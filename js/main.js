@@ -4,7 +4,7 @@
  */
 
 // Firebase 및 기본 설정
-import { app, auth, db, storage, BADGES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } from './firebase-config.js';
+import { app, auth, db, storage, BADGES, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } from './firebase-config.js';
 
 // 인증 모듈
 import { initAuth, setupAuthListener, hideFeedback } from './auth.js';
@@ -95,6 +95,7 @@ window.auth = auth;
 window.db = db;
 window.storage = storage;
 window.BADGES = BADGES;
+window.MILESTONES = MILESTONES;
 window.MISSIONS = MISSIONS;
 window.MAX_IMG_SIZE = MAX_IMG_SIZE;
 window.MAX_VID_SIZE = MAX_VID_SIZE;

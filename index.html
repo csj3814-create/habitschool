@@ -67,7 +67,7 @@
             </div>
 
             <div class="milestone-section" id="milestone-section" style="display:none;">
-                <div class="milestone-title">🏆 나의 마일스톤 뱃지</div>
+                <div class="milestone-title">🏆 나의 마일스톤</div>
                 <div class="badges-grid" id="badges-grid"></div>
             </div>
 
@@ -147,15 +147,15 @@
             <div class="card">
                 <h3>🔄 포인트 → HBT 변환</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    1000P마다 1 HBT로 무료 변환할 수 있습니다. 지갑이 자동으로 HBT를 받아줍니다!
+                    100P마다 1 HBT로 무료 변환할 수 있습니다. 지갑이 자동으로 HBT를 받아줍니다!
                 </p>
                 <div style="background: #FFF3E0; border: 1px solid #FFB74D; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #E65100;">
-                    💡 팁: 1000P 이상 모아야 변환할 수 있습니다.
+                    💡 팁: 100P 이상 모아야 변환할 수 있습니다.
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 12px;">
                     <div style="flex: 1;">
                         <label style="font-size: 12px; color: #666;">변환할 P</label>
-                        <input type="number" id="conversion-points" placeholder="1000" min="1000" step="1000" oninput="document.getElementById('conversion-hbt').value = (parseInt(this.value) || 0) / 1000" style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
+                        <input type="number" id="conversion-points" placeholder="100" min="100" step="100" oninput="document.getElementById('conversion-hbt').value = (parseInt(this.value) || 0) / 100" style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
                     </div>
                     <div style="flex: 1;">
                         <label style="font-size: 12px; color: #666;">받을 HBT</label>
@@ -163,16 +163,23 @@
                     </div>
                 </div>
                 <button class="submit-btn" style="background-color: #2196F3; width: 100%;" onclick="convertPointsToHBT()">
-                    💸 1000P → 1 HBT 변환
+                    💸 100P → 1 HBT 변환
                 </button>
             </div>
 
             <!-- 30일 챌린지 섹션 -->
             <div class="card">
-                <h3>🏆 30일 챌린지 + 스테이킹</h3>
+                <h3>🏆 30일 챌린지</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    1 HBT를 예치하고 30일 동안 목표를 달성하면 1.05 HBT(5% 이자)를 받습니다!
+                    원하는 만큼 HBT를 예치하고 30일 챌린지에 도전하세요!
                 </p>
+
+                <div style="background: #E3F2FD; border: 1px solid #90CAF9; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #1565C0; line-height: 1.6;">
+                    📌 <strong>보상 규칙:</strong><br>
+                    • 성공률 100% (30일 달성): 원금 + <strong>20% 보너스</strong> + 100P<br>
+                    • 성공률 80%+ (24일+): <strong>원금 환급</strong> + 50P<br>
+                    • 성공률 80% 미만: ❌ 예치금 소멸
+                </div>
 
                 <!-- 현재 진행 중인 챌린지 -->
                 <div id="active-challenge-container" style="display: none; background: #E8F5E9; border: 2px solid #4CAF50; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
@@ -180,18 +187,23 @@
                     <div id="active-challenge-info" style="font-size: 13px; color: #333; line-height: 1.6;"></div>
                 </div>
 
-                <!-- 챌린지 선택 -->
+                <!-- 예치 금액 입력 -->
                 <div id="challenge-selection" style="display: block;">
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: #666; font-weight: bold;">예치할 HBT:</label>
+                        <input type="number" id="challenge-stake-amount" min="1" value="1" step="1" style="width: 100px; padding: 8px; border: 1px solid #DDD; border-radius: 6px; font-size: 14px; margin-left: 8px;">
+                        <span style="font-size: 12px; color: #999;"> HBT</span>
+                    </div>
                     <div style="font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;">도전할 챌린지 선택:</div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-diet-30d')">
-                            🥗 30일 식단 챌린지 (1 HBT)
+                            🥗 30일 식단 챌린지
                         </button>
                         <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-exercise-30d')">
-                            🏃 30일 운동 챌린지 (1 HBT)
+                            🏃 30일 운동 챌린지
                         </button>
                         <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-mind-30d')">
-                            🧘 30일 마음 챌린지 (1 HBT)
+                            🧘 30일 마음 챌린지
                         </button>
                     </div>
                 </div>
@@ -418,218 +430,168 @@
 <script type="module">
     // main.js에서 모든 모듈을 전역으로 가져옴
     
-    // 뱃지 획득 조건 확인
-    async function checkAndAwardBadges(userId) {
+    // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
+    async function checkMilestones(userId) {
         try {
             const userRef = doc(db, "users", userId);
             const userSnap = await getDoc(userRef);
             const userData = userSnap.exists() ? userSnap.data() : {};
-            let badges = userData.badges || {};
-            let newBadges = [];
+            let milestones = userData.milestones || {};
+            let newMilestones = [];
 
-            // 현재 포인트, 레벨, 친구, 기록 데이터 조회
             const coins = userData.coins || 0;
-            const level = userData.missionLevel || 1;
-            const friends = (userData.friends || []).length;
 
-            // 식단/운동/마음 일일 기록 조회 (임시: 인덱스 준비 중이므로 비활성화)
-            // TODO: Firestore composite index 생성 완료 후 활성화
-            const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(31));
+            // 일일 기록 조회
+            const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(61));
             let logs = [];
             try {
                 const logsSnap = await getDocs(q);
-                logsSnap.forEach(doc => logs.push({ date: doc.data().date, awarded: doc.data().awardedPoints }));
-            } catch (indexError) {
-                // 인덱스 에러 발생 시 로그는 빈 배열로 진행 (배지 확인 스킵)
-                console.warn('⚠️ 배지 업데이트 일시 스킵 (인덱스 준비 중):', indexError.message);
+                logsSnap.forEach(d => logs.push({ date: d.data().date, awarded: d.data().awardedPoints }));
+            } catch (e) {
+                console.warn('⚠️ 마일스톤 로그 조회 스킵:', e.message);
                 logs = [];
             }
 
-        // 🌟 시작: 첫 기록
-        if(!badges.starter && logs.length > 0) {
-            badges.starter = { earned: true, date: getKstDateString() };
-            newBadges.push('starter');
-        }
-
-        // 🔥 7일 연속 기록
-        if(!badges.streak7) {
+            // 통계 계산
             let streak = 0;
-            for(let log of logs) {
-                if(log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) {
-                    streak++;
-                    if(streak >= 7) {
-                        badges.streak7 = { earned: true, date: getKstDateString() };
-                        newBadges.push('streak7');
-                        break;
+            for (let log of logs) {
+                if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streak++;
+                else break;
+            }
+            let dietCount = 0, exerciseCount = 0, mindCount = 0;
+            for (let log of logs) {
+                if (log.awarded?.diet) dietCount++;
+                if (log.awarded?.exercise) exerciseCount++;
+                if (log.awarded?.mind) mindCount++;
+            }
+
+            const statMap = { streak, diet: dietCount, exercise: exerciseCount, mind: mindCount, points: coins };
+
+            // 각 마일스톤 확인
+            const MS = window.MILESTONES;
+            for (const [category, catData] of Object.entries(MS)) {
+                const val = statMap[category] || 0;
+                for (const level of catData.levels) {
+                    if (!milestones[level.id]?.achieved && val >= level.target) {
+                        milestones[level.id] = { achieved: true, date: getKstDateString(), bonusClaimed: false };
+                        newMilestones.push(level);
                     }
-                } else { break; }
-            }
-        }
-
-        // 🥗 식단 7일 연속
-        if(!badges.diet7) {
-            let streak = 0;
-            for(let log of logs) {
-                if(log.awarded?.diet) streak++; else break;
-            }
-            if(streak >= 7) {
-                badges.diet7 = { earned: true, date: getKstDateString() };
-                newBadges.push('diet7');
-            }
-        }
-
-        // 💪 운동 7일 연속
-        if(!badges.exercise7) {
-            let streak = 0;
-            for(let log of logs) {
-                if(log.awarded?.exercise) streak++; else break;
-            }
-            if(streak >= 7) {
-                badges.exercise7 = { earned: true, date: getKstDateString() };
-                newBadges.push('exercise7');
-            }
-        }
-
-        // 🧘 마음 7일 연속
-        if(!badges.mind7) {
-            let streak = 0;
-            for(let log of logs) {
-                if(log.awarded?.mind) streak++; else break;
-            }
-            if(streak >= 7) {
-                badges.mind7 = { earned: true, date: getKstDateString() };
-                newBadges.push('mind7');
-            }
-        }
-
-        // 🏆 30일 연속 기록
-        if(!badges.streak30) {
-            let streak = 0;
-            for(let log of logs) {
-                if(log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) {
-                    streak++;
-                    if(streak >= 30) {
-                        badges.streak30 = { earned: true, date: getKstDateString() };
-                        newBadges.push('streak30');
-                        break;
-                    }
-                } else { break; }
-            }
-        }
-
-        // 💯 100P 달성
-        if(!badges.points100 && coins >= 100) {
-            badges.points100 = { earned: true, date: getKstDateString() };
-            newBadges.push('points100');
-        }
-
-        // 💎 300P 달성
-        if(!badges.points300 && coins >= 300) {
-            badges.points300 = { earned: true, date: getKstDateString() };
-            newBadges.push('points300');
-        }
-
-        // 🚀 Lv.3 달성
-        if(!badges.level3 && level >= 3) {
-            badges.level3 = { earned: true, date: getKstDateString() };
-            newBadges.push('level3');
-        }
-
-        // ⭐ 친구 5명
-        if(!badges.friends5 && friends >= 5) {
-            badges.friends5 = { earned: true, date: getKstDateString() };
-            newBadges.push('friends5');
-        }
-
-        // Firebase에 저장 + 뱃지 보너스 포인트 지급
-        const BADGE_POINTS = {
-            starter: 5, streak7: 20, diet7: 15, exercise7: 15, mind7: 10,
-            streak30: 50, points100: 10, points300: 20, level3: 15, friends5: 10
-        };
-
-        // 기존 뱃지 중 보너스 미지급된 것도 처리 (소급 적용)
-        let retroBonusPoints = 0;
-        Object.keys(badges).forEach(badgeId => {
-            if(badges[badgeId]?.earned && !badges[badgeId]?.bonusAwarded && !newBadges.includes(badgeId)) {
-                retroBonusPoints += (BADGE_POINTS[badgeId] || 0);
-                badges[badgeId].bonusAwarded = true;
-            }
-        });
-
-        if(newBadges.length > 0 || retroBonusPoints > 0) {
-            let bonusPoints = 0;
-            newBadges.forEach(id => { bonusPoints += (BADGE_POINTS[id] || 0); });
-
-            // 새 뱃지에도 bonusAwarded 플래그 설정
-            newBadges.forEach(id => { badges[id].bonusAwarded = true; });
-
-            const totalBonus = bonusPoints + retroBonusPoints;
-            const updateData = { badges };
-            if(totalBonus > 0) {
-                updateData.coins = (coins + totalBonus);
-            }
-            await setDoc(userRef, updateData, { merge: true });
-
-            // 새 뱃지 알림
-            newBadges.forEach(badgeId => {
-                const badge = BADGES[badgeId];
-                const bp = BADGE_POINTS[badgeId] || 0;
-                showToast(`🎉 뱃지 획득! ${badge.emoji} ${badge.name} (+${bp}P)`);
-            });
-
-            // 소급 보너스 알림
-            if(retroBonusPoints > 0 && newBadges.length === 0) {
-                showToast(`🎁 기존 뱃지 보너스 +${retroBonusPoints}P 지급!`);
+                }
             }
 
-            // 포인트 UI 업데이트
-            if(totalBonus > 0) {
-                const pointEl = document.getElementById('point-balance');
-                if(pointEl) pointEl.textContent = (coins + totalBonus);
+            // 구 뱃지 → 마일스톤 마이그레이션
+            const badges = userData.badges || {};
+            const badgeMap = { starter:'streak1', streak7:'streak7', diet7:'diet7', exercise7:'exercise7', mind7:'mind7', streak30:'streak30', points100:'points100', points300:'points300' };
+            let migrated = false;
+            for (const [old, nw] of Object.entries(badgeMap)) {
+                if (badges[old]?.earned && !milestones[nw]?.achieved) {
+                    milestones[nw] = { achieved: true, date: badges[old].date || getKstDateString(), bonusClaimed: badges[old].bonusAwarded || false };
+                    migrated = true;
+                }
             }
-        }
+
+            if (newMilestones.length > 0 || migrated) {
+                await setDoc(userRef, { milestones }, { merge: true });
+                newMilestones.forEach(m => {
+                    showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
+                });
+            }
         } catch(error) {
-            console.error('뱃지 확인 오류:', error);
-            // 조용히 실패 (사용자 경험 방해 안함)
+            console.error('마일스톤 확인 오류:', error);
         }
     }
 
-    // 뱃지 UI 렌더링
-    async function renderBadges(userId) {
+    // 마일스톤 UI 렌더링 (프로그레시브)
+    async function renderMilestones(userId) {
         try {
             const userRef = doc(db, "users", userId);
             const userSnap = await getDoc(userRef);
             const userData = userSnap.exists() ? userSnap.data() : {};
-            const badges = userData.badges || {};
+            const milestones = userData.milestones || {};
 
-        const badgesGrid = document.getElementById('badges-grid');
-        badgesGrid.innerHTML = '';
+        const grid = document.getElementById('badges-grid');
+        grid.innerHTML = '';
 
-        let hasBadges = false;
-        Object.values(BADGES).forEach(badge => {
-            const earned = badges[badge.id]?.earned;
-            const earnedDate = badges[badge.id]?.date;
-            if(earned) hasBadges = true;
+        const MS = window.MILESTONES;
 
-            let html = `
-                <div class="badge-item ${earned ? '' : 'locked'}">
-                    <div class="badge-emoji">${badge.emoji}</div>
-                    <div class="badge-name">${badge.name}</div>
-                    <div class="badge-desc">${badge.desc}</div>
-                    ${earnedDate ? `<div class="badge-unlocked-date">${earnedDate}</div>` : ''}
-                </div>
-            `;
-            badgesGrid.innerHTML += html;
-        });
+        for (const [category, catData] of Object.entries(MS)) {
+            const levels = catData.levels;
+            // 첫 번째 미달성 마일스톤 인덱스
+            let currentIdx = levels.findIndex(l => !milestones[l.id]?.achieved);
+            if (currentIdx === -1) currentIdx = levels.length;
 
-        document.getElementById('milestone-section').style.display = hasBadges ? 'block' : 'none';
+            let cardHtml = `<div class="milestone-card">`;
+            cardHtml += `<div class="milestone-card-label">${catData.label}</div>`;
+
+            // 완료된 마일스톤 (작게 표시)
+            const completed = levels.slice(0, currentIdx);
+            if (completed.length > 0) {
+                cardHtml += `<div class="milestone-completed-list">`;
+                for (const lv of completed) {
+                    const claimed = milestones[lv.id]?.bonusClaimed;
+                    if (claimed) {
+                        cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
+                    } else {
+                        cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
+                    }
+                }
+                cardHtml += `</div>`;
+            }
+
+            // 현재 목표 (크게 표시)
+            if (currentIdx < levels.length) {
+                const cur = levels[currentIdx];
+                cardHtml += `<div class="milestone-current-target">`;
+                cardHtml += `<div class="milestone-current-emoji">${cur.emoji}</div>`;
+                cardHtml += `<div class="milestone-current-info">`;
+                cardHtml += `<div class="milestone-current-name">🎯 ${cur.name}</div>`;
+                cardHtml += `<div class="milestone-current-desc">${cur.desc}</div>`;
+                cardHtml += `<div class="milestone-current-reward">달성 시 🎁 +${cur.reward}P</div>`;
+                cardHtml += `</div></div>`;
+            } else {
+                cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
+            }
+
+            cardHtml += `</div>`;
+            grid.innerHTML += cardHtml;
+        }
+
+        document.getElementById('milestone-section').style.display = 'block';
         } catch(error) {
-            console.error('배지 렌더링 오류:', error);
-            // 실패 시 섹션 숨기기
+            console.error('마일스톤 렌더링 오류:', error);
             const section = document.getElementById('milestone-section');
             if(section) section.style.display = 'none';
         }
     }
+
+    // 마일스톤 보너스 클릭 시 수령
+    window.claimMilestoneBonus = async function(milestoneId, reward) {
+        try {
+            const currentUser = auth.currentUser;
+            if (!currentUser) { showToast('❌ 로그인이 필요합니다.'); return; }
+
+            const userRef = doc(db, "users", currentUser.uid);
+            const userSnap = await getDoc(userRef);
+            const userData = userSnap.exists() ? userSnap.data() : {};
+            const milestones = userData.milestones || {};
+
+            if (!milestones[milestoneId]?.achieved) { showToast('❌ 아직 달성하지 못한 마일스톤입니다.'); return; }
+            if (milestones[milestoneId]?.bonusClaimed) { showToast('이미 보너스를 수령했습니다.'); return; }
+
+            milestones[milestoneId].bonusClaimed = true;
+            const newCoins = (userData.coins || 0) + reward;
+            await setDoc(userRef, { milestones, coins: newCoins }, { merge: true });
+
+            showToast(`🎁 보너스 +${reward}P 지급 완료!`);
+            const pointEl = document.getElementById('point-balance');
+            if (pointEl) pointEl.textContent = newCoins;
+
+            renderMilestones(currentUser.uid);
+        } catch(error) {
+            console.error('보너스 수령 오류:', error);
+            showToast('⚠️ 보너스 지급 중 오류가 발생했습니다.');
+        }
+    };
 
     const { todayStr, yesterdayStr, weekStrs } = getDatesInfo();
     const dateInput = document.getElementById('selected-date');
@@ -687,10 +649,10 @@
                 </div>
             `;
         } else {
-            const strengthPreviewSrc = data && data.videoThumbUrl ? data.videoThumbUrl : '';
+            // 동영상 URL은 이미지 태그에 표시 불가 → 항상 플레이스홀더 사용
             const statusHtml = `
                 <div id="s_preview_${id}" class="preview-strength" style="${data && data.videoUrl ? 'display:block;' : 'display:none;'}">
-                    <img id="s_img_${id}" class="preview-strength-img" ${strengthPreviewSrc ? `src="${strengthPreviewSrc}"` : ''} alt="근력 영상 썸네일">
+                    <img id="s_img_${id}" class="preview-strength-img" alt="근력 영상 썸네일">
                     <span class="preview-strength-play">▶</span>
                 </div>
             `;
@@ -713,18 +675,10 @@
         }
         list.appendChild(div);
 
-        // 근력 영상 썸네일: 항상 동영상에서 프레임 추출 시도
+        // 근력 영상 썸네일: 항상 플레이스홀더 표시 (Firebase Storage URL은 CORS로 프레임 추출 불가)
         if(!isCardio && data && data.videoUrl) {
-            extractVideoThumbFromUrl(data.videoUrl)
-                .then((thumbDataUrl) => {
-                    if (!thumbDataUrl) return;
-                    const thumbImg = document.getElementById(`s_img_${id}`);
-                    if (thumbImg) {
-                        thumbImg.src = thumbDataUrl;
-                        div.setAttribute('data-thumb-url', thumbDataUrl);
-                    }
-                })
-                .catch(() => {});
+            const thumbImg = document.getElementById(`s_img_${id}`);
+            if(thumbImg) thumbImg.src = createVideoPlaceholderBase64();
         }
     }
 
@@ -761,15 +715,18 @@
         if(uploadText) uploadText.style.display = 'none';
         previewWrap.style.display = 'block';
 
+        // 즉시 플레이스홈더 표시 (검은박스 방지)
+        previewImg.src = createVideoPlaceholderBase64();
+
+        // 로컬 파일에서 썸네일 추출 시도
         const objectUrl = URL.createObjectURL(file);
-        previewImg.src = objectUrl;
         extractVideoThumbFromUrl(objectUrl)
             .then((thumbDataUrl) => {
                 if (thumbDataUrl) previewImg.src = thumbDataUrl;
             })
             .catch(() => {})
             .finally(() => {
-                setTimeout(() => URL.revokeObjectURL(objectUrl), 1200);
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
             });
     };
 
@@ -1273,8 +1230,8 @@
         if(!user) return;
         
         try {
-            // 뱃지 렌더링
-            await renderBadges(user.uid);
+            // 마일스톤 렌더링
+            await renderMilestones(user.uid);
             
             const userRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userRef);
@@ -1610,9 +1567,9 @@
                 cachedGalleryLogs = []; 
                 galleryDisplayCount = 0; // 무한 스크롤도 초기화
                 
-                // 뱃지 확인 및 업데이트
-                await checkAndAwardBadges(user.uid);
-                await renderBadges(user.uid);
+                // 마일스톤 확인 및 업데이트
+                await checkMilestones(user.uid);
+                await renderMilestones(user.uid);
                 
                 loadDataForSelectedDate(selectedDateStr);
 

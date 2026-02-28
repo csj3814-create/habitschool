@@ -22,6 +22,7 @@ export const MAX_IMG_SIZE = 20 * 1024 * 1024;  // 20MB
 export const MAX_VID_SIZE = 100 * 1024 * 1024; // 100MB
 
 // 마일스톤 뱃지 정의
+// Legacy BADGES (backward compat)
 export const BADGES = {
     starter: { id: 'starter', emoji: '🌟', name: '시작', desc: '첫 기록' },
     streak7: { id: 'streak7', emoji: '🔥', name: '연속7일', desc: '7일 연속 기록' },
@@ -33,6 +34,62 @@ export const BADGES = {
     points300: { id: 'points300', emoji: '💎', name: '다이아몬드', desc: '300P 달성' },
     level3: { id: 'level3', emoji: '🚀', name: 'Lv.3 도전', desc: '레벨 3 달성' },
     friends5: { id: 'friends5', emoji: '⭐', name: '네트워크', desc: '친구 5명' }
+};
+
+// 프로그레시브 마일스톤 시스템
+export const MILESTONES = {
+    streak: {
+        label: '📅 연속 기록',
+        levels: [
+            { id: 'streak1', emoji: '🌟', name: '시작', desc: '첫 기록 달성', target: 1, reward: 5 },
+            { id: 'streak3', emoji: '🔥', name: '3일 연속', desc: '3일 연속 기록', target: 3, reward: 10 },
+            { id: 'streak7', emoji: '🔥', name: '7일 연속', desc: '7일 연속 기록', target: 7, reward: 20 },
+            { id: 'streak14', emoji: '💫', name: '14일 연속', desc: '14일 연속 기록', target: 14, reward: 30 },
+            { id: 'streak30', emoji: '🏆', name: '30일 연속', desc: '30일 연속 기록', target: 30, reward: 50 },
+            { id: 'streak60', emoji: '👑', name: '60일 연속', desc: '60일 연속 기록', target: 60, reward: 100 }
+        ]
+    },
+    diet: {
+        label: '🥗 식단',
+        levels: [
+            { id: 'diet1', emoji: '🥗', name: '식단 시작', desc: '첫 식단 기록', target: 1, reward: 5 },
+            { id: 'diet3', emoji: '🥗', name: '식단 3일', desc: '식단 3일 기록', target: 3, reward: 10 },
+            { id: 'diet7', emoji: '🥗', name: '식단 7일', desc: '식단 7일 기록', target: 7, reward: 15 },
+            { id: 'diet14', emoji: '🥗', name: '식단 14일', desc: '식단 14일 달성', target: 14, reward: 25 },
+            { id: 'diet30', emoji: '🥗', name: '식단 30일', desc: '식단 30일 달성', target: 30, reward: 50 }
+        ]
+    },
+    exercise: {
+        label: '💪 운동',
+        levels: [
+            { id: 'exercise1', emoji: '💪', name: '운동 시작', desc: '첫 운동 기록', target: 1, reward: 5 },
+            { id: 'exercise3', emoji: '💪', name: '운동 3일', desc: '운동 3일 기록', target: 3, reward: 10 },
+            { id: 'exercise7', emoji: '💪', name: '운동 7일', desc: '운동 7일 기록', target: 7, reward: 15 },
+            { id: 'exercise14', emoji: '💪', name: '운동 14일', desc: '운동 14일 달성', target: 14, reward: 25 },
+            { id: 'exercise30', emoji: '💪', name: '운동 30일', desc: '운동 30일 달성', target: 30, reward: 50 }
+        ]
+    },
+    mind: {
+        label: '🧘 마음',
+        levels: [
+            { id: 'mind1', emoji: '🧘', name: '마음 시작', desc: '첫 마음 기록', target: 1, reward: 5 },
+            { id: 'mind3', emoji: '🧘', name: '마음 3일', desc: '마음 3일 기록', target: 3, reward: 10 },
+            { id: 'mind7', emoji: '🧘', name: '마음 7일', desc: '마음 7일 기록', target: 7, reward: 15 },
+            { id: 'mind14', emoji: '🧘', name: '마음 14일', desc: '마음 14일 달성', target: 14, reward: 25 },
+            { id: 'mind30', emoji: '🧘', name: '마음 30일', desc: '마음 30일 달성', target: 30, reward: 50 }
+        ]
+    },
+    points: {
+        label: '💰 포인트',
+        levels: [
+            { id: 'points50', emoji: '💰', name: '50P', desc: '50P 달성', target: 50, reward: 5 },
+            { id: 'points100', emoji: '💯', name: '100P', desc: '100P 달성', target: 100, reward: 10 },
+            { id: 'points300', emoji: '💎', name: '300P', desc: '300P 달성', target: 300, reward: 20 },
+            { id: 'points500', emoji: '🏅', name: '500P', desc: '500P 달성', target: 500, reward: 30 },
+            { id: 'points1000', emoji: '👑', name: '1000P', desc: '1000P 달성', target: 1000, reward: 50 },
+            { id: 'points2000', emoji: '🌟', name: '2000P', desc: '2000P 달성', target: 2000, reward: 100 }
+        ]
+    }
 };
 
 // 미션 정의

@@ -145,8 +145,8 @@ export async function convertPointsToHBT() {
             return false;
         }
 
-        if (pointAmount % 1000 !== 0) {
-            showToast('❌ 1000P 단위로만 변환 가능합니다.');
+        if (pointAmount % 100 !== 0) {
+            showToast('❌ 100P 단위로만 변환 가능합니다.');
             return false;
         }
 
@@ -211,13 +211,24 @@ export async function convertPointsToHBT() {
 
 /**
  * 30일 챌린지 시작
- * HBT를 스테이킹 컨트랙트에 예치
+ * 원하는 만큼 HBT를 예치 (유연한 스테이킹)
+ * 보상: 80%+ 성공 → 원금 환급, 100% 성공 → 원금 + 20% 보너스
+ * 80% 미만 → 예치금 소멸
  */
-export async function startChallenge30D(challengeId, hbtAmount = 1) {
+export async function startChallenge30D(challengeId) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
             showToast('❌ 로그인이 필요합니다.');
+            return false;
+        }
+
+        // 예치 금액 입력값 가져오기
+        const stakeInput = document.getElementById('challenge-stake-amount');
+        const hbtAmount = parseFloat(stakeInput?.value || 0);
+
+        if (!hbtAmount || hbtAmount < 1) {
+            showToast('❌ 최소 1 HBT 이상 예치해야 합니다.');
             return false;
         }
 
@@ -256,16 +267,15 @@ export async function startChallenge30D(challengeId, hbtAmount = 1) {
             startDate: startDate,
             endDate: endDate,
             completedDays: 0,
+            totalDays: 30,
             hbtStaked: hbtAmount,
-            status: 'ongoing',
-            rewardHbt: hbtAmount * 1.05, // 5% 이자
-            rewardPoints: 50
+            status: 'ongoing'
         };
 
         // 5. Firebase 업데이트
         await updateDoc(userRef, {
             activeChallenge: challengeData,
-            hbtBalance: increment(-hbtAmount) // HBT 차감
+            hbtBalance: increment(-hbtAmount)
         });
 
         // 6. 거래 기록 저장
@@ -279,11 +289,9 @@ export async function startChallenge30D(challengeId, hbtAmount = 1) {
             walletAddress: userWalletAddress
         });
 
-        showToast(`✅ 챌린지 시작!\n${hbtAmount} HBT를 예치했습니다.\n30일 동안 화이팅!`);
+        showToast(`✅ 챌린지 시작!\n${hbtAmount} HBT 예치 완료.\n80%+ 달성 시 원금 환급, 100% 달성 시 +20% 보너스!`);
         
-        // UI 업데이트
         window.updateAssetDisplay && window.updateAssetDisplay();
-
         return true;
 
     } catch (error) {
@@ -295,6 +303,10 @@ export async function startChallenge30D(challengeId, hbtAmount = 1) {
 
 /**
  * 일일 인증 시 챌린지 진행도 업데이트
+ * 30일 종료 시 보상 규칙:
+ * - 성공률 80% 이상 (24일+): 원금 환급
+ * - 성공률 100% (30일): 원금 + 20% 보너스
+ * - 성공률 80% 미만: 예치금 소멸
  */
 export async function updateChallengeProgress() {
     try {
@@ -308,45 +320,73 @@ export async function updateChallengeProgress() {
         const challenge = userData.activeChallenge;
         if (!challenge || challenge.status !== 'ongoing') return;
 
-        // 오늘 로그 확인
+        // 오늘 날짜 확인
         const today = getKstDateString();
-        const dailyLogsRef = collection(db, "users", currentUser.uid, "daily_logs");
-        
-        // 간단히 completedDays를 증가 (실제로는 daily_logs에서 확인)
-        // 실제 구현에서는 daily_logs를 쿼리해서 챌린지 타입과 일치하는지 확인
-        
-        const matchesChallenge = true; // 향후 로직 추가
-        
-        if (matchesChallenge) {
-            challenge.completedDays += 1;
 
-            // 30일 완료 확인
-            if (challenge.completedDays >= 30) {
-                challenge.status = 'completed';
-                
-                // 보상 지급
-                await updateDoc(userRef, {
-                    activeChallenge: null,
-                    hbtBalance: increment(challenge.rewardHbt),
-                    coins: increment(challenge.rewardPoints),
-                    completedChallenges: firebase.firestore.FieldValue.arrayUnion(challenge)
-                });
+        // 챌린지 종료일 확인
+        if (today > challenge.endDate) {
+            // 챌린지 기간 종료 → 정산
+            const successRate = challenge.completedDays / (challenge.totalDays || 30);
+            const staked = challenge.hbtStaked || 0;
+            let rewardHbt = 0;
+            let rewardPoints = 0;
+            let resultMsg = '';
 
-                showToast(`🎉 챌린지 완료!\n${challenge.rewardHbt} HBT + ${challenge.rewardPoints}P 받았습니다!`);
+            if (successRate >= 1.0) {
+                // 100% 성공: 원금 + 20% 보너스
+                rewardHbt = staked * 1.2;
+                rewardPoints = 100;
+                resultMsg = `🎉 챌린지 완벽 달성! ${rewardHbt} HBT + ${rewardPoints}P 획득!`;
+            } else if (successRate >= 0.8) {
+                // 80% 이상: 원금 환급
+                rewardHbt = staked;
+                rewardPoints = 50;
+                resultMsg = `✅ 챌린지 성공! ${Math.round(successRate*100)}% 달성. 원금 ${rewardHbt} HBT 환급 + ${rewardPoints}P!`;
             } else {
-                // 진행 중 업데이트
-                await updateDoc(userRef, {
-                    activeChallenge: challenge
-                });
-
-                const remainDays = 30 - challenge.completedDays;
-                showToast(`✅ 챌린지 진행: ${challenge.completedDays}/30일 (${remainDays}일 남음)`);
+                // 80% 미만: 예치금 소멸
+                rewardHbt = 0;
+                rewardPoints = 0;
+                resultMsg = `😢 챌린지 미달성 (${Math.round(successRate*100)}%). 예치금 ${staked} HBT가 소멸되었습니다.`;
             }
+
+            const updateData = {
+                activeChallenge: null
+            };
+            if (rewardHbt > 0) updateData.hbtBalance = increment(rewardHbt);
+            if (rewardPoints > 0) updateData.coins = increment(rewardPoints);
+
+            await updateDoc(userRef, updateData);
+
+            // 기록 저장
+            await addDoc(collection(db, "blockchain_transactions"), {
+                userId: currentUser.uid,
+                type: 'challenge_settlement',
+                challengeId: challenge.challengeId,
+                amount: rewardHbt,
+                staked: staked,
+                successRate: successRate,
+                completedDays: challenge.completedDays,
+                timestamp: serverTimestamp(),
+                status: successRate >= 0.8 ? 'success' : 'failed'
+            });
+
+            showToast(resultMsg);
+            window.updateAssetDisplay && window.updateAssetDisplay();
+            return;
         }
+
+        // 진행 중 - completedDays 증가
+        challenge.completedDays = (challenge.completedDays || 0) + 1;
+
+        await updateDoc(userRef, {
+            activeChallenge: challenge
+        });
+
+        const remain = (challenge.totalDays || 30) - challenge.completedDays;
+        showToast(`✅ 챌린지 ${challenge.completedDays}/${challenge.totalDays || 30}일 (${remain}일 남음)`);
 
     } catch (error) {
         console.error('⚠️ 챌린지 진행도 업데이트 오류:', error);
-        // 에러가 발생해도 앱 작동을 방해하지 않음
     }
 }
 

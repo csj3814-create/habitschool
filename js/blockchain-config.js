@@ -96,8 +96,8 @@ export const CHALLENGES_30D = {
 
 // 📊 포인트 → 토큰 변환 규칙
 export const CONVERSION_RULES = {
-    pointsPerConversion: 1000, // 1000P = 1 HBT
-    minConversion: 1000,
+    pointsPerConversion: 100, // 100P = 1 HBT
+    minConversion: 100,
     maxConversionPerDay: 10, // 1일 최대 10회 변환
     gasFeeEstimate: 0, // 가스비 무료 (회사 부담)
     estimatedTime: '2-5초' // 내장형 지갑으로 즉시 처리

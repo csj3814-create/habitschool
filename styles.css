@@ -1376,78 +1376,129 @@ textarea {
 }
 
 .badges-grid { 
-    display: grid; 
-    grid-template-columns: repeat(3, 1fr); 
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-md); 
 }
 
-.badge-item { 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    gap: 6px; 
-    padding: var(--spacing-md); 
-    background: rgba(255,255,255,0.9); 
-    border-radius: 10px; 
-    text-align: center; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-    position: relative; 
-    transition: 0.2s; 
+/* 마일스톤 카드 (카테고리별) */
+.milestone-card {
+    background: rgba(255,255,255,0.92);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-.badge-item:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+.milestone-card-label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eee;
 }
 
-.badge-item.locked { 
-    opacity: 0.5; 
+/* 완료된 마일스톤 목록 (작게) */
+.milestone-completed-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
 }
 
-.badge-emoji { 
-    font-size: 28px; 
+.milestone-completed-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 11px;
+    background: #E8F5E9;
+    color: #2E7D32;
 }
 
-.badge-name { 
-    font-size: 12px; 
-    font-weight: bold; 
-    color: #333; 
+.milestone-completed-item.done {
+    opacity: 0.7;
 }
 
-.badge-desc { 
-    font-size: 10px; 
-    color: #999; 
+.milestone-completed-item.claimable {
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    border: 1.5px solid #FF9800;
+    cursor: pointer;
+    animation: claimPulse 2s infinite;
 }
 
-.badge-unlocked-date { 
-    font-size: 9px; 
-    color: #F57F17; 
-    font-weight: bold; 
-    margin-top: 2px; 
+.milestone-completed-item.claimable:hover {
+    transform: scale(1.05);
 }
 
-.badge-new { 
-    position: absolute; 
-    top: -8px; 
-    right: -8px; 
-    background: #FF5722; 
-    color: white; 
-    border-radius: 50%; 
-    width: 24px; 
-    height: 24px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 12px; 
-    font-weight: bold; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
-    animation: badgePulse 0.6s ease-out; 
+@keyframes claimPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,152,0,0.4); }
+    50% { box-shadow: 0 0 8px 2px rgba(255,152,0,0.3); }
 }
 
-@keyframes badgePulse { 
-    0% { transform: scale(0); } 
-    50% { transform: scale(1.2); } 
-    100% { transform: scale(1); } 
+.ms-sm-name {
+    font-weight: 600;
+}
+
+.ms-check {
+    font-size: 10px;
+}
+
+.ms-claim-btn {
+    background: #FF9800;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* 현재 목표 (크게 표시) */
+.milestone-current-target {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+    border-radius: 10px;
+    border: 1.5px dashed #42A5F5;
+}
+
+.milestone-current-emoji {
+    font-size: 32px;
+}
+
+.milestone-current-info {
+    flex: 1;
+}
+
+.milestone-current-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #1565C0;
+}
+
+.milestone-current-desc {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.milestone-current-reward {
+    font-size: 12px;
+    color: #FF8C00;
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+.milestone-all-done {
+    text-align: center;
+    padding: 8px;
+    color: #F57F17;
+    font-weight: bold;
+    font-size: 13px;
 }
 
 /* 로딩 애니메이션 */
