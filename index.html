@@ -432,11 +432,18 @@
             const level = userData.missionLevel || 1;
             const friends = (userData.friends || []).length;
 
-            // 식단/운동/마음 일일 기록 조회
+            // 식단/운동/마음 일일 기록 조회 (임시: 인덱스 준비 중이므로 비활성화)
+            // TODO: Firestore composite index 생성 완료 후 활성화
             const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(31));
-            const logsSnap = await getDocs(q);
             let logs = [];
-            logsSnap.forEach(doc => logs.push({ date: doc.data().date, awarded: doc.data().awardedPoints }));
+            try {
+                const logsSnap = await getDocs(q);
+                logsSnap.forEach(doc => logs.push({ date: doc.data().date, awarded: doc.data().awardedPoints }));
+            } catch (indexError) {
+                // 인덱스 에러 발생 시 로그는 빈 배열로 진행 (배지 확인 스킵)
+                console.warn('⚠️ 배지 업데이트 일시 스킵 (인덱스 준비 중):', indexError.message);
+                logs = [];
+            }
 
         // 🌟 시작: 첫 기록
         if(!badges.starter && logs.length > 0) {
@@ -1371,6 +1378,13 @@
     async function uploadFileAndGetUrl(file, folderName, userId) {
         if (!file) return null;
         
+        console.log('🔍 업로드 디버깅 정보:');
+        console.log('  폴더:', folderName);
+        console.log('  사용자 ID:', userId);
+        console.log('  파일명:', file.name);
+        console.log('  파일 타입:', file.type);
+        console.log('  파일 크기:', file.size);
+        
         // 파일 타입 검증
         if (!isValidFileType(file)) {
             showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
@@ -1390,13 +1404,26 @@
                 ? await compressImage(file) 
                 : file;
             
-            const storageRef = ref(storage, `${folderName}/${userId}_${Date.now()}_${fileToUpload.name}`);
+            const timestamp = Date.now();
+            // 경로: /folderName/userId/timestamp_filename
+            const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
+            console.log('📤 업로드 경로:', storagePath);
+            
+            const storageRef = ref(storage, storagePath);
+            
+            console.log('📤 업로드 시작...');
             await uploadBytes(storageRef, fileToUpload);
-            return await getDownloadURL(storageRef);
+            const url = await getDownloadURL(storageRef);
+            
+            console.log('✅ 업로드 완료:', url);
+            return url;
         } catch(error) {
-            console.error('파일 업로드 오류:', error);
+            console.error('❌ 파일 업로드 오류:', error);
+            console.error('  에러 코드:', error.code);
+            console.error('  에러 메시지:', error.message);
+            
             if (error.code === 'storage/unauthorized') {
-                showToast('⚠️ 업로드 권한이 없습니다.');
+                showToast('⚠️ 업로드 권한이 없습니다. 저장소 규칙을 확인하세요.');
             } else if (error.code === 'storage/quota-exceeded') {
                 showToast('⚠️ 저장 공간이 부족합니다.');
             } else if (error.code === 'storage/canceled') {
@@ -1410,24 +1437,57 @@
 
     document.getElementById('saveDataBtn').addEventListener('click', () => {
         const user = auth.currentUser;
-        if (!user) return;
+        console.log('💾 저장 버튼 클릭됨!');
+        console.log('🔐 현재 사용자:', user?.uid, user?.displayName);
+        
+        if (!user) {
+            console.warn('⚠️ 로그인되지 않음');
+            return;
+        }
+        
         const saveBtn = document.getElementById('saveDataBtn');
         saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
         showToast("백그라운드에서 저장 중입니다! 🚀");
+        console.log('✅ 저장 UI 업데이트 완료');
 
         (async () => {
             try {
                 const selectedDateStr = document.getElementById('selected-date').value;
-                const docId = `${user.uid}_${selectedDateStr}`; 
+                console.log('📅 선택된 날짜:', selectedDateStr);
+                
+                const docId = `${user.uid}_${selectedDateStr}`;
+                console.log('📄 저장할 문서 ID:', docId);
+                
                 const existingDoc = await getDoc(doc(db, "daily_logs", docId));
+                console.log('📖 기존 문서 확인:', existingDoc.exists());
                 let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
+
+                console.log('🔍 저장 시작 - 기존 데이터:', oldData);
 
                 const getUrl = async (id, folder, oldUrl) => {
                     const el = document.getElementById(id);
+                    console.log(`📝 ${id} 검사:`, {
+                        element: !!el,
+                        hasFile: el?.files[0] ? true : false,
+                        fileName: el?.files[0]?.name,
+                        previewDisplay: el?.parentElement?.querySelector('.preview-img')?.style.display,
+                        oldUrl: oldUrl
+                    });
+                    
                     if(el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
-                        return await uploadFileAndGetUrl(el.files[0], folder, user.uid);
+                        console.log(`📤 ${id} 업로드 시작합니다`);
+                        try {
+                            return await uploadFileAndGetUrl(el.files[0], folder, user.uid);
+                        } catch (err) {
+                            console.error(`⚠️ ${id} 사진 업로드 실패 (계속 진행):`, err);
+                            return null;
+                        }
                     }
-                    if(el && el.parentElement.querySelector('.preview-img').style.display === 'none') return null;
+                    if(el && el.parentElement.querySelector('.preview-img').style.display === 'none') {
+                        console.log(`⏭️ ${id} 미리보기가 숨겨져 있음 - null 반환`);
+                        return null;
+                    }
+                    console.log(`♻️ ${id} 기존 URL 사용:`, oldUrl);
                     return oldUrl || null;
                 };
 
@@ -1435,10 +1495,25 @@
                 const lUrl = await getUrl('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl);
                 const dUrl = await getUrl('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl);
                 const sUrl = await getUrl('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl);
-                const bThumbUrl = bUrl ? await resolveThumbUrl(bUrl, 'diet_images', 'diet_images_thumbnails') : null;
-                const lThumbUrl = lUrl ? await resolveThumbUrl(lUrl, 'diet_images', 'diet_images_thumbnails') : null;
-                const dThumbUrl = dUrl ? await resolveThumbUrl(dUrl, 'diet_images', 'diet_images_thumbnails') : null;
-                const sThumbUrl = sUrl ? await resolveThumbUrl(sUrl, 'diet_images', 'diet_images_thumbnails') : null;
+                
+                console.log('🖼️ 식단 사진 업로드 결과:', { bUrl, lUrl, dUrl, sUrl });
+                
+                const bThumbUrl = bUrl ? await resolveThumbUrl(bUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
+                    console.warn('썸네일 생성 실패:', e);
+                    return null;
+                }) : null;
+                const lThumbUrl = lUrl ? await resolveThumbUrl(lUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
+                    console.warn('썸네일 생성 실패:', e);
+                    return null;
+                }) : null;
+                const dThumbUrl = dUrl ? await resolveThumbUrl(dUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
+                    console.warn('썸네일 생성 실패:', e);
+                    return null;
+                }) : null;
+                const sThumbUrl = sUrl ? await resolveThumbUrl(sUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
+                    console.warn('썸네일 생성 실패:', e);
+                    return null;
+                }) : null;
 
                 let cardioList = [];
                 const cardioBlocks = document.querySelectorAll('.cardio-block');
@@ -1447,8 +1522,18 @@
                     const time = block.querySelector('.c-time').value;
                     const dist = block.querySelector('.c-dist').value;
                     let url = block.getAttribute('data-url') || null;
-                    if(fileInput.files[0]) url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
-                    const thumbUrl = url ? await resolveThumbUrl(url, 'exercise_images', 'exercise_images_thumbnails') : null;
+                    if(fileInput.files[0]) {
+                        try {
+                            url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
+                        } catch (err) {
+                            console.error('⚠️ 유산소 사진 업로드 실패:', err);
+                            url = null;
+                        }
+                    }
+                    const thumbUrl = url ? await resolveThumbUrl(url, 'exercise_images', 'exercise_images_thumbnails').catch(e => {
+                        console.warn('운동 썸네일 생성 실패:', e);
+                        return null;
+                    }) : null;
                     if(url || time || dist) cardioList.push({ imageUrl: url, imageThumbUrl: thumbUrl, time, dist });
                 }
 
@@ -1457,15 +1542,30 @@
                 for (let block of strengthBlocks) {
                     const fileInput = block.querySelector('.exer-file');
                     let url = block.getAttribute('data-url') || null;
-                    if(fileInput.files[0]) url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid);
-                    const videoThumbUrl = url ? await resolveThumbUrl(url, 'exercise_videos', 'exercise_videos_thumbnails') : null;
+                    if(fileInput.files[0]) {
+                        try {
+                            url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid);
+                        } catch (err) {
+                            console.error('⚠️ 근력 영상 업로드 실패:', err);
+                            url = null;
+                        }
+                    }
+                    const videoThumbUrl = url ? await resolveThumbUrl(url, 'exercise_videos', 'exercise_videos_thumbnails').catch(e => {
+                        console.warn('영상 썸네일 생성 실패:', e);
+                        return null;
+                    }) : null;
                     if(url) strengthList.push({ videoUrl: url, videoThumbUrl });
                 }
 
                 const sleepFile = document.getElementById('sleep-img');
                 let sleepUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
                 if(sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
-                    sleepUrl = await uploadFileAndGetUrl(sleepFile.files[0], 'sleep_images', user.uid);
+                    try {
+                        sleepUrl = await uploadFileAndGetUrl(sleepFile.files[0], 'sleep_images', user.uid);
+                    } catch (err) {
+                        console.error('⚠️ 수면 사진 업로드 실패:', err);
+                        sleepUrl = null;
+                    }
                 } else if(document.getElementById('preview-sleep').style.display === 'none') {
                     sleepUrl = null;
                 }

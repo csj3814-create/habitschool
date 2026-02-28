@@ -87,9 +87,17 @@ export async function uploadFileAndGetUrl(file, folderName, userId) {
             ? await compressImage(file) 
             : file;
         
-        const storageRef = ref(storage, `${folderName}/${userId}_${Date.now()}_${fileToUpload.name}`);
+        const timestamp = Date.now();
+        // 경로: /folderName/userId/timestamp_filename
+        const storageRef = ref(storage, `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`);
+        
+        console.log('📤 업로드 시작:', storageRef.fullPath);
+        
         await uploadBytes(storageRef, fileToUpload);
-        return await getDownloadURL(storageRef);
+        const url = await getDownloadURL(storageRef);
+        
+        console.log('✅ 업로드 완료:', url);
+        return url;
     } catch(error) {
         console.error('파일 업로드 오류:', error);
         if (error.code === 'storage/unauthorized') {

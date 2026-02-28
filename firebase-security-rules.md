@@ -160,41 +160,41 @@ service firebase.storage {
     }
     
     // ===== 식단 이미지 =====
-    match /diet_images/{userId}_{timestamp}_{filename} {
+    match /diet_images/{userId}/{allFiles=**} {
       allow read: if request.auth != null;  // 로그인한 사용자만 읽기
       allow write: if request.auth != null
                    && request.auth.uid == userId  // 본인만 업로드
-                   && isImage()
+                   && request.resource.contentType.matches('image/.*')
                    && isValidSize();
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // ===== 운동 이미지 =====
-    match /exercise_images/{userId}_{timestamp}_{filename} {
+    match /exercise_images/{userId}/{allFiles=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
                    && request.auth.uid == userId
-                   && isImage()
+                   && request.resource.contentType.matches('image/.*')
                    && isValidSize();
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // ===== 운동 비디오 =====
-    match /exercise_videos/{userId}_{timestamp}_{filename} {
+    match /exercise_videos/{userId}/{allFiles=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
                    && request.auth.uid == userId
-                   && isVideo()
+                   && request.resource.contentType.matches('video/.*')
                    && isValidSize();
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
     // ===== 수면 기록 이미지 =====
-    match /sleep_images/{userId}_{timestamp}_{filename} {
+    match /sleep_images/{userId}/{allFiles=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null
                    && request.auth.uid == userId
-                   && isImage()
+                   && request.resource.contentType.matches('image/.*')
                    && isValidSize();
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
