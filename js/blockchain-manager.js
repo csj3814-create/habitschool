@@ -512,6 +512,28 @@ export async function updateChallengeProgress() {
                 continue;
             }
 
+            // 통합(all) 챌린지: 식단+운동+마음 모두 완수했는지 확인
+            if (challengeDef.category === 'all') {
+                try {
+                    const logDocId = `${currentUser.uid}_${today}`;
+                    const logSnap = await getDoc(doc(db, "daily_logs", logDocId));
+                    if (logSnap.exists()) {
+                        const logData = logSnap.data();
+                        const ap = logData.awardedPoints || {};
+                        if (!ap.diet || !ap.exercise || !ap.mind) {
+                            console.log(`ℹ️ 통합 챌린지: 아직 3개 카테고리 미완수 (diet:${!!ap.diet}, exercise:${!!ap.exercise}, mind:${!!ap.mind})`);
+                            continue;
+                        }
+                    } else {
+                        console.log(`ℹ️ 통합 챌린지: 오늘 기록 없음`);
+                        continue;
+                    }
+                } catch (e) {
+                    console.warn('⚠️ 통합 챌린지 검증 오류:', e.message);
+                    continue;
+                }
+            }
+
             // 진행 중 - 오늘 날짜 기록
             completedDates.push(today);
             challenge.completedDays = completedDates.length;

@@ -729,18 +729,18 @@ window.updateAssetDisplay = async function() {
             if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
                 const legacyId = userData.activeChallenge.challengeId;
                 const legacyTier = {
-                    'challenge-diet-3d': 'mini', 'challenge-exercise-3d': 'mini', 'challenge-mind-3d': 'mini',
-                    'challenge-diet-7d': 'weekly', 'challenge-exercise-7d': 'weekly', 'challenge-mind-7d': 'weekly',
-                    'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master'
+                    'challenge-diet-3d': 'mini', 'challenge-exercise-3d': 'mini', 'challenge-mind-3d': 'mini', 'challenge-all-3d': 'mini',
+                    'challenge-diet-7d': 'weekly', 'challenge-exercise-7d': 'weekly', 'challenge-mind-7d': 'weekly', 'challenge-all-7d': 'weekly',
+                    'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master', 'challenge-all-30d': 'master'
                 }[legacyId] || 'master';
                 if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
             }
 
             const activeTiers = Object.keys(activeChallenges).filter(t => activeChallenges[t]?.status === 'ongoing');
             const challengeEmojis = {
-                'challenge-diet-3d': '🥗 3일 식단', 'challenge-exercise-3d': '🏃 3일 운동', 'challenge-mind-3d': '🧘 3일 마음',
-                'challenge-diet-7d': '🥗 7일 식단', 'challenge-exercise-7d': '🏃 7일 운동', 'challenge-mind-7d': '🧘 7일 마음',
-                'challenge-diet-30d': '🥗 30일 식단', 'challenge-exercise-30d': '🏃 30일 운동', 'challenge-mind-30d': '🧘 30일 마음'
+                'challenge-diet-3d': '🥗 3일 식단', 'challenge-exercise-3d': '🏃 3일 운동', 'challenge-mind-3d': '🧘 3일 마음', 'challenge-all-3d': '🌟 3일 통합',
+                'challenge-diet-7d': '🥗 7일 식단', 'challenge-exercise-7d': '🏃 7일 운동', 'challenge-mind-7d': '🧘 7일 마음', 'challenge-all-7d': '🌟 7일 통합',
+                'challenge-diet-30d': '🥗 30일 식단', 'challenge-exercise-30d': '🏃 30일 운동', 'challenge-mind-30d': '🧘 30일 마음', 'challenge-all-30d': '🌟 30일 통합'
             };
 
             if (activeTiers.length > 0) {
@@ -1842,15 +1842,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             const sleepFile = document.getElementById('sleep-img');
             let sleepUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
+            let sleepThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
             if(sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
                 try {
-                    sleepUrl = await uploadFileAndGetUrl(sleepFile.files[0], 'sleep_images', user.uid);
+                    const sleepResult = await uploadImageWithThumb(sleepFile.files[0], 'sleep_images', user.uid);
+                    sleepUrl = sleepResult.url;
+                    sleepThumbUrl = sleepResult.thumbUrl;
                 } catch (err) {
                     console.error('⚠️ 수면 사진 업로드 실패:', err);
                     sleepUrl = null;
+                    sleepThumbUrl = null;
                 }
             } else if(document.getElementById('preview-sleep').style.display === 'none') {
                 sleepUrl = null;
+                sleepThumbUrl = null;
             }
 
             const hasDiet = !!(bUrl || lUrl || dUrl || sUrl);
@@ -1903,7 +1908,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     breakfastThumbUrl: bThumbUrl, lunchThumbUrl: lThumbUrl, dinnerThumbUrl: dThumbUrl, snackThumbUrl: sThumbUrl
                 },
                 exercise: { cardioList: cardioList, strengthList: strengthList },
-                sleepAndMind: { sleepImageUrl: sleepUrl, meditationDone: meditationDone, gratitude: gratitudeText }
+                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
             await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
@@ -2873,14 +2878,18 @@ function collectGalleryMedia(data) {
         if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl || null));
     }
 
-    // 마음 미디어
+    // 마음 미디어 (썸네일 우선)
     if(data.sleepAndMind?.sleepImageUrl) {
-        result.mindHtml = `<img src="${data.sleepAndMind.sleepImageUrl}" onclick="openLightbox('${data.sleepAndMind.sleepImageUrl}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
+        const sleepOriginal = data.sleepAndMind.sleepImageUrl;
+        const sleepThumb = data.sleepAndMind.sleepImageThumbUrl || sleepOriginal;
+        const safeSleepOriginal = String(sleepOriginal).replace(/'/g, "\\'");
+        const safeSleepThumb = String(sleepThumb).replace(/'/g, "\\'");
+        result.mindHtml = `<img src="${safeSleepThumb}" onclick="openLightbox('${safeSleepOriginal}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
     }
 
     // 마음 텍스트
     if(data.sleepAndMind?.gratitude) {
-        result.mindText = `<div style="font-size:13px; color:#555; background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:12px; font-style:italic;">💭 "${data.sleepAndMind.gratitude}"</div>`;
+        result.mindText = `<div style="font-size:13px; color:#333; padding:10px 14px; font-style:italic; line-height:1.6;">💭 "${data.sleepAndMind.gratitude}"</div>`;
     }
 
     return result;
@@ -2972,23 +2981,32 @@ async function renderFeedOnly() {
             commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
         }
 
+        // 아바타 이니셜 (첫 글자)
+        const avatarInitial = (data.userName || '?').charAt(0);
+
+        // 반응 총합 텍스트
+        const totalReactions = cHeart + cFire + cClap;
+        const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
+
         const card = document.createElement('div');
         card.className = 'gallery-card';
         card.innerHTML = `
             <div class="gallery-header">
+                <div class="gallery-avatar">${avatarInitial}</div>
                 <div class="gallery-header-info">
-                    <span class="gallery-name">${isFriend ? '⭐️ ' : ''}${safeName}</span>
+                    <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
                     <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
                 </div>
-                ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? 'X 친구취소' : '⭐️ 친구맺기'}</button>` : ''}
+                ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : ''}
             </div>
             ${contentHtml}
             <div class="gallery-actions">
-                <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️ <span>${cHeart}</span></button>
-                <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥 <span>${cFire}</span></button>
-                <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏 <span>${cClap}</span></button>
-                <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬 <span id="comment-count-${safeDocId}">${commentCount}</span></button>
+                <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
+                <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
+                <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
+                <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
             </div>
+            ${reactionSummaryHtml}
             <div class="comment-section">
                 <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
                     ${commentsHtml}

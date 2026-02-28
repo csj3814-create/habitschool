@@ -385,7 +385,7 @@ textarea {
     object-fit: contain; 
     display: none; 
     border-radius: 6px; 
-    margin-top: 10px; 
+    margin: 10px auto 0 auto; 
 }
 
 .preview-strength { 
@@ -833,9 +833,17 @@ textarea {
 .gallery-filters { 
     display: flex; 
     gap: var(--spacing-sm); 
-    margin-bottom: 15px; 
+    margin-bottom: 12px; 
     overflow-x: auto; 
     padding-bottom: 5px; 
+    border-bottom: 1px solid var(--gray-200);
+}
+
+#gallery-container {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
 }
 
 .filter-chip { 
@@ -860,26 +868,38 @@ textarea {
     transform: scale(0.95); 
 }
 
-/* 갤러리 카드 */
+/* 갤러리 카드 - 인스타그램 스타일 */
 .gallery-card { 
     background: var(--white); 
-    border: 1px solid var(--border-color); 
-    border-radius: var(--radius-lg); 
-    padding: var(--spacing-lg); 
-    margin-bottom: var(--spacing-lg); 
-    box-shadow: var(--shadow-light); 
+    border-bottom: 1px solid var(--gray-200); 
+    border-radius: 0; 
+    padding: 0; 
+    margin-bottom: 0; 
+    box-shadow: none; 
     contain: layout style paint;
     content-visibility: auto;
 }
 
 .gallery-header { 
     display: flex; 
-    justify-content: space-between; 
     align-items: center; 
-    gap: var(--spacing-sm); 
-    border-bottom: 1px solid var(--gray-200); 
-    padding-bottom: var(--spacing-sm); 
-    margin-bottom: var(--spacing-md); 
+    gap: 10px; 
+    padding: 12px 14px; 
+    border-bottom: none; 
+}
+
+.gallery-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), #FF6F00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
 }
 
 .gallery-header-info { 
@@ -890,45 +910,44 @@ textarea {
 }
 
 .gallery-name { 
-    font-weight: bold; 
-    font-size: var(--font-md); 
-    color: var(--primary-color); 
+    font-weight: 600; 
+    font-size: 13px; 
+    color: var(--gray-900); 
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
 }
 
 .gallery-date { 
-    font-size: var(--font-xs); 
+    font-size: 11px; 
     color: var(--text-tertiary); 
-    margin-top: 2px; 
+    margin-top: 1px; 
 }
 
 .gallery-photos { 
     display: grid; 
-    grid-template-columns: repeat(2, var(--unified-thumb-size)); 
-    grid-auto-rows: var(--unified-thumb-size);
-    gap: var(--spacing-sm); 
-    margin-bottom: var(--spacing-md); 
+    grid-template-columns: repeat(auto-fill, minmax(var(--unified-thumb-size), 1fr)); 
+    gap: 2px; 
+    margin-bottom: 0; 
 }
 
 .gallery-photos img { 
     width: 100%; 
     aspect-ratio: 1 / 1; 
     object-fit: cover; 
-    border-radius: var(--radius-md); 
     cursor: pointer; 
     will-change: transform;
     content-visibility: auto;
     contain: layout style paint;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    border-radius: 0;
 }
 
 .video-thumb-wrapper {
     position: relative;
     width: var(--unified-thumb-size);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     overflow: hidden;
     cursor: pointer;
     background: #1a1a1a;
@@ -996,46 +1015,60 @@ textarea {
 
 .gallery-actions { 
     display: flex; 
-    gap: var(--spacing-md); 
+    gap: 14px; 
     align-items: center; 
-    border-top: 1px dashed var(--gray-200); 
-    padding-top: var(--spacing-md); 
-    margin-top: var(--spacing-md); 
+    padding: 8px 14px 4px; 
 }
 
 .action-btn { 
-    background: var(--gray-50); 
-    border: 1px solid var(--gray-200); 
-    font-size: var(--font-sm); 
-    padding: 6px var(--spacing-md); 
-    border-radius: 15px; 
+    background: none; 
+    border: none; 
+    font-size: 22px; 
+    padding: 4px 2px; 
     display: flex; 
     align-items: center; 
     gap: 4px; 
     cursor: pointer; 
-    color: var(--gray-600); 
-    transition: var(--transition-base); 
+    color: var(--gray-700); 
+    transition: transform 0.15s ease; 
+    line-height: 1;
+}
+
+.action-btn span {
+    font-size: 13px;
+    color: var(--gray-600);
+    font-weight: 500;
 }
 
 .action-btn:active { 
-    transform: scale(0.95); 
+    transform: scale(1.2); 
 }
 
 .action-btn.active { 
-    background: #FFF0F5; 
-    border-color: var(--pink-light); 
     color: #E91E63; 
+}
+
+.action-btn.active span {
+    color: #E91E63;
+}
+
+.gallery-reaction-summary {
+    padding: 2px 14px 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-800);
 }
 
 .friend-btn { 
     background: none; 
     border: none; 
-    font-size: var(--font-sm); 
+    font-size: 12px; 
     cursor: pointer; 
-    color: var(--warning-color); 
-    font-weight: bold; 
-    padding: 4px; 
+    color: var(--primary-color); 
+    font-weight: 600; 
+    padding: 4px 8px; 
     border-radius: var(--radius-sm); 
+    margin-left: auto;
 }
 
 /* 반응 요약 배너 (인스타그램 스타일) */
@@ -1079,33 +1112,32 @@ textarea {
     gap: 2px;
 }
 
-/* 댓글 섹션 */
+/* 댓글 섹션 - 인스타그램 스타일 */
 .comment-section {
-    border-top: 1px solid var(--gray-100);
-    margin-top: 8px;
-    padding-top: 8px;
+    padding: 0 14px 12px;
 }
 
 .comment-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     margin-bottom: 8px;
 }
 
 .comment-item {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.5;
     flex-wrap: wrap;
 }
 
 .comment-author {
-    font-weight: 700;
-    color: #333;
+    font-weight: 600;
+    color: var(--gray-900);
     flex-shrink: 0;
+    font-size: 13px;
 }
 
 .comment-text {
@@ -1153,6 +1185,8 @@ textarea {
     display: flex;
     gap: 8px;
     align-items: center;
+    border-top: 1px solid var(--gray-100);
+    padding-top: 8px;
 }
 
 .comment-input {

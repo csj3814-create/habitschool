@@ -180,6 +180,48 @@ export const CHALLENGES = {
         emoji: '🧘',
         duration: 30,
         tier: 'master'
+    },
+
+    // === 통합 챌린지 (식단+운동+마음 모두 완수) ===
+    'challenge-all-3d': {
+        id: 'challenge-all-3d',
+        name: '3일 통합 챌린지',
+        description: '3일 연속 식단+운동+마음 모두 인증하기',
+        category: 'all',
+        dailyTarget: 1,
+        requiredDays: 3,
+        hbtStake: 0,
+        rewardPoints: 20,
+        emoji: '🌟',
+        duration: 3,
+        tier: 'mini'
+    },
+    'challenge-all-7d': {
+        id: 'challenge-all-7d',
+        name: '7일 통합 챌린지',
+        description: '7일 연속 식단+운동+마음 모두 인증하기',
+        category: 'all',
+        dailyTarget: 1,
+        requiredDays: 7,
+        hbtStake: 0.5,
+        rewardPoints: 50,
+        emoji: '🌟',
+        duration: 7,
+        tier: 'weekly'
+    },
+    'challenge-all-30d': {
+        id: 'challenge-all-30d',
+        name: '30일 통합 챌린지',
+        description: '30일 연속 식단+운동+마음 모두 인증하기',
+        category: 'all',
+        dailyTarget: 1,
+        requiredDays: 30,
+        hbtStake: 1,
+        rewardHbt: 1.05,
+        rewardPoints: 80,
+        emoji: '🌟',
+        duration: 30,
+        tier: 'master'
     }
 };
 
