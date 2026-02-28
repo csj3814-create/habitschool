@@ -1376,54 +1376,73 @@
     }
 
     async function uploadFileAndGetUrl(file, folderName, userId) {
-        if (!file) return null;
+        if (!file) {
+            console.warn('⚠️ 파일이 없음');
+            return null;
+        }
         
         console.log('🔍 업로드 디버깅 정보:');
         console.log('  폴더:', folderName);
         console.log('  사용자 ID:', userId);
         console.log('  파일명:', file.name);
         console.log('  파일 타입:', file.type);
-        console.log('  파일 크기:', file.size);
+        console.log('  원본 파일 크기:', (file.size / (1024 * 1024)).toFixed(2) + ' MB');
         
-        // 파일 타입 검증
+        // 파일 타입 검증 (압축 전)
         if (!isValidFileType(file)) {
-            showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
-            return null;
-        }
-        
-        // 파일 크기 검증 (기본: 10MB)
-        if (!isValidFileSize(file)) {
-            const maxSizeMB = Math.floor(file.size / (1024 * 1024));
-            showToast(`⚠️ 파일이 너무 큽니다. (최대 10MB, 현재 ${maxSizeMB}MB)`);
+            const msg = '⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)';
+            console.warn(msg);
+            showToast(msg);
             return null;
         }
         
         try {
             // 이미지 파일이면 압축 후 업로드
-            const fileToUpload = file.type.startsWith('image/') 
-                ? await compressImage(file) 
-                : file;
+            console.log('📦 파일 타입 확인:', file.type.startsWith('image/') ? '이미지 (압축)' : '비디오 (그대로)');
+            
+            let fileToUpload = file;
+            if (file.type.startsWith('image/')) {
+                console.log('🔨 이미지 압축 시작...');
+                fileToUpload = await compressImage(file);
+                console.log('✅ 압축 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
+            }
+            
+            // 압축 파일 크기 검증 (50MB까지 허용)
+            const MAX_SIZE_MB = 50;
+            const fileSizeMB = fileToUpload.size / (1024 * 1024);
+            if (fileSizeMB > MAX_SIZE_MB) {
+                const msg = `⚠️ 파일이 너무 큽니다. (최대 ${MAX_SIZE_MB}MB, 현재 ${fileSizeMB.toFixed(2)}MB)`;
+                console.warn(msg);
+                showToast(msg);
+                return null;
+            }
+            
+            console.log('✅ 파일 크기 검증 완료');
             
             const timestamp = Date.now();
-            // 경로: /folderName/userId/timestamp_filename
             const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
             console.log('📤 업로드 경로:', storagePath);
             
             const storageRef = ref(storage, storagePath);
+            console.log('📤 uploadBytes 시작...');
             
-            console.log('📤 업로드 시작...');
             await uploadBytes(storageRef, fileToUpload);
+            
+            console.log('📥 getDownloadURL 호출...');
             const url = await getDownloadURL(storageRef);
             
             console.log('✅ 업로드 완료:', url);
             return url;
         } catch(error) {
-            console.error('❌ 파일 업로드 오류:', error);
+            console.error('❌ 파일 업로드 실패');
             console.error('  에러 코드:', error.code);
             console.error('  에러 메시지:', error.message);
+            console.error('  전체 에러:', error);
             
             if (error.code === 'storage/unauthorized') {
-                showToast('⚠️ 업로드 권한이 없습니다. 저장소 규칙을 확인하세요.');
+                const msg = '⚠️ 업로드 권한이 없습니다. Storage 규칙 확인 필요!';
+                console.error(msg);
+                showToast(msg);
             } else if (error.code === 'storage/quota-exceeded') {
                 showToast('⚠️ 저장 공간이 부족합니다.');
             } else if (error.code === 'storage/canceled') {
