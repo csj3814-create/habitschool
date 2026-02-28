@@ -7,7 +7,7 @@
 // Firebase 모듈 임포트
 import { 
     increment, collection, doc, getDoc, getDocs, setDoc, 
-    query, where, orderBy, limit, serverTimestamp, onSnapshot, 
+    query, where, orderBy, limit, serverTimestamp, 
     arrayRemove, arrayUnion 
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
@@ -971,75 +971,7 @@ window.addEventListener('popstate', (e) => {
 // 페이지 종료 시 리소스 정리 (메모리 누수 방지)
 window.addEventListener('beforeunload', () => {
     cleanupGalleryResources();
-    if (reactionListenerUnsubscribe) {
-        reactionListenerUnsubscribe();
-    }
 });
-
-// 알림 권한 요청
-window.requestNotificationPermission = function() {
-    if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-    }
-};
-
-// 브라우저 알림 표시
-function showBrowserNotification(title, options = {}) {
-    if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, options);
-    }
-}
-
-// 반응 알림 저장
-async function saveReactionNotification(logDocId, reactionType, reactingUserId, reactingUserName, postOwnerId) {
-    if(reactingUserId === postOwnerId) return; // 자신의 게시물에는 알림 안 보냄
-    
-    const notifRef = doc(db, "notifications", `${postOwnerId}_${logDocId}_${Date.now()}_${Math.random().toString(36).substr(2,9)}`);
-    await setDoc(notifRef, {
-        postOwnerId: postOwnerId,
-        logDocId: logDocId,
-        reactionType: reactionType,
-        reactingUserId: reactingUserId,
-        reactingUserName: reactingUserName,
-        timestamp: serverTimestamp(),
-        read: false
-    }, { merge: true });
-}
-
-// 실시간 반응 알림 리스너
-window.reactionListenerUnsubscribe = null;
-window.setupReactionListener = function(userId) {
-    if(window.reactionListenerUnsubscribe) window.reactionListenerUnsubscribe();
-    
-    const q = query(
-        collection(db, "notifications"),
-        where("postOwnerId", "==", userId),
-        where("read", "==", false),
-        orderBy("timestamp", "desc"),
-        limit(15)
-    );
-    
-    window.reactionListenerUnsubscribe = onSnapshot(q, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            if(change.type === "added") {
-                const notif = change.doc.data();
-                const icons = { heart: "❤️", fire: "🔥", clap: "👏" };
-                const labels = { heart: "하트", fire: "불꽃", clap: "박수" };
-                const emoji = icons[notif.reactionType] || "✨";
-                const label = labels[notif.reactionType] || "반응";
-                const safeReactName = (notif.reactingUserName || '').replace(/[<>"'&]/g, '');
-                showBrowserNotification(
-                    `${safeReactName}님이 반응했어요!`,
-                    {
-                        body: `${emoji} ${label}를 눌렀어요!`,
-                        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>☀️</text></svg>",
-                        tag: `reaction_${notif.logDocId}`
-                    }
-                );
-            }
-        });
-    });
-}
 
 // 중복 제거: 로그인 및 인증 로직은 auth.js 모듈에서 처리
 
@@ -1594,22 +1526,13 @@ window.toggleReaction = async function(docId, reactionType, btnElement) {
         
         // arrayUnion/arrayRemove로 원자적 업데이트 (전체 문서 읽기 불필요)
         if (isActive) {
-            // 반응 제거
             await setDoc(logRef, { 
                 reactions: { [reactionType]: arrayRemove(user.uid) }
             }, { merge: true });
         } else {
-            // 반응 추가
             await setDoc(logRef, { 
                 reactions: { [reactionType]: arrayUnion(user.uid) }
             }, { merge: true });
-            
-            // 게시물 작성자에게 알림 저장
-            const logSnap = await getDoc(logRef);
-            if (logSnap.exists()) {
-                const postOwnerId = logSnap.data().userId;
-                await saveReactionNotification(docId, reactionType, user.uid, user.displayName, postOwnerId);
-            }
         }
     } catch(error) {
         console.error('반응 저장 오류:', error);
@@ -2281,8 +2204,161 @@ async function loadGalleryData() {
     
     // 무한 스크롤 초기화
     galleryDisplayCount = INITIAL_LOAD;
+
+    // 갤러리 반응 요약 배너 (인스타그램 스타일)
+    renderActivitySummary(myId);
+
     renderFeedOnly();
     setupInfiniteScroll();
+}
+
+// 인스타그램 스타일: 내 게시물에 달린 반응/댓글 요약 배너
+function renderActivitySummary(myId) {
+    const summaryEl = document.getElementById('gallery-activity-summary');
+    if (!summaryEl || !myId) { if(summaryEl) summaryEl.style.display = 'none'; return; }
+
+    let totalHeart = 0, totalFire = 0, totalClap = 0, totalComments = 0;
+    cachedGalleryLogs.forEach(item => {
+        if (item.data.userId !== myId) return;
+        const rx = item.data.reactions || {};
+        // 자기 자신 반응 제외
+        totalHeart += (rx.heart || []).filter(uid => uid !== myId).length;
+        totalFire += (rx.fire || []).filter(uid => uid !== myId).length;
+        totalClap += (rx.clap || []).filter(uid => uid !== myId).length;
+        const comments = item.data.comments || [];
+        totalComments += comments.filter(c => c.userId !== myId).length;
+    });
+
+    const total = totalHeart + totalFire + totalClap + totalComments;
+    if (total === 0) {
+        summaryEl.style.display = 'none';
+        return;
+    }
+
+    let parts = [];
+    if (totalHeart > 0) parts.push(`<span class="summary-item">❤️ ${totalHeart}</span>`);
+    if (totalFire > 0) parts.push(`<span class="summary-item">🔥 ${totalFire}</span>`);
+    if (totalClap > 0) parts.push(`<span class="summary-item">👏 ${totalClap}</span>`);
+    if (totalComments > 0) parts.push(`<span class="summary-item">💬 ${totalComments}</span>`);
+
+    summaryEl.innerHTML = `
+        <div class="summary-content">
+            <div class="summary-label">내 게시물 반응</div>
+            <div class="summary-stats">${parts.join('')}</div>
+        </div>
+    `;
+    summaryEl.style.display = 'flex';
+}
+
+// 댓글 추가
+window.addComment = async function(docId) {
+    const user = auth.currentUser;
+    if (!user) { showToast('로그인이 필요합니다.'); return; }
+    const input = document.getElementById(`comment-input-${docId}`);
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+    if (text.length > 200) { showToast('댓글은 200자까지 가능합니다.'); return; }
+
+    try {
+        const logRef = doc(db, "daily_logs", docId);
+        const newComment = {
+            userId: user.uid,
+            userName: user.displayName || '익명',
+            text: sanitizeText(text),
+            timestamp: Date.now()
+        };
+        await setDoc(logRef, { comments: arrayUnion(newComment) }, { merge: true });
+        input.value = '';
+
+        // 로컬 캐시 업데이트 & 댓글만 다시 렌더
+        const item = cachedGalleryLogs.find(l => l.id === docId);
+        if (item) {
+            if (!item.data.comments) item.data.comments = [];
+            item.data.comments.push(newComment);
+            renderCommentList(docId, item.data.comments);
+        }
+        // 요약 배너 업데이트
+        renderActivitySummary(user.uid);
+    } catch (e) {
+        console.error('댓글 추가 오류:', e);
+        showToast('댓글 추가에 실패했습니다.');
+    }
+};
+
+// 댓글 삭제 (본인만)
+window.deleteComment = async function(docId, commentIdx) {
+    const user = auth.currentUser;
+    if (!user) return;
+    const item = cachedGalleryLogs.find(l => l.id === docId);
+    if (!item || !item.data.comments) return;
+    const comment = item.data.comments[commentIdx];
+    if (!comment || comment.userId !== user.uid) { showToast('본인 댓글만 삭제할 수 있습니다.'); return; }
+
+    try {
+        const logRef = doc(db, "daily_logs", docId);
+        await setDoc(logRef, { comments: arrayRemove(comment) }, { merge: true });
+        item.data.comments.splice(commentIdx, 1);
+        renderCommentList(docId, item.data.comments);
+        renderActivitySummary(user.uid);
+    } catch (e) {
+        console.error('댓글 삭제 오류:', e);
+        showToast('댓글 삭제에 실패했습니다.');
+    }
+};
+
+// 댓글 더보기 토글
+window.toggleComments = function(docId) {
+    const list = document.getElementById(`comment-list-${docId}`);
+    if (!list) return;
+    const isExpanded = list.dataset.expanded === 'true';
+    list.dataset.expanded = isExpanded ? 'false' : 'true';
+    const item = cachedGalleryLogs.find(l => l.id === docId);
+    if (item) renderCommentList(docId, item.data.comments || []);
+};
+
+// 댓글 목록 렌더링
+function renderCommentList(docId, comments) {
+    const list = document.getElementById(`comment-list-${docId}`);
+    if (!list) return;
+    const myId = auth.currentUser ? auth.currentUser.uid : '';
+    const isExpanded = list.dataset.expanded === 'true';
+    const maxShow = isExpanded ? comments.length : 2;
+    const visibleComments = comments.slice(0, maxShow);
+
+    let html = '';
+    visibleComments.forEach((c, idx) => {
+        const safeName = escapeHtml(c.userName || '익명');
+        const safeText = escapeHtml(c.text || '');
+        const timeStr = formatCommentTime(c.timestamp);
+        const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="삭제">✕</button>` : '';
+        html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}</div>`;
+    });
+
+    if (comments.length > 2) {
+        const toggleText = isExpanded ? '댓글 접기' : `댓글 ${comments.length}개 모두 보기`;
+        html += `<button class="comment-toggle-btn" onclick="toggleComments('${escapeHtml(docId)}')">${toggleText}</button>`;
+    }
+
+    list.innerHTML = html;
+    // 댓글 수 업데이트
+    const countEl = document.getElementById(`comment-count-${docId}`);
+    if (countEl) countEl.textContent = comments.length;
+}
+
+// 댓글 시간 포맷
+function formatCommentTime(timestamp) {
+    if (!timestamp) return '';
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return '방금';
+    if (mins < 60) return `${mins}분 전`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}일 전`;
+    const d = new Date(timestamp);
+    return `${d.getMonth()+1}/${d.getDate()}`;
 }
 
 // 중복 코드 제거: 갤러리 미디어 수집 헬퍼 함수
@@ -2411,10 +2487,28 @@ async function renderFeedOnly() {
         const aFire = rx.fire?.includes(myId) ? 'active' : '';
         const aClap = rx.clap?.includes(myId) ? 'active' : '';
 
+        // 댓글 데이터
+        const comments = data.comments || [];
+        const commentCount = comments.length;
+
         // XSS 방지: 사용자 입력 이스케이프
         const safeName = escapeHtml(data.userName || '익명');
         const safeUserId = escapeHtml(data.userId || '');
         const safeDocId = escapeHtml(item.id || '');
+
+        // 댓글 HTML (최대 2개만 초기 표시)
+        let commentsHtml = '';
+        const showComments = comments.slice(0, 2);
+        showComments.forEach((c, idx) => {
+            const cName = escapeHtml(c.userName || '익명');
+            const cText = escapeHtml(c.text || '');
+            const cTime = formatCommentTime(c.timestamp);
+            const delBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
+            commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}</div>`;
+        });
+        if (comments.length > 2) {
+            commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
+        }
 
         const card = document.createElement('div');
         card.className = 'gallery-card';
@@ -2431,6 +2525,16 @@ async function renderFeedOnly() {
                 <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️ <span>${cHeart}</span></button>
                 <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥 <span>${cFire}</span></button>
                 <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏 <span>${cClap}</span></button>
+                <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬 <span id="comment-count-${safeDocId}">${commentCount}</span></button>
+            </div>
+            <div class="comment-section">
+                <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
+                    ${commentsHtml}
+                </div>
+                <div class="comment-input-wrap">
+                    <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
+                    <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
+                </div>
             </div>
         `;            fragment.appendChild(card);
     }

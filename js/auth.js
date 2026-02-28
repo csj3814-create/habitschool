@@ -42,13 +42,7 @@ export function setupAuthListener(callbacks) {
             document.getElementById('date-ui').style.display = 'flex';
             document.getElementById('user-greeting').innerText = `☀️ ${user.displayName}`;
             
-            // 알림 권한 요청 및 리스너 설정 (전역 함수 사용)
-            if (window.requestNotificationPermission) {
-                window.requestNotificationPermission();
-            }
-            if (window.setupReactionListener) {
-                window.setupReactionListener(user.uid);
-            }
+            // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
             
             const userRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userRef);
@@ -117,12 +111,6 @@ export function setupAuthListener(callbacks) {
             document.getElementById('login-modal').style.display = 'flex';
             document.getElementById('point-badge-ui').style.display = 'none';
             document.getElementById('date-ui').style.display = 'none';
-            
-            // Firebase 리스너 정리
-            if (window.reactionListenerUnsubscribe) {
-                window.reactionListenerUnsubscribe();
-                window.reactionListenerUnsubscribe = null;
-            }
             
             // 갤러리 리소스 정리
             if (window.cleanupGalleryResources) {

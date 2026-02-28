@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=19">
+    <link rel="stylesheet" href="styles.css?v=20">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -389,6 +389,9 @@
                 <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false" aria-label="운동 필터">🏃 운동</button>
                 <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false" aria-label="마음 필터">🧘 마음</button>
             </div>
+
+            <!-- 인스타그램 스타일 반응 요약 배너 -->
+            <div id="gallery-activity-summary" class="activity-summary" style="display:none;" role="status" aria-label="내 게시물 반응 요약"></div>
             
             <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
             <div id="gallery-sentinel" style="height: 20px; text-align: center; padding: 20px; display: none;" aria-hidden="true">

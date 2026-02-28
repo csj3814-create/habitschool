@@ -1037,6 +1037,160 @@ textarea {
     border-radius: var(--radius-sm); 
 }
 
+/* 반응 요약 배너 (인스타그램 스타일) */
+.activity-summary {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f8f0ff 0%, #fff0f5 50%, #fffde7 100%);
+    border: 1px solid #e8d5f5;
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    margin-bottom: var(--spacing-md);
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.08);
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.summary-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #7b1fa2;
+    white-space: nowrap;
+}
+
+.summary-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.summary-item {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* 댓글 섹션 */
+.comment-section {
+    border-top: 1px solid var(--gray-100);
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.comment-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    flex-wrap: wrap;
+}
+
+.comment-author {
+    font-weight: 700;
+    color: #333;
+    flex-shrink: 0;
+}
+
+.comment-text {
+    color: #444;
+    word-break: break-word;
+}
+
+.comment-time {
+    font-size: 11px;
+    color: #aaa;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.comment-delete-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.comment-delete-btn:hover {
+    color: #e74c3c;
+}
+
+.comment-toggle-btn {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 0;
+    text-align: left;
+}
+
+.comment-toggle-btn:hover {
+    color: #666;
+}
+
+.comment-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.comment-input {
+    flex: 1;
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 13px;
+    outline: none;
+    background: var(--gray-50);
+    transition: border-color 0.2s;
+}
+
+.comment-input:focus {
+    border-color: var(--primary-color);
+    background: #fff;
+}
+
+.comment-submit-btn {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 4px;
+    white-space: nowrap;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.comment-submit-btn:hover {
+    opacity: 1;
+}
+
+.comment-btn {
+    margin-left: auto;
+}
+
 /* 채팅 배너 */
 .chat-banner-fixed { 
     position: fixed; 
