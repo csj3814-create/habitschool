@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=16">
+    <link rel="stylesheet" href="styles.css?v=17">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -56,7 +56,7 @@
             <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
             <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊 내 기록</button>
             <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭">🪙 자산</button>
-            <button class="tab-btn" onclick="openTab('gallery')" aria-label="갤러리 탭">✨ 갤러리</button>
+            <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨ 갤러리</button>
         </nav>
 
         <div id="dashboard" class="content-section active" id="main-content" role="main">
@@ -541,14 +541,34 @@
             newBadges.push('friends5');
         }
 
-        // Firebase에 저장
+        // Firebase에 저장 + 뱃지 보너스 포인트 지급
         if(newBadges.length > 0) {
-            await setDoc(userRef, { badges }, { merge: true });
+            // 뱃지별 보너스 포인트
+            const BADGE_POINTS = {
+                starter: 5, streak7: 20, diet7: 15, exercise7: 15, mind7: 10,
+                streak30: 50, points100: 10, points300: 20, level3: 15, friends5: 10
+            };
+            let bonusPoints = 0;
+            newBadges.forEach(id => { bonusPoints += (BADGE_POINTS[id] || 0); });
+
+            const updateData = { badges };
+            if(bonusPoints > 0) {
+                updateData.coins = (coins + bonusPoints);
+            }
+            await setDoc(userRef, updateData, { merge: true });
+
             // 새 뱃지 알림
             newBadges.forEach(badgeId => {
                 const badge = BADGES[badgeId];
-                showToast(`🎉 새로운 뱃지 획득! ${badge.emoji} ${badge.name}`);
+                const bp = BADGE_POINTS[badgeId] || 0;
+                showToast(`🎉 뱃지 획득! ${badge.emoji} ${badge.name} (+${bp}P)`);
             });
+
+            // 포인트 UI 업데이트
+            if(bonusPoints > 0) {
+                const pointEl = document.getElementById('point-balance');
+                if(pointEl) pointEl.textContent = (coins + bonusPoints);
+            }
         }
         } catch(error) {
             console.error('뱃지 확인 오류:', error);
@@ -662,7 +682,7 @@
                 <button class="block-remove-btn" onclick="this.parentElement.remove()">X</button>
                 <label class="upload-area">
                     <input type="file" accept="video/*" class="exer-file" onchange="previewDynamicVid(this)">
-                    <span style="color:#666; font-size:13px;">➕ 근력 동영상 올리기</span>
+                    <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">➕ 근력 동영상 올리기</span>
                     ${statusHtml}
                 </label>
             `;
@@ -675,14 +695,15 @@
         }
         list.appendChild(div);
 
+        // 근력 영상 썸네일: videoThumbUrl이 없으면 동영상에서 프레임 추출
         if(!isCardio && data && data.videoUrl && !data.videoThumbUrl) {
-            resolveThumbUrl(data.videoUrl, 'exercise_videos', 'exercise_videos_thumbnails')
-                .then((thumbUrl) => {
-                    if (!thumbUrl || thumbUrl === data.videoUrl) return;
+            extractVideoThumbFromUrl(data.videoUrl)
+                .then((thumbDataUrl) => {
+                    if (!thumbDataUrl) return;
                     const thumbImg = document.getElementById(`s_img_${id}`);
                     if (thumbImg) {
-                        thumbImg.src = thumbUrl;
-                        div.setAttribute('data-thumb-url', thumbUrl);
+                        thumbImg.src = thumbDataUrl;
+                        div.setAttribute('data-thumb-url', thumbDataUrl);
                     }
                 })
                 .catch(() => {});
@@ -717,6 +738,9 @@
 
         const previewWrap = input.parentElement.querySelector('.preview-strength');
         const previewImg = input.parentElement.querySelector('.preview-strength-img');
+        // 업로드 텍스트 숨기기
+        const uploadText = input.parentElement.querySelector('span');
+        if(uploadText) uploadText.style.display = 'none';
         previewWrap.style.display = 'block';
 
         const objectUrl = URL.createObjectURL(file);
@@ -780,7 +804,13 @@
     window.previewStaticImage = function(input, previewId, btnId, skipExif = false) {
         const preview = document.getElementById(previewId);
         const rmBtn = document.getElementById(btnId);
-        const txtSpan = document.getElementById('txt-' + previewId.split('-')[1]) || document.getElementById('txt_' + previewId.split('_')[1] + '_' + previewId.split('_')[2]); // 예외처리
+        // 텍스트 스팬 찾기: diet용 txt-xxx 또는 cardio용 txt_c_xxx
+        let txtSpan = null;
+        if(previewId.startsWith('preview-')) {
+            txtSpan = document.getElementById('txt-' + previewId.split('-')[1]);
+        } else if(previewId.startsWith('c_img_')) {
+            txtSpan = document.getElementById('txt_c_' + previewId.substring(6));
+        }
         
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -1846,9 +1876,9 @@
             const safeUrl = toSafeAttr(mediaUrl);
 
             if (isVideo) {
-                htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}" data-thumb-source="exercise_videos" data-thumb-target="exercise_videos_thumbnails"><img src="${videoPlaceholder}" alt="해빛 인증 영상 썸네일"></div>`;
+                htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><img src="${videoPlaceholder}" alt="해빛 인증 영상 썸네일"></div>`;
             } else {
-                htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}" data-thumb-source="diet_images" data-thumb-target="diet_images_thumbnails"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async"></div>`;
+                htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async"></div>`;
             }
         }
         return htmlString;
@@ -2192,12 +2222,6 @@
             
             // 캠시 크기 제한 (메모리 누수 방지)
             cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
-            const visibleSeed = cachedGalleryLogs.slice(0, 24);
-            const remainingSeed = cachedGalleryLogs.slice(24);
-            prewarmThumbCache(visibleSeed).catch(() => {});
-            setTimeout(() => {
-                prewarmThumbCache(remainingSeed).catch(() => {});
-            }, 250);
 
             // 공유 카드는 처음 한 번만 그림 (속도 개선)
             let myRecentLogs = []; 
@@ -2247,7 +2271,6 @@
                 if (imgs.length === 2) imgGrid.classList.add('two-items');
                 if (imgs.length === 3) imgGrid.classList.add('three-items');
                 if (imgs.length >= 4) imgGrid.classList.add('four-items');
-                hydrateThumbImages(imgGrid).catch(() => {});
                 
                 if(imgs.length === 0) imgGrid.innerHTML = `<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 완료!</div>`;
             } else {
@@ -2270,16 +2293,14 @@
             mindText: ''
         };
 
-        // 식단 미디어
+        // 식단 미디어 (원본 URL을 직접 사용, 썸네일 폴더 불필요)
         if(data.diet) {
             ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => {
                 if(data.diet[k]) {
                     const mealType = k.replace('Url', '');
                     const originalUrl = data.diet[k];
-                    const thumbUrl = data.diet[`${mealType}ThumbUrl`] || originalUrl;
                     const safeOriginal = String(originalUrl).replace(/'/g, "\\'");
-                    const safeThumb = String(thumbUrl || originalUrl);
-                    result.dietHtml += `<img src="${safeThumb}" data-media-src="${safeOriginal}" data-thumb-source="diet_images" data-thumb-target="diet_images_thumbnails" onclick="openLightbox('${safeOriginal}')" alt="${mealType} 식사 사진" loading="lazy" decoding="async">`;
+                    result.dietHtml += `<img src="${safeOriginal}" onclick="openLightbox('${safeOriginal}')" alt="${mealType} 식사 사진" loading="lazy" decoding="async">`;
                 }
             });
         }
@@ -2289,10 +2310,8 @@
             let addedUrls = new Set();
             const addImg = (url, thumbUrl = null) => {
                 if(url && !addedUrls.has(url)) {
-                    const resolvedThumbUrl = thumbUrl || url;
                     const safeOriginal = String(url).replace(/'/g, "\\'");
-                    const safeThumb = String(resolvedThumbUrl || url);
-                    result.exerciseHtml += `<img src="${safeThumb}" data-media-src="${safeOriginal}" data-thumb-source="exercise_images" data-thumb-target="exercise_images_thumbnails" onclick="openLightbox('${safeOriginal}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
+                    result.exerciseHtml += `<img src="${safeOriginal}" onclick="openLightbox('${safeOriginal}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
                     addedUrls.add(url);
                 }
             };
@@ -2300,7 +2319,7 @@
                 if(url && !addedUrls.has(url)) {
                     const safeJsUrl = String(url).replace(/'/g, "\\'");
                     const safeVideoThumb = String(videoThumbUrl || createVideoPlaceholderBase64());
-                    result.exerciseHtml += `<div class="video-thumb-wrapper" data-media-src="${safeJsUrl}" data-thumb-source="exercise_videos" data-thumb-target="exercise_videos_thumbnails" onclick="openVideoLightbox('${safeJsUrl}')"><img src="${safeVideoThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" data-media-src="${safeJsUrl}" onclick="openVideoLightbox('${safeJsUrl}')"><img src="${safeVideoThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
                     addedUrls.add(url);
                 }
             };
@@ -2426,9 +2445,6 @@
 
         if(visibleCount === 0) {
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
-        } else {
-            initGalleryVideoThumbs();
-            hydrateThumbImages(container).catch(() => {});
         }
     }
 
