@@ -351,8 +351,8 @@ export async function startChallenge30D(challengeId) {
         showToast(`⏳ ${duration}일 챌린지 시작 중...`);
 
         const startDate = getKstDateString();
-        const endDateObj = new Date(startDate);
-        endDateObj.setDate(endDateObj.getDate() + duration);
+        const endDateObj = new Date(startDate + 'T12:00:00Z');
+        endDateObj.setUTCDate(endDateObj.getUTCDate() + duration);
         const endDate = endDateObj.toISOString().split('T')[0];
 
         // 오늘 이미 인증한 데이터가 있으면 1일 인정

@@ -2,30 +2,29 @@
 import { MISSIONS } from './firebase-config.js';
 
 // 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
-export function getKstDateObj() {
-    const now = new Date();
-    // UTC→KST(+9시간)
-    return new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (9 * 60 * 60 * 1000));
+export function getKstDateString() {
+    // toLocaleDateString('en-CA')는 YYYY-MM-DD 형식 반환
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
 }
 
-export function getKstDateString() {
-    return getKstDateObj().toISOString().split('T')[0];
+export function getKstDateObj() {
+    // KST 날짜의 정오(UTC)를 기준으로 Date 객체 생성 (날짜 경계 문제 방지)
+    return new Date(getKstDateString() + 'T12:00:00Z');
 }
 
 // 날짜 정보 가져오기 (한국 시간 기준)
 export function getDatesInfo() {
-    const kstDate = getKstDateObj();
-    const todayStr = kstDate.toISOString().split('T')[0];
-    const yesDate = new Date(kstDate.getTime() - (24 * 60 * 60 * 1000));
-    const yesterdayStr = yesDate.toISOString().split('T')[0];
-    const dayOfWeek = kstDate.getDay(); 
-    const diffToMon = kstDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const monday = new Date(kstDate.setDate(diffToMon));
+    const todayStr = getKstDateString();
+    const todayNoon = new Date(todayStr + 'T12:00:00Z');
+    const yesNoon = new Date(todayNoon.getTime() - 24 * 60 * 60 * 1000);
+    const yesterdayStr = yesNoon.toISOString().split('T')[0];
+    const dayOfWeek = todayNoon.getUTCDay();
+    const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const mondayNoon = new Date(todayNoon.getTime() + diffToMon * 24 * 60 * 60 * 1000);
     let weekStrs = [];
-    let tempDate = new Date(monday);
-    for(let i=0; i<7; i++) {
-        weekStrs.push(new Date(tempDate).toISOString().split('T')[0]);
-        tempDate.setDate(tempDate.getDate() + 1);
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(mondayNoon.getTime() + i * 24 * 60 * 60 * 1000);
+        weekStrs.push(d.toISOString().split('T')[0]);
     }
     return { todayStr, yesterdayStr, weekStrs };
 }

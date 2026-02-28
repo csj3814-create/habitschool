@@ -290,8 +290,7 @@ window.previewDynamicVid = function(input) {
     
     // 동영상 파일의 수정 날짜 확인 (촬영 당일만 허용)
     const fileDate = new Date(file.lastModified);
-    const kstFileDate = new Date(fileDate.getTime() + (fileDate.getTimezoneOffset() * 60000) + (9 * 60 * 60 * 1000));
-    const fileDateStr = kstFileDate.toISOString().split('T')[0];
+    const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
     const selectedDateStr = document.getElementById('selected-date').value;
     
     if(fileDateStr !== selectedDateStr) {
