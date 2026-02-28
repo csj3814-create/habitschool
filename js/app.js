@@ -2238,9 +2238,9 @@ function buildShareImageGrid(urls, maxCount = 4) {
         const safeUrl = toSafeAttr(mediaUrl);
 
         if (isVideo) {
-            htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><video src="${safeUrl}#t=0.5" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:8px;"></video></div>`;
+            htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><video src="${safeUrl}#t=0.5" muted playsinline preload="metadata" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:8px;"></video></div>`;
         } else {
-            htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async"></div>`;
+            htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;"></div>`;
         }
     }
     return htmlString;
@@ -2319,15 +2319,37 @@ async function prepareShareThumbsForCapture() {
             const renderedThumbUrl = renderedThumbImg?.src || mediaSrc;
             b64 = await fetchImageAsBase64(renderedThumbUrl);
             if (!b64) b64 = createVideoPlaceholderBase64();
-            thumb.innerHTML = `<img src="${b64}" alt="해빛 인증 영상 썸네일 ${index + 1}">`;
         } else {
             b64 = await fetchImageAsBase64(mediaSrc);
             if (!b64) b64 = mediaSrc;
-            thumb.innerHTML = `<img src="${b64}" alt="해빛 인증 사진 ${index + 1}">`;
         }
+
+        // 1:1 정사각형 크롭 (화면 비율 증상 방지)
+        const croppedB64 = await cropToSquareBase64(b64);
+        thumb.innerHTML = `<img src="${croppedB64}" alt="해빛 인증 ${index + 1}" style="width:100%;height:100%;object-fit:cover;">`;
     });
 
     await Promise.all(jobs);
+}
+
+// 이미지를 1:1 정사각형으로 크롭하여 base64 반환
+function cropToSquareBase64(src) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const size = Math.min(img.width, img.height);
+            const sx = (img.width - size) / 2;
+            const sy = (img.height - size) / 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = size; canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
+            resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(src); // 실패 시 원본 반환
+        img.src = src;
+    });
 }
 
 function openSharePlatformModal() {
@@ -2840,7 +2862,7 @@ function collectGalleryMedia(data) {
                 const safeJsUrl = String(url).replace(/'/g, "\\'");
                 const safeAttr = String(url).replace(/"/g, '&quot;');
                 // 비디오 태그의 #t=0.5로 첫 프레임 표시 (CORS 불필요)
-                result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="openVideoLightbox('${safeJsUrl}')"><video src="${safeAttr}#t=0.5" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video><div class="video-play-btn">&#9654;</div></div>`;
+                result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="openVideoLightbox('${safeJsUrl}')"><video src="${safeAttr}#t=0.5" muted playsinline preload="metadata" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video><div class="video-play-btn">&#9654;</div></div>`;
                 addedUrls.add(url);
             }
         };
