@@ -218,8 +218,9 @@ export const FIREBASE_STRUCTURE = {
         // 변환 기록
         conversions: 'array', // [{ date, pointsUsed, hbtReceived, txHash, status }]
         
-        // 진행 중인 챌린지
-        activeChallenge: 'object || null', // { challengeId, startDate, completedDays, hbtStaked, status }
+        // 진행 중인 챌린지 (티어별 동시 진행 가능)
+        activeChallenges: 'object', // { mini: {...}, weekly: {...}, master: {...} }
+        activeChallenge: 'object || null', // legacy (deprecated, 마이그레이션 완료 후 삭제)
         
         // 완료된 챌린지 기록
         completedChallenges: 'array' // [{ challengeId, completedDate, rewardHbt, rewardPoints }]

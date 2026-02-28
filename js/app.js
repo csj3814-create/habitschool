@@ -588,7 +588,11 @@ window.loadDataForSelectedDate = async function(dateStr) {
                     document.getElementById(`txt-${k}`).style.display = 'none';
                 }
             });
-            if(awarded.diet) { document.getElementById('quest-diet').className = 'quest-check done'; document.getElementById('quest-diet').innerText = '완료'; }
+            if(awarded.diet) { 
+                const dp = awarded.dietPoints || 10;
+                document.getElementById('quest-diet').className = 'quest-check done'; 
+                document.getElementById('quest-diet').innerText = `+${dp}P`; 
+            }
         }
         if(data.exercise) {
             // 유산소: cardioList가 최우선 (legacy 필드 무시)
@@ -608,7 +612,11 @@ window.loadDataForSelectedDate = async function(dateStr) {
             } else {
                 addStrengthBlock();
             }
-            if(awarded.exercise) { document.getElementById('quest-exercise').className = 'quest-check done'; document.getElementById('quest-exercise').innerText = '완료'; }
+            if(awarded.exercise) { 
+                const ep = awarded.exercisePoints || 15;
+                document.getElementById('quest-exercise').className = 'quest-check done'; 
+                document.getElementById('quest-exercise').innerText = `+${ep}P`; 
+            }
         } else { addCardioBlock(); addStrengthBlock(); }
 
         if(data.sleepAndMind) {
@@ -620,7 +628,11 @@ window.loadDataForSelectedDate = async function(dateStr) {
             }
             if(data.sleepAndMind.meditationDone) document.getElementById('meditation-check').checked = true;
             document.getElementById('gratitude-journal').value = data.sleepAndMind.gratitude || '';
-            if(awarded.mind) { document.getElementById('quest-mind').className = 'quest-check done'; document.getElementById('quest-mind').innerText = '완료'; }
+            if(awarded.mind) { 
+                const mp = awarded.mindPoints || 5;
+                document.getElementById('quest-mind').className = 'quest-check done'; 
+                document.getElementById('quest-mind').innerText = `+${mp}P`; 
+            }
         }
     } else {
         addCardioBlock(); addStrengthBlock();
@@ -707,45 +719,85 @@ window.updateAssetDisplay = async function() {
                 pointBadge.textContent = (userData.coins || 0);
             }
 
-            // ========== 활성 챌린지 UI ==========
+            // ========== 활성 챌린지 UI (동시 진행 지원) ==========
             const challengeContainer = document.getElementById('active-challenge-container');
             const challengeInfo = document.getElementById('active-challenge-info');
             const challengeSelection = document.getElementById('challenge-selection');
             
+            // activeChallenges 수집 (legacy 마이그레이션 포함)
+            let activeChallenges = userData.activeChallenges || {};
             if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
-                const ch = userData.activeChallenge;
-                const progressPct = Math.round((ch.completedDays / (ch.totalDays || 30)) * 100);
-                const remain = (ch.totalDays || 30) - ch.completedDays;
-                const challengeEmojis = {
-                    'challenge-diet-3d': '🥗 3일 식단',
-                    'challenge-exercise-3d': '🏃 3일 운동',
-                    'challenge-mind-3d': '🧘 3일 마음',
-                    'challenge-diet-7d': '🥗 7일 식단',
-                    'challenge-exercise-7d': '🏃 7일 운동',
-                    'challenge-mind-7d': '🧘 7일 마음',
-                    'challenge-diet-30d': '🥗 30일 식단',
-                    'challenge-exercise-30d': '🏃 30일 운동',
-                    'challenge-mind-30d': '🧘 30일 마음'
-                };
-                const challengeName = challengeEmojis[ch.challengeId] || '챌린지';
-                const totalDays = parseInt(ch.totalDays) || 30;
-                const stakeDisplay = ch.hbtStaked > 0 
-                    ? `<div>💰 예치: ${escapeHtml(String(ch.hbtStaked))} HBT</div>` 
-                    : `<div>🎯 무료 참가</div>`;
-                
-                if (challengeContainer) {
-                    challengeContainer.style.display = 'block';
-                    challengeInfo.innerHTML = `
-                        <div style="margin-bottom:8px;"><strong>${escapeHtml(challengeName)} 챌린지</strong></div>
-                        <div>📅 ${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
-                        ${stakeDisplay}
-                        <div>✅ 진행: ${parseInt(ch.completedDays) || 0}/${totalDays}일 (${parseInt(remain) || 0}일 남음)</div>
-                        <div style="background:#fff; border-radius:4px; height:20px; margin-top:8px; overflow:hidden;">
-                            <div style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height:100%; width:${progressPct}%; transition:width 0.5s; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:white; font-weight:bold;">${progressPct}%</div>
-                        </div>
+                const legacyId = userData.activeChallenge.challengeId;
+                const legacyTier = {
+                    'challenge-diet-3d': 'mini', 'challenge-exercise-3d': 'mini', 'challenge-mind-3d': 'mini',
+                    'challenge-diet-7d': 'weekly', 'challenge-exercise-7d': 'weekly', 'challenge-mind-7d': 'weekly',
+                    'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master'
+                }[legacyId] || 'master';
+                if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
+            }
+
+            const activeTiers = Object.keys(activeChallenges).filter(t => activeChallenges[t]?.status === 'ongoing');
+            const challengeEmojis = {
+                'challenge-diet-3d': '🥗 3일 식단', 'challenge-exercise-3d': '🏃 3일 운동', 'challenge-mind-3d': '🧘 3일 마음',
+                'challenge-diet-7d': '🥗 7일 식단', 'challenge-exercise-7d': '🏃 7일 운동', 'challenge-mind-7d': '🧘 7일 마음',
+                'challenge-diet-30d': '🥗 30일 식단', 'challenge-exercise-30d': '🏃 30일 운동', 'challenge-mind-30d': '🧘 30일 마음'
+            };
+
+            if (activeTiers.length > 0) {
+                let challengeHtml = '';
+                for (const tier of activeTiers) {
+                    const ch = activeChallenges[tier];
+                    const progressPct = Math.round((ch.completedDays / (ch.totalDays || 30)) * 100);
+                    const remain = (ch.totalDays || 30) - ch.completedDays;
+                    const challengeName = challengeEmojis[ch.challengeId] || '챌린지';
+                    const totalDays = parseInt(ch.totalDays) || 30;
+                    const tierLabel = { mini: '⚡미니', weekly: '🔥위클리', master: '🏆마스터' }[tier] || '';
+                    const stakeDisplay = ch.hbtStaked > 0 
+                        ? `<span style="font-size:11px;">💰 ${escapeHtml(String(ch.hbtStaked))} HBT</span>` 
+                        : `<span style="font-size:11px;">🎯 무료</span>`;
+
+                    challengeHtml += `
+                        <details style="margin-bottom:8px;" ${activeTiers.length <= 2 ? 'open' : ''}>
+                            <summary style="cursor:pointer; font-weight:bold; font-size:13px; padding:4px 0;">
+                                ${tierLabel} ${escapeHtml(challengeName)} — ${parseInt(ch.completedDays) || 0}/${totalDays}일 ${stakeDisplay}
+                            </summary>
+                            <div style="padding:4px 0 4px 10px; font-size:12px; color:#333; line-height:1.6;">
+                                <div>📅 ${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
+                                <div>✅ ${parseInt(ch.completedDays) || 0}/${totalDays}일 완료 (${parseInt(remain) || 0}일 남음)</div>
+                                <div style="background:#fff; border-radius:4px; height:16px; margin-top:4px; overflow:hidden;">
+                                    <div style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height:100%; width:${progressPct}%; transition:width 0.5s; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:bold;">${progressPct}%</div>
+                                </div>
+                            </div>
+                        </details>
                     `;
                 }
-                if (challengeSelection) challengeSelection.style.display = 'none';
+                if (challengeContainer) {
+                    challengeContainer.style.display = 'block';
+                    challengeInfo.innerHTML = challengeHtml;
+                }
+                // 같은 티어는 숨기고, 비어있는 티어는 선택 가능하게
+                if (challengeSelection) {
+                    challengeSelection.style.display = 'block';
+                    // 진행 중인 티어의 버튼 비활성화
+                    const allTierBtns = { 
+                        mini: challengeSelection.querySelectorAll('[onclick*="-3d"]'),
+                        weekly: challengeSelection.querySelectorAll('[onclick*="-7d"]'),
+                        master: challengeSelection.querySelectorAll('[onclick*="-30d"]')
+                    };
+                    for (const [t, btns] of Object.entries(allTierBtns)) {
+                        btns.forEach(btn => {
+                            if (activeTiers.includes(t)) {
+                                btn.disabled = true;
+                                btn.style.opacity = '0.4';
+                                btn.style.pointerEvents = 'none';
+                            } else {
+                                btn.disabled = false;
+                                btn.style.opacity = '1';
+                                btn.style.pointerEvents = 'auto';
+                            }
+                        });
+                    }
+                }
             } else {
                 if (challengeContainer) challengeContainer.style.display = 'none';
                 if (challengeSelection) challengeSelection.style.display = 'block';
@@ -899,6 +951,10 @@ window.openTab = function(tabName, pushState = true) {
             clearInputs();
             // 현재 선택된 날짜의 데이터 다시 로드
             loadDataForSelectedDate(document.getElementById('selected-date').value);
+        }
+        // 식단 탭에서 공복 지표 그래프 로드
+        if (tabName === 'diet' && user) {
+            loadFastingGraphData(user.uid);
         }
     }
     
@@ -1080,7 +1136,7 @@ async function renderDashboard() {
                 progContainer.innerHTML += `<div class="mp-row"><div class="mp-label"><span>${m.text}</span><span>${currentVal} / ${m.target}</span></div><div class="mp-track"><div class="mp-fill" style="width: ${percent}%;"></div></div></div>`;
             }
         });
-        if(allDone && level < 5) progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0;" onclick="levelUp(${level+1})">🎉 미션 올클리어! Lv ${level+1}(으)로 승급하기</button>`;
+        if(allDone && level < 5) progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level+1})">🎉 Lv ${level+1} 승급하기</button>`;
     } else {
         progContainer.style.display = 'none';
     }
@@ -1121,6 +1177,148 @@ window.levelUp = async function(newLevel) {
 };
 
 // compressImage, uploadFileAndGetUrl 등은 상단에서 직접 import
+
+// ========== 공복 지표 추이 그래프 ==========
+let fastingGraphData = [];
+let currentFastingMetric = 'weight';
+
+window.switchFastingGraph = function(metric, btnEl) {
+    currentFastingMetric = metric;
+    document.querySelectorAll('#fasting-graph-card .filter-chip').forEach(el => el.classList.remove('active'));
+    if(btnEl) btnEl.classList.add('active');
+    drawFastingChart();
+};
+
+async function loadFastingGraphData(userId) {
+    try {
+        const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(30));
+        const snapshot = await getDocs(q);
+        fastingGraphData = [];
+        snapshot.forEach(d => {
+            const data = d.data();
+            if(data.metrics && (data.metrics.weight || data.metrics.glucose || data.metrics.bpSystolic)) {
+                fastingGraphData.push({
+                    date: data.date,
+                    weight: parseFloat(data.metrics.weight) || null,
+                    glucose: parseFloat(data.metrics.glucose) || null,
+                    bpSystolic: parseFloat(data.metrics.bpSystolic) || null,
+                    bpDiastolic: parseFloat(data.metrics.bpDiastolic) || null
+                });
+            }
+        });
+        fastingGraphData.reverse(); // oldest first
+        
+        const card = document.getElementById('fasting-graph-card');
+        if(fastingGraphData.length >= 2 && card) {
+            card.style.display = 'block';
+            drawFastingChart();
+        } else if(card) {
+            card.style.display = 'none';
+        }
+    } catch(e) {
+        console.warn('⚠️ 공복 지표 로드 스킵:', e.message);
+    }
+}
+
+function drawFastingChart() {
+    const canvas = document.getElementById('fasting-chart');
+    if(!canvas || fastingGraphData.length < 2) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 340;
+    const h = 180;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 20, right: 15, bottom: 30, left: 40 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 데이터 준비
+    let lines = [];
+    let legend = '';
+    if(currentFastingMetric === 'weight') {
+        const pts = fastingGraphData.filter(d => d.weight !== null);
+        if(pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.weight })), color: '#FF6F00', label: '체중(kg)' });
+        legend = pts.length >= 2 ? `최근: ${pts[pts.length-1].weight}kg` : '데이터 부족';
+    } else if(currentFastingMetric === 'glucose') {
+        const pts = fastingGraphData.filter(d => d.glucose !== null);
+        if(pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.glucose })), color: '#E53935', label: '혈당(mg/dL)' });
+        legend = pts.length >= 2 ? `최근: ${pts[pts.length-1].glucose}mg/dL` : '데이터 부족';
+    } else if(currentFastingMetric === 'bp') {
+        const spts = fastingGraphData.filter(d => d.bpSystolic !== null);
+        const dpts = fastingGraphData.filter(d => d.bpDiastolic !== null);
+        if(spts.length >= 2) lines.push({ data: spts.map(d => ({ x: d.date, y: d.bpSystolic })), color: '#D32F2F', label: '수축기' });
+        if(dpts.length >= 2) lines.push({ data: dpts.map(d => ({ x: d.date, y: d.bpDiastolic })), color: '#1976D2', label: '이완기' });
+        legend = spts.length >= 2 ? `최근: ${spts[spts.length-1].bpSystolic}/${dpts.length > 0 ? dpts[dpts.length-1].bpDiastolic : '?'}mmHg` : '데이터 부족';
+    }
+
+    document.getElementById('fasting-chart-legend').textContent = legend;
+
+    if(lines.length === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('기록이 2개 이상 필요합니다', w/2, h/2);
+        return;
+    }
+
+    // Y 범위 계산
+    let allY = [];
+    lines.forEach(l => l.data.forEach(p => allY.push(p.y)));
+    let minY = Math.min(...allY);
+    let maxY = Math.max(...allY);
+    const yRange = maxY - minY || 1;
+    minY -= yRange * 0.1;
+    maxY += yRange * 0.1;
+
+    // 배경 그리드
+    ctx.strokeStyle = '#E0E0E0';
+    ctx.lineWidth = 0.5;
+    for(let i = 0; i <= 4; i++) {
+        const y = pad.top + (chartH / 4) * i;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+        const val = maxY - ((maxY - minY) / 4) * i;
+        ctx.fillText(val.toFixed(1), pad.left - 4, y + 3);
+    }
+
+    // 라인 그리기
+    lines.forEach(line => {
+        const pts = line.data;
+        ctx.strokeStyle = line.color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+            const x = pad.left + (i / (pts.length - 1)) * chartW;
+            const y = pad.top + ((maxY - p.y) / (maxY - minY)) * chartH;
+            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // 점 그리기
+        pts.forEach((p, i) => {
+            const x = pad.left + (i / (pts.length - 1)) * chartW;
+            const y = pad.top + ((maxY - p.y) / (maxY - minY)) * chartH;
+            ctx.fillStyle = line.color;
+            ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+        });
+    });
+
+    // X축 날짜 라벨 (처음, 중간, 마지막)
+    const totalPts = lines[0].data.length;
+    const labelIndices = totalPts <= 5 ? [...Array(totalPts).keys()] : [0, Math.floor(totalPts/2), totalPts-1];
+    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+    labelIndices.forEach(i => {
+        const x = pad.left + (i / (totalPts - 1)) * chartW;
+        const dateStr = lines[0].data[i].x.substring(5).replace('-', '/');
+        ctx.fillText(dateStr, x, h - 8);
+    });
+}
 
 async function uploadFileAndGetUrl(file, folderName, userId) {
     if (!file) return null;
@@ -1199,22 +1397,29 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const dUrl = await getUrl('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl);
             const sUrl = await getUrl('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl);
             
-            const bThumbUrl = bUrl ? await resolveThumbUrl(bUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
-                console.warn('썸네일 생성 실패:', e);
-                return null;
-            }) : null;
-            const lThumbUrl = lUrl ? await resolveThumbUrl(lUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
-                console.warn('썸네일 생성 실패:', e);
-                return null;
-            }) : null;
-            const dThumbUrl = dUrl ? await resolveThumbUrl(dUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
-                console.warn('썸네일 생성 실패:', e);
-                return null;
-            }) : null;
-            const sThumbUrl = sUrl ? await resolveThumbUrl(sUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
-                console.warn('썸네일 생성 실패:', e);
-                return null;
-            }) : null;
+            // 식단 썸네일: 새로 업로드된 파일만 썸네일 생성
+            const dietInputs = ['diet-img-breakfast', 'diet-img-lunch', 'diet-img-dinner', 'diet-img-snack'];
+            const dietUrls = [bUrl, lUrl, dUrl, sUrl];
+            const oldThumbUrls = [
+                oldData?.diet?.breakfastThumbUrl, oldData?.diet?.lunchThumbUrl,
+                oldData?.diet?.dinnerThumbUrl, oldData?.diet?.snackThumbUrl
+            ];
+            const thumbResults = await Promise.all(dietInputs.map(async (inputId, idx) => {
+                const el = document.getElementById(inputId);
+                if (el && el.files[0] && dietUrls[idx]) {
+                    try {
+                        const thumbBlob = await generateThumbnailBlob(el.files[0]);
+                        if (thumbBlob) {
+                            const thumbPath = `diet_images_thumbnails/${user.uid}/${Date.now()}_thumb_${idx}.jpg`;
+                            const thumbRef = ref(storage, thumbPath);
+                            await uploadBytes(thumbRef, thumbBlob);
+                            return await getDownloadURL(thumbRef);
+                        }
+                    } catch (e) { console.warn('식단 썸네일 생성 실패:', e.message); }
+                }
+                return oldThumbUrls[idx] || null;
+            }));
+            const [bThumbUrl, lThumbUrl, dThumbUrl, sThumbUrl] = thumbResults;
 
             let cardioList = [];
             const cardioBlocks = document.querySelectorAll('.cardio-block');
@@ -1223,18 +1428,27 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const time = block.querySelector('.c-time').value;
                 const dist = block.querySelector('.c-dist').value;
                 let url = block.getAttribute('data-url') || null;
+                let thumbUrl = null;
                 if(fileInput.files[0]) {
                     try {
                         url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
+                        // 운동 사진 썸네일 생성
+                        if (url) {
+                            try {
+                                const tb = await generateThumbnailBlob(fileInput.files[0]);
+                                if (tb) {
+                                    const tp = `exercise_images_thumbnails/${user.uid}/${Date.now()}_thumb.jpg`;
+                                    const tr = ref(storage, tp);
+                                    await uploadBytes(tr, tb);
+                                    thumbUrl = await getDownloadURL(tr);
+                                }
+                            } catch (e) { console.warn('운동 썸네일 생성 실패:', e.message); }
+                        }
                     } catch (err) {
                         console.error('⚠️ 유산소 사진 업로드 실패:', err);
                         url = null;
                     }
                 }
-                const thumbUrl = url ? await resolveThumbUrl(url, 'exercise_images', 'exercise_images_thumbnails').catch(e => {
-                    console.warn('운동 썸네일 생성 실패:', e);
-                    return null;
-                }) : null;
                 if(url || time || dist) cardioList.push({ imageUrl: url, imageThumbUrl: thumbUrl, time, dist });
             }
 
@@ -1271,16 +1485,44 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const hasDiet = !!(bUrl || lUrl || dUrl || sUrl);
             const hasExer = cardioList.length > 0 || strengthList.length > 0;
             const meditationDone = document.getElementById('meditation-check').checked;
-            const hasMind = !!(sleepUrl || meditationDone || document.getElementById('gratitude-journal').value);
-
-            let awarded = oldData.awardedPoints || { diet: false, exercise: false, mind: false };
-            let pointsToGive = 0;
-            if(hasDiet && !awarded.diet) { pointsToGive += 10; awarded.diet = true; }
-            if(hasExer && !awarded.exercise) { pointsToGive += 15; awarded.exercise = true; }
-            if(hasMind && !awarded.mind) { pointsToGive += 5; awarded.mind = true; }
-
             // 감사일기 텍스트 정제 (XSS 방지)
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
+            const hasMind = !!(sleepUrl || meditationDone || gratitudeText);
+
+            // === 신규 포인트 시스템 (최대 80P/일) ===
+            let awarded = oldData.awardedPoints || {};
+            const oldDietPts = awarded.dietPoints || 0;
+            const oldExerPts = awarded.exercisePoints || 0;
+            const oldMindPts = awarded.mindPoints || 0;
+
+            // 식단: 사진당 10P, 최대 30P (3장까지 인정)
+            const dietPhotoCount = [bUrl, lUrl, dUrl, sUrl].filter(u => !!u).length;
+            const newDietPts = Math.min(dietPhotoCount * 10, 30);
+
+            // 운동: 유산소 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
+            let newExerPts = 0;
+            if(cardioList.length >= 1) newExerPts += 10;
+            if(cardioList.length >= 2) newExerPts += 5;
+            if(strengthList.length >= 1) newExerPts += 10;
+            if(strengthList.length >= 2) newExerPts += 5;
+            newExerPts = Math.min(newExerPts, 30);
+
+            // 마음: 수면분석 10P + 마음챙김/감사일기 10P (최대 20P)
+            let newMindPts = 0;
+            if(sleepUrl) newMindPts += 10;
+            if(meditationDone || gratitudeText) newMindPts += 10;
+            newMindPts = Math.min(newMindPts, 20);
+
+            const pointsToGive = Math.max(0, newDietPts - oldDietPts) +
+                               Math.max(0, newExerPts - oldExerPts) +
+                               Math.max(0, newMindPts - oldMindPts);
+
+            awarded.dietPoints = newDietPts;
+            awarded.exercisePoints = newExerPts;
+            awarded.mindPoints = newMindPts;
+            awarded.diet = newDietPts > 0;
+            awarded.exercise = newExerPts > 0;
+            awarded.mind = newMindPts > 0;
 
             const saveData = sanitize({
                 userId: user.uid, userName: user.displayName, date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
@@ -1460,8 +1702,66 @@ function buildThumbPathCandidates(originalUrl, sourceFolder, thumbFolder) {
 }
 
 async function resolveThumbUrl(originalUrl, sourceFolder, thumbFolder) {
-    // 서버 측 썸네일 생성이 없으므로 원본 URL을 그대로 반환
+    // 클라이언트 사이드 썸네일: 저장 시 _thumb 파일도 함께 업로드
+    // 이미 썸네일이 있으면 그 URL을 반환, 없으면 원본 반환
     return originalUrl || null;
+}
+
+// 이미지 URL로부터 저용량 썸네일 생성 (300px 폭, JPEG 60%)
+async function generateThumbnailBlob(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const maxW = 300;
+                const scale = Math.min(1, maxW / img.width);
+                const w = Math.round(img.width * scale);
+                const h = Math.round(img.height * scale);
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
+            };
+            img.onerror = () => resolve(null);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
+}
+
+// 이미지 파일 업로드 + 썸네일도 함께 업로드
+async function uploadImageWithThumb(file, folderName, userId) {
+    if (!file) return { url: null, thumbUrl: null };
+    
+    try {
+        // 원본 업로드
+        const url = await uploadFileAndGetUrl(file, folderName, userId);
+        if (!url) return { url: null, thumbUrl: null };
+        
+        // 썸네일 생성 & 업로드
+        let thumbUrl = null;
+        try {
+            const thumbBlob = await generateThumbnailBlob(file);
+            if (thumbBlob) {
+                const timestamp = Date.now();
+                const thumbPath = `${folderName}_thumbnails/${userId}/${timestamp}_thumb.jpg`;
+                const thumbRef = ref(storage, thumbPath);
+                await uploadBytes(thumbRef, thumbBlob);
+                thumbUrl = await getDownloadURL(thumbRef);
+            }
+        } catch (e) {
+            console.warn('썸네일 생성/업로드 실패 (원본은 성공):', e.message);
+        }
+        
+        return { url, thumbUrl };
+    } catch (e) {
+        console.error('이미지 업로드 실패:', e);
+        return { url: null, thumbUrl: null };
+    }
 }
 
 window.handleThumbFallback = function(imgEl) {
@@ -1933,8 +2233,8 @@ async function loadGalleryData() {
             const latest = myRecentLogs[0]; 
             document.getElementById('share-name').innerText = user.displayName;
             document.getElementById('share-date').innerText = latest.date.replace(/-/g, '. ');
-            let points = 0;
-            if(latest.awardedPoints?.diet) points += 10; if(latest.awardedPoints?.exercise) points += 15; if(latest.awardedPoints?.mind) points += 5;
+            let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
+            if(points === 0 && latest.awardedPoints) { /* legacy fallback */ if(latest.awardedPoints.diet) points += 10; if(latest.awardedPoints.exercise) points += 15; if(latest.awardedPoints.mind) points += 5; }
             document.getElementById('share-point').innerText = points;
 
             // collectGalleryMedia 헬퍼 함수로 미디어 URL 수집
@@ -1994,25 +2294,28 @@ function collectGalleryMedia(data) {
         mindText: ''
     };
 
-    // 식단 미디어 (원본 URL을 직접 사용, 썸네일 폴더 불필요)
+    // 식단 미디어 (썸네일 우선, 클릭 시 원본)
     if(data.diet) {
-        ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => {
-            if(data.diet[k]) {
-                const mealType = k.replace('Url', '');
-                const originalUrl = data.diet[k];
+        ['breakfast','lunch','dinner','snack'].forEach(k => {
+            const originalUrl = data.diet[`${k}Url`];
+            if(originalUrl) {
+                const thumbUrl = data.diet[`${k}ThumbUrl`] || originalUrl;
                 const safeOriginal = String(originalUrl).replace(/'/g, "\\'");
-                result.dietHtml += `<img src="${safeOriginal}" onclick="openLightbox('${safeOriginal}')" alt="${mealType} 식사 사진" loading="lazy" decoding="async">`;
+                const safeThumb = String(thumbUrl).replace(/'/g, "\\'");
+                result.dietHtml += `<img src="${safeThumb}" onclick="openLightbox('${safeOriginal}')" alt="${k} 식사 사진" loading="lazy" decoding="async">`;
             }
         });
     }
 
-    // 운동 미디어 (중복 제거)
+    // 운동 미디어 (썸네일 우선, 클릭 시 원본)
     if(data.exercise) {
         let addedUrls = new Set();
         const addImg = (url, thumbUrl = null) => {
             if(url && !addedUrls.has(url)) {
+                const displayUrl = thumbUrl || url;
                 const safeOriginal = String(url).replace(/'/g, "\\'");
-                result.exerciseHtml += `<img src="${safeOriginal}" onclick="openLightbox('${safeOriginal}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
+                const safeDisplay = String(displayUrl).replace(/'/g, "\\'");
+                result.exerciseHtml += `<img src="${safeDisplay}" onclick="openLightbox('${safeOriginal}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
                 addedUrls.add(url);
             }
         };

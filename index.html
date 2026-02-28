@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=19">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -60,7 +60,7 @@
             <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
             <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
             <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊 내 기록</button>
-            <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭">🪙 자산</button>
+            <button class="tab-btn" onclick="openTab('assets')" aria-label="내 지갑 탭">💰 내 지갑</button>
             <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨ 갤러리</button>
         </nav>
 
@@ -176,7 +176,7 @@
             <div class="card">
                 <h3>🏆 건강 습관 챌린지</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    3일·7일·30일 챌린지에 도전하세요! 기간이 길수록 보상도 커집니다.
+                    3일·7일·30일 챌린지에 도전하세요! 각 티어별로 <strong>동시 진행</strong>이 가능합니다.
                 </p>
 
                 <div style="background: #E3F2FD; border: 1px solid #90CAF9; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #1565C0; line-height: 1.6;">
@@ -255,7 +255,7 @@
         </div>
 
         <div id="diet" class="content-section" role="region" aria-label="식단 기록">
-            <div class="quest-board"><div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(+10P)</strong></span><span class="quest-check" id="quest-diet">미달성</span></div></div>
+            <div class="quest-board"><div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span class="quest-check" id="quest-diet">미달성</span></div></div>
             <div class="card">
                 <h3>📸 식사 사진</h3>
                 <div class="smart-upload-box">
@@ -312,10 +312,21 @@
                     <input type="number" id="bp-diastolic" placeholder="이완기 혈압">
                 </div>
             </div>
+            <!-- 공복 지표 추이 그래프 -->
+            <div class="card" id="fasting-graph-card" style="display:none;">
+                <h3>📊 공복 지표 추이 (최근 30일)</h3>
+                <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+                    <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">⚖️ 체중</button>
+                    <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">🩸 혈당</button>
+                    <button class="filter-chip" onclick="switchFastingGraph('bp', this)">💓 혈압</button>
+                </div>
+                <canvas id="fasting-chart" width="340" height="180" style="width:100%; height:auto; border-radius:8px;"></canvas>
+                <div id="fasting-chart-legend" style="font-size:11px; color:#888; text-align:center; margin-top:6px;"></div>
+            </div>
         </div>
 
         <div id="exercise" class="content-section">
-            <div class="quest-board"><div class="quest-item"><span>🏃 운동 기록하기 <strong>(+15P)</strong></span><span class="quest-check" id="quest-exercise">미달성</span></div></div>
+            <div class="quest-board"><div class="quest-item"><span>🏃 운동 기록하기 <strong>(유산소 10+5P, 근력 10+5P)</strong></span><span class="quest-check" id="quest-exercise">미달성</span></div></div>
             <div class="card">
                 <h3>🏃 유산소 운동</h3>
                 <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
@@ -332,7 +343,7 @@
         </div>
 
         <div id="sleep" class="content-section">
-            <div class="quest-board"><div class="quest-item"><span>🧘 마음/수면 기록 <strong>(+5P)</strong></span><span class="quest-check" id="quest-mind">미달성</span></div></div>
+            <div class="quest-board"><div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span class="quest-check" id="quest-mind">미달성</span></div></div>
             <div class="card">
                 <h3>💤 수면 분석</h3>
                 <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
