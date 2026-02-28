@@ -1376,79 +1376,39 @@
     }
 
     async function uploadFileAndGetUrl(file, folderName, userId) {
-        if (!file) {
-            console.warn('⚠️ 파일이 없음');
-            return null;
-        }
+        if (!file) return null;
         
-        console.log('🔍 업로드 디버깅 정보:');
-        console.log('  폴더:', folderName);
-        console.log('  사용자 ID:', userId);
-        console.log('  파일명:', file.name);
-        console.log('  파일 타입:', file.type);
-        console.log('  원본 파일 크기:', (file.size / (1024 * 1024)).toFixed(2) + ' MB');
-        
-        // 파일 타입 검증 (압축 전)
         if (!isValidFileType(file)) {
-            const msg = '⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)';
-            console.warn(msg);
-            showToast(msg);
+            showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
             return null;
         }
         
         try {
-            // ⚠️ 임시: 압축 비활성화 (테스트용) - 원본 파일로 업로드
-            console.log('📦 파일 타입 확인:', file.type.startsWith('image/') ? '이미지 (압축 DISABLED)' : '비디오 (그대로)');
+            let fileToUpload = file;
+            if (file.type.startsWith('image/')) {
+                fileToUpload = await compressImage(file);
+            }
             
-            let fileToUpload = file;  // 압축 안 함
-            // if (file.type.startsWith('image/')) {
-            //     console.log('🔨 이미지 압축 시작...');
-            //     fileToUpload = await compressImage(file);
-            //     console.log('✅ 압축 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
-            // }
-            
-            // 파일 크기 검증 (50MB까지 허용)
             const MAX_SIZE_MB = 50;
             const fileSizeMB = fileToUpload.size / (1024 * 1024);
             if (fileSizeMB > MAX_SIZE_MB) {
-                const msg = `⚠️ 파일이 너무 큽니다. (최대 ${MAX_SIZE_MB}MB, 현재 ${fileSizeMB.toFixed(2)}MB)`;
-                console.warn(msg);
-                showToast(msg);
+                showToast(`⚠️ 파일이 너무 큽니다. (최대 ${MAX_SIZE_MB}MB, 현재 ${fileSizeMB.toFixed(2)}MB)`);
                 return null;
             }
             
-            console.log('✅ 파일 크기 검증 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
-            
             const timestamp = Date.now();
             const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
-            console.log('📤 업로드 경로:', storagePath);
-            
             const storageRef = ref(storage, storagePath);
-            console.log('📤 uploadBytes 시작...');
             
-            const uploadResult = await uploadBytes(storageRef, fileToUpload);
-            console.log('✅ uploadBytes 결과:', uploadResult);
-            
-            console.log('📥 getDownloadURL 호출...');
+            await uploadBytes(storageRef, fileToUpload);
             const url = await getDownloadURL(storageRef);
-            console.log('✅ 다운로드 URL:', url);
-            
-            console.log('✅ 업로드 COMPLETE - 최종 URL:', url);
             return url;
         } catch(error) {
-            console.error('❌ 파일 업로드 실패');
-            console.error('  에러 코드:', error.code);
-            console.error('  에러 메시지:', error.message);
-            console.error('  전체 에러:', error);
-            
+            console.error('파일 업로드 실패:', error.code, error.message);
             if (error.code === 'storage/unauthorized') {
-                const msg = '⚠️ 업로드 권한이 없습니다. Storage 규칙 확인 필요!';
-                console.error(msg);
-                showToast(msg);
+                showToast('⚠️ 업로드 권한이 없습니다.');
             } else if (error.code === 'storage/quota-exceeded') {
                 showToast('⚠️ 저장 공간이 부족합니다.');
-            } else if (error.code === 'storage/canceled') {
-                showToast('⚠️ 업로드가 취소되었습니다.');
             } else {
                 showToast(`⚠️ 업로드 실패: ${error.message}`);
             }
@@ -1458,57 +1418,32 @@
 
     document.getElementById('saveDataBtn').addEventListener('click', () => {
         const user = auth.currentUser;
-        console.log('💾 저장 버튼 클릭됨!');
-        console.log('🔐 현재 사용자:', user?.uid, user?.displayName);
-        
-        if (!user) {
-            console.warn('⚠️ 로그인되지 않음');
-            return;
-        }
+        if (!user) return;
         
         const saveBtn = document.getElementById('saveDataBtn');
         saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
         showToast("백그라운드에서 저장 중입니다! 🚀");
-        console.log('✅ 저장 UI 업데이트 완료');
 
         (async () => {
             try {
                 const selectedDateStr = document.getElementById('selected-date').value;
-                console.log('📅 선택된 날짜:', selectedDateStr);
-                
                 const docId = `${user.uid}_${selectedDateStr}`;
-                console.log('📄 저장할 문서 ID:', docId);
-                
                 const existingDoc = await getDoc(doc(db, "daily_logs", docId));
-                console.log('📖 기존 문서 확인:', existingDoc.exists());
                 let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
-
-                console.log('🔍 저장 시작 - 기존 데이터:', oldData);
 
                 const getUrl = async (id, folder, oldUrl) => {
                     const el = document.getElementById(id);
-                    console.log(`📝 ${id} 검사:`, {
-                        element: !!el,
-                        hasFile: el?.files[0] ? true : false,
-                        fileName: el?.files[0]?.name,
-                        previewDisplay: el?.parentElement?.querySelector('.preview-img')?.style.display,
-                        oldUrl: oldUrl
-                    });
-                    
                     if(el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
-                        console.log(`📤 ${id} 업로드 시작합니다`);
                         try {
                             return await uploadFileAndGetUrl(el.files[0], folder, user.uid);
                         } catch (err) {
-                            console.error(`⚠️ ${id} 사진 업로드 실패 (계속 진행):`, err);
+                            console.error(`${id} 업로드 실패:`, err);
                             return null;
                         }
                     }
                     if(el && el.parentElement.querySelector('.preview-img').style.display === 'none') {
-                        console.log(`⏭️ ${id} 미리보기가 숨겨져 있음 - null 반환`);
                         return null;
                     }
-                    console.log(`♻️ ${id} 기존 URL 사용:`, oldUrl);
                     return oldUrl || null;
                 };
 
@@ -1516,8 +1451,6 @@
                 const lUrl = await getUrl('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl);
                 const dUrl = await getUrl('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl);
                 const sUrl = await getUrl('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl);
-                
-                console.log('🖼️ 식단 사진 업로드 결과:', { bUrl, lUrl, dUrl, sUrl });
                 
                 const bThumbUrl = bUrl ? await resolveThumbUrl(bUrl, 'diet_images', 'diet_images_thumbnails').catch(e => {
                     console.warn('썸네일 생성 실패:', e);
@@ -1796,35 +1729,8 @@
     }
 
     async function resolveThumbUrl(originalUrl, sourceFolder, thumbFolder) {
-        const cacheKey = `${sourceFolder}|${thumbFolder}|${originalUrl}`;
-        if (thumbUrlCache.has(cacheKey)) return thumbUrlCache.get(cacheKey);
-
-        const candidatePaths = buildThumbPathCandidates(originalUrl, sourceFolder, thumbFolder);
-        if (!candidatePaths.length) {
-            thumbUrlCache.set(cacheKey, originalUrl);
-            return originalUrl;
-        }
-
-        for (let i = 0; i < candidatePaths.length; i += 3) {
-            const batch = candidatePaths.slice(i, i + 3);
-            const results = await Promise.all(batch.map(async (path) => {
-                try {
-                    const thumbRef = ref(storage, path);
-                    const thumbUrl = await getDownloadURL(thumbRef);
-                    return thumbUrl;
-                } catch (_) {
-                    return '';
-                }
-            }));
-            const hit = results.find(Boolean);
-            if (hit) {
-                thumbUrlCache.set(cacheKey, hit);
-                return hit;
-            }
-        }
-
-        thumbUrlCache.set(cacheKey, originalUrl);
-        return originalUrl;
+        // 서버 측 썸네일 생성이 없으므로 원본 URL을 그대로 반환
+        return originalUrl || null;
     }
 
     window.handleThumbFallback = function(imgEl) {
