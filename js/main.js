@@ -1,182 +1,23 @@
 /**
  * main.js
- * 애플리케이션 진입점 - 모든 모듈을 가져와서 전역으로 노출
+ * 애플리케이션 진입점 - 모듈 초기화 및 최소한의 전역 노출
+ * 대부분의 함수는 app.js에서 직접 import하여 사용
  */
 
-// Firebase 및 기본 설정
-import { app, auth, db, storage, BADGES, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } from './firebase-config.js';
+// 인증 모듈 (initializeApp에서 직접 호출)
+import { initAuth, setupAuthListener } from './auth.js';
 
-// 인증 모듈
-import { initAuth, setupAuthListener, hideFeedback } from './auth.js';
+// 블록체인 모듈 (HTML onclick에서 convertPointsToHBT 사용)
+import { convertPointsToHBT } from './blockchain-manager.js';
 
-// UI 헬퍼
-import { getDatesInfo, showToast, openLightbox, changeDateTo, getKstDateString } from './ui-helpers.js';
+// ========== 최소한의 전역 노출 (window 객체) ==========
+// app.js가 각 모듈에서 직접 import하므로, HTML onclick 또는 auth.js에서
+// window.* 경유로 접근하는 항목만 남김
 
-// 데이터 관리
-import { sanitize, compressImage, uploadFileAndGetUrl, fetchImageAsBase64 } from './data-manager.js';
+// HTML onclick에서 참조하는 함수 (app.js에서 설정하지 않는 것들만)
+window.convertPointsToHBT = convertPointsToHBT; // HTML onclick="convertPointsToHBT()"
 
-// 갤러리 모듈
-import { 
-    loadGalleryData, 
-    renderFeedOnly, 
-    collectGalleryMedia,
-    setupInfiniteScroll,
-    cleanupGalleryResources,
-    setGalleryFilter,
-    cachedGalleryLogs,
-    cachedMyFriends
-} from './gallery.js';
-
-// 보안 모듈
-import { 
-    escapeHtml, 
-    isValidStorageUrl, 
-    limitLength,
-    isValidFileType,
-    isValidFileSize,
-    sanitizeText,
-    isValidDate,
-    isValidNumber,
-    isValidUserId,
-    checkRateLimit,
-    safeJsonParse
-} from './security.js';
-
-// 블록체인 & M2E 모듈
-import { 
-    KLAYTN_CONFIG, 
-    HBT_TOKEN, 
-    STAKING_CONTRACT, 
-    CONVERSION_RULES
-} from './blockchain-config.js';
-
-import { 
-    initializeUserWallet,
-    convertPointsToHBT,
-    startChallenge30D,
-    updateChallengeProgress,
-    getWalletAddress,
-    disconnectWallet
-} from './blockchain-manager.js';
-
-// Firebase 모듈 가져오기
-import { 
-    signInWithPopup, 
-    GoogleAuthProvider, 
-    signInAnonymously, 
-    signOut 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-
-import { 
-    collection, 
-    doc, 
-    getDoc, 
-    getDocs, 
-    setDoc, 
-    query, 
-    where, 
-    orderBy, 
-    limit,
-    serverTimestamp,
-    onSnapshot,
-    arrayUnion,
-    arrayRemove
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-
-import { 
-    ref, 
-    uploadBytes, 
-    getDownloadURL 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-
-// 전역으로 노출할 항목들 (window 객체에 할당)
-window.app = app;
-window.auth = auth;
-window.db = db;
-window.storage = storage;
-window.BADGES = BADGES;
-window.MILESTONES = MILESTONES;
-window.MISSIONS = MISSIONS;
-window.MAX_IMG_SIZE = MAX_IMG_SIZE;
-window.MAX_VID_SIZE = MAX_VID_SIZE;
-window.getKstDateString = getKstDateString;
-
-// Firebase 함수들
-window.signInWithPopup = signInWithPopup;
-window.GoogleAuthProvider = GoogleAuthProvider;
-window.signInAnonymously = signInAnonymously;
-window.signOut = signOut;
-window.collection = collection;
-window.doc = doc;
-window.getDoc = getDoc;
-window.getDocs = getDocs;
-window.setDoc = setDoc;
-window.query = query;
-window.where = where;
-window.orderBy = orderBy;
-window.limit = limit;
-window.serverTimestamp = serverTimestamp;
-window.onSnapshot = onSnapshot;
-window.arrayUnion = arrayUnion;
-window.arrayRemove = arrayRemove;
-window.ref = ref;
-window.uploadBytes = uploadBytes;
-window.getDownloadURL = getDownloadURL;
-
-// 인증 함수들
-window.initAuth = initAuth;
-window.setupAuthListener = setupAuthListener;
-window.hideFeedback = hideFeedback;
-
-// UI 헬퍼 함수들
-window.getDatesInfo = getDatesInfo;
-window.showToast = showToast;
-window.openLightbox = openLightbox;
-window.changeDateTo = changeDateTo;
-
-// 데이터 관리 함수들
-window.sanitize = sanitize;
-window.compressImage = compressImage;
-window.uploadFileAndGetUrl = uploadFileAndGetUrl;
-window.fetchImageAsBase64 = fetchImageAsBase64;
-
-// 갤러리 함수들
-window.loadGalleryData = loadGalleryData;
-window.renderFeedOnly = renderFeedOnly;
-window.collectGalleryMedia = collectGalleryMedia;
-window.setupInfiniteScroll = setupInfiniteScroll;
-window.cleanupGalleryResources = cleanupGalleryResources;
-window.setGalleryFilter = setGalleryFilter;
-
-// 보안 함수들
-window.escapeHtml = escapeHtml;
-window.isValidStorageUrl = isValidStorageUrl;
-window.limitLength = limitLength;
-window.isValidFileType = isValidFileType;
-window.isValidFileSize = isValidFileSize;
-window.sanitizeText = sanitizeText;
-window.isValidDate = isValidDate;
-window.isValidNumber = isValidNumber;
-window.isValidUserId = isValidUserId;
-window.checkRateLimit = checkRateLimit;
-window.safeJsonParse = safeJsonParse;
-
-// 블록체인 설정 및 함수들
-window.KLAYTN_CONFIG = KLAYTN_CONFIG;
-window.HBT_TOKEN = HBT_TOKEN;
-window.STAKING_CONTRACT = STAKING_CONTRACT;
-window.CONVERSION_RULES = CONVERSION_RULES;
-
-window.initializeUserWallet = initializeUserWallet;
-window.convertPointsToHBT = convertPointsToHBT;
-window.startChallenge30D = startChallenge30D;
-window.updateChallengeProgress = updateChallengeProgress;
-window.getWalletAddress = getWalletAddress;
-window.disconnectWallet = disconnectWallet;
-
-// 전역 함수 할당 (index.html에서 사용)
-window.requestNotificationPermission = null; // index.html에서 재할당
-window.setupReactionListener = null; // index.html에서 재할당
+// cleanupGalleryResources는 app.js에서 window에 설정됨
 
 // 모듈 로드 완료 표시
 console.log('✅ 모든 모듈이 로드되었습니다.');
@@ -185,38 +26,26 @@ console.log('✅ 모든 모듈이 로드되었습니다.');
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
-    // 이미 로드된 경우 즉시 실행
     initializeApp();
 }
 
 function initializeApp() {
     console.log('🚀 애플리케이션 초기화 시작...');
     
-    // 인증 초기화
-    if (window.initAuth) {
-        window.initAuth();
-        console.log('✅ 인증 초기화 완료');
-    }
+    // 인증 초기화 (직접 호출)
+    initAuth();
+    console.log('✅ 인증 초기화 완료');
     
-    // 인증 상태 리스너 설정
-    if (window.setupAuthListener) {
-        window.setupAuthListener({
-            onLogin: (user) => {
-                console.log('👤 로그인:', user.displayName);
-                // 로그인 후 초기 데이터 로드
-                if (window.loadDataForSelectedDate) {
-                    const dateInput = document.getElementById('selected-date');
-                    if (dateInput && dateInput.value) {
-                        window.loadDataForSelectedDate(dateInput.value);
-                    }
-                }
-            },
-            onLogout: () => {
-                console.log('👋 로그아웃');
-            }
-        });
-        console.log('✅ 인증 리스너 설정 완료');
-    }
+    // 인증 상태 리스너 설정 (직접 호출)
+    setupAuthListener({
+        onLogin: (user) => {
+            console.log('👤 로그인:', user.displayName);
+        },
+        onLogout: () => {
+            console.log('👋 로그아웃');
+        }
+    });
+    console.log('✅ 인증 리스너 설정 완료');
     
     console.log('✅ 애플리케이션 초기화 완료');
 }

@@ -24,38 +24,72 @@ import { getKstDateString } from './ui-helpers.js';
 let userWallet = null; // ethers.Wallet 인스턴스
 let userWalletAddress = null; // 0x... 주소
 
+// ========== 보안 지갑 관리 (v2) ==========
+// 개선 사항:
+// - 랜덤 지갑 생성 (UID 파생 X → 탈취 불가)
+// - AES-GCM으로 개인키 암호화 후 Firestore 저장
+// - PBKDF2 키 파생 (100,000 iterations)
+
 /**
- * Firebase UID로부터 deterministic 지갑 생성
- * @param {string} uid - Firebase 사용자 UID
- * @returns {Object} { address, wallet }
+ * 사용자 인증 정보로부터 암호화 키 파생 (PBKDF2)
+ * UID만으로는 키를 알 수 없음 (email 필요)
  */
-async function generateWalletFromUID(uid) {
-    try {
-        // UID를 해시하여 32바이트 개인키 생성 (deterministic)
-        // 주의: 프로덕션에서는 더 강력한 암호화 필요 (KMS 사용 권장)
-        const encoder = new TextEncoder();
-        const data = encoder.encode(uid + '_habitschool_secret_2024'); // salt 추가
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const privateKeyHex = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        // ethers.js로 지갑 생성
-        const wallet = new ethers.Wallet(privateKeyHex);
-        
-        console.log('✅ 지갑 생성됨:', wallet.address.substring(0, 10) + '...');
-        
-        return {
-            address: wallet.address,
-            wallet: wallet
-        };
-    } catch (error) {
-        console.error('❌ 지갑 생성 오류:', error);
-        throw error;
-    }
+async function deriveEncryptionKey(uid, email) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(uid),
+        'PBKDF2',
+        false,
+        ['deriveKey']
+    );
+    // 이메일을 salt로 사용 (사용자별 고유)
+    const salt = encoder.encode(email + '_hbt_wallet_v2');
+    return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+    );
+}
+
+/**
+ * 개인키 암호화 (AES-GCM)
+ */
+async function encryptPrivateKey(privateKeyHex, uid, email) {
+    const key = await deriveEncryptionKey(uid, email);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoder = new TextEncoder();
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        key,
+        encoder.encode(privateKeyHex)
+    );
+    return {
+        encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+        iv: btoa(String.fromCharCode(...iv))
+    };
+}
+
+/**
+ * 개인키 복호화 (AES-GCM)
+ */
+async function decryptPrivateKey(encryptedData, iv, uid, email) {
+    const key = await deriveEncryptionKey(uid, email);
+    const ivArray = new Uint8Array(atob(iv).split('').map(c => c.charCodeAt(0)));
+    const encryptedArray = new Uint8Array(atob(encryptedData).split('').map(c => c.charCodeAt(0)));
+    const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: ivArray },
+        key,
+        encryptedArray
+    );
+    return new TextDecoder().decode(decrypted);
 }
 
 /**
  * 사용자 지갑 초기화 (로그인 시 자동 호출)
+ * v2: 랜덤 지갑 + 암호화 저장
  * @returns {string} 지갑 주소
  */
 export async function initializeUserWallet() {
@@ -66,44 +100,82 @@ export async function initializeUserWallet() {
             return null;
         }
 
-        // 1. Firebase에서 기존 지갑 주소 확인
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
         const userData = userSnap.data();
 
-        if (userData && userData.walletAddress) {
-            // 기존 지갑 주소가 있으면 재사용
-            console.log('✅ 기존 지갑 복원:', userData.walletAddress.substring(0, 10) + '...');
+        // Case 1: v2 암호화 지갑이 있는 경우 → 복호화하여 복원
+        if (userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+            try {
+                const privateKeyHex = await decryptPrivateKey(
+                    userData.encryptedKey,
+                    userData.walletIv,
+                    currentUser.uid,
+                    currentUser.email
+                );
+                const wallet = new ethers.Wallet(privateKeyHex);
+                userWallet = wallet;
+                userWalletAddress = wallet.address;
+                console.log('✅ v2 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
+                updateWalletUI(userWalletAddress);
+                return userWalletAddress;
+            } catch (e) {
+                console.error('⚠️ v2 지갑 복호화 실패:', e);
+                // 주소만이라도 표시
+                userWalletAddress = userData.walletAddress;
+                updateWalletUI(userWalletAddress);
+                return userWalletAddress;
+            }
+        }
+
+        // Case 2: v1 구형 지갑이 있는 경우 → v2로 마이그레이션
+        if (userData?.walletAddress && !userData?.walletVersion) {
+            console.log('🔄 v1 → v2 지갑 마이그레이션 중...');
+            // 새 랜덤 지갑 생성 (v1 주소는 보안 결함으로 폐기)
+            const newWallet = ethers.Wallet.createRandom();
+            const { encrypted, iv } = await encryptPrivateKey(
+                newWallet.privateKey, currentUser.uid, currentUser.email
+            );
             
-            // 지갑 객체 재생성
-            const result = await generateWalletFromUID(currentUser.uid);
-            userWallet = result.wallet;
-            userWalletAddress = result.address;
-            
-            // UI 업데이트
+            userWallet = newWallet;
+            userWalletAddress = newWallet.address;
+
+            await updateDoc(userRef, {
+                walletAddress: userWalletAddress,
+                walletCreatedAt: serverTimestamp(),
+                encryptedKey: encrypted,
+                walletIv: iv,
+                walletVersion: 2,
+                oldWalletAddress: userData.walletAddress // 기존 주소 백업
+            });
+
+            console.log('✅ v2 지갑 마이그레이션 완료:', userWalletAddress.substring(0, 10) + '...');
             updateWalletUI(userWalletAddress);
-            
+            showToast('🔐 지갑 보안이 업그레이드되었습니다!');
             return userWalletAddress;
         }
 
-        // 2. 새 지갑 생성
-        console.log('🆕 새 지갑 생성 중...');
-        const result = await generateWalletFromUID(currentUser.uid);
-        userWallet = result.wallet;
-        userWalletAddress = result.address;
+        // Case 3: 지갑 없음 → 새 v2 지갑 생성
+        console.log('🆕 새 보안 지갑 생성 중...');
+        const newWallet = ethers.Wallet.createRandom();
+        const { encrypted, iv } = await encryptPrivateKey(
+            newWallet.privateKey, currentUser.uid, currentUser.email
+        );
+        
+        userWallet = newWallet;
+        userWalletAddress = newWallet.address;
 
-        // 3. Firebase에 지갑 주소 저장
         await updateDoc(userRef, {
             walletAddress: userWalletAddress,
-            walletCreatedAt: serverTimestamp()
+            walletCreatedAt: serverTimestamp(),
+            encryptedKey: encrypted,
+            walletIv: iv,
+            walletVersion: 2
         });
 
-        console.log('✅ 지갑 주소 저장됨:', userWalletAddress.substring(0, 10) + '...');
-        
-        // UI 업데이트
+        console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...');
         updateWalletUI(userWalletAddress);
-        showToast('✅ 내 지갑이 생성되었습니다!');
-
+        showToast('✅ 보안 지갑이 생성되었습니다!');
         return userWalletAddress;
 
     } catch (error) {
@@ -271,6 +343,7 @@ export async function startChallenge30D(challengeId) {
             startDate: startDate,
             endDate: endDate,
             completedDays: 0,
+            completedDates: [], // 인증 완료 날짜 배열 (중복 방지)
             totalDays: 30,
             hbtStaked: hbtAmount,
             status: 'ongoing'
@@ -331,6 +404,13 @@ export async function updateChallengeProgress() {
         // 오늘 날짜 확인
         const today = getKstDateString();
 
+        // ===== 중복 카운트 방지: 같은 날 여러 번 저장해도 1회만 인정 =====
+        const completedDates = challenge.completedDates || [];
+        if (completedDates.includes(today)) {
+            console.log('ℹ️ 오늘 이미 챌린지 인증 완료');
+            return; // 같은 날 중복 카운트 방지
+        }
+
         // 챌린지 종료일 확인
         if (today > challenge.endDate) {
             // 챌린지 기간 종료 → 정산
@@ -387,8 +467,10 @@ export async function updateChallengeProgress() {
             return;
         }
 
-        // 진행 중 - completedDays 증가
-        challenge.completedDays = (challenge.completedDays || 0) + 1;
+        // 진행 중 - 오늘 날짜 기록 + completedDays 증가
+        completedDates.push(today);
+        challenge.completedDays = completedDates.length; // 배열 길이 = 실제 인증일수
+        challenge.completedDates = completedDates;
 
         await updateDoc(userRef, {
             activeChallenge: challenge

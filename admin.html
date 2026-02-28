@@ -88,10 +88,28 @@
 </head>
 <body>
 
-<div class="dashboard-container">
+<!-- 관리자 로그인 오버레이 -->
+<div id="admin-login-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:9999; display:flex; justify-content:center; align-items:center;">
+    <div style="text-align:center; background:white; padding:40px; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.1); max-width:400px; width:90%;">
+        <div style="font-size:48px; margin-bottom:15px;">🔒</div>
+        <h2 style="color:var(--primary-color); margin:0 0 10px;">관리자 로그인</h2>
+        <p style="color:#666; margin-bottom:30px; font-size:14px;">해빛 대사면역 관제탑 접근을 위해<br>관리자 계정으로 로그인해주세요.</p>
+        <button id="admin-login-btn" style="background:white; border:1px solid #ddd; padding:12px 24px; border-radius:8px; cursor:pointer; font-size:15px; font-weight:bold; display:flex; align-items:center; gap:10px; margin:0 auto; transition:0.2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow='none'">
+            <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
+            구글 계정으로 로그인
+        </button>
+        <p id="admin-login-error" style="color:red; margin-top:15px; font-size:13px; display:none;"></p>
+    </div>
+</div>
+
+<div class="dashboard-container" id="admin-dashboard" style="display:none;">
     <div class="header">
         <h1>👨‍⚕️ 해빛 대사면역 관제탑</h1>
-        <button class="refresh-btn" onclick="location.reload()">🔄 데이터 새로고침</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <span id="admin-user-info" style="font-size:13px; color:#666;"></span>
+            <button class="refresh-btn" onclick="location.reload()">🔄 새로고침</button>
+            <button class="refresh-btn" style="background-color:#F44336;" onclick="adminLogout()">🚪 로그아웃</button>
+        </div>
     </div>
 
     <div class="summary-cards">
@@ -175,7 +193,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { escapeHtml } from './js/security.js';
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { escapeHtml, isValidStorageUrl } from './js/security.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
@@ -186,7 +205,71 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let chartInstance = null; 
+    const auth = getAuth(app);
+    let chartInstance = null;
+    let adminDataCache = null; // 관리자 데이터 캐시
+
+    // ========== 관리자 인증 ==========
+    // 관리자 이메일 목록 (필요 시 Firestore admins 컬렉션에서도 확인)
+    const ADMIN_EMAILS = [
+        // TODO: 실제 관리자 이메일 주소를 아래에 추가하세요
+        csj3814@gmail.com
+        // 예: 'doctor@hospital.com'
+    ];
+
+    async function checkIsAdmin(user) {
+        // 1. 하드코딩된 이메일 목록 확인
+        if (ADMIN_EMAILS.includes(user.email)) return true;
+        // 2. Firestore admins 컬렉션 확인 (유연한 관리)
+        try {
+            const adminDoc = await getDoc(doc(db, "admins", user.uid));
+            if (adminDoc.exists()) return true;
+            // 이메일 기반 확인 (uid 모를 때)
+            const adminByEmail = await getDoc(doc(db, "admins", user.email));
+            if (adminByEmail.exists()) return true;
+        } catch(e) { console.warn('관리자 권한 확인 오류:', e); }
+        return false;
+    }
+
+    // 로그인 버튼
+    document.getElementById('admin-login-btn').addEventListener('click', async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+        } catch(e) {
+            const errorEl = document.getElementById('admin-login-error');
+            errorEl.textContent = '로그인 실패: ' + e.message;
+            errorEl.style.display = 'block';
+        }
+    });
+
+    // 로그아웃
+    window.adminLogout = async function() {
+        await signOut(auth);
+        document.getElementById('admin-dashboard').style.display = 'none';
+        document.getElementById('admin-login-overlay').style.display = 'flex';
+    };
+
+    // 인증 상태 리스너
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const isAdmin = await checkIsAdmin(user);
+            if (isAdmin) {
+                document.getElementById('admin-login-overlay').style.display = 'none';
+                document.getElementById('admin-dashboard').style.display = 'block';
+                document.getElementById('admin-user-info').textContent = `👤 ${user.displayName || user.email}`;
+                loadAdminData();
+            } else {
+                const errorEl = document.getElementById('admin-login-error');
+                errorEl.textContent = `⛔ "${user.email}" 계정은 관리자 권한이 없습니다.`;
+                errorEl.style.display = 'block';
+                await signOut(auth);
+            }
+        } else {
+            document.getElementById('admin-login-overlay').style.display = 'flex';
+            document.getElementById('admin-dashboard').style.display = 'none';
+        }
+    });
 
     function getTodayStr() {
         const now = new Date();
@@ -197,11 +280,20 @@
 
     window.alertMessage = function(date, msg) { alert(`[발송일: ${date}]\n\n전송된 메시지 내용:\n${msg}`); };
 
-    async function loadAdminData() {
+    async function loadAdminData(forceRefresh = false) {
         const tbody = document.getElementById('admin-table-body');
         try {
-            const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(400));
-            const snapshot = await getDocs(q);
+            // 캐시된 데이터가 있고 강제 새로고침이 아니면 캐시 사용
+            let snapshot, usersQ;
+            if (!forceRefresh && adminDataCache) {
+                snapshot = adminDataCache.snapshot;
+                usersQ = adminDataCache.usersQ;
+            } else {
+                const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(400));
+                snapshot = await getDocs(q);
+                usersQ = await getDocs(collection(db, "users"));
+                adminDataCache = { snapshot, usersQ, timestamp: Date.now() };
+            }
             
             let userMap = {};
             let todayCount = 0; let bstWarning = 0; let bpWarning = 0;
@@ -211,9 +303,9 @@
                 if(!userMap[data.userId]) userMap[data.userId] = data; 
             });
 
-            const usersQ = await getDocs(collection(db, "users"));
+            const usersSnapshot = usersQ;
             let userMeta = {};
-            usersQ.forEach(u => { userMeta[u.id] = u.data(); });
+            usersSnapshot.forEach(u => { userMeta[u.id] = u.data(); });
 
             let finalRows = [];
 
@@ -236,7 +328,7 @@
                     const fbDate = new Date(meta.feedbackDate);
                     const now = new Date(todayStr);
                     const diffDays = (now - fbDate) / (1000 * 60 * 60 * 24);
-                    const safeMsg = meta.adminFeedback ? meta.adminFeedback.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n") : "내용 없음";
+                    const safeMsg = meta.adminFeedback ? escapeHtml(meta.adminFeedback).replace(/'/g, "&#39;").replace(/\n/g, "\\n") : "내용 없음";
                     if(diffDays <= 3) {
                         msgStatus = `<span class="status-badge bg-green" onclick="alertMessage('${meta.feedbackDate}', '${safeMsg}')">✅ 발송됨 (확인)</span>`;
                     } else if (glu >= 126 || sys >= 140) {
@@ -288,8 +380,8 @@
         document.getElementById('current-user-id').value = userId;
         document.getElementById('detail-modal').style.display = 'flex';
 
-        // where 절에 userId만 걸고 JavaScript로 정렬 (인덱스 에러 방지)
-        const q = query(collection(db, "daily_logs"), where("userId", "==", userId));
+        // where 절에 userId만 걸고 JavaScript로 정렬 (인덱스 에러 방지) + limit 추가
+        const q = query(collection(db, "daily_logs"), where("userId", "==", userId), limit(60));
         const snapshot = await getDocs(q);
         
         let allData = [];
@@ -314,8 +406,8 @@
                     if(d.exercise.cardioList) d.exercise.cardioList.forEach(c => { if(c.imageUrl) imgs.push(c.imageUrl); });
                     else if(d.exercise.cardioImageUrl) imgs.push(d.exercise.cardioImageUrl);
                 }
-                let imgTags = imgs.map(url => `<a href="${url}" target="_blank"><img src="${url}"></a>`).join('');
-                let fbTag = d.adminFeedbackHistory ? `<div class="fb-cell">👨‍⚕️ ${d.adminFeedbackHistory}</div>` : '';
+                let imgTags = imgs.filter(url => isValidStorageUrl(url)).map(url => `<a href="${escapeHtml(url)}" target="_blank" rel="noopener"><img src="${escapeHtml(url)}"></a>`).join('');
+                let fbTag = d.adminFeedbackHistory ? `<div class="fb-cell">👨‍⚕️ ${escapeHtml(d.adminFeedbackHistory)}</div>` : '';
 
                 historyHtml += `
                     <div class="history-card">
@@ -348,13 +440,13 @@
             
             if(ud.healthProfile) {
                 const hp = ud.healthProfile;
-                document.getElementById('prof-fat').innerHTML = hp.fat ? `${hp.fat} kg` : '-';
-                document.getElementById('prof-hba1c').innerHTML = hp.hba1c ? `${hp.hba1c} %` : '-';
-                document.getElementById('prof-visceral').innerHTML = hp.visceral ? hp.visceral : '-';
+                document.getElementById('prof-fat').textContent = hp.fat ? `${hp.fat} kg` : '-';
+                document.getElementById('prof-hba1c').textContent = hp.hba1c ? `${hp.hba1c} %` : '-';
+                document.getElementById('prof-visceral').textContent = hp.visceral ? hp.visceral : '-';
                 
                 let medsHtml = '';
-                if(hp.meds && hp.meds.length > 0) hp.meds.forEach(m => { medsHtml += `<li>${m}</li>`; });
-                if(hp.medOther) medsHtml += `<li>${hp.medOther}</li>`;
+                if(hp.meds && hp.meds.length > 0) hp.meds.forEach(m => { medsHtml += `<li>${escapeHtml(m)}</li>`; });
+                if(hp.medOther) medsHtml += `<li>${escapeHtml(hp.medOther)}</li>`;
                 document.getElementById('prof-meds').innerHTML = medsHtml || '<li>복용 약물 없음</li>';
             }
         }
@@ -395,11 +487,11 @@
 
             alert("✅ 환자의 앱에 3일간 노출되며, 상세 기록에 추가됩니다!");
             closeModal();
-            loadAdminData(); 
+            loadAdminData(true); // 피드백 전송 후 강제 새로고침
         } catch(e) { alert("전송 실패: " + e.message); }
     };
 
-    window.onload = loadAdminData;
+    // 관리자 인증 후 자동 로드 (onAuthStateChanged에서 처리)
 </script>
 </body>
 </html>
