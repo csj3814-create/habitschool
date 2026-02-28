@@ -862,6 +862,8 @@
             video.load();
         });
     }
+    // 갤러리에서 접근 가능하도록 전역 노출
+    window.extractVideoThumbFromUrl = extractVideoThumbFromUrl;
 
     window.previewStaticImage = function(input, previewId, btnId, skipExif = false) {
         const preview = document.getElementById(previewId);
@@ -1928,14 +1930,13 @@
 
     function buildShareImageGrid(urls, maxCount = 4) {
         let htmlString = '';
-        const videoPlaceholder = createVideoPlaceholderBase64();
         for (let i = 0; i < Math.min(urls.length, maxCount); i++) {
             const mediaUrl = urls[i];
             const isVideo = isVideoUrl(mediaUrl);
             const safeUrl = toSafeAttr(mediaUrl);
 
             if (isVideo) {
-                htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><img src="${videoPlaceholder}" alt="해빛 인증 영상 썸네일"></div>`;
+                htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><video src="${safeUrl}#t=0.5" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:8px;"></video></div>`;
             } else {
                 htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async"></div>`;
             }
@@ -2377,9 +2378,9 @@
             const addVid = (url, videoThumbUrl = null) => {
                 if(url && !addedUrls.has(url)) {
                     const safeJsUrl = String(url).replace(/'/g, "\\'");
-                    // 영상 URL은 img로 표시 불가 - 항상 플레이스홀더 사용
-                    const safeVideoThumb = createVideoPlaceholderBase64();
-                    result.exerciseHtml += `<div class="video-thumb-wrapper" data-media-src="${safeJsUrl}" onclick="openVideoLightbox('${safeJsUrl}')"><img src="${safeVideoThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
+                    const safeAttr = String(url).replace(/"/g, '&quot;');
+                    // 비디오 태그의 #t=0.5로 첫 프레임 표시 (CORS 불필요)
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="openVideoLightbox('${safeJsUrl}')"><video src="${safeAttr}#t=0.5" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video><div class="video-play-btn">&#9654;</div></div>`;
                     addedUrls.add(url);
                 }
             };
