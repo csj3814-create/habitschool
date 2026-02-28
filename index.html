@@ -675,10 +675,18 @@
         }
         list.appendChild(div);
 
-        // 근력 영상 썸네일: 항상 플레이스홀더 표시 (Firebase Storage URL은 CORS로 프레임 추출 불가)
+        // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
         if(!isCardio && data && data.videoUrl) {
             const thumbImg = document.getElementById(`s_img_${id}`);
             if(thumbImg) thumbImg.src = createVideoPlaceholderBase64();
+            // Firebase Storage URL에서도 프레임 추출 시도 (CORS 지원)
+            extractVideoThumbFromUrl(data.videoUrl)
+                .then((thumbDataUrl) => {
+                    if (!thumbDataUrl) return;
+                    const ti = document.getElementById(`s_img_${id}`);
+                    if (ti) ti.src = thumbDataUrl;
+                })
+                .catch(() => {});
         }
     }
 
@@ -718,42 +726,121 @@
         // 즉시 플레이스홈더 표시 (검은박스 방지)
         previewImg.src = createVideoPlaceholderBase64();
 
-        // 로컬 파일에서 썸네일 추출 시도
+        // 로컬 파일에서 실제 프레임 썸네일 추출
         const objectUrl = URL.createObjectURL(file);
-        extractVideoThumbFromUrl(objectUrl)
+        extractVideoThumbFromFile(file)
             .then((thumbDataUrl) => {
                 if (thumbDataUrl) previewImg.src = thumbDataUrl;
             })
             .catch(() => {})
             .finally(() => {
-                setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+                setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
             });
     };
 
-    async function extractVideoThumbFromUrl(videoUrl) {
-        return await new Promise((resolve) => {
+    // 로컬 File 객체에서 동영상 프레임 추출 (가장 신뢰성 높음)
+    function extractVideoThumbFromFile(file) {
+        return new Promise((resolve) => {
+            const objectUrl = URL.createObjectURL(file);
             const video = document.createElement('video');
             video.muted = true;
             video.playsInline = true;
-            video.preload = 'metadata';
+            video.preload = 'auto';
+            video.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;';
+            document.body.appendChild(video);
 
+            let resolved = false;
+            const done = (val) => {
+                if (resolved) return;
+                resolved = true;
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                video.remove();
+                URL.revokeObjectURL(objectUrl);
+                resolve(val || '');
+            };
+
+            // 10초 타임아웃
+            const timer = setTimeout(() => done(''), 10000);
+
+            video.addEventListener('error', () => { clearTimeout(timer); done(''); }, { once: true });
+
+            video.addEventListener('loadeddata', () => {
+                try {
+                    const dur = Number.isFinite(video.duration) ? video.duration : 0;
+                    video.currentTime = dur > 1 ? 0.8 : 0.01;
+                } catch (_) { clearTimeout(timer); done(''); }
+            }, { once: true });
+
+            video.addEventListener('seeked', () => {
+                try {
+                    const w = video.videoWidth || 320;
+                    const h = video.videoHeight || 180;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0, w, h);
+
+                    // 검은 프레임 감지: 중앙 픽셀이 모두 0이면 재시도
+                    const px = ctx.getImageData(w/2, h/2, 1, 1).data;
+                    if (px[0] === 0 && px[1] === 0 && px[2] === 0) {
+                        const retryTime = Math.min((video.duration || 1) > 2 ? 2 : 0.5, video.duration || 1);
+                        video.currentTime = retryTime;
+                        video.addEventListener('seeked', () => {
+                            try {
+                                ctx.drawImage(video, 0, 0, w, h);
+                                clearTimeout(timer);
+                                done(canvas.toDataURL('image/jpeg', 0.85));
+                            } catch(_) { clearTimeout(timer); done(''); }
+                        }, { once: true });
+                        return;
+                    }
+
+                    clearTimeout(timer);
+                    done(canvas.toDataURL('image/jpeg', 0.85));
+                } catch (_) { clearTimeout(timer); done(''); }
+            }, { once: true });
+
+            video.src = objectUrl;
+            video.load();
+        });
+    }
+
+    async function extractVideoThumbFromUrl(videoUrl) {
+        return new Promise((resolve) => {
+            const video = document.createElement('video');
+            video.muted = true;
+            video.playsInline = true;
+            video.preload = 'auto';
+            // Firebase Storage URL은 crossOrigin 필요
+            if (videoUrl && !videoUrl.startsWith('blob:')) {
+                video.crossOrigin = 'anonymous';
+            }
+
+            let resolved = false;
             const cleanup = () => {
                 video.removeAttribute('src');
                 video.load();
             };
-
-            const fail = () => {
+            const done = (val) => {
+                if (resolved) return;
+                resolved = true;
                 cleanup();
-                resolve('');
+                resolve(val || '');
             };
 
-            video.addEventListener('error', fail, { once: true });
-            video.addEventListener('loadedmetadata', () => {
+            // 8초 타임아웃
+            const timer = setTimeout(() => done(''), 8000);
+
+            video.addEventListener('error', () => { clearTimeout(timer); done(''); }, { once: true });
+            video.addEventListener('loadeddata', () => {
                 try {
                     const duration = Number.isFinite(video.duration) ? video.duration : 0;
-                    video.currentTime = duration > 1 ? 0.8 : 0.1;
+                    video.currentTime = duration > 1 ? 0.8 : 0.01;
                 } catch (_) {
-                    fail();
+                    clearTimeout(timer); done('');
                 }
             }, { once: true });
 
@@ -763,11 +850,11 @@
                     canvas.width = Math.max(1, video.videoWidth || 320);
                     canvas.height = Math.max(1, video.videoHeight || 180);
                     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-                    cleanup();
-                    resolve(dataUrl);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    clearTimeout(timer);
+                    done(dataUrl);
                 } catch (_) {
-                    fail();
+                    clearTimeout(timer); done('');
                 }
             }, { once: true });
 
