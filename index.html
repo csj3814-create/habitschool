@@ -542,18 +542,31 @@
         }
 
         // Firebase에 저장 + 뱃지 보너스 포인트 지급
-        if(newBadges.length > 0) {
-            // 뱃지별 보너스 포인트
-            const BADGE_POINTS = {
-                starter: 5, streak7: 20, diet7: 15, exercise7: 15, mind7: 10,
-                streak30: 50, points100: 10, points300: 20, level3: 15, friends5: 10
-            };
+        const BADGE_POINTS = {
+            starter: 5, streak7: 20, diet7: 15, exercise7: 15, mind7: 10,
+            streak30: 50, points100: 10, points300: 20, level3: 15, friends5: 10
+        };
+
+        // 기존 뱃지 중 보너스 미지급된 것도 처리 (소급 적용)
+        let retroBonusPoints = 0;
+        Object.keys(badges).forEach(badgeId => {
+            if(badges[badgeId]?.earned && !badges[badgeId]?.bonusAwarded && !newBadges.includes(badgeId)) {
+                retroBonusPoints += (BADGE_POINTS[badgeId] || 0);
+                badges[badgeId].bonusAwarded = true;
+            }
+        });
+
+        if(newBadges.length > 0 || retroBonusPoints > 0) {
             let bonusPoints = 0;
             newBadges.forEach(id => { bonusPoints += (BADGE_POINTS[id] || 0); });
 
+            // 새 뱃지에도 bonusAwarded 플래그 설정
+            newBadges.forEach(id => { badges[id].bonusAwarded = true; });
+
+            const totalBonus = bonusPoints + retroBonusPoints;
             const updateData = { badges };
-            if(bonusPoints > 0) {
-                updateData.coins = (coins + bonusPoints);
+            if(totalBonus > 0) {
+                updateData.coins = (coins + totalBonus);
             }
             await setDoc(userRef, updateData, { merge: true });
 
@@ -564,10 +577,15 @@
                 showToast(`🎉 뱃지 획득! ${badge.emoji} ${badge.name} (+${bp}P)`);
             });
 
+            // 소급 보너스 알림
+            if(retroBonusPoints > 0 && newBadges.length === 0) {
+                showToast(`🎁 기존 뱃지 보너스 +${retroBonusPoints}P 지급!`);
+            }
+
             // 포인트 UI 업데이트
-            if(bonusPoints > 0) {
+            if(totalBonus > 0) {
                 const pointEl = document.getElementById('point-balance');
-                if(pointEl) pointEl.textContent = (coins + bonusPoints);
+                if(pointEl) pointEl.textContent = (coins + totalBonus);
             }
         }
         } catch(error) {
@@ -695,8 +713,8 @@
         }
         list.appendChild(div);
 
-        // 근력 영상 썸네일: videoThumbUrl이 없으면 동영상에서 프레임 추출
-        if(!isCardio && data && data.videoUrl && !data.videoThumbUrl) {
+        // 근력 영상 썸네일: 항상 동영상에서 프레임 추출 시도
+        if(!isCardio && data && data.videoUrl) {
             extractVideoThumbFromUrl(data.videoUrl)
                 .then((thumbDataUrl) => {
                     if (!thumbDataUrl) return;
@@ -1534,11 +1552,8 @@
                             url = null;
                         }
                     }
-                    const videoThumbUrl = url ? await resolveThumbUrl(url, 'exercise_videos', 'exercise_videos_thumbnails').catch(e => {
-                        console.warn('영상 썸네일 생성 실패:', e);
-                        return null;
-                    }) : null;
-                    if(url) strengthList.push({ videoUrl: url, videoThumbUrl });
+                    // 영상에는 썸네일 폴더가 없으므로 null 저장 (클라이언트에서 프레임 추출)
+                    if(url) strengthList.push({ videoUrl: url, videoThumbUrl: null });
                 }
 
                 const sleepFile = document.getElementById('sleep-img');
@@ -2318,7 +2333,8 @@
             const addVid = (url, videoThumbUrl = null) => {
                 if(url && !addedUrls.has(url)) {
                     const safeJsUrl = String(url).replace(/'/g, "\\'");
-                    const safeVideoThumb = String(videoThumbUrl || createVideoPlaceholderBase64());
+                    // 영상 URL은 img로 표시 불가 - 항상 플레이스홀더 사용
+                    const safeVideoThumb = createVideoPlaceholderBase64();
                     result.exerciseHtml += `<div class="video-thumb-wrapper" data-media-src="${safeJsUrl}" onclick="openVideoLightbox('${safeJsUrl}')"><img src="${safeVideoThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
                     addedUrls.add(url);
                 }
