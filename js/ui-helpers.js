@@ -45,16 +45,3 @@ export function openLightbox(url) {
     document.getElementById('lightbox-img').src = url;
     document.getElementById('lightbox-modal').style.display = 'flex';
 }
-
-// 탭 전환
-export function openTab(tabName, pushState = true) {
-    // 이 함수는 많은 전역 변수와 상태에 의존하므로 
-    // 현재는 index.html에 남겨두는 것이 안전
-}
-
-// 날짜 변경
-export function changeDateTo(dStr) {
-    document.getElementById('selected-date').value = dStr;
-    // loadDataForSelectedDate 함수는 data-manager에 있어야 함
-    window.scrollTo(0,0);
-}

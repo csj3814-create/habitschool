@@ -31,13 +31,6 @@ export function initAuth() {
     });
 }
 
-// 피드백 숨기기
-export function hideFeedback() {
-    document.getElementById('admin-feedback-box').style.display = 'none';
-    const user = auth.currentUser;
-    if(user) localStorage.setItem('hide_fb_' + user.uid, 'true');
-}
-
 // 인증 상태 변경 리스너
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();

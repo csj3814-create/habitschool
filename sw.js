@@ -20,6 +20,8 @@ const STATIC_ASSETS = [
     './manifest.json'
 ];
 
+const INDEX_URL = new URL('./index.html', self.location).href;
+
 // 설치: 정적 자산 캐싱
 self.addEventListener('install', (event) => {
     console.log('[SW] 설치 시작');
@@ -67,7 +69,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     // 정적 자산: Cache First
-    if (STATIC_ASSETS.some(asset => request.url.endsWith(asset))) {
+    const reqUrl = new URL(request.url);
+    if (STATIC_ASSETS.some(asset => {
+        const assetUrl = new URL(asset, self.location);
+        return reqUrl.origin === assetUrl.origin && reqUrl.pathname === assetUrl.pathname;
+    })) {
         event.respondWith(
             caches.match(request)
                 .then(cached => cached || fetch(request).then(response => {
@@ -77,7 +83,7 @@ self.addEventListener('fetch', (event) => {
                     }
                     return response;
                 }))
-                .catch(() => caches.match('/index.html'))
+                .catch(() => caches.match(INDEX_URL))
         );
         return;
     }
@@ -104,8 +110,8 @@ self.addEventListener('push', (event) => {
         const data = event.data.json();
         const options = {
             body: data.body || '새로운 알림이 있습니다.',
-            icon: data.icon || '/icons/icon-192.png',
-            badge: '/icons/icon-192.png',
+            icon: data.icon || './icons/icon-192.svg',
+            badge: './icons/icon-192.svg',
             tag: data.tag || 'habitschool-notification',
             data: { url: data.url || '/' },
             vibrate: [100, 50, 100],

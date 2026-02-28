@@ -7,8 +7,8 @@
 // 인증 모듈 (initializeApp에서 직접 호출)
 import { initAuth, setupAuthListener } from './auth.js';
 
-// 블록체인 모듈 (HTML onclick에서 convertPointsToHBT 사용)
-import { convertPointsToHBT } from './blockchain-manager.js';
+// 블록체인 모듈 (HTML onclick에서 사용)
+import { convertPointsToHBT, startChallenge30D } from './blockchain-manager.js';
 
 // ========== 최소한의 전역 노출 (window 객체) ==========
 // app.js가 각 모듈에서 직접 import하므로, HTML onclick 또는 auth.js에서
@@ -16,6 +16,7 @@ import { convertPointsToHBT } from './blockchain-manager.js';
 
 // HTML onclick에서 참조하는 함수 (app.js에서 설정하지 않는 것들만)
 window.convertPointsToHBT = convertPointsToHBT; // HTML onclick="convertPointsToHBT()"
+window.startChallenge30D = startChallenge30D;    // HTML onclick="startChallenge30D(...)"
 
 // cleanupGalleryResources는 app.js에서 window에 설정됨
 

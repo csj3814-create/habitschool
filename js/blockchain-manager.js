@@ -18,7 +18,7 @@ import {
 } from './blockchain-config.js';
 
 import { auth, db } from './firebase-config.js';
-import { doc, updateDoc, getDoc, collection, addDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
 
@@ -166,13 +166,13 @@ export async function initializeUserWallet() {
         userWallet = newWallet;
         userWalletAddress = newWallet.address;
 
-        await updateDoc(userRef, {
+        await setDoc(userRef, {
             walletAddress: userWalletAddress,
             walletCreatedAt: serverTimestamp(),
             encryptedKey: encrypted,
             walletIv: iv,
             walletVersion: 2
-        });
+        }, { merge: true });
 
         console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...');
         updateWalletUI(userWalletAddress);

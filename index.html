@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -30,7 +30,7 @@
 <body>
 
 <div class="app-container">
-    <a href="#main-content" class="skip-to-content">메인 콘텐츠로 이동</a>
+    <a href="#dashboard" class="skip-to-content">메인 콘텐츠로 이동</a>
     <div id="login-modal" role="dialog" aria-label="로그인">
         <div style="font-size: 48px; margin-bottom: 10px;">☀️</div>
         <h1 class="login-title">해빛스쿨</h1>
@@ -64,7 +64,7 @@
             <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨ 갤러리</button>
         </nav>
 
-        <div id="dashboard" class="content-section active" id="main-content" role="main">
+        <div id="dashboard" class="content-section active" role="main">
             <div id="admin-feedback-box" role="alert" aria-live="polite">
                 <button style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:16px; color:#888; cursor:pointer;" onclick="hideFeedback()" aria-label="피드백 닫기">X</button>
                 <div style="font-weight: bold; color: #4A148C; margin-bottom: 5px; font-size: 15px;">👨‍⚕️ 최석재 선생님의 해빛 메시지</div>
@@ -172,18 +172,19 @@
                 </button>
             </div>
 
-            <!-- 30일 챌린지 섹션 -->
+            <!-- 건강 습관 챌린지 섹션 -->
             <div class="card">
-                <h3>🏆 30일 챌린지</h3>
+                <h3>🏆 건강 습관 챌린지</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    원하는 만큼 HBT를 예치하고 30일 챌린지에 도전하세요!
+                    3일·7일·30일 챌린지에 도전하세요! 기간이 길수록 보상도 커집니다.
                 </p>
 
                 <div style="background: #E3F2FD; border: 1px solid #90CAF9; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #1565C0; line-height: 1.6;">
                     📌 <strong>보상 규칙:</strong><br>
-                    • 성공률 100% (30일 달성): 원금 + <strong>20% 보너스</strong> + 100P<br>
-                    • 성공률 80%+ (24일+): <strong>원금 환급</strong> + 50P<br>
-                    • 성공률 80% 미만: ❌ 예치금 소멸
+                    • ⚡ <strong>3일 미니:</strong> 무료 참가 → 100% 달성 시 10P 보상<br>
+                    • 🔥 <strong>7일 위클리:</strong> HBT 예치 → 80%+ 원금환급, 100% 보너스<br>
+                    • 🏆 <strong>30일 마스터:</strong> HBT 예치 → 80%+ 원금환급, 100% +20% HBT<br>
+                    • 80% 미만 달성 시: 예치금 소멸 ❌
                 </div>
 
                 <!-- 현재 진행 중인 챌린지 -->

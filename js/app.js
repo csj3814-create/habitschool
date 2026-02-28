@@ -17,6 +17,7 @@ import { auth, db, storage, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } f
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType } from './security.js';
+import { updateChallengeProgress } from './blockchain-manager.js';
 
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
 async function checkMilestones(userId) {
@@ -1311,6 +1312,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             await checkMilestones(user.uid);
             await renderMilestones(user.uid);
             
+            // 챌린지 진행도 업데이트
+            await updateChallengeProgress();
+            
             loadDataForSelectedDate(selectedDateStr);
 
         } catch (e) { 
@@ -1896,6 +1900,7 @@ function cleanupGalleryResources() {
     // 고유한 상황에서만 캠시 정리 (로그아웃 등)
     isLoadingMore = false;
 }
+window.cleanupGalleryResources = cleanupGalleryResources;
 
 async function loadGalleryData() {
     if(cachedGalleryLogs.length === 0) {
