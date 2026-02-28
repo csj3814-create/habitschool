@@ -171,26 +171,30 @@ export async function convertPointsToHBT() {
         // 3. HBT 계산
         const hbtAmount = pointAmount / CONVERSION_RULES.pointsPerConversion;
         
-        // 4. Firebase 업데이트 (현재는 시뮬레이션, 향후 실제 스마트 컨트랙트 연동)
+        // 4. Firebase 업데이트 (포인트 차감 + HBT 추가)
         await updateDoc(userRef, {
-            coins: increment(-pointAmount), // 포인트 차감
-            hbtBalance: increment(hbtAmount), // HBT 추가
+            coins: increment(-pointAmount),
+            hbtBalance: increment(hbtAmount),
             totalHbtEarned: increment(hbtAmount)
         });
 
-        // 5. 변환 기록 저장
-        await addDoc(collection(db, "blockchain_transactions"), {
-            userId: currentUser.uid,
-            type: 'conversion',
-            pointsUsed: pointAmount,
-            hbtReceived: hbtAmount,
-            timestamp: serverTimestamp(),
-            status: 'success',
-            walletAddress: userWalletAddress,
-            txHash: 'simulated_' + Date.now() // 임시 (향후 실제 트랜잭션 해시로 대체)
-        });
-
         showToast(`✅ ${pointAmount}P를 ${hbtAmount} HBT로 변환했습니다!`);
+
+        // 5. 변환 기록 저장 (실패해도 변환 자체는 이미 완료)
+        try {
+            await addDoc(collection(db, "blockchain_transactions"), {
+                userId: currentUser.uid,
+                type: 'conversion',
+                pointsUsed: pointAmount,
+                hbtReceived: hbtAmount,
+                timestamp: serverTimestamp(),
+                status: 'success',
+                walletAddress: userWalletAddress,
+                txHash: 'simulated_' + Date.now()
+            });
+        } catch (logErr) {
+            console.warn('⚠️ 변환 기록 저장 실패 (변환은 완료됨):', logErr.message);
+        }
         
         // UI 업데이트
         if (pointInput) pointInput.value = '';
@@ -278,18 +282,22 @@ export async function startChallenge30D(challengeId) {
             hbtBalance: increment(-hbtAmount)
         });
 
-        // 6. 거래 기록 저장
-        await addDoc(collection(db, "blockchain_transactions"), {
-            userId: currentUser.uid,
-            type: 'staking',
-            challengeId: challengeId,
-            amount: hbtAmount,
-            timestamp: serverTimestamp(),
-            status: 'success',
-            walletAddress: userWalletAddress
-        });
-
         showToast(`✅ 챌린지 시작!\n${hbtAmount} HBT 예치 완료.\n80%+ 달성 시 원금 환급, 100% 달성 시 +20% 보너스!`);
+
+        // 6. 거래 기록 저장 (실패해도 챌린지 시작은 이미 완료)
+        try {
+            await addDoc(collection(db, "blockchain_transactions"), {
+                userId: currentUser.uid,
+                type: 'staking',
+                challengeId: challengeId,
+                amount: hbtAmount,
+                timestamp: serverTimestamp(),
+                status: 'success',
+                walletAddress: userWalletAddress
+            });
+        } catch (logErr) {
+            console.warn('⚠️ 거래 기록 저장 실패 (챌린지 시작은 완료됨):', logErr.message);
+        }
         
         window.updateAssetDisplay && window.updateAssetDisplay();
         return true;
@@ -357,18 +365,22 @@ export async function updateChallengeProgress() {
 
             await updateDoc(userRef, updateData);
 
-            // 기록 저장
-            await addDoc(collection(db, "blockchain_transactions"), {
-                userId: currentUser.uid,
-                type: 'challenge_settlement',
-                challengeId: challenge.challengeId,
-                amount: rewardHbt,
-                staked: staked,
-                successRate: successRate,
-                completedDays: challenge.completedDays,
-                timestamp: serverTimestamp(),
-                status: successRate >= 0.8 ? 'success' : 'failed'
-            });
+            // 기록 저장 (실패해도 정산은 이미 완료)
+            try {
+                await addDoc(collection(db, "blockchain_transactions"), {
+                    userId: currentUser.uid,
+                    type: 'challenge_settlement',
+                    challengeId: challenge.challengeId,
+                    amount: rewardHbt,
+                    staked: staked,
+                    successRate: successRate,
+                    completedDays: challenge.completedDays,
+                    timestamp: serverTimestamp(),
+                    status: successRate >= 0.8 ? 'success' : 'failed'
+                });
+            } catch (logErr) {
+                console.warn('⚠️ 정산 기록 저장 실패:', logErr.message);
+            }
 
             showToast(resultMsg);
             window.updateAssetDisplay && window.updateAssetDisplay();

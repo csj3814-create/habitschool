@@ -125,6 +125,18 @@ service cloud.firestore {
       allow write: if isOwner(userId) || isAdmin();
     }
     
+    // ===== Blockchain Transactions Collection =====
+    // HBT 변환/스테이킹 거래 기록
+    match /blockchain_transactions/{txId} {
+      // 읽기: 본인 기록만
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      // 쓰기: 로그인한 사용자 (본인 기록만 생성)
+      allow create: if isSignedIn() 
+                    && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;  // 거래 기록은 수정/삭제 불가
+    }
+
     // 기본 규칙: 모든 접근 거부
     match /{document=**} {
       allow read, write: if false;
