@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=20">
+    <link rel="stylesheet" href="styles.css?v=21">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -85,10 +85,10 @@
             <div class="card metrics-card">
                 <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge" onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 (ℹ️미리보기)</span></h3>
                 <div id="mission-selection-area"></div>
-                <button class="submit-btn" style="margin-top: 15px; padding: 10px; font-size: 14px; background-color: #2196F3;" onclick="saveWeeklyMissions()">이번 주 미션 저장</button>
+                <button class="submit-btn" id="btn-save-missions" style="margin-top: 15px; padding: 10px; font-size: 14px; background-color: #2196F3;" onclick="saveWeeklyMissions()">이번 주 미션 저장</button>
                 <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
             </div>
-            <button class="pdf-btn" onclick="window.print()">📄 30일 종합 결과지 출력</button>
+            <button class="pdf-btn" onclick="generate30DayReport()">📄 30일 종합 결과지 출력</button>
         </div>
 
         <div id="profile" class="content-section" role="region" aria-label="내 프로필">
@@ -231,15 +231,15 @@
 
                     <!-- 30일 마스터 챌린지 -->
                     <div style="font-size: 12px; color: #666; margin-bottom: 6px; font-weight: bold;">🏆 30일 마스터 챌린지 <span style="color:#E65100; font-weight:normal;">(1+ HBT 예치, 50P + HBT 보상)</span></div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-diet-30d')">
-                            🥗 30일 식단 챌린지
+                    <div style="display: flex; gap: 6px;">
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-diet-30d')">
+                            🥗 30일 식단
                         </button>
-                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-exercise-30d')">
-                            🏃 30일 운동 챌린지
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-exercise-30d')">
+                            🏃 30일 운동
                         </button>
-                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-mind-30d')">
-                            🧘 30일 마음 챌린지
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-mind-30d')">
+                            🧘 30일 마음
                         </button>
                     </div>
                 </div>
@@ -471,6 +471,26 @@
             <button class="share-platform-btn secondary" onclick="shareViaSystem()">시스템 공유</button>
         </div>
         <button class="share-platform-close" onclick="closeSharePlatformModal()">닫기</button>
+    </div>
+</div>
+
+<!-- 30일 종합 결과지 모달 -->
+<div id="report-modal" class="report-modal" style="display:none;">
+    <div class="report-container" id="report-container">
+        <div class="report-header">
+            <h2>☀️ 해빛스쿨 30일 종합 결과지</h2>
+            <div class="report-meta">
+                <span id="report-user-name"></span> · 
+                <span id="report-period"></span>
+            </div>
+        </div>
+        <div class="report-body" id="report-body">
+            <p style="text-align:center; padding:40px; color:#999;">분석 중...</p>
+        </div>
+        <div class="report-actions">
+            <button class="report-btn report-btn-print" onclick="window.print()">🖨️ 인쇄</button>
+            <button class="report-btn report-btn-close" onclick="document.getElementById('report-modal').style.display='none'">닫기</button>
+        </div>
     </div>
 </div>
 

@@ -78,17 +78,6 @@ export const MILESTONES = {
             { id: 'mind14', emoji: '🧘', name: '마음 14일', desc: '마음 14일 달성', target: 14, reward: 25 },
             { id: 'mind30', emoji: '🧘', name: '마음 30일', desc: '마음 30일 달성', target: 30, reward: 50 }
         ]
-    },
-    points: {
-        label: '💰 포인트',
-        levels: [
-            { id: 'points50', emoji: '💰', name: '50P', desc: '50P 달성', target: 50, reward: 5 },
-            { id: 'points100', emoji: '💯', name: '100P', desc: '100P 달성', target: 100, reward: 10 },
-            { id: 'points300', emoji: '💎', name: '300P', desc: '300P 달성', target: 300, reward: 20 },
-            { id: 'points500', emoji: '🏅', name: '500P', desc: '500P 달성', target: 500, reward: 30 },
-            { id: 'points1000', emoji: '👑', name: '1000P', desc: '1000P 달성', target: 1000, reward: 50 },
-            { id: 'points2000', emoji: '🌟', name: '2000P', desc: '2000P 달성', target: 2000, reward: 100 }
-        ]
     }
 };
 

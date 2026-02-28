@@ -1069,6 +1069,27 @@ async function renderDashboard() {
             }
         });
         if(allDone && level < 5) progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level+1})">🎉 Lv ${level+1} 승급하기</button>`;
+
+        // 모든 미션 완료 시 저장 버튼 & 체크박스 비활성화
+        const saveBtn = document.getElementById('btn-save-missions');
+        if (allDone && selectedMissions.length > 0) {
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+                saveBtn.innerText = '✅ 이번 주 미션 완료!';
+            }
+            document.querySelectorAll('#mission-selection-area input[type="checkbox"]').forEach(chk => {
+                chk.disabled = true;
+            });
+        } else {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.style.opacity = '1';
+                saveBtn.style.cursor = 'pointer';
+                saveBtn.innerText = '이번 주 미션 저장';
+            }
+        }
     } else {
         progContainer.style.display = 'none';
     }
@@ -1109,6 +1130,424 @@ window.levelUp = async function(newLevel) {
 };
 
 // compressImage, uploadFileAndGetUrl 등은 상단에서 직접 import
+
+// ========== 30일 종합 결과지 ==========
+window.generate30DayReport = async function() {
+    const user = auth.currentUser;
+    if (!user) { showToast('로그인이 필요합니다.'); return; }
+
+    const modal = document.getElementById('report-modal');
+    modal.style.display = 'flex';
+    document.getElementById('report-user-name').textContent = user.displayName || '사용자';
+    document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#999;">📊 30일간의 기록을 분석 중...</p>';
+
+    try {
+        const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
+        const snapshot = await getDocs(q);
+        let logs = [];
+        snapshot.forEach(d => logs.push(d.data()));
+        logs.reverse(); // oldest first
+
+        if (logs.length < 2) {
+            document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#999;">최소 2일 이상의 기록이 있어야 결과지를 생성할 수 있습니다.</p>';
+            document.getElementById('report-period').textContent = '';
+            return;
+        }
+
+        const startDate = logs[0].date;
+        const endDate = logs[logs.length - 1].date;
+        document.getElementById('report-period').textContent = `${startDate.replace(/-/g,'.')} ~ ${endDate.replace(/-/g,'.')} (${logs.length}일)`;
+
+        // ===== 통계 계산 =====
+        let totalDiet = 0, totalExer = 0, totalMind = 0, totalPoints = 0;
+        let dietPhotos = 0, cardioCount = 0, strengthCount = 0, meditationCount = 0, gratitudeCount = 0;
+        let weights = [], glucoses = [], bpSys = [], bpDia = [];
+        let dailyDietPts = [], dailyExerPts = [], dailyMindPts = [], dailyTotalPts = [];
+        let dietDays = 0, exerDays = 0, mindDays = 0;
+        let streak = 0, maxStreak = 0, currentStreak = 0;
+
+        logs.forEach((log, idx) => {
+            const ap = log.awardedPoints || {};
+            const dp = ap.dietPoints || (ap.diet ? 10 : 0);
+            const ep = ap.exercisePoints || (ap.exercise ? 15 : 0);
+            const mp = ap.mindPoints || (ap.mind ? 5 : 0);
+            const dayTotal = dp + ep + mp;
+
+            totalDiet += dp; totalExer += ep; totalMind += mp; totalPoints += dayTotal;
+            dailyDietPts.push(dp); dailyExerPts.push(ep); dailyMindPts.push(mp); dailyTotalPts.push(dayTotal);
+
+            if (ap.diet || dp > 0) dietDays++;
+            if (ap.exercise || ep > 0) exerDays++;
+            if (ap.mind || mp > 0) mindDays++;
+
+            // 식단 사진 수
+            if (log.diet) {
+                ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => { if(log.diet[k]) dietPhotos++; });
+            }
+            // 운동 횟수
+            if (log.exercise) {
+                cardioCount += (log.exercise.cardioList?.length || (log.exercise.cardioImageUrl ? 1 : 0));
+                strengthCount += (log.exercise.strengthList?.length || (log.exercise.strengthVideoUrl ? 1 : 0));
+            }
+            // 마음
+            if (log.sleepAndMind?.meditationDone) meditationCount++;
+            if (log.sleepAndMind?.gratitude) gratitudeCount++;
+
+            // 체중·혈당·혈압
+            if (log.metrics) {
+                if (log.metrics.weight) weights.push({ date: log.date, v: parseFloat(log.metrics.weight) });
+                if (log.metrics.glucose) glucoses.push({ date: log.date, v: parseFloat(log.metrics.glucose) });
+                if (log.metrics.bpSystolic) bpSys.push({ date: log.date, v: parseFloat(log.metrics.bpSystolic) });
+                if (log.metrics.bpDiastolic) bpDia.push({ date: log.date, v: parseFloat(log.metrics.bpDiastolic) });
+            }
+
+            // 연속 기록
+            if (dayTotal > 0) { currentStreak++; maxStreak = Math.max(maxStreak, currentStreak); }
+            else currentStreak = 0;
+        });
+
+        const avgDailyPts = logs.length > 0 ? Math.round(totalPoints / logs.length) : 0;
+        const participationRate = Math.round((logs.filter(l => {
+            const ap = l.awardedPoints || {};
+            return ap.diet || ap.exercise || ap.mind || (ap.dietPoints||0) + (ap.exercisePoints||0) + (ap.mindPoints||0) > 0;
+        }).length / logs.length) * 100);
+
+        // 날짜 레이블 (축약)
+        const dateLabels = logs.map(l => l.date.substring(5).replace('-','/'));
+
+        // ===== HTML 렌더 =====
+        let html = '';
+
+        // — 요약 카드 —
+        html += `<div class="report-section">
+            <div class="report-section-title">📋 종합 요약</div>
+            <div class="report-summary-grid">
+                <div class="report-stat-card"><div class="report-stat-value">${totalPoints}P</div><div class="report-stat-label">총 획득 포인트</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${avgDailyPts}P</div><div class="report-stat-label">일 평균</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${participationRate}%</div><div class="report-stat-label">참여율</div></div>
+                <div class="report-stat-card"><div class="report-stat-value">${maxStreak}일</div><div class="report-stat-label">최대 연속</div></div>
+            </div>
+        </div>`;
+
+        // — 카테고리별 기록 —
+        html += `<div class="report-section">
+            <div class="report-section-title">📊 카테고리별 분석</div>
+            <div class="report-category-grid">
+                <div class="report-cat-card diet">
+                    <div class="report-cat-emoji">🥗</div>
+                    <div class="report-cat-name">식단</div>
+                    <div class="report-cat-stat">${dietDays}일 / ${logs.length}일</div>
+                    <div class="report-cat-detail">📷 사진 ${dietPhotos}장 · ${totalDiet}P</div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays/logs.length*100)}%; background:#4CAF50;"></div></div>
+                </div>
+                <div class="report-cat-card exercise">
+                    <div class="report-cat-emoji">🏃</div>
+                    <div class="report-cat-name">운동</div>
+                    <div class="report-cat-stat">${exerDays}일 / ${logs.length}일</div>
+                    <div class="report-cat-detail">🏋️ 유산소 ${cardioCount}회 · 근력 ${strengthCount}회 · ${totalExer}P</div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays/logs.length*100)}%; background:#2196F3;"></div></div>
+                </div>
+                <div class="report-cat-card mind">
+                    <div class="report-cat-emoji">🧘</div>
+                    <div class="report-cat-name">마음</div>
+                    <div class="report-cat-stat">${mindDays}일 / ${logs.length}일</div>
+                    <div class="report-cat-detail">🧘 명상 ${meditationCount}회 · 감사일기 ${gratitudeCount}회 · ${totalMind}P</div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays/logs.length*100)}%; background:#9C27B0;"></div></div>
+                </div>
+            </div>
+        </div>`;
+
+        // — 일별 포인트 그래프 —
+        html += `<div class="report-section">
+            <div class="report-section-title">📈 일별 포인트 추이</div>
+            <canvas id="report-chart-points" class="report-canvas"></canvas>
+        </div>`;
+
+        // — 카테고리별 일별 그래프 —
+        html += `<div class="report-section">
+            <div class="report-section-title">📉 카테고리별 일별 추이</div>
+            <canvas id="report-chart-categories" class="report-canvas"></canvas>
+        </div>`;
+
+        // — 건강 지표 그래프 (데이터 있을 때만) —
+        if (weights.length >= 2 || glucoses.length >= 2 || bpSys.length >= 2) {
+            html += `<div class="report-section">
+                <div class="report-section-title">🏥 건강 지표 변화</div>`;
+            if (weights.length >= 2) {
+                const wFirst = weights[0].v, wLast = weights[weights.length-1].v;
+                const wDiff = (wLast - wFirst).toFixed(1);
+                const wSign = wDiff > 0 ? '+' : '';
+                html += `<div class="report-metric-summary">⚖️ 체중: ${wFirst}kg → ${wLast}kg <span class="report-metric-diff ${wDiff < 0 ? 'good' : wDiff > 0 ? 'warn' : ''}">(${wSign}${wDiff}kg)</span></div>`;
+            }
+            if (glucoses.length >= 2) {
+                const gFirst = glucoses[0].v, gLast = glucoses[glucoses.length-1].v;
+                const gDiff = Math.round(gLast - gFirst);
+                const gSign = gDiff > 0 ? '+' : '';
+                html += `<div class="report-metric-summary">🩸 혈당: ${gFirst} → ${gLast}mg/dL <span class="report-metric-diff ${gDiff < 0 ? 'good' : gDiff > 0 ? 'warn' : ''}">(${gSign}${gDiff})</span></div>`;
+            }
+            if (bpSys.length >= 2) {
+                const sFirst = bpSys[0].v, sLast = bpSys[bpSys.length-1].v;
+                const sDiff = Math.round(sLast - sFirst);
+                const sSign = sDiff > 0 ? '+' : '';
+                html += `<div class="report-metric-summary">💓 혈압(수축): ${sFirst} → ${sLast}mmHg <span class="report-metric-diff ${sDiff < 0 ? 'good' : sDiff > 0 ? 'warn' : ''}">(${sSign}${sDiff})</span></div>`;
+            }
+            html += `<canvas id="report-chart-health" class="report-canvas"></canvas></div>`;
+        }
+
+        // — 일별 기록 캘린더 히트맵 —
+        html += `<div class="report-section">
+            <div class="report-section-title">🗓️ 일별 기록 히트맵</div>
+            <div class="report-heatmap" id="report-heatmap"></div>
+            <div class="report-heatmap-legend">
+                <span class="hm-legend-item"><span class="hm-box" style="background:#eee;"></span>미기록</span>
+                <span class="hm-legend-item"><span class="hm-box" style="background:#FFE0B2;"></span>1~20P</span>
+                <span class="hm-legend-item"><span class="hm-box" style="background:#FFB74D;"></span>21~50P</span>
+                <span class="hm-legend-item"><span class="hm-box" style="background:#FF8C00;"></span>51~80P</span>
+            </div>
+        </div>`;
+
+        document.getElementById('report-body').innerHTML = html;
+
+        // ===== 히트맵 렌더 =====
+        const heatmapEl = document.getElementById('report-heatmap');
+        logs.forEach((log, idx) => {
+            const ap = log.awardedPoints || {};
+            const pts = (ap.dietPoints||0) + (ap.exercisePoints||0) + (ap.mindPoints||0) || ((ap.diet?10:0)+(ap.exercise?15:0)+(ap.mind?5:0));
+            let color = '#eee';
+            if (pts > 50) color = '#FF8C00';
+            else if (pts > 20) color = '#FFB74D';
+            else if (pts > 0) color = '#FFE0B2';
+            const dayLabel = log.date.substring(8);
+            heatmapEl.innerHTML += `<div class="hm-cell" style="background:${color};" title="${log.date}: ${pts}P">${dayLabel}</div>`;
+        });
+
+        // ===== 캔버스 그래프 렌더 =====
+        // 일별 포인트 스택 바 차트
+        drawReportBarChart('report-chart-points', dateLabels, [
+            { data: dailyDietPts, color: '#4CAF50', label: '식단' },
+            { data: dailyExerPts, color: '#2196F3', label: '운동' },
+            { data: dailyMindPts, color: '#9C27B0', label: '마음' }
+        ], '포인트(P)');
+
+        // 카테고리별 라인 차트
+        drawReportLineChart('report-chart-categories', dateLabels, [
+            { data: dailyDietPts, color: '#4CAF50', label: '식단' },
+            { data: dailyExerPts, color: '#2196F3', label: '운동' },
+            { data: dailyMindPts, color: '#9C27B0', label: '마음' }
+        ]);
+
+        // 건강 지표 차트
+        if (document.getElementById('report-chart-health')) {
+            let healthLines = [];
+            if (weights.length >= 2) healthLines.push({ data: weights.map(w => w.v), dates: weights.map(w => w.date.substring(5).replace('-','/')), color: '#FF6F00', label: '체중(kg)' });
+            if (glucoses.length >= 2) healthLines.push({ data: glucoses.map(g => g.v), dates: glucoses.map(g => g.date.substring(5).replace('-','/')), color: '#E53935', label: '혈당' });
+            if (bpSys.length >= 2) healthLines.push({ data: bpSys.map(s => s.v), dates: bpSys.map(s => s.date.substring(5).replace('-','/')), color: '#D32F2F', label: '수축기' });
+            if (bpDia.length >= 2) healthLines.push({ data: bpDia.map(d => d.v), dates: bpDia.map(d => d.date.substring(5).replace('-','/')), color: '#1976D2', label: '이완기' });
+            drawReportHealthChart('report-chart-health', healthLines);
+        }
+
+    } catch (e) {
+        console.error('30일 결과지 오류:', e);
+        document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#e74c3c;">⚠️ 결과지 생성 중 오류가 발생했습니다.</p>';
+    }
+};
+
+// 스택 바 차트 그리기
+function drawReportBarChart(canvasId, labels, datasets, yLabel) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 360;
+    const h = 200;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 25, right: 10, bottom: 35, left: 35 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    const n = labels.length;
+    const barW = Math.max(4, Math.min(16, chartW / n - 2));
+
+    // Y max
+    let maxY = 0;
+    for (let i = 0; i < n; i++) { let sum = 0; datasets.forEach(ds => sum += (ds.data[i]||0)); maxY = Math.max(maxY, sum); }
+    maxY = Math.ceil(maxY / 10) * 10 || 80;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 그리드
+    ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + chartH - (chartH * i / 4);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(Math.round(maxY * i / 4), pad.left - 4, y + 3);
+    }
+
+    // 바
+    for (let i = 0; i < n; i++) {
+        const x = pad.left + (chartW / n) * i + (chartW / n - barW) / 2;
+        let offsetY = 0;
+        datasets.forEach(ds => {
+            const val = ds.data[i] || 0;
+            const barH = (val / maxY) * chartH;
+            ctx.fillStyle = ds.color;
+            ctx.fillRect(x, pad.top + chartH - offsetY - barH, barW, barH);
+            offsetY += barH;
+        });
+        // X 레이블 (간격 조절)
+        if (n <= 15 || i % Math.ceil(n / 10) === 0) {
+            ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+            ctx.save(); ctx.translate(x + barW/2, h - 3); ctx.rotate(-0.5);
+            ctx.fillText(labels[i], 0, 0); ctx.restore();
+        }
+    }
+
+    // 범례
+    let lx = pad.left;
+    datasets.forEach(ds => {
+        ctx.fillStyle = ds.color; ctx.fillRect(lx, 4, 10, 10);
+        ctx.fillStyle = '#333'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(ds.label, lx + 13, 13); lx += ctx.measureText(ds.label).width + 26;
+    });
+}
+
+// 라인 차트 그리기
+function drawReportLineChart(canvasId, labels, datasets) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 360;
+    const h = 200;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 25, right: 10, bottom: 35, left: 35 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+    const n = labels.length;
+
+    let maxY = 0;
+    datasets.forEach(ds => ds.data.forEach(v => { if (v > maxY) maxY = v; }));
+    maxY = Math.ceil(maxY / 10) * 10 || 30;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 그리드
+    ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + chartH - (chartH * i / 4);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(Math.round(maxY * i / 4), pad.left - 4, y + 3);
+    }
+
+    // 라인
+    datasets.forEach(ds => {
+        ctx.strokeStyle = ds.color; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const x = pad.left + (chartW / (n - 1 || 1)) * i;
+            const y = pad.top + chartH - ((ds.data[i] || 0) / maxY) * chartH;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        // 점
+        for (let i = 0; i < n; i++) {
+            if (n <= 15 || i % Math.ceil(n / 8) === 0 || i === n - 1) {
+                const x = pad.left + (chartW / (n - 1 || 1)) * i;
+                const y = pad.top + chartH - ((ds.data[i] || 0) / maxY) * chartH;
+                ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = ds.color; ctx.fill();
+            }
+        }
+    });
+
+    // X 레이블
+    for (let i = 0; i < n; i++) {
+        if (n <= 15 || i % Math.ceil(n / 10) === 0) {
+            const x = pad.left + (chartW / (n - 1 || 1)) * i;
+            ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+            ctx.save(); ctx.translate(x, h - 3); ctx.rotate(-0.5);
+            ctx.fillText(labels[i], 0, 0); ctx.restore();
+        }
+    }
+
+    // 범례
+    let lx = pad.left;
+    datasets.forEach(ds => {
+        ctx.fillStyle = ds.color; ctx.fillRect(lx, 4, 10, 10);
+        ctx.fillStyle = '#333'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(ds.label, lx + 13, 13); lx += ctx.measureText(ds.label).width + 26;
+    });
+}
+
+// 건강 지표 멀티 라인 차트 (각 데이터셋은 독립 X축)
+function drawReportHealthChart(canvasId, healthLines) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth || 360;
+    const h = 200;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+
+    const pad = { top: 25, right: 10, bottom: 30, left: 35 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 각 라인 독립 스케일로 0~1 정규화
+    healthLines.forEach(line => {
+        const minV = Math.min(...line.data);
+        const maxV = Math.max(...line.data);
+        const range = maxV - minV || 1;
+        line.normalized = line.data.map(v => (v - minV + range * 0.05) / (range * 1.1));
+        line.minV = minV; line.maxV = maxV;
+    });
+
+    // 그리드
+    ctx.strokeStyle = '#f0f0f0'; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = pad.top + chartH - (chartH * i / 4);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+    }
+
+    // 라인
+    healthLines.forEach(line => {
+        const n = line.data.length;
+        ctx.strokeStyle = line.color; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < n; i++) {
+            const x = pad.left + (chartW / (n - 1 || 1)) * i;
+            const y = pad.top + chartH - line.normalized[i] * chartH;
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // 시작·끝 값 표시
+        const xStart = pad.left;
+        const yStart = pad.top + chartH - line.normalized[0] * chartH;
+        const xEnd = pad.left + chartW;
+        const yEnd = pad.top + chartH - line.normalized[n-1] * chartH;
+        ctx.fillStyle = line.color; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(line.data[0], xStart + 3, yStart - 5);
+        ctx.textAlign = 'right';
+        ctx.fillText(line.data[n-1], xEnd - 3, yEnd - 5);
+    });
+
+    // 범례
+    let lx = pad.left;
+    healthLines.forEach(line => {
+        ctx.fillStyle = line.color; ctx.fillRect(lx, 4, 10, 10);
+        ctx.fillStyle = '#333'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(line.label, lx + 13, 13); lx += ctx.measureText(line.label).width + 26;
+    });
+}
 
 // ========== 공복 지표 추이 그래프 ==========
 let fastingGraphData = [];
@@ -2126,12 +2565,13 @@ function cleanupGalleryResources() {
 window.cleanupGalleryResources = cleanupGalleryResources;
 
 async function loadGalleryData() {
+    const user = auth.currentUser;
+    const myId = user ? user.uid : "";
+
     if(cachedGalleryLogs.length === 0) {
         const container = document.getElementById('gallery-container');
         container.innerHTML = '<p style="text-align:center; font-size:13px;">데이터를 불러오는 중입니다...</p>';
         
-        const user = auth.currentUser;
-        const myId = user ? user.uid : "";
         if(user) {
             const userSnap = await getDoc(doc(db, "users", myId));
             if(userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
