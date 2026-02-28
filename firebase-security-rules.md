@@ -79,16 +79,16 @@ service cloud.firestore {
                     && isValidDailyLog()
                     && request.resource.data.userId == request.auth.uid;
       
-      // 수정: 본인 데이터 수정 OR 다른 사용자의 reactions 필드만 수정
+      // 수정: 본인 데이터 수정 OR 다른 사용자의 reactions/comments 필드만 수정
       allow update: if isSignedIn() && (
         // Case 1: 본인 게시물 전체 수정
         (isOwner(resource.data.userId) 
           && isValidDailyLog()
           && request.resource.data.userId == resource.data.userId)
         ||
-        // Case 2: 다른 사용자가 reactions 필드만 수정 (좋아요/반응)
-        // reactions 외의 필드는 변경되지 않아야 함
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']))
+        // Case 2: 다른 사용자가 reactions 또는 comments 필드만 수정 (좋아요/댓글)
+        // reactions, comments 외의 필드는 변경되지 않아야 함
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'comments']))
       );
       
       // 관리자: adminFeedbackHistory 필드 수정 가능

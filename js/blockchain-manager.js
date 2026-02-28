@@ -355,12 +355,36 @@ export async function startChallenge30D(challengeId) {
         endDateObj.setDate(endDateObj.getDate() + duration);
         const endDate = endDateObj.toISOString().split('T')[0];
 
+        // 오늘 이미 인증한 데이터가 있으면 1일 인정
+        let initialCompletedDays = 0;
+        let initialCompletedDates = [];
+        try {
+            const todayLogId = `${currentUser.uid}_${startDate}`;
+            const todayLogSnap = await getDoc(doc(db, "daily_logs", todayLogId));
+            if (todayLogSnap.exists()) {
+                const todayData = todayLogSnap.data();
+                const ap = todayData.awardedPoints || {};
+                const category = challengeDef.category;
+                let todayCounted = false;
+                if (category === 'diet' && ap.diet) todayCounted = true;
+                else if (category === 'exercise' && ap.exercise) todayCounted = true;
+                else if (category === 'mind' && ap.mind) todayCounted = true;
+                else if (category === 'all' && ap.diet && ap.exercise && ap.mind) todayCounted = true;
+                if (todayCounted) {
+                    initialCompletedDays = 1;
+                    initialCompletedDates = [startDate];
+                }
+            }
+        } catch (e) {
+            console.warn('오늘 인증 데이터 확인 실패 (무시):', e.message);
+        }
+
         const challengeData = {
             challengeId: challengeId,
             startDate: startDate,
             endDate: endDate,
-            completedDays: 0,
-            completedDates: [],
+            completedDays: initialCompletedDays,
+            completedDates: initialCompletedDates,
             totalDays: duration,
             hbtStaked: hbtAmount,
             status: 'ongoing',
@@ -377,9 +401,9 @@ export async function startChallenge30D(challengeId) {
         await updateDoc(userRef, updateData);
 
         if (hbtAmount > 0) {
-            showToast(`✅ ${duration}일 챌린지 시작!\n${hbtAmount} HBT 예치 완료.\n80%+ 달성 시 원금 환급, 100% 달성 시 +20% 보너스!`);
+            showToast(`✅ ${duration}일 챌린지 시작!\n${hbtAmount} HBT 예치 완료.${initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n80%+ 달성 시 원금 환급, 100% 달성 시 +20% 보너스!`);
         } else {
-            showToast(`✅ ${duration}일 챌린지 시작!\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
+            showToast(`✅ ${duration}일 챌린지 시작!${initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
         }
 
         // 6. 거래 기록 저장 (실패해도 챌린지 시작은 이미 완료)

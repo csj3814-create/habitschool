@@ -2408,6 +2408,20 @@ window.shareMyCard = async function() {
         latestShareBlob = blob;
         latestShareFile = new File([blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
         latestShareText = '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪\n\n👇 갤러리 구경가기 (가입 없이 가능)\n' + window.location.href;
+
+        // Web Share API 우선 시도 (모바일에서 모든 앱으로 직접 공유)
+        const shareData = { title: '해빛스쿨 인증', text: latestShareText, files: [latestShareFile] };
+        if (navigator.canShare && navigator.canShare(shareData)) {
+            try {
+                await navigator.share(shareData);
+                return; // 공유 성공 시 종료
+            } catch (shareErr) {
+                if (shareErr.name !== 'AbortError') {
+                    console.warn('시스템 공유 취소/실패, 모달 표시:', shareErr);
+                }
+            }
+        }
+        // Web Share API 미지원 또는 실패 시 모달 표시
         openSharePlatformModal();
     } catch (err) {
         console.error('공유 카드 생성 오류:', err);
@@ -2440,35 +2454,54 @@ window.shareViaSystem = async function() {
     } catch (_) {}
 };
 
+function downloadShareImage() {
+    if (!latestShareBlob) return;
+    const url = URL.createObjectURL(latestShareBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `haebit_cert_${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
 async function shareFileToAppsOrFallback(platform) {
+    // Web Share API 재시도
     const shareData = {
         title: '해빛스쿨 인증',
         text: latestShareText,
         files: [latestShareFile]
     };
-
     if (navigator.canShare && navigator.canShare(shareData)) {
-        await navigator.share(shareData);
-        closeSharePlatformModal();
-        return true;
+        try {
+            await navigator.share(shareData);
+            closeSharePlatformModal();
+            return true;
+        } catch (_) {}
     }
 
-    try {
-        await navigator.clipboard.writeText(latestShareText);
-    } catch (_) {}
+    // 이미지 자동 다운로드
+    downloadShareImage();
 
     const pageUrl = encodeURIComponent(window.location.href);
-    if (platform === 'facebook') {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`, '_blank');
-        showToast('브라우저 제한으로 직접 업로드는 불가합니다. 페이스북 창에서 이미지 추가 후 붙여넣기 해주세요.');
+    const shareText = encodeURIComponent('오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪');
+
+    if (platform === 'instagram') {
+        window.open('https://www.instagram.com/', '_blank');
+        showToast('📥 이미지가 저장되었습니다!\n인스타그램 앱에서 이미지를 선택하여 게시해주세요.');
+    } else if (platform === 'facebook') {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${shareText}`, '_blank');
+        showToast('📥 이미지가 저장되었습니다!\n페이스북 창에서 이미지를 추가해주세요.');
+    } else if (platform === 'x') {
+        window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${pageUrl}`, '_blank');
+        showToast('📥 이미지가 저장되었습니다!\nX(트위터) 창에서 이미지를 추가해주세요.');
     } else if (platform === 'kakao') {
         window.open(`https://story.kakao.com/share?url=${pageUrl}`, '_blank');
-        showToast('브라우저 제한으로 직접 업로드는 불가합니다. 카카오에서 이미지 추가 후 붙여넣기 해주세요.');
-    } else {
-        window.open('https://www.instagram.com/', '_blank');
-        showToast('브라우저 제한으로 웹에서 인스타 피드 자동 업로드는 불가합니다. 앱에서 이미지 선택 후 붙여넣기 해주세요.');
+        showToast('📥 이미지가 저장되었습니다!\n카카오에서 이미지를 추가해주세요.');
     }
 
+    closeSharePlatformModal();
     return false;
 }
 

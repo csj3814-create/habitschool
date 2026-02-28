@@ -472,12 +472,13 @@
 <div id="share-platform-modal" onclick="closeSharePlatformModal()">
     <div class="share-platform-card" onclick="event.stopPropagation()">
         <h4>공유 채널 선택</h4>
-        <p>1:1 인증 이미지가 생성되었습니다.</p>
+        <p>📸 이미지가 자동 저장되고 SNS 창이 열립니다.</p>
         <div class="share-platform-actions">
-            <button class="share-platform-btn" onclick="shareToPlatform('instagram')">인스타그램</button>
-            <button class="share-platform-btn" onclick="shareToPlatform('facebook')">페이스북</button>
-            <button class="share-platform-btn" onclick="shareToPlatform('kakao')">카카오</button>
-            <button class="share-platform-btn secondary" onclick="shareViaSystem()">시스템 공유</button>
+            <button class="share-platform-btn" onclick="shareToPlatform('instagram')" style="background:#E1306C;">📷 인스타그램</button>
+            <button class="share-platform-btn" onclick="shareToPlatform('facebook')" style="background:#1877F2;">📘 페이스북</button>
+            <button class="share-platform-btn" onclick="shareToPlatform('x')" style="background:#000;">𝕏 X(트위터)</button>
+            <button class="share-platform-btn" onclick="shareToPlatform('kakao')" style="background:#FEE500; color:#3E2723;">💬 카카오톡</button>
+            <button class="share-platform-btn secondary" onclick="shareViaSystem()">📱 시스템 공유</button>
         </div>
         <button class="share-platform-close" onclick="closeSharePlatformModal()">닫기</button>
     </div>
