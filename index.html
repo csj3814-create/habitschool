@@ -1397,17 +1397,17 @@
         }
         
         try {
-            // 이미지 파일이면 압축 후 업로드
-            console.log('📦 파일 타입 확인:', file.type.startsWith('image/') ? '이미지 (압축)' : '비디오 (그대로)');
+            // ⚠️ 임시: 압축 비활성화 (테스트용) - 원본 파일로 업로드
+            console.log('📦 파일 타입 확인:', file.type.startsWith('image/') ? '이미지 (압축 DISABLED)' : '비디오 (그대로)');
             
-            let fileToUpload = file;
-            if (file.type.startsWith('image/')) {
-                console.log('🔨 이미지 압축 시작...');
-                fileToUpload = await compressImage(file);
-                console.log('✅ 압축 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
-            }
+            let fileToUpload = file;  // 압축 안 함
+            // if (file.type.startsWith('image/')) {
+            //     console.log('🔨 이미지 압축 시작...');
+            //     fileToUpload = await compressImage(file);
+            //     console.log('✅ 압축 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
+            // }
             
-            // 압축 파일 크기 검증 (50MB까지 허용)
+            // 파일 크기 검증 (50MB까지 허용)
             const MAX_SIZE_MB = 50;
             const fileSizeMB = fileToUpload.size / (1024 * 1024);
             if (fileSizeMB > MAX_SIZE_MB) {
@@ -1417,7 +1417,7 @@
                 return null;
             }
             
-            console.log('✅ 파일 크기 검증 완료');
+            console.log('✅ 파일 크기 검증 완료, 크기:', (fileToUpload.size / (1024 * 1024)).toFixed(2) + ' MB');
             
             const timestamp = Date.now();
             const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
@@ -1426,12 +1426,14 @@
             const storageRef = ref(storage, storagePath);
             console.log('📤 uploadBytes 시작...');
             
-            await uploadBytes(storageRef, fileToUpload);
+            const uploadResult = await uploadBytes(storageRef, fileToUpload);
+            console.log('✅ uploadBytes 결과:', uploadResult);
             
             console.log('📥 getDownloadURL 호출...');
             const url = await getDownloadURL(storageRef);
+            console.log('✅ 다운로드 URL:', url);
             
-            console.log('✅ 업로드 완료:', url);
+            console.log('✅ 업로드 COMPLETE - 최종 URL:', url);
             return url;
         } catch(error) {
             console.error('❌ 파일 업로드 실패');
