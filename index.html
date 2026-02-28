@@ -7,7 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FF9800">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     
@@ -195,19 +195,49 @@
                 <!-- 예치 금액 입력 -->
                 <div id="challenge-selection" style="display: block;">
                     <div style="margin-bottom: 12px;">
-                        <label style="font-size: 12px; color: #666; font-weight: bold;">예치할 HBT:</label>
-                        <input type="number" id="challenge-stake-amount" min="1" value="1" step="1" style="width: 100px; padding: 8px; border: 1px solid #DDD; border-radius: 6px; font-size: 14px; margin-left: 8px;">
+                        <label style="font-size: 12px; color: #666; font-weight: bold;">예치할 HBT (7일/30일용):</label>
+                        <input type="number" id="challenge-stake-amount" min="0" value="1" step="0.5" style="width: 100px; padding: 8px; border: 1px solid #DDD; border-radius: 6px; font-size: 14px; margin-left: 8px;">
                         <span style="font-size: 12px; color: #999;"> HBT</span>
                     </div>
-                    <div style="font-size: 12px; color: #666; margin-bottom: 8px; font-weight: bold;">도전할 챌린지 선택:</div>
+
+                    <!-- 3일 미니 챌린지 -->
+                    <div style="font-size: 12px; color: #666; margin-bottom: 6px; font-weight: bold;">⚡ 3일 미니 챌린지 <span style="color:#4CAF50; font-weight:normal;">(예치 없음, 10P 보상)</span></div>
+                    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <button class="submit-btn" style="background-color: #66BB6A; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-diet-3d')">
+                            🥗 3일 식단
+                        </button>
+                        <button class="submit-btn" style="background-color: #66BB6A; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-exercise-3d')">
+                            🏃 3일 운동
+                        </button>
+                        <button class="submit-btn" style="background-color: #66BB6A; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-mind-3d')">
+                            🧘 3일 마음
+                        </button>
+                    </div>
+
+                    <!-- 7일 위클리 챌린지 -->
+                    <div style="font-size: 12px; color: #666; margin-bottom: 6px; font-weight: bold;">🔥 7일 위클리 챌린지 <span style="color:#FF9800; font-weight:normal;">(0.5+ HBT 예치, 30P 보상)</span></div>
+                    <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                        <button class="submit-btn" style="background-color: #FF9800; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-diet-7d')">
+                            🥗 7일 식단
+                        </button>
+                        <button class="submit-btn" style="background-color: #FF9800; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-exercise-7d')">
+                            🏃 7일 운동
+                        </button>
+                        <button class="submit-btn" style="background-color: #FF9800; font-size: 12px; flex:1; padding:8px;" onclick="startChallenge30D('challenge-mind-7d')">
+                            🧘 7일 마음
+                        </button>
+                    </div>
+
+                    <!-- 30일 마스터 챌린지 -->
+                    <div style="font-size: 12px; color: #666; margin-bottom: 6px; font-weight: bold;">🏆 30일 마스터 챌린지 <span style="color:#E65100; font-weight:normal;">(1+ HBT 예치, 50P + HBT 보상)</span></div>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-diet-30d')">
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-diet-30d')">
                             🥗 30일 식단 챌린지
                         </button>
-                        <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-exercise-30d')">
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-exercise-30d')">
                             🏃 30일 운동 챌린지
                         </button>
-                        <button class="submit-btn" style="background-color: #FF9800; font-size: 13px;" onclick="startChallenge30D('challenge-mind-30d')">
+                        <button class="submit-btn" style="background-color: #E65100; font-size: 13px;" onclick="startChallenge30D('challenge-mind-30d')">
                             🧘 30일 마음 챌린지
                         </button>
                     </div>
@@ -437,7 +467,7 @@
 <script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
             .then(reg => console.log('✅ SW 등록:', reg.scope))
             .catch(err => console.warn('⚠️ SW 등록 실패:', err));
     });

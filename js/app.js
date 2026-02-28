@@ -716,19 +716,29 @@ window.updateAssetDisplay = async function() {
                 const progressPct = Math.round((ch.completedDays / (ch.totalDays || 30)) * 100);
                 const remain = (ch.totalDays || 30) - ch.completedDays;
                 const challengeEmojis = {
-                    'challenge-diet-30d': '🥗 식단',
-                    'challenge-exercise-30d': '🏃 운동',
-                    'challenge-mind-30d': '🧘 마음'
+                    'challenge-diet-3d': '🥗 3일 식단',
+                    'challenge-exercise-3d': '🏃 3일 운동',
+                    'challenge-mind-3d': '🧘 3일 마음',
+                    'challenge-diet-7d': '🥗 7일 식단',
+                    'challenge-exercise-7d': '🏃 7일 운동',
+                    'challenge-mind-7d': '🧘 7일 마음',
+                    'challenge-diet-30d': '🥗 30일 식단',
+                    'challenge-exercise-30d': '🏃 30일 운동',
+                    'challenge-mind-30d': '🧘 30일 마음'
                 };
                 const challengeName = challengeEmojis[ch.challengeId] || '챌린지';
+                const totalDays = parseInt(ch.totalDays) || 30;
+                const stakeDisplay = ch.hbtStaked > 0 
+                    ? `<div>💰 예치: ${escapeHtml(String(ch.hbtStaked))} HBT</div>` 
+                    : `<div>🎯 무료 참가</div>`;
                 
                 if (challengeContainer) {
                     challengeContainer.style.display = 'block';
                     challengeInfo.innerHTML = `
                         <div style="margin-bottom:8px;"><strong>${escapeHtml(challengeName)} 챌린지</strong></div>
                         <div>📅 ${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
-                        <div>💰 예치: ${escapeHtml(String(ch.hbtStaked))} HBT</div>
-                        <div>✅ 진행: ${parseInt(ch.completedDays) || 0}/${parseInt(ch.totalDays) || 30}일 (${parseInt(remain) || 0}일 남음)</div>
+                        ${stakeDisplay}
+                        <div>✅ 진행: ${parseInt(ch.completedDays) || 0}/${totalDays}일 (${parseInt(remain) || 0}일 남음)</div>
                         <div style="background:#fff; border-radius:4px; height:20px; margin-top:8px; overflow:hidden;">
                             <div style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height:100%; width:${progressPct}%; transition:width 0.5s; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:11px; color:white; font-weight:bold;">${progressPct}%</div>
                         </div>
@@ -805,6 +815,12 @@ window.updateAssetDisplay = async function() {
                     }
                 } catch (txErr) {
                     console.warn('⚠️ 거래 기록 로드 스킵:', txErr.message);
+                    if (txErr.message?.includes('index')) {
+                        console.info('💡 Firebase Console에서 복합 인덱스를 생성해주세요. 위 에러 메시지의 링크를 클릭하면 자동 생성됩니다.');
+                    }
+                    if (txContainer) {
+                        txContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">거래 기록을 불러오는 중입니다...</p>';
+                    }
                 }
             }
         }
@@ -1314,6 +1330,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 });
 
 // [핵심] 갤러리 하트 누르면 즉각 반응 (새로고침 방지)
+// reactions 필드만 업데이트하여 보안 규칙 충돌 방지
 window.toggleReaction = async function(docId, reactionType, btnElement) {
     const user = auth.currentUser;
     if(!user) { document.getElementById('login-modal').style.display='flex'; return; }
@@ -1328,26 +1345,29 @@ window.toggleReaction = async function(docId, reactionType, btnElement) {
 
     try {
         const logRef = doc(db, "daily_logs", docId);
-        const logSnap = await getDoc(logRef);
-        if(logSnap.exists()) {
-            const logData = logSnap.data();
-            let reactions = logData.reactions || { heart: [], fire: [], clap: [] };
-            if (!reactions[reactionType]) reactions[reactionType] = [];
+        
+        // arrayUnion/arrayRemove로 원자적 업데이트 (전체 문서 읽기 불필요)
+        if (isActive) {
+            // 반응 제거
+            await setDoc(logRef, { 
+                reactions: { [reactionType]: arrayRemove(user.uid) }
+            }, { merge: true });
+        } else {
+            // 반응 추가
+            await setDoc(logRef, { 
+                reactions: { [reactionType]: arrayUnion(user.uid) }
+            }, { merge: true });
             
-            const wasActive = reactions[reactionType].includes(user.uid);
-            if(wasActive) {
-                reactions[reactionType] = reactions[reactionType].filter(id => id !== user.uid);
-            } else {
-                reactions[reactionType].push(user.uid);
-                // 반응 추가: 게시물 작성자에게 알림 저장
-                const postOwnerId = logData.userId;
+            // 게시물 작성자에게 알림 저장
+            const logSnap = await getDoc(logRef);
+            if (logSnap.exists()) {
+                const postOwnerId = logSnap.data().userId;
                 await saveReactionNotification(docId, reactionType, user.uid, user.displayName, postOwnerId);
             }
-            await setDoc(logRef, { reactions: reactions }, {merge: true});
         }
     } catch(error) {
         console.error('반응 저장 오류:', error);
-        // UI 로백 (실패 시 원복)
+        // UI 롤백 (실패 시 원복)
         if (isActive) { btnElement.classList.add('active'); count++; } 
         else { btnElement.classList.remove('active'); count = Math.max(0, count - 1); }
         span.innerText = count;

@@ -3,21 +3,21 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v1';
+const CACHE_NAME = 'habitschool-v2';
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/js/main.js',
-    '/js/app.js',
-    '/js/auth.js',
-    '/js/firebase-config.js',
-    '/js/data-manager.js',
-    '/js/ui-helpers.js',
-    '/js/security.js',
-    '/js/blockchain-config.js',
-    '/js/blockchain-manager.js',
-    '/manifest.json'
+    './',
+    './index.html',
+    './styles.css',
+    './js/main.js',
+    './js/app.js',
+    './js/auth.js',
+    './js/firebase-config.js',
+    './js/data-manager.js',
+    './js/ui-helpers.js',
+    './js/security.js',
+    './js/blockchain-config.js',
+    './js/blockchain-manager.js',
+    './manifest.json'
 ];
 
 // 설치: 정적 자산 캐싱

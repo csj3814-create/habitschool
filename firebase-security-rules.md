@@ -74,14 +74,25 @@ service cloud.firestore {
       // 읽기: 로그인한 모든 사용자 (갤러리 공유 기능)
       allow read: if isSignedIn();
       
-      // 쓰기: 본인 데이터만 수정 가능
+      // 생성: 본인 데이터만
       allow create: if isSignedIn() 
                     && isValidDailyLog()
                     && request.resource.data.userId == request.auth.uid;
       
-      allow update: if isOwner(resource.data.userId) 
-                    && isValidDailyLog()
-                    && request.resource.data.userId == resource.data.userId;  // userId 변경 금지
+      // 수정: 본인 데이터 수정 OR 다른 사용자의 reactions 필드만 수정
+      allow update: if isSignedIn() && (
+        // Case 1: 본인 게시물 전체 수정
+        (isOwner(resource.data.userId) 
+          && isValidDailyLog()
+          && request.resource.data.userId == resource.data.userId)
+        ||
+        // Case 2: 다른 사용자가 reactions 필드만 수정 (좋아요/반응)
+        // reactions 외의 필드는 변경되지 않아야 함
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']))
+      );
+      
+      // 관리자: adminFeedbackHistory 필드 수정 가능
+      allow update: if isAdmin();
       
       allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
@@ -105,6 +116,19 @@ service cloud.firestore {
       
       // 쓰기: 로그인한 사용자 (자기 리액션만 추가/삭제)
       allow create, update, delete: if isSignedIn();
+    }
+    
+    // ===== Notifications Collection =====
+    // 반응 알림 (좋아요/불꽃/박수 알림)
+    match /notifications/{notifId} {
+      // 읽기: 본인에게 온 알림만
+      allow read: if isSignedIn() && resource.data.postOwnerId == request.auth.uid;
+      
+      // 생성: 로그인한 사용자 (다른 사람 게시물에 반응 시)
+      allow create: if isSignedIn();
+      
+      // 수정/삭제: 알림 대상자만 (읽음 처리 등)
+      allow update, delete: if isSignedIn() && resource.data.postOwnerId == request.auth.uid;
     }
     
     // ===== Admin Feedback Collection =====

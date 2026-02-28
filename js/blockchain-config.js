@@ -54,9 +54,92 @@ export const STAKING_CONTRACT = {
     maxStakeAmount: 1000 // 최대 1000 HBT (향후 조정)
 };
 
-// 🎯 30일 챌린지 설정
-export const CHALLENGES_30D = {
-    diet: {
+// 🎯 챌린지 설정 (3일, 7일, 30일)
+export const CHALLENGES = {
+    // === 3일 미니 챌린지 (입문용, 부담 없이 시작) ===
+    'challenge-diet-3d': {
+        id: 'challenge-diet-3d',
+        name: '3일 식단 챌린지',
+        description: '3일 연속 식단 인증하기',
+        category: 'diet',
+        dailyTarget: 1,
+        requiredDays: 3,
+        hbtStake: 0,
+        rewardPoints: 10,
+        emoji: '🥗',
+        duration: 3,
+        tier: 'mini'
+    },
+    'challenge-exercise-3d': {
+        id: 'challenge-exercise-3d',
+        name: '3일 운동 챌린지',
+        description: '3일 연속 운동 인증하기',
+        category: 'exercise',
+        dailyTarget: 1,
+        requiredDays: 3,
+        hbtStake: 0,
+        rewardPoints: 10,
+        emoji: '🏃',
+        duration: 3,
+        tier: 'mini'
+    },
+    'challenge-mind-3d': {
+        id: 'challenge-mind-3d',
+        name: '3일 마음 챌린지',
+        description: '3일 연속 마음 기록하기',
+        category: 'mind',
+        dailyTarget: 1,
+        requiredDays: 3,
+        hbtStake: 0,
+        rewardPoints: 10,
+        emoji: '🧘',
+        duration: 3,
+        tier: 'mini'
+    },
+
+    // === 7일 위클리 챌린지 (중급, 습관 형성 시작) ===
+    'challenge-diet-7d': {
+        id: 'challenge-diet-7d',
+        name: '7일 식단 챌린지',
+        description: '7일 연속 식단 인증하기',
+        category: 'diet',
+        dailyTarget: 1,
+        requiredDays: 7,
+        hbtStake: 0.5,
+        rewardPoints: 30,
+        emoji: '🥗',
+        duration: 7,
+        tier: 'weekly'
+    },
+    'challenge-exercise-7d': {
+        id: 'challenge-exercise-7d',
+        name: '7일 운동 챌린지',
+        description: '7일 연속 운동 인증하기',
+        category: 'exercise',
+        dailyTarget: 1,
+        requiredDays: 7,
+        hbtStake: 0.5,
+        rewardPoints: 30,
+        emoji: '🏃',
+        duration: 7,
+        tier: 'weekly'
+    },
+    'challenge-mind-7d': {
+        id: 'challenge-mind-7d',
+        name: '7일 마음 챌린지',
+        description: '7일 연속 마음 기록하기',
+        category: 'mind',
+        dailyTarget: 1,
+        requiredDays: 7,
+        hbtStake: 0.5,
+        rewardPoints: 30,
+        emoji: '🧘',
+        duration: 7,
+        tier: 'weekly'
+    },
+
+    // === 30일 마스터 챌린지 (고급, 완전한 습관 정착) ===
+    'challenge-diet-30d': {
         id: 'challenge-diet-30d',
         name: '30일 식단 챌린지',
         description: '30일 연속 식단 인증하기',
@@ -64,11 +147,13 @@ export const CHALLENGES_30D = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 1,
-        rewardHbt: 1.05, // 5% 추가 (이자 형태)
+        rewardHbt: 1.05,
         rewardPoints: 50,
-        emoji: '🥗'
+        emoji: '🥗',
+        duration: 30,
+        tier: 'master'
     },
-    exercise: {
+    'challenge-exercise-30d': {
         id: 'challenge-exercise-30d',
         name: '30일 운동 챌린지',
         description: '30일 연속 운동 인증하기',
@@ -78,9 +163,11 @@ export const CHALLENGES_30D = {
         hbtStake: 1,
         rewardHbt: 1.05,
         rewardPoints: 50,
-        emoji: '🏃'
+        emoji: '🏃',
+        duration: 30,
+        tier: 'master'
     },
-    mind: {
+    'challenge-mind-30d': {
         id: 'challenge-mind-30d',
         name: '30일 마음 챌린지',
         description: '30일 연속 마음 기록 (명상/일기)',
@@ -90,8 +177,17 @@ export const CHALLENGES_30D = {
         hbtStake: 1,
         rewardHbt: 1.05,
         rewardPoints: 50,
-        emoji: '🧘'
+        emoji: '🧘',
+        duration: 30,
+        tier: 'master'
     }
+};
+
+// 하위 호환: 기존 CHALLENGES_30D 참조 유지
+export const CHALLENGES_30D = {
+    diet: CHALLENGES['challenge-diet-30d'],
+    exercise: CHALLENGES['challenge-exercise-30d'],
+    mind: CHALLENGES['challenge-mind-30d']
 };
 
 // 📊 포인트 → 토큰 변환 규칙
