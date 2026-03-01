@@ -486,13 +486,13 @@ export async function updateChallengeProgress() {
 
                 if (staked > 0) {
                     if (successRate >= 1.0) {
-                        rewardHbt = staked * 1.2;
+                        rewardHbt = staked * 2;
                         rewardPoints = baseRewardP * 2;
-                        resultMsg = `🎉 ${totalDays}일 챌린지 완벽 달성!\n${rewardHbt} HBT + ${rewardPoints}P 획득!`;
+                        resultMsg = `🎉 ${totalDays}일 챌린지 완벽 달성!\n+${rewardHbt} HBT + ${rewardPoints}P 획득!`;
                     } else if (successRate >= 0.8) {
-                        rewardHbt = staked;
+                        rewardHbt = staked * 1.5;
                         rewardPoints = baseRewardP;
-                        resultMsg = `✅ ${totalDays}일 챌린지 성공! (${Math.round(successRate*100)}%)\n원금 ${rewardHbt} HBT 환급 + ${rewardPoints}P!`;
+                        resultMsg = `✅ ${totalDays}일 챌린지 성공! (${Math.round(successRate*100)}%)\n${rewardHbt} HBT + ${rewardPoints}P!`;
                     } else {
                         resultMsg = `😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).\n예치금 ${staked} HBT가 소멸되었습니다.`;
                     }

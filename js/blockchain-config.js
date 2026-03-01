@@ -191,7 +191,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 3,
         hbtStake: 0,
-        rewardPoints: 20,
+        rewardPoints: 30,
         emoji: '🌟',
         duration: 3,
         tier: 'mini'
@@ -217,8 +217,8 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 1,
-        rewardHbt: 1.05,
-        rewardPoints: 80,
+        rewardHbt: 2.0,
+        rewardPoints: 100,
         emoji: '🌟',
         duration: 30,
         tier: 'master'

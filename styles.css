@@ -1715,8 +1715,9 @@ textarea {
 
 .challenge-tier-card {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 12px;
     border-radius: 10px;
     cursor: pointer;
@@ -1791,7 +1792,10 @@ textarea {
     display: flex;
     align-items: center;
     gap: 4px;
-    flex-shrink: 0;
+    width: 100%;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(0,0,0,0.1);
+    margin-top: 2px;
 }
 
 .stake-pct-btn {
@@ -1818,8 +1822,15 @@ textarea {
     font-size: 11px;
     font-weight: 700;
     color: #E65100;
-    min-width: 24px;
-    text-align: right;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.stake-display::after {
+    content: ' HBT';
+    font-weight: 400;
+    color: #999;
+    font-size: 10px;
 }
 
 .challenge-rules-note {

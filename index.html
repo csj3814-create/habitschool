@@ -189,17 +189,18 @@
                             <div class="tier-icon">⚡</div>
                             <div class="tier-info">
                                 <div class="tier-name">3일 미니 챌린지</div>
-                                <div class="tier-desc">무료 참가 · 100% 달성 시 20P 보상</div>
+                                <div class="tier-desc">무료 참가 · 100% 달성 시 30P</div>
                             </div>
                         </div>
                         <div class="challenge-tier-card tier-weekly" id="tier-card-weekly" onclick="startChallenge30D('challenge-all-7d')">
                             <div class="tier-icon">🔥</div>
                             <div class="tier-info">
                                 <div class="tier-name">7일 위클리 챌린지</div>
-                                <div class="tier-desc">0.5+ HBT 예치 · 80%+ 환급 · 50P</div>
+                                <div class="tier-desc">HBT 예치 · 80%+ 환급+50P · 100% 시 +50% HBT</div>
                             </div>
                             <div class="tier-stake-btns" onclick="event.stopPropagation()">
                                 <input type="hidden" id="stake-weekly" value="0">
+                                <span style="font-size:10px;color:#999;">예치:</span>
                                 <button class="stake-pct-btn" onclick="addStakePct('weekly',10)">10%</button>
                                 <button class="stake-pct-btn" onclick="addStakePct('weekly',50)">50%</button>
                                 <button class="stake-pct-btn" onclick="addStakePct('weekly',100)">ALL</button>
@@ -210,10 +211,11 @@
                             <div class="tier-icon">🏆</div>
                             <div class="tier-info">
                                 <div class="tier-name">30일 마스터 챌린지</div>
-                                <div class="tier-desc">1+ HBT 예치 · 80%+ 환급 · 80P + HBT</div>
+                                <div class="tier-desc">HBT 예치 · 80%+ 환급+100P · 100% 시 +100% HBT</div>
                             </div>
                             <div class="tier-stake-btns" onclick="event.stopPropagation()">
                                 <input type="hidden" id="stake-master" value="0">
+                                <span style="font-size:10px;color:#999;">예치:</span>
                                 <button class="stake-pct-btn" onclick="addStakePct('master',10)">10%</button>
                                 <button class="stake-pct-btn" onclick="addStakePct('master',50)">50%</button>
                                 <button class="stake-pct-btn" onclick="addStakePct('master',100)">ALL</button>
@@ -222,7 +224,7 @@
                         </div>
                     </div>
                     <div class="challenge-rules-note">
-                        📌 80%+ 달성 → 원금환급 · 100% 달성 → +20% HBT 보너스 · 미달 시 소멸
+                        📌 80%+ → 원금환급+보너스P · 100% → 원금+예치금의 50~100% HBT 보너스 · 미달 시 소멸
                     </div>
                 </div>
             </div>
