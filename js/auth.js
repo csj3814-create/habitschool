@@ -1,6 +1,6 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
@@ -97,44 +97,32 @@ export function initAuth() {
         return;
     }
     
-    // Redirect 결과 처리 (모바일에서 signInWithRedirect 사용 시)
-    getRedirectResult(auth).catch(error => {
-        if (error.code !== 'auth/null-user') {
-            console.error('리다이렉트 로그인 오류:', error);
-        }
-    });
-    
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
         
-        if (isMobile) {
-            // 모바일: signInWithRedirect 사용 (팝업 차단 문제 방지)
-            signInWithRedirect(auth, provider).catch(error => {
-                console.error('로그인 오류:', error);
-                // 403 disallowed_useragent 오류 감지 (미감지 WebView 폴백)
-                if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
-                    showWebViewWarning();
-                    return;
-                }
-                showToast('⚠️ 인앱 브라우저에서는 로그인이 제한될 수 있습니다. Chrome 또는 Safari에서 열어주세요.');
-            });
-        } else {
-            // 데스크톱: signInWithPopup 사용
-            signInWithPopup(auth, provider).catch(error => {
-                console.error('로그인 오류:', error);
-                let errorMsg = '로그인에 실패했습니다.';
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMsg = '로그인 창이 닫혔습니다.';
-                } else if (error.code === 'auth/popup-blocked') {
-                    errorMsg = '팝업이 차단되었습니다. 팝업 차단을 해제해주세요.';
-                } else if (error.code === 'auth/network-request-failed') {
-                    errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
-                }
-                showToast(`⚠️ ${errorMsg}`);
-            });
-        }
+        // 모바일/데스크톱 모두 signInWithPopup 사용
+        // (signInWithRedirect는 서드파티 쿠키 차단 정책으로 크로스 오리진 환경에서 실패)
+        signInWithPopup(auth, provider).catch(error => {
+            console.error('로그인 오류:', error);
+            
+            // 미감지 WebView 폴백
+            if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
+                showWebViewWarning();
+                return;
+            }
+            
+            let errorMsg = '로그인에 실패했습니다.';
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMsg = '로그인 창이 닫혔습니다.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMsg = '팝업이 차단되었습니다. 팝업 차단을 해제해주세요.';
+            } else if (error.code === 'auth/network-request-failed') {
+                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+            } else if (error.code === 'auth/unauthorized-domain') {
+                errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+            }
+            showToast(`⚠️ ${errorMsg}`);
+        });
     });
 }
 
