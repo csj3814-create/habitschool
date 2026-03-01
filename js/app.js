@@ -1851,16 +1851,29 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             for (let block of strengthBlocks) {
                 const fileInput = block.querySelector('.exer-file');
                 let url = block.getAttribute('data-url') || null;
+                let thumbUrl = block.getAttribute('data-thumb-url') || null;
                 if(fileInput.files[0]) {
                     try {
                         url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid);
+                        // 근력 동영상 썸네일 생성 & 업로드
+                        if (url) {
+                            try {
+                                const vtb = await generateVideoThumbnailBlob(fileInput.files[0]);
+                                if (vtb) {
+                                    const vtp = `exercise_videos_thumbnails/${user.uid}/${Date.now()}_thumb.jpg`;
+                                    const vtr = ref(storage, vtp);
+                                    await uploadBytes(vtr, vtb);
+                                    thumbUrl = await getDownloadURL(vtr);
+                                }
+                            } catch (e) { console.warn('근력 영상 썸네일 생성 실패:', e.message); }
+                        }
                     } catch (err) {
                         console.error('⚠️ 근력 영상 업로드 실패:', err);
                         url = null;
                     }
                 }
                 // 기존 영상의 썸네일 URL 보존
-                if(url) strengthList.push({ videoUrl: url, videoThumbUrl: block.getAttribute('data-thumb-url') || null });
+                if(url) strengthList.push({ videoUrl: url, videoThumbUrl: thumbUrl });
             }
 
             const sleepFile = document.getElementById('sleep-img');
@@ -2097,22 +2110,23 @@ async function resolveThumbUrl(originalUrl, sourceFolder, thumbFolder) {
     return originalUrl || null;
 }
 
-// 이미지 URL로부터 저용량 썸네일 생성 (300px 폭, JPEG 60%)
+// 이미지 파일로부터 1:1 정사각형 썸네일 생성 (300x300, JPEG 60%)
 async function generateThumbnailBlob(file) {
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                const maxW = 300;
-                const scale = Math.min(1, maxW / img.width);
-                const w = Math.round(img.width * scale);
-                const h = Math.round(img.height * scale);
+                const size = 300; // 출력 크기 300x300
                 const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
+                canvas.width = size;
+                canvas.height = size;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, w, h);
+                // 중앙 기준 정사각형 crop
+                const srcSize = Math.min(img.width, img.height);
+                const sx = (img.width - srcSize) / 2;
+                const sy = (img.height - srcSize) / 2;
+                ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, size, size);
                 canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
             };
             img.onerror = () => resolve(null);
@@ -2120,6 +2134,78 @@ async function generateThumbnailBlob(file) {
         };
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(file);
+    });
+}
+
+// 동영상 파일로부터 1:1 정사각형 썸네일 생성 (300x300, JPEG 70%)
+async function generateVideoThumbnailBlob(file) {
+    return new Promise((resolve) => {
+        const objectUrl = URL.createObjectURL(file);
+        const video = document.createElement('video');
+        video.muted = true;
+        video.playsInline = true;
+        video.preload = 'auto';
+        video.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;';
+        document.body.appendChild(video);
+
+        let resolved = false;
+        const done = (blob) => {
+            if (resolved) return;
+            resolved = true;
+            video.pause();
+            video.removeAttribute('src');
+            video.load();
+            video.remove();
+            URL.revokeObjectURL(objectUrl);
+            resolve(blob || null);
+        };
+
+        const timer = setTimeout(() => done(null), 12000);
+
+        const captureFrame = () => {
+            try {
+                const w = video.videoWidth || 320;
+                const h = video.videoHeight || 180;
+                const size = 300;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                // 중앙 기준 정사각형 crop
+                const srcSize = Math.min(w, h);
+                const sx = (w - srcSize) / 2;
+                const sy = (h - srcSize) / 2;
+                ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
+
+                // 검은 프레임 감지
+                const px = ctx.getImageData(size/2, size/2, 1, 1).data;
+                if (px[0] === 0 && px[1] === 0 && px[2] === 0 && video.currentTime < 3) {
+                    video.currentTime = Math.min(video.duration || 2, 2);
+                    video.addEventListener('seeked', () => {
+                        try {
+                            ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
+                            clearTimeout(timer);
+                            canvas.toBlob((blob) => done(blob), 'image/jpeg', 0.7);
+                        } catch(_) { clearTimeout(timer); done(null); }
+                    }, { once: true });
+                    return;
+                }
+                clearTimeout(timer);
+                canvas.toBlob((blob) => done(blob), 'image/jpeg', 0.7);
+            } catch (_) { clearTimeout(timer); done(null); }
+        };
+
+        video.addEventListener('error', () => { clearTimeout(timer); done(null); }, { once: true });
+        video.addEventListener('loadeddata', () => {
+            try {
+                const dur = Number.isFinite(video.duration) ? video.duration : 0;
+                video.currentTime = dur > 1 ? 0.8 : 0.01;
+            } catch (_) { clearTimeout(timer); done(null); }
+        }, { once: true });
+        video.addEventListener('seeked', captureFrame, { once: true });
+
+        video.src = objectUrl;
+        video.load();
     });
 }
 

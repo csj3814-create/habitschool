@@ -42,48 +42,59 @@ export function collectGalleryMedia(data) {
         mindText: ''
     };
 
-    // 식단 미디어
+    // 식단 미디어 (썸네일 우선, 원본 폴백)
     if(data.diet) {
-        ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => {
-            if(data.diet[k]) {
-                const url = data.diet[k];
-                // URL 검증
-                if (isValidStorageUrl(url)) {
-                    const mealType = k.replace('Url', '');
-                    result.dietHtml += `<img src="${escapeHtml(url)}" onclick="openLightbox('${escapeHtml(url)}')" alt="${mealType} 식사 사진" loading="lazy" decoding="async">`;
-                }
+        ['breakfast','lunch','dinner','snack'].forEach(meal => {
+            const origUrl = data.diet[`${meal}Url`];
+            const thumbUrl = data.diet[`${meal}ThumbUrl`];
+            if(origUrl && isValidStorageUrl(origUrl)) {
+                const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(origUrl);
+                const full = escapeHtml(origUrl);
+                result.dietHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="${meal} 식사 사진" loading="lazy" decoding="async">`;
             }
         });
     }
 
-    // 운동 미디어 (중복 제거)
+    // 운동 미디어 (중복 제거, 썸네일 우선)
     if(data.exercise) {
         let addedUrls = new Set();
-        const addImg = (url) => {
+        const addImg = (url, thumbUrl) => {
             if(url && !addedUrls.has(url) && isValidStorageUrl(url)) {
-                result.exerciseHtml += `<img src="${escapeHtml(url)}" onclick="openLightbox('${escapeHtml(url)}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
+                const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
+                const full = escapeHtml(url);
+                result.exerciseHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
                 addedUrls.add(url);
             }
         };
-        const addVid = (url) => {
+        const addVid = (url, thumbUrl) => {
             if(url && !addedUrls.has(url) && isValidStorageUrl(url)) {
                 const safeUrl = escapeHtml(url);
-                result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video><div class="video-play-btn">&#9654;</div></div>`;
+                if (thumbUrl && isValidStorageUrl(thumbUrl)) {
+                    // 썸네일 이미지로 표시, 클릭 시 영상 재생
+                    const safeThumb = escapeHtml(thumbUrl);
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
+                } else {
+                    // 썸네일 없으면 기존 방식 (video 태그로 프레임 추출)
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video><div class="video-play-btn">&#9654;</div></div>`;
+                }
                 addedUrls.add(url);
             }
         };
         
-        addImg(data.exercise.cardioImageUrl);
-        addVid(data.exercise.strengthVideoUrl);
-        if(data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl));
-        if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl));
+        addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl);
+        addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl);
+        if(data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl));
+        if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl));
     }
 
-    // 마음 미디어
+    // 마음 미디어 (썸네일 우선)
     if(data.sleepAndMind?.sleepImageUrl) {
         const url = data.sleepAndMind.sleepImageUrl;
+        const thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
         if (isValidStorageUrl(url)) {
-            result.mindHtml = `<img src="${escapeHtml(url)}" onclick="openLightbox('${escapeHtml(url)}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
+            const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
+            const full = escapeHtml(url);
+            result.mindHtml = `<img src="${src}" onclick="openLightbox('${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
         }
     }
 
@@ -239,26 +250,35 @@ export async function loadGalleryData() {
             if(latest.awardedPoints?.mind) points += 5;
             document.getElementById('share-point').innerText = points;
 
-            // collectGalleryMedia 헬퍼 함수로 미디어 URL 수집
+            // collectGalleryMedia 헬퍼 함수로 미디어 URL 수집 (공유 카드용 - 썸네일 우선)
             let imgs = [];
             if(latest.diet) {
-                ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => { 
-                    if(latest.diet[k]) imgs.push(latest.diet[k]); 
+                ['breakfast','lunch','dinner','snack'].forEach(meal => { 
+                    const thumb = latest.diet[`${meal}ThumbUrl`];
+                    const orig = latest.diet[`${meal}Url`];
+                    if(thumb) imgs.push(thumb);
+                    else if(orig) imgs.push(orig);
                 });
             }
             if(latest.exercise) {
                 if(latest.exercise.cardioList && latest.exercise.cardioList.length > 0) {
-                    latest.exercise.cardioList.forEach(c => { if(c.imageUrl) imgs.push(c.imageUrl); });
+                    latest.exercise.cardioList.forEach(c => { 
+                        if(c.imageThumbUrl) imgs.push(c.imageThumbUrl);
+                        else if(c.imageUrl) imgs.push(c.imageUrl); 
+                    });
                 } else if(latest.exercise.cardioImageUrl) {
-                    imgs.push(latest.exercise.cardioImageUrl);
+                    imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
                 }
                 if(latest.exercise.strengthList && latest.exercise.strengthList.length > 0) {
-                    latest.exercise.strengthList.forEach(s => { if(s.videoUrl) imgs.push(s.videoUrl); });
+                    latest.exercise.strengthList.forEach(s => { 
+                        if(s.videoThumbUrl) imgs.push(s.videoThumbUrl);
+                        else if(s.videoUrl) imgs.push(s.videoUrl); 
+                    });
                 } else if(latest.exercise.strengthVideoUrl) {
-                    imgs.push(latest.exercise.strengthVideoUrl);
+                    imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
                 }
             }
-            if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageUrl);
+            if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
             
             // 중복 제거 및 null/undefined 필터링
             imgs = [...new Set(imgs)].filter(url => url && url.trim() !== '');
@@ -394,15 +414,24 @@ export async function renderFeedOnly() {
 
 /**
  * 갤러리 비디오 재생
- * data-video-src에 저장된 원본 URL(#t 없음)로 교체 후 처음부터 재생
+ * 썸네일 이미지가 있으면 video 태그로 교체 후 재생
  */
 window.playGalleryVideo = function(wrapper) {
-    const video = wrapper.querySelector('video');
+    let video = wrapper.querySelector('video');
     const originalSrc = wrapper.getAttribute('data-video-src');
+    
+    // 썸네일 img만 있는 경우 → video 태그로 교체
+    if (!video && originalSrc) {
+        const thumbImg = wrapper.querySelector('img');
+        if (thumbImg) thumbImg.style.display = 'none';
+        video = document.createElement('video');
+        video.playsInline = true;
+        wrapper.insertBefore(video, wrapper.querySelector('.video-play-btn'));
+    }
+    
     wrapper.classList.add('playing');
     video.muted = false;
     video.controls = true;
-    // #t=0.1 프래그먼트가 없는 원본 URL로 교체하여 처음부터 재생
     if (originalSrc) {
         video.src = originalSrc;
     }
