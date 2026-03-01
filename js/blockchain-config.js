@@ -1,57 +1,74 @@
 /**
  * blockchain-config.js
- * 클레이튼 블록체인 & HBT 토큰 설정
- * Web 2.5 M2E (Move-to-Earn) 시스템
+ * Base 체인 블록체인 & HaBit (HBT) 토큰 설정
+ * Web 2.5 Habit Mining 시스템
  * 
  * 내장형 지갑 전략:
  * - Firebase UID 기반 지갑 자동 생성
  * - ethers.js 사용
  * - 별도 앱 설치 불필요
+ * 
+ * 교환 대상: WBMB (Wrapped BitMobic) / BMB (BitMobic)
  */
 
-// ⛓️ 클레이튼 네트워크 설정
-export const KLAYTN_CONFIG = {
-    // 메인넷
+// ⛓️ Base 네트워크 설정
+export const BASE_CONFIG = {
+    // 메인넷 (Base - Coinbase L2)
     mainnet: {
-        rpcUrl: 'https://public-rpc.kairos.klaytn.net:8551',
-        chainId: 1001,
-        explorer: 'https://scope.klaytn.com'
+        rpcUrl: 'https://mainnet.base.org',
+        chainId: 8453,
+        explorer: 'https://basescan.org',
+        gasToken: 'ETH'
     },
     
-    // 테스트넷 (Kairos - 이전 Baobab)
+    // 테스트넷 (Base Sepolia)
     testnet: {
-        rpcUrl: 'https://public-rpc.kairos.klaytn.net:8551',
-        chainId: 1001,
-        explorer: 'https://kairos.scope.klaytn.com'
+        rpcUrl: 'https://sepolia.base.org',
+        chainId: 84532,
+        explorer: 'https://sepolia.basescan.org',
+        gasToken: 'SepoliaETH',
+        faucet: 'https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet'
     }
 };
 
-// 🪙 HBT 토큰 설정
+// 하위 호환: 기존 KLAYTN_CONFIG 참조 유지
+export const KLAYTN_CONFIG = BASE_CONFIG;
+
+// 🪙 HaBit (HBT) 토큰 설정
 export const HBT_TOKEN = {
-    name: '해빛 코인',
+    name: 'HaBit',
     symbol: 'HBT',
-    decimals: 18,
+    decimals: 8,  // BTC와 동일
+    maxSupply: 100_000_000, // 1억개 하드캡
     
-    // 테스트넷 컨트랙트 주소 (배포 후 업데이트)
-    testnetAddress: '0x0000...',  // TODO: 배포 후 주소 입력
+    // 테스트넷 컨트랙트 주소 (Base Sepolia, 배포 후 업데이트)
+    testnetAddress: '0x0000...',  // TODO: Base Sepolia 배포 후 주소 입력
     
-    // 메인넷 컨트랙트 주소 (향후 배포)
-    mainnetAddress: '0x0000...'   // TODO: 메인넷 배포 후
+    // 메인넷 컨트랙트 주소 (Base, 향후 배포)
+    mainnetAddress: '0x0000...',  // TODO: Base 메인넷 배포 후
+
+    // 교환 대상
+    exchange: {
+        targetToken: 'WBMB',       // Wrapped BitMobic (Base 체인)
+        targetNative: 'BMB',       // BitMobic (원본 체인)
+        rate: 1_000_000,           // 1,000,000 HBT = 1 BMB
+        burnFee: 0.02              // 교환 시 2% 소각
+    }
 };
 
-// 📋 Staking 계약 설정
+// 📋 Staking 계약 설정 (챌린지 예치용)
 export const STAKING_CONTRACT = {
-    // 테스트넷
-    testnetAddress: '0x0000...',   // TODO: 배포 후 주소 입력
+    // 테스트넷 (Base Sepolia)
+    testnetAddress: '0x0000...',   // TODO: Base Sepolia 배포 후 주소 입력
     
-    // 메인넷
-    mainnetAddress: '0x0000...',   // TODO: 메인넷 배포 후
+    // 메인넷 (Base)
+    mainnetAddress: '0x0000...',   // TODO: Base 메인넷 배포 후
     
     // 스테이킹 파라미터
     lockupPeriod: 30 * 24 * 60 * 60, // 30일 (초 단위)
-    apy: 5, // 5% 연이자
-    minStakeAmount: 1, // 최소 1 HBT
-    maxStakeAmount: 1000 // 최대 1000 HBT (향후 조정)
+    slashRate: 0.5, // 실패 시 50% 소각
+    minStakeAmount: 50, // 최소 50 HBT
+    maxStakeAmount: 10000 // 최대 10,000 HBT
 };
 
 // 🎯 챌린지 설정 (3일, 7일, 30일)
@@ -105,7 +122,7 @@ export const CHALLENGES = {
         category: 'diet',
         dailyTarget: 1,
         requiredDays: 7,
-        hbtStake: 0.5,
+        hbtStake: 50,
         rewardPoints: 30,
         emoji: '🥗',
         duration: 7,
@@ -118,7 +135,7 @@ export const CHALLENGES = {
         category: 'exercise',
         dailyTarget: 1,
         requiredDays: 7,
-        hbtStake: 0.5,
+        hbtStake: 50,
         rewardPoints: 30,
         emoji: '🏃',
         duration: 7,
@@ -131,7 +148,7 @@ export const CHALLENGES = {
         category: 'mind',
         dailyTarget: 1,
         requiredDays: 7,
-        hbtStake: 0.5,
+        hbtStake: 50,
         rewardPoints: 30,
         emoji: '🧘',
         duration: 7,
@@ -146,8 +163,8 @@ export const CHALLENGES = {
         category: 'diet',
         dailyTarget: 1,
         requiredDays: 30,
-        hbtStake: 1,
-        rewardHbt: 1.05,
+        hbtStake: 100,
+        rewardHbt: 105,
         rewardPoints: 50,
         emoji: '🥗',
         duration: 30,
@@ -160,8 +177,8 @@ export const CHALLENGES = {
         category: 'exercise',
         dailyTarget: 1,
         requiredDays: 30,
-        hbtStake: 1,
-        rewardHbt: 1.05,
+        hbtStake: 100,
+        rewardHbt: 105,
         rewardPoints: 50,
         emoji: '🏃',
         duration: 30,
@@ -174,8 +191,8 @@ export const CHALLENGES = {
         category: 'mind',
         dailyTarget: 1,
         requiredDays: 30,
-        hbtStake: 1,
-        rewardHbt: 1.05,
+        hbtStake: 100,
+        rewardHbt: 105,
         rewardPoints: 50,
         emoji: '🧘',
         duration: 30,
@@ -203,7 +220,7 @@ export const CHALLENGES = {
         category: 'all',
         dailyTarget: 1,
         requiredDays: 7,
-        hbtStake: 0.5,
+        hbtStake: 50,
         rewardPoints: 50,
         emoji: '🌟',
         duration: 7,
@@ -216,8 +233,8 @@ export const CHALLENGES = {
         category: 'all',
         dailyTarget: 1,
         requiredDays: 30,
-        hbtStake: 1,
-        rewardHbt: 2.0,
+        hbtStake: 100,
+        rewardHbt: 200,
         rewardPoints: 100,
         emoji: '🌟',
         duration: 30,
@@ -234,11 +251,20 @@ export const CHALLENGES_30D = {
 
 // 📊 포인트 → 토큰 변환 규칙
 export const CONVERSION_RULES = {
-    pointsPerConversion: 100, // 100P = 1 HBT
-    minConversion: 100,
-    maxConversionPerDay: 10, // 1일 최대 10회 변환
+    pointsPerConversion: 1, // 1P = 1 HBT (구간 1 기준, 반감기 적용)
+    minConversion: 100,      // 최소 100P
+    maxConversionPerDay: 1000, // 1일 최대 1,000 HBT
     gasFeeEstimate: 0, // 가스비 무료 (회사 부담)
-    estimatedTime: '2-5초' // 내장형 지갑으로 즉시 처리
+    estimatedTime: '2-5초', // 내장형 지갑으로 즉시 처리
+    
+    // 반감기 설정 (비트코인 방식)
+    halving: {
+        miningPool: 60_000_000,      // 채굴 보상 풀 60M HBT
+        era1Threshold: 30_000_000,   // 구간 1: 3천만 HBT
+        initialRate: 1,              // 구간 1: 1P = 1 HBT (100P = 100 HBT)
+        minRate: 0.01,               // 최소: 100P = 1 HBT
+        // 구간별: threshold ÷ 2, rate ÷ 2 (무한 반복)
+    }
 };
 
 // 💾 Firebase 컬렉션 구조 (참고용)
@@ -280,4 +306,4 @@ export const FIREBASE_STRUCTURE = {
     }
 };
 
-console.log('✅ 블록체인 설정 로드됨. (HBT 토큰 & Staking)');
+console.log('✅ 블록체인 설정 로드됨. (HaBit/HBT on Base chain)');

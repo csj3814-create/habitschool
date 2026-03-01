@@ -1,16 +1,16 @@
 /**
  * blockchain-manager.js
- * 클레이튼 블록체인 & 내장형 지갑 통합 모듈
- * HBT 토큰 거래, 스테이킹, 챌린지 관리
+ * Base 체인 블록체인 & 내장형 지갑 통합 모듈
+ * HaBit (HBT) 토큰 거래, 스테이킹, 챌린지 관리
  * 
  * 내장형 지갑 전략: Firebase UID 기반 지갑 자동 생성
  * - 사용자가 로그인만 하면 자동으로 지갑 생성
  * - 별도 앱 설치나 복잡한 설정 불필요
- * - ethers.js를 사용하여 Klaytn 호환 지갑 생성
+ * - ethers.js를 사용하여 Base 체인 호환 지갑 생성
  */
 
 import { 
-    KLAYTN_CONFIG, 
+    BASE_CONFIG, 
     HBT_TOKEN, 
     STAKING_CONTRACT, 
     CONVERSION_RULES,
@@ -199,7 +199,7 @@ function updateWalletUI(address) {
 
 /**
  * 포인트를 HBT 토큰으로 변환
- * 100P → 1 HBT
+ * 구간 1 기준: 100P → 100 HBT (반감기에 따라 변동)
  * @param {number} [pointAmount] - 변환할 포인트 (미입력 시 기존 input에서 읽음)
  */
 export async function convertPointsToHBT(pointAmount) {
