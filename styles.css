@@ -1778,22 +1778,48 @@ textarea {
 
 .stake-input {
     width: 38px;
-    min-width: 0;
-    max-width: 38px;
-    padding: 4px 2px;
+    padding: 4px 4px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 12px;
     text-align: center;
     background: rgba(255,255,255,0.8);
-    box-sizing: border-box;
-    -moz-appearance: textfield;
 }
 
-.stake-input::-webkit-outer-spin-button,
-.stake-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+/* 챌린지 예치 % 버튼 */
+.tier-stake-btns {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.stake-pct-btn {
+    padding: 4px 7px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.85);
+    font-size: 10px;
+    font-weight: 700;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1;
+}
+
+.stake-pct-btn:active {
+    background: #FF9800;
+    color: #fff;
+    border-color: #FF9800;
+    transform: scale(0.93);
+}
+
+.stake-display {
+    font-size: 11px;
+    font-weight: 700;
+    color: #E65100;
+    min-width: 24px;
+    text-align: right;
 }
 
 .challenge-rules-note {

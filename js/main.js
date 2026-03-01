@@ -18,6 +18,24 @@ import { convertPointsToHBT, startChallenge30D } from './blockchain-manager.js';
 window.convertPointsToHBT = convertPointsToHBT; // HTML onclick="convertPointsToHBT()"
 window.startChallenge30D = startChallenge30D;    // HTML onclick="startChallenge30D(...)"
 
+// 챌린지 HBT 예치 % 버튼
+window._stakePctAccum = { weekly: 0, master: 0 };
+window.addStakePct = function(tier, pct) {
+    const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
+    const balance = parseFloat(hbtText) || 0;
+    if (balance <= 0) { alert('❌ 보유 HBT가 없습니다.'); return; }
+
+    if (pct >= 50) {
+        window._stakePctAccum[tier] = pct;
+    } else {
+        window._stakePctAccum[tier] = Math.min(window._stakePctAccum[tier] + pct, 100);
+    }
+    const amount = Math.round(balance * window._stakePctAccum[tier]) / 100;
+    const rounded = Math.round(amount * 100) / 100;
+    document.getElementById('stake-' + tier).value = rounded;
+    document.getElementById('stake-display-' + tier).textContent = rounded;
+};
+
 // cleanupGalleryResources는 app.js에서 window에 설정됨
 
 // 모듈 로드 완료 표시

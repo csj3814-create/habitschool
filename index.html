@@ -198,7 +198,13 @@
                                 <div class="tier-name">7일 위클리 챌린지</div>
                                 <div class="tier-desc">0.5+ HBT 예치 · 80%+ 환급 · 50P</div>
                             </div>
-                            <div class="tier-stake"><input type="number" class="stake-input" id="stake-weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
+                            <div class="tier-stake-btns" onclick="event.stopPropagation()">
+                                <input type="hidden" id="stake-weekly" value="0">
+                                <button class="stake-pct-btn" onclick="addStakePct('weekly',10)">10%</button>
+                                <button class="stake-pct-btn" onclick="addStakePct('weekly',50)">50%</button>
+                                <button class="stake-pct-btn" onclick="addStakePct('weekly',100)">ALL</button>
+                                <span class="stake-display" id="stake-display-weekly">0</span>
+                            </div>
                         </div>
                         <div class="challenge-tier-card tier-master" id="tier-card-master" onclick="startChallenge30D('challenge-all-30d')">
                             <div class="tier-icon">🏆</div>
@@ -206,7 +212,13 @@
                                 <div class="tier-name">30일 마스터 챌린지</div>
                                 <div class="tier-desc">1+ HBT 예치 · 80%+ 환급 · 80P + HBT</div>
                             </div>
-                            <div class="tier-stake"><input type="number" class="stake-input" id="stake-master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
+                            <div class="tier-stake-btns" onclick="event.stopPropagation()">
+                                <input type="hidden" id="stake-master" value="0">
+                                <button class="stake-pct-btn" onclick="addStakePct('master',10)">10%</button>
+                                <button class="stake-pct-btn" onclick="addStakePct('master',50)">50%</button>
+                                <button class="stake-pct-btn" onclick="addStakePct('master',100)">ALL</button>
+                                <span class="stake-display" id="stake-display-master">0</span>
+                            </div>
                         </div>
                     </div>
                     <div class="challenge-rules-note">
