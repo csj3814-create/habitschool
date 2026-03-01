@@ -48,5 +48,5 @@
   <!-- 입 (미소) -->
   <path d="M84,106 Q96,120 108,106" fill="none" stroke="#5D4037" stroke-width="2.5" stroke-linecap="round"/>
   <!-- 텍스트 -->
-  <text x="96" y="178" font-size="30" text-anchor="middle" fill="#5D4037" font-family="'Apple SD Gothic Neo','Malgun Gothic',sans-serif" font-weight="900" stroke="#5D4037" stroke-width="0.5">해빛스쿨</text>
+  <text x="96" y="156" font-size="29" text-anchor="middle" fill="#5D4037" font-family="'Apple SD Gothic Neo','Malgun Gothic',sans-serif" font-weight="900" stroke="#5D4037" stroke-width="0.5">해빛스쿨</text>
 </svg>

@@ -358,6 +358,45 @@ body {
     gap: var(--spacing-sm); 
 }
 
+/* HBT 변환 버튼 */
+.hbt-convert-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #FF9800 0%, #FF6D00 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 10px rgba(255,152,0,0.3);
+    letter-spacing: -0.3px;
+}
+
+.hbt-convert-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(255,152,0,0.3);
+}
+
+.hbt-convert-btn.hbt-convert-big {
+    background: linear-gradient(135deg, #7C4DFF 0%, #651FFF 100%);
+    box-shadow: 0 3px 10px rgba(124,77,255,0.3);
+}
+
+.hbt-convert-btn.hbt-convert-big:active {
+    box-shadow: 0 1px 4px rgba(124,77,255,0.3);
+}
+
+.hbt-convert-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* 입력 폼 */
 .input-grid { 
     display: grid; 
@@ -677,32 +716,34 @@ textarea {
     display: flex; 
     flex-direction: column; 
     align-items: center; 
-    margin-bottom: 28px; 
+    margin-bottom: 16px; 
     width: 100%; 
     background: linear-gradient(145deg, #FFF8E1 0%, #FFFDE7 100%);
-    padding: 20px 0 0;
-    border-radius: 16px;
+    padding: 12px 12px 0;
+    border-radius: 14px;
     border: 1px solid #FFE082;
+    box-sizing: border-box;
 }
 
 .share-card-capture { 
-    width: 320px; 
-    height: 320px; 
+    width: 100%; 
+    max-width: 260px; 
+    aspect-ratio: 1 / 1; 
     background: linear-gradient(145deg, #FFF8E1 0%, #FFE0B2 40%, #FFCC80 100%); 
-    padding: var(--spacing-xl); 
-    border-radius: 20px; 
+    padding: 14px; 
+    border-radius: 16px; 
     box-sizing: border-box;
     display: flex; 
     flex-direction: column; 
     align-items: center; 
     justify-content: space-between;
-    box-shadow: 0 6px 24px rgba(255,152,0,0.18); 
-    border: 2px solid #FFE082; 
+    box-shadow: 0 4px 16px rgba(255,152,0,0.15); 
+    border: 1.5px solid #FFE082; 
     overflow: hidden;
 }
 
 .share-title { 
-    font-size: var(--font-xl); 
+    font-size: 15px; 
     color: #E65100; 
     font-weight: 900; 
     margin: 0; 
@@ -714,24 +755,24 @@ textarea {
     display: flex; 
     justify-content: center; 
     align-items: center; 
-    gap: 15px; 
+    gap: 12px; 
     background: rgba(255,255,255,0.9); 
-    border-radius: var(--radius-lg); 
-    padding: var(--spacing-sm) 15px; 
-    box-shadow: var(--shadow-light); 
-    width: 85%; 
+    border-radius: 10px; 
+    padding: 5px 12px; 
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06); 
+    width: auto; 
     white-space: nowrap; 
 }
 
 .share-val { 
-    font-size: var(--font-md); 
+    font-size: 13px; 
     font-weight: bold; 
     color: #BF360C; 
     white-space: nowrap; 
 }
 
 :root {
-    --unified-thumb-size: 120px;
+    --unified-thumb-size: 100px;
 }
 
 .share-img-grid { 
@@ -739,23 +780,23 @@ textarea {
     --share-thumb-size: var(--unified-thumb-size);
     grid-template-columns: repeat(2, var(--share-thumb-size)); 
     grid-auto-rows: var(--share-thumb-size);
-    gap: 6px; 
+    gap: 4px; 
     width: 100%; 
-    height: calc(var(--share-thumb-size) * 2 + 6px); 
-    margin: 10px 0; 
+    height: calc(var(--share-thumb-size) * 2 + 4px); 
+    margin: 6px 0; 
     justify-content: center;
     align-content: center;
 }
 
 .share-img-grid.single-item {
-    --share-thumb-size: 170px;
+    --share-thumb-size: 140px;
     grid-template-columns: var(--share-thumb-size);
     grid-auto-rows: var(--share-thumb-size);
     height: var(--share-thumb-size);
 }
 
 .share-img-grid.two-items {
-    --share-thumb-size: 128px;
+    --share-thumb-size: 108px;
     grid-template-columns: repeat(2, var(--share-thumb-size));
     grid-auto-rows: var(--share-thumb-size);
     height: var(--share-thumb-size);
@@ -763,19 +804,19 @@ textarea {
 
 .share-img-grid.three-items,
 .share-img-grid.four-items {
-    --share-thumb-size: 106px;
+    --share-thumb-size: 90px;
     grid-template-columns: repeat(2, var(--share-thumb-size));
     grid-auto-rows: var(--share-thumb-size);
-    height: calc(var(--share-thumb-size) * 2 + 6px);
+    height: calc(var(--share-thumb-size) * 2 + 4px);
 }
 
 .share-img-grid img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-    border-radius: 10px; 
+    border-radius: 8px; 
     border: none; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); 
 }
 
 .share-media-thumb {
@@ -783,16 +824,16 @@ textarea {
     width: var(--share-thumb-size);
     height: var(--share-thumb-size);
     overflow: hidden;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .share-media-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 10px;
+    border-radius: 8px;
     border: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
 .share-media-video {
@@ -832,28 +873,28 @@ textarea {
 }
 
 .share-footer { 
-    font-size: 12px; 
+    font-size: 11px; 
     color: #BF360C; 
     font-weight: bold; 
     background: rgba(255,255,255,0.85); 
-    padding: 6px 14px; 
-    border-radius: 20px; 
+    padding: 4px 12px; 
+    border-radius: 16px; 
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
 .btn-share-action { 
     width: 100%; 
-    max-width: 320px; 
+    max-width: 260px; 
     background: linear-gradient(135deg, #FF8C00 0%, #FF6D00 50%, #FF3D00 100%); 
     color: white; 
-    padding: 14px 20px; 
+    padding: 12px 16px; 
     border: none; 
-    border-radius: 14px; 
+    border-radius: 12px; 
     font-weight: 800; 
     cursor: pointer; 
-    margin: 15px auto 0; 
-    font-size: 15px; 
-    box-shadow: 0 4px 14px rgba(255, 109, 0, 0.35); 
+    margin: 10px auto 12px; 
+    font-size: 14px; 
+    box-shadow: 0 3px 12px rgba(255, 109, 0, 0.3); 
     transition: transform 0.12s, box-shadow 0.15s; 
     display: block; 
     letter-spacing: -0.3px;
@@ -861,7 +902,7 @@ textarea {
 
 .btn-share-action:active { 
     transform: scale(0.97); 
-    box-shadow: 0 2px 8px rgba(255, 109, 0, 0.25); 
+    box-shadow: 0 2px 6px rgba(255, 109, 0, 0.2); 
 }
 
 /* 갤러리 필터 */
@@ -908,7 +949,7 @@ textarea {
 /* 갤러리 카드 - 인스타그램 스타일 */
 .gallery-card { 
     background: var(--white); 
-    border-bottom: 8px solid var(--gray-100); 
+    border-bottom: 1px solid var(--gray-200); 
     border-radius: 0; 
     padding: 0; 
     margin-bottom: 0; 
@@ -921,7 +962,7 @@ textarea {
     display: flex; 
     align-items: center; 
     gap: 10px; 
-    padding: 12px 14px; 
+    padding: 10px 14px; 
     border-bottom: none; 
 }
 
@@ -929,15 +970,18 @@ textarea {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #FFB74D, #FF8C00);
+    background: var(--white);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: #fff;
+    color: var(--gray-700);
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(255,140,0,0.25);
+    border: 2px solid transparent;
+    background-image: linear-gradient(white, white), linear-gradient(135deg, #F77737, #E1306C, #833AB4);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
 }
 
 .gallery-header-info { 
@@ -954,19 +998,21 @@ textarea {
     white-space: nowrap; 
     overflow: hidden; 
     text-overflow: ellipsis; 
+    letter-spacing: -0.2px;
 }
 
 .gallery-date { 
     font-size: 11px; 
-    color: var(--text-tertiary); 
-    margin-top: 1px; 
+    color: var(--gray-400); 
+    margin-top: 0; 
 }
 
 .gallery-photos { 
     display: grid; 
     grid-template-columns: repeat(3, 1fr); 
-    gap: 2px; 
+    gap: 1px; 
     margin-bottom: 0; 
+    background: var(--gray-200);
 }
 
 .gallery-photos img { 
@@ -981,6 +1027,7 @@ textarea {
     border-radius: 0;
     background: #f0f0f0;
     transition: opacity 0.3s ease;
+    display: block;
 }
 
 .gallery-photos img[src=""],
@@ -1112,21 +1159,21 @@ textarea {
 
 .gallery-actions { 
     display: flex; 
-    gap: 14px; 
+    gap: 16px; 
     align-items: center; 
-    padding: 8px 14px 4px; 
+    padding: 10px 14px 6px; 
 }
 
 .action-btn { 
     background: none; 
     border: none; 
-    font-size: 22px; 
-    padding: 4px 2px; 
+    font-size: 24px; 
+    padding: 4px 0; 
     display: flex; 
     align-items: center; 
     gap: 4px; 
     cursor: pointer; 
-    color: var(--gray-700); 
+    color: var(--gray-800); 
     transition: transform 0.15s ease; 
     line-height: 1;
 }
@@ -1134,7 +1181,7 @@ textarea {
 .action-btn span {
     font-size: 13px;
     color: var(--gray-600);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .action-btn:active { 
@@ -1150,22 +1197,29 @@ textarea {
 }
 
 .gallery-reaction-summary {
-    padding: 2px 14px 6px;
+    padding: 0 14px 4px;
     font-size: 13px;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--gray-900);
+    line-height: 1.4;
 }
 
 .friend-btn { 
     background: none; 
-    border: none; 
+    border: 1px solid var(--primary-color); 
     font-size: 12px; 
     cursor: pointer; 
     color: var(--primary-color); 
-    font-weight: 600; 
-    padding: 4px 8px; 
-    border-radius: var(--radius-sm); 
+    font-weight: 700; 
+    padding: 4px 10px; 
+    border-radius: 8px; 
     margin-left: auto;
+    transition: all 0.15s;
+}
+
+.friend-btn.is-friend {
+    border-color: var(--gray-300);
+    color: var(--gray-500);
 }
 
 /* 반응 요약 배너 (인스타그램 스타일) */
@@ -1211,30 +1265,31 @@ textarea {
 
 /* 댓글 섹션 - 인스타그램 스타일 */
 .comment-section {
-    padding: 0 14px 12px;
+    padding: 0 14px 14px;
 }
 
 .comment-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     margin-bottom: 8px;
 }
 
 .comment-item {
     display: flex;
     align-items: baseline;
-    gap: 5px;
+    gap: 6px;
     font-size: 13px;
     line-height: 1.5;
     flex-wrap: wrap;
 }
 
 .comment-author {
-    font-weight: 600;
+    font-weight: 700;
     color: var(--gray-900);
     flex-shrink: 0;
     font-size: 13px;
+    letter-spacing: -0.2px;
 }
 
 .comment-text {
@@ -1267,11 +1322,12 @@ textarea {
 .comment-toggle-btn {
     background: none;
     border: none;
-    color: #999;
-    font-size: 12px;
+    color: var(--gray-400);
+    font-size: 13px;
     cursor: pointer;
-    padding: 4px 0;
+    padding: 2px 0;
     text-align: left;
+    font-weight: 400;
 }
 
 .comment-toggle-btn:hover {
@@ -1283,35 +1339,41 @@ textarea {
     gap: 8px;
     align-items: center;
     border-top: 1px solid var(--gray-100);
-    padding-top: 8px;
+    padding-top: 10px;
+    margin-top: 4px;
 }
 
 .comment-input {
     flex: 1;
-    border: 1px solid var(--gray-200);
-    border-radius: 20px;
-    padding: 8px 14px;
+    border: none;
+    border-radius: 0;
+    padding: 6px 0;
     font-size: 13px;
     outline: none;
-    background: var(--gray-50);
+    background: transparent;
     transition: border-color 0.2s;
+    color: var(--gray-800);
+}
+
+.comment-input::placeholder {
+    color: var(--gray-400);
 }
 
 .comment-input:focus {
-    border-color: var(--primary-color);
-    background: #fff;
+    border-color: transparent;
+    background: transparent;
 }
 
 .comment-submit-btn {
     background: none;
     border: none;
-    color: var(--primary-color);
+    color: #0095F6;
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
-    padding: 8px 4px;
+    padding: 6px 4px;
     white-space: nowrap;
-    opacity: 0.7;
+    opacity: 0.5;
     transition: opacity 0.2s;
 }
 
@@ -1331,17 +1393,23 @@ textarea {
     transform: translateX(-50%);
     width: calc(100% - 40px);
     max-width: 440px;
-    padding: var(--spacing-md);
-    background: linear-gradient(135deg, #FEE500, #FDD835); 
-    color: #3E2723; 
+    padding: 12px 16px;
+    background: #FEE500; 
+    color: #3C1E1E; 
     text-align: center; 
-    font-weight: bold; 
+    font-weight: 700; 
+    font-size: 14px;
     cursor: pointer; 
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-medium); 
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(254,229,0,0.4); 
     z-index: 45; 
     display: none; 
     box-sizing: border-box; 
+    transition: transform 0.12s;
+}
+
+.chat-banner-fixed:active {
+    transform: translateX(-50%) scale(0.97);
 }
 
 /* 카카오톡 배너 배경 (뒤 콘텐츠 가림) */
@@ -1351,7 +1419,7 @@ textarea {
     bottom: 70px;
     left: 0;
     right: 0;
-    height: calc(var(--spacing-md) * 2 + 1.5em); /* padding + 텍스트 높이 */
+    height: calc(12px * 2 + 1.5em);
     background-color: var(--bg-color);
     z-index: -1;
 }

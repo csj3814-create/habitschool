@@ -40,5 +40,5 @@
   <circle cx="77" cy="81" r="2" fill="white" opacity="0.8"/>
   <circle cx="107" cy="81" r="2" fill="white" opacity="0.8"/>
   <path d="M79,100 Q90,113 101,100" fill="none" stroke="#5D4037" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="90" y="166" font-size="28" text-anchor="middle" fill="#5D4037" font-family="'Apple SD Gothic Neo','Malgun Gothic',sans-serif" font-weight="900" stroke="#5D4037" stroke-width="0.5">해빛스쿨</text>
+  <text x="90" y="146" font-size="27" text-anchor="middle" fill="#5D4037" font-family="'Apple SD Gothic Neo','Malgun Gothic',sans-serif" font-weight="900" stroke="#5D4037" stroke-width="0.5">해빛스쿨</text>
 </svg>

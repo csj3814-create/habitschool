@@ -199,9 +199,10 @@ function updateWalletUI(address) {
 
 /**
  * 포인트를 HBT 토큰으로 변환
- * 1000P → 1 HBT
+ * 100P → 1 HBT
+ * @param {number} [pointAmount] - 변환할 포인트 (미입력 시 기존 input에서 읽음)
  */
-export async function convertPointsToHBT() {
+export async function convertPointsToHBT(pointAmount) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -209,9 +210,11 @@ export async function convertPointsToHBT() {
             return false;
         }
 
-        // 입력값 가져오기
-        const pointInput = document.getElementById('conversion-points');
-        const pointAmount = parseInt(pointInput?.value || 0);
+        // 인자로 받은 값 우선, 없으면 input에서 읽기
+        if (typeof pointAmount !== 'number' || isNaN(pointAmount)) {
+            const pointInput = document.getElementById('conversion-points');
+            pointAmount = parseInt(pointInput?.value || 0);
+        }
 
         if (pointAmount < CONVERSION_RULES.minConversion) {
             showToast(`❌ 최소 ${CONVERSION_RULES.minConversion}P 이상 필요합니다.`);

@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=26">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -153,24 +153,16 @@
             <div class="card">
                 <h3>🔄 포인트 → HBT 변환</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    100P마다 1 HBT로 무료 변환할 수 있습니다. 지갑이 자동으로 HBT를 받아줍니다!
+                    포인트를 HBT 코인으로 변환하세요!
                 </p>
-                <div style="background: #FFF3E0; border: 1px solid #FFB74D; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 12px; color: #E65100;">
-                    💡 팁: 100P 이상 모아야 변환할 수 있습니다.
+                <div style="display: flex; gap: 10px;">
+                    <button class="hbt-convert-btn" onclick="convertPointsToHBT(100)">
+                        <span class="hbt-convert-label">💸 100P → 1 HBT</span>
+                    </button>
+                    <button class="hbt-convert-btn hbt-convert-big" onclick="convertPointsToHBT(500)">
+                        <span class="hbt-convert-label">🚀 500P → 5 HBT</span>
+                    </button>
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px; color: #666;">변환할 P</label>
-                        <input type="number" id="conversion-points" value="100" min="100" step="100" oninput="document.getElementById('conversion-hbt').value = (parseInt(this.value) || 0) / 100" style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 6px; box-sizing: border-box; font-size: 14px;">
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-size: 12px; color: #666;">받을 HBT</label>
-                        <input type="text" id="conversion-hbt" value="1" disabled style="width: 100%; padding: 10px; border: 1px solid #DDD; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #F5F5F5;">
-                    </div>
-                </div>
-                <button class="submit-btn" style="background-color: #2196F3; width: 100%;" onclick="convertPointsToHBT()">
-                    💸 100P → 1 HBT 변환
-                </button>
             </div>
 
             <!-- 건강 습관 챌린지 섹션 -->
@@ -349,8 +341,6 @@
         </div>
 
         <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="모두의 갤러리">
-            <h3 style="margin-top:0;">모두의 해빛 하루 🌟</h3>
-            
             <div id="my-share-container" style="display:none;">
                 <div class="share-card-container">
                     <div id="capture-area" class="share-card-capture">
@@ -389,7 +379,7 @@
         </div>
 
         <div class="chat-banner-fixed" id="chat-banner" onclick="window.open('https://open.kakao.com/o/gv23urgi', '_blank')">
-            💬 해빛스쿨 공식 오픈단톡방 참여하기
+            💬 해빛스쿨 단톡방 참여하기
         </div>
 
         <div class="bottom-bar" id="submit-bar" style="display: none;" role="complementary">
