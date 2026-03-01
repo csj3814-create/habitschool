@@ -717,7 +717,7 @@ window.updateAssetDisplay = async function() {
                 pointBadge.textContent = (userData.coins || 0);
             }
 
-            // ========== 활성 챌린지 UI (동시 진행 지원) ==========
+            // ========== 활성 챌린지 UI (통합 전용, 미니→위클리→마스터 순) ==========
             const challengeContainer = document.getElementById('active-challenge-container');
             const challengeInfo = document.getElementById('active-challenge-info');
             const challengeSelection = document.getElementById('challenge-selection');
@@ -734,71 +734,62 @@ window.updateAssetDisplay = async function() {
                 if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
             }
 
-            const activeTiers = Object.keys(activeChallenges).filter(t => activeChallenges[t]?.status === 'ongoing');
-            const challengeEmojis = {
-                'challenge-diet-3d': '🥗 3일 식단', 'challenge-exercise-3d': '🏃 3일 운동', 'challenge-mind-3d': '🧘 3일 마음', 'challenge-all-3d': '🌟 3일 통합',
-                'challenge-diet-7d': '🥗 7일 식단', 'challenge-exercise-7d': '🏃 7일 운동', 'challenge-mind-7d': '🧘 7일 마음', 'challenge-all-7d': '🌟 7일 통합',
-                'challenge-diet-30d': '🥗 30일 식단', 'challenge-exercise-30d': '🏃 30일 운동', 'challenge-mind-30d': '🧘 30일 마음', 'challenge-all-30d': '🌟 30일 통합'
-            };
+            // 미니 → 위클리 → 마스터 순서로 정렬
+            const tierOrder = ['mini', 'weekly', 'master'];
+            const activeTiers = tierOrder.filter(t => activeChallenges[t]?.status === 'ongoing');
+            const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
+            const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
 
             if (activeTiers.length > 0) {
                 let challengeHtml = '';
                 for (const tier of activeTiers) {
                     const ch = activeChallenges[tier];
-                    const progressPct = Math.round((ch.completedDays / (ch.totalDays || 30)) * 100);
-                    const remain = (ch.totalDays || 30) - ch.completedDays;
-                    const challengeName = challengeEmojis[ch.challengeId] || '챌린지';
                     const totalDays = parseInt(ch.totalDays) || 30;
-                    const tierLabel = { mini: '⚡미니', weekly: '🔥위클리', master: '🏆마스터' }[tier] || '';
-                    const stakeDisplay = ch.hbtStaked > 0 
-                        ? `<span style="font-size:11px;">💰 ${escapeHtml(String(ch.hbtStaked))} HBT</span>` 
-                        : `<span style="font-size:11px;">🎯 무료</span>`;
+                    const completed = parseInt(ch.completedDays) || 0;
+                    const progressPct = Math.round((completed / totalDays) * 100);
+                    const remain = totalDays - completed;
+                    const color = tierColors[tier];
+                    const stakeText = ch.hbtStaked > 0 ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT` : '🎯 무료';
 
                     challengeHtml += `
-                        <details style="margin-bottom:8px;" ${activeTiers.length <= 2 ? 'open' : ''}>
-                            <summary style="cursor:pointer; font-weight:bold; font-size:13px; padding:4px 0;">
-                                ${tierLabel} ${escapeHtml(challengeName)} — ${parseInt(ch.completedDays) || 0}/${totalDays}일 ${stakeDisplay}
-                            </summary>
-                            <div style="padding:4px 0 4px 10px; font-size:12px; color:#333; line-height:1.6;">
-                                <div>📅 ${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
-                                <div>✅ ${parseInt(ch.completedDays) || 0}/${totalDays}일 완료 (${parseInt(remain) || 0}일 남음)</div>
-                                <div style="background:#fff; border-radius:4px; height:16px; margin-top:4px; overflow:hidden;">
-                                    <div style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height:100%; width:${progressPct}%; transition:width 0.5s; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:10px; color:white; font-weight:bold;">${progressPct}%</div>
-                                </div>
+                        <div class="active-challenge-card" style="border-left: 4px solid ${color};">
+                            <div class="active-ch-header">
+                                <span class="active-ch-name">${tierLabels[tier]}</span>
+                                <span class="active-ch-stake">${stakeText}</span>
                             </div>
-                        </details>
+                            <div class="active-ch-dates">📅 ${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
+                            <div class="active-ch-progress-row">
+                                <div class="active-ch-bar-bg">
+                                    <div class="active-ch-bar-fill" style="width:${progressPct}%; background:${color};">${progressPct}%</div>
+                                </div>
+                                <span class="active-ch-count">${completed}/${totalDays}</span>
+                            </div>
+                        </div>
                     `;
                 }
                 if (challengeContainer) {
                     challengeContainer.style.display = 'block';
                     challengeInfo.innerHTML = challengeHtml;
                 }
-                // 같은 티어는 숨기고, 비어있는 티어는 선택 가능하게
-                if (challengeSelection) {
-                    challengeSelection.style.display = 'block';
-                    // 진행 중인 티어의 버튼 비활성화
-                    const allTierBtns = { 
-                        mini: challengeSelection.querySelectorAll('[onclick*="-3d"]'),
-                        weekly: challengeSelection.querySelectorAll('[onclick*="-7d"]'),
-                        master: challengeSelection.querySelectorAll('[onclick*="-30d"]')
-                    };
-                    for (const [t, btns] of Object.entries(allTierBtns)) {
-                        btns.forEach(btn => {
-                            if (activeTiers.includes(t)) {
-                                btn.disabled = true;
-                                btn.style.opacity = '0.4';
-                                btn.style.pointerEvents = 'none';
-                            } else {
-                                btn.disabled = false;
-                                btn.style.opacity = '1';
-                                btn.style.pointerEvents = 'auto';
-                            }
-                        });
+                // 진행 중인 티어 카드 비활성화
+                for (const t of tierOrder) {
+                    const card = document.getElementById('tier-card-' + t);
+                    if (card) {
+                        if (activeTiers.includes(t)) {
+                            card.style.opacity = '0.4';
+                            card.style.pointerEvents = 'none';
+                        } else {
+                            card.style.opacity = '1';
+                            card.style.pointerEvents = 'auto';
+                        }
                     }
                 }
             } else {
                 if (challengeContainer) challengeContainer.style.display = 'none';
-                if (challengeSelection) challengeSelection.style.display = 'block';
+                for (const t of tierOrder) {
+                    const card = document.getElementById('tier-card-' + t);
+                    if (card) { card.style.opacity = '1'; card.style.pointerEvents = 'auto'; }
+                }
             }
 
             // ========== 거래 기록 로드 ==========

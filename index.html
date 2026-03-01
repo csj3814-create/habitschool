@@ -174,106 +174,44 @@
 
             <!-- 건강 습관 챌린지 섹션 -->
             <div class="card">
-                <h3 style="margin-bottom: 8px;">🏆 건강 습관 챌린지</h3>
+                <h3 style="margin-bottom: 4px;">🏆 건강 습관 챌린지</h3>
+                <p style="font-size: 12px; color: #888; margin: 0 0 10px 0;">식단·운동·마음 모두 인증해야 하루 완료!</p>
 
-                <!-- 현재 진행 중인 챌린지 -->
-                <div id="active-challenge-container" style="display: none; background: #E8F5E9; border: 2px solid #4CAF50; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
-                    <div style="font-weight: bold; color: #2E7D32; margin-bottom: 8px;">📊 진행 중인 챌린지</div>
-                    <div id="active-challenge-info" style="font-size: 13px; color: #333; line-height: 1.6;"></div>
+                <!-- 진행 중인 챌린지 -->
+                <div id="active-challenge-container" style="display: none; margin-bottom: 12px;">
+                    <div id="active-challenge-info"></div>
                 </div>
 
-                <!-- 카테고리 탭 -->
-                <div class="challenge-tabs" id="challenge-tabs">
-                    <button class="challenge-tab active" data-cat="diet" onclick="switchChallengeTab('diet')">🥗 식단</button>
-                    <button class="challenge-tab" data-cat="exercise" onclick="switchChallengeTab('exercise')">🏃 운동</button>
-                    <button class="challenge-tab" data-cat="mind" onclick="switchChallengeTab('mind')">🧘 마음</button>
-                    <button class="challenge-tab" data-cat="all" onclick="switchChallengeTab('all')">🌟 통합</button>
-                </div>
-
-                <div id="challenge-selection" style="display: block;">
-                    <!-- 식단 패널 -->
-                    <div class="challenge-panel active" id="challenge-panel-diet">
-                        <div class="challenge-tier-list">
-                            <div class="challenge-tier-card tier-mini" onclick="startChallenge30D('challenge-diet-3d')">
-                                <div class="tier-icon">⚡</div>
-                                <div class="tier-info"><div class="tier-name">3일 미니</div><div class="tier-desc">무료 · 10P 보상</div></div>
-                            </div>
-                            <div class="challenge-tier-card tier-weekly" onclick="startChallenge30D('challenge-diet-7d')">
-                                <div class="tier-icon">🔥</div>
-                                <div class="tier-info"><div class="tier-name">7일 위클리</div><div class="tier-desc">0.5+ HBT 예치 · 30P</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
-                            <div class="challenge-tier-card tier-master" onclick="startChallenge30D('challenge-diet-30d')">
-                                <div class="tier-icon">🏆</div>
-                                <div class="tier-info"><div class="tier-name">30일 마스터</div><div class="tier-desc">1+ HBT 예치 · 50P + HBT</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
+                <!-- 챌린지 시작 -->
+                <div id="challenge-selection">
+                    <div class="challenge-tier-list">
+                        <div class="challenge-tier-card tier-mini" id="tier-card-mini" onclick="startChallenge30D('challenge-all-3d')">
+                            <div class="tier-icon">⚡</div>
+                            <div class="tier-info">
+                                <div class="tier-name">3일 미니 챌린지</div>
+                                <div class="tier-desc">무료 참가 · 100% 달성 시 20P 보상</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- 운동 패널 -->
-                    <div class="challenge-panel" id="challenge-panel-exercise">
-                        <div class="challenge-tier-list">
-                            <div class="challenge-tier-card tier-mini" onclick="startChallenge30D('challenge-exercise-3d')">
-                                <div class="tier-icon">⚡</div>
-                                <div class="tier-info"><div class="tier-name">3일 미니</div><div class="tier-desc">무료 · 10P 보상</div></div>
+                        <div class="challenge-tier-card tier-weekly" id="tier-card-weekly" onclick="startChallenge30D('challenge-all-7d')">
+                            <div class="tier-icon">🔥</div>
+                            <div class="tier-info">
+                                <div class="tier-name">7일 위클리 챌린지</div>
+                                <div class="tier-desc">0.5+ HBT 예치 · 80%+ 환급 · 50P</div>
                             </div>
-                            <div class="challenge-tier-card tier-weekly" onclick="startChallenge30D('challenge-exercise-7d')">
-                                <div class="tier-icon">🔥</div>
-                                <div class="tier-info"><div class="tier-name">7일 위클리</div><div class="tier-desc">0.5+ HBT 예치 · 30P</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
+                            <div class="tier-stake"><input type="number" class="stake-input" id="stake-weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
+                        </div>
+                        <div class="challenge-tier-card tier-master" id="tier-card-master" onclick="startChallenge30D('challenge-all-30d')">
+                            <div class="tier-icon">🏆</div>
+                            <div class="tier-info">
+                                <div class="tier-name">30일 마스터 챌린지</div>
+                                <div class="tier-desc">1+ HBT 예치 · 80%+ 환급 · 80P + HBT</div>
                             </div>
-                            <div class="challenge-tier-card tier-master" onclick="startChallenge30D('challenge-exercise-30d')">
-                                <div class="tier-icon">🏆</div>
-                                <div class="tier-info"><div class="tier-name">30일 마스터</div><div class="tier-desc">1+ HBT 예치 · 50P + HBT</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
+                            <div class="tier-stake"><input type="number" class="stake-input" id="stake-master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
                         </div>
                     </div>
-
-                    <!-- 마음 패널 -->
-                    <div class="challenge-panel" id="challenge-panel-mind">
-                        <div class="challenge-tier-list">
-                            <div class="challenge-tier-card tier-mini" onclick="startChallenge30D('challenge-mind-3d')">
-                                <div class="tier-icon">⚡</div>
-                                <div class="tier-info"><div class="tier-name">3일 미니</div><div class="tier-desc">무료 · 10P 보상</div></div>
-                            </div>
-                            <div class="challenge-tier-card tier-weekly" onclick="startChallenge30D('challenge-mind-7d')">
-                                <div class="tier-icon">🔥</div>
-                                <div class="tier-info"><div class="tier-name">7일 위클리</div><div class="tier-desc">0.5+ HBT 예치 · 30P</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
-                            <div class="challenge-tier-card tier-master" onclick="startChallenge30D('challenge-mind-30d')">
-                                <div class="tier-icon">🏆</div>
-                                <div class="tier-info"><div class="tier-name">30일 마스터</div><div class="tier-desc">1+ HBT 예치 · 50P + HBT</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
-                        </div>
+                    <div class="challenge-rules-note">
+                        📌 80%+ 달성 → 원금환급 · 100% 달성 → +20% HBT 보너스 · 미달 시 소멸
                     </div>
-
-                    <!-- 통합 패널 -->
-                    <div class="challenge-panel" id="challenge-panel-all">
-                        <div class="challenge-tier-list">
-                            <div class="challenge-tier-card tier-mini" onclick="startChallenge30D('challenge-all-3d')">
-                                <div class="tier-icon">⚡</div>
-                                <div class="tier-info"><div class="tier-name">3일 미니</div><div class="tier-desc">무료 · 20P 보상</div></div>
-                            </div>
-                            <div class="challenge-tier-card tier-weekly" onclick="startChallenge30D('challenge-all-7d')">
-                                <div class="tier-icon">🔥</div>
-                                <div class="tier-info"><div class="tier-name">7일 위클리</div><div class="tier-desc">0.5+ HBT 예치 · 50P</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="weekly" min="0.5" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
-                            <div class="challenge-tier-card tier-master" onclick="startChallenge30D('challenge-all-30d')">
-                                <div class="tier-icon">🏆</div>
-                                <div class="tier-info"><div class="tier-name">30일 마스터</div><div class="tier-desc">1+ HBT 예치 · 80P + HBT</div></div>
-                                <div class="tier-stake"><input type="number" class="stake-input" data-tier="master" min="1" value="1" step="0.5" onclick="event.stopPropagation()"> HBT</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="challenge-rules-note">
-                    📌 80%+ 달성 시 원금환급 · 100% 달성 시 +20% HBT 보너스 · 미달 시 소멸
                 </div>
             </div>
 

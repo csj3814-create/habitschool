@@ -310,11 +310,10 @@ export async function startChallenge30D(challengeId) {
         const minStake = challengeDef.hbtStake || 0;
         const tier = challengeDef.tier || 'master';
 
-        // 티어별 인라인 입력에서 예치량 읽기 (해당 패널 내부)
+        // 티어별 인라인 입력에서 예치량 읽기
         let hbtAmount = 0;
         if (duration > 3) {
-            const activePanelInputs = document.querySelectorAll(`.challenge-panel.active .stake-input[data-tier="${tier}"]`);
-            const stakeInput = activePanelInputs.length > 0 ? activePanelInputs[0] : document.getElementById('challenge-stake-amount');
+            const stakeInput = document.getElementById('stake-' + tier);
             hbtAmount = parseFloat(stakeInput?.value || 0);
             if (!hbtAmount || hbtAmount < minStake) {
                 showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);

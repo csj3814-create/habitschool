@@ -1703,51 +1703,8 @@ textarea {
 }
 
 /* ===========================
-   챌린지 탭 & 티어 카드
+   챌린지 티어 카드 & 진행 현황
    =========================== */
-
-/* 카테고리 탭 바 */
-.challenge-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 12px;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid #E0E0E0;
-}
-
-.challenge-tab {
-    flex: 1;
-    padding: 9px 4px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    background: #F5F5F5;
-    color: #888;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    white-space: nowrap;
-}
-
-.challenge-tab + .challenge-tab {
-    border-left: 1px solid #E0E0E0;
-}
-
-.challenge-tab.active {
-    background: linear-gradient(135deg, #FF9800, #F57C00);
-    color: #fff;
-    box-shadow: 0 2px 6px rgba(255,152,0,0.3);
-}
-
-/* 패널 */
-.challenge-panel {
-    display: none;
-}
-
-.challenge-panel.active {
-    display: block;
-}
 
 /* 티어 카드 리스트 */
 .challenge-tier-list {
@@ -1763,7 +1720,7 @@ textarea {
     padding: 12px;
     border-radius: 10px;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
     position: relative;
 }
 
@@ -1835,6 +1792,77 @@ textarea {
     color: #999;
     text-align: center;
     line-height: 1.5;
+}
+
+/* 진행 중인 챌린지 카드 */
+.active-challenge-card {
+    background: #fff;
+    border: 1px solid #E0E0E0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+}
+
+.active-challenge-card:last-child {
+    margin-bottom: 0;
+}
+
+.active-ch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.active-ch-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+}
+
+.active-ch-stake {
+    font-size: 11px;
+    color: #888;
+}
+
+.active-ch-dates {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 6px;
+}
+
+.active-ch-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.active-ch-bar-bg {
+    flex: 1;
+    height: 18px;
+    background: #F0F0F0;
+    border-radius: 9px;
+    overflow: hidden;
+}
+
+.active-ch-bar-fill {
+    height: 100%;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    font-weight: 700;
+    min-width: 28px;
+    transition: width 0.5s;
+}
+
+.active-ch-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
 }
 
 /* 로딩 애니메이션 */
