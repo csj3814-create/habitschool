@@ -1725,10 +1725,6 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
     
-    // 갤러리 탭에서는 카카오톡 링크 버튼이므로 저장 동작 스킵
-    const activeGallery = document.getElementById('gallery');
-    if (activeGallery && activeGallery.style.display !== 'none') return;
-    
     const saveBtn = document.getElementById('saveDataBtn');
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
     showToast("백그라운드에서 저장 중입니다! 🚀");
