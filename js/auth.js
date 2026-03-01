@@ -1,33 +1,118 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { initializeUserWallet } from './blockchain-manager.js';
 
+// WebView(인앱 브라우저) 감지
+function isWebView() {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    // 주요 인앱 브라우저 패턴: 카카오톡, 네이버, 인스타그램, 페이스북, 라인 등
+    const webviewPatterns = [
+        /KAKAOTALK/i,
+        /NAVER/i,
+        /FBAN|FBAV/i,       // Facebook
+        /Instagram/i,
+        /Line\//i,
+        /Twitter/i,
+        /Snapchat/i,
+        /\bwv\b/i,          // Android WebView
+        /WebView/i
+    ];
+    return webviewPatterns.some(pattern => pattern.test(ua));
+}
+
+// 외부 브라우저로 열기 (Android intent, iOS Safari fallback)
+function openInExternalBrowser() {
+    const currentUrl = window.location.href;
+    const ua = navigator.userAgent || '';
+    
+    if (/android/i.test(ua)) {
+        // Android: Chrome intent로 열기
+        window.location.href = 'intent://' + currentUrl.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end;';
+    } else if (/iphone|ipad|ipod/i.test(ua)) {
+        // iOS: Safari로 열기 시도
+        window.location.href = currentUrl;
+    } else {
+        window.open(currentUrl, '_system');
+    }
+}
+
 // 구글 로그인
 export function initAuth() {
     const loginBtn = document.getElementById('loginBtn');
+    const webviewWarning = document.getElementById('webview-warning');
+    
     if (!loginBtn) {
         console.error('로그인 버튼을 찾을 수 없습니다.');
         return;
     }
     
+    // WebView 감지 시 경고 표시
+    if (isWebView()) {
+        loginBtn.style.display = 'none';
+        if (webviewWarning) {
+            webviewWarning.style.display = 'block';
+            const openBrowserBtn = document.getElementById('openExternalBrowser');
+            if (openBrowserBtn) {
+                openBrowserBtn.addEventListener('click', openInExternalBrowser);
+            }
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+            if (copyLinkBtn) {
+                copyLinkBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        showToast('✅ 링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
+                    }).catch(() => {
+                        // clipboard API 실패 시 폴백
+                        const textArea = document.createElement('textarea');
+                        textArea.value = window.location.href;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showToast('✅ 링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
+                    });
+                });
+            }
+        }
+        return;
+    }
+    
+    // Redirect 결과 처리 (모바일에서 signInWithRedirect 사용 시)
+    getRedirectResult(auth).catch(error => {
+        if (error.code !== 'auth/null-user') {
+            console.error('리다이렉트 로그인 오류:', error);
+        }
+    });
+    
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider).catch(error => {
-            console.error('로그인 오류:', error);
-            let errorMsg = '로그인에 실패했습니다.';
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMsg = '로그인 창이 닫혔습니다.';
-            } else if (error.code === 'auth/popup-blocked') {
-                errorMsg = '팝업이 차단되었습니다. 팝업 차단을 해제해주세요.';
-            } else if (error.code === 'auth/network-request-failed') {
-                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
-            }
-            showToast(`⚠️ ${errorMsg}`);
-        });
+        
+        if (isMobile) {
+            // 모바일: signInWithRedirect 사용 (팝업 차단 문제 방지)
+            signInWithRedirect(auth, provider).catch(error => {
+                console.error('로그인 오류:', error);
+                showToast('⚠️ 로그인에 실패했습니다. 다시 시도해주세요.');
+            });
+        } else {
+            // 데스크톱: signInWithPopup 사용
+            signInWithPopup(auth, provider).catch(error => {
+                console.error('로그인 오류:', error);
+                let errorMsg = '로그인에 실패했습니다.';
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMsg = '로그인 창이 닫혔습니다.';
+                } else if (error.code === 'auth/popup-blocked') {
+                    errorMsg = '팝업이 차단되었습니다. 팝업 차단을 해제해주세요.';
+                } else if (error.code === 'auth/network-request-failed') {
+                    errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+                }
+                showToast(`⚠️ ${errorMsg}`);
+            });
+        }
     });
 }
 
