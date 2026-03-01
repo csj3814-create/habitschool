@@ -7,6 +7,8 @@
  * - 사용자가 로그인만 하면 자동으로 지갑 생성
  * - 별도 앱 설치나 복잡한 설정 불필요
  * - ethers.js를 사용하여 Base 체인 호환 지갑 생성
+ * 
+ * 온체인 연동: Cloud Functions를 통한 실제 스마트 컨트랙트 호출
  */
 
 import { 
@@ -17,10 +19,25 @@ import {
     CHALLENGES
 } from './blockchain-config.js';
 
-import { auth, db } from './firebase-config.js';
+import { auth, db, app } from './firebase-config.js';
 import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
+
+// Firebase Functions 초기화 (서울 리전)
+const functions = getFunctions(app, 'asia-northeast3');
+
+// 로컬 개발 시 에뮬레이터 연결
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    console.log('🛠️ Functions 에뮬레이터 연결');
+}
+
+// Cloud Function 참조
+const mintHBTFunction = httpsCallable(functions, 'mintHBT');
+const getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
+const getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
 
 let userWallet = null; // ethers.Wallet 인스턴스
 let userWalletAddress = null; // 0x... 주소
@@ -260,7 +277,7 @@ export function getCurrentEra(totalMinted = 0) {
 }
 
 /**
- * 포인트를 HBT 토큰으로 변환
+ * 포인트를 HBT 토큰으로 변환 (Cloud Function 경유 온체인 민팅)
  * 구간 1 기준: 100P → 100 HBT (반감기에 따라 변동)
  * @param {number} [pointAmount] - 변환할 포인트 (미입력 시 기존 input에서 읽음)
  */
@@ -288,52 +305,27 @@ export async function convertPointsToHBT(pointAmount) {
             return false;
         }
 
-        // 1. 포인트 잔액 확인
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.data();
-
-        if ((userData.coins || 0) < pointAmount) {
-            showToast(`❌ 포인트가 부족합니다.\n필요: ${pointAmount}P, 보유: ${userData.coins || 0}P`);
-            return false;
-        }
-
-        // 2. 지갑 확인
+        // 지갑 확인
         if (!userWalletAddress) {
             showToast('⚠️ 지갑을 찾을 수 없습니다. 다시 로그인해주세요.');
             return false;
         }
 
-        showToast('⏳ HBT 변환 중입니다... (약 2-5초)');
+        showToast('⏳ HBT 변환 중입니다... (온체인 처리, 약 5-15초)');
 
-        // 3. 반감기 적용 HBT 계산
-        const hbtAmount = calculateHbtWithHalving(pointAmount, userData.totalHbtEarned || 0);
-        
-        // 4. Firebase 업데이트 (포인트 차감 + HBT 추가)
-        await updateDoc(userRef, {
-            coins: increment(-pointAmount),
-            hbtBalance: increment(hbtAmount),
-            totalHbtEarned: increment(hbtAmount)
-        });
+        // Cloud Function 호출 (온체인 민팅)
+        const result = await mintHBTFunction({ pointAmount });
+        const data = result.data;
 
-        showToast(`✅ ${pointAmount}P → ${hbtAmount} HBT 변환 완료!`);
-
-        // 5. 변환 기록 저장 (실패해도 변환 자체는 이미 완료)
-        try {
-            await addDoc(collection(db, "blockchain_transactions"), {
-                userId: currentUser.uid,
-                type: 'conversion',
-                pointsUsed: pointAmount,
-                hbtReceived: hbtAmount,
-                timestamp: serverTimestamp(),
-                status: 'success',
-                walletAddress: userWalletAddress,
-                txHash: 'simulated_' + Date.now()
-            });
-        } catch (logErr) {
-            console.warn('⚠️ 변환 기록 저장 실패 (변환은 완료됨):', logErr.message);
+        if (data.success) {
+            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!\n🔗 구간 ${data.era} (비율: ${data.conversionRate})`);
+            
+            // BaseScan 링크 표시
+            if (data.txHash) {
+                console.log(`🔍 TX: ${data.explorerUrl}`);
+            }
         }
-        
+
         // UI 업데이트
         const pointInput = document.getElementById('conversion-points');
         if (pointInput) pointInput.value = '';
@@ -347,7 +339,8 @@ export async function convertPointsToHBT(pointAmount) {
 
     } catch (error) {
         console.error('❌ 변환 오류:', error);
-        showToast(`❌ 변환 실패: ${error.message}`);
+        const msg = error.message || '변환 실패';
+        showToast(`❌ ${msg}`);
         return false;
     }
 }
@@ -654,6 +647,37 @@ export async function updateChallengeProgress() {
  */
 export function getWalletAddress() {
     return userWalletAddress;
+}
+
+/**
+ * 온체인 HBT 잔액 조회 (Cloud Function 경유)
+ * @returns {object} { balance, balanceFormatted, walletAddress }
+ */
+export async function fetchOnchainBalance() {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return null;
+
+        const result = await getOnchainBalanceFunction();
+        return result.data;
+    } catch (error) {
+        console.error('⚠️ 온체인 잔액 조회 오류:', error);
+        return null;
+    }
+}
+
+/**
+ * 토큰 전체 통계 조회 (Cloud Function 경유)
+ * @returns {object} { totalSupply, totalMined, totalBurned, currentRate, currentEra, remainingInEra }
+ */
+export async function fetchTokenStats() {
+    try {
+        const result = await getTokenStatsFunction();
+        return result.data;
+    } catch (error) {
+        console.error('⚠️ 토큰 통계 조회 오류:', error);
+        return null;
+    }
 }
 
 /**

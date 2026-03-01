@@ -762,6 +762,43 @@ window.updateAssetDisplay = async function() {
                 hbtDisplay.textContent = (userData.hbtBalance || 0) + ' HBT';
             }
 
+            // 온체인 잔액 비동기 업데이트 (Cloud Function 경유)
+            if (window.fetchOnchainBalance) {
+                window.fetchOnchainBalance().then(onchainData => {
+                    if (onchainData && onchainData.balanceFormatted) {
+                        const onchainDisplay = document.getElementById('asset-hbt-onchain');
+                        if (onchainDisplay) {
+                            onchainDisplay.textContent = `온체인: ${onchainData.balanceFormatted} HBT`;
+                            onchainDisplay.style.display = 'block';
+                        }
+                    }
+                }).catch(err => console.warn('온체인 잔액 조회 스킵:', err.message));
+            }
+
+            // 온체인 토큰 통계 비동기 업데이트
+            if (window.fetchTokenStats) {
+                window.fetchTokenStats().then(stats => {
+                    if (stats) {
+                        const halvingEraEl = document.getElementById('halving-era');
+                        if (halvingEraEl) halvingEraEl.textContent = stats.currentEra;
+
+                        const halvingRateEl = document.getElementById('halving-rate');
+                        if (halvingRateEl) {
+                            const r = stats.currentRate;
+                            const displayRate = r >= 1
+                                ? `100P = ${Math.round(100 * r)} HBT`
+                                : `100P = ${(100 * r).toFixed(2)} HBT`;
+                            halvingRateEl.textContent = displayRate;
+                        }
+
+                        const halvingProgressText = document.getElementById('halving-progress-text');
+                        if (halvingProgressText) {
+                            halvingProgressText.textContent = `${parseFloat(stats.totalMined).toLocaleString()} / ${parseFloat(stats.remainingInEra).toLocaleString()} HBT`;
+                        }
+                    }
+                }).catch(err => console.warn('토큰 통계 조회 스킵:', err.message));
+            }
+
             // ========== 반감기 상태 UI 업데이트 ==========
             const totalMinted = userData.totalHbtEarned || 0;
             const era = getCurrentEra(totalMinted);
