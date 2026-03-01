@@ -18,6 +18,14 @@ import { convertPointsToHBT, startChallenge30D } from './blockchain-manager.js';
 window.convertPointsToHBT = convertPointsToHBT; // HTML onclick="convertPointsToHBT()"
 window.startChallenge30D = startChallenge30D;    // HTML onclick="startChallenge30D(...)"
 
+// 챌린지 카테고리 탭 전환
+window.switchChallengeTab = function(cat) {
+    document.querySelectorAll('.challenge-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === cat));
+    document.querySelectorAll('.challenge-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('challenge-panel-' + cat);
+    if (panel) panel.classList.add('active');
+};
+
 // cleanupGalleryResources는 app.js에서 window에 설정됨
 
 // 모듈 로드 완료 표시

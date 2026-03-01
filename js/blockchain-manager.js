@@ -310,14 +310,16 @@ export async function startChallenge30D(challengeId) {
         const minStake = challengeDef.hbtStake || 0;
         const tier = challengeDef.tier || 'master';
 
-        const stakeInput = document.getElementById('challenge-stake-amount');
-        let hbtAmount = parseFloat(stakeInput?.value || 0);
-
-        if (duration <= 3) {
-            hbtAmount = 0;
-        } else if (!hbtAmount || hbtAmount < minStake) {
-            showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
-            return false;
+        // 티어별 인라인 입력에서 예치량 읽기 (해당 패널 내부)
+        let hbtAmount = 0;
+        if (duration > 3) {
+            const activePanelInputs = document.querySelectorAll(`.challenge-panel.active .stake-input[data-tier="${tier}"]`);
+            const stakeInput = activePanelInputs.length > 0 ? activePanelInputs[0] : document.getElementById('challenge-stake-amount');
+            hbtAmount = parseFloat(stakeInput?.value || 0);
+            if (!hbtAmount || hbtAmount < minStake) {
+                showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
+                return false;
+            }
         }
 
         const userRef = doc(db, "users", currentUser.uid);

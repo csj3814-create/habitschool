@@ -124,7 +124,7 @@ async function renderMilestones(userId) {
             cardHtml += `</div>`;
         }
 
-        // 현재 목표 (크게 표시)
+        // 현재 목표 (컴팩트)
         if (currentIdx < levels.length) {
             const cur = levels[currentIdx];
             cardHtml += `<div class="milestone-current-target">`;
@@ -132,7 +132,6 @@ async function renderMilestones(userId) {
             cardHtml += `<div class="milestone-current-info">`;
             cardHtml += `<div class="milestone-current-name">🎯 ${cur.name}</div>`;
             cardHtml += `<div class="milestone-current-desc">${cur.desc}</div>`;
-            cardHtml += `<div class="milestone-current-reward">달성 시 🎁 +${cur.reward}P</div>`;
             cardHtml += `</div></div>`;
         } else {
             cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
