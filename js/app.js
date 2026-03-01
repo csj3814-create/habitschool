@@ -2598,44 +2598,9 @@ async function createSquareShareBlob() {
 
 window.shareMyCard = async function() {
     const btn = document.querySelector('.btn-share-action');
-    const originalText = btn.innerHTML;
-    btn.innerText = '⏳ 1:1 이미지 생성 중...';
+    btn.innerText = '⏳ 이미지 생성중...';
     btn.disabled = true;
-
-    try {
-        await prepareShareThumbsForCapture();
-        const blob = await createSquareShareBlob();
-        latestShareBlob = blob;
-        latestShareFile = new File([blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
-        latestShareText = '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪\n\n👇 갤러리 구경가기 (가입 없이 가능)\n' + window.location.href;
-
-        // 공유 미리보기 썸네일 설정
-        const previewThumb = document.getElementById('share-preview-thumb');
-        if (previewThumb && latestShareBlob) {
-            previewThumb.src = URL.createObjectURL(latestShareBlob);
-        }
-
-        // 모바일: Web Share API 우선 시도 (파일 공유 직접 지원)
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const shareData = { title: '해빛스쿨 인증', text: latestShareText, files: [latestShareFile] };
-        if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
-            try {
-                await navigator.share(shareData);
-                return; // 공유 성공 시 종료
-            } catch (shareErr) {
-                if (shareErr.name === 'AbortError') return; // 사용자가 취소
-                console.warn('시스템 공유 실패, 모달 표시:', shareErr);
-            }
-        }
-        // PC 또는 모바일 Web Share 실패 시 모달 표시
-        openSharePlatformModal();
-    } catch (err) {
-        console.error('공유 카드 생성 오류:', err);
-        showToast('⚠️ 카드 생성에 실패했습니다. 다시 시도해주세요.');
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
+    // 1:1 이미지 기능 준비 중 — 추후 활성화 예정
 };
 
 window.shareViaSystem = async function() {
