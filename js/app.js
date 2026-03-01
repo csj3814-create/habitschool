@@ -1001,7 +1001,7 @@ window.openTab = function(tabName, pushState = true) {
         }
     } else if(tabName === 'gallery') {
         submitBar.style.display = 'block';
-        saveBtn.innerText = '💬 해빛스쿨 공식 오픈단톡방 참여하기';
+        saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
         saveBtn.style.backgroundColor = '#FEE500';
         saveBtn.style.color = '#3E2723';
         saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
@@ -2056,12 +2056,19 @@ window.toggleReaction = async function(docId, reactionType, btnElement) {
     const user = auth.currentUser;
     if(!user) { document.getElementById('login-modal').style.display='flex'; return; }
     
-    const span = btnElement.querySelector('span');
-    let count = parseInt(span.innerText);
-    const isActive = btnElement.classList.contains('active');
+    // span이 없으면 생성 (count 0일 때 span 없는 템플릿 대응)
+    let span = btnElement.querySelector('span');
+    if (!span) {
+        span = document.createElement('span');
+        span.innerText = '0';
+        btnElement.appendChild(span);
+    }
+    let count = parseInt(span.innerText) || 0;
+    // 'reacted' 또는 'active' 클래스 모두 호환
+    const isActive = btnElement.classList.contains('reacted') || btnElement.classList.contains('active');
     
-    if (isActive) { btnElement.classList.remove('active'); count = Math.max(0, count - 1); } 
-    else { btnElement.classList.add('active'); count++; }
+    if (isActive) { btnElement.classList.remove('reacted', 'active'); count = Math.max(0, count - 1); } 
+    else { btnElement.classList.add('reacted'); count++; }
     span.innerText = count;
 
     try {
@@ -2080,8 +2087,8 @@ window.toggleReaction = async function(docId, reactionType, btnElement) {
     } catch(error) {
         console.error('반응 저장 오류:', error);
         // UI 롤백 (실패 시 원복)
-        if (isActive) { btnElement.classList.add('active'); count++; } 
-        else { btnElement.classList.remove('active'); count = Math.max(0, count - 1); }
+        if (isActive) { btnElement.classList.add('reacted'); count++; } 
+        else { btnElement.classList.remove('reacted'); count = Math.max(0, count - 1); }
         span.innerText = count;
         showToast('⚠️ 반응 저장에 실패했습니다.');
     }
