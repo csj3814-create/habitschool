@@ -17,7 +17,7 @@ import { auth, db, storage, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } f
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType } from './security.js';
-import { updateChallengeProgress } from './blockchain-manager.js';
+import { updateChallengeProgress, getConversionRate, getCurrentEra } from './blockchain-manager.js';
 
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
 async function checkMilestones(userId) {
@@ -761,7 +761,45 @@ window.updateAssetDisplay = async function() {
             if (hbtDisplay) {
                 hbtDisplay.textContent = (userData.hbtBalance || 0) + ' HBT';
             }
-            
+
+            // ========== 반감기 상태 UI 업데이트 ==========
+            const totalMinted = userData.totalHbtEarned || 0;
+            const era = getCurrentEra(totalMinted);
+            const rate = getConversionRate(totalMinted);
+
+            const halvingEraEl = document.getElementById('halving-era');
+            if (halvingEraEl) halvingEraEl.textContent = era;
+
+            const halvingRateEl = document.getElementById('halving-rate');
+            if (halvingRateEl) {
+                const displayRate = rate >= 1
+                    ? `100P = ${Math.round(100 * rate)} HBT`
+                    : `100P = ${(100 * rate).toFixed(2)} HBT`;
+                halvingRateEl.textContent = displayRate;
+            }
+
+            // 현재 구간 내 진행률 계산
+            const era1Threshold = 30_000_000;
+            let eraStart = 0;
+            let currentThreshold = era1Threshold;
+            for (let i = 1; i < era; i++) {
+                eraStart += currentThreshold;
+                currentThreshold = Math.floor(currentThreshold / 2);
+                if (currentThreshold < 1) { currentThreshold = 1; break; }
+            }
+            const mintedInEra = totalMinted - eraStart;
+            const progressPct = currentThreshold > 0 ? Math.min((mintedInEra / currentThreshold) * 100, 100) : 0;
+
+            const halvingProgressText = document.getElementById('halving-progress-text');
+            if (halvingProgressText) {
+                halvingProgressText.textContent = `${mintedInEra.toLocaleString()} / ${currentThreshold.toLocaleString()} HBT`;
+            }
+
+            const halvingProgressBar = document.getElementById('halving-progress-bar');
+            if (halvingProgressBar) {
+                halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+            }
+
             // 헤더의 포인트 배지도 업데이트
             const pointBadge = document.getElementById('point-balance');
             if (pointBadge) {

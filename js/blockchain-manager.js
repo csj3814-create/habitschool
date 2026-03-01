@@ -197,6 +197,68 @@ function updateWalletUI(address) {
     }
 }
 
+// ========== 반감기 계산 (비트코인 방식) ==========
+
+/**
+ * 누적 채굴량 기반 현재 전환 비율 계산
+ * 구간 1: totalMinted < 30M → rate = 1 (1P = 1 HBT)
+ * 구간 2: totalMinted < 45M → rate = 0.5 (1P = 0.5 HBT)
+ * ... 각 구간 ÷2, 최소 0.01 (100P = 1 HBT)
+ * @param {number} totalMinted - 전체 누적 채굴 발행량
+ * @returns {number} 현재 전환 비율 (1P당 HBT)
+ */
+export function getConversionRate(totalMinted = 0) {
+    const { era1Threshold, initialRate, minRate } = CONVERSION_RULES.halving;
+    let minted = totalMinted;
+    let rate = initialRate;
+    let threshold = era1Threshold;
+
+    while (minted >= threshold && rate > minRate) {
+        minted -= threshold;
+        threshold = Math.floor(threshold / 2);
+        rate = rate / 2;
+        if (threshold < 1) break;
+    }
+
+    return Math.max(rate, minRate);
+}
+
+/**
+ * 반감기를 적용한 HBT 변환량 계산
+ * @param {number} pointAmount - 변환할 포인트
+ * @param {number} totalMinted - 현재까지 전체 채굴된 HBT (글로벌)
+ * @returns {number} 받을 HBT 수량
+ */
+function calculateHbtWithHalving(pointAmount, totalMinted = 0) {
+    // TODO: totalMinted를 글로벌 카운터(Firestore)에서 읽어오기
+    // 현재는 사용자 개인 totalHbtEarned로 근사 (Phase 1)
+    const rate = getConversionRate(totalMinted);
+    const hbtAmount = pointAmount * rate;
+
+    // 일일 한도 체크
+    return Math.min(hbtAmount, CONVERSION_RULES.maxConversionPerDay);
+}
+
+/**
+ * 현재 구간 번호 반환
+ * @param {number} totalMinted
+ * @returns {number} 구간 번호 (1부터)
+ */
+export function getCurrentEra(totalMinted = 0) {
+    const { era1Threshold } = CONVERSION_RULES.halving;
+    let minted = totalMinted;
+    let threshold = era1Threshold;
+    let era = 1;
+
+    while (minted >= threshold && threshold > 0) {
+        minted -= threshold;
+        threshold = Math.floor(threshold / 2);
+        era++;
+    }
+
+    return era;
+}
+
 /**
  * 포인트를 HBT 토큰으로 변환
  * 구간 1 기준: 100P → 100 HBT (반감기에 따라 변동)
@@ -244,8 +306,8 @@ export async function convertPointsToHBT(pointAmount) {
 
         showToast('⏳ HBT 변환 중입니다... (약 2-5초)');
 
-        // 3. HBT 계산
-        const hbtAmount = pointAmount / CONVERSION_RULES.pointsPerConversion;
+        // 3. 반감기 적용 HBT 계산
+        const hbtAmount = calculateHbtWithHalving(pointAmount, userData.totalHbtEarned || 0);
         
         // 4. Firebase 업데이트 (포인트 차감 + HBT 추가)
         await updateDoc(userRef, {
@@ -254,7 +316,7 @@ export async function convertPointsToHBT(pointAmount) {
             totalHbtEarned: increment(hbtAmount)
         });
 
-        showToast(`✅ ${pointAmount}P를 ${hbtAmount} HBT로 변환했습니다!`);
+        showToast(`✅ ${pointAmount}P → ${hbtAmount} HBT 변환 완료!`);
 
         // 5. 변환 기록 저장 (실패해도 변환 자체는 이미 완료)
         try {

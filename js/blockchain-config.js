@@ -8,7 +8,7 @@
  * - ethers.js 사용
  * - 별도 앱 설치 불필요
  * 
- * 교환 대상: WBMB (Wrapped BitMobic) / BMB (BitMobic)
+ * 교환 대상: 향후 파트너십을 통한 외부 토큰 교환 예정
  */
 
 // ⛓️ Base 네트워크 설정
@@ -47,11 +47,11 @@ export const HBT_TOKEN = {
     // 메인넷 컨트랙트 주소 (Base, 향후 배포)
     mainnetAddress: '0x0000...',  // TODO: Base 메인넷 배포 후
 
-    // 교환 대상
+    // 교환 대상 (파트너십 체결 후 공개)
     exchange: {
-        targetToken: 'WBMB',       // Wrapped BitMobic (Base 체인)
-        targetNative: 'BMB',       // BitMobic (원본 체인)
-        rate: 1_000_000,           // 1,000,000 HBT = 1 BMB
+        targetToken: 'TBD',        // 파트너십 체결 후 결정
+        targetNative: 'TBD',       // 파트너십 체결 후 결정
+        rate: 1_000_000,           // 1,000,000 HBT = 1 파트너 토큰 (예정)
         burnFee: 0.02              // 교환 시 2% 소각
     }
 };

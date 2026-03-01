@@ -147,22 +147,50 @@
                         <span id="wallet-address-display" style="font-family: monospace; font-size: 11px; color: #424242;">로딩 중...</span>
                     </div>
                 </div>
+                <a href="tokenomics.html" style="display: block; margin-top: 12px; text-align: center; padding: 10px; background: linear-gradient(135deg, #FF8C00, #FFA726); color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; box-shadow: 0 2px 6px rgba(255,140,0,0.3);">📋 HaBit(HBT) 토크노믹스 보기</a>
             </div>
 
             <!-- 포인트 → HBT 변환 섹션 -->
             <div class="card">
                 <h3>🔄 포인트 → HBT 변환</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    포인트를 HBT 코인으로 변환하세요!
+                    포인트를 HBT 코인으로 변환하세요! (구간 1: 1P = 1 HBT)
                 </p>
                 <div style="display: flex; gap: 10px;">
                     <button class="hbt-convert-btn" onclick="convertPointsToHBT(100)">
-                        <span class="hbt-convert-label">💸 100P → 1 HBT</span>
+                        <span class="hbt-convert-label">💸 100P → 100 HBT</span>
                     </button>
                     <button class="hbt-convert-btn hbt-convert-big" onclick="convertPointsToHBT(500)">
-                        <span class="hbt-convert-label">🚀 500P → 5 HBT</span>
+                        <span class="hbt-convert-label">🚀 500P → 500 HBT</span>
                     </button>
                 </div>
+            </div>
+
+            <!-- 반감기 현황 -->
+            <div class="card" style="background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%); border: none;">
+                <h3 style="color: #E65100; margin-top: 0;">📉 채굴 반감기 현황</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
+                    <div style="background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 11px; color: #888;">현재 구간</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #E65100;" id="halving-era">1</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 11px; color: #888;">전환 비율</div>
+                        <div style="font-size: 15px; font-weight: 700; color: #E65100;" id="halving-rate">100P = 100 HBT</div>
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.5); padding: 10px; border-radius: 8px; margin-top: 6px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-bottom: 6px;">
+                        <span>구간 진행도</span>
+                        <span id="halving-progress-text">0 / 30,000,000 HBT</span>
+                    </div>
+                    <div style="background: #E0E0E0; border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div id="halving-progress-bar" style="background: linear-gradient(90deg, #FF8C00, #FFA726); height: 100%; border-radius: 4px; width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                <p style="font-size: 11px; color: #999; margin: 8px 0 0; text-align: center;">
+                    💡 일찍 시작할수록 유리합니다! 구간이 올라갈수록 전환량이 절반으로 줄어듭니다.
+                </p>
             </div>
 
             <!-- 건강 습관 챌린지 섹션 -->
