@@ -911,11 +911,7 @@ window.openTab = function(tabName, pushState = true) {
             updateAssetDisplay();
         }
     } else if(tabName === 'gallery') {
-        submitBar.style.display = 'block';
-        saveBtn.innerText = '💬 해빛스쿨 공식 오픈단톡방 참여하기';
-        saveBtn.style.backgroundColor = '#FEE500';
-        saveBtn.style.color = '#3E2723';
-        saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
+        submitBar.style.display = 'none';
     } else {
         submitBar.style.display = 'block';
         saveBtn.innerText = '현재 진행상황 저장 & 포인트 받기 🅿️';

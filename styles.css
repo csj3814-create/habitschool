@@ -1716,8 +1716,8 @@ textarea {
 .challenge-tier-card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px;
     border-radius: 10px;
     cursor: pointer;
     transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
@@ -1744,9 +1744,9 @@ textarea {
 }
 
 .tier-icon {
-    font-size: 22px;
+    font-size: 20px;
     flex-shrink: 0;
-    width: 32px;
+    width: 28px;
     text-align: center;
 }
 
@@ -1759,12 +1759,16 @@ textarea {
     font-size: 13px;
     font-weight: 700;
     color: #333;
+    white-space: nowrap;
 }
 
 .tier-desc {
-    font-size: 11px;
+    font-size: 10px;
     color: #777;
     margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tier-stake {
@@ -1777,8 +1781,8 @@ textarea {
 }
 
 .stake-input {
-    width: 52px;
-    padding: 4px 6px;
+    width: 46px;
+    padding: 4px 4px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 12px;
