@@ -10,9 +10,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=23">
+    <link rel="stylesheet" href="styles.css?v=24">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -446,16 +447,59 @@
 
 <div id="share-platform-modal" onclick="closeSharePlatformModal()">
     <div class="share-platform-card" onclick="event.stopPropagation()">
-        <h4>공유 채널 선택</h4>
-        <p>📸 이미지가 자동 저장되고 SNS 창이 열립니다.</p>
-        <div class="share-platform-actions">
-            <button class="share-platform-btn" onclick="shareToPlatform('instagram')" style="background:#E1306C;">📷 인스타그램</button>
-            <button class="share-platform-btn" onclick="shareToPlatform('facebook')" style="background:#1877F2;">📘 페이스북</button>
-            <button class="share-platform-btn" onclick="shareToPlatform('x')" style="background:#000;">𝕏 X(트위터)</button>
-            <button class="share-platform-btn" onclick="shareToPlatform('kakao')" style="background:#FEE500; color:#3E2723;">💬 카카오톡</button>
-            <button class="share-platform-btn secondary" onclick="shareViaSystem()">📱 시스템 공유</button>
+        <div class="share-modal-header">
+            <span class="share-modal-title">공유하기</span>
+            <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
         </div>
-        <button class="share-platform-close" onclick="closeSharePlatformModal()">닫기</button>
+        <div class="share-preview-row">
+            <img id="share-preview-thumb" src="" alt="공유 미리보기" />
+            <div class="share-preview-text">오늘의 해빛 인증을<br>친구들에게 자랑해보세요!</div>
+        </div>
+        <div class="share-platform-grid">
+            <button class="share-grid-btn" onclick="shareToPlatform('kakao')">
+                <span class="share-icon" style="background:#FEE500;"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z" fill="#3E2723"/></svg></span>
+                <span class="share-label">카카오톡</span>
+            </button>
+            <button class="share-grid-btn" onclick="shareToPlatform('instagram')">
+                <span class="share-icon" style="background:linear-gradient(135deg,#833AB4,#E1306C,#F77737);"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/><circle cx="18" cy="6" r="1.5" fill="white"/></svg></span>
+                <span class="share-label">인스타그램</span>
+            </button>
+            <button class="share-grid-btn" onclick="shareToPlatform('facebook')">
+                <span class="share-icon" style="background:#1877F2;"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z"/></svg></span>
+                <span class="share-label">페이스북</span>
+            </button>
+            <button class="share-grid-btn" onclick="shareToPlatform('x')">
+                <span class="share-icon" style="background:#000;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                <span class="share-label">X</span>
+            </button>
+        </div>
+        <div class="share-action-row">
+            <button class="share-action-pill" onclick="shareViaSystem()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+                시스템 공유
+            </button>
+            <button class="share-action-pill" onclick="copyShareLink()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                링크 복사
+            </button>
+            <button class="share-action-pill" onclick="downloadShareImage()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                이미지 저장
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- PWA 앱 설치 배너 -->
+<div id="pwa-install-banner" style="display:none;">
+    <div class="pwa-install-content">
+        <img src="icons/icon-192.svg" alt="해빛스쿨" class="pwa-install-icon">
+        <div class="pwa-install-text">
+            <strong>해빛스쿨 앱 설치</strong>
+            <span>홈 화면에 추가하면 더 빠르게!</span>
+        </div>
+        <button class="pwa-install-btn" onclick="installPWA()">설치</button>
+        <button class="pwa-install-dismiss" onclick="dismissInstallBanner()" aria-label="닫기">&times;</button>
     </div>
 </div>
 
@@ -483,7 +527,7 @@
 <script type="module" src="js/main.js"></script>
 <script type="module" src="js/app.js"></script>
 
-<!-- Service Worker 등록 (PWA) -->
+<!-- Service Worker 등록 & PWA 설치 프롬프트 -->
 <script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -491,6 +535,50 @@ if ('serviceWorker' in navigator) {
             .then(reg => console.log('✅ SW 등록:', reg.scope))
             .catch(err => console.warn('⚠️ SW 등록 실패:', err));
     });
+}
+
+// PWA 앱 설치 프롬프트
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    // 이미 설치됐거나 사용자가 닫았으면 표시 안함
+    if (localStorage.getItem('pwa_install_dismissed')) return;
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) {
+        banner.style.display = 'flex';
+        banner.classList.add('pwa-banner-animate');
+    }
+});
+
+// 이미 설치된 상태면 배너 숨기기
+window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.style.display = 'none';
+    console.log('✅ 해빛스쿨 앱 설치 완료!');
+});
+
+function installPWA() {
+    if (!deferredInstallPrompt) {
+        // iOS Safari 등 beforeinstallprompt 미지원
+        alert('홈 화면에 추가하려면:\n\n📱 iOS: 공유 버튼(□↑) → "홈 화면에 추가"\n💻 PC: 주소창 오른쪽 설치 아이콘 클릭');
+        return;
+    }
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(choice => {
+        if (choice.outcome === 'accepted') {
+            console.log('✅ 사용자가 앱 설치를 수락했습니다.');
+        }
+        deferredInstallPrompt = null;
+        document.getElementById('pwa-install-banner').style.display = 'none';
+    });
+}
+
+function dismissInstallBanner() {
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('pwa_install_dismissed', Date.now());
 }
 </script>
 </body>

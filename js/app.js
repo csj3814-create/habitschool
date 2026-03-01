@@ -2544,19 +2544,25 @@ window.shareMyCard = async function() {
         latestShareFile = new File([blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
         latestShareText = '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪\n\n👇 갤러리 구경가기 (가입 없이 가능)\n' + window.location.href;
 
-        // Web Share API 우선 시도 (모바일에서 모든 앱으로 직접 공유)
+        // 공유 미리보기 썸네일 설정
+        const previewThumb = document.getElementById('share-preview-thumb');
+        if (previewThumb && latestShareBlob) {
+            previewThumb.src = URL.createObjectURL(latestShareBlob);
+        }
+
+        // 모바일: Web Share API 우선 시도 (파일 공유 직접 지원)
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const shareData = { title: '해빛스쿨 인증', text: latestShareText, files: [latestShareFile] };
-        if (navigator.canShare && navigator.canShare(shareData)) {
+        if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
             try {
                 await navigator.share(shareData);
                 return; // 공유 성공 시 종료
             } catch (shareErr) {
-                if (shareErr.name !== 'AbortError') {
-                    console.warn('시스템 공유 취소/실패, 모달 표시:', shareErr);
-                }
+                if (shareErr.name === 'AbortError') return; // 사용자가 취소
+                console.warn('시스템 공유 실패, 모달 표시:', shareErr);
             }
         }
-        // Web Share API 미지원 또는 실패 시 모달 표시
+        // PC 또는 모바일 Web Share 실패 시 모달 표시
         openSharePlatformModal();
     } catch (err) {
         console.error('공유 카드 생성 오류:', err);
@@ -2584,13 +2590,23 @@ window.shareViaSystem = async function() {
             await navigator.share(shareData);
             closeSharePlatformModal();
         } else {
-            showToast('이 브라우저는 시스템 공유를 지원하지 않습니다. 아래 채널 버튼을 사용해주세요.');
+            // 파일 공유 미지원 시 텍스트만 공유 시도
+            const textShareData = { title: '해빛스쿨 인증', text: latestShareText };
+            if (navigator.share) {
+                await navigator.share(textShareData);
+                closeSharePlatformModal();
+            } else {
+                showToast('이 브라우저는 시스템 공유를 지원하지 않습니다.\n이미지 저장 또는 링크 복사를 이용해주세요.');
+            }
         }
     } catch (_) {}
 };
 
-function downloadShareImage() {
-    if (!latestShareBlob) return;
+window.downloadShareImage = function() {
+    if (!latestShareBlob) {
+        showToast('먼저 자랑하기 버튼을 눌러주세요.');
+        return;
+    }
     const url = URL.createObjectURL(latestShareBlob);
     const a = document.createElement('a');
     a.href = url;
@@ -2599,16 +2615,43 @@ function downloadShareImage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    showToast('✅ 이미지가 다운로드 폴더에 저장되었습니다.');
+};
+
+window.copyShareLink = function() {
+    const url = window.location.href;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('✅ 링크가 복사되었습니다!');
+        }).catch(() => {
+            fallbackCopyToClipboard(url);
+        });
+    } else {
+        fallbackCopyToClipboard(url);
+    }
+};
+
+function fallbackCopyToClipboard(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('✅ 링크가 복사되었습니다!'); }
+    catch (_) { showToast('⚠️ 복사에 실패했습니다. 직접 주소를 복사해주세요.'); }
+    document.body.removeChild(ta);
 }
 
 async function shareFileToAppsOrFallback(platform) {
-    // Web Share API 재시도
+    // 모바일에서 Web Share API 재시도
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const shareData = {
         title: '해빛스쿨 인증',
         text: latestShareText,
         files: [latestShareFile]
     };
-    if (navigator.canShare && navigator.canShare(shareData)) {
+    if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
         try {
             await navigator.share(shareData);
             closeSharePlatformModal();
@@ -2616,7 +2659,7 @@ async function shareFileToAppsOrFallback(platform) {
         } catch (_) {}
     }
 
-    // 이미지 자동 다운로드
+    // PC에서는 이미지 자동 다운로드 + 플랫폼 열기
     downloadShareImage();
 
     const pageUrl = encodeURIComponent(window.location.href);
@@ -2624,13 +2667,13 @@ async function shareFileToAppsOrFallback(platform) {
 
     if (platform === 'instagram') {
         window.open('https://www.instagram.com/', '_blank');
-        showToast('📥 이미지가 저장되었습니다!\n인스타그램 앱에서 이미지를 선택하여 게시해주세요.');
+        showToast('📥 이미지가 저장되었습니다!\n인스타그램에서 이미지를 선택하여 게시해주세요.');
     } else if (platform === 'facebook') {
         window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${shareText}`, '_blank');
         showToast('📥 이미지가 저장되었습니다!\n페이스북 창에서 이미지를 추가해주세요.');
     } else if (platform === 'x') {
-        window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${pageUrl}`, '_blank');
-        showToast('📥 이미지가 저장되었습니다!\nX(트위터) 창에서 이미지를 추가해주세요.');
+        window.open(`https://x.com/intent/tweet?text=${shareText}&url=${pageUrl}`, '_blank');
+        showToast('📥 이미지가 저장되었습니다!\nX 창에서 이미지를 추가해주세요.');
     } else if (platform === 'kakao') {
         window.open(`https://story.kakao.com/share?url=${pageUrl}`, '_blank');
         showToast('📥 이미지가 저장되었습니다!\n카카오에서 이미지를 추가해주세요.');
@@ -2642,7 +2685,7 @@ async function shareFileToAppsOrFallback(platform) {
 
 window.shareToPlatform = async function(platform) {
     if (!latestShareBlob || !latestShareFile) {
-        showToast('먼저 공유 이미지를 생성해주세요.');
+        showToast('먼저 자랑하기 버튼을 눌러 이미지를 생성해주세요.');
         return;
     }
 

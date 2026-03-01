@@ -3,7 +3,7 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v2';
+const CACHE_NAME = 'habitschool-v3';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -17,7 +17,9 @@ const STATIC_ASSETS = [
     './js/security.js',
     './js/blockchain-config.js',
     './js/blockchain-manager.js',
-    './manifest.json'
+    './manifest.json',
+    './icons/icon-192.svg',
+    './icons/icon-512.svg'
 ];
 
 const INDEX_URL = new URL('./index.html', self.location).href;

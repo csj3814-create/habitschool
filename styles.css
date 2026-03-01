@@ -1369,66 +1369,205 @@ textarea {
     background: rgba(0, 0, 0, 0.55);
     z-index: 1200;
     justify-content: center;
-    align-items: center;
-    padding: 20px;
+    align-items: flex-end;
+    padding: 0;
+}
+@media (min-width: 600px) {
+    #share-platform-modal { align-items: center; padding: 20px; }
 }
 
 .share-platform-card {
     width: 100%;
-    max-width: 340px;
-    background: #fff;
-    border-radius: 14px;
-    padding: 16px;
-    box-shadow: var(--shadow-medium);
-    text-align: center;
+    max-width: 420px;
+    background: var(--white);
+    border-radius: 18px 18px 0 0;
+    padding: 0 0 env(safe-area-inset-bottom, 12px);
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+    animation: shareSlideUp 0.28s ease-out;
+}
+@media (min-width: 600px) {
+    .share-platform-card { border-radius: 18px; padding-bottom: 16px; }
+}
+@keyframes shareSlideUp {
+    from { transform: translateY(100%); opacity: 0.5; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
-.share-platform-card h4 {
-    margin: 0 0 6px;
+.share-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px 10px;
+    border-bottom: 1px solid var(--gray-200);
+}
+.share-modal-title {
+    font-size: 16px;
+    font-weight: 700;
     color: var(--text-color);
 }
-
-.share-platform-card p {
-    margin: 0 0 12px;
-    color: var(--text-secondary);
-    font-size: 13px;
-}
-
-.share-platform-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-}
-
-.share-platform-btn {
+.share-modal-close-x {
+    background: none;
     border: none;
+    font-size: 26px;
+    color: var(--gray-500);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.share-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+}
+.share-preview-row img {
+    width: 56px;
+    height: 56px;
     border-radius: 10px;
-    background: var(--point-color);
+    background: var(--gray-100);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.share-preview-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.share-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px 0;
+    padding: 10px 18px 14px;
+}
+
+.share-grid-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.15s;
+}
+.share-grid-btn:hover { background: var(--gray-100); }
+.share-grid-btn:active { transform: scale(0.95); }
+
+.share-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+}
+.share-label {
+    font-size: 11px;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.share-action-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 18px 10px;
+    border-top: 1px solid var(--gray-200);
+}
+.share-action-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 6px;
+    border: 1px solid var(--gray-300);
+    border-radius: 10px;
+    background: var(--white);
+    color: var(--text-color);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.share-action-pill:hover { background: var(--gray-100); }
+.share-action-pill:active { transform: scale(0.97); }
+.share-action-pill svg { flex-shrink: 0; }
+
+/* PWA 설치 배너 */
+#pwa-install-banner {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1100;
+    width: calc(100% - 28px);
+    max-width: 400px;
+}
+.pwa-install-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: 0 6px 28px rgba(0,0,0,0.18);
+    border: 1px solid var(--gray-200);
+}
+.pwa-install-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+.pwa-install-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.pwa-install-text strong {
+    font-size: 14px;
+    color: var(--text-color);
+}
+.pwa-install-text span {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+.pwa-install-btn {
+    background: var(--primary-color);
     color: var(--white);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
     font-weight: 700;
     font-size: 13px;
-    padding: 12px 8px;
     cursor: pointer;
-    transition: opacity 0.15s;
+    flex-shrink: 0;
+    transition: transform 0.1s;
 }
-
-.share-platform-btn:active {
-    opacity: 0.8;
-}
-
-.share-platform-btn.secondary {
-    background: var(--gray-500);
-    grid-column: 1 / -1;
-}
-
-.share-platform-close {
-    margin-top: 10px;
-    width: 100%;
-    border: 1px solid var(--gray-300);
-    background: var(--white);
-    border-radius: 10px;
-    padding: 9px;
+.pwa-install-btn:active { transform: scale(0.95); }
+.pwa-install-dismiss {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--gray-400);
     cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.pwa-banner-animate {
+    animation: pwaBannerIn 0.4s ease-out;
+}
+@keyframes pwaBannerIn {
+    from { transform: translateX(-50%) translateY(30px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
 
 /* 버튼들 */
