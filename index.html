@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=24">
+    <link rel="stylesheet" href="styles.css?v=25">
     
     <script>
         var userAgent = navigator.userAgent.toLowerCase();
@@ -360,10 +360,10 @@
                             <div class="share-val">🅿️ <span id="share-point">0</span> P</div>
                         </div>
                         <div class="share-img-grid" id="share-imgs"></div>
-                        <div class="share-footer">저와 함께 좋은 습관 만들어요💙</div>
+                        <div class="share-footer">저와 함께 좋은 습관 만들어요 🌞</div>
                     </div>
                     <button class="btn-share-action" onclick="shareMyCard()">
-                        ✨ 나의 해빛 기록 자랑하기
+                        🌟 나의 해빛 기록 자랑하기
                     </button>
                 </div>
             </div>
@@ -447,32 +447,40 @@
 
 <div id="share-platform-modal" onclick="closeSharePlatformModal()">
     <div class="share-platform-card" onclick="event.stopPropagation()">
+        <div class="share-modal-handle"></div>
         <div class="share-modal-header">
-            <span class="share-modal-title">공유하기</span>
+            <span class="share-modal-title">공유하기 ✨</span>
             <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
         </div>
         <div class="share-preview-row">
-            <img id="share-preview-thumb" src="" alt="공유 미리보기" />
-            <div class="share-preview-text">오늘의 해빛 인증을<br>친구들에게 자랑해보세요!</div>
+            <div class="share-preview-img-wrap">
+                <img id="share-preview-thumb" src="" alt="공유 미리보기" />
+            </div>
+            <div class="share-preview-info">
+                <div class="share-preview-title">오늘의 해빛 인증 🌞</div>
+                <div class="share-preview-text">친구들에게 나의 건강 습관을<br>자랑해보세요!</div>
+            </div>
         </div>
+        <div class="share-section-label">SNS에 공유</div>
         <div class="share-platform-grid">
             <button class="share-grid-btn" onclick="shareToPlatform('kakao')">
-                <span class="share-icon" style="background:#FEE500;"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z" fill="#3E2723"/></svg></span>
+                <span class="share-icon kakao-icon"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z" fill="#3E2723"/></svg></span>
                 <span class="share-label">카카오톡</span>
             </button>
             <button class="share-grid-btn" onclick="shareToPlatform('instagram')">
-                <span class="share-icon" style="background:linear-gradient(135deg,#833AB4,#E1306C,#F77737);"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/><circle cx="18" cy="6" r="1.5" fill="white"/></svg></span>
+                <span class="share-icon insta-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="white" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2"/><circle cx="18" cy="6" r="1.5" fill="white"/></svg></span>
                 <span class="share-label">인스타그램</span>
             </button>
             <button class="share-grid-btn" onclick="shareToPlatform('facebook')">
-                <span class="share-icon" style="background:#1877F2;"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z"/></svg></span>
+                <span class="share-icon fb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z"/></svg></span>
                 <span class="share-label">페이스북</span>
             </button>
             <button class="share-grid-btn" onclick="shareToPlatform('x')">
-                <span class="share-icon" style="background:#000;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+                <span class="share-icon x-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
                 <span class="share-label">X</span>
             </button>
         </div>
+        <div class="share-section-label">다른 방법</div>
         <div class="share-action-row">
             <button class="share-action-pill" onclick="shareViaSystem()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
@@ -548,6 +556,14 @@ window.addEventListener('beforeinstallprompt', (e) => {
     if (banner) {
         banner.style.display = 'flex';
         banner.classList.add('pwa-banner-animate');
+        // 6초 후 자동 사라짐
+        setTimeout(() => {
+            banner.classList.add('pwa-banner-fadeout');
+            setTimeout(() => {
+                banner.style.display = 'none';
+                banner.classList.remove('pwa-banner-fadeout', 'pwa-banner-animate');
+            }, 500);
+        }, 6000);
     }
 });
 

@@ -2455,10 +2455,28 @@ async function prepareShareThumbsForCapture() {
         let b64 = '';
 
         if (mediaType === 'video') {
-            const renderedThumbImg = thumb.querySelector('img');
-            const renderedThumbUrl = renderedThumbImg?.src || mediaSrc;
-            b64 = await fetchImageAsBase64(renderedThumbUrl);
-            if (!b64) b64 = createVideoPlaceholderBase64();
+            // 1) 비디오 요소에서 프레임 캡처 시도
+            const videoEl = thumb.querySelector('video');
+            if (videoEl && videoEl.readyState >= 2) {
+                try {
+                    const c = document.createElement('canvas');
+                    c.width = videoEl.videoWidth || 320;
+                    c.height = videoEl.videoHeight || 320;
+                    c.getContext('2d').drawImage(videoEl, 0, 0, c.width, c.height);
+                    b64 = c.toDataURL('image/jpeg', 0.85);
+                } catch (_) {}
+            }
+            // 2) 썸네일 이미지가 있으면 사용
+            if (!b64 || b64 === 'data:,') {
+                const renderedThumbImg = thumb.querySelector('img');
+                if (renderedThumbImg?.src && !renderedThumbImg.src.startsWith('data:video')) {
+                    b64 = await fetchImageAsBase64(renderedThumbImg.src);
+                }
+            }
+            // 3) 최종 폴백: 플레이스홀더 생성
+            if (!b64 || b64 === 'data:,' || /^data:video/i.test(b64)) {
+                b64 = createVideoPlaceholderBase64();
+            }
         } else {
             b64 = await fetchImageAsBase64(mediaSrc);
             if (!b64) b64 = mediaSrc;
