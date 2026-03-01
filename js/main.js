@@ -7,18 +7,22 @@
 // 인증 모듈 (initializeApp에서 직접 호출)
 import { initAuth, setupAuthListener } from './auth.js';
 
-// 블록체인 모듈 (HTML onclick에서 사용)
-import { convertPointsToHBT, startChallenge30D, fetchOnchainBalance, fetchTokenStats } from './blockchain-manager.js';
-
 // ========== 최소한의 전역 노출 (window 객체) ==========
-// app.js가 각 모듈에서 직접 import하므로, HTML onclick 또는 auth.js에서
-// window.* 경유로 접근하는 항목만 남김
-
-// HTML onclick에서 참조하는 함수 (app.js에서 설정하지 않는 것들만)
-window.convertPointsToHBT = convertPointsToHBT; // HTML onclick="convertPointsToHBT()"
-window.startChallenge30D = startChallenge30D;    // HTML onclick="startChallenge30D(...)"
-window.fetchOnchainBalance = fetchOnchainBalance;
-window.fetchTokenStats = fetchTokenStats;
+// 블록체인 모듈은 동적 import로 로드 (실패해도 인증에 영향 없음)
+try {
+    const blockchainModule = await import('./blockchain-manager.js');
+    window.convertPointsToHBT = blockchainModule.convertPointsToHBT;
+    window.startChallenge30D = blockchainModule.startChallenge30D;
+    window.fetchOnchainBalance = blockchainModule.fetchOnchainBalance;
+    window.fetchTokenStats = blockchainModule.fetchTokenStats;
+    console.log('✅ 블록체인 모듈 로드 완료');
+} catch (e) {
+    console.warn('⚠️ 블록체인 모듈 로드 실패 (인증은 정상 작동):', e.message);
+    window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 오류. 페이지를 새로고침 해주세요.'); };
+    window.startChallenge30D = () => { alert('블록체인 모듈 로딩 오류. 페이지를 새로고침 해주세요.'); };
+    window.fetchOnchainBalance = async () => null;
+    window.fetchTokenStats = async () => null;
+}
 
 // 챌린지 HBT 예치 % 버튼
 window._stakePctAccum = { weekly: 0, master: 0 };

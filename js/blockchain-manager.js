@@ -21,23 +21,35 @@ import {
 
 import { auth, db, app } from './firebase-config.js';
 import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
 
-// Firebase Functions 초기화 (서울 리전)
-const functions = getFunctions(app, 'asia-northeast3');
+// Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
+let mintHBTFunction = null;
+let getOnchainBalanceFunction = null;
+let getTokenStatsFunction = null;
+let _functionsInitialized = false;
 
-// 로컬 개발 시 에뮬레이터 연결
-if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-    connectFunctionsEmulator(functions, 'localhost', 5001);
-    console.log('🛠️ Functions 에뮬레이터 연결');
+async function ensureFunctions() {
+    if (_functionsInitialized) return;
+    try {
+        const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+        const functions = getFunctions(app, 'asia-northeast3');
+        
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            connectFunctionsEmulator(functions, 'localhost', 5001);
+            console.log('🛠️ Functions 에뮬레이터 연결');
+        }
+        
+        mintHBTFunction = httpsCallable(functions, 'mintHBT');
+        getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
+        getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
+        _functionsInitialized = true;
+        console.log('✅ Cloud Functions 초기화 완료');
+    } catch (e) {
+        console.error('⚠️ Cloud Functions 초기화 실패:', e.message);
+    }
 }
-
-// Cloud Function 참조
-const mintHBTFunction = httpsCallable(functions, 'mintHBT');
-const getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
-const getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
 
 let userWallet = null; // ethers.Wallet 인스턴스
 let userWalletAddress = null; // 0x... 주소
@@ -283,6 +295,12 @@ export function getCurrentEra(totalMinted = 0) {
  */
 export async function convertPointsToHBT(pointAmount) {
     try {
+        await ensureFunctions();
+        if (!mintHBTFunction) {
+            showToast('❌ 온체인 연결을 초기화할 수 없습니다. 페이지를 새로고침 해주세요.');
+            return false;
+        }
+
         const currentUser = auth.currentUser;
         if (!currentUser) {
             showToast('❌ 로그인이 필요합니다.');
@@ -655,8 +673,9 @@ export function getWalletAddress() {
  */
 export async function fetchOnchainBalance() {
     try {
+        await ensureFunctions();
         const currentUser = auth.currentUser;
-        if (!currentUser) return null;
+        if (!currentUser || !getOnchainBalanceFunction) return null;
 
         const result = await getOnchainBalanceFunction();
         return result.data;
@@ -672,6 +691,9 @@ export async function fetchOnchainBalance() {
  */
 export async function fetchTokenStats() {
     try {
+        await ensureFunctions();
+        if (!getTokenStatsFunction) return null;
+
         const result = await getTokenStatsFunction();
         return result.data;
     } catch (error) {
