@@ -252,6 +252,9 @@ function addExerciseBlock(type, data = null) {
     
     div.innerHTML = contentHtml;
     if(dataUrl) div.setAttribute('data-url', dataUrl);
+    if(isCardio && data && data.imageThumbUrl) {
+        div.setAttribute('data-thumb-url', data.imageThumbUrl);
+    }
     if(!isCardio && data && data.videoThumbUrl) {
         div.setAttribute('data-thumb-url', data.videoThumbUrl);
     }
@@ -477,6 +480,7 @@ window.previewStaticImage = function(input, previewId, btnId, skipExif = false) 
             EXIF.getData(file, function() {
                 const exifDate = EXIF.getTag(this, "DateTimeOriginal");
                 if(exifDate) {
+                    // EXIF 날짜가 있으면 EXIF로 검증
                     const dateParts = exifDate.split(" ")[0].replace(/:/g, "-");
                     if(dateParts !== dateInput.value) {
                         alert(`⚠️ 촬영일(${dateParts})이 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
@@ -485,9 +489,32 @@ window.previewStaticImage = function(input, previewId, btnId, skipExif = false) 
                         if(txtSpan) txtSpan.style.display='inline-block';
                         return;
                     }
+                } else {
+                    // EXIF 없으면 파일 수정일(lastModified)로 검증
+                    const fileDate = new Date(file.lastModified);
+                    const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+                    if(fileDateStr !== dateInput.value) {
+                        alert(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
+                        input.value = ""; preview.style.display = 'none';
+                        if(rmBtn) rmBtn.style.display='none';
+                        if(txtSpan) txtSpan.style.display='inline-block';
+                        return;
+                    }
                 }
                 render();
             });
+        } else if (!skipExif) {
+            // EXIF 라이브러리 없을 때도 lastModified로 검증
+            const fileDate = new Date(file.lastModified);
+            const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+            if(fileDateStr !== dateInput.value) {
+                alert(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
+                input.value = ""; preview.style.display = 'none';
+                if(rmBtn) rmBtn.style.display='none';
+                if(txtSpan) txtSpan.style.display='inline-block';
+                return;
+            }
+            render();
         } else { render(); }
     }
 };
@@ -1694,10 +1721,13 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
             fileToUpload = await compressImage(file);
         }
         
-        const MAX_SIZE_MB = 50;
+        // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
+        const isVideo = fileToUpload.type && fileToUpload.type.startsWith('video/');
+        const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
+        const maxLabel = isVideo ? '100' : '20';
         const fileSizeMB = fileToUpload.size / (1024 * 1024);
-        if (fileSizeMB > MAX_SIZE_MB) {
-            showToast(`⚠️ 파일이 너무 큽니다. (최대 ${MAX_SIZE_MB}MB, 현재 ${fileSizeMB.toFixed(2)}MB)`);
+        if (fileToUpload.size > maxBytes) {
+            showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
             return null;
         }
         
@@ -1792,7 +1822,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const time = block.querySelector('.c-time').value;
                 const dist = block.querySelector('.c-dist').value;
                 let url = block.getAttribute('data-url') || null;
-                let thumbUrl = null;
+                let thumbUrl = block.getAttribute('data-thumb-url') || null;
                 if(fileInput.files[0]) {
                     try {
                         url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
@@ -1829,8 +1859,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         url = null;
                     }
                 }
-                // 영상에는 썸네일 폴더가 없으므로 null 저장 (클라이언트에서 프레임 추출)
-                if(url) strengthList.push({ videoUrl: url, videoThumbUrl: null });
+                // 기존 영상의 썸네일 URL 보존
+                if(url) strengthList.push({ videoUrl: url, videoThumbUrl: block.getAttribute('data-thumb-url') || null });
             }
 
             const sleepFile = document.getElementById('sleep-img');

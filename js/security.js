@@ -48,11 +48,16 @@ export function limitLength(text, maxLength = 500) {
  */
 export function isValidFileType(file) {
     if (!file) return false;
-    const allowedTypes = [
-        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        'video/mp4', 'video/quicktime', 'video/webm'
-    ];
-    return allowedTypes.includes(file.type);
+    // 브라우저가 감지한 MIME 타입이 image/* 또는 video/* 이면 허용
+    // (모바일 기기별 다양한 코덱/컨테이너 대응: 3gpp, x-m4v, hevc 등)
+    if (file.type && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+        return true;
+    }
+    // type이 빈 문자열인 경우 확장자로 판별
+    const ext = (file.name || '').split('.').pop().toLowerCase();
+    const allowedExts = ['jpg','jpeg','png','gif','webp','heic','heif',
+                         'mp4','mov','avi','mkv','webm','3gp','m4v','mpeg'];
+    return allowedExts.includes(ext);
 }
 
 /**
