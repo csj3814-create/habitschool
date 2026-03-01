@@ -1002,14 +1002,16 @@ window.openTab = function(tabName, pushState = true) {
     } else if(tabName === 'gallery') {
         submitBar.style.display = 'block';
         saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
-        saveBtn.style.backgroundColor = '#FEE500';
+        saveBtn.style.background = '#FEE500';
         saveBtn.style.color = '#3E2723';
+        saveBtn.style.boxShadow = '0 4px 14px rgba(254,229,0,0.4)';
         saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
     } else {
         submitBar.style.display = 'block';
         saveBtn.innerText = '현재 진행상황 저장 & 포인트 받기 🅿️';
-        saveBtn.style.backgroundColor = 'var(--primary-color)';
+        saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
         saveBtn.style.color = 'white';
+        saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
         saveBtn.onclick = null; // 기본 이벤트 리스너로 복원
     }
 
