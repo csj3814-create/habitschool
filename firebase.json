@@ -12,6 +12,11 @@
       ]
     }
   ],
+  "artifactregistry": {
+    "cleanupPolicies": {
+      "keep-days": 30
+    }
+  },
   "hosting": {
     "public": ".",
     "ignore": [
