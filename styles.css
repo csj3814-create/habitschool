@@ -926,7 +926,7 @@ textarea {
 
 .gallery-photos { 
     display: grid; 
-    grid-template-columns: repeat(auto-fill, minmax(var(--unified-thumb-size), 1fr)); 
+    grid-template-columns: repeat(3, 1fr); 
     gap: 2px; 
     margin-bottom: 0; 
 }
@@ -936,23 +936,28 @@ textarea {
     aspect-ratio: 1 / 1; 
     object-fit: cover; 
     cursor: pointer; 
-    will-change: transform;
     content-visibility: auto;
     contain: layout style paint;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     border-radius: 0;
+    background: #f0f0f0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-photos img[src=""],
+.gallery-photos img:not([src]) {
+    opacity: 0;
 }
 
 .video-thumb-wrapper {
     position: relative;
-    width: var(--unified-thumb-size);
+    width: 100%;
     border-radius: 0;
     overflow: hidden;
     cursor: pointer;
     background: #1a1a1a;
     aspect-ratio: 1 / 1;
-    grid-column: auto;
 }
 
 .video-thumb-wrapper video,
@@ -1006,12 +1011,66 @@ textarea {
 .video-thumb-wrapper.playing {
     cursor: default;
     aspect-ratio: unset;
+    grid-column: 1 / -1;
 }
 
 .video-thumb-wrapper.playing video {
     height: auto;
     max-height: 400px;
 }
+
+/* 갤러리 스켈레톤 로딩 */
+.gallery-skeleton {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-bottom: 0;
+}
+
+.skeleton-item {
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(110deg, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: 0;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.gallery-card.skeleton-card {
+    padding: 0;
+}
+
+.skeleton-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+}
+
+.skeleton-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(110deg, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.skeleton-text {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(110deg, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-text.w60 { width: 60%; }
+.skeleton-text.w40 { width: 40%; }
 
 .gallery-actions { 
     display: flex; 
@@ -2086,7 +2145,7 @@ textarea:focus-visible,
     }
     
     .gallery-photos { 
-        grid-template-columns: var(--unified-thumb-size); 
+        grid-template-columns: repeat(3, 1fr); 
         justify-content: center;
     }
     
@@ -2103,7 +2162,7 @@ textarea:focus-visible,
 /* 큰 화면 (480px 이상) */
 @media (min-width: 481px) {
     .gallery-photos { 
-        grid-template-columns: repeat(2, var(--unified-thumb-size)); 
+        grid-template-columns: repeat(3, 1fr); 
         justify-content: flex-start;
     }
     
@@ -2123,7 +2182,7 @@ textarea:focus-visible,
     }
     
     .gallery-photos { 
-        grid-template-columns: repeat(2, var(--unified-thumb-size)); 
+        grid-template-columns: repeat(3, 1fr); 
     }
     
     .share-card-capture { 

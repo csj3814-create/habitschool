@@ -674,14 +674,13 @@ window.loadDataForSelectedDate = async function(dateStr) {
 let galleryFilter = 'all';
 window.setGalleryFilter = function(filter, btnElement) {
     galleryFilter = filter;
+    sortedFilteredDirty = true;  // 필터 변경 시 캐시 무효화
     document.querySelectorAll('.filter-chip').forEach(el => {
         el.classList.remove('active');
         el.setAttribute('aria-pressed', 'false');
     });
     btnElement.classList.add('active');
     btnElement.setAttribute('aria-pressed', 'true');
-    // 필터 변경 시 무한 스크롤 초기화
-    galleryDisplayCount = INITIAL_LOAD;
     renderFeedOnly();
 };
 
@@ -711,6 +710,31 @@ window.openVideoLightbox = function(url) {
     video.currentTime = 0;
     modal.style.display = 'flex';
     video.play().catch(() => {});
+};
+
+// 갤러리 비디오 인라인 재생 (썸네일 → video 태그 교체)
+window.playGalleryVideo = function(wrapper) {
+    let video = wrapper.querySelector('video');
+    const originalSrc = wrapper.getAttribute('data-video-src');
+    
+    // 썸네일 img만 있는 경우 → video 태그로 교체
+    if (!video && originalSrc) {
+        const thumbImg = wrapper.querySelector('img');
+        if (thumbImg) thumbImg.style.display = 'none';
+        video = document.createElement('video');
+        video.playsInline = true;
+        wrapper.insertBefore(video, wrapper.querySelector('.video-play-btn'));
+    }
+    
+    wrapper.classList.add('playing');
+    video.muted = false;
+    video.controls = true;
+    if (originalSrc) {
+        video.src = originalSrc;
+    }
+    video.currentTime = 0;
+    video.play();
+    wrapper.onclick = null;
 };
 
 
@@ -1960,7 +1984,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             
             // 데이터 저장 후 캐시 초기화 (갤러리 재로드를 위해)
             cachedGalleryLogs = []; 
-            galleryDisplayCount = 0; // 무한 스크롤도 초기화
+            galleryDisplayCount = 0;
+            sortedFilteredDirty = true;
             
             // 마일스톤 확인 및 업데이트
             await checkMilestones(user.uid);
@@ -2038,6 +2063,7 @@ window.toggleFriend = async function(friendId) {
     // 친구 목록 변경 시 캐시 초기화 및 재로드
     cachedGalleryLogs = []; 
     galleryDisplayCount = 0;
+    sortedFilteredDirty = true;
     loadGalleryData();
 };
 
@@ -2632,12 +2658,15 @@ let cachedGalleryLogs = [];
 let cachedMyFriends = [];
 
 // 무한 스크롤 관련 변수
-let galleryDisplayCount = 0; // 현재 표시할 아이템 수
-const INITIAL_LOAD = 20; // 초기 로드 개수
-const LOAD_MORE = 15; // 추가 로드 개수
-const MAX_CACHE_SIZE = 100; // 캠시 최대 크기 (메모리 관리)
+let galleryDisplayCount = 0;
+const INITIAL_LOAD = 8;        // 초기 로드: 8개 (빠른 첫 화면)
+const LOAD_MORE = 6;           // 추가 로드: 6개씩
+const MAX_CACHE_SIZE = 50;     // 캐시 크기 (메모리 관리)
 let galleryIntersectionObserver = null;
-let isLoadingMore = false; // 중복 로딩 방지
+let isLoadingMore = false;
+// 정렬+필터 캐시 (매번 재정렬 방지)
+let sortedFilteredCache = [];
+let sortedFilteredDirty = true;
 
 // 무한 스크롤 옵저버 설정
 function setupInfiniteScroll() {
@@ -2662,62 +2691,114 @@ function setupInfiniteScroll() {
     galleryIntersectionObserver.observe(sentinel);
 }
 
-// 추가 아이템 로드 함수
-function loadMoreGalleryItems() {
-    if (isLoadingMore) return;
-    
-    const sentinel = document.getElementById('gallery-sentinel');
-    const container = document.getElementById('gallery-container');
-    
-    // 필터링된 전체 아이템 수 계산
-    let totalFilteredItems = 0;
-    const myId = auth.currentUser ? auth.currentUser.uid : "";
-    let sortedLogs = [...cachedGalleryLogs];
-    sortedLogs.sort((a, b) => {
+// 스켈레톤 HTML 생성 (즉시 표시용)
+function createSkeletonHtml(count = 3) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `<div class="gallery-card skeleton-card">
+            <div class="skeleton-header">
+                <div class="skeleton-avatar"></div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-text w60"></div>
+                    <div class="skeleton-text w40"></div>
+                </div>
+            </div>
+            <div class="gallery-skeleton">
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
+            </div>
+        </div>`;
+    }
+    return html;
+}
+
+// 아이템에 미디어가 있는지 빠르게 판단 (HTML 생성 없이)
+function hasMediaForFilter(data, filter) {
+    if (filter === 'diet' || filter === 'all') {
+        if (data.diet) {
+            for (const meal of ['breakfast','lunch','dinner','snack']) {
+                if (data.diet[`${meal}Url`]) { if (filter === 'diet') return true; else break; }
+            }
+            if (filter === 'all' && data.diet && ['breakfast','lunch','dinner','snack'].some(m => data.diet[`${m}Url`])) {
+                // has diet
+            }
+        }
+    }
+    if (filter === 'exercise' || filter === 'all') {
+        if (data.exercise) {
+            if (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl ||
+                data.exercise.cardioList?.length || data.exercise.strengthList?.length) {
+                if (filter === 'exercise') return true;
+            }
+        }
+    }
+    if (filter === 'mind' || filter === 'all') {
+        if (data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude) {
+            if (filter === 'mind') return true;
+        }
+    }
+    if (filter === 'all') {
+        const hasDiet = data.diet && ['breakfast','lunch','dinner','snack'].some(m => data.diet[`${m}Url`]);
+        const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length);
+        const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude;
+        return !!(hasDiet || hasExercise || hasMind);
+    }
+    return false;
+}
+
+// 정렬+필터 캐시 갱신 (매번 재정렬/재필터 방지)
+function refreshSortedFiltered() {
+    if (!sortedFilteredDirty) return;
+    let sorted = [...cachedGalleryLogs];
+    sorted.sort((a, b) => {
         const aFr = cachedMyFriends.includes(a.data.userId);
         const bFr = cachedMyFriends.includes(b.data.userId);
         return (aFr === bFr) ? 0 : aFr ? -1 : 1;
     });
+    sortedFilteredCache = sorted.filter(item => hasMediaForFilter(item.data, galleryFilter));
+    sortedFilteredDirty = false;
+}
+
+// 추가 아이템 로드 함수 (추가분만 append - 전체 재렌더 X)
+function loadMoreGalleryItems() {
+    if (isLoadingMore) return;
     
-    sortedLogs.forEach(item => {
-        if (shouldShowItem(item.data)) totalFilteredItems++;
-    });
+    refreshSortedFiltered();
+    const sentinel = document.getElementById('gallery-sentinel');
     
-    // 이미 모든 아이템을 표시했으면 종료
-    if (galleryDisplayCount >= totalFilteredItems) {
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
         sentinel.style.display = 'none';
         return;
     }
     
     isLoadingMore = true;
-    sentinel.style.display = 'block';
     
-    // 다음 배치 로드
-    setTimeout(() => {
-        galleryDisplayCount += LOAD_MORE;
-        renderFeedOnly();
-        isLoadingMore = false;
-    }, 300); // 부드러운 UX를 위한 약간의 지연
+    // 추가분만 append (전체 재렌더 X)
+    const container = document.getElementById('gallery-container');
+    const myId = auth.currentUser ? auth.currentUser.uid : "";
+    const start = galleryDisplayCount;
+    const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
+    
+    for (let i = start; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
+    }
+    
+    galleryDisplayCount = end;
+    isLoadingMore = false;
+    
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
+        sentinel.style.display = 'none';
+        if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+    } else {
+        sentinel.style.display = 'block';
+    }
 }
 
-// 아이템이 표시되어야 하는지 판단하는 헬퍼 함수
+// 아이템이 표시되어야 하는지 판단 (HTML 생성 없이 빠르게)
 function shouldShowItem(data) {
-    // collectGalleryMedia 활용하여 중복 제거
-    const media = collectGalleryMedia(data);
-    const hasDiet = !!media.dietHtml;
-    const hasExercise = !!media.exerciseHtml;
-    const hasMind = !!(media.mindHtml || media.mindText);
-
-    if (galleryFilter === 'all') {
-        return hasDiet || hasExercise || hasMind;
-    } else if (galleryFilter === 'diet') {
-        return hasDiet;
-    } else if (galleryFilter === 'exercise') {
-        return hasExercise;
-    } else if (galleryFilter === 'mind') {
-        return hasMind;
-    }
-    return false;
+    return !!hasMediaForFilter(data, galleryFilter);
 }
 
 // 메모리 누수 방지: 모든 리소스 정리
@@ -2734,31 +2815,70 @@ function cleanupGalleryResources() {
 window.cleanupGalleryResources = cleanupGalleryResources;
 
 async function loadGalleryData() {
+    const container = document.getElementById('gallery-container');
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
 
     if(cachedGalleryLogs.length === 0) {
-        const container = document.getElementById('gallery-container');
-        container.innerHTML = '<p style="text-align:center; font-size:13px;">데이터를 불러오는 중입니다...</p>';
+        // 즉시 스켈레톤 표시 (체감 로딩 0ms)
+        container.innerHTML = createSkeletonHtml(4);
         
         if(user) {
             const userSnap = await getDoc(doc(db, "users", myId));
             if(userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
         }
         
-        // 메모리 관리: MAX_CACHE_SIZE까지만 가져오기
         const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
         const snapshot = await getDocs(q);
         
         let logsArray = [];
         snapshot.forEach(d => { logsArray.push({id: d.id, data: d.data()}); });
-        
-        // 캠시 크기 제한 (메모리 누수 방지)
         cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
+        sortedFilteredDirty = true;
 
-        // 공유 카드는 처음 한 번만 그림 (속도 개선)
+        // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
+        buildShareCardAsync(myId, user);
+    }
+    
+    // 피드 즉시 렌더링
+    galleryDisplayCount = 0;
+    container.innerHTML = '';
+    
+    refreshSortedFiltered();
+    const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
+    
+    for (let i = 0; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
+    }
+    
+    galleryDisplayCount = end;
+    
+    const sentinel = document.getElementById('gallery-sentinel');
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
+        sentinel.style.display = 'none';
+    } else {
+        sentinel.style.display = 'block';
+    }
+    
+    if (sortedFilteredCache.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
+    }
+
+    // 갤러리 반응 요약 배너
+    renderActivitySummary(myId);
+    setupInfiniteScroll();
+}
+
+// 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
+async function buildShareCardAsync(myId, user) {
+    try {
+        const { todayStr, yesterdayStr } = getDatesInfo();
         let myRecentLogs = []; 
-        cachedGalleryLogs.forEach(item => { if(item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr)) myRecentLogs.push(item.data); });
+        cachedGalleryLogs.forEach(item => { 
+            if(item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr)) 
+                myRecentLogs.push(item.data); 
+        });
         
         if(user && myRecentLogs.length > 0) {
             document.getElementById('my-share-container').style.display = 'flex';
@@ -2766,38 +2886,45 @@ async function loadGalleryData() {
             document.getElementById('share-name').innerText = user.displayName;
             document.getElementById('share-date').innerText = latest.date.replace(/-/g, '. ');
             let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
-            if(points === 0 && latest.awardedPoints) { /* legacy fallback */ if(latest.awardedPoints.diet) points += 10; if(latest.awardedPoints.exercise) points += 15; if(latest.awardedPoints.mind) points += 5; }
+            if(points === 0 && latest.awardedPoints) { if(latest.awardedPoints.diet) points += 10; if(latest.awardedPoints.exercise) points += 15; if(latest.awardedPoints.mind) points += 5; }
             document.getElementById('share-point').innerText = points;
 
-            // collectGalleryMedia 헬퍼 함수로 미디어 URL 수집
+            // 공유 카드용 이미지 - 썸네일 우선
             let imgs = [];
             if(latest.diet) {
-                ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => { 
-                    if(latest.diet[k]) imgs.push(latest.diet[k]); 
+                ['breakfast','lunch','dinner','snack'].forEach(meal => { 
+                    const thumb = latest.diet[`${meal}ThumbUrl`];
+                    const orig = latest.diet[`${meal}Url`];
+                    if(thumb) imgs.push(thumb);
+                    else if(orig) imgs.push(orig);
                 });
             }
             if(latest.exercise) {
                 if(latest.exercise.cardioList && latest.exercise.cardioList.length > 0) {
-                    latest.exercise.cardioList.forEach(c => { if(c.imageUrl) imgs.push(c.imageUrl); });
+                    latest.exercise.cardioList.forEach(c => { 
+                        if(c.imageThumbUrl) imgs.push(c.imageThumbUrl);
+                        else if(c.imageUrl) imgs.push(c.imageUrl); 
+                    });
                 } else if(latest.exercise.cardioImageUrl) {
-                    imgs.push(latest.exercise.cardioImageUrl);
+                    imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
                 }
                 if(latest.exercise.strengthList && latest.exercise.strengthList.length > 0) {
-                    latest.exercise.strengthList.forEach(s => { if(s.videoUrl) imgs.push(s.videoUrl); });
+                    latest.exercise.strengthList.forEach(s => { 
+                        if(s.videoThumbUrl) imgs.push(s.videoThumbUrl);
+                        else if(s.videoUrl) imgs.push(s.videoUrl); 
+                    });
                 } else if(latest.exercise.strengthVideoUrl) {
-                    imgs.push(latest.exercise.strengthVideoUrl);
+                    imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
                 }
             }
-            if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageUrl);
+            if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
             
-            // 중복 제거 및 null/undefined 필터링
             imgs = [...new Set(imgs)].filter(url => url && url.trim() !== '');
             
             const imgGrid = document.getElementById('share-imgs');
             imgGrid.innerHTML = '';
             imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items');
             
-            // 모든 이미지를 한 번에 로드 후 한 번에 추가 (중복 방지)
             let htmlString = buildShareImageGrid(imgs, 4);
             imgGrid.innerHTML = htmlString;
             if (imgs.length === 1) imgGrid.classList.add('single-item');
@@ -2809,16 +2936,10 @@ async function loadGalleryData() {
         } else {
             document.getElementById('my-share-container').style.display = 'none';
         }
+    } catch(e) {
+        console.warn('공유 카드 로드 실패:', e.message);
+        document.getElementById('my-share-container').style.display = 'none';
     }
-    
-    // 무한 스크롤 초기화
-    galleryDisplayCount = INITIAL_LOAD;
-
-    // 갤러리 반응 요약 배너 (인스타그램 스타일)
-    renderActivitySummary(myId);
-
-    renderFeedOnly();
-    setupInfiniteScroll();
 }
 
 // 인스타그램 스타일: 내 게시물에 달린 반응/댓글 요약 배너
@@ -2970,7 +3091,7 @@ function formatCommentTime(timestamp) {
     return `${d.getMonth()+1}/${d.getDate()}`;
 }
 
-// 중복 코드 제거: 갤러리 미디어 수집 헬퍼 함수
+// 중복 코드 제거: 갤러리 미디어 수집 헬퍼 함수 (썸네일 우선)
 function collectGalleryMedia(data) {
     const result = {
         dietHtml: '',
@@ -2981,204 +3102,187 @@ function collectGalleryMedia(data) {
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본)
     if(data.diet) {
-        ['breakfast','lunch','dinner','snack'].forEach(k => {
-            const originalUrl = data.diet[`${k}Url`];
-            if(originalUrl) {
-                const thumbUrl = data.diet[`${k}ThumbUrl`] || originalUrl;
-                const safeOriginal = String(originalUrl).replace(/'/g, "\\'");
-                const safeThumb = String(thumbUrl).replace(/'/g, "\\'");
-                result.dietHtml += `<img src="${safeThumb}" onclick="openLightbox('${safeOriginal}')" alt="${k} 식사 사진" loading="lazy" decoding="async">`;
+        ['breakfast','lunch','dinner','snack'].forEach(meal => {
+            const origUrl = data.diet[`${meal}Url`];
+            const thumbUrl = data.diet[`${meal}ThumbUrl`];
+            if(origUrl) {
+                const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(origUrl);
+                const full = escapeHtml(origUrl);
+                result.dietHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="${meal} 식사 사진" loading="lazy" decoding="async">`;
             }
         });
     }
 
-    // 운동 미디어 (썸네일 우선, 클릭 시 원본)
+    // 운동 미디어 (중복 제거, 썸네일 우선)
     if(data.exercise) {
         let addedUrls = new Set();
-        const addImg = (url, thumbUrl = null) => {
+        const addImg = (url, thumbUrl) => {
             if(url && !addedUrls.has(url)) {
-                const displayUrl = thumbUrl || url;
-                const safeOriginal = String(url).replace(/'/g, "\\'");
-                const safeDisplay = String(displayUrl).replace(/'/g, "\\'");
-                result.exerciseHtml += `<img src="${safeDisplay}" onclick="openLightbox('${safeOriginal}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
+                const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(url);
+                const full = escapeHtml(url);
+                result.exerciseHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
                 addedUrls.add(url);
             }
         };
-        const addVid = (url, videoThumbUrl = null) => {
+        const addVid = (url, thumbUrl) => {
             if(url && !addedUrls.has(url)) {
-                const safeJsUrl = String(url).replace(/'/g, "\\'");
-                const safeAttr = String(url).replace(/"/g, '&quot;');
-                // 비디오 태그의 #t=0.5로 첫 프레임 표시 (CORS 불필요)
-                result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="openVideoLightbox('${safeJsUrl}')"><video src="${safeAttr}#t=0.5" muted playsinline preload="metadata" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;pointer-events:none;"></video><div class="video-play-btn">&#9654;</div></div>`;
+                const safeUrl = escapeHtml(url);
+                if (thumbUrl) {
+                    // 썸네일 이미지로 표시, 클릭 시 영상 재생
+                    const safeThumb = escapeHtml(thumbUrl);
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
+                } else {
+                    // 썸네일 없으면 기존 방식 (video 태그로 프레임 추출)
+                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video><div class="video-play-btn">&#9654;</div></div>`;
+                }
                 addedUrls.add(url);
             }
         };
         
-        addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl || null);
-        addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl || null);
-        if(data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl || null));
-        if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl || null));
+        addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl);
+        addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl);
+        if(data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl));
+        if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl));
     }
 
     // 마음 미디어 (썸네일 우선)
     if(data.sleepAndMind?.sleepImageUrl) {
-        const sleepOriginal = data.sleepAndMind.sleepImageUrl;
-        const sleepThumb = data.sleepAndMind.sleepImageThumbUrl || sleepOriginal;
-        const safeSleepOriginal = String(sleepOriginal).replace(/'/g, "\\'");
-        const safeSleepThumb = String(sleepThumb).replace(/'/g, "\\'");
-        result.mindHtml = `<img src="${safeSleepThumb}" onclick="openLightbox('${safeSleepOriginal}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
+        const url = data.sleepAndMind.sleepImageUrl;
+        const thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
+        const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(url);
+        const full = escapeHtml(url);
+        result.mindHtml = `<img src="${src}" onclick="openLightbox('${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
     }
 
     // 마음 텍스트
     if(data.sleepAndMind?.gratitude) {
-        result.mindText = `<div style="font-size:13px; color:#333; padding:10px 14px; font-style:italic; line-height:1.6;">💭 "${data.sleepAndMind.gratitude}"</div>`;
+        const safeGratitude = escapeHtml(data.sleepAndMind.gratitude);
+        result.mindText = `<div style="font-size:13px; color:#555; background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:12px; font-style:italic;">💭 "${safeGratitude}"</div>`;
     }
 
     return result;
 }
 
-// [핵심] 리렌더링 분리로 속도 폭발 + 무한 스크롤 + DocumentFragment
-async function renderFeedOnly() {
+// 갤러리 카드 DOM 생성 (추출된 단일 카드 빌더)
+function buildGalleryCard(item, myId) {
+    const data = item.data;
+    const isFriend = cachedMyFriends.includes(data.userId);
+    
+    const media = collectGalleryMedia(data);
+    let contentHtml = '';
+    let shouldShow = false;
+
+    if (galleryFilter === 'all') {
+        const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
+        if(allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
+        if(media.mindText) contentHtml += media.mindText;
+        if(allMedia || media.mindText) shouldShow = true;
+    } else if (galleryFilter === 'diet') {
+        if(media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
+    } else if (galleryFilter === 'exercise') {
+        if(media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
+    } else if (galleryFilter === 'mind') {
+        if(media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
+        if(media.mindText) contentHtml += media.mindText;
+        if(media.mindHtml || media.mindText) shouldShow = true;
+    }
+    
+    if(!shouldShow) return null;
+
+    const rx = data.reactions || { heart: [], fire: [], clap: [] };
+    const cHeart = rx.heart ? rx.heart.length : 0;
+    const cFire = rx.fire ? rx.fire.length : 0;
+    const cClap = rx.clap ? rx.clap.length : 0;
+    const aHeart = rx.heart?.includes(myId) ? 'active' : '';
+    const aFire = rx.fire?.includes(myId) ? 'active' : '';
+    const aClap = rx.clap?.includes(myId) ? 'active' : '';
+
+    const comments = data.comments || [];
+    const commentCount = comments.length;
+    const safeName = escapeHtml(data.userName || '익명');
+    const safeUserId = escapeHtml(data.userId || '');
+    const safeDocId = escapeHtml(item.id || '');
+
+    let commentsHtml = '';
+    const showComments = comments.slice(0, 2);
+    showComments.forEach((c, idx) => {
+        const cName = escapeHtml(c.userName || '익명');
+        const cText = escapeHtml(c.text || '');
+        const cTime = formatCommentTime(c.timestamp);
+        const delBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
+        commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}</div>`;
+    });
+    if (comments.length > 2) {
+        commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
+    }
+
+    const avatarInitial = (data.userName || '?').charAt(0);
+    const totalReactions = cHeart + cFire + cClap;
+    const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
+
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    card.innerHTML = `
+        <div class="gallery-header">
+            <div class="gallery-avatar">${avatarInitial}</div>
+            <div class="gallery-header-info">
+                <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
+                <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
+            </div>
+            ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : ''}
+        </div>
+        ${contentHtml}
+        <div class="gallery-actions">
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
+        </div>
+        ${reactionSummaryHtml}
+        <div class="comment-section">
+            <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
+                ${commentsHtml}
+            </div>
+            <div class="comment-input-wrap">
+                <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
+                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
+            </div>
+        </div>
+    `;
+    return card;
+}
+
+// 피드 렌더링 (필터 변경 시 전체 재빌드 - 캐시 활용)
+function renderFeedOnly() {
     const container = document.getElementById('gallery-container');
     container.innerHTML = '';
     const myId = auth.currentUser ? auth.currentUser.uid : "";
     const sentinel = document.getElementById('gallery-sentinel');
 
-    let sortedLogs = [...cachedGalleryLogs];
-    sortedLogs.sort((a, b) => {
-        const aFr = cachedMyFriends.includes(a.data.userId); const bFr = cachedMyFriends.includes(b.data.userId);
-        return (aFr === bFr) ? 0 : aFr ? -1 : 1;
-    });
-
-    let visibleCount = 0;
-    let renderedCount = 0;
-    const fragment = document.createDocumentFragment();
-
-    for (let i = 0; i < sortedLogs.length; i++) {
-        const item = sortedLogs[i];
-        const data = item.data;
-        const isFriend = cachedMyFriends.includes(data.userId);
-        
-        // 헬퍼 함수 사용으로 중복 제거
-        const media = collectGalleryMedia(data);
-        const dietMediaHtml = media.dietHtml;
-        const exerMediaHtml = media.exerciseHtml;
-        const mindMediaHtml = media.mindHtml;
-        const mindTextHtml = media.mindText;
-
-        let contentHtml = ''; let shouldShow = false;
-
-        if (galleryFilter === 'all') {
-            const allMedia = dietMediaHtml + exerMediaHtml + mindMediaHtml;
-            if(allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
-            if(mindTextHtml) contentHtml += mindTextHtml;
-            if(allMedia || mindTextHtml) shouldShow = true;
-        } else if (galleryFilter === 'diet') {
-            if(dietMediaHtml) { contentHtml += `<div class="gallery-photos">${dietMediaHtml}</div>`; shouldShow = true; }
-        } else if (galleryFilter === 'exercise') {
-            if(exerMediaHtml) { contentHtml += `<div class="gallery-photos">${exerMediaHtml}</div>`; shouldShow = true; }
-        } else if (galleryFilter === 'mind') {
-            if(mindMediaHtml) contentHtml += `<div class="gallery-photos">${mindMediaHtml}</div>`;
-            if(mindTextHtml) contentHtml += mindTextHtml;
-            if(mindMediaHtml || mindTextHtml) shouldShow = true;
-        }
-
-        if(!shouldShow) continue; 
-        visibleCount++;
-        
-        // 무한 스크롤: 표시 개수 제한
-        if (renderedCount >= galleryDisplayCount) {
-            continue;
-        }
-        renderedCount++;
-
-        const rx = data.reactions || { heart: [], fire: [], clap: [] };
-        const cHeart = rx.heart ? rx.heart.length : 0;
-        const cFire = rx.fire ? rx.fire.length : 0;
-        const cClap = rx.clap ? rx.clap.length : 0;
-        const aHeart = rx.heart?.includes(myId) ? 'active' : '';
-        const aFire = rx.fire?.includes(myId) ? 'active' : '';
-        const aClap = rx.clap?.includes(myId) ? 'active' : '';
-
-        // 댓글 데이터
-        const comments = data.comments || [];
-        const commentCount = comments.length;
-
-        // XSS 방지: 사용자 입력 이스케이프
-        const safeName = escapeHtml(data.userName || '익명');
-        const safeUserId = escapeHtml(data.userId || '');
-        const safeDocId = escapeHtml(item.id || '');
-
-        // 댓글 HTML (최대 2개만 초기 표시)
-        let commentsHtml = '';
-        const showComments = comments.slice(0, 2);
-        showComments.forEach((c, idx) => {
-            const cName = escapeHtml(c.userName || '익명');
-            const cText = escapeHtml(c.text || '');
-            const cTime = formatCommentTime(c.timestamp);
-            const delBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
-            commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}</div>`;
-        });
-        if (comments.length > 2) {
-            commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
-        }
-
-        // 아바타 이니셜 (첫 글자)
-        const avatarInitial = (data.userName || '?').charAt(0);
-
-        // 반응 총합 텍스트
-        const totalReactions = cHeart + cFire + cClap;
-        const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
-
-        const card = document.createElement('div');
-        card.className = 'gallery-card';
-        card.innerHTML = `
-            <div class="gallery-header">
-                <div class="gallery-avatar">${avatarInitial}</div>
-                <div class="gallery-header-info">
-                    <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
-                    <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
-                </div>
-                ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : ''}
-            </div>
-            ${contentHtml}
-            <div class="gallery-actions">
-                <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
-                <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
-                <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
-                <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
-            </div>
-            ${reactionSummaryHtml}
-            <div class="comment-section">
-                <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
-                    ${commentsHtml}
-                </div>
-                <div class="comment-input-wrap">
-                    <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
-                    <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
-                </div>
-            </div>
-        `;            fragment.appendChild(card);
+    refreshSortedFiltered();
+    
+    const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
+    
+    for (let i = 0; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
     }
+    
+    galleryDisplayCount = end;
 
-    // DocumentFragment로 한 번에 DOM 삽입 (리플로우 최소화)
-    container.appendChild(fragment);
-
-    // 무한 스크롤 센티널 표시 여부 결정
-    if (renderedCount >= visibleCount || visibleCount === 0) {
+    if (galleryDisplayCount >= sortedFilteredCache.length || sortedFilteredCache.length === 0) {
         sentinel.style.display = 'none';
         if (galleryIntersectionObserver) {
             galleryIntersectionObserver.disconnect();
         }
     } else {
         sentinel.style.display = 'block';
-        // 옵저버가 설정되지 않았으면 설정
         if (!galleryIntersectionObserver) {
             setupInfiniteScroll();
         }
     }
 
-    if(visibleCount === 0) {
+    if(sortedFilteredCache.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
     }
 }

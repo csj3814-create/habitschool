@@ -15,11 +15,14 @@ export let cachedMyFriends = [];
 
 // 무한 스크롤 관련 변수
 export let galleryDisplayCount = 0;
-const INITIAL_LOAD = 12;      // 초기 로드: 20 → 12 (성능 개선)
-const LOAD_MORE = 12;         // 추가 로드: 15 → 12 (일관성)
-const MAX_CACHE_SIZE = 50;    // 캐시 크기: 100 → 50 (메모리 절약)
+const INITIAL_LOAD = 8;       // 초기 로드: 8개 (최소한 빠르게)
+const LOAD_MORE = 6;          // 추가 로드: 6개씩
+const MAX_CACHE_SIZE = 50;    // 캐시 크기
 let galleryIntersectionObserver = null;
 let isLoadingMore = false;
+// 정렬 캐시 (매번 재정렬 방지)
+let sortedFilteredCache = [];
+let sortedFilteredDirty = true;
 
 // 현재 필터 상태 (전역에서 접근 가능하도록)
 export let galleryFilter = 'all';
@@ -29,6 +32,59 @@ export let galleryFilter = 'all';
  */
 export function setGalleryFilter(filter) {
     galleryFilter = filter;
+    sortedFilteredDirty = true;
+}
+
+/**
+ * 스켈레톤 카드 HTML 생성
+ */
+function createSkeletonHtml(count = 3) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+        html += `<div class="gallery-card skeleton-card">
+            <div class="skeleton-header">
+                <div class="skeleton-avatar"></div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-text w60"></div>
+                    <div class="skeleton-text w40"></div>
+                </div>
+            </div>
+            <div class="gallery-skeleton">
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
+            </div>
+        </div>`;
+    }
+    return html;
+}
+
+/**
+ * 아이템에 미디어가 있는지 빠르게 판단 (HTML 생성 없이)
+ */
+function hasMediaForFilter(data, filter) {
+    if (filter === 'diet' || filter === 'all') {
+        if (data.diet) {
+            for (const meal of ['breakfast','lunch','dinner','snack']) {
+                if (data.diet[`${meal}Url`]) return filter === 'diet' ? true : 'has';
+            }
+        }
+        if (filter === 'diet') return false;
+    }
+    if (filter === 'exercise' || filter === 'all') {
+        if (data.exercise) {
+            if (data.exercise.cardioImageUrl) return filter === 'exercise' ? true : 'has';
+            if (data.exercise.strengthVideoUrl) return filter === 'exercise' ? true : 'has';
+            if (data.exercise.cardioList?.length) return filter === 'exercise' ? true : 'has';
+            if (data.exercise.strengthList?.length) return filter === 'exercise' ? true : 'has';
+        }
+        if (filter === 'exercise') return false;
+    }
+    if (filter === 'mind' || filter === 'all') {
+        if (data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude) return filter === 'mind' ? true : 'has';
+        if (filter === 'mind') return false;
+    }
+    return filter === 'all' ? false : false;
 }
 
 /**
@@ -108,24 +164,10 @@ export function collectGalleryMedia(data) {
 }
 
 /**
- * 아이템이 표시되어야 하는지 판단
+ * 아이템이 표시되어야 하는지 판단 (HTML 생성 없이 빠르게)
  */
 export function shouldShowItem(data) {
-    const media = collectGalleryMedia(data);
-    const hasDiet = !!media.dietHtml;
-    const hasExercise = !!media.exerciseHtml;
-    const hasMind = !!(media.mindHtml || media.mindText);
-
-    if (galleryFilter === 'all') {
-        return hasDiet || hasExercise || hasMind;
-    } else if (galleryFilter === 'diet') {
-        return hasDiet;
-    } else if (galleryFilter === 'exercise') {
-        return hasExercise;
-    } else if (galleryFilter === 'mind') {
-        return hasMind;
-    }
-    return false;
+    return !!hasMediaForFilter(data, galleryFilter);
 }
 
 /**
@@ -154,42 +196,56 @@ export function setupInfiniteScroll() {
 }
 
 /**
+ * 정렬+필터 캐시 갱신
+ */
+function refreshSortedFiltered() {
+    if (!sortedFilteredDirty) return;
+    let sorted = [...cachedGalleryLogs];
+    sorted.sort((a, b) => {
+        const aFr = cachedMyFriends.includes(a.data.userId);
+        const bFr = cachedMyFriends.includes(b.data.userId);
+        return (aFr === bFr) ? 0 : aFr ? -1 : 1;
+    });
+    sortedFilteredCache = sorted.filter(item => shouldShowItem(item.data));
+    sortedFilteredDirty = false;
+}
+
+/**
  * 추가 아이템 로드 함수
  */
 export function loadMoreGalleryItems() {
     if (isLoadingMore) return;
     
+    refreshSortedFiltered();
     const sentinel = document.getElementById('gallery-sentinel');
-    const myId = auth.currentUser ? auth.currentUser.uid : "";
     
-    // 필터링된 전체 아이템 수 계산
-    let totalFilteredItems = 0;
-    let sortedLogs = [...cachedGalleryLogs];
-    sortedLogs.sort((a, b) => {
-        const aFr = cachedMyFriends.includes(a.data.userId);
-        const bFr = cachedMyFriends.includes(b.data.userId);
-        return (aFr === bFr) ? 0 : aFr ? -1 : 1;
-    });
-    
-    sortedLogs.forEach(item => {
-        if (shouldShowItem(item.data)) totalFilteredItems++;
-    });
-    
-    // 이미 모든 아이템을 표시했으면 종료
-    if (galleryDisplayCount >= totalFilteredItems) {
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
         sentinel.style.display = 'none';
         return;
     }
     
     isLoadingMore = true;
-    sentinel.style.display = 'block';
     
-    // 다음 배치 로드
-    setTimeout(() => {
-        galleryDisplayCount += LOAD_MORE;
-        renderFeedOnly();
-        isLoadingMore = false;
-    }, 300); // 부드러운 UX를 위한 약간의 지연
+    // 추가분만 append (전체 재렌더 X)
+    const container = document.getElementById('gallery-container');
+    const myId = auth.currentUser ? auth.currentUser.uid : "";
+    const start = galleryDisplayCount;
+    const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
+    
+    for (let i = start; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
+    }
+    
+    galleryDisplayCount = end;
+    isLoadingMore = false;
+    
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
+        sentinel.style.display = 'none';
+        if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+    } else {
+        sentinel.style.display = 'block';
+    }
 }
 
 /**
@@ -206,12 +262,14 @@ export function cleanupGalleryResources() {
 }
 
 /**
- * 갤러리 데이터 로드 (초기 로드)
+ * 갤러리 데이터 로드 (초기 로드 - 스켈레톤 즉시 표시)
  */
 export async function loadGalleryData() {
+    const container = document.getElementById('gallery-container');
+    
     if(cachedGalleryLogs.length === 0) {
-        const container = document.getElementById('gallery-container');
-        container.innerHTML = '<p style="text-align:center; font-size:13px;">데이터를 불러오는 중입니다...</p>';
+        // 즉시 스켈레톤 표시 (체감 로딩 0ms)
+        container.innerHTML = createSkeletonHtml(4);
         
         const { todayStr, yesterdayStr } = getDatesInfo();
         const user = auth.currentUser;
@@ -222,17 +280,111 @@ export async function loadGalleryData() {
             if(userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
         }
         
-        // 메모리 관리: MAX_CACHE_SIZE까지만 가져오기
         const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
         const snapshot = await getDocs(q);
         
         let logsArray = [];
         snapshot.forEach(d => { logsArray.push({id: d.id, data: d.data()}); });
-        
-        // 캠시 크기 제한 (메모리 누수 방지)
         cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
+        sortedFilteredDirty = true;
 
-        // 공유 카드는 처음 한 번만 그림 (속도 개선)
+        // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저)
+        buildShareCardAsync(myId, todayStr, yesterdayStr, user);
+    }
+    
+    // 피드 즉시 렌더링
+    galleryDisplayCount = 0;
+    container.innerHTML = '';
+    
+    refreshSortedFiltered();
+    const myId = auth.currentUser ? auth.currentUser.uid : "";
+    const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
+    
+    for (let i = 0; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
+    }
+    
+    galleryDisplayCount = end;
+    
+    const sentinel = document.getElementById('gallery-sentinel');
+    if (galleryDisplayCount >= sortedFilteredCache.length) {
+        sentinel.style.display = 'none';
+    } else {
+        sentinel.style.display = 'block';
+    }
+    
+    if (sortedFilteredCache.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
+    }
+    
+    setupInfiniteScroll();
+}
+
+/**
+ * 갤러리 카드 DOM 생성
+ */
+function buildGalleryCard(item, myId) {
+    const data = item.data;
+    const isFriend = cachedMyFriends.includes(data.userId);
+    
+    const media = collectGalleryMedia(data);
+    let contentHtml = '';
+    let shouldShow = false;
+
+    if (galleryFilter === 'all') {
+        const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
+        if(allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
+        if(media.mindText) contentHtml += media.mindText;
+        if(allMedia || media.mindText) shouldShow = true;
+    } else if (galleryFilter === 'diet') {
+        if(media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
+    } else if (galleryFilter === 'exercise') {
+        if(media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
+    } else if (galleryFilter === 'mind') {
+        if(media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
+        if(media.mindText) contentHtml += media.mindText;
+        if(media.mindHtml || media.mindText) shouldShow = true;
+    }
+    
+    if(!shouldShow) return null;
+
+    const rx = data.reactions || { heart: [], fire: [], clap: [] };
+    const cHeart = rx.heart ? rx.heart.length : 0;
+    const cFire = rx.fire ? rx.fire.length : 0;
+    const cClap = rx.clap ? rx.clap.length : 0;
+    const aHeart = (rx.heart && rx.heart.includes(myId)) ? 'reacted' : '';
+    const aFire = (rx.fire && rx.fire.includes(myId)) ? 'reacted' : '';
+    const aClap = (rx.clap && rx.clap.includes(myId)) ? 'reacted' : '';
+    const safeName = escapeHtml(data.userName || '익명');
+    const safeUserId = escapeHtml(data.userId || '');
+    const safeDocId = escapeHtml(item.id || '');
+
+    const card = document.createElement('div');
+    card.className = 'gallery-card';
+    card.innerHTML = `
+        <div class="gallery-header">
+            <div class="gallery-header-info">
+                <span class="gallery-name">${isFriend ? '⭐️ ' : ''}${safeName}</span>
+                <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
+            </div>
+            ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? 'X 친구취소' : '⭐️ 친구맺기'}</button>` : ''}
+        </div>
+        ${contentHtml}
+        <div class="gallery-actions">
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️ <span>${cHeart}</span></button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥 <span>${cFire}</span></button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏 <span>${cClap}</span></button>
+        </div>
+    `;
+    return card;
+}
+
+/**
+ * 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
+ */
+async function buildShareCardAsync(myId, todayStr, yesterdayStr, user) {
+    try {
         let myRecentLogs = []; 
         cachedGalleryLogs.forEach(item => { 
             if(item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr)) 
@@ -250,7 +402,7 @@ export async function loadGalleryData() {
             if(latest.awardedPoints?.mind) points += 5;
             document.getElementById('share-point').innerText = points;
 
-            // collectGalleryMedia 헬퍼 함수로 미디어 URL 수집 (공유 카드용 - 썸네일 우선)
+            // 공유 카드용 이미지 - 썸네일 우선
             let imgs = [];
             if(latest.diet) {
                 ['breakfast','lunch','dinner','snack'].forEach(meal => { 
@@ -280,13 +432,11 @@ export async function loadGalleryData() {
             }
             if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
             
-            // 중복 제거 및 null/undefined 필터링
             imgs = [...new Set(imgs)].filter(url => url && url.trim() !== '');
             
             const imgGrid = document.getElementById('share-imgs');
             imgGrid.innerHTML = '';
             
-            // 모든 이미지를 한 번에 로드 후 한 번에 추가 (중복 방지)
             let htmlString = '';
             for (let i = 0; i < Math.min(imgs.length, 4); i++) {
                 const b64 = await fetchImageAsBase64(imgs[i]);
@@ -298,16 +448,14 @@ export async function loadGalleryData() {
         } else {
             document.getElementById('my-share-container').style.display = 'none';
         }
+    } catch(e) {
+        console.warn('공유 카드 로드 실패:', e.message);
+        document.getElementById('my-share-container').style.display = 'none';
     }
-    
-    // 무한 스크롤 초기화
-    galleryDisplayCount = INITIAL_LOAD;
-    renderFeedOnly();
-    setupInfiniteScroll();
 }
 
 /**
- * 피드 렌더링 (필터링 + 무한 스크롤 적용)
+ * 피드 렌더링 (필터 변경 시 전체 재빌드)
  */
 export async function renderFeedOnly() {
     const container = document.getElementById('gallery-container');
@@ -315,99 +463,30 @@ export async function renderFeedOnly() {
     const myId = auth.currentUser ? auth.currentUser.uid : "";
     const sentinel = document.getElementById('gallery-sentinel');
 
-    let sortedLogs = [...cachedGalleryLogs];
-    sortedLogs.sort((a, b) => {
-        const aFr = cachedMyFriends.includes(a.data.userId); 
-        const bFr = cachedMyFriends.includes(b.data.userId);
-        return (aFr === bFr) ? 0 : aFr ? -1 : 1;
-    });
-
-    let visibleCount = 0;
-    let renderedCount = 0;
-
-    for (let i = 0; i < sortedLogs.length; i++) {
-        const item = sortedLogs[i];
-        const data = item.data;
-        const isFriend = cachedMyFriends.includes(data.userId);
-        
-        // 헬퍼 함수 사용으로 중복 제거
-        const media = collectGalleryMedia(data);
-        const dietMediaHtml = media.dietHtml;
-        const exerMediaHtml = media.exerciseHtml;
-        const mindMediaHtml = media.mindHtml;
-        const mindTextHtml = media.mindText;
-
-        let contentHtml = ''; 
-        let shouldShow = false;
-
-        if (galleryFilter === 'all') {
-            const allMedia = dietMediaHtml + exerMediaHtml + mindMediaHtml;
-            if(allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
-            if(mindTextHtml) contentHtml += mindTextHtml;
-            if(allMedia || mindTextHtml) shouldShow = true;
-        } else if (galleryFilter === 'diet') {
-            if(dietMediaHtml) { contentHtml += `<div class="gallery-photos">${dietMediaHtml}</div>`; shouldShow = true; }
-        } else if (galleryFilter === 'exercise') {
-            if(exerMediaHtml) { contentHtml += `<div class="gallery-photos">${exerMediaHtml}</div>`; shouldShow = true; }
-        } else if (galleryFilter === 'mind') {
-            if(mindMediaHtml) contentHtml += `<div class="gallery-photos">${mindMediaHtml}</div>`;
-            if(mindTextHtml) contentHtml += mindTextHtml;
-            if(mindMediaHtml || mindTextHtml) shouldShow = true;
-        }
-
-        if(!shouldShow) continue; 
-        visibleCount++;
-        
-        // 무한 스크롤: 표시 개수 제한
-        if (renderedCount >= galleryDisplayCount) {
-            continue;
-        }
-        renderedCount++;
-
-        const rx = data.reactions || { heart: [], fire: [], clap: [] };
-        const cHeart = rx.heart ? rx.heart.length : 0;
-        const cFire = rx.fire ? rx.fire.length : 0;
-        const cClap = rx.clap ? rx.clap.length : 0;
-        // XSS 방지: 사용자 입력 이스케이프
-        const safeName = escapeHtml(data.userName || '익명');
-        const safeUserId = escapeHtml(data.userId || '');
-        const safeDocId = escapeHtml(item.id || '');
-
-        const card = document.createElement('div');
-        card.className = 'gallery-card';
-        card.innerHTML = `
-            <div class="gallery-header">
-                <div class="gallery-header-info">
-                    <span class="gallery-name">${isFriend ? '⭐️ ' : ''}${safeName}</span>
-                    <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
-                </div>
-                ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? 'X 친구취소' : '⭐️ 친구맺기'}</button>` : ''}
-            </div>
-            ${contentHtml}
-            <div class="gallery-actions">
-                <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️ <span>${cHeart}</span></button>
-                <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥 <span>${cFire}</span></button>
-                <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏 <span>${cClap}</span></button>
-            </div>
-        `;
-        container.appendChild(card);
+    refreshSortedFiltered();
+    
+    const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
+    
+    for (let i = 0; i < end; i++) {
+        const card = buildGalleryCard(sortedFilteredCache[i], myId);
+        if (card) container.appendChild(card);
     }
+    
+    galleryDisplayCount = end;
 
-    // 무한 스크롤 센티널 표시 여부 결정
-    if (renderedCount >= visibleCount || visibleCount === 0) {
+    if (galleryDisplayCount >= sortedFilteredCache.length || sortedFilteredCache.length === 0) {
         sentinel.style.display = 'none';
         if (galleryIntersectionObserver) {
             galleryIntersectionObserver.disconnect();
         }
     } else {
         sentinel.style.display = 'block';
-        // 옵저버가 설정되지 않았으면 설정
         if (!galleryIntersectionObserver) {
             setupInfiniteScroll();
         }
     }
 
-    if(visibleCount === 0) {
+    if(sortedFilteredCache.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
     }
 }
