@@ -9,18 +9,35 @@ import { initializeUserWallet } from './blockchain-manager.js';
 // WebView(인앱 브라우저) 감지
 function isWebView() {
     const ua = navigator.userAgent || navigator.vendor || '';
-    // 주요 인앱 브라우저 패턴: 카카오톡, 네이버, 인스타그램, 페이스북, 라인 등
+    // 주요 인앱 브라우저 패턴
     const webviewPatterns = [
         /KAKAOTALK/i,
-        /NAVER/i,
-        /FBAN|FBAV/i,       // Facebook
+        /NAVER\(/i,           // 네이버 앱 (NAVER( 패턴)
+        /NAVER/i,             // 네이버 관련 전반
+        /NaverMatome/i,
+        /FBAN|FBAV/i,         // Facebook
+        /FB_IAB/i,            // Facebook In-App Browser
         /Instagram/i,
         /Line\//i,
         /Twitter/i,
         /Snapchat/i,
-        /\bwv\b/i,          // Android WebView
-        /WebView/i
+        /DaumApps/i,          // 다음/카카오 계열
+        /everytimeApp/i,
+        /BAND\//i,            // 네이버 밴드
+        /Whale\//i,           // 네이버 웨일 앱 내 WebView
+        /\bwv\b/i,            // Android WebView 플래그
+        /;\s*wv\)/i,          // Android WebView (정확한 패턴)
+        /WebView/i,
+        /GSA\//i,             // Google Search App
+        /CriOS.*Mobile/i,     // Chrome iOS (WebView 가능성)
+        /\[FB/i,              // Facebook bracket 패턴
     ];
+    
+    // Safari가 아닌데 iOS인 경우 = WebView일 가능성 높음
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
+    if (isIOS && !isSafari && !/Chrome/i.test(ua)) return true;
+    
     return webviewPatterns.some(pattern => pattern.test(ua));
 }
 
@@ -96,7 +113,12 @@ export function initAuth() {
             // 모바일: signInWithRedirect 사용 (팝업 차단 문제 방지)
             signInWithRedirect(auth, provider).catch(error => {
                 console.error('로그인 오류:', error);
-                showToast('⚠️ 로그인에 실패했습니다. 다시 시도해주세요.');
+                // 403 disallowed_useragent 오류 감지 (미감지 WebView 폴백)
+                if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
+                    showWebViewWarning();
+                    return;
+                }
+                showToast('⚠️ 인앱 브라우저에서는 로그인이 제한될 수 있습니다. Chrome 또는 Safari에서 열어주세요.');
             });
         } else {
             // 데스크톱: signInWithPopup 사용
@@ -114,6 +136,36 @@ export function initAuth() {
             });
         }
     });
+}
+
+// WebView 경고 UI 표시 (폴백용)
+function showWebViewWarning() {
+    const loginBtn = document.getElementById('loginBtn');
+    const webviewWarning = document.getElementById('webview-warning');
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (webviewWarning) {
+        webviewWarning.style.display = 'block';
+        const openBrowserBtn = document.getElementById('openExternalBrowser');
+        if (openBrowserBtn) {
+            openBrowserBtn.addEventListener('click', openInExternalBrowser);
+        }
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showToast('✅ 링크가 복사되었습니다!');
+                }).catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = window.location.href;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast('✅ 링크가 복사되었습니다!');
+                });
+            });
+        }
+    }
 }
 
 // 인증 상태 변경 리스너
