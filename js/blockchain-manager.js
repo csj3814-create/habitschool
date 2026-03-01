@@ -335,6 +335,7 @@ export async function convertPointsToHBT(pointAmount) {
         }
         
         // UI 업데이트
+        const pointInput = document.getElementById('conversion-points');
         if (pointInput) pointInput.value = '';
         const hbtInput = document.getElementById('conversion-hbt');
         if (hbtInput) hbtInput.value = '';
