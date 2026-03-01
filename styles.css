@@ -1197,11 +1197,13 @@ textarea {
     transform: scale(1.2); 
 }
 
-.action-btn.active { 
+.action-btn.active,
+.action-btn.reacted { 
     color: #E91E63; 
 }
 
-.action-btn.active span {
+.action-btn.active span,
+.action-btn.reacted span {
     color: #E91E63;
 }
 
