@@ -17,7 +17,16 @@ import { auth, db, storage, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } f
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType } from './security.js';
-import { updateChallengeProgress, getConversionRate, getCurrentEra } from './blockchain-manager.js';
+// blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
+let updateChallengeProgress = async () => {};
+let getConversionRate = () => 100;
+let getCurrentEra = () => 1;
+import('./blockchain-manager.js').then(mod => {
+    updateChallengeProgress = mod.updateChallengeProgress;
+    getConversionRate = mod.getConversionRate;
+    getCurrentEra = mod.getCurrentEra;
+    console.log('✅ app.js: 블록체인 모듈 로드');
+}).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
 async function checkMilestones(userId) {

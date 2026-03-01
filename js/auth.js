@@ -4,7 +4,7 @@ import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https:/
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
-import { initializeUserWallet } from './blockchain-manager.js';
+// blockchain-manager는 동적 import (로드 실패해도 인증에 영향 없음)
 
 // WebView(인앱 브라우저) 감지
 function isWebView() {
@@ -212,9 +212,13 @@ export function setupAuthListener(callbacks) {
                 }
             }
             
-            // 내장형 지갑 자동 초기화 (비동기, 백그라운드)
-            initializeUserWallet().catch(err => {
-                console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
+            // 내장형 지갑 자동 초기화 (비동기, 백그라운드 — 동적 import)
+            import('./blockchain-manager.js').then(mod => {
+                mod.initializeUserWallet().catch(err => {
+                    console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
+                });
+            }).catch(err => {
+                console.warn('⚠️ 블록체인 모듈 로드 실패 (계속 진행):', err.message);
             });
             
             // 오늘 날짜 데이터 로드
