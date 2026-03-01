@@ -911,7 +911,11 @@ window.openTab = function(tabName, pushState = true) {
             updateAssetDisplay();
         }
     } else if(tabName === 'gallery') {
-        submitBar.style.display = 'none';
+        submitBar.style.display = 'block';
+        saveBtn.innerText = '💬 해빛스쿨 공식 오픈단톡방 참여하기';
+        saveBtn.style.backgroundColor = '#FEE500';
+        saveBtn.style.color = '#3E2723';
+        saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
     } else {
         submitBar.style.display = 'block';
         saveBtn.innerText = '현재 진행상황 저장 & 포인트 받기 🅿️';
@@ -1720,6 +1724,10 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
 document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
+    
+    // 갤러리 탭에서는 카카오톡 링크 버튼이므로 저장 동작 스킵
+    const activeGallery = document.getElementById('gallery');
+    if (activeGallery && activeGallery.style.display !== 'none') return;
     
     const saveBtn = document.getElementById('saveDataBtn');
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;

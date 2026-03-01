@@ -1777,8 +1777,8 @@ textarea {
 }
 
 .stake-input {
-    width: 42px;
-    padding: 3px 4px;
+    width: 20px;
+    padding: 4px 2px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 11px;
