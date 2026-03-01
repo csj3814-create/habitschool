@@ -1573,7 +1573,8 @@ textarea {
 .badges-grid { 
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px; 
+    gap: 8px;
+    align-items: stretch;
 }
 
 /* 마일스톤 카드 (카테고리별) - 컴팩트 */
@@ -1583,18 +1584,21 @@ textarea {
     padding: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .milestone-card-label {
     font-size: 11px;
     font-weight: bold;
     color: #333;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
     padding-bottom: 3px;
     border-bottom: 1px solid #eee;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
 }
 
 /* 완료된 마일스톤 목록 (초소형 뱃지) */
@@ -1602,7 +1606,8 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
+    flex-shrink: 0;
 }
 
 .milestone-completed-item {
@@ -1663,6 +1668,7 @@ textarea {
     background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
     border-radius: 8px;
     border: 1px dashed #42A5F5;
+    margin-top: auto;
 }
 
 .milestone-current-emoji {
@@ -1687,19 +1693,13 @@ textarea {
     margin-top: 1px;
 }
 
-.milestone-current-reward {
-    font-size: 10px;
-    color: #FF8C00;
-    font-weight: bold;
-    margin-top: 2px;
-}
-
 .milestone-all-done {
     text-align: center;
     padding: 6px;
     color: #F57F17;
     font-weight: bold;
     font-size: 11px;
+    margin-top: auto;
 }
 
 /* ===========================
