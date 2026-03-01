@@ -1725,6 +1725,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
     
+    // 갤러리 탭에서는 오픈단톡방 버튼으로 사용 → 저장 로직 실행 안함
+    const gallerySection = document.getElementById('gallery');
+    if (gallerySection && gallerySection.style.display === 'block') return;
+
     const saveBtn = document.getElementById('saveDataBtn');
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
     showToast("백그라운드에서 저장 중입니다! 🚀");
