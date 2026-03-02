@@ -747,6 +747,39 @@ window.playGalleryVideo = function(wrapper) {
 };
 
 
+// 구간 번호 → 알파벳 라벨 변환 (1→A, 2→B, ...)
+function eraToLabel(era) {
+    return String.fromCharCode(64 + Math.min(era, 26)); // 1→A, 2→B, ...26→Z
+}
+
+// 반감기 스케줄 테이블 활성 구간 하이라이트
+function updateHalvingScheduleUI(currentEra) {
+    const schedule = document.getElementById('halving-schedule');
+    if (!schedule) return;
+    const rows = schedule.children;
+    for (let i = 0; i < rows.length; i++) {
+        const eraIdx = i + 1;
+        const label = eraToLabel(eraIdx);
+        const firstSpan = rows[i].querySelector('span');
+        if (eraIdx === currentEra) {
+            rows[i].style.background = 'rgba(255,140,0,0.08)';
+            rows[i].style.fontWeight = '700';
+            rows[i].style.opacity = '1';
+            if (firstSpan) firstSpan.textContent = `${label} 👈`;
+        } else {
+            rows[i].style.background = 'transparent';
+            rows[i].style.fontWeight = 'normal';
+            rows[i].style.opacity = eraIdx < currentEra ? '0.4' : (0.7 - (eraIdx - currentEra) * 0.1).toFixed(1);
+            if (firstSpan) firstSpan.textContent = label;
+        }
+    }
+    // 하단 안내 문구 업데이트
+    const msgEl = schedule.parentElement?.querySelector('p');
+    if (msgEl) {
+        msgEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentEra)}구간</strong>! 구간이 넘어갈수록 같은 포인트로 받는 HBT가 절반으로 줄어듭니다.`;
+    }
+}
+
 // 자산 표시 업데이트 함수
 window.updateAssetDisplay = async function() {
     const user = auth.currentUser;
@@ -788,22 +821,23 @@ window.updateAssetDisplay = async function() {
             if (window.fetchTokenStats) {
                 window.fetchTokenStats().then(stats => {
                     if (stats) {
+                        // 온체인 stats.currentRate는 100P당 HBT 수량 (rate=100 → 100P=100HBT)
                         const halvingEraEl = document.getElementById('halving-era');
-                        if (halvingEraEl) halvingEraEl.textContent = stats.currentEra;
+                        if (halvingEraEl) halvingEraEl.textContent = eraToLabel(stats.currentEra);
 
                         const halvingRateEl = document.getElementById('halving-rate');
                         if (halvingRateEl) {
-                            const r = stats.currentRate;
-                            const displayRate = r >= 1
-                                ? `100P = ${Math.round(100 * r)} HBT`
-                                : `100P = ${(100 * r).toFixed(2)} HBT`;
-                            halvingRateEl.textContent = displayRate;
+                            const r = stats.currentRate; // 100P당 HBT (100, 50, 25...)
+                            halvingRateEl.textContent = `100P = ${r} HBT`;
                         }
 
                         const halvingProgressText = document.getElementById('halving-progress-text');
                         if (halvingProgressText) {
                             halvingProgressText.textContent = `${parseFloat(stats.totalMined).toLocaleString()} / ${parseFloat(stats.remainingInEra).toLocaleString()} HBT`;
                         }
+
+                        // 반감기 스케줄 테이블 활성 구간 표시
+                        updateHalvingScheduleUI(stats.currentEra);
                     }
                 }).catch(err => console.warn('토큰 통계 조회 스킵:', err.message));
             }
@@ -814,15 +848,17 @@ window.updateAssetDisplay = async function() {
             const rate = getConversionRate(totalMinted);
 
             const halvingEraEl = document.getElementById('halving-era');
-            if (halvingEraEl) halvingEraEl.textContent = era;
+            if (halvingEraEl) halvingEraEl.textContent = eraToLabel(era);
 
             const halvingRateEl = document.getElementById('halving-rate');
             if (halvingRateEl) {
-                const displayRate = rate >= 1
-                    ? `100P = ${Math.round(100 * rate)} HBT`
-                    : `100P = ${(100 * rate).toFixed(2)} HBT`;
-                halvingRateEl.textContent = displayRate;
+                // rate: 1P당 HBT (1, 0.5, 0.25...) → 100P당으로 표시
+                const per100 = Math.round(100 * rate * 100) / 100;
+                halvingRateEl.textContent = `100P = ${per100} HBT`;
             }
+
+            // 반감기 스케줄 테이블 활성 구간 표시
+            updateHalvingScheduleUI(era);
 
             // 현재 구간 내 진행률 계산
             const era1Threshold = 30_000_000;

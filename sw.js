@@ -3,7 +3,7 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v7';
+const CACHE_NAME = 'habitschool-v8';
 const STATIC_ASSETS = [
     './',
     './index.html',

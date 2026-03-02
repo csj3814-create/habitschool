@@ -294,73 +294,107 @@ export function getCurrentEra(totalMinted = 0) {
  * @param {number} [pointAmount] - 변환할 포인트 (미입력 시 기존 input에서 읽음)
  */
 export async function convertPointsToHBT(pointAmount) {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showToast('❌ 로그인이 필요합니다.');
+        return false;
+    }
+
+    // 인자로 받은 값 우선, 없으면 input에서 읽기
+    if (typeof pointAmount !== 'number' || isNaN(pointAmount)) {
+        const pointInput = document.getElementById('conversion-points');
+        pointAmount = parseInt(pointInput?.value || 0);
+    }
+
+    if (pointAmount < CONVERSION_RULES.minConversion) {
+        showToast(`❌ 최소 ${CONVERSION_RULES.minConversion}P 이상 필요합니다.`);
+        return false;
+    }
+
+    if (pointAmount % 100 !== 0) {
+        showToast('❌ 100P 단위로만 변환 가능합니다.');
+        return false;
+    }
+
+    // 1차 시도: Cloud Function (온체인 민팅)
     try {
         await ensureFunctions();
-        if (!mintHBTFunction) {
-            showToast('❌ 온체인 연결을 초기화할 수 없습니다. 페이지를 새로고침 해주세요.');
-            return false;
-        }
+        if (mintHBTFunction && userWalletAddress) {
+            showToast('⏳ HBT 변환 중입니다...');
 
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-            showToast('❌ 로그인이 필요합니다.');
-            return false;
-        }
+            const result = await mintHBTFunction({ pointAmount });
+            const data = result.data;
 
-        // 인자로 받은 값 우선, 없으면 input에서 읽기
-        if (typeof pointAmount !== 'number' || isNaN(pointAmount)) {
-            const pointInput = document.getElementById('conversion-points');
-            pointAmount = parseInt(pointInput?.value || 0);
-        }
-
-        if (pointAmount < CONVERSION_RULES.minConversion) {
-            showToast(`❌ 최소 ${CONVERSION_RULES.minConversion}P 이상 필요합니다.`);
-            return false;
-        }
-
-        if (pointAmount % 100 !== 0) {
-            showToast('❌ 100P 단위로만 변환 가능합니다.');
-            return false;
-        }
-
-        // 지갑 확인
-        if (!userWalletAddress) {
-            showToast('⚠️ 지갑을 찾을 수 없습니다. 다시 로그인해주세요.');
-            return false;
-        }
-
-        showToast('⏳ HBT 변환 중입니다... (온체인 처리, 약 5-15초)');
-
-        // Cloud Function 호출 (온체인 민팅)
-        const result = await mintHBTFunction({ pointAmount });
-        const data = result.data;
-
-        if (data.success) {
-            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!\n🔗 구간 ${data.era} (비율: ${data.conversionRate})`);
-            
-            // BaseScan 링크 표시
-            if (data.txHash) {
-                console.log(`🔍 TX: ${data.explorerUrl}`);
+            if (data.success) {
+                showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
+                if (data.txHash) {
+                    console.log(`🔍 TX: ${data.explorerUrl}`);
+                }
             }
+
+            window.updateAssetDisplay && window.updateAssetDisplay();
+            return true;
+        }
+    } catch (onchainError) {
+        console.warn('⚠️ 온체인 변환 실패, 오프체인 폴백 실행:', onchainError.message);
+    }
+
+    // 2차 폴백: 오프체인 Firestore 직접 업데이트
+    try {
+        showToast('⏳ HBT 변환 처리 중...');
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            showToast('❌ 사용자 정보를 찾을 수 없습니다.');
+            return false;
         }
 
-        // UI 업데이트
-        const pointInput = document.getElementById('conversion-points');
-        if (pointInput) pointInput.value = '';
-        const hbtInput = document.getElementById('conversion-hbt');
-        if (hbtInput) hbtInput.value = '';
+        const userData = userSnap.data();
+        const currentCoins = userData.coins || 0;
 
-        // 자산 표시 업데이트
+        if (currentCoins < pointAmount) {
+            showToast(`❌ 포인트가 부족합니다. 보유: ${currentCoins}P`);
+            return false;
+        }
+
+        // 반감기 적용 HBT 계산
+        const totalMinted = userData.totalHbtEarned || 0;
+        const rate = getConversionRate(totalMinted);
+        const hbtAmount = pointAmount * rate;
+        const era = getCurrentEra(totalMinted);
+
+        // 일일 변환 한도 확인
+        const today = getKstDateString();
+        const dailyConverted = userData.dailyConvertedHbt?.[today] || 0;
+        if (dailyConverted + hbtAmount > CONVERSION_RULES.maxConversionPerDay) {
+            showToast(`❌ 일일 변환 한도 초과 (오늘: ${dailyConverted} HBT, 한도: ${CONVERSION_RULES.maxConversionPerDay} HBT)`);
+            return false;
+        }
+
+        // Firestore 원자적 업데이트 (포인트 차감 + HBT 추가)
+        await updateDoc(userRef, {
+            coins: increment(-pointAmount),
+            hbtBalance: increment(hbtAmount),
+            totalHbtEarned: increment(hbtAmount),
+            [`dailyConvertedHbt.${today}`]: increment(hbtAmount)
+        });
+
+        showToast(`✅ ${pointAmount}P → ${hbtAmount} HBT 변환 완료! (${eraLabel(era)}구간)`);
+
         window.updateAssetDisplay && window.updateAssetDisplay();
-
         return true;
 
     } catch (error) {
         console.error('❌ 변환 오류:', error);
-        const msg = error.message || '변환 실패';
-        showToast(`❌ ${msg}`);
+        showToast(`❌ 변환에 실패했습니다. 잠시 후 다시 시도해주세요.`);
         return false;
     }
+}
+
+// 구간 번호 → 알파벳 라벨
+function eraLabel(era) {
+    return String.fromCharCode(64 + Math.min(era, 26));
 }
 
 /**

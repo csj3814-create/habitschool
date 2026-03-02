@@ -211,7 +211,7 @@
             <div class="card">
                 <h3>🔄 포인트 → HBT 변환</h3>
                 <p style="font-size: 13px; color: #666; margin: 0 0 12px 0;">
-                    포인트를 HBT 코인으로 변환하세요! (구간 1: 1P = 1 HBT)
+                    포인트를 HBT 코인으로 변환하세요!
                 </p>
                 <div style="display: flex; gap: 10px;">
                     <button class="hbt-convert-btn" onclick="convertPointsToHBT(100)">
@@ -223,16 +223,16 @@
                 </div>
             </div>
 
-            <!-- 반감기 현황 -->
+            <!-- 채굴 반감기 현황 -->
             <div class="card" style="background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%); border: none;">
-                <h3 style="color: #E65100; margin-top: 0;">📉 채굴 반감기 현황</h3>
+                <h3 style="color: #E65100; margin-top: 0;">⛏️ 채굴 반감기 현황</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0;">
                     <div style="background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 11px; color: #888;">현재 구간</div>
-                        <div style="font-size: 22px; font-weight: 800; color: #E65100;" id="halving-era">1</div>
+                        <div style="font-size: 11px; color: #888;">현재 채굴 구간</div>
+                        <div style="font-size: 28px; font-weight: 800; color: #E65100;" id="halving-era">A</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 11px; color: #888;">전환 비율</div>
+                        <div style="font-size: 11px; color: #888;">현재 전환 비율</div>
                         <div style="font-size: 15px; font-weight: 700; color: #E65100;" id="halving-rate">100P = 100 HBT</div>
                     </div>
                 </div>
@@ -245,8 +245,28 @@
                         <div id="halving-progress-bar" style="background: linear-gradient(90deg, #FF8C00, #FFA726); height: 100%; border-radius: 4px; width: 0%; transition: width 0.5s;"></div>
                     </div>
                 </div>
-                <p style="font-size: 11px; color: #999; margin: 8px 0 0; text-align: center;">
-                    💡 일찍 시작할수록 유리합니다! 구간이 올라갈수록 전환량이 절반으로 줄어듭니다.
+                <!-- 반감기 스케줄 표 -->
+                <div style="margin-top: 10px; background: rgba(255,255,255,0.6); border-radius: 8px; overflow: hidden;">
+                    <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; font-size: 11px; font-weight: 700; color: #E65100; padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,0.06);">
+                        <span>구간</span><span>전환 비율</span><span>채굴량</span>
+                    </div>
+                    <div id="halving-schedule" style="font-size: 11px; color: #555;">
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; padding: 6px 10px; background: rgba(255,140,0,0.08); font-weight: 700;" class="halving-row-active">
+                            <span>A 👈</span><span>100P = 100 HBT</span><span>3,000만</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; padding: 6px 10px; opacity: 0.7;">
+                            <span>B</span><span>100P = 50 HBT</span><span>1,500만</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; padding: 6px 10px; opacity: 0.5;">
+                            <span>C</span><span>100P = 25 HBT</span><span>750만</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 2fr; padding: 6px 10px; opacity: 0.35;">
+                            <span>D</span><span>100P = 12.5 HBT</span><span>375만</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size: 12px; color: #E65100; margin: 10px 0 0; text-align: center; font-weight: 600;">
+                    ⚡ 지금은 A구간! 구간이 넘어갈수록 같은 포인트로 받는 HBT가 절반으로 줄어듭니다.
                 </p>
             </div>
 
