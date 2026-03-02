@@ -817,32 +817,7 @@ window.updateAssetDisplay = async function() {
                 }).catch(err => console.warn('온체인 잔액 조회 스킵:', err.message));
             }
 
-            // 온체인 토큰 통계 비동기 업데이트
-            if (window.fetchTokenStats) {
-                window.fetchTokenStats().then(stats => {
-                    if (stats) {
-                        // 온체인 stats.currentRate는 100P당 HBT 수량 (rate=100 → 100P=100HBT)
-                        const halvingEraEl = document.getElementById('halving-era');
-                        if (halvingEraEl) halvingEraEl.textContent = eraToLabel(stats.currentEra);
-
-                        const halvingRateEl = document.getElementById('halving-rate');
-                        if (halvingRateEl) {
-                            const r = stats.currentRate; // 100P당 HBT (100, 50, 25...)
-                            halvingRateEl.textContent = `100P = ${r} HBT`;
-                        }
-
-                        const halvingProgressText = document.getElementById('halving-progress-text');
-                        if (halvingProgressText) {
-                            halvingProgressText.textContent = `${parseFloat(stats.totalMined).toLocaleString()} / ${parseFloat(stats.remainingInEra).toLocaleString()} HBT`;
-                        }
-
-                        // 반감기 스케줄 테이블 활성 구간 표시
-                        updateHalvingScheduleUI(stats.currentEra);
-                    }
-                }).catch(err => console.warn('토큰 통계 조회 스킵:', err.message));
-            }
-
-            // ========== 반감기 상태 UI 업데이트 ==========
+            // ========== 반감기 상태 UI 업데이트 (Firestore 기준) ==========
             const totalMinted = userData.totalHbtEarned || 0;
             const era = getCurrentEra(totalMinted);
             const rate = getConversionRate(totalMinted);
@@ -879,7 +854,12 @@ window.updateAssetDisplay = async function() {
 
             const halvingProgressBar = document.getElementById('halving-progress-bar');
             if (halvingProgressBar) {
-                halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+                // 진행량이 있지만 1% 미만일 때 최소 너비 보장 (시각적 피드백)
+                if (mintedInEra > 0 && progressPct < 1) {
+                    halvingProgressBar.style.width = '1%';
+                } else {
+                    halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+                }
             }
 
             // 헤더의 포인트 배지도 업데이트
