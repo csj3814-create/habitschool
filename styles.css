@@ -1207,6 +1207,17 @@ textarea {
     color: #E91E63;
 }
 
+/* 게스트 모드 갤러리 액션 (보기 전용) */
+.guest-actions .action-btn,
+.guest-actions span.action-btn {
+    cursor: default;
+    opacity: 0.7;
+}
+.guest-actions .action-btn:active,
+.guest-actions span.action-btn:active {
+    transform: none;
+}
+
 .gallery-reaction-summary {
     padding: 0 14px 4px;
     font-size: 13px;

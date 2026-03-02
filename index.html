@@ -13,7 +13,7 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
     
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=27">
+    <link rel="stylesheet" href="styles.css?v=28">
     
     <script>
         // 인앱 브라우저(WebView) 감지 → 외부 브라우저로 자동 이동
@@ -75,7 +75,7 @@
 <div class="app-container">
     <a href="#dashboard" class="skip-to-content">메인 콘텐츠로 이동</a>
     <div id="login-modal" role="dialog" aria-label="로그인">
-        <div style="font-size: 48px; margin-bottom: 10px;">☀️</div>
+        <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
         <h1 class="login-title">해빛스쿨</h1>
         <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
             병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
@@ -98,13 +98,13 @@
                 </button>
             </div>
         </div>
-        <button class="guest-btn" onclick="document.getElementById('login-modal').style.display='none'; openTab('gallery', false);" aria-label="게스트로 갤러리 둘러보기">로그인 없이 갤러리 둘러보기</button>
+        <button class="guest-btn" onclick="document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);" aria-label="게스트로 갤러리 둘러보기">👀 로그인 없이 갤러리 둘러보기</button>
     </div>
 
     <div id="main-app">
         <div class="header" role="banner">
             <div class="header-top">
-                <h1 id="user-greeting">☀️ 해빛스쿨</h1>
+                <h1 id="user-greeting"><img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨</h1>
                 <div class="date-selector-container" id="date-ui" style="display:none;">
                     <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택">
                 </div>

@@ -1047,11 +1047,19 @@ window.openTab = function(tabName, pushState = true) {
         }
     } else if(tabName === 'gallery') {
         submitBar.style.display = 'block';
-        saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
-        saveBtn.style.background = '#FEE500';
-        saveBtn.style.color = '#3E2723';
-        saveBtn.style.boxShadow = '0 4px 14px rgba(254,229,0,0.4)';
-        saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
+        if (!user) {
+            saveBtn.innerText = '🌟 구글 로그인하고 함께 참여하기';
+            saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
+            saveBtn.style.color = 'white';
+            saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
+            saveBtn.onclick = () => { document.getElementById('login-modal').style.display = 'flex'; };
+        } else {
+            saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
+            saveBtn.style.background = '#FEE500';
+            saveBtn.style.color = '#3E2723';
+            saveBtn.style.boxShadow = '0 4px 14px rgba(254,229,0,0.4)';
+            saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
+        }
     } else {
         submitBar.style.display = 'block';
         saveBtn.innerText = '현재 진행상황 저장 & 포인트 받기 🅿️';
@@ -2973,6 +2981,14 @@ async function loadGalleryData() {
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
 
+    // 게스트 모드: 공유 카드/활동 요약 숨김, CTA 배너 표시
+    const shareContainer = document.getElementById('my-share-container');
+    const activitySummary = document.getElementById('gallery-activity-summary');
+    if (!user) {
+        if (shareContainer) shareContainer.style.display = 'none';
+        if (activitySummary) activitySummary.style.display = 'none';
+    }
+
     if(cachedGalleryLogs.length === 0) {
         // 즉시 스켈레톤 표시 (체감 로딩 0ms)
         container.innerHTML = createSkeletonHtml(4);
@@ -2982,13 +2998,21 @@ async function loadGalleryData() {
             if(userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
         }
         
-        const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
-        const snapshot = await getDocs(q);
-        
-        let logsArray = [];
-        snapshot.forEach(d => { logsArray.push({id: d.id, data: d.data()}); });
-        cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
-        sortedFilteredDirty = true;
+        try {
+            const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
+            const snapshot = await getDocs(q);
+            
+            let logsArray = [];
+            snapshot.forEach(d => { logsArray.push({id: d.id, data: d.data()}); });
+            cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
+            sortedFilteredDirty = true;
+        } catch(e) {
+            console.error('갤러리 데이터 로드 실패:', e);
+            if (!user) {
+                container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 보려면 로그인이 필요합니다.</p><button class="google-btn" style="margin:0 auto;" onclick="document.getElementById(\'login-modal\').style.display=\'flex\'">🌟 구글로 시작하기</button></div>';
+                return;
+            }
+        }
 
         // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
         buildShareCardAsync(myId, user);
@@ -3343,6 +3367,7 @@ function buildGalleryCard(item, myId) {
     
     if(!shouldShow) return null;
 
+    const isGuest = !auth.currentUser;
     const rx = data.reactions || { heart: [], fire: [], clap: [] };
     const cHeart = rx.heart ? rx.heart.length : 0;
     const cFire = rx.fire ? rx.fire.length : 0;
@@ -3363,7 +3388,7 @@ function buildGalleryCard(item, myId) {
         const cName = escapeHtml(c.userName || '익명');
         const cText = escapeHtml(c.text || '');
         const cTime = formatCommentTime(c.timestamp);
-        const delBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
+        const delBtn = (!isGuest && c.userId === myId) ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
         commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}</div>`;
     });
     if (comments.length > 2) {
@@ -3374,6 +3399,35 @@ function buildGalleryCard(item, myId) {
     const totalReactions = cHeart + cFire + cClap;
     const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
 
+    // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
+    const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
+
+    const actionsHtml = isGuest 
+        ? `<div class="gallery-actions guest-actions">
+            <span class="action-btn">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</span>
+            <span class="action-btn">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</span>
+            <span class="action-btn">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</span>
+            <span class="action-btn">💬${commentCount > 0 ? ` <span>${commentCount}</span>` : ''}</span>
+           </div>`
+        : `<div class="gallery-actions">
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
+           </div>`;
+
+    const commentSectionHtml = isGuest
+        ? (commentsHtml ? `<div class="comment-section"><div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">${commentsHtml}</div></div>` : '')
+        : `<div class="comment-section">
+            <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
+                ${commentsHtml}
+            </div>
+            <div class="comment-input-wrap">
+                <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
+                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
+            </div>
+           </div>`;
+
     const card = document.createElement('div');
     card.className = 'gallery-card';
     card.innerHTML = `
@@ -3383,25 +3437,12 @@ function buildGalleryCard(item, myId) {
                 <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
                 <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
             </div>
-            ${data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : ''}
+            ${friendBtnHtml}
         </div>
         ${contentHtml}
-        <div class="gallery-actions">
-            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
-            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
-            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
-        </div>
+        ${actionsHtml}
         ${reactionSummaryHtml}
-        <div class="comment-section">
-            <div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">
-                ${commentsHtml}
-            </div>
-            <div class="comment-input-wrap">
-                <input type="text" class="comment-input" id="comment-input-${safeDocId}" placeholder="댓글 달기..." maxlength="200" onkeydown="if(event.key==='Enter')addComment('${safeDocId}')">
-                <button class="comment-submit-btn" onclick="addComment('${safeDocId}')">게시</button>
-            </div>
-        </div>
+        ${commentSectionHtml}
     `;
     return card;
 }

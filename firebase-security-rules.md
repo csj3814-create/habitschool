@@ -71,8 +71,8 @@ service cloud.firestore {
     // ===== Daily Logs Collection =====
     // 일일 건강 기록
     match /daily_logs/{logId} {
-      // 읽기: 로그인한 모든 사용자 (갤러리 공유 기능)
-      allow read: if isSignedIn();
+      // 읽기: 모든 사용자 (게스트도 갤러리 열람 가능)
+      allow read: if true;
       
       // 생성: 본인 데이터만
       allow create: if isSignedIn() 

@@ -165,7 +165,7 @@ export function setupAuthListener(callbacks) {
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
-            document.getElementById('user-greeting').innerText = `☀️ ${user.displayName}`;
+            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${user.displayName}`;
             
             // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
             
