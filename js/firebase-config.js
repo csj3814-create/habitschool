@@ -17,8 +17,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-export { app };
-
 // 상수
 export const MAX_IMG_SIZE = 20 * 1024 * 1024;  // 20MB
 export const MAX_VID_SIZE = 100 * 1024 * 1024; // 100MB
