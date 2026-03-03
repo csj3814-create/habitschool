@@ -317,26 +317,40 @@ export async function convertPointsToHBT(pointAmount) {
     }
 
     // 1차 시도: Cloud Function (온체인 민팅)
+    let attemptedOnchain = false;
     try {
         await ensureFunctions();
-        if (mintHBTFunction && userWalletAddress) {
-            showToast('⏳ HBT 변환 중입니다...');
-
-            const result = await mintHBTFunction({ pointAmount });
-            const data = result.data;
-
-            if (data.success) {
-                showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
-                if (data.txHash) {
-                    console.log(`🔍 TX: ${data.explorerUrl}`);
-                }
-            }
-
-            window.updateAssetDisplay && window.updateAssetDisplay();
-            return true;
+        if (!mintHBTFunction || !userWalletAddress) {
+            // 지갑 또는 모듈이 준비되지 않으면 변환을 중단
+            showToast('⚠️ 블록체인 모듈 또는 지갑이 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+            return false;
         }
+        attemptedOnchain = true;
+
+        showToast('⏳ HBT 변환 중입니다...');
+
+        const result = await mintHBTFunction({ pointAmount });
+        const data = result.data;
+
+        if (data.success) {
+            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
+            if (data.txHash) {
+                console.log(`🔍 TX: ${data.explorerUrl}`);
+            }
+        }
+
+        // 온체인 잔액 자동 갱신
+        window.updateAssetDisplay && window.updateAssetDisplay();
+        return true;
     } catch (onchainError) {
-        console.warn('⚠️ 온체인 변환 실패, 오프체인 폴백 실행:', onchainError.message);
+        console.warn('⚠️ 온체인 변환 시도 중 오류:', onchainError.message);
+        if (!attemptedOnchain) {
+            // 모듈/지갑 체크 단계에서 실패한 경우
+            // 이미 사용자에게 메시지 표시했으므로 그냥 종료
+            return false;
+        }
+        // 실제로 온체인 트랜잭션을 시도했지만 실패한 경우
+        showToast('⚠️ 온체인 변환에 실패했습니다. 오프체인으로 처리합니다.');
     }
 
     // 2차 폴백: 오프체인 Firestore 직접 업데이트
