@@ -24,8 +24,6 @@ const STATIC_ASSETS = [
 
 const INDEX_URL = new URL('./index.html', self.location).href;
 
-const INDEX_URL = new URL('./index.html', self.location).href;
-
 // 설치: 정적 자산 캐싱
 self.addEventListener('install', (event) => {
     console.log('[SW] 설치 시작');

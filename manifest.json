@@ -2,7 +2,7 @@
     "name": "해빛스쿨 - 건강 습관 트래커",
     "short_name": "해빛스쿨",
     "description": "매일 건강 습관을 기록하고 포인트를 모으세요!",
-    "start_url": "./",
+    "start_url": "./index.html",
     "display": "standalone",
     "orientation": "portrait",
     "background_color": "#FFFFFF",
