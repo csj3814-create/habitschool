@@ -119,6 +119,22 @@ exports.mintHBT = onCall(
             const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
+            // debug: server minter address
+            const serverAddress = wallet.address;
+            console.log(`🚀 Server minter wallet: ${serverAddress}`);
+            try {
+                const isMinter = await habitContract.authorizedMinters(serverAddress);
+                console.log(`🔐 authorizedMinter? ${isMinter}`);
+                if (!isMinter) {
+                    console.warn('⚠️ 서버 지갑이 Minter 권한이 없습니다.');
+                }
+            } catch(e) {
+                console.warn('⚠️ 권한 조회 실패:', e.message);
+            }
+            // balance check for gas
+            const bal = await provider.getBalance(serverAddress);
+            console.log(`💰 Server wallet balance: ${ethers.formatEther(bal)} ETH`);
+
             const [currentRate, currentEra] = await habitContract.getConversionRate();
             const rateNumber = Number(currentRate);
             const eraNumber = Number(currentEra);
