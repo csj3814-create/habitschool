@@ -333,9 +333,13 @@ export async function convertPointsToHBT(pointAmount) {
         const data = result.data;
 
         if (data.success) {
-            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
+            const txInfo = data.txHash ? ` (TX: ${data.txHash})` : '';
+            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!${txInfo}`);
             if (data.txHash) {
+                // 사용자가 볼 수 있도록 콘솔에 링크 제공
                 console.log(`🔍 TX: ${data.explorerUrl}`);
+                // 팝업으로도 알려주기
+                alert(`온체인 전환이 완료되었습니다. 트랜잭션: ${data.explorerUrl}`);
             }
         }
 
@@ -350,7 +354,13 @@ export async function convertPointsToHBT(pointAmount) {
             return false;
         }
         // 실제로 온체인 트랜잭션을 시도했지만 실패한 경우
-        showToast('⚠️ 온체인 변환에 실패했습니다. 오프체인으로 처리합니다.');
+        showToast('⚠️ 온체인 변환에 실패했습니다.');
+        // 오프체인 폴백을 사용자에게 묻기
+        if (confirm('온체인 처리에 실패했습니다. 포인트를 소모하고 오프체인 HBT로 변환하시겠습니까?')) {
+            // continue to fallback section
+        } else {
+            return false;
+        }
     }
 
     // 2차 폴백: 오프체인 Firestore 직접 업데이트
@@ -394,7 +404,7 @@ export async function convertPointsToHBT(pointAmount) {
             [`dailyConvertedHbt.${today}`]: increment(hbtAmount)
         });
 
-        showToast(`✅ ${pointAmount}P → ${hbtAmount} HBT 변환 완료! (${eraLabel(era)}구간)`);
+        showToast(`✅ ${pointAmount}P → ${hbtAmount} HBT 변환 완료! (${eraLabel(era)}구간) [오프체인]`);
 
         window.updateAssetDisplay && window.updateAssetDisplay();
         return true;
