@@ -6,7 +6,7 @@
 const CACHE_NAME = 'habitschool-v9';
 const STATIC_ASSETS = [
     './',
-    './index.html',
+    './',
     './styles.css',
     './js/main.js',
     './js/app.js',
@@ -22,7 +22,7 @@ const STATIC_ASSETS = [
     './icons/icon-512.svg'
 ];
 
-const INDEX_URL = new URL('./index.html', self.location).href;
+const INDEX_URL = new URL('./', self.location).href;
 
 // 설치: 정적 자산 캐싱
 self.addEventListener('install', (event) => {

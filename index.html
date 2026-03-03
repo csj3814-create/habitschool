@@ -19,8 +19,7 @@
         // 인앱 브라우저(WebView) 감지 → 외부 브라우저로 자동 이동
         (function() {
             var ua = navigator.userAgent || '';
-            var currentUrl = location.href;
-            
+            var currentUrl = location.href.replace(/\/index\.html$/, '/');
             // 카카오톡
             if (/KAKAOTALK/i.test(ua)) {
                 location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(currentUrl);
