@@ -528,6 +528,36 @@ async function extractVideoThumbFromUrl(videoUrl) {
 // 갤러리에서 접근 가능하도록 전역 노출
 window.extractVideoThumbFromUrl = extractVideoThumbFromUrl;
 
+// ==== helper 2026-03-06 ====
+// 클릭 시 식단 업로드 버튼이 가장 먼저 비어있는 칸을 열도록
+window.openDietUpload = function() {
+    const mealOrder = ['breakfast','lunch','dinner','snack'];
+    for (let meal of mealOrder) {
+        const preview = document.getElementById(`preview-${meal}`);
+        if (!preview || preview.style.display === 'none' || !preview.src) {
+            document.getElementById(`diet-img-${meal}`).click();
+            return;
+        }
+    }
+    // 모두 채워진 상태라면 안내만 띄움
+    if (typeof showToast === 'function') {
+        showToast('⚠️ 모든 식단 칸이 이미 채워졌습니다. 기존 사진을 교체하려면 먼저 삭제하세요.');
+    }
+};
+
+// 마음 탭 수면 업로드는 칸이 하나뿐이라 판단하여
+// 이미 사진이 있을 때는 교체 안내를 띄웁니다.
+window.openSleepUpload = function() {
+    const preview = document.getElementById('preview-sleep');
+    if (!preview || preview.style.display === 'none' || !preview.src) {
+        document.getElementById('sleep-img').click();
+        return;
+    }
+    if (typeof showToast === 'function') {
+        showToast('⚠️ 수면 캡처가 이미 등록되었습니다. 새 사진을 올리려면 먼저 삭제하세요.');
+    }
+};
+
 window.previewStaticImage = function (input, previewId, btnId, skipExif = false) {
     const preview = document.getElementById(previewId);
     const rmBtn = document.getElementById(btnId);
