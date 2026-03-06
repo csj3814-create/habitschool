@@ -27,7 +27,10 @@ export async function requestSleepMindAnalysis(imageUrl, textData, analysisType)
 
     try {
         const payload = { analysisType };
-        if (imageUrl) payload.imageUrl = imageUrl;
+        if (imageUrl) {
+            if (imageUrl.startsWith('data:')) payload.imageData = imageUrl;
+            else payload.imageUrl = imageUrl;
+        }
         if (textData) payload.textData = textData;
         const result = await analyzeSleepMindFn(payload);
         return result.data.analysis;
@@ -36,7 +39,8 @@ export async function requestSleepMindAnalysis(imageUrl, textData, analysisType)
         if (error.code === 'functions/unauthenticated') {
             showToast('로그인이 필요합니다.');
         } else if (error.code === 'functions/internal') {
-            showToast('AI 분석에 실패했습니다. 다시 시도해주세요.');
+            const msg = error.message || '';
+            showToast(`⚠️ AI 분석에 실패했습니다. (${msg})`);
         } else {
             showToast('수면/마음 분석 중 오류가 발생했습니다.');
         }
@@ -68,7 +72,8 @@ export async function requestDietAnalysis(imageUrl) {
         if (error.code === 'functions/unauthenticated') {
             showToast('⚠️ 로그인이 필요합니다.');
         } else if (error.code === 'functions/internal') {
-            showToast('⚠️ AI 분석에 실패했습니다. 다시 시도해주세요.');
+            const msg = error.message || '';
+            showToast(`⚠️ AI 분석에 실패했습니다. (${msg})`);
         } else {
             showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
         }

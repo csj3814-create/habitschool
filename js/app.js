@@ -4086,25 +4086,40 @@ async function analyzeMealPhoto(meal) {
 
     try {
         let analysis = await requestDietAnalysis(imageUrl);
-        // if the cloud function returned null or internal error may have been
-        // thrown, but requestDietAnalysis catches and returns null; we can try
-        // a fallback by sending base64 data if we still have a preview file.
-        if (!analysis && imageUrl && imageUrl.startsWith('http')) {
-            // attempt fallback: convert image to base64 and resend
+        // if initial request returned null, attempt compressed fallback
+        if (!analysis) {
+            console.log('기본 분석 요청 결과 없음, 압축/업로드 재시도 시도');
+            let compressedDataUrl = null;
             try {
-                const resp = await fetch(imageUrl);
-                const blob = await resp.blob();
-                const reader = new FileReader();
-                const dataUrl = await new Promise((resolve, reject) => {
-                    reader.onerror = reject;
-                    reader.onload = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                if (dataUrl) {
-                    analysis = await requestDietAnalysis(dataUrl);
+                if (imageUrl.startsWith('http')) {
+                    const resp = await fetch(imageUrl);
+                    const blob = await resp.blob();
+                    const reader = new FileReader();
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        reader.onerror = reject;
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                    compressedDataUrl = await compressImageForAI(dataUrl);
+                } else if (imageUrl.startsWith('data:')) {
+                    compressedDataUrl = await compressImageForAI(imageUrl);
                 }
             } catch (fallbackErr) {
-                console.warn('재시도용 base64 변환 실패:', fallbackErr);
+                console.warn('fallback 압축/변환 중 오류:', fallbackErr);
+            }
+            if (compressedDataUrl) {
+                showToast('🔄 AI 분석을 다시 시도하고 있습니다...');
+                // convert compressed dataurl to blob+file and upload
+                try {
+                    const blob = await (await fetch(compressedDataUrl)).blob();
+                    const file = new File([blob], 'fallback.jpg', { type: blob.type });
+                    const tmpUrl = await uploadFileAndGetUrl(file, 'analysis_images', auth.currentUser.uid);
+                    if (tmpUrl) {
+                        analysis = await requestDietAnalysis(tmpUrl);
+                    }
+                } catch (uplErr) {
+                    console.warn('fallback 업로드 실패:', uplErr);
+                }
             }
         }
 
@@ -4125,10 +4140,12 @@ async function analyzeMealPhoto(meal) {
             }
             showToast('✅ AI 식단 분석 완료!');
             updateDietDaySummary();
+        } else {
+            // 두번 시도 후에도 실패
+            showToast('⚠️ AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
         }
     } catch (e) {
         console.error('식단 분석 오류:', e);
-        // provide more specific message from error codes if available
         if (e && e.code === 'functions/internal') {
             showToast('⚠️ AI 분석에 실패했습니다. 다시 시도해주세요.');
         } else {
@@ -4423,22 +4440,38 @@ window.analyzeSleepData = async function() {
         resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">수면 패턴 분석 중...</p></div>';
 
         let analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
-        if (!analysis && sleepUrl && sleepUrl.startsWith('http')) {
-            // try converting to base64 and re-send
+        if (!analysis) {
+            console.log('수면 분석 첫 시도 실패, 압축/업로드 재시도 준비');
+            let compressedDataUrl = null;
             try {
-                const resp = await fetch(sleepUrl);
-                const blob = await resp.blob();
-                const reader = new FileReader();
-                const dataUrl = await new Promise((resolve, reject) => {
-                    reader.onerror = reject;
-                    reader.onload = () => resolve(reader.result);
-                    reader.readAsDataURL(blob);
-                });
-                if (dataUrl) {
-                    analysis = await requestSleepMindAnalysis(dataUrl, null, 'sleep');
+                if (sleepUrl.startsWith('http')) {
+                    const resp = await fetch(sleepUrl);
+                    const blob = await resp.blob();
+                    const reader = new FileReader();
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        reader.onerror = reject;
+                        reader.onload = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                    compressedDataUrl = await compressImageForAI(dataUrl);
+                } else if (sleepUrl.startsWith('data:')) {
+                    compressedDataUrl = await compressImageForAI(sleepUrl);
                 }
             } catch (fallbackErr) {
-                console.warn('수면 분석 재시도용 base64 변환 실패:', fallbackErr);
+                console.warn('수면 분석 fallback 압축/변환 실패:', fallbackErr);
+            }
+            if (compressedDataUrl) {
+                showToast('🔄 AI 분석을 다시 시도하고 있습니다...');
+                try {
+                    const blob = await (await fetch(compressedDataUrl)).blob();
+                    const file = new File([blob], 'fallback.jpg', { type: blob.type });
+                    const tmpUrl = await uploadFileAndGetUrl(file, 'analysis_images', auth.currentUser.uid);
+                    if (tmpUrl) {
+                        analysis = await requestSleepMindAnalysis(tmpUrl, null, 'sleep');
+                    }
+                } catch (uplErr) {
+                    console.warn('수면 분석 fallback 업로드 실패:', uplErr);
+                }
             }
         }
         if (analysis) {
