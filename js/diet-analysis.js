@@ -57,7 +57,11 @@ export async function requestDietAnalysis(imageUrl) {
     if (!imageUrl) return null;
 
     try {
-        const result = await analyzeDietFn({ imageUrl });
+        // if we were passed a data URI (base64) we send it under a different
+        // field; server can choose which to process. including both should be
+        // harmless.
+        const payload = imageUrl.startsWith('data:') ? { imageData: imageUrl } : { imageUrl };
+        const result = await analyzeDietFn(payload);
         return result.data.analysis;
     } catch (error) {
         console.error('식단 분석 오류:', error);

@@ -688,6 +688,8 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
         const meal = previewId.substring(mealPrefix.length);
         const resultContainer = document.getElementById(`diet-analysis-${meal}`);
         const aiBtn = document.getElementById(`ai-btn-${meal}`);
+        const pv = document.getElementById(previewId);
+        if (pv) pv.removeAttribute('data-url');
         if (resultContainer) {
             resultContainer._analysisData = null;
             resultContainer.innerHTML = '';
@@ -894,8 +896,10 @@ async function loadDataForSelectedDate(dateStr) {
             if (data.diet) {
                 ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
                     if (data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) {
-                        document.getElementById(`preview-${k}`).src = data.diet[`${k}Url`];
-                        document.getElementById(`preview-${k}`).style.display = 'block';
+                        const pv = document.getElementById(`preview-${k}`);
+                        pv.src = data.diet[`${k}Url`];
+                        pv.setAttribute('data-url', data.diet[`${k}Url`]);
+                        pv.style.display = 'block';
                         document.getElementById(`rm-${k}`).style.display = 'block';
                         document.getElementById(`txt-${k}`).style.display = 'none';
                     }
@@ -4044,16 +4048,34 @@ async function analyzeMealPhoto(meal) {
     if (resultContainer._analysisData || resultContainer.innerHTML.trim() !== '') {
         if (resultContainer.style.display === 'none') {
             resultContainer.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
+            if (btn) btn.textContent = '🤖 분석 접기';
         } else {
             resultContainer.style.display = 'none';
-            btn.textContent = '🤖 분석 보기';
+            if (btn) btn.textContent = '🤖 분석 보기';
         }
         return;
     }
 
-    // 이미 저장된 URL 사용 또는 미리보기 src 사용
-    const imageUrl = previewImg.src;
+    // determine usable image URL. if we have a data-uri, upload a temporary copy
+    let imageUrl = previewImg.getAttribute('data-url') || previewImg.src || '';
+
+    if (imageUrl.startsWith('data:')) {
+        // try to upload the raw file from the file input
+        const input = document.getElementById(`diet-img-${meal}`);
+        if (input && input.files && input.files[0]) {
+            try {
+                imageUrl = await uploadFileAndGetUrl(input.files[0], 'analysis_images', auth.currentUser.uid);
+                if (imageUrl) {
+                    previewImg.setAttribute('data-url', imageUrl);
+                }
+            } catch (e) {
+                console.error('analysis temp upload failed', e);
+                showToast('⚠️ 분석용 이미지 업로드에 실패했습니다.');
+                return;
+            }
+        }
+    }
+
     if (!imageUrl || imageUrl.startsWith('data:')) {
         showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
         return;
@@ -4063,12 +4085,34 @@ async function analyzeMealPhoto(meal) {
     if (btn) { btn.classList.add('loading'); btn.textContent = '🤖 AI 분석 중...'; }
 
     try {
-        const analysis = await requestDietAnalysis(imageUrl);
+        let analysis = await requestDietAnalysis(imageUrl);
+        // if the cloud function returned null or internal error may have been
+        // thrown, but requestDietAnalysis catches and returns null; we can try
+        // a fallback by sending base64 data if we still have a preview file.
+        if (!analysis && imageUrl && imageUrl.startsWith('http')) {
+            // attempt fallback: convert image to base64 and resend
+            try {
+                const resp = await fetch(imageUrl);
+                const blob = await resp.blob();
+                const reader = new FileReader();
+                const dataUrl = await new Promise((resolve, reject) => {
+                    reader.onerror = reject;
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                if (dataUrl) {
+                    analysis = await requestDietAnalysis(dataUrl);
+                }
+            } catch (fallbackErr) {
+                console.warn('재시도용 base64 변환 실패:', fallbackErr);
+            }
+        }
+
         if (analysis) {
             renderDietAnalysisResult(resultContainer, analysis);
             resultContainer._analysisData = analysis;
             resultContainer.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
+            if (btn) btn.textContent = '🤖 분석 접기';
 
             // Firestore에 분석 결과 저장
             const user = auth.currentUser;
@@ -4084,7 +4128,12 @@ async function analyzeMealPhoto(meal) {
         }
     } catch (e) {
         console.error('식단 분석 오류:', e);
-        showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
+        // provide more specific message from error codes if available
+        if (e && e.code === 'functions/internal') {
+            showToast('⚠️ AI 분석에 실패했습니다. 다시 시도해주세요.');
+        } else {
+            showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
+        }
     } finally {
         if (btn && btn.textContent === '🤖 AI 분석 중...') {
             btn.classList.remove('loading'); 
@@ -4339,9 +4388,26 @@ window.analyzeSleepData = async function() {
 
     // 저장된 수면 이미지 URL 또는 로컬 미리보기 확인
     const previewEl = document.getElementById('preview-sleep');
-    let sleepUrl = previewEl?.getAttribute('data-url');
-    if (!sleepUrl && previewEl?.src && previewEl.src.startsWith('data:')) {
-        try { sleepUrl = await compressImageForAI(previewEl.src); } catch(e) { sleepUrl = previewEl.src; }
+    let sleepUrl = previewEl?.getAttribute('data-url') || '';
+    // first try compressing any data URI we have
+    if (sleepUrl.startsWith('data:') || (!sleepUrl && previewEl?.src && previewEl.src.startsWith('data:'))) {
+        const srcData = sleepUrl.startsWith('data:') ? sleepUrl : previewEl.src;
+        try { sleepUrl = await compressImageForAI(srcData); } catch(e) { sleepUrl = srcData; }
+    }
+    // if it's still a data URI, try uploading a temp copy
+    if (sleepUrl && sleepUrl.startsWith('data:')) {
+        const input = document.getElementById('sleep-img');
+        if (input && input.files && input.files[0]) {
+            try {
+                const tmp = await uploadFileAndGetUrl(input.files[0], 'analysis_images', auth.currentUser.uid);
+                if (tmp) {
+                    sleepUrl = tmp;
+                    previewEl.setAttribute('data-url', tmp);
+                }
+            } catch (uploadErr) {
+                console.warn('sleep analysis temp upload failed', uploadErr);
+            }
+        }
     }
     if (!sleepUrl && previewEl?.src && previewEl.src.startsWith('http')) {
         sleepUrl = previewEl.src;
@@ -4356,7 +4422,25 @@ window.analyzeSleepData = async function() {
         resultBox.style.display = 'block';
         resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">수면 패턴 분석 중...</p></div>';
 
-        const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
+        let analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
+        if (!analysis && sleepUrl && sleepUrl.startsWith('http')) {
+            // try converting to base64 and re-send
+            try {
+                const resp = await fetch(sleepUrl);
+                const blob = await resp.blob();
+                const reader = new FileReader();
+                const dataUrl = await new Promise((resolve, reject) => {
+                    reader.onerror = reject;
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                if (dataUrl) {
+                    analysis = await requestSleepMindAnalysis(dataUrl, null, 'sleep');
+                }
+            } catch (fallbackErr) {
+                console.warn('수면 분석 재시도용 base64 변환 실패:', fallbackErr);
+            }
+        }
         if (analysis) {
             renderSleepMindAnalysisResult(analysis, resultBox);
             if (aiBtn) {
@@ -4376,7 +4460,13 @@ window.analyzeSleepData = async function() {
             resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 결과를 받지 못했습니다.</p>';
         }
     } catch (e) {
-        console.error(e);
+        console.error('수면 분석 오류:', e);
+        if (e && e.code === 'functions/internal') {
+            showToast('⚠️ AI 분석에 실패했습니다. 다시 시도해주세요.');
+        } else {
+            showToast('⚠️ 수면 분석 중 오류가 발생했습니다.');
+        }
+
         resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 중 오류가 발생했습니다.</p>';
     } finally {
         if (aiBtn) aiBtn.classList.remove('loading');
