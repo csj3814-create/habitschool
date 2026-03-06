@@ -3,9 +3,8 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v9';
+const CACHE_NAME = 'habitschool-v21';
 const STATIC_ASSETS = [
-    './',
     './',
     './styles.css',
     './js/main.js',
@@ -13,6 +12,8 @@ const STATIC_ASSETS = [
     './js/auth.js',
     './js/firebase-config.js',
     './js/data-manager.js',
+    './js/diet-analysis.js',
+    './js/metabolic-score.js',
     './js/ui-helpers.js',
     './js/security.js',
     './js/blockchain-config.js',

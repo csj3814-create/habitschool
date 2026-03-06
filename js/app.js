@@ -5,10 +5,10 @@
  */
 
 // Firebase 모듈 임포트
-import { 
-    increment, collection, doc, getDoc, getDocs, setDoc, 
-    query, where, orderBy, limit, serverTimestamp, 
-    arrayRemove, arrayUnion 
+import {
+    increment, collection, doc, getDoc, getDocs, setDoc,
+    query, where, orderBy, limit, serverTimestamp,
+    arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
@@ -17,8 +17,21 @@ import { auth, db, storage, MILESTONES, MISSIONS, MAX_IMG_SIZE, MAX_VID_SIZE } f
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType } from './security.js';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult } from './diet-analysis.js';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
+// 전역 노출 함수 선언 (Hoisting 활용)
+window.loadDataForSelectedDate = loadDataForSelectedDate;
+window.renderDashboard = renderDashboard;
+window.updateMetabolicScoreUI = updateMetabolicScoreUI;
+window.checkOnboarding = checkOnboarding;
+window.analyzeMealPhoto = analyzeMealPhoto;
+window.completeOnboarding = completeOnboarding;
+window.goOnboardingStep = goOnboardingStep;
+window.openTab = openTab;
+
+// -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-let updateChallengeProgress = async () => {};
+let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
 import('./blockchain-manager.js').then(mod => {
@@ -78,7 +91,7 @@ async function checkMilestones(userId) {
 
         // 구 뱃지 → 마일스톤 마이그레이션
         const badges = userData.badges || {};
-        const badgeMap = { starter:'streak1', streak7:'streak7', diet7:'diet7', exercise7:'exercise7', mind7:'mind7', streak30:'streak30', points100:'points100', points300:'points300' };
+        const badgeMap = { starter: 'streak1', streak7: 'streak7', diet7: 'diet7', exercise7: 'exercise7', mind7: 'mind7', streak30: 'streak30', points100: 'points100', points300: 'points300' };
         let migrated = false;
         for (const [old, nw] of Object.entries(badgeMap)) {
             if (badges[old]?.earned && !milestones[nw]?.achieved) {
@@ -93,7 +106,7 @@ async function checkMilestones(userId) {
                 showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
             });
         }
-    } catch(error) {
+    } catch (error) {
         console.error('마일스톤 확인 오류:', error);
     }
 }
@@ -106,60 +119,60 @@ async function renderMilestones(userId) {
         const userData = userSnap.exists() ? userSnap.data() : {};
         const milestones = userData.milestones || {};
 
-    const grid = document.getElementById('badges-grid');
-    grid.innerHTML = '';
+        const grid = document.getElementById('badges-grid');
+        grid.innerHTML = '';
 
-    for (const [category, catData] of Object.entries(MILESTONES)) {
-        const levels = catData.levels;
-        // 첫 번째 미달성 마일스톤 인덱스
-        let currentIdx = levels.findIndex(l => !milestones[l.id]?.achieved);
-        if (currentIdx === -1) currentIdx = levels.length;
+        for (const [category, catData] of Object.entries(MILESTONES)) {
+            const levels = catData.levels;
+            // 첫 번째 미달성 마일스톤 인덱스
+            let currentIdx = levels.findIndex(l => !milestones[l.id]?.achieved);
+            if (currentIdx === -1) currentIdx = levels.length;
 
-        let cardHtml = `<div class="milestone-card">`;
-        cardHtml += `<div class="milestone-card-label">${catData.label}</div>`;
+            let cardHtml = `<div class="milestone-card">`;
+            cardHtml += `<div class="milestone-card-label">${catData.label}</div>`;
 
-        // 완료된 마일스톤 (작게 표시)
-        const completed = levels.slice(0, currentIdx);
-        if (completed.length > 0) {
-            cardHtml += `<div class="milestone-completed-list">`;
-            for (const lv of completed) {
-                const claimed = milestones[lv.id]?.bonusClaimed;
-                if (claimed) {
-                    cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
-                } else {
-                    cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
+            // 완료된 마일스톤 (작게 표시)
+            const completed = levels.slice(0, currentIdx);
+            if (completed.length > 0) {
+                cardHtml += `<div class="milestone-completed-list">`;
+                for (const lv of completed) {
+                    const claimed = milestones[lv.id]?.bonusClaimed;
+                    if (claimed) {
+                        cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
+                    } else {
+                        cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
+                    }
                 }
+                cardHtml += `</div>`;
             }
+
+            // 현재 목표 (컴팩트)
+            if (currentIdx < levels.length) {
+                const cur = levels[currentIdx];
+                cardHtml += `<div class="milestone-current-target">`;
+                cardHtml += `<div class="milestone-current-emoji">${cur.emoji}</div>`;
+                cardHtml += `<div class="milestone-current-info">`;
+                cardHtml += `<div class="milestone-current-name">🎯 ${cur.name}</div>`;
+                cardHtml += `<div class="milestone-current-desc">${cur.desc}</div>`;
+                cardHtml += `</div></div>`;
+            } else {
+                cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
+            }
+
             cardHtml += `</div>`;
+            grid.innerHTML += cardHtml;
         }
 
-        // 현재 목표 (컴팩트)
-        if (currentIdx < levels.length) {
-            const cur = levels[currentIdx];
-            cardHtml += `<div class="milestone-current-target">`;
-            cardHtml += `<div class="milestone-current-emoji">${cur.emoji}</div>`;
-            cardHtml += `<div class="milestone-current-info">`;
-            cardHtml += `<div class="milestone-current-name">🎯 ${cur.name}</div>`;
-            cardHtml += `<div class="milestone-current-desc">${cur.desc}</div>`;
-            cardHtml += `</div></div>`;
-        } else {
-            cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
-        }
-
-        cardHtml += `</div>`;
-        grid.innerHTML += cardHtml;
-    }
-
-    document.getElementById('milestone-section').style.display = 'block';
-    } catch(error) {
+        document.getElementById('milestone-section').style.display = 'block';
+    } catch (error) {
         console.error('마일스톤 렌더링 오류:', error);
         const section = document.getElementById('milestone-section');
-        if(section) section.style.display = 'none';
+        if (section) section.style.display = 'none';
     }
 }
 
 // 마일스톤 보너스 클릭 시 수령
-window.claimMilestoneBonus = async function(milestoneId, reward) {
+window.claimMilestoneBonus = async function (milestoneId, reward) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) { showToast('❌ 로그인이 필요합니다.'); return; }
@@ -182,27 +195,36 @@ window.claimMilestoneBonus = async function(milestoneId, reward) {
         if (pointEl) pointEl.textContent = currentPts + reward;
 
         renderMilestones(currentUser.uid);
-    } catch(error) {
+    } catch (error) {
         console.error('보너스 수령 오류:', error);
         showToast('⚠️ 보너스 지급 중 오류가 발생했습니다.');
     }
 };
 
-const { todayStr, yesterdayStr, weekStrs } = getDatesInfo();
-const dateInput = document.getElementById('selected-date');
-dateInput.max = todayStr;
-// KST \uae30\uc900 5\uc77c \uc804\uae4c\uc9c0 \uc120\ud0dd \uac00\ub2a5
-const minDate = new Date(todayStr);
-minDate.setDate(minDate.getDate() - 5);
-dateInput.min = minDate.toISOString().split('T')[0];
-dateInput.value = todayStr;
-dateInput.addEventListener('change', () => { loadDataForSelectedDate(dateInput.value); });
+try {
+    const { todayStr, yesterdayStr, weekStrs } = getDatesInfo();
+    const dateInput = document.getElementById('selected-date');
+    if (dateInput) {
+        dateInput.max = todayStr;
+        // KST 기준 5일 전까지 선택 가능
+        const minDate = new Date(todayStr);
+        minDate.setDate(minDate.getDate() - 5);
+        dateInput.min = minDate.toISOString().split('T')[0];
+        dateInput.value = todayStr;
+        dateInput.addEventListener('change', () => {
+            if (window.loadDataForSelectedDate) window.loadDataForSelectedDate(dateInput.value);
+        });
+    }
 
-window.changeDateTo = function(dStr) {
-    document.getElementById('selected-date').value = dStr;
-    loadDataForSelectedDate(dStr);
-    window.scrollTo(0,0);
-};
+    window.changeDateTo = function (dStr) {
+        const di = document.getElementById('selected-date');
+        if (di) di.value = dStr;
+        if (window.loadDataForSelectedDate) window.loadDataForSelectedDate(dStr);
+        window.scrollTo(0, 0);
+    };
+} catch (e) {
+    console.error('app.js 초기화 오류:', e);
+}
 
 // showToast, sanitize 등은 상단에서 직접 import
 
@@ -211,14 +233,17 @@ function addExerciseBlock(type, data = null) {
     const isCardio = type === 'cardio';
     const listId = isCardio ? 'cardio-list' : 'strength-list';
     const list = document.getElementById(listId);
-    const id = `${type}_${Date.now()}_${Math.floor(Math.random()*1000)}`;
+    const id = `${type}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const div = document.createElement('div');
     div.className = `exercise-block ${type}-block`;
     div.id = id;
-    
+
     let contentHtml = '';
     let dataUrl = '';
-    
+
+    // AI 분석 결과 저장용 data attribute
+    const hasAnalysis = data && data.aiAnalysis;
+
     if (isCardio) {
         const safeImgUrl = data && data.imageUrl && isValidStorageUrl(data.imageUrl) ? escapeHtml(data.imageUrl) : '';
         const imgHtml = `<div style="position:relative;">
@@ -226,18 +251,14 @@ function addExerciseBlock(type, data = null) {
             <button id="rm_c_${id}" class="static-remove-btn" style="${safeImgUrl ? 'display:block;' : 'display:none;'}" onclick="removeStaticImage(event, 'file_c_${id}', 'c_img_${id}', 'rm_c_${id}', 'txt_c_${id}')">X 삭제</button>
         </div>`;
         dataUrl = data && data.imageUrl ? data.imageUrl : '';
-        
+
         contentHtml = `
             <button class="block-remove-btn" onclick="this.parentElement.remove()">X</button>
             <label class="upload-area">
                 <input type="file" id="file_c_${id}" accept="image/*" class="exer-file" onchange="previewStaticImage(this, 'c_img_${id}', 'rm_c_${id}')">
-                <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">➕ 유산소 사진 올리기</span>
+                <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">운동 이미지 올리기</span>
                 ${imgHtml}
             </label>
-            <div class="input-grid">
-                <input type="number" class="c-time" placeholder="시간(분)" value="${data ? (data.time || '') : ''}">
-                <input type="number" class="c-dist" placeholder="거리(km)" value="${data ? (data.dist || '') : ''}">
-            </div>
         `;
     } else {
         // 동영상 URL은 이미지 태그에 표시 불가 → 항상 플레이스홀더 사용
@@ -248,31 +269,35 @@ function addExerciseBlock(type, data = null) {
             </div>
         `;
         dataUrl = data && data.videoUrl ? data.videoUrl : '';
-        
+
         contentHtml = `
             <button class="block-remove-btn" onclick="this.parentElement.remove()">X</button>
             <label class="upload-area">
                 <input type="file" accept="video/*" class="exer-file" onchange="previewDynamicVid(this)">
-                <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">➕ 근력 동영상 올리기</span>
+                <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">운동 영상 올리기</span>
                 ${statusHtml}
             </label>
         `;
     }
-    
+
     div.innerHTML = contentHtml;
-    if(dataUrl) div.setAttribute('data-url', dataUrl);
-    if(isCardio && data && data.imageThumbUrl) {
+    if (dataUrl) div.setAttribute('data-url', dataUrl);
+    if (isCardio && data && data.imageThumbUrl) {
         div.setAttribute('data-thumb-url', data.imageThumbUrl);
     }
-    if(!isCardio && data && data.videoThumbUrl) {
+    if (!isCardio && data && data.videoThumbUrl) {
         div.setAttribute('data-thumb-url', data.videoThumbUrl);
+    }
+    // AI 분석 결과 보존 (갤러리에서 표시용)
+    if (hasAnalysis) {
+        div.setAttribute('data-ai-analysis', JSON.stringify(data.aiAnalysis));
     }
     list.appendChild(div);
 
     // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
-    if(!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
+    if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
         const thumbImg = document.getElementById(`s_img_${id}`);
-        if(thumbImg) thumbImg.src = createVideoPlaceholderBase64();
+        if (thumbImg) thumbImg.src = createVideoPlaceholderBase64();
         // Firebase Storage URL에서도 프레임 추출 시도 (CORS 지원)
         extractVideoThumbFromUrl(data.videoUrl)
             .then((thumbDataUrl) => {
@@ -280,7 +305,7 @@ function addExerciseBlock(type, data = null) {
                 const ti = document.getElementById(`s_img_${id}`);
                 if (ti) ti.src = thumbDataUrl;
             })
-            .catch(() => {});
+            .catch(() => { });
     }
 }
 
@@ -294,17 +319,38 @@ function addStrengthBlock(data = null) {
 window.addCardioBlock = addCardioBlock;
 window.addStrengthBlock = addStrengthBlock;
 
-window.previewDynamicVid = function(input) {
+// CTA에서 블록 생성 후 파일 선택 다이얼로그 열기
+window.addCardioBlockWithFile = function() {
+    addCardioBlock();
+    const blocks = document.querySelectorAll('.cardio-block');
+    const lastBlock = blocks[blocks.length - 1];
+    if (lastBlock) {
+        const innerInput = lastBlock.querySelector('.exer-file');
+        if (innerInput) innerInput.click();
+    }
+};
+
+window.addStrengthBlockWithFile = function() {
+    addStrengthBlock();
+    const blocks = document.querySelectorAll('.strength-block');
+    const lastBlock = blocks[blocks.length - 1];
+    if (lastBlock) {
+        const innerInput = lastBlock.querySelector('.exer-file');
+        if (innerInput) innerInput.click();
+    }
+};
+
+window.previewDynamicVid = function (input) {
     const file = input.files[0];
-    if(!file) return;
-    if(file.size > MAX_VID_SIZE) { alert("100MB 이하만 가능!"); input.value=""; return; }
-    
+    if (!file) return;
+    if (file.size > MAX_VID_SIZE) { alert("100MB 이하만 가능!"); input.value = ""; return; }
+
     // 동영상 파일의 수정 날짜 확인 (촬영 당일만 허용)
     const fileDate = new Date(file.lastModified);
     const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
     const selectedDateStr = document.getElementById('selected-date').value;
-    
-    if(fileDateStr !== selectedDateStr) {
+
+    if (fileDateStr !== selectedDateStr) {
         alert(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${selectedDateStr})와 다릅니다!\n해당 일자의 영상만 올릴 수 있습니다.`);
         input.value = "";
         return;
@@ -314,8 +360,10 @@ window.previewDynamicVid = function(input) {
     const previewImg = input.parentElement.querySelector('.preview-strength-img');
     // 업로드 텍스트 숨기기
     const uploadText = input.parentElement.querySelector('span');
-    if(uploadText) uploadText.style.display = 'none';
+    if (uploadText) uploadText.style.display = 'none';
     previewWrap.style.display = 'block';
+
+
 
     // 즉시 플레이스홈더 표시 (검은박스 방지)
     previewImg.src = createVideoPlaceholderBase64();
@@ -326,11 +374,32 @@ window.previewDynamicVid = function(input) {
         .then((thumbDataUrl) => {
             if (thumbDataUrl) previewImg.src = thumbDataUrl;
         })
-        .catch(() => {})
+        .catch(() => { })
         .finally(() => {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
         });
 };
+
+// AI 분석용 이미지 압축 (base64 data URL → 최대 480px 리사이즈, 품질 0.5)
+function compressImageForAI(dataUrl) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const MAX = 480;
+            let w = img.width, h = img.height;
+            if (w > MAX || h > MAX) {
+                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                else { w = Math.round(w * MAX / h); h = MAX; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.5));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+    });
+}
 
 // 로컬 File 객체에서 동영상 프레임 추출 (가장 신뢰성 높음)
 function extractVideoThumbFromFile(file) {
@@ -378,7 +447,7 @@ function extractVideoThumbFromFile(file) {
                 ctx.drawImage(video, 0, 0, w, h);
 
                 // 검은 프레임 감지: 중앙 픽셀이 모두 0이면 재시도
-                const px = ctx.getImageData(w/2, h/2, 1, 1).data;
+                const px = ctx.getImageData(w / 2, h / 2, 1, 1).data;
                 if (px[0] === 0 && px[1] === 0 && px[2] === 0) {
                     const retryTime = Math.min((video.duration || 1) > 2 ? 2 : 0.5, video.duration || 1);
                     video.currentTime = retryTime;
@@ -387,7 +456,7 @@ function extractVideoThumbFromFile(file) {
                             ctx.drawImage(video, 0, 0, w, h);
                             clearTimeout(timer);
                             done(canvas.toDataURL('image/jpeg', 0.85));
-                        } catch(_) { clearTimeout(timer); done(''); }
+                        } catch (_) { clearTimeout(timer); done(''); }
                     }, { once: true });
                     return;
                 }
@@ -459,54 +528,101 @@ async function extractVideoThumbFromUrl(videoUrl) {
 // 갤러리에서 접근 가능하도록 전역 노출
 window.extractVideoThumbFromUrl = extractVideoThumbFromUrl;
 
-window.previewStaticImage = function(input, previewId, btnId, skipExif = false) {
+window.previewStaticImage = function (input, previewId, btnId, skipExif = false) {
     const preview = document.getElementById(previewId);
     const rmBtn = document.getElementById(btnId);
+    // 인증 날짜 input 보장
+    const dateInput = document.getElementById('selected-date');
     // 텍스트 스팬 찾기: diet용 txt-xxx 또는 cardio용 txt_c_xxx
     let txtSpan = null;
-    if(previewId.startsWith('preview-')) {
+    if (previewId.startsWith('preview-')) {
         txtSpan = document.getElementById('txt-' + previewId.split('-')[1]);
-    } else if(previewId.startsWith('c_img_')) {
+    } else if (previewId.startsWith('c_img_')) {
         txtSpan = document.getElementById('txt_c_' + previewId.substring(6));
     }
-    
+
     if (input.files && input.files[0]) {
         const file = input.files[0];
-        if(file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
-        
+        if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
+
         const render = () => {
             const reader = new FileReader();
-            reader.onload = e => { 
-                preview.src = e.target.result; 
-                preview.style.display = 'block'; 
-                if(rmBtn) rmBtn.style.display = 'block';
-                if(txtSpan) txtSpan.style.display = 'none';
+            reader.onload = e => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                if (rmBtn) rmBtn.style.display = 'block';
+                if (txtSpan) txtSpan.style.display = 'none';
+
+                // 운동 블록 기존 분석 초기화
+                const exerciseBlock = input.closest('.exercise-block');
+                if (exerciseBlock) {
+                    exerciseBlock.removeAttribute('data-ai-analysis');
+                    exerciseBlock.removeAttribute('data-url');
+                }
+
+                // 식단 AI 분석 버튼 표시 + 기존 분석 초기화
+                if (previewId.startsWith('preview-')) {
+                    const meal = previewId.substring(8);
+                    const aiBtn = document.getElementById(`ai-btn-${meal}`);
+                    if (aiBtn) {
+                        aiBtn.style.display = 'block';
+                        aiBtn.textContent = '🤖 AI 분석';
+                    }
+                    // 기존 분석 결과 초기화
+                    const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+                    if (resultContainer) {
+                        resultContainer._analysisData = null;
+                        resultContainer.innerHTML = '';
+                        resultContainer.style.display = 'none';
+                    }
+                    // 수면 분석 초기화
+                    if (meal === 'sleep') {
+                        const sleepResult = document.getElementById('sleep-analysis-result');
+                        if (sleepResult) { sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
+                        if (aiBtn) aiBtn.removeAttribute('data-analyzed');
+                    }
+                }
             }
             reader.readAsDataURL(file);
+
+            // 빈 박스 보이기 로직
+            const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+            const mealPrefix = 'preview-';
+            if (previewId.startsWith(mealPrefix)) {
+                const currentMeal = previewId.substring(mealPrefix.length);
+                const currentIndex = mealOrder.indexOf(currentMeal);
+                if (currentIndex >= 0 && currentIndex < mealOrder.length - 1) {
+                    const nextMeal = mealOrder[currentIndex + 1];
+                    const nextBox = document.getElementById(`diet-box-${nextMeal}`);
+                    if (nextBox) {
+                        nextBox.style.display = 'block';
+                    }
+                }
+            }
         };
 
         if (!skipExif && typeof EXIF !== 'undefined') {
-            EXIF.getData(file, function() {
+            EXIF.getData(file, function () {
                 const exifDate = EXIF.getTag(this, "DateTimeOriginal");
-                if(exifDate) {
+                if (exifDate) {
                     // EXIF 날짜가 있으면 EXIF로 검증
                     const dateParts = exifDate.split(" ")[0].replace(/:/g, "-");
-                    if(dateParts !== dateInput.value) {
+                    if (dateParts !== dateInput.value) {
                         alert(`⚠️ 촬영일(${dateParts})이 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
-                        input.value = ""; preview.style.display = 'none'; 
-                        if(rmBtn) rmBtn.style.display='none';
-                        if(txtSpan) txtSpan.style.display='inline-block';
+                        input.value = ""; preview.style.display = 'none';
+                        if (rmBtn) rmBtn.style.display = 'none';
+                        if (txtSpan) txtSpan.style.display = 'inline-block';
                         return;
                     }
                 } else {
                     // EXIF 없으면 파일 수정일(lastModified)로 검증
                     const fileDate = new Date(file.lastModified);
                     const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-                    if(fileDateStr !== dateInput.value) {
+                    if (fileDateStr !== dateInput.value) {
                         alert(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
                         input.value = ""; preview.style.display = 'none';
-                        if(rmBtn) rmBtn.style.display='none';
-                        if(txtSpan) txtSpan.style.display='inline-block';
+                        if (rmBtn) rmBtn.style.display = 'none';
+                        if (txtSpan) txtSpan.style.display = 'inline-block';
                         return;
                     }
                 }
@@ -516,11 +632,11 @@ window.previewStaticImage = function(input, previewId, btnId, skipExif = false) 
             // EXIF 라이브러리 없을 때도 lastModified로 검증
             const fileDate = new Date(file.lastModified);
             const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-            if(fileDateStr !== dateInput.value) {
+            if (fileDateStr !== dateInput.value) {
                 alert(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다!\n해당 일자의 사진만 올릴 수 있습니다.`);
                 input.value = ""; preview.style.display = 'none';
-                if(rmBtn) rmBtn.style.display='none';
-                if(txtSpan) txtSpan.style.display='inline-block';
+                if (rmBtn) rmBtn.style.display = 'none';
+                if (txtSpan) txtSpan.style.display = 'inline-block';
                 return;
             }
             render();
@@ -528,60 +644,190 @@ window.previewStaticImage = function(input, previewId, btnId, skipExif = false) 
     }
 };
 
-window.removeStaticImage = function(e, inputId, previewId, btnId, txtId) {
+window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     e.preventDefault(); e.stopPropagation();
     document.getElementById(inputId).value = "";
     document.getElementById(previewId).src = "";
     document.getElementById(previewId).style.display = "none";
     document.getElementById(btnId).style.display = "none";
-    if(document.getElementById(txtId)) document.getElementById(txtId).style.display = "inline-block";
-};
+    if (document.getElementById(txtId)) document.getElementById(txtId).style.display = "inline-block";
 
-window.smartUpload = function(input) {
-    const file = input.files[0];
-    if(!file) return;
-    if(file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value=""; return; }
-    
-    if (typeof EXIF !== 'undefined') {
-        EXIF.getData(file, function() {
-            const exifDate = EXIF.getTag(this, "DateTimeOriginal");
-            if(exifDate) {
-                const parts = exifDate.split(" ");
-                const dStr = parts[0].replace(/:/g, "-");
-                const hour = parseInt(parts[1].split(":")[0]);
-                
-                if(dStr !== dateInput.value) { alert(`⚠️ 촬영일(${dStr})이 현재 날짜와 다릅니다!`); input.value=""; return; }
-                
-                let category = 'snack';
-                if(hour >= 5 && hour < 11) category = 'breakfast';
-                else if(hour >= 11 && hour < 16) category = 'lunch';
-                else if(hour >= 16 && hour < 22) category = 'dinner';
-                
-                const dt = new DataTransfer(); dt.items.add(file);
-                const targetInput = document.getElementById(`diet-img-${category}`);
-                targetInput.files = dt.files;
-                window.previewStaticImage(targetInput, `preview-${category}`, `rm-${category}`, true);
-                showToast(`✨ ${hour}시 촬영 확인! 자동 분류 완료.`);
-            } else {
-                alert("⚠️ 캡처본이거나 시간 정보가 없습니다. 수동 업로드해주세요.");
-            }
-            input.value = ""; 
-        });
+    // 식단 분석 결과 초기화 및 가리기
+    const mealPrefix = 'preview-';
+    if (previewId.startsWith(mealPrefix)) {
+        const meal = previewId.substring(mealPrefix.length);
+        const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+        const aiBtn = document.getElementById(`ai-btn-${meal}`);
+        if (resultContainer) {
+            resultContainer._analysisData = null;
+            resultContainer.innerHTML = '';
+            resultContainer.style.display = 'none';
+        }
+        if (aiBtn) {
+            aiBtn.style.display = 'none';
+            aiBtn.textContent = '🤖 AI 분석';
+        }
+        // 수면 분석 초기화
+        if (meal === 'sleep') {
+            const sleepResult = document.getElementById('sleep-analysis-result');
+            if (sleepResult) { sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
+            if (aiBtn) aiBtn.removeAttribute('data-analyzed');
+        }
+    }
+
+    // 운동 블록 AI 분석 초기화
+    const previewEl = document.getElementById(previewId);
+    if (previewEl) {
+        const exerciseBlock = previewEl.closest('.exercise-block');
+        if (exerciseBlock) {
+            exerciseBlock.removeAttribute('data-ai-analysis');
+            exerciseBlock.removeAttribute('data-url');
+        }
     }
 };
 
+window.smartUpload = async function (input) {
+    const files = Array.from(input.files);
+    if (!files || files.length === 0) return;
+
+    for (let f of files) {
+        if (f.size > MAX_IMG_SIZE) { 
+            alert("20MB 이하만 가능합니다."); 
+            input.value = ""; 
+            return; 
+        }
+    }
+
+    const dateInput = document.getElementById('selected-date');
+    const validDate = dateInput.value;
+
+    if (typeof EXIF === 'undefined') {
+        alert("⚠️ 이미지 분석 모듈이 없습니다.");
+        input.value = ""; return;
+    }
+
+    // 시간 추출 헬퍼 (비동기)
+    const extractTime = (f) => new Promise((resolve) => {
+        try {
+            EXIF.getData(f, function () {
+                const exifDate = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
+                if (exifDate) {
+                    const parts = String(exifDate).trim().split(" ");
+                    if (parts.length >= 2) {
+                        const dStr = parts[0].replace(/:/g, "-");
+                        if (dStr !== validDate) {
+                            resolve(null); // 날짜 불일치
+                            return;
+                        }
+                        resolve(parts[1]); // "HH:MM:SS"
+                        return;
+                    }
+                }
+                resolve("99:99:99"); // 시간정보가 없으면 제일 뒤로
+            });
+        } catch {
+            resolve("99:99:99"); // 오류 시 제일 뒤로
+        }
+    });
+
+    try {
+        const fileData = [];
+        for (let f of files) {
+            let t = await extractTime(f);
+            if (t === null) {
+                alert(`⚠️ 촬영일이 선택한 날짜(${validDate})와 다른 사진이 제외되었습니다.`);
+                continue;
+            }
+            fileData.push({ file: f, time: t });
+        }
+
+        // 시간순 오름차순 정렬
+        fileData.sort((a, b) => a.time.localeCompare(b.time));
+
+        const categories = ['breakfast', 'lunch', 'dinner', 'snack'];
+        
+        // 빈 슬롯 찾기
+        const emptySlots = categories.filter(c => {
+             const preview = document.getElementById(`preview-${c}`);
+             return (!preview || preview.style.display === 'none' || !preview.src || preview.src.endsWith(location.host + '/') || preview.src.trim() === '');
+        });
+
+        let assigned = 0;
+        for (let i = 0; i < fileData.length; i++) {
+            if (i >= emptySlots.length) {
+                alert("⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
+                break;
+            }
+            const cat = emptySlots[i];
+            const targetInput = document.getElementById(`diet-img-${cat}`);
+            
+            try {
+                const dt = new DataTransfer();
+                dt.items.add(fileData[i].file);
+                targetInput.files = dt.files;
+                
+                // 해당 컨테이너 상자 보이기
+                const box = document.getElementById(`diet-box-${cat}`);
+                if (box) box.style.display = 'block';
+
+                window.previewStaticImage(targetInput, `preview-${cat}`, `rm-${cat}`, true);
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                assigned++;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        
+        if (assigned > 0) {
+            showToast(`✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
+        }
+    } catch (err) {
+        console.error(err);
+        alert("⚠️ 자동 업로드 중 오류가 발생했습니다.");
+    }
+    input.value = "";
+};
+
 function clearInputs() {
-    ['weight','glucose','bp-systolic','bp-diastolic','gratitude-journal'].forEach(id => document.getElementById(id).value = '');
+    ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('meditation-check').checked = false;
-    
-    ['breakfast','lunch','dinner','snack','sleep'].forEach(k => { 
+
+    ['breakfast', 'lunch', 'dinner', 'snack', 'sleep'].forEach(k => {
         const pv = document.getElementById(`preview-${k}`);
         const rm = document.getElementById(`rm-${k}`);
         const tx = document.getElementById(`txt-${k}`);
-        if(pv) { pv.style.display = 'none'; pv.src = ''; }
-        if(rm) rm.style.display = 'none';
-        if(tx) tx.style.display = 'inline-block';
+        const box = document.getElementById(`diet-box-${k}`);
+        
+        if (pv) { pv.style.display = 'none'; pv.src = ''; }
+        if (rm) rm.style.display = 'none';
+        if (tx) tx.style.display = 'inline-block';
+        if (box && k !== 'breakfast' && k !== 'sleep') { 
+             box.style.display = 'none'; 
+        }
+        
+        const aiContainer = document.getElementById(`diet-analysis-${k}`);
+        const aiBtn = document.getElementById(`ai-btn-${k}`);
+        if(aiContainer) {
+            aiContainer._analysisData = null;
+            aiContainer.innerHTML = '';
+            aiContainer.style.display = 'none';
+        }
+        if(aiBtn) {
+            aiBtn.style.display = 'none';
+            aiBtn.textContent = '🤖 AI 분석';
+            aiBtn.removeAttribute('data-analyzed');
+        }
     });
+
+    const breakBox = document.getElementById(`diet-box-breakfast`);
+    if (breakBox) breakBox.style.display = 'block';
+
+    // 수면 분석 결과 초기화
+    const sleepResultBox = document.getElementById('sleep-analysis-result');
+    if (sleepResultBox) { sleepResultBox.innerHTML = ''; sleepResultBox.style.display = 'none'; }
+    // 마음 분석 결과 초기화
+    const mindResultBox = document.getElementById('mind-analysis-result');
+    if (mindResultBox) { mindResultBox.innerHTML = ''; mindResultBox.style.display = 'none'; }
 
     document.getElementById('cardio-list').innerHTML = '';
     document.getElementById('strength-list').innerHTML = '';
@@ -589,99 +835,139 @@ function clearInputs() {
     document.getElementById('quest-diet').className = 'quest-check'; document.getElementById('quest-diet').innerText = '미달성';
     document.getElementById('quest-exercise').className = 'quest-check'; document.getElementById('quest-exercise').innerText = '미달성';
     document.getElementById('quest-mind').className = 'quest-check'; document.getElementById('quest-mind').innerText = '미달성';
-    
+
     document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
 }
 
-window.loadDataForSelectedDate = async function(dateStr) {
+// 데이터 로드
+async function loadDataForSelectedDate(dateStr) {
+    const { todayStr } = getDatesInfo(); // 로컬 확보
     const user = auth.currentUser;
-    if(!user) return;
-    
+    if (!user) return;
+
     try {
         clearInputs();
-        
+
         const docId = `${user.uid}_${dateStr}`;
         const myLogDoc = await getDoc(doc(db, "daily_logs", docId));
-    
-    if (myLogDoc.exists()) {
-        const data = myLogDoc.data();
-        const awarded = data.awardedPoints || {};
 
-        if(data.metrics) {
-            document.getElementById('weight').value = data.metrics.weight || '';
-            document.getElementById('glucose').value = data.metrics.glucose || '';
-            document.getElementById('bp-systolic').value = data.metrics.bpSystolic || '';
-            document.getElementById('bp-diastolic').value = data.metrics.bpDiastolic || '';
-        }
-        if(data.diet) {
-            ['breakfast','lunch','dinner','snack'].forEach(k => {
-                if(data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) { 
-                    document.getElementById(`preview-${k}`).src = data.diet[`${k}Url`]; 
-                    document.getElementById(`preview-${k}`).style.display = 'block'; 
-                    document.getElementById(`rm-${k}`).style.display = 'block';
-                    document.getElementById(`txt-${k}`).style.display = 'none';
+        if (myLogDoc.exists()) {
+            const data = myLogDoc.data();
+            const awarded = data.awardedPoints || {};
+
+            if (data.metrics) {
+                document.getElementById('weight').value = data.metrics.weight || '';
+                document.getElementById('glucose').value = data.metrics.glucose || '';
+                document.getElementById('bp-systolic').value = data.metrics.bpSystolic || '';
+                document.getElementById('bp-diastolic').value = data.metrics.bpDiastolic || '';
+            }
+            if (data.diet) {
+                ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
+                    if (data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) {
+                        document.getElementById(`preview-${k}`).src = data.diet[`${k}Url`];
+                        document.getElementById(`preview-${k}`).style.display = 'block';
+                        document.getElementById(`rm-${k}`).style.display = 'block';
+                        document.getElementById(`txt-${k}`).style.display = 'none';
+                    }
+                });
+                if (awarded.diet) {
+                    const dp = awarded.dietPoints || 10;
+                    document.getElementById('quest-diet').className = 'quest-check done';
+                    document.getElementById('quest-diet').innerText = `+${dp}P`;
                 }
-            });
-            if(awarded.diet) { 
-                const dp = awarded.dietPoints || 10;
-                document.getElementById('quest-diet').className = 'quest-check done'; 
-                document.getElementById('quest-diet').innerText = `+${dp}P`; 
             }
-        }
-        if(data.exercise) {
-            // 유산소: cardioList가 최우선 (legacy 필드 무시)
-            if(data.exercise.cardioList && data.exercise.cardioList.length > 0) {
-                data.exercise.cardioList.forEach(item => addCardioBlock(item));
-            } else if(data.exercise.cardioImageUrl || data.exercise.cardioTime || data.exercise.cardioDist) {
-                addCardioBlock({imageUrl: data.exercise.cardioImageUrl, time: data.exercise.cardioTime, dist: data.exercise.cardioDist});
-            } else {
-                addCardioBlock();
+            if (data.exercise) {
+                // 유산소: cardioList가 최우선 (legacy 필드 무시)
+                if (data.exercise.cardioList && data.exercise.cardioList.length > 0) {
+                    data.exercise.cardioList.forEach(item => addExerciseBlock('cardio', item));
+                } else if (data.exercise.cardioImageUrl || data.exercise.cardioTime || data.exercise.cardioDist) {
+                    addExerciseBlock('cardio', { imageUrl: data.exercise.cardioImageUrl, time: data.exercise.cardioTime, dist: data.exercise.cardioDist });
+                } else {
+                    addExerciseBlock('cardio');
+                }
+
+                // 근력: strengthList가 최우선 (legacy 필드 무시)
+                if (data.exercise.strengthList && data.exercise.strengthList.length > 0) {
+                    data.exercise.strengthList.forEach(item => addExerciseBlock('strength', item));
+                } else if (data.exercise.strengthVideoUrl) {
+                    addExerciseBlock('strength', { videoUrl: data.exercise.strengthVideoUrl });
+                } else {
+                    addExerciseBlock('strength');
+                }
+                if (awarded.exercise) {
+                    const ep = awarded.exercisePoints || 15;
+                    document.getElementById('quest-exercise').className = 'quest-check done';
+                    document.getElementById('quest-exercise').innerText = `+${ep}P`;
+                }
+            } else { addCardioBlock(); addStrengthBlock(); }
+
+            if (data.sleepAndMind) {
+                if (data.sleepAndMind.sleepImageUrl) {
+                    document.getElementById('preview-sleep').src = data.sleepAndMind.sleepImageUrl;
+                    document.getElementById('preview-sleep').style.display = 'block';
+                    document.getElementById('rm-sleep').style.display = 'block';
+                    document.getElementById('txt-sleep').style.display = 'none';
+                    // 수면 AI 분석 버튼 표시
+                    const sleepAiBtn = document.getElementById('ai-btn-sleep');
+                    if (sleepAiBtn) sleepAiBtn.style.display = 'block';
+                }
+                // 수면 AI 분석 결과 복원
+                if (data.sleepAndMind.sleepAnalysis) {
+                    const sleepResultBox = document.getElementById('sleep-analysis-result');
+                    const sleepAiBtn = document.getElementById('ai-btn-sleep');
+                    if (sleepResultBox && typeof renderSleepMindAnalysisResult === 'function') {
+                        renderSleepMindAnalysisResult(data.sleepAndMind.sleepAnalysis, sleepResultBox);
+                        sleepResultBox.style.display = 'none';
+                        if (sleepAiBtn) {
+                            sleepAiBtn.setAttribute('data-analyzed', 'true');
+                            sleepAiBtn.textContent = '🤖 분석 보기';
+                        }
+                    }
+                }
+                if (data.sleepAndMind.meditationDone) document.getElementById('meditation-check').checked = true;
+                document.getElementById('gratitude-journal').value = data.sleepAndMind.gratitude || '';
+
+                if (awarded.mind) {
+                    const mp = awarded.mindPoints || 5;
+                    document.getElementById('quest-mind').className = 'quest-check done';
+                    document.getElementById('quest-mind').innerText = `+${mp}P`;
+                }
             }
 
-            // 근력: strengthList가 최우선 (legacy 필드 무시)
-            if(data.exercise.strengthList && data.exercise.strengthList.length > 0) {
-                data.exercise.strengthList.forEach(item => addStrengthBlock(item));
-            } else if(data.exercise.strengthVideoUrl) {
-                addStrengthBlock({videoUrl: data.exercise.strengthVideoUrl});
-            } else {
-                addStrengthBlock();
+            // 중성지방 복원
+            const tgEl = document.getElementById('triglyceride');
+            if (tgEl && data.metrics?.triglyceride) {
+                tgEl.value = data.metrics.triglyceride;
             }
-            if(awarded.exercise) { 
-                const ep = awarded.exercisePoints || 15;
-                document.getElementById('quest-exercise').className = 'quest-check done'; 
-                document.getElementById('quest-exercise').innerText = `+${ep}P`; 
-            }
-        } else { addCardioBlock(); addStrengthBlock(); }
 
-        if(data.sleepAndMind) {
-            if(data.sleepAndMind.sleepImageUrl) { 
-                document.getElementById('preview-sleep').src = data.sleepAndMind.sleepImageUrl; 
-                document.getElementById('preview-sleep').style.display = 'block'; 
-                document.getElementById('rm-sleep').style.display = 'block';
-                document.getElementById('txt-sleep').style.display = 'none';
+            // AI 식단 분석 결과 복원
+            if (window._restoreDietAnalysis) {
+                window._restoreDietAnalysis(data);
             }
-            if(data.sleepAndMind.meditationDone) document.getElementById('meditation-check').checked = true;
-            document.getElementById('gratitude-journal').value = data.sleepAndMind.gratitude || '';
-            if(awarded.mind) { 
-                const mp = awarded.mindPoints || 5;
-                document.getElementById('quest-mind').className = 'quest-check done'; 
-                document.getElementById('quest-mind').innerText = `+${mp}P`; 
+
+            // 대시보드 갱신
+            if (typeof renderDashboard === 'function') {
+                renderDashboard();
+            }
+        } else {
+            addExerciseBlock('cardio'); addExerciseBlock('strength');
+
+            // 대시보드는 로드 시도 (데이터 없어도 기본 렌더링)
+            if (typeof renderDashboard === 'function') {
+                renderDashboard();
             }
         }
-    } else {
-        addCardioBlock(); addStrengthBlock();
-    }
-    } catch(error) {
+    } catch (error) {
         console.error('데이터 로드 오류:', error);
         showToast('⚠️ 데이터를 불러오는 중 오류가 발생했습니다.');
         // 기본 블록은 추가
-        addCardioBlock(); 
-        addStrengthBlock();
+        addExerciseBlock('cardio');
+        addExerciseBlock('strength');
     }
 }
 
 let galleryFilter = 'all';
-window.setGalleryFilter = function(filter, btnElement) {
+window.setGalleryFilter = function (filter, btnElement) {
     galleryFilter = filter;
     sortedFilteredDirty = true;  // 필터 변경 시 캐시 무효화
     document.querySelectorAll('.filter-chip').forEach(el => {
@@ -693,7 +979,7 @@ window.setGalleryFilter = function(filter, btnElement) {
     renderFeedOnly();
 };
 
-window.openLightbox = function(url) {
+window.openLightbox = function (url) {
     const modal = document.getElementById('lightbox-modal');
     const img = document.getElementById('lightbox-img');
     const video = document.getElementById('lightbox-video');
@@ -707,7 +993,7 @@ window.openLightbox = function(url) {
     modal.style.display = 'flex';
 };
 
-window.openVideoLightbox = function(url) {
+window.openVideoLightbox = function (url) {
     const modal = document.getElementById('lightbox-modal');
     const img = document.getElementById('lightbox-img');
     const video = document.getElementById('lightbox-video');
@@ -718,14 +1004,14 @@ window.openVideoLightbox = function(url) {
     video.src = url;
     video.currentTime = 0;
     modal.style.display = 'flex';
-    video.play().catch(() => {});
+    video.play().catch(() => { });
 };
 
 // 갤러리 비디오 인라인 재생 (썸네일 → video 태그 교체)
-window.playGalleryVideo = function(wrapper) {
+window.playGalleryVideo = function (wrapper) {
     let video = wrapper.querySelector('video');
     const originalSrc = wrapper.getAttribute('data-video-src');
-    
+
     // 썸네일 img만 있는 경우 → video 태그로 교체
     if (!video && originalSrc) {
         const thumbImg = wrapper.querySelector('img');
@@ -734,7 +1020,7 @@ window.playGalleryVideo = function(wrapper) {
         video.playsInline = true;
         wrapper.insertBefore(video, wrapper.querySelector('.video-play-btn'));
     }
-    
+
     wrapper.classList.add('playing');
     video.muted = false;
     video.controls = true;
@@ -744,6 +1030,87 @@ window.playGalleryVideo = function(wrapper) {
     video.currentTime = 0;
     video.play();
     wrapper.onclick = null;
+};
+
+// 갤러리 이미지 인라인 확대/축소 토글.
+window.toggleGalleryFullImage = function (imgEl, fullUrl) {
+    const wrapper = imgEl.closest('.gallery-media-wrapper');
+    if (!wrapper) return;
+
+    if (imgEl.classList.contains('gallery-img-expanded')) {
+        // 축소: 원본 썸네일로 복귀
+        imgEl.classList.remove('gallery-img-expanded');
+        if (imgEl._originalSrc) imgEl.src = imgEl._originalSrc;
+
+        // AI 오버레이도 함께 접기
+        const overlay = wrapper.querySelector('.gallery-ai-overlay');
+        const aiBtn = wrapper.querySelector('.gallery-ai-overlay-btn');
+        if (overlay) overlay.style.display = 'none';
+        if (aiBtn) aiBtn.textContent = '분석 확인';
+    } else {
+        // 확대: 원본 고화질 로드
+        imgEl._originalSrc = imgEl.src;
+        imgEl.src = fullUrl;
+        imgEl.classList.add('gallery-img-expanded');
+    }
+};
+
+// 갤러리 AI분석 오버레이 토글 (이미지 확대도 함께 처리)
+window.toggleGalleryAiOverlay = function (btnEl) {
+    const wrapper = btnEl.closest('.gallery-media-wrapper');
+    if (!wrapper) return;
+
+    const overlay = wrapper.querySelector('.gallery-ai-overlay');
+    if (!overlay) return;
+
+    const imgEl = wrapper.querySelector('img');
+
+    if (overlay.style.display === 'none' || !overlay.style.display) {
+        // 이미지 확대 (아직 확대 안 된 경우)
+        if (imgEl && !imgEl.classList.contains('gallery-img-expanded')) {
+            const fullUrl = imgEl.getAttribute('onclick')?.match(/'([^']+)'\s*\)/)?.[1];
+            if (fullUrl) {
+                imgEl._originalSrc = imgEl.src;
+                imgEl.src = fullUrl;
+                imgEl.classList.add('gallery-img-expanded');
+            }
+        }
+
+        // AI 오버레이 보이기
+        const aiDataB64 = wrapper.getAttribute('data-ai-analysis');
+        if (aiDataB64 && overlay.innerHTML.trim() === '') {
+            try {
+                const aiData = decodeURIComponent(escape(atob(aiDataB64)));
+                const analysis = JSON.parse(aiData);
+                // 식단 분석인지 운동 분석인지 수면/마음 분석인지 판별
+                if (analysis.foods || (analysis.grade && !analysis.type)) {
+                    renderDietAnalysisResult(overlay, analysis);
+                } else if (analysis.intensity || analysis.exerciseType) {
+                    renderExerciseAnalysisResult(analysis, overlay);
+                } else if (analysis.type === 'sleep' || analysis.type === 'mind') {
+                    renderSleepMindAnalysisResult(analysis, overlay);
+                } else if (analysis.grade || analysis.feedback) {
+                    renderSleepMindAnalysisResult(analysis, overlay);
+                } else {
+                    overlay.innerHTML = '<div style="padding:10px;color:#666;">분석 데이터가 없습니다.</div>';
+                }
+            } catch(e) {
+                console.error('Gallery AI overlay parse error:', e);
+                overlay.innerHTML = '<div style="padding:10px;color:#666;">분석 데이터를 읽을 수 없습니다.</div>';
+            }
+        }
+        overlay.style.display = 'block';
+        btnEl.textContent = '분석 닫기';
+    } else {
+        // 이미지 축소
+        if (imgEl && imgEl.classList.contains('gallery-img-expanded')) {
+            imgEl.classList.remove('gallery-img-expanded');
+            if (imgEl._originalSrc) imgEl.src = imgEl._originalSrc;
+        }
+
+        overlay.style.display = 'none';
+        btnEl.textContent = '분석 확인';
+    }
 };
 
 
@@ -781,23 +1148,23 @@ function updateHalvingScheduleUI(currentEra) {
 }
 
 // 자산 표시 업데이트 함수
-window.updateAssetDisplay = async function() {
+window.updateAssetDisplay = async function () {
     const user = auth.currentUser;
     if (!user) return;
-    
+
     try {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-        
+
         if (userSnap.exists()) {
             const userData = userSnap.data();
-            
+
             // 포인트 표시 업데이트
             const pointsDisplay = document.getElementById('asset-points-display');
             if (pointsDisplay) {
                 pointsDisplay.textContent = (userData.coins || 0) + 'P';
             }
-            
+
             // HBT 표시 업데이트
             const hbtDisplay = document.getElementById('asset-hbt-display');
             if (hbtDisplay) {
@@ -872,7 +1239,7 @@ window.updateAssetDisplay = async function() {
             const challengeContainer = document.getElementById('active-challenge-container');
             const challengeInfo = document.getElementById('active-challenge-info');
             const challengeSelection = document.getElementById('challenge-selection');
-            
+
             // activeChallenges 수집 (legacy 마이그레이션 포함)
             let activeChallenges = userData.activeChallenges || {};
             if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
@@ -954,7 +1321,7 @@ window.updateAssetDisplay = async function() {
                         limit(20)
                     );
                     const txSnap = await getDocs(txQuery);
-                    
+
                     if (txSnap.empty) {
                         txContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#999;">거래 기록이 없습니다.</p>';
                     } else {
@@ -978,7 +1345,7 @@ window.updateAssetDisplay = async function() {
                             const label = txLabels[tx.type] || escapeHtml(String(tx.type));
                             const statusColor = tx.status === 'success' ? '#4CAF50' : tx.status === 'failed' ? '#F44336' : '#FF9800';
                             const statusText = tx.status === 'success' ? '✅' : tx.status === 'failed' ? '❌' : '⏳';
-                            
+
                             let amountText = '';
                             if (tx.type === 'conversion') {
                                 amountText = `${parseInt(tx.pointsUsed) || 0}P → ${parseFloat(tx.hbtReceived) || 0} HBT`;
@@ -989,7 +1356,7 @@ window.updateAssetDisplay = async function() {
                             } else {
                                 amountText = `${parseFloat(tx.amount) || 0} HBT`;
                             }
-                            
+
                             txHtml += `
                                 <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f0f0f0;">
                                     <div>
@@ -1022,46 +1389,47 @@ window.updateAssetDisplay = async function() {
     }
 };
 
-window.openTab = function(tabName, pushState = true) {
+// 탭 관리
+function openTab(tabName, pushState = true) {
     const user = auth.currentUser;
     if (!user && tabName !== 'gallery') {
         document.getElementById('login-modal').style.display = 'flex'; return;
     }
-    if(pushState) history.pushState({ tab: tabName }, '', '#' + tabName);
+    if (pushState) history.pushState({ tab: tabName }, '', '#' + tabName);
 
     const contents = document.getElementsByClassName("content-section");
     for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; contents[i].classList.remove("active"); }
     const btns = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < btns.length; i++) { 
-        btns[i].classList.remove("active"); 
+    for (let i = 0; i < btns.length; i++) {
+        btns[i].classList.remove("active");
         btns[i].removeAttribute("aria-current");
     }
-    
+
     // 갤러리 탭은 ID로 직접 선택 (더 안정적)
     let targetBtn;
-    if(tabName === 'gallery') {
+    if (tabName === 'gallery') {
         targetBtn = document.getElementById('btn-tab-gallery');
     } else {
         targetBtn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
     }
-    if(targetBtn) {
+    if (targetBtn) {
         targetBtn.classList.add("active");
         targetBtn.setAttribute("aria-current", "page");
     }
     document.getElementById(tabName).style.display = "block";
-    
+
     const submitBar = document.getElementById('submit-bar');
     const saveBtn = document.getElementById('saveDataBtn');
     const chatBanner = document.getElementById('chat-banner');
-    
-    if(tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
+
+    if (tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
         submitBar.style.display = 'none';
-        
+
         // 자산 탭 열릴 때 자산 표시 업데이트
-        if(tabName === 'assets' && user) {
+        if (tabName === 'assets' && user) {
             updateAssetDisplay();
         }
-    } else if(tabName === 'gallery') {
+    } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
         if (!user) {
             saveBtn.innerText = '🌟 구글 로그인하고 함께 참여하기';
@@ -1085,17 +1453,17 @@ window.openTab = function(tabName, pushState = true) {
         saveBtn.onclick = null; // 기본 이벤트 리스너로 복원
     }
 
-    if(tabName === 'gallery') { 
-        chatBanner.style.display = 'none'; 
-        loadGalleryData(); 
-    } else { 
+    if (tabName === 'gallery') {
+        chatBanner.style.display = 'none';
+        loadGalleryData();
+    } else {
         chatBanner.style.display = 'none';
         // 갤러리 탭을 벗어날 때 무한 스크롤 옵저버 해제 (메모리 절약)
         if (galleryIntersectionObserver) {
             galleryIntersectionObserver.disconnect();
             galleryIntersectionObserver = null;
         }
-        
+
         // 입력 폼 탭(diet, exercise, sleep)으로 전환 시 기존 입력 초기화
         if (tabName === 'diet' || tabName === 'exercise' || tabName === 'sleep') {
             clearInputs();
@@ -1107,14 +1475,14 @@ window.openTab = function(tabName, pushState = true) {
             loadFastingGraphData(user.uid);
         }
     }
-    
-    if(tabName === 'dashboard') renderDashboard();
+
+    if (tabName === 'dashboard') renderDashboard();
 
     setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
 };
 
 window.addEventListener('popstate', (e) => {
-    if(e.state && e.state.tab) openTab(e.state.tab, false);
+    if (e.state && e.state.tab) openTab(e.state.tab, false);
     else openTab('dashboard', false);
 });
 
@@ -1125,17 +1493,17 @@ window.addEventListener('beforeunload', () => {
 
 // 중복 제거: 로그인 및 인증 로직은 auth.js 모듈에서 처리
 
-window.hideFeedback = function() {
+window.hideFeedback = function () {
     document.getElementById('admin-feedback-box').style.display = 'none';
     const user = auth.currentUser;
-    if(user) localStorage.setItem('hide_fb_' + user.uid, 'true');
+    if (user) localStorage.setItem('hide_fb_' + user.uid, 'true');
 };
 
 // 중복 제거: 인증 상태 리스너는 auth.js의 setupAuthListener에서 처리
 
-window.saveHealthProfile = async function() {
+window.saveHealthProfile = async function () {
     const user = auth.currentUser;
-    if(!user) return;
+    if (!user) return;
     const smm = document.getElementById('prof-smm').value;
     const fat = document.getElementById('prof-fat').value;
     const visceral = document.getElementById('prof-visceral').value;
@@ -1147,27 +1515,30 @@ window.saveHealthProfile = async function() {
     try {
         await setDoc(doc(db, "users", user.uid), { healthProfile: { smm, fat, visceral, hba1c, meds, medOther } }, { merge: true });
         showToast("🧬 프로필이 저장되었습니다!");
-    } catch(e) { 
+    } catch (e) {
         console.error('프로필 저장 오류:', e);
         showToast(`⚠️ 프로필 저장 실패: ${e.message || '알 수 없는 오류'}`);
     }
 };
 
+// 대시보드 렌더링
 async function renderDashboard() {
     const user = auth.currentUser;
-    if(!user) return;
-    
+    if (!user) return;
+
+    const { todayStr, weekStrs } = getDatesInfo(); // 로컬 확보
+
     try {
         // 마일스톤 렌더링
         await renderMilestones(user.uid);
-        
+
         const userRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userRef);
         let level = 1; let selectedMissions = [];
-        if(userDoc.exists()) {
+        if (userDoc.exists()) {
             const ud = userDoc.data();
-            if(ud.missionLevel) level = ud.missionLevel;
-            if(ud.selectedMissions) selectedMissions = ud.selectedMissions;
+            if (ud.missionLevel) level = ud.missionLevel;
+            if (ud.selectedMissions) selectedMissions = ud.selectedMissions;
         }
         document.getElementById('user-level-badge').innerText = `Lv. ${level} (ℹ️전체보기)`;
         const missionArea = document.getElementById('mission-selection-area');
@@ -1183,97 +1554,98 @@ async function renderDashboard() {
         let logsMap = {}; let statDiet = 0, statExer = 0, statMind = 0;
         snapshot.forEach(d => {
             const data = d.data();
-            if(weekStrs.includes(data.date)) {
+            if (weekStrs.includes(data.date)) {
                 logsMap[data.date] = data;
-                if(data.awardedPoints?.diet) statDiet++;
-                if(data.awardedPoints?.exercise) statExer++;
-                if(data.awardedPoints?.mind) statMind++;
-        }
-    });
-
-    const graphArea = document.getElementById('week-graph');
-    graphArea.innerHTML = '';
-    const dayNames = ['월','화','수','목','금','토','일'];
-    weekStrs.forEach((dateStr, idx) => {
-        let circleClass = 'day-circle';
-        if(logsMap[dateStr]) circleClass += ' done';
-        let labelClass = 'day-label';
-        if(dateStr === todayStr) { circleClass += ' today'; labelClass += ' today'; }
-        // 날짜 누르면 해당 날짜로 이동
-        graphArea.innerHTML += `<div class="day-wrap" onclick="changeDateTo('${dateStr}')"><div class="${circleClass}">${dayNames[idx]}</div><div class="${labelClass}">${dateStr.substring(5).replace('-','/')}</div></div>`;
-    });
-
-    const progContainer = document.getElementById('mission-progress-container');
-    if(selectedMissions.length > 0) {
-        progContainer.style.display = 'block'; progContainer.innerHTML = '';
-        let allDone = true;
-        currentMissions.forEach(m => {
-            if(selectedMissions.includes(m.id)) {
-                let currentVal = 0;
-                if(m.type === 'diet') currentVal = statDiet;
-                if(m.type === 'exercise') currentVal = statExer;
-                if(m.type === 'mind') currentVal = statMind;
-                const percent = Math.min((currentVal / m.target) * 100, 100);
-                if(percent < 100) allDone = false;
-                progContainer.innerHTML += `<div class="mp-row"><div class="mp-label"><span>${m.text}</span><span>${currentVal} / ${m.target}</span></div><div class="mp-track"><div class="mp-fill" style="width: ${percent}%;"></div></div></div>`;
+                if (data.awardedPoints?.diet) statDiet++;
+                if (data.awardedPoints?.exercise) statExer++;
+                if (data.awardedPoints?.mind) statMind++;
             }
         });
-        if(allDone && level < 5) progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level+1})">🎉 Lv ${level+1} 승급하기</button>`;
 
-        // 모든 미션 완료 시 저장 버튼 & 체크박스 비활성화
-        const saveBtn = document.getElementById('btn-save-missions');
-        if (allDone && selectedMissions.length > 0) {
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.5';
-                saveBtn.style.cursor = 'not-allowed';
-                saveBtn.innerText = '✅ 이번 주 미션 완료!';
-            }
-            document.querySelectorAll('#mission-selection-area input[type="checkbox"]').forEach(chk => {
-                chk.disabled = true;
+        const graphArea = document.getElementById('week-graph');
+        graphArea.innerHTML = '';
+        const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+        weekStrs.forEach((dateStr, idx) => {
+            let circleClass = 'day-circle';
+            if (logsMap[dateStr]) circleClass += ' done';
+            let labelClass = 'day-label';
+            if (dateStr === todayStr) { circleClass += ' today'; labelClass += ' today'; }
+            // 날짜 누르면 해당 날짜로 이동
+            graphArea.innerHTML += `<div class="day-wrap" onclick="changeDateTo('${dateStr}')"><div class="${circleClass}">${dayNames[idx]}</div><div class="${labelClass}">${dateStr.substring(5).replace('-', '/')}</div></div>`;
+        });
+
+        const progContainer = document.getElementById('mission-progress-container');
+        if (selectedMissions.length > 0) {
+            progContainer.style.display = 'block'; progContainer.innerHTML = '';
+            let allDone = true;
+            currentMissions.forEach(m => {
+                if (selectedMissions.includes(m.id)) {
+                    let currentVal = 0;
+                    if (m.type === 'diet') currentVal = statDiet;
+                    if (m.type === 'exercise') currentVal = statExer;
+                    if (m.type === 'mind') currentVal = statMind;
+                    const percent = Math.min((currentVal / m.target) * 100, 100);
+                    if (percent < 100) allDone = false;
+                    progContainer.innerHTML += `<div class="mp-row"><div class="mp-label"><span>${m.text}</span><span>${currentVal} / ${m.target}</span></div><div class="mp-track"><div class="mp-fill" style="width: ${percent}%;"></div></div></div>`;
+                }
             });
-        } else {
-            if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.style.opacity = '1';
-                saveBtn.style.cursor = 'pointer';
-                saveBtn.innerText = '이번 주 미션 저장';
+            if (allDone && level < 5) progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`;
+
+            // 모든 미션 완료 시 저장 버튼 & 체크박스 비활성화
+            const saveBtn = document.getElementById('btn-save-missions');
+            if (allDone && selectedMissions.length > 0) {
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.style.opacity = '0.5';
+                    saveBtn.style.cursor = 'not-allowed';
+                    saveBtn.innerText = '✅ 이번 주 미션 완료!';
+                }
+                document.querySelectorAll('#mission-selection-area input[type="checkbox"]').forEach(chk => {
+                    chk.disabled = true;
+                });
+            } else {
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.style.opacity = '1';
+                    saveBtn.style.cursor = 'pointer';
+                    saveBtn.innerText = '이번 주 미션 저장';
+                }
             }
+        } else {
+            progContainer.style.display = 'none';
         }
-    } else {
-        progContainer.style.display = 'none';
-    }
-    } catch(error) {
+    } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
         showToast('⚠️ 대시보드를 불러오는 중 오류가 발생했습니다.');
     }
 }
 
-window.saveWeeklyMissions = async function() {
+// 주간 미션 저장
+async function saveWeeklyMissions() {
     const user = auth.currentUser;
-    if(!user) return;
+    if (!user) return;
     try {
         let selected = [];
-        document.querySelectorAll('#mission-selection-area input[type="checkbox"]').forEach(chk => { if(chk.checked) selected.push(chk.value); });
-        if(selected.length === 0) { alert("최소 1개 이상의 미션을 선택해주세요."); return; }
+        document.querySelectorAll('#mission-selection-area input[type="checkbox"]').forEach(chk => { if (chk.checked) selected.push(chk.value); });
+        if (selected.length === 0) { alert("최소 1개 이상의 미션을 선택해주세요."); return; }
         await setDoc(doc(db, "users", user.uid), { selectedMissions: selected }, { merge: true });
-        showToast("🎯 주간 미션이 설정되었습니다!"); 
+        showToast("🎯 주간 미션이 설정되었습니다!");
         renderDashboard();
-    } catch(error) {
+    } catch (error) {
         console.error('미션 저장 오류:', error);
         showToast('⚠️ 미션 저장에 실패했습니다.');
     }
 };
 
-window.levelUp = async function(newLevel) {
+window.levelUp = async function (newLevel) {
     const user = auth.currentUser;
-    if(!user) return;
+    if (!user) return;
     try {
         await setDoc(doc(db, "users", user.uid), { missionLevel: newLevel, selectedMissions: [] }, { merge: true });
         alert(`축하합니다! 레벨 ${newLevel}(으)로 승급하셨습니다.`);
-        document.getElementById('level-modal').style.display='none'; 
+        document.getElementById('level-modal').style.display = 'none';
         renderDashboard();
-    } catch(error) {
+    } catch (error) {
         console.error('레벨업 오류:', error);
         showToast('⚠️ 레벨업에 실패했습니다.');
     }
@@ -1282,7 +1654,7 @@ window.levelUp = async function(newLevel) {
 // compressImage, uploadFileAndGetUrl 등은 상단에서 직접 import
 
 // ========== 30일 종합 결과지 ==========
-window.generate30DayReport = async function() {
+window.generate30DayReport = async function () {
     const user = auth.currentUser;
     if (!user) { showToast('로그인이 필요합니다.'); return; }
 
@@ -1306,7 +1678,7 @@ window.generate30DayReport = async function() {
 
         const startDate = logs[0].date;
         const endDate = logs[logs.length - 1].date;
-        document.getElementById('report-period').textContent = `${startDate.replace(/-/g,'.')} ~ ${endDate.replace(/-/g,'.')} (${logs.length}일)`;
+        document.getElementById('report-period').textContent = `${startDate.replace(/-/g, '.')} ~ ${endDate.replace(/-/g, '.')} (${logs.length}일)`;
 
         // ===== 통계 계산 =====
         let totalDiet = 0, totalExer = 0, totalMind = 0, totalPoints = 0;
@@ -1332,7 +1704,7 @@ window.generate30DayReport = async function() {
 
             // 식단 사진 수
             if (log.diet) {
-                ['breakfastUrl','lunchUrl','dinnerUrl','snackUrl'].forEach(k => { if(log.diet[k]) dietPhotos++; });
+                ['breakfastUrl', 'lunchUrl', 'dinnerUrl', 'snackUrl'].forEach(k => { if (log.diet[k]) dietPhotos++; });
             }
             // 운동 횟수
             if (log.exercise) {
@@ -1359,11 +1731,11 @@ window.generate30DayReport = async function() {
         const avgDailyPts = logs.length > 0 ? Math.round(totalPoints / logs.length) : 0;
         const participationRate = Math.round((logs.filter(l => {
             const ap = l.awardedPoints || {};
-            return ap.diet || ap.exercise || ap.mind || (ap.dietPoints||0) + (ap.exercisePoints||0) + (ap.mindPoints||0) > 0;
+            return ap.diet || ap.exercise || ap.mind || (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) > 0;
         }).length / logs.length) * 100);
 
         // 날짜 레이블 (축약)
-        const dateLabels = logs.map(l => l.date.substring(5).replace('-','/'));
+        const dateLabels = logs.map(l => l.date.substring(5).replace('-', '/'));
 
         // ===== HTML 렌더 =====
         let html = '';
@@ -1388,21 +1760,21 @@ window.generate30DayReport = async function() {
                     <div class="report-cat-name">식단</div>
                     <div class="report-cat-stat">${dietDays}일 / ${logs.length}일</div>
                     <div class="report-cat-detail">📷 사진 ${dietPhotos}장 · ${totalDiet}P</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays/logs.length*100)}%; background:#4CAF50;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(dietDays / logs.length * 100)}%; background:#4CAF50;"></div></div>
                 </div>
                 <div class="report-cat-card exercise">
                     <div class="report-cat-emoji">🏃</div>
                     <div class="report-cat-name">운동</div>
                     <div class="report-cat-stat">${exerDays}일 / ${logs.length}일</div>
                     <div class="report-cat-detail">🏋️ 유산소 ${cardioCount}회 · 근력 ${strengthCount}회 · ${totalExer}P</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays/logs.length*100)}%; background:#2196F3;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(exerDays / logs.length * 100)}%; background:#2196F3;"></div></div>
                 </div>
                 <div class="report-cat-card mind">
                     <div class="report-cat-emoji">🧘</div>
                     <div class="report-cat-name">마음</div>
                     <div class="report-cat-stat">${mindDays}일 / ${logs.length}일</div>
                     <div class="report-cat-detail">🧘 명상 ${meditationCount}회 · 감사일기 ${gratitudeCount}회 · ${totalMind}P</div>
-                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays/logs.length*100)}%; background:#9C27B0;"></div></div>
+                    <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / logs.length * 100)}%; background:#9C27B0;"></div></div>
                 </div>
             </div>
         </div>`;
@@ -1424,19 +1796,19 @@ window.generate30DayReport = async function() {
             html += `<div class="report-section">
                 <div class="report-section-title">🏥 건강 지표 변화</div>`;
             if (weights.length >= 2) {
-                const wFirst = weights[0].v, wLast = weights[weights.length-1].v;
+                const wFirst = weights[0].v, wLast = weights[weights.length - 1].v;
                 const wDiff = (wLast - wFirst).toFixed(1);
                 const wSign = wDiff > 0 ? '+' : '';
                 html += `<div class="report-metric-summary">⚖️ 체중: ${wFirst}kg → ${wLast}kg <span class="report-metric-diff ${wDiff < 0 ? 'good' : wDiff > 0 ? 'warn' : ''}">(${wSign}${wDiff}kg)</span></div>`;
             }
             if (glucoses.length >= 2) {
-                const gFirst = glucoses[0].v, gLast = glucoses[glucoses.length-1].v;
+                const gFirst = glucoses[0].v, gLast = glucoses[glucoses.length - 1].v;
                 const gDiff = Math.round(gLast - gFirst);
                 const gSign = gDiff > 0 ? '+' : '';
                 html += `<div class="report-metric-summary">🩸 혈당: ${gFirst} → ${gLast}mg/dL <span class="report-metric-diff ${gDiff < 0 ? 'good' : gDiff > 0 ? 'warn' : ''}">(${gSign}${gDiff})</span></div>`;
             }
             if (bpSys.length >= 2) {
-                const sFirst = bpSys[0].v, sLast = bpSys[bpSys.length-1].v;
+                const sFirst = bpSys[0].v, sLast = bpSys[bpSys.length - 1].v;
                 const sDiff = Math.round(sLast - sFirst);
                 const sSign = sDiff > 0 ? '+' : '';
                 html += `<div class="report-metric-summary">💓 혈압(수축): ${sFirst} → ${sLast}mmHg <span class="report-metric-diff ${sDiff < 0 ? 'good' : sDiff > 0 ? 'warn' : ''}">(${sSign}${sDiff})</span></div>`;
@@ -1462,7 +1834,7 @@ window.generate30DayReport = async function() {
         const heatmapEl = document.getElementById('report-heatmap');
         logs.forEach((log, idx) => {
             const ap = log.awardedPoints || {};
-            const pts = (ap.dietPoints||0) + (ap.exercisePoints||0) + (ap.mindPoints||0) || ((ap.diet?10:0)+(ap.exercise?15:0)+(ap.mind?5:0));
+            const pts = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) || ((ap.diet ? 10 : 0) + (ap.exercise ? 15 : 0) + (ap.mind ? 5 : 0));
             let color = '#eee';
             if (pts > 50) color = '#FF8C00';
             else if (pts > 20) color = '#FFB74D';
@@ -1489,10 +1861,10 @@ window.generate30DayReport = async function() {
         // 건강 지표 차트
         if (document.getElementById('report-chart-health')) {
             let healthLines = [];
-            if (weights.length >= 2) healthLines.push({ data: weights.map(w => w.v), dates: weights.map(w => w.date.substring(5).replace('-','/')), color: '#FF6F00', label: '체중(kg)' });
-            if (glucoses.length >= 2) healthLines.push({ data: glucoses.map(g => g.v), dates: glucoses.map(g => g.date.substring(5).replace('-','/')), color: '#E53935', label: '혈당' });
-            if (bpSys.length >= 2) healthLines.push({ data: bpSys.map(s => s.v), dates: bpSys.map(s => s.date.substring(5).replace('-','/')), color: '#D32F2F', label: '수축기' });
-            if (bpDia.length >= 2) healthLines.push({ data: bpDia.map(d => d.v), dates: bpDia.map(d => d.date.substring(5).replace('-','/')), color: '#1976D2', label: '이완기' });
+            if (weights.length >= 2) healthLines.push({ data: weights.map(w => w.v), dates: weights.map(w => w.date.substring(5).replace('-', '/')), color: '#FF6F00', label: '체중(kg)' });
+            if (glucoses.length >= 2) healthLines.push({ data: glucoses.map(g => g.v), dates: glucoses.map(g => g.date.substring(5).replace('-', '/')), color: '#E53935', label: '혈당' });
+            if (bpSys.length >= 2) healthLines.push({ data: bpSys.map(s => s.v), dates: bpSys.map(s => s.date.substring(5).replace('-', '/')), color: '#D32F2F', label: '수축기' });
+            if (bpDia.length >= 2) healthLines.push({ data: bpDia.map(d => d.v), dates: bpDia.map(d => d.date.substring(5).replace('-', '/')), color: '#1976D2', label: '이완기' });
             drawReportHealthChart('report-chart-health', healthLines);
         }
 
@@ -1521,7 +1893,7 @@ function drawReportBarChart(canvasId, labels, datasets, yLabel) {
 
     // Y max
     let maxY = 0;
-    for (let i = 0; i < n; i++) { let sum = 0; datasets.forEach(ds => sum += (ds.data[i]||0)); maxY = Math.max(maxY, sum); }
+    for (let i = 0; i < n; i++) { let sum = 0; datasets.forEach(ds => sum += (ds.data[i] || 0)); maxY = Math.max(maxY, sum); }
     maxY = Math.ceil(maxY / 10) * 10 || 80;
 
     ctx.clearRect(0, 0, w, h);
@@ -1549,7 +1921,7 @@ function drawReportBarChart(canvasId, labels, datasets, yLabel) {
         // X 레이블 (간격 조절)
         if (n <= 15 || i % Math.ceil(n / 10) === 0) {
             ctx.fillStyle = '#666'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-            ctx.save(); ctx.translate(x + barW/2, h - 3); ctx.rotate(-0.5);
+            ctx.save(); ctx.translate(x + barW / 2, h - 3); ctx.rotate(-0.5);
             ctx.fillText(labels[i], 0, 0); ctx.restore();
         }
     }
@@ -1683,11 +2055,11 @@ function drawReportHealthChart(canvasId, healthLines) {
         const xStart = pad.left;
         const yStart = pad.top + chartH - line.normalized[0] * chartH;
         const xEnd = pad.left + chartW;
-        const yEnd = pad.top + chartH - line.normalized[n-1] * chartH;
+        const yEnd = pad.top + chartH - line.normalized[n - 1] * chartH;
         ctx.fillStyle = line.color; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
         ctx.fillText(line.data[0], xStart + 3, yStart - 5);
         ctx.textAlign = 'right';
-        ctx.fillText(line.data[n-1], xEnd - 3, yEnd - 5);
+        ctx.fillText(line.data[n - 1], xEnd - 3, yEnd - 5);
     });
 
     // 범례
@@ -1703,10 +2075,10 @@ function drawReportHealthChart(canvasId, healthLines) {
 let fastingGraphData = [];
 let currentFastingMetric = 'weight';
 
-window.switchFastingGraph = function(metric, btnEl) {
+window.switchFastingGraph = function (metric, btnEl) {
     currentFastingMetric = metric;
     document.querySelectorAll('#fasting-graph-card .filter-chip').forEach(el => el.classList.remove('active'));
-    if(btnEl) btnEl.classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
     drawFastingChart();
 };
 
@@ -1717,7 +2089,7 @@ async function loadFastingGraphData(userId) {
         fastingGraphData = [];
         snapshot.forEach(d => {
             const data = d.data();
-            if(data.metrics && (data.metrics.weight || data.metrics.glucose || data.metrics.bpSystolic)) {
+            if (data.metrics && (data.metrics.weight || data.metrics.glucose || data.metrics.bpSystolic)) {
                 fastingGraphData.push({
                     date: data.date,
                     weight: parseFloat(data.metrics.weight) || null,
@@ -1728,22 +2100,22 @@ async function loadFastingGraphData(userId) {
             }
         });
         fastingGraphData.reverse(); // oldest first
-        
+
         const card = document.getElementById('fasting-graph-card');
-        if(fastingGraphData.length >= 2 && card) {
+        if (fastingGraphData.length >= 2 && card) {
             card.style.display = 'block';
             drawFastingChart();
-        } else if(card) {
+        } else if (card) {
             card.style.display = 'none';
         }
-    } catch(e) {
+    } catch (e) {
         console.warn('⚠️ 공복 지표 로드 스킵:', e.message);
     }
 }
 
 function drawFastingChart() {
     const canvas = document.getElementById('fasting-chart');
-    if(!canvas || fastingGraphData.length < 2) return;
+    if (!canvas || fastingGraphData.length < 2) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.clientWidth || 340;
@@ -1761,29 +2133,29 @@ function drawFastingChart() {
     // 데이터 준비
     let lines = [];
     let legend = '';
-    if(currentFastingMetric === 'weight') {
+    if (currentFastingMetric === 'weight') {
         const pts = fastingGraphData.filter(d => d.weight !== null);
-        if(pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.weight })), color: '#FF6F00', label: '체중(kg)' });
-        legend = pts.length >= 2 ? `최근: ${pts[pts.length-1].weight}kg` : '데이터 부족';
-    } else if(currentFastingMetric === 'glucose') {
+        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.weight })), color: '#FF6F00', label: '체중(kg)' });
+        legend = pts.length >= 2 ? `최근: ${pts[pts.length - 1].weight}kg` : '데이터 부족';
+    } else if (currentFastingMetric === 'glucose') {
         const pts = fastingGraphData.filter(d => d.glucose !== null);
-        if(pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.glucose })), color: '#E53935', label: '혈당(mg/dL)' });
-        legend = pts.length >= 2 ? `최근: ${pts[pts.length-1].glucose}mg/dL` : '데이터 부족';
-    } else if(currentFastingMetric === 'bp') {
+        if (pts.length >= 2) lines.push({ data: pts.map(d => ({ x: d.date, y: d.glucose })), color: '#E53935', label: '혈당(mg/dL)' });
+        legend = pts.length >= 2 ? `최근: ${pts[pts.length - 1].glucose}mg/dL` : '데이터 부족';
+    } else if (currentFastingMetric === 'bp') {
         const spts = fastingGraphData.filter(d => d.bpSystolic !== null);
         const dpts = fastingGraphData.filter(d => d.bpDiastolic !== null);
-        if(spts.length >= 2) lines.push({ data: spts.map(d => ({ x: d.date, y: d.bpSystolic })), color: '#D32F2F', label: '수축기' });
-        if(dpts.length >= 2) lines.push({ data: dpts.map(d => ({ x: d.date, y: d.bpDiastolic })), color: '#1976D2', label: '이완기' });
-        legend = spts.length >= 2 ? `최근: ${spts[spts.length-1].bpSystolic}/${dpts.length > 0 ? dpts[dpts.length-1].bpDiastolic : '?'}mmHg` : '데이터 부족';
+        if (spts.length >= 2) lines.push({ data: spts.map(d => ({ x: d.date, y: d.bpSystolic })), color: '#D32F2F', label: '수축기' });
+        if (dpts.length >= 2) lines.push({ data: dpts.map(d => ({ x: d.date, y: d.bpDiastolic })), color: '#1976D2', label: '이완기' });
+        legend = spts.length >= 2 ? `최근: ${spts[spts.length - 1].bpSystolic}/${dpts.length > 0 ? dpts[dpts.length - 1].bpDiastolic : '?'}mmHg` : '데이터 부족';
     }
 
     document.getElementById('fasting-chart-legend').textContent = legend;
 
-    if(lines.length === 0) {
+    if (lines.length === 0) {
         ctx.fillStyle = '#999';
         ctx.font = '13px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('기록이 2개 이상 필요합니다', w/2, h/2);
+        ctx.fillText('기록이 2개 이상 필요합니다', w / 2, h / 2);
         return;
     }
 
@@ -1799,7 +2171,7 @@ function drawFastingChart() {
     // 배경 그리드
     ctx.strokeStyle = '#E0E0E0';
     ctx.lineWidth = 0.5;
-    for(let i = 0; i <= 4; i++) {
+    for (let i = 0; i <= 4; i++) {
         const y = pad.top + (chartH / 4) * i;
         ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
         ctx.fillStyle = '#999'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
@@ -1817,7 +2189,7 @@ function drawFastingChart() {
         pts.forEach((p, i) => {
             const x = pad.left + (i / (pts.length - 1)) * chartW;
             const y = pad.top + ((maxY - p.y) / (maxY - minY)) * chartH;
-            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         });
         ctx.stroke();
 
@@ -1832,7 +2204,7 @@ function drawFastingChart() {
 
     // X축 날짜 라벨 (처음, 중간, 마지막)
     const totalPts = lines[0].data.length;
-    const labelIndices = totalPts <= 5 ? [...Array(totalPts).keys()] : [0, Math.floor(totalPts/2), totalPts-1];
+    const labelIndices = totalPts <= 5 ? [...Array(totalPts).keys()] : [0, Math.floor(totalPts / 2), totalPts - 1];
     ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
     labelIndices.forEach(i => {
         const x = pad.left + (i / (totalPts - 1)) * chartW;
@@ -1843,18 +2215,18 @@ function drawFastingChart() {
 
 async function uploadFileAndGetUrl(file, folderName, userId) {
     if (!file) return null;
-    
+
     if (!isValidFileType(file)) {
         showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
         return null;
     }
-    
+
     try {
         let fileToUpload = file;
         if (file.type.startsWith('image/')) {
             fileToUpload = await compressImage(file);
         }
-        
+
         // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
         const isVideo = fileToUpload.type && fileToUpload.type.startsWith('video/');
         const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
@@ -1864,15 +2236,15 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
             showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
             return null;
         }
-        
+
         const timestamp = Date.now();
         const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
         const storageRef = ref(storage, storagePath);
-        
+
         await uploadBytes(storageRef, fileToUpload);
         const url = await getDownloadURL(storageRef);
         return url;
-    } catch(error) {
+    } catch (error) {
         console.error('파일 업로드 실패:', error.code, error.message);
         if (error.code === 'storage/unauthorized') {
             showToast('⚠️ 업로드 권한이 없습니다.');
@@ -1888,7 +2260,7 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
 document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
-    
+
     // 갤러리 탭에서는 오픈단톡방 버튼으로 사용 → 저장 로직 실행 안함
     const gallerySection = document.getElementById('gallery');
     if (gallerySection && gallerySection.style.display === 'block') return;
@@ -1906,7 +2278,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             const getUrl = async (id, folder, oldUrl) => {
                 const el = document.getElementById(id);
-                if(el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
+                if (el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
                     try {
                         return await uploadFileAndGetUrl(el.files[0], folder, user.uid);
                     } catch (err) {
@@ -1914,7 +2286,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         return null;
                     }
                 }
-                if(el && el.parentElement.querySelector('.preview-img').style.display === 'none') {
+                if (el && el.parentElement.querySelector('.preview-img').style.display === 'none') {
                     return null;
                 }
                 return oldUrl || null;
@@ -1924,7 +2296,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const lUrl = await getUrl('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl);
             const dUrl = await getUrl('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl);
             const sUrl = await getUrl('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl);
-            
+
             // 식단 썸네일: 새로 업로드된 파일만 썸네일 생성
             const dietInputs = ['diet-img-breakfast', 'diet-img-lunch', 'diet-img-dinner', 'diet-img-snack'];
             const dietUrls = [bUrl, lUrl, dUrl, sUrl];
@@ -1953,11 +2325,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const cardioBlocks = document.querySelectorAll('.cardio-block');
             for (let block of cardioBlocks) {
                 const fileInput = block.querySelector('.exer-file');
-                const time = block.querySelector('.c-time').value;
-                const dist = block.querySelector('.c-dist').value;
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
-                if(fileInput.files[0]) {
+                let aiAnalysis = null;
+                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
+                if (fileInput.files[0]) {
                     try {
                         url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
                         // 운동 사진 썸네일 생성
@@ -1977,7 +2349,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         url = null;
                     }
                 }
-                if(url || time || dist) cardioList.push({ imageUrl: url, imageThumbUrl: thumbUrl, time, dist });
+                if (url) cardioList.push({ imageUrl: url, imageThumbUrl: thumbUrl, aiAnalysis: aiAnalysis });
             }
 
             let strengthList = [];
@@ -1986,7 +2358,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const fileInput = block.querySelector('.exer-file');
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
-                if(fileInput.files[0]) {
+                let aiAnalysis = null;
+                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
+                if (fileInput.files[0]) {
                     try {
                         url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid);
                         // 근력 동영상 썸네일 생성 & 업로드
@@ -2007,13 +2381,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     }
                 }
                 // 기존 영상의 썸네일 URL 보존
-                if(url) strengthList.push({ videoUrl: url, videoThumbUrl: thumbUrl });
+                if (url) strengthList.push({ videoUrl: url, videoThumbUrl: thumbUrl, aiAnalysis: aiAnalysis });
             }
 
             const sleepFile = document.getElementById('sleep-img');
             let sleepUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
             let sleepThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
-            if(sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
+            if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
                 try {
                     const sleepResult = await uploadImageWithThumb(sleepFile.files[0], 'sleep_images', user.uid);
                     sleepUrl = sleepResult.url;
@@ -2023,7 +2397,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepUrl = null;
                     sleepThumbUrl = null;
                 }
-            } else if(document.getElementById('preview-sleep').style.display === 'none') {
+            } else if (document.getElementById('preview-sleep').style.display === 'none') {
                 sleepUrl = null;
                 sleepThumbUrl = null;
             }
@@ -2047,21 +2421,21 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             // 운동: 유산소 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
             let newExerPts = 0;
-            if(cardioList.length >= 1) newExerPts += 10;
-            if(cardioList.length >= 2) newExerPts += 5;
-            if(strengthList.length >= 1) newExerPts += 10;
-            if(strengthList.length >= 2) newExerPts += 5;
+            if (cardioList.length >= 1) newExerPts += 10;
+            if (cardioList.length >= 2) newExerPts += 5;
+            if (strengthList.length >= 1) newExerPts += 10;
+            if (strengthList.length >= 2) newExerPts += 5;
             newExerPts = Math.min(newExerPts, 30);
 
             // 마음: 수면분석 10P + 마음챙김/감사일기 10P (최대 20P)
             let newMindPts = 0;
-            if(sleepUrl) newMindPts += 10;
-            if(meditationDone || gratitudeText) newMindPts += 10;
+            if (sleepUrl) newMindPts += 10;
+            if (meditationDone || gratitudeText) newMindPts += 10;
             newMindPts = Math.min(newMindPts, 20);
 
             const pointsToGive = Math.max(0, newDietPts - oldDietPts) +
-                               Math.max(0, newExerPts - oldExerPts) +
-                               Math.max(0, newMindPts - oldMindPts);
+                Math.max(0, newExerPts - oldExerPts) +
+                Math.max(0, newMindPts - oldMindPts);
 
             awarded.dietPoints = newDietPts;
             awarded.exercisePoints = newExerPts;
@@ -2070,6 +2444,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             awarded.exercise = newExerPts > 0;
             awarded.mind = newMindPts > 0;
 
+            // 기존 AI 분석 결과 보존
+            const existingAnalysis = oldData.dietAnalysis || {};
+            const existingSleepAnalysis = oldData.sleepAndMind?.sleepAnalysis || null;
+
             const saveData = sanitize({
                 userId: user.uid, userName: user.displayName, date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
                 metrics: { weight: document.getElementById('weight').value, glucose: document.getElementById('glucose').value, bpSystolic: document.getElementById('bp-systolic').value, bpDiastolic: document.getElementById('bp-diastolic').value },
@@ -2077,13 +2455,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,
                     breakfastThumbUrl: bThumbUrl, lunchThumbUrl: lThumbUrl, dinnerThumbUrl: dThumbUrl, snackThumbUrl: sThumbUrl
                 },
+                dietAnalysis: existingAnalysis,
                 exercise: { cardioList: cardioList, strengthList: strengthList },
-                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, meditationDone: meditationDone, gratitude: gratitudeText }
+                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
             await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
 
-            if(pointsToGive > 0) {
+            if (pointsToGive > 0) {
                 const userRef = doc(db, "users", user.uid);
                 // increment()로 원자적 업데이트 (Race Condition 방지)
                 await setDoc(userRef, { coins: increment(pointsToGive) }, { merge: true });
@@ -2091,22 +2470,22 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 document.getElementById('point-balance').innerText = currentDisplayed + pointsToGive;
                 showToast(`🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
             } else { showToast(`🎉 데이터가 업데이트되었습니다.`); }
-            
+
             // 데이터 저장 후 캐시 초기화 (갤러리 재로드를 위해)
-            cachedGalleryLogs = []; 
+            cachedGalleryLogs = [];
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
-            
+
             // 마일스톤 확인 및 업데이트
             await checkMilestones(user.uid);
             await renderMilestones(user.uid);
-            
+
             // 챌린지 진행도 업데이트
             await updateChallengeProgress();
-            
+
             loadDataForSelectedDate(selectedDateStr);
 
-        } catch (e) { 
+        } catch (e) {
             console.error('데이터 저장 오류:', e);
             let errorMsg = '저장 중 오류가 발생했습니다.';
             if (e.code === 'permission-denied') {
@@ -2117,17 +2496,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 errorMsg = e.message;
             }
             showToast(`⚠️ ${errorMsg}`);
-        } 
+        }
         finally { saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false; }
     })();
 });
 
 // [핵심] 갤러리 하트 누르면 즉각 반응 (새로고침 방지)
 // reactions 필드만 업데이트하여 보안 규칙 충돌 방지
-window.toggleReaction = async function(docId, reactionType, btnElement) {
+window.toggleReaction = async function (docId, reactionType, btnElement) {
     const user = auth.currentUser;
-    if(!user) { document.getElementById('login-modal').style.display='flex'; return; }
-    
+    if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
+
     // span이 없으면 생성 (count 0일 때 span 없는 템플릿 대응)
     let span = btnElement.querySelector('span');
     if (!span) {
@@ -2138,47 +2517,47 @@ window.toggleReaction = async function(docId, reactionType, btnElement) {
     let count = parseInt(span.innerText) || 0;
     // 'reacted' 또는 'active' 클래스 모두 호환
     const isActive = btnElement.classList.contains('reacted') || btnElement.classList.contains('active');
-    
-    if (isActive) { btnElement.classList.remove('reacted', 'active'); count = Math.max(0, count - 1); } 
+
+    if (isActive) { btnElement.classList.remove('reacted', 'active'); count = Math.max(0, count - 1); }
     else { btnElement.classList.add('reacted'); count++; }
     span.innerText = count;
 
     try {
         const logRef = doc(db, "daily_logs", docId);
-        
+
         // arrayUnion/arrayRemove로 원자적 업데이트 (전체 문서 읽기 불필요)
         if (isActive) {
-            await setDoc(logRef, { 
+            await setDoc(logRef, {
                 reactions: { [reactionType]: arrayRemove(user.uid) }
             }, { merge: true });
         } else {
-            await setDoc(logRef, { 
+            await setDoc(logRef, {
                 reactions: { [reactionType]: arrayUnion(user.uid) }
             }, { merge: true });
         }
-    } catch(error) {
+    } catch (error) {
         console.error('반응 저장 오류:', error);
         // UI 롤백 (실패 시 원복)
-        if (isActive) { btnElement.classList.add('reacted'); count++; } 
+        if (isActive) { btnElement.classList.add('reacted'); count++; }
         else { btnElement.classList.remove('reacted'); count = Math.max(0, count - 1); }
         span.innerText = count;
         showToast('⚠️ 반응 저장에 실패했습니다.');
     }
 };
 
-window.toggleFriend = async function(friendId) {
+window.toggleFriend = async function (friendId) {
     const user = auth.currentUser;
-    if(!user) { document.getElementById('login-modal').style.display='flex'; return; }
+    if (!user) { document.getElementById('login-modal').style.display = 'flex'; return; }
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
     let friends = userSnap.exists() ? (userSnap.data().friends || []) : [];
-    if(friends.includes(friendId)) { await setDoc(userRef, { friends: arrayRemove(friendId) }, {merge: true}); showToast("친구 삭제 완료"); } 
+    if (friends.includes(friendId)) { await setDoc(userRef, { friends: arrayRemove(friendId) }, { merge: true }); showToast("친구 삭제 완료"); }
     else {
-        if(friends.length >= 3) { showToast("친구는 3명까지만 가능합니다!"); return; }
-        await setDoc(userRef, { friends: arrayUnion(friendId) }, {merge: true}); showToast("✨ 친구 등록 완료! 갤러리 상단에 뜹니다.");
+        if (friends.length >= 3) { showToast("친구는 3명까지만 가능합니다!"); return; }
+        await setDoc(userRef, { friends: arrayUnion(friendId) }, { merge: true }); showToast("✨ 친구 등록 완료! 갤러리 상단에 뜹니다.");
     }
     // 친구 목록 변경 시 캐시 초기화 및 재로드
-    cachedGalleryLogs = []; 
+    cachedGalleryLogs = [];
     galleryDisplayCount = 0;
     sortedFilteredDirty = true;
     loadGalleryData();
@@ -2321,7 +2700,7 @@ async function generateVideoThumbnailBlob(file) {
                 ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
 
                 // 검은 프레임 감지
-                const px = ctx.getImageData(size/2, size/2, 1, 1).data;
+                const px = ctx.getImageData(size / 2, size / 2, 1, 1).data;
                 if (px[0] === 0 && px[1] === 0 && px[2] === 0 && video.currentTime < 3) {
                     video.currentTime = Math.min(video.duration || 2, 2);
                     video.addEventListener('seeked', () => {
@@ -2329,7 +2708,7 @@ async function generateVideoThumbnailBlob(file) {
                             ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
                             clearTimeout(timer);
                             canvas.toBlob((blob) => done(blob), 'image/jpeg', 0.7);
-                        } catch(_) { clearTimeout(timer); done(null); }
+                        } catch (_) { clearTimeout(timer); done(null); }
                     }, { once: true });
                     return;
                 }
@@ -2355,12 +2734,12 @@ async function generateVideoThumbnailBlob(file) {
 // 이미지 파일 업로드 + 썸네일도 함께 업로드
 async function uploadImageWithThumb(file, folderName, userId) {
     if (!file) return { url: null, thumbUrl: null };
-    
+
     try {
         // 원본 업로드
         const url = await uploadFileAndGetUrl(file, folderName, userId);
         if (!url) return { url: null, thumbUrl: null };
-        
+
         // 썸네일 생성 & 업로드
         let thumbUrl = null;
         try {
@@ -2375,7 +2754,7 @@ async function uploadImageWithThumb(file, folderName, userId) {
         } catch (e) {
             console.warn('썸네일 생성/업로드 실패 (원본은 성공):', e.message);
         }
-        
+
         return { url, thumbUrl };
     } catch (e) {
         console.error('이미지 업로드 실패:', e);
@@ -2383,7 +2762,7 @@ async function uploadImageWithThumb(file, folderName, userId) {
     }
 }
 
-window.handleThumbFallback = function(imgEl) {
+window.handleThumbFallback = function (imgEl) {
     const raw = imgEl.getAttribute('data-fallback-list') || '';
     const list = raw ? raw.split('||').filter(Boolean) : [];
     if (!list.length) {
@@ -2497,7 +2876,7 @@ function buildShareImageGrid(urls, maxCount = 4) {
         if (isVideo) {
             htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><video src="${safeUrl}#t=0.5" muted playsinline preload="metadata" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:8px;"></video></div>`;
         } else {
-            htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i+1}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;"></div>`;
+            htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i + 1}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;"></div>`;
         }
     }
     return htmlString;
@@ -2555,7 +2934,7 @@ async function prewarmThumbCache(logItems) {
 
     const workers = Array.from({ length: 8 }, async (_, i) => {
         for (let idx = i; idx < tasks.length; idx += 8) {
-            try { await tasks[idx](); } catch (_) {}
+            try { await tasks[idx](); } catch (_) { }
         }
     });
 
@@ -2581,7 +2960,7 @@ async function prepareShareThumbsForCapture() {
                     c.height = videoEl.videoHeight || 320;
                     c.getContext('2d').drawImage(videoEl, 0, 0, c.width, c.height);
                     b64 = c.toDataURL('image/jpeg', 0.85);
-                } catch (_) {}
+                } catch (_) { }
             }
             // 2) 썸네일 이미지가 있으면 사용
             if (!b64 || b64 === 'data:,') {
@@ -2632,7 +3011,7 @@ function openSharePlatformModal() {
     if (modal) modal.style.display = 'flex';
 }
 
-window.closeSharePlatformModal = function() {
+window.closeSharePlatformModal = function () {
     const modal = document.getElementById('share-platform-modal');
     if (modal) modal.style.display = 'none';
 };
@@ -2643,17 +3022,17 @@ async function createSquareShareBlob() {
     const height = captureArea.offsetHeight;
 
     const canvas = await html2canvas(captureArea, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: null,
-            allowTaint: false,
-            logging: false,
-            imageTimeout: 7000,
-            removeContainer: true,
-            foreignObjectRendering: false,
-            width,
-            height
-        });
+        scale: 2,
+        useCORS: true,
+        backgroundColor: null,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 7000,
+        removeContainer: true,
+        foreignObjectRendering: false,
+        width,
+        height
+    });
 
     return await new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
@@ -2666,7 +3045,7 @@ async function createSquareShareBlob() {
     });
 };
 
-window.shareMyCard = async function() {
+window.shareMyCard = async function () {
     const btn = document.querySelector('.btn-share-action');
     const originalText = btn.innerHTML;
     btn.innerText = '⏳ 이미지 생성 중...';
@@ -2708,7 +3087,7 @@ window.shareMyCard = async function() {
     }
 };
 
-window.shareViaSystem = async function() {
+window.shareViaSystem = async function () {
     if (!latestShareFile) {
         showToast('먼저 공유 이미지를 생성해주세요.');
         return;
@@ -2734,10 +3113,10 @@ window.shareViaSystem = async function() {
                 showToast('이 브라우저는 시스템 공유를 지원하지 않습니다.\n이미지 저장 또는 링크 복사를 이용해주세요.');
             }
         }
-    } catch (_) {}
+    } catch (_) { }
 };
 
-window.downloadShareImage = function() {
+window.downloadShareImage = function () {
     if (!latestShareBlob) {
         showToast('먼저 자랑하기 버튼을 눌러주세요.');
         return;
@@ -2753,7 +3132,7 @@ window.downloadShareImage = function() {
     showToast('✅ 이미지가 다운로드 폴더에 저장되었습니다.');
 };
 
-window.copyShareLink = function() {
+window.copyShareLink = function () {
     const url = window.location.href;
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(() => {
@@ -2791,7 +3170,7 @@ async function shareFileToAppsOrFallback(platform) {
             await navigator.share(shareData);
             closeSharePlatformModal();
             return true;
-        } catch (_) {}
+        } catch (_) { }
     }
 
     // PC에서는 이미지 자동 다운로드 + 플랫폼 열기
@@ -2818,7 +3197,7 @@ async function shareFileToAppsOrFallback(platform) {
     return false;
 }
 
-window.shareToPlatform = async function(platform) {
+window.shareToPlatform = async function (platform) {
     if (!latestShareBlob || !latestShareFile) {
         showToast('먼저 자랑하기 버튼을 눌러 이미지를 생성해주세요.');
         return;
@@ -2850,12 +3229,12 @@ let sortedFilteredDirty = true;
 function setupInfiniteScroll() {
     const sentinel = document.getElementById('gallery-sentinel');
     if (!sentinel) return;
-    
+
     // 기존 옵저버가 있으면 해제
     if (galleryIntersectionObserver) {
         galleryIntersectionObserver.disconnect();
     }
-    
+
     galleryIntersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting && !isLoadingMore) {
@@ -2865,7 +3244,7 @@ function setupInfiniteScroll() {
     }, {
         rootMargin: '100px' // 하단 100px 전에 미리 로드
     });
-    
+
     galleryIntersectionObserver.observe(sentinel);
 }
 
@@ -2895,10 +3274,10 @@ function createSkeletonHtml(count = 3) {
 function hasMediaForFilter(data, filter) {
     if (filter === 'diet' || filter === 'all') {
         if (data.diet) {
-            for (const meal of ['breakfast','lunch','dinner','snack']) {
+            for (const meal of ['breakfast', 'lunch', 'dinner', 'snack']) {
                 if (data.diet[`${meal}Url`]) { if (filter === 'diet') return true; else break; }
             }
-            if (filter === 'all' && data.diet && ['breakfast','lunch','dinner','snack'].some(m => data.diet[`${m}Url`])) {
+            if (filter === 'all' && data.diet && ['breakfast', 'lunch', 'dinner', 'snack'].some(m => data.diet[`${m}Url`])) {
                 // has diet
             }
         }
@@ -2917,7 +3296,7 @@ function hasMediaForFilter(data, filter) {
         }
     }
     if (filter === 'all') {
-        const hasDiet = data.diet && ['breakfast','lunch','dinner','snack'].some(m => data.diet[`${m}Url`]);
+        const hasDiet = data.diet && ['breakfast', 'lunch', 'dinner', 'snack'].some(m => data.diet[`${m}Url`]);
         const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length);
         const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude;
         return !!(hasDiet || hasExercise || hasMind);
@@ -2941,31 +3320,31 @@ function refreshSortedFiltered() {
 // 추가 아이템 로드 함수 (추가분만 append - 전체 재렌더 X)
 function loadMoreGalleryItems() {
     if (isLoadingMore) return;
-    
+
     refreshSortedFiltered();
     const sentinel = document.getElementById('gallery-sentinel');
-    
+
     if (galleryDisplayCount >= sortedFilteredCache.length) {
         sentinel.style.display = 'none';
         return;
     }
-    
+
     isLoadingMore = true;
-    
+
     // 추가분만 append (전체 재렌더 X)
     const container = document.getElementById('gallery-container');
     const myId = auth.currentUser ? auth.currentUser.uid : "";
     const start = galleryDisplayCount;
     const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
-    
+
     for (let i = start; i < end; i++) {
         const card = buildGalleryCard(sortedFilteredCache[i], myId);
         if (card) container.appendChild(card);
     }
-    
+
     galleryDisplayCount = end;
     isLoadingMore = false;
-    
+
     if (galleryDisplayCount >= sortedFilteredCache.length) {
         sentinel.style.display = 'none';
         if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
@@ -2986,7 +3365,7 @@ function cleanupGalleryResources() {
         galleryIntersectionObserver.disconnect();
         galleryIntersectionObserver = null;
     }
-    
+
     // 고유한 상황에서만 캠시 정리 (로그아웃 등)
     isLoadingMore = false;
 }
@@ -3005,24 +3384,24 @@ async function loadGalleryData() {
         if (activitySummary) activitySummary.style.display = 'none';
     }
 
-    if(cachedGalleryLogs.length === 0) {
+    if (cachedGalleryLogs.length === 0) {
         // 즉시 스켈레톤 표시 (체감 로딩 0ms)
         container.innerHTML = createSkeletonHtml(4);
-        
-        if(user) {
+
+        if (user) {
             const userSnap = await getDoc(doc(db, "users", myId));
-            if(userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
+            if (userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
         }
-        
+
         try {
             const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
             const snapshot = await getDocs(q);
-            
+
             let logsArray = [];
-            snapshot.forEach(d => { logsArray.push({id: d.id, data: d.data()}); });
+            snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
             cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
             sortedFilteredDirty = true;
-        } catch(e) {
+        } catch (e) {
             console.error('갤러리 데이터 로드 실패:', e);
             if (!user) {
                 container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 보려면 로그인이 필요합니다.</p><button class="google-btn" style="margin:0 auto;" onclick="document.getElementById(\'login-modal\').style.display=\'flex\'">🌟 구글로 시작하기</button></div>';
@@ -3033,28 +3412,28 @@ async function loadGalleryData() {
         // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
         buildShareCardAsync(myId, user);
     }
-    
+
     // 피드 즉시 렌더링
     galleryDisplayCount = 0;
     container.innerHTML = '';
-    
+
     refreshSortedFiltered();
     const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
-    
+
     for (let i = 0; i < end; i++) {
         const card = buildGalleryCard(sortedFilteredCache[i], myId);
         if (card) container.appendChild(card);
     }
-    
+
     galleryDisplayCount = end;
-    
+
     const sentinel = document.getElementById('gallery-sentinel');
     if (galleryDisplayCount >= sortedFilteredCache.length) {
         sentinel.style.display = 'none';
     } else {
         sentinel.style.display = 'block';
     }
-    
+
     if (sortedFilteredCache.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
     }
@@ -3068,69 +3447,69 @@ async function loadGalleryData() {
 async function buildShareCardAsync(myId, user) {
     try {
         const { todayStr, yesterdayStr } = getDatesInfo();
-        let myRecentLogs = []; 
-        cachedGalleryLogs.forEach(item => { 
-            if(item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr)) 
-                myRecentLogs.push(item.data); 
+        let myRecentLogs = [];
+        cachedGalleryLogs.forEach(item => {
+            if (item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr))
+                myRecentLogs.push(item.data);
         });
-        
-        if(user && myRecentLogs.length > 0) {
+
+        if (user && myRecentLogs.length > 0) {
             document.getElementById('my-share-container').style.display = 'flex';
-            const latest = myRecentLogs[0]; 
+            const latest = myRecentLogs[0];
             document.getElementById('share-name').innerText = user.displayName;
             document.getElementById('share-date').innerText = latest.date.replace(/-/g, '. ');
             let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
-            if(points === 0 && latest.awardedPoints) { if(latest.awardedPoints.diet) points += 10; if(latest.awardedPoints.exercise) points += 15; if(latest.awardedPoints.mind) points += 5; }
+            if (points === 0 && latest.awardedPoints) { if (latest.awardedPoints.diet) points += 10; if (latest.awardedPoints.exercise) points += 15; if (latest.awardedPoints.mind) points += 5; }
             document.getElementById('share-point').innerText = points;
 
             // 공유 카드용 이미지 - 썸네일 우선
             let imgs = [];
-            if(latest.diet) {
-                ['breakfast','lunch','dinner','snack'].forEach(meal => { 
+            if (latest.diet) {
+                ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
                     const thumb = latest.diet[`${meal}ThumbUrl`];
                     const orig = latest.diet[`${meal}Url`];
-                    if(thumb) imgs.push(thumb);
-                    else if(orig) imgs.push(orig);
+                    if (thumb) imgs.push(thumb);
+                    else if (orig) imgs.push(orig);
                 });
             }
-            if(latest.exercise) {
-                if(latest.exercise.cardioList && latest.exercise.cardioList.length > 0) {
-                    latest.exercise.cardioList.forEach(c => { 
-                        if(c.imageThumbUrl) imgs.push(c.imageThumbUrl);
-                        else if(c.imageUrl) imgs.push(c.imageUrl); 
+            if (latest.exercise) {
+                if (latest.exercise.cardioList && latest.exercise.cardioList.length > 0) {
+                    latest.exercise.cardioList.forEach(c => {
+                        if (c.imageThumbUrl) imgs.push(c.imageThumbUrl);
+                        else if (c.imageUrl) imgs.push(c.imageUrl);
                     });
-                } else if(latest.exercise.cardioImageUrl) {
+                } else if (latest.exercise.cardioImageUrl) {
                     imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
                 }
-                if(latest.exercise.strengthList && latest.exercise.strengthList.length > 0) {
-                    latest.exercise.strengthList.forEach(s => { 
-                        if(s.videoThumbUrl) imgs.push(s.videoThumbUrl);
-                        else if(s.videoUrl) imgs.push(s.videoUrl); 
+                if (latest.exercise.strengthList && latest.exercise.strengthList.length > 0) {
+                    latest.exercise.strengthList.forEach(s => {
+                        if (s.videoThumbUrl) imgs.push(s.videoThumbUrl);
+                        else if (s.videoUrl) imgs.push(s.videoUrl);
                     });
-                } else if(latest.exercise.strengthVideoUrl) {
+                } else if (latest.exercise.strengthVideoUrl) {
                     imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
                 }
             }
-            if(latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
-            
+            if (latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
+
             imgs = [...new Set(imgs)].filter(url => url && url.trim() !== '');
-            
+
             const imgGrid = document.getElementById('share-imgs');
             imgGrid.innerHTML = '';
             imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items');
-            
+
             let htmlString = buildShareImageGrid(imgs, 4);
             imgGrid.innerHTML = htmlString;
             if (imgs.length === 1) imgGrid.classList.add('single-item');
             if (imgs.length === 2) imgGrid.classList.add('two-items');
             if (imgs.length === 3) imgGrid.classList.add('three-items');
             if (imgs.length >= 4) imgGrid.classList.add('four-items');
-            
-            if(imgs.length === 0) imgGrid.innerHTML = `<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 완료!</div>`;
+
+            if (imgs.length === 0) imgGrid.innerHTML = `<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 완료!</div>`;
         } else {
             document.getElementById('my-share-container').style.display = 'none';
         }
-    } catch(e) {
+    } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
     }
@@ -3139,7 +3518,7 @@ async function buildShareCardAsync(myId, user) {
 // 인스타그램 스타일: 내 게시물에 달린 반응/댓글 요약 배너
 function renderActivitySummary(myId) {
     const summaryEl = document.getElementById('gallery-activity-summary');
-    if (!summaryEl || !myId) { if(summaryEl) summaryEl.style.display = 'none'; return; }
+    if (!summaryEl || !myId) { if (summaryEl) summaryEl.style.display = 'none'; return; }
 
     let totalHeart = 0, totalFire = 0, totalClap = 0, totalComments = 0;
     cachedGalleryLogs.forEach(item => {
@@ -3175,7 +3554,7 @@ function renderActivitySummary(myId) {
 }
 
 // 댓글 추가
-window.addComment = async function(docId) {
+window.addComment = async function (docId) {
     const user = auth.currentUser;
     if (!user) { showToast('로그인이 필요합니다.'); return; }
     const input = document.getElementById(`comment-input-${docId}`);
@@ -3211,7 +3590,7 @@ window.addComment = async function(docId) {
 };
 
 // 댓글 삭제 (본인만)
-window.deleteComment = async function(docId, commentIdx) {
+window.deleteComment = async function (docId, commentIdx) {
     const user = auth.currentUser;
     if (!user) return;
     const item = cachedGalleryLogs.find(l => l.id === docId);
@@ -3232,7 +3611,7 @@ window.deleteComment = async function(docId, commentIdx) {
 };
 
 // 댓글 더보기 토글
-window.toggleComments = function(docId) {
+window.toggleComments = function (docId) {
     const list = document.getElementById(`comment-list-${docId}`);
     if (!list) return;
     const isExpanded = list.dataset.expanded === 'true';
@@ -3282,7 +3661,7 @@ function formatCommentTime(timestamp) {
     const days = Math.floor(hours / 24);
     if (days < 7) return `${days}일 전`;
     const d = new Date(timestamp);
-    return `${d.getMonth()+1}/${d.getDate()}`;
+    return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 // 중복 코드 제거: 갤러리 미디어 수집 헬퍼 함수 (썸네일 우선)
@@ -3294,62 +3673,86 @@ function collectGalleryMedia(data) {
         mindText: ''
     };
 
-    // 식단 미디어 (썸네일 우선, 클릭 시 원본)
-    if(data.diet) {
-        ['breakfast','lunch','dinner','snack'].forEach(meal => {
+    // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
+    if (data.diet) {
+        ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
             const origUrl = data.diet[`${meal}Url`];
             const thumbUrl = data.diet[`${meal}ThumbUrl`];
-            if(origUrl) {
-                const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(origUrl);
+            if (origUrl && isValidStorageUrl(origUrl)) {
+                const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(origUrl);
                 const full = escapeHtml(origUrl);
-                result.dietHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="${meal} 식사 사진" loading="lazy" decoding="async">`;
+                const hasAi = data.dietAnalysis && data.dietAnalysis[meal];
+                const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.dietAnalysis[meal]))))}"` : '';
+                result.dietHtml += `<div class="gallery-media-wrapper"${aiAttr}>
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${meal} 식단 사진" loading="lazy" decoding="async">
+                    ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                    <div class="gallery-ai-overlay" style="display:none;"></div>
+                </div>`;
             }
         });
     }
 
-    // 운동 미디어 (중복 제거, 썸네일 우선)
-    if(data.exercise) {
+    // 운동 미디어 (중복 제거, 썸네일 우선) - AI분석 오버레이 포함
+    if (data.exercise) {
         let addedUrls = new Set();
-        const addImg = (url, thumbUrl) => {
-            if(url && !addedUrls.has(url)) {
-                const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(url);
+        const addImg = (url, thumbUrl, aiAnalysis) => {
+            if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
+                const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
                 const full = escapeHtml(url);
-                result.exerciseHtml += `<img src="${src}" onclick="openLightbox('${full}')" alt="운동 인증 사진" loading="lazy" decoding="async">`;
+                const hasAi = aiAnalysis != null;
+                const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(aiAnalysis))))}"` : '';
+                result.exerciseHtml += `<div class="gallery-media-wrapper"${aiAttr}>
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="운동 인증 사진" loading="lazy" decoding="async">
+                    ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                    <div class="gallery-ai-overlay" style="display:none;"></div>
+                </div>`;
                 addedUrls.add(url);
             }
         };
         const addVid = (url, thumbUrl) => {
-            if(url && !addedUrls.has(url)) {
+            if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
                 const safeUrl = escapeHtml(url);
-                if (thumbUrl) {
-                    // 썸네일 이미지로 표시, 클릭 시 영상 재생
+                if (thumbUrl && isValidStorageUrl(thumbUrl)) {
                     const safeThumb = escapeHtml(thumbUrl);
-                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async"><div class="video-play-btn">&#9654;</div></div>`;
+                    result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
+                        <img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async">
+                        <div class="video-play-btn">&#9654;</div>
+                    </div>`;
                 } else {
-                    // 썸네일 없으면 기존 방식 (video 태그로 프레임 추출)
-                    result.exerciseHtml += `<div class="video-thumb-wrapper" onclick="playGalleryVideo(this)" data-video-src="${safeUrl}"><video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video><div class="video-play-btn">&#9654;</div></div>`;
+                    result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
+                        <video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video>
+                        <div class="video-play-btn">&#9654;</div>
+                    </div>`;
                 }
                 addedUrls.add(url);
             }
         };
-        
-        addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl);
+
+        addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl, null);
         addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl);
-        if(data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl));
-        if(data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl));
+        if (data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl, c.aiAnalysis));
+        if (data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl));
     }
 
-    // 마음 미디어 (썸네일 우선)
-    if(data.sleepAndMind?.sleepImageUrl) {
+    // 마음 미디어 (썸네일 우선) - 클릭 시 확대 + AI분석 오버레이
+    if (data.sleepAndMind?.sleepImageUrl) {
         const url = data.sleepAndMind.sleepImageUrl;
         const thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
-        const src = thumbUrl ? escapeHtml(thumbUrl) : escapeHtml(url);
-        const full = escapeHtml(url);
-        result.mindHtml = `<img src="${src}" onclick="openLightbox('${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async">`;
+        if (isValidStorageUrl(url)) {
+            const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
+            const full = escapeHtml(url);
+            const hasSleepAi = data.sleepAndMind.sleepAnalysis != null;
+            const sleepAiAttr = hasSleepAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.sleepAndMind.sleepAnalysis))))}"` : '';
+            result.mindHtml = `<div class="gallery-media-wrapper"${sleepAiAttr}>
+                <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async">
+                ${hasSleepAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
+                <div class="gallery-ai-overlay" style="display:none;"></div>
+            </div>`;
+        }
     }
 
     // 마음 텍스트
-    if(data.sleepAndMind?.gratitude) {
+    if (data.sleepAndMind?.gratitude) {
         const safeGratitude = escapeHtml(data.sleepAndMind.gratitude);
         result.mindText = `<div style="font-size:13px; color:#555; background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:12px; font-style:italic;">💭 "${safeGratitude}"</div>`;
     }
@@ -3361,27 +3764,27 @@ function collectGalleryMedia(data) {
 function buildGalleryCard(item, myId) {
     const data = item.data;
     const isFriend = cachedMyFriends.includes(data.userId);
-    
+
     const media = collectGalleryMedia(data);
     let contentHtml = '';
     let shouldShow = false;
 
     if (galleryFilter === 'all') {
         const allMedia = media.dietHtml + media.exerciseHtml + media.mindHtml;
-        if(allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
-        if(media.mindText) contentHtml += media.mindText;
-        if(allMedia || media.mindText) shouldShow = true;
+        if (allMedia) contentHtml += `<div class="gallery-photos">${allMedia}</div>`;
+        if (media.mindText) contentHtml += media.mindText;
+        if (allMedia || media.mindText) shouldShow = true;
     } else if (galleryFilter === 'diet') {
-        if(media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
+        if (media.dietHtml) { contentHtml += `<div class="gallery-photos">${media.dietHtml}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'exercise') {
-        if(media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
+        if (media.exerciseHtml) { contentHtml += `<div class="gallery-photos">${media.exerciseHtml}</div>`; shouldShow = true; }
     } else if (galleryFilter === 'mind') {
-        if(media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
-        if(media.mindText) contentHtml += media.mindText;
-        if(media.mindHtml || media.mindText) shouldShow = true;
+        if (media.mindHtml) contentHtml += `<div class="gallery-photos">${media.mindHtml}</div>`;
+        if (media.mindText) contentHtml += media.mindText;
+        if (media.mindHtml || media.mindText) shouldShow = true;
     }
-    
-    if(!shouldShow) return null;
+
+    if (!shouldShow) return null;
 
     const isGuest = !auth.currentUser;
     const rx = data.reactions || { heart: [], fire: [], clap: [] };
@@ -3418,7 +3821,7 @@ function buildGalleryCard(item, myId) {
     // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
     const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
 
-    const actionsHtml = isGuest 
+    const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">
             <span class="action-btn">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</span>
             <span class="action-btn">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</span>
@@ -3471,14 +3874,14 @@ function renderFeedOnly() {
     const sentinel = document.getElementById('gallery-sentinel');
 
     refreshSortedFiltered();
-    
+
     const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
-    
+
     for (let i = 0; i < end; i++) {
         const card = buildGalleryCard(sortedFilteredCache[i], myId);
         if (card) container.appendChild(card);
     }
-    
+
     galleryDisplayCount = end;
 
     if (galleryDisplayCount >= sortedFilteredCache.length || sortedFilteredCache.length === 0) {
@@ -3493,7 +3896,7 @@ function renderFeedOnly() {
         }
     }
 
-    if(sortedFilteredCache.length === 0) {
+    if (sortedFilteredCache.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#888; padding:20px; background:#f9f9f9; border-radius:8px;">해당하는 기록이 없습니다.</p>';
     }
 }
@@ -3505,7 +3908,7 @@ function initGalleryVideoThumbs() {
         video.dataset.thumbReady = '1';
 
         const setFrame = () => {
-            try { video.currentTime = 0.1; } catch (_) {}
+            try { video.currentTime = 0.1; } catch (_) { }
         };
 
         if (video.readyState >= 2) {
@@ -3517,13 +3920,13 @@ function initGalleryVideoThumbs() {
 }
 
 // 접근성: 키보드 네비게이션 지원
-document.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function (e) {
     // Escape 키로 모달/라이트박스 닫기
     if (e.key === 'Escape' || e.key === 'Esc') {
         const lightbox = document.getElementById('lightbox-modal');
         const levelModal = document.getElementById('level-modal');
         const guideModal = document.getElementById('guide-modal');
-        
+
         if (lightbox && lightbox.style.display === 'flex') {
             const video = document.getElementById('lightbox-video');
             if (video) {
@@ -3543,7 +3946,7 @@ document.addEventListener('keydown', function(e) {
             e.preventDefault();
         }
     }
-    
+
     // Tab 트랩 방지: 라이트박스 활성화 시에도 Tab 이동 가능하도록
     if (e.key === 'Tab') {
         const lightbox = document.getElementById('lightbox-modal');
@@ -3558,7 +3961,7 @@ document.addEventListener('keydown', function(e) {
 // 접근성: point-badge에 Enter 키 지원
 const pointBadge = document.getElementById('point-badge-ui');
 if (pointBadge) {
-    pointBadge.addEventListener('keydown', function(e) {
+    pointBadge.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             this.click();
@@ -3573,7 +3976,7 @@ if (lightboxModal) {
     lightboxModal.setAttribute('aria-label', '미디어 확대 보기');
     lightboxModal.setAttribute('tabindex', '-1');
 
-    lightboxModal.addEventListener('click', function() {
+    lightboxModal.addEventListener('click', function () {
         const video = document.getElementById('lightbox-video');
         if (video) {
             video.pause();
@@ -3583,11 +3986,370 @@ if (lightboxModal) {
         const img = document.getElementById('lightbox-img');
         if (img) img.style.display = 'block';
     });
-    
+
     // 라이트박스 열릴 때 포커스 설정
     const originalOpenLightbox = window.openLightbox;
-    window.openLightbox = function(url) {
+    window.openLightbox = function (url) {
         originalOpenLightbox(url);
         setTimeout(() => lightboxModal.focus(), 100);
     };
 }
+
+// ==========================
+// AI 식단 분석 + 온보딩 + 대사건강 점수
+// ==========================
+
+// 식단 사진 AI 분석
+async function analyzeMealPhoto(meal) {
+    const previewImg = document.getElementById(`preview-${meal}`);
+    const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+    const btn = document.querySelector(`.diet-ai-btn[data-meal="${meal}"]`);
+
+    if (!previewImg || previewImg.style.display === 'none') {
+        showToast('⚠️ 먼저 사진을 올려주세요.');
+        return;
+    }
+
+    // 이미 분석 결과가 있는 경우 토글
+    if (resultContainer._analysisData || resultContainer.innerHTML.trim() !== '') {
+        if (resultContainer.style.display === 'none') {
+            resultContainer.style.display = 'block';
+            btn.textContent = '🤖 분석 접기';
+        } else {
+            resultContainer.style.display = 'none';
+            btn.textContent = '🤖 분석 보기';
+        }
+        return;
+    }
+
+    // 이미 저장된 URL 사용 또는 미리보기 src 사용
+    const imageUrl = previewImg.src;
+    if (!imageUrl || imageUrl.startsWith('data:')) {
+        showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
+        return;
+    }
+
+    // 로딩 상태
+    if (btn) { btn.classList.add('loading'); btn.textContent = '🤖 AI 분석 중...'; }
+
+    try {
+        const analysis = await requestDietAnalysis(imageUrl);
+        if (analysis) {
+            renderDietAnalysisResult(resultContainer, analysis);
+            resultContainer._analysisData = analysis;
+            resultContainer.style.display = 'block';
+            btn.textContent = '🤖 분석 접기';
+
+            // Firestore에 분석 결과 저장
+            const user = auth.currentUser;
+            if (user) {
+                const selectedDateStr = document.getElementById('selected-date').value;
+                const docId = `${user.uid}_${selectedDateStr}`;
+                await setDoc(doc(db, "daily_logs", docId), {
+                    dietAnalysis: { [meal]: analysis }
+                }, { merge: true });
+            }
+            showToast('✅ AI 식단 분석 완료!');
+            updateDietDaySummary();
+        }
+    } catch (e) {
+        console.error('식단 분석 오류:', e);
+        showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
+    } finally {
+        if (btn && btn.textContent === '🤖 AI 분석 중...') {
+            btn.classList.remove('loading'); 
+            btn.textContent = '🤖 AI 분석'; 
+        } else if (btn) {
+            btn.classList.remove('loading');
+        }
+    }
+};
+
+// 사진 미리보기 표시 시 AI 분석 버튼도 표시
+const originalPreviewStatic = window.previewStaticImage;
+if (originalPreviewStatic) {
+    // previewStaticImage가 호출된 후 AI 버튼 표시
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(m => {
+            if (m.type === 'attributes' && m.attributeName === 'style') {
+                const el = m.target;
+                if (el.classList.contains('preview-img') && el.style.display !== 'none' && el.src) {
+                    const parent = el.closest('.diet-box');
+                    if (parent) {
+                        const aiBtn = parent.querySelector('.diet-ai-btn');
+                        if (aiBtn) aiBtn.style.display = 'block';
+                    }
+                }
+            }
+        });
+    });
+    document.querySelectorAll('.preview-img').forEach(img => {
+        observer.observe(img, { attributes: true, attributeFilter: ['style'] });
+    });
+}
+
+// 오늘의 식단 총평 업데이트
+function updateDietDaySummary() {
+    const container = document.getElementById('diet-day-summary-container');
+    if (!container) return;
+
+    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const analyses = [];
+    meals.forEach(meal => {
+        const resultEl = document.getElementById(`diet-analysis-${meal}`);
+        if (resultEl && resultEl._analysisData) {
+            analyses.push(resultEl._analysisData);
+        }
+    });
+    renderDietDaySummary(container, analyses);
+}
+
+// 데이터 로드 시 기존 AI 분석 결과 복원
+const originalLoadData = window.loadDataForSelectedDate;
+window._restoreDietAnalysis = _restoreDietAnalysis;
+function _restoreDietAnalysis(data) {
+    if (!data) return;
+
+    // 데이터 복원 시 사진 있는 박스는 보이기, 아니면 가리기
+    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    let lastShownIndex = -1;
+
+    meals.forEach((meal, index) => {
+        const mealUrls = {
+            breakfast: data.diet?.breakfastUrl,
+            lunch: data.diet?.lunchUrl,
+            dinner: data.diet?.dinnerUrl,
+            snack: data.diet?.snackUrl
+        };
+        const hasPhoto = mealUrls[meal];
+        const box = document.getElementById(`diet-box-${meal}`);
+
+        if (hasPhoto) {
+            if (box) box.style.display = 'block';
+            lastShownIndex = index;
+        } else {
+            if (box) box.style.display = 'none';
+        }
+    });
+
+    // 아무것도 없는 경우 첫 번째 박스는 보여주기
+    // 혹은 마지막으로 사진이 있는 박스 다음 박스는 보여주기 (수동 입력을 위해)
+    if (lastShownIndex === -1) {
+        const firstBox = document.getElementById(`diet-box-${meals[0]}`);
+        if (firstBox) firstBox.style.display = 'block';
+    } else if (lastShownIndex < meals.length - 1) {
+        const nextBox = document.getElementById(`diet-box-${meals[lastShownIndex + 1]}`);
+        if (nextBox) nextBox.style.display = 'block';
+    }
+
+    if (!data.dietAnalysis) return;
+
+    meals.forEach(meal => {
+        const analysis = data.dietAnalysis[meal];
+        const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+        const aiBtn = document.querySelector(`.diet-ai-btn[data-meal="${meal}"]`);
+
+        if (analysis && resultContainer) {
+            renderDietAnalysisResult(resultContainer, analysis);
+            resultContainer._analysisData = analysis;
+            resultContainer.style.display = 'none'; // 분석결과는 처음에 접기
+            if (aiBtn) {
+                aiBtn.textContent = '🤖 분석 보기';
+            }
+        } else if (resultContainer) {
+            resultContainer._analysisData = null;
+            resultContainer.innerHTML = '';
+            resultContainer.style.display = 'none';
+            if (aiBtn) {
+                aiBtn.textContent = '🤖 AI 분석';
+            }
+        }
+
+        const mealUrls = {
+            breakfast: data.diet?.breakfastUrl,
+            lunch: data.diet?.lunchUrl,
+            dinner: data.diet?.dinnerUrl,
+            snack: data.diet?.snackUrl
+        };
+        if (mealUrls[meal] && aiBtn) {
+            aiBtn.style.display = 'block';
+        }
+    });
+
+    updateDietDaySummary();
+};
+
+// 온보딩 스텝 이동
+function goOnboardingStep(step) {
+    for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById(`ob-step-${i}`);
+        const dot = document.getElementById(`ob-dot-${i}`);
+        if (el) el.style.display = i === step ? 'block' : 'none';
+        if (dot) dot.classList.toggle('active', i === step);
+    }
+};
+
+// 온보딩 완료
+async function completeOnboarding() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // 건강 목표 수집
+    const goals = [];
+    document.querySelectorAll('input[name="ob-goal"]:checked').forEach(el => goals.push(el.value));
+
+    // 인바디 프로필 수집
+    const profile = {
+        smm: document.getElementById('ob-smm')?.value || '',
+        fat: document.getElementById('ob-fat')?.value || '',
+        visceral: document.getElementById('ob-visceral')?.value || '',
+        hba1c: document.getElementById('ob-hba1c')?.value || ''
+    };
+
+    try {
+        // Firestore에 저장
+        await setDoc(doc(db, "users", user.uid), {
+            healthGoals: goals,
+            healthProfile: profile,
+            onboardingComplete: true
+        }, { merge: true });
+
+        // 기존 프로필 필드도 업데이트
+        if (profile.smm) document.getElementById('prof-smm').value = profile.smm;
+        if (profile.fat) document.getElementById('prof-fat').value = profile.fat;
+        if (profile.visceral) document.getElementById('prof-visceral').value = profile.visceral;
+        if (profile.hba1c) document.getElementById('prof-hba1c').value = profile.hba1c;
+
+        // 모달 닫기
+        document.getElementById('onboarding-modal').style.display = 'none';
+        showToast('🌞 환영합니다! 대사건강 개선 여정을 시작합니다!');
+
+        // 대사건강 점수 업데이트
+        updateMetabolicScoreUI();
+    } catch (e) {
+        console.error('온보딩 저장 오류:', e);
+        showToast('⚠️ 저장 중 오류가 발생했습니다.');
+    }
+};
+
+// 대사건강 점수 UI 업데이트
+async function updateMetabolicScoreUI() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const container = document.getElementById('metabolic-score-container');
+    if (!container) return;
+
+    try {
+        // 사용자 프로필 로드
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        const userData = userSnap.exists() ? userSnap.data() : {};
+        const profile = userData.healthProfile || {};
+
+        // 최근 7일 로그 로드
+        const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(7));
+        const snapshot = await getDocs(q);
+        const recentLogs = [];
+        snapshot.forEach(d => recentLogs.push(d.data()));
+        recentLogs.reverse();
+
+        // 최신 건강 지표
+        const latestMetrics = recentLogs.length > 0 ? (recentLogs[recentLogs.length - 1].metrics || {}) : {};
+
+        // 점수 계산
+        const scoreData = calculateMetabolicScore(profile, recentLogs, latestMetrics);
+
+        // UI 렌더링
+        renderMetabolicScoreCard(container, scoreData);
+    } catch (e) {
+        console.warn('대사건강 점수 로드 스킵:', e.message);
+    }
+};
+
+// 온보딩 체크 (auth.js에서 호출 가능하도록)
+async function checkOnboarding() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        const userData = userSnap.exists() ? userSnap.data() : {};
+
+        if (!userData.onboardingComplete) {
+            document.getElementById('onboarding-modal').style.display = 'flex';
+        }
+    } catch (e) {
+        console.warn('온보딩 체크 스킵:', e.message);
+    }
+};
+
+
+
+
+
+// ========================================
+// 수면 AI 분석
+// ========================================
+window.analyzeSleepData = async function() {
+    const resultBox = document.getElementById('sleep-analysis-result');
+    const aiBtn = document.getElementById('ai-btn-sleep');
+    if (!resultBox) return;
+
+    // 이미 분석 완료 → 토글
+    if (aiBtn && aiBtn.getAttribute('data-analyzed') === 'true') {
+        if (resultBox.style.display === 'none') {
+            resultBox.style.display = 'block';
+            aiBtn.textContent = '🤖 분석 접기';
+        } else {
+            resultBox.style.display = 'none';
+            aiBtn.textContent = '🤖 분석 보기';
+        }
+        return;
+    }
+
+    // 저장된 수면 이미지 URL 또는 로컬 미리보기 확인
+    const previewEl = document.getElementById('preview-sleep');
+    let sleepUrl = previewEl?.getAttribute('data-url');
+    if (!sleepUrl && previewEl?.src && previewEl.src.startsWith('data:')) {
+        try { sleepUrl = await compressImageForAI(previewEl.src); } catch(e) { sleepUrl = previewEl.src; }
+    }
+    if (!sleepUrl && previewEl?.src && previewEl.src.startsWith('http')) {
+        sleepUrl = previewEl.src;
+    }
+    if (!sleepUrl) {
+        showToast('⚠️ 수면 캡처를 올려주세요.');
+        return;
+    }
+
+    try {
+        if (aiBtn) { aiBtn.classList.add('loading'); aiBtn.textContent = '🤖 AI 분석 중...'; }
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">수면 패턴 분석 중...</p></div>';
+
+        const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
+        if (analysis) {
+            renderSleepMindAnalysisResult(analysis, resultBox);
+            if (aiBtn) {
+                aiBtn.textContent = '🤖 분석 접기';
+                aiBtn.setAttribute('data-analyzed', 'true');
+            }
+            // Firestore에 수면 분석 결과 저장
+            const user = auth.currentUser;
+            if (user) {
+                const selectedDateStr = document.getElementById('selected-date').value;
+                const docId = `${user.uid}_${selectedDateStr}`;
+                await setDoc(doc(db, "daily_logs", docId), {
+                    sleepAndMind: { sleepAnalysis: analysis }
+                }, { merge: true });
+            }
+        } else {
+            resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 결과를 받지 못했습니다.</p>';
+        }
+    } catch (e) {
+        console.error(e);
+        resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 중 오류가 발생했습니다.</p>';
+    } finally {
+        if (aiBtn) aiBtn.classList.remove('loading');
+    }
+};
+

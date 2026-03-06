@@ -2710,3 +2710,676 @@ textarea:focus-visible,
         padding: 0 !important;
     }
 }
+
+/* ==========================
+   AI 식단 분석 카드
+   ========================== */
+
+.diet-ai-btn {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 1px solid #A5D6A7;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2E7D32;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.15s;
+}
+
+.diet-ai-btn:active {
+    transform: scale(0.95);
+}
+
+.diet-ai-btn.loading {
+    background: #E0E0E0;
+    color: #999;
+    pointer-events: none;
+}
+
+.diet-analysis-card {
+    background: #FAFAFA;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #E8E8E8;
+}
+
+.diet-grade-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.diet-grade-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    flex-shrink: 0;
+}
+
+.diet-grade-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+}
+
+.diet-grade-summary {
+    font-size: 13px;
+    color: #333;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.diet-natural-ratio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.diet-ratio-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: #E0E0E0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.diet-ratio-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66BB6A, #2E7D32);
+    border-radius: 4px;
+    transition: width 0.5s;
+}
+
+.diet-ratio-val {
+    font-weight: 700;
+    color: #2E7D32;
+    min-width: 32px;
+    text-align: right;
+}
+
+.diet-foods-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.diet-food-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: white;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.diet-food-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.diet-food-name {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+}
+
+.diet-food-cat {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.diet-food-cat[data-cat="natural"] {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.diet-food-cat[data-cat="processed"] {
+    background: #FFF8E1;
+    color: #F57F17;
+}
+
+.diet-food-cat[data-cat="ultraprocessed"] {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.diet-scores-section {
+    margin-bottom: 10px;
+}
+
+.diet-scores-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.diet-score-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.diet-score-label {
+    font-size: 11px;
+    width: 64px;
+    flex-shrink: 0;
+}
+
+.diet-score-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #E0E0E0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.diet-score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+
+.diet-score-val {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+    min-width: 20px;
+    text-align: right;
+}
+
+.diet-insight-box {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: linear-gradient(135deg, #E8F5E9, #F1F8E9);
+    border-radius: 8px;
+    border: 1px solid #C8E6C9;
+    margin-bottom: 6px;
+}
+
+.diet-insight-icon {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.diet-insight-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #2E7D32;
+    margin-bottom: 2px;
+}
+
+.diet-insight-text {
+    font-size: 12px;
+    color: #333;
+    line-height: 1.4;
+}
+
+.diet-suggestion-box {
+    font-size: 12px;
+    color: #E65100;
+    padding: 8px;
+    background: #FFF3E0;
+    border-radius: 8px;
+    border: 1px solid #FFE0B2;
+}
+
+/* 오늘의 식단 총평 */
+.diet-day-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-light);
+}
+
+.diet-day-grade {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 900;
+    color: white;
+    flex-shrink: 0;
+}
+
+.diet-day-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+}
+
+/* ==========================
+   대사건강 점수 카드
+   ========================== */
+
+.metabolic-score-card {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-bottom: var(--spacing-lg);
+    border: none;
+}
+
+.metabolic-score-card h3 {
+    margin: 0 0 12px;
+    font-size: 15px;
+    color: #1B5E20;
+}
+
+.ms-score-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.ms-circle-wrap {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+}
+
+.ms-circle {
+    width: 90px;
+    height: 90px;
+}
+
+.ms-circle-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.ms-circle-num {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.ms-circle-label {
+    font-size: 10px;
+    color: #888;
+}
+
+.ms-areas {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ms-area-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.ms-area-icon {
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.ms-area-label {
+    width: 42px;
+    font-weight: 600;
+    color: #444;
+    flex-shrink: 0;
+}
+
+.ms-area-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.ms-area-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #66BB6A, #2E7D32);
+    border-radius: 3px;
+    transition: width 0.5s;
+}
+
+.ms-area-val {
+    font-size: 10px;
+    color: #555;
+    font-weight: 600;
+    min-width: 30px;
+    text-align: right;
+}
+
+.ms-insights {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ms-insight-item {
+    font-size: 12px;
+    color: #333;
+    padding: 8px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 8px;
+    line-height: 1.5;
+}
+
+/* ==========================
+   온보딩 모달
+   ========================== */
+
+.onboarding-modal-content {
+    max-width: 360px;
+    padding: 24px 20px;
+    text-align: center;
+}
+
+.onboarding-steps-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.onboarding-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #DDD;
+    transition: background 0.3s, transform 0.3s;
+}
+
+.onboarding-dot.active {
+    background: var(--primary-color);
+    transform: scale(1.2);
+}
+
+.ob-question {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.ob-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.ob-choice-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #F5F5F5;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ob-choice-item:has(input:checked) {
+    background: #FFF3E0;
+    border: 1px solid #FFB74D;
+}
+
+.ob-choice-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.ob-start-tips {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.ob-tip {
+    padding: 10px 12px;
+    background: #F5F5F5;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
+}
+
+/* Diet UI Refinements */
+.input-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.diet-analysis-card.collapsed .diet-natural-ratio,
+.diet-analysis-card.collapsed .diet-foods-list,
+.diet-analysis-card.collapsed .diet-scores-section,
+.diet-analysis-card.collapsed .diet-insight-box,
+.diet-analysis-card.collapsed .diet-suggestion-box {
+    display: none;
+}
+
+/* .diet-grade-row {
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+}
+
+.diet-grade-row::after {
+    content: '▼';
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #888;
+    transition: transform 0.3s ease;
+}
+
+.diet-analysis-card.collapsed .diet-grade-row::after {
+    transform: translateY(-50%) rotate(180deg);
+} */
+
+/* ==========================================
+   운동 탭 - 헤더 + 추가 버튼 인라인 배치
+   ========================================== */
+.exercise-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.exercise-header h3 {
+    margin: 0;
+}
+
+.add-exercise-btn {
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 1px solid #A5D6A7;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #2E7D32;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.12s, box-shadow 0.15s;
+}
+
+.add-exercise-btn:active {
+    transform: scale(0.95);
+}
+
+/* 운동 블록별 AI 버튼 */
+.exercise-ai-btn {
+    width: 100%;
+    margin-top: 6px;
+}
+
+.exercise-block-ai-result {
+    margin-top: 8px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* ==========================================
+   갤러리 인라인 미디어 + AI 오버레이
+   ========================================== */
+.gallery-media-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* 이미지 확대 시 wrapper가 그리드 전체 너비 차지 */
+.gallery-media-wrapper:has(img.gallery-img-expanded) {
+    grid-column: 1 / -1;
+}
+
+.gallery-media-wrapper img {
+    transition: max-height 0.3s ease;
+    cursor: pointer;
+}
+
+.gallery-media-wrapper img.gallery-img-expanded {
+    max-height: none !important;
+    width: 100% !important;
+    aspect-ratio: auto !important;
+    object-fit: contain !important;
+    contain: none !important;
+}
+
+.gallery-ai-overlay-btn {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.12s;
+}
+
+.gallery-ai-overlay-btn:active {
+    transform: scale(0.95);
+}
+
+.gallery-ai-overlay {
+    background: #FAFAFA;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    padding: 6px;
+    margin-top: 6px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+.gallery-ai-overlay .diet-analysis-card {
+    margin-top: 0;
+    font-size: 12px;
+}
+
+/* ========================================
+ * 업로드 CTA 배너
+ * ======================================== */
+.upload-cta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin: 8px 0 12px 0;
+    background: linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 100%);
+    border: 2px dashed #4CAF50;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.upload-cta:active {
+    transform: scale(0.98);
+    background: linear-gradient(135deg, #c8e6c9 0%, #e1bee7 100%);
+}
+
+.upload-cta-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+    animation: uploadBounce 2s ease-in-out infinite;
+}
+
+@keyframes uploadBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.upload-cta-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.upload-cta-text strong {
+    font-size: 14px;
+    color: #2E7D32;
+}
+
+.upload-cta-text span {
+    font-size: 11px;
+    color: #666;
+}
+
+.upload-cta-arrow {
+    font-size: 24px;
+    color: #4CAF50;
+    font-weight: bold;
+}
+
