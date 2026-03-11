@@ -6,7 +6,7 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-s
 
 // authDomain을 현재 호스팅 도메인으로 설정 → 크로스도메인 쿠키/CSP 문제 원천 차단
 const currentHost = location.hostname;
-const trustedHosts = ['habitschool.web.app', 'habitschool-8497b.web.app', 'habitschool-8497b.firebaseapp.com', 'csj3814-create.github.io'];
+const trustedHosts = ['habitschool.web.app', 'habitschool-8497b.web.app', 'habitschool-8497b.firebaseapp.com', 'habitschool.kr', 'csj3814-create.github.io'];
 const firebaseConfig = {
     apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
     authDomain: trustedHosts.includes(currentHost) ? currentHost : "habitschool-8497b.firebaseapp.com",
