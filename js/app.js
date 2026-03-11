@@ -37,10 +37,12 @@ window.shareApp = shareApp;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
+let fetchTokenStats = async () => null;
 import('./blockchain-manager.js').then(mod => {
     updateChallengeProgress = mod.updateChallengeProgress;
     getConversionRate = mod.getConversionRate;
     getCurrentEra = mod.getCurrentEra;
+    fetchTokenStats = mod.fetchTokenStats;
     console.log('✅ app.js: 블록체인 모듈 로드');
 }).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
@@ -1380,14 +1382,7 @@ window.updateAssetDisplay = async function () {
             }
 
             // ========== 변환 비율 배지 & 일일 한도 ==========
-            const totalMintedForRate = userData.totalHbtEarned || 0;
-            const currentRate = getConversionRate(totalMintedForRate);
-            const currentEraForBadge = getCurrentEra(totalMintedForRate);
-            const rateBadge = document.getElementById('convert-rate-badge');
-            if (rateBadge) {
-                const per100 = Math.round(100 * currentRate * 100) / 100;
-                rateBadge.textContent = `현재 ${eraToLabel(currentEraForBadge)}구간 · 100P = ${per100} HBT`;
-            }
+            // 변환 비율은 fetchTokenStats()에서 전체 기준으로 업데이트
             const dailyLimitEl = document.getElementById('convert-daily-limit');
             if (dailyLimitEl) {
                 const dailyMax = 1000;
@@ -1416,50 +1411,61 @@ window.updateAssetDisplay = async function () {
                 }).catch(err => console.warn('온체인 잔액 조회 스킵:', err.message));
             }
 
-            // ========== 반감기 상태 UI 업데이트 (Firestore 기준) ==========
-            const totalMinted = userData.totalHbtEarned || 0;
-            const era = getCurrentEra(totalMinted);
-            const rate = getConversionRate(totalMinted);
-
-            const halvingEraEl = document.getElementById('halving-era');
-            if (halvingEraEl) halvingEraEl.textContent = eraToLabel(era);
-
-            const halvingRateEl = document.getElementById('halving-rate');
-            if (halvingRateEl) {
-                // rate: 1P당 HBT (1, 0.5, 0.25...) → 100P당으로 표시
-                const per100 = Math.round(100 * rate * 100) / 100;
-                halvingRateEl.textContent = `100P = ${per100} HBT`;
-            }
-
-            // 반감기 스케줄 테이블 활성 구간 표시
-            updateHalvingScheduleUI(era);
-
-            // 현재 구간 내 진행률 계산
-            const era1Threshold = 30_000_000;
-            let eraStart = 0;
-            let currentThreshold = era1Threshold;
-            for (let i = 1; i < era; i++) {
-                eraStart += currentThreshold;
-                currentThreshold = Math.floor(currentThreshold / 2);
-                if (currentThreshold < 1) { currentThreshold = 1; break; }
-            }
-            const mintedInEra = totalMinted - eraStart;
-            const progressPct = currentThreshold > 0 ? Math.min((mintedInEra / currentThreshold) * 100, 100) : 0;
-
-            const halvingProgressText = document.getElementById('halving-progress-text');
-            if (halvingProgressText) {
-                halvingProgressText.textContent = `${mintedInEra.toLocaleString()} / ${currentThreshold.toLocaleString()} HBT`;
-            }
-
-            const halvingProgressBar = document.getElementById('halving-progress-bar');
-            if (halvingProgressBar) {
-                // 진행량이 있지만 1% 미만일 때 최소 너비 보장 (시각적 피드백)
-                if (mintedInEra > 0 && progressPct < 1) {
-                    halvingProgressBar.style.width = '1%';
-                } else {
-                    halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+            // ========== 반감기 상태 UI 업데이트 (온체인 전체 채굴량 기준) ==========
+            fetchTokenStats().then(stats => {
+                if (!stats) {
+                    // 온체인 조회 실패 시 개인 데이터로 펴백
+                    console.warn('토큰 통계 조회 실패, 개인 데이터로 펴백');
+                    return;
                 }
-            }
+                const globalMinted = parseFloat(stats.totalMined) || 0;
+                const era = stats.currentEra || 1;
+                const rate = stats.currentRate || 100;
+                const remainingInEra = parseFloat(stats.remainingInEra) || 0;
+
+                const halvingEraEl = document.getElementById('halving-era');
+                if (halvingEraEl) halvingEraEl.textContent = eraToLabel(era);
+
+                const halvingRateEl = document.getElementById('halving-rate');
+                if (halvingRateEl) {
+                    const per100 = Math.round(rate * 100) / 100;
+                    halvingRateEl.textContent = `100P = ${per100} HBT`;
+                }
+
+                // 반감기 스케줄 테이블 활성 구간 표시
+                updateHalvingScheduleUI(era);
+
+                // 변환 비율 배지 업데이트 (전체 기준)
+                const rateBadge = document.getElementById('convert-rate-badge');
+                if (rateBadge) {
+                    const per100 = Math.round(rate * 100) / 100;
+                    rateBadge.textContent = `현재 ${eraToLabel(era)}구간 · 100P = ${per100} HBT`;
+                }
+
+                // 현재 구간 내 진행률 계산
+                const era1Threshold = 30_000_000;
+                let currentThreshold = era1Threshold;
+                for (let i = 1; i < era; i++) {
+                    currentThreshold = Math.floor(currentThreshold / 2);
+                    if (currentThreshold < 1) { currentThreshold = 1; break; }
+                }
+                const mintedInEra = currentThreshold - remainingInEra;
+                const progressPct = currentThreshold > 0 ? Math.min((mintedInEra / currentThreshold) * 100, 100) : 0;
+
+                const halvingProgressText = document.getElementById('halving-progress-text');
+                if (halvingProgressText) {
+                    halvingProgressText.textContent = `${Math.round(mintedInEra).toLocaleString()} / ${currentThreshold.toLocaleString()} HBT`;
+                }
+
+                const halvingProgressBar = document.getElementById('halving-progress-bar');
+                if (halvingProgressBar) {
+                    if (mintedInEra > 0 && progressPct < 1) {
+                        halvingProgressBar.style.width = '1%';
+                    } else {
+                        halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+                    }
+                }
+            }).catch(err => console.warn('반감기 통계 로드 실패:', err.message));
 
             // 헤더의 포인트 배지도 업데이트
             const pointBadge = document.getElementById('point-balance');
