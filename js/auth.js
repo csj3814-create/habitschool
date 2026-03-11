@@ -1,6 +1,6 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
@@ -98,6 +98,18 @@ export function initAuth() {
         return;
     }
 
+    // 페이지 로드 시 리다이렉트 로그인 결과 처리 (모바일 팝업 차단 fallback)
+    getRedirectResult(auth).catch(error => {
+        if (error.code === 'auth/missing-initial-state') {
+            // 세션 스토리지 유실 — 무시 (onAuthStateChanged가 처리)
+            console.warn('Redirect auth: missing initial state, ignored');
+            return;
+        }
+        if (error.code) {
+            console.error('Redirect 로그인 결과 오류:', error.code, error.message);
+        }
+    });
+
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
 
@@ -109,11 +121,15 @@ export function initAuth() {
                 return;
             }
 
+            // 팝업 차단 시 리다이렉트 방식으로 자동 전환
+            if (error.code === 'auth/popup-blocked') {
+                signInWithRedirect(auth, provider);
+                return;
+            }
+
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-closed-by-user') {
                 errorMsg = '로그인 창이 닫혔습니다.';
-            } else if (error.code === 'auth/popup-blocked') {
-                errorMsg = '팝업이 차단되었습니다. 팝업 차단을 해제해주세요.';
             } else if (error.code === 'auth/network-request-failed') {
                 errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
             } else if (error.code === 'auth/unauthorized-domain') {
