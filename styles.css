@@ -5496,6 +5496,28 @@ body.dark-mode .mission-level { background: var(--purple); }
     text-align: right;
 }
 
+.ms-area-missing .ms-area-need {
+    flex: 1;
+    font-size: 10px;
+    color: #888;
+    font-style: italic;
+    text-align: right;
+}
+
+.ms-area-missing .ms-area-label {
+    color: #aaa;
+}
+
+.ms-partial-note {
+    font-size: 11px;
+    color: #777;
+    text-align: center;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 8px;
+}
+
 .ms-insights {
     margin-top: 10px;
     display: flex;

@@ -24,17 +24,23 @@ export function calculateMetabolicScore(profile = {}, recentLogs = [], latestMet
         lifestyle: calcLifestyleScore(recentLogs)
     };
 
-    const total = Math.round(
-        breakdown.muscleFat.score +
-        breakdown.visceralFat.score +
-        breakdown.insulinResistance.score +
-        breakdown.lifestyle.score
-    );
+    // 데이터가 있는 항목만으로 점수 계산 (100점 스케일)
+    const categories = [breakdown.muscleFat, breakdown.visceralFat, breakdown.insulinResistance, breakdown.lifestyle];
+    const available = categories.filter(c => !c.missing);
+    let total;
+    if (available.length === 0) {
+        total = 0;
+    } else {
+        const rawSum = available.reduce((sum, c) => sum + c.score, 0);
+        const maxPossible = available.length * 25;
+        total = Math.round((rawSum / maxPossible) * 100);
+    }
+    const allMissing = available.length === 0;
 
-    const grade = getGrade(total);
+    const grade = allMissing ? null : getGrade(total);
     const insights = generateInsights(breakdown, profile, recentLogs, latestMetrics);
 
-    return { total, breakdown, grade, insights };
+    return { total, breakdown, grade, insights, allMissing, availableCount: available.length };
 }
 
 /**
@@ -46,7 +52,7 @@ function calcMuscleFatScore(profile) {
     const smm = parseFloat(profile.smm);
     const fat = parseFloat(profile.fat);
     if (!smm || !fat || fat <= 0) {
-        return { score: 12.5, detail: '데이터 없음', ratio: null };
+        return { score: 0, detail: '데이터 없음', ratio: null, missing: true, missingLabel: '📋 인바디 데이터 필요' };
     }
     const ratio = smm / fat;
     // 2.0 이상 → 25점, 1.0 미만 → 5점
@@ -69,7 +75,7 @@ function calcMuscleFatScore(profile) {
 function calcVisceralFatScore(profile) {
     const visceral = parseFloat(profile.visceral);
     if (!visceral) {
-        return { score: 12.5, detail: '데이터 없음', level: null };
+        return { score: 0, detail: '데이터 없음', level: null, missing: true, missingLabel: '📋 인바디 데이터 필요' };
     }
     // 1~5 → 25점, 15+ → 5점
     let score = Math.min(25, Math.max(5, ((15 - visceral) / 10) * 20 + 5));
@@ -145,7 +151,7 @@ function calcInsulinResistanceScore(metrics, profile) {
         return { score, detail, hba1c, method: 'HbA1c' };
     }
 
-    return { score: 12.5, detail: '데이터 없음 — 공복혈당 또는 중성지방을 기록해주세요', method: 'none' };
+    return { score: 0, detail: '데이터 없음', method: 'none', missing: true, missingLabel: '🩸 건강 지표 기록 필요' };
 }
 
 /**
@@ -154,7 +160,7 @@ function calcInsulinResistanceScore(metrics, profile) {
  */
 function calcLifestyleScore(recentLogs) {
     if (!recentLogs || recentLogs.length === 0) {
-        return { score: 0, detail: '기록 없음', diet: 0, exercise: 0, mind: 0 };
+        return { score: 0, detail: '기록 없음', diet: 0, exercise: 0, mind: 0, missing: true, missingLabel: '📝 생활 기록 필요' };
     }
 
     const total = Math.min(recentLogs.length, 7);
@@ -300,32 +306,54 @@ function generateInsights(breakdown, profile, recentLogs, latestMetrics) {
 export function renderMetabolicScoreCard(container, scoreData) {
     if (!container || !scoreData) return;
 
-    const { total, breakdown, grade, insights } = scoreData;
+    const { total, breakdown, grade, insights, allMissing, availableCount } = scoreData;
     const gradeColors = { 'A': '#2E7D32', 'B': '#558B2F', 'C': '#F9A825', 'D': '#EF6C00', 'F': '#C62828' };
-    const color = gradeColors[grade] || '#888';
+    const color = allMissing ? '#BDBDBD' : (gradeColors[grade] || '#888');
 
     // 원형 프로그레스 계산
     const circumference = 2 * Math.PI * 45;
-    const offset = circumference - (total / 100) * circumference;
+    const offset = allMissing ? circumference : circumference - (total / 100) * circumference;
 
-    const areaItems = [
-        { label: '근지방비', score: breakdown.muscleFat.score, max: 25, icon: '💪' },
-        { label: '내장지방', score: breakdown.visceralFat.score, max: 25, icon: '🎯' },
-        { label: '인슐린', score: breakdown.insulinResistance.score, max: 25, icon: '🧬' },
-        { label: '생활습관', score: breakdown.lifestyle.score, max: 25, icon: '🌿' }
+    const areaRaw = [
+        { label: '근지방비', data: breakdown.muscleFat, max: 25, icon: '💪' },
+        { label: '내장지방', data: breakdown.visceralFat, max: 25, icon: '🎯' },
+        { label: '인슐린', data: breakdown.insulinResistance, max: 25, icon: '🧬' },
+        { label: '생활습관', data: breakdown.lifestyle, max: 25, icon: '🌿' }
     ];
 
-    const areasHtml = areaItems.map(a => {
-        const pct = Math.round((a.score / a.max) * 100);
+    const areasHtml = areaRaw.map(a => {
+        if (a.data.missing) {
+            return `<div class="ms-area-item ms-area-missing">
+                <span class="ms-area-icon">${a.icon}</span>
+                <span class="ms-area-label">${a.label}</span>
+                <span class="ms-area-need">${a.data.missingLabel}</span>
+            </div>`;
+        }
+        const pct = Math.round((a.data.score / a.max) * 100);
         return `<div class="ms-area-item">
             <span class="ms-area-icon">${a.icon}</span>
             <span class="ms-area-label">${a.label}</span>
             <div class="ms-area-bar-bg"><div class="ms-area-bar-fill" style="width:${pct}%;"></div></div>
-            <span class="ms-area-val">${Math.round(a.score)}/${a.max}</span>
+            <span class="ms-area-val">${Math.round(a.data.score)}/${a.max}</span>
         </div>`;
     }).join('');
 
     const insightsHtml = insights.map(i => `<div class="ms-insight-item">${i}</div>`).join('');
+
+    // 총점 영역: 데이터 없으면 안내 메시지
+    const circleContent = allMissing
+        ? `<div class="ms-circle-text">
+               <div class="ms-circle-num" style="color:#BDBDBD;">—</div>
+               <div class="ms-circle-label">데이터 입력 후<br>점수 확인</div>
+           </div>`
+        : `<div class="ms-circle-text">
+               <div class="ms-circle-num" style="color:${color};">${total}</div>
+               <div class="ms-circle-label">/ 100</div>
+           </div>`;
+
+    const partialNote = (!allMissing && availableCount < 4)
+        ? `<div class="ms-partial-note">📌 ${4 - availableCount}개 항목의 데이터를 추가하면 더 정확한 점수를 확인할 수 있어요</div>`
+        : '';
 
     container.innerHTML = `
         <div class="metabolic-score-card">
@@ -338,13 +366,11 @@ export function renderMetabolicScoreCard(container, scoreData) {
                             stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
                             stroke-linecap="round" transform="rotate(-90 50 50)"/>
                     </svg>
-                    <div class="ms-circle-text">
-                        <div class="ms-circle-num" style="color:${color};">${total}</div>
-                        <div class="ms-circle-label">/ 100</div>
-                    </div>
+                    ${circleContent}
                 </div>
                 <div class="ms-areas">${areasHtml}</div>
             </div>
+            ${partialNote}
             ${insightsHtml ? `<div class="ms-insights">${insightsHtml}</div>` : ''}
         </div>
     `;

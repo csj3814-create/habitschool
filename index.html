@@ -182,8 +182,7 @@
                     <div id="admin-feedback-text" style="font-size: 14px; color: #333; line-height: 1.5;"></div>
                 </div>
 
-                <!-- 🧬 대사건강 점수 카드 -->
-                <div id="metabolic-score-container" style="display:none;"></div>
+                <!-- 🧬 대사건강 점수 카드 (프로필 탭으로 이동) -->
 
                 <div class="milestone-section" id="milestone-section" style="display:none;">
                     <div class="milestone-title">🏆 나의 마일스톤</div>
@@ -218,33 +217,10 @@
             </div>
 
             <div id="profile" class="content-section" role="region" aria-label="내 프로필">
-                <!-- 혈액검사 결과지 업로드 -->
-                <div class="card" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
-                    <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
-                        <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
-                    </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">건강검진 또는 혈액검사 결과지를 사진 찍어 올리면 AI가 수치를 자동 추출합니다.</p>
-                    
-                    <div style="display:flex; gap:10px; margin-bottom:12px; justify-content:center;">
-                        <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #E53935 0%, #C62828 100%); cursor:pointer; font-size:14px; margin:0;">
-                            📷 결과지 촬영/선택
-                            <input type="file" id="blood-test-input" accept="image/*" capture="environment" 
-                                style="display:none;" onchange="uploadBloodTestPhoto(this)">
-                        </label>
-                    </div>
+                <!-- 🧬 대사건강 점수 카드 -->
+                <div id="metabolic-score-container" style="display:none;"></div>
 
-                    <!-- 분석 결과 컨테이너 -->
-                    <div id="blood-test-result" style="display:none;"></div>
-
-                    <!-- 이전 검사 결과 -->
-                    <div id="blood-test-history" style="display:none;"></div>
-
-                    <div style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
-                        💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
-                        🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
-                    </div>
-                </div>
-
+                <!-- 1. 나의 기초 대사 프로필 (인바디) -->
                 <div class="card metrics-card">
                     <h3>🧬 나의 기초 대사 프로필 (인바디)
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
@@ -272,7 +248,7 @@
                     <div id="inbody-history-container" style="display:none; margin-top:14px;"></div>
                 </div>
 
-                <!-- 인바디 앱 연동 안내 -->
+                <!-- 2. 인바디 앱 연동 안내 -->
                 <div class="card" style="border:1px dashed var(--info-color); background:var(--info-light);">
                     <h3 style="font-size:15px;">📲 인바디 앱에서 데이터 가져오기</h3>
                     <div style="font-size:13px; color:#555; line-height:1.6;">
@@ -289,6 +265,7 @@
                     </div>
                 </div>
 
+                <!-- 3. 현재 복용 중인 약물 -->
                 <div class="card">
                     <h3>💊 현재 복용 중인 약물</h3>
                     <div
@@ -303,7 +280,34 @@
                         onclick="saveHealthProfile()">🧬 프로필 저장 및 대사건강 점수 업데이트</button>
                 </div>
 
-                <!-- 친구 초대 공유 -->
+                <!-- 4. 혈액검사 결과지 업로드 -->
+                <div class="card" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
+                    <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
+                        <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
+                    </h3>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">건강검진 또는 혈액검사 결과지를 사진 찍어 올리면 AI가 수치를 자동 추출합니다.</p>
+                    
+                    <div style="display:flex; gap:10px; margin-bottom:12px; justify-content:center;">
+                        <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #E53935 0%, #C62828 100%); cursor:pointer; font-size:14px; margin:0;">
+                            📷 결과지 촬영/선택
+                            <input type="file" id="blood-test-input" accept="image/*" capture="environment" 
+                                style="display:none;" onchange="uploadBloodTestPhoto(this)">
+                        </label>
+                    </div>
+
+                    <!-- 분석 결과 컨테이너 -->
+                    <div id="blood-test-result" style="display:none;"></div>
+
+                    <!-- 이전 검사 결과 -->
+                    <div id="blood-test-history" style="display:none;"></div>
+
+                    <div style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
+                        💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
+                        🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
+                    </div>
+                </div>
+
+                <!-- 5. 친구 초대 공유 -->
                 <div class="card" style="text-align:center; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
                     <h3 style="color:#E65100;">🎉 친구 초대하기</h3>
                     <p style="font-size:13px; color:#666; margin-bottom:14px; line-height:1.5;">
@@ -321,7 +325,7 @@
                     </div>
                 </div>
 
-                <!-- 로그아웃 -->
+                <!-- 6. 로그아웃 -->
                 <div style="text-align:center; margin:20px 0 10px;">
                     <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px;"
                         onclick="logoutAndReset()">🚪 로그아웃</button>
