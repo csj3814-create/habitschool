@@ -4,12 +4,13 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-// authDomain을 현재 호스팅 도메인으로 설정 → 크로스도메인 쿠키/CSP 문제 원천 차단
-const currentHost = location.hostname;
-const trustedHosts = ['habitschool.web.app', 'habitschool-8497b.web.app', 'habitschool-8497b.firebaseapp.com', 'habitschool.kr', 'csj3814-create.github.io'];
+// authDomain은 항상 firebaseapp.com 사용
+// → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
+// → firebaseapp.com은 PWA scope 밖이므로 안전
+// → signInWithPopup은 postMessage 기반이므로 크로스오리진 문제 없음
 const firebaseConfig = {
     apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
-    authDomain: trustedHosts.includes(currentHost) ? currentHost : "habitschool-8497b.firebaseapp.com",
+    authDomain: "habitschool-8497b.firebaseapp.com",
     projectId: "habitschool-8497b",
     storageBucket: "habitschool-8497b.firebasestorage.app"
 };
