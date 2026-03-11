@@ -942,66 +942,16 @@
     <!-- 온보딩 모달 (첫 로그인 시) -->
     <div id="onboarding-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content onboarding-modal-content">
-            <div class="onboarding-steps-indicator">
-                <span class="onboarding-dot active" id="ob-dot-1"></span>
-                <span class="onboarding-dot" id="ob-dot-2"></span>
-                <span class="onboarding-dot" id="ob-dot-3"></span>
-            </div>
-
-            <!-- Step 1: 건강 고민 -->
             <div id="ob-step-1" class="onboarding-step">
-                <div style="font-size:40px; margin-bottom:12px;">🌞</div>
-                <h3 style="color:var(--primary-color); margin:0 0 8px;">해빛스쿨에 오신 걸 환영합니다!</h3>
-                <p style="font-size:14px; color:#666; margin-bottom:20px;">맞춤 건강 관리를 위해 몇 가지 알려주세요.</p>
-                <div class="ob-question">어떤 건강 고민이 있으신가요?</div>
-                <div class="ob-choices" id="ob-health-goals">
-                    <label class="ob-choice-item"><input type="checkbox" name="ob-goal" value="diabetes"> 🩸 당뇨/혈당
-                        관리</label>
-                    <label class="ob-choice-item"><input type="checkbox" name="ob-goal" value="hypertension"> 💓 고혈압
-                        관리</label>
-                    <label class="ob-choice-item"><input type="checkbox" name="ob-goal" value="obesity"> ⚖️ 체중/비만
-                        관리</label>
-                    <label class="ob-choice-item"><input type="checkbox" name="ob-goal" value="metabolic"> 🧬 전반적
-                        대사건강</label>
-                </div>
-                <button class="submit-btn" style="margin-top:16px;" onclick="goOnboardingStep(2)">다음 →</button>
-            </div>
-
-            <!-- Step 2: 인바디 프로필 -->
-            <div id="ob-step-2" class="onboarding-step" style="display:none;">
-                <div style="font-size:40px; margin-bottom:12px;">📊</div>
-                <h3 style="color:var(--primary-color); margin:0 0 8px;">신체 정보 (선택)</h3>
-                <p style="font-size:13px; color:#666; margin-bottom:16px;">인바디 데이터가 있으면 더 정확한 대사건강 점수를 계산합니다.<br>모르는 항목은
-                    비워도 됩니다!</p>
-                <div class="input-grid" style="gap:10px;">
-                    <input type="number" id="ob-smm" placeholder="골격근량 (kg)">
-                    <input type="number" id="ob-fat" placeholder="체지방량 (kg)">
-                    <input type="number" id="ob-visceral" placeholder="내장지방 레벨 (1~20)">
-                    <input type="number" id="ob-bmr" placeholder="기초대사량 (kcal)">
-                </div>
-                <div style="display:flex; gap:10px; margin-top:16px;">
-                    <button class="submit-btn" style="background:#888; flex:1;" onclick="goOnboardingStep(1)">←
-                        이전</button>
-                    <button class="submit-btn" style="flex:1;" onclick="goOnboardingStep(3)">다음 →</button>
-                </div>
-            </div>
-
-            <!-- Step 3: 시작 -->
-            <div id="ob-step-3" class="onboarding-step" style="display:none;">
-                <div style="font-size:40px; margin-bottom:12px;">🚀</div>
-                <h3 style="color:var(--primary-color); margin:0 0 8px;">준비 완료!</h3>
-                <p style="font-size:14px; color:#666; margin-bottom:8px;">지금부터 대사건강 개선 여정을 시작합니다.</p>
+                <div style="font-size:48px; margin-bottom:16px;">🌞</div>
+                <h3 style="color:var(--primary-color); margin:0 0 12px; font-size:20px;">해빛스쿨에 오신 걸 환영합니다!</h3>
+                <p style="font-size:14px; color:#666; margin-bottom:20px; line-height:1.6;">매일 식단·운동·수면을 사진으로 기록하며<br>건강한 습관을 만들어가는 습관학교입니다.</p>
                 <div class="ob-start-tips">
-                    <div class="ob-tip">🥗 식단 사진을 올리면 <strong>AI가 자연식품 vs 초가공식품</strong>을 분석해요</div>
-                    <div class="ob-tip">🏃 운동은 <strong>근지방비와 내장지방</strong> 개선에 집중해요</div>
-                    <div class="ob-tip">🧘 질 좋은 수면과 명상은 <strong>인슐린 저항성</strong> 개선에 핵심이에요</div>
+                    <div class="ob-tip">🥗 식단 사진을 올리면 <strong>AI가 칼로리·영양소</strong>를 분석해요</div>
+                    <div class="ob-tip">🏃 운동과 수면도 사진으로 간편하게 기록해요</div>
+                    <div class="ob-tip">✨ 갤러리에서 다른 사용자들과 함께 응원해요</div>
                 </div>
-                <div style="display:flex; gap:10px; margin-top:16px;">
-                    <button class="submit-btn" style="background:#888; flex:1;" onclick="goOnboardingStep(2)">←
-                        이전</button>
-                    <button class="submit-btn" style="flex:2; font-size:16px;" onclick="completeOnboarding()">🌞
-                        시작하기!</button>
-                </div>
+                <button class="submit-btn" style="margin-top:20px; font-size:16px; width:100%;" onclick="completeOnboarding()">🌞 시작하기!</button>
             </div>
         </div>
     </div>

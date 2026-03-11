@@ -5480,42 +5480,19 @@ async function completeOnboarding() {
     const user = auth.currentUser;
     if (!user) return;
 
-    // 건강 목표 수집
-    const goals = [];
-    document.querySelectorAll('input[name="ob-goal"]:checked').forEach(el => goals.push(el.value));
-
-    // 인바디 프로필 수집
-    const profile = {
-        smm: document.getElementById('ob-smm')?.value || '',
-        fat: document.getElementById('ob-fat')?.value || '',
-        visceral: document.getElementById('ob-visceral')?.value || '',
-        bmr: document.getElementById('ob-bmr')?.value || ''
-    };
+    // 모달 즉시 닫기 (저장 실패해도 진행)
+    document.getElementById('onboarding-modal').style.display = 'none';
+    showToast('🌞 환영합니다! 건강 습관 여정을 시작합니다!');
 
     try {
-        // Firestore에 저장
         await setDoc(doc(db, "users", user.uid), {
-            healthGoals: goals,
-            healthProfile: profile,
             onboardingComplete: true
         }, { merge: true });
-
-        // 기존 프로필 필드도 업데이트
-        if (profile.smm) document.getElementById('prof-smm').value = profile.smm;
-        if (profile.fat) document.getElementById('prof-fat').value = profile.fat;
-        if (profile.visceral) document.getElementById('prof-visceral').value = profile.visceral;
-        if (profile.bmr) document.getElementById('prof-bmr').value = profile.bmr;
-
-        // 모달 닫기
-        document.getElementById('onboarding-modal').style.display = 'none';
-        showToast('🌞 환영합니다! 대사건강 개선 여정을 시작합니다!');
-
-        // 대사건강 점수 업데이트
-        updateMetabolicScoreUI();
     } catch (e) {
-        console.error('온보딩 저장 오류:', e);
-        showToast('⚠️ 저장 중 오류가 발생했습니다.');
+        console.warn('온보딩 저장 스킵:', e.message);
     }
+
+    try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 
 // 대사건강 점수 UI 업데이트
