@@ -1,6 +1,6 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
@@ -294,3 +294,13 @@ export function setupAuthListener(callbacks) {
         }
     });
 }
+
+// 로그아웃 후 로그인 화면으로 복귀
+window.logoutAndReset = async function () {
+    try {
+        await signOut(auth);
+    } catch (e) {
+        console.warn('로그아웃 오류:', e.message);
+        location.reload();
+    }
+};
