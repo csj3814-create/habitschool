@@ -105,7 +105,7 @@ window.openWalletExplorer = function() {
         alert('지갑 주소가 아직 생성되지 않았습니다.');
         return;
     }
-    const tokenAddr = '0xca499c14afe8b80e86d9e382aff76f9f9c4e2e29';
+    const tokenAddr = '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B';
     window.open(`https://sepolia.basescan.org/token/${tokenAddr}?a=${addr}`, '_blank');
 };
 
