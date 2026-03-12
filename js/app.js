@@ -2487,6 +2487,8 @@ async function renderGroupChallenge() {
         if (log.userId) {
             if (!userStats[log.userId]) userStats[log.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || '익명' };
             userStats[log.userId].days++;
+            // 기록 작성자의 이름은 항상 최신으로 업데이트
+            if (log.userName) userStats[log.userId].name = log.userName;
             if (log.awardedPoints?.diet) userStats[log.userId].diet++;
             if (log.awardedPoints?.exercise) userStats[log.userId].exercise++;
             if (log.awardedPoints?.mind) userStats[log.userId].mind++;
