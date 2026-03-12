@@ -41,7 +41,7 @@ const CHAIN_ID = 84532;
 const EXPLORER_URL = "https://sepolia.basescan.org";
 
 // 일일 변환 한도
-const MAX_DAILY_HBT = 1000;
+const MAX_DAILY_HBT = 5000;
 const MIN_POINTS = 100;
 
 /**

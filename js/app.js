@@ -1441,7 +1441,7 @@ window.updateAssetDisplay = async function () {
             // 변환 비율은 fetchTokenStats()에서 전체 기준으로 업데이트
             const dailyLimitEl = document.getElementById('convert-daily-limit');
             if (dailyLimitEl) {
-                const dailyMax = 1000;
+                const dailyMax = 5000;
                 const remaining = Math.max(dailyMax - todayHbt, 0);
                 dailyLimitEl.innerHTML = `오늘 변환 한도: <strong>${remaining.toLocaleString()} / ${dailyMax.toLocaleString()} HBT</strong>`;
             }
