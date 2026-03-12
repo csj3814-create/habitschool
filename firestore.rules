@@ -35,7 +35,7 @@ service cloud.firestore {
     // 헬퍼 함수: 사용자 필드 화이트리스트
     function isAllowedUserField() {
       return request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['displayName', 'photoURL', 'walletAddress', 'encryptedWallet',
+          .hasOnly(['displayName', 'customDisplayName', 'photoURL', 'walletAddress', 'encryptedWallet',
                     'activeChallenge', 'activeChallenges', 'milestones', 'settings',
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind']);

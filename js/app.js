@@ -31,6 +31,46 @@ window.openTab = openTab;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
+window.changeDisplayName = changeDisplayName;
+
+// ========== 닉네임 변경 ==========
+function getUserDisplayName() {
+    return window._userDisplayName || auth.currentUser?.displayName || '사용자';
+}
+
+async function changeDisplayName() {
+    const user = auth.currentUser;
+    if (!user) { showToast('로그인이 필요합니다.'); return; }
+
+    const input = document.getElementById('profile-nickname');
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName) { showToast('닉네임을 입력해주세요.'); return; }
+    if (newName.length > 20) { showToast('닉네임은 20자까지 가능합니다.'); return; }
+    if (newName === getUserDisplayName()) { showToast('현재 사용 중인 닉네임입니다.'); return; }
+
+    try {
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, { customDisplayName: sanitizeText(newName) }, { merge: true });
+        window._userDisplayName = newName;
+
+        // 좌측 상단 이름 업데이트
+        document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(newName)}`;
+
+        // 갤러리 공유 카드 이름 업데이트
+        const shareNameEl = document.getElementById('share-name');
+        if (shareNameEl) shareNameEl.innerText = newName;
+
+        // 리포트 이름 업데이트
+        const reportNameEl = document.getElementById('report-user-name');
+        if (reportNameEl) reportNameEl.textContent = newName;
+
+        showToast('✅ 닉네임이 변경되었습니다.');
+    } catch (e) {
+        console.error('닉네임 변경 오류:', e);
+        showToast('⚠️ 닉네임 변경에 실패했습니다.');
+    }
+}
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
@@ -2912,7 +2952,7 @@ window.generate30DayReport = async function () {
 
     const modal = document.getElementById('report-modal');
     modal.style.display = 'flex';
-    document.getElementById('report-user-name').textContent = user.displayName || '사용자';
+    document.getElementById('report-user-name').textContent = getUserDisplayName();
     document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#999;">📊 30일간의 기록을 분석 중...</p>';
 
     try {
@@ -3706,7 +3746,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const existingSleepAnalysis = oldData.sleepAndMind?.sleepAnalysis || null;
 
             const saveData = sanitize({
-                userId: user.uid, userName: user.displayName, date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
+                userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
                 metrics: { weight: document.getElementById('weight').value, glucose: document.getElementById('glucose').value, bpSystolic: document.getElementById('bp-systolic').value, bpDiastolic: document.getElementById('bp-diastolic').value },
                 diet: {
                     breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,
@@ -4884,7 +4924,7 @@ async function buildShareCardAsync(myId, user) {
         if (user && myRecentLogs.length > 0) {
             document.getElementById('my-share-container').style.display = 'flex';
             const latest = myRecentLogs[0];
-            document.getElementById('share-name').innerText = user.displayName;
+            document.getElementById('share-name').innerText = getUserDisplayName();
             document.getElementById('share-date').innerText = latest.date.replace(/-/g, '.');
             let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
             if (points === 0 && latest.awardedPoints) { if (latest.awardedPoints.diet) points += 10; if (latest.awardedPoints.exercise) points += 15; if (latest.awardedPoints.mind) points += 5; }
@@ -5006,7 +5046,7 @@ window.addComment = async function (docId) {
         const logRef = doc(db, "daily_logs", docId);
         const newComment = {
             userId: user.uid,
-            userName: user.displayName || '익명',
+            userName: getUserDisplayName(),
             text: sanitizeText(text),
             timestamp: Date.now()
         };

@@ -332,10 +332,24 @@
                     </div>
                 </div>
 
-                <!-- 6. 로그아웃 -->
-                <div style="text-align:center; margin:20px 0 10px;">
-                    <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px;"
-                        onclick="logoutAndReset()">🚪 로그아웃</button>
+                <!-- 6. 계정 설정 (이름 변경 + 로그아웃) -->
+                <div style="background:white; border-radius:16px; padding:20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0;">
+                    <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">⚙️ 계정 설정</div>
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:6px;">닉네임</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" id="profile-nickname" placeholder="닉네임을 입력하세요" maxlength="20"
+                                style="flex:1; padding:10px 12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; outline:none; transition:border-color 0.2s;"
+                                onfocus="this.style.borderColor='#FF8C00'" onblur="this.style.borderColor='#e0e0e0'">
+                            <button onclick="changeDisplayName()"
+                                style="flex:none; padding:10px 16px; background:linear-gradient(135deg,#FF8C00,#FFa040); color:white; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.2s;"
+                                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">변경</button>
+                        </div>
+                    </div>
+                    <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
+                        <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
+                            onclick="logoutAndReset()">🚪 로그아웃</button>
+                    </div>
                 </div>
             </div>
 

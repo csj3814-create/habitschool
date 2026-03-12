@@ -1,7 +1,7 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
@@ -100,6 +100,7 @@ export function initAuth() {
 
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
 
         signInWithPopup(auth, provider).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
@@ -163,12 +164,18 @@ export function setupAuthListener(callbacks) {
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
-            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(user.displayName)}`;
-
-            // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
-
+            // Firestore에서 커스텀 닉네임 확인 후 표시
             const userRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userRef);
+            const customName = userDoc.exists() ? userDoc.data().customDisplayName : null;
+            const displayName = customName || user.displayName;
+            window._userDisplayName = displayName;
+            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(displayName)}`;
+            // 닉네임 입력창에 현재 이름 표시
+            const nicknameInput = document.getElementById('profile-nickname');
+            if (nicknameInput) nicknameInput.value = displayName;
+
+            // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
 
             if (userDoc.exists()) {
                 const ud = userDoc.data();
