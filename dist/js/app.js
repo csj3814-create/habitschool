@@ -1337,11 +1337,10 @@ window.updateAssetDisplay = async function () {
             }
 
             // HBT 표시 업데이트
+            // HBT 표시: 온체인 잔액이 진실의 원천 (hbtBalance 사용 안 함)
             const hbtDisplay = document.getElementById('asset-hbt-display');
             if (hbtDisplay) {
-                const hbtVal = parseFloat(userData.hbtBalance || 0);
-                const hbtStr = hbtVal % 1 === 0 ? hbtVal.toLocaleString() : hbtVal.toLocaleString(undefined, {maximumFractionDigits: 1});
-                hbtDisplay.innerHTML = `${hbtStr} <span class="wallet-asset-unit">HBT</span>`;
+                hbtDisplay.innerHTML = `<span style="color:#aaa">조회 중...</span>`;
             }
 
             // ========== 자산 변동 표시 (오늘 획득분 - daily_logs에서 계산) ==========
@@ -1449,22 +1448,28 @@ window.updateAssetDisplay = async function () {
             // 스켈레톤 해제
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
 
-            // 온체인 잔액 비동기 업데이트 (Cloud Function 경유)
+            // 온체인 잔액으로 메인 HBT 표시 업데이트
             if (window.fetchOnchainBalance) {
                 window.fetchOnchainBalance().then(onchainData => {
+                    const hbtEl = document.getElementById('asset-hbt-display');
                     if (onchainData && onchainData.balanceFormatted) {
+                        const val = parseFloat(onchainData.balanceFormatted);
+                        const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, {maximumFractionDigits: 1});
+                        if (hbtEl) hbtEl.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
                         const onchainBadge = document.getElementById('asset-hbt-onchain');
-                        const onchainText = document.getElementById('asset-hbt-onchain-text');
                         if (onchainBadge) {
-                            if (onchainText) {
-                                onchainText.textContent = `온체인: ${onchainData.balanceFormatted} HBT`;
-                            } else {
-                                onchainBadge.textContent = `온체인: ${onchainData.balanceFormatted} HBT`;
-                            }
+                            const onchainText = document.getElementById('asset-hbt-onchain-text');
+                            if (onchainText) onchainText.textContent = `온체인 (Base Sepolia)`;
                             onchainBadge.style.display = 'inline-flex';
                         }
+                    } else {
+                        if (hbtEl) hbtEl.innerHTML = `0 <span class="wallet-asset-unit">HBT</span>`;
                     }
-                }).catch(err => console.warn('온체인 잔액 조회 스킵:', err.message));
+                }).catch(err => {
+                    console.warn('온체인 잔액 조회 스킵:', err.message);
+                    const hbtEl = document.getElementById('asset-hbt-display');
+                    if (hbtEl) hbtEl.innerHTML = `- <span class="wallet-asset-unit">HBT</span>`;
+                });
             }
 
             // ========== 반감기 상태 UI 업데이트 (온체인 전체 채굴량 기준, v2) ==========

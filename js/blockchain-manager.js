@@ -595,19 +595,25 @@ export async function updateChallengeProgress() {
                         toastMessages.push(`🎉 ${totalDays}일 챌린지 완료! 내 지갑에서 보상을 수령하세요.`);
                     } else {
                         const staked = challenge.hbtStaked || 0;
-                        const refund = Math.floor(staked * 0.5);
-                        updateData[`activeChallenges.${tier}`] = null;
-                        if (refund > 0) {
-                            updateData.hbtBalance = increment(refund);
+                        const stakedOnChain = challenge.stakedOnChain || false;
+
+                        if (stakedOnChain && staked > 0) {
+                            // 온체인 정산은 settleExpiredChallenges에서 CF를 통해 처리
+                            // 여기서는 상태만 'expired'로 마킹하여 settleExpiredChallenges가 처리하도록 함
+                            challenge.status = 'expired';
+                            updateData[`activeChallenges.${tier}`] = challenge;
+                            toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%). 소각 정산 처리 중...`);
+                        } else {
+                            updateData[`activeChallenges.${tier}`] = null;
+                            toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
                         }
-                        toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n${refund} HBT 반환, ${staked - refund} HBT 소각` : ''}`);
                         settlementLogs.push({
                             userId: currentUser.uid,
                             type: 'challenge_settlement',
                             challengeId: challenge.challengeId,
-                            amount: refund,
+                            amount: 0,
                             staked: staked,
-                            burned: staked - refund,
+                            burned: stakedOnChain ? staked / 2 : 0,
                             successRate: successRate,
                             completedDays: challenge.completedDays,
                             timestamp: serverTimestamp(),
@@ -684,11 +690,14 @@ export async function settleExpiredChallenges() {
 
         const activeChallenges = userData.activeChallenges || {};
         const tiers = Object.keys(activeChallenges).filter(t => 
-            activeChallenges[t]?.status === 'ongoing'
+            activeChallenges[t]?.status === 'ongoing' || activeChallenges[t]?.status === 'expired'
         );
         if (tiers.length === 0) return;
 
-        const expiredTiers = tiers.filter(t => today > activeChallenges[t].endDate);
+        // 'expired'는 이미 기한 만료 확정, 'ongoing'은 endDate로 판단
+        const expiredTiers = tiers.filter(t => 
+            activeChallenges[t].status === 'expired' || today > activeChallenges[t].endDate
+        );
         if (expiredTiers.length === 0) return;
 
         const updateData = {};

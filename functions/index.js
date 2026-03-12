@@ -188,9 +188,8 @@ exports.mintHBT = onCall(
                 throw new HttpsError("internal", "온체인 민팅에 실패했습니다. 잠시 후 다시 시도해주세요.");
             }
 
-            // 5. Firestore 업데이트 (HBT 잔액 + 기록)
+            // 5. Firestore 업데이트 (온체인 민팅 기록만, hbtBalance는 온체인이 진실의 원천)
             await userRef.update({
-                hbtBalance: admin.firestore.FieldValue.increment(hbtAmount),
                 totalHbtEarned: admin.firestore.FieldValue.increment(hbtAmount)
             });
 
@@ -1062,13 +1061,9 @@ exports.claimChallengeReward = onCall(
             }
         }
 
-        // Firestore 업데이트
+        // Firestore 업데이트 (hbtBalance 제거 — 온체인이 진실의 원천)
         const updateData = {};
         updateData[`activeChallenges.${tier}`] = admin.firestore.FieldValue.delete();
-        // 온체인 스테이킹: HBT는 컨트랙트에서 직접 반환됨 (hbtBalance 불필요)
-        if (!stakedOnChain && rewardHbt > 0) {
-            updateData.hbtBalance = admin.firestore.FieldValue.increment(rewardHbt);
-        }
         if (rewardPoints > 0) updateData.coins = admin.firestore.FieldValue.increment(rewardPoints);
 
         await userRef.update(updateData);
@@ -1323,5 +1318,103 @@ exports.distributeMonthlyMvpReward = onCall(
         console.log(`Monthly MVP rewards distributed for ${targetMonth}:`, winners);
 
         return { alreadyDistributed: false, winners };
+    }
+);
+
+// ========================================
+// 11. 오프체인 hbtBalance → coins 마이그레이션
+// ========================================
+exports.migrateHbtToCoins = onCall(
+    {
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 120
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        // 관리자 확인 (본인 UID만 허용)
+        const adminUids = ['YOUR_ADMIN_UID']; // 필요 시 수정
+        const isAdmin = adminUids.includes(request.auth.uid);
+        // 관리자가 아닌 경우 본인 계정만 마이그레이션
+        const targetUid = isAdmin ? (request.data?.targetUid || null) : request.auth.uid;
+
+        const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+        const habitContract = getHabitContract(provider);
+        const results = [];
+
+        async function migrateUser(uid) {
+            const userRef = db.doc(`users/${uid}`);
+            const userSnap = await userRef.get();
+            if (!userSnap.exists) return null;
+
+            const userData = userSnap.data();
+            const hbtBalance = parseFloat(userData.hbtBalance || 0);
+            if (hbtBalance <= 0) return { uid, hbtBalance: 0, converted: 0, skipped: true };
+
+            // 온체인 잔액 + 스테이킹 잔액 조회
+            let onChainHbt = 0;
+            let stakedHbt = 0;
+            const walletAddress = userData.walletAddress;
+            if (walletAddress) {
+                try {
+                    const rawBalance = await habitContract.balanceOf(walletAddress);
+                    const rawStaked = await habitContract.challengeStakes(walletAddress);
+                    onChainHbt = parseFloat(ethers.formatUnits(rawBalance, 8));
+                    stakedHbt = parseFloat(ethers.formatUnits(rawStaked, 8));
+                } catch (e) {
+                    console.warn(`온체인 조회 실패 (${uid}):`, e.message);
+                }
+            }
+
+            // 오프체인 초과분 = hbtBalance - (온체인 잔액 + 스테이킹)
+            const realHbt = onChainHbt + stakedHbt;
+            const offChainExcess = Math.max(0, hbtBalance - realHbt);
+
+            if (offChainExcess <= 0) {
+                // hbtBalance가 온체인보다 적거나 같으면 그냥 0으로 초기화
+                await userRef.update({ hbtBalance: 0 });
+                return { uid, hbtBalance, onChainHbt, stakedHbt, converted: 0, note: 'no excess' };
+            }
+
+            // 오프체인 초과분을 포인트(coins)로 전환
+            const pointsToAdd = Math.round(offChainExcess);
+            await userRef.update({
+                hbtBalance: 0,
+                coins: admin.firestore.FieldValue.increment(pointsToAdd)
+            });
+
+            // 마이그레이션 기록
+            await db.collection("blockchain_transactions").add({
+                userId: uid,
+                type: 'hbt_migration',
+                offChainHbt: hbtBalance,
+                onChainHbt,
+                stakedHbt,
+                convertedToCoins: pointsToAdd,
+                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                status: 'success'
+            });
+
+            return { uid, hbtBalance, onChainHbt, stakedHbt, converted: pointsToAdd };
+        }
+
+        if (targetUid) {
+            // 특정 유저만 마이그레이션
+            const result = await migrateUser(targetUid);
+            results.push(result);
+        } else if (isAdmin) {
+            // 전체 유저 마이그레이션
+            const usersSnap = await db.collection("users").where("hbtBalance", ">", 0).get();
+            for (const doc of usersSnap.docs) {
+                const result = await migrateUser(doc.id);
+                if (result) results.push(result);
+            }
+        }
+
+        return { success: true, migrated: results.length, results };
     }
 );
