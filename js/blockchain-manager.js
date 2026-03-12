@@ -16,9 +16,24 @@ import {
     HBT_TOKEN, 
     STAKING_CONTRACT, 
     CONVERSION_RULES,
-    CHALLENGES,
-    CHALLENGE_ID_MAP
+    CHALLENGES
 } from './blockchain-config.js';
+
+// 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
+const CHALLENGE_ID_MAP = {
+    'challenge-diet-3d': 'challenge-3d',
+    'challenge-exercise-3d': 'challenge-3d',
+    'challenge-mind-3d': 'challenge-3d',
+    'challenge-all-3d': 'challenge-3d',
+    'challenge-diet-7d': 'challenge-7d',
+    'challenge-exercise-7d': 'challenge-7d',
+    'challenge-mind-7d': 'challenge-7d',
+    'challenge-all-7d': 'challenge-7d',
+    'challenge-diet-30d': 'challenge-30d',
+    'challenge-exercise-30d': 'challenge-30d',
+    'challenge-mind-30d': 'challenge-30d',
+    'challenge-all-30d': 'challenge-30d'
+};
 
 import { auth, db, app } from './firebase-config.js';
 import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
