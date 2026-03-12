@@ -124,8 +124,8 @@ exports.mintHBT = onCall(
                 throw new HttpsError("failed-precondition", `포인트가 부족합니다. 필요: ${pointAmount}P, 보유: ${currentCoins}P`);
             }
 
-            // 일일 변환 한도 확인
-            const today = new Date().toISOString().split("T")[0];
+            // 일일 변환 한도 확인 (KST 기준 — 프론트엔드와 일치)
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
             const dailyQuery = await db.collection("blockchain_transactions")
                 .where("userId", "==", uid)
                 .where("type", "==", "conversion")

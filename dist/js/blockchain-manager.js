@@ -372,7 +372,7 @@ export async function convertPointsToHBT(pointAmount) {
             }
         }
 
-        window.updateAssetDisplay && window.updateAssetDisplay();
+        if (window.updateAssetDisplay) await window.updateAssetDisplay();
         return true;
     } catch (onchainError) {
         console.error('❌ 온체인 민팅 실패:', onchainError.code, onchainError.message);
