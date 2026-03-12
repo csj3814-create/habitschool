@@ -11,6 +11,7 @@ import {
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
@@ -2409,7 +2410,7 @@ async function renderDashboard() {
         renderMissionBadges(missionBadges);
 
         // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시)
-        renderGroupChallenge(weekStrs).catch(() => {});
+        renderGroupChallenge().catch(() => {});
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -2455,19 +2456,24 @@ function renderMissionBadges(earnedBadges) {
     });
 }
 
-// 커뮤니티 주간 현황 렌더링
-async function renderGroupChallenge(weekStrs) {
+// 커뮤니티 월간 현황 렌더링
+async function renderGroupChallenge() {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
 
-    // 이번 주 전체 daily_logs 조회 (로그인 사용자면 읽기 가능)
+    // 이번 달 날짜 범위 계산
+    const today = new Date(getKstDateString() + 'T12:00:00Z');
+    const year = today.getUTCFullYear();
+    const month = String(today.getUTCMonth() + 1).padStart(2, '0');
+    const monthStart = `${year}-${month}-01`;
+    const monthEnd = `${year}-${month}-31`;
+
+    // 이번 달 전체 daily_logs 범위 조회
+    const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd));
+    const snap = await getDocs(q);
     const allLogs = [];
-    for (const dateStr of weekStrs) {
-        const q = query(collection(db, "daily_logs"), where("date", "==", dateStr));
-        const snap = await getDocs(q);
-        snap.forEach(d => allLogs.push(d.data()));
-    }
+    snap.forEach(d => allLogs.push(d.data()));
 
     if (allLogs.length === 0) {
         section.style.display = 'none';
@@ -2487,8 +2493,14 @@ async function renderGroupChallenge(weekStrs) {
     const totalUsers = Object.keys(userStats).length;
     const avgDays = totalUsers > 0 ? (Object.values(userStats).reduce((s, u) => s + u.days, 0) / totalUsers).toFixed(1) : 0;
 
-    // 가장 열심인 사용자 (이름 표시)
-    const topUser = Object.values(userStats).sort((a, b) => b.days - a.days)[0];
+    // 상위 3명 선정
+    const ranked = Object.entries(userStats)
+        .map(([userId, stat]) => ({ userId, ...stat }))
+        .sort((a, b) => b.days - a.days)
+        .slice(0, 3);
+
+    const medals = ['🥇', '🥈', '🥉'];
+    const rewardAmounts = ['5,000P', '2,000P', '500P'];
 
     section.style.display = 'block';
     content.innerHTML = `
@@ -2506,8 +2518,43 @@ async function renderGroupChallenge(weekStrs) {
                 <span class="group-stat-label">총 기록</span>
             </div>
         </div>
-        ${topUser ? `<div class="group-top-user">🏆 이번 주 MVP: <strong>${topUser.name}</strong> (${topUser.days}일 기록)</div>` : ''}
+        <div class="mvp-ranking-title">🏆 이번 달 MVP TOP 3</div>
+        <div class="mvp-ranking-list">
+            ${ranked.map((u, i) => `
+                <div class="mvp-ranking-item rank-${i + 1}">
+                    <span class="mvp-medal">${medals[i]}</span>
+                    <span class="mvp-name">${u.name}</span>
+                    <span class="mvp-days">${u.days}일 기록</span>
+                    <span class="mvp-reward">${rewardAmounts[i]}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="mvp-reward-info">💰 매월 자동 지급 · 1위 5,000P / 2위 2,000P / 3위 500P</div>
     `;
+
+    // 지난달 MVP 보상 자동 트리거 (매월 1~3일에만 시도)
+    const dayOfMonth = today.getUTCDate();
+    if (dayOfMonth <= 3 && auth.currentUser) {
+        try {
+            const prevDate = new Date(today);
+            prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
+            const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
+            const functions = getFunctions(undefined, 'asia-northeast3');
+            const distributeFn = httpsCallable(functions, 'distributeMonthlyMvpReward');
+            const result = await distributeFn({ targetMonth: prevMonth });
+            const data = result.data;
+            if (data && !data.alreadyDistributed && data.winners?.length > 0) {
+                // 현재 사용자가 수상자인지 확인
+                const myUid = auth.currentUser.uid;
+                const myWin = data.winners.find(w => w.userId === myUid);
+                if (myWin) {
+                    showToast(`🎉 ${prevMonth} MVP ${myWin.rank}위 달성! ${myWin.reward.toLocaleString()}P가 지급되었습니다!`);
+                }
+            }
+        } catch (e) {
+            console.log('MVP reward check:', e.message);
+        }
+    }
 }
 
 // 난이도 선택

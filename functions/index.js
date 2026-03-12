@@ -1034,3 +1034,103 @@ exports.claimChallengeReward = onCall(
         };
     }
 );
+
+// ========================================
+// 10. 월간 MVP 보상 자동 지급
+// ========================================
+
+const MVP_REWARDS = [
+    { rank: 1, points: 5000, label: '🥇 1위' },
+    { rank: 2, points: 2000, label: '🥈 2위' },
+    { rank: 3, points: 500, label: '🥉 3위' }
+];
+
+exports.distributeMonthlyMvpReward = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 5,
+        timeoutSeconds: 30
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { targetMonth } = request.data; // "YYYY-MM" 형식
+        if (!targetMonth || !/^\d{4}-\d{2}$/.test(targetMonth)) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 월 형식입니다. (YYYY-MM)");
+        }
+
+        // 이미 지급된 달인지 확인
+        const rewardRef = db.doc(`monthly_rewards/${targetMonth}`);
+        const rewardSnap = await rewardRef.get();
+        if (rewardSnap.exists) {
+            // 이미 지급 완료 - 결과만 반환
+            return { alreadyDistributed: true, ...rewardSnap.data() };
+        }
+
+        // 해당 월의 daily_logs 조회
+        const monthStart = `${targetMonth}-01`;
+        const monthEnd = `${targetMonth}-31`;
+        const q = db.collection("daily_logs")
+            .where("date", ">=", monthStart)
+            .where("date", "<=", monthEnd);
+        const snap = await q.get();
+
+        if (snap.empty) {
+            return { alreadyDistributed: false, winners: [] };
+        }
+
+        // 사용자별 기록일 수 집계
+        const userStats = {};
+        snap.forEach(doc => {
+            const log = doc.data();
+            if (!log.userId) return;
+            if (!userStats[log.userId]) {
+                userStats[log.userId] = { days: 0, name: log.userName || '익명' };
+            }
+            userStats[log.userId].days++;
+        });
+
+        // 상위 3명 선정
+        const ranked = Object.entries(userStats)
+            .map(([userId, stat]) => ({ userId, ...stat }))
+            .sort((a, b) => b.days - a.days)
+            .slice(0, 3);
+
+        if (ranked.length === 0) {
+            return { alreadyDistributed: false, winners: [] };
+        }
+
+        // 포인트 지급 (batch write)
+        const batch = db.batch();
+        const winners = [];
+        for (let i = 0; i < ranked.length; i++) {
+            const reward = MVP_REWARDS[i];
+            const winner = ranked[i];
+            const userRef = db.doc(`users/${winner.userId}`);
+            batch.set(userRef, {
+                coins: admin.firestore.FieldValue.increment(reward.points)
+            }, { merge: true });
+            winners.push({
+                rank: i + 1,
+                userId: winner.userId,
+                name: winner.name,
+                days: winner.days,
+                reward: reward.points
+            });
+        }
+
+        // 지급 기록 저장
+        batch.set(rewardRef, {
+            winners,
+            distributedAt: admin.firestore.FieldValue.serverTimestamp(),
+            distributedBy: request.auth.uid
+        });
+
+        await batch.commit();
+        console.log(`Monthly MVP rewards distributed for ${targetMonth}:`, winners);
+
+        return { alreadyDistributed: false, winners };
+    }
+);

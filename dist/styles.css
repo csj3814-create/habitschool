@@ -2202,6 +2202,81 @@ textarea {
     word-break: keep-all;
 }
 
+/* MVP 랭킹 */
+.mvp-ranking-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #E65100;
+    text-align: center;
+}
+
+.mvp-ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mvp-ranking-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.mvp-ranking-item.rank-1 {
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFE082 100%);
+    border: 1.5px solid #FFD54F;
+}
+.mvp-ranking-item.rank-2 {
+    background: linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%);
+    border: 1.5px solid #BDBDBD;
+}
+.mvp-ranking-item.rank-3 {
+    background: linear-gradient(135deg, #FBE9E7 0%, #FFCCBC 100%);
+    border: 1.5px solid #FFAB91;
+}
+
+.mvp-medal {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.mvp-name {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mvp-days {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.mvp-reward {
+    font-size: 12px;
+    font-weight: 700;
+    color: #E65100;
+    background: rgba(255, 111, 0, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.mvp-reward-info {
+    font-size: 10px;
+    color: #999;
+    text-align: center;
+    margin-top: 4px;
+}
+
 .mp-count {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -5083,6 +5158,26 @@ body.dark-mode .group-top-user {
     border-color: #5C4A2E;
     color: #FFB74D;
 }
+body.dark-mode .mvp-ranking-title { color: #FFB74D; }
+body.dark-mode .mvp-ranking-item.rank-1 {
+    background: linear-gradient(135deg, #2E2518 0%, #3A2E1A 100%);
+    border-color: #5C4A2E;
+}
+body.dark-mode .mvp-ranking-item.rank-2 {
+    background: linear-gradient(135deg, #252525 0%, #2A2A2A 100%);
+    border-color: #444;
+}
+body.dark-mode .mvp-ranking-item.rank-3 {
+    background: linear-gradient(135deg, #2A1E1A 0%, #302420 100%);
+    border-color: #5A3E30;
+}
+body.dark-mode .mvp-name { color: #E8E4DF; }
+body.dark-mode .mvp-days { color: #9E9E9E; }
+body.dark-mode .mvp-reward {
+    color: #FFB74D;
+    background: rgba(255, 152, 0, 0.15);
+}
+body.dark-mode .mvp-reward-info { color: #6E6A74; }
 
 /* ───────────────────────────────
    30일 결과지 버튼 다크모드
