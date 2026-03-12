@@ -11,7 +11,6 @@ import {
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
@@ -2539,6 +2538,7 @@ async function renderGroupChallenge() {
             const prevDate = new Date(today);
             prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
             const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
+            const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
             const functions = getFunctions(undefined, 'asia-northeast3');
             const distributeFn = httpsCallable(functions, 'distributeMonthlyMvpReward');
             const result = await distributeFn({ targetMonth: prevMonth });
