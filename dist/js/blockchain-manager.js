@@ -36,7 +36,7 @@ const CHALLENGE_ID_MAP = {
 };
 
 import { auth, db, app } from './firebase-config.js';
-import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
 import { checkRateLimit } from './security.js';
@@ -73,6 +73,27 @@ async function ensureFunctions() {
 
 let userWallet = null; // ethers.Wallet 인스턴스
 let userWalletAddress = null; // 0x... 주소
+
+// HBT 토큰 컨트랙트 ABI (stakeForChallenge용 최소 ABI)
+const HBT_STAKE_ABI = [
+    'function stakeForChallenge(uint256 amount) external',
+    'function challengeStakes(address) view returns (uint256)',
+    'function balanceOf(address) view returns (uint256)',
+    'function decimals() view returns (uint8)'
+];
+
+/**
+ * 사용자 지갑을 Base Sepolia 프로바이더에 연결
+ * @returns {ethers.Wallet} 연결된 지갑 (서명+전송 가능)
+ */
+function getConnectedWallet() {
+    if (!userWallet) return null;
+    const provider = new ethers.providers.JsonRpcProvider(
+        BASE_CONFIG.testnet.rpcUrl,
+        BASE_CONFIG.testnet.chainId
+    );
+    return userWallet.connect(provider);
+}
 
 // ========== 보안 지갑 관리 (v2) ==========
 // 개선 사항:
@@ -399,8 +420,7 @@ function eraLabel(era) {
  * 범용 챌린지 시작 (3일 / 7일 / 30일)
  * 동시 진행 지원: 티어(mini/weekly/master)별 1개씩 동시 진행 가능
  * - 3일: HBT 예치 없음, 포인트만 보상
- * - 7일: 소량 HBT 예치, 포인트 보상
- * - 30일: HBT 예치, 80%+ 원금 환급, 100% +20% 보너스
+ * - 7일/30일: 온체인 stakeForChallenge → CF로 Firestore 기록
  */
 export async function startChallenge30D(challengeId) {
     try {
@@ -431,12 +451,10 @@ export async function startChallenge30D(challengeId) {
                 showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
                 return false;
             }
-            // 소수점 2자리까지만 허용
             if (Math.round(hbtAmount * 100) !== hbtAmount * 100) {
                 showToast('❌ HBT는 소수점 2자리까지만 입력 가능합니다.');
                 return false;
             }
-            // 최대 예치량 제한
             if (hbtAmount > maxStake) {
                 showToast(`❌ 최대 ${maxStake} HBT까지만 예치 가능합니다.`);
                 return false;
@@ -445,18 +463,58 @@ export async function startChallenge30D(challengeId) {
 
         showToast(`⏳ ${duration}일 챌린지 시작 중...`);
 
-        // Cloud Function 호출 (서버에서 HBT 차감 + 챌린지 생성)
+        // 온체인 스테이킹 (HBT 예치가 있는 경우)
+        let stakeTxHash = null;
+        if (hbtAmount > 0) {
+            const connectedWallet = getConnectedWallet();
+            if (!connectedWallet) {
+                showToast('❌ 지갑이 초기화되지 않았습니다. 페이지를 새로고침해주세요.');
+                return false;
+            }
+
+            const hbtContract = new ethers.Contract(
+                HBT_TOKEN.testnetAddress,
+                HBT_STAKE_ABI,
+                connectedWallet
+            );
+
+            // raw amount: HBT * 10^decimals
+            const rawAmount = ethers.utils.parseUnits(String(hbtAmount), HBT_TOKEN.decimals);
+
+            // 온체인 잔액 확인
+            const onchainBalance = await hbtContract.balanceOf(connectedWallet.address);
+            if (onchainBalance.lt(rawAmount)) {
+                const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
+                showToast(`❌ 온체인 HBT 잔액이 부족합니다.\n보유: ${displayBalance} HBT, 필요: ${hbtAmount} HBT\n먼저 포인트를 HBT로 변환해주세요.`);
+                return false;
+            }
+
+            showToast('⏳ 온체인 예치 트랜잭션 전송 중...');
+            try {
+                const tx = await hbtContract.stakeForChallenge(rawAmount);
+                showToast('⏳ 블록체인 확인 대기 중...');
+                const receipt = await tx.wait();
+                stakeTxHash = receipt.transactionHash;
+                console.log('✅ 온체인 스테이킹 완료:', stakeTxHash);
+            } catch (txError) {
+                console.error('❌ 온체인 스테이킹 실패:', txError);
+                showToast('❌ 온체인 예치에 실패했습니다. 가스(SepoliaETH)가 부족할 수 있습니다.');
+                return false;
+            }
+        }
+
+        // Cloud Function 호출 (서버에서 Firestore 챌린지 기록)
         await ensureFunctions();
         if (!startChallengeFunction) {
             showToast('❌ 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
             return false;
         }
 
-        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount });
+        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
         const data = result.data;
 
         if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${data.hbtStaked} HBT 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n100% 달성 시 예치금 + 보너스, 80%+ 시 예치금 반환`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n100% 달성 시 예치금 + 보너스, 80%+ 시 예치금 반환`);
         } else {
             showToast(`✅ ${data.duration}일 챌린지 시작!${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
         }
@@ -643,23 +701,37 @@ export async function settleExpiredChallenges() {
                 // 성공 → claimable 상태로 전환 (사용자가 수령)
                 updateData[`activeChallenges.${tier}.status`] = 'claimable';
             } else {
-                // 실패 → 50% 반환, 50% 소각
+                // 실패 → 온체인 resolveChallenge(user, false) 호출 (50% 소각)
                 const staked = challenge.hbtStaked || 0;
-                const refund = Math.floor(staked * 0.5);
-                updateData[`activeChallenges.${tier}`] = null;
-                if (refund > 0) {
-                    updateData.hbtBalance = increment(refund);
+
+                if (staked > 0) {
+                    // CF를 통해 온체인 소각 처리 (CF가 Firestore 삭제도 처리)
+                    try {
+                        await ensureFunctions();
+                        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+                        const functions = getFunctions(app, 'asia-northeast3');
+                        const settleFn = httpsCallable(functions, 'settleChallengeFailure');
+                        const settleResult = await settleFn({ tier });
+                        const refund = settleResult.data?.returned || 0;
+                        const burned = settleResult.data?.burned || 0;
+                        showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).\n${refund} HBT 반환, ${burned} HBT 소각 (온체인)`);
+                    } catch (settleErr) {
+                        console.error('⚠️ 온체인 실패 정산 오류:', settleErr);
+                        // CF 실패 시 클라이언트에서 제거
+                        updateData[`activeChallenges.${tier}`] = deleteField();
+                        showToast(`😢 ${totalDays}일 챌린지 미달성. 소각 처리 중 오류가 발생했습니다.`);
+                    }
+                } else {
+                    updateData[`activeChallenges.${tier}`] = deleteField();
+                    showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
                 }
-                showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n${refund} HBT 반환, ${staked - refund} HBT 소각` : ''}`);
 
                 try {
                     await addDoc(collection(db, "blockchain_transactions"), {
                         userId: currentUser.uid,
                         type: 'challenge_settlement',
                         challengeId: challenge.challengeId,
-                        amount: refund,
                         staked: staked,
-                        burned: staked - refund,
                         successRate: successRate,
                         completedDays: challenge.completedDays || 0,
                         timestamp: serverTimestamp(),
@@ -741,35 +813,54 @@ export async function forfeitChallenge(tier) {
         }
 
         const staked = challenge.hbtStaked || 0;
+        const stakedOnChain = challenge.stakedOnChain || false;
         const msg = staked > 0
-            ? `⚠️ 포기하면 예치한 ${staked} HBT가 소멸됩니다.\n정말 포기하시겠습니까?`
+            ? `⚠️ 포기하면 예치한 ${staked} HBT의 50%가 소각됩니다.\n정말 포기하시겠습니까?`
             : '정말 이 챌린지를 포기하시겠습니까?';
 
         if (!confirm(msg)) return false;
 
-        const updateData = {};
-        updateData[`activeChallenges.${tier}`] = null;
+        // 온체인 스테이킹이 있는 경우 CF를 통해 소각 처리
+        if (stakedOnChain && staked > 0) {
+            try {
+                showToast('⏳ 온체인 정산 중...');
+                await ensureFunctions();
+                const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+                const functions = getFunctions(app, 'asia-northeast3');
+                const settleFn = httpsCallable(functions, 'settleChallengeFailure');
+                const settleResult = await settleFn({ tier });
+                const burned = settleResult.data?.burned || 0;
+                const returned = settleResult.data?.returned || 0;
+                showToast(`🏳️ 챌린지 포기.\n${returned} HBT 반환, ${burned} HBT 소각 (온체인)`);
+            } catch (settleErr) {
+                console.error('⚠️ 온체인 포기 정산 오류:', settleErr);
+                showToast('❌ 온체인 정산에 실패했습니다. 다시 시도해주세요.');
+                return false;
+            }
+        } else {
+            const updateData = {};
+            updateData[`activeChallenges.${tier}`] = deleteField();
+            await updateDoc(userRef, updateData);
 
-        await updateDoc(userRef, updateData);
+            // 정산 기록 저장
+            try {
+                await addDoc(collection(db, "blockchain_transactions"), {
+                    userId: currentUser.uid,
+                    type: 'challenge_settlement',
+                    challengeId: challenge.challengeId,
+                    amount: 0,
+                    staked: staked,
+                    successRate: (challenge.completedDays || 0) / (challenge.totalDays || 1),
+                    completedDays: challenge.completedDays || 0,
+                    timestamp: serverTimestamp(),
+                    status: 'forfeit'
+                });
+            } catch (logErr) {
+                console.warn('⚠️ 포기 기록 저장 실패:', logErr.message);
+            }
 
-        // 정산 기록 저장
-        try {
-            await addDoc(collection(db, "blockchain_transactions"), {
-                userId: currentUser.uid,
-                type: 'challenge_settlement',
-                challengeId: challenge.challengeId,
-                amount: 0,
-                staked: staked,
-                successRate: (challenge.completedDays || 0) / (challenge.totalDays || 1),
-                completedDays: challenge.completedDays || 0,
-                timestamp: serverTimestamp(),
-                status: 'forfeit'
-            });
-        } catch (logErr) {
-            console.warn('⚠️ 포기 기록 저장 실패:', logErr.message);
+            showToast('🏳️ 챌린지를 포기했습니다.');
         }
-
-        showToast('🏳️ 챌린지를 포기했습니다.');
         if (window.updateAssetDisplay) window.updateAssetDisplay();
         return true;
     } catch (error) {

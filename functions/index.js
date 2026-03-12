@@ -831,6 +831,7 @@ const CHALLENGE_DEFS = {
 
 exports.startChallenge = onCall(
     {
+        secrets: [SERVER_MINTER_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
         timeoutSeconds: 30
@@ -840,7 +841,7 @@ exports.startChallenge = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { challengeId, hbtAmount } = request.data;
+        const { challengeId, hbtAmount, stakeTxHash } = request.data;
         // 하위 호환: 기존 ID를 새 ID로 매핑
         const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
         const def = CHALLENGE_DEFS[resolvedId];
@@ -866,10 +867,23 @@ exports.startChallenge = onCall(
 
         const userData = userSnap.data();
 
-        // HBT 잔액 확인
-        if (stakeAmount > 0 && (userData.hbtBalance || 0) < stakeAmount) {
-            throw new HttpsError("failed-precondition",
-                `HBT가 부족합니다. 필요: ${stakeAmount}, 보유: ${userData.hbtBalance || 0}`);
+        // 온체인 스테이킹 검증 (HBT 예치가 있는 경우)
+        if (stakeAmount > 0) {
+            if (!stakeTxHash) {
+                throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 필요합니다.");
+            }
+            // 온체인에서 트랜잭션 확인
+            try {
+                const { provider } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const receipt = await provider.getTransactionReceipt(stakeTxHash);
+                if (!receipt || receipt.status !== 1) {
+                    throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 실패했거나 아직 확인되지 않았습니다.");
+                }
+            } catch (verifyErr) {
+                if (verifyErr.code) throw verifyErr; // HttpsError는 그대로 전달
+                console.error("온체인 검증 오류:", verifyErr.message);
+                throw new HttpsError("internal", "온체인 예치 검증에 실패했습니다.");
+            }
         }
 
         // 같은 티어에 진행 중인 챌린지 확인
@@ -895,7 +909,6 @@ exports.startChallenge = onCall(
             const todayLogSnap = await db.doc(`daily_logs/${uid}_${startDate}`).get();
             if (todayLogSnap.exists) {
                 const ap = todayLogSnap.data().awardedPoints || {};
-                // 모든 챌린지는 통합: 식단+운동+마음 3개 모두 필요
                 if (ap.diet && ap.exercise && ap.mind) {
                     initialCompletedDays = 1;
                     initialCompletedDates = [startDate];
@@ -913,6 +926,8 @@ exports.startChallenge = onCall(
             completedDates: initialCompletedDates,
             totalDays: def.duration,
             hbtStaked: stakeAmount,
+            stakeTxHash: stakeTxHash || null,
+            stakedOnChain: stakeAmount > 0,
             status: 'ongoing',
             tier: def.tier
         };
@@ -920,9 +935,6 @@ exports.startChallenge = onCall(
         const updateData = {};
         updateData[`activeChallenges.${def.tier}`] = challengeData;
         if (userData.activeChallenge) updateData.activeChallenge = admin.firestore.FieldValue.delete();
-        if (stakeAmount > 0) {
-            updateData.hbtBalance = admin.firestore.FieldValue.increment(-stakeAmount);
-        }
         await userRef.update(updateData);
 
         // 거래 기록
@@ -930,8 +942,10 @@ exports.startChallenge = onCall(
             await db.collection("blockchain_transactions").add({
                 userId: uid,
                 type: 'staking',
-                challengeId,
+                challengeId: resolvedId,
                 amount: stakeAmount,
+                stakeTxHash,
+                onChain: true,
                 timestamp: admin.firestore.FieldValue.serverTimestamp(),
                 status: 'success'
             });
@@ -949,9 +963,10 @@ exports.startChallenge = onCall(
 
 exports.claimChallengeReward = onCall(
     {
+        secrets: [SERVER_MINTER_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 30
+        timeoutSeconds: 60
     },
     async (request) => {
         if (!request.auth) {
@@ -982,20 +997,21 @@ exports.claimChallengeReward = onCall(
         const totalDays = challenge.totalDays || 30;
         const successRate = (challenge.completedDays || 0) / totalDays;
         const staked = challenge.hbtStaked || 0;
+        const stakedOnChain = challenge.stakedOnChain || false;
         const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
         const challengeDef = CHALLENGE_REWARDS[resolvedChallengeId] || {};
         const baseRewardP = challengeDef.rewardPoints || 0;
         let rewardHbt = 0;
         let rewardPoints = 0;
+        let resolveTxHash = null;
+        let bonusTxHash = null;
 
         if (staked > 0) {
             if (successRate >= 1.0) {
-                // 100% 달성: 원금 + 보너스 (위클리 +50%, 마스터 +100%)
                 const bonusRate = tier === 'master' ? 1.0 : 0.5;
                 rewardHbt = staked + (staked * bonusRate);
                 rewardPoints = baseRewardP;
             } else if (successRate >= 0.8) {
-                // 80%+ 달성: 원금만 반환 (보너스 없음)
                 rewardHbt = staked;
                 rewardPoints = baseRewardP;
             }
@@ -1007,10 +1023,52 @@ exports.claimChallengeReward = onCall(
             }
         }
 
-        // Firestore 업데이트 (서버 권한)
+        // 온체인 정산: resolveChallenge(user, true) → 스테이킹 100% 반환
+        if (stakedOnChain && staked > 0 && successRate >= 0.8) {
+            const userWalletAddress = userData.walletAddress;
+            if (!userWalletAddress) {
+                throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
+            }
+
+            try {
+                const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const habitContract = getHabitContract(wallet);
+
+                // 1) resolveChallenge(user, true) — 스테이킹 원금 100% 반환
+                const resolveTx = await habitContract.resolveChallenge(userWalletAddress, true);
+                const resolveReceipt = await resolveTx.wait();
+                resolveTxHash = resolveReceipt.hash;
+
+                // 2) 100% 달성 시 보너스 HBT 온체인 민팅
+                if (successRate >= 1.0) {
+                    const DECIMALS = 8;
+                    const stakedRaw = ethers.parseUnits(staked.toString(), DECIMALS);
+                    const bonusMultiplier = tier === 'master' ? 100n : 50n;
+                    const bonusHbtRaw = stakedRaw * bonusMultiplier / 100n;
+
+                    if (bonusHbtRaw > 0n) {
+                        const currentRate = await habitContract.currentRate();
+                        const pointAmount = bonusHbtRaw / currentRate;
+                        if (pointAmount > 0n) {
+                            const bonusTx = await habitContract.mint(userWalletAddress, pointAmount);
+                            const bonusReceipt = await bonusTx.wait();
+                            bonusTxHash = bonusReceipt.hash;
+                        }
+                    }
+                }
+            } catch (onChainErr) {
+                console.error("온체인 정산 오류:", onChainErr.message);
+                throw new HttpsError("internal", "온체인 챌린지 정산에 실패했습니다.");
+            }
+        }
+
+        // Firestore 업데이트
         const updateData = {};
         updateData[`activeChallenges.${tier}`] = admin.firestore.FieldValue.delete();
-        if (rewardHbt > 0) updateData.hbtBalance = admin.firestore.FieldValue.increment(rewardHbt);
+        // 온체인 스테이킹: HBT는 컨트랙트에서 직접 반환됨 (hbtBalance 불필요)
+        if (!stakedOnChain && rewardHbt > 0) {
+            updateData.hbtBalance = admin.firestore.FieldValue.increment(rewardHbt);
+        }
         if (rewardPoints > 0) updateData.coins = admin.firestore.FieldValue.increment(rewardPoints);
 
         await userRef.update(updateData);
@@ -1024,6 +1082,9 @@ exports.claimChallengeReward = onCall(
             staked: staked,
             successRate: successRate,
             completedDays: challenge.completedDays || 0,
+            onChain: stakedOnChain,
+            resolveTxHash,
+            bonusTxHash,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             status: 'success'
         });
@@ -1033,7 +1094,104 @@ exports.claimChallengeReward = onCall(
             rewardHbt,
             rewardPoints,
             tier,
-            successRate: Math.round(successRate * 100)
+            successRate: Math.round(successRate * 100),
+            resolveTxHash,
+            bonusTxHash
+        };
+    }
+);
+
+// ========================================
+// 9-1. 챌린지 실패 정산 (온체인 소각)
+// ========================================
+exports.settleChallengeFailure = onCall(
+    {
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { tier } = request.data;
+        if (!tier || !['mini', 'weekly', 'master'].includes(tier)) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 챌린지 티어입니다.");
+        }
+
+        const uid = request.auth.uid;
+        const userRef = db.doc(`users/${uid}`);
+        const userSnap = await userRef.get();
+
+        if (!userSnap.exists) {
+            throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+        }
+
+        const userData = userSnap.data();
+        const activeChallenges = userData.activeChallenges || {};
+        const challenge = activeChallenges[tier];
+
+        if (!challenge) {
+            throw new HttpsError("failed-precondition", "해당 티어의 챌린지를 찾을 수 없습니다.");
+        }
+
+        const staked = challenge.hbtStaked || 0;
+        const stakedOnChain = challenge.stakedOnChain || false;
+        const totalDays = challenge.totalDays || 30;
+        const successRate = (challenge.completedDays || 0) / totalDays;
+        let resolveTxHash = null;
+
+        // 온체인 정산: resolveChallenge(user, false) → 50% 소각 + 50% 반환
+        if (stakedOnChain && staked > 0) {
+            const userWalletAddress = userData.walletAddress;
+            if (!userWalletAddress) {
+                throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
+            }
+
+            try {
+                const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const habitContract = getHabitContract(wallet);
+
+                const resolveTx = await habitContract.resolveChallenge(userWalletAddress, false);
+                const resolveReceipt = await resolveTx.wait();
+                resolveTxHash = resolveReceipt.hash;
+            } catch (onChainErr) {
+                console.error("온체인 소각 정산 오류:", onChainErr.message);
+                throw new HttpsError("internal", "온체인 챌린지 실패 정산에 실패했습니다.");
+            }
+        }
+
+        // Firestore 업데이트: 챌린지 제거
+        const updateData = {};
+        updateData[`activeChallenges.${tier}`] = admin.firestore.FieldValue.delete();
+
+        await userRef.update(updateData);
+
+        // 거래 기록
+        await db.collection("blockchain_transactions").add({
+            userId: uid,
+            type: 'challenge_failure',
+            challengeId: challenge.challengeId,
+            staked: staked,
+            burned: stakedOnChain ? staked / 2 : 0,
+            returned: stakedOnChain ? staked / 2 : 0,
+            successRate: successRate,
+            completedDays: challenge.completedDays || 0,
+            onChain: stakedOnChain,
+            resolveTxHash,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'success'
+        });
+
+        return {
+            success: true,
+            tier,
+            staked,
+            burned: stakedOnChain ? staked / 2 : 0,
+            returned: stakedOnChain ? staked / 2 : 0,
+            resolveTxHash
         };
     }
 );
