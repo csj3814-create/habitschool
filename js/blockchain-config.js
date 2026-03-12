@@ -123,6 +123,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 7,
         hbtStake: 50,
+        bonusRate: 50,
         rewardPoints: 30,
         emoji: '🥗',
         duration: 7,
@@ -136,6 +137,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 7,
         hbtStake: 50,
+        bonusRate: 50,
         rewardPoints: 30,
         emoji: '🏃',
         duration: 7,
@@ -149,6 +151,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 7,
         hbtStake: 50,
+        bonusRate: 50,
         rewardPoints: 30,
         emoji: '🧘',
         duration: 7,
@@ -164,7 +167,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 100,
-        rewardHbt: 105,
+        bonusRate: 100,
         rewardPoints: 50,
         emoji: '🥗',
         duration: 30,
@@ -178,7 +181,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 100,
-        rewardHbt: 105,
+        bonusRate: 100,
         rewardPoints: 50,
         emoji: '🏃',
         duration: 30,
@@ -192,7 +195,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 100,
-        rewardHbt: 105,
+        bonusRate: 100,
         rewardPoints: 50,
         emoji: '🧘',
         duration: 30,
@@ -221,6 +224,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 7,
         hbtStake: 50,
+        bonusRate: 50,
         rewardPoints: 50,
         emoji: '🌟',
         duration: 7,
@@ -234,7 +238,7 @@ export const CHALLENGES = {
         dailyTarget: 1,
         requiredDays: 30,
         hbtStake: 100,
-        rewardHbt: 200,
+        bonusRate: 100,
         rewardPoints: 100,
         emoji: '🌟',
         duration: 30,
@@ -249,21 +253,24 @@ export const CHALLENGES_30D = {
     mind: CHALLENGES['challenge-mind-30d']
 };
 
-// 📊 포인트 → 토큰 변환 규칙
+// 📊 포인트 → 토큰 변환 규칙 (v2)
 export const CONVERSION_RULES = {
-    pointsPerConversion: 1, // 1P = 1 HBT (구간 1 기준, 반감기 적용)
-    minConversion: 100,      // 최소 100P
-    maxConversionPerDay: 1000, // 1일 최대 1,000 HBT
+    pointsPerConversion: 100, // 100P 단위 변환
+    minConversion: 100,       // 최소 100P
+    maxConversionPerDay: 1000, // 1일 최대 1,000 HBT (서버 제한)
     gasFeeEstimate: 0, // 가스비 무료 (회사 부담)
     estimatedTime: '2-5초', // 내장형 지갑으로 즉시 처리
     
-    // 반감기 설정 (비트코인 방식)
+    // Phase 기반 반감 (v2)
     halving: {
-        miningPool: 60_000_000,      // 채굴 보상 풀 60M HBT
-        era1Threshold: 30_000_000,   // 구간 1: 3천만 HBT
-        initialRate: 1,              // 구간 1: 1P = 1 HBT (100P = 100 HBT)
-        minRate: 0.01,               // 최소: 100P = 1 HBT
-        // 구간별: threshold ÷ 2, rate ÷ 2 (무한 반복)
+        miningPool: 70_000_000,       // 채굴 풀 70M HBT
+        phase1End: 35_000_000,        // Phase 1 → A구간: 누적 3,500만
+        phase2End: 52_500_000,        // Phase 2 → B구간: 누적 5,250만
+        phase3End: 61_250_000,        // Phase 3 → C구간: 누적 6,125만
+        // Phase 4+ (D구간~): 나머지 875만, 무한 반감
+        initialRate: 1,               // 초기: 1P = 1 HBT (100P = 100 HBT)
+        maxRate: 4,                   // 최대: 1P = 4 HBT (주간 난이도 조절)
+        rateScale: 100_000_000,       // 온체인 RATE_SCALE (10^8)
     }
 };
 

@@ -171,10 +171,8 @@
             font-weight: 700;
             color: white;
         }
-        .alloc-mining { background: #FF8C00; flex: 60; }
-        .alloc-season { background: #4CAF50; flex: 20; }
-        .alloc-ops { background: #1E88E5; flex: 15; }
-        .alloc-early { background: #9C27B0; flex: 5; }
+        .alloc-mining { background: #FF8C00; flex: 70; }
+        .alloc-ops { background: #1E88E5; flex: 30; }
 
         .alloc-list { list-style: none; }
         .alloc-list li {
@@ -320,7 +318,7 @@
         <div class="header">
             <h1>🪙 HaBit (HBT)</h1>
             <div class="subtitle">Habit(습관) + Bit(비트) — 건강한 습관이 가치가 되는 토큰</div>
-            <div class="update">최종 업데이트: 2026년 3월 1일</div>
+            <div class="update">최종 업데이트: 2026년 3월 13일</div>
         </div>
 
         <!-- 기본 정보 -->
@@ -331,7 +329,7 @@
                 <tr><td>표준</td><td>ERC-20 (Base 체인)</td></tr>
                 <tr><td>소수점</td><td>8자리 (BTC와 동일)</td></tr>
                 <tr><td>최대 발행량</td><td>100,000,000 HBT</td></tr>
-                <tr><td>초기 발행</td><td>0 (전량 채굴)</td></tr>
+                <tr><td>초기 발행</td><td>30,000,000 HBT (리저브)</td></tr>
                 <tr><td>교환 대상</td><td>파트너십 체결 후 공개 예정</td></tr>
             </table>
         </div>
@@ -368,19 +366,19 @@
         <div class="section">
             <div class="section-title"><span class="icon">🔄</span> HBT 전환 (Minting)</div>
             <table class="info-table">
-                <tr><td>100P</td><td>→ 100 HBT</td></tr>
-                <tr><td>500P</td><td>→ 500 HBT</td></tr>
+                <tr><td>100P</td><td>→ 100 HBT (현재 A구간)</td></tr>
+                <tr><td>200P</td><td>→ 200 HBT (현재 A구간)</td></tr>
+                <tr><td>변환 단위</td><td>100P 단위</td></tr>
                 <tr><td>일일 한도</td><td>최대 1,000 HBT</td></tr>
-                <tr><td>풀 인증 시</td><td>80P = 80 HBT</td></tr>
             </table>
             <div class="highlight-box warning">
-                ⚡ 전환 비율은 <strong>구간 1</strong> 기준입니다. 반감기에 따라 점차 줄어듭니다.
+                ⚡ 전환 비율은 매주 <strong>자동 난이도 조절</strong>에 의해 변동됩니다. 채굴이 적으면 비율이 올라가고, 많으면 내려갑니다.
             </div>
         </div>
 
         <!-- 반감기 -->
         <div class="section">
-            <div class="section-title"><span class="icon">📉</span> 반감기 — 비트코인 방식</div>
+            <div class="section-title"><span class="icon">📉</span> Phase 기반 반감기</div>
             <div class="quote">"일찍 시작할수록 유리하다"</div>
             
             <div class="highlight-box info">
@@ -390,24 +388,21 @@
 
             <table class="halving-table">
                 <thead>
-                    <tr><th>구간</th><th>발행 가능</th><th>100P 전환</th></tr>
+                    <tr><th>구간</th><th>채굴 풀</th><th>주간 목표</th></tr>
                 </thead>
                 <tbody>
-                    <tr class="era-1"><td>1</td><td>30,000,000</td><td>100 HBT</td></tr>
-                    <tr><td>2</td><td>15,000,000</td><td>50 HBT</td></tr>
-                    <tr><td>3</td><td>7,500,000</td><td>25 HBT</td></tr>
-                    <tr><td>4</td><td>3,750,000</td><td>12.5 HBT</td></tr>
-                    <tr><td>5</td><td>1,875,000</td><td>6.25 HBT</td></tr>
-                    <tr><td>6</td><td>937,500</td><td>3.125 HBT</td></tr>
-                    <tr><td>7+</td><td>... (÷2 반복)</td><td>최소 1 HBT</td></tr>
+                    <tr class="era-1"><td>A</td><td>35,000,000</td><td>140,000 HBT/주</td></tr>
+                    <tr><td>B</td><td>17,500,000</td><td>70,000 HBT/주</td></tr>
+                    <tr><td>C</td><td>8,750,000</td><td>35,000 HBT/주</td></tr>
+                    <tr><td>D+</td><td>8,750,000</td><td>17,500~ HBT/주</td></tr>
                 </tbody>
             </table>
 
             <div class="highlight-box">
-                🌟 <strong>지금 시작하면?</strong><br>
-                구간 1: 100P → 100 HBT<br>
-                구간 5: 100P → 6.25 HBT (16배 차이!)<br>
-                구간 7: 100P → 1.56 HBT (64배 차이!)
+                🌟 <strong>주간 난이도 자동 조절</strong><br>
+                채굴이 목표보다 적으면 → 비율 ↑ (최대 2배/주, 상한 4 HBT/P)<br>
+                채굴이 목표보다 많으면 → 비율 ↓ (최소 0.5배/주)<br>
+                지금은 A구간: 100P → 100 HBT 시작!
             </div>
         </div>
 
@@ -442,63 +437,81 @@
             <div class="section-title"><span class="icon">📊</span> 토큰 배분</div>
             
             <div class="alloc-bar">
-                <div class="alloc-mining">60%</div>
-                <div class="alloc-season">20%</div>
-                <div class="alloc-ops">15%</div>
-                <div class="alloc-early">5%</div>
+                <div class="alloc-mining">70%</div>
+                <div class="alloc-ops" style="flex:30">30%</div>
             </div>
 
             <ul class="alloc-list">
                 <li>
                     <span class="alloc-dot" style="background:#FF8C00"></span>
-                    🏃 습관 채굴 보상
-                    <span class="alloc-pct">60,000,000 (60%)</span>
-                </li>
-                <li>
-                    <span class="alloc-dot" style="background:#4CAF50"></span>
-                    🏆 챌린지/시즌 보상
-                    <span class="alloc-pct">20,000,000 (20%)</span>
+                    ⛏️ 채굴 풀 (습관채굴 + 챌린지 보너스)
+                    <span class="alloc-pct">70,000,000 (70%)</span>
                 </li>
                 <li>
                     <span class="alloc-dot" style="background:#1E88E5"></span>
-                    🔧 운영/유동성 리저브
-                    <span class="alloc-pct">15,000,000 (15%)</span>
-                </li>
-                <li>
-                    <span class="alloc-dot" style="background:#9C27B0"></span>
-                    👥 초기 사용자 보너스
-                    <span class="alloc-pct">5,000,000 (5%)</span>
+                    💼 리저브 (팀/파트너십/유동성)
+                    <span class="alloc-pct">30,000,000 (30%)</span>
                 </li>
             </ul>
+
+            <div class="highlight-box info">
+                📌 리저브 30M은 컨트랙트 배포 시 즉시 발행됩니다.<br>
+                프로덕션에서는 시간 기반 베스팅 또는 multi-sig로 관리 예정입니다.
+            </div>
         </div>
 
-        <!-- 시즌 리워드 -->
+        <!-- 챌린지 스테이킹 -->
         <div class="section">
-            <div class="section-title"><span class="icon">🏆</span> 시즌 리워드 (30일)</div>
+            <div class="section-title"><span class="icon">🏆</span> 챌린지 스테이킹</div>
+            
+            <div class="highlight-box info">
+                📌 HBT를 원하는 만큼 예치 (슬라이더)하고 습관 인증에 도전!<br>
+                • <strong>100% 달성</strong>: 예치금 반환 + 보너스 (위클리 +50%, 마스터 +100%)<br>
+                • <strong>80% 이상</strong>: 예치금 전액 반환<br>
+                • <strong>80% 미만</strong>: 50% 소각, 50% 반환
+            </div>
+
+            <table class="halving-table">
+                <thead>
+                    <tr><th>티어</th><th>최소 예치</th><th>100% 달성</th><th>80%+ 달성</th><th>80% 미만</th></tr>
+                </thead>
+                <tbody>
+                    <tr class="era-1"><td>⚡ 3일 미니</td><td>무료</td><td>10P</td><td>—</td><td>—</td></tr>
+                    <tr><td>🔥 7일 위클리</td><td>50 HBT~</td><td>예치의 150% + 30P</td><td>예치금 반환</td><td>50% 반환<br>50% 소각</td></tr>
+                    <tr><td>🏆 30일 마스터</td><td>100 HBT~</td><td>예치의 200% + 50P</td><td>예치금 반환</td><td>50% 반환<br>50% 소각</td></tr>
+                    <tr><td>🌟 30일 통합</td><td>100 HBT~</td><td>예치의 200% + 100P</td><td>예치금 반환</td><td>50% 반환<br>50% 소각</td></tr>
+                </tbody>
+            </table>
+
+            <div class="highlight-box">
+                💡 <strong>보상 기준:</strong><br>
+                • 예치량은 슬라이더로 자유 설정 (최소 예치 이상)<br>
+                • 100% = 모든 날 인증 완료 (3일은 3일 전부 필수)<br>
+                • 80% 이상 = 기간의 80% 인증 (7일 중 6일, 30일 중 24일)<br>
+                • 포인트(P)는 일일 인증 시 적립 (스테이킹 결과와 무관)
+            </div>
+        </div>
+
+        <!-- 커뮤니티 랭킹 -->
+        <div class="section">
+            <div class="section-title"><span class="icon">🏅</span> 월간 커뮤니티 랭킹</div>
             <div class="reward-item">
                 <span class="reward-medal">🥇</span>
                 <span class="reward-rank">1위</span>
-                <span class="reward-amount">5,000 HBT</span>
+                <span class="reward-amount">5,000 P</span>
             </div>
             <div class="reward-item">
                 <span class="reward-medal">🥈</span>
                 <span class="reward-rank">2위</span>
-                <span class="reward-amount">3,000 HBT</span>
+                <span class="reward-amount">2,000 P</span>
             </div>
             <div class="reward-item">
                 <span class="reward-medal">🥉</span>
                 <span class="reward-rank">3위</span>
-                <span class="reward-amount">1,500 HBT</span>
+                <span class="reward-amount">500 P</span>
             </div>
-            <div class="reward-item">
-                <span class="reward-medal">⭐</span>
-                <span class="reward-rank">상위 10%</span>
-                <span class="reward-amount">500 HBT</span>
-            </div>
-            <div class="reward-item">
-                <span class="reward-medal">🎖️</span>
-                <span class="reward-rank">완주자 전원</span>
-                <span class="reward-amount">뱃지</span>
+            <div class="highlight-box warning">
+                💬 랭킹은 매월 커뮤니티 활동 기준으로 산정되며, 보상은 포인트(P)로 지급됩니다.
             </div>
         </div>
 
@@ -538,15 +551,6 @@
                 <tr><td>탐색기</td><td><a href="https://basescan.org" target="_blank" style="color:#1E88E5">basescan.org</a></td></tr>
                 <tr><td>가스비</td><td>ETH (~$0.01 이하)</td></tr>
             </table>
-        </div>
-
-        <!-- 법적 고려 -->
-        <div class="section">
-            <div class="section-title"><span class="icon">⚖️</span> 법적 고려사항</div>
-            <div class="point-item">테스트넷 단계: 법적 이슈 없음 (실제 가치 없음)</div>
-            <div class="point-item">메인넷 전환 시: VASP 신고 의무 검토 필요</div>
-            <div class="point-item">소규모 유틸리티 토큰: 규제 대상 아닐 가능성 높음</div>
-            <div class="point-item">외부 토큰 교환 시작 전: 법률 자문 권장</div>
         </div>
 
         <div class="footer">

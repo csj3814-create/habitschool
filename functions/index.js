@@ -996,10 +996,13 @@ exports.claimChallengeReward = onCall(
 
         if (staked > 0) {
             if (successRate >= 1.0) {
-                rewardHbt = staked * 2;
-                rewardPoints = baseRewardP * 2;
+                // 100% 달성: 원금 + 보너스 (위클리 +50%, 마스터 +100%)
+                const bonusRate = tier === 'master' ? 1.0 : 0.5;
+                rewardHbt = staked + (staked * bonusRate);
+                rewardPoints = baseRewardP;
             } else if (successRate >= 0.8) {
-                rewardHbt = staked * 1.5;
+                // 80%+ 달성: 원금만 반환 (보너스 없음)
+                rewardHbt = staked;
                 rewardPoints = baseRewardP;
             }
         } else {

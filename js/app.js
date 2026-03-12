@@ -1288,27 +1288,32 @@ function eraToLabel(era) {
     return String.fromCharCode(64 + Math.min(era, 26)); // 1→A, 2→B, ...26→Z
 }
 
-// 반감기 스케줄 테이블 활성 구간 하이라이트
-function updateHalvingScheduleUI(currentEra) {
+// 반감기 스케줄 테이블 활성 구간 하이라이트 + 현재 비율 동적 표시
+function updateHalvingScheduleUI(currentPhase, per100Hbt) {
     const schedule = document.getElementById('halving-schedule');
     if (!schedule) return;
     const rows = schedule.children;
     for (let i = 0; i < rows.length; i++) {
-        const eraIdx = i + 1;
-        const label = eraToLabel(eraIdx);
-        const firstSpan = rows[i].querySelector('span');
-        if (eraIdx === currentEra) {
+        const phaseIdx = i + 1;
+        const label = eraToLabel(phaseIdx);
+        const spans = rows[i].querySelectorAll('span');
+        if (phaseIdx === currentPhase) {
             rows[i].className = 'wallet-halving-row active';
-            if (firstSpan) firstSpan.textContent = `${label} 👈`;
+            if (spans[0]) spans[0].textContent = `${label} 👈`;
+            // 현재 구간은 온체인 비율로 동적 표시
+            if (spans[1] && per100Hbt !== undefined) {
+                const display = per100Hbt % 1 === 0 ? per100Hbt : per100Hbt.toFixed(1);
+                spans[1].textContent = `100P = ${display} HBT`;
+            }
         } else {
-            rows[i].className = eraIdx < currentEra ? 'wallet-halving-row' : 'wallet-halving-row future';
-            if (firstSpan) firstSpan.textContent = label;
+            rows[i].className = phaseIdx < currentPhase ? 'wallet-halving-row' : 'wallet-halving-row future';
+            if (spans[0]) spans[0].textContent = label;
         }
     }
     // 하단 안내 문구 업데이트
     const tipEl = schedule.parentElement?.parentElement?.querySelector('.wallet-halving-tip');
     if (tipEl) {
-        tipEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentEra)}구간</strong>! 같은 포인트로 받는 HBT가 구간마다 절반으로 줄어듭니다.`;
+        tipEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentPhase)}구간</strong>! 전환 비율은 매주 자동 조절됩니다. 채굴이 적으면 비율이 올라가요!`;
     }
 }
 
@@ -1462,55 +1467,53 @@ window.updateAssetDisplay = async function () {
                 }).catch(err => console.warn('온체인 잔액 조회 스킵:', err.message));
             }
 
-            // ========== 반감기 상태 UI 업데이트 (온체인 전체 채굴량 기준) ==========
+            // ========== 반감기 상태 UI 업데이트 (온체인 전체 채굴량 기준, v2) ==========
             fetchTokenStats().then(stats => {
                 if (!stats) {
-                    // 온체인 조회 실패 시 개인 데이터로 펴백
                     console.warn('토큰 통계 조회 실패, 개인 데이터로 펴백');
                     return;
                 }
                 const globalMinted = parseFloat(stats.totalMined) || 0;
-                const era = stats.currentEra || 1;
-                const rate = stats.currentRate || 100;
-                const remainingInEra = parseFloat(stats.remainingInEra) || 0;
+                const phase = stats.currentPhase || 1;
+                // v2: currentRate는 RATE_SCALE(10^8) 단위
+                const RATE_SCALE = 1e8;
+                const ratePerPoint = (stats.currentRate || RATE_SCALE) / RATE_SCALE;
+                const per100 = Math.round(ratePerPoint * 100 * 100) / 100; // 100P 기준
 
                 const halvingEraEl = document.getElementById('halving-era');
-                if (halvingEraEl) halvingEraEl.textContent = eraToLabel(era);
+                if (halvingEraEl) halvingEraEl.textContent = eraToLabel(phase);
 
                 const halvingRateEl = document.getElementById('halving-rate');
                 if (halvingRateEl) {
-                    const per100 = Math.round(rate * 100) / 100;
                     halvingRateEl.textContent = `100P = ${per100} HBT`;
                 }
 
-                // 반감기 스케줄 테이블 활성 구간 표시
-                updateHalvingScheduleUI(era);
+                // 반감기 스케줄 테이블 활성 구간 + 동적 비율 표시
+                updateHalvingScheduleUI(phase, per100);
 
                 // 변환 비율 배지 업데이트 (전체 기준)
                 const rateBadge = document.getElementById('convert-rate-badge');
                 if (rateBadge) {
-                    const per100 = Math.round(rate * 100) / 100;
-                    rateBadge.textContent = `현재 ${eraToLabel(era)}구간 · 100P = ${per100} HBT`;
+                    const display = per100 % 1 === 0 ? per100 : per100.toFixed(1);
+                    rateBadge.textContent = `현재 ${eraToLabel(phase)}구간 · 100P = ${display} HBT`;
                 }
 
-                // 현재 구간 내 진행률 계산
-                const era1Threshold = 30_000_000;
-                let currentThreshold = era1Threshold;
-                for (let i = 1; i < era; i++) {
-                    currentThreshold = Math.floor(currentThreshold / 2);
-                    if (currentThreshold < 1) { currentThreshold = 1; break; }
-                }
-                const mintedInEra = currentThreshold - remainingInEra;
-                const progressPct = currentThreshold > 0 ? Math.min((mintedInEra / currentThreshold) * 100, 100) : 0;
+                // v2 Phase 경계 기반 진행률 계산
+                const phaseBounds = [0, 35_000_000, 52_500_000, 61_250_000, 70_000_000];
+                const phaseStart = phaseBounds[Math.min(phase - 1, phaseBounds.length - 2)] || 0;
+                const phaseEnd = phaseBounds[Math.min(phase, phaseBounds.length - 1)] || 70_000_000;
+                const phasePool = phaseEnd - phaseStart;
+                const mintedInPhase = Math.max(globalMinted - phaseStart, 0);
+                const progressPct = phasePool > 0 ? Math.min((mintedInPhase / phasePool) * 100, 100) : 0;
 
                 const halvingProgressText = document.getElementById('halving-progress-text');
                 if (halvingProgressText) {
-                    halvingProgressText.textContent = `${Math.round(mintedInEra).toLocaleString()} / ${currentThreshold.toLocaleString()} HBT`;
+                    halvingProgressText.textContent = `${Math.round(mintedInPhase).toLocaleString()} / ${phasePool.toLocaleString()} HBT`;
                 }
 
                 const halvingProgressBar = document.getElementById('halving-progress-bar');
                 if (halvingProgressBar) {
-                    if (mintedInEra > 0 && progressPct < 1) {
+                    if (mintedInPhase > 0 && progressPct < 1) {
                         halvingProgressBar.style.width = '1%';
                     } else {
                         halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
@@ -1549,7 +1552,9 @@ window.updateAssetDisplay = async function () {
             });
             const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
             const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
-            const tierBaseRewardP = { mini: 30, weekly: 50, master: 100 };
+            const tierBaseRewardP = { mini: 10, weekly: 30, master: 50 };
+            const tierAllRewardP = { mini: 30, weekly: 50, master: 100 };
+            const tierBonusRate = { mini: 0, weekly: 0.5, master: 1.0 };
 
             if (activeTiers.length > 0) {
                 let challengeHtml = '';
@@ -1605,7 +1610,15 @@ window.updateAssetDisplay = async function () {
                                 <div class="challenge-ring-name">${tierLabels[tier]}</div>
                                 <div class="challenge-ring-date">${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
-                                <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${ch.hbtStaked > 0 ? `${tierBaseRewardP[tier] * 2}P + ${ch.hbtStaked * 2} HBT` : `${tierBaseRewardP[tier]}P`}</div>
+                                <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${(() => {
+                                    const isAll = ch.challengeId?.includes('-all-');
+                                    const pts = isAll ? tierAllRewardP[tier] : tierBaseRewardP[tier];
+                                    if (ch.hbtStaked > 0) {
+                                        const totalHbt = ch.hbtStaked + Math.floor(ch.hbtStaked * tierBonusRate[tier]);
+                                        return `${pts}P + ${totalHbt} HBT`;
+                                    }
+                                    return `${pts}P`;
+                                })()}</div>
                             </div>
                         </div>
                     `;

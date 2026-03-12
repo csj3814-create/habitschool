@@ -230,30 +230,39 @@ function updateWalletUI(address) {
     }
 }
 
-// ========== 반감기 계산 (비트코인 방식) ==========
+// ========== Phase 기반 반감기 계산 (v2) ==========
 
 /**
- * 누적 채굴량 기반 현재 전환 비율 계산
- * 구간 1: totalMinted < 30M → rate = 1 (1P = 1 HBT)
- * 구간 2: totalMinted < 45M → rate = 0.5 (1P = 0.5 HBT)
- * ... 각 구간 ÷2, 최소 0.01 (100P = 1 HBT)
+ * 누적 채굴량 기반 현재 전환 비율 계산 (v2 Phase 구조)
+ * Phase 1 (A): totalMinted < 35M → 기본 비율 (주간 난이도 조절)
+ * Phase 2 (B): totalMinted < 52.5M → 주간 목표 ÷2
+ * Phase 3 (C): totalMinted < 61.25M → 주간 목표 ÷4
+ * Phase 4+ (D~): 이후 무한 반감
+ * 
+ * ⚠️ v2에서 실제 비율은 온체인 currentRate로 결정됩니다.
+ *    이 함수는 온체인 조회 실패 시 fallback 용도입니다.
  * @param {number} totalMinted - 전체 누적 채굴 발행량
- * @returns {number} 현재 전환 비율 (1P당 HBT)
+ * @returns {number} 현재 전환 비율 (1P당 HBT, 근사값)
  */
 export function getConversionRate(totalMinted = 0) {
-    const { era1Threshold, initialRate, minRate } = CONVERSION_RULES.halving;
-    let minted = totalMinted;
-    let rate = initialRate;
-    let threshold = era1Threshold;
+    const { phase1End, phase2End, phase3End, initialRate } = CONVERSION_RULES.halving;
+    
+    if (totalMinted < phase1End) return initialRate;       // Phase 1: 1P = 1 HBT
+    if (totalMinted < phase2End) return initialRate / 2;   // Phase 2: 1P = 0.5 HBT
+    if (totalMinted < phase3End) return initialRate / 4;   // Phase 3: 1P = 0.25 HBT
+    
+    // Phase 4+: 계속 반감
+    let rate = initialRate / 8;
+    let remaining = CONVERSION_RULES.halving.miningPool - phase3End;
+    let extraMinted = totalMinted - phase3End;
+    let threshold = Math.floor(remaining / 2);
 
-    while (minted >= threshold && rate > minRate) {
-        minted -= threshold;
+    while (extraMinted >= threshold && threshold > 0) {
+        extraMinted -= threshold;
         threshold = Math.floor(threshold / 2);
-        rate = rate / 2;
-        if (threshold < 1) break;
+        rate /= 2;
     }
-
-    return Math.max(rate, minRate);
+    return Math.max(rate, 0.01);
 }
 
 /**
@@ -263,38 +272,40 @@ export function getConversionRate(totalMinted = 0) {
  * @returns {number} 받을 HBT 수량
  */
 function calculateHbtWithHalving(pointAmount, totalMinted = 0) {
-    // TODO: totalMinted를 글로벌 카운터(Firestore)에서 읽어오기
-    // 현재는 사용자 개인 totalHbtEarned로 근사 (Phase 1)
     const rate = getConversionRate(totalMinted);
     const hbtAmount = pointAmount * rate;
-
-    // 일일 한도 체크
     return Math.min(hbtAmount, CONVERSION_RULES.maxConversionPerDay);
 }
 
 /**
- * 현재 구간 번호 반환
+ * 현재 Phase 번호 반환 (1→A, 2→B, 3→C, 4→D ...)
  * @param {number} totalMinted
- * @returns {number} 구간 번호 (1부터)
+ * @returns {number} Phase 번호 (1부터)
  */
 export function getCurrentEra(totalMinted = 0) {
-    const { era1Threshold } = CONVERSION_RULES.halving;
-    let minted = totalMinted;
-    let threshold = era1Threshold;
-    let era = 1;
+    const { phase1End, phase2End, phase3End, miningPool } = CONVERSION_RULES.halving;
 
-    while (minted >= threshold && threshold > 0) {
-        minted -= threshold;
+    if (totalMinted < phase1End) return 1;
+    if (totalMinted < phase2End) return 2;
+    if (totalMinted < phase3End) return 3;
+
+    // Phase 4+
+    let remaining = miningPool - phase3End;
+    let extraMinted = totalMinted - phase3End;
+    let threshold = Math.floor(remaining / 2);
+    let phase = 4;
+
+    while (extraMinted >= threshold && threshold > 0) {
+        extraMinted -= threshold;
         threshold = Math.floor(threshold / 2);
-        era++;
+        phase++;
     }
-
-    return era;
+    return phase;
 }
 
 /**
  * 포인트를 HBT 토큰으로 변환 (Cloud Function 경유 온체인 민팅)
- * 구간 1 기준: 100P → 100 HBT (반감기에 따라 변동)
+ * A구간 기준: 100P → 100 HBT (주간 난이도 조절에 따라 변동)
  * @param {number} [pointAmount] - 변환할 포인트 (미입력 시 기존 input에서 읽음)
  */
 export async function convertPointsToHBT(pointAmount) {
@@ -427,7 +438,7 @@ export async function startChallenge30D(challengeId) {
         const data = result.data;
 
         if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${data.hbtStaked} HBT 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n80%+ 달성 시 원금 환급, 100% 달성 시 +20% 보너스!`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${data.hbtStaked} HBT 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n100% 달성 시 예치금 + 보너스, 80%+ 시 예치금 반환`);
         } else {
             showToast(`✅ ${data.duration}일 챌린지 시작!${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
         }
@@ -507,14 +518,19 @@ export async function updateChallengeProgress() {
                         toastMessages.push(`🎉 ${totalDays}일 챌린지 완료! 내 지갑에서 보상을 수령하세요.`);
                     } else {
                         const staked = challenge.hbtStaked || 0;
+                        const refund = Math.floor(staked * 0.5);
                         updateData[`activeChallenges.${tier}`] = null;
-                        toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n예치금 ${staked} HBT 소멸` : ''}`);
+                        if (refund > 0) {
+                            updateData.hbtBalance = increment(refund);
+                        }
+                        toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n${refund} HBT 반환, ${staked - refund} HBT 소각` : ''}`);
                         settlementLogs.push({
                             userId: currentUser.uid,
                             type: 'challenge_settlement',
                             challengeId: challenge.challengeId,
-                            amount: 0,
+                            amount: refund,
                             staked: staked,
+                            burned: staked - refund,
                             successRate: successRate,
                             completedDays: challenge.completedDays,
                             timestamp: serverTimestamp(),
@@ -610,18 +626,23 @@ export async function settleExpiredChallenges() {
                 // 성공 → claimable 상태로 전환 (사용자가 수령)
                 updateData[`activeChallenges.${tier}.status`] = 'claimable';
             } else {
-                // 실패 → 즉시 정산 (예치금 소멸)
+                // 실패 → 50% 반환, 50% 소각
                 const staked = challenge.hbtStaked || 0;
+                const refund = Math.floor(staked * 0.5);
                 updateData[`activeChallenges.${tier}`] = null;
-                showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n예치금 ${staked} HBT 소멸` : ''}`);
+                if (refund > 0) {
+                    updateData.hbtBalance = increment(refund);
+                }
+                showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).${staked > 0 ? `\n${refund} HBT 반환, ${staked - refund} HBT 소각` : ''}`);
 
                 try {
                     await addDoc(collection(db, "blockchain_transactions"), {
                         userId: currentUser.uid,
                         type: 'challenge_settlement',
                         challengeId: challenge.challengeId,
-                        amount: 0,
+                        amount: refund,
                         staked: staked,
+                        burned: staked - refund,
                         successRate: successRate,
                         completedDays: challenge.completedDays || 0,
                         timestamp: serverTimestamp(),
@@ -768,7 +789,7 @@ export async function fetchOnchainBalance() {
 
 /**
  * 토큰 전체 통계 조회 (Cloud Function 경유)
- * @returns {object} { totalSupply, totalMined, totalBurned, currentRate, currentEra, remainingInEra }
+ * @returns {object} { totalSupply, totalMined, totalBurned, currentRate, currentPhase, weeklyTarget, remainingInPool, totalStaked, totalSlashed }
  */
 export async function fetchTokenStats() {
     try {
