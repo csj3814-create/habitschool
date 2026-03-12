@@ -4870,7 +4870,6 @@ body.dark-mode .diet-ai-btn {
     color: #81C784;
 }
 body.dark-mode .diet-ai-btn.loading { background: #2B2830; color: #6D6878; }
-body.dark-mode .diet-analysis-card { background: #242128; border-color: #3A3540; }
 
 /* 30일 결과지 */
 body.dark-mode .report-container { background: var(--white); }
@@ -4928,7 +4927,248 @@ body.dark-mode .filter-chip.active {
 }
 
 /* 미션 레벨 */
-body.dark-mode .mission-level { background: var(--purple); }
+body.dark-mode .mission-level {
+    background: #4A2880;
+    color: #D8D4DC;
+}
+
+/* 인라인 밝은 배경 카드 다크모드 오버라이드 */
+body.dark-mode .card-blood-test {
+    background: linear-gradient(to right, #2E1C1C, #331E1E) !important;
+    border-color: #5C2E2E !important;
+}
+body.dark-mode .card-blood-test h3 { color: #EF9A9A !important; }
+
+body.dark-mode .card-invite {
+    background: linear-gradient(135deg, #2E2518, #332A15) !important;
+    border-color: #5C4A2E !important;
+}
+body.dark-mode .card-invite h3 { color: #FFB74D !important; }
+body.dark-mode .card-invite p { color: #A09AAA !important; }
+
+body.dark-mode .card-fasting {
+    background: linear-gradient(to right, #1A2636, #1E3048) !important;
+    background-color: #1A2636 !important;
+    border-color: #2E4A6A !important;
+}
+
+/* 업로드 CTA 다크모드 */
+body.dark-mode .upload-cta {
+    background: linear-gradient(135deg, #1E2E1E 0%, #281E32 100%);
+    border-color: #3A6A3A;
+}
+body.dark-mode .upload-cta:active {
+    background: linear-gradient(135deg, #223022 0%, #302438 100%);
+}
+body.dark-mode .upload-cta-text strong { color: #81C784; }
+body.dark-mode .upload-cta-text span { color: #A09AAA; }
+body.dark-mode .upload-cta-arrow { color: #81C784; }
+
+/* 인라인 팁 박스 다크모드 */
+body.dark-mode .tip-box {
+    background: rgba(0,0,0,0.25) !important;
+    color: #A09AAA !important;
+}
+
+/* 관리자 피드백 인라인 색상 */
+body.dark-mode #admin-feedback-box div[style*="color: #4A148C"] { color: #CE93D8 !important; }
+body.dark-mode #admin-feedback-box div[style*="color: #333"] { color: #D8D4DC !important; }
+
+/* ───────────────────────────────
+   대사건강 점수 카드 다크모드
+   ─────────────────────────────── */
+body.dark-mode .metabolic-score-card {
+    background: linear-gradient(135deg, #1E2E1E 0%, #1A2A1E 100%);
+}
+body.dark-mode .metabolic-score-card h3 { color: #81C784; }
+body.dark-mode .ms-circle circle[stroke="#E0E0E0"] { stroke: #3A3540; }
+body.dark-mode .ms-area-label { color: #C0BCC6; }
+body.dark-mode .ms-area-val { color: #A09AAA; }
+body.dark-mode .ms-area-bar-bg { background: rgba(255,255,255,0.12); }
+body.dark-mode .ms-area-missing .ms-area-need { color: #A09AAA; }
+body.dark-mode .ms-area-missing .ms-area-label { color: #6D6878; }
+body.dark-mode .ms-circle-label { color: #A09AAA; }
+body.dark-mode .ms-partial-note {
+    background: rgba(0,0,0,0.25);
+    color: #A09AAA;
+}
+body.dark-mode .ms-insight-item {
+    background: rgba(0,0,0,0.2);
+    color: #D8D4DC;
+}
+
+/* ───────────────────────────────
+   식단 AI 분석 결과 다크모드
+   ─────────────────────────────── */
+body.dark-mode .diet-analysis-card {
+    background: #242128;
+    border-color: #3A3540;
+}
+body.dark-mode .diet-grade-label { color: #A09AAA; }
+body.dark-mode .diet-grade-summary { color: #D8D4DC; }
+body.dark-mode .diet-natural-ratio { color: #C0BCC6; }
+body.dark-mode .diet-ratio-bar-bg { background: #3A3540; }
+body.dark-mode .diet-ratio-val { color: #81C784; }
+body.dark-mode .diet-food-item { background: #1D1B20; }
+body.dark-mode .diet-food-name { color: #D8D4DC; }
+body.dark-mode .diet-food-cat[data-cat="natural"] {
+    background: #1E2E1E; color: #81C784;
+}
+body.dark-mode .diet-food-cat[data-cat="processed"] {
+    background: #2E2518; color: #FFB74D;
+}
+body.dark-mode .diet-food-cat[data-cat="ultraprocessed"] {
+    background: #2E1C1C; color: #EF9A9A;
+}
+body.dark-mode .diet-scores-title { color: #8E8998; }
+body.dark-mode .diet-score-label { color: #C0BCC6; }
+body.dark-mode .diet-score-bar-bg { background: #3A3540; }
+body.dark-mode .diet-score-val { color: #A09AAA; }
+body.dark-mode .diet-insight-box {
+    background: linear-gradient(135deg, #1E2E1E, #1A2A1E);
+    border-color: #2E4A2E;
+}
+body.dark-mode .diet-insight-label { color: #81C784; }
+body.dark-mode .diet-insight-text { color: #D8D4DC; }
+body.dark-mode .diet-suggestion-box {
+    background: #2E2518;
+    border-color: #5C4A2E;
+    color: #FFB74D;
+}
+
+/* 오늘의 식단 총평 다크모드 */
+body.dark-mode .diet-day-summary {
+    background: #242128;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+body.dark-mode .diet-day-stats { color: #C0BCC6; }
+
+/* ───────────────────────────────
+   미션 관련 다크모드
+   ─────────────────────────────── */
+body.dark-mode .mission-warning {
+    background: #2E2518;
+    border-color: #5C4A2E;
+    color: #FFB74D;
+}
+body.dark-mode .reset-mission-btn {
+    background-color: #1D1B20 !important;
+    color: #8E8998 !important;
+    border: 1px solid #2B2830 !important;
+}
+
+/* 미션 배지 다크모드 */
+body.dark-mode .mission-badges-title { color: #D8D4DC; }
+body.dark-mode .mission-badge.earned {
+    background: linear-gradient(135deg, #2E2518 0%, #332A15 100%);
+    border-color: #5C4A2E;
+}
+body.dark-mode .mission-badge.locked {
+    background: #242128;
+    border-color: #3A3540;
+}
+body.dark-mode .badge-name { color: #D8D4DC; }
+body.dark-mode .badge-desc { color: #8E8998; }
+
+/* 그룹 챌린지 / 커뮤니티 현황 다크모드 */
+body.dark-mode .group-challenge-title { color: #D8D4DC; }
+body.dark-mode .group-stat-item {
+    background: linear-gradient(135deg, #1E2E1E 0%, #1A2A1E 100%);
+    border-color: #2E4A2E;
+}
+body.dark-mode .group-stat-num { color: #81C784; }
+body.dark-mode .group-stat-label { color: #66BB6A; }
+body.dark-mode .group-top-user {
+    background: #2E2518;
+    border-color: #5C4A2E;
+    color: #FFB74D;
+}
+
+/* ───────────────────────────────
+   30일 결과지 버튼 다크모드
+   ─────────────────────────────── */
+body.dark-mode .pdf-btn {
+    background-color: #1B5E20;
+    color: #C0BCC6;
+    box-shadow: 0 2px 8px rgba(27,94,32,0.3);
+}
+
+/* ───────────────────────────────
+   공유 카드 / 갤러리 다크모드
+   ─────────────────────────────── */
+body.dark-mode .share-card-container {
+    background: linear-gradient(145deg, #2E2518 0%, #332A15 100%);
+    border-color: #5C4A2E;
+}
+body.dark-mode .share-card-capture {
+    background: linear-gradient(145deg, #2E2518 0%, #30271A 40%, #332A15 100%);
+    border-color: #5C4A2E;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+body.dark-mode .btn-share-action {
+    background: linear-gradient(135deg, #CC6600 0%, #B35A00 50%, #994D00 100%);
+    box-shadow: 0 3px 12px rgba(204,102,0,0.25);
+}
+
+/* 이번 주 인기 기록 다크모드 */
+body.dark-mode #weekly-best-container {
+    background: linear-gradient(135deg, #2E2518 0%, #332A15 100%);
+    border-color: #5C4A2E;
+}
+body.dark-mode .weekly-best-header { color: #FFB74D; }
+body.dark-mode .weekly-best-item {
+    background: rgba(255,255,255,0.06);
+}
+body.dark-mode .best-name { color: #D8D4DC; }
+body.dark-mode .best-stats { color: #8E8998; }
+body.dark-mode .best-thumb { background: #3A3540; }
+body.dark-mode .best-no-img { background: #3A3540; }
+
+/* ───────────────────────────────
+   갤러리 상세·댓글 다크모드
+   ─────────────────────────────── */
+body.dark-mode .gallery-header { color: #D8D4DC; }
+body.dark-mode .gallery-actions button { color: #A09AAA; }
+
+/* ───────────────────────────────
+   마음 챙김·감사일기 다크모드
+   ─────────────────────────────── */
+body.dark-mode #gratitude-journal {
+    background: #242128;
+    color: #E8E4DF;
+    border-color: #3A3540;
+}
+
+/* ───────────────────────────────
+   기타 인라인 색상 다크모드 보정
+   ─────────────────────────────── */
+body.dark-mode .content-section p[style*="color:#888"],
+body.dark-mode .content-section p[style*="color: #888"] {
+    color: #8E8998 !important;
+}
+body.dark-mode .content-section p[style*="color:#FF8C00"],
+body.dark-mode .content-section p[style*="color: #FF8C00"] {
+    color: #FFB74D !important;
+}
+body.dark-mode .content-section div[style*="color:#555"],
+body.dark-mode .content-section div[style*="color: #555"] {
+    color: #A09AAA !important;
+}
+body.dark-mode .content-section label[style*="color:#555"],
+body.dark-mode .content-section label[style*="color: #555"] {
+    color: #A09AAA !important;
+}
+body.dark-mode .content-section div[style*="color:#666"],
+body.dark-mode .content-section div[style*="color: #666"] {
+    color: #8E8998 !important;
+}
+body.dark-mode .content-section span[style*="color: #666"],
+body.dark-mode .content-section span[style*="color:#666"] {
+    color: #8E8998 !important;
+}
+body.dark-mode .inbody-field label { color: #A09AAA !important; }
+body.dark-mode .diet-analysis-card div[style*="color:#555"] { color: #A09AAA !important; }
+body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6; }
 
 /* ==========================
    다크모드 끝
