@@ -807,34 +807,26 @@ exports.analyzeBloodTest = onCall(
 
 // 챌린지 보상 테이블 (blockchain-config.js와 동기화)
 const CHALLENGE_REWARDS = {
-    'challenge-diet-3d': { rewardPoints: 10 },
-    'challenge-exercise-3d': { rewardPoints: 10 },
-    'challenge-mind-3d': { rewardPoints: 10 },
-    'challenge-diet-7d': { rewardPoints: 30 },
-    'challenge-exercise-7d': { rewardPoints: 30 },
-    'challenge-mind-7d': { rewardPoints: 30 },
-    'challenge-diet-30d': { rewardPoints: 50 },
-    'challenge-exercise-30d': { rewardPoints: 50 },
-    'challenge-mind-30d': { rewardPoints: 50 },
-    'challenge-all-3d': { rewardPoints: 30 },
-    'challenge-all-7d': { rewardPoints: 50 },
-    'challenge-all-30d': { rewardPoints: 100 }
+    'challenge-3d': { rewardPoints: 30 },
+    'challenge-7d': { rewardPoints: 100 },
+    'challenge-30d': { rewardPoints: 500 }
+};
+
+// 하위 호환: 기존 ID로도 조회 가능
+const CHALLENGE_ID_MAP = {
+    'challenge-diet-3d': 'challenge-3d', 'challenge-exercise-3d': 'challenge-3d',
+    'challenge-mind-3d': 'challenge-3d', 'challenge-all-3d': 'challenge-3d',
+    'challenge-diet-7d': 'challenge-7d', 'challenge-exercise-7d': 'challenge-7d',
+    'challenge-mind-7d': 'challenge-7d', 'challenge-all-7d': 'challenge-7d',
+    'challenge-diet-30d': 'challenge-30d', 'challenge-exercise-30d': 'challenge-30d',
+    'challenge-mind-30d': 'challenge-30d', 'challenge-all-30d': 'challenge-30d'
 };
 
 // 챌린지 정의 (duration, hbtStake, category, tier)
 const CHALLENGE_DEFS = {
-    'challenge-diet-3d': { duration: 3, hbtStake: 0, category: 'diet', tier: 'mini' },
-    'challenge-exercise-3d': { duration: 3, hbtStake: 0, category: 'exercise', tier: 'mini' },
-    'challenge-mind-3d': { duration: 3, hbtStake: 0, category: 'mind', tier: 'mini' },
-    'challenge-all-3d': { duration: 3, hbtStake: 0, category: 'all', tier: 'mini' },
-    'challenge-diet-7d': { duration: 7, hbtStake: 50, category: 'diet', tier: 'weekly' },
-    'challenge-exercise-7d': { duration: 7, hbtStake: 50, category: 'exercise', tier: 'weekly' },
-    'challenge-mind-7d': { duration: 7, hbtStake: 50, category: 'mind', tier: 'weekly' },
-    'challenge-all-7d': { duration: 7, hbtStake: 50, category: 'all', tier: 'weekly' },
-    'challenge-diet-30d': { duration: 30, hbtStake: 100, category: 'diet', tier: 'master' },
-    'challenge-exercise-30d': { duration: 30, hbtStake: 100, category: 'exercise', tier: 'master' },
-    'challenge-mind-30d': { duration: 30, hbtStake: 100, category: 'mind', tier: 'master' },
-    'challenge-all-30d': { duration: 30, hbtStake: 100, category: 'all', tier: 'master' }
+    'challenge-3d': { duration: 3, hbtStake: 0, category: 'all', tier: 'mini' },
+    'challenge-7d': { duration: 7, hbtStake: 50, maxStake: 5000, category: 'all', tier: 'weekly' },
+    'challenge-30d': { duration: 30, hbtStake: 100, maxStake: 10000, category: 'all', tier: 'master' }
 };
 
 exports.startChallenge = onCall(
@@ -849,7 +841,9 @@ exports.startChallenge = onCall(
         }
 
         const { challengeId, hbtAmount } = request.data;
-        const def = CHALLENGE_DEFS[challengeId];
+        // 하위 호환: 기존 ID를 새 ID로 매핑
+        const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
+        const def = CHALLENGE_DEFS[resolvedId];
         if (!def) {
             throw new HttpsError("invalid-argument", "유효하지 않은 챌린지입니다.");
         }
@@ -857,6 +851,9 @@ exports.startChallenge = onCall(
         const stakeAmount = parseFloat(hbtAmount) || 0;
         if (def.hbtStake > 0 && stakeAmount < def.hbtStake) {
             throw new HttpsError("invalid-argument", `최소 ${def.hbtStake} HBT 이상 예치해야 합니다.`);
+        }
+        if (def.maxStake && stakeAmount > def.maxStake) {
+            throw new HttpsError("invalid-argument", `최대 ${def.maxStake} HBT까지만 예치 가능합니다.`);
         }
 
         const uid = request.auth.uid;
@@ -898,12 +895,8 @@ exports.startChallenge = onCall(
             const todayLogSnap = await db.doc(`daily_logs/${uid}_${startDate}`).get();
             if (todayLogSnap.exists) {
                 const ap = todayLogSnap.data().awardedPoints || {};
-                let counted = false;
-                if (def.category === 'diet' && ap.diet) counted = true;
-                else if (def.category === 'exercise' && ap.exercise) counted = true;
-                else if (def.category === 'mind' && ap.mind) counted = true;
-                else if (def.category === 'all' && ap.diet && ap.exercise && ap.mind) counted = true;
-                if (counted) {
+                // 모든 챌린지는 통합: 식단+운동+마음 3개 모두 필요
+                if (ap.diet && ap.exercise && ap.mind) {
                     initialCompletedDays = 1;
                     initialCompletedDates = [startDate];
                 }
@@ -913,7 +906,7 @@ exports.startChallenge = onCall(
         }
 
         const challengeData = {
-            challengeId,
+            challengeId: resolvedId,
             startDate,
             endDate,
             completedDays: initialCompletedDays,
@@ -989,7 +982,8 @@ exports.claimChallengeReward = onCall(
         const totalDays = challenge.totalDays || 30;
         const successRate = (challenge.completedDays || 0) / totalDays;
         const staked = challenge.hbtStaked || 0;
-        const challengeDef = CHALLENGE_REWARDS[challenge.challengeId] || {};
+        const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
+        const challengeDef = CHALLENGE_REWARDS[resolvedChallengeId] || {};
         const baseRewardP = challengeDef.rewardPoints || 0;
         let rewardHbt = 0;
         let rewardPoints = 0;

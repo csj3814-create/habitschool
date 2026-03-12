@@ -215,11 +215,17 @@ window.updateStakeSlider = function(tier) {
     const hiddenInput = document.getElementById('stake-' + tier);
     if (!slider || !valueEl) return;
 
+    // 슬라이더 값 = HBT 직접 입력
+    const amount = parseInt(slider.value) || 0;
+
+    // 보유 HBT 확인 — 초과 시 보유량으로 제한
     const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
     const balance = parseFloat(hbtText) || 0;
-    const pct = parseInt(slider.value);
-    const amount = Math.round(balance * pct) / 100;
-    const rounded = Math.round(amount * 100) / 100;
+    const capped = Math.min(amount, Math.floor(balance));
+    if (capped < amount) {
+        slider.value = capped;
+    }
+    const rounded = Math.max(capped, parseInt(slider.min) || 0);
 
     valueEl.textContent = rounded + ' HBT';
     if (hiddenInput) hiddenInput.value = rounded;
@@ -228,7 +234,7 @@ window.updateStakeSlider = function(tier) {
     if (rewardEl) {
         if (rounded > 0) {
             const bonus = tier === 'weekly' ? 0.5 : 1.0;
-            const expectedBonus = Math.round(rounded * bonus * 100) / 100;
+            const expectedBonus = Math.round(rounded * bonus);
             rewardEl.textContent = `100% 달성 시 +${expectedBonus} HBT 보너스`;
         } else {
             rewardEl.textContent = '';

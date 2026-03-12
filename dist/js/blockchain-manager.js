@@ -16,7 +16,8 @@ import {
     HBT_TOKEN, 
     STAKING_CONTRACT, 
     CONVERSION_RULES,
-    CHALLENGES
+    CHALLENGES,
+    CHALLENGE_ID_MAP
 } from './blockchain-config.js';
 
 import { auth, db, app } from './firebase-config.js';
@@ -394,18 +395,21 @@ export async function startChallenge30D(challengeId) {
             return false;
         }
 
-        const challengeDef = CHALLENGES[challengeId];
+        // 하위 호환: 기존 ID를 새 ID로 매핑
+        const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
+        const challengeDef = CHALLENGES[resolvedId];
         if (!challengeDef) {
             showToast('❌ 알 수 없는 챌린지입니다.');
             return false;
         }
         const duration = challengeDef.duration || 30;
         const minStake = challengeDef.hbtStake || 0;
+        const maxStake = challengeDef.maxStake || 10000;
         const tier = challengeDef.tier || 'master';
 
         // 티어별 인라인 입력에서 예치량 읽기
         let hbtAmount = 0;
-        if (duration > 3) {
+        if (minStake > 0) {
             const stakeInput = document.getElementById('stake-' + tier);
             hbtAmount = parseFloat(stakeInput?.value || 0);
             if (!Number.isFinite(hbtAmount) || hbtAmount < minStake) {
@@ -418,9 +422,8 @@ export async function startChallenge30D(challengeId) {
                 return false;
             }
             // 최대 예치량 제한
-            const MAX_STAKE = 10000;
-            if (hbtAmount > MAX_STAKE) {
-                showToast(`❌ 최대 ${MAX_STAKE} HBT까지만 예치 가능합니다.`);
+            if (hbtAmount > maxStake) {
+                showToast(`❌ 최대 ${maxStake} HBT까지만 예치 가능합니다.`);
                 return false;
             }
         }
@@ -434,7 +437,7 @@ export async function startChallenge30D(challengeId) {
             return false;
         }
 
-        const result = await startChallengeFunction({ challengeId, hbtAmount });
+        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount });
         const data = result.data;
 
         if (data.hbtStaked > 0) {
@@ -506,7 +509,8 @@ export async function updateChallengeProgress() {
                 const challenge = activeChallenges[tier];
                 const totalDays = challenge.totalDays || 30;
                 const completedDates = challenge.completedDates || [];
-                const challengeDef = CHALLENGES[challenge.challengeId] || {};
+                const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
+                const challengeDef = CHALLENGES[resolvedChallengeId] || {};
 
                 // 챌린지 종료일 확인
                 if (today > challenge.endDate) {
@@ -546,18 +550,16 @@ export async function updateChallengeProgress() {
                     continue;
                 }
 
-                // 통합(all) 챌린지: 식단+운동+마음 모두 완수했는지 확인
-                if (challengeDef.category === 'all') {
-                    if (dailyLogData) {
-                        const ap = dailyLogData.awardedPoints || {};
-                        if (!ap.diet || !ap.exercise || !ap.mind) {
-                            console.log(`ℹ️ 통합 챌린지: 아직 3개 카테고리 미완수 (diet:${!!ap.diet}, exercise:${!!ap.exercise}, mind:${!!ap.mind})`);
-                            continue;
-                        }
-                    } else {
-                        console.log(`ℹ️ 통합 챌린지: 오늘 기록 없음`);
+                // 통합 챌린지: 식단+운동+마음 모두 완수했는지 확인
+                if (dailyLogData) {
+                    const ap = dailyLogData.awardedPoints || {};
+                    if (!ap.diet || !ap.exercise || !ap.mind) {
+                        console.log(`ℹ️ 챌린지: 아직 3개 카테고리 미완수 (diet:${!!ap.diet}, exercise:${!!ap.exercise}, mind:${!!ap.mind})`);
                         continue;
                     }
+                } else {
+                    console.log(`ℹ️ 챌린지: 오늘 기록 없음`);
+                    continue;
                 }
 
                 // 진행 중 - 오늘 날짜 기록

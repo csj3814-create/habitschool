@@ -1537,6 +1537,7 @@ window.updateAssetDisplay = async function () {
             if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
                 const legacyId = userData.activeChallenge.challengeId;
                 const legacyTier = {
+                    'challenge-3d': 'mini', 'challenge-7d': 'weekly', 'challenge-30d': 'master',
                     'challenge-diet-3d': 'mini', 'challenge-exercise-3d': 'mini', 'challenge-mind-3d': 'mini', 'challenge-all-3d': 'mini',
                     'challenge-diet-7d': 'weekly', 'challenge-exercise-7d': 'weekly', 'challenge-mind-7d': 'weekly', 'challenge-all-7d': 'weekly',
                     'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master', 'challenge-all-30d': 'master'
@@ -1552,8 +1553,7 @@ window.updateAssetDisplay = async function () {
             });
             const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
             const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
-            const tierBaseRewardP = { mini: 10, weekly: 30, master: 50 };
-            const tierAllRewardP = { mini: 30, weekly: 50, master: 100 };
+            const tierRewardP = { mini: 30, weekly: 100, master: 500 };
             const tierBonusRate = { mini: 0, weekly: 0.5, master: 1.0 };
 
             if (activeTiers.length > 0) {
@@ -1611,8 +1611,7 @@ window.updateAssetDisplay = async function () {
                                 <div class="challenge-ring-date">${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${(() => {
-                                    const isAll = ch.challengeId?.includes('-all-');
-                                    const pts = isAll ? tierAllRewardP[tier] : tierBaseRewardP[tier];
+                                    const pts = tierRewardP[tier];
                                     if (ch.hbtStaked > 0) {
                                         const totalHbt = ch.hbtStaked + Math.floor(ch.hbtStaked * tierBonusRate[tier]);
                                         return `${pts}P + ${totalHbt} HBT`;
