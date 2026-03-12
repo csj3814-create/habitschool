@@ -2162,7 +2162,8 @@ textarea {
 }
 
 .group-stats-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
     margin-bottom: 10px;
 }
@@ -2200,6 +2201,41 @@ textarea {
     color: #F57F17;
     border: 1px solid #FFE082;
     word-break: keep-all;
+}
+
+/* 연속 기록 하이라이트 */
+.community-highlight {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+    border-radius: 8px;
+    font-size: 12px;
+    text-align: center;
+    color: #E65100;
+    border: 1px solid #FFCC80;
+    margin-bottom: 8px;
+}
+
+/* 카테고리별 1등 */
+.category-kings {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.cat-king {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 6px;
+    background: #F1F8E9;
+    border: 1px solid #C5E1A5;
+    border-radius: 8px;
+    font-size: 11px;
+    text-align: center;
+    color: #33691E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* MVP 랭킹 */
@@ -4458,11 +4494,10 @@ textarea:focus-visible,
     }
 
     .group-stats-grid {
-        flex-wrap: wrap;
+        grid-template-columns: 1fr 1fr;
     }
 
     .group-stat-item {
-        flex: 1 1 40%;
     }
 }
 
@@ -5157,6 +5192,16 @@ body.dark-mode .group-top-user {
     background: #2E2518;
     border-color: #5C4A2E;
     color: #FFB74D;
+}
+body.dark-mode .community-highlight {
+    background: linear-gradient(135deg, #2E2518 0%, #332A1A 100%);
+    border-color: #5C4A2E;
+    color: #FFB74D;
+}
+body.dark-mode .cat-king {
+    background: #1E2E1E;
+    border-color: #2E4A2E;
+    color: #A5D6A7;
 }
 body.dark-mode .mvp-ranking-title { color: #FFB74D; }
 body.dark-mode .mvp-ranking-item.rank-1 {

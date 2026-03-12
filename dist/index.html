@@ -162,7 +162,7 @@
                         <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택">
                     </div>
                     <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
-                        aria-label="해빛 포인트 정보" onclick="alert('해빛 포인트(P)는 오프라인 혜택 등에 사용됩니다. 꾸준히 모아보세요!')">🅿️ <span
+                        aria-label="해빛 포인트 정보" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
                     <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙</button>
                 </div>
@@ -204,7 +204,7 @@
 
                 <div class="card metrics-card mission-card-enhanced">
                     <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
-                            onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 (ℹ️전체보기)</span>
+                            onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
                     </h3>
                     <div id="mission-selection-area"></div>
                     <button class="submit-btn" id="btn-save-missions"

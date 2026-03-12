@@ -1081,21 +1081,47 @@ exports.distributeMonthlyMvpReward = onCall(
             return { alreadyDistributed: false, winners: [] };
         }
 
-        // 사용자별 기록일 수 집계
+        // 사용자별 활동 집계 (기록일 + 댓글 + 리액션)
         const userStats = {};
         snap.forEach(doc => {
             const log = doc.data();
-            if (!log.userId) return;
-            if (!userStats[log.userId]) {
-                userStats[log.userId] = { days: 0, name: log.userName || '익명' };
+            // 기록 작성자 집계
+            if (log.userId) {
+                if (!userStats[log.userId]) {
+                    userStats[log.userId] = { days: 0, comments: 0, reactions: 0, name: log.userName || '익명' };
+                }
+                userStats[log.userId].days++;
             }
-            userStats[log.userId].days++;
+            // 댓글 작성자 집계
+            if (log.comments && Array.isArray(log.comments)) {
+                log.comments.forEach(c => {
+                    if (!c.userId) return;
+                    if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, name: c.userName || '익명' };
+                    userStats[c.userId].comments++;
+                });
+            }
+            // 리액션 작성자 집계
+            if (log.reactions) {
+                ['heart', 'fire', 'clap'].forEach(type => {
+                    if (Array.isArray(log.reactions[type])) {
+                        log.reactions[type].forEach(uid => {
+                            if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, name: '회원' };
+                            userStats[uid].reactions++;
+                        });
+                    }
+                });
+            }
         });
 
-        // 상위 3명 선정
+        // MVP 점수 계산: 기록 10점 + 댓글 3점 + 리액션 1점
+        Object.values(userStats).forEach(u => {
+            u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
+        });
+
+        // 상위 3명 선정 (점수 기준)
         const ranked = Object.entries(userStats)
             .map(([userId, stat]) => ({ userId, ...stat }))
-            .sort((a, b) => b.days - a.days)
+            .sort((a, b) => b.score - a.score)
             .slice(0, 3);
 
         if (ranked.length === 0) {
@@ -1117,6 +1143,9 @@ exports.distributeMonthlyMvpReward = onCall(
                 userId: winner.userId,
                 name: winner.name,
                 days: winner.days,
+                comments: winner.comments,
+                reactions: winner.reactions,
+                score: winner.score,
                 reward: reward.points
             });
         }
