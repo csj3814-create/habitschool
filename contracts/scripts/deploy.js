@@ -1,16 +1,16 @@
 /**
- * HaBit (HBT) 배포 스크립트
+ * HaBit (HBT) v2 배포 스크립트
  * 
  * 사용법:
- *   1. contracts/.env 파일 생성 (DEPLOYER_PRIVATE_KEY 필수)
+ *   1. contracts/.env 파일 생성 (DEPLOYER_PRIVATE_KEY, SERVER_MINTER_ADDRESS 필수)
  *   2. cd contracts && npm install
  *   3. npx hardhat compile
  *   4. npx hardhat run scripts/deploy.js --network baseSepolia
  * 
  * 배포 순서:
- *   1. HaBit.sol (ERC-20 토큰)
+ *   1. HaBit.sol v2 (ERC-20 토큰 — reserveWallet에 30M 프리민트)
  *   2. HaBitStaking.sol (챌린지 예치)
- *   3. 서버 민터 권한 설정
+ *   3. 서버 민터 MINTER_ROLE 부여 (AccessControl)
  */
 
 const hre = require("hardhat");
@@ -19,20 +19,21 @@ async function main() {
     const [deployer] = await hre.ethers.getSigners();
     
     console.log("========================================");
-    console.log("🚀 HaBit (HBT) 배포 시작");
+    console.log("🚀 HaBit (HBT) v2 배포 시작");
     console.log("========================================");
     console.log(`배포자: ${deployer.address}`);
     console.log(`네트워크: ${hre.network.name}`);
     console.log(`잔액: ${hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address))} ETH`);
     console.log("----------------------------------------");
 
-    // 1. HaBit 토큰 배포
-    console.log("\n📦 1/3: HaBit (HBT) 토큰 배포 중...");
+    // 1. HaBit v2 토큰 배포 (리저브 30M → deployer 지갑으로 프리민트)
+    console.log("\n📦 1/3: HaBit (HBT) v2 토큰 배포 중...");
     const HaBit = await hre.ethers.getContractFactory("HaBit");
-    const habit = await HaBit.deploy();
+    const habit = await HaBit.deploy(deployer.address);
     await habit.waitForDeployment();
     const habitAddress = await habit.getAddress();
-    console.log(`✅ HaBit 배포 완료: ${habitAddress}`);
+    console.log(`✅ HaBit v2 배포 완료: ${habitAddress}`);
+    console.log(`   리저브 30M HBT → ${deployer.address}`);
 
     // 2. HaBitStaking 배포
     console.log("\n📦 2/3: HaBitStaking 배포 중...");
@@ -42,15 +43,16 @@ async function main() {
     const stakingAddress = await staking.getAddress();
     console.log(`✅ HaBitStaking 배포 완료: ${stakingAddress}`);
 
-    // 3. 서버 민터 권한 설정
+    // 3. 서버 민터 역할 부여 (AccessControl — MINTER_ROLE)
     const serverMinter = process.env.SERVER_MINTER_ADDRESS;
     if (serverMinter && serverMinter !== "0x0000000000000000000000000000000000000000") {
         console.log("\n🔑 3/3: 서버 민터 권한 설정 중...");
         
-        // HaBit에 민터 권한 부여
-        const tx1 = await habit.setMinter(serverMinter, true);
+        // HaBit에 MINTER_ROLE 부여
+        const MINTER_ROLE = await habit.MINTER_ROLE();
+        const tx1 = await habit.grantRole(MINTER_ROLE, serverMinter);
         await tx1.wait();
-        console.log(`✅ HaBit 민터 설정: ${serverMinter}`);
+        console.log(`✅ HaBit MINTER_ROLE 부여: ${serverMinter}`);
 
         // Staking에 운영자 권한 부여
         const tx2 = await staking.setOperator(serverMinter, true);
@@ -64,7 +66,7 @@ async function main() {
     console.log("\n========================================");
     console.log("🎉 배포 완료!");
     console.log("========================================");
-    console.log(`HaBit (HBT):     ${habitAddress}`);
+    console.log(`HaBit (HBT) v2:  ${habitAddress}`);
     console.log(`HaBitStaking:    ${stakingAddress}`);
     console.log(`네트워크:         ${hre.network.name}`);
     

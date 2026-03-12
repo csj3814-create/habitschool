@@ -41,8 +41,8 @@ export const HBT_TOKEN = {
     decimals: 8,  // BTC와 동일
     maxSupply: 100_000_000, // 1억개 하드캡
     
-    // 테스트넷 컨트랙트 주소 (Base Sepolia)
-    testnetAddress: '0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29',
+    // 테스트넷 컨트랙트 주소 (Base Sepolia) — v2
+    testnetAddress: '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B',
     
     // 메인넷 컨트랙트 주소 (Base, 향후 배포)
     mainnetAddress: '0x0000...',  // TODO: Base 메인넷 배포 후
@@ -58,8 +58,8 @@ export const HBT_TOKEN = {
 
 // 📋 Staking 계약 설정 (챌린지 예치용)
 export const STAKING_CONTRACT = {
-    // 테스트넷 (Base Sepolia)
-    testnetAddress: '0xa439c57806174fbAB0A78b8Cd13a51d94C2a1631',
+    // 테스트넷 (Base Sepolia) — v2
+    testnetAddress: '0x7e8c29699F382B553891f853299e615257491F9D',
     
     // 메인넷 (Base)
     mainnetAddress: '0x0000...',   // TODO: Base 메인넷 배포 후

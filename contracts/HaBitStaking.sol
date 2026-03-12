@@ -160,7 +160,7 @@ contract HaBitStaking is Ownable {
             uint256 burnAmount = staked / 2;
             uint256 returnAmount = staked - burnAmount;
 
-            hbtToken.burn(burnAmount, "challenge_slash");
+            hbtToken.burn(burnAmount);
             hbtToken.transfer(user, returnAmount);
 
             totalSlashed += burnAmount;

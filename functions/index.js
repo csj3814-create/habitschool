@@ -33,9 +33,9 @@ const db = admin.firestore();
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
-// 컨트랙트 주소 (Base Sepolia)
-const HABIT_ADDRESS = "0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29";
-const STAKING_ADDRESS = "0xa439c57806174fbAB0A78b8Cd13a51d94C2a1631";
+// 컨트랙트 주소 (Base Sepolia) — v2
+const HABIT_ADDRESS = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
+const STAKING_ADDRESS = "0x7e8c29699F382B553891f853299e615257491F9D";
 const RPC_URL = "https://sepolia.base.org";
 const CHAIN_ID = 84532;
 const EXPLORER_URL = "https://sepolia.basescan.org";
@@ -142,12 +142,15 @@ exports.mintHBT = onCall(
             const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
-            const [currentRate, currentEra] = await habitContract.getConversionRate();
-            const rateNumber = Number(currentRate);
-            const eraNumber = Number(currentEra);
+            // v2: currentRate는 RATE_SCALE(10^8) 단위, 1P = currentRate/10^8 HBT
+            const currentRateRaw = await habitContract.currentRate();
+            const rateNumber = Number(currentRateRaw);
+            const [currentPhase] = await habitContract.getCurrentPhase();
+            const phaseNumber = Number(currentPhase);
 
-            // HBT 계산 (컨트랙트와 동일한 로직)
-            const hbtAmount = (pointAmount * rateNumber) / 100;
+            // HBT 계산: pointAmount * currentRate / RATE_SCALE
+            const RATE_SCALE = 1e8;
+            const hbtAmount = (pointAmount * rateNumber) / RATE_SCALE;
 
             if (todayMinted + hbtAmount > MAX_DAILY_HBT) {
                 throw new HttpsError("resource-exhausted",
@@ -171,7 +174,7 @@ exports.mintHBT = onCall(
             let onchainSuccess = false;
 
             try {
-                const tx = await habitContract.habitMine(walletAddress, pointAmount);
+                const tx = await habitContract.mint(walletAddress, pointAmount);
                 const receipt = await tx.wait();
                 txHash = receipt.hash;
                 onchainSuccess = true;
@@ -201,7 +204,7 @@ exports.mintHBT = onCall(
                 pointsUsed: pointAmount,
                 hbtReceived: hbtAmount,
                 conversionRate: rateNumber,
-                era: eraNumber,
+                phase: phaseNumber,
                 txHash: txHash,
                 walletAddress: walletAddress,
                 date: today,
@@ -217,7 +220,7 @@ exports.mintHBT = onCall(
                 txHash: txHash,
                 explorerUrl: `${EXPLORER_URL}/tx/${txHash}`,
                 conversionRate: rateNumber,
-                era: eraNumber
+                phase: phaseNumber
             };
 
         } catch (error) {
@@ -293,14 +296,17 @@ exports.getTokenStats = onCall(
             const stats = await habitContract.getTokenStats();
             const decimals = await habitContract.decimals();
 
+            // v2 getTokenStats 반환: totalSupply, totalMined, totalBurned, currentRate, currentPhase, weeklyTarget, remainingInPool, totalStaked, totalSlashed
             return {
                 totalSupply: ethers.formatUnits(stats[0], decimals),
                 totalMined: ethers.formatUnits(stats[1], decimals),
                 totalBurned: ethers.formatUnits(stats[2], decimals),
-                circulatingSupply: ethers.formatUnits(stats[3], decimals),
-                currentRate: Number(stats[4]),
-                currentEra: Number(stats[5]),
-                remainingInEra: ethers.formatUnits(stats[6], decimals)
+                currentRate: Number(stats[3]),
+                currentPhase: Number(stats[4]),
+                weeklyTarget: ethers.formatUnits(stats[5], decimals),
+                remainingInPool: ethers.formatUnits(stats[6], decimals),
+                totalStaked: ethers.formatUnits(stats[7], decimals),
+                totalSlashed: ethers.formatUnits(stats[8], decimals)
             };
 
         } catch (error) {
