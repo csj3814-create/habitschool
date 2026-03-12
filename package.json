@@ -1,0 +1,19 @@
+{
+  "name": "habitschool",
+  "version": "1.0.0",
+  "description": "건강 습관을 기록하고 포인트를 모으는 **Move-to-Earn(M2E)** PWA 앱입니다.",
+  "main": "sw.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deploy:staging": "firebase deploy --only hosting:habitschool-8497b",
+    "deploy:prod": "firebase deploy --only hosting:habitschool"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
+}

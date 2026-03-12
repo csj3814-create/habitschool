@@ -1,0 +1,1007 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <script>
+    if (location.hostname === 'habitschool.kr') {
+        location.replace('https://habitschool.web.app' + location.pathname + location.search + location.hash);
+    }
+    // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(reg => reg.update());
+        });
+    }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해빛스쿨 - 즐겁게 좋은 습관 만들기</title>
+    <meta name="description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
+    <meta name="keywords" content="건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, 건강 관리 앱, Move-to-Earn, HBT, 해빛스쿨">
+    <meta name="author" content="해빛스쿨">
+    <link rel="canonical" href="https://habitschool.web.app/">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZS22SSRLY6"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZS22SSRLY6');
+    </script>
+
+    <!-- Open Graph (카카오톡, 페이스북, 인스타그램 공유 시 표시) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
+    <meta property="og:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
+    <meta property="og:image" content="https://habitschool.web.app/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://habitschool.web.app/">
+    <meta property="og:site_name" content="해빛스쿨">
+    <meta property="og:locale" content="ko_KR">
+
+    <!-- Twitter Card (X/트위터 공유 시 표시) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
+    <meta name="twitter:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱">
+    <meta name="twitter:image" content="https://habitschool.web.app/icons/og-image.png">
+
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF9800" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#17151A" media="(prefers-color-scheme: dark)">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="해빛스쿨">
+    <meta name="naver-site-verification" content="1a68411ce68b625dc6c131aa71fc5a06acc7ae68" />
+    <!-- Google Search Console (HTML 파일 인증 완료, 메타태그 백업) -->
+    <meta name="google-site-verification" content="f3171fd1f953cdf0" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+
+    <!-- 구조화 데이터 (Google 리치 결과) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "해빛스쿨",
+        "alternateName": "HabitSchool",
+        "description": "매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!",
+        "url": "https://habitschool.web.app/",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KRW"
+        },
+        "image": "https://habitschool.web.app/icons/icon-512.png",
+        "screenshot": "https://habitschool.web.app/icons/og-image.png",
+        "inLanguage": "ko",
+        "author": {
+            "@type": "Organization",
+            "name": "해빛스쿨",
+            "url": "https://habitschool.web.app/"
+        },
+        "keywords": "건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, Move-to-Earn, HBT"
+    }
+    </script>
+
+    <!-- 외부 CSS 파일 -->
+    <link rel="stylesheet" href="styles.css?v=40">
+
+    <script src="js/webview-detect.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js" integrity="sha384-bBk9n8KsCuctQitaFzFx/GKOiW55lMJJazrZck6VGKtlwuiMcRSEldT8D10SsVT2" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+    <!-- Ethers.js (Base 체인 지갑 라이브러리) -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" integrity="sha384-Htz1SE4Sl5aitpvFgr2j0sfsGUIuSXI6t8hEyrlQ93zflEF3a29bH2AvkUROUw7J" crossorigin="anonymous"></script>
+    <!-- Kakao JS SDK (카카오톡 공유) -->
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
+    <script>
+    if (window.Kakao && !Kakao.isInitialized()) {
+        Kakao.init('f179e091a7b2f4425918b0625aa0fabb');
+    }
+    </script>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <a href="#dashboard" class="skip-to-content">메인 콘텐츠로 이동</a>
+        <div id="login-modal" role="dialog" aria-label="로그인">
+            <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
+            <h1 class="login-title">해빛스쿨</h1>
+            <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
+                병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
+            </p>
+            <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
+                <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
+                    <path fill="#FFC107"
+                        d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00"
+                        d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50"
+                        d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2"
+                        d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                </svg>
+                구글로 시작하기
+            </button>
+            <!-- WebView(인앱 브라우저) 감지 시 표시되는 안내 -->
+            <div id="webview-warning" style="display:none;">
+                <div class="webview-warning-box">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔒</div>
+                    <p style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #333;">인앱 브라우저에서는 구글 로그인이
+                        제한됩니다</p>
+                    <p style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 16px;">카카오톡, 네이버 등의 앱 내
+                        브라우저에서는 구글 보안 정책으로 로그인이 불가합니다.<br><strong>Chrome 또는 Safari</strong>에서 열어주세요.</p>
+                    <button class="google-btn" id="openExternalBrowser" style="margin-bottom: 8px;">
+                        🌐 외부 브라우저로 열기
+                    </button>
+                    <button class="guest-btn" id="copyLinkBtn" style="font-size: 13px;">
+                        📋 링크 복사하기
+                    </button>
+                </div>
+            </div>
+            <button class="guest-btn"
+                onclick="document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);"
+                aria-label="게스트로 갤러리 둘러보기">👀 로그인 없이 갤러리 둘러보기</button>
+            <a href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
+                style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
+                💬 카카오톡 채널 문의
+            </a>
+        </div>
+
+        <div id="main-app">
+            <div class="header" role="banner">
+                <div class="header-top">
+                    <h1 id="user-greeting" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/icon-192.svg" alt=""
+                            style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨</h1>
+                    <div class="date-selector-container" id="date-ui" style="display:none;">
+                        <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택">
+                    </div>
+                    <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
+                        aria-label="해빛 포인트 정보" onclick="alert('해빛 포인트(P)는 오프라인 혜택 등에 사용됩니다. 꾸준히 모아보세요!')">🅿️ <span
+                            id="point-balance">0</span>P</div>
+                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙</button>
+                </div>
+            </div>
+
+            <nav class="tab-menu" role="navigation" aria-label="주요 메뉴">
+                <button class="tab-btn" onclick="openTab('diet')" aria-label="식단 탭">🥗 식단</button>
+                <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
+                <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
+                <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊
+                    내 기록</button>
+                <button class="tab-btn" onclick="openTab('assets')" aria-label="내 지갑 탭">💰 내 지갑</button>
+                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
+                    갤러리</button>
+            </nav>
+
+            <div id="dashboard" class="content-section active" role="main">
+                <div id="admin-feedback-box" role="alert" aria-live="polite">
+                    <button
+                        style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:16px; color:#888; cursor:pointer;"
+                        onclick="hideFeedback()" aria-label="피드백 닫기">X</button>
+                    <div style="font-weight: bold; color: #4A148C; margin-bottom: 5px; font-size: 15px;">👨‍⚕️ 최석재 선생님의
+                        해빛 메시지</div>
+                    <div id="admin-feedback-text" style="font-size: 14px; color: #333; line-height: 1.5;"></div>
+                </div>
+
+                <!-- 🧬 대사건강 점수 카드 (프로필 탭으로 이동) -->
+
+                <div class="milestone-section" id="milestone-section" style="display:none;">
+                    <div class="milestone-title">🏆 나의 마일스톤</div>
+                    <div class="badges-grid" id="badges-grid"></div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom:0;">📈 이번 주(월~일) 인증 현황</h3>
+                    <p style="font-size:11px; color:#888; margin-top:2px;">날짜를 누르면 해당 일의 기록으로 이동합니다.</p>
+                    <div class="week-graph" id="week-graph"></div>
+                </div>
+
+                <div class="card metrics-card mission-card-enhanced">
+                    <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
+                            onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 (ℹ️전체보기)</span>
+                    </h3>
+                    <div id="mission-selection-area"></div>
+                    <button class="submit-btn" id="btn-save-missions"
+                        style="margin-top: 15px; padding: 12px; font-size: 14px; background-color: #2196F3;"
+                        onclick="saveWeeklyMissions()">🎯 이번 주 미션 시작!</button>
+                    <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
+                    <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
+                        <div class="mission-badges-title">🏅 미션 배지</div>
+                        <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                    </div>
+                    <div class="group-challenge-section" id="group-challenge-section" style="display:none;">
+                        <div class="group-challenge-title">👥 이번 주 커뮤니티 현황</div>
+                        <div id="group-challenge-content"></div>
+                    </div>
+                </div>
+                <button class="pdf-btn" onclick="generate30DayReport()">📄 30일 종합 결과지 출력</button>
+            </div>
+
+            <div id="profile" class="content-section" role="region" aria-label="내 프로필">
+                <!-- 🧬 대사건강 점수 카드 -->
+                <div id="metabolic-score-container" style="display:none;"></div>
+
+                <!-- 1. 나의 기초 대사 프로필 (인바디) -->
+                <div class="card metrics-card">
+                    <h3>🧬 나의 기초 대사 프로필 (인바디)
+                        <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
+                    </h3>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">체성분 변화를 추적합니다. 인바디 측정 후 수시로 업데이트하세요!</p>
+                    <div class="input-grid" style="gap:8px;">
+                        <div class="inbody-field">
+                            <label for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">💪 골격근량 (kg)</label>
+                            <input type="number" id="prof-smm" placeholder="예: 28.5" step="0.1" min="0" max="80">
+                        </div>
+                        <div class="inbody-field">
+                            <label for="prof-fat" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🔥 체지방량 (kg)</label>
+                            <input type="number" id="prof-fat" placeholder="예: 15.2" step="0.1" min="0" max="100">
+                        </div>
+                        <div class="inbody-field">
+                            <label for="prof-visceral" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🎯 내장지방 레벨</label>
+                            <input type="number" id="prof-visceral" placeholder="1~20" step="1" min="1" max="20">
+                        </div>
+                        <div class="inbody-field">
+                            <label for="prof-bmr" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚡ 기초대사량 (kcal)</label>
+                            <input type="number" id="prof-bmr" placeholder="예: 1450" step="1" min="500" max="3000">
+                        </div>
+                    </div>
+                    <!-- 인바디 변화 추이 -->
+                    <div id="inbody-history-container" style="display:none; margin-top:14px;"></div>
+                </div>
+
+                <!-- 2. 인바디 앱 연동 안내 -->
+                <div class="card" style="border:1px dashed var(--info-color); background:var(--info-light);">
+                    <h3 style="font-size:15px;">📲 인바디 앱에서 데이터 가져오기</h3>
+                    <div style="font-size:13px; color:#555; line-height:1.6;">
+                        <p style="margin:0 0 8px;">InBody 앱의 측정 결과를 쉽게 입력할 수 있어요:</p>
+                        <ol style="margin:0; padding-left:20px;">
+                            <li>InBody 앱 실행 → <strong>체성분 결과</strong> 화면</li>
+                            <li><strong>골격근량, 체지방량, 내장지방 레벨</strong> 확인</li>
+                            <li>위 입력칸에 숫자만 입력 후 <strong>저장</strong></li>
+                        </ol>
+                        <div style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">
+                            💡 <strong>팁:</strong> 인바디는 2~4주 간격으로 측정하면 변화를 정확히 추적할 수 있어요.
+                            같은 시간(아침 공복)에 측정하면 더 정확합니다!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 현재 복용 중인 약물 -->
+                <div class="card">
+                    <h3>💊 현재 복용 중인 약물</h3>
+                    <div
+                        style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
+                        <label><input type="checkbox" name="med-chk" value="고혈압약"> 고혈압약</label>
+                        <label><input type="checkbox" name="med-chk" value="당뇨약"> 당뇨약</label>
+                        <label><input type="checkbox" name="med-chk" value="고지혈증약"> 고지혈증약</label>
+                        <label><input type="checkbox" name="med-chk" value="비만치료제"> 비만치료제</label>
+                    </div>
+                    <input type="text" id="prof-med-other" placeholder="기타 직접 입력 (예: 갑상선약)">
+                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 프로필 저장 및 대사건강 점수 업데이트</button>
+                </div>
+
+                <!-- 4. 혈액검사 결과지 업로드 -->
+                <div class="card" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
+                    <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
+                        <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
+                    </h3>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">건강검진 또는 혈액검사 결과지를 사진 찍어 올리면 AI가 수치를 자동 추출합니다.</p>
+                    
+                    <div style="display:flex; gap:10px; margin-bottom:12px; justify-content:center;">
+                        <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #E53935 0%, #C62828 100%); cursor:pointer; font-size:14px; margin:0;">
+                            📷 결과지 촬영/선택
+                            <input type="file" id="blood-test-input" accept="image/*" capture="environment" 
+                                style="display:none;" onchange="uploadBloodTestPhoto(this)">
+                        </label>
+                    </div>
+
+                    <!-- 분석 결과 컨테이너 -->
+                    <div id="blood-test-result" style="display:none;"></div>
+
+                    <!-- 이전 검사 결과 -->
+                    <div id="blood-test-history" style="display:none;"></div>
+
+                    <div style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
+                        💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
+                        🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
+                    </div>
+                </div>
+
+                <!-- 5. 친구 초대 공유 -->
+                <div class="card" style="text-align:center; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
+                    <h3 style="color:#E65100;">🎉 친구 초대하기</h3>
+                    <p style="font-size:13px; color:#666; margin-bottom:14px; line-height:1.5;">
+                        해빛스쿨을 친구에게 알려주세요!<br>함께하면 습관 만들기가 더 즐거워요 🌞
+                    </p>
+                    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
+                            onclick="shareApp('kakao')">💬 카카오톡</button>
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#1DA1F2; color:white; border-radius:12px;"
+                            onclick="shareApp('twitter')">🐦 X (트위터)</button>
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#03C75A; color:white; border-radius:12px;"
+                            onclick="shareApp('naver')">📝 네이버 블로그</button>
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#555; color:white; border-radius:12px;"
+                            onclick="shareApp('copy')">📋 링크 복사</button>
+                    </div>
+                </div>
+
+                <!-- 6. 로그아웃 -->
+                <div style="text-align:center; margin:20px 0 10px;">
+                    <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px;"
+                        onclick="logoutAndReset()">🚪 로그아웃</button>
+                </div>
+            </div>
+
+            <!-- 🪙 자산 관리 탭 (M2E 시스템) -->
+            <div id="assets" class="content-section" role="region" aria-label="나의 자산">
+                <!-- 스켈레톤 로딩 -->
+                <div id="wallet-skeleton" class="wallet-skeleton">
+                    <div class="skeleton-card skeleton-asset"></div>
+                    <div class="skeleton-card skeleton-info"></div>
+                    <div class="skeleton-card skeleton-convert"></div>
+                </div>
+
+                <!-- 포인트 & HBT 요약 -->
+                <div class="card wallet-asset-card" id="wallet-asset-section">
+                    <h3>💰 나의 자산</h3>
+                    <div class="wallet-asset-grid">
+                        <div class="wallet-asset-item">
+                            <div class="wallet-asset-label">🅿️ 해빛 포인트</div>
+                            <div class="wallet-asset-value" id="asset-points-display">0P</div>
+                            <div class="wallet-asset-delta" id="asset-points-delta"></div>
+                        </div>
+                        <div class="wallet-asset-item">
+                            <div class="wallet-asset-label">💎 HBT 코인</div>
+                            <div class="wallet-asset-value" id="asset-hbt-display">0 HBT</div>
+                            <div id="asset-hbt-onchain" class="wallet-onchain-badge" style="display: none;">
+                                <span class="dot"></span>
+                                <span id="asset-hbt-onchain-text">온체인: 0 HBT</span>
+                            </div>
+                            <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
+                        </div>
+                    </div>
+                    <!-- 7일 HBT 획득 미니차트 -->
+                    <div class="wallet-minichart" id="wallet-minichart">
+                        <div class="wallet-minichart-label">최근 7일 HBT 획득</div>
+                        <div class="wallet-minichart-bars" id="minichart-bars"></div>
+                    </div>
+                </div>
+
+                <!-- 건강 습관 챌린지 섹션 -->
+                <div class="card wallet-challenge-card">
+                    <h3 class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
+                    <p class="wallet-challenge-desc">식단·운동·마음 모두 인증해야 하루 완료!</p>
+
+                    <!-- 진행 중인 챌린지 (링 차트) -->
+                    <div id="active-challenge-container" class="wallet-challenge-active" style="display: none;">
+                        <div id="active-challenge-info"></div>
+                    </div>
+
+                    <!-- 챌린지 시작 -->
+                    <div id="challenge-selection" style="display: none;">
+                        <button class="challenge-toggle-btn" id="challenge-toggle-btn" onclick="toggleChallengeSelection()" style="display: none;">
+                            <span id="challenge-toggle-text">📋 새 챌린지 시작하기</span>
+                            <span class="challenge-toggle-arrow" id="challenge-toggle-arrow">▼</span>
+                        </button>
+                        <div id="challenge-tier-wrap" class="challenge-tier-list">
+                            <div class="challenge-tier-card tier-mini" id="tier-card-mini"
+                                onclick="startChallenge30D('challenge-all-3d')">
+                                <div class="tier-icon">⚡</div>
+                                <div class="tier-info">
+                                    <div class="tier-name">3일 미니 챌린지</div>
+                                    <div class="tier-desc">무료 참가 · 100% 달성 시 30P</div>
+                                </div>
+                            </div>
+                            <div class="challenge-tier-card tier-weekly" id="tier-card-weekly"
+                                onclick="startChallenge30D('challenge-all-7d')">
+                                <div class="tier-icon">🔥</div>
+                                <div class="tier-info">
+                                    <div class="tier-name">7일 위클리 챌린지</div>
+                                    <div class="tier-desc">HBT 예치 · 80%+ 환급+50P · 100% 시 +50% HBT</div>
+                                </div>
+                                <div class="tier-stake-slider-wrap" onclick="event.stopPropagation()">
+                                    <input type="hidden" id="stake-weekly" value="0">
+                                    <label class="wallet-stake-label">예치 HBT</label>
+                                    <input type="range" class="wallet-stake-slider" id="stake-slider-weekly"
+                                        min="0" max="100" value="0" oninput="updateStakeSlider('weekly')">
+                                    <div class="wallet-stake-value" id="stake-value-weekly">0 HBT</div>
+                                    <div class="wallet-stake-reward" id="stake-reward-weekly"></div>
+                                </div>
+                            </div>
+                            <div class="challenge-tier-card tier-master" id="tier-card-master"
+                                onclick="startChallenge30D('challenge-all-30d')">
+                                <div class="tier-icon">🏆</div>
+                                <div class="tier-info">
+                                    <div class="tier-name">30일 마스터 챌린지</div>
+                                    <div class="tier-desc">HBT 예치 · 80%+ 환급+100P · 100% 시 +100% HBT</div>
+                                </div>
+                                <div class="tier-stake-slider-wrap" onclick="event.stopPropagation()">
+                                    <input type="hidden" id="stake-master" value="0">
+                                    <label class="wallet-stake-label">예치 HBT</label>
+                                    <input type="range" class="wallet-stake-slider" id="stake-slider-master"
+                                        min="0" max="100" value="0" oninput="updateStakeSlider('master')">
+                                    <div class="wallet-stake-value" id="stake-value-master">0 HBT</div>
+                                    <div class="wallet-stake-reward" id="stake-reward-master"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="challenge-rules-note">
+                            📌 80%+ → 원금환급+보너스P · 100% → 원금+예치금의 50~100% HBT 보너스 · 미달 시 소멸
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 포인트 → HBT 변환 섹션 -->
+                <div class="card wallet-convert-card">
+                    <h3>🔄 포인트 → HBT 변환</h3>
+                    <p class="wallet-convert-desc">포인트를 HBT 코인으로 변환하세요. 100P 단위로 변환 가능합니다.</p>
+                    <div class="wallet-convert-rate-badge" id="convert-rate-badge">
+                        현재 A구간 · 1:1 비율
+                    </div>
+                    <div class="wallet-convert-presets">
+                        <button class="wallet-preset-btn" onclick="setConvertAmount(100)">100P</button>
+                        <button class="wallet-preset-btn" onclick="setConvertAmount(300)">300P</button>
+                        <button class="wallet-preset-btn" onclick="setConvertAmount(500)">500P</button>
+                        <button class="wallet-preset-btn" onclick="setConvertAmount(1000)">1000P</button>
+                    </div>
+                    <input type="hidden" id="convert-point-input" value="">
+                    <div class="wallet-convert-result-row">
+                        <span class="wallet-convert-arrow">→</span>
+                        <span class="wallet-convert-result" id="convert-result-preview">0 HBT</span>
+                    </div>
+                    <div class="wallet-convert-limit" id="convert-daily-limit">오늘 변환 한도: <strong>1,000 / 1,000 HBT</strong></div>
+                    <button class="wallet-convert-submit" id="convert-submit-btn" onclick="executeConversion()" disabled>
+                        💸 변환하기
+                    </button>
+                </div>
+
+                <!-- 변환 확인 모달 -->
+                <div class="wallet-modal-overlay" id="convert-confirm-modal" style="display:none;">
+                    <div class="wallet-modal">
+                        <div class="wallet-modal-title">🔄 HBT 변환 확인</div>
+                        <div class="wallet-modal-body">
+                            <div class="wallet-modal-summary">
+                                <div class="wallet-modal-row">
+                                    <span>변환 포인트</span>
+                                    <span id="modal-convert-points">0P</span>
+                                </div>
+                                <div class="wallet-modal-row">
+                                    <span>받을 HBT</span>
+                                    <span id="modal-convert-hbt" class="highlight">0 HBT</span>
+                                </div>
+                                <div class="wallet-modal-row">
+                                    <span>적용 비율</span>
+                                    <span id="modal-convert-rate">1:1</span>
+                                </div>
+                            </div>
+                            <p class="wallet-modal-warn">⚠️ 변환 후 취소할 수 없습니다.</p>
+                        </div>
+                        <div class="wallet-modal-actions">
+                            <button class="wallet-modal-btn cancel" onclick="closeConvertModal()">취소</button>
+                            <button class="wallet-modal-btn confirm" id="modal-confirm-btn" onclick="confirmConversion()">확인</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 채굴 반감기 현황 -->
+                <div class="card wallet-halving-card">
+                    <h3>⛏️ 채굴 반감기 현황</h3>
+                    <div class="wallet-halving-progress">
+                        <div class="wallet-halving-progress-header">
+                            <span>구간 진행도</span>
+                            <span id="halving-progress-text">0 / 30,000,000 HBT</span>
+                        </div>
+                        <div class="wallet-halving-bar-bg">
+                            <div class="wallet-halving-bar-fill" id="halving-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div class="wallet-halving-schedule">
+                        <div class="wallet-halving-schedule-header">
+                            <span>구간</span><span>전환 비율</span><span>채굴량</span>
+                        </div>
+                        <div id="halving-schedule">
+                            <div class="wallet-halving-row active">
+                                <span>A 👈</span><span>100P = 100 HBT</span><span>3,000만</span>
+                            </div>
+                            <div class="wallet-halving-row future">
+                                <span>B</span><span>100P = 50 HBT</span><span>1,500만</span>
+                            </div>
+                            <div class="wallet-halving-row future">
+                                <span>C</span><span>100P = 25 HBT</span><span>750만</span>
+                            </div>
+                            <div class="wallet-halving-row future">
+                                <span>D</span><span>100P = 12.5 HBT</span><span>375만</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="wallet-halving-tip">
+                        ⚡ 지금은 A구간! 같은 포인트로 받는 HBT가 구간마다 절반으로 줄어듭니다.
+                    </p>
+                </div>
+
+                <!-- 지갑 정보 -->
+                <div class="card wallet-info-card">
+                    <div class="wallet-info-header">
+                        <h3>🔐 블록체인 지갑</h3>
+                        <span class="wallet-network-badge"><span class="dot"></span> Base Sepolia</span>
+                    </div>
+                    <div class="wallet-address-box">
+                        <span class="wallet-address-text" id="wallet-address-display">로딩 중...</span>
+                        <div class="wallet-addr-actions">
+                            <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="주소 복사">📋</button>
+                            <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
+                        </div>
+                    </div>
+                    <div class="wallet-links">
+                        <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
+                    </div>
+                </div>
+
+                <!-- 거래 기록 -->
+                <div class="card wallet-tx-card">
+                    <h3>📜 거래 기록</h3>
+                    <div id="transaction-history" class="wallet-tx-list">
+                        <div class="wallet-tx-empty-cta">
+                            <div class="wallet-tx-empty-icon">💎</div>
+                            <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
+                            <div class="wallet-tx-empty-sub">포인트를 HBT로 변환하면 여기에 기록됩니다</div>
+                            <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="diet" class="content-section" role="region" aria-label="식단 기록">
+                <div class="quest-board">
+                    <div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span
+                            class="quest-check" id="quest-diet">미달성</span></div>
+                </div>
+                <!-- 업로드 CTA -->
+                <div class="upload-cta" onclick="clickNextEmptyDietSlot()">
+                    <div class="upload-cta-icon">📸</div>
+                    <div class="upload-cta-text">
+                        <strong>식단 사진을 올려보세요!</strong>
+                        <span>AI가 초가공식품을 판별하고 영양소를 분석해드려요</span>
+                    </div>
+                    <div class="upload-cta-arrow">›</div>
+                </div>
+                <!-- 오늘의 식단 총평 -->
+                <div id="diet-day-summary-container" style="display:none;"></div>
+                <div class="card">
+                    <h3>📸 식단 사진</h3>
+                    <div id="diet-boxes-container" style="display: flex; flex-direction: column; gap: 15px;">
+                        <div class="diet-box" id="diet-box-breakfast">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;">① 첫 번째 식사</span>
+                                <input type="file" id="diet-img-breakfast" accept="image/*"
+                                    onchange="previewStaticImage(this, 'preview-breakfast', 'rm-breakfast')">
+                                <span id="txt-breakfast"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-breakfast" class="preview-img" alt="첫 번째 식사 사진 미리보기">
+                                    <button id="rm-breakfast" class="static-remove-btn"
+                                        onclick="removeStaticImage(event, 'diet-img-breakfast', 'preview-breakfast', 'rm-breakfast', 'txt-breakfast')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-breakfast" data-meal="breakfast" onclick="analyzeMealPhoto('breakfast')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-breakfast" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
+
+                        <div class="diet-box" id="diet-box-lunch" style="display:none;">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;">② 두 번째 식사</span>
+                                <input type="file" id="diet-img-lunch" accept="image/*"
+                                    onchange="previewStaticImage(this, 'preview-lunch', 'rm-lunch')">
+                                <span id="txt-lunch"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-lunch" class="preview-img" alt="두 번째 식사 사진 미리보기">
+                                    <button id="rm-lunch" class="static-remove-btn"
+                                        onclick="removeStaticImage(event, 'diet-img-lunch', 'preview-lunch', 'rm-lunch', 'txt-lunch')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-lunch" data-meal="lunch" onclick="analyzeMealPhoto('lunch')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-lunch" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
+
+                        <div class="diet-box" id="diet-box-dinner" style="display:none;">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;">③ 세 번째 식사</span>
+                                <input type="file" id="diet-img-dinner" accept="image/*"
+                                    onchange="previewStaticImage(this, 'preview-dinner', 'rm-dinner')">
+                                <span id="txt-dinner"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-dinner" class="preview-img" alt="세 번째 식사 사진 미리보기">
+                                    <button id="rm-dinner" class="static-remove-btn"
+                                        onclick="removeStaticImage(event, 'diet-img-dinner', 'preview-dinner', 'rm-dinner', 'txt-dinner')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-dinner" data-meal="dinner" onclick="analyzeMealPhoto('dinner')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-dinner" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
+
+                        <div class="diet-box" id="diet-box-snack" style="display:none;">
+                            <label class="upload-area">
+                                <span style="font-size: 13px; font-weight: bold; display: block;">④ 네 번째 식사</span>
+                                <input type="file" id="diet-img-snack" accept="image/*"
+                                    onchange="previewStaticImage(this, 'preview-snack', 'rm-snack')">
+                                <span id="txt-snack"
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
+                                <div style="position:relative;">
+                                    <img id="preview-snack" class="preview-img" alt="네 번째 식사 사진 미리보기">
+                                    <button id="rm-snack" class="static-remove-btn"
+                                        onclick="removeStaticImage(event, 'diet-img-snack', 'preview-snack', 'rm-snack', 'txt-snack')"
+                                        aria-label="사진 삭제">X 삭제</button>
+                                </div>
+                            </label>
+                            <button class="diet-ai-btn" id="ai-btn-snack" data-meal="snack" onclick="analyzeMealPhoto('snack')"
+                                style="display:none;">🤖 AI 분석</button>
+                            <div id="diet-analysis-snack" class="diet-analysis-result" style="display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card"
+                    style="border: 2px solid #E3F2FD; background-color: #F8BBD0; background: linear-gradient(to right, #ffffff, #f0f8ff);">
+                    <h3>⚖️ 아침 공복 지표 기록</h3>
+                    <div class="input-grid">
+                        <input type="number" id="weight" placeholder="체중 (kg)">
+                        <input type="number" id="glucose" placeholder="공복 혈당 (mg/dL)">
+                        <input type="number" id="bp-systolic" placeholder="수축기 혈압">
+                        <input type="number" id="bp-diastolic" placeholder="이완기 혈압">
+                    </div>
+                </div>
+                <!-- 공복 지표 추이 그래프 -->
+                <div class="card" id="fasting-graph-card" style="display:none;">
+                    <h3>📊 공복 지표 추이 (최근 30일)</h3>
+                    <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
+                        <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">⚖️ 체중</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">🩸 혈당</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('bp', this)">💓 혈압</button>
+                    </div>
+                    <canvas id="fasting-chart" width="340" height="180"
+                        style="width:100%; height:auto; border-radius:8px;"></canvas>
+                    <div id="fasting-chart-legend"
+                        style="font-size:11px; color:#888; text-align:center; margin-top:6px;"></div>
+                </div>
+            </div>
+
+            <div id="exercise" class="content-section">
+                <div class="quest-board">
+                    <div class="quest-item"><span>🏃 운동 기록하기 <strong>(유산소 10+5P, 근력 10+5P)</strong></span><span
+                            class="quest-check" id="quest-exercise">미달성</span></div>
+                </div>
+                <!-- 업로드 CTA -->
+                <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile()">
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
+                        <div class="upload-cta-text">
+                            <strong style="font-size:13px;">운동 이미지 등록</strong>
+                        </div>
+                        <div class="upload-cta-arrow">›</div>
+                    </div>
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile()">
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
+                        <div class="upload-cta-text">
+                            <strong style="font-size:13px;">운동 영상 등록</strong>
+                        </div>
+                        <div class="upload-cta-arrow">›</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📸 운동 이미지</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
+                    <div id="cardio-list"></div>
+                </div>
+                <div class="card">
+                    <h3>📹 운동 영상</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📹 영상은 촬영 당일에만 등록 가능합니다.</p>
+                    <button class="guide-btn" onclick="document.getElementById('guide-modal').style.display='flex'">📸 10초 하이퍼랩스 쉽게 찍는 법</button>
+                    <div id="strength-list"></div>
+                </div>
+            </div>
+
+            <div id="sleep" class="content-section">
+                <div class="quest-board">
+                    <div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span
+                            class="quest-check" id="quest-mind">미달성</span></div>
+                </div>
+                <!-- 업로드 CTA -->
+                <div class="upload-cta" onclick="document.getElementById('sleep-img').click()">
+                    <div class="upload-cta-icon">💤</div>
+                    <div class="upload-cta-text">
+                        <strong>수면 캡처를 올려보세요!</strong>
+                        <span>AI가 수면 패턴을 분석하고 개선점을 알려드려요</span>
+                    </div>
+                    <div class="upload-cta-arrow">›</div>
+                </div>
+                <div class="card">
+                    <h3>💤 수면 분석</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록
+                        가능합니다.</p>
+                    <label class="upload-area">
+                        <input type="file" id="sleep-img" accept="image/*"
+                            onchange="previewStaticImage(this, 'preview-sleep', 'rm-sleep', false)">
+                        <span id="txt-sleep" style="color: #666; font-size: 14px;">➕ 캡처 올리기</span>
+                        <div style="position:relative;">
+                            <img id="preview-sleep" class="preview-img" alt="수면 기록 캘처 미리보기">
+                            <button id="rm-sleep" class="static-remove-btn"
+                                onclick="removeStaticImage(event, 'sleep-img', 'preview-sleep', 'rm-sleep', 'txt-sleep')"
+                                aria-label="수면 기록 사진 삭제">X 삭제</button>
+                        </div>
+                    </label>
+                    <button class="diet-ai-btn" id="ai-btn-sleep" onclick="analyzeSleepData()" style="display:none;">🤖 AI 분석</button>
+                    <div id="sleep-analysis-result" class="diet-analysis-result" style="display:none;"></div>
+                </div>
+                <div class="card">
+                    <h3>🧘 마음 챙김 및 감사일기</h3>
+                    <label style="font-size: 14px; display: block; margin-bottom: 10px;"><input type="checkbox"
+                            id="meditation-check"> ✅ 오늘 10분 명상 완료</label>
+                    <textarea id="gratitude-journal" placeholder="오늘 하루 감사했던 일 기록하기"></textarea>
+
+                </div>
+            </div>
+
+            <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="모두의 갤러리">
+                <div id="my-share-container" style="display:none;">
+                    <div class="share-card-container">
+                        <div id="capture-area" class="share-card-capture">
+                            <div class="share-title">☀️ <span id="share-name"></span>님의 해빛 인증</div>
+                            <div class="share-stat">
+                                <div class="share-val">🗓 <span id="share-date"></span></div>
+                                <div class="share-val">🅿️ <span id="share-point">0</span> P</div>
+                            </div>
+                            <div class="share-img-grid" id="share-imgs"></div>
+                            <div class="share-footer">저와 함께 좋은 습관 만들어요 🌞</div>
+                        </div>
+                        <button class="btn-share-action" onclick="shareMyCard()">
+                            🌟 나의 해빛 기록 자랑하기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="gallery-filters" role="group" aria-label="갤러리 필터">
+                    <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
+                        aria-pressed="true">전체보기</button>
+                    <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
+                        aria-label="식단 필터">🥗 식단</button>
+                    <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"
+                        aria-label="운동 필터">🏃 운동</button>
+                    <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false"
+                        aria-label="마음 필터">🧘 마음</button>
+                </div>
+
+                <!-- 인스타그램 스타일 반응 요약 배너 -->
+                <div id="gallery-activity-summary" class="activity-summary" style="display:none;" role="status"
+                    aria-label="내 게시물 반응 요약"></div>
+
+                <!-- 주간 베스트 -->
+                <div id="weekly-best-container" style="display:none;"></div>
+
+                <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
+                <div id="gallery-sentinel" style="height: 20px; text-align: center; padding: 20px; display: none;"
+                    aria-hidden="true">
+                    <div class="loading-spinner">
+                        <span class="loading-dot"></span>
+                        <span class="loading-dot"></span>
+                        <span class="loading-dot"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-banner-fixed" id="chat-banner"
+                onclick="window.open('https://open.kakao.com/o/gv23urgi', '_blank')">
+                💬 해빛스쿨 단톡방 참여하기
+            </div>
+
+            <div class="bottom-bar" id="submit-bar" style="display: none;" role="complementary">
+                <button class="submit-btn" id="saveDataBtn" aria-label="현재 진행상황 저장 및 포인트 받기">현재 진행상황 저장 & 포인트 받기
+                    🅿️</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="level-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="document.getElementById('level-modal').style.display='none'">×</button>
+            <h3 style="margin-top: 0; color: var(--primary-color);">🏆 해빛스쿨 미션 레벨</h3>
+            <p style="font-size:12px; color:#888; margin-bottom:10px;">각 레벨에서 쉬움/보통/도전 난이도를 선택할 수 있어요!</p>
+            <ul style="font-size: 14px; line-height: 1.8; color: #444; padding-left: 20px;">
+                <li><strong>Lv 1 (시작):</strong> 식단 2~5일 / 운동 2~5일 / 마음 1~4일</li>
+                <li><strong>Lv 2 (적응):</strong> 식단 3~7일 / 운동 3~6일 / 마음 2~5일</li>
+                <li><strong>Lv 3 (도전):</strong> 식단 4~7일 / 운동 4~7일 / 마음 3~6일</li>
+                <li><strong>Lv 4 (성장):</strong> 식단 5~7일 / 운동 5~7일 / 마음 4~7일</li>
+                <li><strong>Lv 5 (마스터):</strong> 식단 6~7일 / 운동 6~7일 / 마음 5~7일</li>
+            </ul>
+            <p style="font-size:12px; color:#666; margin-top:8px;">💡 나만의 커스텀 미션도 추가할 수 있습니다!</p>
+            <button class="submit-btn" style="margin-top: 10px; padding: 12px;"
+                onclick="document.getElementById('level-modal').style.display='none'">확인</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-content guide-modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">×</button>
+            <h3 style="margin-top:0; color: var(--point-color);">📹 10초 하이퍼랩스 쉽게 찍는 법</h3>
+            <div class="guide-platform">
+                <h4>🍎 iPhone (iPhone 13~16 / iOS 17~18)</h4>
+                <ol>
+                    <li>카메라 앱 열기 → 하단 모드에서 <strong>타임랩스</strong> 선택</li>
+                    <li>휴대폰을 가슴 높이로 고정하고 이동 동선 먼저 확인</li>
+                    <li>촬영 버튼 누르고 운동 동작 20~40초 촬영</li>
+                    <li>종료 후 미리보기 확인 → 저장된 영상 업로드</li>
+                </ol>
+            </div>
+            <div class="guide-platform">
+                <h4>🤖 Android (Galaxy S23~S25 / Pixel 8~9)</h4>
+                <ol>
+                    <li>카메라 앱 → <strong>더보기</strong> 또는 <strong>모드</strong> → <strong>하이퍼랩스/타임랩스</strong></li>
+                    <li>배속은 기본(자동) 또는 10x 권장</li>
+                    <li>핸드폰 흔들림 줄이고 운동 20~40초 촬영</li>
+                    <li>갤러리에서 재생 확인 후 업로드</li>
+                </ol>
+            </div>
+            <p class="guide-tip">💡 팁: 너무 짧게(3~5초) 찍으면 썸네일 품질이 떨어질 수 있어요. 최소 15초 이상 촬영을 권장합니다.</p>
+        </div>
+    </div>
+
+    <div id="lightbox-modal" role="dialog" aria-label="이미지 확대 보기" tabindex="-1" onclick="this.style.display='none'">
+        <button id="lightbox-prev" class="lightbox-nav lightbox-prev" aria-label="이전 이미지">‹</button>
+        <img id="lightbox-img" src="" crossorigin="anonymous" onclick="event.stopPropagation()" alt="확대된 이미지">
+        <video id="lightbox-video" controls playsinline onclick="event.stopPropagation()" aria-label="확대된 동영상"></video>
+        <button id="lightbox-next" class="lightbox-nav lightbox-next" aria-label="다음 이미지">›</button>
+        <button class="lightbox-close" onclick="this.parentElement.style.display='none'" aria-label="닫기">✕</button>
+    </div>
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="share-platform-modal" onclick="closeSharePlatformModal()">
+        <div class="share-platform-card" onclick="event.stopPropagation()">
+            <div class="share-modal-handle"></div>
+            <div class="share-modal-header">
+                <span class="share-modal-title">공유하기 ✨</span>
+                <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
+            </div>
+            <div class="share-preview-row">
+                <div class="share-preview-img-wrap">
+                    <img id="share-preview-thumb" src="" alt="공유 미리보기" />
+                </div>
+                <div class="share-preview-info">
+                    <div class="share-preview-title">오늘의 해빛 인증 🌞</div>
+                    <div class="share-preview-text">친구들에게 나의 건강 습관을<br>자랑해보세요!</div>
+                </div>
+            </div>
+            <div class="share-section-label">SNS에 공유</div>
+            <div class="share-platform-grid">
+                <button class="share-grid-btn" onclick="shareToPlatform('kakao')">
+                    <span class="share-icon kakao-icon"><svg width="24" height="24" viewBox="0 0 24 24">
+                            <path
+                                d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z"
+                                fill="#3E2723" />
+                        </svg></span>
+                    <span class="share-label">카카오톡</span>
+                </button>
+                <button class="share-grid-btn" onclick="shareToPlatform('instagram')">
+                    <span class="share-icon insta-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                            <rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke="white"
+                                stroke-width="2" />
+                            <circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2" />
+                            <circle cx="18" cy="6" r="1.5" fill="white" />
+                        </svg></span>
+                    <span class="share-label">인스타그램</span>
+                </button>
+                <button class="share-grid-btn" onclick="shareToPlatform('facebook')">
+                    <span class="share-icon fb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                            <path
+                                d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z" />
+                        </svg></span>
+                    <span class="share-label">페이스북</span>
+                </button>
+                <button class="share-grid-btn" onclick="shareToPlatform('x')">
+                    <span class="share-icon x-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                            <path
+                                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg></span>
+                    <span class="share-label">X</span>
+                </button>
+            </div>
+            <div class="share-section-label">다른 방법</div>
+            <div class="share-action-row">
+                <button class="share-action-pill" onclick="shareViaSystem()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
+                    </svg>
+                    시스템 공유
+                </button>
+                <button class="share-action-pill" onclick="copyShareLink()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                    </svg>
+                    링크 복사
+                </button>
+                <button class="share-action-pill" onclick="downloadShareImage()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+                    </svg>
+                    이미지 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA 앱 설치 배너 -->
+    <div id="pwa-install-banner" style="display:none;">
+        <div class="pwa-install-content">
+            <img src="icons/icon-192.svg" alt="해빛스쿨" class="pwa-install-icon">
+            <div class="pwa-install-text">
+                <strong>해빛스쿨 앱 설치</strong>
+                <span>홈 화면에 추가하면 더 빠르게!</span>
+            </div>
+            <button class="pwa-install-btn" onclick="installPWA()">설치</button>
+            <button class="pwa-install-dismiss" onclick="dismissInstallBanner()" aria-label="닫기">&times;</button>
+        </div>
+    </div>
+
+    <!-- 온보딩 모달 (첫 로그인 시) -->
+    <div id="onboarding-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content onboarding-modal-content">
+            <div id="ob-step-1" class="onboarding-step">
+                <div style="font-size:48px; margin-bottom:16px;">🌞</div>
+                <h3 style="color:var(--primary-color); margin:0 0 12px; font-size:20px;">해빛스쿨에 오신 걸 환영합니다!</h3>
+                <p style="font-size:14px; color:#666; margin-bottom:20px; line-height:1.6;">매일 식단·운동·수면을 사진으로 기록하며<br>건강한 습관을 만들어가는 습관학교입니다.</p>
+                <div class="ob-start-tips">
+                    <div class="ob-tip">🥗 식단 사진을 올리면 <strong>AI가 칼로리·영양소</strong>를 분석해요</div>
+                    <div class="ob-tip">🏃 운동과 수면도 사진으로 간편하게 기록해요</div>
+                    <div class="ob-tip">✨ 갤러리에서 다른 사용자들과 함께 응원해요</div>
+                </div>
+                <button class="submit-btn" style="margin-top:20px; font-size:16px; width:100%;" onclick="completeOnboarding()">🌞 시작하기!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 30일 종합 결과지 모달 -->
+    <div id="report-modal" class="report-modal" style="display:none;">
+        <div class="report-container" id="report-container">
+            <div class="report-header">
+                <h2>☀️ 해빛스쿨 30일 종합 결과지</h2>
+                <div class="report-meta">
+                    <span id="report-user-name"></span> ·
+                    <span id="report-period"></span>
+                </div>
+            </div>
+            <div class="report-body" id="report-body">
+                <p style="text-align:center; padding:40px; color:#999;">분석 중...</p>
+            </div>
+            <div class="report-actions">
+                <button class="report-btn report-btn-print" onclick="window.print()">🖨️ 인쇄</button>
+                <button class="report-btn report-btn-close"
+                    onclick="document.getElementById('report-modal').style.display='none'">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 모듈화된 JavaScript 로드 -->
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/diet-analysis.js"></script>
+    <script type="module" src="js/metabolic-score.js"></script>
+
+    <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
+    <script src="js/pwa-install.js"></script>
+</body>
+
+</html>
