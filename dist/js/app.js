@@ -2566,9 +2566,10 @@ async function renderGroupChallenge() {
         newMemberCount = [...thisMonthUsers].filter(uid => !prevUsers.has(uid)).length;
     } catch (e) { console.log('newMember calc error:', e.message); }
 
-    // 상위 3명 (점수 기준)
+    // 상위 3명 (점수 기준, 기록 1일 이상인 사람만)
     const ranked = Object.entries(userStats)
         .map(([userId, stat]) => ({ userId, ...stat }))
+        .filter(u => u.days > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
 

@@ -1118,9 +1118,10 @@ exports.distributeMonthlyMvpReward = onCall(
             u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
         });
 
-        // 상위 3명 선정 (점수 기준)
+        // 상위 3명 선정 (점수 기준, 기록 1일 이상만)
         const ranked = Object.entries(userStats)
             .map(([userId, stat]) => ({ userId, ...stat }))
+            .filter(u => u.days > 0)
             .sort((a, b) => b.score - a.score)
             .slice(0, 3);
 
