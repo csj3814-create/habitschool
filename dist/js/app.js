@@ -1370,17 +1370,62 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
     }
 }
 
+// 자산 표시 캐시 (30초 TTL)
+let _assetCache = { uid: null, ts: 0 };
+const ASSET_CACHE_TTL = 30_000;
+
 // 자산 표시 업데이트 함수
-window.updateAssetDisplay = async function () {
+window.updateAssetDisplay = async function (forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return;
 
+    // 캐시 히트: 30초 이내 같은 유저 → 스킵 (스켈레톤만 해제)
+    const now = Date.now();
+    if (!forceRefresh && _assetCache.uid === user.uid && (now - _assetCache.ts) < ASSET_CACHE_TTL) {
+        if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        return;
+    }
+
     try {
         const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+
+        // 모든 Firestore 쿼리를 동시에 실행 (순차 → 병렬, 5초→1초)
+        const _todayStr = getKstDateString();
+        const _todayLogId = `${user.uid}_${_todayStr}`;
+        const _sevenDaysAgo = new Date();
+        _sevenDaysAgo.setDate(_sevenDaysAgo.getDate() - 6);
+        const _startDateStr = _sevenDaysAgo.toISOString().split('T')[0];
+
+        const _p_user = getDoc(userRef);
+        const _p_todayLog = getDoc(doc(db, 'daily_logs', _todayLogId)).catch(() => null);
+        const _p_hbtTx = getDocs(query(
+            collection(db, 'blockchain_transactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'conversion'),
+            where('status', '==', 'success'),
+            where('date', '==', _todayStr)
+        )).catch(() => null);
+        const _p_minichart = getDocs(query(
+            collection(db, 'blockchain_transactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'conversion'),
+            where('status', '==', 'success'),
+            where('date', '>=', _startDateStr)
+        )).catch(() => null);
+        const _p_txHistory = getDocs(query(
+            collection(db, "blockchain_transactions"),
+            where("userId", "==", user.uid),
+            orderBy("timestamp", "desc"),
+            limit(20)
+        )).catch(() => null);
+
+        const userSnap = await _p_user;
 
         if (userSnap.exists()) {
             const userData = userSnap.data();
+
+            // 캐시 갱신
+            _assetCache = { uid: user.uid, ts: Date.now() };
 
             // 포인트 표시 업데이트
             const pointsDisplay = document.getElementById('asset-points-display');
@@ -1401,10 +1446,8 @@ window.updateAssetDisplay = async function () {
             if (pointsDeltaEl) {
                 let todayPoints = 0;
                 try {
-                    const todayStr = getKstDateString();
-                    const todayLogId = `${user.uid}_${todayStr}`;
-                    const todayLogSnap = await getDoc(doc(db, 'daily_logs', todayLogId));
-                    if (todayLogSnap.exists()) {
+                    const todayLogSnap = await _p_todayLog;
+                    if (todayLogSnap && todayLogSnap.exists()) {
                         const ap = todayLogSnap.data().awardedPoints || {};
                         todayPoints = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
                     }
@@ -1422,16 +1465,8 @@ window.updateAssetDisplay = async function () {
             // 오늘 변환 HBT 합산 (델타 + 일일 한도 양쪽에서 사용)
             let todayHbt = 0;
             try {
-                const todayStr = getKstDateString();
-                const hbtTxQuery = query(
-                    collection(db, 'blockchain_transactions'),
-                    where('userId', '==', user.uid),
-                    where('type', '==', 'conversion'),
-                    where('status', '==', 'success'),
-                    where('date', '==', todayStr)
-                );
-                const hbtTxSnap = await getDocs(hbtTxQuery);
-                hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
+                const hbtTxSnap = await _p_hbtTx;
+                if (hbtTxSnap) hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
             } catch (_) {}
             const hbtDeltaEl = document.getElementById('asset-hbt-delta');
             if (hbtDeltaEl) {
@@ -1453,20 +1488,11 @@ window.updateAssetDisplay = async function () {
                     const todayDow = nowDate.getDay();
                     const data = Array(7).fill(0);
 
-                    // 7일 전 날짜 계산
-                    const sevenDaysAgo = new Date(nowDate);
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-                    const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
+                    // 7일 전 날짜 (병렬 쿼리에서 이미 조회됨)
+                    const sevenDaysAgo = _sevenDaysAgo;
 
-                    const txQuery = query(
-                        collection(db, 'blockchain_transactions'),
-                        where('userId', '==', user.uid),
-                        where('type', '==', 'conversion'),
-                        where('status', '==', 'success'),
-                        where('date', '>=', startDateStr)
-                    );
-                    const txSnap = await getDocs(txQuery);
-                    txSnap.forEach(d => {
+                    const txSnap = await _p_minichart;
+                    if (txSnap) txSnap.forEach(d => {
                         const txDate = new Date(d.data().date + 'T12:00:00');
                         const diffDays = Math.round((txDate - sevenDaysAgo) / 86400000);
                         if (diffDays >= 0 && diffDays < 7) {
@@ -1730,15 +1756,9 @@ window.updateAssetDisplay = async function () {
             const txContainer = document.getElementById('transaction-history');
             if (txContainer) {
                 try {
-                    const txQuery = query(
-                        collection(db, "blockchain_transactions"),
-                        where("userId", "==", user.uid),
-                        orderBy("timestamp", "desc"),
-                        limit(20)
-                    );
-                    const txSnap = await getDocs(txQuery);
+                    const txSnap = await _p_txHistory;
 
-                    if (txSnap.empty) {
+                    if (!txSnap || txSnap.empty) {
                         txContainer.innerHTML = `
                             <div class="wallet-tx-empty-cta">
                                 <div class="wallet-tx-empty-icon">💎</div>
@@ -1862,14 +1882,12 @@ function openTab(tabName, pushState = true) {
 
         // 자산 탭 열릴 때 자산 표시 업데이트
         if (tabName === 'assets' && user) {
-            // 만료된 챌린지 자동 정산
+            // 만료된 챌린지 자동 정산 (실패해도 자산 표시는 반드시 진행)
             if (window.settleExpiredChallenges) {
-                window.settleExpiredChallenges().then(() => {
-                    updateAssetDisplay();
-                });
-            } else {
-                updateAssetDisplay();
+                window.settleExpiredChallenges()
+                    .catch(err => console.warn('챌린지 정산 스킵:', err.message));
             }
+            updateAssetDisplay();
         }
     } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
@@ -2217,6 +2235,10 @@ async function loadBloodTestHistory() {
     }
 }
 
+// 대시보드 캐시 (30초 TTL)
+let _dashboardCache = { uid: null, data: null, ts: 0 };
+const DASHBOARD_CACHE_TTL = 30_000;
+
 // 대시보드 렌더링
 async function renderDashboard() {
     const user = auth.currentUser;
@@ -2224,6 +2246,22 @@ async function renderDashboard() {
 
     const { todayStr, weekStrs } = getDatesInfo();
     const currentWeekId = getWeekId(todayStr);
+
+    // 캐시 히트: 30초 이내 같은 유저 → 재쿼리 생략
+    const now = Date.now();
+    if (_dashboardCache.uid === user.uid && (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL && _dashboardCache.data) {
+        _renderDashboardFromCache(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
+        return;
+    }
+
+    // 로딩 인디케이터 표시
+    const dashEl = document.getElementById('dashboard');
+    if (dashEl && !dashEl.querySelector('.dashboard-loading-indicator')) {
+        const loader = document.createElement('div');
+        loader.className = 'dashboard-loading-indicator';
+        loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">📊 기록을 불러오는 중...</div>';
+        dashEl.prepend(loader);
+    }
 
     try {
         // 유저문서와 주간 로그와 연속기록용 최근 로그를 병렬로 로드
@@ -2248,6 +2286,13 @@ async function renderDashboard() {
             getDocs(weekQuery),
             getDocs(streakQuery)
         ]);
+
+        // 로딩 인디케이터 제거
+        const loadingEl = document.querySelector('.dashboard-loading-indicator');
+        if (loadingEl) loadingEl.remove();
+
+        // 캐시 저장
+        _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
 
         // 마일스톤에 이미 로드한 유저 데이터 전달 (추가 Firestore 호출 방지)
         const ud = userDoc.exists() ? userDoc.data() : {};
@@ -2576,6 +2621,9 @@ async function renderDashboard() {
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
+        // 로딩 인디케이터 제거
+        const loadingEl = document.querySelector('.dashboard-loading-indicator');
+        if (loadingEl) loadingEl.remove();
         // 콜드 스타트 시 자동 재시도 (1회)
         if (!renderDashboard._retried) {
             renderDashboard._retried = true;
@@ -2589,6 +2637,58 @@ async function renderDashboard() {
         }
     }
 }
+
+// 캐시 데이터로 대시보드 즉시 렌더링 (Firestore 쿼리 스킵)
+function _renderDashboardFromCache(cachedData, todayStr, weekStrs, currentWeekId, user) {
+    try {
+        const { userDoc, snapshot, streakSnap } = cachedData;
+        const ud = userDoc.exists() ? userDoc.data() : {};
+        renderMilestones(user.uid, ud);
+
+        let logsMap = {};
+        snapshot.forEach(d => { const data = d.data(); logsMap[data.date] = data; });
+
+        // 오늘의 인증 현황
+        const todayLog = logsMap[todayStr];
+        const todayAwarded = todayLog?.awardedPoints || {};
+        document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
+        document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
+        document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
+
+        // 연속기록
+        let streakCount = 0;
+        const streakLogs = [];
+        streakSnap.forEach(d => { const sd = d.data(); streakLogs.push({ date: sd.date, awarded: sd.awardedPoints }); });
+        for (const log of streakLogs) {
+            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streakCount++;
+            else break;
+        }
+        const streakBadge = document.getElementById('today-streak-badge');
+        if (streakCount > 0) {
+            streakBadge.textContent = `🔥 ${streakCount}일 연속`;
+            streakBadge.style.display = '';
+        }
+
+        // 주간 그래프
+        const graphArea = document.getElementById('week-graph');
+        graphArea.innerHTML = '';
+        const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+        weekStrs.forEach((dateStr, idx) => {
+            let circleClass = 'day-circle';
+            if (logsMap[dateStr]) circleClass += ' done';
+            let labelClass = 'day-label';
+            if (dateStr === todayStr) { circleClass += ' today'; labelClass += ' today'; }
+            graphArea.innerHTML += `<div class="day-wrap" onclick="changeDateTo('${dateStr}')"><div class="${circleClass}">${dayNames[idx]}</div><div class="${labelClass}">${dateStr.substring(5).replace('-', '/')}</div></div>`;
+        });
+    } catch (e) {
+        console.warn('캐시 렌더링 실패, 전체 리로드:', e.message);
+        _dashboardCache.ts = 0;
+        renderDashboard();
+    }
+}
+
+// 데이터 저장 시 대시보드 캐시 무효화
+window._invalidateDashboardCache = function() { _dashboardCache.ts = 0; };
 
 // 난이도 선택기 초기화
 function initDifficultySelectors(level) {
@@ -3927,6 +4027,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             cachedGalleryLogs = [];
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
+            // 대시보드/자산 캐시도 무효화
+            _dashboardCache.ts = 0;
+            _assetCache.ts = 0;
 
             // 마일스톤 확인 및 업데이트
             await checkMilestones(user.uid);

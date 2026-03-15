@@ -1388,7 +1388,38 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
     try {
         const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
+
+        // 모든 Firestore 쿼리를 동시에 실행 (순차 → 병렬, 5초→1초)
+        const _todayStr = getKstDateString();
+        const _todayLogId = `${user.uid}_${_todayStr}`;
+        const _sevenDaysAgo = new Date();
+        _sevenDaysAgo.setDate(_sevenDaysAgo.getDate() - 6);
+        const _startDateStr = _sevenDaysAgo.toISOString().split('T')[0];
+
+        const _p_user = getDoc(userRef);
+        const _p_todayLog = getDoc(doc(db, 'daily_logs', _todayLogId)).catch(() => null);
+        const _p_hbtTx = getDocs(query(
+            collection(db, 'blockchain_transactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'conversion'),
+            where('status', '==', 'success'),
+            where('date', '==', _todayStr)
+        )).catch(() => null);
+        const _p_minichart = getDocs(query(
+            collection(db, 'blockchain_transactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'conversion'),
+            where('status', '==', 'success'),
+            where('date', '>=', _startDateStr)
+        )).catch(() => null);
+        const _p_txHistory = getDocs(query(
+            collection(db, "blockchain_transactions"),
+            where("userId", "==", user.uid),
+            orderBy("timestamp", "desc"),
+            limit(20)
+        )).catch(() => null);
+
+        const userSnap = await _p_user;
 
         if (userSnap.exists()) {
             const userData = userSnap.data();
@@ -1415,10 +1446,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (pointsDeltaEl) {
                 let todayPoints = 0;
                 try {
-                    const todayStr = getKstDateString();
-                    const todayLogId = `${user.uid}_${todayStr}`;
-                    const todayLogSnap = await getDoc(doc(db, 'daily_logs', todayLogId));
-                    if (todayLogSnap.exists()) {
+                    const todayLogSnap = await _p_todayLog;
+                    if (todayLogSnap && todayLogSnap.exists()) {
                         const ap = todayLogSnap.data().awardedPoints || {};
                         todayPoints = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
                     }
@@ -1436,16 +1465,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 오늘 변환 HBT 합산 (델타 + 일일 한도 양쪽에서 사용)
             let todayHbt = 0;
             try {
-                const todayStr = getKstDateString();
-                const hbtTxQuery = query(
-                    collection(db, 'blockchain_transactions'),
-                    where('userId', '==', user.uid),
-                    where('type', '==', 'conversion'),
-                    where('status', '==', 'success'),
-                    where('date', '==', todayStr)
-                );
-                const hbtTxSnap = await getDocs(hbtTxQuery);
-                hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
+                const hbtTxSnap = await _p_hbtTx;
+                if (hbtTxSnap) hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
             } catch (_) {}
             const hbtDeltaEl = document.getElementById('asset-hbt-delta');
             if (hbtDeltaEl) {
@@ -1467,20 +1488,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const todayDow = nowDate.getDay();
                     const data = Array(7).fill(0);
 
-                    // 7일 전 날짜 계산
-                    const sevenDaysAgo = new Date(nowDate);
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-                    const startDateStr = sevenDaysAgo.toISOString().split('T')[0];
+                    // 7일 전 날짜 (병렬 쿼리에서 이미 조회됨)
+                    const sevenDaysAgo = _sevenDaysAgo;
 
-                    const txQuery = query(
-                        collection(db, 'blockchain_transactions'),
-                        where('userId', '==', user.uid),
-                        where('type', '==', 'conversion'),
-                        where('status', '==', 'success'),
-                        where('date', '>=', startDateStr)
-                    );
-                    const txSnap = await getDocs(txQuery);
-                    txSnap.forEach(d => {
+                    const txSnap = await _p_minichart;
+                    if (txSnap) txSnap.forEach(d => {
                         const txDate = new Date(d.data().date + 'T12:00:00');
                         const diffDays = Math.round((txDate - sevenDaysAgo) / 86400000);
                         if (diffDays >= 0 && diffDays < 7) {
@@ -1744,15 +1756,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const txContainer = document.getElementById('transaction-history');
             if (txContainer) {
                 try {
-                    const txQuery = query(
-                        collection(db, "blockchain_transactions"),
-                        where("userId", "==", user.uid),
-                        orderBy("timestamp", "desc"),
-                        limit(20)
-                    );
-                    const txSnap = await getDocs(txQuery);
+                    const txSnap = await _p_txHistory;
 
-                    if (txSnap.empty) {
+                    if (!txSnap || txSnap.empty) {
                         txContainer.innerHTML = `
                             <div class="wallet-tx-empty-cta">
                                 <div class="wallet-tx-empty-icon">💎</div>
@@ -1879,11 +1885,9 @@ function openTab(tabName, pushState = true) {
             // 만료된 챌린지 자동 정산 (실패해도 자산 표시는 반드시 진행)
             if (window.settleExpiredChallenges) {
                 window.settleExpiredChallenges()
-                    .catch(err => console.warn('챌린지 정산 스킵:', err.message))
-                    .then(() => updateAssetDisplay());
-            } else {
-                updateAssetDisplay();
+                    .catch(err => console.warn('챌린지 정산 스킵:', err.message));
             }
+            updateAssetDisplay();
         }
     } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
