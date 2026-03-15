@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.habitschool.app",
+        "sha256_cert_fingerprints": ["C6:BE:28:7B:3E:90:32:5B:94:44:41:C5:15:D6:9E:5E:59:B1:05:89:12:3F:5B:C1:35:7E:37:15:69:E8:E8:24"]
+      }
+    }]

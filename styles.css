@@ -1516,6 +1516,7 @@ body.dark-mode .skeleton-card {
 
 body.dark-mode .wallet-tx-empty-text { color: #ccc; }
 body.dark-mode .wallet-tx-empty-sub { color: #888; }
+body.dark-mode .hbt-disclaimer { color: #bbb; }
 
 /* HBT 변환 버튼 (legacy, 챌린지 등에서 재사용) */
 .hbt-convert-btn {
@@ -1675,6 +1676,23 @@ textarea {
     border-radius: var(--radius-sm); 
     z-index: 20; 
     box-shadow: var(--shadow-light); 
+}
+
+.static-rotate-btn {
+    display: none;
+    position: absolute;
+    top: 15px;
+    left: 5px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid #ccc;
+    color: #333;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    z-index: 20;
+    box-shadow: var(--shadow-light);
+    line-height: 1;
 }
 
 .smart-upload-box { 
@@ -3840,6 +3858,80 @@ textarea {
     color: var(--text-secondary); 
 }
 
+/* 오늘의 인증 현황 카드 */
+.today-status-card {
+    background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: var(--spacing-md);
+}
+
+.today-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.today-status-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #2E7D32;
+}
+
+.today-streak-badge {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E65100;
+    background: rgba(255,255,255,0.8);
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.today-status-cheer {
+    font-size: 13px;
+    color: #4E342E;
+    text-align: center;
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.55);
+    border-radius: 10px;
+    line-height: 1.4;
+}
+
+.today-status-items {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.today-status-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 12px;
+    padding: 10px 6px;
+    cursor: pointer;
+    transition: transform 0.15s;
+}
+
+.today-status-item:active {
+    transform: scale(0.95);
+}
+
+.today-status-icon {
+    font-size: 24px;
+}
+
+.today-status-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+}
+
 /* 마일스톤 뱃지 (컴팩트) */
 .milestone-section { 
     background: linear-gradient(135deg, #FFE082 0%, #FDD835 100%); 
@@ -3852,7 +3944,35 @@ textarea {
     font-size: 15px; 
     font-weight: bold; 
     color: #F57F17; 
-    margin: 0 0 8px 0; 
+    margin: 0 0 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ms-expand-btn {
+    font-size: 11px;
+    font-weight: normal;
+    color: #795548;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.6);
+}
+
+.ms-claimed-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 4px;
+}
+
+.ms-claimable-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-bottom: 5px;
+    flex-shrink: 0;
 }
 
 .badges-grid { 
@@ -3871,6 +3991,10 @@ textarea {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+.ms-spacer {
+    flex: 1;
 }
 
 .milestone-card-label {
@@ -3953,7 +4077,7 @@ textarea {
     background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
     border-radius: 8px;
     border: 1px dashed #42A5F5;
-    margin-top: auto;
+    margin-bottom: 5px;
 }
 
 .milestone-current-emoji {
@@ -4830,11 +4954,22 @@ body.dark-mode .modal-content { background: var(--white); }
 body.dark-mode .guide-platform { background: #242128; border-color: #3A3540; }
 body.dark-mode .guide-tip { background: var(--info-light); border-color: var(--info-border); }
 
+/* 오늘의 인증 현황 - 다크모드 */
+body.dark-mode .today-status-card {
+    background: linear-gradient(135deg, #1B3A20 0%, #1E3524 100%);
+}
+body.dark-mode .today-status-title { color: #81C784; }
+body.dark-mode .today-streak-badge { color: #FFB74D; background: rgba(255,255,255,0.1); }
+body.dark-mode .today-status-cheer { color: #fff; background: rgba(255,255,255,0.15); }
+body.dark-mode .today-status-item { background: rgba(255,255,255,0.08); }
+body.dark-mode .today-status-label { color: #B0B0B0; }
+
 /* 마일스톤 */
 body.dark-mode .milestone-section {
     background: linear-gradient(135deg, #302518 0%, #3A2E1C 100%);
 }
 body.dark-mode .milestone-title { color: #FFB74D; }
+body.dark-mode .ms-expand-btn { color: #BCAAA4; background: rgba(255,255,255,0.1); }
 body.dark-mode .milestone-card {
     background: rgba(29,27,32,0.92);
     box-shadow: 0 1px 4px rgba(0,0,0,0.2);

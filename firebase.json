@@ -48,6 +48,15 @@
       ],
       "headers": [
         {
+          "source": "/.well-known/assetlinks.json",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        {
           "source": "/sw.js",
           "headers": [
             {
@@ -109,6 +118,15 @@
         "storage.rules"
       ],
       "headers": [
+        {
+          "source": "/.well-known/assetlinks.json",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
         {
           "source": "/sw.js",
           "headers": [

@@ -22,51 +22,62 @@ export function sanitize(obj) {
  * @returns {Promise<File>} 압축된 파일 또는 원본 파일
  */
 export async function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
-    // 이미지 파일이 아니거나 이미 작은 파일은 그대로 반환
+    // 이미지 파일이 아니면 그대로 반환
     if (!file.type.startsWith('image/')) return file;
-    if (file.size < 200 * 1024) return file; // 200KB 미만은 압축 안 함
 
     return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+        createImageBitmap(file, { imageOrientation: 'from-image' }).catch(() =>
+            createImageBitmap(file)
+        ).then(bitmap => {
+            const canvas = document.createElement('canvas');
+            let width = bitmap.width;
+            let height = bitmap.height;
 
-                // 비율 유지하며 리사이징
-                if (width > maxWidth || height > maxHeight) {
-                    const ratio = Math.min(maxWidth / width, maxHeight / height);
-                    width = Math.floor(width * ratio);
-                    height = Math.floor(height * ratio);
-                }
+            const needsResize = width > maxWidth || height > maxHeight;
+            const isSmall = file.size < 200 * 1024;
 
+            // 작은 파일이면서 리사이즈 불필요하면 EXIF 보정만 적용
+            if (isSmall && !needsResize) {
                 canvas.width = width;
                 canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Canvas를 Blob으로 변환 (JPEG, quality 조절)
+                canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
+                bitmap.close();
                 canvas.toBlob((blob) => {
-                    // 압축 후 파일이 더 크면 원본 반환
-                    if (blob.size > file.size) {
-                        resolve(file);
-                    } else {
-                        // Blob을 File 객체로 변환
-                        const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        });
-                        console.log(`이미지 압축: ${(file.size / 1024).toFixed(1)}KB → ${(blob.size / 1024).toFixed(1)}KB`);
-                        resolve(compressedFile);
-                    }
-                }, 'image/jpeg', quality);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+                    resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
+                }, 'image/jpeg', 0.95);
+                return;
+            }
+
+            // 비율 유지하며 리사이징
+            if (needsResize) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, width, height);
+            bitmap.close();
+
+            // Canvas를 Blob으로 변환 (JPEG, quality 조절)
+            canvas.toBlob((blob) => {
+                // 압축 후 파일이 더 크면 원본 반환
+                if (blob.size > file.size) {
+                    resolve(file);
+                } else {
+                    // Blob을 File 객체로 변환
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    console.log(`이미지 압축: ${(file.size / 1024).toFixed(1)}KB → ${(blob.size / 1024).toFixed(1)}KB`);
+                    resolve(compressedFile);
+                }
+            }, 'image/jpeg', quality);
+        });
     });
 }
 
@@ -80,7 +91,7 @@ export async function compressImage(file, maxWidth = 1200, maxHeight = 1200, qua
  * @param {number} timeoutMs - 업로드 타임아웃 (기본값: 30초)
  * @returns {Promise<string|null>} 업로드된 파일의 URL 또는 null
  */
-export async function uploadFileAndGetUrl(file, folderName, userId, maxRetries = 2, timeoutMs = 30000) {
+export async function uploadFileAndGetUrl(file, folderName, userId, maxRetries = 3, timeoutMs = 60000) {
     if (!file) return null;
 
     // 이미지 파일이면 압축 후 업로드

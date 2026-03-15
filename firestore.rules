@@ -38,7 +38,7 @@ service cloud.firestore {
           .hasOnly(['displayName', 'customDisplayName', 'photoURL', 'walletAddress', 'encryptedWallet',
                     'activeChallenge', 'activeChallenges', 'milestones', 'settings',
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
-                    'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind']);
+                    'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers']);
     }
     
     // ===== Users Collection =====
@@ -50,20 +50,20 @@ service cloud.firestore {
         && (!request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['hbtBalance', 'totalHbtEarned', 'coins']))
         && isAllowedUserField();
-      allow delete: if isAdmin();
-
+      allow delete: if isOwner(userId) || isAdmin();
       // ===== InBody History Subcollection =====
       match /inbodyHistory/{recordId} {
         allow read: if isOwner(userId) || isAdmin();
         allow create, update: if isOwner(userId);
-        allow delete: if isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
 
       // ===== Blood Test Results Subcollection =====
       match /bloodTests/{testId} {
         allow read: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId);
-        allow update, delete: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
     }
     
@@ -140,6 +140,14 @@ service cloud.firestore {
       allow create: if isSignedIn() 
                     && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
+    }
+
+    // ===== Reports Collection (UGC 신고) =====
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn()
+                    && request.resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     // 기본 규칙: 모든 접근 거부

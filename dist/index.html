@@ -145,12 +145,32 @@
                 </div>
             </div>
             <button class="guest-btn"
-                onclick="document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);"
+                onclick="document.getElementById('guest-welcome-modal').style.display='flex';"
                 aria-label="게스트로 갤러리 둘러보기">👀 로그인 없이 갤러리 둘러보기</button>
             <a href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
                 💬 카카오톡 채널 문의
             </a>
+            <div style="margin-top:12px;">
+                <a href="/terms.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">📜 이용약관</a>
+                <span style="font-size:11px; color:#ddd;"> | </span>
+                <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
+            </div>
+            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">로그인 시 <a href="/terms.html" target="_blank" style="color:#bbb;">이용약관</a> 및 <a href="/privacy.html" target="_blank" style="color:#bbb;">개인정보처리방침</a>에 동의하는 것으로 간주합니다.</p>
+        </div>
+
+        <!-- 게스트 환영 모달 -->
+        <div id="guest-welcome-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+            <div style="background:#fff; border-radius:20px; padding:32px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.2); animation:modalFadeIn 0.25s ease;">
+                <div style="font-size:48px; margin-bottom:12px;">🌱</div>
+                <h2 style="font-size:20px; font-weight:800; color:#4E342E; margin-bottom:8px;">해빛스쿨에 오신 걸 환영합니다!</h2>
+                <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:20px;">식단·운동·체중을 기록하고<br>다른 회원들과 함께 건강한 습관을 만들어요 💪</p>
+                <div style="background:#FFF8E1; border-radius:12px; padding:14px 16px; margin-bottom:20px; text-align:left;">
+                    <p style="font-size:13px; color:#5D4037; line-height:1.6; margin:0;">✅ 갤러리에서 다른 회원 기록 구경<br>✅ 로그인하면 나만의 기록 시작<br>✅ 매일 인증하면 포인트 적립</p>
+                </div>
+                <button onclick="document.getElementById('guest-welcome-modal').style.display='none'; document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);" style="width:100%; padding:14px; background:linear-gradient(135deg, #FF8C00, #FF6D00); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;">👀 갤러리 둘러보기</button>
+                <button onclick="document.getElementById('guest-welcome-modal').style.display='none';" style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:12px; font-size:14px; color:#888; cursor:pointer;">돌아가기</button>
+            </div>
         </div>
 
         <div id="main-app">
@@ -189,11 +209,27 @@
                     <div id="admin-feedback-text" style="font-size: 14px; color: #333; line-height: 1.5;"></div>
                 </div>
 
-                <!-- 🧬 대사건강 점수 카드 (프로필 탭으로 이동) -->
-
-                <div class="milestone-section" id="milestone-section" style="display:none;">
-                    <div class="milestone-title">🏆 나의 마일스톤</div>
-                    <div class="badges-grid" id="badges-grid"></div>
+                <!-- 오늘의 인증 현황 + 연속기록 -->
+                <div class="today-status-card" id="today-status-card">
+                    <div class="today-status-header">
+                        <span class="today-status-title">오늘의 인증</span>
+                        <span class="today-streak-badge" id="today-streak-badge" style="display:none;"></span>
+                    </div>
+                    <div class="today-status-items" id="today-status-items">
+                        <div class="today-status-item" onclick="openTab('diet')">
+                            <span class="today-status-icon" id="ts-diet-icon">⬜</span>
+                            <span class="today-status-label">식단</span>
+                        </div>
+                        <div class="today-status-item" onclick="openTab('exercise')">
+                            <span class="today-status-icon" id="ts-exercise-icon">⬜</span>
+                            <span class="today-status-label">운동</span>
+                        </div>
+                        <div class="today-status-item" onclick="openTab('sleep')">
+                            <span class="today-status-icon" id="ts-mind-icon">⬜</span>
+                            <span class="today-status-label">마음</span>
+                        </div>
+                    </div>
+                    <div class="today-status-cheer" id="today-status-cheer" style="display:none;"></div>
                 </div>
 
                 <div class="card">
@@ -220,6 +256,12 @@
                         <div id="group-challenge-content"></div>
                     </div>
                 </div>
+
+                <div class="milestone-section" id="milestone-section" style="display:none;">
+                    <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
+                    <div class="badges-grid" id="badges-grid"></div>
+                </div>
+
                 <button class="pdf-btn" onclick="generate30DayReport()">📄 30일 종합 결과지 출력</button>
             </div>
 
@@ -350,6 +392,16 @@
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
                             onclick="logoutAndReset()">🚪 로그아웃</button>
                     </div>
+                    <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-top:14px; text-align:center;">
+                        <button id="delete-account-btn" style="color:#E53935; font-size:12px; background:none; border:1px solid #FFCDD2; border-radius:10px; padding:8px 20px; width:100%; cursor:pointer;"
+                            onclick="deleteAccountAndData()">🗑️ 계정 삭제</button>
+                        <p style="font-size:11px; color:#bbb; margin-top:6px;">모든 데이터가 영구 삭제되며 복구할 수 없습니다.</p>
+                    </div>
+                    <div style="border-top:1px solid #f0f0f0; padding-top:12px; margin-top:14px; text-align:center;">
+                        <a href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">📜 이용약관</a>
+                        <span style="font-size:12px; color:#ddd;"> | </span>
+                        <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
+                    </div>
                 </div>
             </div>
 
@@ -372,15 +424,12 @@
                             <div class="wallet-asset-delta" id="asset-points-delta"></div>
                         </div>
                         <div class="wallet-asset-item">
-                            <div class="wallet-asset-label">💎 HBT 코인</div>
+                            <div class="wallet-asset-label">💎 HBT 토큰</div>
                             <div class="wallet-asset-value" id="asset-hbt-display">0 HBT</div>
-                            <div id="asset-hbt-onchain" class="wallet-onchain-badge" style="display: none;">
-                                <span class="dot"></span>
-                                <span id="asset-hbt-onchain-text">온체인: 0 HBT</span>
-                            </div>
                             <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
                         </div>
                     </div>
+                    <p class="hbt-disclaimer" style="font-size:10px; color:#555; margin-top:8px; line-height:1.4; text-align:center;">⚠️ HBT 토큰은 앱 내 보상 수단이며 법정 화폐가 아닙니다. 금전적 가치 및 가치 상승을 보장하지 않습니다.</p>
                     <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
                         <div class="wallet-minichart-label">최근 7일 HBT 획득</div>
@@ -455,7 +504,7 @@
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
                     <h3>🔄 포인트 → HBT 변환</h3>
-                    <p class="wallet-convert-desc">포인트를 HBT 코인으로 변환하세요. 100P 단위로 변환 가능합니다.</p>
+                    <p class="wallet-convert-desc">포인트를 HBT 토큰으로 변환하세요. 100P 단위로 변환 가능합니다.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
                         현재 A구간 · 1:1 비율
                     </div>
@@ -600,6 +649,9 @@
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
                                     <img id="preview-breakfast" class="preview-img" alt="첫 번째 식사 사진 미리보기">
+                                    <button id="rot-breakfast" class="static-rotate-btn"
+                                        onclick="rotateImage(event, 'preview-breakfast', 'diet-img-breakfast')"
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-breakfast" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-breakfast', 'preview-breakfast', 'rm-breakfast', 'txt-breakfast')"
                                         aria-label="사진 삭제">X 삭제</button>
@@ -619,6 +671,9 @@
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
                                     <img id="preview-lunch" class="preview-img" alt="두 번째 식사 사진 미리보기">
+                                    <button id="rot-lunch" class="static-rotate-btn"
+                                        onclick="rotateImage(event, 'preview-lunch', 'diet-img-lunch')"
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-lunch" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-lunch', 'preview-lunch', 'rm-lunch', 'txt-lunch')"
                                         aria-label="사진 삭제">X 삭제</button>
@@ -638,6 +693,9 @@
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
                                     <img id="preview-dinner" class="preview-img" alt="세 번째 식사 사진 미리보기">
+                                    <button id="rot-dinner" class="static-rotate-btn"
+                                        onclick="rotateImage(event, 'preview-dinner', 'diet-img-dinner')"
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-dinner" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-dinner', 'preview-dinner', 'rm-dinner', 'txt-dinner')"
                                         aria-label="사진 삭제">X 삭제</button>
@@ -657,6 +715,9 @@
                                     style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
                                     <img id="preview-snack" class="preview-img" alt="네 번째 식사 사진 미리보기">
+                                    <button id="rot-snack" class="static-rotate-btn"
+                                        onclick="rotateImage(event, 'preview-snack', 'diet-img-snack')"
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-snack" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-snack', 'preview-snack', 'rm-snack', 'txt-snack')"
                                         aria-label="사진 삭제">X 삭제</button>

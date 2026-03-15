@@ -3,7 +3,7 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v38';
+const CACHE_NAME = 'habitschool-v64';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -63,16 +63,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    // Firebase API, 인증, 외부 CDN은 캐싱하지 않음
+    // 같은 origin의 GET 요청만 캐싱 (외부 API, Firebase, CDN 등 모두 제외)
     if (
-        request.url.includes('/__/') ||
-        request.url.includes('firebasestorage.googleapis.com') ||
-        request.url.includes('firebaseio.com') ||
-        request.url.includes('googleapis.com/identitytoolkit') ||
-        request.url.includes('gstatic.com/firebasejs') ||
-        request.url.includes('cdn.jsdelivr.net') ||
-        request.url.includes('accounts.google.com') ||
-        request.method !== 'GET'
+        request.method !== 'GET' ||
+        !request.url.startsWith(self.location.origin)
     ) {
         return; // 기본 네트워크 동작 사용
     }
@@ -92,7 +86,7 @@ self.addEventListener('fetch', (event) => {
                     }
                     return response;
                 }))
-                .catch(() => caches.match(INDEX_URL))
+                .catch(() => caches.match(INDEX_URL).then(r => r || fetch(request)))
         );
         return;
     }
@@ -107,7 +101,7 @@ self.addEventListener('fetch', (event) => {
                 }
                 return response;
             })
-            .catch(() => caches.match(request))
+            .catch(() => caches.match(request).then(r => r || new Response('', { status: 503 })))
     );
 });
 

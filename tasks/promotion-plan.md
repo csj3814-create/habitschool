@@ -148,3 +148,43 @@ Try it free → habitschool.web.app
 | 갤러리 게시물 | 500개 | Firestore |
 | 소셜 공유 클릭 | 100회 | GA4 이벤트 |
 | 평균 체류 시간 | 5분+ | GA4 |
+
+---
+
+## 🌍 다국어(i18n) 지원 계획
+
+> **전략**: 별도 영문 앱이 아닌, 현재 앱에 다국어 지원 추가 (Method 1)
+> **이유**: 코드베이스 통합 관리, 사용자 데이터 공유, 유지보수 효율
+
+### Phase 1 — 한국어 앱 안정화 + Play Store 출시 (현재)
+- [x] Google Play Console 앱 생성 (com.habitschool.app)
+- [x] AAB 내부 테스트 트랙 업로드
+- [x] Digital Asset Links 배포
+- [x] 개인정보처리방침 페이지 생성
+- [x] 콘텐츠 등급 설정
+- [ ] 스토어 등록정보 완성 (스크린샷, 설명, 그래픽)
+- [ ] 내부 테스트 → 비공개 테스트 (12명 테스터, 14일)
+- [ ] 프로덕션 출시
+
+### Phase 2 — 언어 리소스 파일 구조 생성
+- [ ] `lang/ko.json` — 한국어 리소스 파일 (현재 하드코딩된 텍스트 추출)
+- [ ] `lang/en.json` — 영어 리소스 파일
+- [ ] `js/i18n.js` — 언어 관리 모듈 생성
+  - 브라우저 언어 자동 감지 (`navigator.language`)
+  - 수동 언어 전환 UI (설정 또는 헤더)
+  - `t('key')` 함수로 텍스트 렌더링
+- [ ] HTML 텍스트를 `data-i18n` 속성으로 치환
+- [ ] JavaScript 내 하드코딩 문자열을 `t()` 호출로 변경
+
+### Phase 3 — 영어 번역 + 영문 스토어 등록
+- [ ] `lang/en.json` 전체 번역 완료
+- [ ] AI 분석 프롬프트 영어 버전 추가 (식단/혈액검사)
+- [ ] Google Play 영어 스토어 등록정보 추가 (en-US)
+- [ ] 영문 개인정보처리방침 (privacy-en.html)
+- [ ] 영문 SNS 홍보 시작
+
+### Phase 4 — 언어별 앱 이름 + 글로벌 최적화
+- [ ] 앱 이름: 한국어 "해빛스쿨" / English "HaBit School"
+- [ ] manifest.json 다국어 처리
+- [ ] 언어별 ASO(App Store Optimization) 키워드 최적화
+- [ ] 추가 언어 확장 가능 구조 확보 (일본어, 중국어 등)
