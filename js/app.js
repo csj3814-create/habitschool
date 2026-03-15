@@ -6,7 +6,7 @@
 
 // Firebase 모듈 임포트
 import {
-    increment, collection, doc, getDoc, getDocs, setDoc, deleteDoc,
+    increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, deleteDoc,
     query, where, orderBy, limit, serverTimestamp,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -146,10 +146,12 @@ async function checkMilestones(userId) {
         }
 
         if (newMilestones.length > 0 || migrated) {
-            await setDoc(userRef, { milestones }, { merge: true });
+            await setDoc(userRef, { milestones, currentStreak: streak }, { merge: true });
             newMilestones.forEach(m => {
                 showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
             });
+        } else {
+            await setDoc(userRef, { currentStreak: streak }, { merge: true });
         }
     } catch (error) {
         console.error('마일스톤 확인 오류:', error);
@@ -157,41 +159,35 @@ async function checkMilestones(userId) {
 }
 
 // 마일스톤 UI 렌더링 (프로그레시브)
-async function renderMilestones(userId) {
+async function renderMilestones(userId, prefetchedData) {
     try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? userSnap.data() : {};
+        let userData;
+        if (prefetchedData) {
+            userData = prefetchedData;
+        } else {
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+            userData = userSnap.exists() ? userSnap.data() : {};
+        }
         const milestones = userData.milestones || {};
 
         const grid = document.getElementById('badges-grid');
         grid.innerHTML = '';
+        let hasClaimed = false;
 
         for (const [category, catData] of Object.entries(MILESTONES)) {
             const levels = catData.levels;
-            // 첫 번째 미달성 마일스톤 인덱스
             let currentIdx = levels.findIndex(l => !milestones[l.id]?.achieved);
             if (currentIdx === -1) currentIdx = levels.length;
+
+            const completed = levels.slice(0, currentIdx);
+            const claimable = completed.filter(lv => !milestones[lv.id]?.bonusClaimed);
+            const claimed = completed.filter(lv => milestones[lv.id]?.bonusClaimed);
 
             let cardHtml = `<div class="milestone-card">`;
             cardHtml += `<div class="milestone-card-label">${catData.label}</div>`;
 
-            // 완료된 마일스톤 (작게 표시)
-            const completed = levels.slice(0, currentIdx);
-            if (completed.length > 0) {
-                cardHtml += `<div class="milestone-completed-list">`;
-                for (const lv of completed) {
-                    const claimed = milestones[lv.id]?.bonusClaimed;
-                    if (claimed) {
-                        cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
-                    } else {
-                        cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
-                    }
-                }
-                cardHtml += `</div>`;
-            }
-
-            // 현재 목표 (컴팩트)
+            // 현재 목표 (라벨 바로 아래 배치)
             if (currentIdx < levels.length) {
                 const cur = levels[currentIdx];
                 cardHtml += `<div class="milestone-current-target">`;
@@ -204,10 +200,32 @@ async function renderMilestones(userId) {
                 cardHtml += `<div class="milestone-all-done">🎉 모든 레벨 완료!</div>`;
             }
 
+            // 클레임 가능한 마일스톤 (항상 표시)
+            if (claimable.length > 0) {
+                cardHtml += `<div class="ms-claimable-list">`;
+                for (const lv of claimable) {
+                    cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
+                }
+                cardHtml += `</div>`;
+            }
+
+            // 이미 수령한 마일스톤 (글로벌 토글로 숨김)
+            if (claimed.length > 0) {
+                hasClaimed = true;
+                cardHtml += `<div class="ms-claimed-row" style="display:none;">`;
+                for (const lv of claimed) {
+                    cardHtml += `<div class="milestone-completed-item done"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-check">✅</span></div>`;
+                }
+                cardHtml += `</div>`;
+            }
+
             cardHtml += `</div>`;
             grid.innerHTML += cardHtml;
         }
 
+        // 수령완료 마일스톤이 있으면 펼치기 버튼 표시
+        const expandBtn = document.getElementById('ms-expand-btn');
+        if (expandBtn) expandBtn.style.display = hasClaimed ? '' : 'none';
         document.getElementById('milestone-section').style.display = 'block';
     } catch (error) {
         console.error('마일스톤 렌더링 오류:', error);
@@ -293,6 +311,7 @@ function addExerciseBlock(type, data = null) {
         const safeImgUrl = data && data.imageUrl && isValidStorageUrl(data.imageUrl) ? escapeHtml(data.imageUrl) : '';
         const imgHtml = `<div style="position:relative;">
             <img id="c_img_${id}" class="preview-img" ${safeImgUrl ? `src="${safeImgUrl}" style="display:block;"` : ''}>
+            <button class="static-rotate-btn" style="${safeImgUrl ? 'display:block;' : 'display:none;'}" onclick="rotateImage(event, 'c_img_${id}', 'file_c_${id}')">🔄</button>
             <button id="rm_c_${id}" class="static-remove-btn" style="${safeImgUrl ? 'display:block;' : 'display:none;'}" onclick="removeStaticImage(event, 'file_c_${id}', 'c_img_${id}', 'rm_c_${id}', 'txt_c_${id}')">X 삭제</button>
         </div>`;
         dataUrl = data && data.imageUrl ? data.imageUrl : '';
@@ -600,6 +619,10 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 if (rmBtn) rmBtn.style.display = 'block';
                 if (txtSpan) txtSpan.style.display = 'none';
 
+                // 회전 버튼 표시
+                const rotBtn = preview.parentElement.querySelector('.static-rotate-btn');
+                if (rotBtn) rotBtn.style.display = 'block';
+
                 // 미리보기 클릭 시 라이트박스 열기
                 preview.onclick = () => { if (preview.src) window.openLightbox(preview.src); };
 
@@ -716,6 +739,11 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     document.getElementById(btnId).style.display = "none";
     if (document.getElementById(txtId)) document.getElementById(txtId).style.display = "inline-block";
 
+    // 회전 버튼 숨기기
+    const previewEl = document.getElementById(previewId);
+    const rotBtn = previewEl?.parentElement?.querySelector('.static-rotate-btn');
+    if (rotBtn) rotBtn.style.display = 'none';
+
     // 식단 분석 결과 초기화 및 가리기
     const mealPrefix = 'preview-';
     if (previewId.startsWith(mealPrefix)) {
@@ -740,7 +768,6 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     }
 
     // 운동 블록 AI 분석 초기화
-    const previewEl = document.getElementById(previewId);
     if (previewEl) {
         const exerciseBlock = previewEl.closest('.exercise-block');
         if (exerciseBlock) {
@@ -748,6 +775,40 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
             exerciseBlock.removeAttribute('data-url');
         }
     }
+};
+
+// 90° 시계방향 회전
+window.rotateImage = function (e, previewId, inputId) {
+    e.preventDefault(); e.stopPropagation();
+    const img = document.getElementById(previewId);
+    if (!img || !img.src) return;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const tempImg = new Image();
+    tempImg.crossOrigin = 'anonymous';
+    tempImg.onload = () => {
+        canvas.width = tempImg.height;
+        canvas.height = tempImg.width;
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.drawImage(tempImg, -tempImg.width / 2, -tempImg.height / 2);
+
+        const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        img.src = rotatedDataUrl;
+
+        // file input에 회전된 이미지를 Blob으로 교체
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const file = new File([blob], 'rotated.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+        }, 'image/jpeg', 0.92);
+    };
+    tempImg.src = img.src;
 };
 
 /* CTA 버튼: 다음 빈 식단 칸으로 이동 */
@@ -1034,17 +1095,9 @@ async function loadDataForSelectedDate(dateStr) {
                 window._restoreDietAnalysis(data);
             }
 
-            // 대시보드 갱신
-            if (typeof renderDashboard === 'function') {
-                renderDashboard();
-            }
+            // 대시보드는 openTab에서 호출하므로 여기서는 생략
         } else {
             addExerciseBlock('cardio'); addExerciseBlock('strength');
-
-            // 대시보드는 로드 시도 (데이터 없어도 기본 렌더링)
-            if (typeof renderDashboard === 'function') {
-                renderDashboard();
-            }
         }
     } catch (error) {
         // race condition으로 취소된 경우 에러 무시
@@ -1317,10 +1370,21 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
     }
 }
 
+// 자산 표시 캐시 (30초 TTL)
+let _assetCache = { uid: null, ts: 0 };
+const ASSET_CACHE_TTL = 30_000;
+
 // 자산 표시 업데이트 함수
-window.updateAssetDisplay = async function () {
+window.updateAssetDisplay = async function (forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return;
+
+    // 캐시 히트: 30초 이내 같은 유저 → 스킵 (스켈레톤만 해제)
+    const now = Date.now();
+    if (!forceRefresh && _assetCache.uid === user.uid && (now - _assetCache.ts) < ASSET_CACHE_TTL) {
+        if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        return;
+    }
 
     try {
         const userRef = doc(db, "users", user.uid);
@@ -1328,6 +1392,9 @@ window.updateAssetDisplay = async function () {
 
         if (userSnap.exists()) {
             const userData = userSnap.data();
+
+            // 캐시 갱신
+            _assetCache = { uid: user.uid, ts: Date.now() };
 
             // 포인트 표시 업데이트
             const pointsDisplay = document.getElementById('asset-points-display');
@@ -1809,11 +1876,11 @@ function openTab(tabName, pushState = true) {
 
         // 자산 탭 열릴 때 자산 표시 업데이트
         if (tabName === 'assets' && user) {
-            // 만료된 챌린지 자동 정산
+            // 만료된 챌린지 자동 정산 (실패해도 자산 표시는 반드시 진행)
             if (window.settleExpiredChallenges) {
-                window.settleExpiredChallenges().then(() => {
-                    updateAssetDisplay();
-                });
+                window.settleExpiredChallenges()
+                    .catch(err => console.warn('챌린지 정산 스킵:', err.message))
+                    .then(() => updateAssetDisplay());
             } else {
                 updateAssetDisplay();
             }
@@ -2164,6 +2231,10 @@ async function loadBloodTestHistory() {
     }
 }
 
+// 대시보드 캐시 (30초 TTL)
+let _dashboardCache = { uid: null, data: null, ts: 0 };
+const DASHBOARD_CACHE_TTL = 30_000;
+
 // 대시보드 렌더링
 async function renderDashboard() {
     const user = auth.currentUser;
@@ -2172,25 +2243,64 @@ async function renderDashboard() {
     const { todayStr, weekStrs } = getDatesInfo();
     const currentWeekId = getWeekId(todayStr);
 
-    try {
-        // 마일스톤 렌더링
-        await renderMilestones(user.uid);
+    // 캐시 히트: 30초 이내 같은 유저 → 재쿼리 생략
+    const now = Date.now();
+    if (_dashboardCache.uid === user.uid && (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL && _dashboardCache.data) {
+        _renderDashboardFromCache(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
+        return;
+    }
 
+    // 로딩 인디케이터 표시
+    const dashEl = document.getElementById('dashboard');
+    if (dashEl && !dashEl.querySelector('.dashboard-loading-indicator')) {
+        const loader = document.createElement('div');
+        loader.className = 'dashboard-loading-indicator';
+        loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">📊 기록을 불러오는 중...</div>';
+        dashEl.prepend(loader);
+    }
+
+    try {
+        // 유저문서와 주간 로그와 연속기록용 최근 로그를 병렬로 로드
         const userRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userRef);
-        let level = 1;
-        let weeklyMissionData = null;
-        let missionHistory = [];
-        let missionStreak = 0;
-        let missionBadges = [];
+        const weekStart = weekStrs[0];
+        const weekEnd = weekStrs[6];
+        const weekQuery = query(
+            collection(db, "daily_logs"),
+            where("userId", "==", user.uid),
+            where("date", ">=", weekStart),
+            where("date", "<=", weekEnd)
+        );
+        const streakQuery = query(
+            collection(db, "daily_logs"),
+            where("userId", "==", user.uid),
+            orderBy("date", "desc"),
+            limit(120)
+        );
+
+        const [userDoc, snapshot, streakSnap] = await Promise.all([
+            getDoc(userRef),
+            getDocs(weekQuery),
+            getDocs(streakQuery)
+        ]);
+
+        // 로딩 인디케이터 제거
+        const loadingEl = document.querySelector('.dashboard-loading-indicator');
+        if (loadingEl) loadingEl.remove();
+
+        // 캐시 저장
+        _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
+
+        // 마일스톤에 이미 로드한 유저 데이터 전달 (추가 Firestore 호출 방지)
+        const ud = userDoc.exists() ? userDoc.data() : {};
+        renderMilestones(user.uid, ud);
+
+        let level = ud.missionLevel || 1;
+        let weeklyMissionData = ud.weeklyMissionData || null;
+        let missionHistory = ud.missionHistory || [];
+        let missionStreak = ud.missionStreak || 0;
+        let missionBadges = ud.missionBadges || [];
 
         if (userDoc.exists()) {
-            const ud = userDoc.data();
-            if (ud.missionLevel) level = ud.missionLevel;
-            if (ud.weeklyMissionData) weeklyMissionData = ud.weeklyMissionData;
-            if (ud.missionHistory) missionHistory = ud.missionHistory;
-            if (ud.missionStreak) missionStreak = ud.missionStreak;
-            if (ud.missionBadges) missionBadges = ud.missionBadges;
             // 기존 selectedMissions 마이그레이션 지원
             if (!weeklyMissionData && ud.selectedMissions && ud.selectedMissions.length > 0) {
                 const oldMissionMap = {
@@ -2246,19 +2356,56 @@ async function renderDashboard() {
         // 레벨 뱃지 업데이트
         document.getElementById('user-level-badge').innerText = `Lv. ${level} ${MISSIONS[level]?.name || ''} ℹ️`;
 
-        // 이번 주 daily_logs에서 통계 계산
-        const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid));
-        const snapshot = await getDocs(q);
+        // 이번 주 daily_logs 통계 계산 (위에서 병렬 로드 완료)
         let logsMap = {}; let statDiet = 0, statExer = 0, statMind = 0;
         snapshot.forEach(d => {
             const data = d.data();
-            if (weekStrs.includes(data.date)) {
-                logsMap[data.date] = data;
-                if (data.awardedPoints?.diet) statDiet++;
-                if (data.awardedPoints?.exercise) statExer++;
-                if (data.awardedPoints?.mind) statMind++;
-            }
+            logsMap[data.date] = data;
+            if (data.awardedPoints?.diet) statDiet++;
+            if (data.awardedPoints?.exercise) statExer++;
+            if (data.awardedPoints?.mind) statMind++;
         });
+
+        // ==========================================
+        // 오늘의 인증 현황
+        // ==========================================
+        const todayLog = logsMap[todayStr];
+        const todayAwarded = todayLog?.awardedPoints || {};
+        document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
+        document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
+        document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
+
+        // 연속기록 배지 (실시간 계산)
+        let streakCount = 0;
+        const streakLogs = [];
+        streakSnap.forEach(d => {
+            const sd = d.data();
+            streakLogs.push({ date: sd.date, awarded: sd.awardedPoints });
+        });
+        for (const log of streakLogs) {
+            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streakCount++;
+            else break;
+        }
+        const streakBadge = document.getElementById('today-streak-badge');
+        const cheerEl = document.getElementById('today-status-cheer');
+        if (streakCount > 0) {
+            streakBadge.textContent = `🔥 ${streakCount}일 연속`;
+            streakBadge.style.display = '';
+            // 응원 메시지
+            let cheerMsg = '';
+            if (streakCount >= 100) cheerMsg = '🏆 100일 돌파! 진정한 습관 마스터!';
+            else if (streakCount >= 60) cheerMsg = '💎 60일 넘었어요! 습관이 체질이 되었네요!';
+            else if (streakCount >= 30) cheerMsg = '🌟 한 달 연속! 정말 대단해요!';
+            else if (streakCount >= 21) cheerMsg = '✨ 21일! 습관 형성의 마법 숫자 통과!';
+            else if (streakCount >= 14) cheerMsg = '💪 2주 연속! 꾸준함이 빛나요!';
+            else if (streakCount >= 7) cheerMsg = '🎉 일주일 연속! 습관이 만들어지고 있어요!';
+            else if (streakCount >= 3) cheerMsg = `👏 ${streakCount}일째! 좋은 흐름, 계속 가봐요!`;
+            else cheerMsg = '🌱 시작이 반! 연속 기록을 이어가요!';
+            if (cheerEl) { cheerEl.textContent = cheerMsg; cheerEl.style.display = ''; }
+        } else {
+            streakBadge.style.display = 'none';
+            if (cheerEl) { cheerEl.textContent = '🌱 첫 기록을 남기고 연속을 시작해보세요!'; cheerEl.style.display = ''; }
+        }
 
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
@@ -2470,9 +2617,74 @@ async function renderDashboard() {
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
-        showToast('⚠️ 대시보드를 불러오는 중 오류가 발생했습니다.');
+        // 로딩 인디케이터 제거
+        const loadingEl = document.querySelector('.dashboard-loading-indicator');
+        if (loadingEl) loadingEl.remove();
+        // 콜드 스타트 시 자동 재시도 (1회)
+        if (!renderDashboard._retried) {
+            renderDashboard._retried = true;
+            setTimeout(() => {
+                renderDashboard._retried = false;
+                renderDashboard();
+            }, 1500);
+        } else {
+            renderDashboard._retried = false;
+            showToast('⚠️ 대시보드를 불러오는 중 오류가 발생했습니다.');
+        }
     }
 }
+
+// 캐시 데이터로 대시보드 즉시 렌더링 (Firestore 쿼리 스킵)
+function _renderDashboardFromCache(cachedData, todayStr, weekStrs, currentWeekId, user) {
+    try {
+        const { userDoc, snapshot, streakSnap } = cachedData;
+        const ud = userDoc.exists() ? userDoc.data() : {};
+        renderMilestones(user.uid, ud);
+
+        let logsMap = {};
+        snapshot.forEach(d => { const data = d.data(); logsMap[data.date] = data; });
+
+        // 오늘의 인증 현황
+        const todayLog = logsMap[todayStr];
+        const todayAwarded = todayLog?.awardedPoints || {};
+        document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
+        document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
+        document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
+
+        // 연속기록
+        let streakCount = 0;
+        const streakLogs = [];
+        streakSnap.forEach(d => { const sd = d.data(); streakLogs.push({ date: sd.date, awarded: sd.awardedPoints }); });
+        for (const log of streakLogs) {
+            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streakCount++;
+            else break;
+        }
+        const streakBadge = document.getElementById('today-streak-badge');
+        if (streakCount > 0) {
+            streakBadge.textContent = `🔥 ${streakCount}일 연속`;
+            streakBadge.style.display = '';
+        }
+
+        // 주간 그래프
+        const graphArea = document.getElementById('week-graph');
+        graphArea.innerHTML = '';
+        const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
+        weekStrs.forEach((dateStr, idx) => {
+            let circleClass = 'day-circle';
+            if (logsMap[dateStr]) circleClass += ' done';
+            let labelClass = 'day-label';
+            if (dateStr === todayStr) { circleClass += ' today'; labelClass += ' today'; }
+            graphArea.innerHTML += `<div class="day-wrap" onclick="changeDateTo('${dateStr}')"><div class="${circleClass}">${dayNames[idx]}</div><div class="${labelClass}">${dateStr.substring(5).replace('-', '/')}</div></div>`;
+        });
+    } catch (e) {
+        console.warn('캐시 렌더링 실패, 전체 리로드:', e.message);
+        _dashboardCache.ts = 0;
+        renderDashboard();
+    }
+}
+
+// 데이터 저장 시 대시보드 캐시 무효화
+window._invalidateDashboardCache = function() { _dashboardCache.ts = 0; };
 
 // 난이도 선택기 초기화
 function initDifficultySelectors(level) {
@@ -2486,6 +2698,15 @@ function initDifficultySelectors(level) {
         }
     });
 }
+
+// 마일스톤 수령완료 전체 펼치기/접기
+window.toggleClaimedMilestones = function() {
+    const rows = document.querySelectorAll('.ms-claimed-row');
+    const btn = document.getElementById('ms-expand-btn');
+    const isHidden = rows[0]?.style.display === 'none';
+    rows.forEach(r => r.style.display = isHidden ? 'flex' : 'none');
+    if (btn) btn.textContent = isHidden ? '접기 ▲' : '펼치기 ▼';
+};
 
 // 미션 배지 렌더링
 function renderMissionBadges(earnedBadges) {
@@ -3774,7 +3995,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
-            await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
+            // Firestore 저장 (초기 연결 지연 대비 자동 재시도)
+            for (let saveAttempt = 0; saveAttempt < 3; saveAttempt++) {
+                try {
+                    await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
+                    break;
+                } catch (saveErr) {
+                    if (saveErr.code === 'unavailable' && saveAttempt < 2) {
+                        console.warn(`Firestore 저장 재시도 (${saveAttempt + 1}/3):`, saveErr.message);
+                        await new Promise(r => setTimeout(r, 1500 * (saveAttempt + 1)));
+                    } else {
+                        throw saveErr;
+                    }
+                }
+            }
 
             // coins 업데이트는 Cloud Function(awardPoints)이 서버에서 처리
             if (uploadFailures.length > 0) {
@@ -3789,6 +4023,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             cachedGalleryLogs = [];
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
+            // 대시보드/자산 캐시도 무효화
+            _dashboardCache.ts = 0;
+            _assetCache.ts = 0;
 
             // 마일스톤 확인 및 업데이트
             await checkMilestones(user.uid);
@@ -4568,7 +4805,7 @@ let cachedMyFriends = [];
 let galleryDisplayCount = 0;
 const INITIAL_LOAD = 8;        // 초기 로드: 8개 (빠른 첫 화면)
 const LOAD_MORE = 6;           // 추가 로드: 6개씩
-const MAX_CACHE_SIZE = 50;     // 캐시 크기 (메모리 관리)
+const MAX_CACHE_SIZE = 30;     // 캐시 크기 (메모리 관리)
 let galleryIntersectionObserver = null;
 let isLoadingMore = false;
 // 정렬+필터 캐시 (매번 재정렬 방지)
@@ -4576,6 +4813,72 @@ let sortedFilteredCache = [];
 let sortedFilteredDirty = true;
 
 // 갤러리 게시물 삭제 (본인 게시물만)
+// 게시물 신고
+window.reportPost = async function (docId, targetUserId) {
+    const user = auth.currentUser;
+    if (!user) return;
+    const reason = prompt('신고 사유를 선택해주세요:\n1. 부적절한 콘텐츠\n2. 스팸/광고\n3. 혐오 발언\n4. 기타\n\n번호 또는 사유를 입력하세요:');
+    if (!reason) return;
+    const reasons = { '1': '부적절한 콘텐츠', '2': '스팸/광고', '3': '혐오 발언', '4': '기타' };
+    const reasonText = reasons[reason] || reason;
+    try {
+        await setDoc(doc(db, 'reports', `${user.uid}_${docId}`), {
+            reporterUid: user.uid,
+            targetDocId: docId,
+            targetUserId: targetUserId,
+            reason: reasonText,
+            type: 'post',
+            createdAt: new Date().toISOString()
+        });
+        showToast('🚨 신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+    } catch (e) {
+        console.error('신고 오류:', e);
+        showToast('신고 접수에 실패했습니다.');
+    }
+};
+
+// 사용자 차단
+window.blockUser = async function (targetUserId, targetName) {
+    const user = auth.currentUser;
+    if (!user) return;
+    if (!confirm(`${targetName}님을 차단하시겠습니까?\n차단하면 해당 사용자의 게시물이 갤러리에 표시되지 않습니다.`)) return;
+    try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        const blockedUsers = userSnap.exists() ? (userSnap.data().blockedUsers || []) : [];
+        if (!blockedUsers.includes(targetUserId)) {
+            blockedUsers.push(targetUserId);
+            await setDoc(userRef, { blockedUsers }, { merge: true });
+        }
+        window._blockedUsers = blockedUsers;
+        sortedFilteredDirty = true;
+        renderFeedOnly();
+        showToast(`🚫 ${targetName}님을 차단했습니다.`);
+    } catch (e) {
+        console.error('차단 오류:', e);
+        showToast('차단에 실패했습니다.');
+    }
+};
+
+// 댓글 신고
+window.reportComment = async function (docId, commentIdx) {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+        await setDoc(doc(db, 'reports', `${user.uid}_${docId}_c${commentIdx}`), {
+            reporterUid: user.uid,
+            targetDocId: docId,
+            commentIndex: commentIdx,
+            type: 'comment',
+            createdAt: new Date().toISOString()
+        });
+        showToast('🚨 댓글 신고가 접수되었습니다.');
+    } catch (e) {
+        console.error('댓글 신고 오류:', e);
+        showToast('신고 접수에 실패했습니다.');
+    }
+};
+
 window.deleteGalleryPost = async function (docId) {
     const user = auth.currentUser;
     if (!user) return;
@@ -4783,7 +5086,8 @@ function hasMediaForFilter(data, filter) {
 // 정렬+필터 캐시 갱신 (매번 재정렬/재필터 방지)
 function refreshSortedFiltered() {
     if (!sortedFilteredDirty) return;
-    let sorted = [...cachedGalleryLogs];
+    const blockedUsers = window._blockedUsers || [];
+    let sorted = [...cachedGalleryLogs].filter(item => !blockedUsers.includes(item.data.userId));
     sorted.sort((a, b) => {
         const aFr = cachedMyFriends.includes(a.data.userId);
         const bFr = cachedMyFriends.includes(b.data.userId);
@@ -4842,12 +5146,86 @@ function cleanupGalleryResources() {
         galleryIntersectionObserver = null;
     }
 
-    // 고유한 상황에서만 캠시 정리 (로그아웃 등)
+    // 갤러리 캠시 초기화 (로그아웃 시 재로드 보장)
+    cachedGalleryLogs = [];
+    sortedFilteredCache = [];
+    sortedFilteredDirty = true;
+    galleryDisplayCount = 0;
     isLoadingMore = false;
 }
 window.cleanupGalleryResources = cleanupGalleryResources;
 
-async function loadGalleryData() {
+let _galleryLoading = false; // 중복 로드 방지
+
+async function loadGalleryData(forceReload = false) {
+    if (_galleryLoading) return;
+    if (forceReload) cachedGalleryLogs = [];
+    _galleryLoading = true;
+
+    try {
+        await _loadGalleryDataInner();
+    } finally {
+        _galleryLoading = false;
+    }
+}
+
+// Firestore REST API로 갤러리 데이터 직접 조회 (비로그인 cold start 대응)
+async function _fetchGalleryViaRest(cutoffStr, limitCount) {
+    const projectId = 'habitschool-8497b';
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
+    const body = {
+        structuredQuery: {
+            from: [{ collectionId: 'daily_logs' }],
+            where: {
+                fieldFilter: {
+                    field: { fieldPath: 'date' },
+                    op: 'GREATER_THAN_OR_EQUAL',
+                    value: { stringValue: cutoffStr }
+                }
+            },
+            orderBy: [{ field: { fieldPath: 'date' }, direction: 'DESCENDING' }],
+            limit: limitCount
+        }
+    };
+    const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error(`REST API ${resp.status}`);
+    const results = await resp.json();
+    const logsArray = [];
+    for (const item of results) {
+        if (!item.document) continue;
+        const docPath = item.document.name;
+        const docId = docPath.split('/').pop();
+        logsArray.push({ id: docId, data: _convertFirestoreFields(item.document.fields || {}) });
+    }
+    return logsArray;
+}
+
+// Firestore REST 응답 필드를 JS 객체로 변환
+function _convertFirestoreFields(fields) {
+    const result = {};
+    for (const [key, val] of Object.entries(fields)) {
+        result[key] = _convertFirestoreValue(val);
+    }
+    return result;
+}
+
+function _convertFirestoreValue(val) {
+    if ('stringValue' in val) return val.stringValue;
+    if ('integerValue' in val) return Number(val.integerValue);
+    if ('doubleValue' in val) return val.doubleValue;
+    if ('booleanValue' in val) return val.booleanValue;
+    if ('nullValue' in val) return null;
+    if ('timestampValue' in val) return val.timestampValue;
+    if ('mapValue' in val) return _convertFirestoreFields(val.mapValue.fields || {});
+    if ('arrayValue' in val) return (val.arrayValue.values || []).map(v => _convertFirestoreValue(v));
+    return null;
+}
+
+async function _loadGalleryDataInner() {
     const container = document.getElementById('gallery-container');
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
@@ -4870,9 +5248,37 @@ async function loadGalleryData() {
         }
 
         let retries = 0;
+
+        // 비로그인: Firestore SDK가 cold start에서 서버 연결 실패 → REST API로 직접 조회
+        if (!user) {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+            const cutoffStr = cutoffDate.toISOString().split('T')[0];
+            while (retries < 3) {
+                try {
+                    const logsArray = await _fetchGalleryViaRest(cutoffStr, MAX_CACHE_SIZE);
+                    cachedGalleryLogs = logsArray;
+                    sortedFilteredDirty = true;
+                    break;
+                } catch (e) {
+                    retries++;
+                    console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
+                    if (retries < 3) {
+                        await new Promise(r => setTimeout(r, 800 * retries));
+                    } else {
+                        container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
+                        return;
+                    }
+                }
+            }
+        } else {
+        // 로그인: SDK 사용 (캐시 활용 가능)
         while (retries < 3) {
             try {
-                const q = query(collection(db, "daily_logs"), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - 7);
+                const cutoffStr = cutoffDate.toISOString().split('T')[0];
+                const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
                 const snapshot = await getDocs(q);
 
                 let logsArray = [];
@@ -4891,6 +5297,7 @@ async function loadGalleryData() {
                     return;
                 }
             }
+        }
         }
 
         // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
@@ -5304,7 +5711,8 @@ function buildGalleryCard(item, myId) {
         const cText = escapeHtml(c.text || '');
         const cTime = formatCommentTime(c.timestamp);
         const delBtn = (!isGuest && c.userId === myId) ? `<button class="comment-delete-btn" onclick="deleteComment('${safeDocId}', ${idx})" title="삭제">✕</button>` : '';
-        commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}</div>`;
+        const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
+        commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}${reportBtn}</div>`;
     });
     if (comments.length > 2) {
         commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
@@ -5317,13 +5725,26 @@ function buildGalleryCard(item, myId) {
     // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
     const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
 
-    // 본인 게시물: ⋯ 메뉴 (삭제)
-    const postMenuHtml = (!isGuest && data.userId === myId) ? `<div class="post-menu-container">
-        <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
-        <div class="post-menu-dropdown" style="display:none;">
-            <button onclick="deleteGalleryPost('${safeDocId}')">🗑️ 삭제</button>
-        </div>
-    </div>` : '';
+    // 본인 게시물: ⋯ 메뉴 (삭제), 타인 게시물: ⋯ 메뉴 (신고)
+    let postMenuHtml = '';
+    if (!isGuest) {
+        if (data.userId === myId) {
+            postMenuHtml = `<div class="post-menu-container">
+                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
+                <div class="post-menu-dropdown" style="display:none;">
+                    <button onclick="deleteGalleryPost('${safeDocId}')">🗑️ 삭제</button>
+                </div>
+            </div>`;
+        } else {
+            postMenuHtml = `<div class="post-menu-container">
+                <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
+                <div class="post-menu-dropdown" style="display:none;">
+                    <button onclick="reportPost('${safeDocId}', '${safeUserId}')">🚨 신고</button>
+                    <button onclick="blockUser('${safeUserId}', '${safeName}')">🚫 차단</button>
+                </div>
+            </div>`;
+        }
+    }
 
     const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">

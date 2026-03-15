@@ -20,6 +20,7 @@
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const { ethers } = require("ethers");
@@ -1416,5 +1417,332 @@ exports.migrateHbtToCoins = onCall(
         }
 
         return { success: true, migrated: results.length, results };
+    }
+);
+
+// ========================================
+// 12. 주간 채굴 난이도 자동 조절 (매주 월요일 00:00 KST)
+// ========================================
+
+// 난이도 조절 상수
+const RATE_SCALE = 100_000_000; // 10^8 (온체인 비율 스케일)
+const MAX_RATE = 4.0;           // 1P = 최대 4 HBT
+const MIN_RATE = 1e-8;          // 최소 비율
+const MAX_RATE_MULTIPLIER = 2.0; // 주당 최대 2배 상승
+const MIN_RATE_MULTIPLIER = 0.5; // 주당 최소 절반 하락
+
+// Phase 경계값 (HBT 단위)
+const PHASE1_END = 35_000_000;
+const PHASE2_END = 52_500_000;
+const PHASE3_END = 61_250_000;
+const MINING_POOL = 70_000_000;
+
+// Phase별 주간 목표
+const PHASE1_WEEKLY = 140_000;
+const PHASE2_WEEKLY = 70_000;
+const PHASE3_WEEKLY = 35_000;
+
+/**
+ * 누적 채굴량 기반 Phase 및 주간 목표 결정
+ */
+function getPhaseAndWeeklyTarget(totalMinedHbt) {
+    if (totalMinedHbt < PHASE1_END) return { phase: 1, weeklyTarget: PHASE1_WEEKLY };
+    if (totalMinedHbt < PHASE2_END) return { phase: 2, weeklyTarget: PHASE2_WEEKLY };
+    if (totalMinedHbt < PHASE3_END) return { phase: 3, weeklyTarget: PHASE3_WEEKLY };
+
+    // Phase 4+: 무한 반감
+    let remaining = MINING_POOL - PHASE3_END;
+    let extraMined = totalMinedHbt - PHASE3_END;
+    let target = PHASE3_WEEKLY;
+    let threshold = remaining / 2;
+    let phase = 4;
+
+    while (extraMined >= threshold && threshold > 0) {
+        extraMined -= threshold;
+        threshold /= 2;
+        target /= 2;
+        phase++;
+    }
+    if (target < 1) target = 1;
+    return { phase, weeklyTarget: target };
+}
+
+/**
+ * 새로운 P:HBT 교환 비율 계산
+ */
+function calculateNewRate(currentRate, last7DaysMinted, totalMinedHbt) {
+    const { phase, weeklyTarget } = getPhaseAndWeeklyTarget(totalMinedHbt);
+
+    // 조정 비율 계산
+    let rawRatio;
+    if (last7DaysMinted <= 0) {
+        rawRatio = MAX_RATE_MULTIPLIER; // 채굴 없음 → 최대 상승
+    } else {
+        rawRatio = weeklyTarget / last7DaysMinted;
+    }
+
+    // 변동폭 제한 (Smoothing)
+    let adjustmentRatio = rawRatio;
+    let clamped = false;
+    let clampReason = "";
+
+    if (adjustmentRatio > MAX_RATE_MULTIPLIER) {
+        adjustmentRatio = MAX_RATE_MULTIPLIER;
+        clamped = true;
+        clampReason = `상승 제한 (${rawRatio.toFixed(4)}x → ${MAX_RATE_MULTIPLIER}x)`;
+    } else if (adjustmentRatio < MIN_RATE_MULTIPLIER) {
+        adjustmentRatio = MIN_RATE_MULTIPLIER;
+        clamped = true;
+        clampReason = `하락 제한 (${rawRatio.toFixed(4)}x → ${MIN_RATE_MULTIPLIER}x)`;
+    }
+
+    let newRate = currentRate * adjustmentRatio;
+
+    // 상한선/하한선
+    if (newRate > MAX_RATE) {
+        newRate = MAX_RATE;
+        clamped = true;
+        clampReason = `상한선 적용 (→ ${MAX_RATE} HBT/P)`;
+    }
+    if (newRate < MIN_RATE) {
+        newRate = MIN_RATE;
+        clamped = true;
+        clampReason = `하한선 적용 (→ ${MIN_RATE} HBT/P)`;
+    }
+
+    // 온체인 형식 변환 (RATE_SCALE = 10^8)
+    let newRateScaled = Math.round(newRate * RATE_SCALE);
+    if (newRateScaled < 1) newRateScaled = 1;
+
+    return {
+        newRate: parseFloat(newRate.toFixed(8)),
+        newRateScaled,
+        phase,
+        weeklyTarget,
+        adjustmentRatio: parseFloat(adjustmentRatio.toFixed(6)),
+        rawRatio: parseFloat(rawRatio.toFixed(6)),
+        clamped,
+        clampReason
+    };
+}
+
+/**
+ * 매주 월요일 00:00 KST (일요일 15:00 UTC) 자동 실행
+ * 지난 7일간 채굴량을 평가하고 온체인 교환 비율을 갱신합니다.
+ */
+exports.adjustMiningRate = onSchedule(
+    {
+        schedule: "0 15 * * 0",  // 매주 일요일 15:00 UTC = 월요일 00:00 KST
+        timeZone: "UTC",
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        timeoutSeconds: 120,
+        maxInstances: 1
+    },
+    async (event) => {
+        console.log("⛏️ 주간 채굴 난이도 조절 시작...");
+
+        try {
+            // 1. 온체인 현재 상태 조회
+            const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+            const habitContract = getHabitContract(wallet);
+
+            const currentRateRaw = await habitContract.currentRate();
+            const totalMintedRaw = await habitContract.totalMintedFromMining();
+            const decimals = await habitContract.decimals();
+
+            const currentRateNumber = Number(currentRateRaw) / RATE_SCALE; // HBT per P
+            const totalMinedHbt = parseFloat(ethers.formatUnits(totalMintedRaw, decimals));
+
+            console.log(`📊 현재 비율: ${currentRateNumber} HBT/P (raw: ${currentRateRaw})`);
+            console.log(`📊 누적 채굴량: ${totalMinedHbt.toLocaleString()} HBT`);
+
+            // 2. 지난 7일간 실제 채굴량 조회 (blockchain_transactions)
+            const now = new Date();
+            const sevenDaysAgo = new Date(now);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const startDateStr = sevenDaysAgo.toISOString().split("T")[0];
+            const endDateStr = now.toISOString().split("T")[0];
+
+            const txQuery = db.collection("blockchain_transactions")
+                .where("type", "==", "conversion")
+                .where("status", "==", "success")
+                .where("date", ">=", startDateStr)
+                .where("date", "<=", endDateStr);
+
+            const txSnap = await txQuery.get();
+            let last7DaysMinted = 0;
+            let txCount = 0;
+            txSnap.forEach(doc => {
+                last7DaysMinted += doc.data().hbtReceived || 0;
+                txCount++;
+            });
+
+            console.log(`📊 7일간 채굴량: ${last7DaysMinted.toLocaleString()} HBT (${txCount}건)`);
+
+            // 3. 새 비율 계산
+            const result = calculateNewRate(currentRateNumber, last7DaysMinted, totalMinedHbt);
+
+            console.log(`📊 Phase: ${result.phase}, 주간 목표: ${result.weeklyTarget.toLocaleString()} HBT`);
+            console.log(`📊 조정 배수: ${result.adjustmentRatio}x${result.clamped ? ` (${result.clampReason})` : ""}`);
+            console.log(`📊 새 비율: ${result.newRate} HBT/P (raw: ${result.newRateScaled})`);
+
+            // 4. 비율 변경이 없으면 스킵
+            if (result.newRateScaled === Number(currentRateRaw)) {
+                console.log("⏭️ 비율 변경 없음, 스킵합니다.");
+                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "no_change");
+                return;
+            }
+
+            // 5. 온체인 updateRate() 호출
+            let txHash = null;
+            try {
+                const tx = await habitContract.updateRate(BigInt(result.newRateScaled));
+                const receipt = await tx.wait();
+                txHash = receipt.hash;
+                console.log(`✅ 온체인 비율 업데이트 완료! TX: ${EXPLORER_URL}/tx/${txHash}`);
+            } catch (chainError) {
+                console.error("❌ 온체인 updateRate 실패:", chainError.message);
+                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", chainError.message);
+                return;
+            }
+
+            // 6. Firestore에 이력 저장
+            await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, txHash, "success");
+
+            console.log("✅ 주간 채굴 난이도 조절 완료!");
+
+        } catch (error) {
+            console.error("❌ 주간 난이도 조절 오류:", error);
+        }
+    }
+);
+
+/**
+ * 비율 조정 이력 Firestore 저장
+ */
+async function saveRateHistory(result, previousRate, last7DaysMinted, totalMinedHbt, txCount, txHash, status, errorMessage) {
+    const now = new Date();
+    const weekId = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + new Date(now.getFullYear(), 0, 1).getDay()) / 7)).padStart(2, "0")}`;
+
+    await db.collection("mining_rate_history").doc(weekId).set({
+        weekId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        previousRate,
+        newRate: result.newRate,
+        newRateScaled: result.newRateScaled,
+        phase: result.phase,
+        weeklyTarget: result.weeklyTarget,
+        last7DaysMinted,
+        totalMinedHbt,
+        transactionCount: txCount,
+        adjustmentRatio: result.adjustmentRatio,
+        rawRatio: result.rawRatio,
+        clamped: result.clamped,
+        clampReason: result.clampReason || "",
+        txHash: txHash || null,
+        status,
+        errorMessage: errorMessage || null
+    });
+}
+
+/**
+ * 수동 채굴 난이도 조절 (관리자용)
+ * adjustMiningRate 스케줄러와 동일한 로직을 즉시 실행합니다.
+ */
+exports.adjustMiningRateManual = onCall(
+    {
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 120
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        // 관리자 확인
+        const adminDoc = await db.doc("admins/" + request.auth.uid).get();
+        if (!adminDoc.exists) {
+            throw new HttpsError("permission-denied", "관리자 권한이 필요합니다.");
+        }
+
+        try {
+            const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+            const habitContract = getHabitContract(wallet);
+
+            const currentRateRaw = await habitContract.currentRate();
+            const totalMintedRaw = await habitContract.totalMintedFromMining();
+            const decimals = await habitContract.decimals();
+
+            const currentRateNumber = Number(currentRateRaw) / RATE_SCALE;
+            const totalMinedHbt = parseFloat(ethers.formatUnits(totalMintedRaw, decimals));
+
+            // 7일간 채굴량 조회
+            const now = new Date();
+            const sevenDaysAgo = new Date(now);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const startDateStr = sevenDaysAgo.toISOString().split("T")[0];
+            const endDateStr = now.toISOString().split("T")[0];
+
+            const txSnap = await db.collection("blockchain_transactions")
+                .where("type", "==", "conversion")
+                .where("status", "==", "success")
+                .where("date", ">=", startDateStr)
+                .where("date", "<=", endDateStr)
+                .get();
+
+            let last7DaysMinted = 0;
+            let txCount = 0;
+            txSnap.forEach(doc => {
+                last7DaysMinted += doc.data().hbtReceived || 0;
+                txCount++;
+            });
+
+            const result = calculateNewRate(currentRateNumber, last7DaysMinted, totalMinedHbt);
+
+            // dryRun 모드: 계산만 하고 실제 온체인 갱신은 안 함
+            if (request.data?.dryRun) {
+                return {
+                    dryRun: true,
+                    currentRate: currentRateNumber,
+                    ...result,
+                    last7DaysMinted,
+                    totalMinedHbt,
+                    transactionCount: txCount
+                };
+            }
+
+            // 온체인 비율 갱신
+            if (result.newRateScaled !== Number(currentRateRaw)) {
+                const tx = await habitContract.updateRate(BigInt(result.newRateScaled));
+                const receipt = await tx.wait();
+                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, receipt.hash, "manual");
+                return {
+                    success: true,
+                    txHash: receipt.hash,
+                    currentRate: currentRateNumber,
+                    ...result,
+                    last7DaysMinted,
+                    totalMinedHbt,
+                    transactionCount: txCount
+                };
+            }
+
+            return {
+                success: true,
+                noChange: true,
+                currentRate: currentRateNumber,
+                ...result,
+                last7DaysMinted,
+                totalMinedHbt,
+                transactionCount: txCount
+            };
+
+        } catch (error) {
+            console.error("수동 난이도 조절 오류:", error);
+            throw new HttpsError("internal", "난이도 조절 중 오류가 발생했습니다: " + error.message);
+        }
     }
 );
