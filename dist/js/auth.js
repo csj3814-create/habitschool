@@ -163,42 +163,38 @@ function showWebViewWarning() {
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
 
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
+            // === 즉시 실행: Firestore 대기 없이 UI 표시 ===
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
             window._wasLoggedIn = true;
+            window._userDisplayName = user.displayName || '사용자';
+            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
 
-            // 구글 닉네임으로 즉시 표시
-            const tempName = user.displayName || '사용자';
-            window._userDisplayName = tempName;
-            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(tempName)}`;
+            // === 즉시 대시보드 탭 열기 → renderDashboard가 자체적으로 데이터 로드 ===
+            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
+            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
+            if (window.openTab) {
+                window.openTab(targetTab, false);
+            }
 
-            // 사용자 문서 + 오늘 데이터를 병렬로 시작
+            // === 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용) ===
             const userRef = doc(db, "users", user.uid);
-            const userDocPromise = getDoc(userRef);
-            if (window.loadDataForSelectedDate) {
-                window.loadDataForSelectedDate(todayStr).catch(() => {});
-            }
-
-            const userDoc = await userDocPromise;
-
-            // 커스텀 닉네임 덮어쓰기
-            const customName = userDoc.exists() ? userDoc.data().customDisplayName : null;
-            if (customName) {
-                window._userDisplayName = customName;
-                document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(customName)}`;
-            }
-            const nicknameInput = document.getElementById('profile-nickname');
-            if (nicknameInput) nicknameInput.value = window._userDisplayName;
-
-            window._blockedUsers = userDoc.exists() ? (userDoc.data().blockedUsers || []) : [];
-
-            if (userDoc.exists()) {
+            getDoc(userRef).then(userDoc => {
+                if (!userDoc.exists()) return;
                 const ud = userDoc.data();
+                window._cachedUserDoc = userDoc;
+                if (ud.customDisplayName) {
+                    window._userDisplayName = ud.customDisplayName;
+                    document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(ud.customDisplayName)}`;
+                }
+                const nicknameInput = document.getElementById('profile-nickname');
+                if (nicknameInput) nicknameInput.value = window._userDisplayName;
+                window._blockedUsers = ud.blockedUsers || [];
                 if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
-
                 if (ud.adminFeedback && ud.feedbackDate) {
                     const fbDate = new Date(ud.feedbackDate);
                     const now = new Date(todayStr);
@@ -209,71 +205,47 @@ export function setupAuthListener(callbacks) {
                         document.getElementById('admin-feedback-text').innerText = ud.adminFeedback;
                     }
                 }
-
                 if (ud.healthProfile) {
                     const prof = ud.healthProfile;
-                    const profSmm = document.getElementById('prof-smm');
-                    const profFat = document.getElementById('prof-fat');
-                    const profVisceral = document.getElementById('prof-visceral');
-                    const profBmr = document.getElementById('prof-bmr');
-                    const profMedOther = document.getElementById('prof-med-other');
-                    if (profSmm) profSmm.value = prof.smm || '';
-                    if (profFat) profFat.value = prof.fat || '';
-                    if (profVisceral) profVisceral.value = prof.visceral || '';
-                    if (profBmr) profBmr.value = prof.bmr || '';
-                    if (profMedOther) profMedOther.value = prof.medOther || '';
+                    const el = (id) => document.getElementById(id);
+                    if (el('prof-smm')) el('prof-smm').value = prof.smm || '';
+                    if (el('prof-fat')) el('prof-fat').value = prof.fat || '';
+                    if (el('prof-visceral')) el('prof-visceral').value = prof.visceral || '';
+                    if (el('prof-bmr')) el('prof-bmr').value = prof.bmr || '';
+                    if (el('prof-med-other')) el('prof-med-other').value = prof.medOther || '';
                     if (prof.meds) {
                         document.querySelectorAll('input[name="med-chk"]').forEach(chk => {
                             if (prof.meds.includes(chk.value)) chk.checked = true;
                         });
                     }
                     if (prof.updatedAt) {
-                        const lastDate = prof.updatedAt.slice(0, 10);
-                        const el = document.getElementById('prof-last-date');
-                        if (el) el.textContent = `마지막 측정: ${lastDate}`;
+                        const dateEl = el('prof-last-date');
+                        if (dateEl) dateEl.textContent = `마지막 측정: ${prof.updatedAt.slice(0, 10)}`;
                     }
                 }
-            }
+            }).catch(() => {});
 
-            // 탭 열기 (사용자 문서 로드 후 — 대시보드에서 renderDashboard 호출됨)
-            const urlTab = new URLSearchParams(window.location.search).get('tab');
-            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
-            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
-            if (window.openTab) {
-                window.openTab(targetTab, false);
-            }
-
-            // 백그라운드 작업
-            import('./blockchain-manager.js').then(mod => {
-                mod.initializeUserWallet().catch(err => {
-                    console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
-                });
-                mod.settleExpiredChallenges().then(() => {
-                    getDoc(userRef).then(snap => {
-                        const ac = snap.data()?.activeChallenges || {};
-                        const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
-                        if (claimable.length > 0) {
-                            showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
-                        }
+            // === 3초 후 부가 기능 (대시보드 표시 후) ===
+            setTimeout(() => {
+                if (window.checkOnboarding) window.checkOnboarding();
+                if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
+                if (window.loadInbodyHistory) window.loadInbodyHistory();
+                if (window.loadBloodTestHistory) window.loadBloodTestHistory();
+                import('./blockchain-manager.js').then(mod => {
+                    mod.initializeUserWallet().catch(() => {});
+                    mod.settleExpiredChallenges().then(() => {
+                        getDoc(userRef).then(snap => {
+                            const ac = snap.data()?.activeChallenges || {};
+                            const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
+                            if (claimable.length > 0) {
+                                showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
+                            }
+                        }).catch(() => {});
                     }).catch(() => {});
                 }).catch(() => {});
-            }).catch(err => {
-                console.warn('⚠️ 블록체인 모듈 로드 실패 (계속 진행):', err.message);
-            });
+            }, 3000);
 
-            if (window.checkOnboarding) window.checkOnboarding();
-            if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
-            if (window.loadInbodyHistory) window.loadInbodyHistory();
-
-            // 혈액검사 이력 로드
-            if (window.loadBloodTestHistory) {
-                window.loadBloodTestHistory();
-            }
-
-            // 콜백 실행
-            if (callbacks && callbacks.onLogin) {
-                callbacks.onLogin(user);
-            }
+            if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
             // 로그아웃 시 모든 리소스 정리 (메모리 누수 방지)
             document.getElementById('login-modal').style.display = 'flex';
