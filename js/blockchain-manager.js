@@ -251,7 +251,6 @@ export async function initializeUserWallet() {
 
     } catch (error) {
         console.error('❌ 지갑 초기화 오류:', error);
-        showToast('⚠️ 지갑 생성 중 오류 발생. 다시 시도해주세요.');
         return null;
     }
 }
