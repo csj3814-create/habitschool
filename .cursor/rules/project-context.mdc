@@ -1,0 +1,53 @@
+---
+description: 해빛스쿨 프로젝트 핵심 조건 및 배포/인증 규칙. 매 세션 시작 시 반드시 숙지.
+alwaysApply: true
+---
+
+# 해빛스쿨 프로젝트 컨텍스트
+
+## Firebase 프로젝트
+- **Project ID**: `habitschool-8497b`
+- **Firestore/Auth/Storage**: 모두 `habitschool-8497b`
+- **Hosting 도메인**: `habitschool.web.app` (본서버), `habitschool-8497b.web.app` (보조)
+
+## 배포 워크플로 (반드시 준수)
+1. 소스 코드는 **루트**(`js/`, `index.html`, `styles.css` 등)에서 편집
+2. 편집 후 반드시 **`dist/` 폴더에 동기화** (수동 복사)
+3. **테스트 서버**: `dist/` → GitHub `csj3814-create/habitschool` main 브랜치 push → `https://csj3814-create.github.io/habitschool/`
+4. **본서버**: `npx firebase deploy --only hosting` → `habitschool.web.app`
+5. **순서**: 항상 테스트 서버 먼저 → 확인 후 → 본서버 배포 (사용자가 명시적으로 요청할 때만)
+6. Firestore 보안 규칙 변경 시: `npx firebase deploy --only firestore:rules` (별도 배포)
+
+## 서비스 워커 (sw.js)
+- 정적 자산 **Cache First** 전략 → JS 수정 후 반드시 `CACHE_NAME` 버전 번호를 올려야 사용자에게 적용됨
+- 현재 버전: `sw.js` 파일 상단의 `CACHE_NAME` 값 확인
+- SW 업데이트 시 클라이언트에 `SW_UPDATED` 메시지 → 자동 새로고침
+
+## 인증/로그인 (절대 실수 금지)
+- **authDomain**: `habitschool-8497b.firebaseapp.com` (절대 변경 금지)
+  - 이유: PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA 내에서 처리해버려서 로그인이 깨짐
+  - `firebaseapp.com`은 PWA scope 밖이라 안전
+- **모바일+PC 모두 `signInWithPopup` 사용** (절대 signInWithRedirect로 바꾸지 말 것!)
+  - `signInWithRedirect`는 이 프로젝트의 PWA/authDomain 구성에서 작동하지 않음 (과거 검증 완료)
+  - 모바일에서 팝업이 자동으로 닫혀서 `auth/popup-closed-by-user` 에러가 나올 수 있지만, `onAuthStateChanged`가 결국 로그인을 감지함
+  - 이 에러에 대해 사용자에게 토스트를 보여주지 않음 (혼란 방지)
+
+## Firestore 보안 규칙
+- `isAllowedUserField()` 화이트리스트에 반드시 포함되어야 하는 필드:
+  - 기본: `displayName`, `customDisplayName`, `photoURL`, `walletAddress`, `encryptedWallet`, `activeChallenge`, `activeChallenges`, `milestones`, `settings`, `lastLogin`, `fcmToken`, `healthProfile`, `inbodyData`, `dietAnalysis`, `exerciseAnalysis`, `sleepAndMind`, `blockedUsers`
+  - 미션 관련: `weeklyMissionData`, `missionHistory`, `missionStreak`, `missionLevel`, `missionBadges`, `selectedMissions`
+- 새 사용자 필드를 프론트엔드에서 쓰려면 이 화이트리스트에 추가 필수
+
+## 날짜/시간
+- 모든 날짜 계산은 **KST (한국 표준시)** 기준
+- 주 시작: **월요일**
+- `getWeekId()`: ISO 주차 형식 (예: `2026-W12`)
+- `getDatesInfo()`: 이번 주 월~일 날짜 배열 반환
+
+## 대시보드 캐시
+- `_dashboardCache` (30초 TTL, weekId 포함)
+- 미션 재설정/데이터 변경 후 반드시 캐시 무효화: `_dashboardCache = { uid: null, weekId: null, data: null, ts: 0 }`
+
+## PowerShell 주의사항
+- `&&` 사용 불가 → `;`으로 명령 연결
+- heredoc `<<'EOF'` 구문 불가 → git commit 메시지는 한 줄로
