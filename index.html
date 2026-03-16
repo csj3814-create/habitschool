@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -92,16 +92,18 @@
     <link rel="stylesheet" href="styles.css?v=40">
 
     <script src="js/webview-detect.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/exif-js" integrity="sha384-bBk9n8KsCuctQitaFzFx/GKOiW55lMJJazrZck6VGKtlwuiMcRSEldT8D10SsVT2" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
-    <!-- Ethers.js (Base 체인 지갑 라이브러리) -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" integrity="sha384-Htz1SE4Sl5aitpvFgr2j0sfsGUIuSXI6t8hEyrlQ93zflEF3a29bH2AvkUROUw7J" crossorigin="anonymous"></script>
-    <!-- Kakao JS SDK (카카오톡 공유) -->
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/exif-js" integrity="sha384-bBk9n8KsCuctQitaFzFx/GKOiW55lMJJazrZck6VGKtlwuiMcRSEldT8D10SsVT2" crossorigin="anonymous"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
+    <!-- Ethers.js — defer: 지갑 기능은 로그인 후에만 필요 -->
+    <script defer src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" integrity="sha384-Htz1SE4Sl5aitpvFgr2j0sfsGUIuSXI6t8hEyrlQ93zflEF3a29bH2AvkUROUw7J" crossorigin="anonymous"></script>
+    <!-- Kakao JS SDK -->
+    <script defer src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
     <script>
-    if (window.Kakao && !Kakao.isInitialized()) {
-        Kakao.init('f179e091a7b2f4425918b0625aa0fabb');
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.Kakao && !Kakao.isInitialized()) {
+            Kakao.init('f179e091a7b2f4425918b0625aa0fabb');
+        }
+    });
     </script>
 </head>
 
