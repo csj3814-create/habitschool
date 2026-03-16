@@ -2235,8 +2235,8 @@ async function loadBloodTestHistory() {
     }
 }
 
-// 대시보드 캐시 (30초 TTL)
-let _dashboardCache = { uid: null, data: null, ts: 0 };
+// 대시보드 캐시 (30초 TTL) — 주차까지 포함
+let _dashboardCache = { uid: null, weekId: null, data: null, ts: 0 };
 const DASHBOARD_CACHE_TTL = 30_000;
 
 // 대시보드 렌더링
@@ -2249,7 +2249,10 @@ async function renderDashboard() {
 
     // 캐시 히트: 30초 이내 같은 유저 → 재쿼리 생략
     const now = Date.now();
-    if (_dashboardCache.uid === user.uid && (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL && _dashboardCache.data) {
+    if (_dashboardCache.uid === user.uid &&
+        _dashboardCache.weekId === currentWeekId &&
+        (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL &&
+        _dashboardCache.data) {
         _renderDashboardFromCache(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
         return;
     }
@@ -2278,7 +2281,8 @@ async function renderDashboard() {
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
             orderBy("date", "desc"),
-            limit(120)
+            // 최근 60일만 조회해도 연속 기록 계산에는 충분
+            limit(60)
         );
 
         const [userDoc, snapshot, streakSnap] = await Promise.all([
@@ -2292,7 +2296,12 @@ async function renderDashboard() {
         if (loadingEl) loadingEl.remove();
 
         // 캐시 저장
-        _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
+        _dashboardCache = {
+            uid: user.uid,
+            weekId: currentWeekId,
+            data: { userDoc, snapshot, streakSnap },
+            ts: Date.now()
+        };
 
         // 마일스톤에 이미 로드한 유저 데이터 전달 (추가 Firestore 호출 방지)
         const ud = userDoc.exists() ? userDoc.data() : {};
@@ -2665,8 +2674,10 @@ async function renderDashboard() {
         // 미션 배지 렌더링
         renderMissionBadges(missionBadges);
 
-        // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시)
-        renderGroupChallenge().catch(() => {});
+        // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시) — 첫 화면 렌더 이후로 지연 실행
+        setTimeout(() => {
+            renderGroupChallenge().catch(() => {});
+        }, 0);
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
