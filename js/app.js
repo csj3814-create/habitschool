@@ -2740,149 +2740,18 @@ function renderMissionBadges(earnedBadges) {
     });
 }
 
-// 커뮤니티 월간 현황 렌더링
+// 커뮤니티 월간 현황 렌더링 — 서버에서 미리 계산된 meta/communityStats 문서 1개만 읽음
 async function renderGroupChallenge() {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
 
-    const today = new Date(getKstDateString() + 'T12:00:00Z');
-    const year = today.getUTCFullYear();
-    const month = String(today.getUTCMonth() + 1).padStart(2, '0');
-    const cacheKey = `groupChallenge_${year}-${month}`;
-    const monthStart = `${year}-${month}-01`;
-    const monthEnd = `${year}-${month}-31`;
+    const statsDoc = await getDoc(doc(db, "meta", "communityStats"));
+    if (!statsDoc.exists()) { section.style.display = 'none'; return; }
+    const s = statsDoc.data();
+    if (!s.totalUsers || s.totalUsers === 0) { section.style.display = 'none'; return; }
 
-    // localStorage 캐시 확인 (1시간 TTL)
-    let allLogs = null;
-    try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            if (parsed.ts && (Date.now() - parsed.ts) < 3600_000) {
-                allLogs = parsed.data;
-            }
-        }
-    } catch (_) {}
-
-    // 캐시 없으면 Firestore 조회 후 캐시 저장
-    if (!allLogs) {
-        const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd), limit(500));
-        const snap = await getDocs(q);
-        allLogs = [];
-        snap.forEach(d => {
-            const data = d.data();
-            allLogs.push({
-                userId: data.userId, userName: data.userName, date: data.date,
-                awardedPoints: data.awardedPoints || {},
-                comments: (data.comments || []).map(c => ({ userId: c.userId, userName: c.userName })),
-                reactions: data.reactions || {}
-            });
-        });
-        try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: allLogs })); } catch (_) {}
-    }
-
-    if (allLogs.length === 0) {
-        section.style.display = 'none';
-        return;
-    }
-
-    // 사용자별 활동 집계 (기록일 + 댓글 + 리액션 + 카테고리)
-    const userStats = {};
-    const userDates = {}; // userId -> Set of date strings (스트릭 계산용)
-    allLogs.forEach(log => {
-        // 기록 작성자 집계
-        if (log.userId) {
-            if (!userStats[log.userId]) userStats[log.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || '익명' };
-            userStats[log.userId].days++;
-            // 기록 작성자의 이름은 항상 최신으로 업데이트
-            if (log.userName) userStats[log.userId].name = log.userName;
-            if (log.awardedPoints?.diet) userStats[log.userId].diet++;
-            if (log.awardedPoints?.exercise) userStats[log.userId].exercise++;
-            if (log.awardedPoints?.mind) userStats[log.userId].mind++;
-            if (!userDates[log.userId]) userDates[log.userId] = new Set();
-            userDates[log.userId].add(log.date);
-        }
-        // 댓글 작성자 집계
-        if (log.comments && Array.isArray(log.comments)) {
-            log.comments.forEach(c => {
-                if (!c.userId) return;
-                if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: c.userName || '익명' };
-                userStats[c.userId].comments++;
-            });
-        }
-        // 리액션(좋아요) 작성자 집계
-        if (log.reactions) {
-            ['heart', 'fire', 'clap'].forEach(type => {
-                if (Array.isArray(log.reactions[type])) {
-                    log.reactions[type].forEach(uid => {
-                        if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: '회원' };
-                        userStats[uid].reactions++;
-                    });
-                }
-            });
-        }
-    });
-
-    // 최장 연속 기록일 계산
-    let bestStreak = 0, bestStreakName = '';
-    Object.entries(userDates).forEach(([uid, dates]) => {
-        const sorted = [...dates].sort();
-        let streak = 1, maxStreak = 1;
-        for (let i = 1; i < sorted.length; i++) {
-            const prev = new Date(sorted[i - 1] + 'T12:00:00Z');
-            const curr = new Date(sorted[i] + 'T12:00:00Z');
-            const diff = (curr - prev) / (1000 * 60 * 60 * 24);
-            streak = diff === 1 ? streak + 1 : 1;
-            if (streak > maxStreak) maxStreak = streak;
-        }
-        if (maxStreak > bestStreak) {
-            bestStreak = maxStreak;
-            bestStreakName = userStats[uid]?.name || '익명';
-        }
-    });
-
-    // 카테고리별 1등
-    const activeUsers = Object.values(userStats).filter(u => u.days > 0);
-    const dietKing = activeUsers.reduce((best, u) => u.diet > (best?.diet || 0) ? u : best, null);
-    const exerciseKing = activeUsers.reduce((best, u) => u.exercise > (best?.exercise || 0) ? u : best, null);
-    const mindKing = activeUsers.reduce((best, u) => u.mind > (best?.mind || 0) ? u : best, null);
-
-    // MVP 점수 계산: 기록 10점 + 댓글 3점 + 리액션 1점
-    Object.values(userStats).forEach(u => {
-        u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
-    });
-
-    const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
-    const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
-    const avgDays = totalUsers > 0 ? (totalDays / totalUsers).toFixed(1) : 0;
-    const totalComments = Object.values(userStats).reduce((s, u) => s + u.comments, 0);
-    const totalReactions = Object.values(userStats).reduce((s, u) => s + u.reactions, 0);
-
-    // 신규 회원 수 (지난달 데이터와 비교)
-    let newMemberCount = 0;
-    try {
-        const prevDate = new Date(today);
-        prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
-        const prevYear = prevDate.getUTCFullYear();
-        const prevMonth = String(prevDate.getUTCMonth() + 1).padStart(2, '0');
-        const prevStart = `${prevYear}-${prevMonth}-01`;
-        const prevEnd = `${prevYear}-${prevMonth}-31`;
-        const prevQ = query(collection(db, "daily_logs"), where("date", ">=", prevStart), where("date", "<=", prevEnd));
-        const prevSnap = await getDocs(prevQ);
-        const prevUsers = new Set();
-        prevSnap.forEach(d => { const uid = d.data().userId; if (uid) prevUsers.add(uid); });
-        const thisMonthUsers = new Set(Object.keys(userStats).filter(uid => userStats[uid].days > 0));
-        newMemberCount = [...thisMonthUsers].filter(uid => !prevUsers.has(uid)).length;
-    } catch (e) { console.log('newMember calc error:', e.message); }
-
-    // 상위 3명 (점수 기준, 기록 1일 이상인 사람만)
-    const ranked = Object.entries(userStats)
-        .map(([userId, stat]) => ({ userId, ...stat }))
-        .filter(u => u.days > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
-
+    const ranked = s.ranked || [];
     const medals = ['🥇', '🥈', '🥉'];
     const rewardAmounts = ['5,000P', '2,000P', '500P'];
 
@@ -2890,27 +2759,27 @@ async function renderGroupChallenge() {
     content.innerHTML = `
         <div class="group-stats-grid">
             <div class="group-stat-item">
-                <span class="group-stat-num">${totalUsers}명</span>
+                <span class="group-stat-num">${s.totalUsers}명</span>
                 <span class="group-stat-label">참여 회원</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${newMemberCount}명</span>
+                <span class="group-stat-num">${s.newMemberCount || 0}명</span>
                 <span class="group-stat-label">🌟 신규</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${totalComments}개</span>
+                <span class="group-stat-num">${s.totalComments || 0}개</span>
                 <span class="group-stat-label">댓글</span>
             </div>
             <div class="group-stat-item">
-                <span class="group-stat-num">${totalReactions}개</span>
+                <span class="group-stat-num">${s.totalReactions || 0}개</span>
                 <span class="group-stat-label">리액션</span>
             </div>
         </div>
-        ${bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${bestStreakName}</strong> ${bestStreak}일!</div>` : ''}
+        ${s.bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${s.bestStreakName}</strong> ${s.bestStreak}일!</div>` : ''}
         <div class="category-kings">
-            ${dietKing && dietKing.diet > 0 ? `<span class="cat-king">🥗 <strong>${dietKing.name}</strong> ${dietKing.diet}일</span>` : ''}
-            ${exerciseKing && exerciseKing.exercise > 0 ? `<span class="cat-king">🏃 <strong>${exerciseKing.name}</strong> ${exerciseKing.exercise}일</span>` : ''}
-            ${mindKing && mindKing.mind > 0 ? `<span class="cat-king">🌙 <strong>${mindKing.name}</strong> ${mindKing.mind}일</span>` : ''}
+            ${s.dietKing?.count > 0 ? `<span class="cat-king">🥗 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
+            ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
+            ${s.mindKing?.count > 0 ? `<span class="cat-king">🌙 <strong>${s.mindKing.name}</strong> ${s.mindKing.count}일</span>` : ''}
         </div>
         <div class="mvp-ranking-title">🏆 이번 달 MVP TOP 3</div>
         <div class="mvp-ranking-list">

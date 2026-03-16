@@ -152,6 +152,12 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // meta 컬렉션: 서버에서 계산한 통계 (communityStats 등)
+    match /meta/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     // 기본 규칙: 모든 접근 거부
     match /{document=**} {
       allow read, write: if false;
