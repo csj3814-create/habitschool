@@ -1,7 +1,7 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch, disableNetwork, enableNetwork } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
@@ -101,7 +101,13 @@ export function initAuth() {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        signInWithPopup(auth, provider).catch(error => {
+        signInWithPopup(auth, provider).then(() => {
+            // 모바일: 팝업 중 Firestore WebSocket 끊김 → 강제 재연결
+            console.time('⏱️ Firestore 재연결');
+            disableNetwork(db).then(() => enableNetwork(db)).then(() => {
+                console.timeEnd('⏱️ Firestore 재연결');
+            }).catch(() => {});
+        }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
 
             if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
@@ -163,12 +169,13 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            console.time('⏱️ 로그인→대시보드 전체');
+            console.log('⏱️ onAuthStateChanged 시작:', new Date().toISOString());
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
             window._wasLoggedIn = true;
 
-            // 구글 닉네임으로 즉시 표시 (Firestore 대기 없음)
             window._userDisplayName = user.displayName || '사용자';
             document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
 

@@ -1748,117 +1748,129 @@ exports.adjustMiningRateManual = onCall(
 );
 
 /**
+ * 커뮤니티 통계를 수동으로 새로고침 (관리자 전용)
+ */
+exports.refreshCommunityStats = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "로그인 필요");
+        const adminDoc = await db.doc(`admins/${request.auth.uid}`).get();
+        if (!adminDoc.exists) throw new HttpsError("permission-denied", "관리자만 가능");
+        await computeCommunityStatsLogic();
+        return { success: true };
+    }
+);
+
+async function computeCommunityStatsLogic() {
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kst = new Date(now.getTime() + kstOffset);
+    const year = kst.getUTCFullYear();
+    const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
+    const monthStart = `${year}-${month}-01`;
+    const monthEnd = `${year}-${month}-31`;
+
+    const snap = await db.collection("daily_logs")
+        .where("date", ">=", monthStart)
+        .where("date", "<=", monthEnd)
+        .get();
+
+    const userStats = {};
+    const userDates = {};
+    snap.forEach(d => {
+        const log = d.data();
+        if (!log.userId) return;
+        const uid = log.userId;
+        if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || "익명" };
+        userStats[uid].days++;
+        if (log.userName) userStats[uid].name = log.userName;
+        if (log.awardedPoints?.diet) userStats[uid].diet++;
+        if (log.awardedPoints?.exercise) userStats[uid].exercise++;
+        if (log.awardedPoints?.mind) userStats[uid].mind++;
+        if (!userDates[uid]) userDates[uid] = new Set();
+        userDates[uid].add(log.date);
+
+        if (log.comments && Array.isArray(log.comments)) {
+            log.comments.forEach(c => {
+                if (!c.userId) return;
+                if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: c.userName || "익명" };
+                userStats[c.userId].comments++;
+            });
+        }
+        if (log.reactions) {
+            ["heart", "fire", "clap"].forEach(type => {
+                if (Array.isArray(log.reactions[type])) {
+                    log.reactions[type].forEach(ruid => {
+                        if (!userStats[ruid]) userStats[ruid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: "회원" };
+                        userStats[ruid].reactions++;
+                    });
+                }
+            });
+        }
+    });
+
+    let bestStreak = 0, bestStreakName = "";
+    Object.entries(userDates).forEach(([uid, dates]) => {
+        const sorted = [...dates].sort();
+        let streak = 1, maxS = 1;
+        for (let i = 1; i < sorted.length; i++) {
+            const diff = (new Date(sorted[i] + "T12:00:00Z") - new Date(sorted[i - 1] + "T12:00:00Z")) / 86400000;
+            streak = diff === 1 ? streak + 1 : 1;
+            if (streak > maxS) maxS = streak;
+        }
+        if (maxS > bestStreak) { bestStreak = maxS; bestStreakName = userStats[uid]?.name || "익명"; }
+    });
+
+    const active = Object.values(userStats).filter(u => u.days > 0);
+    const pick = (field) => active.reduce((best, u) => u[field] > (best?.[field] || 0) ? u : best, null);
+    const dietKing = pick("diet");
+    const exerciseKing = pick("exercise");
+    const mindKing = pick("mind");
+
+    Object.values(userStats).forEach(u => { u.score = u.days * 10 + u.comments * 3 + u.reactions; });
+    const ranked = Object.entries(userStats)
+        .map(([userId, s]) => ({ userId, ...s }))
+        .filter(u => u.days > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+
+    const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
+    const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
+    const totalComments = Object.values(userStats).reduce((s, u) => s + u.comments, 0);
+    const totalReactions = Object.values(userStats).reduce((s, u) => s + u.reactions, 0);
+
+    let newMemberCount = 0;
+    try {
+        const prevDate = new Date(kst);
+        prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
+        const pStart = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
+        const pEnd = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-31`;
+        const prevSnap = await db.collection("daily_logs").where("date", ">=", pStart).where("date", "<=", pEnd).get();
+        const prevUsers = new Set();
+        prevSnap.forEach(d => { if (d.data().userId) prevUsers.add(d.data().userId); });
+        const thisUsers = new Set(Object.keys(userStats).filter(uid => userStats[uid].days > 0));
+        newMemberCount = [...thisUsers].filter(uid => !prevUsers.has(uid)).length;
+    } catch (_) {}
+
+    await db.doc("meta/communityStats").set({
+        month: `${year}-${month}`,
+        totalUsers, totalDays, totalComments, totalReactions,
+        newMemberCount, bestStreak, bestStreakName,
+        dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
+        exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
+        mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
+        ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`✅ communityStats ${year}-${month} 업데이트 완료: ${totalUsers}명, ${snap.size}건 처리`);
+}
+
+/**
  * 커뮤니티 월간 통계 사전 계산 (1시간마다)
  * 결과를 meta/communityStats 문서에 저장하여 클라이언트가 문서 1개만 읽으면 됨
  */
 exports.computeCommunityStats = onSchedule(
     { schedule: "every 1 hours", region: "asia-northeast3", timeoutSeconds: 120 },
-    async () => {
-        const now = new Date();
-        const kstOffset = 9 * 60 * 60 * 1000;
-        const kst = new Date(now.getTime() + kstOffset);
-        const year = kst.getUTCFullYear();
-        const month = String(kst.getUTCMonth() + 1).padStart(2, "0");
-        const monthStart = `${year}-${month}-01`;
-        const monthEnd = `${year}-${month}-31`;
-
-        const snap = await db.collection("daily_logs")
-            .where("date", ">=", monthStart)
-            .where("date", "<=", monthEnd)
-            .get();
-
-        const userStats = {};
-        const userDates = {};
-        snap.forEach(d => {
-            const log = d.data();
-            if (!log.userId) return;
-            const uid = log.userId;
-            if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || "익명" };
-            userStats[uid].days++;
-            if (log.userName) userStats[uid].name = log.userName;
-            if (log.awardedPoints?.diet) userStats[uid].diet++;
-            if (log.awardedPoints?.exercise) userStats[uid].exercise++;
-            if (log.awardedPoints?.mind) userStats[uid].mind++;
-            if (!userDates[uid]) userDates[uid] = new Set();
-            userDates[uid].add(log.date);
-
-            if (log.comments && Array.isArray(log.comments)) {
-                log.comments.forEach(c => {
-                    if (!c.userId) return;
-                    if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: c.userName || "익명" };
-                    userStats[c.userId].comments++;
-                });
-            }
-            if (log.reactions) {
-                ["heart", "fire", "clap"].forEach(type => {
-                    if (Array.isArray(log.reactions[type])) {
-                        log.reactions[type].forEach(ruid => {
-                            if (!userStats[ruid]) userStats[ruid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: "회원" };
-                            userStats[ruid].reactions++;
-                        });
-                    }
-                });
-            }
-        });
-
-        // 최장 연속 기록
-        let bestStreak = 0, bestStreakName = "";
-        Object.entries(userDates).forEach(([uid, dates]) => {
-            const sorted = [...dates].sort();
-            let streak = 1, maxS = 1;
-            for (let i = 1; i < sorted.length; i++) {
-                const diff = (new Date(sorted[i] + "T12:00:00Z") - new Date(sorted[i - 1] + "T12:00:00Z")) / 86400000;
-                streak = diff === 1 ? streak + 1 : 1;
-                if (streak > maxS) maxS = streak;
-            }
-            if (maxS > bestStreak) { bestStreak = maxS; bestStreakName = userStats[uid]?.name || "익명"; }
-        });
-
-        // 카테고리 1등
-        const active = Object.values(userStats).filter(u => u.days > 0);
-        const pick = (field) => active.reduce((best, u) => u[field] > (best?.[field] || 0) ? u : best, null);
-        const dietKing = pick("diet");
-        const exerciseKing = pick("exercise");
-        const mindKing = pick("mind");
-
-        // MVP 점수 & 순위
-        Object.values(userStats).forEach(u => { u.score = u.days * 10 + u.comments * 3 + u.reactions; });
-        const ranked = Object.entries(userStats)
-            .map(([userId, s]) => ({ userId, ...s }))
-            .filter(u => u.days > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
-
-        const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
-        const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
-        const totalComments = Object.values(userStats).reduce((s, u) => s + u.comments, 0);
-        const totalReactions = Object.values(userStats).reduce((s, u) => s + u.reactions, 0);
-
-        // 신규 회원 (이전 달 비교)
-        let newMemberCount = 0;
-        try {
-            const prevDate = new Date(kst);
-            prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
-            const pStart = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
-            const pEnd = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-31`;
-            const prevSnap = await db.collection("daily_logs").where("date", ">=", pStart).where("date", "<=", pEnd).get();
-            const prevUsers = new Set();
-            prevSnap.forEach(d => { if (d.data().userId) prevUsers.add(d.data().userId); });
-            const thisUsers = new Set(Object.keys(userStats).filter(uid => userStats[uid].days > 0));
-            newMemberCount = [...thisUsers].filter(uid => !prevUsers.has(uid)).length;
-        } catch (_) {}
-
-        await db.doc("meta/communityStats").set({
-            month: `${year}-${month}`,
-            totalUsers, totalDays, totalComments, totalReactions,
-            newMemberCount, bestStreak, bestStreakName,
-            dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
-            exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
-            mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
-            ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-
-        console.log(`✅ communityStats ${year}-${month} 업데이트 완료: ${totalUsers}명, ${snap.size}건 처리`);
-    }
+    async () => { await computeCommunityStatsLogic(); }
 );

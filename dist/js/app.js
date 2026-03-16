@@ -2265,7 +2265,7 @@ async function renderDashboard() {
     }
 
     try {
-        // 유저문서와 주간 로그와 연속기록용 최근 로그를 병렬로 로드
+        console.time('⏱️ 대시보드 Firestore 쿼리');
         const userRef = doc(db, "users", user.uid);
         const weekStart = weekStrs[0];
         const weekEnd = weekStrs[6];
@@ -2287,6 +2287,7 @@ async function renderDashboard() {
             getDocs(weekQuery),
             getDocs(streakQuery)
         ]);
+        console.timeEnd('⏱️ 대시보드 Firestore 쿼리');
 
         // 로딩 인디케이터 제거
         const loadingEl = document.querySelector('.dashboard-loading-indicator');
@@ -2885,19 +2886,20 @@ function renderPendingCustomMissions() {
 
 // 주간 아카이브 및 리셋
 async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, weekStrs) {
-    // 해당 주의 실제 stats 계산
-    const q = query(collection(db, "daily_logs"), where("userId", "==", uid));
+    const q = query(
+        collection(db, "daily_logs"),
+        where("userId", "==", uid),
+        where("date", ">=", weekStrs[0]),
+        where("date", "<=", weekStrs[6])
+    );
     const snapshot = await getDocs(q);
     let statDiet = 0, statExer = 0, statMind = 0;
 
-    // 아카이브할 주의 날짜 계산 (weeklyData.weekId 기준)
     snapshot.forEach(d => {
         const data = d.data();
-        if (weekStrs.includes(data.date)) {
-            if (data.awardedPoints?.diet) statDiet++;
-            if (data.awardedPoints?.exercise) statExer++;
-            if (data.awardedPoints?.mind) statMind++;
-        }
+        if (data.awardedPoints?.diet) statDiet++;
+        if (data.awardedPoints?.exercise) statExer++;
+        if (data.awardedPoints?.mind) statMind++;
     });
 
     // 달성률 계산
