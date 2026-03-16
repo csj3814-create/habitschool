@@ -228,26 +228,33 @@ export function setupAuthListener(callbacks) {
                 }
             }).catch(() => {});
 
-            // 3초 후 부가 기능 (대시보드 표시 후)
+            // 5초 후 부가 기능 (대시보드 완전히 표시된 후)
             setTimeout(() => {
-                import('./blockchain-manager.js').then(mod => {
-                    mod.initializeUserWallet().catch(() => {});
-                    mod.settleExpiredChallenges().then(() => {
-                        getDoc(userRef).then(snap => {
-                            const ac = snap.data()?.activeChallenges || {};
-                            const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
-                            if (claimable.length > 0) {
-                                showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
-                            }
-                        }).catch(() => {});
-                    }).catch(() => {});
-                }).catch(() => {});
-
                 if (window.checkOnboarding) window.checkOnboarding();
                 if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
                 if (window.loadInbodyHistory) window.loadInbodyHistory();
                 if (window.loadBloodTestHistory) window.loadBloodTestHistory();
-            }, 3000);
+            }, 5000);
+
+            // 10초 후 블록체인 (가장 낮은 우선순위)
+            setTimeout(() => {
+                if (window._loadBlockchainModule) {
+                    window._loadBlockchainModule().then(() => {
+                        import('./blockchain-manager.js').then(mod => {
+                            mod.initializeUserWallet().catch(() => {});
+                            mod.settleExpiredChallenges().then(() => {
+                                getDoc(userRef).then(snap => {
+                                    const ac = snap.data()?.activeChallenges || {};
+                                    const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
+                                    if (claimable.length > 0) {
+                                        showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
+                                    }
+                                }).catch(() => {});
+                            }).catch(() => {});
+                        }).catch(() => {});
+                    });
+                }
+            }, 10000);
 
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {

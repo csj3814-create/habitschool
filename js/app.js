@@ -1880,14 +1880,15 @@ function openTab(tabName, pushState = true) {
     if (tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
         submitBar.style.display = 'none';
 
-        // 자산 탭 열릴 때 자산 표시 업데이트
+        // 자산 탭 열릴 때: 블록체인 모듈 지연 로드 후 자산 표시
         if (tabName === 'assets' && user) {
-            // 만료된 챌린지 자동 정산 (실패해도 자산 표시는 반드시 진행)
-            if (window.settleExpiredChallenges) {
-                window.settleExpiredChallenges()
-                    .catch(err => console.warn('챌린지 정산 스킵:', err.message));
-            }
-            updateAssetDisplay();
+            const load = window._loadBlockchainModule || (() => Promise.resolve());
+            load().then(() => {
+                if (window.settleExpiredChallenges) {
+                    window.settleExpiredChallenges().catch(() => {});
+                }
+                updateAssetDisplay();
+            });
         }
     } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
@@ -2343,16 +2344,17 @@ async function renderDashboard() {
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
         const needsReset = weeklyMissionData && weeklyMissionData.weekId && weeklyMissionData.weekId !== currentWeekId;
         if (needsReset) {
-            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, weekStrs);
-            // 리로드
-            const freshDoc = await getDoc(userRef);
-            if (freshDoc.exists()) {
-                const fd = freshDoc.data();
-                weeklyMissionData = fd.weeklyMissionData || null;
-                missionHistory = fd.missionHistory || [];
-                missionStreak = fd.missionStreak || 0;
-                missionBadges = fd.missionBadges || [];
-            }
+            // 아카이브를 백그라운드로 실행 (대시보드 렌더링 차단 방지)
+            const prevWeekStrs = weekStrs.map(dStr => {
+                const d = new Date(dStr + 'T12:00:00Z');
+                d.setUTCDate(d.getUTCDate() - 7);
+                return d.toISOString().slice(0, 10);
+            });
+            archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs).catch(e =>
+                console.warn('주간 아카이브 실패:', e.message)
+            );
+            weeklyMissionData = null;
+            missionStreak = 0;
         }
 
         const isWeekActive = weeklyMissionData && weeklyMissionData.weekId === currentWeekId && weeklyMissionData.missions && weeklyMissionData.missions.length > 0;
@@ -2744,18 +2746,41 @@ async function renderGroupChallenge() {
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
 
-    // 이번 달 날짜 범위 계산
     const today = new Date(getKstDateString() + 'T12:00:00Z');
     const year = today.getUTCFullYear();
     const month = String(today.getUTCMonth() + 1).padStart(2, '0');
+    const cacheKey = `groupChallenge_${year}-${month}`;
     const monthStart = `${year}-${month}-01`;
     const monthEnd = `${year}-${month}-31`;
 
-    // 이번 달 daily_logs (최대 500건으로 제한하여 모바일 성능 보호)
-    const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd), limit(500));
-    const snap = await getDocs(q);
-    const allLogs = [];
-    snap.forEach(d => allLogs.push(d.data()));
+    // localStorage 캐시 확인 (1시간 TTL)
+    let allLogs = null;
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.ts && (Date.now() - parsed.ts) < 3600_000) {
+                allLogs = parsed.data;
+            }
+        }
+    } catch (_) {}
+
+    // 캐시 없으면 Firestore 조회 후 캐시 저장
+    if (!allLogs) {
+        const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd), limit(500));
+        const snap = await getDocs(q);
+        allLogs = [];
+        snap.forEach(d => {
+            const data = d.data();
+            allLogs.push({
+                userId: data.userId, userName: data.userName, date: data.date,
+                awardedPoints: data.awardedPoints || {},
+                comments: (data.comments || []).map(c => ({ userId: c.userId, userName: c.userName })),
+                reactions: data.reactions || {}
+            });
+        });
+        try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: allLogs })); } catch (_) {}
+    }
 
     if (allLogs.length === 0) {
         section.style.display = 'none';

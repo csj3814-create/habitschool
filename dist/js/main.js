@@ -36,27 +36,27 @@ if (document.readyState === 'loading') {
     initializeApp();
 }
 
-// ========== 블록체인 모듈은 비동기 로드 (실패해도 인증에 영향 없음) ==========
-// 기본 fallback 먼저 설정
+// ========== 블록체인 모듈 — 지갑 탭 열 때만 로드 (초기 로딩 차단 방지) ==========
 window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
 window.startChallenge30D = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
 window.fetchOnchainBalance = async () => null;
 window.fetchTokenStats = async () => null;
+window._blockchainLoaded = false;
 
-// 비동기로 블록체인 모듈 로드 (then 패턴 — top-level await 미사용)
-import('./blockchain-manager.js').then(blockchainModule => {
-    window.convertPointsToHBT = blockchainModule.convertPointsToHBT;
-    window.startChallenge30D = blockchainModule.startChallenge30D;
-    window.fetchOnchainBalance = blockchainModule.fetchOnchainBalance;
-    window.fetchTokenStats = blockchainModule.fetchTokenStats;
-    window.getWalletAddress = blockchainModule.getWalletAddress;
-    window.settleExpiredChallenges = blockchainModule.settleExpiredChallenges;
-    window.forfeitChallenge = blockchainModule.forfeitChallenge;
-    window.claimChallengeReward = blockchainModule.claimChallengeReward;
-    console.log('✅ 블록체인 모듈 로드 완료');
-}).catch(e => {
-    console.warn('⚠️ 블록체인 모듈 로드 실패 (인증은 정상 작동):', e.message);
-});
+window._loadBlockchainModule = function() {
+    if (window._blockchainLoaded) return Promise.resolve();
+    return import('./blockchain-manager.js').then(mod => {
+        window.convertPointsToHBT = mod.convertPointsToHBT;
+        window.startChallenge30D = mod.startChallenge30D;
+        window.fetchOnchainBalance = mod.fetchOnchainBalance;
+        window.fetchTokenStats = mod.fetchTokenStats;
+        window.getWalletAddress = mod.getWalletAddress;
+        window.settleExpiredChallenges = mod.settleExpiredChallenges;
+        window.forfeitChallenge = mod.forfeitChallenge;
+        window.claimChallengeReward = mod.claimChallengeReward;
+        window._blockchainLoaded = true;
+    }).catch(e => console.warn('⚠️ 블록체인 모듈 로드 실패:', e.message));
+};
 
 // ========== 챌린지 신청 토글 ==========
 window.toggleChallengeSelection = function() {
