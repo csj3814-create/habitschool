@@ -2374,40 +2374,37 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         let missionStreak = typeof ud.missionStreak === 'number' ? ud.missionStreak : 0;
         let missionBadges = Array.isArray(ud.missionBadges) ? ud.missionBadges : [];
 
-        if (userDoc.exists()) {
-            // 기존 selectedMissions 마이그레이션 지원
-            if (!weeklyMissionData && ud.selectedMissions && ud.selectedMissions.length > 0) {
-                const oldMissionMap = {
-                    'm1_diet': { text: '🥗 하루 한 끼 채소 채우기', target: 3, type: 'diet' },
-                    'm1_exer': { text: '🏃 주 3회 이상 운동', target: 3, type: 'exercise' },
-                    'm1_mind': { text: '🧘 주 2회 명상', target: 2, type: 'mind' },
-                    'm2_diet': { text: '🥗 채소 위주 식단', target: 5, type: 'diet' },
-                    'm2_exer': { text: '🏃 주 4회 운동', target: 4, type: 'exercise' },
-                    'm2_mind': { text: '🧘 주 3회 명상', target: 3, type: 'mind' },
-                    'm3_diet': { text: '🥗 주 5일 클린 식단', target: 5, type: 'diet' },
-                    'm3_exer': { text: '🏃 매일 운동 습관', target: 5, type: 'exercise' },
-                    'm3_mind': { text: '🧘 주 4회 마음 챙김', target: 4, type: 'mind' },
-                    'm4_diet': { text: '🥗 하루 3끼 채소 중심', target: 6, type: 'diet' },
-                    'm4_exer': { text: '🏃 매일 운동 (주 6회)', target: 6, type: 'exercise' },
-                    'm4_mind': { text: '🧘 주 5회 명상', target: 5, type: 'mind' },
-                    'm5_diet': { text: '🥗 클린 식단 달성', target: 7, type: 'diet' },
-                    'm5_exer': { text: '🏃 매일 운동 달성', target: 7, type: 'exercise' },
-                    'm5_med':  { text: '💊 약 감량 시도', target: 1, type: 'mind' }
-                };
-                weeklyMissionData = {
-                    weekId: currentWeekId,
-                    missions: ud.selectedMissions.map(id => {
-                        const legacy = oldMissionMap[id];
-                        return {
-                            id,
-                            text: legacy ? legacy.text : id,
-                            target: legacy ? legacy.target : 3,
-                            type: legacy ? legacy.type : (id.includes('diet') ? 'diet' : id.includes('exer') ? 'exercise' : 'mind'),
-                            isCustom: false
-                        };
-                    })
-                };
-            }
+        if (!weeklyMissionData && ud.selectedMissions && ud.selectedMissions.length > 0) {
+            const oldMissionMap = {
+                'm1_diet': { text: '🥗 하루 한 끼 채소 채우기', target: 3, type: 'diet' },
+                'm1_exer': { text: '🏃 주 3회 이상 운동', target: 3, type: 'exercise' },
+                'm1_mind': { text: '🧘 주 2회 명상', target: 2, type: 'mind' },
+                'm2_diet': { text: '🥗 채소 위주 식단', target: 5, type: 'diet' },
+                'm2_exer': { text: '🏃 주 4회 운동', target: 4, type: 'exercise' },
+                'm2_mind': { text: '🧘 주 3회 명상', target: 3, type: 'mind' },
+                'm3_diet': { text: '🥗 주 5일 클린 식단', target: 5, type: 'diet' },
+                'm3_exer': { text: '🏃 매일 운동 습관', target: 5, type: 'exercise' },
+                'm3_mind': { text: '🧘 주 4회 마음 챙김', target: 4, type: 'mind' },
+                'm4_diet': { text: '🥗 하루 3끼 채소 중심', target: 6, type: 'diet' },
+                'm4_exer': { text: '🏃 매일 운동 (주 6회)', target: 6, type: 'exercise' },
+                'm4_mind': { text: '🧘 주 5회 명상', target: 5, type: 'mind' },
+                'm5_diet': { text: '🥗 클린 식단 달성', target: 7, type: 'diet' },
+                'm5_exer': { text: '🏃 매일 운동 달성', target: 7, type: 'exercise' },
+                'm5_med':  { text: '💊 약 감량 시도', target: 1, type: 'mind' }
+            };
+            weeklyMissionData = {
+                weekId: currentWeekId,
+                missions: ud.selectedMissions.map(id => {
+                    const legacy = oldMissionMap[id];
+                    return {
+                        id,
+                        text: legacy ? legacy.text : id,
+                        target: legacy ? legacy.target : 3,
+                        type: legacy ? legacy.type : (id.includes('diet') ? 'diet' : id.includes('exer') ? 'exercise' : 'mind'),
+                        isCustom: false
+                    };
+                })
+            };
         }
 
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
