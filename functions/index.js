@@ -1874,3 +1874,44 @@ exports.computeCommunityStats = onSchedule(
     { schedule: "every 1 hours", region: "asia-northeast3", timeoutSeconds: 120 },
     async () => { await computeCommunityStatsLogic(); }
 );
+
+// 대시보드 데이터 일괄 조회 (모바일 로딩 최적화: 4개 쿼리 → 1 HTTP 호출)
+exports.getDashboardData = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 10 },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "로그인 필요");
+        const uid = request.auth.uid;
+        const { weekStart, weekEnd } = request.data || {};
+        if (!weekStart || !weekEnd) throw new HttpsError("invalid-argument", "weekStart, weekEnd 필수");
+
+        const [userSnap, weekSnap, streakSnap, statsSnap] = await Promise.all([
+            db.doc(`users/${uid}`).get(),
+            db.collection("daily_logs")
+                .where("userId", "==", uid)
+                .where("date", ">=", weekStart)
+                .where("date", "<=", weekEnd)
+                .get(),
+            db.collection("daily_logs")
+                .where("userId", "==", uid)
+                .orderBy("date", "desc")
+                .limit(30)
+                .get(),
+            db.doc("meta/communityStats").get()
+        ]);
+
+        const user = userSnap.exists ? userSnap.data() : {};
+        const weekLogs = [];
+        weekSnap.forEach(d => {
+            const dd = d.data();
+            weekLogs.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} });
+        });
+        const streakLogs = [];
+        streakSnap.forEach(d => {
+            const dd = d.data();
+            streakLogs.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} });
+        });
+        const communityStats = statsSnap.exists ? statsSnap.data() : null;
+
+        return { user, weekLogs, streakLogs, communityStats };
+    }
+);

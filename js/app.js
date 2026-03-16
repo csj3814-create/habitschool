@@ -23,6 +23,29 @@ import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-s
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
 window.updateMetabolicScoreUI = updateMetabolicScoreUI;
+
+// CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
+function _loadScript(url) {
+    if (document.querySelector(`script[src="${url}"]`)) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+async function _ensureExif() {
+    if (typeof EXIF !== 'undefined') return;
+    await _loadScript('https://cdn.jsdelivr.net/npm/exif-js');
+}
+async function _ensureHtml2Canvas() {
+    if (typeof html2canvas !== 'undefined') return;
+    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+}
+async function _ensureKakao() {
+    if (window.Kakao && Kakao.isInitialized()) return;
+    await _loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
+    if (window.Kakao && !Kakao.isInitialized()) Kakao.init('f179e091a7b2f4425918b0625aa0fabb');
+}
 window.checkOnboarding = checkOnboarding;
 window.analyzeMealPhoto = analyzeMealPhoto;
 window.completeOnboarding = completeOnboarding;
@@ -684,8 +707,8 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
             }
         };
 
-        if (!skipExif && typeof EXIF !== 'undefined') {
-            EXIF.getData(file, function () {
+        if (!skipExif) {
+            _ensureExif().then(() => EXIF.getData(file, function () {
                 const exifDate = EXIF.getTag(this, "DateTimeOriginal");
                 if (exifDate) {
                     // EXIF 날짜가 있으면 EXIF로 검증
@@ -712,7 +735,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                     }
                 }
                 render();
-            });
+            })).catch(() => render());
         } else if (!skipExif) {
             // EXIF 라이브러리 없을 때도 lastModified로 검증
             const fileDate = new Date(file.lastModified);
@@ -848,7 +871,7 @@ window.smartUpload = async function (input) {
     }
 
     // 시간 추출 헬퍼 (비동기)
-    const extractTime = (f) => new Promise((resolve) => {
+    const extractTime = (f) => _ensureExif().then(() => new Promise((resolve) => {
         try {
             EXIF.getData(f, function () {
                 const exifDate = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
@@ -869,7 +892,7 @@ window.smartUpload = async function (input) {
         } catch {
             resolve("99:99:99"); // 오류 시 제일 뒤로
         }
-    });
+    }));
 
     try {
         const fileData = [];
@@ -2236,11 +2259,35 @@ async function loadBloodTestHistory() {
     }
 }
 
-// 대시보드 캐시 (30초 TTL)
+// 대시보드 캐시
 let _dashboardCache = { uid: null, data: null, ts: 0 };
 const DASHBOARD_CACHE_TTL = 30_000;
+const LS_DASHBOARD_KEY = 'dashboardData_v1';
 
-// 대시보드 렌더링
+function _saveDashboardToLS(uid, data) {
+    try {
+        localStorage.setItem(LS_DASHBOARD_KEY, JSON.stringify({ uid, ts: Date.now(), ...data }));
+    } catch (_) {}
+}
+
+function _loadDashboardFromLS(uid) {
+    try {
+        const raw = localStorage.getItem(LS_DASHBOARD_KEY);
+        if (!raw) return null;
+        const d = JSON.parse(raw);
+        if (d.uid !== uid) return null;
+        return d;
+    } catch (_) { return null; }
+}
+
+async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
+    const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+    const functions = getFunctions(undefined, 'asia-northeast3');
+    const fn = httpsCallable(functions, 'getDashboardData');
+    const result = await fn({ weekStart, weekEnd });
+    return result.data;
+}
+
 async function renderDashboard() {
     const user = auth.currentUser;
     if (!user) return;
@@ -2248,14 +2295,22 @@ async function renderDashboard() {
     const { todayStr, weekStrs } = getDatesInfo();
     const currentWeekId = getWeekId(todayStr);
 
-    // 캐시 히트: 30초 이내 같은 유저 → 재쿼리 생략
+    // 1차: 메모리 캐시 (30초 TTL)
     const now = Date.now();
     if (_dashboardCache.uid === user.uid && (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL && _dashboardCache.data) {
-        _renderDashboardFromCache(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
+        _renderDashboardWithData(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
         return;
     }
 
-    // 로딩 인디케이터 표시
+    // 2차: localStorage 캐시 → 즉시 렌더 + 백그라운드 갱신
+    const lsData = _loadDashboardFromLS(user.uid);
+    if (lsData) {
+        _renderDashboardWithData(lsData, todayStr, weekStrs, currentWeekId, user);
+        _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId).catch(() => {});
+        return;
+    }
+
+    // 3차: 캐시 없음 → 로딩 표시 + 서버 fetch
     const dashEl = document.getElementById('dashboard');
     if (dashEl && !dashEl.querySelector('.dashboard-loading-indicator')) {
         const loader = document.createElement('div');
@@ -2263,49 +2318,61 @@ async function renderDashboard() {
         loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">📊 기록을 불러오는 중...</div>';
         dashEl.prepend(loader);
     }
+    await _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId);
+}
 
+async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
     try {
-        console.time('⏱️ 대시보드 Firestore 쿼리');
-        const userRef = doc(db, "users", user.uid);
+        console.time('⏱️ 대시보드 데이터 로드');
         const weekStart = weekStrs[0];
         const weekEnd = weekStrs[6];
-        const weekQuery = query(
-            collection(db, "daily_logs"),
-            where("userId", "==", user.uid),
-            where("date", ">=", weekStart),
-            where("date", "<=", weekEnd)
-        );
-        const streakQuery = query(
-            collection(db, "daily_logs"),
-            where("userId", "==", user.uid),
-            orderBy("date", "desc"),
-            limit(30)
-        );
 
-        const [userDoc, snapshot, streakSnap] = await Promise.all([
-            getDoc(userRef),
-            getDocs(weekQuery),
-            getDocs(streakQuery)
-        ]);
-        console.timeEnd('⏱️ 대시보드 Firestore 쿼리');
+        let dashData;
+        try {
+            const cfData = await _fetchDashboardViaCloudFunction(user.uid, weekStart, weekEnd);
+            dashData = {
+                ud: cfData.user || {},
+                weekLogs: cfData.weekLogs || [],
+                streakLogs: cfData.streakLogs || [],
+                communityStats: cfData.communityStats || null
+            };
+        } catch (cfErr) {
+            console.warn('Cloud Function 실패, Firestore 직접 쿼리:', cfErr.message);
+            const userRef = doc(db, "users", user.uid);
+            const weekQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), where("date", ">=", weekStart), where("date", "<=", weekEnd));
+            const streakQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
+            const [userDoc, snapshot, streakSnap] = await Promise.all([getDoc(userRef), getDocs(weekQuery), getDocs(streakQuery)]);
+            const wl = []; snapshot.forEach(d => { const dd = d.data(); wl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
+            const sl = []; streakSnap.forEach(d => { const dd = d.data(); sl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
+            dashData = { ud: userDoc.exists() ? userDoc.data() : {}, weekLogs: wl, streakLogs: sl, communityStats: null };
+        }
+        console.timeEnd('⏱️ 대시보드 데이터 로드');
 
-        // 로딩 인디케이터 제거
         const loadingEl = document.querySelector('.dashboard-loading-indicator');
         if (loadingEl) loadingEl.remove();
 
-        // 캐시 저장
-        _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
+        _dashboardCache = { uid: user.uid, data: dashData, ts: Date.now() };
+        _saveDashboardToLS(user.uid, dashData);
 
-        const ud = userDoc.exists() ? userDoc.data() : {};
-        // 포인트 표시 (auth.js 백그라운드 호출과 무관하게 확실히 표시)
+        _renderDashboardWithData(dashData, todayStr, weekStrs, currentWeekId, user);
+    } catch (error) {
+        console.error('대시보드 데이터 로드 오류:', error);
+        const loadingEl = document.querySelector('.dashboard-loading-indicator');
+        if (loadingEl) loadingEl.remove();
+    }
+}
+
+function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user) {
+    try {
+        const ud = data.ud || {};
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderMilestones(user.uid, ud);
 
-        let level = ud.missionLevel || 1;
+        let level = typeof ud.missionLevel === 'number' ? ud.missionLevel : 1;
         let weeklyMissionData = ud.weeklyMissionData || null;
-        let missionHistory = ud.missionHistory || [];
-        let missionStreak = ud.missionStreak || 0;
-        let missionBadges = ud.missionBadges || [];
+        let missionHistory = Array.isArray(ud.missionHistory) ? ud.missionHistory : [];
+        let missionStreak = typeof ud.missionStreak === 'number' ? ud.missionStreak : 0;
+        let missionBadges = Array.isArray(ud.missionBadges) ? ud.missionBadges : [];
 
         if (userDoc.exists()) {
             // 기존 selectedMissions 마이그레이션 지원
@@ -2364,14 +2431,13 @@ async function renderDashboard() {
         // 레벨 뱃지 업데이트
         document.getElementById('user-level-badge').innerText = `Lv. ${level} ${MISSIONS[level]?.name || ''} ℹ️`;
 
-        // 이번 주 daily_logs 통계 계산 (위에서 병렬 로드 완료)
         let logsMap = {}; let statDiet = 0, statExer = 0, statMind = 0;
-        snapshot.forEach(d => {
-            const data = d.data();
-            logsMap[data.date] = data;
-            if (data.awardedPoints?.diet) statDiet++;
-            if (data.awardedPoints?.exercise) statExer++;
-            if (data.awardedPoints?.mind) statMind++;
+        const weekLogs = data.weekLogs || [];
+        weekLogs.forEach(logItem => {
+            logsMap[logItem.date] = logItem;
+            if (logItem.awardedPoints?.diet) statDiet++;
+            if (logItem.awardedPoints?.exercise) statExer++;
+            if (logItem.awardedPoints?.mind) statMind++;
         });
 
         // ==========================================
@@ -2383,15 +2449,11 @@ async function renderDashboard() {
         document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
         document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
 
-        // 연속기록 배지 (실시간 계산)
         let streakCount = 0;
-        const streakLogs = [];
-        streakSnap.forEach(d => {
-            const sd = d.data();
-            streakLogs.push({ date: sd.date, awarded: sd.awardedPoints });
-        });
+        const streakLogs = data.streakLogs || [];
         for (const log of streakLogs) {
-            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streakCount++;
+            const awarded = log.awardedPoints || log.awarded || {};
+            if (awarded.diet || awarded.exercise || awarded.mind) streakCount++;
             else break;
         }
         const streakBadge = document.getElementById('today-streak-badge');
@@ -2617,83 +2679,24 @@ async function renderDashboard() {
             progContainer.style.display = 'none';
         }
 
-        // 미션 배지 렌더링
         renderMissionBadges(missionBadges);
 
-        // 커뮤니티 현황 렌더링 — 대시보드 핵심 UI 렌더링 후 5초 지연 실행
-        // (전체 사용자 월간 로그 쿼리로 무거움, 모바일 대역폭 보호)
-        setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
+        if (data.communityStats) {
+            renderGroupChallengeFromData(data.communityStats);
+        } else {
+            setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
+        }
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
-        // 로딩 인디케이터 제거
-        const loadingEl = document.querySelector('.dashboard-loading-indicator');
-        if (loadingEl) loadingEl.remove();
-        // 콜드 스타트 시 자동 재시도 (1회)
-        if (!renderDashboard._retried) {
-            renderDashboard._retried = true;
-            setTimeout(() => {
-                renderDashboard._retried = false;
-                renderDashboard();
-            }, 1500);
-        } else {
-            renderDashboard._retried = false;
-            showToast('⚠️ 대시보드를 불러오는 중 오류가 발생했습니다.');
-        }
-    }
-}
-
-// 캐시 데이터로 대시보드 즉시 렌더링 (Firestore 쿼리 스킵)
-function _renderDashboardFromCache(cachedData, todayStr, weekStrs, currentWeekId, user) {
-    try {
-        const { userDoc, snapshot, streakSnap } = cachedData;
-        const ud = userDoc.exists() ? userDoc.data() : {};
-        renderMilestones(user.uid, ud);
-
-        let logsMap = {};
-        snapshot.forEach(d => { const data = d.data(); logsMap[data.date] = data; });
-
-        // 오늘의 인증 현황
-        const todayLog = logsMap[todayStr];
-        const todayAwarded = todayLog?.awardedPoints || {};
-        document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
-        document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
-        document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
-
-        // 연속기록
-        let streakCount = 0;
-        const streakLogs = [];
-        streakSnap.forEach(d => { const sd = d.data(); streakLogs.push({ date: sd.date, awarded: sd.awardedPoints }); });
-        for (const log of streakLogs) {
-            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streakCount++;
-            else break;
-        }
-        const streakBadge = document.getElementById('today-streak-badge');
-        if (streakCount > 0) {
-            streakBadge.textContent = `🔥 ${streakCount}일 연속`;
-            streakBadge.style.display = '';
-        }
-
-        // 주간 그래프
-        const graphArea = document.getElementById('week-graph');
-        graphArea.innerHTML = '';
-        const dayNames = ['월', '화', '수', '목', '금', '토', '일'];
-        weekStrs.forEach((dateStr, idx) => {
-            let circleClass = 'day-circle';
-            if (logsMap[dateStr]) circleClass += ' done';
-            let labelClass = 'day-label';
-            if (dateStr === todayStr) { circleClass += ' today'; labelClass += ' today'; }
-            graphArea.innerHTML += `<div class="day-wrap" onclick="changeDateTo('${dateStr}')"><div class="${circleClass}">${dayNames[idx]}</div><div class="${labelClass}">${dateStr.substring(5).replace('-', '/')}</div></div>`;
-        });
-    } catch (e) {
-        console.warn('캐시 렌더링 실패, 전체 리로드:', e.message);
-        _dashboardCache.ts = 0;
-        renderDashboard();
     }
 }
 
 // 데이터 저장 시 대시보드 캐시 무효화
-window._invalidateDashboardCache = function() { _dashboardCache.ts = 0; };
+window._invalidateDashboardCache = function() {
+    _dashboardCache.ts = 0;
+    try { localStorage.removeItem(LS_DASHBOARD_KEY); } catch (_) {}
+};
 
 // 난이도 선택기 초기화
 function initDifficultySelectors(level) {
@@ -2743,6 +2746,45 @@ function renderMissionBadges(earnedBadges) {
 }
 
 // 커뮤니티 월간 현황 렌더링 — 서버에서 미리 계산된 meta/communityStats 문서 1개만 읽음
+function renderGroupChallengeFromData(s) {
+    const section = document.getElementById('group-challenge-section');
+    const content = document.getElementById('group-challenge-content');
+    if (!section || !content) return;
+    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
+
+    const ranked = s.ranked || [];
+    const medals = ['🥇', '🥈', '🥉'];
+    const rewardAmounts = ['5,000P', '2,000P', '500P'];
+
+    section.style.display = 'block';
+    content.innerHTML = `
+        <div class="group-stats-grid">
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalUsers}명</span><span class="group-stat-label">참여 회원</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.newMemberCount || 0}명</span><span class="group-stat-label">🌟 신규</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalComments || 0}개</span><span class="group-stat-label">댓글</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">리액션</span></div>
+        </div>
+        ${s.bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${s.bestStreakName}</strong> ${s.bestStreak}일!</div>` : ''}
+        <div class="category-kings">
+            ${s.dietKing?.count > 0 ? `<span class="cat-king">🥗 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
+            ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
+            ${s.mindKing?.count > 0 ? `<span class="cat-king">🌙 <strong>${s.mindKing.name}</strong> ${s.mindKing.count}일</span>` : ''}
+        </div>
+        <div class="mvp-ranking-title">🏆 이번 달 MVP TOP 3</div>
+        <div class="mvp-ranking-list">
+            ${ranked.map((u, i) => `
+                <div class="mvp-ranking-item rank-${i + 1}">
+                    <span class="mvp-medal">${medals[i]}</span>
+                    <span class="mvp-name">${u.name}</span>
+                    <span class="mvp-days">${u.days}일·💬${u.comments}·❤️${u.reactions}</span>
+                    <span class="mvp-reward">${rewardAmounts[i]}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+    `;
+}
+
 async function renderGroupChallenge() {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
@@ -4473,6 +4515,7 @@ window.closeSharePlatformModal = function () {
 };
 
 async function createSquareShareBlob() {
+    await _ensureHtml2Canvas();
     const captureArea = document.getElementById('capture-area');
     const width = captureArea.offsetWidth;
     const height = captureArea.offsetHeight;
@@ -4667,7 +4710,7 @@ async function shareFileToAppsOrFallback(platform) {
         showToast('📥 이미지가 저장되었습니다!\nX 창에서 이미지를 추가해주세요.');
     } else if (platform === 'kakao') {
         downloadShareImage();
-        if (window.Kakao && Kakao.isInitialized()) {
+        _ensureKakao().then(() => {
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
@@ -4678,11 +4721,10 @@ async function shareFileToAppsOrFallback(platform) {
                 },
                 buttons: [{ title: '갤러리 구경가기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }]
             });
-        } else if (navigator.share) {
-            navigator.share({ title: '해빛스쿨 인증', text: shareText, url: window.location.href }).catch(() => {});
-        } else {
-            showToast('📥 이미지가 저장되었습니다!\n카카오톡에서 직접 공유해주세요.');
-        }
+        }).catch(() => {
+            if (navigator.share) navigator.share({ title: '해빛스쿨 인증', text: shareText, url: window.location.href }).catch(() => {});
+            else showToast('📥 이미지가 저장되었습니다!\n카카오톡에서 직접 공유해주세요.');
+        });
     }
 
     closeSharePlatformModal();
@@ -6176,22 +6218,16 @@ function shareApp(platform) {
 
     switch (platform) {
         case 'kakao':
-            if (window.Kakao && Kakao.isInitialized()) {
+            _ensureKakao().then(() => {
                 Kakao.Share.sendDefault({
                     objectType: 'feed',
-                    content: {
-                        title: title,
-                        description: text,
-                        imageUrl: 'https://habitschool.web.app/icons/og-image.png',
-                        link: { mobileWebUrl: url, webUrl: url }
-                    },
+                    content: { title, description: text, imageUrl: 'https://habitschool.web.app/icons/og-image.png', link: { mobileWebUrl: url, webUrl: url } },
                     buttons: [{ title: '시작하기', link: { mobileWebUrl: url, webUrl: url } }]
                 });
-            } else if (navigator.share) {
-                navigator.share({ title, text, url }).catch(() => {});
-            } else {
-                navigator.clipboard.writeText(url).then(() => showToast('📋 링크가 복사되었습니다!'));
-            }
+            }).catch(() => {
+                if (navigator.share) navigator.share({ title, text, url }).catch(() => {});
+                else navigator.clipboard.writeText(url).then(() => showToast('📋 링크가 복사되었습니다!'));
+            });
             break;
         case 'twitter':
             window.open(`https://twitter.com/intent/tweet?text=${encoded(text)}&url=${encoded(url)}`, '_blank', 'noopener');
