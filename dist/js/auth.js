@@ -165,25 +165,45 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
+            // ===== Phase 1: UI 즉시 표시 (Firestore 대기 없이) =====
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
             window._wasLoggedIn = true;
-            // Firestore에서 커스텀 닉네임 확인 후 표시
+
+            // 구글 닉네임으로 먼저 표시 (Firestore 커스텀 닉네임은 아래에서 덮어씀)
+            const tempName = user.displayName || '사용자';
+            window._userDisplayName = tempName;
+            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(tempName)}`;
+
+            // 탭 즉시 열기 (대시보드 렌더링은 자체적으로 Firestore 로드)
+            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
+            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
+            if (window.openTab) {
+                window.openTab(targetTab, false);
+            }
+
+            // ===== Phase 2: 사용자 문서 + 오늘 데이터 병렬 로드 =====
             const userRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userRef);
+            const userDocPromise = getDoc(userRef);
+            const loadDataPromise = window.loadDataForSelectedDate
+                ? window.loadDataForSelectedDate(todayStr)
+                : Promise.resolve();
+
+            const userDoc = await userDocPromise;
+
+            // 커스텀 닉네임 덮어쓰기
             const customName = userDoc.exists() ? userDoc.data().customDisplayName : null;
-            const displayName = customName || user.displayName;
-            window._userDisplayName = displayName;
-            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(displayName)}`;
-            // 닉네임 입력창에 현재 이름 표시
+            if (customName) {
+                window._userDisplayName = customName;
+                document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(customName)}`;
+            }
             const nicknameInput = document.getElementById('profile-nickname');
-            if (nicknameInput) nicknameInput.value = displayName;
+            if (nicknameInput) nicknameInput.value = window._userDisplayName;
 
             // 차단 목록 로드
             window._blockedUsers = userDoc.exists() ? (userDoc.data().blockedUsers || []) : [];
-
-            // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
 
             if (userDoc.exists()) {
                 const ud = userDoc.data();
@@ -223,7 +243,6 @@ export function setupAuthListener(callbacks) {
                         });
                     }
 
-                    // 마지막 측정일 표시
                     if (prof.updatedAt) {
                         const lastDate = prof.updatedAt.slice(0, 10);
                         const el = document.getElementById('prof-last-date');
@@ -232,14 +251,15 @@ export function setupAuthListener(callbacks) {
                 }
             }
 
-            // 내장형 지갑 자동 초기화 (비동기, 백그라운드 — 동적 import)
+            // loadDataForSelectedDate도 완료 대기 (이미 병렬 실행 중)
+            await loadDataPromise;
+
+            // ===== Phase 3: 백그라운드 작업 (비동기, 블로킹 없음) =====
             import('./blockchain-manager.js').then(mod => {
                 mod.initializeUserWallet().catch(err => {
                     console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
                 });
-                // 만료된 챌린지 확인 & 수령 안내
                 mod.settleExpiredChallenges().then(() => {
-                    // claimable 챌린지 확인 후 안내
                     getDoc(userRef).then(snap => {
                         const ac = snap.data()?.activeChallenges || {};
                         const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
@@ -252,30 +272,17 @@ export function setupAuthListener(callbacks) {
                 console.warn('⚠️ 블록체인 모듈 로드 실패 (계속 진행):', err.message);
             });
 
-            // 오늘 날짜 데이터 로드 (완료 후 탭 이동)
-            if (window.loadDataForSelectedDate) {
-                await window.loadDataForSelectedDate(todayStr);
-            }
-
-            // URL 파라미터로 지정된 탭 또는 대시보드로 이동
-            const urlTab = new URLSearchParams(window.location.search).get('tab');
-            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
-            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
-            if (window.openTab) {
-                window.openTab(targetTab, false);
-            }
-
             // 온보딩 체크 (첫 로그인 사용자)
             if (window.checkOnboarding) {
                 window.checkOnboarding();
             }
 
-            // 대사건강 점수 업데이트
+            // 대사건강 점수 업데이트 (비동기)
             if (window.updateMetabolicScoreUI) {
                 window.updateMetabolicScoreUI();
             }
 
-            // 인바디 히스토리 로드
+            // 인바디 히스토리 로드 (비동기)
             if (window.loadInbodyHistory) {
                 window.loadInbodyHistory();
             }
