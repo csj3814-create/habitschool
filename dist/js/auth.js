@@ -98,10 +98,13 @@ export function initAuth() {
     }
 
     loginBtn.addEventListener('click', () => {
+        window._isPopupLogin = true;
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        signInWithPopup(auth, provider).catch(error => {
+        signInWithPopup(auth, provider).then(() => {
+            window.location.reload();
+        }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
 
             if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
@@ -112,6 +115,7 @@ export function initAuth() {
             if (error.code === 'auth/popup-closed-by-user') {
                 return;
             }
+            window._isPopupLogin = false;
 
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
@@ -162,6 +166,12 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            if (window._isPopupLogin) {
+                window._isPopupLogin = false;
+                window.location.reload();
+                return;
+            }
+
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
