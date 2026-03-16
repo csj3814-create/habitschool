@@ -2327,25 +2327,14 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
         const weekStart = weekStrs[0];
         const weekEnd = weekStrs[6];
 
-        let dashData;
-        try {
-            const cfData = await _fetchDashboardViaCloudFunction(user.uid, weekStart, weekEnd);
-            dashData = {
-                ud: cfData.user || {},
-                weekLogs: cfData.weekLogs || [],
-                streakLogs: cfData.streakLogs || [],
-                communityStats: cfData.communityStats || null
-            };
-        } catch (cfErr) {
-            console.warn('Cloud Function 실패, Firestore 직접 쿼리:', cfErr.message);
-            const userRef = doc(db, "users", user.uid);
-            const weekQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), where("date", ">=", weekStart), where("date", "<=", weekEnd));
-            const streakQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
-            const [userDoc, snapshot, streakSnap] = await Promise.all([getDoc(userRef), getDocs(weekQuery), getDocs(streakQuery)]);
-            const wl = []; snapshot.forEach(d => { const dd = d.data(); wl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
-            const sl = []; streakSnap.forEach(d => { const dd = d.data(); sl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
-            dashData = { ud: userDoc.exists() ? userDoc.data() : {}, weekLogs: wl, streakLogs: sl, communityStats: null };
-        }
+        const userRef = doc(db, "users", user.uid);
+        const weekQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), where("date", ">=", weekStart), where("date", "<=", weekEnd));
+        const streakQuery = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
+        const [userDoc, snapshot, streakSnap] = await Promise.all([getDoc(userRef), getDocs(weekQuery), getDocs(streakQuery)]);
+        const wl = []; snapshot.forEach(d => { const dd = d.data(); wl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
+        const sl = []; streakSnap.forEach(d => { const dd = d.data(); sl.push({ date: dd.date, awardedPoints: dd.awardedPoints || {} }); });
+        const dashData = { ud: userDoc.exists() ? userDoc.data() : {}, weekLogs: wl, streakLogs: sl, communityStats: null };
+
         console.timeEnd('⏱️ 대시보드 데이터 로드');
 
         const loadingEl = document.querySelector('.dashboard-loading-indicator');
