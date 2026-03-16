@@ -36,16 +36,6 @@ if (document.readyState === 'loading') {
     initializeApp();
 }
 
-// SW 업데이트 시 자동 새로고침
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data?.type === 'SW_UPDATED') {
-            console.log('[SW] 새 버전 감지 → 자동 새로고침');
-            window.location.reload();
-        }
-    });
-}
-
 // ========== 블록체인 모듈은 비동기 로드 (실패해도 인증에 영향 없음) ==========
 // 기본 fallback 먼저 설정
 window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
