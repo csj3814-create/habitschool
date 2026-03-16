@@ -2616,8 +2616,9 @@ async function renderDashboard() {
         // 미션 배지 렌더링
         renderMissionBadges(missionBadges);
 
-        // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시)
-        renderGroupChallenge().catch(() => {});
+        // 커뮤니티 현황 렌더링 — 대시보드 핵심 UI 렌더링 후 5초 지연 실행
+        // (전체 사용자 월간 로그 쿼리로 무거움, 모바일 대역폭 보호)
+        setTimeout(() => renderGroupChallenge().catch(() => {}), 5000);
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -2750,8 +2751,8 @@ async function renderGroupChallenge() {
     const monthStart = `${year}-${month}-01`;
     const monthEnd = `${year}-${month}-31`;
 
-    // 이번 달 전체 daily_logs 범위 조회
-    const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd));
+    // 이번 달 daily_logs (최대 500건으로 제한하여 모바일 성능 보호)
+    const q = query(collection(db, "daily_logs"), where("date", ">=", monthStart), where("date", "<=", monthEnd), limit(500));
     const snap = await getDocs(q);
     const allLogs = [];
     snap.forEach(d => allLogs.push(d.data()));
