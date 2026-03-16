@@ -1,4 +1,4 @@
-﻿/**
+/**
  * app.js
  * 메인 애플리케이션 로직 모듈
  * index.html의 인라인 스크립트에서 추출
@@ -2235,9 +2235,11 @@ async function loadBloodTestHistory() {
     }
 }
 
-// 대시보드 캐시 (30초 TTL)
-let _dashboardCache = { uid: null, data: null, ts: 0 };
+// 대시보드 캐시 (30초 TTL) — 주차까지 포함
+let _dashboardCache = { uid: null, weekId: null, data: null, ts: 0 };
 const DASHBOARD_CACHE_TTL = 30_000;
+// 주간 미션 편집 모드 플래그 (진행 중인 주간 미션을 사용자가 수정하려고 할 때만 선택 UI 표시)
+window._missionEditMode = false;
 
 // 대시보드 렌더링
 async function renderDashboard() {
@@ -2249,7 +2251,10 @@ async function renderDashboard() {
 
     // 캐시 히트: 30초 이내 같은 유저 → 재쿼리 생략
     const now = Date.now();
-    if (_dashboardCache.uid === user.uid && (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL && _dashboardCache.data) {
+    if (_dashboardCache.uid === user.uid &&
+        _dashboardCache.weekId === currentWeekId &&
+        (now - _dashboardCache.ts) < DASHBOARD_CACHE_TTL &&
+        _dashboardCache.data) {
         _renderDashboardFromCache(_dashboardCache.data, todayStr, weekStrs, currentWeekId, user);
         return;
     }
@@ -2261,6 +2266,10 @@ async function renderDashboard() {
         loader.className = 'dashboard-loading-indicator';
         loader.innerHTML = '<div style="text-align:center;padding:20px 0;color:#aaa;font-size:13px;">📊 기록을 불러오는 중...</div>';
         dashEl.prepend(loader);
+        // 안전장치: 네트워크가 느리거나 오류가 나더라도 인디케이터가 너무 오래 남지 않도록 2초 후 강제 제거
+        setTimeout(() => {
+            if (loader && loader.parentNode) loader.remove();
+        }, 2000);
     }
 
     try {
@@ -2278,7 +2287,8 @@ async function renderDashboard() {
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
             orderBy("date", "desc"),
-            limit(120)
+            // 최근 60일만 조회해도 연속 기록 계산에는 충분
+            limit(60)
         );
 
         const [userDoc, snapshot, streakSnap] = await Promise.all([
@@ -2292,7 +2302,12 @@ async function renderDashboard() {
         if (loadingEl) loadingEl.remove();
 
         // 캐시 저장
-        _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
+        _dashboardCache = {
+            uid: user.uid,
+            weekId: currentWeekId,
+            data: { userDoc, snapshot, streakSnap },
+            ts: Date.now()
+        };
 
         // 마일스톤에 이미 로드한 유저 데이터 전달 (추가 Firestore 호출 방지)
         const ud = userDoc.exists() ? userDoc.data() : {};
@@ -2303,6 +2318,48 @@ async function renderDashboard() {
         let missionHistory = ud.missionHistory || [];
         let missionStreak = ud.missionStreak || 0;
         let missionBadges = ud.missionBadges || [];
+
+        // ===== 미션 데이터 방어/정규화 (특정 계정의 스키마/타입 불일치로 월요일 리셋이 깨지는 문제 방지) =====
+        let needsMissionFieldFix = false;
+        if (!Number.isFinite(level) || level < 1 || level > 10) {
+            level = 1;
+            needsMissionFieldFix = true;
+        }
+        if (!Array.isArray(missionHistory)) {
+            missionHistory = [];
+            needsMissionFieldFix = true;
+        }
+        if (!Array.isArray(missionBadges)) {
+            missionBadges = [];
+            needsMissionFieldFix = true;
+        }
+        if (weeklyMissionData && typeof weeklyMissionData === 'object') {
+            if (typeof weeklyMissionData.weekId !== 'string') {
+                weeklyMissionData.weekId = null;
+                needsMissionFieldFix = true;
+            }
+            const missionsVal = weeklyMissionData.missions;
+            if (!Array.isArray(missionsVal)) {
+                if (missionsVal && typeof missionsVal === 'object') {
+                    weeklyMissionData.missions = Object.values(missionsVal).filter(Boolean);
+                } else {
+                    weeklyMissionData.missions = [];
+                }
+                needsMissionFieldFix = true;
+            }
+        } else if (weeklyMissionData != null) {
+            weeklyMissionData = null;
+            needsMissionFieldFix = true;
+        }
+        if (needsMissionFieldFix) {
+            // 렌더가 깨지는 것을 우선 막기 위해 best-effort로만 정리 (실패해도 계속 진행)
+            setDoc(userRef, {
+                missionLevel: level,
+                weeklyMissionData: weeklyMissionData,
+                missionHistory: missionHistory,
+                missionBadges: missionBadges
+            }, { merge: true }).catch(() => {});
+        }
 
         if (userDoc.exists()) {
             // 기존 selectedMissions 마이그레이션 지원
@@ -2343,7 +2400,14 @@ async function renderDashboard() {
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
         const needsReset = weeklyMissionData && weeklyMissionData.weekId && weeklyMissionData.weekId !== currentWeekId;
         if (needsReset) {
-            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, weekStrs);
+            // ⚠️ 아카이브는 "이전 주(weeklyMissionData.weekId)" 기준이어야 함.
+            // 기존 코드는 current weekStrs를 넘겨서 월요일에 지난주 결과가 0%로 기록되거나 리셋이 꼬일 수 있었음.
+            const prevWeekStrs = weekStrs.map(dStr => {
+                const d = new Date(dStr + 'T12:00:00Z');
+                d.setUTCDate(d.getUTCDate() - 7);
+                return d.toISOString().slice(0, 10);
+            });
+            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs);
             // 리로드
             const freshDoc = await getDoc(userRef);
             if (freshDoc.exists()) {
@@ -2429,6 +2493,7 @@ async function renderDashboard() {
         const missionArea = document.getElementById('mission-selection-area');
         const progContainer = document.getElementById('mission-progress-container');
         missionArea.innerHTML = '';
+        if (progContainer) progContainer.innerHTML = '';
 
         // (A) 지난주 리포트 카드
         const lastWeek = missionHistory.length > 0 ? missionHistory[missionHistory.length - 1] : null;
@@ -2457,7 +2522,9 @@ async function renderDashboard() {
                 </div>`;
         }
 
-        if (!isWeekActive) {
+        const isEditingMission = window._missionEditMode === true;
+
+        if (!isWeekActive || isEditingMission) {
             // ========== 미션 설정 모드 ==========
             const levelData = MISSIONS[level] || MISSIONS[1];
             const categories = ['diet', 'exercise', 'mind'];
@@ -2515,91 +2582,26 @@ async function renderDashboard() {
             setTimeout(() => initDifficultySelectors(level), 0);
 
         } else {
-            // ========== 진행 중 모드: 프로그레스 표시 ==========
+            // ========== 진행 중 모드: 요약만 표시 ==========
             progContainer.style.display = 'block';
-            progContainer.innerHTML = '';
-
             let totalMissions = weeklyMissionData.missions.length;
             let completedMissions = 0;
-
             weeklyMissionData.missions.forEach(m => {
-                let currentVal = 0;
-                if (m.type === 'diet') currentVal = statDiet;
-                else if (m.type === 'exercise') currentVal = statExer;
-                else if (m.type === 'mind') currentVal = statMind;
-
-                const percent = Math.min((currentVal / m.target) * 100, 100);
-                if (percent >= 100) completedMissions++;
-
-                const fillColor = percent >= 100 ? 'var(--success-color, #4CAF50)' : percent >= 50 ? 'var(--secondary-color)' : 'var(--warning-color, #FF9800)';
-                const statusIcon = percent >= 100 ? '✅' : percent >= 50 ? '🔄' : '⏳';
-                const customTag = m.isCustom ? '<span class="custom-tag">커스텀</span>' : '';
-
-                progContainer.innerHTML += `
-                    <div class="mp-row">
-                        <div class="mp-label">
-                            <span>${statusIcon} ${m.text} ${customTag}</span>
-                            <span class="mp-count">${currentVal} / ${m.target}</span>
-                        </div>
-                        <div class="mp-track">
-                            <div class="mp-fill" style="width: ${percent}%; background-color: ${fillColor};"></div>
-                        </div>
-                    </div>`;
+                const key = m.type === 'diet' ? 'diet' : m.type === 'exercise' ? 'exercise' : 'mind';
+                const achieved = key === 'diet' ? statDiet : key === 'exercise' ? statExer : statMind;
+                const clamped = Math.min(achieved, m.target);
+                const ratio = m.target > 0 ? Math.round((clamped / m.target) * 100) : 0;
+                if (ratio >= 100) completedMissions++;
             });
-
-            // 전체 달성률 (실제 진행도 기반)
-            let totalProgress = 0;
-            weeklyMissionData.missions.forEach(m => {
-                let val = m.type === 'diet' ? statDiet : m.type === 'exercise' ? statExer : statMind;
-                totalProgress += Math.min(val / m.target, 1);
-            });
-            const overallRate = totalMissions > 0 ? Math.round((totalProgress / totalMissions) * 100) : 0;
-            const rateMsg = overallRate >= 100 ? '🎉 모든 미션 완료! 대단해요!' : overallRate >= 80 ? '🔥 거의 다 왔어요! 조금만 더!' : overallRate >= 50 ? '👍 절반 이상 달성! 이 페이스 유지!' : '💪 아직 시간 있어요, 화이팅!';
-
-            // 남은 일수 계산
             const todayIdx = weekStrs.indexOf(todayStr);
-            const remainingDays = todayIdx >= 0 ? 6 - todayIdx : 0;
-
-            progContainer.innerHTML += `
+            const remainingDays = todayIdx >= 0 ? (6 - todayIdx) : 0;
+            progContainer.innerHTML = `
                 <div class="mission-overall-status">
-                    <div class="overall-rate">${rateMsg}</div>
-                    <div class="overall-stats">
-                        <span>달성률 <strong>${overallRate}%</strong></span>
-                        <span>남은 일수 <strong>${remainingDays}일</strong></span>
-                    </div>
-                </div>`;
-
-            // 미달성 경고 (남은 일수 적고 달성률 낮을 때)
-            if (remainingDays <= 2 && overallRate < 80) {
-                progContainer.innerHTML += `<div class="mission-warning">⚠️ 이번 주 ${remainingDays}일 남았어요! 미션을 서둘러 달성해보세요!</div>`;
-            }
-
-            // 레벨업 버튼
-            const allDone = completedMissions === totalMissions && totalMissions > 0;
-            if (allDone && level < 5) {
-                progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`;
-            }
-
-            // 미션 재설정 버튼 (진행 중에도 변경 가능)
-            progContainer.innerHTML += `<button class="submit-btn reset-mission-btn" onclick="resetWeeklyMissions()">🔄 이번 주 미션 재설정</button>`;
-
-            // 저장 버튼 상태 업데이트
-            const saveBtn = document.getElementById('btn-save-missions');
-            if (allDone) {
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.opacity = '0.5';
-                    saveBtn.style.cursor = 'not-allowed';
-                    saveBtn.innerText = '✅ 이번 주 미션 완료!';
-                }
-            } else {
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.opacity = '0.5';
-                    saveBtn.style.cursor = 'not-allowed';
-                    saveBtn.innerText = '미션 진행 중...';
-                }
-            }
+                    <span>이번 주 미션: <strong>${completedMissions}/${totalMissions}</strong> 완료</span>
+                    <span>${remainingDays > 0 ? `남은 ${remainingDays}일` : '이번 주 종료'}</span>
+                </div>
+                <button class="submit-btn reset-mission-btn" onclick="enterMissionEditMode()">📝 이번 주 미션 변경하기</button>
+            `;
         }
 
         if (!isWeekActive) {
@@ -2610,14 +2612,16 @@ async function renderDashboard() {
                 saveBtn.style.cursor = 'pointer';
                 saveBtn.innerText = '🎯 이번 주 미션 시작!';
             }
-            progContainer.style.display = 'none';
+            if (progContainer) progContainer.style.display = 'none';
         }
 
         // 미션 배지 렌더링
         renderMissionBadges(missionBadges);
 
-        // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시)
-        renderGroupChallenge().catch(() => {});
+        // 커뮤니티 현황 렌더링 (비동기, 실패해도 무시) — 첫 화면 렌더 이후로 지연 실행
+        setTimeout(() => {
+            renderGroupChallenge().catch(() => {});
+        }, 0);
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -2987,15 +2991,38 @@ function renderPendingCustomMissions() {
 
 // 주간 아카이브 및 리셋
 async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, weekStrs) {
-    // 해당 주의 실제 stats 계산
-    const q = query(collection(db, "daily_logs"), where("userId", "==", uid));
-    const snapshot = await getDocs(q);
+    // 방어: 깨진 타입이 들어와도 리셋이 전체 대시보드를 망치지 않게
+    if (!weeklyData || typeof weeklyData !== 'object') return;
+    if (!Array.isArray(history)) history = [];
+    const safeMissions = Array.isArray(weeklyData.missions)
+        ? weeklyData.missions.filter(Boolean)
+        : (weeklyData.missions && typeof weeklyData.missions === 'object'
+            ? Object.values(weeklyData.missions).filter(Boolean)
+            : []);
+
+    // 해당 주의 실제 stats 계산 (해당 주 범위만 조회)
+    const weekStart = weekStrs?.[0];
+    const weekEnd = weekStrs?.[6];
+    let snapshot;
+    if (weekStart && weekEnd) {
+        const q = query(
+            collection(db, "daily_logs"),
+            where("userId", "==", uid),
+            where("date", ">=", weekStart),
+            where("date", "<=", weekEnd)
+        );
+        snapshot = await getDocs(q);
+    } else {
+        // fallback: 기존 방식 (최소 기능 유지)
+        const q = query(collection(db, "daily_logs"), where("userId", "==", uid));
+        snapshot = await getDocs(q);
+    }
     let statDiet = 0, statExer = 0, statMind = 0;
 
     // 아카이브할 주의 날짜 계산 (weeklyData.weekId 기준)
     snapshot.forEach(d => {
         const data = d.data();
-        if (weekStrs.includes(data.date)) {
+        if (Array.isArray(weekStrs) && weekStrs.includes(data.date)) {
             if (data.awardedPoints?.diet) statDiet++;
             if (data.awardedPoints?.exercise) statExer++;
             if (data.awardedPoints?.mind) statMind++;
@@ -3004,11 +3031,12 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
 
     // 달성률 계산
     let totalTarget = 0, totalAchieved = 0;
-    if (weeklyData.missions) {
-        weeklyData.missions.forEach(m => {
+    if (safeMissions.length > 0) {
+        safeMissions.forEach(m => {
+            const target = Number(m?.target) || 0;
             totalTarget += m.target;
             let val = m.type === 'diet' ? statDiet : m.type === 'exercise' ? statExer : statMind;
-            totalAchieved += Math.min(val, m.target);
+            totalAchieved += Math.min(val, target);
         });
     }
     const completionRate = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
@@ -3019,7 +3047,7 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     // 히스토리에 추가 (최대 12주 보관)
     const archiveEntry = {
         weekId: weeklyData.weekId,
-        missions: weeklyData.missions,
+        missions: safeMissions,
         stats: { diet: statDiet, exercise: statExer, mind: statMind },
         completionRate: completionRate
     };
@@ -3031,13 +3059,13 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     if (newStreak >= 3) newBadges.push('mStreak3');
     if (newStreak >= 5) newBadges.push('mStreak5');
     if (newStreak >= 10) newBadges.push('mStreak10');
-    const hasHard = weeklyData.missions?.some(m => m.difficulty === 'hard');
+    const hasHard = safeMissions.some(m => m.difficulty === 'hard');
     if (hasHard && completionRate >= 100) newBadges.push('hardMode');
-    const hasDiet = weeklyData.missions?.some(m => m.type === 'diet');
-    const hasExer = weeklyData.missions?.some(m => m.type === 'exercise');
-    const hasMind = weeklyData.missions?.some(m => m.type === 'mind');
+    const hasDiet = safeMissions.some(m => m.type === 'diet');
+    const hasExer = safeMissions.some(m => m.type === 'exercise');
+    const hasMind = safeMissions.some(m => m.type === 'mind');
     if (hasDiet && hasExer && hasMind && completionRate >= 100) newBadges.push('allCategories');
-    const hasCustom = weeklyData.missions?.some(m => m.isCustom);
+    const hasCustom = safeMissions.some(m => m.isCustom);
     if (hasCustom && completionRate >= 80) newBadges.push('customMaster');
 
     // Firestore 업데이트
@@ -3051,7 +3079,8 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     if (newBadges.length > 0) {
         const userRef = doc(db, "users", uid);
         const userDoc = await getDoc(userRef);
-        const existingBadges = userDoc.exists() ? (userDoc.data().missionBadges || []) : [];
+        const existingBadgesRaw = userDoc.exists() ? (userDoc.data().missionBadges || []) : [];
+        const existingBadges = Array.isArray(existingBadgesRaw) ? existingBadgesRaw : [];
         const allBadges = [...new Set([...existingBadges, ...newBadges])];
         updateData.missionBadges = allBadges;
     }
@@ -3144,6 +3173,12 @@ window.resetWeeklyMissions = async function() {
         console.error('미션 리셋 오류:', error);
         showToast('⚠️ 미션 리셋에 실패했습니다.');
     }
+};
+
+// 진행 중인 주간 미션 편집 모드 진입
+window.enterMissionEditMode = function () {
+    window._missionEditMode = true;
+    renderDashboard();
 };
 
 /* 다크모드 토글 */
