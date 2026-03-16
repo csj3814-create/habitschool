@@ -8,7 +8,8 @@
 import {
     increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, deleteDoc,
     query, where, orderBy, limit, serverTimestamp,
-    arrayRemove, arrayUnion
+    arrayRemove, arrayUnion,
+    disableNetwork, enableNetwork
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
@@ -2265,6 +2266,15 @@ async function renderDashboard() {
     }
 
     try {
+        // 모바일 팝업 로그인 후: 죽은 WebSocket을 강제 재연결 (쿼리 전에 반드시 완료)
+        if (window._needsFirestoreReconnect) {
+            window._needsFirestoreReconnect = false;
+            console.time('⏱️ Firestore 재연결');
+            await disableNetwork(db);
+            await enableNetwork(db);
+            console.timeEnd('⏱️ Firestore 재연결');
+        }
+
         console.time('⏱️ 대시보드 Firestore 쿼리');
         const userRef = doc(db, "users", user.uid);
         const weekStart = weekStrs[0];

@@ -1,7 +1,7 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch, disableNetwork, enableNetwork } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
@@ -102,11 +102,8 @@ export function initAuth() {
         provider.setCustomParameters({ prompt: 'select_account' });
 
         signInWithPopup(auth, provider).then(() => {
-            // 모바일: 팝업 중 Firestore WebSocket 끊김 → 강제 재연결
-            console.time('⏱️ Firestore 재연결');
-            disableNetwork(db).then(() => enableNetwork(db)).then(() => {
-                console.timeEnd('⏱️ Firestore 재연결');
-            }).catch(() => {});
+            // 모바일: 팝업 중 Firestore WebSocket 끊김 → renderDashboard에서 쿼리 전 강제 재연결
+            window._needsFirestoreReconnect = true;
         }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
 
