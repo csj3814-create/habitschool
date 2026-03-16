@@ -98,12 +98,13 @@ export function initAuth() {
     }
 
     loginBtn.addEventListener('click', () => {
+        window._isPopupLogin = true;
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
         signInWithPopup(auth, provider).then(() => {
-            // 모바일: 팝업 중 Firestore WebSocket 끊김 → renderDashboard에서 쿼리 전 강제 재연결
-            window._needsFirestoreReconnect = true;
+            // PC: 팝업 성공 → 깔끔하게 페이지 reload (Firestore 연결 초기화)
+            window.location.reload();
         }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
 
@@ -113,9 +114,10 @@ export function initAuth() {
             }
 
             if (error.code === 'auth/popup-closed-by-user') {
-                console.log('팝업 닫힘 — onAuthStateChanged 대기');
+                // 모바일: 팝업 닫히지만 인증은 성공할 수 있음 → onAuthStateChanged에서 reload 처리
                 return;
             }
+            window._isPopupLogin = false;
 
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
@@ -166,8 +168,13 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            console.time('⏱️ 로그인→대시보드 전체');
-            console.log('⏱️ onAuthStateChanged 시작:', new Date().toISOString());
+            // 모바일 팝업 로그인 직후: Firestore WebSocket 죽어있으므로 reload로 깨끗하게 시작
+            if (window._isPopupLogin) {
+                window._isPopupLogin = false;
+                window.location.reload();
+                return;
+            }
+
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';

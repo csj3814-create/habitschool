@@ -8,8 +8,7 @@
 import {
     increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, deleteDoc,
     query, where, orderBy, limit, serverTimestamp,
-    arrayRemove, arrayUnion,
-    disableNetwork, enableNetwork
+    arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
@@ -2266,15 +2265,6 @@ async function renderDashboard() {
     }
 
     try {
-        // 모바일 팝업 로그인 후: 죽은 WebSocket을 강제 재연결 (쿼리 전에 반드시 완료)
-        if (window._needsFirestoreReconnect) {
-            window._needsFirestoreReconnect = false;
-            console.time('⏱️ Firestore 재연결');
-            await disableNetwork(db);
-            await enableNetwork(db);
-            console.timeEnd('⏱️ Firestore 재연결');
-        }
-
         console.time('⏱️ 대시보드 Firestore 쿼리');
         const userRef = doc(db, "users", user.uid);
         const weekStart = weekStrs[0];
@@ -2306,8 +2296,9 @@ async function renderDashboard() {
         // 캐시 저장
         _dashboardCache = { uid: user.uid, data: { userDoc, snapshot, streakSnap }, ts: Date.now() };
 
-        // 마일스톤에 이미 로드한 유저 데이터 전달 (추가 Firestore 호출 방지)
         const ud = userDoc.exists() ? userDoc.data() : {};
+        // 포인트 표시 (auth.js 백그라운드 호출과 무관하게 확실히 표시)
+        if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderMilestones(user.uid, ud);
 
         let level = ud.missionLevel || 1;
