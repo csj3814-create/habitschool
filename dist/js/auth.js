@@ -165,31 +165,22 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, async (user) => {
         if (user) {
-            // ===== Phase 1: UI 즉시 표시 (Firestore 대기 없이) =====
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
             window._wasLoggedIn = true;
 
-            // 구글 닉네임으로 먼저 표시 (Firestore 커스텀 닉네임은 아래에서 덮어씀)
+            // 구글 닉네임으로 즉시 표시
             const tempName = user.displayName || '사용자';
             window._userDisplayName = tempName;
             document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(tempName)}`;
 
-            // 탭 즉시 열기 (대시보드 렌더링은 자체적으로 Firestore 로드)
-            const urlTab = new URLSearchParams(window.location.search).get('tab');
-            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
-            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
-            if (window.openTab) {
-                window.openTab(targetTab, false);
-            }
-
-            // ===== Phase 2: 사용자 문서 + 오늘 데이터 병렬 로드 =====
+            // 사용자 문서 + 오늘 데이터를 병렬로 시작
             const userRef = doc(db, "users", user.uid);
             const userDocPromise = getDoc(userRef);
-            const loadDataPromise = window.loadDataForSelectedDate
-                ? window.loadDataForSelectedDate(todayStr)
-                : Promise.resolve();
+            if (window.loadDataForSelectedDate) {
+                window.loadDataForSelectedDate(todayStr).catch(() => {});
+            }
 
             const userDoc = await userDocPromise;
 
@@ -202,27 +193,23 @@ export function setupAuthListener(callbacks) {
             const nicknameInput = document.getElementById('profile-nickname');
             if (nicknameInput) nicknameInput.value = window._userDisplayName;
 
-            // 차단 목록 로드
             window._blockedUsers = userDoc.exists() ? (userDoc.data().blockedUsers || []) : [];
 
             if (userDoc.exists()) {
                 const ud = userDoc.data();
                 if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
 
-                // 관리자 피드백 표시
                 if (ud.adminFeedback && ud.feedbackDate) {
                     const fbDate = new Date(ud.feedbackDate);
                     const now = new Date(todayStr);
                     const diffDays = (now - fbDate) / (1000 * 60 * 60 * 24);
                     const isHidden = localStorage.getItem('hide_fb_' + user.uid);
-
                     if (diffDays <= 3 && !isHidden) {
                         document.getElementById('admin-feedback-box').style.display = 'block';
                         document.getElementById('admin-feedback-text').innerText = ud.adminFeedback;
                     }
                 }
 
-                // 건강 프로필 로드
                 if (ud.healthProfile) {
                     const prof = ud.healthProfile;
                     const profSmm = document.getElementById('prof-smm');
@@ -230,19 +217,16 @@ export function setupAuthListener(callbacks) {
                     const profVisceral = document.getElementById('prof-visceral');
                     const profBmr = document.getElementById('prof-bmr');
                     const profMedOther = document.getElementById('prof-med-other');
-
                     if (profSmm) profSmm.value = prof.smm || '';
                     if (profFat) profFat.value = prof.fat || '';
                     if (profVisceral) profVisceral.value = prof.visceral || '';
                     if (profBmr) profBmr.value = prof.bmr || '';
                     if (profMedOther) profMedOther.value = prof.medOther || '';
-
                     if (prof.meds) {
                         document.querySelectorAll('input[name="med-chk"]').forEach(chk => {
                             if (prof.meds.includes(chk.value)) chk.checked = true;
                         });
                     }
-
                     if (prof.updatedAt) {
                         const lastDate = prof.updatedAt.slice(0, 10);
                         const el = document.getElementById('prof-last-date');
@@ -251,10 +235,15 @@ export function setupAuthListener(callbacks) {
                 }
             }
 
-            // loadDataForSelectedDate도 완료 대기 (이미 병렬 실행 중)
-            await loadDataPromise;
+            // 탭 열기 (사용자 문서 로드 후 — 대시보드에서 renderDashboard 호출됨)
+            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
+            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
+            if (window.openTab) {
+                window.openTab(targetTab, false);
+            }
 
-            // ===== Phase 3: 백그라운드 작업 (비동기, 블로킹 없음) =====
+            // 백그라운드 작업
             import('./blockchain-manager.js').then(mod => {
                 mod.initializeUserWallet().catch(err => {
                     console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
@@ -272,20 +261,9 @@ export function setupAuthListener(callbacks) {
                 console.warn('⚠️ 블록체인 모듈 로드 실패 (계속 진행):', err.message);
             });
 
-            // 온보딩 체크 (첫 로그인 사용자)
-            if (window.checkOnboarding) {
-                window.checkOnboarding();
-            }
-
-            // 대사건강 점수 업데이트 (비동기)
-            if (window.updateMetabolicScoreUI) {
-                window.updateMetabolicScoreUI();
-            }
-
-            // 인바디 히스토리 로드 (비동기)
-            if (window.loadInbodyHistory) {
-                window.loadInbodyHistory();
-            }
+            if (window.checkOnboarding) window.checkOnboarding();
+            if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
+            if (window.loadInbodyHistory) window.loadInbodyHistory();
 
             // 혈액검사 이력 로드
             if (window.loadBloodTestHistory) {
