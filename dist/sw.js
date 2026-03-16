@@ -3,7 +3,7 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v73';
+const CACHE_NAME = 'habitschool-v74';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -29,20 +29,13 @@ const STATIC_ASSETS = [
 
 const INDEX_URL = new URL('./', self.location).href;
 
-// 설치: 정적 자산 캐싱
+// 설치: 즉시 활성화 (구버전 캐시로 인한 지연 방지)
 self.addEventListener('install', (event) => {
     console.log('[SW] 설치 시작');
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('[SW] 정적 자산 캐싱');
-                return cache.addAll(STATIC_ASSETS);
-            })
-            .then(() => self.skipWaiting())
-    );
+    event.waitUntil(self.skipWaiting());
 });
 
-// 활성화: 구 캐시 정리
+// 활성화: 구 캐시 정리 + 즉시 제어
 self.addEventListener('activate', (event) => {
     console.log('[SW] 활성화');
     event.waitUntil(
@@ -59,43 +52,21 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// 네트워크 요청 처리 (Network First, Cache Fallback)
+// 모든 요청: Network First, Cache Fallback (항상 최신 파일 우선)
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    // 같은 origin의 GET 요청만 캐싱 (외부 API, Firebase, CDN 등 모두 제외)
     if (
         request.method !== 'GET' ||
         !request.url.startsWith(self.location.origin)
     ) {
-        return; // 기본 네트워크 동작 사용
-    }
-
-    // 정적 자산: Cache First
-    const reqUrl = new URL(request.url);
-    if (STATIC_ASSETS.some(asset => {
-        const assetUrl = new URL(asset, self.location);
-        return reqUrl.origin === assetUrl.origin && reqUrl.pathname === assetUrl.pathname;
-    })) {
-        event.respondWith(
-            caches.match(request)
-                .then(cached => cached || fetch(request).then(response => {
-                    if (response.ok) {
-                        const clone = response.clone();
-                        caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-                    }
-                    return response;
-                }))
-                .catch(() => caches.match(INDEX_URL).then(r => r || fetch(request)))
-        );
         return;
     }
 
-    // 기타 요청: Network First, Cache Fallback
     event.respondWith(
         fetch(request)
             .then(response => {
-                if (response.ok && request.url.startsWith(self.location.origin)) {
+                if (response.ok) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
                 }
