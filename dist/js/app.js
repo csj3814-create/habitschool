@@ -3218,6 +3218,8 @@ window.resetWeeklyMissions = async function() {
     try {
         await setDoc(doc(db, "users", user.uid), { weeklyMissionData: null, selectedMissions: [] }, { merge: true });
         pendingCustomMissions = [];
+        _dashboardCache = { uid: null, weekId: null, data: null, ts: 0 };
+        window._missionEditMode = false;
         showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
         renderDashboard();
     } catch (error) {
