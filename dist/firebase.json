@@ -48,6 +48,15 @@
       ],
       "headers": [
         {
+          "source": "/.well-known/assetlinks.json",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        {
           "source": "/sw.js",
           "headers": [
             {
@@ -81,7 +90,7 @@
             },
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google.com; media-src 'self' blob: https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://*.cloudfunctions.net https://firebasestorage.googleapis.com https://accounts.google.com https://sepolia.base.org https://mainnet.base.org; font-src 'self' data:; frame-src 'self' https://*.firebaseapp.com https://*.web.app https://*.googleapis.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none';"
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://t1.kakaocdn.net https://developers.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://*.kakaocdn.net; media-src 'self' blob: https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://*.cloudfunctions.net https://firebasestorage.googleapis.com https://accounts.google.com https://apis.google.com https://sepolia.base.org https://mainnet.base.org https://sharer.kakao.com https://kapi.kakao.com; font-src 'self' data:; frame-src 'self' https://*.firebaseapp.com https://*.web.app https://*.googleapis.com https://accounts.google.com https://apis.google.com https://sharer.kakao.com; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none';"
             }
           ]
         }
@@ -110,6 +119,15 @@
       ],
       "headers": [
         {
+          "source": "/.well-known/assetlinks.json",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        {
           "source": "/sw.js",
           "headers": [
             {
@@ -143,7 +161,7 @@
             },
             {
               "key": "Content-Security-Policy",
-              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google.com; media-src 'self' blob: https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://*.cloudfunctions.net https://firebasestorage.googleapis.com https://accounts.google.com https://sepolia.base.org https://mainnet.base.org; font-src 'self' data:; frame-src 'self' https://*.firebaseapp.com https://*.web.app https://*.googleapis.com https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none';"
+              "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://t1.kakaocdn.net https://developers.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://www.google.com https://*.kakaocdn.net; media-src 'self' blob: https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://*.cloudfunctions.net https://firebasestorage.googleapis.com https://accounts.google.com https://apis.google.com https://sepolia.base.org https://mainnet.base.org https://sharer.kakao.com https://kapi.kakao.com; font-src 'self' data:; frame-src 'self' https://*.firebaseapp.com https://*.web.app https://*.googleapis.com https://accounts.google.com https://apis.google.com https://sharer.kakao.com; object-src 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com; frame-ancestors 'none';"
             }
           ]
         }

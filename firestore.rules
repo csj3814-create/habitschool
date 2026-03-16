@@ -38,7 +38,9 @@ service cloud.firestore {
           .hasOnly(['displayName', 'customDisplayName', 'photoURL', 'walletAddress', 'encryptedWallet',
                     'activeChallenge', 'activeChallenges', 'milestones', 'settings',
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
-                    'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers']);
+                    'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
+                    'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
+                    'missionBadges', 'selectedMissions']);
     }
     
     // ===== Users Collection =====

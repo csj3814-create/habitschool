@@ -393,7 +393,7 @@ export async function convertPointsToHBT(pointAmount) {
             }
         }
 
-        if (window.updateAssetDisplay) await window.updateAssetDisplay();
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         return true;
     } catch (onchainError) {
         console.error('❌ 온체인 민팅 실패:', onchainError.code, onchainError.message);
@@ -519,7 +519,7 @@ export async function startChallenge30D(challengeId) {
             showToast(`✅ ${data.duration}일 챌린지 시작!${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
         }
 
-        window.updateAssetDisplay && window.updateAssetDisplay();
+        window.updateAssetDisplay && window.updateAssetDisplay(true);
         return true;
 
     } catch (error) {
@@ -666,7 +666,7 @@ export async function updateChallengeProgress() {
             }
         }
 
-        window.updateAssetDisplay && window.updateAssetDisplay();
+        window.updateAssetDisplay && window.updateAssetDisplay(true);
 
     } catch (error) {
         console.error('⚠️ 챌린지 진행도 업데이트 오류:', error);
@@ -789,7 +789,7 @@ export async function claimChallengeReward(tier) {
         if (data.rewardPoints > 0) resultParts.push(`+${data.rewardPoints}P`);
         showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}`);
 
-        if (window.updateAssetDisplay) window.updateAssetDisplay();
+        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
         return true;
     } catch (error) {
         console.error('❌ 보상 수령 오류:', error);
@@ -870,7 +870,7 @@ export async function forfeitChallenge(tier) {
 
             showToast('🏳️ 챌린지를 포기했습니다.');
         }
-        if (window.updateAssetDisplay) window.updateAssetDisplay();
+        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
         return true;
     } catch (error) {
         console.error('❌ 챌린지 포기 오류:', error);

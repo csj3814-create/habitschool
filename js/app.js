@@ -2400,22 +2400,24 @@ async function renderDashboard() {
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
         const needsReset = weeklyMissionData && weeklyMissionData.weekId && weeklyMissionData.weekId !== currentWeekId;
         if (needsReset) {
-            // ⚠️ 아카이브는 "이전 주(weeklyMissionData.weekId)" 기준이어야 함.
-            // 기존 코드는 current weekStrs를 넘겨서 월요일에 지난주 결과가 0%로 기록되거나 리셋이 꼬일 수 있었음.
-            const prevWeekStrs = weekStrs.map(dStr => {
-                const d = new Date(dStr + 'T12:00:00Z');
-                d.setUTCDate(d.getUTCDate() - 7);
-                return d.toISOString().slice(0, 10);
-            });
-            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs);
-            // 리로드
-            const freshDoc = await getDoc(userRef);
-            if (freshDoc.exists()) {
-                const fd = freshDoc.data();
-                weeklyMissionData = fd.weeklyMissionData || null;
-                missionHistory = fd.missionHistory || [];
-                missionStreak = fd.missionStreak || 0;
-                missionBadges = fd.missionBadges || [];
+            try {
+                const prevWeekStrs = weekStrs.map(dStr => {
+                    const d = new Date(dStr + 'T12:00:00Z');
+                    d.setUTCDate(d.getUTCDate() - 7);
+                    return d.toISOString().slice(0, 10);
+                });
+                await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs);
+                const freshDoc = await getDoc(userRef);
+                if (freshDoc.exists()) {
+                    const fd = freshDoc.data();
+                    weeklyMissionData = fd.weeklyMissionData || null;
+                    missionHistory = fd.missionHistory || [];
+                    missionStreak = fd.missionStreak || 0;
+                    missionBadges = fd.missionBadges || [];
+                }
+            } catch (archiveErr) {
+                console.warn('주간 아카이브 실패 (대시보드는 계속 렌더링):', archiveErr.message);
+                weeklyMissionData = null;
             }
         }
 
