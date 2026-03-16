@@ -1,4 +1,4 @@
-﻿/**
+/**
  * app.js
  * 메인 애플리케이션 로직 모듈
  * index.html의 인라인 스크립트에서 추출
@@ -2278,7 +2278,7 @@ async function renderDashboard() {
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
             orderBy("date", "desc"),
-            limit(120)
+            limit(30)
         );
 
         const [userDoc, snapshot, streakSnap] = await Promise.all([

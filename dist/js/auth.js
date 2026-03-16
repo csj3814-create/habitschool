@@ -109,10 +109,13 @@ export function initAuth() {
                 return;
             }
 
-            let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-closed-by-user') {
-                errorMsg = '로그인 창이 닫혔습니다.';
-            } else if (error.code === 'auth/popup-blocked') {
+                console.log('팝업 닫힘 — onAuthStateChanged 대기');
+                return;
+            }
+
+            let errorMsg = '로그인에 실패했습니다.';
+            if (error.code === 'auth/popup-blocked') {
                 errorMsg = '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
             } else if (error.code === 'auth/network-request-failed') {
                 errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
@@ -158,101 +161,18 @@ function showWebViewWarning() {
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
 
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
             document.getElementById('date-ui').style.display = 'flex';
             window._wasLoggedIn = true;
-            // Firestore에서 커스텀 닉네임 확인 후 표시
-            const userRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userRef);
-            const customName = userDoc.exists() ? userDoc.data().customDisplayName : null;
-            const displayName = customName || user.displayName;
-            window._userDisplayName = displayName;
-            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(displayName)}`;
-            // 닉네임 입력창에 현재 이름 표시
-            const nicknameInput = document.getElementById('profile-nickname');
-            if (nicknameInput) nicknameInput.value = displayName;
 
-            // 차단 목록 로드
-            window._blockedUsers = userDoc.exists() ? (userDoc.data().blockedUsers || []) : [];
+            // 구글 닉네임으로 즉시 표시 (Firestore 대기 없음)
+            window._userDisplayName = user.displayName || '사용자';
+            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
 
-            // 갤러리 알림 요약은 갤러리 탭 진입 시 로드 (push 알림 제거)
-
-            if (userDoc.exists()) {
-                const ud = userDoc.data();
-                if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
-
-                // 관리자 피드백 표시
-                if (ud.adminFeedback && ud.feedbackDate) {
-                    const fbDate = new Date(ud.feedbackDate);
-                    const now = new Date(todayStr);
-                    const diffDays = (now - fbDate) / (1000 * 60 * 60 * 24);
-                    const isHidden = localStorage.getItem('hide_fb_' + user.uid);
-
-                    if (diffDays <= 3 && !isHidden) {
-                        document.getElementById('admin-feedback-box').style.display = 'block';
-                        document.getElementById('admin-feedback-text').innerText = ud.adminFeedback;
-                    }
-                }
-
-                // 건강 프로필 로드
-                if (ud.healthProfile) {
-                    const prof = ud.healthProfile;
-                    const profSmm = document.getElementById('prof-smm');
-                    const profFat = document.getElementById('prof-fat');
-                    const profVisceral = document.getElementById('prof-visceral');
-                    const profBmr = document.getElementById('prof-bmr');
-                    const profMedOther = document.getElementById('prof-med-other');
-
-                    if (profSmm) profSmm.value = prof.smm || '';
-                    if (profFat) profFat.value = prof.fat || '';
-                    if (profVisceral) profVisceral.value = prof.visceral || '';
-                    if (profBmr) profBmr.value = prof.bmr || '';
-                    if (profMedOther) profMedOther.value = prof.medOther || '';
-
-                    if (prof.meds) {
-                        document.querySelectorAll('input[name="med-chk"]').forEach(chk => {
-                            if (prof.meds.includes(chk.value)) chk.checked = true;
-                        });
-                    }
-
-                    // 마지막 측정일 표시
-                    if (prof.updatedAt) {
-                        const lastDate = prof.updatedAt.slice(0, 10);
-                        const el = document.getElementById('prof-last-date');
-                        if (el) el.textContent = `마지막 측정: ${lastDate}`;
-                    }
-                }
-            }
-
-            // 내장형 지갑 자동 초기화 (비동기, 백그라운드 — 동적 import)
-            import('./blockchain-manager.js').then(mod => {
-                mod.initializeUserWallet().catch(err => {
-                    console.error('⚠️ 지갑 초기화 오류 (계속 진행):', err);
-                });
-                // 만료된 챌린지 확인 & 수령 안내
-                mod.settleExpiredChallenges().then(() => {
-                    // claimable 챌린지 확인 후 안내
-                    getDoc(userRef).then(snap => {
-                        const ac = snap.data()?.activeChallenges || {};
-                        const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
-                        if (claimable.length > 0) {
-                            showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
-                        }
-                    }).catch(() => {});
-                }).catch(() => {});
-            }).catch(err => {
-                console.warn('⚠️ 블록체인 모듈 로드 실패 (계속 진행):', err.message);
-            });
-
-            // 오늘 날짜 데이터 로드 (완료 후 탭 이동)
-            if (window.loadDataForSelectedDate) {
-                await window.loadDataForSelectedDate(todayStr);
-            }
-
-            // URL 파라미터로 지정된 탭 또는 대시보드로 이동
+            // 즉시 대시보드 열기 (renderDashboard가 자체 데이터 로딩 수행)
             const urlTab = new URLSearchParams(window.location.search).get('tab');
             const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
             const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
@@ -260,30 +180,76 @@ export function setupAuthListener(callbacks) {
                 window.openTab(targetTab, false);
             }
 
-            // 온보딩 체크 (첫 로그인 사용자)
-            if (window.checkOnboarding) {
-                window.checkOnboarding();
-            }
+            // 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용)
+            const userRef = doc(db, "users", user.uid);
+            getDoc(userRef).then(userDoc => {
+                if (!userDoc.exists()) return;
+                const ud = userDoc.data();
 
-            // 대사건강 점수 업데이트
-            if (window.updateMetabolicScoreUI) {
-                window.updateMetabolicScoreUI();
-            }
+                if (ud.customDisplayName) {
+                    window._userDisplayName = ud.customDisplayName;
+                    document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(ud.customDisplayName)}`;
+                }
+                const nicknameInput = document.getElementById('profile-nickname');
+                if (nicknameInput) nicknameInput.value = window._userDisplayName;
 
-            // 인바디 히스토리 로드
-            if (window.loadInbodyHistory) {
-                window.loadInbodyHistory();
-            }
+                window._blockedUsers = ud.blockedUsers || [];
 
-            // 혈액검사 이력 로드
-            if (window.loadBloodTestHistory) {
-                window.loadBloodTestHistory();
-            }
+                if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
 
-            // 콜백 실행
-            if (callbacks && callbacks.onLogin) {
-                callbacks.onLogin(user);
-            }
+                if (ud.adminFeedback && ud.feedbackDate) {
+                    const fbDate = new Date(ud.feedbackDate);
+                    const now = new Date(todayStr);
+                    const diffDays = (now - fbDate) / (1000 * 60 * 60 * 24);
+                    const isHidden = localStorage.getItem('hide_fb_' + user.uid);
+                    if (diffDays <= 3 && !isHidden) {
+                        document.getElementById('admin-feedback-box').style.display = 'block';
+                        document.getElementById('admin-feedback-text').innerText = ud.adminFeedback;
+                    }
+                }
+
+                if (ud.healthProfile) {
+                    const prof = ud.healthProfile;
+                    const el = (id) => document.getElementById(id);
+                    if (el('prof-smm')) el('prof-smm').value = prof.smm || '';
+                    if (el('prof-fat')) el('prof-fat').value = prof.fat || '';
+                    if (el('prof-visceral')) el('prof-visceral').value = prof.visceral || '';
+                    if (el('prof-bmr')) el('prof-bmr').value = prof.bmr || '';
+                    if (el('prof-med-other')) el('prof-med-other').value = prof.medOther || '';
+                    if (prof.meds) {
+                        document.querySelectorAll('input[name="med-chk"]').forEach(chk => {
+                            if (prof.meds.includes(chk.value)) chk.checked = true;
+                        });
+                    }
+                    if (prof.updatedAt) {
+                        const dateEl = el('prof-last-date');
+                        if (dateEl) dateEl.textContent = `마지막 측정: ${prof.updatedAt.slice(0, 10)}`;
+                    }
+                }
+            }).catch(() => {});
+
+            // 3초 후 부가 기능 (대시보드 표시 후)
+            setTimeout(() => {
+                import('./blockchain-manager.js').then(mod => {
+                    mod.initializeUserWallet().catch(() => {});
+                    mod.settleExpiredChallenges().then(() => {
+                        getDoc(userRef).then(snap => {
+                            const ac = snap.data()?.activeChallenges || {};
+                            const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
+                            if (claimable.length > 0) {
+                                showToast('🎉 완료된 챌린지가 있습니다! 내 지갑에서 보상을 수령하세요.');
+                            }
+                        }).catch(() => {});
+                    }).catch(() => {});
+                }).catch(() => {});
+
+                if (window.checkOnboarding) window.checkOnboarding();
+                if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
+                if (window.loadInbodyHistory) window.loadInbodyHistory();
+                if (window.loadBloodTestHistory) window.loadBloodTestHistory();
+            }, 3000);
+
+            if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
             // 로그아웃 시 모든 리소스 정리 (메모리 누수 방지)
             document.getElementById('login-modal').style.display = 'flex';
