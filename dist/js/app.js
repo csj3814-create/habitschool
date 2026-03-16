@@ -2620,7 +2620,7 @@ async function renderDashboard() {
 
         // 커뮤니티 현황 렌더링 — 대시보드 핵심 UI 렌더링 후 5초 지연 실행
         // (전체 사용자 월간 로그 쿼리로 무거움, 모바일 대역폭 보호)
-        setTimeout(() => renderGroupChallenge().catch(() => {}), 5000);
+        setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -2746,9 +2746,12 @@ async function renderGroupChallenge() {
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
 
-    const statsDoc = await getDoc(doc(db, "meta", "communityStats"));
-    if (!statsDoc.exists()) { section.style.display = 'none'; return; }
-    const s = statsDoc.data();
+    let s = null;
+    try {
+        const statsDoc = await getDoc(doc(db, "meta", "communityStats"));
+        if (statsDoc.exists()) s = statsDoc.data();
+    } catch (_) {}
+    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
     if (!s.totalUsers || s.totalUsers === 0) { section.style.display = 'none'; return; }
 
     const ranked = s.ranked || [];
