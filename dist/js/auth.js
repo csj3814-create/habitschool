@@ -188,6 +188,11 @@ export function setupAuthListener(callbacks) {
                 window.openTab(targetTab, false);
             }
 
+            // 식단/운동/마음 탭 데이터 로드 (백그라운드, 대시보드 렌더 차단하지 않음)
+            if (window.loadDataForSelectedDate) {
+                window.loadDataForSelectedDate(todayStr);
+            }
+
             // 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용)
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(userDoc => {
