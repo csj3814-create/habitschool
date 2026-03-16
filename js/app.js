@@ -1,4 +1,4 @@
-﻿/**
+/**
  * app.js
  * 메인 애플리케이션 로직 모듈
  * index.html의 인라인 스크립트에서 추출
@@ -2304,6 +2304,48 @@ async function renderDashboard() {
         let missionStreak = ud.missionStreak || 0;
         let missionBadges = ud.missionBadges || [];
 
+        // ===== 미션 데이터 방어/정규화 (특정 계정의 스키마/타입 불일치로 월요일 리셋이 깨지는 문제 방지) =====
+        let needsMissionFieldFix = false;
+        if (!Number.isFinite(level) || level < 1 || level > 10) {
+            level = 1;
+            needsMissionFieldFix = true;
+        }
+        if (!Array.isArray(missionHistory)) {
+            missionHistory = [];
+            needsMissionFieldFix = true;
+        }
+        if (!Array.isArray(missionBadges)) {
+            missionBadges = [];
+            needsMissionFieldFix = true;
+        }
+        if (weeklyMissionData && typeof weeklyMissionData === 'object') {
+            if (typeof weeklyMissionData.weekId !== 'string') {
+                weeklyMissionData.weekId = null;
+                needsMissionFieldFix = true;
+            }
+            const missionsVal = weeklyMissionData.missions;
+            if (!Array.isArray(missionsVal)) {
+                if (missionsVal && typeof missionsVal === 'object') {
+                    weeklyMissionData.missions = Object.values(missionsVal).filter(Boolean);
+                } else {
+                    weeklyMissionData.missions = [];
+                }
+                needsMissionFieldFix = true;
+            }
+        } else if (weeklyMissionData != null) {
+            weeklyMissionData = null;
+            needsMissionFieldFix = true;
+        }
+        if (needsMissionFieldFix) {
+            // 렌더가 깨지는 것을 우선 막기 위해 best-effort로만 정리 (실패해도 계속 진행)
+            setDoc(userRef, {
+                missionLevel: level,
+                weeklyMissionData: weeklyMissionData,
+                missionHistory: missionHistory,
+                missionBadges: missionBadges
+            }, { merge: true }).catch(() => {});
+        }
+
         if (userDoc.exists()) {
             // 기존 selectedMissions 마이그레이션 지원
             if (!weeklyMissionData && ud.selectedMissions && ud.selectedMissions.length > 0) {
@@ -2343,7 +2385,14 @@ async function renderDashboard() {
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
         const needsReset = weeklyMissionData && weeklyMissionData.weekId && weeklyMissionData.weekId !== currentWeekId;
         if (needsReset) {
-            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, weekStrs);
+            // ⚠️ 아카이브는 "이전 주(weeklyMissionData.weekId)" 기준이어야 함.
+            // 기존 코드는 current weekStrs를 넘겨서 월요일에 지난주 결과가 0%로 기록되거나 리셋이 꼬일 수 있었음.
+            const prevWeekStrs = weekStrs.map(dStr => {
+                const d = new Date(dStr + 'T12:00:00Z');
+                d.setUTCDate(d.getUTCDate() - 7);
+                return d.toISOString().slice(0, 10);
+            });
+            await archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs);
             // 리로드
             const freshDoc = await getDoc(userRef);
             if (freshDoc.exists()) {
@@ -2987,15 +3036,38 @@ function renderPendingCustomMissions() {
 
 // 주간 아카이브 및 리셋
 async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, weekStrs) {
-    // 해당 주의 실제 stats 계산
-    const q = query(collection(db, "daily_logs"), where("userId", "==", uid));
-    const snapshot = await getDocs(q);
+    // 방어: 깨진 타입이 들어와도 리셋이 전체 대시보드를 망치지 않게
+    if (!weeklyData || typeof weeklyData !== 'object') return;
+    if (!Array.isArray(history)) history = [];
+    const safeMissions = Array.isArray(weeklyData.missions)
+        ? weeklyData.missions.filter(Boolean)
+        : (weeklyData.missions && typeof weeklyData.missions === 'object'
+            ? Object.values(weeklyData.missions).filter(Boolean)
+            : []);
+
+    // 해당 주의 실제 stats 계산 (해당 주 범위만 조회)
+    const weekStart = weekStrs?.[0];
+    const weekEnd = weekStrs?.[6];
+    let snapshot;
+    if (weekStart && weekEnd) {
+        const q = query(
+            collection(db, "daily_logs"),
+            where("userId", "==", uid),
+            where("date", ">=", weekStart),
+            where("date", "<=", weekEnd)
+        );
+        snapshot = await getDocs(q);
+    } else {
+        // fallback: 기존 방식 (최소 기능 유지)
+        const q = query(collection(db, "daily_logs"), where("userId", "==", uid));
+        snapshot = await getDocs(q);
+    }
     let statDiet = 0, statExer = 0, statMind = 0;
 
     // 아카이브할 주의 날짜 계산 (weeklyData.weekId 기준)
     snapshot.forEach(d => {
         const data = d.data();
-        if (weekStrs.includes(data.date)) {
+        if (Array.isArray(weekStrs) && weekStrs.includes(data.date)) {
             if (data.awardedPoints?.diet) statDiet++;
             if (data.awardedPoints?.exercise) statExer++;
             if (data.awardedPoints?.mind) statMind++;
@@ -3004,11 +3076,12 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
 
     // 달성률 계산
     let totalTarget = 0, totalAchieved = 0;
-    if (weeklyData.missions) {
-        weeklyData.missions.forEach(m => {
+    if (safeMissions.length > 0) {
+        safeMissions.forEach(m => {
+            const target = Number(m?.target) || 0;
             totalTarget += m.target;
             let val = m.type === 'diet' ? statDiet : m.type === 'exercise' ? statExer : statMind;
-            totalAchieved += Math.min(val, m.target);
+            totalAchieved += Math.min(val, target);
         });
     }
     const completionRate = totalTarget > 0 ? Math.round((totalAchieved / totalTarget) * 100) : 0;
@@ -3019,7 +3092,7 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     // 히스토리에 추가 (최대 12주 보관)
     const archiveEntry = {
         weekId: weeklyData.weekId,
-        missions: weeklyData.missions,
+        missions: safeMissions,
         stats: { diet: statDiet, exercise: statExer, mind: statMind },
         completionRate: completionRate
     };
@@ -3031,13 +3104,13 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     if (newStreak >= 3) newBadges.push('mStreak3');
     if (newStreak >= 5) newBadges.push('mStreak5');
     if (newStreak >= 10) newBadges.push('mStreak10');
-    const hasHard = weeklyData.missions?.some(m => m.difficulty === 'hard');
+    const hasHard = safeMissions.some(m => m.difficulty === 'hard');
     if (hasHard && completionRate >= 100) newBadges.push('hardMode');
-    const hasDiet = weeklyData.missions?.some(m => m.type === 'diet');
-    const hasExer = weeklyData.missions?.some(m => m.type === 'exercise');
-    const hasMind = weeklyData.missions?.some(m => m.type === 'mind');
+    const hasDiet = safeMissions.some(m => m.type === 'diet');
+    const hasExer = safeMissions.some(m => m.type === 'exercise');
+    const hasMind = safeMissions.some(m => m.type === 'mind');
     if (hasDiet && hasExer && hasMind && completionRate >= 100) newBadges.push('allCategories');
-    const hasCustom = weeklyData.missions?.some(m => m.isCustom);
+    const hasCustom = safeMissions.some(m => m.isCustom);
     if (hasCustom && completionRate >= 80) newBadges.push('customMaster');
 
     // Firestore 업데이트
@@ -3051,7 +3124,8 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     if (newBadges.length > 0) {
         const userRef = doc(db, "users", uid);
         const userDoc = await getDoc(userRef);
-        const existingBadges = userDoc.exists() ? (userDoc.data().missionBadges || []) : [];
+        const existingBadgesRaw = userDoc.exists() ? (userDoc.data().missionBadges || []) : [];
+        const existingBadges = Array.isArray(existingBadgesRaw) ? existingBadgesRaw : [];
         const allBadges = [...new Set([...existingBadges, ...newBadges])];
         updateData.missionBadges = allBadges;
     }
