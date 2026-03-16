@@ -45,7 +45,16 @@ window._blockchainLoaded = false;
 
 window._loadBlockchainModule = function() {
     if (window._blockchainLoaded) return Promise.resolve();
-    return import('./blockchain-manager.js').then(mod => {
+    const loadEthers = () => {
+        if (typeof ethers !== 'undefined') return Promise.resolve();
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js';
+            s.onload = resolve; s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    };
+    return loadEthers().then(() => import('./blockchain-manager.js')).then(mod => {
         window.convertPointsToHBT = mod.convertPointsToHBT;
         window.startChallenge30D = mod.startChallenge30D;
         window.fetchOnchainBalance = mod.fetchOnchainBalance;
