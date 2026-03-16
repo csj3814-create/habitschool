@@ -105,9 +105,18 @@ export function initAuth() {
         return;
     }
 
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     loginBtn.addEventListener('click', () => {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
+
+        if (isMobile) {
+            loginBtn.disabled = true;
+            loginBtn.textContent = '로그인 중...';
+            signInWithRedirect(auth, provider);
+            return;
+        }
 
         signInWithPopup(auth, provider).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
@@ -117,14 +126,12 @@ export function initAuth() {
                 return;
             }
 
-            if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/popup-blocked') {
-                console.log('팝업 실패 → 리다이렉트 로그인으로 전환');
-                signInWithRedirect(auth, provider);
-                return;
-            }
-
             let errorMsg = '로그인에 실패했습니다.';
-            if (error.code === 'auth/network-request-failed') {
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMsg = '로그인 창이 닫혔습니다. 다시 시도해주세요.';
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMsg = '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
+            } else if (error.code === 'auth/network-request-failed') {
                 errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
             } else if (error.code === 'auth/unauthorized-domain') {
                 errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';

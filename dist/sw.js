@@ -3,7 +3,7 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v65';
+const CACHE_NAME = 'habitschool-v66';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -42,7 +42,7 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// 활성화: 구 캐시 정리
+// 활성화: 구 캐시 정리 + 클라이언트에 새로고침 알림
 self.addEventListener('activate', (event) => {
     console.log('[SW] 활성화');
     event.waitUntil(
@@ -56,6 +56,10 @@ self.addEventListener('activate', (event) => {
                     })
             );
         }).then(() => self.clients.claim())
+          .then(() => self.clients.matchAll({ type: 'window' }))
+          .then(clients => {
+              clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+          })
     );
 });
 
