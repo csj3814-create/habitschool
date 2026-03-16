@@ -2584,26 +2584,75 @@ async function renderDashboard() {
             setTimeout(() => initDifficultySelectors(level), 0);
 
         } else {
-            // ========== 진행 중 모드: 요약만 표시 ==========
+            // ========== 진행 중 모드: 프로그레스 표시 ==========
             progContainer.style.display = 'block';
+            progContainer.innerHTML = '';
+
             let totalMissions = weeklyMissionData.missions.length;
             let completedMissions = 0;
+
             weeklyMissionData.missions.forEach(m => {
-                const key = m.type === 'diet' ? 'diet' : m.type === 'exercise' ? 'exercise' : 'mind';
-                const achieved = key === 'diet' ? statDiet : key === 'exercise' ? statExer : statMind;
-                const clamped = Math.min(achieved, m.target);
-                const ratio = m.target > 0 ? Math.round((clamped / m.target) * 100) : 0;
-                if (ratio >= 100) completedMissions++;
+                let currentVal = 0;
+                if (m.type === 'diet') currentVal = statDiet;
+                else if (m.type === 'exercise') currentVal = statExer;
+                else if (m.type === 'mind') currentVal = statMind;
+
+                const percent = Math.min((currentVal / m.target) * 100, 100);
+                if (percent >= 100) completedMissions++;
+
+                const fillColor = percent >= 100 ? 'var(--success-color, #4CAF50)' : percent >= 50 ? 'var(--secondary-color)' : 'var(--warning-color, #FF9800)';
+                const statusIcon = percent >= 100 ? '✅' : percent >= 50 ? '🔄' : '⏳';
+                const customTag = m.isCustom ? '<span class="custom-tag">커스텀</span>' : '';
+
+                progContainer.innerHTML += `
+                    <div class="mp-row">
+                        <div class="mp-label">
+                            <span>${statusIcon} ${m.text} ${customTag}</span>
+                            <span class="mp-count">${currentVal} / ${m.target}</span>
+                        </div>
+                        <div class="mp-track">
+                            <div class="mp-fill" style="width: ${percent}%; background-color: ${fillColor};"></div>
+                        </div>
+                    </div>`;
             });
+
+            let totalProgress = 0;
+            weeklyMissionData.missions.forEach(m => {
+                let val = m.type === 'diet' ? statDiet : m.type === 'exercise' ? statExer : statMind;
+                totalProgress += Math.min(val / m.target, 1);
+            });
+            const overallRate = totalMissions > 0 ? Math.round((totalProgress / totalMissions) * 100) : 0;
+            const rateMsg = overallRate >= 100 ? '🎉 모든 미션 완료! 대단해요!' : overallRate >= 80 ? '🔥 거의 다 왔어요! 조금만 더!' : overallRate >= 50 ? '👍 절반 이상 달성! 이 페이스 유지!' : '💪 아직 시간 있어요, 화이팅!';
+
             const todayIdx = weekStrs.indexOf(todayStr);
-            const remainingDays = todayIdx >= 0 ? (6 - todayIdx) : 0;
-            progContainer.innerHTML = `
+            const remainingDays = todayIdx >= 0 ? 6 - todayIdx : 0;
+
+            progContainer.innerHTML += `
                 <div class="mission-overall-status">
-                    <span>이번 주 미션: <strong>${completedMissions}/${totalMissions}</strong> 완료</span>
-                    <span>${remainingDays > 0 ? `남은 ${remainingDays}일` : '이번 주 종료'}</span>
-                </div>
-                <button class="submit-btn reset-mission-btn" onclick="enterMissionEditMode()">📝 이번 주 미션 변경하기</button>
-            `;
+                    <div class="overall-rate">${rateMsg}</div>
+                    <div class="overall-stats">
+                        <span>달성률 <strong>${overallRate}%</strong></span>
+                        <span>남은 일수 <strong>${remainingDays}일</strong></span>
+                    </div>
+                </div>`;
+
+            if (remainingDays <= 2 && overallRate < 80) {
+                progContainer.innerHTML += `<div class="mission-warning">⚠️ 이번 주 ${remainingDays}일 남았어요! 미션을 서둘러 달성해보세요!</div>`;
+            }
+
+            const allDone = completedMissions === totalMissions && totalMissions > 0;
+            if (allDone && level < 5) {
+                progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`;
+            }
+
+            progContainer.innerHTML += `<button class="submit-btn reset-mission-btn" onclick="resetWeeklyMissions()">🔄 이번 주 미션 재설정</button>`;
+
+            const saveBtn = document.getElementById('btn-save-missions');
+            if (allDone) {
+                if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'not-allowed'; saveBtn.innerText = '✅ 이번 주 미션 완료!'; }
+            } else {
+                if (saveBtn) { saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'not-allowed'; saveBtn.innerText = '미션 진행 중...'; }
+            }
         }
 
         if (!isWeekActive) {
