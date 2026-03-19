@@ -1,3 +1,34 @@
+# 2026-03-20 세션 완료 보고
+
+> **상태**: ✅ 전체 완료 · main push · Firebase 양쪽 배포 완료
+> **작업**: 전체 코드 리뷰(`/octo:review`) + 버그 수정 7건 + 인프라 정리
+
+## 수행한 작업
+
+### 버그 수정 ✅
+
+| # | 심각도 | 파일 | 내용 |
+|---|--------|------|------|
+| 1 | 🔴 HIGH | `js/main.js` | HBT 변환 미리보기 1:1 하드코딩 → `fetchTokenStats()` 기반 동적 비율 |
+| 2 | 🔴 HIGH | `js/main.js` | `_stakePctAccum` 챌린지 간 리셋 누락 → 패널 오픈 시 자동 초기화 |
+| 3 | 🟡 MED | `js/app.js` + `js/main.js` | CDN 스크립트 SRI 없음 → `integrity`+`crossOrigin` 추가, exif-js 버전 고정 |
+| 4 | 🟡 MED | `js/main.js` | deprecated `execCommand('copy')` → toast 안내로 교체 |
+| 5 | 🟢 LOW | `js/main.js` | 블록체인 로드 실패 시 사용자 피드백 없음 → `showToast()` 추가 |
+| 6 | 🟢 LOW | `js/app.js` | CF cold start 타임아웃 3s → 5s 완화 |
+| 7 | 🟢 LOW | `.claude/launch.json` | 개발 서버 설정 5개 추가 (Firebase/Vitest/Hardhat) |
+
+### 인프라 정리 ✅
+- `dist/` git 제거 + `.gitignore` 추가 (테스트=GitHub, 배포=Firebase 구조 확정)
+- `package.json` 단순화: `npm run deploy` 하나로 통합
+- `.firebaserc` 생성: 기본 프로젝트 `habitschool-8497b` 설정
+- Firebase 양쪽 배포: `habitschool.web.app` + `habitschool-8497b.web.app`
+
+### 다음 세션 시작 전 확인
+- [ ] `tasks/lessons.md` 배포 전 체크리스트 확인
+- [ ] `cd D:\antigravity\habitschool && git pull origin main`
+
+---
+
 # 2026-03-16 작업 완료 보고서
 
 > **상태**: ✅ 모든 작업 완료 · main 브랜치 push 완료 · Firebase Hosting 배포 완료
