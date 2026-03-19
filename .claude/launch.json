@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Firebase Hosting (로컬 서버)",
+      "runtimeExecutable": "firebase",
+      "runtimeArgs": ["serve", "--only", "hosting", "--port", "5000"],
+      "port": 5000
+    },
+    {
+      "name": "Firebase 전체 에뮬레이터 (Hosting + Functions + Firestore)",
+      "runtimeExecutable": "firebase",
+      "runtimeArgs": ["emulators:start"],
+      "port": 5000
+    },
+    {
+      "name": "Cloud Functions 에뮬레이터 전용",
+      "runtimeExecutable": "firebase",
+      "runtimeArgs": ["emulators:start", "--only", "functions"],
+      "port": 5001
+    },
+    {
+      "name": "Vitest 테스트 러너",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vitest"],
+      "port": 51204
+    },
+    {
+      "name": "Hardhat 로컬 노드 (Base Sepolia 시뮬레이션)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["hardhat", "node", "--config", "contracts/hardhat.config.js"],
+      "port": 8545
+    }
+  ]
+}

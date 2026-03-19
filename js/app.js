@@ -25,24 +25,36 @@ window.renderDashboard = renderDashboard;
 window.updateMetabolicScoreUI = updateMetabolicScoreUI;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
-function _loadScript(url) {
+// integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
+function _loadScript(url, integrity, crossOrigin) {
     if (document.querySelector(`script[src="${url}"]`)) return Promise.resolve();
     return new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = url; s.onload = resolve; s.onerror = reject;
+        s.src = url;
+        if (integrity) { s.integrity = integrity; s.crossOrigin = crossOrigin || 'anonymous'; }
+        s.onload = resolve; s.onerror = reject;
         document.head.appendChild(s);
     });
 }
 async function _ensureExif() {
     if (typeof EXIF !== 'undefined') return;
-    await _loadScript('https://cdn.jsdelivr.net/npm/exif-js');
+    // exif-js v2.3.0 — 버전 고정 + SRI
+    await _loadScript(
+        'https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js',
+        'sha512-xsoiisGNT6Dw2Le1Cocn5305Uje1pOYeSzrpO3RD9K+JTpVH9KqSXksXqur8cobTEKJcFz0COYq4723mzo88/Q=='
+    );
 }
 async function _ensureHtml2Canvas() {
     if (typeof html2canvas !== 'undefined') return;
-    await _loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    // html2canvas v1.4.1 — SRI
+    await _loadScript(
+        'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+        'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='
+    );
 }
 async function _ensureKakao() {
     if (window.Kakao && Kakao.isInitialized()) return;
+    // Kakao SDK: 1st-party CDN, SRI 미지원 (CORS 헤더 없음)
     await _loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
     if (window.Kakao && !Kakao.isInitialized()) Kakao.init('f179e091a7b2f4425918b0625aa0fabb');
 }
@@ -2341,7 +2353,7 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
         try {
             const cfPromise = _fetchDashboardViaCloudFunction(user.uid, weekStart, weekEnd)
                 .then(cf => ({ ud: cf.user || {}, weekLogs: cf.weekLogs || [], streakLogs: cf.streakLogs || [], communityStats: cf.communityStats || null }));
-            const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('CF 3s timeout')), 3000));
+            const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('CF 5s timeout')), 5000));
             dashData = await Promise.race([cfPromise, timeout]);
         } catch (cfErr) {
             console.warn('CF 실패/타임아웃, Firestore 직접 쿼리:', cfErr.message);
