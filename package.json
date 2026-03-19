@@ -6,6 +6,9 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:dist": "node -e \"const fs=require('fs');['js','icons'].forEach(d=>{fs.cpSync(d,'dist/'+d,{recursive:true,force:true})});['index.html','styles.css','manifest.json','sw.js'].forEach(f=>{if(fs.existsSync(f))fs.copyFileSync(f,'dist/'+f)});console.log('✅ dist/ 동기화 완료');\"",
+    "predeploy:staging": "npm run sync:dist",
+    "predeploy:prod": "npm run sync:dist",
     "deploy:staging": "firebase deploy --only hosting:habitschool-8497b",
     "deploy:prod": "firebase deploy --only hosting:habitschool"
   },
