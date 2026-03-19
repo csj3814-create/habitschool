@@ -35,6 +35,14 @@
 - `resetWeeklyMissions`에서 Firestore는 초기화했지만 `_dashboardCache`(30초 TTL)를 안 비워서 캐시된 옛 데이터로 재렌더링
 - **교훈**: Firestore 데이터 변경 후 `renderDashboard()` 호출 전에 반드시 `_dashboardCache` 초기화.
 
+### 13. main push 후 habitschool/ 메인 폴더 동기화 필수
+- 워크트리(`worktrees/frosty-mclean/`)에서 작업 후 `main`에 push해도
+  메인 폴더(`D:\antigravity\habitschool\`)는 자동으로 갱신되지 않음
+- **교훈**: `main` push 완료 후 반드시 아래 명령 실행:
+  ```
+  cd D:\antigravity\habitschool && git pull origin main
+  ```
+
 ---
 
 ## 2026-03-15
