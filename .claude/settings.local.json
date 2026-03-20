@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.cdnjs.com)",
+      "WebFetch(domain:data.jsdelivr.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "Bash(curl -s \"https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js\")",
+      "Bash(openssl dgst:*)",
+      "Bash(openssl base64:*)",
+      "Bash(where gh:*)"
+    ]
+  }
+}

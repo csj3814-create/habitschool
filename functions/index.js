@@ -1427,7 +1427,7 @@ exports.migrateHbtToCoins = onCall(
 // 난이도 조절 상수
 const RATE_SCALE = 100_000_000; // 10^8 (온체인 비율 스케일)
 const MAX_RATE = 4.0;           // 1P = 최대 4 HBT
-const MIN_RATE = 1e-8;          // 최소 비율
+const MIN_RATE = 0.5;           // 최소 비율 (Phase 1 기준: 0.5 HBT/P)
 const MAX_RATE_MULTIPLIER = 2.0; // 주당 최대 2배 상승
 const MIN_RATE_MULTIPLIER = 0.5; // 주당 최소 절반 하락
 
@@ -1498,16 +1498,20 @@ function calculateNewRate(currentRate, last7DaysMinted, totalMinedHbt) {
 
     let newRate = currentRate * adjustmentRatio;
 
-    // 상한선/하한선
-    if (newRate > MAX_RATE) {
-        newRate = MAX_RATE;
+    // Phase 동적 상한선/하한선 (반감기마다 절반)
+    const phaseMultiplier = Math.pow(2, phase - 1);
+    const effectiveMaxRate = MAX_RATE / phaseMultiplier;
+    const effectiveMinRate = MIN_RATE / phaseMultiplier;
+
+    if (newRate > effectiveMaxRate) {
+        newRate = effectiveMaxRate;
         clamped = true;
-        clampReason = `상한선 적용 (→ ${MAX_RATE} HBT/P)`;
+        clampReason = `상한선 적용 (Phase ${phase}: → ${effectiveMaxRate} HBT/P)`;
     }
-    if (newRate < MIN_RATE) {
-        newRate = MIN_RATE;
+    if (newRate < effectiveMinRate) {
+        newRate = effectiveMinRate;
         clamped = true;
-        clampReason = `하한선 적용 (→ ${MIN_RATE} HBT/P)`;
+        clampReason = `하한선 적용 (Phase ${phase}: → ${effectiveMinRate} HBT/P)`;
     }
 
     // 온체인 형식 변환 (RATE_SCALE = 10^8)
@@ -1559,10 +1563,10 @@ exports.adjustMiningRate = onSchedule(
 
             // 2. 지난 7일간 실제 채굴량 조회 (blockchain_transactions)
             const now = new Date();
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            const startDateStr = sevenDaysAgo.toISOString().split("T")[0];
-            const endDateStr = now.toISOString().split("T")[0];
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const toKstDateStr = (d) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+            const startDateStr = toKstDateStr(sevenDaysAgo);
+            const endDateStr = toKstDateStr(now);
 
             const txQuery = db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
@@ -1594,16 +1598,39 @@ exports.adjustMiningRate = onSchedule(
                 return;
             }
 
-            // 5. 온체인 updateRate() 호출
+            // 5. 온체인 updateRate() 호출 (RateChangeExceedsLimit 시 이분탐색 재시도)
             let txHash = null;
-            try {
-                const tx = await habitContract.updateRate(BigInt(result.newRateScaled));
-                const receipt = await tx.wait();
-                txHash = receipt.hash;
-                console.log(`✅ 온체인 비율 업데이트 완료! TX: ${EXPLORER_URL}/tx/${txHash}`);
-            } catch (chainError) {
-                console.error("❌ 온체인 updateRate 실패:", chainError.message);
-                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", chainError.message);
+            let attemptRateScaled = result.newRateScaled;
+            const currentRateScaled = Number(currentRateRaw);
+
+            for (let attempt = 0; attempt < 4; attempt++) {
+                try {
+                    const tx = await habitContract.updateRate(BigInt(attemptRateScaled));
+                    const receipt = await tx.wait();
+                    txHash = receipt.hash;
+                    console.log(`✅ 온체인 비율 업데이트 완료! TX: ${EXPLORER_URL}/tx/${txHash}`);
+                    break;
+                } catch (chainError) {
+                    const chainErrorMsg = chainError.message || "";
+                    const isLimitError = chainErrorMsg.includes("RateChangeExceedsLimit") ||
+                        chainErrorMsg.includes("rate change exceeds");
+                    console.error(`❌ 온체인 updateRate 시도 ${attempt + 1} 실패:`, chainErrorMsg);
+                    if (isLimitError && attempt < 3) {
+                        const mid = Math.round((currentRateScaled + attemptRateScaled) / 2);
+                        if (mid === currentRateScaled || mid === attemptRateScaled) {
+                            console.log("⚠️ 이분탐색 더 이상 불가, 업데이트 중단.");
+                            break;
+                        }
+                        attemptRateScaled = mid;
+                        console.log(`🔄 이분탐색 재시도 (${currentRateScaled} → ${attemptRateScaled})`);
+                    } else {
+                        await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", chainErrorMsg);
+                        return;
+                    }
+                }
+            }
+            if (!txHash) {
+                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", "RateChangeExceedsLimit: 이분탐색 실패");
                 return;
             }
 
@@ -1681,10 +1708,10 @@ exports.adjustMiningRateManual = onCall(
 
             // 7일간 채굴량 조회
             const now = new Date();
-            const sevenDaysAgo = new Date(now);
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            const startDateStr = sevenDaysAgo.toISOString().split("T")[0];
-            const endDateStr = now.toISOString().split("T")[0];
+            const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const toKstDateStr = (d) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+            const startDateStr = toKstDateStr(sevenDaysAgo);
+            const endDateStr = toKstDateStr(now);
 
             const txSnap = await db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
@@ -1714,14 +1741,35 @@ exports.adjustMiningRateManual = onCall(
                 };
             }
 
-            // 온체인 비율 갱신
+            // 온체인 비율 갱신 (RateChangeExceedsLimit 시 이분탐색 재시도)
             if (result.newRateScaled !== Number(currentRateRaw)) {
-                const tx = await habitContract.updateRate(BigInt(result.newRateScaled));
-                const receipt = await tx.wait();
-                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, receipt.hash, "manual");
+                let txHash = null;
+                let attemptRateScaled = result.newRateScaled;
+                const currentRateScaled = Number(currentRateRaw);
+
+                for (let attempt = 0; attempt < 4; attempt++) {
+                    try {
+                        const tx = await habitContract.updateRate(BigInt(attemptRateScaled));
+                        const receipt = await tx.wait();
+                        txHash = receipt.hash;
+                        break;
+                    } catch (chainError) {
+                        const chainErrorMsg = chainError.message || "";
+                        const isLimitError = chainErrorMsg.includes("RateChangeExceedsLimit") ||
+                            chainErrorMsg.includes("rate change exceeds");
+                        if (isLimitError && attempt < 3) {
+                            const mid = Math.round((currentRateScaled + attemptRateScaled) / 2);
+                            if (mid === currentRateScaled || mid === attemptRateScaled) break;
+                            attemptRateScaled = mid;
+                        } else {
+                            throw chainError;
+                        }
+                    }
+                }
+                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, txHash, "manual");
                 return {
                     success: true,
-                    txHash: receipt.hash,
+                    txHash,
                     currentRate: currentRateNumber,
                     ...result,
                     last7DaysMinted,
