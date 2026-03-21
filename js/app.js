@@ -3708,40 +3708,62 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
         return null;
     }
 
-    try {
-        let fileToUpload = file;
-        if (file.type.startsWith('image/')) {
-            fileToUpload = await compressImage(file);
-        }
+    let fileToUpload = file;
+    if (file.type.startsWith('image/')) {
+        fileToUpload = await compressImage(file);
+    }
 
-        // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
-        const isVideo = fileToUpload.type && fileToUpload.type.startsWith('video/');
-        const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
-        const maxLabel = isVideo ? '100' : '20';
-        const fileSizeMB = fileToUpload.size / (1024 * 1024);
-        if (fileToUpload.size > maxBytes) {
-            showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
-            return null;
-        }
-
-        const timestamp = Date.now();
-        const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
-        const storageRef = ref(storage, storagePath);
-
-        await uploadBytes(storageRef, fileToUpload);
-        const url = await getDownloadURL(storageRef);
-        return url;
-    } catch (error) {
-        console.error('파일 업로드 실패:', error.code, error.message);
-        if (error.code === 'storage/unauthorized') {
-            showToast('⚠️ 업로드 권한이 없습니다.');
-        } else if (error.code === 'storage/quota-exceeded') {
-            showToast('⚠️ 저장 공간이 부족합니다.');
-        } else {
-            showToast(`⚠️ 업로드 실패: ${error.message}`);
-        }
+    // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
+    const isVideo = fileToUpload.type && fileToUpload.type.startsWith('video/');
+    const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
+    const maxLabel = isVideo ? '100' : '20';
+    const fileSizeMB = fileToUpload.size / (1024 * 1024);
+    if (fileToUpload.size > maxBytes) {
+        showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
         return null;
     }
+
+    const timestamp = Date.now();
+    const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
+    const storageRef = ref(storage, storagePath);
+    const maxRetries = 2;
+    const timeoutMs = 60000;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
+            const uploadPromise = uploadBytes(storageRef, fileToUpload);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('업로드 시간 초과. 네트워크를 확인해주세요.')), timeoutMs)
+            );
+            await Promise.race([uploadPromise, timeoutPromise]);
+
+            const urlPromise = getDownloadURL(storageRef);
+            const urlTimeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('URL 가져오기 시간 초과')), 10000)
+            );
+            const url = await Promise.race([urlPromise, urlTimeout]);
+            console.log('✅ 업로드 완료:', storagePath);
+            return url;
+        } catch (error) {
+            console.error(`파일 업로드 오류 (시도 ${attempt + 1}):`, error.code || '', error.message);
+            if (error.code === 'storage/unauthorized') {
+                showToast('⚠️ 업로드 권한이 없습니다.');
+                return null;
+            }
+            if (error.code === 'storage/quota-exceeded') {
+                showToast('⚠️ 저장 공간이 부족합니다.');
+                return null;
+            }
+            if (attempt === maxRetries) {
+                showToast(`⚠️ 업로드 실패: ${error.message}`);
+                return null;
+            }
+            // 재시도 전 대기 (1초, 2초 exponential backoff)
+            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        }
+    }
+    return null;
 }
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
@@ -3764,58 +3786,72 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const existingDoc = await getDoc(doc(db, "daily_logs", docId));
             let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
 
-            const getUrl = async (id, folder, oldUrl) => {
+            // === 원본+썸네일 병렬 업로드 헬퍼 ===
+            const uploadWithThumbParallel = async (file, folder, userId) => {
+                if (!file) return { url: null, thumbUrl: null };
+                try {
+                    // 원본 업로드와 썸네일 생성을 동시에 시작
+                    const [url, thumbBlob] = await Promise.all([
+                        uploadFileAndGetUrl(file, folder, userId),
+                        generateThumbnailBlob(file).catch(() => null)
+                    ]);
+                    if (!url) return { url: null, thumbUrl: null };
+                    // 원본 성공 후 썸네일 업로드
+                    let thumbUrl = null;
+                    if (thumbBlob) {
+                        try {
+                            const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
+                            const tr = ref(storage, tp);
+                            await uploadBytes(tr, thumbBlob);
+                            thumbUrl = await getDownloadURL(tr);
+                        } catch (e) { console.warn('썸네일 업로드 실패:', e.message); }
+                    }
+                    return { url, thumbUrl };
+                } catch (e) {
+                    console.error(`${folder} 업로드 실패:`, e);
+                    return { url: null, thumbUrl: null };
+                }
+            };
+
+            // === getUrl + 썸네일을 하나로 합친 헬퍼 ===
+            const getUrlWithThumb = async (id, folder, oldUrl, oldThumbUrl) => {
                 const el = document.getElementById(id);
                 if (el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
                     try {
-                        return await uploadFileAndGetUrl(el.files[0], folder, user.uid);
+                        const result = await uploadWithThumbParallel(el.files[0], folder, user.uid);
+                        if (result.url) return result;
+                        uploadFailures.push(id);
+                        return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
                     } catch (err) {
                         console.error(`${id} 업로드 실패:`, err);
                         uploadFailures.push(id);
-                        return oldUrl || null;
+                        return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
                     }
                 }
                 if (el) {
                     const previewImg = el.parentElement.querySelector('.preview-img');
                     if (previewImg && previewImg.style.display === 'none' && previewImg.hasAttribute('data-user-removed')) {
-                        return null;
+                        return { url: null, thumbUrl: null };
                     }
                 }
-                return oldUrl || null;
+                return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
             };
 
-            const bUrl = await getUrl('diet-img-breakfast', 'diet_images', oldData?.diet?.breakfastUrl);
-            const lUrl = await getUrl('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl);
-            const dUrl = await getUrl('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl);
-            const sUrl = await getUrl('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl);
+            // === 모든 업로드를 병렬로 실행 ===
+            console.log('📤 모든 이미지 병렬 업로드 시작');
+            const uploadStart = Date.now();
 
-            // 식단 썸네일: 새로 업로드된 파일만 썸네일 생성
-            const dietInputs = ['diet-img-breakfast', 'diet-img-lunch', 'diet-img-dinner', 'diet-img-snack'];
-            const dietUrls = [bUrl, lUrl, dUrl, sUrl];
-            const oldThumbUrls = [
-                oldData?.diet?.breakfastThumbUrl, oldData?.diet?.lunchThumbUrl,
-                oldData?.diet?.dinnerThumbUrl, oldData?.diet?.snackThumbUrl
-            ];
-            const thumbResults = await Promise.all(dietInputs.map(async (inputId, idx) => {
-                const el = document.getElementById(inputId);
-                if (el && el.files[0] && dietUrls[idx]) {
-                    try {
-                        const thumbBlob = await generateThumbnailBlob(el.files[0]);
-                        if (thumbBlob) {
-                            const thumbPath = `diet_images_thumbnails/${user.uid}/${Date.now()}_thumb_${idx}.jpg`;
-                            const thumbRef = ref(storage, thumbPath);
-                            await uploadBytes(thumbRef, thumbBlob);
-                            return await getDownloadURL(thumbRef);
-                        }
-                    } catch (e) { console.warn('식단 썸네일 생성 실패:', e.message); }
-                }
-                return oldThumbUrls[idx] || null;
-            }));
-            const [bThumbUrl, lThumbUrl, dThumbUrl, sThumbUrl] = thumbResults;
+            // 1) 식단 4장 병렬
+            const dietPromise = Promise.all([
+                getUrlWithThumb('diet-img-breakfast', 'diet_images', oldData?.diet?.breakfastUrl, oldData?.diet?.breakfastThumbUrl),
+                getUrlWithThumb('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl, oldData?.diet?.lunchThumbUrl),
+                getUrlWithThumb('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl, oldData?.diet?.dinnerThumbUrl),
+                getUrlWithThumb('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl, oldData?.diet?.snackThumbUrl),
+            ]);
 
-            let cardioList = [];
+            // 2) 운동 사진 병렬
             const cardioBlocks = document.querySelectorAll('.cardio-block');
-            for (let block of cardioBlocks) {
+            const cardioPromise = Promise.all([...cardioBlocks].map(async (block) => {
                 const fileInput = block.querySelector('.exer-file');
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
@@ -3823,30 +3859,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
                 if (fileInput.files[0]) {
                     try {
-                        url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_images', user.uid);
-                        // 운동 사진 썸네일 생성
-                        if (url) {
-                            try {
-                                const tb = await generateThumbnailBlob(fileInput.files[0]);
-                                if (tb) {
-                                    const tp = `exercise_images_thumbnails/${user.uid}/${Date.now()}_thumb.jpg`;
-                                    const tr = ref(storage, tp);
-                                    await uploadBytes(tr, tb);
-                                    thumbUrl = await getDownloadURL(tr);
-                                }
-                            } catch (e) { console.warn('운동 썸네일 생성 실패:', e.message); }
-                        }
+                        const result = await uploadWithThumbParallel(fileInput.files[0], 'exercise_images', user.uid);
+                        url = result.url;
+                        if (result.thumbUrl) thumbUrl = result.thumbUrl;
                     } catch (err) {
                         console.error('⚠️ 유산소 사진 업로드 실패:', err);
                         url = null;
                     }
                 }
-                if (url) cardioList.push({ imageUrl: url, imageThumbUrl: thumbUrl, aiAnalysis: aiAnalysis });
-            }
+                return url ? { imageUrl: url, imageThumbUrl: thumbUrl, aiAnalysis } : null;
+            }));
 
-            let strengthList = [];
+            // 3) 근력 영상 병렬
             const strengthBlocks = document.querySelectorAll('.strength-block');
-            for (let block of strengthBlocks) {
+            const strengthPromise = Promise.all([...strengthBlocks].map(async (block) => {
                 const fileInput = block.querySelector('.exer-file');
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
@@ -3854,45 +3880,64 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
                 if (fileInput.files[0]) {
                     try {
-                        url = await uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid);
-                        // 근력 동영상 썸네일 생성 & 업로드
-                        if (url) {
+                        // 영상 원본 업로드와 영상 썸네일 생성을 동시에
+                        const [uploadedUrl, vtb] = await Promise.all([
+                            uploadFileAndGetUrl(fileInput.files[0], 'exercise_videos', user.uid),
+                            generateVideoThumbnailBlob(fileInput.files[0]).catch(() => null)
+                        ]);
+                        url = uploadedUrl;
+                        if (url && vtb) {
                             try {
-                                const vtb = await generateVideoThumbnailBlob(fileInput.files[0]);
-                                if (vtb) {
-                                    const vtp = `exercise_videos_thumbnails/${user.uid}/${Date.now()}_thumb.jpg`;
-                                    const vtr = ref(storage, vtp);
-                                    await uploadBytes(vtr, vtb);
-                                    thumbUrl = await getDownloadURL(vtr);
-                                }
-                            } catch (e) { console.warn('근력 영상 썸네일 생성 실패:', e.message); }
+                                const vtp = `exercise_videos_thumbnails/${user.uid}/${Date.now()}_thumb.jpg`;
+                                const vtr = ref(storage, vtp);
+                                await uploadBytes(vtr, vtb);
+                                thumbUrl = await getDownloadURL(vtr);
+                            } catch (e) { console.warn('근력 영상 썸네일 실패:', e.message); }
                         }
                     } catch (err) {
                         console.error('⚠️ 근력 영상 업로드 실패:', err);
                         url = null;
                     }
                 }
-                // 기존 영상의 썸네일 URL 보존
-                if (url) strengthList.push({ videoUrl: url, videoThumbUrl: thumbUrl, aiAnalysis: aiAnalysis });
-            }
+                return url ? { videoUrl: url, videoThumbUrl: thumbUrl, aiAnalysis } : null;
+            }));
 
+            // 4) 수면 사진
             const sleepFile = document.getElementById('sleep-img');
-            let sleepUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
-            let sleepThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
-            if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
-                try {
-                    const sleepResult = await uploadImageWithThumb(sleepFile.files[0], 'sleep_images', user.uid);
-                    sleepUrl = sleepResult.url;
-                    sleepThumbUrl = sleepResult.thumbUrl;
-                } catch (err) {
-                    console.error('⚠️ 수면 사진 업로드 실패:', err);
-                    sleepUrl = null;
-                    sleepThumbUrl = null;
+            const sleepPromise = (async () => {
+                let sUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
+                let sThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
+                if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
+                    try {
+                        const result = await uploadWithThumbParallel(sleepFile.files[0], 'sleep_images', user.uid);
+                        sUrl = result.url;
+                        sThumbUrl = result.thumbUrl;
+                    } catch (err) {
+                        console.error('⚠️ 수면 사진 업로드 실패:', err);
+                        sUrl = null; sThumbUrl = null;
+                    }
+                } else if (document.getElementById('preview-sleep').style.display === 'none' && document.getElementById('preview-sleep').hasAttribute('data-user-removed')) {
+                    sUrl = null; sThumbUrl = null;
                 }
-            } else if (document.getElementById('preview-sleep').style.display === 'none' && document.getElementById('preview-sleep').hasAttribute('data-user-removed')) {
-                sleepUrl = null;
-                sleepThumbUrl = null;
-            }
+                return { url: sUrl, thumbUrl: sThumbUrl };
+            })();
+
+            // 모든 업로드 완료 대기
+            const [dietResults, cardioResults, strengthResults, sleepResult] = await Promise.all([
+                dietPromise, cardioPromise, strengthPromise, sleepPromise
+            ]);
+
+            console.log(`✅ 전체 업로드 완료 (${((Date.now() - uploadStart) / 1000).toFixed(1)}초)`);
+
+            const [bResult, lResult, dResult, sResult] = dietResults;
+            const bUrl = bResult.url, lUrl = lResult.url, dUrl = dResult.url, sUrl = sResult.url;
+            const bThumbUrl = bResult.thumbUrl, lThumbUrl = lResult.thumbUrl, dThumbUrl = dResult.thumbUrl, sThumbUrl = sResult.thumbUrl;
+
+            const cardioList = cardioResults.filter(Boolean);
+            const strengthList = strengthResults.filter(Boolean);
+
+            let sleepUrl = sleepResult.url;
+            let sleepThumbUrl = sleepResult.thumbUrl;
 
             const hasDiet = !!(bUrl || lUrl || dUrl || sUrl);
             const hasExer = cardioList.length > 0 || strengthList.length > 0;
@@ -4275,6 +4320,7 @@ window.handleThumbFallback = function (imgEl) {
     const list = raw ? raw.split('||').filter(Boolean) : [];
     if (!list.length) {
         imgEl.onerror = null;
+        imgEl.classList.add('img-error');
         return;
     }
     const next = list.shift();
@@ -5541,10 +5587,11 @@ function collectGalleryMedia(data) {
             if (origUrl && isValidStorageUrl(origUrl)) {
                 const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(origUrl);
                 const full = escapeHtml(origUrl);
+                const fallback = (src !== full) ? ` data-fallback-list="${full}"` : '';
                 const hasAi = data.dietAnalysis && data.dietAnalysis[meal];
                 const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.dietAnalysis[meal]))))}"` : '';
                 result.dietHtml += `<div class="gallery-media-wrapper"${aiAttr}>
-                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${meal} 식단 사진" loading="lazy" decoding="async">
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="${meal} 식단 사진" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
                     ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
                     <div class="gallery-ai-overlay" style="display:none;"></div>
                 </div>`;
@@ -5559,10 +5606,11 @@ function collectGalleryMedia(data) {
             if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
                 const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
                 const full = escapeHtml(url);
+                const fallback = (src !== full) ? ` data-fallback-list="${full}"` : '';
                 const hasAi = aiAnalysis != null;
                 const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(aiAnalysis))))}"` : '';
                 result.exerciseHtml += `<div class="gallery-media-wrapper"${aiAttr}>
-                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="운동 인증 사진" loading="lazy" decoding="async">
+                    <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="운동 인증 사진" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
                     ${hasAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
                     <div class="gallery-ai-overlay" style="display:none;"></div>
                 </div>`;
@@ -5575,7 +5623,7 @@ function collectGalleryMedia(data) {
                 if (thumbUrl && isValidStorageUrl(thumbUrl)) {
                     const safeThumb = escapeHtml(thumbUrl);
                     result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
-                        <img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async">
+                        <img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">
                         <div class="video-play-btn">&#9654;</div>
                     </div>`;
                 } else {
@@ -5601,10 +5649,11 @@ function collectGalleryMedia(data) {
         if (isValidStorageUrl(url)) {
             const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
             const full = escapeHtml(url);
+            const fallback = (src !== full) ? ` data-fallback-list="${full}"` : '';
             const hasSleepAi = data.sleepAndMind.sleepAnalysis != null;
             const sleepAiAttr = hasSleepAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.sleepAndMind.sleepAnalysis))))}"` : '';
             result.mindHtml = `<div class="gallery-media-wrapper"${sleepAiAttr}>
-                <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async">
+                <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
                 ${hasSleepAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
                 <div class="gallery-ai-overlay" style="display:none;"></div>
             </div>`;
