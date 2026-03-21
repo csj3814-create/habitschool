@@ -1417,15 +1417,15 @@ body {
 }
 
 .wallet-stake-slider {
-    width: 100%;
-    box-sizing: border-box;
+    width: 90%;
+    display: block;
+    margin: 0 auto;
     -webkit-appearance: none;
     appearance: none;
     height: 4px;
     background: #ddd;
     border-radius: 2px;
     outline: none;
-    display: block;
 }
 
 .wallet-stake-slider::-webkit-slider-thumb {
@@ -1464,7 +1464,9 @@ body {
     font-size: 9px;
     color: #888;
     margin-top: 1px;
-    padding: 0 8px;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* 변환 버튼 스피너 */
