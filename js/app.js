@@ -1585,7 +1585,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         const onchainBadge = document.getElementById('asset-hbt-onchain');
                         if (onchainBadge) {
                             const onchainText = document.getElementById('asset-hbt-onchain-text');
-                            if (onchainText) onchainText.textContent = `온체인 (Base Sepolia)`;
+                            if (onchainText) onchainText.textContent = `온체인 (BSC Testnet)`;
                             onchainBadge.style.display = 'inline-flex';
                         }
                     } else {

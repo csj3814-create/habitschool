@@ -132,7 +132,7 @@ window.openWalletExplorer = function() {
         return;
     }
     const tokenAddr = '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B';
-    window.open(`https://sepolia.basescan.org/token/${tokenAddr}?a=${addr}`, '_blank');
+    window.open(`https://testnet.bscscan.com/token/${tokenAddr}?a=${addr}`, '_blank');
 };
 
 // 변환 금액 프리셋 설정
