@@ -1417,13 +1417,15 @@ body {
 }
 
 .wallet-stake-slider {
-    flex: 1;
+    width: 100%;
+    box-sizing: border-box;
     -webkit-appearance: none;
     appearance: none;
     height: 4px;
     background: #ddd;
     border-radius: 2px;
     outline: none;
+    display: block;
 }
 
 .wallet-stake-slider::-webkit-slider-thumb {
@@ -1462,7 +1464,7 @@ body {
     font-size: 9px;
     color: #888;
     margin-top: 1px;
-    padding: 0 2px;
+    padding: 0 8px;
 }
 
 /* 변환 버튼 스피너 */
@@ -4155,6 +4157,10 @@ textarea {
 
 .challenge-tier-card:active {
     transform: scale(0.97);
+}
+/* 슬라이더 조작 중에는 카드 shrink 없음 */
+.challenge-tier-card:has(.tier-stake-slider-wrap *:active):active {
+    transform: none;
 }
 
 .tier-mini {
