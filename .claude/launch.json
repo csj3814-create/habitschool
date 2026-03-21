@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "Firebase Hosting (로컬 서버)",
-      "runtimeExecutable": "firebase",
-      "runtimeArgs": ["serve", "--only", "hosting", "--port", "5000"],
+      "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
+      "runtimeArgs": [".claude/server.js"],
       "port": 5000
     },
     {
