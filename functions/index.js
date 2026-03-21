@@ -2023,3 +2023,59 @@ exports.getDashboardData = onCall(
         return { user, weekLogs, streakLogs, communityStats };
     }
 );
+
+// ========================================
+// 사용자 지갑 가스(ETH) 자동 충전
+// ========================================
+exports.prefundWallet = onCall(
+    {
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        maxInstances: 10
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const uid = request.auth.uid;
+        const userRef = db.collection("users").doc(uid);
+        const userSnap = await userRef.get();
+
+        if (!userSnap.exists) {
+            throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+        }
+
+        const userData = userSnap.data();
+        const walletAddress = userData.walletAddress;
+        if (!walletAddress) {
+            throw new HttpsError("failed-precondition", "지갑 주소가 없습니다.");
+        }
+
+        // 24시간 충전 제한
+        const lastFunded = userData.lastGasFunded;
+        if (lastFunded) {
+            const elapsed = Date.now() - lastFunded.toMillis();
+            if (elapsed < 24 * 60 * 60 * 1000) {
+                return { funded: false, reason: "24시간 내 이미 충전됨" };
+            }
+        }
+
+        const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+        const ethBalance = await provider.getBalance(walletAddress);
+        const THRESHOLD = ethers.parseEther("0.003");
+
+        if (ethBalance >= THRESHOLD) {
+            return { funded: false, reason: "ETH 잔액 충분" };
+        }
+
+        const FUND_AMOUNT = ethers.parseEther("0.005");
+        const tx = await wallet.sendTransaction({ to: walletAddress, value: FUND_AMOUNT });
+        await tx.wait();
+
+        await userRef.update({ lastGasFunded: admin.firestore.FieldValue.serverTimestamp() });
+
+        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 ETH`);
+        return { funded: true, amount: "0.005", txHash: tx.hash };
+    }
+);
