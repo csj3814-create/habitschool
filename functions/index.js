@@ -34,12 +34,12 @@ const db = admin.firestore();
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
-// 컨트랙트 주소 (Base Sepolia) — v2
-const HABIT_ADDRESS = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
-const STAKING_ADDRESS = "0x7e8c29699F382B553891f853299e615257491F9D";
-const RPC_URL = "https://sepolia.base.org";
-const CHAIN_ID = 84532;
-const EXPLORER_URL = "https://sepolia.basescan.org";
+// 컨트랙트 주소 (BSC Chapel 테스트넷) — v3
+const HABIT_ADDRESS = "0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29";
+const STAKING_ADDRESS = "0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8";
+const RPC_URL = "https://data-seed-prebsc-1-s1.binance.org:8545/";
+const CHAIN_ID = 97;
+const EXPLORER_URL = "https://testnet.bscscan.com";
 
 // 일일 변환 한도
 const MAX_DAILY_HBT = 5000;
@@ -318,11 +318,11 @@ exports.prefundWallet = onCall(
         }
 
         const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-        const ethBalance = await provider.getBalance(walletAddress);
+        const bnbBalance = await provider.getBalance(walletAddress);
         const THRESHOLD = ethers.parseEther("0.003");
 
-        if (ethBalance >= THRESHOLD) {
-            return { funded: false, reason: "ETH 잔액 충분" };
+        if (bnbBalance >= THRESHOLD) {
+            return { funded: false, reason: "BNB 잔액 충분" };
         }
 
         const FUND_AMOUNT = ethers.parseEther("0.005");
@@ -331,7 +331,7 @@ exports.prefundWallet = onCall(
 
         await userRef.update({ lastGasFunded: admin.firestore.FieldValue.serverTimestamp() });
 
-        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 ETH`);
+        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
     }
 );
@@ -2078,11 +2078,11 @@ exports.prefundWallet = onCall(
         }
 
         const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-        const ethBalance = await provider.getBalance(walletAddress);
+        const bnbBalance = await provider.getBalance(walletAddress);
         const THRESHOLD = ethers.parseEther("0.003");
 
-        if (ethBalance >= THRESHOLD) {
-            return { funded: false, reason: "ETH 잔액 충분" };
+        if (bnbBalance >= THRESHOLD) {
+            return { funded: false, reason: "BNB 잔액 충분" };
         }
 
         const FUND_AMOUNT = ethers.parseEther("0.005");
@@ -2091,7 +2091,7 @@ exports.prefundWallet = onCall(
 
         await userRef.update({ lastGasFunded: admin.firestore.FieldValue.serverTimestamp() });
 
-        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 ETH`);
+        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
     }
 );

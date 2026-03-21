@@ -1,12 +1,12 @@
 /**
  * blockchain-manager.js
- * Base 체인 블록체인 & 내장형 지갑 통합 모듈
+ * BSC (BNB Smart Chain) 블록체인 & 내장형 지갑 통합 모듈
  * HaBit (HBT) 토큰 거래, 스테이킹, 챌린지 관리
  * 
  * 내장형 지갑 전략: Firebase UID 기반 지갑 자동 생성
  * - 사용자가 로그인만 하면 자동으로 지갑 생성
  * - 별도 앱 설치나 복잡한 설정 불필요
- * - ethers.js를 사용하여 Base 체인 호환 지갑 생성
+ * - ethers.js를 사용하여 BSC 호환 지갑 생성
  * 
  * 온체인 연동: Cloud Functions를 통한 실제 스마트 컨트랙트 호출
  */
@@ -85,7 +85,7 @@ const HBT_STAKE_ABI = [
 ];
 
 /**
- * 사용자 지갑을 Base Sepolia 프로바이더에 연결
+ * 사용자 지갑을 BSC 테스트넷 프로바이더에 연결
  * @returns {ethers.Wallet} 연결된 지갑 (서명+전송 가능)
  */
 function getConnectedWallet() {
@@ -500,7 +500,7 @@ export async function startChallenge30D(challengeId) {
                     await new Promise(r => setTimeout(r, 4000));
                 } catch (fundErr) {
                     console.warn('가스 충전 실패:', fundErr.message);
-                    showToast('❌ 가스(SepoliaETH) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                    showToast('❌ 가스(tBNB) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.');
                     return false;
                 }
             }
@@ -514,7 +514,7 @@ export async function startChallenge30D(challengeId) {
                 console.log('✅ 온체인 스테이킹 완료:', stakeTxHash);
             } catch (txError) {
                 console.error('❌ 온체인 스테이킹 실패:', txError);
-                showToast('❌ 온체인 예치에 실패했습니다. 가스(SepoliaETH)가 부족할 수 있습니다.');
+                showToast('❌ 온체인 예치에 실패했습니다. 가스(tBNB)가 부족할 수 있습니다.');
                 return false;
             }
         }

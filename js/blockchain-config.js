@@ -1,38 +1,39 @@
 /**
  * blockchain-config.js
- * Base 체인 블록체인 & HaBit (HBT) 토큰 설정
+ * BSC (BNB Smart Chain) 블록체인 & HaBit (HBT) 토큰 설정
  * Web 2.5 Habit Mining 시스템
- * 
+ *
  * 내장형 지갑 전략:
  * - Firebase UID 기반 지갑 자동 생성
  * - ethers.js 사용
  * - 별도 앱 설치 불필요
- * 
+ *
  * 교환 대상: 향후 파트너십을 통한 외부 토큰 교환 예정
  */
 
-// ⛓️ Base 네트워크 설정
-export const BASE_CONFIG = {
-    // 메인넷 (Base - Coinbase L2)
+// ⛓️ BSC 네트워크 설정
+export const BSC_CONFIG = {
+    // 메인넷 (BNB Smart Chain)
     mainnet: {
-        rpcUrl: 'https://mainnet.base.org',
-        chainId: 8453,
-        explorer: 'https://basescan.org',
-        gasToken: 'ETH'
+        rpcUrl: 'https://bsc-dataseed.binance.org/',
+        chainId: 56,
+        explorer: 'https://bscscan.com',
+        gasToken: 'BNB'
     },
-    
-    // 테스트넷 (Base Sepolia)
+
+    // 테스트넷 (BSC Chapel Testnet)
     testnet: {
-        rpcUrl: 'https://sepolia.base.org',
-        chainId: 84532,
-        explorer: 'https://sepolia.basescan.org',
-        gasToken: 'SepoliaETH',
-        faucet: 'https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet'
+        rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+        chainId: 97,
+        explorer: 'https://testnet.bscscan.com',
+        gasToken: 'tBNB',
+        faucet: 'https://testnet.bnbchain.org/faucet-smart'
     }
 };
 
-// 하위 호환: 기존 KLAYTN_CONFIG 참조 유지
-export const KLAYTN_CONFIG = BASE_CONFIG;
+// 하위 호환: 기존 BASE_CONFIG / KLAYTN_CONFIG 참조 유지
+export const BASE_CONFIG = BSC_CONFIG;
+export const KLAYTN_CONFIG = BSC_CONFIG;
 
 // 🪙 HaBit (HBT) 토큰 설정
 export const HBT_TOKEN = {
@@ -40,12 +41,12 @@ export const HBT_TOKEN = {
     symbol: 'HBT',
     decimals: 8,  // BTC와 동일
     maxSupply: 100_000_000, // 1억개 하드캡
-    
-    // 테스트넷 컨트랙트 주소 (Base Sepolia) — v2
-    testnetAddress: '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B',
-    
-    // 메인넷 컨트랙트 주소 (Base, 향후 배포)
-    mainnetAddress: '0x0000...',  // TODO: Base 메인넷 배포 후
+
+    // 테스트넷 컨트랙트 주소 (BSC Chapel) — v3
+    testnetAddress: '0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29',
+
+    // 메인넷 컨트랙트 주소 (BSC, 향후 배포)
+    mainnetAddress: '0x0000000000000000000000000000000000000000', // TODO: BSC 메인넷 배포 후
 
     // 교환 대상 (파트너십 체결 후 공개)
     exchange: {
@@ -58,12 +59,12 @@ export const HBT_TOKEN = {
 
 // 📋 Staking 계약 설정 (챌린지 예치용)
 export const STAKING_CONTRACT = {
-    // 테스트넷 (Base Sepolia) — v2
-    testnetAddress: '0x7e8c29699F382B553891f853299e615257491F9D',
-    
-    // 메인넷 (Base)
-    mainnetAddress: '0x0000...',   // TODO: Base 메인넷 배포 후
-    
+    // 테스트넷 (BSC Chapel) — v3
+    testnetAddress: '0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8',
+
+    // 메인넷 (BSC)
+    mainnetAddress: '0x0000000000000000000000000000000000000000', // TODO: BSC 메인넷 배포 후
+
     // 스테이킹 파라미터
     lockupPeriod: 30 * 24 * 60 * 60, // 30일 (초 단위)
     slashRate: 0.5, // 실패 시 50% 소각
@@ -148,7 +149,7 @@ export const CONVERSION_RULES = {
     maxConversionPerDay: 1000, // 1일 최대 1,000 HBT (서버 제한)
     gasFeeEstimate: 0, // 가스비 무료 (회사 부담)
     estimatedTime: '2-5초', // 내장형 지갑으로 즉시 처리
-    
+
     // Phase 기반 반감 (v2)
     halving: {
         miningPool: 70_000_000,       // 채굴 풀 70M HBT
@@ -165,40 +166,29 @@ export const CONVERSION_RULES = {
 // 💾 Firebase 컬렉션 구조 (참고용)
 export const FIREBASE_STRUCTURE = {
     users: {
-        // 기존 필드
         uid: 'string',
         displayName: 'string',
         email: 'string',
-        coins: 'number', // 해빛 포인트 (Off-chain)
+        coins: 'number',
         friends: 'array',
-        
-        // M2E 신규 필드
-        walletAddress: 'string', // 내장형 지갑 주소 (Firebase UID 기반 자동 생성, 0x로 시작)
-        walletCreatedAt: 'timestamp', // 지갑 생성 시각
-        hbtBalance: 'number', // 현재 HBT 보유량 (Off-chain 시뮬레이션)
-        totalHbtEarned: 'number', // 총 획득 HBT
-        
-        // 변환 기록
-        conversions: 'array', // [{ date, pointsUsed, hbtReceived, txHash, status }]
-        
-        // 진행 중인 챌린지 (티어별 동시 진행 가능)
-        activeChallenges: 'object', // { mini: {...}, weekly: {...}, master: {...} }
-        activeChallenge: 'object || null', // legacy (deprecated, 마이그레이션 완료 후 삭제)
-        
-        // 완료된 챌린지 기록
-        completedChallenges: 'array' // [{ challengeId, completedDate, rewardHbt, rewardPoints }]
+        walletAddress: 'string',
+        walletCreatedAt: 'timestamp',
+        hbtBalance: 'number',
+        totalHbtEarned: 'number',
+        conversions: 'array',
+        activeChallenges: 'object',
+        activeChallenge: 'object || null',
+        completedChallenges: 'array'
     },
-    
-    // 블록체인 거래 기록 (감시용)
     blockchain_transactions: {
         userId: 'string',
         txHash: 'string',
-        type: 'string', // 'conversion', 'staking', 'withdrawal'
-        amount: 'number', // HBT 수량
+        type: 'string',
+        amount: 'number',
         timestamp: 'timestamp',
         blockNumber: 'number',
-        status: 'string' // 'pending', 'success', 'failed'
+        status: 'string'
     }
 };
 
-console.log('✅ 블록체인 설정 로드됨. (HaBit/HBT on Base chain)');
+console.log('✅ 블록체인 설정 로드됨. (HaBit/HBT on BNB Smart Chain)');
