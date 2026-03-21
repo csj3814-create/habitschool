@@ -1611,6 +1611,15 @@ exports.adjustMiningRate = onSchedule(
             const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
+            // 멱등성 보장: 온체인 lastRateUpdate 기준 6일 이내 조정됐으면 스킵
+            const lastRateUpdateTs = await habitContract.lastRateUpdate();
+            const lastUpdateMs = Number(lastRateUpdateTs) * 1000;
+            const sixDaysMs = 6 * 24 * 60 * 60 * 1000;
+            if (lastUpdateMs > 0 && Date.now() - lastUpdateMs < sixDaysMs) {
+                console.log(`⏭️ 이미 이번 주 비율 조정 완료 (lastRateUpdate: ${new Date(lastUpdateMs).toISOString()}), 건너뜁니다.`);
+                return;
+            }
+
             const currentRateRaw = await habitContract.currentRate();
             const totalMintedRaw = await habitContract.totalMintedFromMining();
             const decimals = await habitContract.decimals();
@@ -1622,11 +1631,13 @@ exports.adjustMiningRate = onSchedule(
             console.log(`📊 누적 채굴량: ${totalMinedHbt.toLocaleString()} HBT`);
 
             // 2. 지난 7일간 실제 채굴량 조회 (blockchain_transactions)
+            // startDateStr: 7일 전 KST 날짜 (포함), endDateStr: 어제 KST 날짜 (포함, 오늘 제외)
             const now = new Date();
             const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
             const toKstDateStr = (d) => d.toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
             const startDateStr = toKstDateStr(sevenDaysAgo);
-            const endDateStr = toKstDateStr(now);
+            const endDateStr = toKstDateStr(yesterday);
 
             const txQuery = db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
@@ -1710,7 +1721,12 @@ exports.adjustMiningRate = onSchedule(
  */
 async function saveRateHistory(result, previousRate, last7DaysMinted, totalMinedHbt, txCount, txHash, status, errorMessage) {
     const now = new Date();
-    const weekId = `${now.getFullYear()}-W${String(Math.ceil((now.getDate() + new Date(now.getFullYear(), 0, 1).getDay()) / 7)).padStart(2, "0")}`;
+    // ISO 8601 주차 계산 (목요일 기준)
+    const jan4 = new Date(Date.UTC(now.getUTCFullYear(), 0, 4));
+    const dayOfWeek = (now.getUTCDay() + 6) % 7; // 월=0 ... 일=6
+    const monday = new Date(now.getTime() - dayOfWeek * 86400000);
+    const isoWeek = Math.round((monday - jan4) / (7 * 86400000)) + 1;
+    const weekId = `${monday.getUTCFullYear()}-W${String(isoWeek).padStart(2, "0")}`;
 
     await db.collection("mining_rate_history").doc(weekId).set({
         weekId,
