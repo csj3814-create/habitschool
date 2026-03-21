@@ -131,7 +131,7 @@ window.openWalletExplorer = function() {
         alert('지갑 주소가 아직 생성되지 않았습니다.');
         return;
     }
-    const tokenAddr = '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B';
+    const tokenAddr = '0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29';
     window.open(`https://testnet.bscscan.com/token/${tokenAddr}?a=${addr}`, '_blank');
 };
 
