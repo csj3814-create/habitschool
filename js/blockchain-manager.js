@@ -584,8 +584,8 @@ export async function updateChallengeProgress() {
                 const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
                 const challengeDef = CHALLENGES[resolvedChallengeId] || {};
 
-                // 챌린지 종료일 확인
-                if (today > challenge.endDate) {
+                // 챌린지 종료일 확인 (endDate 당일 포함 — today >= endDate)
+                if (today >= challenge.endDate) {
                     const successRate = challenge.completedDays / totalDays;
 
                     if (successRate >= 0.8) {
@@ -695,7 +695,7 @@ export async function settleExpiredChallenges() {
 
         // 'expired'는 이미 기한 만료 확정, 'ongoing'은 endDate로 판단
         const expiredTiers = tiers.filter(t => 
-            activeChallenges[t].status === 'expired' || today > activeChallenges[t].endDate
+            activeChallenges[t].status === 'expired' || today >= activeChallenges[t].endDate
         );
         if (expiredTiers.length === 0) return;
 

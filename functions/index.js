@@ -1069,12 +1069,14 @@ exports.claimChallengeReward = onCall(
 
         await userRef.update(updateData);
 
-        // 거래 기록
+        // 거래 기록 (온체인 TX 해시 포함, date 필드 추가 — 앱의 날짜별 HBT 집계에 필요)
+        const _kstDateStr = new Date(Date.now() + 9 * 3600 * 1000).toISOString().split('T')[0];
         await db.collection("blockchain_transactions").add({
             userId: uid,
             type: 'challenge_settlement',
             challengeId: challenge.challengeId,
             amount: rewardHbt,
+            date: _kstDateStr,
             staked: staked,
             successRate: successRate,
             completedDays: challenge.completedDays || 0,
@@ -1165,11 +1167,13 @@ exports.settleChallengeFailure = onCall(
 
         await userRef.update(updateData);
 
-        // 거래 기록
+        // 거래 기록 (date 필드 추가 — 일관성)
+        const _kstDateStrFail = new Date(Date.now() + 9 * 3600 * 1000).toISOString().split('T')[0];
         await db.collection("blockchain_transactions").add({
             userId: uid,
             type: 'challenge_failure',
             challengeId: challenge.challengeId,
+            date: _kstDateStrFail,
             staked: staked,
             burned: stakedOnChain ? staked / 2 : 0,
             returned: stakedOnChain ? staked / 2 : 0,

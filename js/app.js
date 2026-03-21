@@ -1440,6 +1440,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             where('status', '==', 'success'),
             where('date', '==', _todayStr)
         )).catch(() => null);
+        // 챌린지 정산 HBT 오늘 집계 (challenge_settlement 타입)
+        const _p_settleTx = getDocs(query(
+            collection(db, 'blockchain_transactions'),
+            where('userId', '==', user.uid),
+            where('type', '==', 'challenge_settlement'),
+            where('status', '==', 'success'),
+            where('date', '==', _todayStr)
+        )).catch(() => null);
         const _p_minichart = getDocs(query(
             collection(db, 'blockchain_transactions'),
             where('userId', '==', user.uid),
@@ -1502,6 +1510,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             try {
                 const hbtTxSnap = await _p_hbtTx;
                 if (hbtTxSnap) hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
+                // 챌린지 정산 HBT도 오늘 합산
+                const settleTxSnap = await _p_settleTx;
+                if (settleTxSnap) settleTxSnap.forEach(d => { todayHbt += d.data().amount || 0; });
             } catch (_) {}
             const hbtDeltaEl = document.getElementById('asset-hbt-delta');
             if (hbtDeltaEl) {
@@ -1582,7 +1593,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 }).catch(err => {
                     console.warn('온체인 잔액 조회 스킵:', err.message);
                     const hbtEl = document.getElementById('asset-hbt-display');
-                    if (hbtEl) hbtEl.innerHTML = `- <span class="wallet-asset-unit">HBT</span>`;
+                    if (hbtEl) hbtEl.innerHTML = `0 <span class="wallet-asset-unit">HBT</span>`;
                 });
             }
 
