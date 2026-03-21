@@ -1455,6 +1455,16 @@ body {
     padding-right: 4px;
 }
 
+/* 슬라이더 최소/최대 범위 라벨 */
+.wallet-stake-range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #888;
+    margin-top: 1px;
+    padding: 0 2px;
+}
+
 /* 변환 버튼 스피너 */
 .wallet-convert-submit.loading {
     pointer-events: none;

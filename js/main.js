@@ -306,5 +306,36 @@ window.addStakePct = function(tier, pct) {
     document.getElementById('stake-display-' + tier).textContent = rounded;
 };
 
+// 챌린지 슬라이더 최대값을 사용자 HBT 잔액에 맞게 업데이트
+window.updateChallengeSliderBounds = function(balance) {
+    const floor = Math.floor(balance);
+
+    // weekly: min 50, max 5000 → 사용자 잔액으로 제한
+    const weeklyMax = Math.max(50, Math.min(5000, floor));
+    const weeklySlider = document.getElementById('stake-slider-weekly');
+    if (weeklySlider) {
+        weeklySlider.max = weeklyMax;
+        if (parseInt(weeklySlider.value) > weeklyMax) {
+            weeklySlider.value = weeklyMax;
+            window.updateStakeSlider('weekly');
+        }
+    }
+    const maxLabelW = document.getElementById('stake-max-label-weekly');
+    if (maxLabelW) maxLabelW.textContent = weeklyMax.toLocaleString();
+
+    // master: min 100, max 10000 → 사용자 잔액으로 제한
+    const masterMax = Math.max(100, Math.min(10000, floor));
+    const masterSlider = document.getElementById('stake-slider-master');
+    if (masterSlider) {
+        masterSlider.max = masterMax;
+        if (parseInt(masterSlider.value) > masterMax) {
+            masterSlider.value = masterMax;
+            window.updateStakeSlider('master');
+        }
+    }
+    const maxLabelM = document.getElementById('stake-max-label-master');
+    if (maxLabelM) maxLabelM.textContent = masterMax.toLocaleString();
+};
+
 // cleanupGalleryResources는 app.js에서 window에 설정됨
 console.log('✅ 모든 모듈이 로드되었습니다.');

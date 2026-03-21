@@ -47,6 +47,7 @@ let getOnchainBalanceFunction = null;
 let getTokenStatsFunction = null;
 let claimChallengeFunction = null;
 let startChallengeFunction = null;
+let prefundWalletFunction = null;
 let _functionsInitialized = false;
 
 async function ensureFunctions() {
@@ -64,6 +65,7 @@ async function ensureFunctions() {
         getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
         getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
         startChallengeFunction = httpsCallable(functions, 'startChallenge');
+        prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
         _functionsInitialized = true;
         console.log('✅ Cloud Functions 초기화 완료');
     } catch (e) {
@@ -486,6 +488,21 @@ export async function startChallenge30D(challengeId) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
                 showToast(`❌ 온체인 HBT 잔액이 부족합니다.\n보유: ${displayBalance} HBT, 필요: ${hbtAmount} HBT\n먼저 포인트를 HBT로 변환해주세요.`);
                 return false;
+            }
+
+            // ETH 잔액 확인 → 부족 시 서버에서 가스 자동 충전
+            const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
+            const MIN_GAS = ethers.utils.parseEther("0.001");
+            if (ethBalance.lt(MIN_GAS)) {
+                showToast('⏳ 가스(ETH) 부족 — 자동 충전 중...');
+                try {
+                    await prefundWalletFunction();
+                    await new Promise(r => setTimeout(r, 4000));
+                } catch (fundErr) {
+                    console.warn('가스 충전 실패:', fundErr.message);
+                    showToast('❌ 가스(SepoliaETH) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                    return false;
+                }
             }
 
             showToast('⏳ 온체인 예치 트랜잭션 전송 중...');

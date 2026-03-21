@@ -1581,6 +1581,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         const val = parseFloat(onchainData.balanceFormatted);
                         const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, {maximumFractionDigits: 1});
                         if (hbtEl) hbtEl.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
+                        if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
                         const onchainBadge = document.getElementById('asset-hbt-onchain');
                         if (onchainBadge) {
                             const onchainText = document.getElementById('asset-hbt-onchain-text');
