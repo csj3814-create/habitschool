@@ -6363,37 +6363,35 @@ function setManualSteps() {
     showToast(`👟 ${val.toLocaleString()}보 입력 완료!`);
 }
 
-function handleStepScreenshot(fileInput) {
+async function handleStepScreenshot(fileInput) {
     const file = fileInput.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) { showToast('⚠️ 이미지 파일만 업로드 가능합니다.'); return; }
 
+    const user = auth.currentUser;
+    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+
     _stepScreenshotFile = file;
     const preview = document.getElementById('preview-step-screenshot');
-    const aiBtn = document.getElementById('ai-btn-step');
+    const resultBox = document.getElementById('step-analysis-result');
+    const screenshotBtn = document.querySelector('.step-screenshot-btn');
 
+    // 프리뷰 즉시 표시 + 로딩 상태
     const reader = new FileReader();
     reader.onload = (e) => {
         preview.src = e.target.result;
         preview.style.display = 'block';
-        aiBtn.style.display = 'block';
     };
     reader.readAsDataURL(file);
-}
 
-async function analyzeStepScreenshot() {
-    const user = auth.currentUser;
-    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
-    if (!_stepScreenshotFile) { showToast('⚠️ 캡처 이미지를 먼저 올려주세요.'); return; }
-
-    const btn = document.getElementById('ai-btn-step');
-    const resultBox = document.getElementById('step-analysis-result');
-    btn.classList.add('loading');
-    btn.textContent = '🤖 AI 분석 중...';
+    if (screenshotBtn) {
+        screenshotBtn.textContent = '🔄 인식 중...';
+        screenshotBtn.style.pointerEvents = 'none';
+    }
 
     try {
         // 1. Firebase Storage 업로드
-        const compressed = await compressImage(_stepScreenshotFile, 1280, 0.85);
+        const compressed = await compressImage(file, 1280, 0.85);
         const timestamp = Date.now();
         const storagePath = `step_screenshots/${user.uid}/${timestamp}.jpg`;
 
@@ -6403,9 +6401,12 @@ async function analyzeStepScreenshot() {
         await uploadBytes(imgRef, compressed);
         const downloadUrl = await getDownloadURL(imgRef);
 
-        // 2. AI 분석 호출
+        // 2. AI 분석 호출 (gemini-2.0-flash — 초고속)
         const result = await requestStepScreenshotAnalysis(downloadUrl);
-        if (!result) { btn.textContent = '🤖 AI 걸음수 인식'; btn.classList.remove('loading'); return; }
+        if (!result) {
+            showToast('⚠️ 인식에 실패했습니다. 다시 시도해주세요.');
+            return;
+        }
 
         const { analysis, imageHash } = result;
 
@@ -6417,8 +6418,6 @@ async function analyzeStepScreenshot() {
             const existingHash = existingDoc.data()?.steps?.imageHash;
             if (existingHash && existingHash === imageHash) {
                 showToast('⚠️ 이미 등록된 캡처입니다. 다른 캡처를 올려주세요.');
-                btn.textContent = '🤖 AI 걸음수 인식';
-                btn.classList.remove('loading');
                 return;
             }
         }
@@ -6461,9 +6460,17 @@ async function analyzeStepScreenshot() {
         console.error('걸음수 스크린샷 분석 오류:', e);
         showToast('⚠️ 분석에 실패했습니다. 다시 시도해주세요.');
     } finally {
-        btn.textContent = '🤖 AI 걸음수 인식';
-        btn.classList.remove('loading');
+        if (screenshotBtn) {
+            screenshotBtn.innerHTML = '📱 삼성헬스 캡처<input type="file" id="step-screenshot-img" accept="image/*" style="display:none" onchange="handleStepScreenshot(this)">';
+            screenshotBtn.style.pointerEvents = '';
+        }
     }
+}
+
+// Legacy — kept for backward compat if button exists
+async function analyzeStepScreenshot() {
+    const fileInput = document.getElementById('step-screenshot-img');
+    if (fileInput?.files[0]) await handleStepScreenshot(fileInput);
 }
 
 // 걸음수 데이터 로드 (날짜 변경 시)
