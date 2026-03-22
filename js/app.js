@@ -6390,13 +6390,12 @@ async function handleStepScreenshot(fileInput) {
     }
 
     try {
-        // 1. Firebase Storage 업로드
-        const compressed = await compressImage(file, 1280, 0.85);
+        // 1. Firebase Storage 업로드 (스크린샷은 압축 불필요)
         const timestamp = Date.now();
         const storagePath = `step_screenshots/${user.uid}/${timestamp}.jpg`;
 
         const imgRef = ref(storage, storagePath);
-        await uploadBytes(imgRef, compressed);
+        await uploadBytes(imgRef, file);
         const downloadUrl = await getDownloadURL(imgRef);
 
         // 2. AI 분석 호출 (gemini-2.0-flash — 초고속)

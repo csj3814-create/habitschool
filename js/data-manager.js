@@ -64,6 +64,11 @@ export async function compressImage(file, maxWidth = 1200, maxHeight = 1200, qua
 
             // Canvas를 Blob으로 변환 (JPEG, quality 조절)
             canvas.toBlob((blob) => {
+                // blob이 null이면 원본 반환 (캔버스 변환 실패)
+                if (!blob) {
+                    resolve(file);
+                    return;
+                }
                 // 압축 후 파일이 더 크면 원본 반환
                 if (blob.size > file.size) {
                     resolve(file);
