@@ -1,146 +1,76 @@
-# 2026-03-20 세션 완료 보고
+# 2026-03-22 세션 완료 보고
 
-> **상태**: ✅ 전체 완료 · main push · Firebase 양쪽 배포 완료
-> **작업**: 전체 코드 리뷰(`/octo:review`) + 버그 수정 7건 + 인프라 정리
-
-## 수행한 작업
-
-### 버그 수정 ✅
-
-| # | 심각도 | 파일 | 내용 |
-|---|--------|------|------|
-| 1 | 🔴 HIGH | `js/main.js` | HBT 변환 미리보기 1:1 하드코딩 → `fetchTokenStats()` 기반 동적 비율 |
-| 2 | 🔴 HIGH | `js/main.js` | `_stakePctAccum` 챌린지 간 리셋 누락 → 패널 오픈 시 자동 초기화 |
-| 3 | 🟡 MED | `js/app.js` + `js/main.js` | CDN 스크립트 SRI 없음 → `integrity`+`crossOrigin` 추가, exif-js 버전 고정 |
-| 4 | 🟡 MED | `js/main.js` | deprecated `execCommand('copy')` → toast 안내로 교체 |
-| 5 | 🟢 LOW | `js/main.js` | 블록체인 로드 실패 시 사용자 피드백 없음 → `showToast()` 추가 |
-| 6 | 🟢 LOW | `js/app.js` | CF cold start 타임아웃 3s → 5s 완화 |
-| 7 | 🟢 LOW | `.claude/launch.json` | 개발 서버 설정 5개 추가 (Firebase/Vitest/Hardhat) |
-
-### 인프라 정리 ✅
-- `dist/` git 제거 + `.gitignore` 추가 (테스트=GitHub, 배포=Firebase 구조 확정)
-- `package.json` 단순화: `npm run deploy` 하나로 통합
-- `.firebaserc` 생성: 기본 프로젝트 `habitschool-8497b` 설정
-- Firebase 양쪽 배포: `habitschool.web.app` + `habitschool-8497b.web.app`
-
-### 다음 세션 시작 전 확인
-- [ ] `tasks/lessons.md` 배포 전 체크리스트 확인
-- [ ] `cd D:\antigravity\habitschool && git pull origin main`
-
----
-
-# 2026-03-16 작업 완료 보고서
-
-> **상태**: ✅ 모든 작업 완료 · main 브랜치 push 완료 · Firebase Hosting 배포 완료
-> **목표**: 모바일 대시보드 로딩 시간 3초 이내 달성
-> **결과**: 일반 크롬 4초, 시크릿 탭 3초 — **목표 달성**
-
----
-
-## 배경
-
-모바일에서 로그인 후 대시보드 로딩에 16~33초 소요. 시크릿 탭에서는 3초인데 일반 크롬에서 33초 걸리는 현상이 핵심 문제.
-
----
+> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료
+> **작업**: 걸음수(만보기) 기능 추가 + 갤러리 탭 지연 수정 + 버그 수정 6건
 
 ## 수행한 작업
 
-### 1. CDN 스크립트 제거 (초기 로딩 차단 제거) ✅
-
-| 제거 대상 | 크기 | 비고 |
-|-----------|------|------|
-| ethers.umd.min.js | ~800KB | 블록체인 기능 전용, 대시보드에 불필요 |
-| exif-js | ~30KB | 사진 메타데이터 전용 |
-| html2canvas.min.js | ~200KB | 공유 이미지 생성 전용 |
-| kakao.min.js + Kakao.init | ~100KB | 카카오 공유 전용 |
-
-- `index.html`에서 4개 CDN `<script>` 태그 + `Kakao.init` 인라인 스크립트 제거
-- 총 ~1.1MB의 초기 로딩 제거
-
-### 2. 동적 라이브러리 로딩 구현 ✅
-
-- `js/app.js`에 `_loadScript()`, `_ensureExif()`, `_ensureHtml2Canvas()`, `_ensureKakao()` 헬퍼 함수 추가
-- 각 라이브러리를 **사용 시점**에만 로드 (lazy loading)
-- `js/main.js`의 `_loadBlockchainModule`에서 ethers.js를 동적 로드 후 blockchain-manager.js import
-
-### 3. Dashboard localStorage 캐시 ✅
-
-- `_saveDashboardToLS()` / `_loadDashboardFromLS()` 구현
-- 캐시 히트 시 즉시 렌더 → 백그라운드에서 최신 데이터 갱신
-- 5분 TTL (300초)
-
-### 4. getDashboardData Cloud Function ✅
-
-- `functions/index.js`에 서버사이드 데이터 집계 함수 추가
-- 클라이언트 3개 Firestore 쿼리 → 서버 1회 호출로 통합
-- **3초 타임아웃**: CF 응답이 3초 초과 시 직접 Firestore 쿼리로 폴백 (cold start 대응)
-
-### 5. Service Worker 전략 변경 (핵심 해결책) ✅
-
-| 항목 | 변경 전 | 변경 후 |
-|------|---------|---------|
-| 전략 | Cache First | **Network First, Cache Fallback** |
-| install | cache.addAll()로 정적 자산 프리캐시 | skipWaiting() 즉시 활성화 |
-| activate | 구 캐시 삭제 | 구 캐시 삭제 + clients.claim() |
-| CACHE_NAME | v64 | **v78** |
-
-- **이것이 33초 vs 3초 차이의 근본 원인이었음**: 구 SW(Cache First)가 오래된 JS 파일을 캐시에서 계속 서빙
-- Network First로 변경하여 항상 최신 파일을 네트워크에서 가져오고, 오프라인일 때만 캐시 사용
-
-### 6. 로그인 흐름 복원 ✅
-
-- `window.location.reload()` 복원: 모바일 popup 로그인 후 Firebase Firestore WebSocket 연결 상태를 깨끗하게 재설정
-- `loadDataForSelectedDate(todayStr)` 복원: 식단/운동/마음 탭 데이터 로드 보장
-
----
-
-## 변경 파일 목록
+### 1. 갤러리 탭 15초+ 지연 수정 ✅
 
 | 파일 | 변경 내용 |
-|------|-----------|
-| `index.html` | CDN script 4개 + Kakao.init 제거 |
-| `js/app.js` | 동적 로드 헬퍼, localStorage 캐시, CF 호출 + 타임아웃 폴백 |
-| `js/auth.js` | reload() 복원, loadDataForSelectedDate 복원 |
-| `js/main.js` | ethers.js 동적 로드 후 blockchain-manager import |
-| `sw.js` | Network First 전략, v78, skipWaiting + clients.claim |
-| `functions/index.js` | getDashboardData Cloud Function 추가 |
+|------|---------|
+| `js/app.js` | `_galleryLoading` boolean → Promise 기반 동시 로드 핸들링 |
+| `js/app.js` | 데이터 저장 후 갤러리 백그라운드 프리페치 추가 |
 
----
+- **원인**: Firestore WebSocket 재연결 지연 + boolean guard가 동시 요청 차단
+- **해결**: Promise 재사용 패턴 + 저장 직후 백그라운드 프리페치
 
-## 성능 결과
+### 2. 걸음수(만보기) 기능 추가 ✅
 
-| 환경 | 변경 전 | 변경 후 |
-|------|---------|---------|
-| 모바일 일반 크롬 | 16~33초 | **4초** |
-| 모바일 시크릿 탭 | 3초 | **3초** |
-| PC | 5~10초 | **3초** |
+| 파일 | 변경 내용 |
+|------|---------|
+| `index.html` | 운동 탭에 걸음수 카드 (SVG 원형 프로그레스 링 + 숫자 입력) |
+| `styles.css` | 걸음수 카드 스타일 + 다크모드 |
+| `js/app.js` | 걸음수 입력/저장/포인트 통합/데이터 로드 로직 |
+| `js/diet-analysis.js` | `requestStepScreenshotAnalysis` 함수 (사용 중단) |
+| `functions/index.js` | `analyzeStepScreenshot` Cloud Function (사용 중단) |
+| `manifest.json` | PWA 바로가기 shortcuts (식단/운동/걸음수) |
+| `storage.rules` | `step_screenshots/` 경로 보안 규칙 추가 |
 
----
+**설계 결정**:
+- 목표: 8,000보 (SVG 원형 프로그레스 링)
+- 포인트: 유산소 인증에 통합 (러닝+걸음수=15P, 단독=10P)
+- UI: 원형 링 좌측 + 숫자 입력 우측 가로 배치
+- OCR 기능: 삼성헬스 스크린샷 AI 인식 기능은 제거 (안정성 문제)
+  → 숫자 직접 입력만 지원
 
-## 이전 작업 (2026-03-15)
+### 3. 연쇄 버그 수정 (걸음수 기능 관련) ✅
 
-<details>
-<summary>클릭하여 펼치기</summary>
+| # | 원인 | 수정 |
+|---|------|------|
+| 1 | `compressImage`에서 `canvas.toBlob()` null 반환 → hang | blob null 체크 추가 |
+| 2 | Firebase SDK 11.6.0 동적 import (앱은 10.8.0) → hang | top-level import 재사용 |
+| 3 | `storage.rules`에 `step_screenshots/` 경로 누락 → 403 | 규칙 추가 |
+| 4 | `gemini-2.0-flash` deprecated → CF 500 에러 | `gemini-2.5-flash` + thinkingBudget:0 |
+| 5 | 운동 퀘스트 문구 모바일 2줄 표시 | 문구 축약 |
+| 6 | 삼성헬스 OCR 안정성 문제 | OCR 기능 제거, 숫자 입력만 남김 |
 
-### Task 1: 탭 로딩 성능 개선 ✅
-- Dashboard 캐시 (30초 TTL _dashboardCache)
-- Assets 5개 순차 쿼리 → 병렬 쿼리 (5초→1초)
-- settleExpiredChallenges .catch() 누락 버그 수정
+## 중요 규칙 (반드시 준수)
 
-### Task 2: 주간 채굴량 자동 조절 Cloud Function ✅
-- adjustMiningRate: 매주 월요일 00:00 KST 자동 실행
-- adjustMiningRateManual: Admin 수동 실행
+### Gemini 모델
+- **gemini-2.0-flash 사용 금지** — 반드시 `gemini-2.5-flash`만 사용
+- thinking 불필요한 작업: `thinkingConfig: { thinkingBudget: 0 }`
 
-### Task 3: Git 동기화 & 배포 ✅
-- 26개 미커밋 파일 동기화
-- Firebase Hosting 배포
+### 배포 순서 (절대 규칙)
+1. `git add` + `git commit`
+2. `git push origin main`
+3. **사용자에게 확인 요청** ← 반드시 이 단계를 거칠 것
+4. 확인 받은 후에만 `firebase deploy`
 
-</details>
+### 작업 완료 검증
+- 코드 변경이 의존하는 모든 인프라 점검 (Storage rules, Firestore rules, CF 배포 등)
+- 새 import/경로 추가 시 기존 버전/규칙과 충돌 없는지 확인
+- 면밀하게 분석 후 배포, 에러 발생 시 근본 원인까지 완벽히 해결
 
----
+## 커밋 이력
 
-## 다음 단계
-
-1. **채굴량 조절 확인**: adjustMiningRate 첫 자동 실행 로그 확인 (Firebase Console)
-2. **Base 메인넷 출시**: `tasks/mainnet-launch-guide.md` 참고
-3. **Play Store**: 테스터 20명 모집 → 프로덕션 출시
+| 순서 | 커밋 | 내용 |
+|------|------|------|
+| 1 | `192e6bb` | feat: 걸음수 측정 기능 추가 + 갤러리 탭 지연 수정 |
+| 2 | `be2ac87` | fix: 걸음수 캡처 자동 인식 + 모델 고속화 |
+| 3 | `e576267` | fix: 걸음수 Storage import 버전 불일치 수정 |
+| 4 | `be0a70c` | fix: 걸음수 캡처 업로드 hang 수정 (compressImage blob null) |
+| 5 | `6334d7b` | fix: Storage 보안 규칙에 step_screenshots 경로 추가 |
+| 6 | `73e063a` | fix: 걸음수 AI 모델 gemini-2.0-flash→2.5-flash |
+| 7 | `7e041c6` | fix: 운동 퀘스트 문구 축약 |
+| 8 | `1082145` | fix: 걸음수 삼성헬스 캡처 OCR 기능 제거 |

@@ -2,6 +2,52 @@
 
 ---
 
+## 2026-03-22 (걸음수 기능 추가 & 갤러리 지연 수정 세션)
+
+### 29. Gemini 모델: gemini-2.0-flash 사용 금지 — 반드시 gemini-2.5-flash만 사용
+- **증상**: `gemini-2.0-flash` 모델이 deprecated되어 Cloud Function에서 404 에러 발생.
+- **교훈**: **gemini-2.0-flash는 절대 사용하지 말 것.** 모든 Gemini API 호출은 `gemini-2.5-flash`만 사용.
+  단순 OCR 등 thinking이 불필요한 작업은 `thinkingConfig: { thinkingBudget: 0 }`으로 thinking 비활성화.
+
+### 30. 배포 순서: 반드시 git commit → push → 사용자 확인 → firebase deploy
+- **증상**: 코드 변경 후 바로 `firebase deploy`하여 검증되지 않은 코드가 프로덕션에 배포됨.
+  Storage 규칙 누락, SDK 버전 불일치, 모델 deprecated 등 연쇄 에러 발생.
+- **교훈**: 서버 배포 순서를 반드시 지킬 것:
+  1. `git add` + `git commit`
+  2. `git push origin main`
+  3. **사용자에게 확인 요청**
+  4. 확인 받은 후에만 `firebase deploy --only hosting,functions`
+- **절대 금지**: 사용자 확인 없이 `firebase deploy` 실행.
+
+### 31. Firebase Storage 보안 규칙에 새 경로 추가를 잊지 말 것
+- **증상**: `step_screenshots/` 경로가 `storage.rules`에 없어서 업로드 시 403 Forbidden 에러.
+- **교훈**: 새로운 Storage 경로를 코드에 추가할 때 반드시 `storage.rules`에도 해당 경로 규칙 추가.
+  `firestore.rules` (Lesson #6)과 동일한 패턴. **체크리스트에 추가.**
+
+### 32. Firebase SDK 버전은 프로젝트 전체에서 반드시 통일
+- **증상**: 앱 전체는 `firebase 10.8.0`인데 걸음수 코드에서 `11.6.0`을 동적 import.
+  서로 다른 버전의 SDK는 Firebase 앱 인스턴스를 공유하지 못해 업로드가 무한 대기(hang).
+- **교훈**: 동적 import로 Firebase SDK를 새로 로드하지 말 것.
+  이미 top-level에서 import된 모듈(`ref`, `uploadBytes`, `getDownloadURL` 등)을 직접 사용.
+  새 Firebase 모듈이 필요하면 기존 import 블록에 추가.
+
+### 33. canvas.toBlob()은 null을 반환할 수 있다 — 반드시 null 체크
+- **증상**: `compressImage`에서 `canvas.toBlob()` 콜백의 `blob`이 null이었고,
+  `blob.size` 접근 시 TypeError 발생. Promise가 resolve도 reject도 안 되어 전체 hang.
+- **교훈**: `canvas.toBlob()` 콜백에서 `blob`이 null인 경우 원본 파일로 fallback.
+  Promise 내부에서는 모든 경로가 resolve 또는 reject에 도달하는지 반드시 확인.
+
+### 34. 작업 완료 후 반드시 에러 검증 — 면밀한 분석 후 배포
+- **증상**: 기능 구현 후 테스트 없이 "완료"로 보고. Storage 규칙 누락, SDK 버전 불일치,
+  모델 deprecated 등 3개 연쇄 에러가 사용자에게 그대로 노출됨.
+- **교훈**: 작업 완료 시 반드시:
+  1. 코드 변경이 의존하는 모든 인프라(Storage rules, Firestore rules, CF 배포) 점검
+  2. 새 import/경로 추가 시 기존 버전/규칙과 충돌 없는지 확인
+  3. 단순하게 생각하지 말고 면밀하게 분석 후 배포
+  4. 에러 발생 시 근본 원인까지 완벽히 해결
+
+---
+
 ## 2026-03-20 (코드 리뷰 & 인프라 정리 세션)
 
 ### 20. 전체 코드 리뷰는 숨겨진 버그를 한꺼번에 드러낸다
@@ -145,3 +191,8 @@
 - [ ] onAuthStateChanged에서 `loadDataForSelectedDate` 호출이 있는가?
 - [ ] Cloud Function 호출에 타임아웃 + 폴백이 있는가?
 - [ ] main push 후 `cd D:\antigravity\habitschool && git pull origin main` 실행했는가?
+- [ ] 새 Storage 경로 추가 시 `storage.rules`에 규칙을 추가했는가?
+- [ ] 새 Firestore 필드 추가 시 `firestore.rules`의 화이트리스트에 추가했는가?
+- [ ] Firebase SDK import 버전이 프로젝트 전체와 동일한가? (현재 10.8.0)
+- [ ] Gemini 모델이 `gemini-2.5-flash`인가? (gemini-2.0-flash 사용 금지)
+- [ ] **git commit + push 후 사용자 확인을 받았는가?** (확인 전 firebase deploy 금지)

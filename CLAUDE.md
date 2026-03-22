@@ -67,6 +67,35 @@
 
 ---
 
+## 배포 규칙 (절대 준수)
+
+### 배포 순서
+1. `git add` + `git commit`
+2. `git push origin main`
+3. **사용자에게 확인 요청** ← 이 단계 없이 firebase deploy 절대 금지
+4. 확인 받은 후에만 `firebase deploy --only hosting,functions`
+
+### Gemini API
+- **gemini-2.0-flash 사용 금지** — deprecated됨
+- 반드시 `gemini-2.5-flash`만 사용
+- thinking 불필요한 작업: `thinkingConfig: { thinkingBudget: 0 }`
+
+### Firebase SDK
+- 프로젝트 전체 버전: `10.8.0` — 다른 버전 동적 import 금지
+- 이미 top-level에서 import된 모듈을 재사용할 것
+
+### 새 기능 추가 시 인프라 체크
+- 새 Storage 경로 → `storage.rules`에 규칙 추가
+- 새 Firestore 필드 → `firestore.rules` 화이트리스트에 추가
+- 새 Cloud Function → 배포 후 실행 로그 확인
+
+### 작업 완료 검증
+- 면밀하게 분석 후 배포 — 단순하게 생각해서 실수하지 말 것
+- 에러 발생 시 근본 원인까지 완벽히 해결
+- 해결했다고 보고하기 전에 실제 동작 확인
+
+---
+
 ## Session Start Checklist
 
 - [ ] Review `tasks/lessons.md` for patterns relevant to this project
