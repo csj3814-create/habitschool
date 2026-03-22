@@ -6395,9 +6395,7 @@ async function handleStepScreenshot(fileInput) {
         const timestamp = Date.now();
         const storagePath = `step_screenshots/${user.uid}/${timestamp}.jpg`;
 
-        const { ref: storageRef, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js');
-        const { storage } = await import('./firebase-config.js');
-        const imgRef = storageRef(storage, storagePath);
+        const imgRef = ref(storage, storagePath);
         await uploadBytes(imgRef, compressed);
         const downloadUrl = await getDownloadURL(imgRef);
 
