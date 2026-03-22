@@ -787,20 +787,8 @@
                                     placeholder="직접 입력" min="0" max="200000" inputmode="numeric">
                                 <button class="step-input-btn" onclick="setManualSteps()">입력</button>
                             </div>
-                            <label class="step-screenshot-btn" for="step-screenshot-img">
-                                📱 삼성헬스 캡처
-                                <input type="file" id="step-screenshot-img" accept="image/*"
-                                    style="display:none" onchange="handleStepScreenshot(this)">
-                            </label>
-                            <div class="step-details" id="step-details" style="display:none;">
-                                <div class="step-detail-item"><span>📏</span> <span id="step-distance">-</span></div>
-                                <div class="step-detail-item"><span>🔥</span> <span id="step-calories">-</span></div>
-                                <div class="step-detail-item"><span>⏱️</span> <span id="step-active-time">-</span></div>
-                            </div>
                         </div>
                     </div>
-                    <img id="preview-step-screenshot" class="preview-img" style="display:none; max-height:200px; margin-top:8px; border-radius:8px; width:100%; object-fit:contain;">
-                    <div id="step-analysis-result" style="display:none;" class="step-analysis-box"></div>
                 </div>
                 <!-- 업로드 CTA -->
                 <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
