@@ -13,6 +13,7 @@ const functions = getFunctions(undefined, 'asia-northeast3');
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
+const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');
 
 /**
  * 수면/마음 AI 분석 요청
@@ -426,3 +427,35 @@ export function renderBloodTestResult(container, analysis) {
 
 window.requestBloodTestAnalysis = requestBloodTestAnalysis;
 window.renderBloodTestResult = renderBloodTestResult;
+window.requestStepScreenshotAnalysis = requestStepScreenshotAnalysis;
+
+// ========================================
+// 걸음수 스크린샷 AI 분석
+// ========================================
+
+/**
+ * 걸음수 스크린샷 AI 분석 요청
+ * @param {string} imageUrl - Firebase Storage 이미지 URL
+ * @returns {{ analysis: object, imageHash: string } | null}
+ */
+export async function requestStepScreenshotAnalysis(imageUrl) {
+    if (!auth.currentUser) {
+        showToast('⚠️ 로그인이 필요합니다.');
+        return null;
+    }
+    try {
+        const result = await analyzeStepScreenshotFn({ imageUrl });
+        if (result.data?.success && result.data.analysis) {
+            if (result.data.analysis.notHealthApp) {
+                showToast('⚠️ 건강/만보기 앱 캡처가 아닌 것 같습니다.');
+                return null;
+            }
+            return { analysis: result.data.analysis, imageHash: result.data.imageHash };
+        }
+        return null;
+    } catch (e) {
+        console.error('걸음수 스크린샷 분석 오류:', e);
+        showToast('⚠️ 분석 실패. 다시 시도해주세요.');
+        return null;
+    }
+}

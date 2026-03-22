@@ -17,12 +17,15 @@ import { auth, db, storage, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, 
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult } from './diet-analysis.js';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis } from './diet-analysis.js';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
 window.updateMetabolicScoreUI = updateMetabolicScoreUI;
+window.setManualSteps = setManualSteps;
+window.handleStepScreenshot = handleStepScreenshot;
+window.analyzeStepScreenshot = analyzeStepScreenshot;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -1124,6 +1127,9 @@ async function loadDataForSelectedDate(dateStr) {
             if (tgEl && data.metrics?.triglyceride) {
                 tgEl.value = data.metrics.triglyceride;
             }
+
+            // 걸음수 데이터 복원
+            loadStepData(data);
 
             // AI 식단 분석 결과 복원
             if (window._restoreDietAnalysis) {
@@ -2470,6 +2476,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
         document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
         document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
+
 
         let streakCount = 0;
         const streakLogs = data.streakLogs || [];
@@ -3952,7 +3959,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             let sleepThumbUrl = sleepResult.thumbUrl;
 
             const hasDiet = !!(bUrl || lUrl || dUrl || sUrl);
-            const hasExer = cardioList.length > 0 || strengthList.length > 0;
+            const hasExer = cardioList.length > 0 || strengthList.length > 0 || (_stepData.count > 0);
             const meditationDone = document.getElementById('meditation-check').checked;
             // 감사일기 텍스트 정제 (XSS 방지)
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
@@ -3968,10 +3975,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const dietPhotoCount = [bUrl, lUrl, dUrl, sUrl].filter(u => !!u).length;
             const newDietPts = Math.min(dietPhotoCount * 10, 30);
 
-            // 운동: 유산소 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
+            // 운동: 유산소·걸음수 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
             let newExerPts = 0;
-            if (cardioList.length >= 1) newExerPts += 10;
-            if (cardioList.length >= 2) newExerPts += 5;
+            const cardioCredits = cardioList.length + (_stepData.count > 0 ? 1 : 0);
+            if (cardioCredits >= 1) newExerPts += 10;
+            if (cardioCredits >= 2) newExerPts += 5;
             if (strengthList.length >= 1) newExerPts += 10;
             if (strengthList.length >= 2) newExerPts += 5;
             newExerPts = Math.min(newExerPts, 30);
@@ -4006,6 +4014,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 },
                 dietAnalysis: existingAnalysis,
                 exercise: { cardioList: cardioList, strengthList: strengthList },
+                steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: new Date().toISOString() } : (oldData.steps || null),
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
@@ -4033,10 +4042,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 showToast(`🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
             } else { showToast(`🎉 데이터가 업데이트되었습니다.`); }
 
-            // 데이터 저장 후 캐시 초기화 (갤러리 재로드를 위해)
+            // 데이터 저장 후 캐시 초기화 후 백그라운드 pre-fetch (갤러리 탭 전환 시 즉시 표시)
             cachedGalleryLogs = [];
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
+            loadGalleryData();
             // 대시보드/자산 캐시도 무효화
             _dashboardCache.ts = 0;
             _assetCache.ts = 0;
@@ -5170,18 +5180,21 @@ function cleanupGalleryResources() {
 }
 window.cleanupGalleryResources = cleanupGalleryResources;
 
-let _galleryLoading = false; // 중복 로드 방지
+let _galleryLoadingPromise = null; // 중복 로드 방지 + 완료 대기용
 
 async function loadGalleryData(forceReload = false) {
-    if (_galleryLoading) return;
     if (forceReload) cachedGalleryLogs = [];
-    _galleryLoading = true;
 
-    try {
-        await _loadGalleryDataInner();
-    } finally {
-        _galleryLoading = false;
+    if (_galleryLoadingPromise) {
+        // 백그라운드 로드 완료 대기 후 캐시에서 즉시 렌더링
+        await _galleryLoadingPromise;
+        return _loadGalleryDataInner(); // 캐시 있으면 fetch 스킵, 렌더링만
     }
+
+    _galleryLoadingPromise = _loadGalleryDataInner().finally(() => {
+        _galleryLoadingPromise = null;
+    });
+    return _galleryLoadingPromise;
 }
 
 // Firestore REST API로 갤러리 데이터 직접 조회 (비로그인 cold start 대응)
@@ -6313,6 +6326,184 @@ function shareApp(platform) {
                 showToast('⚠️ 복사에 실패했습니다. 직접 복사해 주세요.');
             });
             break;
+    }
+}
+
+// ==========================================
+// 걸음수 (Step Counter) 기능
+// ==========================================
+
+let _stepData = { count: 0, source: null, screenshotUrl: null, screenshotThumbUrl: null, imageHash: null, distance_km: null, calories: null, active_minutes: null };
+let _stepScreenshotFile = null;
+
+function updateStepRing(count, goal = 8000) {
+    const pct = Math.min(count / goal, 1);
+    const circumference = 2 * Math.PI * 52; // r=52
+    const offset = circumference * (1 - pct);
+
+    const ring = document.getElementById('step-ring-progress');
+    if (ring) ring.setAttribute('stroke-dashoffset', offset);
+
+    const display = document.getElementById('step-count-display');
+    if (display) display.textContent = count.toLocaleString();
+
+}
+
+function setManualSteps() {
+    const input = document.getElementById('step-manual-input');
+    const val = parseInt(input.value);
+    if (!val || val <= 0) { showToast('⚠️ 올바른 걸음수를 입력하세요.'); return; }
+    if (val > 200000) { showToast('⚠️ 걸음수가 너무 큽니다.'); return; }
+
+    _stepData.count = val;
+    _stepData.source = 'manual';
+    _stepData.imageHash = null;
+    _stepData.screenshotUrl = null;
+    updateStepRing(val);
+    showToast(`👟 ${val.toLocaleString()}보 입력 완료!`);
+}
+
+function handleStepScreenshot(fileInput) {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { showToast('⚠️ 이미지 파일만 업로드 가능합니다.'); return; }
+
+    _stepScreenshotFile = file;
+    const preview = document.getElementById('preview-step-screenshot');
+    const aiBtn = document.getElementById('ai-btn-step');
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        aiBtn.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+async function analyzeStepScreenshot() {
+    const user = auth.currentUser;
+    if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+    if (!_stepScreenshotFile) { showToast('⚠️ 캡처 이미지를 먼저 올려주세요.'); return; }
+
+    const btn = document.getElementById('ai-btn-step');
+    const resultBox = document.getElementById('step-analysis-result');
+    btn.classList.add('loading');
+    btn.textContent = '🤖 AI 분석 중...';
+
+    try {
+        // 1. Firebase Storage 업로드
+        const compressed = await compressImage(_stepScreenshotFile, 1280, 0.85);
+        const timestamp = Date.now();
+        const storagePath = `step_screenshots/${user.uid}/${timestamp}.jpg`;
+
+        const { ref: storageRef, uploadBytes, getDownloadURL } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js');
+        const { storage } = await import('./firebase-config.js');
+        const imgRef = storageRef(storage, storagePath);
+        await uploadBytes(imgRef, compressed);
+        const downloadUrl = await getDownloadURL(imgRef);
+
+        // 2. AI 분석 호출
+        const result = await requestStepScreenshotAnalysis(downloadUrl);
+        if (!result) { btn.textContent = '🤖 AI 걸음수 인식'; btn.classList.remove('loading'); return; }
+
+        const { analysis, imageHash } = result;
+
+        // 3. 중복 해시 체크
+        const { todayStr } = getDatesInfo();
+        const docId = `${user.uid}_${todayStr}`;
+        const existingDoc = await getDoc(doc(db, "daily_logs", docId));
+        if (existingDoc.exists()) {
+            const existingHash = existingDoc.data()?.steps?.imageHash;
+            if (existingHash && existingHash === imageHash) {
+                showToast('⚠️ 이미 등록된 캡처입니다. 다른 캡처를 올려주세요.');
+                btn.textContent = '🤖 AI 걸음수 인식';
+                btn.classList.remove('loading');
+                return;
+            }
+        }
+
+        // 4. 걸음수 데이터 업데이트
+        _stepData = {
+            count: analysis.steps || 0,
+            source: 'samsung_screenshot',
+            screenshotUrl: downloadUrl,
+            screenshotThumbUrl: null,
+            imageHash: imageHash,
+            distance_km: analysis.distance_km || null,
+            calories: analysis.calories || null,
+            active_minutes: analysis.active_minutes || null
+        };
+
+        updateStepRing(_stepData.count);
+
+        // 5. 상세 정보 표시
+        const detailsDiv = document.getElementById('step-details');
+        if (detailsDiv) {
+            detailsDiv.style.display = 'flex';
+            document.getElementById('step-distance').textContent = analysis.distance_km ? `${analysis.distance_km} km` : '-';
+            document.getElementById('step-calories').textContent = analysis.calories ? `${analysis.calories} kcal` : '-';
+            document.getElementById('step-active-time').textContent = analysis.active_minutes ? `${analysis.active_minutes}분` : '-';
+        }
+
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `
+            <div class="step-result-row"><span class="step-result-label">걸음수</span><span class="step-result-value">${(analysis.steps || 0).toLocaleString()}보</span></div>
+            ${analysis.distance_km ? `<div class="step-result-row"><span class="step-result-label">거리</span><span class="step-result-value">${analysis.distance_km} km</span></div>` : ''}
+            ${analysis.calories ? `<div class="step-result-row"><span class="step-result-label">칼로리</span><span class="step-result-value">${analysis.calories} kcal</span></div>` : ''}
+            <div class="step-result-row"><span class="step-result-label">앱</span><span class="step-result-value">${analysis.source === 'samsung_health' ? '삼성헬스' : analysis.source === 'apple_health' ? 'Apple 건강' : '기타'}</span></div>
+            <p style="font-size:12px; color:#4CAF50; margin-top:8px;">✅ ${analysis.summary || '걸음수가 인식되었습니다.'}</p>
+        `;
+
+        showToast(`👟 ${(analysis.steps || 0).toLocaleString()}보 인식 완료!`);
+
+    } catch (e) {
+        console.error('걸음수 스크린샷 분석 오류:', e);
+        showToast('⚠️ 분석에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+        btn.textContent = '🤖 AI 걸음수 인식';
+        btn.classList.remove('loading');
+    }
+}
+
+// 걸음수 데이터 로드 (날짜 변경 시)
+function loadStepData(logData) {
+    if (logData?.steps) {
+        _stepData = { ...logData.steps };
+        updateStepRing(_stepData.count || 0);
+
+        if (_stepData.screenshotUrl) {
+            const preview = document.getElementById('preview-step-screenshot');
+            if (preview) { preview.src = _stepData.screenshotUrl; preview.style.display = 'block'; }
+        }
+
+        const detailsDiv = document.getElementById('step-details');
+        if (detailsDiv && (_stepData.distance_km || _stepData.calories || _stepData.active_minutes)) {
+            detailsDiv.style.display = 'flex';
+            const distEl = document.getElementById('step-distance');
+            const calEl = document.getElementById('step-calories');
+            const timeEl = document.getElementById('step-active-time');
+            if (distEl) distEl.textContent = _stepData.distance_km ? `${_stepData.distance_km} km` : '-';
+            if (calEl) calEl.textContent = _stepData.calories ? `${_stepData.calories} kcal` : '-';
+            if (timeEl) timeEl.textContent = _stepData.active_minutes ? `${_stepData.active_minutes}분` : '-';
+        }
+
+        // 수동 입력 필드에도 값 표시
+        const manualInput = document.getElementById('step-manual-input');
+        if (manualInput && _stepData.count > 0) manualInput.value = _stepData.count;
+    } else {
+        _stepData = { count: 0, source: null, screenshotUrl: null, screenshotThumbUrl: null, imageHash: null, distance_km: null, calories: null, active_minutes: null };
+        updateStepRing(0);
+        const preview = document.getElementById('preview-step-screenshot');
+        if (preview) { preview.src = ''; preview.style.display = 'none'; }
+        const detailsDiv = document.getElementById('step-details');
+        if (detailsDiv) detailsDiv.style.display = 'none';
+        const aiBtn = document.getElementById('ai-btn-step');
+        if (aiBtn) aiBtn.style.display = 'none';
+        const resultBox = document.getElementById('step-analysis-result');
+        if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
+        const manualInput = document.getElementById('step-manual-input');
+        if (manualInput) manualInput.value = '';
     }
 }
 
