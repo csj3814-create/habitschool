@@ -37,5 +37,25 @@
     ],
     "categories": ["health", "fitness", "lifestyle"],
     "screenshots": [],
-    "prefer_related_applications": false
+    "prefer_related_applications": false,
+    "shortcuts": [
+        {
+            "name": "식단 기록",
+            "short_name": "식단",
+            "url": "/?tab=diet",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "운동 기록",
+            "short_name": "운동",
+            "url": "/?tab=exercise",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "걸음수 입력",
+            "short_name": "걸음수",
+            "url": "/?tab=exercise&section=steps",
+            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+        }
+    ]
 }

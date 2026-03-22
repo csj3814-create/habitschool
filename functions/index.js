@@ -646,6 +646,128 @@ exports.analyzeSleepMind = onCall(
     }
 );
 
+// ========================================
+// 6. AI 걸음수 스크린샷 분석 (Gemini Vision API)
+// ========================================
+
+const crypto = require('crypto');
+
+const STEP_SCREENSHOT_PROMPT = `당신은 건강 앱 스크린샷을 분석하는 AI입니다.
+사용자가 삼성헬스, Apple 건강, 또는 기타 건강/만보기 앱의 스크린샷을 제공합니다.
+
+## 분석 대상
+화면에 보이는 걸음수, 거리, 칼로리, 활동 시간 등의 데이터를 정확히 추출합니다.
+
+## 분석 기준
+1. **걸음수**: 메인 숫자(보통 가장 크게 표시됨)를 인식
+2. **거리**: km 또는 miles 단위 (없으면 null)
+3. **칼로리**: kcal 또는 cal (없으면 null)
+4. **활동 시간**: 분 단위로 환산 (없으면 null)
+5. **날짜**: 화면에 표시된 날짜 (없으면 null)
+6. **앱 종류**: 삼성헬스/Apple건강/기타 판별
+
+## 주의사항
+- 걸음수에 쉼표(,)가 있으면 제거하고 순수 숫자로 반환
+- 거리 단위가 miles인 경우 km로 변환 (×1.609)
+- 화면이 건강/만보기 앱이 아닌 경우 "notHealthApp": true 반환
+- 숫자를 정확히 읽을 수 없는 경우 null 반환
+
+## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
+{
+  "steps": 8432,
+  "distance_km": 5.2,
+  "calories": 312,
+  "active_minutes": 45,
+  "date": "2025-03-22",
+  "source": "samsung_health" | "apple_health" | "other",
+  "notHealthApp": false,
+  "confidence": "high" | "medium" | "low",
+  "summary": "오늘 8,432보를 걸어 약 5.2km를 이동했습니다."
+}
+마크다운 코드 블록으로 출력하지 말고, 순수 JSON만 출력하세요.`;
+
+exports.analyzeStepScreenshot = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 20,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { imageUrl } = request.data;
+        if (!imageUrl || typeof imageUrl !== "string") {
+            throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+        }
+
+        // SSRF 방지: Firebase Storage URL만 허용
+        if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/")) {
+            throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
+        }
+
+        try {
+            // 이미지 다운로드
+            const imgResponse = await fetch(imageUrl);
+            if (!imgResponse.ok) {
+                throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+            }
+            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+            const base64Image = imgBuffer.toString("base64");
+
+            // 이미지 SHA-256 해시 계산 (중복 감지용)
+            const imageHash = crypto.createHash('sha256').update(imgBuffer).digest('hex');
+
+            // Gemini API 호출
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: { responseMimeType: "application/json" }
+            });
+
+            const result = await model.generateContent([
+                STEP_SCREENSHOT_PROMPT,
+                {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: contentType
+                    }
+                }
+            ]);
+
+            const responseText = result.response.text();
+
+            // JSON 추출 (마크다운 코드블록 제거)
+            let jsonStr = responseText;
+            const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+            }
+
+            const analysis = JSON.parse(jsonStr);
+
+            return {
+                success: true,
+                analysis: analysis,
+                imageHash: imageHash,
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("analyzeStepScreenshot 오류:", error);
+
+            if (error.message && error.message.includes("JSON")) {
+                throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
+            }
+            throw new HttpsError("internal", "걸음수 분석 중 오류가 발생했습니다.");
+        }
+    }
+);
+
 /**
  * daily_logs 문서 변경 시 포인트(coins) 자동 정산
  * 클라이언트가 직접 coins를 수정하지 않고, 서버에서 안전하게 처리

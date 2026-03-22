@@ -230,6 +230,7 @@
                     <div class="today-status-cheer" id="today-status-cheer" style="display:none;"></div>
                 </div>
 
+
                 <div class="card">
                     <h3 style="margin-bottom:0;">📈 이번 주(월~일) 인증 현황</h3>
                     <p style="font-size:11px; color:#888; margin-top:2px;">날짜를 누르면 해당 일의 기록으로 이동합니다.</p>
@@ -762,8 +763,45 @@
 
             <div id="exercise" class="content-section">
                 <div class="quest-board">
-                    <div class="quest-item"><span>🏃 운동 기록하기 <strong>(유산소 10+5P, 근력 10+5P)</strong></span><span
+                    <div class="quest-item"><span>🏃 운동 기록하기 <strong>(유산소·걸음수 10+5P, 근력 10+5P)</strong></span><span
                             class="quest-check" id="quest-exercise">미달성</span></div>
+                </div>
+                <!-- 걸음수 카드 -->
+                <div class="card step-card" id="step-card">
+                    <h3>👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(유산소 인증 1건)</span></h3>
+                    <div class="step-display">
+                        <div class="step-ring-container">
+                            <svg class="step-ring" viewBox="0 0 120 120">
+                                <circle class="step-ring-bg" cx="60" cy="60" r="52" />
+                                <circle class="step-ring-progress" id="step-ring-progress" cx="60" cy="60" r="52"
+                                    stroke-dasharray="326.73" stroke-dashoffset="326.73" />
+                            </svg>
+                            <div class="step-ring-text">
+                                <span class="step-count" id="step-count-display">0</span>
+                                <span class="step-goal-label">/ 8,000</span>
+                            </div>
+                        </div>
+                        <div class="step-right-panel">
+                            <div class="step-input-group">
+                                <input type="number" id="step-manual-input" class="step-number-input"
+                                    placeholder="직접 입력" min="0" max="200000" inputmode="numeric">
+                                <button class="step-input-btn" onclick="setManualSteps()">입력</button>
+                            </div>
+                            <label class="step-screenshot-btn" for="step-screenshot-img">
+                                📱 삼성헬스 캡처
+                                <input type="file" id="step-screenshot-img" accept="image/*"
+                                    style="display:none" onchange="handleStepScreenshot(this)">
+                            </label>
+                            <div class="step-details" id="step-details" style="display:none;">
+                                <div class="step-detail-item"><span>📏</span> <span id="step-distance">-</span></div>
+                                <div class="step-detail-item"><span>🔥</span> <span id="step-calories">-</span></div>
+                                <div class="step-detail-item"><span>⏱️</span> <span id="step-active-time">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <img id="preview-step-screenshot" class="preview-img" style="display:none; max-height:200px; margin-top:8px; border-radius:8px; width:100%; object-fit:contain;">
+                    <button class="diet-ai-btn" id="ai-btn-step" style="display:none;" onclick="analyzeStepScreenshot()">🤖 AI 걸음수 인식</button>
+                    <div id="step-analysis-result" style="display:none;" class="step-analysis-box"></div>
                 </div>
                 <!-- 업로드 CTA -->
                 <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
