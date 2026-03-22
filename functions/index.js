@@ -724,8 +724,11 @@ exports.analyzeStepScreenshot = onCall(
             // Gemini API 호출
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
             const model = genAI.getGenerativeModel({
-                model: "gemini-2.0-flash",
-                generationConfig: { responseMimeType: "application/json" }
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
             });
 
             const result = await model.generateContent([
