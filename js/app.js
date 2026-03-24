@@ -1476,16 +1476,24 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
 
-            // 초대 링크 표시
-            const referralSection = document.getElementById('referral-section');
-            const referralLinkEl = document.getElementById('referral-link-display');
-            if (referralSection && referralLinkEl) {
-                if (userData.referralCode) {
-                    referralLinkEl.value = `https://habitschool.web.app?ref=${userData.referralCode}`;
-                    referralSection.style.display = 'block';
-                } else {
-                    referralSection.style.display = 'none';
-                }
+            // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
+            if (userData.referralCode) {
+                const referralUrl = `https://habitschool.web.app?ref=${userData.referralCode}`;
+                // 지갑 탭
+                const referralSection = document.getElementById('referral-section');
+                const referralLinkEl = document.getElementById('referral-link-display');
+                if (referralSection) referralSection.style.display = 'block';
+                if (referralLinkEl) referralLinkEl.value = referralUrl;
+                // 프로필 탭
+                const profileLinkBox = document.getElementById('profile-invite-link-box');
+                const profileLinkEl = document.getElementById('profile-invite-link');
+                const profileCodeEl = document.getElementById('profile-invite-code');
+                if (profileLinkBox) profileLinkBox.style.display = 'block';
+                if (profileLinkEl) profileLinkEl.value = referralUrl;
+                if (profileCodeEl) profileCodeEl.textContent = userData.referralCode;
+            } else {
+                const referralSection = document.getElementById('referral-section');
+                if (referralSection) referralSection.style.display = 'none';
             }
 
             // 포인트 표시 업데이트
@@ -4994,7 +5002,7 @@ function getEmptyStateHtml(filter) {
     </div>`;
 }
 
-// 주간 베스트 갤러리 (이번 주 가장 많은 반응을 받은 상위 3개)
+// 주간 베스트 갤러리 (성실 기록 + 응원 + 댓글 종합 점수 기준, 유저 단위)
 function buildWeeklyBestSection() {
     const container = document.getElementById('weekly-best-container');
     if (!container) return;
@@ -5013,27 +5021,55 @@ function buildWeeklyBestSection() {
         return;
     }
 
-    // 반응 수 기준 정렬
-    const scored = weekLogs.map(item => {
+    // 유저별 집계 (days * 10 + reactions * 2 + comments * 3)
+    const userMap = {};
+    weekLogs.forEach(item => {
+        const uid = item.data.userId;
+        if (!uid) return;
+        if (!userMap[uid]) {
+            userMap[uid] = {
+                name: item.data.userName || '익명',
+                days: new Set(),
+                reactions: 0,
+                comments: 0,
+                streak: item.data.currentStreak || 0,
+                bestItem: null,
+                bestItemScore: -1
+            };
+        }
+        const u = userMap[uid];
+        u.days.add(item.data.date);
         const rx = item.data.reactions || {};
-        const total = (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0) + (item.data.comments?.length || 0);
-        return { ...item, score: total };
-    }).filter(item => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+        const rxCount = (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0);
+        u.reactions += rxCount;
+        u.comments += (item.data.comments?.length || 0);
+        // 가장 인기 있는 포스트를 썸네일로
+        const itemScore = rxCount + (item.data.comments?.length || 0);
+        if (itemScore > u.bestItemScore) { u.bestItem = item; u.bestItemScore = itemScore; }
+        // 최신 streak 반영
+        if ((item.data.currentStreak || 0) > u.streak) u.streak = item.data.currentStreak;
+    });
 
-    if (scored.length === 0) {
+    const ranked = Object.values(userMap)
+        .map(u => ({ ...u, daysCount: u.days.size, score: u.days.size * 10 + u.reactions * 2 + u.comments * 3 }))
+        .filter(u => u.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+
+    if (ranked.length === 0) {
         container.style.display = 'none';
         return;
     }
 
     let html = '<div class="weekly-best-header">🏅 이번 주 열심 학생</div><div class="weekly-best-list">';
-    scored.forEach((item, idx) => {
-        const data = item.data;
+    ranked.forEach((u, idx) => {
         const medal = ['🥇', '🥈', '🥉'][idx];
-        const name = escapeHtml(data.userName || '익명');
-        const rx = data.reactions || {};
-        const reactions = (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0);
+        const name = escapeHtml(u.name);
+        const streakEmoji = u.streak >= 100 ? '👑' : u.streak >= 60 ? '💎' : u.streak >= 30 ? '⭐' : u.streak >= 7 ? '🔥' : '';
+        const streakHtml = streakEmoji ? `<span class="streak-badge">${streakEmoji} ${u.streak}일</span>` : '';
 
-        // 첫 번째 이미지 썸네일
+        // 썸네일 (가장 인기 있는 포스트 기준)
+        const data = u.bestItem?.data || {};
         let thumbUrl = '';
         if (data.diet) {
             for (const meal of ['breakfast', 'lunch', 'dinner', 'snack']) {
@@ -5048,14 +5084,14 @@ function buildWeeklyBestSection() {
         if (!thumbUrl && data.sleepAndMind?.sleepImageThumbUrl) thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
 
         const safeThumb = thumbUrl ? escapeHtml(thumbUrl) : '';
-        const thumbHtml = safeThumb ? `<img src="${safeThumb}" alt="인기 기록" loading="lazy">` : `<div class="best-no-img">📝</div>`;
+        const thumbHtml = safeThumb ? `<img src="${safeThumb}" alt="이번 주 기록" loading="lazy">` : `<div class="best-no-img">📝</div>`;
 
         html += `<div class="weekly-best-item">
             <span class="best-medal">${medal}</span>
             <div class="best-thumb">${thumbHtml}</div>
             <div class="best-info">
-                <span class="best-name">${name}</span>
-                <span class="best-stats">❤️ ${reactions} · 💬 ${data.comments?.length || 0}</span>
+                <span class="best-name">${name}${streakHtml}</span>
+                <span class="best-stats">📅 ${u.daysCount}일 · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
             </div>
         </div>`;
     });
@@ -6312,8 +6348,9 @@ window.analyzeSleepData = async function() {
 // ============================================================
 // 친구 초대 링크 복사 / 공유
 // ============================================================
-window.copyReferralLink = function() {
-    const input = document.getElementById('referral-link-display');
+window.copyReferralLink = function(inputId) {
+    const id = inputId || 'referral-link-display';
+    const input = document.getElementById(id);
     if (!input || !input.value) return;
     navigator.clipboard.writeText(input.value).then(() => {
         showToast('📋 초대 링크가 복사되었습니다!');
@@ -6325,9 +6362,10 @@ window.copyReferralLink = function() {
 };
 
 window.shareReferralLink = function(platform) {
-    const input = document.getElementById('referral-link-display');
-    const url = input?.value || '';
-    if (!url) return;
+    const url = document.getElementById('profile-invite-link')?.value
+             || document.getElementById('referral-link-display')?.value
+             || '';
+    if (!url) { showToast('초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.'); return; }
     const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
     const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크로 가입하면 보너스 포인트 지급 🎁';
     if (platform === 'kakao') {

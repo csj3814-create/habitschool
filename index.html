@@ -356,20 +356,28 @@
                 </div>
 
                 <!-- 5. 친구 초대 공유 -->
-                <div class="card card-invite" style="text-align:center; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
-                    <h3 style="color:#E65100;">🎉 친구 초대하기</h3>
-                    <p style="font-size:13px; color:#666; margin-bottom:14px; line-height:1.5;">
-                        해빛스쿨을 친구에게 알려주세요!<br>함께하면 습관 만들기가 더 즐거워요 🌞
-                    </p>
+                <div class="card card-invite" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
+                    <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
+                    <!-- 보상 안내 -->
+                    <div class="referral-rewards" style="margin-bottom:14px;">
+                        <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">친구 가입 즉시 <strong>+200P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
+                    </div>
+                    <!-- 초대 코드 + 링크 (지갑 생성 후 표시) -->
+                    <div id="profile-invite-link-box" style="display:none; margin-bottom:12px;">
+                        <div style="font-size:12px; color:#888; margin-bottom:5px;">내 초대 코드: <strong id="profile-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" id="profile-invite-link" class="referral-link-input" readonly onclick="this.select()">
+                            <button class="referral-copy-btn" onclick="copyReferralLink('profile-invite-link')">복사</button>
+                        </div>
+                    </div>
+                    <!-- 공유 버튼 -->
                     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
-                            onclick="shareApp('kakao')">💬 카카오톡</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#1DA1F2; color:white; border-radius:12px;"
-                            onclick="shareApp('twitter')">🐦 X (트위터)</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#03C75A; color:white; border-radius:12px;"
-                            onclick="shareApp('naver')">📝 네이버 블로그</button>
+                            onclick="shareReferralLink('kakao')">💬 카카오톡</button>
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#555; color:white; border-radius:12px;"
-                            onclick="shareApp('copy')">📋 링크 복사</button>
+                            onclick="shareReferralLink('copy')">📋 링크 복사</button>
                     </div>
                 </div>
 
@@ -610,7 +618,7 @@
                     </div>
                     <div class="referral-link-box">
                         <input type="text" id="referral-link-display" class="referral-link-input" readonly onclick="this.select()">
-                        <button class="referral-copy-btn" onclick="copyReferralLink()">복사</button>
+                        <button class="referral-copy-btn" onclick="copyReferralLink('referral-link-display')">복사</button>
                     </div>
                     <div class="referral-share-row">
                         <button class="referral-share-btn" onclick="shareReferralLink('kakao')">카카오</button>
