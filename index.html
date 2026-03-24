@@ -597,6 +597,27 @@
                 </div>
 
                 <!-- 지갑 정보 -->
+                <!-- 친구 초대 링크 -->
+                <div class="card referral-card" id="referral-section" style="display:none;">
+                    <div class="referral-header">
+                        <h3>🎁 친구 초대</h3>
+                        <span class="referral-badge">초대 보너스</span>
+                    </div>
+                    <div class="referral-rewards">
+                        <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">신규 가입 즉시 <strong>+200P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
+                    </div>
+                    <div class="referral-link-box">
+                        <input type="text" id="referral-link-display" class="referral-link-input" readonly onclick="this.select()">
+                        <button class="referral-copy-btn" onclick="copyReferralLink()">복사</button>
+                    </div>
+                    <div class="referral-share-row">
+                        <button class="referral-share-btn" onclick="shareReferralLink('kakao')">카카오</button>
+                        <button class="referral-share-btn" onclick="shareReferralLink('copy')">링크 복사</button>
+                    </div>
+                </div>
+
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
                         <h3>🔐 블록체인 지갑</h3>

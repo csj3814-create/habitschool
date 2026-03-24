@@ -1476,6 +1476,18 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
 
+            // 초대 링크 표시
+            const referralSection = document.getElementById('referral-section');
+            const referralLinkEl = document.getElementById('referral-link-display');
+            if (referralSection && referralLinkEl) {
+                if (userData.referralCode) {
+                    referralLinkEl.value = `https://habitschool.web.app?ref=${userData.referralCode}`;
+                    referralSection.style.display = 'block';
+                } else {
+                    referralSection.style.display = 'none';
+                }
+            }
+
             // 포인트 표시 업데이트
             const pointsDisplay = document.getElementById('asset-points-display');
             if (pointsDisplay) {
@@ -5013,7 +5025,7 @@ function buildWeeklyBestSection() {
         return;
     }
 
-    let html = '<div class="weekly-best-header">🏆 이번 주 인기 기록</div><div class="weekly-best-list">';
+    let html = '<div class="weekly-best-header">🏅 이번 주 열심 학생</div><div class="weekly-best-list">';
     scored.forEach((item, idx) => {
         const data = item.data;
         const medal = ['🥇', '🥈', '🥉'][idx];
@@ -5753,6 +5765,11 @@ function buildGalleryCard(item, myId) {
     const totalReactions = cHeart + cFire + cClap;
     const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
 
+    // 연속 인증 스트릭 뱃지
+    const streak = data.currentStreak || 0;
+    const streakEmoji = streak >= 100 ? '👑' : streak >= 60 ? '💎' : streak >= 30 ? '⭐' : streak >= 7 ? '🔥' : '';
+    const streakHtml = streakEmoji ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
+
     // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
     const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
 
@@ -5810,7 +5827,7 @@ function buildGalleryCard(item, myId) {
             <div class="gallery-avatar">${avatarInitial}</div>
             <div class="gallery-header-info">
                 <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
-                <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
+                <span class="gallery-date">${data.date.replace(/-/g, '. ')}${streakHtml}</span>
             </div>
             ${friendBtnHtml}
             ${postMenuHtml}
@@ -6288,6 +6305,43 @@ window.analyzeSleepData = async function() {
         resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 중 오류가 발생했습니다.</p>';
     } finally {
         if (aiBtn) aiBtn.classList.remove('loading');
+    }
+};
+
+// ============================================================
+// ============================================================
+// 친구 초대 링크 복사 / 공유
+// ============================================================
+window.copyReferralLink = function() {
+    const input = document.getElementById('referral-link-display');
+    if (!input || !input.value) return;
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('📋 초대 링크가 복사되었습니다!');
+    }).catch(() => {
+        input.select();
+        document.execCommand('copy');
+        showToast('📋 초대 링크가 복사되었습니다!');
+    });
+};
+
+window.shareReferralLink = function(platform) {
+    const input = document.getElementById('referral-link-display');
+    const url = input?.value || '';
+    if (!url) return;
+    const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
+    const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크로 가입하면 보너스 포인트 지급 🎁';
+    if (platform === 'kakao') {
+        _ensureKakao().then(() => {
+            Kakao.Share.sendDefault({
+                objectType: 'feed',
+                content: { title, description: text, imageUrl: 'https://habitschool.web.app/icons/og-image.png', link: { mobileWebUrl: url, webUrl: url } },
+                buttons: [{ title: '가입하기', link: { mobileWebUrl: url, webUrl: url } }]
+            });
+        }).catch(() => {
+            navigator.clipboard.writeText(url).then(() => showToast('📋 초대 링크가 복사되었습니다!'));
+        });
+    } else {
+        navigator.clipboard.writeText(url).then(() => showToast('📋 초대 링크가 복사되었습니다!'));
     }
 };
 

@@ -800,11 +800,68 @@ exports.awardPoints = onDocumentWritten(
             const userRef = db.doc(`users/${userId}`);
             await userRef.set({ coins: admin.firestore.FieldValue.increment(diff) }, { merge: true });
             console.log(`awardPoints: ${userId} +${diff}P (total: ${newTotal})`);
+
+            // 스트릭 계산 및 저장
+            const logDate = after.date;
+            if (logDate) {
+                const streak = await calculateStreak(userId, logDate);
+                await event.data.after.ref.set({ currentStreak: streak }, { merge: true });
+                console.log(`streak: ${userId} ${logDate} → ${streak}일`);
+
+                // 추천인 마일스톤 보상
+                await checkReferralMilestone(userId, streak);
+            }
         } catch (err) {
             console.error("awardPoints 오류:", err);
         }
     }
 );
+
+// 연속 인증 스트릭 계산 (날짜 역순 탐색)
+async function calculateStreak(userId, currentDate) {
+    let streak = 1;
+    const d = new Date(currentDate + "T00:00:00Z");
+    for (let i = 1; i <= 100; i++) {
+        d.setUTCDate(d.getUTCDate() - 1);
+        const prevDateStr = d.toISOString().split("T")[0];
+        const snap = await db.collection("daily_logs")
+            .where("userId", "==", userId)
+            .where("date", "==", prevDateStr)
+            .limit(1)
+            .get();
+        if (snap.empty) break;
+        const prevData = snap.docs[0].data();
+        const prevTotal = (prevData.awardedPoints?.dietPoints || 0) +
+                          (prevData.awardedPoints?.exercisePoints || 0) +
+                          (prevData.awardedPoints?.mindPoints || 0);
+        if (prevTotal <= 0) break;
+        streak++;
+    }
+    return streak;
+}
+
+// 추천인 마일스톤 보상 (3일: 추천인 +500P, 7일: 신규 유저 +300P)
+async function checkReferralMilestone(userId, streak) {
+    if (streak !== 3 && streak !== 7) return;
+    const userSnap = await db.doc(`users/${userId}`).get();
+    const userData = userSnap.data();
+    if (!userData || !userData.referredBy) return;
+
+    if (streak === 3 && !userData.referralDay3BonusGiven) {
+        await db.doc(`users/${userData.referredBy}`).set(
+            { coins: admin.firestore.FieldValue.increment(500) }, { merge: true }
+        );
+        await db.doc(`users/${userId}`).set({ referralDay3BonusGiven: true }, { merge: true });
+        console.log(`referral 3-day: ${userId} → referrer ${userData.referredBy} +500P`);
+    }
+    if (streak === 7 && !userData.referralDay7BonusGiven) {
+        await db.doc(`users/${userId}`).set({
+            coins: admin.firestore.FieldValue.increment(300),
+            referralDay7BonusGiven: true
+        }, { merge: true });
+        console.log(`referral 7-day: ${userId} +300P`);
+    }
+}
 
 /**
  * 마일스톤 보너스 지급
@@ -837,6 +894,83 @@ exports.awardMilestoneBonus = onDocumentWritten(
         } catch (err) {
             console.error("awardMilestoneBonus 오류:", err);
         }
+    }
+);
+
+/**
+ * 갤러리 리액션 시 포인트 지급
+ * heart/fire/clap 배열에 새 UID가 추가되면 리액션 누른 사람 +1P, 게시물 주인 +1P
+ * 본인 게시물 제외, 리액션 취소 시 회수 없음
+ */
+exports.awardReactionPoints = onDocumentWritten(
+    { document: "daily_logs/{logId}", region: "asia-northeast3" },
+    async (event) => {
+        const after = event.data?.after?.data();
+        const before = event.data?.before?.data();
+        if (!after) return;
+        const postOwnerId = after.userId;
+        if (!postOwnerId) return;
+
+        for (const type of ["heart", "fire", "clap"]) {
+            const afterList = after.reactions?.[type] || [];
+            const beforeList = before?.reactions?.[type] || [];
+            const added = afterList.filter(uid => !beforeList.includes(uid));
+            for (const reactorUid of added) {
+                if (reactorUid === postOwnerId) continue;
+                await db.doc(`users/${reactorUid}`).set(
+                    { coins: admin.firestore.FieldValue.increment(1) }, { merge: true }
+                );
+                await db.doc(`users/${postOwnerId}`).set(
+                    { coins: admin.firestore.FieldValue.increment(1) }, { merge: true }
+                );
+                console.log(`reactionPoints: ${reactorUid} → ${postOwnerId} +1P each (${type})`);
+            }
+        }
+    }
+);
+
+/**
+ * 친구 초대 코드 처리 (신규 가입자 +200P, referredBy 저장)
+ * 클라이언트가 ?ref=CODE로 접속 후 가입 시 호출
+ */
+exports.processReferralSignup = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+
+        const { code } = request.data;
+        if (!code || typeof code !== "string" || code.length !== 6) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 초대 코드");
+        }
+        const upperCode = code.toUpperCase();
+
+        // 코드 → 추천인 UID 조회 (users 컬렉션에서 referralCode 필드 검색)
+        const codeQuery = await db.collection("users")
+            .where("referralCode", "==", upperCode)
+            .limit(1)
+            .get();
+        if (codeQuery.empty) throw new HttpsError("not-found", "존재하지 않는 초대 코드");
+        const referrerUid = codeQuery.docs[0].id;
+
+        // 자기 자신 초대 방지
+        if (referrerUid === uid) throw new HttpsError("invalid-argument", "본인 초대 코드 사용 불가");
+
+        // 이미 referredBy 저장된 경우 중복 방지
+        const userRef = db.doc(`users/${uid}`);
+        const userSnap = await userRef.get();
+        if (userSnap.exists && userSnap.data().referredBy) {
+            throw new HttpsError("already-exists", "이미 초대 코드를 사용했습니다");
+        }
+
+        // referredBy 저장 + 신규 가입 보너스 +200P
+        await userRef.set({
+            referredBy: referrerUid,
+            coins: admin.firestore.FieldValue.increment(200)
+        }, { merge: true });
+
+        console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P`);
+        return { success: true, bonus: 200 };
     }
 );
 

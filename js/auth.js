@@ -7,6 +7,12 @@ import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
 // blockchain-manager는 동적 import (로드 실패해도 인증에 영향 없음)
 
+// 페이지 로드 시 ?ref= 파라미터 저장 (초대 링크)
+const _refCode = new URLSearchParams(window.location.search).get('ref');
+if (_refCode && /^[A-Z0-9]{6}$/i.test(_refCode)) {
+    localStorage.setItem('pendingReferralCode', _refCode.toUpperCase());
+}
+
 // WebView(인앱 브라우저) 감지
 function isWebView() {
     const ua = navigator.userAgent || navigator.vendor || '';
@@ -209,6 +215,21 @@ export function setupAuthListener(callbacks) {
                 window._blockedUsers = ud.blockedUsers || [];
 
                 if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
+
+                // 초대 코드 처리 (아직 referredBy 없는 신규 유저)
+                const pendingCode = localStorage.getItem('pendingReferralCode');
+                if (pendingCode && !ud.referredBy) {
+                    localStorage.removeItem('pendingReferralCode');
+                    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js').then(({ getFunctions, httpsCallable }) => {
+                        const functions = getFunctions(undefined, 'asia-northeast3');
+                        const processReferral = httpsCallable(functions, 'processReferralSignup');
+                        processReferral({ code: pendingCode }).then(result => {
+                            if (result.data?.success) {
+                                showToast(`🎉 초대 보너스 ${result.data.bonus}P 지급되었습니다!`);
+                            }
+                        }).catch(() => {});
+                    }).catch(() => {});
+                }
 
                 if (ud.adminFeedback && ud.feedbackDate) {
                     const fbDate = new Date(ud.feedbackDate);

@@ -40,7 +40,8 @@ service cloud.firestore {
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
-                    'missionBadges', 'selectedMissions']);
+                    'missionBadges', 'selectedMissions',
+                    'referralCode']);
     }
     
     // ===== Users Collection =====

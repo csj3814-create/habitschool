@@ -234,19 +234,24 @@ export async function initializeUserWallet() {
         const { encrypted, iv } = await encryptPrivateKey(
             newWallet.privateKey, currentUser.uid, currentUser.email
         );
-        
+
         userWallet = newWallet;
         userWalletAddress = newWallet.address;
+
+        // 6자리 초대 코드 생성 (영숫자 대문자), users/{uid}.referralCode에 저장
+        // processReferralSignup Cloud Function에서 users 컬렉션 쿼리로 역방향 조회
+        const referralCode = generateReferralCode();
 
         await setDoc(userRef, {
             walletAddress: userWalletAddress,
             walletCreatedAt: serverTimestamp(),
             encryptedKey: encrypted,
             walletIv: iv,
-            walletVersion: 2
+            walletVersion: 2,
+            referralCode: referralCode
         }, { merge: true });
 
-        console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...');
+        console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...', '초대코드:', referralCode);
         updateWalletUI(userWalletAddress);
         showToast('✅ 보안 지갑이 생성되었습니다!');
         return userWalletAddress;
@@ -255,6 +260,18 @@ export async function initializeUserWallet() {
         console.error('❌ 지갑 초기화 오류:', error);
         return null;
     }
+}
+
+/**
+ * 6자리 영숫자 대문자 초대 코드 생성
+ */
+function generateReferralCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 혼동 문자(0,O,1,I) 제외
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
 }
 
 /**
