@@ -42,8 +42,8 @@ export const HBT_TOKEN = {
     decimals: 8,  // BTC와 동일
     maxSupply: 100_000_000, // 1억개 하드캡
 
-    // 테스트넷 컨트랙트 주소 (BSC Chapel) — v3
-    testnetAddress: '0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29',
+    // 테스트넷 컨트랙트 주소 (BSC Chapel) — v4 (RATE_UPDATER_ROLE 추가)
+    testnetAddress: '0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B',
 
     // 메인넷 컨트랙트 주소 (BSC, 향후 배포)
     mainnetAddress: '0x0000000000000000000000000000000000000000', // TODO: BSC 메인넷 배포 후
@@ -59,8 +59,8 @@ export const HBT_TOKEN = {
 
 // 📋 Staking 계약 설정 (챌린지 예치용)
 export const STAKING_CONTRACT = {
-    // 테스트넷 (BSC Chapel) — v3
-    testnetAddress: '0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8',
+    // 테스트넷 (BSC Chapel) — v4
+    testnetAddress: '0x7e8c29699F382B553891f853299e615257491F9D',
 
     // 메인넷 (BSC)
     mainnetAddress: '0x0000000000000000000000000000000000000000', // TODO: BSC 메인넷 배포 후

@@ -43,16 +43,22 @@ async function main() {
     const stakingAddress = await staking.getAddress();
     console.log(`✅ HaBitStaking 배포 완료: ${stakingAddress}`);
 
-    // 3. 서버 민터 역할 부여 (AccessControl — MINTER_ROLE)
+    // 3. 서버 민터 역할 부여 (AccessControl — MINTER_ROLE + RATE_UPDATER_ROLE)
     const serverMinter = process.env.SERVER_MINTER_ADDRESS;
     if (serverMinter && serverMinter !== "0x0000000000000000000000000000000000000000") {
         console.log("\n🔑 3/3: 서버 민터 권한 설정 중...");
         
-        // HaBit에 MINTER_ROLE 부여
+        // HaBit에 MINTER_ROLE 부여 (채굴 mint 호출용)
         const MINTER_ROLE = await habit.MINTER_ROLE();
         const tx1 = await habit.grantRole(MINTER_ROLE, serverMinter);
         await tx1.wait();
         console.log(`✅ HaBit MINTER_ROLE 부여: ${serverMinter}`);
+
+        // HaBit에 RATE_UPDATER_ROLE 부여 (updateRate 호출용)
+        const RATE_UPDATER_ROLE = await habit.RATE_UPDATER_ROLE();
+        const tx1b = await habit.grantRole(RATE_UPDATER_ROLE, serverMinter);
+        await tx1b.wait();
+        console.log(`✅ HaBit RATE_UPDATER_ROLE 부여: ${serverMinter}`);
 
         // Staking에 운영자 권한 부여
         const tx2 = await staking.setOperator(serverMinter, true);

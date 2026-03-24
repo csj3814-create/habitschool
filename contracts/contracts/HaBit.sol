@@ -60,6 +60,7 @@ contract HaBit is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard {
 
     // 역할
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant RATE_UPDATER_ROLE = keccak256("RATE_UPDATER_ROLE");
 
     // ============ 상태 변수 ============
     uint256 public totalMintedFromMining;    // 채굴 풀에서 누적 발행량
@@ -230,7 +231,7 @@ contract HaBit is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard {
      *      - 비율 ≤ MAX_RATE (4 HBT/P)
      *      - 변동폭: 현재의 0.5x ~ 2.0x 이내
      */
-    function updateRate(uint256 newRate) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateRate(uint256 newRate) external onlyRole(RATE_UPDATER_ROLE) {
         if (newRate == 0) revert InvalidRate();
         if (newRate > MAX_RATE) revert RateExceedsMaxCap();
 

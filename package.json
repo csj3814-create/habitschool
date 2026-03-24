@@ -13,6 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "sharp": "^0.34.5",
     "vitest": "^4.0.18"
   }
 }

@@ -34,9 +34,9 @@ const db = admin.firestore();
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
-// 컨트랙트 주소 (BSC Chapel 테스트넷) — v3
-const HABIT_ADDRESS = "0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29";
-const STAKING_ADDRESS = "0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8";
+// 컨트랙트 주소 (BSC Chapel 테스트넷) — v4 (RATE_UPDATER_ROLE 추가)
+const HABIT_ADDRESS = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
+const STAKING_ADDRESS = "0x7e8c29699F382B553891f853299e615257491F9D";
 const RPC_URL = "https://data-seed-prebsc-1-s1.binance.org:8545/";
 const CHAIN_ID = 97;
 const EXPLORER_URL = "https://testnet.bscscan.com";
