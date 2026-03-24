@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-03-25 (커뮤니티 활성화 + 초대 시스템 세션)
+
+### 35. Firestore rules 변경은 git commit만으로는 안 된다 — firebase deploy 필수
+- **증상**: `isAllowedUserField()`에 `referralCode` 추가 후 commit/push 했지만 실제 Firestore는 여전히 권한 거부.
+- **교훈**: Firestore rules, Storage rules 변경은 반드시 `firebase deploy --only firestore:rules` (또는 `storage`) 별도 실행 필요.
+  git commit은 코드 저장일 뿐, 규칙 반영은 firebase deploy가 해야 함.
+- **체크리스트 추가**: 새 Firestore 필드 추가 → rules 화이트리스트 추가 → **firebase deploy --only firestore:rules** 포함해서 배포
+
+### 36. try/catch 범위를 최소화할 것 — 관련 없는 코드를 같은 catch에 묶지 말 것
+- **증상**: 복호화 성공 후 `updateDoc(referralCode)` 실패가 "v2 지갑 복호화 실패"로 잘못 로깅됨.
+  사용자에게는 복호화 에러로 오해될 수 있고, referralCode 저장 실패는 조용히 묻힘.
+- **교훈**: try/catch 블록은 목적별로 분리할 것.
+  복호화 로직 → 복호화 전용 catch. 저장 로직 → 저장 전용 catch.
+  서로 다른 실패 케이스를 같은 catch에 묶으면 에러 진단이 불가능해짐.
+
+---
+
 ## 2026-03-22 (걸음수 기능 추가 & 갤러리 지연 수정 세션)
 
 ### 29. Gemini 모델: gemini-2.0-flash 사용 금지 — 반드시 gemini-2.5-flash만 사용

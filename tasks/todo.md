@@ -1,76 +1,72 @@
-# 2026-03-22 세션 완료 보고
+# 2026-03-25 세션 완료 보고
 
-> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료
-> **작업**: 걸음수(만보기) 기능 추가 + 갤러리 탭 지연 수정 + 버그 수정 6건
+> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료 (hosting + functions + firestore:rules)
+> **작업**: 커뮤니티 활성화 기능 + 프로필 초대 카드 개선 + 갤러리 열심 학생 개선 + 버그 수정
+
+---
 
 ## 수행한 작업
 
-### 1. 갤러리 탭 15초+ 지연 수정 ✅
+### 1. 커뮤니티 활성화 기능 추가 ✅
 
-| 파일 | 변경 내용 |
-|------|---------|
-| `js/app.js` | `_galleryLoading` boolean → Promise 기반 동시 로드 핸들링 |
-| `js/app.js` | 데이터 저장 후 갤러리 백그라운드 프리페치 추가 |
+| 기능 | 파일 | 내용 |
+|------|------|------|
+| 친구 초대 링크 | `js/auth.js`, `js/app.js`, `index.html` | 6자리 코드(`?ref=AB3X7K`), 프로필·지갑 탭 공유 버튼 |
+| 리액션 포인트 | `functions/index.js` | 응원(❤️🔥👏) 시 반응자·포스트 주인 각 +1P |
+| 스트릭 뱃지 | `functions/index.js`, `js/app.js` | 7일🔥 30일⭐ 60일💎 100일👑, 갤러리 카드 표시 |
+| 초대 마일스톤 | `functions/index.js` | 친구 가입 +200P, 3일 달성 시 추천인 +500P, 7일 달성 시 신규 +300P |
 
-- **원인**: Firestore WebSocket 재연결 지연 + boolean guard가 동시 요청 차단
-- **해결**: Promise 재사용 패턴 + 저장 직후 백그라운드 프리페치
+### 2. 프로필 탭 "친구 초대하기" 카드 개선 ✅
 
-### 2. 걸음수(만보기) 기능 추가 ✅
+- 보상 안내(+200P/+500P/+300P) 표시
+- 6자리 초대 코드 + referral URL 표시 (`profile-invite-link-box`)
+- 카카오톡 / 링크복사 버튼 → `shareReferralLink()` 호출
 
-| 파일 | 변경 내용 |
-|------|---------|
-| `index.html` | 운동 탭에 걸음수 카드 (SVG 원형 프로그레스 링 + 숫자 입력) |
-| `styles.css` | 걸음수 카드 스타일 + 다크모드 |
-| `js/app.js` | 걸음수 입력/저장/포인트 통합/데이터 로드 로직 |
-| `js/diet-analysis.js` | `requestStepScreenshotAnalysis` 함수 (사용 중단) |
-| `functions/index.js` | `analyzeStepScreenshot` Cloud Function (사용 중단) |
-| `manifest.json` | PWA 바로가기 shortcuts (식단/운동/걸음수) |
-| `storage.rules` | `step_screenshots/` 경로 보안 규칙 추가 |
+### 3. 갤러리 "이번 주 열심 학생" 개선 ✅
 
-**설계 결정**:
-- 목표: 8,000보 (SVG 원형 프로그레스 링)
-- 포인트: 유산소 인증에 통합 (러닝+걸음수=15P, 단독=10P)
-- UI: 원형 링 좌측 + 숫자 입력 우측 가로 배치
-- OCR 기능: 삼성헬스 스크린샷 AI 인식 기능은 제거 (안정성 문제)
-  → 숫자 직접 입력만 지원
+- **기존**: 포스트 단위 리액션 수 → 같은 사람이 TOP3 독차지 가능
+- **변경**: 유저 단위 집계, 점수 = `days×10 + reactions×2 + comments×3`
+- 이번 주 N일 · ❤️ N · 💬 N 표시, 스트릭 뱃지 포함
 
-### 3. 연쇄 버그 수정 (걸음수 기능 관련) ✅
+### 4. 버그 수정 ✅
 
-| # | 원인 | 수정 |
+| # | 버그 | 수정 |
 |---|------|------|
-| 1 | `compressImage`에서 `canvas.toBlob()` null 반환 → hang | blob null 체크 추가 |
-| 2 | Firebase SDK 11.6.0 동적 import (앱은 10.8.0) → hang | top-level import 재사용 |
-| 3 | `storage.rules`에 `step_screenshots/` 경로 누락 → 403 | 규칙 추가 |
-| 4 | `gemini-2.0-flash` deprecated → CF 500 에러 | `gemini-2.5-flash` + thinkingBudget:0 |
-| 5 | 운동 퀘스트 문구 모바일 2줄 표시 | 문구 축약 |
-| 6 | 삼성헬스 OCR 안정성 문제 | OCR 기능 제거, 숫자 입력만 남김 |
+| 1 | 프로필 탭 공유 버튼 → "초대 링크를 불러오는 중" | `auth.js` 로그인 직후 invite card 채우기 |
+| 2 | 기존 사용자(Case 1/2) referralCode 미생성 | `blockchain-manager.js` Case 1/2에 코드 생성 추가 |
+| 3 | referralCode updateDoc이 복호화 catch에 잡힘 | 복호화 try/catch 밖으로 분리, 별도 catch 처리 |
+| 4 | 주간 미션 날 바뀌면 다시 설정 화면 표시 | `saveWeeklyMissions` 후 `_invalidateDashboardCache()` 호출 |
+| 5 | Firestore rules `referralCode` 권한 없음 | `firestore.rules` 화이트리스트 추가 + deploy |
 
-## 중요 규칙 (반드시 준수)
-
-### Gemini 모델
-- **gemini-2.0-flash 사용 금지** — 반드시 `gemini-2.5-flash`만 사용
-- thinking 불필요한 작업: `thinkingConfig: { thinkingBudget: 0 }`
-
-### 배포 순서 (절대 규칙)
-1. `git add` + `git commit`
-2. `git push origin main`
-3. **사용자에게 확인 요청** ← 반드시 이 단계를 거칠 것
-4. 확인 받은 후에만 `firebase deploy`
-
-### 작업 완료 검증
-- 코드 변경이 의존하는 모든 인프라 점검 (Storage rules, Firestore rules, CF 배포 등)
-- 새 import/경로 추가 시 기존 버전/규칙과 충돌 없는지 확인
-- 면밀하게 분석 후 배포, 에러 발생 시 근본 원인까지 완벽히 해결
+---
 
 ## 커밋 이력
 
-| 순서 | 커밋 | 내용 |
-|------|------|------|
-| 1 | `192e6bb` | feat: 걸음수 측정 기능 추가 + 갤러리 탭 지연 수정 |
-| 2 | `be2ac87` | fix: 걸음수 캡처 자동 인식 + 모델 고속화 |
-| 3 | `e576267` | fix: 걸음수 Storage import 버전 불일치 수정 |
-| 4 | `be0a70c` | fix: 걸음수 캡처 업로드 hang 수정 (compressImage blob null) |
-| 5 | `6334d7b` | fix: Storage 보안 규칙에 step_screenshots 경로 추가 |
-| 6 | `73e063a` | fix: 걸음수 AI 모델 gemini-2.0-flash→2.5-flash |
-| 7 | `7e041c6` | fix: 운동 퀘스트 문구 축약 |
-| 8 | `1082145` | fix: 걸음수 삼성헬스 캡처 OCR 기능 제거 |
+| 커밋 | 내용 |
+|------|------|
+| `57dcb5e` | feat: 커뮤니티 활성화 기능 추가 (초대 링크, 리액션 포인트, 스트릭 뱃지, 랭킹) |
+| `bf16ba7` | feat: 프로필 초대 카드 개선 + 갤러리 열심 학생 유저 단위 집계 |
+| `43b096a` | fix: 프로필 탭 초대 링크 로그인 직후 즉시 채우기 |
+| `134b9d8` | fix: 기존 사용자 초대 코드 미생성 + 주간 미션 날 바뀌면 리셋 버그 |
+| `ac4a27d` | fix: referralCode updateDoc을 복호화 try/catch 밖으로 분리 |
+
+---
+
+## 다음 할 일 (우선순위순)
+
+### 🔴 High
+- [ ] **초대 코드 이벤트 검증**: 실제 다른 계정으로 `?ref=코드` 접속 후 가입 → +200P 지급 확인
+- [ ] **마일스톤 검증**: 친구 3일/7일 달성 시 포인트 지급 Cloud Function 로그 확인
+- [ ] **리액션 포인트 검증**: 갤러리에서 응원 누를 때 +1P 정상 지급 확인
+
+### 🟡 Medium
+- [ ] **Node.js 20 → 22 업그레이드**: Cloud Functions 런타임이 2026-04-30 deprecated 예정
+  - `functions/package.json`의 `"node": "20"` → `"22"` 변경 후 재배포
+- [ ] **firebase-functions 최신 버전 업그레이드**: 현재 구버전 경고 발생
+- [ ] **갤러리 신고 기능 UI**: `reports` 컬렉션 규칙은 있지만 UI 없음 (UGC 안전)
+- [ ] **admin_feedback / admin_messages UI**: 관리자 피드백 발송 인터페이스 없음
+
+### 🟢 Low
+- [ ] **CDN SRI 해시 추가**: ethers.js, html2canvas, exif-js에 `integrity` 속성 (Lesson #23)
+- [ ] **communityStats 캐시 활용**: `meta/communityStats` 데이터를 대시보드 상단에 표시
+- [ ] **초대 리더보드**: 누적 초대 수 많은 사용자 TOP5 표시 (홍보 효과)
