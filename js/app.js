@@ -3113,6 +3113,7 @@ async function saveWeeklyMissions() {
 
         pendingCustomMissions = [];
         showToast("🎯 이번 주 미션이 시작되었습니다! 화이팅!");
+        if (window._invalidateDashboardCache) window._invalidateDashboardCache();
         renderDashboard();
     } catch (error) {
         console.error('미션 저장 오류:', error);

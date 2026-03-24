@@ -191,6 +191,12 @@ export async function initializeUserWallet() {
                 userWalletAddress = wallet.address;
                 console.log('✅ v2 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
                 updateWalletUI(userWalletAddress);
+                // 기존 사용자에게 초대 코드가 없으면 생성
+                if (!userData.referralCode) {
+                    const referralCode = generateReferralCode();
+                    await updateDoc(userRef, { referralCode });
+                    console.log('✅ 초대 코드 생성 (Case 1):', referralCode);
+                }
                 return userWalletAddress;
             } catch (e) {
                 console.error('⚠️ v2 지갑 복호화 실패:', e);
@@ -213,14 +219,19 @@ export async function initializeUserWallet() {
             userWallet = newWallet;
             userWalletAddress = newWallet.address;
 
-            await updateDoc(userRef, {
+            const migrateData = {
                 walletAddress: userWalletAddress,
                 walletCreatedAt: serverTimestamp(),
                 encryptedKey: encrypted,
                 walletIv: iv,
                 walletVersion: 2,
                 oldWalletAddress: userData.walletAddress // 기존 주소 백업
-            });
+            };
+            if (!userData.referralCode) {
+                migrateData.referralCode = generateReferralCode();
+                console.log('✅ 초대 코드 생성 (Case 2):', migrateData.referralCode);
+            }
+            await updateDoc(userRef, migrateData);
 
             console.log('✅ v2 지갑 마이그레이션 완료:', userWalletAddress.substring(0, 10) + '...');
             updateWalletUI(userWalletAddress);
