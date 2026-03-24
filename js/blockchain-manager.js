@@ -191,13 +191,6 @@ export async function initializeUserWallet() {
                 userWalletAddress = wallet.address;
                 console.log('✅ v2 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
                 updateWalletUI(userWalletAddress);
-                // 기존 사용자에게 초대 코드가 없으면 생성
-                if (!userData.referralCode) {
-                    const referralCode = generateReferralCode();
-                    await updateDoc(userRef, { referralCode });
-                    console.log('✅ 초대 코드 생성 (Case 1):', referralCode);
-                }
-                return userWalletAddress;
             } catch (e) {
                 console.error('⚠️ v2 지갑 복호화 실패:', e);
                 // 주소만이라도 표시
@@ -205,6 +198,17 @@ export async function initializeUserWallet() {
                 updateWalletUI(userWalletAddress);
                 return userWalletAddress;
             }
+            // 기존 사용자에게 초대 코드가 없으면 생성 (복호화 try/catch 밖에서 처리)
+            if (!userData.referralCode) {
+                try {
+                    const referralCode = generateReferralCode();
+                    await updateDoc(userRef, { referralCode });
+                    console.log('✅ 초대 코드 생성 (Case 1):', referralCode);
+                } catch (e) {
+                    console.warn('⚠️ 초대 코드 저장 실패 (권한 미배포):', e.message);
+                }
+            }
+            return userWalletAddress;
         }
 
         // Case 2: v1 구형 지갑이 있는 경우 → v2로 마이그레이션
