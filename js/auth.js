@@ -216,6 +216,17 @@ export function setupAuthListener(callbacks) {
 
                 if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
 
+                // 프로필 탭 초대 카드 즉시 채우기 (updateAssetDisplay 호출 전에도 동작)
+                if (ud.referralCode) {
+                    const referralUrl = `https://habitschool.web.app?ref=${ud.referralCode}`;
+                    const pBox = document.getElementById('profile-invite-link-box');
+                    const pLink = document.getElementById('profile-invite-link');
+                    const pCode = document.getElementById('profile-invite-code');
+                    if (pBox) pBox.style.display = 'block';
+                    if (pLink) pLink.value = referralUrl;
+                    if (pCode) pCode.textContent = ud.referralCode;
+                }
+
                 // 초대 코드 처리 (아직 referredBy 없는 신규 유저)
                 const pendingCode = localStorage.getItem('pendingReferralCode');
                 if (pendingCode && !ud.referredBy) {
