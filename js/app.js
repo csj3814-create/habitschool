@@ -1484,6 +1484,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 const referralLinkEl = document.getElementById('referral-link-display');
                 if (referralSection) referralSection.style.display = 'block';
                 if (referralLinkEl) referralLinkEl.value = referralUrl;
+                const referralInviteCodeEl = document.getElementById('referral-invite-code');
+                if (referralInviteCodeEl) referralInviteCodeEl.textContent = userData.referralCode;
                 // 프로필 탭
                 const profileLinkBox = document.getElementById('profile-invite-link-box');
                 const profileLinkEl = document.getElementById('profile-invite-link');
@@ -5346,6 +5348,7 @@ async function _loadGalleryDataInner() {
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
 
+    try {
     // 게스트 모드: 공유 카드/활동 요약 숨김, CTA 배너 표시
     const shareContainer = document.getElementById('my-share-container');
     const activitySummary = document.getElementById('gallery-activity-summary');
@@ -5359,8 +5362,12 @@ async function _loadGalleryDataInner() {
         container.innerHTML = createSkeletonHtml(4);
 
         if (user) {
-            const userSnap = await getDoc(doc(db, "users", myId));
-            if (userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
+            try {
+                const userSnap = await getDoc(doc(db, "users", myId));
+                if (userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
+            } catch (e) {
+                console.warn('친구 목록 조회 실패 (무시):', e.message);
+            }
         }
 
         let retries = 0;
@@ -5449,6 +5456,14 @@ async function _loadGalleryDataInner() {
     renderActivitySummary(myId);
     buildWeeklyBestSection();
     setupInfiniteScroll();
+    } catch (e) {
+        console.error('갤러리 렌더링 중 오류:', e);
+        if (container) {
+            container.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
+                '<p style="font-size:15px;color:#666;margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p>' +
+                '<button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
+        }
+    }
 }
 
 // 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
