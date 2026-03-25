@@ -2021,6 +2021,32 @@ window.addEventListener('beforeunload', () => {
     cleanupGalleryResources();
 });
 
+// 모바일 백그라운드 복귀 처리
+(function setupVisibilityHandler() {
+    const RELOAD_THRESHOLD_MS = 30 * 60 * 1000; // 30분 이상이면 전체 새로고침
+    const GALLERY_REFRESH_MS  =  1 * 60 * 1000; //  1분 이상이면 갤러리만 재로드
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            localStorage.setItem('_lastHiddenAt', Date.now());
+        } else {
+            const last = parseInt(localStorage.getItem('_lastHiddenAt') || '0', 10);
+            const elapsed = Date.now() - last;
+
+            if (elapsed >= RELOAD_THRESHOLD_MS) {
+                // 30분 이상 → 전체 새로고침 (Firebase 재연결 + 재로그인)
+                location.reload();
+            } else if (elapsed >= GALLERY_REFRESH_MS) {
+                // 1분 이상 → 갤러리 탭이 열려 있으면 데이터 재로드
+                const galleryEl = document.getElementById('gallery');
+                if (galleryEl && galleryEl.style.display === 'block') {
+                    loadGalleryData();
+                }
+            }
+        }
+    });
+})();
+
 // 중복 제거: 로그인 및 인증 로직은 auth.js 모듈에서 처리
 
 window.hideFeedback = function () {
