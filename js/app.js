@@ -4157,6 +4157,19 @@ window.toggleReaction = async function (docId, reactionType, btnElement) {
                 reactions: { [reactionType]: arrayUnion(user.uid) }
             }, { merge: true });
         }
+
+        // 캐시 동기화: Firestore 성공 후 cachedGalleryLogs도 업데이트
+        const cached = cachedGalleryLogs.find(l => l.id === docId);
+        if (cached) {
+            const rx = cached.data.reactions || { heart: [], fire: [], clap: [] };
+            const arr = rx[reactionType] ? [...rx[reactionType]] : [];
+            if (isActive) {
+                cached.data.reactions = { ...rx, [reactionType]: arr.filter(uid => uid !== user.uid) };
+            } else {
+                if (!arr.includes(user.uid)) arr.push(user.uid);
+                cached.data.reactions = { ...rx, [reactionType]: arr };
+            }
+        }
     } catch (error) {
         console.error('반응 저장 오류:', error);
         // UI 롤백 (실패 시 원복)
