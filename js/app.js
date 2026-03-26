@@ -5196,8 +5196,9 @@ function hasMediaForFilter(data, filter) {
     if (filter === 'all') {
         const hasDiet = data.diet && ['breakfast', 'lunch', 'dinner', 'snack'].some(m => data.diet[`${m}Url`]);
         const hasExercise = data.exercise && (data.exercise.cardioImageUrl || data.exercise.strengthVideoUrl || data.exercise.cardioList?.length || data.exercise.strengthList?.length);
-        const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude;
-        return !!(hasDiet || hasExercise || hasMind);
+        const hasMind = data.sleepAndMind?.sleepImageUrl || data.sleepAndMind?.gratitude || data.sleepAndMind?.meditationDone;
+        const hasSteps = data.steps?.count > 0;
+        return !!(hasDiet || hasExercise || hasMind || hasSteps);
     }
     return false;
 }
