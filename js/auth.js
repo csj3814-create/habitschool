@@ -199,6 +199,11 @@ export function setupAuthListener(callbacks) {
                 window.loadDataForSelectedDate(todayStr);
             }
 
+            // 갤러리 데이터 백그라운드 pre-fetch (탭 클릭 전에 미리 로드)
+            setTimeout(() => {
+                if (window.loadGalleryData) window.loadGalleryData();
+            }, 800);
+
             // 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용)
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(userDoc => {

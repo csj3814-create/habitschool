@@ -66,6 +66,7 @@ window.analyzeMealPhoto = analyzeMealPhoto;
 window.completeOnboarding = completeOnboarding;
 window.goOnboardingStep = goOnboardingStep;
 window.openTab = openTab;
+window.loadGalleryData = loadGalleryData;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
@@ -5366,14 +5367,12 @@ async function _loadGalleryDataInner() {
         // 즉시 스켈레톤 표시 (체감 로딩 0ms)
         container.innerHTML = createSkeletonHtml(4);
 
-        if (user) {
-            try {
-                const userSnap = await getDoc(doc(db, "users", myId));
-                if (userSnap.exists()) cachedMyFriends = userSnap.data().friends || [];
-            } catch (e) {
-                console.warn('친구 목록 조회 실패 (무시):', e.message);
-            }
-        }
+        // 친구 목록 fetch를 백그라운드에서 시작 (갤러리 fetch와 병렬)
+        const friendsPromise = user
+            ? getDoc(doc(db, "users", myId))
+                .then(snap => { if (snap.exists()) cachedMyFriends = snap.data().friends || []; })
+                .catch(e => console.warn('친구 목록 조회 실패 (무시):', e.message))
+            : Promise.resolve();
 
         let retries = 0;
 
@@ -5427,6 +5426,9 @@ async function _loadGalleryDataInner() {
             }
         }
         }
+
+        // 친구 목록 완료 대기 (보통 이미 완료됨)
+        await friendsPromise;
 
         // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
         buildShareCardAsync(myId, user);
