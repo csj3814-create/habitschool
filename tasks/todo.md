@@ -1,42 +1,34 @@
-# 2026-03-25 세션 완료 보고
+# 2026-03-26 세션 완료 보고
 
-> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료 (hosting + functions + firestore:rules)
-> **작업**: 커뮤니티 활성화 기능 + 프로필 초대 카드 개선 + 갤러리 열심 학생 개선 + 버그 수정
+> **상태**: ✅ 전체 완료 · main push · Firebase 배포 대기 중
+> **작업**: 모바일 버그 수정 + 로딩 성능 개선
 
 ---
 
 ## 수행한 작업
 
-### 1. 커뮤니티 활성화 기능 추가 ✅
+### 1. 버그 수정 ✅
 
-| 기능 | 파일 | 내용 |
-|------|------|------|
-| 친구 초대 링크 | `js/auth.js`, `js/app.js`, `index.html` | 6자리 코드(`?ref=AB3X7K`), 프로필·지갑 탭 공유 버튼 |
-| 리액션 포인트 | `functions/index.js` | 응원(❤️🔥👏) 시 반응자·포스트 주인 각 +1P |
-| 스트릭 뱃지 | `functions/index.js`, `js/app.js` | 7일🔥 30일⭐ 60일💎 100일👑, 갤러리 카드 표시 |
-| 초대 마일스톤 | `functions/index.js` | 친구 가입 +200P, 3일 달성 시 추천인 +500P, 7일 달성 시 신규 +300P |
+| # | 버그 | 수정 | 파일 |
+|---|------|------|------|
+| 1 | 내 지갑 스켈레톤 고착 (에러 시) | `updateAssetDisplay` catch 블록 + `userSnap.exists()=false` 분기에 `hideWalletSkeleton()` 추가 | `js/app.js` |
+| 2 | 갤러리 "아직 기록이 없어요" (steps/명상만 있는 경우) | `hasMediaForFilter`에 `steps.count > 0`, `meditationDone` 체크 추가 | `js/app.js` |
+| 3 | HBT 잔액 로딩 중 "0 HBT" 표시 | `fetchOnchainBalance` 실패/null 시 강제 0 표시 제거 → "조회 중..." 유지 | `js/app.js` |
 
-### 2. 프로필 탭 "친구 초대하기" 카드 개선 ✅
+### 2. 성능 개선 ✅
 
-- 보상 안내(+200P/+500P/+300P) 표시
-- 6자리 초대 코드 + referral URL 표시 (`profile-invite-link-box`)
-- 카카오톡 / 링크복사 버튼 → `shareReferralLink()` 호출
+| 개선 항목 | 내용 | 효과 |
+|-----------|------|------|
+| 내 지갑 첫 로딩 20초 → 1~2초 | blockchain 로드 완료 대기 없이 `updateAssetDisplay()` 즉시 실행 | **~18초 단축** |
+| 갤러리 로딩 속도 개선 | 친구 fetch + 갤러리 fetch 병렬화, 로그인 후 background pre-fetch | ~300ms 단축 + 탭 클릭 시 즉시 표시 |
+| Firestore 오프라인 캐시 활성화 | `initializeFirestore + persistentLocalCache()` 설정 | 재방문 시 즉시 로드 |
+| 업로드 타임아웃 단축 | 60s → 30s (최대 대기 183초 → 93초) | 빠른 실패 피드백 |
+| 이미지 압축 강화 | 1200px/0.8 → 1000px/0.7 | 업로드 파일 크기 감소 |
 
-### 3. 갤러리 "이번 주 열심 학생" 개선 ✅
+### 3. 진단 (코드 수정 없음)
 
-- **기존**: 포스트 단위 리액션 수 → 같은 사람이 TOP3 독차지 가능
-- **변경**: 유저 단위 집계, 점수 = `days×10 + reactions×2 + comments×3`
-- 이번 주 N일 · ❤️ N · 💬 N 표시, 스트릭 뱃지 포함
-
-### 4. 버그 수정 ✅
-
-| # | 버그 | 수정 |
-|---|------|------|
-| 1 | 프로필 탭 공유 버튼 → "초대 링크를 불러오는 중" | `auth.js` 로그인 직후 invite card 채우기 |
-| 2 | 기존 사용자(Case 1/2) referralCode 미생성 | `blockchain-manager.js` Case 1/2에 코드 생성 추가 |
-| 3 | referralCode updateDoc이 복호화 catch에 잡힘 | 복호화 try/catch 밖으로 분리, 별도 catch 처리 |
-| 4 | 주간 미션 날 바뀌면 다시 설정 화면 표시 | `saveWeeklyMissions` 후 `_invalidateDashboardCache()` 호출 |
-| 5 | Firestore rules `referralCode` 권한 없음 | `firestore.rules` 화이트리스트 추가 + deploy |
+- 유산소 사진 업로드 느림 + "네트워크 연결을 확인해주세요": 근본 원인은 모바일 네트워크 불안정. Firestore `unavailable` 에러는 이미 3회 재시도 로직 있음.
+- 갤러리 스켈레톤: 실제 고착 버그 아님, 네트워크 지연 + 캐시 후 빠른 재로드 현상.
 
 ---
 
@@ -44,11 +36,11 @@
 
 | 커밋 | 내용 |
 |------|------|
-| `57dcb5e` | feat: 커뮤니티 활성화 기능 추가 (초대 링크, 리액션 포인트, 스트릭 뱃지, 랭킹) |
-| `bf16ba7` | feat: 프로필 초대 카드 개선 + 갤러리 열심 학생 유저 단위 집계 |
-| `43b096a` | fix: 프로필 탭 초대 링크 로그인 직후 즉시 채우기 |
-| `134b9d8` | fix: 기존 사용자 초대 코드 미생성 + 주간 미션 날 바뀌면 리셋 버그 |
-| `ac4a27d` | fix: referralCode updateDoc을 복호화 try/catch 밖으로 분리 |
+| `cf619e1` | fix: 내 지갑 스켈레톤 고착 버그 수정 + 업로드 성능 개선 |
+| `cf2f453` | fix: 갤러리 빈 화면 + 초기 로딩 속도 개선 |
+| `be76ef1` | perf: 갤러리 탭 로딩 속도 개선 |
+| `0cee09d` | perf: 내 지갑 탭 첫 로딩 20초 → 1~2초로 단축 |
+| `d8b2103` | fix: HBT 잔액 로딩 중 0 HBT 대신 조회 중... 표시 |
 
 ---
 
