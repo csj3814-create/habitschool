@@ -1617,13 +1617,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                             if (onchainText) onchainText.textContent = `온체인 (BSC Testnet)`;
                             onchainBadge.style.display = 'inline-flex';
                         }
-                    } else {
-                        if (hbtEl) hbtEl.innerHTML = `0 <span class="wallet-asset-unit">HBT</span>`;
                     }
+                    // 데이터 없으면 "조회 중..." 유지 (강제 0 표시 안 함)
                 }).catch(err => {
                     console.warn('온체인 잔액 조회 스킵:', err.message);
-                    const hbtEl = document.getElementById('asset-hbt-display');
-                    if (hbtEl) hbtEl.innerHTML = `0 <span class="wallet-asset-unit">HBT</span>`;
+                    // 에러 시에도 "조회 중..." 유지
                 });
             }
 
@@ -1971,8 +1969,8 @@ function openTab(tabName, pushState = true) {
                 if (window.fetchOnchainBalance && !document.getElementById('asset-hbt-display')?.textContent.includes('HBT')) {
                     window.fetchOnchainBalance().then(data => {
                         const el = document.getElementById('asset-hbt-display');
-                        if (!el) return;
-                        const val = parseFloat(data?.balanceFormatted || 0);
+                        if (!el || !data?.balanceFormatted) return; // 데이터 없으면 "조회 중..." 유지
+                        const val = parseFloat(data.balanceFormatted);
                         const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, { maximumFractionDigits: 1 });
                         el.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
                     }).catch(() => {});
