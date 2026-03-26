@@ -1913,9 +1913,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     }
                 }
             }
+        } else {
+            // 사용자 문서가 없는 경우에도 스켈레톤 해제
+            if (window.hideWalletSkeleton) window.hideWalletSkeleton();
         }
     } catch (error) {
         console.error('자산 표시 업데이트 오류:', error);
+        if (window.hideWalletSkeleton) window.hideWalletSkeleton();
     }
 };
 
@@ -3795,7 +3799,7 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
     const maxRetries = 2;
-    const timeoutMs = 60000;
+    const timeoutMs = 30000;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {

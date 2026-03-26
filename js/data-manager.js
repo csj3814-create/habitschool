@@ -21,7 +21,7 @@ export function sanitize(obj) {
  * @param {number} quality - JPEG 품질 (0.0-1.0, 기본값: 0.8)
  * @returns {Promise<File>} 압축된 파일 또는 원본 파일
  */
-export async function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) {
+export async function compressImage(file, maxWidth = 1000, maxHeight = 1000, quality = 0.7) {
     // 이미지 파일이 아니면 그대로 반환
     if (!file.type.startsWith('image/')) return file;
 
