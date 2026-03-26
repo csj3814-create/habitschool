@@ -26,6 +26,20 @@
 - **근본 원인**: `fetchOnchainBalance` null 반환 또는 에러 시 강제로 "0 HBT" innerHTML 설정.
 - **교훈**: 외부 API 호출 실패/null 응답 시 "미확인 상태(조회 중...)"를 유지할 것. 실제 0인지 조회 실패인지 구분 불가능할 때 0을 표시하면 사용자를 오도.
 
+### 47. 비동기 archive 함수가 유저 저장을 race condition으로 덮어쓸 수 있다
+- **증상**: 주간 미션을 설정해도 자꾸 해제됨. 여러 번 설정해도 반복 발생.
+- **근본 원인**: 새 주 첫 방문 시 LS 캐시의 지난주 데이터로 `archiveWeekAndReset`이 비동기 실행 시작. 유저가 미션 저장(`saveWeeklyMissions`)을 완료한 후에 archive의 Firestore `setDoc`이 완료되며 새 미션을 null로 덮어씀.
+  - 레이스 윈도우: archive 시작(렌더) → 유저 저장 → archive Firestore 쓰기 완료(null)
+- **수정**:
+  1. `archiveWeekAndReset`: setDoc 전 `getDoc`으로 현재 weekId 확인 → 이미 새 주차 미션이면 null 덮어쓰기 생략
+  2. `_archivedWeekIds` Set으로 같은 weekId에 대한 archive 중복 호출 차단
+- **교훈**: 비동기로 백그라운드 실행되는 "정리 함수"는 반드시 조건부 쓰기(read-then-write)로 구현할 것. 유저 액션이 먼저 완료됐을 가능성을 항상 고려해야 한다.
+
+### 48. PIL에서 한국어 폰트 렌더링 시 malgun.ttf(일반체)는 특정 글자를 깨뜨린다
+- **증상**: feature-graphic 이미지에서 "받" 글자가 이상하게 렌더링됨.
+- **근본 원인**: `malgun.ttf`(일반체)는 특정 크기(22~26px)에서 "받" 등 일부 한국어 글자를 잘못 렌더링. `malgunbd.ttf`(굵은체)는 동일 크기에서 정상 렌더링.
+- **교훈**: Windows PIL 이미지 생성에서 한국어 텍스트는 `malgunbd.ttf`(굵은체)를 기본으로 사용할 것. 일반체 사용 시 사이즈별로 글자 깨짐 여부 반드시 확인.
+
 ---
 
 ## 2026-03-25 (모바일 갤러리 버그 수정 세션 #2)

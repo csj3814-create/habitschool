@@ -1,7 +1,7 @@
 # 2026-03-26 세션 완료 보고
 
-> **상태**: ✅ 전체 완료 · main push · Firebase 배포 대기 중
-> **작업**: 모바일 버그 수정 + 로딩 성능 개선
+> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료
+> **작업**: 모바일 버그 수정 + 로딩 성능 개선 + 이미지 에셋 개선 + 주간 미션 race condition 수정
 
 ---
 
@@ -25,7 +25,28 @@
 | 업로드 타임아웃 단축 | 60s → 30s (최대 대기 183초 → 93초) | 빠른 실패 피드백 |
 | 이미지 압축 강화 | 1200px/0.8 → 1000px/0.7 | 업로드 파일 크기 감소 |
 
-### 3. 진단 (코드 수정 없음)
+### 3. 이미지 에셋 개선 ✅
+
+| 항목 | 내용 |
+|------|------|
+| og-image.png | 해 아이콘 흰 귀퉁이 제거 (알파 채널 정상 합성) |
+| feature-graphic.png | 이모지 □ → 컬러 pill 뱃지, 흰 원 → 반투명 오렌지 원 |
+| feature-graphic-*.png | 5종 테마 버전 생성 (dawn, green, dark, minimal 추가) |
+| "받" 글자 깨짐 수정 | malgun.ttf → malgunbd.ttf (굵은체)로 변경 |
+
+### 4. 추가 버그 수정 ✅
+
+| # | 버그 | 수정 | 파일 |
+|---|------|------|------|
+| 4 | 주간 미션 자꾸 해제됨 | `archiveWeekAndReset` race condition 수정 (유저 저장 후 null 덮어쓰기 방지) | `js/app.js` |
+
+**근본 원인**: 새 주 첫 방문 시 LS 캐시의 지난주 데이터로 `archiveWeekAndReset` 비동기 실행 → 유저가 미션 저장 완료 후에도 archive가 뒤늦게 Firestore에 null 쓰기.
+
+**수정 내용**:
+- `archiveWeekAndReset`에서 setDoc 전 현재 Firestore 상태 확인 → 이미 새 주차 미션이 있으면 null 덮어쓰기 방지
+- `_archivedWeekIds` Set으로 동일 weekId 중복 archive 차단
+
+### 5. 진단 (코드 수정 없음)
 
 - 유산소 사진 업로드 느림 + "네트워크 연결을 확인해주세요": 근본 원인은 모바일 네트워크 불안정. Firestore `unavailable` 에러는 이미 3회 재시도 로직 있음.
 - 갤러리 스켈레톤: 실제 고착 버그 아님, 네트워크 지연 + 캐시 후 빠른 재로드 현상.
@@ -41,6 +62,8 @@
 | `be76ef1` | perf: 갤러리 탭 로딩 속도 개선 |
 | `0cee09d` | perf: 내 지갑 탭 첫 로딩 20초 → 1~2초로 단축 |
 | `d8b2103` | fix: HBT 잔액 로딩 중 0 HBT 대신 조회 중... 표시 |
+| `176f853` | feat: feature-graphic 5종 + og-image 개선 (이미지 에셋) |
+| `d2b531e` | fix: 주간 미션 race condition 버그 수정 |
 
 ---
 
