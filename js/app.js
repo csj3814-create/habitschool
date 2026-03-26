@@ -1960,14 +1960,23 @@ function openTab(tabName, pushState = true) {
     if (tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
         submitBar.style.display = 'none';
 
-        // 자산 탭 열릴 때: 블록체인 모듈 지연 로드 후 자산 표시
+        // 자산 탭 열릴 때: Firestore 데이터 즉시 표시 (블록체인 로드 대기 없이)
         if (tabName === 'assets' && user) {
+            updateAssetDisplay();
+            // 블록체인 모듈은 백그라운드 로드 → 완료 후 HBT 잔액만 갱신
             const load = window._loadBlockchainModule || (() => Promise.resolve());
             load().then(() => {
-                if (window.settleExpiredChallenges) {
-                    window.settleExpiredChallenges().catch(() => {});
+                if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
+                // updateAssetDisplay 시점에 blockchain 미로드였으면 HBT 잔액 보완
+                if (window.fetchOnchainBalance && !document.getElementById('asset-hbt-display')?.textContent.includes('HBT')) {
+                    window.fetchOnchainBalance().then(data => {
+                        const el = document.getElementById('asset-hbt-display');
+                        if (!el) return;
+                        const val = parseFloat(data?.balanceFormatted || 0);
+                        const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, { maximumFractionDigits: 1 });
+                        el.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
+                    }).catch(() => {});
                 }
-                updateAssetDisplay();
             });
         }
     } else if (tabName === 'gallery') {
