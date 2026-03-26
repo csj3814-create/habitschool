@@ -2351,6 +2351,7 @@ async function loadBloodTestHistory() {
 
 // 대시보드 캐시
 let _dashboardCache = { uid: null, data: null, ts: 0 };
+const _archivedWeekIds = new Set(); // 이미 archive 요청된 weekId 추적 (중복 방지)
 const DASHBOARD_CACHE_TTL = 30_000;
 const LS_DASHBOARD_KEY = 'dashboardData_v1';
 
@@ -2501,15 +2502,21 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 주간 리셋 감지: 저장된 weekId가 현재 주와 다르면 아카이브 후 리셋
         const needsReset = weeklyMissionData && weeklyMissionData.weekId && weeklyMissionData.weekId !== currentWeekId;
         if (needsReset) {
-            // 아카이브를 백그라운드로 실행 (대시보드 렌더링 차단 방지)
-            const prevWeekStrs = weekStrs.map(dStr => {
-                const d = new Date(dStr + 'T12:00:00Z');
-                d.setUTCDate(d.getUTCDate() - 7);
-                return d.toISOString().slice(0, 10);
-            });
-            archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs).catch(e =>
-                console.warn('주간 아카이브 실패:', e.message)
-            );
+            const oldWeekId = weeklyMissionData.weekId;
+            // 같은 주차에 대해 archive가 중복 실행되지 않도록 가드
+            if (!_archivedWeekIds.has(oldWeekId)) {
+                _archivedWeekIds.add(oldWeekId);
+                // 아카이브를 백그라운드로 실행 (대시보드 렌더링 차단 방지)
+                const prevWeekStrs = weekStrs.map(dStr => {
+                    const d = new Date(dStr + 'T12:00:00Z');
+                    d.setUTCDate(d.getUTCDate() - 7);
+                    return d.toISOString().slice(0, 10);
+                });
+                archiveWeekAndReset(user.uid, weeklyMissionData, missionHistory, missionStreak, prevWeekStrs).catch(e => {
+                    _archivedWeekIds.delete(oldWeekId); // 실패 시 재시도 허용
+                    console.warn('주간 아카이브 실패:', e.message);
+                });
+            }
             weeklyMissionData = null;
             missionStreak = 0;
         }
@@ -3072,18 +3079,25 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     const hasCustom = weeklyData.missions?.some(m => m.isCustom);
     if (hasCustom && completionRate >= 80) newBadges.push('customMaster');
 
-    // Firestore 업데이트
+    // Firestore 업데이트 (항상 현재 상태를 먼저 읽어 race condition 방지)
+    const userRef = doc(db, "users", uid);
+    const userDoc = await getDoc(userRef);
+    const existingData = userDoc.exists() ? userDoc.data() : {};
+
+    // 현재 weeklyMissionData가 이미 새 주차로 변경됐으면 null로 덮어쓰지 않음
+    // (saveWeeklyMissions가 먼저 완료된 경우 유저 데이터 보호)
+    const currentMissionWeekId = existingData.weeklyMissionData?.weekId;
+    const shouldNullMissions = !currentMissionWeekId || currentMissionWeekId === weeklyData.weekId;
+
     const updateData = {
-        weeklyMissionData: null,
+        ...(shouldNullMissions ? { weeklyMissionData: null } : {}),
         missionHistory: newHistory,
         missionStreak: newStreak
     };
 
     // 새 배지 추가
     if (newBadges.length > 0) {
-        const userRef = doc(db, "users", uid);
-        const userDoc = await getDoc(userRef);
-        const existingBadges = userDoc.exists() ? (userDoc.data().missionBadges || []) : [];
+        const existingBadges = existingData.missionBadges || [];
         const allBadges = [...new Set([...existingBadges, ...newBadges])];
         updateData.missionBadges = allBadges;
     }
