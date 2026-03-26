@@ -175,11 +175,77 @@ def make_og():
     print(f'  saved: og-image.png')
 
 
+versions2 = [
+
+    # 6. 선셋 퍼플 (Sunset Purple) — 보라→핑크
+    dict(
+        filename='feature-graphic-purple.png',
+        bg_top=(74,20,140), bg_bottom=(194,24,91),
+        deco_color=(200,100,255), deco_alpha=40,
+        title_color='#FCE4EC', sub_color='#F8BBD0', bottom_color='#F48FB1',
+        tagline='몸과 마음이 함께 건강해지는 시간',
+        badges=[('식단','#6A1B9A','#F3E5F5'),('운동','#880E4F','#FCE4EC'),('마음','#4A148C','#EDE7F6')],
+        bottom_text='매일 인증하고, 포인트 받고, 함께 성장하세요!',
+    ),
+
+    # 7. 오션 (Ocean) — 딥블루→청록
+    dict(
+        filename='feature-graphic-ocean.png',
+        bg_top=(1,87,155), bg_bottom=(0,150,136),
+        deco_color=(100,220,255), deco_alpha=35,
+        title_color='#E0F7FA', sub_color='#B2EBF2', bottom_color='#80DEEA',
+        tagline='꾸준함이 만드는 가장 깊은 건강',
+        badges=[('식단','#006064','#E0F7FA'),('운동','#01579B','#E3F2FD'),('마음','#004D40','#E0F2F1')],
+        bottom_text='매일 인증하고, 포인트 받고, 함께 성장하세요!',
+    ),
+
+    # 8. 코랄 (Coral) — 코랄→살구
+    dict(
+        filename='feature-graphic-coral.png',
+        bg_top=(255,111,97), bg_bottom=(255,179,128),
+        deco_color=(255,255,200), deco_alpha=40,
+        title_color='#4A0000', sub_color='#6D1500', bottom_color='#8D3000',
+        tagline='오늘의 작은 선택이 내일을 바꿉니다',
+        badges=[('식단','#C62828','#FFEBEE'),('운동','#E64A19','#FBE9E7'),('마음','#6D4C41','#EFEBE9')],
+        bottom_text='매일 인증하고, 포인트 받고, 함께 성장하세요!',
+    ),
+
+    # 9. 네온 다크 (Neon) — 거의 검정 + 네온 민트
+    dict(
+        filename='feature-graphic-neon.png',
+        bg_top=(5,10,20), bg_bottom=(10,25,15),
+        deco_color=(0,230,118), deco_alpha=30,
+        title_color='#00E676', sub_color='#69F0AE', bottom_color='#B9F6CA',
+        tagline='데이터로 증명하는 나의 건강 루틴',
+        badges=[('식단','#00695C','#E0F2F1'),('운동','#1B5E20','#E8F5E9'),('마음','#0D47A1','#E3F2FD')],
+        bottom_text='매일 인증하고, 포인트 받고, 함께 성장하세요!',
+    ),
+
+    # 10. 어텀 (Autumn) — 단풍 갈색→황토
+    dict(
+        filename='feature-graphic-autumn.png',
+        bg_top=(121,85,72), bg_bottom=(230,162,60),
+        deco_color=(255,220,100), deco_alpha=40,
+        title_color='#FFF8E1', sub_color='#FFECB3', bottom_color='#FFE082',
+        tagline='계절처럼 꾸준히, 자연스럽게 건강하게',
+        badges=[('식단','#4E342E','#EFEBE9'),('운동','#BF360C','#FBE9E7'),('마음','#827717','#F9FBE7')],
+        bottom_text='매일 인증하고, 포인트 받고, 함께 성장하세요!',
+    ),
+]
+
+
 if __name__ == '__main__':
+    import sys
+    mode = sys.argv[1] if len(sys.argv) > 1 else 'all'
+
     print('Generating images...')
-    for v in versions:
-        make_version(**v)
-    make_og()
+    if mode in ('all', 'v1'):
+        for v in versions:
+            make_version(**v)
+        make_og()
+    if mode in ('all', 'v2'):
+        for v in versions2:
+            make_version(**v)
     # 테스트 파일 삭제
     for f in ['test_font.png','test_font2.png']:
         p = BASE+'/'+f
