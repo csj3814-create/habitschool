@@ -258,6 +258,35 @@
 
 ---
 
+## 2026-03-27 (식단 사진 저장 버그 시리즈)
+
+### 45. 빈 img.src는 페이지 URL을 반환한다 — Firebase URL 반드시 검증
+- **증상**: 식단 사진 없는 슬롯(lunch/dinner/snack)에 `https://habitschool.web.app/`이 저장됨.
+- **근본 원인**: `<img src="">` 태그의 `.src` 속성은 비어있을 때 브라우저가 현재 페이지 URL을 반환. `url.startsWith('https://')` 체크만으로는 실제 Firebase URL과 구분 불가.
+- **교훈**: Firebase Storage URL 검증은 반드시 `url.includes('firebasestorage.googleapis.com')`으로 할 것. `startsWith('https://')` 만으로는 부족.
+
+### 46. clearInputs()가 data-saved-url을 초기화하지 않으면 날짜 간 데이터 오염
+- **증상**: 전날 데이터를 보고 오늘로 돌아와 저장하면 전날 사진 URL이 오늘 빈 슬롯에 저장됨.
+- **근본 원인**: 날짜 변경 시 `clearInputs()`가 `preview.src`와 `display`는 초기화하지만 `data-saved-url` 커스텀 속성은 유지. 새 날짜에 해당 슬롯에 사진이 없으면 `data-saved-url`에 이전 날짜 URL이 남아있음.
+- **교훈**: DOM에 커스텀 데이터를 캐시할 때는 반드시 초기화 함수에서도 함께 제거할 것. `clearInputs()`에 `removeAttribute('data-saved-url')` 추가.
+
+### 47. 저장 후 loadDataForSelectedDate 재호출은 화면을 망친다
+- **증상**: 저장 3초 후 사진이 사라졌다 다시 나타나는 현상. 일부 슬롯 사진 소실.
+- **근본 원인**: 저장 직후 백그라운드 `loadDataForSelectedDate` 호출 → `getDoc`이 stale 데이터 반환 → `clearInputs()`로 화면 초기화 → 사진 복원 실패.
+- **교훈**: 저장 성공 후 UI는 이미 올바른 상태. `loadDataForSelectedDate`를 재호출할 필요 없음. 필요한 UI 업데이트(퀘스트 체크 등)만 저장된 데이터로 직접 갱신할 것.
+
+### 48. Firestore rules 화이트리스트에 새 필드 추가를 빠뜨리지 말 것
+- **증상**: `checkMilestones`에서 `currentStreak` 필드 저장 시 Missing permissions 에러.
+- **근본 원인**: `isAllowedUserField()` 화이트리스트에 `currentStreak` 누락.
+- **교훈**: 새 필드를 users 컬렉션에 쓸 때 반드시 `firestore.rules`의 `hasOnly([...])` 목록에 추가. 배포 전 체크리스트 항목.
+
+### 49. Firestore getDoc 타임아웃 fallback은 oldData가 비어있다는 뜻 — 기존 URL은 DOM에서 읽어야
+- **증상**: 모바일에서 저장 시 사진이 지워짐. Firestore getDoc 2초 타임아웃으로 oldData가 빈 채로 진행.
+- **근본 원인**: `getUrlWithThumb`가 `oldUrl`(from oldData)만 보고 기존 URL을 판단. 타임아웃 시 oldData 빈 값 → url: null → 사진 삭제.
+- **교훈**: Firestore 타임아웃 fallback 패턴 사용 시, 기존 URL은 반드시 DOM(`data-saved-url`)에서도 읽어야 함. 우선순위: oldData → data-saved-url → previewImg.src (Firebase URL만).
+
+---
+
 ## 배포 전 필수 체크리스트
 
 - [ ] `sw.js` CACHE_NAME 버전 번호가 올라갔는가?
