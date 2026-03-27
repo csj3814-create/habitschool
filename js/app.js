@@ -5429,6 +5429,20 @@ async function _loadMoreGalleryFromFirestore() {
     }
 }
 
+// observer 해제 헬퍼 (null 처리까지 함께)
+function _disconnectGalleryObserver() {
+    if (galleryIntersectionObserver) {
+        galleryIntersectionObserver.disconnect();
+        galleryIntersectionObserver = null;
+    }
+}
+
+// observer 재연결 헬퍼 (항상 새 인스턴스로)
+function _reconnectGalleryObserver() {
+    _disconnectGalleryObserver();
+    setupInfiniteScroll();
+}
+
 // 추가 아이템 로드 함수 (추가분만 append - 전체 재렌더 X)
 async function loadMoreGalleryItems() {
     if (isLoadingMore) return;
@@ -5437,23 +5451,27 @@ async function loadMoreGalleryItems() {
     const sentinel = document.getElementById('gallery-sentinel');
 
     if (galleryDisplayCount >= sortedFilteredCache.length) {
-        // 렌더링할 캐시가 없으면 Firestore에서 더 가져오기 시도
+        // 렌더링할 캐시 소진 — Firestore에서 더 가져오기 시도
         if (galleryHasMore) {
             isLoadingMore = true;
             sentinel.style.display = 'block';
             await _loadMoreGalleryFromFirestore();
             refreshSortedFiltered();
             isLoadingMore = false;
-            // 새 데이터가 없으면 종료
+            // 유저 필터 등으로 여전히 표시할 항목이 없어도 galleryHasMore이면 계속 시도
             if (galleryDisplayCount >= sortedFilteredCache.length) {
-                sentinel.style.display = 'none';
-                if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+                if (galleryHasMore) {
+                    loadMoreGalleryItems(); // 다음 페이지도 시도
+                } else {
+                    sentinel.style.display = 'none';
+                    _disconnectGalleryObserver();
+                }
             } else {
                 loadMoreGalleryItems(); // 새 데이터로 이어서 렌더링
             }
         } else {
             sentinel.style.display = 'none';
-            if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+            _disconnectGalleryObserver();
         }
         return;
     }
@@ -5474,14 +5492,9 @@ async function loadMoreGalleryItems() {
     galleryDisplayCount = end;
     isLoadingMore = false;
 
-    if (galleryDisplayCount >= sortedFilteredCache.length) {
-        // 캐시 소진 — Firestore에 더 있으면 sentinel 유지 (observer가 다시 트리거)
-        if (!galleryHasMore) {
-            sentinel.style.display = 'none';
-            if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
-        } else {
-            sentinel.style.display = 'block';
-        }
+    if (galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore) {
+        sentinel.style.display = 'none';
+        _disconnectGalleryObserver();
     } else {
         sentinel.style.display = 'block';
     }
@@ -5495,10 +5508,7 @@ function shouldShowItem(data) {
 // 메모리 누수 방지: 모든 리소스 정리
 function cleanupGalleryResources() {
     // Intersection Observer 정리
-    if (galleryIntersectionObserver) {
-        galleryIntersectionObserver.disconnect();
-        galleryIntersectionObserver = null;
-    }
+    _disconnectGalleryObserver();
 
     // 갤러리 캠시 초기화 (로그아웃 시 재로드 보장)
     cachedGalleryLogs = [];
@@ -6192,16 +6202,13 @@ function renderFeedOnly() {
 
     galleryDisplayCount = end;
 
-    if (galleryDisplayCount >= sortedFilteredCache.length || sortedFilteredCache.length === 0) {
+    const noMoreToShow = galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore;
+    if (noMoreToShow || sortedFilteredCache.length === 0) {
         sentinel.style.display = 'none';
-        if (galleryIntersectionObserver) {
-            galleryIntersectionObserver.disconnect();
-        }
+        _disconnectGalleryObserver();
     } else {
         sentinel.style.display = 'block';
-        if (!galleryIntersectionObserver) {
-            setupInfiniteScroll();
-        }
+        _reconnectGalleryObserver(); // 필터 변경/해제 후 항상 새 observer
     }
 
     if (sortedFilteredCache.length === 0) {
