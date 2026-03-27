@@ -1075,8 +1075,12 @@ async function loadDataForSelectedDate(dateStr) {
             if (data.diet) {
                 ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
                     if (data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) {
-                        document.getElementById(`preview-${k}`).src = data.diet[`${k}Url`];
-                        document.getElementById(`preview-${k}`).style.display = 'block';
+                        const previewEl = document.getElementById(`preview-${k}`);
+                        previewEl.src = data.diet[`${k}Url`];
+                        previewEl.style.display = 'block';
+                        // 저장 시 oldData 타임아웃 대비: URL을 DOM에 보존
+                        previewEl.setAttribute('data-saved-url', data.diet[`${k}Url`]);
+                        previewEl.setAttribute('data-saved-thumb-url', data.diet[`${k}ThumbUrl`] || '');
                         document.getElementById(`rm-${k}`).style.display = 'block';
                         document.getElementById(`txt-${k}`).style.display = 'none';
                     }
@@ -4008,6 +4012,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (previewImg && previewImg.style.display === 'none' && previewImg.hasAttribute('data-user-removed')) {
                         return { url: null, thumbUrl: null };
                     }
+                    // getDoc 타임아웃으로 oldUrl이 없을 때, DOM에 저장된 URL 사용 (사진 보존)
+                    if (!oldUrl && previewImg && previewImg.style.display !== 'none') {
+                        const domSavedUrl = previewImg.getAttribute('data-saved-url');
+                        const domSavedThumb = previewImg.getAttribute('data-saved-thumb-url');
+                        if (domSavedUrl) return { url: domSavedUrl, thumbUrl: domSavedThumb || null };
+                    }
                 }
                 return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
             };
@@ -4226,13 +4236,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
         } catch (e) {
             console.error('데이터 저장 오류:', e);
-            let errorMsg = '저장 중 오류가 발생했습니다.';
+            let errorMsg = '저장 중 오류가 발생했습니다. 다시 시도해주세요.';
             if (e.code === 'permission-denied') {
                 errorMsg = '저장 권한이 없습니다. 로그인을 확인해주세요.';
-            } else if (e.code === 'unavailable') {
-                errorMsg = '네트워크 연결을 확인해주세요.';
-            } else if (e.message) {
-                errorMsg = e.message;
+            } else if (e.code === 'unavailable' || e.code === 'failed-precondition') {
+                errorMsg = '네트워크 연결을 확인 후 다시 시도해주세요.';
             }
             showToast(`⚠️ ${errorMsg}`);
         }
