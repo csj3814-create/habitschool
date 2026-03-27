@@ -184,16 +184,23 @@ async function checkMilestones(userId) {
             }
         }
 
-        if (newMilestones.length > 0 || migrated) {
-            await setDoc(userRef, { milestones, currentStreak: streak }, { merge: true });
-            newMilestones.forEach(m => {
-                showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
-            });
-        } else {
-            await setDoc(userRef, { currentStreak: streak }, { merge: true });
+        const saveFields = (newMilestones.length > 0 || migrated)
+            ? { milestones, currentStreak: streak }
+            : { currentStreak: streak };
+        // failed-precondition(동시 쓰기 충돌) 시 1회 재시도
+        try {
+            await setDoc(userRef, saveFields, { merge: true });
+        } catch (e2) {
+            if (e2.code === 'failed-precondition') {
+                await new Promise(r => setTimeout(r, 1000));
+                await setDoc(userRef, saveFields, { merge: true });
+            } else { throw e2; }
         }
+        newMilestones.forEach(m => {
+            showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
+        });
     } catch (error) {
-        console.error('마일스톤 확인 오류:', error);
+        console.warn('마일스톤 확인 스킵:', error.code || error.message);
     }
 }
 
