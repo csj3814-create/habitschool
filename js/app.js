@@ -7,7 +7,7 @@
 // Firebase 모듈 임포트
 import {
     increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, deleteDoc,
-    query, where, orderBy, limit, serverTimestamp,
+    query, where, orderBy, limit, startAfter, serverTimestamp,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
@@ -4258,6 +4258,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             // 데이터 저장 후 캐시 초기화
             cachedGalleryLogs = [];
+            galleryLastDoc = null; galleryHasMore = false;
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
             _dashboardCache.ts = 0;
@@ -4373,6 +4374,7 @@ window.toggleFriend = async function (friendId) {
     }
     // 친구 목록 변경 시 캐시 초기화 및 재로드
     cachedGalleryLogs = [];
+    galleryLastDoc = null; galleryHasMore = false;
     galleryDisplayCount = 0;
     sortedFilteredDirty = true;
     loadGalleryData();
@@ -5070,9 +5072,13 @@ let cachedMyFriends = [];
 let galleryDisplayCount = 0;
 const INITIAL_LOAD = 8;        // 초기 로드: 8개 (빠른 첫 화면)
 const LOAD_MORE = 6;           // 추가 로드: 6개씩
-const MAX_CACHE_SIZE = 30;     // 캐시 크기 (메모리 관리)
+const FIRESTORE_PAGE_SIZE = 30; // Firestore 페이지당 건수 (빠른 초기 로딩)
+const MAX_CACHE_SIZE = 300;    // 캐시 최대 크기 (메모리 관리)
 let galleryIntersectionObserver = null;
 let isLoadingMore = false;
+// Firestore 커서 페이지네이션 상태
+let galleryLastDoc = null;   // 마지막으로 가져온 Firestore 문서 (startAfter 커서)
+let galleryHasMore = false;  // Firestore에 더 가져올 데이터가 있는지
 // 정렬+필터 캐시 (매번 재정렬 방지)
 let sortedFilteredCache = [];
 let sortedFilteredDirty = true;
@@ -5395,15 +5401,60 @@ function refreshSortedFiltered() {
     sortedFilteredDirty = false;
 }
 
+// Firestore에서 다음 페이지 가져오기 (커서 기반)
+async function _loadMoreGalleryFromFirestore() {
+    const user = auth.currentUser;
+    if (!user || !galleryHasMore || !galleryLastDoc) return;
+    if (cachedGalleryLogs.length >= MAX_CACHE_SIZE) { galleryHasMore = false; return; }
+    try {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - 30);
+        const cutoffStr = cutoffDate.toISOString().split('T')[0];
+        const q = query(collection(db, "daily_logs"),
+            where("date", ">=", cutoffStr),
+            orderBy("date", "desc"),
+            startAfter(galleryLastDoc),
+            limit(FIRESTORE_PAGE_SIZE));
+        const snapshot = await getDocs(q);
+        const newDocs = [];
+        snapshot.forEach(d => { newDocs.push({ id: d.id, data: d.data() }); });
+        if (newDocs.length > 0) {
+            cachedGalleryLogs = [...cachedGalleryLogs, ...newDocs];
+            galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || galleryLastDoc;
+        }
+        galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE && cachedGalleryLogs.length < MAX_CACHE_SIZE;
+        sortedFilteredDirty = true;
+    } catch (e) {
+        console.error('[갤러리] 추가 로드 실패:', e);
+    }
+}
+
 // 추가 아이템 로드 함수 (추가분만 append - 전체 재렌더 X)
-function loadMoreGalleryItems() {
+async function loadMoreGalleryItems() {
     if (isLoadingMore) return;
 
     refreshSortedFiltered();
     const sentinel = document.getElementById('gallery-sentinel');
 
     if (galleryDisplayCount >= sortedFilteredCache.length) {
-        sentinel.style.display = 'none';
+        // 렌더링할 캐시가 없으면 Firestore에서 더 가져오기 시도
+        if (galleryHasMore) {
+            isLoadingMore = true;
+            sentinel.style.display = 'block';
+            await _loadMoreGalleryFromFirestore();
+            refreshSortedFiltered();
+            isLoadingMore = false;
+            // 새 데이터가 없으면 종료
+            if (galleryDisplayCount >= sortedFilteredCache.length) {
+                sentinel.style.display = 'none';
+                if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+            } else {
+                loadMoreGalleryItems(); // 새 데이터로 이어서 렌더링
+            }
+        } else {
+            sentinel.style.display = 'none';
+            if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+        }
         return;
     }
 
@@ -5424,8 +5475,13 @@ function loadMoreGalleryItems() {
     isLoadingMore = false;
 
     if (galleryDisplayCount >= sortedFilteredCache.length) {
-        sentinel.style.display = 'none';
-        if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+        // 캐시 소진 — Firestore에 더 있으면 sentinel 유지 (observer가 다시 트리거)
+        if (!galleryHasMore) {
+            sentinel.style.display = 'none';
+            if (galleryIntersectionObserver) galleryIntersectionObserver.disconnect();
+        } else {
+            sentinel.style.display = 'block';
+        }
     } else {
         sentinel.style.display = 'block';
     }
@@ -5446,6 +5502,7 @@ function cleanupGalleryResources() {
 
     // 갤러리 캠시 초기화 (로그아웃 시 재로드 보장)
     cachedGalleryLogs = [];
+    galleryLastDoc = null; galleryHasMore = false;
     sortedFilteredCache = [];
     sortedFilteredDirty = true;
     galleryDisplayCount = 0;
@@ -5456,7 +5513,7 @@ window.cleanupGalleryResources = cleanupGalleryResources;
 let _galleryLoadingPromise = null; // 중복 로드 방지 + 완료 대기용
 
 async function loadGalleryData(forceReload = false) {
-    if (forceReload) cachedGalleryLogs = [];
+    if (forceReload) { cachedGalleryLogs = []; galleryLastDoc = null; galleryHasMore = false; }
 
     if (_galleryLoadingPromise) {
         // 백그라운드 로드 완료 대기 후 캐시에서 즉시 렌더링
@@ -5580,14 +5637,16 @@ async function _loadGalleryDataInner() {
         while (retries < 3) {
             try {
                 const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - 7);
+                cutoffDate.setDate(cutoffDate.getDate() - 30);
                 const cutoffStr = cutoffDate.toISOString().split('T')[0];
-                const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(MAX_CACHE_SIZE));
+                const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(FIRESTORE_PAGE_SIZE));
                 const snapshot = await getDocs(q);
 
                 let logsArray = [];
                 snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
-                cachedGalleryLogs = logsArray.slice(0, MAX_CACHE_SIZE);
+                cachedGalleryLogs = logsArray;
+                galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+                galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
                 sortedFilteredDirty = true;
                 break;
             } catch (e) {
