@@ -1450,6 +1450,18 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         return;
     }
 
+    // localStorage 캐시: 즉시 표시 후 Firestore 백그라운드 갱신 (stale-while-revalidate)
+    const _LS_WALLET_KEY = `hs_wallet_${user.uid}`;
+    const _LS_WALLET_TTL = 24 * 60 * 60 * 1000; // 24시간
+    try {
+        const _cached = JSON.parse(localStorage.getItem(_LS_WALLET_KEY) || 'null');
+        if (_cached && (now - _cached.ts) < _LS_WALLET_TTL) {
+            const _pd = document.getElementById('asset-points-display');
+            if (_pd) _pd.innerHTML = `${parseInt(_cached.coins || 0).toLocaleString()} <span class="wallet-asset-unit">P</span>`;
+            if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        }
+    } catch (_) {}
+
     try {
         const userRef = doc(db, "users", user.uid);
 
@@ -1504,6 +1516,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
+
+            // localStorage에 저장 (다음 방문 시 즉시 표시용)
+            try {
+                localStorage.setItem(_LS_WALLET_KEY, JSON.stringify({
+                    coins: userData.coins || 0,
+                    ts: Date.now()
+                }));
+            } catch (_) {}
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
