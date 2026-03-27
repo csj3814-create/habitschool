@@ -1049,7 +1049,11 @@ async function loadDataForSelectedDate(dateStr) {
 
     try {
         const docId = `${user.uid}_${dateStr}`;
-        const myLogDoc = await getDoc(doc(db, "daily_logs", docId));
+        // 캐시 있으면 즉시, 없으면 최대 3초 대기 후 빈 결과로 진행
+        const myLogDoc = await Promise.race([
+            getDoc(doc(db, "daily_logs", docId)),
+            new Promise(resolve => setTimeout(() => resolve({ exists: () => false, data: () => ({}) }), 3000))
+        ]);
 
         // race condition 방지: 날짜가 빠르게 변경된 경우 이전 요청 무시
         if (thisGeneration !== _loadDataGeneration) return;
@@ -3889,30 +3893,39 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
 // === 파일 선택 즉시 업로드를 위한 상태 저장소 ===
 const _pendingUploads = new Map(); // inputId → { promise, done, result }
 
-// 원본 + 썸네일 병렬 업로드 (모듈 레벨 함수 — previewStaticImage에서도 호출 가능)
-async function uploadWithThumb(file, folder, userId) {
-    if (!file) return { url: null, thumbUrl: null };
-    try {
-        const [url, thumbBlob] = await Promise.all([
-            uploadFileAndGetUrl(file, folder, userId),
-            generateThumbnailBlob(file).catch(() => null)
-        ]);
-        if (!url) return { url: null, thumbUrl: null };
-        let thumbUrl = null;
-        if (thumbBlob) {
-            try {
-                const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
-                const tr = ref(storage, tp);
-                const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
-                await Promise.race([uploadBytes(tr, thumbBlob), tout(15000)]);
-                thumbUrl = await Promise.race([getDownloadURL(tr), tout(10000)]);
-            } catch (e) { console.warn('썸네일 업로드 실패:', e.message); }
-        }
-        return { url, thumbUrl };
-    } catch (e) {
-        console.error(`${folder} 업로드 실패:`, e);
-        return { url: null, thumbUrl: null };
-    }
+// 원본 + 썸네일 업로드 (모듈 레벨 함수 — previewStaticImage에서도 호출 가능)
+// 전략: 원본 URL 획득 즉시 resolve → 썸네일은 백그라운드에서 계속 업로드
+// _pendingUploads 엔트리의 result.thumbUrl을 나중에 갱신함
+function uploadWithThumb(file, folder, userId) {
+    if (!file) return Promise.resolve({ url: null, thumbUrl: null });
+
+    // 원본 업로드 Promise → 완료 즉시 resolve
+    const originalPromise = uploadFileAndGetUrl(file, folder, userId)
+        .then(url => url ? { url, thumbUrl: null } : { url: null, thumbUrl: null })
+        .catch(() => ({ url: null, thumbUrl: null }));
+
+    // 썸네일은 원본과 병렬로 생성 + 업로드하되, 결과를 기다리지 않음
+    // 원본 성공 시 thumbUrl을 비동기로 갱신
+    originalPromise.then(async ({ url }) => {
+        if (!url) return;
+        try {
+            const thumbBlob = await generateThumbnailBlob(file).catch(() => null);
+            if (!thumbBlob) return;
+            const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
+            const tr = ref(storage, tp);
+            const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+            await Promise.race([uploadBytes(tr, thumbBlob), tout(15000)]);
+            const thumbUrl = await Promise.race([getDownloadURL(tr), tout(10000)]);
+            // _pendingUploads의 result에 thumbUrl 반영 (이미 save 완료된 경우 무시됨)
+            for (const [, entry] of _pendingUploads) {
+                if (entry.result && entry.result.url === url) {
+                    entry.result.thumbUrl = thumbUrl;
+                }
+            }
+        } catch (e) { console.warn('썸네일 백그라운드 업로드 실패:', e.message); }
+    });
+
+    return originalPromise;
 }
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
