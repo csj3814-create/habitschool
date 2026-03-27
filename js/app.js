@@ -4138,20 +4138,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
-            // Firestore 저장 (초기 연결 지연 대비 자동 재시도)
-            for (let saveAttempt = 0; saveAttempt < 3; saveAttempt++) {
-                try {
-                    await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
-                    break;
-                } catch (saveErr) {
-                    if (saveErr.code === 'unavailable' && saveAttempt < 2) {
-                        console.warn(`Firestore 저장 재시도 (${saveAttempt + 1}/3):`, saveErr.message);
-                        await new Promise(r => setTimeout(r, 1500 * (saveAttempt + 1)));
-                    } else {
-                        throw saveErr;
-                    }
-                }
-            }
+            // Firestore 저장 (offline persistence가 로컬에 즉시 기록 → 서버 동기화는 백그라운드)
+            await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
 
             // coins 업데이트는 Cloud Function(awardPoints)이 서버에서 처리
             if (uploadFailures.length > 0) {
