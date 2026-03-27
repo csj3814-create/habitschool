@@ -1002,7 +1002,7 @@ function clearInputs() {
         const tx = document.getElementById(`txt-${k}`);
         const box = document.getElementById(`diet-box-${k}`);
         
-        if (pv) { pv.style.display = 'none'; pv.src = ''; pv.removeAttribute('data-user-removed'); }
+        if (pv) { pv.style.display = 'none'; pv.src = ''; pv.removeAttribute('data-user-removed'); pv.removeAttribute('data-saved-url'); pv.removeAttribute('data-saved-thumb-url'); }
         if (rm) rm.style.display = 'none';
         if (tx) tx.style.display = 'inline-block';
         if (box && k !== 'breakfast' && k !== 'sleep') { 
