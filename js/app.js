@@ -4038,13 +4038,6 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             console.log('📤 모든 이미지 병렬 업로드 시작');
             const uploadStart = Date.now();
 
-            // 디버그: 저장 시점 각 식단 input 상태 로깅
-            ['breakfast','lunch','dinner','snack'].forEach(k => {
-                const el = document.getElementById(`diet-img-${k}`);
-                const pv = document.getElementById(`preview-${k}`);
-                console.log(`🔍 [${k}] files:`, el?.files?.length, 'display:', pv?.style.display, 'src:', pv?.src?.substring(0,60), 'saved-url:', pv?.getAttribute('data-saved-url')?.substring(0,60), 'oldData:', oldData?.diet?.[`${k}Url`]?.substring(0,60));
-            });
-
             // 1) 식단 4장 병렬
             const dietPromise = Promise.all([
                 getUrlWithThumb('diet-img-breakfast', 'diet_images', oldData?.diet?.breakfastUrl, oldData?.diet?.breakfastThumbUrl),
@@ -4149,7 +4142,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const [bResult, lResult, dResult, sResult] = dietResults;
             const bUrl = bResult.url, lUrl = lResult.url, dUrl = dResult.url, sUrl = sResult.url;
             const bThumbUrl = bResult.thumbUrl, lThumbUrl = lResult.thumbUrl, dThumbUrl = dResult.thumbUrl, sThumbUrl = sResult.thumbUrl;
-            console.log('💾 저장될 식단 URL:', { bUrl: bUrl?.substring(0,60), lUrl: lUrl?.substring(0,60), dUrl: dUrl?.substring(0,60), sUrl: sUrl?.substring(0,60) });
+
 
             const cardioList = cardioResults.filter(Boolean);
             const strengthList = strengthResults.filter(Boolean);
