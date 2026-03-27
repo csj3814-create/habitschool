@@ -183,10 +183,10 @@
                 <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
             </div>
             <div class="box">
-                <h3>🥇 코인 TOP 5</h3>
+                <h3>🥇 포인트 TOP 5</h3>
                 <table>
-                    <thead><tr><th>순위</th><th>이름</th><th>코인</th><th>스트릭</th></tr></thead>
-                    <tbody id="top5-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
+                    <thead><tr><th>순위</th><th>이름</th><th>포인트</th><th>HBT</th><th>스트릭</th></tr></thead>
+                    <tbody id="top5-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -202,20 +202,23 @@
                 <button class="chip" data-f="today" onclick="setFilter('today')">오늘 인증</button>
                 <button class="chip" data-f="alert" onclick="setFilter('alert')">건강 경보</button>
                 <button class="chip" data-f="inactive" onclick="setFilter('inactive')">7일+ 미활동</button>
+                <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 12px;" onclick="sendReEngagement(3)">📧 3일 미활동 발송</button>
+                <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;" onclick="sendReEngagement(7)">📧 7일+ 미활동 발송</button>
             </div>
             <table>
                 <thead><tr>
                     <th class="sort" onclick="sortBy('date')">최근 기록일 ↕</th>
                     <th>이름</th>
+                    <th>이메일</th>
                     <th>레벨</th>
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
-                    <th class="sort" onclick="sortBy('coins')">코인 ↕</th>
+                    <th class="sort" onclick="sortBy('coins')">포인트 ↕</th>
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
                     <th>상세</th>
                 </tr></thead>
-                <tbody id="member-tbody"><tr><td colspan="9">데이터를 불러오는 중...</td></tr></tbody>
+                <tbody id="member-tbody"><tr><td colspan="10">데이터를 불러오는 중...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -224,9 +227,9 @@
     <div id="tab-economy" class="tab-panel">
         <div class="two-col">
             <div class="box">
-                <h3>🥇 코인 TOP 10</h3>
+                <h3>🥇 포인트 TOP 10</h3>
                 <table>
-                    <thead><tr><th>#</th><th>이름</th><th>코인</th><th>HBT</th><th>스트릭</th></tr></thead>
+                    <thead><tr><th>#</th><th>이름</th><th>포인트</th><th>HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top10-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
             </div>
@@ -292,8 +295,8 @@
             <div class="box">
                 <h3>🎁 초대 리더보드 (TOP 10)</h3>
                 <table>
-                    <thead><tr><th>#</th><th>이름</th><th>초대 코드</th><th>성공 초대</th></tr></thead>
-                    <tbody id="referral-tbody"><tr><td colspan="4">로딩 중...</td></tr></tbody>
+                    <thead><tr><th>#</th><th>이름</th><th>초대 코드</th><th>성공 초대</th><th>초대 회원</th></tr></thead>
+                    <tbody id="referral-tbody"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
             </div>
             <div class="box">
@@ -513,9 +516,9 @@
         activityChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: '활성 유저', data: vals, backgroundColor: 'rgba(156,39,176,0.6)', borderColor: '#9C27B0', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
 
         // Top 5
-        const arr = []; usersQ.forEach(u => { const d = u.data(); arr.push({ name: d.customDisplayName || d.displayName || u.id.slice(0,8), coins: d.coins||0, streak: d.currentStreak||0 }); });
+        const arr = []; usersQ.forEach(u => { const d = u.data(); arr.push({ name: d.customDisplayName || d.displayName || u.id.slice(0,8), coins: d.coins||0, hbt: d.hbtBalance||d.totalHbtEarned||0, streak: d.currentStreak||0 }); });
         arr.sort((a,b) => b.coins - a.coins);
-        document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="4" style="color:#999;">데이터 없음</td></tr>';
+        document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
     }
 
     // ── Tab 2: Members ────────────────────────────────────────
@@ -536,7 +539,10 @@
                         ? `<span class="badge badge-green" onclick="alertMsg('${m.feedbackDate}','${safeMsg}')">✅ 발송됨</span>`
                         : `<span class="badge badge-red">⚠️ ${Math.floor(diff)}일 경과</span>`;
                 }
-                return { uid, date: r.date||'-', name: r.userName || m.customDisplayName || m.displayName || uid.slice(0,8), level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, glucose: glu, sys, dia, msgBadge, alert: glu>=126||sys>=140 };
+                const rawName = r.userName || '';
+                const nameFromLog = (!rawName.includes(' ') && rawName.length > 15) ? '' : rawName;
+                const name = m.customDisplayName || m.displayName || nameFromLog || uid.slice(0,8);
+                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, glucose: glu, sys, dia, msgBadge, alert: glu>=126||sys>=140 };
             });
             renderMembers();
         } catch(e) { document.getElementById('member-tbody').innerHTML = `<tr><td colspan="9" style="color:red;">${escapeHtml(e.message)}</td></tr>`; }
@@ -557,9 +563,11 @@
             return sortDir==='asc' ? (av||0)-(bv||0) : (bv||0)-(av||0);
         });
         const tbody = document.getElementById('member-tbody');
-        if (!rows.length) { tbody.innerHTML='<tr><td colspan="9" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
+        if (!rows.length) { tbody.innerHTML='<tr><td colspan="10" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
         tbody.innerHTML = rows.map(r => `<tr class="${r.alert?'alert-row':''}">
-            <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}</td><td>Lv.${r.level}</td>
+            <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}</td>
+            <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
+            <td>Lv.${r.level}</td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td>
             <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
             <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
@@ -707,12 +715,44 @@
         const tbody = document.getElementById('referral-tbody');
         try {
             const { usersQ } = await getData();
-            const cnt = {}, info = {};
-            usersQ.forEach(u => { const d=u.data(); info[u.id]={ name:d.customDisplayName||d.displayName||u.id.slice(0,8), code:d.referralCode||'-' }; if (d.referredBy) cnt[d.referredBy]=(cnt[d.referredBy]||0)+1; });
+            const cnt = {}, info = {}, referredBy = {};
+            usersQ.forEach(u => {
+                const d = u.data();
+                info[u.id] = { name: d.customDisplayName||d.displayName||u.id.slice(0,8), code: d.referralCode||'-', streak: d.currentStreak||0 };
+                if (d.referredBy) {
+                    cnt[d.referredBy] = (cnt[d.referredBy]||0) + 1;
+                    if (!referredBy[d.referredBy]) referredBy[d.referredBy] = [];
+                    referredBy[d.referredBy].push({ uid: u.id, name: d.customDisplayName||d.displayName||u.id.slice(0,8), streak: d.currentStreak||0, lastLogin: d.lastLogin||'-' });
+                }
+            });
             const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,10);
-            tbody.innerHTML = sorted.length ? sorted.map(([uid,n],i) => `<tr><td>${i+1}</td><td>${escapeHtml((info[uid]||{name:uid.slice(0,8)}).name)}</td><td style="font-family:monospace;font-weight:bold;">${escapeHtml((info[uid]||{code:'-'}).code)}</td><td>👥 ${n}명</td></tr>`).join('') : '<tr><td colspan="4" style="color:#999;">초대 이력 없음</td></tr>';
-        } catch(_) { tbody.innerHTML='<tr><td colspan="4" style="color:#999;">조회 불가</td></tr>'; }
+            if (!sorted.length) { tbody.innerHTML='<tr><td colspan="5" style="color:#999;">초대 이력 없음</td></tr>'; return; }
+            let html = '';
+            sorted.forEach(([uid, n], i) => {
+                const inf = info[uid] || { name: uid.slice(0,8), code: '-' };
+                const members = referredBy[uid] || [];
+                const rowId = `ref-expand-${i}`;
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td>${escapeHtml(inf.name)}</td>
+                    <td style="font-family:monospace;font-weight:bold;">${escapeHtml(inf.code)}</td>
+                    <td>👥 ${n}명</td>
+                    <td><button class="btn-view" onclick="toggleReferralMembers('${rowId}')">▼ 보기</button></td>
+                </tr>
+                <tr id="${rowId}" style="display:none;"><td colspan="5" style="padding:0;">
+                    <div style="background:#F3E5F5;padding:10px 16px;font-size:12px;">
+                        ${members.length ? members.map(m => `<span style="display:inline-block;margin:3px 6px;background:white;padding:3px 8px;border-radius:6px;border:1px solid #CE93D8;">${escapeHtml(m.name)} 🔥${m.streak}</span>`).join('') : '<span style="color:#999;">초대된 회원 없음</span>'}
+                    </div>
+                </td></tr>`;
+            });
+            tbody.innerHTML = html;
+        } catch(_) { tbody.innerHTML='<tr><td colspan="5" style="color:#999;">조회 불가</td></tr>'; }
     }
+
+    window.toggleReferralMembers = function(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+    };
 
     async function loadAdmins() {
         const tbody = document.getElementById('admins-tbody');
@@ -779,6 +819,33 @@
 
     window.closeModal = function() { document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
     window.quickMsg = function(msg) { document.getElementById('fb-text').value=msg; };
+
+    window.sendReEngagement = async function(days) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = '⏳ 조회 중...';
+        try {
+            const fn = httpsCallable(fns, 'sendReEngagementEmails');
+            const preview = await fn({ days, preview: true });
+            const { count, targets } = preview.data;
+            btn.disabled = false;
+            btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
+            if (count === 0) { alert('대상 회원이 없습니다.'); return; }
+            const names = targets.slice(0, 10).map(t => `• ${t.name} (${t.email})`).join('\n');
+            const more = count > 10 ? `\n... 외 ${count - 10}명` : '';
+            if (!confirm(`📧 ${days}일+ 미활동 대상 ${count}명:\n\n${names}${more}\n\n이메일을 발송하시겠습니까?`)) return;
+            btn.disabled = true;
+            btn.textContent = '📤 발송 중...';
+            const result = await fn({ days, preview: false });
+            const { sentCount, errors } = result.data;
+            alert(`✅ ${sentCount}명에게 이메일을 발송했습니다.${errors?.length ? `\n\n실패 ${errors.length}건` : ''}`);
+        } catch(e) {
+            alert('오류: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
+        }
+    };
 
     window.submitFb = async function() {
         const uid = document.getElementById('modal-uid').value;

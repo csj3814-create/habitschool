@@ -207,6 +207,11 @@ export function setupAuthListener(callbacks) {
 
             // 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용)
             const userRef = doc(db, "users", user.uid);
+            // email + displayName을 Firestore에 저장 (관리자 화면 표시용)
+            setDoc(userRef, {
+                email: user.email || '',
+                displayName: user.displayName || '사용자'
+            }, { merge: true }).catch(() => {});
             getDoc(userRef).then(userDoc => {
                 if (!userDoc.exists()) return;
                 const ud = userDoc.data();

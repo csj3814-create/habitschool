@@ -33,6 +33,8 @@ const db = admin.firestore();
 // 비밀 키 (Firebase Secret Manager)
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
+const GMAIL_USER = defineSecret("GMAIL_USER");
+const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
 
 // 컨트랙트 주소 (BSC Chapel 테스트넷) — v4 (RATE_UPDATER_ROLE 추가)
 const HABIT_ADDRESS = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
@@ -2352,5 +2354,169 @@ exports.prefundWallet = onCall(
 
         console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
+    }
+);
+
+// ========================================
+// 미활동 유저 재참여 이메일 발송
+// ========================================
+exports.sendReEngagementEmails = onCall(
+    {
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 120,
+        invoker: "public"
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        // 관리자 권한 확인
+        const adminSnap = await db.collection("admins").doc(request.auth.uid).get();
+        if (!adminSnap.exists) {
+            throw new HttpsError("permission-denied", "관리자 권한이 필요합니다.");
+        }
+
+        const { days, preview } = request.data;
+        if (![3, 7].includes(days)) {
+            throw new HttpsError("invalid-argument", "days는 3 또는 7이어야 합니다.");
+        }
+
+        // 기준 날짜 계산 (KST)
+        const now = new Date();
+        const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+        const cutoffDate = new Date(kst);
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        const cutoffStr = cutoffDate.toISOString().slice(0, 10); // YYYY-MM-DD
+
+        // 전체 유저 목록 조회
+        const usersSnap = await db.collection("users").get();
+        const allUids = usersSnap.docs.map(d => d.id);
+
+        // 각 유저의 최근 daily_log 날짜 조회
+        const inactiveUids = [];
+        await Promise.all(allUids.map(async (uid) => {
+            const logSnap = await db.collection("daily_logs")
+                .where("userId", "==", uid)
+                .orderBy("date", "desc")
+                .limit(1)
+                .get();
+
+            let lastDate = null;
+            if (!logSnap.empty) {
+                lastDate = logSnap.docs[0].data().date;
+            }
+
+            // 한 번도 기록 없거나 기준일 이전이면 대상
+            if (!lastDate || lastDate < cutoffStr) {
+                inactiveUids.push(uid);
+            }
+        }));
+
+        // 각 유저의 이메일 + 이름 조회
+        const targets = [];
+        await Promise.all(inactiveUids.map(async (uid) => {
+            try {
+                // Firestore에서 먼저 시도 (로그인한 적 있는 유저)
+                const userDoc = usersSnap.docs.find(d => d.id === uid);
+                const userData = userDoc ? userDoc.data() : {};
+                const name = userData.customDisplayName || userData.displayName || '회원';
+                let email = userData.email || '';
+
+                // email이 없으면 Firebase Auth에서 조회
+                if (!email) {
+                    try {
+                        const authUser = await admin.auth().getUser(uid);
+                        email = authUser.email || '';
+                    } catch (_) {}
+                }
+
+                if (email) {
+                    targets.push({ uid, name, email });
+                }
+            } catch (_) {}
+        }));
+
+        // preview 모드: 발송 안 하고 대상자 목록만 반환
+        if (preview) {
+            return {
+                count: targets.length,
+                targets: targets.map(t => ({ name: t.name, email: t.email }))
+            };
+        }
+
+        // 이메일 발송
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: GMAIL_USER.value(),
+                pass: GMAIL_APP_PASSWORD.value()
+            }
+        });
+
+        const APP_URL = "https://habitschool.web.app";
+
+        let sentCount = 0;
+        const errors = [];
+
+        for (const t of targets) {
+            try {
+                const subject = days === 3
+                    ? `[해빛스쿨] ${t.name}님, 오늘 건강 기록은 어떠세요? 🌟`
+                    : `[해빛스쿨] ${t.name}님이 보고 싶어요 💙`;
+
+                const html = days === 3 ? `
+<div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
+  <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
+    <img src="https://habitschool.web.app/icons/icon-192.svg" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
+    <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">오늘의 건강 기록 🌟</h2>
+    <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">작은 기록이 큰 변화를 만들어요</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${t.name}</strong>님, 안녕하세요 👋</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">최근 3일간 해빛스쿨에 기록이 없으셨어요.<br>오늘 식단, 운동, 수면 기록 한 번만 해도 스트릭이 이어져요!</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${APP_URL}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">지금 기록하러 가기 →</a>
+    </div>
+    <p style="font-size:13px;color:#aaa;text-align:center;">꾸준한 기록이 건강한 습관을 만듭니다 💪</p>
+  </div>
+</div>` : `
+<div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
+  <div style="background:linear-gradient(135deg,#1565c0,#42a5f5);padding:32px 24px;text-align:center;">
+    <img src="https://habitschool.web.app/icons/icon-192.svg" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
+    <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">${t.name}님이 보고 싶어요 💙</h2>
+    <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">함께하는 건강 여정을 기다리고 있어요</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${t.name}</strong>님, 잘 지내고 계신가요? 💙</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">7일 이상 기록이 없으셨네요. 바쁘셨던 거 알아요.<br>오늘 다시 시작해도 늦지 않아요. 해빛스쿨이 응원합니다!</p>
+    <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
+      <p style="margin:0;font-size:14px;color:#666;">다시 시작하면 <strong style="color:#1565c0;">복귀 보너스 포인트</strong>가 기다려요 🎁</p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${APP_URL}" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">해빛스쿨로 돌아가기 →</a>
+    </div>
+    <p style="font-size:13px;color:#aaa;text-align:center;">당신의 건강한 하루를 함께 만들어가고 싶어요 🌱</p>
+  </div>
+</div>`;
+
+                await transporter.sendMail({
+                    from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
+                    to: t.email,
+                    subject,
+                    html
+                });
+                sentCount++;
+                console.log(`✅ 이메일 발송: ${t.email} (${t.name})`);
+            } catch (err) {
+                errors.push({ email: t.email, error: err.message });
+                console.error(`❌ 이메일 실패: ${t.email}`, err.message);
+            }
+        }
+
+        return { sentCount, totalTargets: targets.length, errors };
     }
 );
