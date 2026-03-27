@@ -1530,6 +1530,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 hbtDisplay.innerHTML = `<span style="color:#aaa">조회 중...</span>`;
             }
 
+            // user doc 로드 완료 → 기본 정보(포인트, HBT 플레이스홀더) 준비됨 → 스켈레톤 즉시 해제
+            if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+
             // ========== 자산 변동 표시 (오늘 획득분 - daily_logs에서 계산) ==========
             const pointsDeltaEl = document.getElementById('asset-points-delta');
             if (pointsDeltaEl) {
@@ -4159,23 +4162,26 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 showToast(`🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
             } else { showToast(`🎉 데이터가 업데이트되었습니다.`); }
 
-            // 데이터 저장 후 캐시 초기화 후 백그라운드 pre-fetch (갤러리 탭 전환 시 즉시 표시)
+            // 데이터 저장 후 캐시 초기화
             cachedGalleryLogs = [];
             galleryDisplayCount = 0;
             sortedFilteredDirty = true;
-            loadGalleryData();
-            // 대시보드/자산 캐시도 무효화
             _dashboardCache.ts = 0;
             _assetCache.ts = 0;
 
-            // 마일스톤 확인 및 업데이트
-            await checkMilestones(user.uid);
-            await renderMilestones(user.uid);
+            // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
+            saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false;
 
-            // 챌린지 진행도 업데이트
-            await updateChallengeProgress();
-
+            // post-save ops: 백그라운드에서 실행 (버튼 복원과 무관)
             loadDataForSelectedDate(selectedDateStr);
+            loadGalleryData();
+            (async () => {
+                try {
+                    await checkMilestones(user.uid);
+                    await renderMilestones(user.uid);
+                    await updateChallengeProgress();
+                } catch (_) {}
+            })();
 
         } catch (e) {
             console.error('데이터 저장 오류:', e);
@@ -5454,7 +5460,7 @@ async function _loadGalleryDataInner() {
                     retries++;
                     console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
                     if (retries < 3) {
-                        await new Promise(r => setTimeout(r, 800 * retries));
+                        await new Promise(r => setTimeout(r, 200 * retries));
                     } else {
                         container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
                         return;
@@ -5480,7 +5486,7 @@ async function _loadGalleryDataInner() {
                 retries++;
                 console.warn(`갤러리 데이터 로드 재시도 (${retries}/3):`, e.message);
                 if (retries < 3) {
-                    await new Promise(r => setTimeout(r, 800 * retries));
+                    await new Promise(r => setTimeout(r, 200 * retries));
                 } else {
                     console.error('갤러리 데이터 로드 실패:', e);
                     container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">🔄 다시 시도</button></div>';
