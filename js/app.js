@@ -4009,15 +4009,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 }
                 if (el) {
                     const previewImg = el.parentElement.querySelector('.preview-img');
-                    if (previewImg && previewImg.style.display === 'none' && previewImg.hasAttribute('data-user-removed')) {
+                    // 사용자가 명시적으로 삭제한 경우만 null 반환
+                    if (previewImg && previewImg.hasAttribute('data-user-removed')) {
                         return { url: null, thumbUrl: null };
                     }
-                    // getDoc 타임아웃으로 oldUrl이 없을 때, DOM에 저장된 URL 사용 (사진 보존)
-                    if (!oldUrl && previewImg && previewImg.style.display !== 'none') {
-                        const domSavedUrl = previewImg.getAttribute('data-saved-url');
-                        const domSavedThumb = previewImg.getAttribute('data-saved-thumb-url');
-                        if (domSavedUrl) return { url: domSavedUrl, thumbUrl: domSavedThumb || null };
-                    }
+                    // 기존 URL 보존: oldData → data-saved-url → previewImg.src 순서로 fallback
+                    // (display:none 여부 무관 — clearInputs로 숨겨져도 data-saved-url 유지)
+                    const savedUrl = oldUrl
+                        || (previewImg && previewImg.getAttribute('data-saved-url'))
+                        || (previewImg && previewImg.src && previewImg.src.startsWith('https://') ? previewImg.src : null);
+                    const savedThumb = oldThumbUrl
+                        || (previewImg && previewImg.getAttribute('data-saved-thumb-url')) || null;
+                    return { url: savedUrl || null, thumbUrl: savedThumb };
                 }
                 return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
             };
