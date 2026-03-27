@@ -138,6 +138,26 @@
             </tbody>
         </table>
     </div>
+
+    <!-- 신고 목록 -->
+    <div class="table-container" style="margin-top:20px;">
+        <h3 style="margin-top:0; color:#C62828;">🚨 신고 목록</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>접수일</th>
+                    <th>유형</th>
+                    <th>사유</th>
+                    <th>신고자 UID</th>
+                    <th>대상 문서 ID</th>
+                    <th>처리</th>
+                </tr>
+            </thead>
+            <tbody id="reports-table-body">
+                <tr><td colspan="6">불러오는 중...</td></tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal-overlay" id="detail-modal">
@@ -192,7 +212,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
 
@@ -259,6 +279,7 @@
                 document.getElementById('admin-dashboard').style.display = 'block';
                 document.getElementById('admin-user-info').textContent = `👤 ${user.displayName || user.email}`;
                 loadAdminData();
+                loadReports();
             } else {
                 const errorEl = document.getElementById('admin-login-error');
                 errorEl.textContent = `⛔ "${user.email}" 계정은 관리자 권한이 없습니다.`;
@@ -472,6 +493,44 @@
     }
 
     window.sendQuickMessage = function(msg) { document.getElementById('feedback-text').value = msg; };
+
+    async function loadReports() {
+        const tbody = document.getElementById('reports-table-body');
+        try {
+            const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(100));
+            const snap = await getDocs(q);
+            if (snap.empty) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#999; padding:20px;">신고 내역이 없습니다.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = snap.docs.map(d => {
+                const r = d.data();
+                const date = r.createdAt ? r.createdAt.substring(0, 10) : '-';
+                const type = r.type === 'post' ? '📄 게시물' : r.type === 'comment' ? '💬 댓글' : escapeHtml(r.type || '-');
+                const reason = escapeHtml(r.reason || '-');
+                const reporter = escapeHtml(r.reporterUid || '-');
+                const target = escapeHtml(r.targetDocId || '-');
+                return `<tr>
+                    <td>${date}</td>
+                    <td>${type}</td>
+                    <td>${reason}</td>
+                    <td style="font-size:11px; word-break:break-all;">${reporter}</td>
+                    <td style="font-size:11px; word-break:break-all;">${target}</td>
+                    <td><button onclick="resolveReport('${escapeHtml(d.id)}')" style="background:#E8F5E9;color:#2E7D32;border:1px solid #4CAF50;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;">✅ 처리완료</button></td>
+                </tr>`;
+            }).join('');
+        } catch(e) {
+            tbody.innerHTML = `<tr><td colspan="6" style="color:red;">로드 실패: ${escapeHtml(e.message)}</td></tr>`;
+        }
+    }
+
+    window.resolveReport = async function(reportId) {
+        if (!confirm('신고를 처리 완료로 표시하고 삭제하시겠습니까?')) return;
+        try {
+            await deleteDoc(doc(db, 'reports', reportId));
+            await loadReports();
+        } catch(e) { alert('처리 실패: ' + e.message); }
+    };
 
     window.submitFeedback = async function() {
         const userId = document.getElementById('current-user-id').value;
