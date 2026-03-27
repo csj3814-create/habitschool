@@ -2365,7 +2365,7 @@ exports.sendReEngagementEmails = onCall(
         secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
         region: "asia-northeast3",
         maxInstances: 1,
-        timeoutSeconds: 120,
+        timeoutSeconds: 300,
         invoker: "public"
     },
     async (request) => {
@@ -2459,16 +2459,12 @@ exports.sendReEngagementEmails = onCall(
 
         const APP_URL = "https://habitschool.web.app";
 
-        let sentCount = 0;
-        const errors = [];
+        const sendResults = await Promise.allSettled(targets.map(async (t) => {
+            const subject = days === 3
+                ? `[해빛스쿨] ${t.name}님, 오늘 건강 기록은 어떠세요? 🌟`
+                : `[해빛스쿨] ${t.name}님이 보고 싶어요 💙`;
 
-        for (const t of targets) {
-            try {
-                const subject = days === 3
-                    ? `[해빛스쿨] ${t.name}님, 오늘 건강 기록은 어떠세요? 🌟`
-                    : `[해빛스쿨] ${t.name}님이 보고 싶어요 💙`;
-
-                const html = days === 3 ? `
+            const html = days === 3 ? `
 <div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
   <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
     <img src="https://habitschool.web.app/icons/icon-192.svg" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
@@ -2503,19 +2499,30 @@ exports.sendReEngagementEmails = onCall(
   </div>
 </div>`;
 
-                await transporter.sendMail({
-                    from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
-                    to: t.email,
-                    subject,
-                    html
-                });
-                sentCount++;
-                console.log(`✅ 이메일 발송: ${t.email} (${t.name})`);
-            } catch (err) {
-                errors.push({ email: t.email, error: err.message });
-                console.error(`❌ 이메일 실패: ${t.email}`, err.message);
-            }
-        }
+            await transporter.sendMail({
+                from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
+                to: t.email,
+                subject,
+                html
+            });
+
+            // 발송 이력 저장
+            await db.collection("emailLogs").doc(t.uid).set({
+                lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+                lastSentDays: days,
+                sentCount: admin.firestore.FieldValue.increment(1)
+            }, { merge: true });
+
+            console.log(`✅ 이메일 발송: ${t.email} (${t.name})`);
+        }));
+
+        const sentCount = sendResults.filter(r => r.status === "fulfilled").length;
+        const errors = sendResults
+            .map((r, i) => r.status === "rejected" ? { email: targets[i].email, error: r.reason?.message } : null)
+            .filter(Boolean);
+        sendResults.forEach((r, i) => {
+            if (r.status === "rejected") console.error(`❌ 이메일 실패: ${targets[i].email}`, r.reason?.message);
+        });
 
         return { sentCount, totalTargets: targets.length, errors };
     }

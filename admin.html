@@ -525,6 +525,12 @@
     async function loadMembers() {
         try {
             const { snap, usersQ } = await getData();
+
+            // 이메일 발송 이력 조회
+            const emailLogsSnap = await getDocs(collection(db, 'emailLogs'));
+            const emailLogs = {};
+            emailLogsSnap.forEach(d => { emailLogs[d.id] = d.data(); });
+
             const meta = {}; usersQ.forEach(u => { meta[u.id] = u.data(); });
             const latestLog = {}; snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
 
@@ -542,7 +548,18 @@
                 const rawName = r.userName || '';
                 const nameFromLog = (!rawName.includes(' ') && rawName.length > 15) ? '' : rawName;
                 const name = m.customDisplayName || m.displayName || nameFromLog || uid.slice(0,8);
-                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, glucose: glu, sys, dia, msgBadge, alert: glu>=126||sys>=140 };
+
+                // 이메일 발송 배지
+                let emailBadge = '';
+                const eLog = emailLogs[uid];
+                if (eLog?.lastSentAt) {
+                    const sentAt = eLog.lastSentAt.toDate ? eLog.lastSentAt.toDate() : new Date(eLog.lastSentAt.seconds * 1000);
+                    const daysAgo = Math.floor((new Date() - sentAt) / 86400000);
+                    const color = daysAgo <= 7 ? '#ff9800' : '#bbb';
+                    emailBadge = `<span style="font-size:10px;color:${color};margin-left:4px;">📧${daysAgo}일전</span>`;
+                }
+
+                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 };
             });
             renderMembers();
         } catch(e) { document.getElementById('member-tbody').innerHTML = `<tr><td colspan="9" style="color:red;">${escapeHtml(e.message)}</td></tr>`; }
@@ -565,7 +582,7 @@
         const tbody = document.getElementById('member-tbody');
         if (!rows.length) { tbody.innerHTML='<tr><td colspan="10" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
         tbody.innerHTML = rows.map(r => `<tr class="${r.alert?'alert-row':''}">
-            <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}</td>
+            <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}${r.emailBadge||''}</td>
             <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
             <td>Lv.${r.level}</td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td>
