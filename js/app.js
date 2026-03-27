@@ -4197,12 +4197,21 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
-            // Firestore 저장: offline persistence가 로컬에 즉시 기록, 서버 ACK는 최대 5초 대기 후 진행
-            await withTimeout(
+            // Firestore 저장: 서버 ACK 최대 5초 대기, unavailable 에러 시 1회 자동 재시도
+            const doSetDoc = () => withTimeout(
                 setDoc(doc(db, "daily_logs", docId), saveData, { merge: true }),
                 5000,
-                null  // 타임아웃 시 null → 저장은 백그라운드에서 계속 진행됨
+                null
             );
+            try {
+                await doSetDoc();
+            } catch (e) {
+                if (e.code === 'unavailable' || e.code === 'failed-precondition') {
+                    // 연결 안정화 대기 후 1회 재시도
+                    await new Promise(r => setTimeout(r, 1500));
+                    await doSetDoc();
+                } else { throw e; }
+            }
 
             // coins 업데이트는 Cloud Function(awardPoints)이 서버에서 처리
             if (uploadFailures.length > 0) {
