@@ -4013,16 +4013,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (previewImg && previewImg.hasAttribute('data-user-removed')) {
                         return { url: null, thumbUrl: null };
                     }
+                    // Firebase Storage URL인지 검증 (빈 img.src는 페이지 URL을 반환하므로 반드시 검증 필요)
+                    const isFbUrl = u => u && u.includes('firebasestorage.googleapis.com');
                     // 기존 URL 보존: oldData → data-saved-url → previewImg.src 순서로 fallback
                     // (display:none 여부 무관 — clearInputs로 숨겨져도 data-saved-url 유지)
-                    const savedUrl = oldUrl
-                        || (previewImg && previewImg.getAttribute('data-saved-url'))
-                        || (previewImg && previewImg.src && previewImg.src.startsWith('https://') ? previewImg.src : null);
-                    const savedThumb = oldThumbUrl
-                        || (previewImg && previewImg.getAttribute('data-saved-thumb-url')) || null;
+                    const savedUrl = (isFbUrl(oldUrl) ? oldUrl : null)
+                        || (isFbUrl(previewImg?.getAttribute('data-saved-url')) ? previewImg.getAttribute('data-saved-url') : null)
+                        || (isFbUrl(previewImg?.src) ? previewImg.src : null);
+                    const savedThumb = (isFbUrl(oldThumbUrl) ? oldThumbUrl : null)
+                        || (isFbUrl(previewImg?.getAttribute('data-saved-thumb-url')) ? previewImg.getAttribute('data-saved-thumb-url') : null) || null;
                     return { url: savedUrl || null, thumbUrl: savedThumb };
                 }
-                return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
+                return { url: (oldUrl?.includes('firebasestorage.googleapis.com') ? oldUrl : null), thumbUrl: (oldThumbUrl?.includes('firebasestorage.googleapis.com') ? oldThumbUrl : null) };
             };
 
             // === 모든 업로드를 병렬로 실행 ===
@@ -6248,11 +6250,27 @@ async function analyzeMealPhoto(meal) {
         return;
     }
 
-    // 이미 저장된 URL 사용 또는 미리보기 src 사용
-    const imageUrl = previewImg.src;
-    if (!imageUrl || imageUrl.startsWith('data:')) {
-        showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
-        return;
+    // Firebase Storage URL 확보: previewImg.src → _pendingUploads 완료 결과 → data-saved-url
+    let imageUrl = previewImg.src;
+    if (!imageUrl || imageUrl.startsWith('data:') || !imageUrl.includes('firebasestorage.googleapis.com')) {
+        // 새로 선택한 파일의 pre-upload 완료 여부 확인
+        const inputId = `diet-img-${meal}`;
+        const pending = _pendingUploads.get(inputId);
+        if (pending) {
+            if (!pending.done) {
+                showToast('⏳ 사진 업로드 중입니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+            imageUrl = pending.result?.url || null;
+        }
+        // data-saved-url fallback
+        if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+            imageUrl = previewImg.getAttribute('data-saved-url') || null;
+        }
+        if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+            showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
+            return;
+        }
     }
 
     // 로딩 상태
