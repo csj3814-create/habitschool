@@ -650,6 +650,21 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         const file = input.files[0];
         if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
 
+        // 파일 선택 즉시 백그라운드 업로드 시작 (저장 버튼 클릭 시 이미 완료되어 있음)
+        if (auth?.currentUser && input.id) {
+            const folder = input.id.startsWith('diet-') ? 'diet_images'
+                         : input.id.startsWith('file_c_') ? 'exercise_images' : null;
+            if (folder) {
+                _pendingUploads.delete(input.id);
+                const p = uploadWithThumb(file, folder, auth.currentUser.uid);
+                _pendingUploads.set(input.id, { promise: p, done: false, result: null });
+                p.then(r => {
+                    const entry = _pendingUploads.get(input.id);
+                    if (entry) { entry.done = true; entry.result = r; }
+                }).catch(() => _pendingUploads.delete(input.id));
+            }
+        }
+
         const render = () => {
             const reader = new FileReader();
             reader.onload = e => {
@@ -771,6 +786,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
 
 window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     e.preventDefault(); e.stopPropagation();
+    _pendingUploads.delete(inputId); // 진행 중인 pre-upload 폐기
     document.getElementById(inputId).value = "";
     document.getElementById(previewId).src = "";
     document.getElementById(previewId).style.display = "none";
@@ -841,6 +857,7 @@ window.rotateImage = function (e, previewId, inputId) {
             if (!blob) return;
             const input = document.getElementById(inputId);
             if (!input) return;
+            _pendingUploads.delete(inputId); // 회전 전 pre-upload 무효화
             const file = new File([blob], 'rotated.jpg', { type: 'image/jpeg', lastModified: Date.now() });
             const dt = new DataTransfer();
             dt.items.add(file);
@@ -3860,6 +3877,35 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
     return null;
 }
 
+// === 파일 선택 즉시 업로드를 위한 상태 저장소 ===
+const _pendingUploads = new Map(); // inputId → { promise, done, result }
+
+// 원본 + 썸네일 병렬 업로드 (모듈 레벨 함수 — previewStaticImage에서도 호출 가능)
+async function uploadWithThumb(file, folder, userId) {
+    if (!file) return { url: null, thumbUrl: null };
+    try {
+        const [url, thumbBlob] = await Promise.all([
+            uploadFileAndGetUrl(file, folder, userId),
+            generateThumbnailBlob(file).catch(() => null)
+        ]);
+        if (!url) return { url: null, thumbUrl: null };
+        let thumbUrl = null;
+        if (thumbBlob) {
+            try {
+                const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
+                const tr = ref(storage, tp);
+                const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+                await Promise.race([uploadBytes(tr, thumbBlob), tout(15000)]);
+                thumbUrl = await Promise.race([getDownloadURL(tr), tout(10000)]);
+            } catch (e) { console.warn('썸네일 업로드 실패:', e.message); }
+        }
+        return { url, thumbUrl };
+    } catch (e) {
+        console.error(`${folder} 업로드 실패:`, e);
+        return { url: null, thumbUrl: null };
+    }
+}
+
 document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -3880,39 +3926,22 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const existingDoc = await getDoc(doc(db, "daily_logs", docId));
             let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
 
-            // === 원본+썸네일 병렬 업로드 헬퍼 ===
-            const uploadWithThumbParallel = async (file, folder, userId) => {
-                if (!file) return { url: null, thumbUrl: null };
-                try {
-                    // 원본 업로드와 썸네일 생성을 동시에 시작
-                    const [url, thumbBlob] = await Promise.all([
-                        uploadFileAndGetUrl(file, folder, userId),
-                        generateThumbnailBlob(file).catch(() => null)
-                    ]);
-                    if (!url) return { url: null, thumbUrl: null };
-                    // 원본 성공 후 썸네일 업로드
-                    let thumbUrl = null;
-                    if (thumbBlob) {
-                        try {
-                            const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
-                            const tr = ref(storage, tp);
-                            await uploadBytes(tr, thumbBlob);
-                            thumbUrl = await getDownloadURL(tr);
-                        } catch (e) { console.warn('썸네일 업로드 실패:', e.message); }
-                    }
-                    return { url, thumbUrl };
-                } catch (e) {
-                    console.error(`${folder} 업로드 실패:`, e);
-                    return { url: null, thumbUrl: null };
-                }
-            };
-
-            // === getUrl + 썸네일을 하나로 합친 헬퍼 ===
+            // === getUrl + 썸네일을 하나로 합친 헬퍼 (pre-upload 결과 우선 사용) ===
             const getUrlWithThumb = async (id, folder, oldUrl, oldThumbUrl) => {
                 const el = document.getElementById(id);
                 if (el && el.files[0] && el.parentElement.querySelector('.preview-img').style.display !== 'none') {
+                    // 파일 선택 시 시작된 pre-upload 결과 우선 사용
+                    const pending = _pendingUploads.get(id);
+                    if (pending) {
+                        _pendingUploads.delete(id);
+                        try {
+                            const result = pending.done ? pending.result : await pending.promise;
+                            if (result?.url) return result;
+                        } catch (e) {}
+                    }
+                    // fallback: 지금 업로드
                     try {
-                        const result = await uploadWithThumbParallel(el.files[0], folder, user.uid);
+                        const result = await uploadWithThumb(el.files[0], folder, user.uid);
                         if (result.url) return result;
                         uploadFailures.push(id);
                         return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
@@ -3952,13 +3981,26 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 let aiAnalysis = null;
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
                 if (fileInput.files[0]) {
-                    try {
-                        const result = await uploadWithThumbParallel(fileInput.files[0], 'exercise_images', user.uid);
-                        url = result.url;
-                        if (result.thumbUrl) thumbUrl = result.thumbUrl;
-                    } catch (err) {
-                        console.error('⚠️ 유산소 사진 업로드 실패:', err);
-                        url = null;
+                    // pre-upload 결과 우선 사용
+                    const pending = _pendingUploads.get(fileInput.id);
+                    if (pending) {
+                        _pendingUploads.delete(fileInput.id);
+                        try {
+                            const res = pending.done ? pending.result : await pending.promise;
+                            url = res?.url || null;
+                            if (res?.thumbUrl) thumbUrl = res.thumbUrl;
+                        } catch (e) { url = null; }
+                    }
+                    // fallback: 지금 업로드
+                    if (!url) {
+                        try {
+                            const result = await uploadWithThumb(fileInput.files[0], 'exercise_images', user.uid);
+                            url = result.url;
+                            if (result.thumbUrl) thumbUrl = result.thumbUrl;
+                        } catch (err) {
+                            console.error('⚠️ 유산소 사진 업로드 실패:', err);
+                            url = null;
+                        }
                     }
                 }
                 return url ? { imageUrl: url, imageThumbUrl: thumbUrl, aiAnalysis } : null;
@@ -4003,7 +4045,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 let sThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
                 if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
                     try {
-                        const result = await uploadWithThumbParallel(sleepFile.files[0], 'sleep_images', user.uid);
+                        const result = await uploadWithThumb(sleepFile.files[0], 'sleep_images', user.uid);
                         sUrl = result.url;
                         sThumbUrl = result.thumbUrl;
                     } catch (err) {
