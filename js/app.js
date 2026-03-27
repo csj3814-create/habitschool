@@ -4235,8 +4235,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
             saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false;
 
+            // 퀘스트 체크 UI 직접 갱신 (loadDataForSelectedDate 재호출 없음 — 사진 UI 보호)
+            if (awarded.diet) { document.getElementById('quest-diet').className = 'quest-check done'; document.getElementById('quest-diet').innerText = `+${awarded.dietPoints || 0}P`; }
+            if (awarded.exercise) { document.getElementById('quest-exercise').className = 'quest-check done'; document.getElementById('quest-exercise').innerText = `+${awarded.exercisePoints || 0}P`; }
+            if (awarded.mind) { document.getElementById('quest-mind').className = 'quest-check done'; document.getElementById('quest-mind').innerText = `+${awarded.mindPoints || 0}P`; }
+
+            // data-saved-url 갱신 (다음 저장 시 URL 보존용)
+            [['breakfast', bUrl, bThumbUrl], ['lunch', lUrl, lThumbUrl], ['dinner', dUrl, dThumbUrl], ['snack', sUrl, sThumbUrl]].forEach(([k, url, thumb]) => {
+                if (url) {
+                    const pv = document.getElementById(`preview-${k}`);
+                    if (pv) { pv.setAttribute('data-saved-url', url); pv.setAttribute('data-saved-thumb-url', thumb || ''); }
+                }
+            });
+
             // post-save ops: 백그라운드에서 실행 (버튼 복원과 무관)
-            loadDataForSelectedDate(selectedDateStr);
             loadGalleryData();
             (async () => {
                 try {
