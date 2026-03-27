@@ -314,6 +314,25 @@
 
 ---
 
+## 2026-03-27 (admin.html 리뉴얼 + 이메일 발송 세션)
+
+### 54. Cloud Function 대량 이메일 발송 — for 루프는 Deadline Exceeded를 유발한다
+- **증상**: 회원 30명 이상에게 이메일 발송 시 `DEADLINE_EXCEEDED` 에러 발생. 실제로는 이메일이 모두 발송됐지만 클라이언트에는 에러로 반환됨.
+- **근본 원인**: `for...of` 루프로 1건씩 순차 발송 → 1건당 약 2초 × 30명 = 60초+. 기본 타임아웃 120초를 쉽게 초과.
+- **해결**: `Promise.allSettled(targets.map(async (t) => { ... }))` 으로 전체 병렬 발송. 소요 시간 2~3초로 단축. `timeoutSeconds: 300` 으로 안전망 추가.
+- **교훈**: CF에서 다수 대상에게 외부 API(이메일, 푸시 등) 호출 시 반드시 병렬(`Promise.allSettled`)로 처리할 것. 실패한 건은 개별 추적하고 전체를 막지 않도록.
+
+### 55. 이메일 발송 이력은 발송과 동시에 Firestore에 기록해야 한다
+- **증상**: 이메일 발송 후 admin.html에서 "며칠 전 발송했는지" 알 수 없음. 기능 추가 전 발송분은 소급 불가.
+- **교훈**: 발송 이력 추적이 필요한 기능은 처음부터 Firestore 기록 포함해서 구현할 것. 나중에 추가하면 과거 데이터 없음.
+  - 패턴: 발송 성공 시 `db.collection('emailLogs').doc(uid).set({ lastSentAt, sentCount: increment(1) }, { merge: true })`
+
+### 56. Firebase Secrets는 채팅/코드에 절대 노출하면 안 된다
+- **증상**: 사용자가 Gmail 앱 비밀번호를 채팅창에 입력하려 했음.
+- **교훈**: API 키, 비밀번호, Secrets는 반드시 터미널에서 `firebase functions:secrets:set SECRET_NAME` 으로 입력. 채팅, 코드, git에 절대 노출 금지.
+
+---
+
 ## 배포 전 필수 체크리스트
 
 - [ ] `sw.js` CACHE_NAME 버전 번호가 올라갔는가?
