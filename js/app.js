@@ -1050,9 +1050,10 @@ async function loadDataForSelectedDate(dateStr) {
     try {
         const docId = `${user.uid}_${dateStr}`;
         // 캐시 있으면 즉시, 없으면 최대 3초 대기 후 빈 결과로 진행
+        const _empty = { exists: () => false, data: () => ({}) };
         const myLogDoc = await Promise.race([
-            getDoc(doc(db, "daily_logs", docId)),
-            new Promise(resolve => setTimeout(() => resolve({ exists: () => false, data: () => ({}) }), 3000))
+            getDoc(doc(db, "daily_logs", docId)).catch(() => _empty),
+            new Promise(resolve => setTimeout(() => resolve(_empty), 3000))
         ]);
 
         // race condition 방지: 날짜가 빠르게 변경된 경우 이전 요청 무시
