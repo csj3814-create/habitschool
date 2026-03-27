@@ -287,6 +287,33 @@
 
 ---
 
+## 2026-03-27 (갤러리 페이지네이션 & 무한 스크롤 버그 시리즈)
+
+### 50. 갤러리 Firestore 커서 페이지네이션 — MAX_CACHE_SIZE와 초기 fetch를 분리해야 한다
+- **증상**: MAX_CACHE_SIZE=30, 커트오프 7일 → 사용자 많으면 2~3일치만 보임.
+- **근본 원인**: 초기 fetch limit과 총 캐시 한도를 같은 상수로 묶어 둠. limit을 늘리면 초기 로딩이 느려지는 트레이드오프 발생.
+- **해결**: `FIRESTORE_PAGE_SIZE=30` (빠른 초기 fetch) + `MAX_CACHE_SIZE=300` (총 한도) 분리. `startAfter` 커서로 스크롤 시마다 다음 30개 fetch.
+- **교훈**: "초기 로딩 속도"와 "최대 표시 범위"는 서로 다른 요구. 한 상수로 두 요구를 동시에 충족할 수 없음. 반드시 분리.
+
+### 51. IntersectionObserver.disconnect() 후 null 처리를 안 하면 재연결이 영구 차단된다
+- **증상**: 갤러리 유저 필터 해제 후 스크롤해도 추가 기록이 로드 안 됨.
+- **근본 원인**: `galleryIntersectionObserver.disconnect()`는 호출하지만 변수를 `null`로 안 만듦. `renderFeedOnly()`의 `if (!galleryIntersectionObserver) setupInfiniteScroll()` 조건이 항상 false → observer 재연결 불가.
+- **해결**: `_disconnectGalleryObserver()` 헬퍼를 만들어 disconnect + null 처리를 항상 함께 수행. `_reconnectGalleryObserver()`는 항상 새 인스턴스로 교체.
+- **교훈**: Observer/Timer/Listener를 해제할 때 변수를 반드시 null로 초기화할 것. "해제됐지만 null이 아닌" 상태는 재연결 코드를 모두 무력화시킨다.
+
+### 52. 유저 필터 + Firestore 페이지네이션: 한 페이지에 필터 결과가 없어도 계속 fetch해야 한다
+- **증상**: 특정 유저 필터 적용 시 2~3개 기록만 보이고 더 이상 로드 안 됨.
+- **근본 원인**: `loadMoreGalleryItems()`에서 Firestore 페이지 fetch 후 필터된 결과가 여전히 없으면 "데이터 없음"으로 판단해 sentinel 숨기고 observer 종료.
+  - Firestore는 전체 사용자 기록을 날짜 순으로 반환 → 특정 유저 기록이 드문 경우 한 페이지(30개)에 0개가 될 수 있음.
+- **해결**: fetch 후에도 `galleryDisplayCount >= sortedFilteredCache.length`이고 `galleryHasMore`이면 다음 페이지 계속 fetch (재귀).
+- **교훈**: 클라이언트 필터 + 서버 페이지네이션 혼합 시, 한 서버 페이지가 필터 결과 0건을 반환할 수 있음. "0건 = 끝"으로 처리하면 안 되고 `hasMore` 플래그를 항상 기준으로 삼아야 함.
+
+### 53. 커서 상태(galleryLastDoc, galleryHasMore)는 캐시 초기화 시 함께 리셋해야 한다
+- **근본 원인**: `cachedGalleryLogs = []` 하는 곳(로그아웃, 저장 후, 친구 변경 등)에서 커서 변수를 리셋 안 하면 다음 fetch가 잘못된 위치에서 시작.
+- **교훈**: 커서 기반 페이지네이션 상태는 반드시 캐시 초기화와 묶어서 리셋할 것. `cachedGalleryLogs = []; galleryLastDoc = null; galleryHasMore = false;`를 항상 세트로.
+
+---
+
 ## 배포 전 필수 체크리스트
 
 - [ ] `sw.js` CACHE_NAME 버전 번호가 올라갔는가?

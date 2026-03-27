@@ -1,55 +1,43 @@
-# 2026-03-26 세션 완료 보고
+# 2026-03-27 세션 완료 보고
 
 > **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료
-> **작업**: 모바일 버그 수정 + 로딩 성능 개선 + 이미지 에셋 개선 + 주간 미션 race condition 수정
+> **작업**: 식단 사진 저장 버그 수정 + 갤러리 유저 필터 + 갤러리 Firestore 커서 페이지네이션
 
 ---
 
 ## 수행한 작업
 
-### 1. 버그 수정 ✅
+### 1. 식단 사진 저장 버그 시리즈 ✅
 
-| # | 버그 | 수정 | 파일 |
-|---|------|------|------|
-| 1 | 내 지갑 스켈레톤 고착 (에러 시) | `updateAssetDisplay` catch 블록 + `userSnap.exists()=false` 분기에 `hideWalletSkeleton()` 추가 | `js/app.js` |
-| 2 | 갤러리 "아직 기록이 없어요" (steps/명상만 있는 경우) | `hasMediaForFilter`에 `steps.count > 0`, `meditationDone` 체크 추가 | `js/app.js` |
-| 3 | HBT 잔액 로딩 중 "0 HBT" 표시 | `fetchOnchainBalance` 실패/null 시 강제 0 표시 제거 → "조회 중..." 유지 | `js/app.js` |
+| # | 증상 | 근본 원인 | 수정 |
+|---|------|-----------|------|
+| 1 | 사진 없는 슬롯에 페이지 URL 저장 | `<img src="">`.src = 페이지 URL 반환 | Firebase URL 검증을 `firebasestorage.googleapis.com` 포함 여부로 변경 |
+| 2 | 날짜 변경 후 전날 사진 URL이 오늘에 섞임 | `clearInputs()`가 `data-saved-url` 제거 안 함 | `clearInputs()`에 `removeAttribute('data-saved-url/thumb')` 추가 |
+| 3 | 저장 3초 후 사진 사라짐 | 저장 후 `loadDataForSelectedDate` 재호출 → stale Firestore 데이터로 UI 덮어씀 | 저장 후 `loadDataForSelectedDate` 호출 제거, 퀘스트 UI만 직접 갱신 |
+| 4 | AI 분석 "사진을 먼저 저장해주세요" | `previewImg.src`가 `data:` URL (업로드된 Firebase URL 아님) | `_pendingUploads` pre-upload 결과 → `data-saved-url` 순서로 URL fallback 체인 구현 |
+| 5 | Missing permissions (checkMilestones) | `currentStreak` 필드가 Firestore rules 화이트리스트에 없음 | `firestore.rules` `isAllowedUserField()` 에 `currentStreak`, `onboardingComplete`, `friends` 추가 |
+| 6 | failed-precondition 400 에러 | `checkMilestones`와 다른 ops의 동시 쓰기 충돌 | catch `failed-precondition` → 1초 후 재시도 |
 
-### 2. 성능 개선 ✅
+### 2. 갤러리 유저 필터 기능 ✅
 
-| 개선 항목 | 내용 | 효과 |
-|-----------|------|------|
-| 내 지갑 첫 로딩 20초 → 1~2초 | blockchain 로드 완료 대기 없이 `updateAssetDisplay()` 즉시 실행 | **~18초 단축** |
-| 갤러리 로딩 속도 개선 | 친구 fetch + 갤러리 fetch 병렬화, 로그인 후 background pre-fetch | ~300ms 단축 + 탭 클릭 시 즉시 표시 |
-| Firestore 오프라인 캐시 활성화 | `initializeFirestore + persistentLocalCache()` 설정 | 재방문 시 즉시 로드 |
-| 업로드 타임아웃 단축 | 60s → 30s (최대 대기 183초 → 93초) | 빠른 실패 피드백 |
-| 이미지 압축 강화 | 1200px/0.8 → 1000px/0.7 | 업로드 파일 크기 감소 |
+- 아바타/이름 클릭 → 해당 유저 게시물만 보기 (`setGalleryUserFilter`)
+- "XX님의 게시물만 보는 중" 배너 + ✕ 버튼으로 해제 (`clearGalleryUserFilter`)
+- 유저 필터 배너 + 카테고리 필터 칩을 "이번 주 열심 학생" 박스 아래로 이동
+- 갤러리 탭 벗어날 때 유저 필터 자동 해제
 
-### 3. 이미지 에셋 개선 ✅
+### 3. 갤러리 Firestore 커서 페이지네이션 ✅
 
-| 항목 | 내용 |
-|------|------|
-| og-image.png | 해 아이콘 흰 귀퉁이 제거 (알파 채널 정상 합성) |
-| feature-graphic.png | 이모지 □ → 컬러 pill 뱃지, 흰 원 → 반투명 오렌지 원 |
-| feature-graphic-*.png | 5종 테마 버전 생성 (dawn, green, dark, minimal 추가) |
-| "받" 글자 깨짐 수정 | malgun.ttf → malgunbd.ttf (굵은체)로 변경 |
+- 초기 로딩: `FIRESTORE_PAGE_SIZE=30` (빠름 유지)
+- 스크롤 끝 도달 시: `startAfter` 커서로 다음 30개 자동 fetch
+- 총 한도: `MAX_CACHE_SIZE=300`
+- 커트오프: 7일 → 30일 (한 달치 기록 조회)
 
-### 4. 추가 버그 수정 ✅
+### 4. 갤러리 무한 스크롤 버그 수정 ✅
 
-| # | 버그 | 수정 | 파일 |
-|---|------|------|------|
-| 4 | 주간 미션 자꾸 해제됨 | `archiveWeekAndReset` race condition 수정 (유저 저장 후 null 덮어쓰기 방지) | `js/app.js` |
-
-**근본 원인**: 새 주 첫 방문 시 LS 캐시의 지난주 데이터로 `archiveWeekAndReset` 비동기 실행 → 유저가 미션 저장 완료 후에도 archive가 뒤늦게 Firestore에 null 쓰기.
-
-**수정 내용**:
-- `archiveWeekAndReset`에서 setDoc 전 현재 Firestore 상태 확인 → 이미 새 주차 미션이 있으면 null 덮어쓰기 방지
-- `_archivedWeekIds` Set으로 동일 weekId 중복 archive 차단
-
-### 5. 진단 (코드 수정 없음)
-
-- 유산소 사진 업로드 느림 + "네트워크 연결을 확인해주세요": 근본 원인은 모바일 네트워크 불안정. Firestore `unavailable` 에러는 이미 3회 재시도 로직 있음.
-- 갤러리 스켈레톤: 실제 고착 버그 아님, 네트워크 지연 + 캐시 후 빠른 재로드 현상.
+| 버그 | 근본 원인 | 수정 |
+|------|-----------|------|
+| 유저 필터 시 기록 부족 | 한 Firestore 페이지에 해당 유저 기록 0건이어도 "끝"으로 처리 | `galleryHasMore`이면 다음 페이지 계속 fetch (재귀) |
+| 필터 해제 후 스크롤 안 됨 | `disconnect()` 후 observer 변수를 `null`로 안 만들어 재연결 차단 | `_disconnectGalleryObserver()` 헬퍼 — disconnect + null 처리 항상 세트로 |
 
 ---
 
@@ -57,13 +45,13 @@
 
 | 커밋 | 내용 |
 |------|------|
-| `cf619e1` | fix: 내 지갑 스켈레톤 고착 버그 수정 + 업로드 성능 개선 |
-| `cf2f453` | fix: 갤러리 빈 화면 + 초기 로딩 속도 개선 |
-| `be76ef1` | perf: 갤러리 탭 로딩 속도 개선 |
-| `0cee09d` | perf: 내 지갑 탭 첫 로딩 20초 → 1~2초로 단축 |
-| `d8b2103` | fix: HBT 잔액 로딩 중 0 HBT 대신 조회 중... 표시 |
-| `176f853` | feat: feature-graphic 5종 + og-image 개선 (이미지 에셋) |
-| `d2b531e` | fix: 주간 미션 race condition 버그 수정 |
+| `4aa1707` | fix: 날짜 변경 시 전날 사진 URL이 오늘 저장에 섞이는 버그 |
+| `5e9d548` | chore: 디버그 console.log 제거 |
+| `f1d9bec` | docs: 2026-03-27 식단 사진 버그 시리즈 교훈 기록 |
+| `9a02a47` | feat: 갤러리 유저 필터 — 아바타/이름 클릭 시 해당 유저 게시물만 보기 |
+| `eb3e632` | ui: 갤러리 필터 위치 이동 — 이번 주 열심 학생 박스 아래로 |
+| `2cf9008` | feat: 갤러리 Firestore 커서 페이지네이션 — 초기 30개 로드 후 스크롤 시 추가 fetch |
+| `be8c469` | fix: 갤러리 유저 필터/해제 후 무한 스크롤 동작 안 하는 버그 |
 
 ---
 
