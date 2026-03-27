@@ -1455,8 +1455,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         _sevenDaysAgo.setDate(_sevenDaysAgo.getDate() - 6);
         const _startDateStr = _sevenDaysAgo.toISOString().split('T')[0];
 
-        const _p_user = getDoc(userRef);
-        const _p_todayLog = getDoc(doc(db, 'daily_logs', _todayLogId)).catch(() => null);
+        // getDoc 타임아웃 헬퍼: 캐시 있으면 즉시, 없으면 최대 3초 후 빈 snap 반환
+        const _assetTimeout = ms => new Promise(resolve =>
+            setTimeout(() => resolve({ exists: () => false, data: () => ({}) }), ms));
+        const _p_user = Promise.race([getDoc(userRef), _assetTimeout(3000)]);
+        const _p_todayLog = Promise.race([
+            getDoc(doc(db, 'daily_logs', _todayLogId)),
+            _assetTimeout(3000)
+        ]).catch(() => null);
         const _p_hbtTx = getDocs(query(
             collection(db, 'blockchain_transactions'),
             where('userId', '==', user.uid),
@@ -3922,11 +3928,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     showToast("백그라운드에서 저장 중입니다! 🚀");
 
     (async () => {
+        // Firestore 타임아웃 헬퍼 (서버 응답 대기 상한선)
+        const withTimeout = (promise, ms, fallback) =>
+            Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+
         let uploadFailures = [];
         try {
             const selectedDateStr = document.getElementById('selected-date').value;
             const docId = `${user.uid}_${selectedDateStr}`;
-            const existingDoc = await getDoc(doc(db, "daily_logs", docId));
+            // getDoc: 캐시 있으면 즉시, 없으면 최대 2초 대기 후 빈 데이터로 진행
+            const existingDoc = await withTimeout(
+                getDoc(doc(db, "daily_logs", docId)),
+                2000,
+                { exists: () => false, data: () => ({}) }
+            );
             let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
 
             // === getUrl + 썸네일을 하나로 합친 헬퍼 (pre-upload 결과 우선 사용) ===
@@ -4138,8 +4153,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
             });
 
-            // Firestore 저장 (offline persistence가 로컬에 즉시 기록 → 서버 동기화는 백그라운드)
-            await setDoc(doc(db, "daily_logs", docId), saveData, { merge: true });
+            // Firestore 저장: offline persistence가 로컬에 즉시 기록, 서버 ACK는 최대 5초 대기 후 진행
+            await withTimeout(
+                setDoc(doc(db, "daily_logs", docId), saveData, { merge: true }),
+                5000,
+                null  // 타임아웃 시 null → 저장은 백그라운드에서 계속 진행됨
+            );
 
             // coins 업데이트는 Cloud Function(awardPoints)이 서버에서 처리
             if (uploadFailures.length > 0) {
