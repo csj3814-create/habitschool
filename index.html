@@ -913,6 +913,12 @@
                     </div>
                 </div>
 
+                <!-- 유저 필터 배너 (아바타/이름 클릭 시 표시) -->
+                <div id="gallery-user-filter-bar" style="display:none; align-items:center; gap:8px; padding:8px 12px; background:#fff3e0; border-radius:10px; margin-bottom:8px; font-size:13px;">
+                    <span id="gallery-user-filter-label" style="flex:1; color:#e65100; font-weight:600;"></span>
+                    <button onclick="clearGalleryUserFilter()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#e65100; line-height:1;">✕</button>
+                </div>
+
                 <div class="gallery-filters" role="group" aria-label="갤러리 필터">
                     <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
                         aria-pressed="true">전체보기</button>

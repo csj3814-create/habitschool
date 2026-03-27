@@ -1186,6 +1186,7 @@ async function loadDataForSelectedDate(dateStr) {
 }
 
 let galleryFilter = 'all';
+let galleryUserFilter = null; // { userId, userName } | null
 window.setGalleryFilter = function (filter, btnElement) {
     galleryFilter = filter;
     sortedFilteredDirty = true;  // 필터 변경 시 캐시 무효화
@@ -1195,6 +1196,24 @@ window.setGalleryFilter = function (filter, btnElement) {
     });
     btnElement.classList.add('active');
     btnElement.setAttribute('aria-pressed', 'true');
+    renderFeedOnly();
+};
+window.setGalleryUserFilter = function (userId, userName) {
+    galleryUserFilter = { userId, userName };
+    sortedFilteredDirty = true;
+    const bar = document.getElementById('gallery-user-filter-bar');
+    const label = document.getElementById('gallery-user-filter-label');
+    if (bar) bar.style.display = 'flex';
+    if (label) label.textContent = `👤 ${userName}님의 게시물만 보는 중`;
+    renderFeedOnly();
+    // 갤러리 영역 상단으로 스크롤
+    document.getElementById('gallery-user-filter-bar')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+window.clearGalleryUserFilter = function () {
+    galleryUserFilter = null;
+    sortedFilteredDirty = true;
+    const bar = document.getElementById('gallery-user-filter-bar');
+    if (bar) bar.style.display = 'none';
     renderFeedOnly();
 };
 
@@ -2068,6 +2087,8 @@ function openTab(tabName, pushState = true) {
         loadGalleryData();
     } else {
         chatBanner.style.display = 'none';
+        // 갤러리 탭을 벗어날 때 유저 필터 초기화
+        if (galleryUserFilter) window.clearGalleryUserFilter();
         // 갤러리 탭을 벗어날 때 무한 스크롤 옵저버 해제 (메모리 절약)
         if (galleryIntersectionObserver) {
             galleryIntersectionObserver.disconnect();
@@ -5361,6 +5382,10 @@ function refreshSortedFiltered() {
     if (!sortedFilteredDirty) return;
     const blockedUsers = window._blockedUsers || [];
     let sorted = [...cachedGalleryLogs].filter(item => !blockedUsers.includes(item.data.userId));
+    // 유저 필터 적용
+    if (galleryUserFilter) {
+        sorted = sorted.filter(item => item.data.userId === galleryUserFilter.userId);
+    }
     sorted.sort((a, b) => {
         const aFr = cachedMyFriends.includes(a.data.userId);
         const bFr = cachedMyFriends.includes(b.data.userId);
@@ -6074,8 +6099,8 @@ function buildGalleryCard(item, myId) {
     card.className = 'gallery-card';
     card.innerHTML = `
         <div class="gallery-header">
-            <div class="gallery-avatar">${avatarInitial}</div>
-            <div class="gallery-header-info">
+            <div class="gallery-avatar" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">${avatarInitial}</div>
+            <div class="gallery-header-info" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">
                 <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
                 <span class="gallery-date">${data.date.replace(/-/g, '. ')}${streakHtml}</span>
             </div>
