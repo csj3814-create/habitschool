@@ -563,13 +563,14 @@
         arr.sort((a,b) => b.coins - a.coins);
         document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
 
-        // 기록 유형별 도넛 차트
+        // 기록 유형별 도넛 차트 — awardedPoints 기준 (사진 없는 기록도 포함)
         let dietCnt = 0, exCnt = 0, mindCnt = 0;
         snap.forEach(d => {
             const r = d.data();
-            if (r.diet?.imageUrl || r.diet?.analysis) dietCnt++;
-            if (r.exercise?.imageUrl || r.exercise?.analysis) exCnt++;
-            if (r.sleepAndMind?.imageUrl || r.sleepAndMind?.analysis) mindCnt++;
+            const ap = r.awardedPoints || {};
+            if ((ap.dietPoints || 0) > 0 || r.diet?.imageUrl || r.diet?.analysis) dietCnt++;
+            if ((ap.exercisePoints || 0) > 0 || r.exercise?.imageUrl || r.exercise?.analysis) exCnt++;
+            if ((ap.mindPoints || 0) > 0 || r.sleepAndMind?.imageUrl || r.sleepAndMind?.analysis) mindCnt++;
         });
         const rCtx = document.getElementById('recordTypeChart').getContext('2d');
         if (recordTypeChart) recordTypeChart.destroy();
