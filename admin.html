@@ -198,8 +198,8 @@
             <div class="box">
                 <h3>🏆 챌린지 현황</h3>
                 <table style="font-size:13px;">
-                    <thead><tr><th>종류</th><th>진행 중</th><th>완료 대기</th></tr></thead>
-                    <tbody id="challenge-body"><tr><td colspan="3">로딩 중...</td></tr></tbody>
+                    <thead><tr><th>종류</th><th>진행 중</th><th>완료 대기</th><th>누적 완료</th></tr></thead>
+                    <tbody id="challenge-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -580,10 +580,34 @@
                 labels: ['🥗 식단', '🏃 운동', '🧘 마음'],
                 datasets: [{ data: [dietCnt, exCnt, mindCnt], backgroundColor: ['#4CAF50','#2196F3','#9C27B0'], borderWidth: 2 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}건` } }
+                }
+            },
+            plugins: [{
+                id: 'doughnutLabels',
+                afterDatasetsDraw(chart) {
+                    const { ctx, data } = chart;
+                    chart.getDatasetMeta(0).data.forEach((arc, i) => {
+                        const val = data.datasets[0].data[i];
+                        if (!val) return;
+                        const { x, y } = arc.tooltipPosition();
+                        ctx.save();
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.fillStyle = '#fff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(val, x, y);
+                        ctx.restore();
+                    });
+                }
+            }]
         });
 
-        // 챌린지 현황
+        // 챌린지 현황 — 진행 중 / 완료 대기 / 누적 완료
         let miniOn=0, weeklyOn=0, masterOn=0, miniWait=0, weeklyWait=0, masterWait=0;
         usersQ.forEach(u => {
             const ac = u.data().activeChallenges || {};
@@ -594,12 +618,29 @@
             if (ac.master?.status === 'ongoing') masterOn++;
             else if (ac.master?.status === 'claimable') masterWait++;
         });
+
+        // 누적 완료: blockchain_transactions type=challenge_settlement + status=success
+        let miniDone=0, weeklyDone=0, masterDone=0;
+        try {
+            const doneSnap = await getDocs(query(
+                collection(db, 'blockchain_transactions'),
+                where('type', '==', 'challenge_settlement'),
+                where('status', '==', 'success')
+            ));
+            doneSnap.forEach(d => {
+                const cid = d.data().challengeId || '';
+                if (cid.includes('3d')) miniDone++;
+                else if (cid.includes('7d')) weeklyDone++;
+                else if (cid.includes('30d')) masterDone++;
+            });
+        } catch(e) { console.error('챌린지 완료 조회 오류:', e); }
+
         document.getElementById('challenge-body').innerHTML = [
-            ['🌱 미니 (3일)', miniOn, miniWait],
-            ['🔥 위클리 (7일)', weeklyOn, weeklyWait],
-            ['👑 마스터 (30일)', masterOn, masterWait]
-        ].map(([label, on, wait]) =>
-            `<tr><td>${label}</td><td>${on}명</td><td style="color:${wait>0?'#FF9800':'#999'};">${wait > 0 ? wait+'명 ⏳' : '-'}</td></tr>`
+            ['🌱 미니 (3일)', miniOn, miniWait, miniDone],
+            ['🔥 위클리 (7일)', weeklyOn, weeklyWait, weeklyDone],
+            ['👑 마스터 (30일)', masterOn, masterWait, masterDone]
+        ].map(([label, on, wait, done]) =>
+            `<tr><td>${label}</td><td>${on}명</td><td style="color:${wait>0?'#FF9800':'#999'};">${wait > 0 ? wait+'명 ⏳' : '-'}</td><td style="color:${done>0?'#4CAF50':'#999'};">${done > 0 ? done+'건 ✅' : '-'}</td></tr>`
         ).join('');
     }
 
