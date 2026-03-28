@@ -4023,13 +4023,19 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         try {
             const selectedDateStr = document.getElementById('selected-date').value;
             const docId = `${user.uid}_${selectedDateStr}`;
-            // getDoc: 캐시 있으면 즉시, 없으면 최대 2초 대기 후 빈 데이터로 진행
-            const existingDoc = await withTimeout(
-                getDoc(doc(db, "daily_logs", docId)),
-                2000,
-                { exists: () => false, data: () => ({}) }
-            );
-            let oldData = existingDoc.exists() ? existingDoc.data() : { awardedPoints: {} };
+            // getDoc: 캐시 우선(즉시) → 없으면 네트워크 최대 8초 대기
+            // 타임아웃 시 빈 객체 fallback은 기존 수면/식단 데이터를 지울 수 있어 위험
+            let oldData = { awardedPoints: {} };
+            try {
+                // 1) 캐시 즉시 읽기 (페이지 로드 시 이미 fetch됨)
+                const cachedDoc = await getDoc(doc(db, "daily_logs", docId), { source: 'cache' });
+                if (cachedDoc.exists()) oldData = cachedDoc.data();
+            } catch (_) {}
+            try {
+                // 2) 네트워크에서 최신 데이터 확인 (최대 8초 — 영상 업로드 중이라 충분)
+                const netDoc = await withTimeout(getDoc(doc(db, "daily_logs", docId)), 8000, null);
+                if (netDoc?.exists()) oldData = netDoc.data();
+            } catch (_) {}
 
             // === getUrl + 썸네일을 하나로 합친 헬퍼 (pre-upload 결과 우선 사용) ===
             const getUrlWithThumb = async (id, folder, oldUrl, oldThumbUrl) => {
