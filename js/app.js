@@ -6721,15 +6721,19 @@ window.shareReferralLink = function(platform) {
     const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
     const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크로 가입하면 보너스 포인트 지급 🎁';
     if (platform === 'kakao') {
-        _ensureKakao().then(() => {
-            Kakao.Share.sendDefault({
-                objectType: 'feed',
-                content: { title, description: text, imageUrl: 'https://habitschool.web.app/icons/og-image.png', link: { mobileWebUrl: url, webUrl: url } },
-                buttons: [{ title: '가입하기', link: { mobileWebUrl: url, webUrl: url } }]
+        if (navigator.share) {
+            // 모바일: 네이티브 공유 시트 (카카오톡 선택 가능)
+            navigator.share({ title, text, url }).catch(e => {
+                if (e.name !== 'AbortError') {
+                    navigator.clipboard.writeText(url)
+                        .then(() => showToast('📋 초대 링크가 복사되었습니다!\n카카오톡에 붙여넣기 해주세요.'));
+                }
             });
-        }).catch(() => {
-            navigator.clipboard.writeText(url).then(() => showToast('📋 초대 링크가 복사되었습니다!'));
-        });
+        } else {
+            // 데스크탑: 링크 복사 후 안내
+            navigator.clipboard.writeText(url)
+                .then(() => showToast('📋 초대 링크가 복사되었습니다!\n카카오톡 채팅창에 붙여넣기 해주세요.'));
+        }
     } else {
         navigator.clipboard.writeText(url).then(() => showToast('📋 초대 링크가 복사되었습니다!'));
     }
