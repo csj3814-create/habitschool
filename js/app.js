@@ -6955,3 +6955,54 @@ function loadStepData(logData) {
     }
 }
 
+// ============================================================
+// QR 코드 초대 모달
+// ============================================================
+const CHAT_QR_URL = 'https://open.kakao.com/o/gv23urgi';
+
+window.openQRModal = async function() {
+    const modal = document.getElementById('qr-invite-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    const inviteUrl = document.getElementById('referral-link-display')?.value
+                   || document.getElementById('profile-invite-link')?.value
+                   || '';
+    const code = document.getElementById('referral-invite-code')?.textContent
+              || document.getElementById('profile-invite-code')?.textContent
+              || '';
+
+    if (code && code !== '-') {
+        document.getElementById('qr-invite-label').textContent = `초대 코드: ${code}`;
+    }
+
+    if (!window.QRCode) { return; }
+
+    const opts = { errorCorrectionLevel: 'H', width: 400, margin: 2,
+                   color: { dark: '#1a1a1a', light: '#ffffff' } };
+    try {
+        if (inviteUrl) {
+            const inviteDataUrl = await window.QRCode.toDataURL(inviteUrl, opts);
+            document.getElementById('qr-invite-img').src = inviteDataUrl;
+        }
+        const chatDataUrl = await window.QRCode.toDataURL(CHAT_QR_URL, opts);
+        document.getElementById('qr-chat-img').src = chatDataUrl;
+    } catch(e) { console.error('QR 생성 오류:', e); }
+};
+
+window.closeQRModal = function() {
+    const modal = document.getElementById('qr-invite-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+window.copyReferralFromModal = function() {
+    const url = document.getElementById('referral-link-display')?.value
+             || document.getElementById('profile-invite-link')?.value;
+    if (!url) return;
+    navigator.clipboard.writeText(url)
+        .then(() => showToast('📋 초대 링크가 복사되었습니다!'))
+        .catch(() => showToast('복사에 실패했습니다.'));
+};
+

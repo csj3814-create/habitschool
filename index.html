@@ -376,8 +376,8 @@
                     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
                             onclick="shareReferralLink('kakao')">💬 카카오톡</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#555; color:white; border-radius:12px;"
-                            onclick="shareReferralLink('copy')">📋 링크 복사</button>
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
+                            onclick="openQRModal()">📱 QR 코드</button>
                     </div>
                 </div>
 
@@ -626,8 +626,8 @@
                     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
                             onclick="shareReferralLink('kakao')">💬 카카오톡</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#555; color:white; border-radius:12px;"
-                            onclick="shareReferralLink('copy')">📋 링크 복사</button>
+                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
+                            onclick="openQRModal()">📱 QR 코드</button>
                     </div>
                 </div>
 
@@ -1153,6 +1153,39 @@
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
     <script src="js/pwa-install.js"></script>
+
+    <!-- QR 코드 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- QR 초대 모달 -->
+    <div id="qr-invite-modal" onclick="if(event.target===this)closeQRModal()"
+         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:white; border-radius:24px; padding:28px 20px 20px; width:100%; max-width:320px; position:relative; text-align:center; max-height:90vh; overflow-y:auto;">
+            <button onclick="closeQRModal()"
+                    style="position:absolute; top:12px; right:14px; background:none; border:none; font-size:24px; line-height:1; cursor:pointer; color:#bbb; padding:4px;">✕</button>
+            <h3 style="margin:0 0 20px; font-size:15px; color:#333; font-weight:700;">📱 QR 코드로 초대하기</h3>
+
+            <!-- 내 초대 QR -->
+            <div style="margin-bottom:20px;">
+                <div style="font-size:12px; font-weight:700; color:#E65100; margin-bottom:10px; letter-spacing:0.3px;">내 초대 링크</div>
+                <img id="qr-invite-img" style="width:200px; height:200px; border-radius:12px; display:block; margin:0 auto; background:#f5f5f5;" alt="초대 QR">
+                <div id="qr-invite-label" style="font-size:11px; color:#999; margin-top:7px; letter-spacing:1px;"></div>
+            </div>
+
+            <div style="border-top:1px solid #f0f0f0; margin:0 0 20px;"></div>
+
+            <!-- 단톡방 QR -->
+            <div style="margin-bottom:20px;">
+                <div style="font-size:12px; font-weight:700; color:#3B1F8C; margin-bottom:10px;">💬 해빛스쿨 단톡방</div>
+                <img id="qr-chat-img" style="width:200px; height:200px; border-radius:12px; display:block; margin:0 auto; background:#f5f5f5;" alt="단톡방 QR">
+                <div style="font-size:11px; color:#999; margin-top:7px;">스캔하면 단톡방 바로 입장</div>
+            </div>
+
+            <button onclick="copyReferralFromModal()"
+                    style="width:100%; padding:12px; background:#F5F5F5; border:none; border-radius:12px; font-size:13px; cursor:pointer; color:#555; font-weight:600;">📋 초대 링크 복사</button>
+        </div>
+    </div>
+
 </body>
 
 </html>
