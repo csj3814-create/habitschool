@@ -190,6 +190,19 @@
                 </table>
             </div>
         </div>
+        <div class="two-col">
+            <div class="box">
+                <h3>📊 기록 유형별 비율 (전체)</h3>
+                <div class="chart-wrap" style="height:180px;"><canvas id="recordTypeChart"></canvas></div>
+            </div>
+            <div class="box">
+                <h3>🏆 챌린지 현황</h3>
+                <table style="font-size:13px;">
+                    <thead><tr><th>종류</th><th>진행 중</th><th>완료 대기</th></tr></thead>
+                    <tbody id="challenge-body"><tr><td colspan="3">로딩 중...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <!-- Tab 2: 회원 관리 -->
@@ -314,6 +327,14 @@
                 <div id="grant-welcome-result" style="margin-top:10px;font-size:13px;color:#388e3c;"></div>
             </div>
             <div class="box">
+                <h3>📣 전체 푸시 알림 발송</h3>
+                <p style="font-size:13px;color:#666;margin:0 0 12px;">FCM 토큰이 등록된 전체 회원에게 즉시 푸시 알림을 발송합니다.</p>
+                <input type="text" id="broadcast-title" class="inp" placeholder="알림 제목" style="width:100%;margin-bottom:8px;">
+                <textarea id="broadcast-body" class="fb-textarea" placeholder="알림 내용" style="height:72px;"></textarea>
+                <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="sendBroadcast()" id="broadcast-btn">📣 전체 발송</button>
+                <div id="broadcast-result" style="margin-top:8px;font-size:13px;color:#388e3c;"></div>
+            </div>
+            <div class="box">
                 <h3>🔑 관리자 계정</h3>
                 <div class="row-inp" style="margin-top:0;margin-bottom:14px;">
                     <input type="email" id="new-admin-email" class="inp" placeholder="새 관리자 이메일" style="flex:1;">
@@ -367,6 +388,14 @@
                     <textarea id="fb-text" class="fb-textarea" placeholder="직접 코멘트 작성..."></textarea>
                     <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
                 </div>
+                <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
+                    <h3 class="sec-title">💰 포인트 수동 조정</h3>
+                    <div class="row-inp" style="margin-top:8px;">
+                        <input type="number" id="coin-amount" class="inp" placeholder="양수=지급, 음수=차감" style="width:160px;">
+                        <input type="text" id="coin-reason" class="inp" placeholder="사유 (예: 이벤트 보상)" style="flex:1;">
+                        <button class="btn btn-primary" onclick="adjustCoins()">적용</button>
+                    </div>
+                </div>
             </div>
             <div style="display:flex;flex-direction:column;overflow:hidden;">
                 <h3 class="sec-title" style="margin:0 0 10px;">📋 최근 30일 상세 기록</h3>
@@ -393,7 +422,7 @@
     const auth = getAuth(app);
     const fns = getFunctions(app, 'asia-northeast3');
 
-    let trendChart = null, activityChart = null, miningChart = null;
+    let trendChart = null, activityChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc';
     const tabLoaded = {};
@@ -533,6 +562,44 @@
         const arr = []; usersQ.forEach(u => { const d = u.data(); arr.push({ name: d.customDisplayName || d.displayName || u.id.slice(0,8), coins: d.coins||0, hbt: d.hbtBalance||d.totalHbtEarned||0, streak: d.currentStreak||0 }); });
         arr.sort((a,b) => b.coins - a.coins);
         document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
+
+        // 기록 유형별 도넛 차트
+        let dietCnt = 0, exCnt = 0, mindCnt = 0;
+        snap.forEach(d => {
+            const r = d.data();
+            if (r.diet?.imageUrl || r.diet?.analysis) dietCnt++;
+            if (r.exercise?.imageUrl || r.exercise?.analysis) exCnt++;
+            if (r.sleepAndMind?.imageUrl || r.sleepAndMind?.analysis) mindCnt++;
+        });
+        const rCtx = document.getElementById('recordTypeChart').getContext('2d');
+        if (recordTypeChart) recordTypeChart.destroy();
+        recordTypeChart = new Chart(rCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['🥗 식단', '🏃 운동', '🧘 마음'],
+                datasets: [{ data: [dietCnt, exCnt, mindCnt], backgroundColor: ['#4CAF50','#2196F3','#9C27B0'], borderWidth: 2 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // 챌린지 현황
+        let miniOn=0, weeklyOn=0, masterOn=0, miniWait=0, weeklyWait=0, masterWait=0;
+        usersQ.forEach(u => {
+            const ac = u.data().activeChallenges || {};
+            if (ac.mini?.status === 'ongoing') miniOn++;
+            else if (ac.mini?.status === 'claimable') miniWait++;
+            if (ac.weekly?.status === 'ongoing') weeklyOn++;
+            else if (ac.weekly?.status === 'claimable') weeklyWait++;
+            if (ac.master?.status === 'ongoing') masterOn++;
+            else if (ac.master?.status === 'claimable') masterWait++;
+        });
+        document.getElementById('challenge-body').innerHTML = [
+            ['🌱 미니 (3일)', miniOn, miniWait],
+            ['🔥 위클리 (7일)', weeklyOn, weeklyWait],
+            ['👑 마스터 (30일)', masterOn, masterWait]
+        ].map(([label, on, wait]) =>
+            `<tr><td>${label}</td><td>${on}명</td><td style="color:${wait>0?'#FF9800':'#999'};">${wait > 0 ? wait+'명 ⏳' : '-'}</td></tr>`
+        ).join('');
     }
 
     // ── Tab 2: Members ────────────────────────────────────────
@@ -904,6 +971,49 @@
             btn.disabled = false;
             btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
         }
+    };
+
+    window.sendBroadcast = async function() {
+        const title = document.getElementById('broadcast-title').value.trim();
+        const body = document.getElementById('broadcast-body').value.trim();
+        if (!title || !body) { alert('제목과 내용을 모두 입력하세요.'); return; }
+        if (!confirm(`전체 회원에게 푸시 알림을 발송합니다.\n\n제목: ${title}\n내용: ${body}\n\n진행하시겠습니까?`)) return;
+        const btn = document.getElementById('broadcast-btn');
+        const result = document.getElementById('broadcast-result');
+        btn.disabled = true; btn.textContent = '⏳ 발송 중...'; result.textContent = '';
+        try {
+            const fn = httpsCallable(fns, 'sendBroadcastNotification');
+            const res = await fn({ title, body });
+            result.textContent = `✅ ${res.data.sentCount}명에게 발송 완료`;
+            document.getElementById('broadcast-title').value = '';
+            document.getElementById('broadcast-body').value = '';
+        } catch(e) {
+            result.style.color = '#d32f2f';
+            result.textContent = '오류: ' + e.message;
+        } finally {
+            btn.disabled = false; btn.textContent = '📣 전체 발송';
+        }
+    };
+
+    window.adjustCoins = async function() {
+        const uid = document.getElementById('modal-uid').value;
+        const amount = parseInt(document.getElementById('coin-amount').value);
+        const reason = document.getElementById('coin-reason').value.trim();
+        if (!uid) { alert('회원을 선택하세요.'); return; }
+        if (!amount || isNaN(amount)) { alert('포인트 값을 입력하세요.'); return; }
+        if (!reason) { alert('사유를 입력하세요.'); return; }
+        const label = amount > 0 ? `+${amount}P 지급` : `${amount}P 차감`;
+        if (!confirm(`${document.getElementById('modal-name').textContent}에게\n${label} (사유: ${reason})\n\n진행하시겠습니까?`)) return;
+        try {
+            const fn = httpsCallable(fns, 'adjustUserCoins');
+            await fn({ targetUid: uid, amount, reason });
+            alert(`✅ ${label} 완료`);
+            document.getElementById('coin-amount').value = '';
+            document.getElementById('coin-reason').value = '';
+            // 모달 코인 표시 갱신
+            const snap = await getDoc(doc(db, 'users', uid));
+            if (snap.exists()) document.getElementById('p-coins').textContent = (snap.data().coins || 0).toLocaleString();
+        } catch(e) { alert('오류: ' + e.message); }
     };
 
     window.grantWelcomeBonusToAll = async function() {

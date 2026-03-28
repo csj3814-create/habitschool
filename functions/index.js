@@ -2707,3 +2707,70 @@ exports.sendStreakAlert = onSchedule(
         );
     }
 );
+
+/**
+ * 전체 푸시 알림 발송 (관리자 전용)
+ */
+exports.sendBroadcastNotification = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+        const adminDoc = await db.doc(`admins/${uid}`).get();
+        if (!adminDoc.exists) throw new HttpsError("permission-denied", "관리자 권한 필요");
+
+        const { title, body } = request.data;
+        if (!title || !body) throw new HttpsError("invalid-argument", "제목과 내용 필요");
+
+        const usersSnap = await db.collection("users")
+            .where("fcmToken", "!=", "")
+            .select("fcmToken")
+            .get();
+
+        const tokens = [], uids = [];
+        usersSnap.docs.forEach(d => {
+            if (d.data().fcmToken) { tokens.push(d.data().fcmToken); uids.push(d.id); }
+        });
+
+        if (tokens.length === 0) return { sentCount: 0 };
+        await sendMulticast(tokens, uids, title, body, "broadcast");
+        console.log(`sendBroadcastNotification: ${tokens.length}명 발송 완료`);
+        return { sentCount: tokens.length };
+    }
+);
+
+/**
+ * 포인트 수동 지급/차감 (관리자 전용)
+ */
+exports.adjustUserCoins = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+        const adminDoc = await db.doc(`admins/${uid}`).get();
+        if (!adminDoc.exists) throw new HttpsError("permission-denied", "관리자 권한 필요");
+
+        const { targetUid, amount, reason } = request.data;
+        if (!targetUid) throw new HttpsError("invalid-argument", "대상 유저 필요");
+        if (!amount || typeof amount !== "number") throw new HttpsError("invalid-argument", "유효한 포인트 값 필요");
+        if (!reason) throw new HttpsError("invalid-argument", "사유 필요");
+
+        const targetRef = db.doc(`users/${targetUid}`);
+        const targetSnap = await targetRef.get();
+        if (!targetSnap.exists) throw new HttpsError("not-found", "유저를 찾을 수 없음");
+
+        await targetRef.set({ coins: admin.firestore.FieldValue.increment(amount) }, { merge: true });
+
+        // 조정 이력 기록
+        await db.collection("pointAdjustments").add({
+            targetUid,
+            amount,
+            reason,
+            adjustedBy: uid,
+            adjustedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        console.log(`adjustUserCoins: ${targetUid} ${amount > 0 ? '+' : ''}${amount}P (${reason}) by ${uid}`);
+        return { success: true };
+    }
+);
