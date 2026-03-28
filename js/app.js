@@ -1538,6 +1538,12 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("timestamp", "desc"),
             limit(20)
         )).catch(() => null);
+        // 오늘 전체 로그 (리액션 포인트 집계용)
+        const _p_todayAllLogs = getDocs(query(
+            collection(db, 'daily_logs'),
+            where('date', '==', _todayStr),
+            limit(200)
+        )).catch(() => null);
 
         const userSnap = await _p_user;
 
@@ -1594,15 +1600,30 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // user doc 로드 완료 → 기본 정보(포인트, HBT 플레이스홀더) 준비됨 → 스켈레톤 즉시 해제
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
 
-            // ========== 자산 변동 표시 (오늘 획득분 - daily_logs에서 계산) ==========
+            // ========== 자산 변동 표시 (오늘 획득분) ==========
             const pointsDeltaEl = document.getElementById('asset-points-delta');
             if (pointsDeltaEl) {
                 let todayPoints = 0;
                 try {
+                    // 1) 기록 활동 포인트 (식단/운동/마음)
                     const todayLogSnap = await _p_todayLog;
                     if (todayLogSnap && todayLogSnap.exists()) {
                         const ap = todayLogSnap.data().awardedPoints || {};
-                        todayPoints = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
+                        todayPoints += (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
+                        // 2) 내 오늘 게시물에 달린 리액션 수신 (+1P each)
+                        const rx = todayLogSnap.data().reactions || {};
+                        todayPoints += (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0);
+                    }
+                    // 3) 오늘 다른 사람 게시물에 내가 준 리액션 (+1P each)
+                    const todayAllSnap = await _p_todayAllLogs;
+                    if (todayAllSnap) {
+                        todayAllSnap.forEach(d => {
+                            if (d.data().userId === user.uid) return;
+                            const rx = d.data().reactions || {};
+                            if ((rx.heart || []).includes(user.uid)) todayPoints++;
+                            if ((rx.fire || []).includes(user.uid)) todayPoints++;
+                            if ((rx.clap || []).includes(user.uid)) todayPoints++;
+                        });
                     }
                 } catch (_) {}
                 if (todayPoints > 0) {
