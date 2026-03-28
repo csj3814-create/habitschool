@@ -300,6 +300,12 @@
                 </table>
             </div>
             <div class="box">
+                <h3>🎁 가입 축하금 관리</h3>
+                <p style="font-size:13px;color:#666;margin:0 0 12px;">기존 회원 중 가입 축하금(200P)을 받지 못한 회원에게 소급 지급합니다.</p>
+                <button class="btn btn-primary" onclick="grantWelcomeBonusToAll()" id="grant-welcome-btn">🎁 기존 회원 전체 가입 축하금 지급</button>
+                <div id="grant-welcome-result" style="margin-top:10px;font-size:13px;color:#388e3c;"></div>
+            </div>
+            <div class="box">
                 <h3>🔑 관리자 계정</h3>
                 <div class="row-inp" style="margin-top:0;margin-bottom:14px;">
                     <input type="email" id="new-admin-email" class="inp" placeholder="새 관리자 이메일" style="flex:1;">
@@ -861,6 +867,27 @@
         } finally {
             btn.disabled = false;
             btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
+        }
+    };
+
+    window.grantWelcomeBonusToAll = async function() {
+        const btn = document.getElementById('grant-welcome-btn');
+        const result = document.getElementById('grant-welcome-result');
+        if (!confirm('가입 축하금(200P)을 받지 못한 모든 기존 회원에게 소급 지급합니다.\n진행하시겠습니까?')) return;
+        btn.disabled = true;
+        btn.textContent = '⏳ 지급 중...';
+        result.textContent = '';
+        try {
+            const fn = httpsCallable(fns, 'grantWelcomeBonusToAll');
+            const res = await fn({});
+            const { grantedCount, totalTargets, message } = res.data;
+            result.textContent = message || `✅ ${grantedCount}명 / ${totalTargets}명 지급 완료`;
+        } catch(e) {
+            result.style.color = '#d32f2f';
+            result.textContent = '오류: ' + e.message;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🎁 기존 회원 전체 가입 축하금 지급';
         }
     };
 

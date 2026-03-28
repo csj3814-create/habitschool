@@ -6541,6 +6541,16 @@ async function completeOnboarding() {
         console.warn('온보딩 저장 스킵:', e.message);
     }
 
+    // 가입 축하 보너스 +200P
+    try {
+        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'awardWelcomeBonus');
+        const res = await fn({});
+        if (res.data?.success) showToast('🎁 가입 축하 포인트 200P가 지급되었습니다!');
+    } catch (e) {
+        console.warn('환영 보너스 지급 스킵:', e.message);
+    }
+
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 

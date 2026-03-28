@@ -976,6 +976,70 @@ exports.processReferralSignup = onCall(
     }
 );
 
+/**
+ * 가입 축하 보너스 +200P (온보딩 완료 시 1회만 지급)
+ */
+exports.awardWelcomeBonus = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+
+        const userRef = db.doc(`users/${uid}`);
+        const userSnap = await userRef.get();
+
+        // 이미 지급된 경우 중복 방지
+        if (userSnap.exists && userSnap.data().welcomeBonusGiven) {
+            return { success: false, reason: "already_given" };
+        }
+
+        await userRef.set({
+            welcomeBonusGiven: true,
+            coins: admin.firestore.FieldValue.increment(200)
+        }, { merge: true });
+
+        console.log(`welcome bonus +200P: ${uid}`);
+        return { success: true, bonus: 200 };
+    }
+);
+
+/**
+ * 기존 회원 전체 가입 축하금 소급 지급 (관리자 전용)
+ */
+exports.grantWelcomeBonusToAll = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 300 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+
+        const adminDoc = await db.doc(`admins/${uid}`).get();
+        if (!adminDoc.exists) throw new HttpsError("permission-denied", "관리자 권한 필요");
+
+        // welcomeBonusGiven 없는 유저 전체 조회
+        const usersSnap = await db.collection("users")
+            .where("welcomeBonusGiven", "==", null)
+            .get()
+            .catch(() => null);
+
+        // where != null은 존재하지 않는 필드를 못 잡으므로 전체 조회 후 필터
+        const allSnap = await db.collection("users").get();
+        const targets = allSnap.docs.filter(d => !d.data().welcomeBonusGiven);
+
+        if (targets.length === 0) return { grantedCount: 0, message: "모든 회원이 이미 지급받았습니다" };
+
+        const results = await Promise.allSettled(targets.map(d =>
+            db.doc(`users/${d.id}`).set({
+                welcomeBonusGiven: true,
+                coins: admin.firestore.FieldValue.increment(200)
+            }, { merge: true })
+        ));
+
+        const grantedCount = results.filter(r => r.status === "fulfilled").length;
+        console.log(`grantWelcomeBonusToAll: ${grantedCount}/${targets.length} 지급 완료`);
+        return { grantedCount, totalTargets: targets.length };
+    }
+);
+
 // ========================================
 // 8. AI 혈액검사 결과지 분석 (Gemini Vision API)
 // ========================================
