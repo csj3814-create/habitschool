@@ -290,6 +290,7 @@ export function setupAuthListener(callbacks) {
                 if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
                 if (window.loadInbodyHistory) window.loadInbodyHistory();
                 if (window.loadBloodTestHistory) window.loadBloodTestHistory();
+                registerFCMToken(user).catch(() => {});
             }, 5000);
 
             // 10초 후 블록체인 (가장 낮은 우선순위)
@@ -456,3 +457,42 @@ window.deleteAccountAndData = async function () {
         }
     }
 };
+
+// FCM 토큰 등록 — 알림 권한 요청 후 Firestore에 저장
+async function registerFCMToken(user) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+    if (Notification.permission === 'denied') return;
+
+    const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    try {
+        const { getMessaging, getToken, onMessage } = await import(
+            'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js'
+        );
+        const messaging = getMessaging();
+        const swReg = await navigator.serviceWorker.ready;
+        const token = await getToken(messaging, {
+            vapidKey: 'BD5hsiadZ0sOiiM-63QEEXM7u_z0YCXfSTWNljeydEeH8-9cXNKgXAP6pcMW9zxsICMaxQ-BzxSe619EGz_Hg4c',
+            serviceWorkerRegistration: swReg
+        });
+        if (!token) return;
+
+        // 토큰이 바뀐 경우에만 Firestore 업데이트
+        const userRef = doc(db, 'users', user.uid);
+        const snap = await getDoc(userRef);
+        if (snap.data()?.fcmToken !== token) {
+            await setDoc(userRef, { fcmToken: token }, { merge: true });
+        }
+
+        // 포그라운드 알림 → 토스트로 표시
+        onMessage(messaging, (payload) => {
+            const { title, body } = payload.data || {};
+            if (title || body) showToast(`${title || '해빛스쿨'} — ${body || ''}`);
+        });
+    } catch (e) {
+        console.warn('[FCM] 토큰 등록 실패:', e.message);
+    }
+}

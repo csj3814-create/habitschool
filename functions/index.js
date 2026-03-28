@@ -2591,3 +2591,119 @@ exports.sendReEngagementEmails = onCall(
         return { sentCount, totalTargets: targets.length, errors };
     }
 );
+
+// ========================================
+// 푸시 알림 — 일일 기록 알림 + 연속 습관 달성 위기 알림
+// ========================================
+
+/**
+ * KST 기준 오늘 날짜 문자열 (YYYY-MM-DD)
+ */
+function getTodayKST() {
+    const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    return kstNow.toISOString().slice(0, 10);
+}
+
+/**
+ * 오늘 기록한 userId Set 조회
+ */
+async function getTodayLoggedUserIds(todayKST) {
+    const snap = await db.collection("daily_logs")
+        .where("date", "==", todayKST)
+        .select("userId")
+        .get();
+    return new Set(snap.docs.map(d => d.data().userId).filter(Boolean));
+}
+
+/**
+ * FCM 일괄 발송 (500개 청크 분할)
+ * 유효하지 않은 토큰은 Firestore에서 자동 삭제
+ */
+async function sendMulticast(tokens, uids, title, body, tag) {
+    if (tokens.length === 0) return;
+    const CHUNK = 500;
+    for (let i = 0; i < tokens.length; i += CHUNK) {
+        const chunkTokens = tokens.slice(i, i + CHUNK);
+        const chunkUids = uids.slice(i, i + CHUNK);
+        const res = await admin.messaging().sendEachForMulticast({
+            tokens: chunkTokens,
+            data: { title, body, tag, url: "/" }
+        });
+        // 유효하지 않은 토큰 정리
+        const deletes = [];
+        res.responses.forEach((r, idx) => {
+            if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
+                deletes.push(
+                    db.doc(`users/${chunkUids[idx]}`).set({ fcmToken: admin.firestore.FieldValue.delete() }, { merge: true })
+                );
+            }
+        });
+        if (deletes.length) await Promise.allSettled(deletes);
+        console.log(`FCM chunk ${i / CHUNK + 1}: ${res.successCount} 성공, ${res.failureCount} 실패`);
+    }
+}
+
+/**
+ * 매일 저녁 8시 KST (UTC 11:00) — 오늘 기록 없는 유저에게 알림
+ */
+exports.sendDailyReminder = onSchedule(
+    { schedule: "0 11 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => {
+        const todayKST = getTodayKST();
+        const loggedIds = await getTodayLoggedUserIds(todayKST);
+
+        const usersSnap = await db.collection("users")
+            .where("fcmToken", "!=", "")
+            .select("fcmToken")
+            .get();
+
+        const tokens = [], uids = [];
+        usersSnap.docs.forEach(d => {
+            if (!loggedIds.has(d.id) && d.data().fcmToken) {
+                tokens.push(d.data().fcmToken);
+                uids.push(d.id);
+            }
+        });
+
+        console.log(`sendDailyReminder: 대상 ${tokens.length}명 / 오늘 기록 ${loggedIds.size}명`);
+        await sendMulticast(tokens, uids,
+            "🌞 오늘 건강 기록하셨나요?",
+            "식단·운동·수면 기록으로 건강 습관을 이어가세요!",
+            "daily-reminder"
+        );
+    }
+);
+
+/**
+ * 매일 밤 10시 KST (UTC 13:00) — 연속 달성 있는데 오늘 기록 없는 유저에게 위기 알림
+ */
+exports.sendStreakAlert = onSchedule(
+    { schedule: "0 13 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => {
+        const todayKST = getTodayKST();
+        const loggedIds = await getTodayLoggedUserIds(todayKST);
+
+        const usersSnap = await db.collection("users")
+            .where("fcmToken", "!=", "")
+            .where("currentStreak", ">", 0)
+            .select("fcmToken", "currentStreak")
+            .get();
+
+        const sendJobs = [];
+        usersSnap.docs.forEach(d => {
+            if (!loggedIds.has(d.id) && d.data().fcmToken) {
+                const streak = d.data().currentStreak || 0;
+                sendJobs.push({ token: d.data().fcmToken, uid: d.id, streak });
+            }
+        });
+
+        console.log(`sendStreakAlert: 대상 ${sendJobs.length}명`);
+        await sendMulticast(
+            sendJobs.map(j => j.token),
+            sendJobs.map(j => j.uid),
+            "🔥 연속 습관 달성이 끊길 위기!",
+            "지금 기록하면 연속 달성을 지킬 수 있어요",
+            "streak-alert"
+        );
+    }
+);

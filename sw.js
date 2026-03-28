@@ -3,7 +3,35 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-const CACHE_NAME = 'habitschool-v95';
+// Firebase Messaging (백그라운드 푸시 수신)
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+    apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
+    authDomain: "habitschool-8497b.firebaseapp.com",
+    projectId: "habitschool-8497b",
+    storageBucket: "habitschool-8497b.firebasestorage.app",
+    messagingSenderId: "628617480821",
+    appId: "1:628617480821:web:2756952ab78e8edf97463c"
+});
+
+const messaging = firebase.messaging();
+
+// 백그라운드 메시지 수신 (앱이 닫혀 있거나 탭이 비활성일 때)
+messaging.onBackgroundMessage((payload) => {
+    const d = payload.data || {};
+    self.registration.showNotification(d.title || '해빛스쿨', {
+        body: d.body || '',
+        icon: d.icon || './icons/icon-192.svg',
+        badge: './icons/icon-192.svg',
+        tag: d.tag || 'habitschool',
+        data: { url: d.url || '/' },
+        vibrate: [100, 50, 100]
+    });
+});
+
+const CACHE_NAME = 'habitschool-v96';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -74,33 +102,6 @@ self.addEventListener('fetch', (event) => {
             })
             .catch(() => caches.match(request).then(r => r || new Response('', { status: 503 })))
     );
-});
-
-// 푸시 알림 수신
-self.addEventListener('push', (event) => {
-    if (!event.data) return;
-
-    try {
-        const data = event.data.json();
-        const options = {
-            body: data.body || '새로운 알림이 있습니다.',
-            icon: data.icon || './icons/icon-192.svg',
-            badge: './icons/icon-192.svg',
-            tag: data.tag || 'habitschool-notification',
-            data: { url: data.url || '/' },
-            vibrate: [100, 50, 100],
-            actions: [
-                { action: 'open', title: '열기' },
-                { action: 'close', title: '닫기' }
-            ]
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title || '해빛스쿨', options)
-        );
-    } catch (e) {
-        console.error('[SW] 푸시 처리 오류:', e);
-    }
 });
 
 // 푸시 알림 클릭 처리
