@@ -6960,7 +6960,7 @@ function loadStepData(logData) {
 // ============================================================
 const CHAT_QR_URL = 'https://open.kakao.com/o/gv23urgi';
 
-window.openQRModal = async function() {
+window.openQRModal = function() {
     const modal = document.getElementById('qr-invite-modal');
     if (!modal) return;
     modal.style.display = 'flex';
@@ -6977,18 +6977,21 @@ window.openQRModal = async function() {
         document.getElementById('qr-invite-label').textContent = `초대 코드: ${code}`;
     }
 
-    if (!window.QRCode) { return; }
+    if (!window.QRCode) {
+        console.error('QRCode 라이브러리 미로드');
+        return;
+    }
 
-    const opts = { errorCorrectionLevel: 'H', width: 400, margin: 2,
-                   color: { dark: '#1a1a1a', light: '#ffffff' } };
-    try {
-        if (inviteUrl) {
-            const inviteDataUrl = await window.QRCode.toDataURL(inviteUrl, opts);
-            document.getElementById('qr-invite-img').src = inviteDataUrl;
-        }
-        const chatDataUrl = await window.QRCode.toDataURL(CHAT_QR_URL, opts);
-        document.getElementById('qr-chat-img').src = chatDataUrl;
-    } catch(e) { console.error('QR 생성 오류:', e); }
+    const qrOpts = { width: 200, height: 200, colorDark: '#1a1a1a', colorLight: '#ffffff',
+                     correctLevel: window.QRCode.CorrectLevel.H };
+
+    const inviteContainer = document.getElementById('qr-invite-container');
+    inviteContainer.innerHTML = '';
+    if (inviteUrl) new window.QRCode(inviteContainer, { ...qrOpts, text: inviteUrl });
+
+    const chatContainer = document.getElementById('qr-chat-container');
+    chatContainer.innerHTML = '';
+    new window.QRCode(chatContainer, { ...qrOpts, text: CHAT_QR_URL });
 };
 
 window.closeQRModal = function() {

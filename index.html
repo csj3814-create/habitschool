@@ -1154,8 +1154,8 @@
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
     <script src="js/pwa-install.js"></script>
 
-    <!-- QR 코드 라이브러리 -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
     <!-- QR 초대 모달 -->
     <div id="qr-invite-modal" onclick="if(event.target===this)closeQRModal()"
@@ -1168,7 +1168,7 @@
             <!-- 내 초대 QR -->
             <div style="margin-bottom:20px;">
                 <div style="font-size:12px; font-weight:700; color:#E65100; margin-bottom:10px; letter-spacing:0.3px;">내 초대 링크</div>
-                <img id="qr-invite-img" style="width:200px; height:200px; border-radius:12px; display:block; margin:0 auto; background:#f5f5f5;" alt="초대 QR">
+                <div id="qr-invite-container" style="width:200px; height:200px; border-radius:12px; overflow:hidden; display:inline-block; background:#f5f5f5;"></div>
                 <div id="qr-invite-label" style="font-size:11px; color:#999; margin-top:7px; letter-spacing:1px;"></div>
             </div>
 
@@ -1177,7 +1177,7 @@
             <!-- 단톡방 QR -->
             <div style="margin-bottom:20px;">
                 <div style="font-size:12px; font-weight:700; color:#3B1F8C; margin-bottom:10px;">💬 해빛스쿨 단톡방</div>
-                <img id="qr-chat-img" style="width:200px; height:200px; border-radius:12px; display:block; margin:0 auto; background:#f5f5f5;" alt="단톡방 QR">
+                <div id="qr-chat-container" style="width:200px; height:200px; border-radius:12px; overflow:hidden; display:inline-block; background:#f5f5f5;"></div>
                 <div style="font-size:11px; color:#999; margin-top:7px;">스캔하면 단톡방 바로 입장</div>
             </div>
 
