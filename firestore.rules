@@ -139,10 +139,22 @@ service cloud.firestore {
     
     // ===== Blockchain Transactions Collection =====
     match /blockchain_transactions/{txId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() 
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn()
                     && request.resource.data.userId == request.auth.uid;
       allow update, delete: if false;
+    }
+
+    // ===== Mining Rate History Collection =====
+    match /mining_rate_history/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // ===== Monthly Rewards Collection =====
+    match /monthly_rewards/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ===== Reports Collection (UGC 신고) =====

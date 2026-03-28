@@ -241,6 +241,13 @@
                 </table>
             </div>
         </div>
+        <div class="box" style="margin-top:16px;">
+            <h3>📋 포인트 지급 내역 (최근 30건)</h3>
+            <table style="font-size:12px;">
+                <thead><tr><th>날짜</th><th>회원</th><th style="color:#4CAF50;">식단</th><th style="color:#2196F3;">운동</th><th style="color:#9C27B0;">마음</th><th>합계</th></tr></thead>
+                <tbody id="points-log-body"><tr><td colspan="6">로딩 중...</td></tr></tbody>
+            </table>
+        </div>
         <div class="two-col">
             <div class="box">
                 <h3>⚙️ 마이닝 레이트</h3>
@@ -252,7 +259,8 @@
                 </div>
                 <div style="margin-top:14px;">
                     <div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">조정 이력</div>
-                    <table style="font-size:12px;">
+                    <table style="font-size:12px;table-layout:fixed;width:100%;">
+                        <colgroup><col style="width:30%"><col style="width:20%"><col style="width:50%"></colgroup>
                         <thead><tr><th>날짜</th><th>계수</th><th>사유</th></tr></thead>
                         <tbody id="rate-history-body"><tr><td colspan="3">로딩 중...</td></tr></tbody>
                     </table>
@@ -625,7 +633,7 @@
                 const amt = t.details?.hbtAmount ?? t.amount ?? '-';
                 return `<tr><td>${date}</td><td>${escapeHtml(t.type||'-')}</td><td>${typeof amt==='number'?amt.toLocaleString():amt}</td><td style="font-family:monospace;font-size:11px;">${t.txHash?t.txHash.slice(0,8)+'...':'-'}</td></tr>`;
             }).join('');
-        } catch(_) { document.getElementById('tx-body').innerHTML='<tr><td colspan="4" style="color:#999;">조회 불가</td></tr>'; }
+        } catch(e) { console.error('HBT tx 조회 오류:', e); document.getElementById('tx-body').innerHTML='<tr><td colspan="4" style="color:#999;">없음</td></tr>'; }
 
         // Mining rate history
         try {
@@ -644,15 +652,43 @@
                 if (miningChart) miningChart.destroy();
                 miningChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'조정 계수', data:vals, borderColor:'#9C27B0', backgroundColor:'rgba(156,39,176,0.1)', borderWidth:2, tension:0.3, pointRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:false } } } });
             }
-        } catch(_) { document.getElementById('rate-history-body').innerHTML='<tr><td colspan="3" style="color:#999;">조회 불가</td></tr>'; }
+        } catch(e) { console.error('마이닝 레이트 조회 오류:', e); document.getElementById('rate-history-body').innerHTML='<tr><td colspan="3" style="color:#999;">이력 없음</td></tr>'; }
 
         // MVP history
         try {
             const mvpSnap = await getDocs(query(collection(db,'monthly_rewards'), orderBy('month','desc'), limit(6)));
             document.getElementById('mvp-body').innerHTML = mvpSnap.empty ? '<tr><td colspan="3" style="color:#999;">배포 이력 없음</td></tr>' : mvpSnap.docs.map(d => {
-                const m=d.data(); return `<tr><td>${escapeHtml(m.month||d.id)}</td><td style="font-size:11px;">${escapeHtml((m.winner?.userId||'-').slice(0,12))}</td><td style="font-size:11px;">${escapeHtml(m.winner?.email||'-')}</td></tr>`;
+                const m=d.data();
+                // winners 배열 또는 winner 단수 모두 처리
+                const w = m.winners?.[0] || m.winner || {};
+                const name = w.name || w.userId?.slice(0,10) || '-';
+                return `<tr><td>${escapeHtml(m.month||d.id)}</td><td style="font-size:11px;">${escapeHtml(name)}</td><td style="font-size:11px;">${escapeHtml(w.email||'-')}</td></tr>`;
             }).join('');
-        } catch(_) { document.getElementById('mvp-body').innerHTML='<tr><td colspan="3" style="color:#999;">조회 불가</td></tr>'; }
+        } catch(e) { console.error('MVP 조회 오류:', e); document.getElementById('mvp-body').innerHTML='<tr><td colspan="3" style="color:#999;">배포 이력 없음</td></tr>'; }
+
+        // 포인트 지급 내역 (최근 30건) — date 내림차순 후 클라이언트 필터
+        try {
+            const pointsSnap = await getDocs(query(
+                collection(db, 'daily_logs'),
+                orderBy('date','desc'),
+                limit(100)
+            ));
+            const usersMap = {};
+            const { usersQ: uQ } = await getData();
+            uQ.forEach(u => { const d=u.data(); usersMap[u.id] = d.customDisplayName||d.displayName||u.id.slice(0,8); });
+            const pointsDocs = pointsSnap.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(r => { const ap=r.awardedPoints||{}; return (ap.dietPoints||0)+(ap.exercisePoints||0)+(ap.mindPoints||0) > 0; })
+                .slice(0, 30);
+            document.getElementById('points-log-body').innerHTML = pointsDocs.length === 0
+                ? '<tr><td colspan="6" style="color:#999;">내역 없음</td></tr>'
+                : pointsDocs.map(r => {
+                    const ap=r.awardedPoints||{};
+                    const diet=ap.dietPoints||0, ex=ap.exercisePoints||0, mind=ap.mindPoints||0, total=diet+ex+mind;
+                    const name = usersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
+                    return `<tr><td>${escapeHtml(r.date||'-')}</td><td>${escapeHtml(name)}</td><td style="color:#4CAF50;text-align:center;">${diet?'+'+diet+'P':'-'}</td><td style="color:#2196F3;text-align:center;">${ex?'+'+ex+'P':'-'}</td><td style="color:#9C27B0;text-align:center;">${mind?'+'+mind+'P':'-'}</td><td style="font-weight:600;text-align:center;">+${total}P</td></tr>`;
+                }).join('');
+        } catch(e) { console.error('포인트 내역 조회 오류:', e); document.getElementById('points-log-body').innerHTML='<tr><td colspan="6" style="color:#999;">없음</td></tr>'; }
     }
 
     window.adjustRate = async function() {
