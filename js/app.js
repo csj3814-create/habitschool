@@ -2982,6 +2982,7 @@ function renderGroupChallengeFromData(s) {
             `).join('')}
         </div>
         <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
     `;
 }
 
@@ -3040,6 +3041,7 @@ async function renderGroupChallenge() {
             `).join('')}
         </div>
         <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
     `;
 
     // 지난달 MVP 보상 자동 트리거 (매월 1~3일에만 시도)
@@ -5256,19 +5258,33 @@ function getEmptyStateHtml(filter) {
 }
 
 // 주간 베스트 갤러리 (성실 기록 + 응원 + 댓글 종합 점수 기준, 유저 단위)
-function buildWeeklyBestSection() {
+async function buildWeeklyBestSection() {
     const container = document.getElementById('weekly-best-container');
     if (!container) return;
 
-    // 이번 주 기준 (월요일~일요일)
+    // 이번 주 기준 (월요일~일요일) — KST 기준 날짜 계산
     const now = new Date();
-    const dayOfWeek = now.getDay();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kstNow = new Date(now.getTime() + kstOffset);
+    const dayOfWeek = kstNow.getUTCDay();
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(now);
-    monday.setDate(now.getDate() + mondayOffset);
-    const mondayStr = monday.toISOString().slice(0, 10);
+    const kstMonday = new Date(kstNow);
+    kstMonday.setUTCDate(kstNow.getUTCDate() + mondayOffset);
+    const mondayStr = kstMonday.toISOString().slice(0, 10);
 
-    const weekLogs = cachedGalleryLogs.filter(item => item.data.date >= mondayStr);
+    // cachedGalleryLogs는 30개로 제한되므로, 이번 주 전체 데이터를 Firestore에서 직접 조회
+    let weekLogs = [];
+    try {
+        const weekSnap = await getDocs(query(
+            collection(db, 'daily_logs'),
+            where('date', '>=', mondayStr),
+            orderBy('date', 'desc')
+        ));
+        weekSnap.forEach(d => weekLogs.push({ id: d.id, data: d.data() }));
+    } catch (e) {
+        // 쿼리 실패 시 캐시 폴백
+        weekLogs = cachedGalleryLogs.filter(item => item.data.date >= mondayStr);
+    }
     if (weekLogs.length === 0) {
         container.style.display = 'none';
         return;
@@ -5734,7 +5750,7 @@ async function _loadGalleryDataInner() {
 
     // 갤러리 반응 요약 배너
     renderActivitySummary(myId);
-    buildWeeklyBestSection();
+    buildWeeklyBestSection().catch(() => {});
     setupInfiniteScroll();
     } catch (e) {
         console.error('갤러리 렌더링 중 오류:', e);

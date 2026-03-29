@@ -838,10 +838,20 @@ export async function claimChallengeReward(tier) {
         showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}`);
 
         if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+        // 챌린지 카드 UI 갱신 (카드가 그대로 남아 재시도 방지)
+        if (window.loadDashboard) setTimeout(() => window.loadDashboard(), 500);
         return true;
     } catch (error) {
         console.error('❌ 보상 수령 오류:', error);
-        showToast('❌ 보상 수령에 실패했습니다. 다시 시도해주세요.');
+        const code = error?.code;
+        const msg = code === 'failed-precondition'
+            ? '❌ 이미 처리된 챌린지이거나 보상 조건이 맞지 않습니다.'
+            : code === 'internal'
+            ? '❌ 온체인 정산에 실패했습니다. 잠시 후 다시 시도해주세요.'
+            : code === 'unauthenticated'
+            ? '❌ 로그인이 필요합니다.'
+            : `❌ 보상 수령에 실패했습니다. (${code || error?.message || '알 수 없는 오류'})`;
+        showToast(msg);
         return false;
     }
 }
