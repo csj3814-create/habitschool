@@ -1438,8 +1438,17 @@ exports.claimChallengeReward = onCall(
                     }
                 }
             } catch (onChainErr) {
-                console.error("온체인 정산 오류:", onChainErr.message);
-                throw new HttpsError("internal", "온체인 챌린지 정산에 실패했습니다.");
+                // NoStakeFound: 이미 온체인 정산 완료 (재시도 등) → Firestore 정리만 진행
+                const isAlreadySettled =
+                    onChainErr?.errorName === 'NoStakeFound' ||
+                    (onChainErr?.message || '').includes('NoStakeFound');
+                if (isAlreadySettled) {
+                    console.warn("온체인 이미 정산됨, Firestore 정리만 진행합니다.");
+                    rewardHbt = 0; // HBT는 이미 반환됨
+                } else {
+                    console.error("온체인 정산 오류:", onChainErr.message);
+                    throw new HttpsError("internal", "온체인 챌린지 정산에 실패했습니다.");
+                }
             }
         }
 
