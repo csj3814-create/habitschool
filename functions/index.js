@@ -1438,12 +1438,15 @@ exports.claimChallengeReward = onCall(
                     }
                 }
             } catch (onChainErr) {
-                // NoStakeFound: 이미 온체인 정산 완료 (재시도 등) → Firestore 정리만 진행
+                // NoStakeFound(0x59be8f02): 이미 온체인 정산 완료 → Firestore 정리만 진행
+                // ethers v6가 커스텀 에러를 "unknown custom error"로 표시하므로 data 셀렉터로 판별
+                const errData = onChainErr?.data || onChainErr?.error?.data || '';
                 const isAlreadySettled =
                     onChainErr?.errorName === 'NoStakeFound' ||
-                    (onChainErr?.message || '').includes('NoStakeFound');
+                    (onChainErr?.message || '').includes('NoStakeFound') ||
+                    String(errData).startsWith('0x59be8f02'); // NoStakeFound() selector
                 if (isAlreadySettled) {
-                    console.warn("온체인 이미 정산됨, Firestore 정리만 진행합니다.");
+                    console.warn("온체인 이미 정산됨(NoStakeFound), Firestore 정리만 진행합니다.");
                     rewardHbt = 0; // HBT는 이미 반환됨
                 } else {
                     console.error("온체인 정산 오류:", onChainErr.message);
