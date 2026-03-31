@@ -36,7 +36,7 @@ const CHALLENGE_ID_MAP = {
 };
 
 import { auth, db, app } from './firebase-config.js';
-import { doc, updateDoc, setDoc, getDoc, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, updateDoc, setDoc, getDoc, getDocFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
 import { checkRateLimit } from './security.js';
@@ -732,12 +732,14 @@ export async function settleExpiredChallenges() {
         if (!currentUser) return;
 
         const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+        // 캐시 우선 읽기 금지: 캐시의 completedDays가 실제보다 적을 경우
+        // successRate < 0.8로 오판하여 실패 정산이 트리거될 수 있음
+        const userSnap = await getDocFromServer(userRef);
         const userData = userSnap.data();
         const today = getKstDateString();
 
         const activeChallenges = userData.activeChallenges || {};
-        const tiers = Object.keys(activeChallenges).filter(t => 
+        const tiers = Object.keys(activeChallenges).filter(t =>
             activeChallenges[t]?.status === 'ongoing' || activeChallenges[t]?.status === 'expired'
         );
         if (tiers.length === 0) return;
