@@ -251,13 +251,17 @@ window.updateStakeSlider = function(tier) {
     const amount = parseInt(slider.value) || 0;
 
     // 보유 HBT 확인 — 초과 시 보유량으로 제한
+    // balance = 0은 "잔액 미로드" 상태일 수 있으므로 0일 때는 capping 건너뜀
     const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
     const balance = parseFloat(hbtText) || 0;
-    const capped = Math.min(amount, Math.floor(balance));
-    if (capped < amount) {
-        slider.value = capped;
+    let rounded = amount;
+    if (balance > 0) {
+        const capped = Math.min(amount, Math.floor(balance));
+        if (capped < amount) slider.value = capped;
+        rounded = Math.max(capped, parseInt(slider.min) || 0);
+    } else {
+        rounded = Math.max(amount, parseInt(slider.min) || 0);
     }
-    const rounded = Math.max(capped, parseInt(slider.min) || 0);
 
     valueEl.textContent = rounded + ' HBT';
     if (hiddenInput) hiddenInput.value = rounded;
@@ -308,6 +312,7 @@ window.addStakePct = function(tier, pct) {
 
 // 챌린지 슬라이더 최대값을 사용자 HBT 잔액에 맞게 업데이트
 window.updateChallengeSliderBounds = function(balance) {
+    if (!balance || balance <= 0) return; // 잔액 미로드 시 슬라이더 범위 변경 금지
     const floor = Math.floor(balance);
 
     // weekly: min 50, max 5000 → 사용자 잔액으로 제한
