@@ -2308,10 +2308,14 @@ async function computeCommunityStatsLogic() {
 
     let newMemberCount = 0;
     try {
-        const prevDate = new Date(kst);
-        prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
-        const pStart = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-01`;
-        const pEnd = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, "0")}-31`;
+        // 이번 달 1일에서 하루 빼면 안전하게 전달 말일을 구할 수 있음
+        // setUTCMonth(month - 1)은 말일이 29~31일이면 오버플로 발생 (예: 3/31 → 2월로 설정 시 3/3으로 변환됨)
+        const firstOfThisMonth = new Date(Date.UTC(year, kst.getUTCMonth(), 1));
+        const lastMonthDate = new Date(firstOfThisMonth.getTime() - 24 * 60 * 60 * 1000);
+        const pYear = lastMonthDate.getUTCFullYear();
+        const pMonth = String(lastMonthDate.getUTCMonth() + 1).padStart(2, "0");
+        const pStart = `${pYear}-${pMonth}-01`;
+        const pEnd = `${pYear}-${pMonth}-31`;
         const prevSnap = await db.collection("daily_logs").where("date", ">=", pStart).where("date", "<=", pEnd).get();
         const prevUsers = new Set();
         prevSnap.forEach(d => { if (d.data().userId) prevUsers.add(d.data().userId); });
