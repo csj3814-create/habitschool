@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
     });
 });
 
-const CACHE_NAME = 'habitschool-v96';
+const CACHE_NAME = 'habitschool-v97';
 const STATIC_ASSETS = [
     './',
     './styles.css',
