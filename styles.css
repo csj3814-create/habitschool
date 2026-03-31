@@ -4153,17 +4153,23 @@ textarea {
     gap: 8px;
     padding: 12px;
     border-radius: 10px;
-    cursor: pointer;
+    cursor: default;
     transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
     position: relative;
 }
 
-.challenge-tier-card:active {
-    transform: scale(0.97);
+.tier-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
 }
-/* 슬라이더 조작 중에는 카드 shrink 없음 */
-.challenge-tier-card:has(.tier-stake-slider-wrap *:active):active {
-    transform: none;
+
+.tier-card-header:active,
+.tier-mini:active {
+    transform: scale(0.97);
 }
 
 .tier-mini {
