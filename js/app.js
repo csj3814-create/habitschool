@@ -2075,6 +2075,7 @@ function openTab(tabName, pushState = true) {
                         const val = parseFloat(data.balanceFormatted);
                         const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, { maximumFractionDigits: 1 });
                         el.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
+                        if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
                     }).catch(() => {});
                 }
             });

@@ -94,8 +94,14 @@ window.toggleChallengeSelection = function() {
     wrap.style.display = isHidden ? '' : 'none';
     if (arrow) arrow.classList.toggle('open', isHidden);
     if (text) text.textContent = isHidden ? '📋 접기' : '📋 새 챌린지 시작하기';
-    // 패널 열 때 누적값 리셋 — 이전 스테이킹 시도의 잔여 % 제거
-    if (isHidden) window._stakePctAccum = { weekly: 0, master: 0 };
+    if (isHidden) {
+        // 패널 열 때 누적값 리셋 — 이전 스테이킹 시도의 잔여 % 제거
+        window._stakePctAccum = { weekly: 0, master: 0 };
+        // 슬라이더 최대치를 현재 보유 HBT로 즉시 업데이트
+        const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
+        const bal = parseFloat(hbtText.replace(/[^0-9.]/g, '')) || 0;
+        if (bal > 0 && window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(bal);
+    }
 };
 
 // ========== 지갑 탭 유틸리티 함수 ==========
