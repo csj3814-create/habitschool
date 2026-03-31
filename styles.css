@@ -1426,6 +1426,7 @@ body {
     background: #ddd;
     border-radius: 2px;
     outline: none;
+    touch-action: none; /* 모바일 스크롤 이벤트 가로채기 방지 */
 }
 
 .wallet-stake-slider::-webkit-slider-thumb {
