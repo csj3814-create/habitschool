@@ -674,11 +674,14 @@
             const emailLogs = {};
             emailLogsSnap.forEach(d => { emailLogs[d.id] = d.data(); });
 
-            const meta = {}; usersQ.forEach(u => { meta[u.id] = u.data(); });
             const latestLog = {}; snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
 
-            memberRows = Object.entries(latestLog).map(([uid, r]) => {
-                const m = meta[uid] || {};
+            // usersQ(전체 회원) 기준으로 순회 — latestLog에 없는 회원도 포함
+            memberRows = [];
+            usersQ.forEach(u => {
+                const uid = u.id;
+                const m = u.data();
+                const r = latestLog[uid] || {};
                 const glu = parseInt(r.metrics?.glucose||0), sys = parseInt(r.metrics?.bpSystolic||0), dia = parseInt(r.metrics?.bpDiastolic||0);
                 let msgBadge = `<span class="badge badge-gray">대기중</span>`;
                 if (m.feedbackDate) {
@@ -702,7 +705,7 @@
                     emailBadge = `<span style="font-size:10px;color:${color};margin-left:4px;">📧${daysAgo}일전</span>`;
                 }
 
-                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, hbt: m.hbtBalance||m.totalHbtEarned||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 };
+                memberRows.push({ uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, hbt: m.hbtBalance||m.totalHbtEarned||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 });
             });
             renderMembers();
         } catch(e) { document.getElementById('member-tbody').innerHTML = `<tr><td colspan="9" style="color:red;">${escapeHtml(e.message)}</td></tr>`; }
