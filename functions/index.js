@@ -1389,7 +1389,7 @@ exports.claimChallengeReward = onCall(
 
         if (staked > 0) {
             if (successRate >= 1.0) {
-                const bonusRate = tier === 'master' ? 1.0 : 0.5;
+                const bonusRate = tier === 'master' ? 2.0 : 0.5;
                 rewardHbt = staked + (staked * bonusRate);
                 rewardPoints = baseRewardP;
             } else if (successRate >= 0.8) {
@@ -1424,7 +1424,7 @@ exports.claimChallengeReward = onCall(
                 if (successRate >= 1.0) {
                     const DECIMALS = 8;
                     const stakedRaw = ethers.parseUnits(staked.toString(), DECIMALS);
-                    const bonusMultiplier = tier === 'master' ? 100n : 50n;
+                    const bonusMultiplier = tier === 'master' ? 200n : 50n;
                     const bonusHbtRaw = stakedRaw * bonusMultiplier / 100n;
 
                     if (bonusHbtRaw > 0n) {

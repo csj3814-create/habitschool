@@ -1814,7 +1814,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
             const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
             const tierRewardP = { mini: 30, weekly: 100, master: 500 };
-            const tierBonusRate = { mini: 0, weekly: 0.5, master: 1.0 };
+            const tierBonusRate = { mini: 0, weekly: 0.5, master: 2.0 };
 
             if (activeTiers.length > 0) {
                 let challengeHtml = '';

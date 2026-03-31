@@ -269,7 +269,7 @@ window.updateStakeSlider = function(tier) {
     // 예상 수익 계산
     if (rewardEl) {
         if (rounded > 0) {
-            const bonus = tier === 'weekly' ? 0.5 : 1.0;
+            const bonus = tier === 'weekly' ? 0.5 : 2.0;
             const expectedBonus = Math.round(rounded * bonus);
             rewardEl.textContent = `100% 달성 시 +${expectedBonus} HBT 보너스`;
         } else {
