@@ -247,31 +247,16 @@ window.updateStakeSlider = function(tier) {
     const hiddenInput = document.getElementById('stake-' + tier);
     if (!slider || !valueEl) return;
 
-    // 슬라이더 값 = HBT 직접 입력
-    const amount = parseInt(slider.value) || 0;
-
-    // 보유 HBT 확인 — 초과 시 보유량으로 제한
-    // balance = 0은 "잔액 미로드" 상태일 수 있으므로 0일 때는 capping 건너뜀
-    const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
-    const balance = parseFloat(hbtText) || 0;
-    let rounded = amount;
-    if (balance > 0) {
-        const capped = Math.min(amount, Math.floor(balance));
-        if (capped < amount) slider.value = capped;
-        rounded = Math.max(capped, parseInt(slider.min) || 0);
-    } else {
-        rounded = Math.max(amount, parseInt(slider.min) || 0);
-    }
-
+    // 슬라이더 max는 updateChallengeSliderBounds가 잔액 기준으로 설정
+    // 실제 잔액 검증은 startChallenge30D에서 수행 — 여기서는 단순 표시만
+    const rounded = parseInt(slider.value) || parseInt(slider.min) || 0;
     valueEl.textContent = rounded + ' HBT';
     if (hiddenInput) hiddenInput.value = rounded;
 
-    // 예상 수익 계산
     if (rewardEl) {
         if (rounded > 0) {
             const bonus = tier === 'weekly' ? 0.5 : 2.0;
-            const expectedBonus = Math.round(rounded * bonus);
-            rewardEl.textContent = `100% 달성 시 +${expectedBonus} HBT 보너스`;
+            rewardEl.textContent = `100% 달성 시 +${Math.round(rounded * bonus)} HBT 보너스`;
         } else {
             rewardEl.textContent = '';
         }

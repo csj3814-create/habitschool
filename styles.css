@@ -1426,7 +1426,7 @@ body {
     background: #ddd;
     border-radius: 2px;
     outline: none;
-    touch-action: none; /* 모바일 스크롤 이벤트 가로채기 방지 */
+    touch-action: pan-y; /* 수직 스크롤 허용, 수평 드래그는 슬라이더가 처리 */
 }
 
 .wallet-stake-slider::-webkit-slider-thumb {
