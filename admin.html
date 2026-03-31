@@ -153,6 +153,7 @@
         <h1>👨‍⚕️ 해빛스쿨 관제탑</h1>
         <div class="hdr-btns">
             <span id="admin-info" style="font-size:12px;color:#888;"></span>
+            <button class="btn-hdr" onclick="refreshCommunityStats()">📊 커뮤니티 통계 갱신</button>
             <button class="btn-hdr" onclick="refreshTab()">🔄 새로고침</button>
             <button class="btn-hdr red" onclick="adminLogout()">🚪 로그아웃</button>
         </div>
@@ -227,12 +228,13 @@
                     <th>레벨</th>
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
                     <th class="sort" onclick="sortBy('coins')">포인트 ↕</th>
+                    <th class="sort" onclick="sortBy('hbt')">HBT ↕</th>
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
                     <th>상세</th>
                 </tr></thead>
-                <tbody id="member-tbody"><tr><td colspan="10">데이터를 불러오는 중...</td></tr></tbody>
+                <tbody id="member-tbody"><tr><td colspan="11">데이터를 불러오는 중...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -241,26 +243,41 @@
     <div id="tab-economy" class="tab-panel">
         <div class="two-col">
             <div class="box">
-                <h3>🥇 포인트 TOP 10</h3>
+                <h3>🥇 포인트 TOP 20</h3>
                 <table>
                     <thead><tr><th>#</th><th>이름</th><th>포인트</th><th>HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top10-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
+                <div class="page-bar" id="top20-page-bar" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="top20Page(-1)" id="top20-prev">◀ 이전</button>
+                    <span id="top20-page-label">1 페이지</span>
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="top20Page(1)" id="top20-next">다음 ▶</button>
+                </div>
             </div>
             <div class="box">
-                <h3>💸 최근 HBT 트랜잭션 (20건)</h3>
+                <h3>💸 최근 HBT 트랜잭션</h3>
                 <table>
                     <thead><tr><th>날짜</th><th>유형</th><th>금액</th><th>TxHash</th></tr></thead>
                     <tbody id="tx-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
                 </table>
+                <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="txPage(-1)" id="tx-prev">◀ 이전</button>
+                    <span id="tx-page-label">1 페이지</span>
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="txPage(1)" id="tx-next">다음 ▶</button>
+                </div>
             </div>
         </div>
         <div class="box" style="margin-top:16px;">
-            <h3>📋 포인트 지급 내역 (최근 30건)</h3>
+            <h3>📋 포인트 지급 내역</h3>
             <table style="font-size:12px;">
                 <thead><tr><th>날짜</th><th>회원</th><th style="color:#4CAF50;">식단</th><th style="color:#2196F3;">운동</th><th style="color:#9C27B0;">마음</th><th>합계</th></tr></thead>
                 <tbody id="points-log-body"><tr><td colspan="6">로딩 중...</td></tr></tbody>
             </table>
+            <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="pointsPage(-1)" id="points-prev">◀ 이전</button>
+                <span id="points-page-label">1 페이지</span>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="pointsPage(1)" id="points-next">다음 ▶</button>
+            </div>
         </div>
         <div class="two-col">
             <div class="box">
@@ -408,7 +425,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
@@ -685,7 +702,7 @@
                     emailBadge = `<span style="font-size:10px;color:${color};margin-left:4px;">📧${daysAgo}일전</span>`;
                 }
 
-                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 };
+                return { uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, hbt: m.hbtBalance||m.totalHbtEarned||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 };
             });
             renderMembers();
         } catch(e) { document.getElementById('member-tbody').innerHTML = `<tr><td colspan="9" style="color:red;">${escapeHtml(e.message)}</td></tr>`; }
@@ -706,12 +723,12 @@
             return sortDir==='asc' ? (av||0)-(bv||0) : (bv||0)-(av||0);
         });
         const tbody = document.getElementById('member-tbody');
-        if (!rows.length) { tbody.innerHTML='<tr><td colspan="10" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
+        if (!rows.length) { tbody.innerHTML='<tr><td colspan="11" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
         tbody.innerHTML = rows.map(r => `<tr class="${r.alert?'alert-row':''}">
             <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}${r.emailBadge||''}</td>
             <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
             <td>Lv.${r.level}</td>
-            <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td>
+            <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td><td>${r.hbt.toLocaleString()}</td>
             <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
             <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
             <td>${r.msgBadge}</td>
@@ -731,21 +748,116 @@
     };
 
     // ── Tab 3: Economy ────────────────────────────────────────
-    async function loadEconomy() {
-        const { usersQ } = await getData();
-        const arr = []; usersQ.forEach(u => { const d=u.data(); arr.push({ name: d.customDisplayName||d.displayName||u.id.slice(0,8), coins:d.coins||0, hbt:d.hbtBalance||d.totalHbtEarned||0, streak:d.currentStreak||0 }); });
-        arr.sort((a,b) => b.coins-a.coins);
-        document.getElementById('top10-body').innerHTML = arr.slice(0,10).map((u,i) => `<tr><td>${i+1}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">없음</td></tr>';
+    const PAGE_SIZE_TOP20 = 20;
+    const PAGE_SIZE_TX = 20;
+    const PAGE_SIZE_POINTS = 30;
+    let top20AllRows = [], top20CurrentPage = 0;
+    let txCursors = [null], txCurrentPage = 0;
+    let pointsCursors = [null], pointsCurrentPage = 0;
+    let pointsUsersMap = {};
 
-        // HBT Transactions
+    function renderTop20() {
+        const start = top20CurrentPage * PAGE_SIZE_TOP20;
+        const page = top20AllRows.slice(start, start + PAGE_SIZE_TOP20);
+        document.getElementById('top10-body').innerHTML = page.map((u, i) =>
+            `<tr><td>${start+i+1}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`
+        ).join('') || '<tr><td colspan="5" style="color:#999;">없음</td></tr>';
+        document.getElementById('top20-page-label').textContent = `${top20CurrentPage+1} 페이지`;
+        document.getElementById('top20-prev').disabled = top20CurrentPage === 0;
+        document.getElementById('top20-next').disabled = start + PAGE_SIZE_TOP20 >= top20AllRows.length;
+    }
+    window.top20Page = function(dir) {
+        const next = top20CurrentPage + dir;
+        if (next < 0 || next * PAGE_SIZE_TOP20 >= top20AllRows.length) return;
+        top20CurrentPage = next;
+        renderTop20();
+    };
+
+    async function loadTxPage() {
         try {
-            const txSnap = await getDocs(query(collection(db, 'blockchain_transactions'), orderBy('timestamp','desc'), limit(20)));
-            document.getElementById('tx-body').innerHTML = txSnap.empty ? '<tr><td colspan="4" style="color:#999;">없음</td></tr>' : txSnap.docs.map(d => {
+            const cursor = txCursors[txCurrentPage];
+            const q = cursor
+                ? query(collection(db,'blockchain_transactions'), orderBy('timestamp','desc'), startAfter(cursor), limit(PAGE_SIZE_TX))
+                : query(collection(db,'blockchain_transactions'), orderBy('timestamp','desc'), limit(PAGE_SIZE_TX));
+            const snap = await getDocs(q);
+            document.getElementById('tx-body').innerHTML = snap.empty ? '<tr><td colspan="4" style="color:#999;">없음</td></tr>' : snap.docs.map(d => {
                 const t=d.data(), ts=t.timestamp, date=ts ? new Date(ts.seconds?ts.seconds*1000:ts).toLocaleDateString('ko') : '-';
-                const amt = t.details?.hbtAmount ?? t.amount ?? '-';
+                const amt = t.details?.hbtAmount ?? t.hbtReceived ?? t.amount ?? '-';
                 return `<tr><td>${date}</td><td>${escapeHtml(t.type||'-')}</td><td>${typeof amt==='number'?amt.toLocaleString():amt}</td><td style="font-family:monospace;font-size:11px;">${t.txHash?t.txHash.slice(0,8)+'...':'-'}</td></tr>`;
             }).join('');
+            // 다음 페이지 커서 저장
+            if (!snap.empty && snap.docs.length === PAGE_SIZE_TX) {
+                txCursors[txCurrentPage+1] = snap.docs[snap.docs.length-1];
+            }
+            document.getElementById('tx-page-label').textContent = `${txCurrentPage+1} 페이지`;
+            document.getElementById('tx-prev').disabled = txCurrentPage === 0;
+            document.getElementById('tx-next').disabled = snap.empty || snap.docs.length < PAGE_SIZE_TX;
         } catch(e) { console.error('HBT tx 조회 오류:', e); document.getElementById('tx-body').innerHTML='<tr><td colspan="4" style="color:#999;">없음</td></tr>'; }
+    }
+    window.txPage = async function(dir) {
+        const next = txCurrentPage + dir;
+        if (next < 0) return;
+        if (dir > 0 && !txCursors[next]) return;
+        txCurrentPage = next;
+        await loadTxPage();
+    };
+
+    async function loadPointsPage() {
+        try {
+            const cursor = pointsCursors[pointsCurrentPage];
+            const q = cursor
+                ? query(collection(db,'daily_logs'), orderBy('date','desc'), startAfter(cursor), limit(PAGE_SIZE_POINTS * 3))
+                : query(collection(db,'daily_logs'), orderBy('date','desc'), limit(PAGE_SIZE_POINTS * 3));
+            const snap = await getDocs(q);
+            const filtered = snap.docs
+                .map(d => ({ _doc: d, id: d.id, ...d.data() }))
+                .filter(r => { const ap=r.awardedPoints||{}; return (ap.dietPoints||0)+(ap.exercisePoints||0)+(ap.mindPoints||0) > 0; })
+                .slice(0, PAGE_SIZE_POINTS);
+            document.getElementById('points-log-body').innerHTML = filtered.length === 0
+                ? '<tr><td colspan="6" style="color:#999;">내역 없음</td></tr>'
+                : filtered.map(r => {
+                    const ap=r.awardedPoints||{};
+                    const diet=ap.dietPoints||0, ex=ap.exercisePoints||0, mind=ap.mindPoints||0, total=diet+ex+mind;
+                    const name = pointsUsersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
+                    return `<tr><td>${escapeHtml(r.date||'-')}</td><td>${escapeHtml(name)}</td><td style="color:#4CAF50;text-align:center;">${diet?'+'+diet+'P':'-'}</td><td style="color:#2196F3;text-align:center;">${ex?'+'+ex+'P':'-'}</td><td style="color:#9C27B0;text-align:center;">${mind?'+'+mind+'P':'-'}</td><td style="font-weight:600;text-align:center;">+${total}P</td></tr>`;
+                }).join('');
+            // 다음 페이지 커서: 마지막 doc
+            if (!snap.empty && snap.docs.length > 0) {
+                pointsCursors[pointsCurrentPage+1] = snap.docs[snap.docs.length-1];
+            }
+            document.getElementById('points-page-label').textContent = `${pointsCurrentPage+1} 페이지`;
+            document.getElementById('points-prev').disabled = pointsCurrentPage === 0;
+            document.getElementById('points-next').disabled = snap.empty || snap.docs.length < PAGE_SIZE_POINTS * 3;
+        } catch(e) { console.error('포인트 내역 조회 오류:', e); document.getElementById('points-log-body').innerHTML='<tr><td colspan="6" style="color:#999;">없음</td></tr>'; }
+    }
+    window.pointsPage = async function(dir) {
+        const next = pointsCurrentPage + dir;
+        if (next < 0) return;
+        if (dir > 0 && !pointsCursors[next]) return;
+        pointsCurrentPage = next;
+        await loadPointsPage();
+    };
+
+    async function loadEconomy() {
+        // TOP 20 (전체 사용자 클라이언트 정렬)
+        const { usersQ } = await getData();
+        top20AllRows = [];
+        usersQ.forEach(u => { const d=u.data(); top20AllRows.push({ name: d.customDisplayName||d.displayName||u.id.slice(0,8), coins:d.coins||0, hbt:d.hbtBalance||d.totalHbtEarned||0, streak:d.currentStreak||0 }); });
+        top20AllRows.sort((a,b) => b.coins-a.coins);
+        top20CurrentPage = 0;
+        renderTop20();
+
+        // 사용자 이름 맵 (포인트 내역용)
+        pointsUsersMap = {};
+        usersQ.forEach(u => { const d=u.data(); pointsUsersMap[u.id] = d.customDisplayName||d.displayName||u.id.slice(0,8); });
+
+        // HBT Transactions (페이지네이션)
+        txCursors = [null]; txCurrentPage = 0;
+        await loadTxPage();
+
+        // 포인트 지급 내역 (페이지네이션)
+        pointsCursors = [null]; pointsCurrentPage = 0;
+        await loadPointsPage();
 
         // Mining rate history
         try {
@@ -771,36 +883,11 @@
             const mvpSnap = await getDocs(query(collection(db,'monthly_rewards'), orderBy('month','desc'), limit(6)));
             document.getElementById('mvp-body').innerHTML = mvpSnap.empty ? '<tr><td colspan="3" style="color:#999;">배포 이력 없음</td></tr>' : mvpSnap.docs.map(d => {
                 const m=d.data();
-                // winners 배열 또는 winner 단수 모두 처리
                 const w = m.winners?.[0] || m.winner || {};
                 const name = w.name || w.userId?.slice(0,10) || '-';
                 return `<tr><td>${escapeHtml(m.month||d.id)}</td><td style="font-size:11px;">${escapeHtml(name)}</td><td style="font-size:11px;">${escapeHtml(w.email||'-')}</td></tr>`;
             }).join('');
         } catch(e) { console.error('MVP 조회 오류:', e); document.getElementById('mvp-body').innerHTML='<tr><td colspan="3" style="color:#999;">배포 이력 없음</td></tr>'; }
-
-        // 포인트 지급 내역 (최근 30건) — date 내림차순 후 클라이언트 필터
-        try {
-            const pointsSnap = await getDocs(query(
-                collection(db, 'daily_logs'),
-                orderBy('date','desc'),
-                limit(100)
-            ));
-            const usersMap = {};
-            const { usersQ: uQ } = await getData();
-            uQ.forEach(u => { const d=u.data(); usersMap[u.id] = d.customDisplayName||d.displayName||u.id.slice(0,8); });
-            const pointsDocs = pointsSnap.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(r => { const ap=r.awardedPoints||{}; return (ap.dietPoints||0)+(ap.exercisePoints||0)+(ap.mindPoints||0) > 0; })
-                .slice(0, 30);
-            document.getElementById('points-log-body').innerHTML = pointsDocs.length === 0
-                ? '<tr><td colspan="6" style="color:#999;">내역 없음</td></tr>'
-                : pointsDocs.map(r => {
-                    const ap=r.awardedPoints||{};
-                    const diet=ap.dietPoints||0, ex=ap.exercisePoints||0, mind=ap.mindPoints||0, total=diet+ex+mind;
-                    const name = usersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
-                    return `<tr><td>${escapeHtml(r.date||'-')}</td><td>${escapeHtml(name)}</td><td style="color:#4CAF50;text-align:center;">${diet?'+'+diet+'P':'-'}</td><td style="color:#2196F3;text-align:center;">${ex?'+'+ex+'P':'-'}</td><td style="color:#9C27B0;text-align:center;">${mind?'+'+mind+'P':'-'}</td><td style="font-weight:600;text-align:center;">+${total}P</td></tr>`;
-                }).join('');
-        } catch(e) { console.error('포인트 내역 조회 오류:', e); document.getElementById('points-log-body').innerHTML='<tr><td colspan="6" style="color:#999;">없음</td></tr>'; }
     }
 
     window.adjustRate = async function() {
@@ -816,6 +903,13 @@
             await setDoc(doc(db, 'mining_rate_history', `manual_${Date.now()}`), { adjustmentFactor:factor, reason, timestamp:new Date(), weekId:`manual_${todayStr}` });
         }
         alert('✅ 완료되었습니다.'); tabLoaded['economy']=false; loadEconomy();
+    };
+
+    window.refreshCommunityStats = async function() {
+        try {
+            await httpsCallable(fns, 'refreshCommunityStats')({});
+            alert('✅ 커뮤니티 통계가 갱신되었습니다.');
+        } catch(e) { alert('오류: ' + e.message); }
     };
 
     window.distributeMvp = async function() {
