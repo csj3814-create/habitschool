@@ -1948,12 +1948,18 @@ exports.adjustMiningRate = onSchedule(
             const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
-            // 멱등성 보장: 온체인 lastRateUpdate 기준 6일 이내 조정됐으면 스킵
-            const lastRateUpdateTs = await habitContract.lastRateUpdate();
-            const lastUpdateMs = Number(lastRateUpdateTs) * 1000;
-            const sixDaysMs = 6 * 24 * 60 * 60 * 1000;
-            if (lastUpdateMs > 0 && Date.now() - lastUpdateMs < sixDaysMs) {
-                console.log(`⏭️ 이미 이번 주 비율 조정 완료 (lastRateUpdate: ${new Date(lastUpdateMs).toISOString()}), 건너뜁니다.`);
+            // 멱등성 보장: Firestore mining_rate_history에 이번 주(weekId) 기록이 이미 있으면 스킵
+            // (온체인 lastRateUpdate 6일 기준은 수동 조정 후 다음 주 스케줄이 skip되는 버그 있음)
+            const nowForWeek = new Date();
+            const dayOfWeekForCheck = (nowForWeek.getUTCDay() + 6) % 7;
+            const mondayForCheck = new Date(nowForWeek.getTime() - dayOfWeekForCheck * 86400000);
+            const jan4ForCheck = new Date(Date.UTC(mondayForCheck.getUTCFullYear(), 0, 4));
+            const isoWeekForCheck = Math.round((mondayForCheck - jan4ForCheck) / (7 * 86400000)) + 1;
+            const currentWeekId = `${mondayForCheck.getUTCFullYear()}-W${String(isoWeekForCheck).padStart(2, "0")}`;
+
+            const existingRecord = await db.collection("mining_rate_history").doc(currentWeekId).get();
+            if (existingRecord.exists && existingRecord.data()?.status === "success") {
+                console.log(`⏭️ 이미 이번 주(${currentWeekId}) 비율 조정 완료, 건너뜁니다.`);
                 return;
             }
 
