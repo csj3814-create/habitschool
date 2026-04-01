@@ -1599,123 +1599,126 @@ const MVP_REWARDS = [
     { rank: 3, points: 500, label: '🥉 3위' }
 ];
 
+// MVP 보상 지급 핵심 로직 (callable + scheduled 공용)
+async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
+    const rewardRef = db.doc(`monthly_rewards/${targetMonth}`);
+    const rewardSnap = await rewardRef.get();
+    if (rewardSnap.exists) {
+        return { alreadyDistributed: true, ...rewardSnap.data() };
+    }
+
+    const monthStart = `${targetMonth}-01`;
+    const monthEnd = `${targetMonth}-31`;
+    const snap = await db.collection("daily_logs")
+        .where("date", ">=", monthStart)
+        .where("date", "<=", monthEnd)
+        .get();
+
+    if (snap.empty) {
+        return { alreadyDistributed: false, winners: [] };
+    }
+
+    const userStats = {};
+    snap.forEach(doc => {
+        const log = doc.data();
+        if (log.userId) {
+            if (!userStats[log.userId]) {
+                userStats[log.userId] = { days: 0, comments: 0, reactions: 0, name: log.userName || '익명' };
+            }
+            userStats[log.userId].days++;
+        }
+        if (log.comments && Array.isArray(log.comments)) {
+            log.comments.forEach(c => {
+                if (!c.userId) return;
+                if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, name: c.userName || '익명' };
+                userStats[c.userId].comments++;
+            });
+        }
+        if (log.reactions) {
+            ['heart', 'fire', 'clap'].forEach(type => {
+                if (Array.isArray(log.reactions[type])) {
+                    log.reactions[type].forEach(uid => {
+                        if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, name: '회원' };
+                        userStats[uid].reactions++;
+                    });
+                }
+            });
+        }
+    });
+
+    Object.values(userStats).forEach(u => {
+        u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
+    });
+
+    const ranked = Object.entries(userStats)
+        .map(([userId, stat]) => ({ userId, ...stat }))
+        .filter(u => u.days > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+
+    if (ranked.length === 0) {
+        return { alreadyDistributed: false, winners: [] };
+    }
+
+    const batch = db.batch();
+    const winners = [];
+    for (let i = 0; i < ranked.length; i++) {
+        const reward = MVP_REWARDS[i];
+        const winner = ranked[i];
+        const userRef = db.doc(`users/${winner.userId}`);
+        batch.set(userRef, {
+            coins: admin.firestore.FieldValue.increment(reward.points)
+        }, { merge: true });
+        winners.push({
+            rank: i + 1,
+            userId: winner.userId,
+            name: winner.name,
+            days: winner.days,
+            comments: winner.comments,
+            reactions: winner.reactions,
+            score: winner.score,
+            reward: reward.points
+        });
+    }
+
+    batch.set(rewardRef, {
+        winners,
+        distributedAt: admin.firestore.FieldValue.serverTimestamp(),
+        distributedBy
+    });
+
+    await batch.commit();
+    console.log(`✅ MVP 보상 지급 완료 (${targetMonth}):`, winners);
+    return { alreadyDistributed: false, winners };
+}
+
 exports.distributeMonthlyMvpReward = onCall(
-    {
-        region: "asia-northeast3",
-        maxInstances: 5,
-        timeoutSeconds: 30
-    },
+    { region: "asia-northeast3", maxInstances: 5, timeoutSeconds: 30 },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
-
-        const { targetMonth } = request.data; // "YYYY-MM" 형식
+        const { targetMonth } = request.data;
         if (!targetMonth || !/^\d{4}-\d{2}$/.test(targetMonth)) {
             throw new HttpsError("invalid-argument", "유효하지 않은 월 형식입니다. (YYYY-MM)");
         }
+        return distributeMvpRewardForMonth(targetMonth, request.auth.uid);
+    }
+);
 
-        // 이미 지급된 달인지 확인
-        const rewardRef = db.doc(`monthly_rewards/${targetMonth}`);
-        const rewardSnap = await rewardRef.get();
-        if (rewardSnap.exists) {
-            // 이미 지급 완료 - 결과만 반환
-            return { alreadyDistributed: true, ...rewardSnap.data() };
-        }
-
-        // 해당 월의 daily_logs 조회
-        const monthStart = `${targetMonth}-01`;
-        const monthEnd = `${targetMonth}-31`;
-        const q = db.collection("daily_logs")
-            .where("date", ">=", monthStart)
-            .where("date", "<=", monthEnd);
-        const snap = await q.get();
-
-        if (snap.empty) {
-            return { alreadyDistributed: false, winners: [] };
-        }
-
-        // 사용자별 활동 집계 (기록일 + 댓글 + 리액션)
-        const userStats = {};
-        snap.forEach(doc => {
-            const log = doc.data();
-            // 기록 작성자 집계
-            if (log.userId) {
-                if (!userStats[log.userId]) {
-                    userStats[log.userId] = { days: 0, comments: 0, reactions: 0, name: log.userName || '익명' };
-                }
-                userStats[log.userId].days++;
-            }
-            // 댓글 작성자 집계
-            if (log.comments && Array.isArray(log.comments)) {
-                log.comments.forEach(c => {
-                    if (!c.userId) return;
-                    if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, name: c.userName || '익명' };
-                    userStats[c.userId].comments++;
-                });
-            }
-            // 리액션 작성자 집계
-            if (log.reactions) {
-                ['heart', 'fire', 'clap'].forEach(type => {
-                    if (Array.isArray(log.reactions[type])) {
-                        log.reactions[type].forEach(uid => {
-                            if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, name: '회원' };
-                            userStats[uid].reactions++;
-                        });
-                    }
-                });
-            }
-        });
-
-        // MVP 점수 계산: 기록 10점 + 댓글 3점 + 리액션 1점
-        Object.values(userStats).forEach(u => {
-            u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
-        });
-
-        // 상위 3명 선정 (점수 기준, 기록 1일 이상만)
-        const ranked = Object.entries(userStats)
-            .map(([userId, stat]) => ({ userId, ...stat }))
-            .filter(u => u.days > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
-
-        if (ranked.length === 0) {
-            return { alreadyDistributed: false, winners: [] };
-        }
-
-        // 포인트 지급 (batch write)
-        const batch = db.batch();
-        const winners = [];
-        for (let i = 0; i < ranked.length; i++) {
-            const reward = MVP_REWARDS[i];
-            const winner = ranked[i];
-            const userRef = db.doc(`users/${winner.userId}`);
-            batch.set(userRef, {
-                coins: admin.firestore.FieldValue.increment(reward.points)
-            }, { merge: true });
-            winners.push({
-                rank: i + 1,
-                userId: winner.userId,
-                name: winner.name,
-                days: winner.days,
-                comments: winner.comments,
-                reactions: winner.reactions,
-                score: winner.score,
-                reward: reward.points
-            });
-        }
-
-        // 지급 기록 저장
-        batch.set(rewardRef, {
-            winners,
-            distributedAt: admin.firestore.FieldValue.serverTimestamp(),
-            distributedBy: request.auth.uid
-        });
-
-        await batch.commit();
-        console.log(`Monthly MVP rewards distributed for ${targetMonth}:`, winners);
-
-        return { alreadyDistributed: false, winners };
+// 매월 2일 오전 09:05 KST (= UTC 00:05) 에 전달 MVP 자동 지급
+exports.distributeMonthlyMvpRewardScheduled = onSchedule(
+    { schedule: "5 0 2 * *", region: "asia-northeast3", timeoutSeconds: 60 },
+    async () => {
+        // KST 2일 → 전달 계산
+        const now = new Date();
+        const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+        // 현재 달의 1일로 이동 후 하루 빼면 전달 마지막 날
+        const firstOfThisMonth = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), 1));
+        const lastOfPrevMonth = new Date(firstOfThisMonth.getTime() - 24 * 60 * 60 * 1000);
+        const prevMonth = `${lastOfPrevMonth.getUTCFullYear()}-${String(lastOfPrevMonth.getUTCMonth() + 1).padStart(2, '0')}`;
+        console.log(`⏰ 자동 MVP 지급 시작: ${prevMonth}`);
+        await distributeMvpRewardForMonth(prevMonth, 'auto-scheduler');
     }
 );
 
@@ -2323,8 +2326,9 @@ async function computeCommunityStatsLogic() {
         newMemberCount = [...thisUsers].filter(uid => !prevUsers.has(uid)).length;
     } catch (_) {}
 
-    await db.doc("meta/communityStats").set({
-        month: `${year}-${month}`,
+    const currentMonth = `${year}-${month}`;
+    const newStats = {
+        month: currentMonth,
         totalUsers, totalDays, totalComments, totalReactions,
         newMemberCount, bestStreak, bestStreakName,
         dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
@@ -2332,9 +2336,24 @@ async function computeCommunityStatsLogic() {
         mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
         ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
+    };
 
-    console.log(`✅ communityStats ${year}-${month} 업데이트 완료: ${totalUsers}명, ${snap.size}건 처리`);
+    // 월이 바뀌면 기존 데이터를 아카이브에 저장
+    try {
+        const existing = await db.doc("meta/communityStats").get();
+        if (existing.exists) {
+            const prevData = existing.data();
+            if (prevData.month && prevData.month !== currentMonth) {
+                await db.doc(`communityStats_archive/${prevData.month}`).set(prevData);
+                console.log(`📦 커뮤니티 통계 아카이브 저장: ${prevData.month}`);
+            }
+        }
+    } catch (e) {
+        console.warn("아카이브 저장 실패 (무시):", e.message);
+    }
+
+    await db.doc("meta/communityStats").set(newStats);
+    console.log(`✅ communityStats ${currentMonth} 업데이트 완료: ${totalUsers}명, ${snap.size}건 처리`);
 }
 
 /**

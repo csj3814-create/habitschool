@@ -2346,6 +2346,26 @@ textarea {
     margin-top: 4px;
 }
 
+.community-history-btn-wrap {
+    text-align: center;
+    margin-top: 14px;
+}
+.community-history-btn {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4CAF50;
+    text-decoration: none;
+    padding: 8px 18px;
+    border: 1.5px solid #4CAF50;
+    border-radius: 20px;
+    transition: background 0.15s, color 0.15s;
+}
+.community-history-btn:active {
+    background: #4CAF50;
+    color: white;
+}
+
 .mp-count {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -5392,6 +5412,8 @@ body.dark-mode .mvp-reward {
     background: rgba(255, 152, 0, 0.15);
 }
 body.dark-mode .mvp-reward-info { color: #6E6A74; }
+body.dark-mode .community-history-btn { color: #66BB6A; border-color: #66BB6A; }
+body.dark-mode .community-history-btn:active { background: #66BB6A; color: #1a1a1a; }
 
 /* ───────────────────────────────
    30일 결과지 버튼 다크모드

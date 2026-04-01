@@ -10,7 +10,7 @@ import {
     query, where, orderBy, limit, startAfter, serverTimestamp,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
@@ -2984,6 +2984,9 @@ function renderGroupChallengeFromData(s) {
         </div>
         <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+        <div class="community-history-btn-wrap">
+            <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
+        </div>
     `;
 }
 
@@ -3043,6 +3046,9 @@ async function renderGroupChallenge() {
         </div>
         <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+        <div class="community-history-btn-wrap">
+            <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
+        </div>
     `;
 
     // 지난달 MVP 보상 자동 트리거 (매월 1~3일에만 시도)
@@ -3933,9 +3939,22 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
-            const uploadPromise = uploadBytes(storageRef, fileToUpload);
+            const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+            const uploadPromise = new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        if (pct > 0 && pct < 100) {
+                            const saveBtn = document.getElementById('saveDataBtn');
+                            if (saveBtn) saveBtn.innerText = `저장 중... ${pct}%`;
+                        }
+                    },
+                    reject,
+                    resolve
+                );
+            });
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('업로드 시간 초과. 네트워크를 확인해주세요.')), timeoutMs)
+                setTimeout(() => { uploadTask.cancel(); reject(new Error('업로드 시간 초과. 네트워크를 확인해주세요.')); }, timeoutMs)
             );
             await Promise.race([uploadPromise, timeoutPromise]);
 

@@ -171,6 +171,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // 월별 커뮤니티 통계 아카이브 (이전 달 현황 기록)
+    match /communityStats_archive/{monthId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
     // ===== Email Logs Collection (관리자 읽기 전용, 쓰기는 CF Admin SDK만)
     match /emailLogs/{uid} {
       allow read: if isAdmin();
