@@ -1682,6 +1682,7 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
     }
 
     batch.set(rewardRef, {
+        month: targetMonth,
         winners,
         distributedAt: admin.firestore.FieldValue.serverTimestamp(),
         distributedBy
