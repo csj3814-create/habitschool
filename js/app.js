@@ -3192,15 +3192,17 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     const hasCustom = weeklyData.missions?.some(m => m.isCustom);
     if (hasCustom && completionRate >= 80) newBadges.push('customMaster');
 
-    // Firestore 업데이트 (항상 현재 상태를 먼저 읽어 race condition 방지)
+    // Firestore 업데이트 — setDoc 직전에 최신 상태를 읽어 race condition 방지
+    // (archiveWeekAndReset이 daily_logs 쿼리 중 saveWeeklyMissions가 먼저 완료되는 케이스)
     const userRef = doc(db, "users", uid);
     const userDoc = await getDoc(userRef);
     const existingData = userDoc.exists() ? userDoc.data() : {};
 
-    // 현재 weeklyMissionData가 이미 새 주차로 변경됐으면 null로 덮어쓰지 않음
-    // (saveWeeklyMissions가 먼저 완료된 경우 유저 데이터 보호)
-    const currentMissionWeekId = existingData.weeklyMissionData?.weekId;
-    const shouldNullMissions = !currentMissionWeekId || currentMissionWeekId === weeklyData.weekId;
+    // setDoc 직전 최신 주차 ID를 다시 확인 (race condition 방지)
+    const freshDoc = await getDoc(userRef);
+    const freshMissionWeekId = freshDoc.exists() ? freshDoc.data()?.weeklyMissionData?.weekId : null;
+    // 이미 새 주차 미션이 저장된 경우 null로 덮어쓰지 않음
+    const shouldNullMissions = freshMissionWeekId === weeklyData.weekId;
 
     const updateData = {
         ...(shouldNullMissions ? { weeklyMissionData: null } : {}),
@@ -4044,6 +4046,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let uploadFailures = [];
         try {
             const selectedDateStr = document.getElementById('selected-date').value;
+            // 미래 날짜 저장 방지
+            const { todayStr: saveToday } = getDatesInfo();
+            if (selectedDateStr > saveToday) {
+                showToast('⚠️ 미래 날짜에는 저장할 수 없습니다.');
+                saveBtn.innerText = "저장"; saveBtn.disabled = false;
+                return;
+            }
             const docId = `${user.uid}_${selectedDateStr}`;
             // getDoc: 캐시 우선(즉시) → 없으면 네트워크 최대 8초 대기
             // 타임아웃 시 빈 객체 fallback은 기존 수면/식단 데이터를 지울 수 있어 위험
