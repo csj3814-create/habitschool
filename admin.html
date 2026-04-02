@@ -299,8 +299,16 @@
             </div>
             <div class="box">
                 <h3>🎁 월간 MVP 보상</h3>
-                <p style="font-size:13px;color:#666;margin-top:0;">매월 코인 최다 획득자에게 보너스를 지급합니다.</p>
+                <p style="font-size:13px;color:#666;margin-top:0;">매월 커뮤니티에 가장 열심히 참여한 회원 TOP3에게 포인트를 지급합니다.</p>
                 <button class="btn btn-primary" style="width:100%;margin-bottom:16px;" onclick="distributeMvp()">🏆 이번 달 MVP 보상 배포</button>
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #eee;">
+                    <div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">🗂 과거 커뮤니티 통계 백필</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="month" id="backfill-month" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;" placeholder="YYYY-MM">
+                        <button class="btn btn-primary" onclick="backfillStats()">백필 실행</button>
+                    </div>
+                    <div id="backfill-result" style="font-size:12px;color:#888;margin-top:6px;"></div>
+                </div>
                 <div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">배포 이력</div>
                 <table style="font-size:12px;">
                     <thead><tr><th>월</th><th>수상자 ID</th><th>이메일</th></tr></thead>
@@ -913,6 +921,19 @@
             await httpsCallable(fns, 'refreshCommunityStats')({});
             alert('✅ 커뮤니티 통계가 갱신되었습니다.');
         } catch(e) { alert('오류: ' + e.message); }
+    };
+
+    window.backfillStats = async function() {
+        const monthInput = document.getElementById('backfill-month');
+        const resultEl = document.getElementById('backfill-result');
+        const targetMonth = monthInput.value; // "YYYY-MM" format from type=month input
+        if (!targetMonth) { resultEl.textContent = '❌ 월을 선택해 주세요.'; return; }
+        if (!confirm(`${targetMonth} 커뮤니티 통계를 백필하시겠습니까?`)) return;
+        resultEl.textContent = '⏳ 처리 중...';
+        try {
+            const res = await httpsCallable(fns, 'backfillCommunityStatsArchive')({ targetMonth });
+            resultEl.textContent = `✅ ${targetMonth} 완료 — ${res.data.totalUsers}명, ${res.data.totalDays}일`;
+        } catch(e) { resultEl.textContent = '❌ 오류: ' + e.message; }
     };
 
     window.distributeMvp = async function() {
