@@ -2892,6 +2892,10 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         renderFriendActivityCard(user, todayStr).catch(() => {});
         // 친구 스트릭 달성 알림
         checkFriendStreakNotifications(user.uid).catch(() => {});
+        // 소셜 챌린지 카드
+        renderSocialChallenges(user).catch(() => {});
+        // 챌린지 관련 알림
+        checkChallengeNotifications(user.uid).catch(() => {});
 
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
@@ -7153,4 +7157,366 @@ window.copyReferralFromModal = function() {
         .then(() => showToast('📋 초대 링크가 복사되었습니다!'))
         .catch(() => showToast('복사에 실패했습니다.'));
 };
+
+// ============================================================
+// 소셜 챌린지
+// ============================================================
+
+let _challengeState = {
+    type: 'group_goal',
+    duration: 3,
+    selectedFriends: [],   // { uid, name }[]
+    friends: [],           // 내 친구 목록 { uid, name }[]
+    pendingInviteId: null  // 응답 대기 중인 챌린지 ID
+};
+
+/** 대시보드 로드 시 소셜 챌린지 카드 렌더링 */
+async function renderSocialChallenges(user) {
+    const card = document.getElementById('social-challenge-card');
+    if (!card) return;
+
+    try {
+        const mySnap = await getDoc(doc(db, 'users', user.uid));
+        const friends = mySnap.exists() ? (mySnap.data().friends || []) : [];
+
+        // 친구가 없으면 카드 숨김
+        if (friends.length === 0) { card.style.display = 'none'; return; }
+        card.style.display = 'block';
+
+        // 내가 참가 중이거나 초대받은 챌린지 로드
+        const [asParticipant, asInvitee] = await Promise.all([
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('participants', 'array-contains', user.uid),
+                where('status', 'in', ['pending', 'active']),
+                limit(5)
+            )),
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('invitees', 'array-contains', user.uid),
+                where('status', '==', 'pending'),
+                limit(5)
+            ))
+        ]);
+
+        const challenges = [];
+        asInvitee.forEach(d => challenges.push({ id: d.id, ...d.data(), isInvite: true }));
+        asParticipant.forEach(d => {
+            if (!challenges.find(c => c.id === d.id))
+                challenges.push({ id: d.id, ...d.data(), isInvite: false });
+        });
+
+        const list = document.getElementById('social-challenge-list');
+        if (!list) return;
+
+        if (challenges.length === 0) {
+            list.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0;">진행 중인 챌린지가 없어요</div>';
+            return;
+        }
+
+        list.innerHTML = challenges.map(ch => {
+            const typeLabel = ch.type === 'competition' ? '⚔️ 1:1 경쟁' : '👥 단체 목표';
+            const durLabel = `${ch.durationDays}일`;
+
+            if (ch.isInvite) {
+                return `<div style="padding:8px 10px;border-radius:10px;background:#f3f0ff;border:1px solid #d0c4ff;margin-bottom:6px;">
+                    <div style="font-size:12px;font-weight:700;color:#5e35b1;margin-bottom:3px;">${typeLabel} · ${durLabel}</div>
+                    <div style="font-size:11px;color:#666;margin-bottom:6px;">${escapeHtml(ch.creatorName)}님이 초대했어요${ch.type === 'competition' ? ` (스테이크 ${ch.stakePoints}P)` : ''}</div>
+                    <div style="display:flex;gap:6px;">
+                        <button onclick="openChallengeInviteModal('${ch.id}')" style="flex:1;padding:6px;border-radius:8px;border:none;background:#7C4DFF;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">응답하기</button>
+                    </div>
+                </div>`;
+            }
+
+            const statusLabel = ch.status === 'active'
+                ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
+                : '수락 대기 중';
+            const statusColor = ch.status === 'active' ? '#388E3C' : '#F57C00';
+
+            return `<div style="padding:8px 10px;border-radius:10px;background:#f8f8f8;border:1px solid #eee;margin-bottom:6px;">
+                <div style="font-size:12px;font-weight:700;color:#333;margin-bottom:2px;">${typeLabel} · ${durLabel}</div>
+                <div style="font-size:11px;color:${statusColor};">${escapeHtml(statusLabel)}</div>
+                ${ch.type === 'competition' ? `<div style="font-size:11px;color:#888;margin-top:2px;">스테이크: ${ch.stakePoints}P</div>` : ''}
+            </div>`;
+        }).join('');
+
+    } catch (e) {
+        console.warn('[renderSocialChallenges] 오류:', e.message);
+    }
+}
+
+/** 챌린지 생성 모달 열기 */
+window.openCreateChallengeModal = async function() {
+    const modal = document.getElementById('create-challenge-modal');
+    if (!modal) return;
+
+    const user = auth.currentUser;
+    if (!user) { showToast('로그인이 필요합니다'); return; }
+
+    // 내 friends 배열 로드
+    const mySnap = await getDoc(doc(db, 'users', user.uid));
+    const friendIds = mySnap.exists() ? (mySnap.data().friends || []) : [];
+
+    if (friendIds.length === 0) {
+        showToast('친구를 먼저 추가해주세요!\n카카오톡 챗봇에서 !내코드를 입력하세요 👥');
+        return;
+    }
+
+    // 친구 이름 로드
+    const friendDocs = await Promise.all(friendIds.map(fid => getDoc(doc(db, 'users', fid))));
+    _challengeState.friends = friendDocs
+        .map((snap, i) => {
+            if (!snap.exists()) return null;
+            const d = snap.data();
+            return { uid: friendIds[i], name: d.customDisplayName || d.displayName || friendIds[i].slice(0, 8) };
+        })
+        .filter(Boolean);
+
+    // 상태 초기화
+    _challengeState.type = 'group_goal';
+    _challengeState.duration = 3;
+    _challengeState.selectedFriends = [];
+
+    // 친구 목록 렌더링
+    renderChallengeFriendList();
+    selectChallengeType('group_goal');
+    selectDuration(3);
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeCreateChallengeModal = function() {
+    const modal = document.getElementById('create-challenge-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+function renderChallengeFriendList() {
+    const container = document.getElementById('challenge-friend-list');
+    if (!container) return;
+    const isCompetition = _challengeState.type === 'competition';
+    container.innerHTML = _challengeState.friends.map(f => {
+        const isSelected = _challengeState.selectedFriends.some(s => s.uid === f.uid);
+        return `<div onclick="toggleChallengeFriend('${f.uid}', '${escapeHtml(f.name)}')"
+            style="padding:8px 12px;border-radius:10px;border:2px solid ${isSelected ? '#7C4DFF' : '#e8e8e8'};
+                   background:${isSelected ? '#f3f0ff' : 'transparent'};cursor:pointer;
+                   display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+            <span style="font-weight:${isSelected ? '700' : '400'};color:${isSelected ? '#5e35b1' : '#333'};">${escapeHtml(f.name)}</span>
+            ${isSelected ? '<span style="color:#7C4DFF;font-size:14px;">✓</span>' : ''}
+        </div>`;
+    }).join('');
+}
+
+window.toggleChallengeFriend = function(uid, name) {
+    const isCompetition = _challengeState.type === 'competition';
+    const idx = _challengeState.selectedFriends.findIndex(f => f.uid === uid);
+    if (idx >= 0) {
+        _challengeState.selectedFriends.splice(idx, 1);
+    } else {
+        if (isCompetition && _challengeState.selectedFriends.length >= 1) {
+            showToast('1:1 경쟁은 상대 1명만 선택할 수 있어요');
+            return;
+        }
+        if (!isCompetition && _challengeState.selectedFriends.length >= 3) {
+            showToast('단체 목표는 최대 3명까지 선택할 수 있어요');
+            return;
+        }
+        _challengeState.selectedFriends.push({ uid, name });
+    }
+    renderChallengeFriendList();
+};
+
+window.selectChallengeType = function(type) {
+    _challengeState.type = type;
+    _challengeState.selectedFriends = [];
+
+    const btnGroup = document.getElementById('type-group');
+    const btnComp = document.getElementById('type-competition');
+    const desc = document.getElementById('type-desc');
+    const stakeSection = document.getElementById('stake-section');
+    const hint = document.getElementById('friend-select-hint');
+
+    if (btnGroup && btnComp) {
+        if (type === 'group_goal') {
+            btnGroup.style.cssText += ';border-color:#7C4DFF;background:#7C4DFF;color:#fff;';
+            btnComp.style.cssText += ';border-color:#e8e8e8;background:transparent;color:#666;';
+            if (desc) desc.textContent = '전원 70% 이상 달성 시 습관 포인트 +20% 보너스';
+            if (stakeSection) stakeSection.style.display = 'none';
+            if (hint) hint.textContent = '(최대 3명)';
+        } else {
+            btnComp.style.cssText += ';border-color:#7C4DFF;background:#7C4DFF;color:#fff;';
+            btnGroup.style.cssText += ';border-color:#e8e8e8;background:transparent;color:#666;';
+            if (desc) desc.textContent = '이기면 상대 스테이크 획득 + 기간 포인트 30% 보너스';
+            if (stakeSection) stakeSection.style.display = 'block';
+            if (hint) hint.textContent = '(1명만 선택)';
+        }
+    }
+    renderChallengeFriendList();
+};
+
+window.selectDuration = function(days) {
+    _challengeState.duration = days;
+    [3, 7, 14].forEach(d => {
+        const btn = document.getElementById(`dur-${d}`);
+        if (!btn) return;
+        if (d === days) {
+            btn.style.borderColor = '#7C4DFF';
+            btn.style.background = '#7C4DFF';
+            btn.style.color = '#fff';
+            btn.style.fontWeight = '600';
+        } else {
+            btn.style.borderColor = '#e8e8e8';
+            btn.style.background = 'transparent';
+            btn.style.color = '#666';
+            btn.style.fontWeight = '400';
+        }
+    });
+};
+
+window.submitCreateChallenge = async function() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const { type, duration, selectedFriends } = _challengeState;
+    if (selectedFriends.length === 0) {
+        showToast('친구를 한 명 이상 선택해주세요');
+        return;
+    }
+    if (type === 'competition' && selectedFriends.length !== 1) {
+        showToast('1:1 경쟁은 상대 1명을 선택해주세요');
+        return;
+    }
+
+    let stakePoints = null;
+    if (type === 'competition') {
+        stakePoints = parseInt(document.getElementById('stake-input')?.value || '50', 10);
+        if (isNaN(stakePoints) || stakePoints < 10 || stakePoints > 200 || stakePoints % 10 !== 0) {
+            showToast('스테이크는 10~200P 범위에서 10P 단위로 입력해주세요');
+            return;
+        }
+    }
+
+    const btn = document.getElementById('create-challenge-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '생성 중...'; }
+
+    try {
+        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'createSocialChallenge');
+        await fn({
+            type,
+            inviteeIds: selectedFriends.map(f => f.uid),
+            durationDays: duration,
+            stakePoints
+        });
+
+        closeCreateChallengeModal();
+        showToast('🎉 챌린지 초대를 보냈어요!');
+        renderSocialChallenges(user).catch(() => {});
+    } catch (e) {
+        console.error('[createChallenge]', e);
+        showToast(`⚠️ ${e.message || '챌린지 생성에 실패했어요'}`);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '챌린지 시작하기 🚀'; }
+    }
+};
+
+/** 챌린지 초대 모달 열기 */
+window.openChallengeInviteModal = async function(challengeId) {
+    const modal = document.getElementById('challenge-invite-modal');
+    const info = document.getElementById('challenge-invite-info');
+    if (!modal || !info) return;
+
+    try {
+        const snap = await getDoc(doc(db, 'social_challenges', challengeId));
+        if (!snap.exists()) { showToast('챌린지를 찾을 수 없어요'); return; }
+        const ch = snap.data();
+        const typeLabel = ch.type === 'competition' ? '⚔️ 1:1 경쟁' : '👥 단체 목표';
+        const stakeInfo = ch.type === 'competition' ? `\n스테이크: <b>${ch.stakePoints}P</b>` : '';
+        info.innerHTML = `<b>${escapeHtml(ch.creatorName)}</b>님이 보낸 초대<br>
+            유형: <b>${typeLabel}</b><br>
+            기간: <b>${ch.durationDays}일</b>${stakeInfo}<br>
+            <span style="font-size:11px;color:#aaa;margin-top:4px;display:block;">수락하면 오늘부터 챌린지가 시작돼요</span>`;
+        _challengeState.pendingInviteId = challengeId;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } catch (e) {
+        showToast('챌린지 정보를 불러올 수 없어요');
+    }
+};
+
+window.closeChallengeInviteModal = function() {
+    const modal = document.getElementById('challenge-invite-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+    _challengeState.pendingInviteId = null;
+};
+
+window.respondChallenge = async function(accept) {
+    const challengeId = _challengeState.pendingInviteId;
+    if (!challengeId) return;
+
+    closeChallengeInviteModal();
+
+    try {
+        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
+        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'respondSocialChallenge');
+        const result = await fn({ challengeId, accept });
+        if (accept) {
+            const msg = result.data?.status === 'active'
+                ? '🎉 챌린지가 시작됐어요! 화이팅!'
+                : '✅ 수락 완료! 나머지 친구의 수락을 기다리고 있어요';
+            showToast(msg);
+        } else {
+            showToast('챌린지 초대를 거절했어요');
+        }
+        const user = auth.currentUser;
+        if (user) renderSocialChallenges(user).catch(() => {});
+    } catch (e) {
+        console.error('[respondChallenge]', e);
+        showToast(`⚠️ ${e.message || '처리에 실패했어요'}`);
+    }
+};
+
+/** 챌린지 결산 알림 확인 (대시보드 로드 시 호출) */
+async function checkChallengeNotifications(uid) {
+    try {
+        const storageKey = `challengeNotifSeen_${uid}`;
+        const lastSeen = parseInt(localStorage.getItem(storageKey) || '0');
+
+        const snap = await getDocs(query(
+            collection(db, 'notifications'),
+            where('postOwnerId', '==', uid),
+            where('type', 'in', ['challenge_invite', 'challenge_settled']),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+        ));
+
+        let hasNew = false;
+        snap.forEach(d => {
+            const data = d.data();
+            const ts = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0;
+            if (ts <= lastSeen) return;
+            hasNew = true;
+
+            if (data.type === 'challenge_invite') {
+                showToast(`🏆 ${data.fromUserName}님이 챌린지에 초대했어요!\n대시보드에서 확인하세요`);
+            } else if (data.type === 'challenge_settled') {
+                const outcomeMsg = {
+                    'success': '🎉 단체 목표 달성! 보너스 포인트가 지급됐어요',
+                    'win':     '🏆 경쟁에서 승리! 스테이크와 보너스를 획득했어요',
+                    'loss':    '💪 아쉽게 패배했지만 다음엔 꼭 이겨봐요',
+                    'draw':    '🤝 동점! 스테이크가 반환됐어요',
+                    'void':    '⚠️ 활동 기록 부족으로 챌린지가 무효 처리됐어요',
+                    'missed':  '😢 목표 달성에 실패했어요. 다음엔 함께 해봐요'
+                };
+                showToast(outcomeMsg[data.outcome] || '📋 챌린지가 결산됐어요');
+            }
+        });
+
+        if (hasNew) localStorage.setItem(storageKey, String(Date.now()));
+    } catch (e) {
+        console.warn('[checkChallengeNotifications]', e.message);
+    }
+}
 

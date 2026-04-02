@@ -2979,3 +2979,439 @@ exports.adjustUserCoins = onCall(
         return { success: true };
     }
 );
+
+// ========================================
+// SOCIAL CHALLENGES
+// ========================================
+
+const CHALLENGE_TYPES    = ['group_goal', 'competition'];
+const CHALLENGE_DURATIONS = [3, 7, 14];
+const MAX_STAKE          = 200;
+const GROUP_GOAL_THRESHOLD   = 0.7;   // 70% 달성 기준
+const GROUP_GOAL_BONUS_PCT   = 0.2;   // 단체 목표 달성 보너스 20%
+const COMPETITION_WIN_BONUS_PCT = 0.3; // 경쟁 승리 보너스 30%
+const MIN_ACTIVITY_DAYS  = 5;          // 최소 활동 이력 (30일 내)
+const CHALLENGE_EXPIRE_HOURS = 48;     // 초대 만료 시간
+
+/** KST 오늘 날짜 (YYYY-MM-DD) */
+function todayKST() {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+}
+
+/** dateStr + n일 (YYYY-MM-DD) */
+function addDaysKST(dateStr, n) {
+    const d = new Date(dateStr + 'T00:00:00+09:00');
+    d.setDate(d.getDate() + n);
+    return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+}
+
+/** 지난 30일 내 최소 N일 활동 이력 확인 */
+async function hasMinActivity(uid, minDays = MIN_ACTIVITY_DAYS) {
+    const thirtyDaysAgo = addDaysKST(todayKST(), -30);
+    const snap = await db.collection('daily_logs')
+        .where('userId', '==', uid)
+        .where('date', '>=', thirtyDaysAgo)
+        .limit(minDays)
+        .get();
+    return snap.size >= minDays;
+}
+
+/**
+ * createSocialChallenge — 챌린지 생성
+ */
+exports.createSocialChallenge = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "로그인 필요");
+        const uid = request.auth.uid;
+        const { type, inviteeIds, durationDays, stakePoints } = request.data;
+
+        // 입력 검증
+        if (!CHALLENGE_TYPES.includes(type))
+            throw new HttpsError("invalid-argument", "올바른 챌린지 유형을 선택해주세요.");
+        if (!Array.isArray(inviteeIds) || inviteeIds.length === 0 || inviteeIds.length > 3)
+            throw new HttpsError("invalid-argument", "초대 인원은 1~3명이어야 합니다.");
+        if (!CHALLENGE_DURATIONS.includes(durationDays))
+            throw new HttpsError("invalid-argument", "기간은 3, 7, 14일 중 선택해주세요.");
+        if (inviteeIds.includes(uid))
+            throw new HttpsError("invalid-argument", "자기 자신을 초대할 수 없습니다.");
+        if (type === 'competition' && inviteeIds.length !== 1)
+            throw new HttpsError("invalid-argument", "1:1 경쟁은 상대 1명만 초대할 수 있습니다.");
+        if (type === 'competition') {
+            if (!stakePoints || typeof stakePoints !== 'number' || stakePoints <= 0 || stakePoints > MAX_STAKE)
+                throw new HttpsError("invalid-argument", `스테이크는 10~${MAX_STAKE}P 사이여야 합니다.`);
+            if (stakePoints % 10 !== 0)
+                throw new HttpsError("invalid-argument", "스테이크는 10P 단위로 설정해주세요.");
+        }
+
+        // 생성자 정보 + 포인트 확인
+        const creatorSnap = await db.doc(`users/${uid}`).get();
+        if (!creatorSnap.exists) throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+        const creatorData = creatorSnap.data();
+        const creatorName = creatorData.customDisplayName || creatorData.displayName || '회원';
+
+        if (type === 'competition' && (creatorData.coins || 0) < stakePoints)
+            throw new HttpsError("failed-precondition",
+                `포인트가 부족합니다. 필요: ${stakePoints}P, 보유: ${creatorData.coins || 0}P`);
+
+        // 생성자 최소 활동 확인
+        if (!(await hasMinActivity(uid)))
+            throw new HttpsError("failed-precondition",
+                `챌린지 참가는 최근 30일 내 ${MIN_ACTIVITY_DAYS}일 이상 기록이 필요합니다.`);
+
+        // 초대 대상 유효성 확인 (쌍방 친구 확인)
+        for (const inviteeId of inviteeIds) {
+            const inviteeSnap = await db.doc(`users/${inviteeId}`).get();
+            if (!inviteeSnap.exists)
+                throw new HttpsError("not-found", "초대 대상 유저를 찾을 수 없습니다.");
+            const inviteeFriends = inviteeSnap.data().friends || [];
+            if (!inviteeFriends.includes(uid))
+                throw new HttpsError("failed-precondition",
+                    "챌린지는 서로 친구 등록된 회원끼리만 만들 수 있습니다.");
+        }
+
+        // 진행 중인 챌린지 중복 확인 (생성자 기준)
+        const existingSnap = await db.collection('social_challenges')
+            .where('creatorId', '==', uid)
+            .where('status', 'in', ['pending', 'active'])
+            .limit(1)
+            .get();
+        if (!existingSnap.empty)
+            throw new HttpsError("already-exists",
+                "이미 진행 중인 챌린지가 있습니다. 완료 후 새 챌린지를 만들어주세요.");
+
+        // 경쟁 모드: 스테이크 락업
+        if (type === 'competition') {
+            await db.doc(`users/${uid}`).update({
+                coins: admin.firestore.FieldValue.increment(-stakePoints)
+            });
+        }
+
+        // 챌린지 문서 생성
+        const now = admin.firestore.FieldValue.serverTimestamp();
+        const expiresAt = new Date(Date.now() + CHALLENGE_EXPIRE_HOURS * 60 * 60 * 1000);
+        const challengeData = {
+            type,
+            status: 'pending',
+            creatorId: uid,
+            creatorName,
+            invitees: inviteeIds,
+            participants: [uid],
+            durationDays,
+            startDate: null,
+            endDate: null,
+            expiresAt: admin.firestore.Timestamp.fromDate(expiresAt),
+            createdAt: now,
+            results: {},
+            ...(type === 'competition'
+                ? { stakePoints, stakes: { [uid]: stakePoints } }
+                : { targetCompletionPct: GROUP_GOAL_THRESHOLD })
+        };
+
+        const challengeRef = await db.collection('social_challenges').add(challengeData);
+        const challengeId = challengeRef.id;
+
+        // 초대 알림 발송
+        for (const inviteeId of inviteeIds) {
+            await db.collection('notifications').add({
+                postOwnerId: inviteeId,
+                type: 'challenge_invite',
+                fromUserId: uid,
+                fromUserName: creatorName,
+                challengeId,
+                challengeType: type,
+                durationDays,
+                stakePoints: stakePoints || null,
+                createdAt: now
+            });
+        }
+
+        console.log(`[createSocialChallenge] ${uid} → ${inviteeIds.join(',')} (${type}, ${durationDays}일)`);
+        return { challengeId };
+    }
+);
+
+/**
+ * respondSocialChallenge — 초대 수락/거절
+ */
+exports.respondSocialChallenge = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "로그인 필요");
+        const uid = request.auth.uid;
+        const { challengeId, accept } = request.data;
+
+        if (!challengeId) throw new HttpsError("invalid-argument", "챌린지 ID 필요");
+        if (typeof accept !== 'boolean') throw new HttpsError("invalid-argument", "수락 여부(accept) 필요");
+
+        const challengeRef = db.doc(`social_challenges/${challengeId}`);
+        const challengeSnap = await challengeRef.get();
+        if (!challengeSnap.exists) throw new HttpsError("not-found", "챌린지를 찾을 수 없습니다.");
+
+        const challenge = challengeSnap.data();
+        if (challenge.status !== 'pending')
+            throw new HttpsError("failed-precondition", "이미 시작되었거나 종료된 챌린지입니다.");
+        if (!challenge.invitees.includes(uid))
+            throw new HttpsError("permission-denied", "이 챌린지에 초대되지 않았습니다.");
+
+        // 만료 확인
+        if (challenge.expiresAt.toMillis() < Date.now()) {
+            await challengeRef.update({ status: 'cancelled' });
+            if (challenge.type === 'competition' && challenge.stakes?.[challenge.creatorId]) {
+                await db.doc(`users/${challenge.creatorId}`).update({
+                    coins: admin.firestore.FieldValue.increment(challenge.stakes[challenge.creatorId])
+                });
+            }
+            throw new HttpsError("deadline-exceeded", "챌린지 초대가 만료되었습니다.");
+        }
+
+        if (!accept) {
+            // 거절: invitees에서 제거
+            const newInvitees = challenge.invitees.filter(id => id !== uid);
+            if (newInvitees.length === 0) {
+                // 모든 초대 거절 → 취소, 생성자 스테이크 반환
+                await challengeRef.update({ status: 'cancelled', invitees: [] });
+                if (challenge.type === 'competition' && challenge.stakes?.[challenge.creatorId]) {
+                    await db.doc(`users/${challenge.creatorId}`).update({
+                        coins: admin.firestore.FieldValue.increment(challenge.stakes[challenge.creatorId])
+                    });
+                }
+            } else {
+                await challengeRef.update({ invitees: newInvitees });
+            }
+            console.log(`[respondSocialChallenge] ${uid} 거절: ${challengeId}`);
+            return { result: 'declined' };
+        }
+
+        // 수락: 최소 활동 이력 확인
+        if (!(await hasMinActivity(uid)))
+            throw new HttpsError("failed-precondition",
+                `챌린지 참가는 최근 30일 내 ${MIN_ACTIVITY_DAYS}일 이상 기록이 필요합니다.`);
+
+        const userSnap = await db.doc(`users/${uid}`).get();
+        const userData = userSnap.data();
+
+        // 경쟁 모드: 포인트 락업
+        if (challenge.type === 'competition') {
+            if ((userData.coins || 0) < challenge.stakePoints)
+                throw new HttpsError("failed-precondition",
+                    `포인트가 부족합니다. 필요: ${challenge.stakePoints}P, 보유: ${userData.coins || 0}P`);
+            await db.doc(`users/${uid}`).update({
+                coins: admin.firestore.FieldValue.increment(-challenge.stakePoints)
+            });
+        }
+
+        const newInvitees = challenge.invitees.filter(id => id !== uid);
+        const newParticipants = [...challenge.participants, uid];
+        const updateData = {
+            invitees: newInvitees,
+            participants: newParticipants,
+            ...(challenge.type === 'competition' ? { [`stakes.${uid}`]: challenge.stakePoints } : {})
+        };
+
+        // 모든 초대 수락 → active 전환
+        if (newInvitees.length === 0) {
+            const startDate = todayKST();
+            const endDate = addDaysKST(startDate, challenge.durationDays - 1);
+            updateData.status = 'active';
+            updateData.startDate = startDate;
+            updateData.endDate = endDate;
+
+            const now = admin.firestore.FieldValue.serverTimestamp();
+            for (const participantId of newParticipants) {
+                await db.collection('notifications').add({
+                    postOwnerId: participantId,
+                    type: 'challenge_started',
+                    challengeId,
+                    challengeType: challenge.type,
+                    durationDays: challenge.durationDays,
+                    startDate,
+                    endDate,
+                    createdAt: now
+                });
+            }
+        }
+
+        await challengeRef.update(updateData);
+        const newStatus = newInvitees.length === 0 ? 'active' : 'pending';
+        console.log(`[respondSocialChallenge] ${uid} 수락: ${challengeId} → ${newStatus}`);
+        return { result: 'accepted', status: newStatus };
+    }
+);
+
+/**
+ * 챌린지 결산 내부 헬퍼
+ */
+async function settleChallengeById(challengeId) {
+    const challengeRef = db.doc(`social_challenges/${challengeId}`);
+    const challengeSnap = await challengeRef.get();
+    if (!challengeSnap.exists) return;
+    const challenge = challengeSnap.data();
+    if (challenge.status !== 'active') return;
+
+    const { type, participants, startDate, endDate, stakePoints, stakes, durationDays } = challenge;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    // 각 참가자 기간 내 daily_logs 집계
+    const participantStats = {};
+    for (const pid of participants) {
+        const logsSnap = await db.collection('daily_logs')
+            .where('userId', '==', pid)
+            .where('date', '>=', startDate)
+            .where('date', '<=', endDate)
+            .get();
+        let totalPoints = 0;
+        let activeDays = 0;
+        logsSnap.forEach(docSnap => {
+            const d = docSnap.data();
+            const ap = d.awardedPoints || {};
+            totalPoints += (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
+            activeDays++;
+        });
+        participantStats[pid] = { totalPoints, activeDays };
+    }
+
+    const results = {};
+
+    if (type === 'group_goal') {
+        let allAchieved = true;
+        for (const [pid, stats] of Object.entries(participantStats)) {
+            const completionPct = durationDays > 0 ? stats.activeDays / durationDays : 0;
+            const achieved = completionPct >= GROUP_GOAL_THRESHOLD;
+            results[pid] = {
+                habitPoints: stats.totalPoints,
+                activeDays: stats.activeDays,
+                completionPct: Math.round(completionPct * 100) / 100,
+                achieved,
+                bonusPoints: 0,
+                outcome: achieved ? 'achieved' : 'missed'
+            };
+            if (!achieved) allAchieved = false;
+        }
+
+        if (allAchieved) {
+            for (const pid of participants) {
+                const bonus = Math.floor(results[pid].habitPoints * GROUP_GOAL_BONUS_PCT);
+                results[pid].bonusPoints = bonus;
+                results[pid].outcome = 'success';
+                if (bonus > 0) {
+                    await db.doc(`users/${pid}`).update({
+                        coins: admin.firestore.FieldValue.increment(bonus)
+                    });
+                }
+            }
+        }
+
+    } else if (type === 'competition') {
+        const [pid0, pid1] = participants;
+        const s0 = participantStats[pid0];
+        const s1 = participantStats[pid1];
+
+        if (s0.activeDays === 0 || s1.activeDays === 0) {
+            // 어뷰징 방지: 한쪽 0일 → 스테이크 전액 반환, 무효
+            for (const pid of participants) {
+                const refund = stakes?.[pid] || stakePoints || 0;
+                if (refund > 0) {
+                    await db.doc(`users/${pid}`).update({
+                        coins: admin.firestore.FieldValue.increment(refund)
+                    });
+                }
+            }
+            results[pid0] = { habitPoints: s0.totalPoints, activeDays: s0.activeDays, bonusPoints: 0, outcome: 'void' };
+            results[pid1] = { habitPoints: s1.totalPoints, activeDays: s1.activeDays, bonusPoints: 0, outcome: 'void' };
+        } else if (s0.totalPoints === s1.totalPoints) {
+            // 동점: 스테이크 반환
+            for (const pid of participants) {
+                const refund = stakes?.[pid] || stakePoints || 0;
+                if (refund > 0) {
+                    await db.doc(`users/${pid}`).update({
+                        coins: admin.firestore.FieldValue.increment(refund)
+                    });
+                }
+            }
+            results[pid0] = { habitPoints: s0.totalPoints, activeDays: s0.activeDays, bonusPoints: 0, outcome: 'draw' };
+            results[pid1] = { habitPoints: s1.totalPoints, activeDays: s1.activeDays, bonusPoints: 0, outcome: 'draw' };
+        } else {
+            const winnerId = s0.totalPoints > s1.totalPoints ? pid0 : pid1;
+            const loserId  = winnerId === pid0 ? pid1 : pid0;
+            const winnerStake = stakes?.[winnerId] || stakePoints || 0;
+            const loserStake  = stakes?.[loserId]  || stakePoints || 0;
+            const winnerBonus = Math.floor(participantStats[winnerId].totalPoints * COMPETITION_WIN_BONUS_PCT);
+
+            await db.doc(`users/${winnerId}`).update({
+                coins: admin.firestore.FieldValue.increment(winnerStake + loserStake + winnerBonus)
+            });
+
+            results[winnerId] = {
+                habitPoints: participantStats[winnerId].totalPoints,
+                activeDays: participantStats[winnerId].activeDays,
+                bonusPoints: loserStake + winnerBonus,
+                outcome: 'win'
+            };
+            results[loserId] = {
+                habitPoints: participantStats[loserId].totalPoints,
+                activeDays: participantStats[loserId].activeDays,
+                bonusPoints: 0,
+                outcome: 'loss'
+            };
+        }
+    }
+
+    await challengeRef.update({ status: 'settled', results, settledAt: now });
+
+    // 결산 알림
+    for (const pid of participants) {
+        await db.collection('notifications').add({
+            postOwnerId: pid,
+            type: 'challenge_settled',
+            challengeId,
+            challengeType: type,
+            outcome: results[pid]?.outcome || 'unknown',
+            bonusPoints: results[pid]?.bonusPoints || 0,
+            createdAt: now
+        });
+    }
+
+    console.log(`[settleChallengeById] ${challengeId} settled (${type})`);
+}
+
+/**
+ * settleDueSocialChallenges — 매일 00:10 KST 자동 결산
+ * 00:10 KST = 15:10 UTC
+ */
+exports.settleDueSocialChallenges = onSchedule(
+    { schedule: "10 15 * * *", timeZone: "UTC", region: "asia-northeast3" },
+    async () => {
+        // 만료된 pending 챌린지 취소 + 스테이크 반환
+        const pendingSnap = await db.collection('social_challenges')
+            .where('status', '==', 'pending')
+            .get();
+        for (const docSnap of pendingSnap.docs) {
+            const data = docSnap.data();
+            if (data.expiresAt?.toMillis() < Date.now()) {
+                await docSnap.ref.update({ status: 'cancelled' });
+                if (data.type === 'competition' && data.stakes?.[data.creatorId]) {
+                    await db.doc(`users/${data.creatorId}`).update({
+                        coins: admin.firestore.FieldValue.increment(data.stakes[data.creatorId])
+                    });
+                }
+                console.log(`[settleDue] pending 만료 취소: ${docSnap.id}`);
+            }
+        }
+
+        // 종료된 active 챌린지 결산
+        const today = todayKST();
+        const dueSnap = await db.collection('social_challenges')
+            .where('status', '==', 'active')
+            .where('endDate', '<', today)
+            .get();
+        console.log(`[settleDueSocialChallenges] 결산 대상: ${dueSnap.size}개`);
+        for (const docSnap of dueSnap.docs) {
+            try {
+                await settleChallengeById(docSnap.id);
+            } catch (e) {
+                console.error(`[settleDue] ${docSnap.id} 결산 실패:`, e.message);
+            }
+        }
+    }
+);

@@ -254,6 +254,15 @@
                         <div style="font-size:13px;font-weight:700;color:var(--text-secondary,#555);margin-bottom:8px;">👥 친구 오늘 현황</div>
                         <div id="friend-activity-list"></div>
                     </div>
+
+                    <!-- 소셜 챌린지 카드 -->
+                    <div id="social-challenge-card" style="display:none;margin:12px 0 4px;padding:12px 14px;background:var(--card-bg,#fff);border-radius:14px;border:1px solid var(--border,#e8e8e8);">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                            <div style="font-size:13px;font-weight:700;color:var(--text-secondary,#555);">🏆 소셜 챌린지</div>
+                            <button onclick="openCreateChallengeModal()" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid #7C4DFF;color:#7C4DFF;background:transparent;cursor:pointer;">+ 새 챌린지</button>
+                        </div>
+                        <div id="social-challenge-list"><div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0;">진행 중인 챌린지가 없어요</div></div>
+                    </div>
                     <div class="group-challenge-section" id="group-challenge-section" style="display:none;">
                         <div class="group-challenge-title">👥 이번 달 커뮤니티 현황</div>
                         <div id="group-challenge-content"></div>
@@ -1197,6 +1206,83 @@
                 <div style="font-size:11px; color:#999; margin-top:7px;">스캔하면 단톡방 바로 입장</div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ===== 소셜 챌린지 생성 모달 ===== -->
+    <div id="create-challenge-modal" onclick="if(event.target===this)closeCreateChallengeModal()"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:340px;max-height:90vh;overflow-y:auto;position:relative;">
+            <button onclick="closeCreateChallengeModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">✕</button>
+            <h3 style="margin:0 0 18px;font-size:16px;font-weight:700;">🏆 새 소셜 챌린지</h3>
+
+            <!-- 챌린지 유형 -->
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">챌린지 유형</div>
+                <div style="display:flex;gap:8px;">
+                    <button id="type-group" onclick="selectChallengeType('group_goal')"
+                        style="flex:1;padding:10px 8px;border-radius:12px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+                        👥 단체 목표
+                    </button>
+                    <button id="type-competition" onclick="selectChallengeType('competition')"
+                        style="flex:1;padding:10px 8px;border-radius:12px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;font-weight:600;cursor:pointer;">
+                        ⚔️ 1:1 경쟁
+                    </button>
+                </div>
+                <div id="type-desc" style="font-size:11px;color:#888;margin-top:6px;padding:0 2px;">
+                    전원 70% 이상 달성 시 습관 포인트 +20% 보너스
+                </div>
+            </div>
+
+            <!-- 친구 선택 -->
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">친구 선택 <span id="friend-select-hint" style="font-weight:400;color:#aaa;">(최대 3명)</span></div>
+                <div id="challenge-friend-list" style="display:flex;flex-direction:column;gap:6px;">
+                    <div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">친구 목록 로딩 중...</div>
+                </div>
+            </div>
+
+            <!-- 기간 선택 -->
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">기간</div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="selectDuration(3)" id="dur-3"
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">3일</button>
+                    <button onclick="selectDuration(7)" id="dur-7"
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">7일</button>
+                    <button onclick="selectDuration(14)" id="dur-14"
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">14일</button>
+                </div>
+            </div>
+
+            <!-- 스테이크 (경쟁 모드만) -->
+            <div id="stake-section" style="display:none;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">스테이크 (최대 200P)</div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="number" id="stake-input" min="10" max="200" step="10" value="50"
+                        style="flex:1;padding:10px;border-radius:10px;border:1px solid #e8e8e8;font-size:15px;text-align:center;background:var(--input-bg,#f8f8f8);">
+                    <span style="font-size:13px;color:#666;white-space:nowrap;">P 걸기</span>
+                </div>
+                <div style="font-size:11px;color:#F57C00;margin-top:4px;">이기면 상대 스테이크 + 기간 포인트 30% 보너스 획득</div>
+            </div>
+
+            <button onclick="submitCreateChallenge()" id="create-challenge-btn"
+                style="width:100%;padding:14px;border-radius:14px;border:none;background:#7C4DFF;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">
+                챌린지 시작하기 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== 챌린지 초대 응답 모달 ===== -->
+    <div id="challenge-invite-modal" onclick="if(event.target===this)closeChallengeInviteModal()"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:320px;position:relative;">
+            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">🏆 챌린지 초대</h3>
+            <div id="challenge-invite-info" style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;"></div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="respondChallenge(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
+                <button onclick="respondChallenge(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#7C4DFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
+            </div>
         </div>
     </div>
 

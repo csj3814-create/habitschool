@@ -183,6 +183,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ===== Social Challenges Collection =====
+    match /social_challenges/{challengeId} {
+      allow read: if isSignedIn() &&
+        (request.auth.uid in resource.data.participants ||
+         request.auth.uid in resource.data.invitees);
+      allow create: if isSignedIn() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      allow update, delete: if false;
+    }
+
     // 기본 규칙: 모든 접근 거부
     match /{document=**} {
       allow read, write: if false;
