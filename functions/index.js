@@ -812,6 +812,9 @@ exports.awardPoints = onDocumentWritten(
 
                 // 추천인 마일스톤 보상
                 await checkReferralMilestone(userId, streak);
+
+                // 스트릭 달성 시 친구 알림
+                await notifyFriendsOnStreak(userId, streak, logDate, after.userName);
             }
         } catch (err) {
             console.error("awardPoints 오류:", err);
@@ -840,6 +843,45 @@ async function calculateStreak(userId, currentDate) {
         streak++;
     }
     return streak;
+}
+
+// 스트릭 달성 시 친구들에게 알림 (3, 7, 14, 30일 마일스톤)
+async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
+    const MILESTONES = [3, 7, 14, 30];
+    if (!MILESTONES.includes(streak)) return;
+
+    try {
+        // 중복 알림 방지: daily_log에 이미 보낸 milestone 기록
+        const logRef = db.doc(`daily_logs/${userId}_${logDate}`);
+        const logSnap = await logRef.get();
+        const notifiedDays = logSnap.exists() ? (logSnap.data().streakNotifiedDays || []) : [];
+        if (notifiedDays.includes(streak)) return; // 이미 발송
+        await logRef.set({ streakNotifiedDays: admin.firestore.FieldValue.arrayUnion(streak) }, { merge: true });
+
+        // 친구 목록 조회
+        const userSnap = await db.doc(`users/${userId}`).get();
+        if (!userSnap.exists()) return;
+        const friends = userSnap.data().friends || [];
+        if (friends.length === 0) return;
+
+        const displayName = userName || userSnap.data().customDisplayName || userSnap.data().displayName || '친구';
+        const batch = db.batch();
+        friends.forEach(friendId => {
+            const notifRef = db.collection('notifications').doc();
+            batch.set(notifRef, {
+                postOwnerId: friendId,
+                type: 'friend_streak',
+                fromUserId: userId,
+                fromUserName: displayName,
+                streakDays: streak,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+        });
+        await batch.commit();
+        console.log(`notifyFriendsOnStreak: ${displayName} ${streak}일 달성 → ${friends.length}명 알림`);
+    } catch (e) {
+        console.warn('notifyFriendsOnStreak 오류:', e.message);
+    }
 }
 
 // 추천인 마일스톤 보상 (3일: 추천인 +500P, 7일: 신규 유저 +300P)

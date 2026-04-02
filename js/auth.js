@@ -1,7 +1,7 @@
 // 인증 관리 모듈
 import { auth, db } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
@@ -207,12 +207,14 @@ export function setupAuthListener(callbacks) {
 
             // 백그라운드: 사용자 문서 로드 (닉네임/코인/프로필 업데이트용)
             const userRef = doc(db, "users", user.uid);
-            // email + displayName을 Firestore에 저장 (관리자 화면 표시용)
-            setDoc(userRef, {
-                email: user.email || '',
-                displayName: user.displayName || '사용자'
-            }, { merge: true }).catch(() => {});
-            getDoc(userRef).then(userDoc => {
+            getDoc(userRef).then(async userDoc => {
+                // email + displayName 저장 (관리자 화면 표시용), 신규 가입 시 createdAt 추가
+                const updateData = {
+                    email: user.email || '',
+                    displayName: user.displayName || '사용자'
+                };
+                if (!userDoc.exists()) updateData.createdAt = serverTimestamp();
+                setDoc(userRef, updateData, { merge: true }).catch(() => {});
                 if (!userDoc.exists()) return;
                 const ud = userDoc.data();
 

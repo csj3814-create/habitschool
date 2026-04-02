@@ -2888,6 +2888,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
         }
 
+        // 친구 오늘 활동 카드 (백그라운드 로드)
+        renderFriendActivityCard(user, todayStr).catch(() => {});
+        // 친구 스트릭 달성 알림
+        checkFriendStreakNotifications(user.uid).catch(() => {});
+
     } catch (error) {
         console.error('대시보드 렌더링 오류:', error);
     }
@@ -2988,6 +2993,91 @@ function renderGroupChallengeFromData(s) {
             <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
         </div>
     `;
+}
+
+async function renderFriendActivityCard(user, todayStr) {
+    const card = document.getElementById('friend-activity-card');
+    const list = document.getElementById('friend-activity-list');
+    if (!card || !list) return;
+
+    try {
+        // 내 friends 배열 읽기
+        const mySnap = await getDoc(doc(db, 'users', user.uid));
+        const friends = mySnap.exists() ? (mySnap.data().friends || []) : [];
+        if (friends.length === 0) { card.style.display = 'none'; return; }
+
+        // 각 친구의 오늘 daily_log + 이름 병렬 조회
+        const results = await Promise.all(friends.map(async fid => {
+            const [logSnap, userSnap] = await Promise.all([
+                getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`)),
+                getDoc(doc(db, 'users', fid))
+            ]);
+            const ud = userSnap.exists() ? userSnap.data() : {};
+            const name = ud.customDisplayName || ud.displayName || fid.slice(0, 8);
+            const streak = ud.currentStreak || 0;
+            if (!logSnap.exists()) return { name, streak, diet: false, exercise: false, mind: false };
+            const ap = logSnap.data().awardedPoints || {};
+            return {
+                name,
+                streak,
+                diet: (ap.dietPoints || 0) > 0,
+                exercise: (ap.exercisePoints || 0) > 0,
+                mind: (ap.mindPoints || 0) > 0
+            };
+        }));
+
+        list.innerHTML = results.map(r => {
+            const checks = [
+                r.diet ? '<span style="color:#4CAF50;">🥗</span>' : '<span style="opacity:.3;">🥗</span>',
+                r.exercise ? '<span style="color:#2196F3;">🏃</span>' : '<span style="opacity:.3;">🏃</span>',
+                r.mind ? '<span style="color:#9C27B0;">🌙</span>' : '<span style="opacity:.3;">🌙</span>'
+            ].join(' ');
+            const streakBadge = r.streak >= 2 ? `<span style="font-size:11px;color:#F57C00;margin-left:6px;">🔥 ${r.streak}일</span>` : '';
+            return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border,#f0f0f0);font-size:13px;">
+                <span style="font-weight:600;">${escapeHtml(r.name)}${streakBadge}</span>
+                <span>${checks}</span>
+            </div>`;
+        }).join('');
+
+        card.style.display = 'block';
+    } catch (e) {
+        console.warn('친구 활동 카드 오류:', e.message);
+        card.style.display = 'none';
+    }
+}
+
+// 친구 스트릭 달성 알림 (notifications 컬렉션에서 24시간 이내 미확인 알림 토스트)
+async function checkFriendStreakNotifications(uid) {
+    try {
+        const storageKey = `friendStreakNotifSeen_${uid}`;
+        const lastSeen = parseInt(localStorage.getItem(storageKey) || '0');
+        const since = new Date(Math.max(lastSeen, Date.now() - 48 * 60 * 60 * 1000)); // 최대 48시간
+
+        const snap = await getDocs(query(
+            collection(db, 'notifications'),
+            where('postOwnerId', '==', uid),
+            where('type', '==', 'friend_streak'),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+        ));
+
+        const newNotifs = [];
+        snap.forEach(d => {
+            const data = d.data();
+            const ts = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0;
+            if (ts > lastSeen) newNotifs.push(data);
+        });
+
+        if (newNotifs.length === 0) return;
+
+        // 가장 최근 알림 하나만 토스트로 표시
+        const n = newNotifs[0];
+        showToast(`🔥 ${n.fromUserName}님이 ${n.streakDays}일 연속 달성했어요!`);
+        localStorage.setItem(storageKey, String(Date.now()));
+    } catch (e) {
+        // 인덱스 없으면 조용히 무시 (비핵심 기능)
+        console.warn('친구 스트릭 알림 조회 오류:', e.message);
+    }
 }
 
 async function renderGroupChallenge() {
