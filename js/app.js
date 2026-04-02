@@ -7350,14 +7350,17 @@ window.selectChallengeType = function(type) {
         btnComp.style.color       = type === 'competition' ? '#fff' : '#666';
     }
 
+    const durHint = document.getElementById('duration-hint');
     if (type === 'group_goal') {
         if (desc) { desc.textContent = '전원 70% 이상 달성 시 습관 포인트 +20% 보너스'; desc.style.color = '#F57C00'; }
         if (stakeSection) stakeSection.style.display = 'none';
         if (hint) hint.textContent = '(최대 3명)';
+        if (durHint) durHint.style.display = 'block';
     } else {
         if (desc) { desc.textContent = '이기면 상대 스테이크 획득 + 기간 포인트 30% 보너스'; desc.style.color = '#F57C00'; }
         if (stakeSection) stakeSection.style.display = 'block';
         if (hint) hint.textContent = '(1명만 선택)';
+        if (durHint) durHint.style.display = 'none';
     }
     renderChallengeFriendList();
 };
