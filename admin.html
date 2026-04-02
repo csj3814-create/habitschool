@@ -279,6 +279,14 @@
                 <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="pointsPage(1)" id="points-next">다음 ▶</button>
             </div>
         </div>
+        <div class="box" style="margin-top:16px;">
+            <h3>🎁 특수 포인트 지급 내역</h3>
+            <p style="font-size:12px;color:#888;margin-top:0;">MVP 보상, 챌린지, 가입 축하, 초대 이벤트</p>
+            <table style="font-size:12px;">
+                <thead><tr><th>날짜</th><th>회원</th><th>유형</th><th>지급액</th></tr></thead>
+                <tbody id="special-points-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
+            </table>
+        </div>
         <div class="two-col">
             <div class="box">
                 <h3>⚙️ 마이닝 레이트</h3>
@@ -853,6 +861,76 @@
         await loadPointsPage();
     };
 
+    async function loadSpecialPoints(usersQ) {
+        const tbody = document.getElementById('special-points-body');
+        try {
+            const rows = [];
+
+            // 1. MVP 보상 (monthly_rewards)
+            const mvpSnap = await getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(20)));
+            mvpSnap.forEach(doc => {
+                const d = doc.data();
+                const date = d.distributedAt ? new Date(d.distributedAt.seconds * 1000).toLocaleDateString('en-CA') : (d.month || '-');
+                const RANK_LABEL = ['🥇 MVP 1위', '🥈 MVP 2위', '🥉 MVP 3위'];
+                (d.winners || []).forEach((w, i) => {
+                    rows.push({ date, name: w.name || pointsUsersMap[w.userId] || w.userId?.slice(0,8), type: RANK_LABEL[i] || `MVP ${i+1}위`, points: w.reward || 0 });
+                });
+            });
+
+            // 2. 챌린지 보상 (blockchain_transactions type=challenge_settlement)
+            const chalSnap = await getDocs(query(collection(db, 'blockchain_transactions'),
+                where('type', '==', 'challenge_settlement'), orderBy('updatedAt', 'desc'), limit(50)));
+            chalSnap.forEach(doc => {
+                const d = doc.data();
+                if (!d.rewardPoints || d.rewardPoints <= 0) return;
+                const date = d.date || (d.updatedAt ? new Date(d.updatedAt.seconds * 1000).toLocaleDateString('en-CA') : '-');
+                const name = pointsUsersMap[d.userId] || d.userId?.slice(0,8) || '-';
+                const tier = d.challengeId?.includes('30d') ? '30일' : d.challengeId?.includes('7d') ? '7일' : '3일';
+                rows.push({ date, name, type: `🏅 챌린지 완료 (${tier})`, points: d.rewardPoints });
+            });
+
+            // 3. 가입 축하 + 초대 이벤트 (users 컬렉션 플래그)
+            usersQ.forEach(u => {
+                const d = u.data();
+                const uname = d.customDisplayName || d.displayName || u.id.slice(0, 8);
+                const createdDate = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('en-CA') : '-';
+                if (d.welcomeBonusGiven) {
+                    rows.push({ date: createdDate, name: uname, type: '🎉 가입 축하', points: 200 });
+                }
+                if (d.referredBy) {
+                    rows.push({ date: createdDate, name: uname, type: '👥 초대 수락', points: 200 });
+                }
+                if (d.referralDay3BonusGiven) {
+                    const referrerName = pointsUsersMap[d.referredBy] || d.referredBy?.slice(0,8) || '?';
+                    rows.push({ date: '-', name: referrerName, type: `👥 초대 3일 달성 (${uname})`, points: 500 });
+                }
+                if (d.referralDay7BonusGiven) {
+                    rows.push({ date: '-', name: uname, type: '👥 초대 7일 달성', points: 300 });
+                }
+            });
+
+            // 날짜 내림차순 정렬 (날짜 없는 항목은 맨 아래)
+            rows.sort((a, b) => {
+                if (a.date === '-' && b.date === '-') return 0;
+                if (a.date === '-') return 1;
+                if (b.date === '-') return -1;
+                return b.date.localeCompare(a.date);
+            });
+
+            tbody.innerHTML = rows.length === 0
+                ? '<tr><td colspan="4" style="color:#999;">내역 없음</td></tr>'
+                : rows.map(r => `<tr>
+                    <td>${escapeHtml(r.date)}</td>
+                    <td>${escapeHtml(r.name)}</td>
+                    <td>${escapeHtml(r.type)}</td>
+                    <td style="font-weight:600;color:#388E3C;text-align:center;">+${r.points.toLocaleString()}P</td>
+                </tr>`).join('');
+        } catch(e) {
+            console.error('특수 포인트 내역 조회 오류:', e);
+            tbody.innerHTML = `<tr><td colspan="4" style="color:#999;">오류: ${e.message}</td></tr>`;
+        }
+    }
+
     async function loadEconomy() {
         // TOP 20 (전체 사용자 클라이언트 정렬)
         const { usersQ } = await getData();
@@ -873,6 +951,9 @@
         // 포인트 지급 내역 (페이지네이션)
         pointsCursors = [null]; pointsCurrentPage = 0;
         await loadPointsPage();
+
+        // 특수 포인트 지급 내역
+        await loadSpecialPoints(usersQ);
 
         // Mining rate history
         try {
