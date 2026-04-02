@@ -268,24 +268,17 @@
             </div>
         </div>
         <div class="box" style="margin-top:16px;">
-            <h3>📋 포인트 지급 내역</h3>
+            <h3>📋 포인트 지급 내역 전체</h3>
+            <p style="font-size:12px;color:#888;margin-top:0;">일일 습관 + MVP 보상 + 챌린지 + 가입 축하 + 초대 이벤트 · 리액션(+1P)은 개별 로그 없이 직접 지급됨</p>
             <table style="font-size:12px;">
-                <thead><tr><th>날짜</th><th>회원</th><th style="color:#4CAF50;">식단</th><th style="color:#2196F3;">운동</th><th style="color:#9C27B0;">마음</th><th>합계</th></tr></thead>
-                <tbody id="points-log-body"><tr><td colspan="6">로딩 중...</td></tr></tbody>
+                <thead><tr><th>날짜</th><th>회원</th><th>유형</th><th style="text-align:center;">포인트</th></tr></thead>
+                <tbody id="all-points-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
             </table>
             <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
-                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="pointsPage(-1)" id="points-prev">◀ 이전</button>
-                <span id="points-page-label">1 페이지</span>
-                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="pointsPage(1)" id="points-next">다음 ▶</button>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="allPointsPage(-1)" id="all-points-prev" disabled>◀ 이전</button>
+                <span id="all-points-label">1 페이지</span>
+                <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="allPointsPage(1)" id="all-points-next">다음 ▶</button>
             </div>
-        </div>
-        <div class="box" style="margin-top:16px;">
-            <h3>🎁 특수 포인트 지급 내역</h3>
-            <p style="font-size:12px;color:#888;margin-top:0;">MVP 보상, 챌린지, 가입 축하, 초대 이벤트</p>
-            <table style="font-size:12px;">
-                <thead><tr><th>날짜</th><th>회원</th><th>유형</th><th>지급액</th></tr></thead>
-                <tbody id="special-points-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
-            </table>
         </div>
         <div class="two-col">
             <div class="box">
@@ -776,7 +769,6 @@
     const PAGE_SIZE_POINTS = 30;
     let top20AllRows = [], top20CurrentPage = 0;
     let txCursors = [null], txCurrentPage = 0;
-    let pointsCursors = [null], pointsCurrentPage = 0;
     let pointsUsersMap = {};
 
     function renderTop20() {
@@ -825,111 +817,111 @@
         await loadTxPage();
     };
 
-    async function loadPointsPage() {
-        try {
-            const cursor = pointsCursors[pointsCurrentPage];
-            const q = cursor
-                ? query(collection(db,'daily_logs'), orderBy('date','desc'), startAfter(cursor), limit(PAGE_SIZE_POINTS * 3))
-                : query(collection(db,'daily_logs'), orderBy('date','desc'), limit(PAGE_SIZE_POINTS * 3));
-            const snap = await getDocs(q);
-            const filtered = snap.docs
-                .map(d => ({ _doc: d, id: d.id, ...d.data() }))
-                .filter(r => { const ap=r.awardedPoints||{}; return (ap.dietPoints||0)+(ap.exercisePoints||0)+(ap.mindPoints||0) > 0; })
-                .slice(0, PAGE_SIZE_POINTS);
-            document.getElementById('points-log-body').innerHTML = filtered.length === 0
-                ? '<tr><td colspan="6" style="color:#999;">내역 없음</td></tr>'
-                : filtered.map(r => {
-                    const ap=r.awardedPoints||{};
-                    const diet=ap.dietPoints||0, ex=ap.exercisePoints||0, mind=ap.mindPoints||0, total=diet+ex+mind;
-                    const name = pointsUsersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
-                    return `<tr><td>${escapeHtml(r.date||'-')}</td><td>${escapeHtml(name)}</td><td style="color:#4CAF50;text-align:center;">${diet?'+'+diet+'P':'-'}</td><td style="color:#2196F3;text-align:center;">${ex?'+'+ex+'P':'-'}</td><td style="color:#9C27B0;text-align:center;">${mind?'+'+mind+'P':'-'}</td><td style="font-weight:600;text-align:center;">+${total}P</td></tr>`;
-                }).join('');
-            // 다음 페이지 커서: 마지막 doc
-            if (!snap.empty && snap.docs.length > 0) {
-                pointsCursors[pointsCurrentPage+1] = snap.docs[snap.docs.length-1];
-            }
-            document.getElementById('points-page-label').textContent = `${pointsCurrentPage+1} 페이지`;
-            document.getElementById('points-prev').disabled = pointsCurrentPage === 0;
-            document.getElementById('points-next').disabled = snap.empty || snap.docs.length < PAGE_SIZE_POINTS * 3;
-        } catch(e) { console.error('포인트 내역 조회 오류:', e); document.getElementById('points-log-body').innerHTML='<tr><td colspan="6" style="color:#999;">없음</td></tr>'; }
-    }
-    window.pointsPage = async function(dir) {
-        const next = pointsCurrentPage + dir;
-        if (next < 0) return;
-        if (dir > 0 && !pointsCursors[next]) return;
-        pointsCurrentPage = next;
-        await loadPointsPage();
-    };
+    // ── 통합 포인트 내역 ──────────────────────────────────
+    let allPointsRows = [];   // 전체 로우 (정렬 완료)
+    let allPointsPage = 0;
+    const ALL_POINTS_PAGE_SIZE = 30;
 
-    async function loadSpecialPoints(usersQ) {
-        const tbody = document.getElementById('special-points-body');
-        try {
-            const rows = [];
+    async function loadAllPointsData(usersQ) {
+        const rows = [];
 
-            // 1. MVP 보상 (monthly_rewards)
-            const mvpSnap = await getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(20)));
+        // 1. 일일 습관 포인트 (daily_logs)
+        try {
+            const snap = await getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500)));
+            snap.forEach(d => {
+                const r = d.data();
+                const ap = r.awardedPoints || {};
+                const diet = ap.dietPoints || 0, ex = ap.exercisePoints || 0, mind = ap.mindPoints || 0;
+                const total = diet + ex + mind;
+                if (total <= 0) return;
+                const name = pointsUsersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
+                const parts = [];
+                if (diet) parts.push(`🥗 식단 +${diet}P`);
+                if (ex)   parts.push(`🏃 운동 +${ex}P`);
+                if (mind) parts.push(`🌙 마음 +${mind}P`);
+                rows.push({ date: r.date || '-', name, type: parts.join(' / '), points: total, sort: r.date || '' });
+            });
+        } catch(e) { console.warn('daily_logs 조회 오류:', e.message); }
+
+        // 2. MVP 보상 (monthly_rewards)
+        try {
+            const mvpSnap = await getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(24)));
+            const RANK_LABEL = ['🥇 MVP 1위', '🥈 MVP 2위', '🥉 MVP 3위'];
             mvpSnap.forEach(doc => {
                 const d = doc.data();
                 const date = d.distributedAt ? new Date(d.distributedAt.seconds * 1000).toLocaleDateString('en-CA') : (d.month || '-');
-                const RANK_LABEL = ['🥇 MVP 1위', '🥈 MVP 2위', '🥉 MVP 3위'];
                 (d.winners || []).forEach((w, i) => {
-                    rows.push({ date, name: w.name || pointsUsersMap[w.userId] || w.userId?.slice(0,8), type: RANK_LABEL[i] || `MVP ${i+1}위`, points: w.reward || 0 });
+                    rows.push({ date, name: w.name || pointsUsersMap[w.userId] || w.userId?.slice(0,8) || '-',
+                        type: RANK_LABEL[i] || `MVP ${i+1}위`, points: w.reward || 0, sort: date });
                 });
             });
+        } catch(e) { console.warn('monthly_rewards 조회 오류:', e.message); }
 
-            // 2. 챌린지 보상 (blockchain_transactions type=challenge_settlement)
+        // 3. 챌린지 보상 (blockchain_transactions, 복합 인덱스 불필요하게 orderBy 제거)
+        try {
             const chalSnap = await getDocs(query(collection(db, 'blockchain_transactions'),
-                where('type', '==', 'challenge_settlement'), orderBy('updatedAt', 'desc'), limit(50)));
+                where('type', '==', 'challenge_settlement'), limit(200)));
             chalSnap.forEach(doc => {
                 const d = doc.data();
                 if (!d.rewardPoints || d.rewardPoints <= 0) return;
                 const date = d.date || (d.updatedAt ? new Date(d.updatedAt.seconds * 1000).toLocaleDateString('en-CA') : '-');
                 const name = pointsUsersMap[d.userId] || d.userId?.slice(0,8) || '-';
                 const tier = d.challengeId?.includes('30d') ? '30일' : d.challengeId?.includes('7d') ? '7일' : '3일';
-                rows.push({ date, name, type: `🏅 챌린지 완료 (${tier})`, points: d.rewardPoints });
+                rows.push({ date, name, type: `🏅 챌린지 완료 (${tier})`, points: d.rewardPoints, sort: date });
             });
+        } catch(e) { console.warn('blockchain_transactions 조회 오류:', e.message); }
 
-            // 3. 가입 축하 + 초대 이벤트 (users 컬렉션 플래그)
-            usersQ.forEach(u => {
-                const d = u.data();
-                const uname = d.customDisplayName || d.displayName || u.id.slice(0, 8);
-                const createdDate = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('en-CA') : '-';
-                if (d.welcomeBonusGiven) {
-                    rows.push({ date: createdDate, name: uname, type: '🎉 가입 축하', points: 200 });
-                }
-                if (d.referredBy) {
-                    rows.push({ date: createdDate, name: uname, type: '👥 초대 수락', points: 200 });
-                }
-                if (d.referralDay3BonusGiven) {
-                    const referrerName = pointsUsersMap[d.referredBy] || d.referredBy?.slice(0,8) || '?';
-                    rows.push({ date: '-', name: referrerName, type: `👥 초대 3일 달성 (${uname})`, points: 500 });
-                }
-                if (d.referralDay7BonusGiven) {
-                    rows.push({ date: '-', name: uname, type: '👥 초대 7일 달성', points: 300 });
-                }
-            });
+        // 4. 가입 축하 + 초대 이벤트 (users 플래그)
+        usersQ.forEach(u => {
+            const d = u.data();
+            const uname = d.customDisplayName || d.displayName || u.id.slice(0, 8);
+            const createdDate = d.createdAt ? new Date(d.createdAt.seconds * 1000).toLocaleDateString('en-CA') : '-';
+            if (d.welcomeBonusGiven)
+                rows.push({ date: createdDate, name: uname, type: '🎉 가입 축하', points: 200, sort: createdDate });
+            if (d.referredBy)
+                rows.push({ date: createdDate, name: uname, type: '👥 초대 수락', points: 200, sort: createdDate });
+            if (d.referralDay3BonusGiven) {
+                const referrerName = pointsUsersMap[d.referredBy] || d.referredBy?.slice(0,8) || '?';
+                rows.push({ date: '-', name: referrerName, type: `👥 초대 3일 달성 (${uname})`, points: 500, sort: '' });
+            }
+            if (d.referralDay7BonusGiven)
+                rows.push({ date: '-', name: uname, type: '👥 초대 7일 달성', points: 300, sort: '' });
+        });
 
-            // 날짜 내림차순 정렬 (날짜 없는 항목은 맨 아래)
-            rows.sort((a, b) => {
-                if (a.date === '-' && b.date === '-') return 0;
-                if (a.date === '-') return 1;
-                if (b.date === '-') return -1;
-                return b.date.localeCompare(a.date);
-            });
+        // 날짜 내림차순 정렬
+        rows.sort((a, b) => {
+            if (!a.sort && !b.sort) return 0;
+            if (!a.sort) return 1;
+            if (!b.sort) return -1;
+            return b.sort.localeCompare(a.sort);
+        });
 
-            tbody.innerHTML = rows.length === 0
-                ? '<tr><td colspan="4" style="color:#999;">내역 없음</td></tr>'
-                : rows.map(r => `<tr>
-                    <td>${escapeHtml(r.date)}</td>
-                    <td>${escapeHtml(r.name)}</td>
-                    <td>${escapeHtml(r.type)}</td>
-                    <td style="font-weight:600;color:#388E3C;text-align:center;">+${r.points.toLocaleString()}P</td>
-                </tr>`).join('');
-        } catch(e) {
-            console.error('특수 포인트 내역 조회 오류:', e);
-            tbody.innerHTML = `<tr><td colspan="4" style="color:#999;">오류: ${e.message}</td></tr>`;
-        }
+        return rows;
     }
+
+    function renderAllPoints() {
+        const tbody = document.getElementById('all-points-body');
+        const start = allPointsPage * ALL_POINTS_PAGE_SIZE;
+        const slice = allPointsRows.slice(start, start + ALL_POINTS_PAGE_SIZE);
+        tbody.innerHTML = slice.length === 0
+            ? '<tr><td colspan="4" style="color:#999;">내역 없음</td></tr>'
+            : slice.map(r => `<tr>
+                <td>${escapeHtml(r.date)}</td>
+                <td>${escapeHtml(r.name)}</td>
+                <td>${escapeHtml(r.type)}</td>
+                <td style="font-weight:600;color:#388E3C;text-align:center;">+${r.points.toLocaleString()}P</td>
+            </tr>`).join('');
+        document.getElementById('all-points-label').textContent = `${allPointsPage + 1} / ${Math.ceil(allPointsRows.length / ALL_POINTS_PAGE_SIZE) || 1} 페이지`;
+        document.getElementById('all-points-prev').disabled = allPointsPage === 0;
+        document.getElementById('all-points-next').disabled = start + ALL_POINTS_PAGE_SIZE >= allPointsRows.length;
+    }
+
+    window.allPointsPage = function(dir) {
+        const next = allPointsPage + dir;
+        if (next < 0 || next * ALL_POINTS_PAGE_SIZE >= allPointsRows.length) return;
+        allPointsPage = next;
+        renderAllPoints();
+    };
 
     async function loadEconomy() {
         // TOP 20 (전체 사용자 클라이언트 정렬)
@@ -948,12 +940,11 @@
         txCursors = [null]; txCurrentPage = 0;
         await loadTxPage();
 
-        // 포인트 지급 내역 (페이지네이션)
-        pointsCursors = [null]; pointsCurrentPage = 0;
-        await loadPointsPage();
-
-        // 특수 포인트 지급 내역
-        await loadSpecialPoints(usersQ);
+        // 통합 포인트 지급 내역
+        allPointsPage = 0;
+        document.getElementById('all-points-body').innerHTML = '<tr><td colspan="4" style="color:#999;">로딩 중...</td></tr>';
+        allPointsRows = await loadAllPointsData(usersQ);
+        renderAllPoints();
 
         // Mining rate history
         try {
