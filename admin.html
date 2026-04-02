@@ -300,8 +300,12 @@
             <div class="box">
                 <h3>🎁 월간 MVP 보상</h3>
                 <p style="font-size:13px;color:#666;margin-top:0;">매월 커뮤니티에 가장 열심히 참여한 회원 TOP3에게 포인트를 지급합니다.</p>
-                <button class="btn btn-primary" style="width:100%;margin-bottom:16px;" onclick="distributeMvp()">🏆 이번 달 MVP 보상 배포</button>
-                <div style="margin-top:16px;padding-top:14px;border-top:1px solid #eee;">
+                <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="distributeMvp()">🏆 지난 달 MVP 보상 배포</button>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;">
+                    <input type="month" id="mvp-custom-month" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+                    <button class="btn" style="background:#e8f5e9;color:#2E7D32;border:1px solid #c8e6c9;" onclick="distributeMvpForMonth()">특정 월 배포</button>
+                </div>
+                <div style="margin-top:4px;padding-top:14px;border-top:1px solid #eee;">
                     <div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">🗂 과거 커뮤니티 통계 백필</div>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <input type="month" id="backfill-month" style="flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;" placeholder="YYYY-MM">
@@ -934,6 +938,17 @@
             const res = await httpsCallable(fns, 'backfillCommunityStatsArchive')({ targetMonth });
             resultEl.textContent = `✅ ${targetMonth} 완료 — ${res.data.totalUsers}명, ${res.data.totalDays}일`;
         } catch(e) { resultEl.textContent = '❌ 오류: ' + e.message; }
+    };
+
+    window.distributeMvpForMonth = async function() {
+        const targetMonth = document.getElementById('mvp-custom-month').value;
+        if (!targetMonth) { alert('월을 선택해 주세요.'); return; }
+        if (!confirm(`${targetMonth} MVP 보상을 배포하시겠습니까?\n(이미 지급된 경우 중복 지급되지 않습니다)`)) return;
+        try {
+            await httpsCallable(fns, 'distributeMonthlyMvpReward')({ targetMonth });
+            alert(`✅ ${targetMonth} MVP 보상이 배포되었습니다.`);
+            tabLoaded['economy'] = false; loadEconomy();
+        } catch(e) { alert('오류: ' + e.message); }
     };
 
     window.distributeMvp = async function() {
