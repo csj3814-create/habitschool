@@ -1,6 +1,6 @@
 # 2026-04-02 세션 완료 보고
 
-> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료 (habitschool) · Render 자동 배포 (habitchatbot)
+> **상태**: ✅ 전체 완료 · main push · Firebase 배포 완료 (hosting + functions + firestore:indexes)
 
 ---
 
@@ -38,32 +38,57 @@
 - 중복 방지: `daily_logs.streakNotifiedDays` 배열로 마일스톤 기록
 - 클라이언트: 새 friend_streak 알림 toast 표시
 
-**Firestore 인덱스 추가** (`firestore.indexes.json`)
-- `notifications`: `postOwnerId ASC + type ASC + createdAt DESC`
+### 6. 소셜 챌린지 2단계: 단체 목표 + 1:1 경쟁 ✅
 
-### 6. auth.js createdAt 필드 추가 ✅
-- 첫 로그인 시 `createdAt: serverTimestamp()` 저장
-- 추후 소셜 챌린지 계정 나이 검증에 활용
+**Cloud Functions** (`functions/index.js`)
+- `createSocialChallenge`: 생성 + 쌍방 친구 확인 + 최소 5일 활동 이력 확인 + 포인트 락업
+- `respondSocialChallenge`: 수락(포인트 락업) / 거절. 전원 수락 → active 전환
+- `settleDueSocialChallenges`: 매일 00:10 KST 자동 결산 스케줄
 
-### 7. 어뷰징 안전장치 설계 ✅ (2단계 구현 시 적용)
+**어뷰징 안전장치 (전부 구현됨)**
 | 안전장치 | 효과 |
 |---|---|
 | 쌍방 친구 확인 | 부계정 일방 등록 방지 |
 | 최소 5일 활동 이력 | 신규 부계정 즉시 참가 차단 |
 | 양쪽 최소 1일 활동 | Stake Siphon 차단 |
 | 스테이크 최대 200P | 피해 규모 제한 |
-| createdAt 필드 | 계정 나이 추후 활용 |
 
-### 8. 카카오톡 챗봇 친구 추가 기능 ✅ (`habitchatbot`)
+**결산 로직**
+- 단체 목표: 전원 70%+ 달성 → +20% 습관 포인트 보너스
+- 경쟁 동점: 스테이크 양쪽 반환
+- 경쟁 한쪽 0일: 무효, 전액 반환 (어뷰징 차단)
+- 경쟁 승리: 상대 스테이크 + 기간 포인트 30% 보너스
 
-**신규 파일**: `commands/addFriend.js`
-- `!내코드`: 내 referralCode(6자리) 조회 → 친구에게 공유
-- `!친구 [코드]`: 코드로 상대방 조회 → `friends` 배열에 arrayUnion
-- 검증: 코드 형식(영숫자 6자), 자기자신 방지, 이미 친구 확인, 최대 3명 제한
+**Firestore** (`firestore.rules`, `firestore.indexes.json`)
+- `social_challenges` 컬렉션 읽기/생성 규칙 추가
+- `status+endDate`, `creatorId+status` 복합 인덱스 추가
 
-**수정 파일**: `routes/kakao.js`, `routes/messengerbot.js`
-- import + 라우팅 추가
-- 도움말(HELP_MSG)에 `!내코드`, `!친구 코드` 항목 추가
+**프론트엔드** (`js/app.js`, `index.html`)
+- 대시보드: 소셜 챌린지 카드 (친구 있을 때만 표시)
+- 생성 모달: 유형(단체/경쟁) → 친구 선택 → 기간(3/7/14일) → 스테이크(50/100/200P) → 생성
+- 초대 응답 모달: 수락/거절
+- 결산 알림 토스트: win/loss/draw/void/success/missed 각각 메시지
+- UI 개선: 설명 텍스트 주황색, 기간별 성공 기준 안내, 1:1 경쟁에서 성공 기준 문구 숨김
+
+### 7. 카카오톡 챗봇 친구 추가 기능 ✅ (`habitchatbot`)
+- `commands/addFriend.js`: `!내코드`, `!친구 [코드]` 핸들러
+- `routes/kakao.js`, `routes/messengerbot.js`: 라우팅 + 도움말 업데이트
+- Render.com 자동 배포 완료
+
+### 8. auth.js createdAt 필드 추가 ✅
+- 첫 로그인 시 `createdAt: serverTimestamp()` 저장
+- 추후 소셜 챌린지 계정 나이 검증에 활용
+
+---
+
+## 배포 현황
+
+| 대상 | 배포 방법 | 상태 |
+|------|-----------|------|
+| habitschool hosting | `firebase deploy --only hosting,functions` | ✅ |
+| habitschool functions | 동상 | ✅ (신규: createSocialChallenge, respondSocialChallenge, settleDueSocialChallenges) |
+| firestore indexes | `firebase deploy --only firestore:indexes` | ✅ |
+| habitchatbot | git push → Render 자동 배포 | ✅ |
 
 ---
 
@@ -72,12 +97,14 @@
 ### habitschool
 | 커밋 | 내용 |
 |------|------|
-| `(backfill)` | feat: 커뮤니티 통계 백필 Cloud Function + 관제탑 UI |
-| `(mvp)` | feat: 관제탑 특정 월 MVP 배포 버튼 |
-| `(hbt-limit)` | fix: HBT 일일 변환 한도 5000 → 12000 |
-| `(points-table)` | feat: 관제탑 포인트 지급 내역 통합 테이블 |
-| `(social-1)` | feat: 소셜 1단계 — 친구 활동 카드 + 스트릭 알림 |
-| `(auth-createdat)` | feat: auth.js 첫 로그인 시 createdAt 저장 |
+| `0dca7be` | fix: 1:1 경쟁 모드에서 기간 성공 기준 문구 숨김 |
+| `dedbe78` | fix: 챌린지 생성 모달 UI 개선 |
+| `9d789f7` | feat: 소셜 챌린지 2단계 — 단체 목표 + 1:1 경쟁 |
+| `c886cff` | feat: 소셜 기능 1단계 — 친구 오늘 활동 카드 + 스트릭 달성 알림 |
+| `a27b5d8` | refactor: 포인트 지급 내역 통합 테이블로 개편 |
+| `661e3f6` | feat: 일일 HBT 변환 한도 5000 → 12000으로 상향 |
+| `26d4d1f` | feat: admin MVP 보상 특정 월 직접 배포 기능 추가 |
+| `b964e27` | feat: 과거 커뮤니티 통계 백필 기능 추가 |
 
 ### habitchatbot
 | 커밋 | 내용 |
@@ -86,54 +113,69 @@
 
 ---
 
-## 다음 단계: 소셜 챌린지 2단계 (미착수)
+# 다음 세션: BSC 메인넷 출시
 
-### 구현 범위
-1. **Cloud Functions** (`functions/index.js`)
-   - `createSocialChallenge` — 챌린지 생성 + 초대 알림
-   - `respondSocialChallenge` — 수락(포인트 락업) / 거절
-   - `settleSocialChallenge` — 결산 로직
-   - `settleDueSocialChallenges` — 매일 00:10 KST 자동 결산 스케줄
+> **준비물**: Keystone Pro 3 하드웨어 지갑
 
-2. **Firestore** (`firestore.rules`, `firestore.indexes.json`)
-   - `social_challenges` 컬렉션 읽기/쓰기 규칙
+## 사전 준비 체크리스트
 
-3. **프론트엔드** (`js/app.js`, `index.html`)
-   - 챌린지 생성 UI (단체 목표 / 1:1 경쟁 선택)
-   - 초대 수락/거절 UI
-   - 진행 중 챌린지 현황 카드
-   - 결산 결과 표시
+| # | 항목 | 상태 | 비고 |
+|---|------|------|------|
+| 1 | Keystone Pro 3 — Deployer 주소 확인 | ⬜ | ETH 계정 주소 메모 |
+| 2 | Safe 멀티시그 지갑 생성 (리저브 30M용) | ⬜ | https://app.safe.global → BSC 선택, 2/3 서명 |
+| 3 | Deployer 지갑에 BNB 충전 | ⬜ | 약 0.01 BNB (≒$5 미만) 이면 충분 |
+| 4 | Slither 보안 감사 실행 | ⬜ | `pip install slither-analyzer && slither .` |
+| 5 | BSC 메인넷 컨트랙트 배포 | ⬜ | deploy.js에 Safe 주소 반영 후 실행 |
+| 6 | BscScan 컨트랙트 검증 | ⬜ | `npx hardhat verify --network bsc ...` |
+| 7 | functions/index.js 메인넷 주소로 전환 | ⬜ | HABIT_ADDRESS, RPC_URL, CHAIN_ID 변경 |
+| 8 | blockchain-config.js 주소 업데이트 | ⬜ | mainnetAddress 필드 |
+| 9 | Firebase Functions 재배포 | ⬜ | `firebase deploy --only functions` |
+| 10 | 소액 mint 테스트 | ⬜ | 100P → HBT 변환 실제 트랜잭션 확인 |
+| 11 | 모니터링 알림 설정 | ⬜ | BscScan 알림 등록 |
 
-### Firestore 구조
+## 메인넷 전환 시 변경할 코드
+
+**`functions/index.js`**
+```javascript
+// 현재 (BSC 테스트넷)
+const HABIT_ADDRESS   = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
+const STAKING_ADDRESS = "0x7e8c29699F382B553891f853299e615257491F9D";
+const RPC_URL  = "https://data-seed-prebsc-1-s1.binance.org:8545/";
+const CHAIN_ID = 97;
+const EXPLORER_URL = "https://testnet.bscscan.com";
+
+// 변경 후 (BSC 메인넷)
+const HABIT_ADDRESS   = "0x배포_후_기록";
+const STAKING_ADDRESS = "0x배포_후_기록";
+const RPC_URL  = "https://bsc-dataseed.binance.org/";
+const CHAIN_ID = 56;
+const EXPLORER_URL = "https://bscscan.com";
 ```
-social_challenges/{challengeId}
-{
-  type: 'group_goal' | 'competition',
-  status: 'pending' | 'active' | 'settled' | 'cancelled',
-  creatorId, invitees[], participants[],
-  durationDays: 3 | 7 | 14,
-  startDate, endDate, expiresAt (createdAt + 48h),
-  targetCompletionPct: 0.7,      // 단체 목표
-  stakePoints, stakes: {uid: N}, // 경쟁 모드
-  results: {uid: {habitPoints, bonusPoints, outcome}}
+
+**`contracts/hardhat.config.js`**
+```javascript
+bsc: {
+  url: "https://bsc-dataseed.binance.org/",
+  chainId: 56,
+  accounts: [process.env.DEPLOYER_PRIVATE_KEY]  // ← Keystone → MetaMask export
 }
 ```
 
-### 보상 구조
-| 케이스 | 결과 |
-|---|---|
-| 단체 목표 — 전원 70%+ 달성 | 각자 +20% of 기간 습관 포인트 |
-| 단체 목표 — 1명이라도 미달 | 패널티 없음 |
-| 경쟁 승리 | 스테이크 회수 + 상대 스테이크 + 기간 포인트 30% 보너스 |
-| 경쟁 패배 | 스테이크 몰수 |
-| 경쟁 동점 | 양쪽 스테이크 반환, 보너스 없음 |
+**`contracts/scripts/deploy.js`**
+```javascript
+// reserveWallet을 Safe 멀티시그 주소로 변경
+const reserveWallet = "0xSafe_멀티시그_주소";
+```
+
+## 주의사항
+- Keystone Private Key는 절대 코드/파일에 저장 금지
+- 배포 전 `contracts/.env`의 DEPLOYER_PRIVATE_KEY 확인 후 사용, 완료 후 즉시 삭제
+- 멀티시그 없이 30M 토큰 단일 지갑 보관 절대 금지
+- 메인넷 배포 후 테스트넷 컨트랙트 주소와 혼용 주의
 
 ---
 
-## 기존 미완료 항목 (이전 세션 이월)
-
-### 🔴 안정성
-- [ ] FCM 스케줄 함수 실행 로그 확인 (Cloud Scheduler)
+## 기존 미완료 항목 (낮은 우선순위)
 
 ### 🟡 사용자 경험
 - [ ] 관제탑 신고 처리 UI (승인/반려/처리 완료)
@@ -142,8 +184,3 @@ social_challenges/{challengeId}
 ### 🟢 낮은 우선순위
 - [ ] CDN SRI 해시 추가 (ethers.js, html2canvas, exif-js)
 - [ ] 갤러리 콘텐츠 관리 (관제탑에서 게시물 직접 삭제)
-
-### 🔵 메인넷 (별도 세션)
-- [ ] 테스트넷 전체 플로우 검증
-- [ ] 메인넷 컨트랙트 배포
-- [ ] 메인넷 모니터링 체계 구축
