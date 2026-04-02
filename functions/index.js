@@ -44,7 +44,7 @@ const CHAIN_ID = 97;
 const EXPLORER_URL = "https://testnet.bscscan.com";
 
 // 일일 변환 한도
-const MAX_DAILY_HBT = 5000;
+const MAX_DAILY_HBT = 12000;
 const MIN_POINTS = 100;
 
 /**
