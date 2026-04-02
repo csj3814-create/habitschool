@@ -7275,12 +7275,14 @@ window.openCreateChallengeModal = async function() {
     // 상태 초기화
     _challengeState.type = 'group_goal';
     _challengeState.duration = 3;
+    _challengeState.stake = 50;
     _challengeState.selectedFriends = [];
 
     // 친구 목록 렌더링
     renderChallengeFriendList();
     selectChallengeType('group_goal');
     selectDuration(3);
+    selectStake(50);
 
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -7337,20 +7339,25 @@ window.selectChallengeType = function(type) {
     const stakeSection = document.getElementById('stake-section');
     const hint = document.getElementById('friend-select-hint');
 
-    if (btnGroup && btnComp) {
-        if (type === 'group_goal') {
-            btnGroup.style.cssText += ';border-color:#7C4DFF;background:#7C4DFF;color:#fff;';
-            btnComp.style.cssText += ';border-color:#e8e8e8;background:transparent;color:#666;';
-            if (desc) desc.textContent = '전원 70% 이상 달성 시 습관 포인트 +20% 보너스';
-            if (stakeSection) stakeSection.style.display = 'none';
-            if (hint) hint.textContent = '(최대 3명)';
-        } else {
-            btnComp.style.cssText += ';border-color:#7C4DFF;background:#7C4DFF;color:#fff;';
-            btnGroup.style.cssText += ';border-color:#e8e8e8;background:transparent;color:#666;';
-            if (desc) desc.textContent = '이기면 상대 스테이크 획득 + 기간 포인트 30% 보너스';
-            if (stakeSection) stakeSection.style.display = 'block';
-            if (hint) hint.textContent = '(1명만 선택)';
-        }
+    if (btnGroup) {
+        btnGroup.style.borderColor = type === 'group_goal' ? '#7C4DFF' : '#e8e8e8';
+        btnGroup.style.background  = type === 'group_goal' ? '#7C4DFF' : 'transparent';
+        btnGroup.style.color       = type === 'group_goal' ? '#fff' : '#666';
+    }
+    if (btnComp) {
+        btnComp.style.borderColor = type === 'competition' ? '#7C4DFF' : '#e8e8e8';
+        btnComp.style.background  = type === 'competition' ? '#7C4DFF' : 'transparent';
+        btnComp.style.color       = type === 'competition' ? '#fff' : '#666';
+    }
+
+    if (type === 'group_goal') {
+        if (desc) { desc.textContent = '전원 70% 이상 달성 시 습관 포인트 +20% 보너스'; desc.style.color = '#F57C00'; }
+        if (stakeSection) stakeSection.style.display = 'none';
+        if (hint) hint.textContent = '(최대 3명)';
+    } else {
+        if (desc) { desc.textContent = '이기면 상대 스테이크 획득 + 기간 포인트 30% 보너스'; desc.style.color = '#F57C00'; }
+        if (stakeSection) stakeSection.style.display = 'block';
+        if (hint) hint.textContent = '(1명만 선택)';
     }
     renderChallengeFriendList();
 };
@@ -7361,6 +7368,33 @@ window.selectDuration = function(days) {
         const btn = document.getElementById(`dur-${d}`);
         if (!btn) return;
         if (d === days) {
+            btn.style.borderColor = '#7C4DFF';
+            btn.style.background = '#7C4DFF';
+            btn.style.color = '#fff';
+            btn.style.fontWeight = '600';
+        } else {
+            btn.style.borderColor = '#e8e8e8';
+            btn.style.background = 'transparent';
+            btn.style.color = '#666';
+            btn.style.fontWeight = '400';
+        }
+    });
+    // 기간별 성공 기준 안내 (단체 목표: 70% 반올림)
+    const hint = document.getElementById('duration-hint');
+    if (hint) {
+        const needed = Math.ceil(days * 0.7);
+        hint.textContent = `${days}일 중 ${needed}일 이상 기록 시 성공`;
+    }
+};
+
+window.selectStake = function(points) {
+    _challengeState.stake = points;
+    const stakeInput = document.getElementById('stake-input');
+    if (stakeInput) stakeInput.value = points;
+    [50, 100, 200].forEach(p => {
+        const btn = document.getElementById(`stake-${p}`);
+        if (!btn) return;
+        if (p === points) {
             btn.style.borderColor = '#7C4DFF';
             btn.style.background = '#7C4DFF';
             btn.style.color = '#fff';
