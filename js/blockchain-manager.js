@@ -35,8 +35,9 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, app } from './firebase-config.js';
+import { auth, db, functions, FIREBASE_REGION } from './firebase-config.js';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
 import { checkRateLimit } from './security.js';
@@ -53,21 +54,13 @@ let _functionsInitialized = false;
 async function ensureFunctions() {
     if (_functionsInitialized) return;
     try {
-        const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-        const functions = getFunctions(app, 'asia-northeast3');
-        
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            connectFunctionsEmulator(functions, 'localhost', 5001);
-            console.log('🛠️ Functions 에뮬레이터 연결');
-        }
-        
         mintHBTFunction = httpsCallable(functions, 'mintHBT');
         getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
         getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
         startChallengeFunction = httpsCallable(functions, 'startChallenge');
         prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
         _functionsInitialized = true;
-        console.log('✅ Cloud Functions 초기화 완료');
+        console.log(`✅ Cloud Functions 초기화 완료 (${FIREBASE_REGION})`);
     } catch (e) {
         console.error('⚠️ Cloud Functions 초기화 실패:', e.message);
     }
@@ -767,8 +760,6 @@ export async function settleExpiredChallenges() {
                     // CF를 통해 온체인 소각 처리 (CF가 Firestore 삭제도 처리)
                     try {
                         await ensureFunctions();
-                        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-                        const functions = getFunctions(app, 'asia-northeast3');
                         const settleFn = httpsCallable(functions, 'settleChallengeFailure');
                         const settleResult = await settleFn({ tier });
                         const refund = settleResult.data?.returned || 0;
@@ -826,8 +817,6 @@ export async function claimChallengeReward(tier) {
 
         // Cloud Function lazy init
         if (!claimChallengeFunction) {
-            const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-            const functions = getFunctions(app, 'asia-northeast3');
             claimChallengeFunction = httpsCallable(functions, 'claimChallengeReward');
         }
 
@@ -894,8 +883,6 @@ export async function forfeitChallenge(tier) {
             try {
                 showToast('⏳ 온체인 정산 중...');
                 await ensureFunctions();
-                const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-                const functions = getFunctions(app, 'asia-northeast3');
                 const settleFn = httpsCallable(functions, 'settleChallengeFailure');
                 const settleResult = await settleFn({ tier });
                 const burned = settleResult.data?.burned || 0;

@@ -3,35 +3,53 @@
  * 오프라인 캐싱 및 백그라운드 동기화
  */
 
-// Firebase Messaging (백그라운드 푸시 수신)
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
-
-firebase.initializeApp({
+const PROD_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
     authDomain: "habitschool-8497b.firebaseapp.com",
     projectId: "habitschool-8497b",
     storageBucket: "habitschool-8497b.firebasestorage.app",
     messagingSenderId: "628617480821",
     appId: "1:628617480821:web:2756952ab78e8edf97463c"
-});
+};
 
-const messaging = firebase.messaging();
+const STAGING_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCFA1-cb_C8O3-9aFHaBu9GxcvpOHv_Q1Q",
+    authDomain: "habitschool-staging.firebaseapp.com",
+    projectId: "habitschool-staging",
+    storageBucket: "habitschool-staging.firebasestorage.app",
+    messagingSenderId: "227563724498",
+    appId: "1:227563724498:web:4810638c31ff8ccf0bd70b"
+};
 
-// 백그라운드 메시지 수신 (앱이 닫혀 있거나 탭이 비활성일 때)
-messaging.onBackgroundMessage((payload) => {
-    const d = payload.data || {};
-    self.registration.showNotification(d.title || '해빛스쿨', {
-        body: d.body || '',
-        icon: d.icon || './icons/icon-192.svg',
-        badge: './icons/icon-192.svg',
-        tag: d.tag || 'habitschool',
-        data: { url: d.url || '/' },
-        vibrate: [100, 50, 100]
+const hostname = self.location.hostname;
+const isLocalEnv = hostname === 'localhost' || hostname === '127.0.0.1';
+const isStagingEnv = !isLocalEnv && hostname.includes('habitschool-staging');
+const firebaseConfig = isStagingEnv || isLocalEnv ? STAGING_FIREBASE_CONFIG : PROD_FIREBASE_CONFIG;
+
+if (!isLocalEnv) {
+    // Firebase Messaging (백그라운드 푸시 수신)
+    importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+    importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+
+    firebase.initializeApp(firebaseConfig);
+
+    const messaging = firebase.messaging();
+
+    // 백그라운드 메시지 수신 (앱이 닫혀 있거나 탭이 비활성일 때)
+    messaging.onBackgroundMessage((payload) => {
+        const d = payload.data || {};
+        self.registration.showNotification(d.title || '해빛스쿨', {
+            body: d.body || '',
+            icon: d.icon || './icons/icon-192.svg',
+            badge: './icons/icon-192.svg',
+            tag: d.tag || 'habitschool',
+            data: { url: d.url || '/' },
+            vibrate: [100, 50, 100]
+        });
     });
-});
+}
 
-const CACHE_NAME = 'habitschool-v97';
+const CACHE_NAME = 'habitschool-v98';
 const STATIC_ASSETS = [
     './',
     './styles.css',

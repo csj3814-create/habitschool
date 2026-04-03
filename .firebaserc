@@ -1,5 +1,24 @@
 {
   "projects": {
-    "default": "habitschool-8497b"
+    "default": "habitschool-8497b",
+    "prod": "habitschool-8497b",
+    "staging": "habitschool-staging"
+  },
+  "targets": {
+    "habitschool-8497b": {
+      "hosting": {
+        "app": [
+          "habitschool",
+          "habitschool-8497b"
+        ]
+      }
+    },
+    "habitschool-staging": {
+      "hosting": {
+        "app": [
+          "habitschool-staging"
+        ]
+      }
+    }
   }
 }

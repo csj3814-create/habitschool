@@ -11,11 +11,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 function isValidStorageUrl(url) {
     if (!url) return false;
     const firebasePattern = /^https:\/\/firebasestorage\.googleapis\.com\//;
+    const emulatorPattern = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/v0\/b\/[^/]+\/o\//;
     const dataUrlPattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
-    return firebasePattern.test(url) || dataUrlPattern.test(url);
+    return firebasePattern.test(url) || emulatorPattern.test(url) || dataUrlPattern.test(url);
+}
+
+function isPersistedStorageUrl(url) {
+    return !!url && !url.startsWith('data:') && isValidStorageUrl(url);
 }
 
 describe('isValidStorageUrl', () => {
+    it('Storage Emulator URL ?덉슜', () => {
+        expect(isValidStorageUrl('http://127.0.0.1:9199/v0/b/test/o/img.jpg?alt=media')).toBe(true);
+        expect(isValidStorageUrl('http://localhost:9199/v0/b/test/o/img.jpg?alt=media')).toBe(true);
+    });
+
     it('Firebase Storage URL 허용', () => {
         expect(isValidStorageUrl('https://firebasestorage.googleapis.com/v0/b/test/o/img.jpg')).toBe(true);
     });
@@ -44,6 +54,20 @@ describe('isValidStorageUrl', () => {
 
     it('javascript: 프로토콜 거부', () => {
         expect(isValidStorageUrl('javascript:alert(1)')).toBe(false);
+    });
+});
+
+describe('isPersistedStorageUrl', () => {
+    it('Firebase Storage URL ?덉슜', () => {
+        expect(isPersistedStorageUrl('https://firebasestorage.googleapis.com/v0/b/test/o/img.jpg')).toBe(true);
+    });
+
+    it('Storage Emulator URL ?덉슜', () => {
+        expect(isPersistedStorageUrl('http://127.0.0.1:9199/v0/b/test/o/img.jpg?alt=media')).toBe(true);
+    });
+
+    it('data URL?????濡?蹂댁? ?딆쓬', () => {
+        expect(isPersistedStorageUrl('data:image/png;base64,iVBOR...')).toBe(false);
     });
 });
 

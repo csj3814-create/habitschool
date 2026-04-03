@@ -6,17 +6,17 @@
     <title>해빛스쿨 관제탑</title>
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://apis.google.com https://cdnjs.cloudflare.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-        img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.googleusercontent.com;
-        connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://*.run.app https://accounts.google.com;
-        frame-src https://accounts.google.com https://*.firebaseapp.com;
+        img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.googleusercontent.com https://lh3.googleusercontent.com https://www.google.com;
+        connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://*.run.app https://accounts.google.com https://apis.google.com https://sepolia.base.org https://mainnet.base.org https://*.binance.org:8545 https://bsc-dataseed.binance.org https://data-seed-prebsc-1-s1.binance.org:8545 https://data-seed-prebsc-2-s1.binance.org:8545;
+        frame-src 'self' https://accounts.google.com https://apis.google.com https://*.firebaseapp.com https://*.web.app https://*.googleapis.com;
         font-src 'self' data:;
         object-src 'none';
         base-uri 'self';
-        form-action 'self';
-        frame-ancestors 'none';
+        form-action 'self' https://accounts.google.com;
     ">
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --primary: #9C27B0; --bg: #F4F6F8; --text: #333; --danger: #F44336; --success: #4CAF50; }
@@ -437,23 +437,11 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+    import { collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+    import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
-
-    const app = initializeApp({
-        apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
-        authDomain: "habitschool-8497b.firebaseapp.com",
-        projectId: "habitschool-8497b",
-        storageBucket: "habitschool-8497b.firebasestorage.app",
-        messagingSenderId: "628617480821",
-        appId: "1:628617480821:web:2756952ab78e8edf97463c"
-    });
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const fns = getFunctions(app, 'asia-northeast3');
 
     let trendChart = null, activityChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
@@ -465,13 +453,41 @@
 
     // ── Auth ──────────────────────────────────────────────────
     const ADMIN_EMAILS = ['csj3814@gmail.com'];
-    async function isAdmin(user) {
-        if (ADMIN_EMAILS.includes(user.email)) return true;
+    const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
+    function normalizeEmail(email) {
+        return String(email || '').trim().toLowerCase();
+    }
+    function isKnownAdminEmail(user) {
+        return ADMIN_EMAILS.includes(normalizeEmail(user?.email));
+    }
+    async function hasAdminRecord(user) {
         try {
             if ((await getDoc(doc(db, 'admins', user.uid))).exists()) return true;
-            if ((await getDoc(doc(db, 'admins', user.email))).exists()) return true;
-        } catch(_) {}
+            const email = normalizeEmail(user.email);
+            if (email && (await getDoc(doc(db, 'admins', email))).exists()) return true;
+        } catch (_) {}
         return false;
+    }
+    async function ensureAdminAccessForUser(user) {
+        const knownAdmin = isKnownAdminEmail(user);
+        const hasRecord = await hasAdminRecord(user);
+        if (!knownAdmin && !hasRecord) return false;
+        try {
+            await ensureAdminAccessCallable({});
+            return true;
+        } catch (e) {
+            console.error('관리자 권한 초기화 오류:', e);
+            if (hasRecord) return true;
+            throw e;
+        }
+    }
+    async function isAdmin(user) {
+        try {
+            return await ensureAdminAccessForUser(user);
+        } catch (e) {
+            console.error('관리자 권한 확인 오류:', e);
+            return false;
+        }
     }
 
     document.getElementById('login-btn').onclick = async () => {
@@ -493,7 +509,8 @@
         if (user && await isAdmin(user)) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('admin-dashboard').style.display = 'block';
-            document.getElementById('admin-info').textContent = `👤 ${user.displayName || user.email}`;
+            const envLabel = APP_ENV === 'prod' ? 'PROD' : APP_ENV === 'staging' ? 'STAGING' : 'LOCAL';
+            document.getElementById('admin-info').textContent = `[${envLabel}] ${user.displayName || user.email}`;
             switchTab('dashboard');
         } else if (user) {
             showErr(`⛔ "${user.email}" 계정은 관리자 권한이 없습니다.`);

@@ -10,13 +10,14 @@ import {
     query, where, orderBy, limit, startAfter, serverTimestamp,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
+import { auth, db, storage, functions, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
-import { escapeHtml, isValidStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
 import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis } from './diet-analysis.js';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
 // 전역 노출 함수 선언 (Hoisting 활용)
@@ -1563,7 +1564,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
-                const referralUrl = `https://habitschool.web.app?ref=${userData.referralCode}`;
+                const referralUrl = `${APP_ORIGIN}?ref=${userData.referralCode}`;
                 // 지갑 탭
                 const referralSection = document.getElementById('referral-section');
                 const referralLinkEl = document.getElementById('referral-link-display');
@@ -2477,8 +2478,6 @@ function _loadDashboardFromLS(uid) {
 }
 
 async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
-    const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-    const functions = getFunctions(undefined, 'asia-northeast3');
     const fn = httpsCallable(functions, 'getDashboardData');
     const result = await fn({ weekStart, weekEnd });
     return result.data;
@@ -3152,8 +3151,6 @@ async function renderGroupChallenge() {
             const prevDate = new Date(today);
             prevDate.setUTCMonth(prevDate.getUTCMonth() - 1);
             const prevMonth = `${prevDate.getUTCFullYear()}-${String(prevDate.getUTCMonth() + 1).padStart(2, '0')}`;
-            const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-            const functions = getFunctions(undefined, 'asia-northeast3');
             const distributeFn = httpsCallable(functions, 'distributeMonthlyMvpReward');
             const result = await distributeFn({ targetMonth: prevMonth });
             const data = result.data;
@@ -4194,17 +4191,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         return { url: null, thumbUrl: null };
                     }
                     // Firebase Storage URL인지 검증 (빈 img.src는 페이지 URL을 반환하므로 반드시 검증 필요)
-                    const isFbUrl = u => u && u.includes('firebasestorage.googleapis.com');
+                    const isStoredUrl = u => isPersistedStorageUrl(u);
                     // 기존 URL 보존: oldData → data-saved-url → previewImg.src 순서로 fallback
                     // (display:none 여부 무관 — clearInputs로 숨겨져도 data-saved-url 유지)
-                    const savedUrl = (isFbUrl(oldUrl) ? oldUrl : null)
-                        || (isFbUrl(previewImg?.getAttribute('data-saved-url')) ? previewImg.getAttribute('data-saved-url') : null)
-                        || (isFbUrl(previewImg?.src) ? previewImg.src : null);
-                    const savedThumb = (isFbUrl(oldThumbUrl) ? oldThumbUrl : null)
-                        || (isFbUrl(previewImg?.getAttribute('data-saved-thumb-url')) ? previewImg.getAttribute('data-saved-thumb-url') : null) || null;
+                    const savedUrl = (isStoredUrl(oldUrl) ? oldUrl : null)
+                        || (isStoredUrl(previewImg?.getAttribute('data-saved-url')) ? previewImg.getAttribute('data-saved-url') : null)
+                        || (isStoredUrl(previewImg?.src) ? previewImg.src : null);
+                    const savedThumb = (isStoredUrl(oldThumbUrl) ? oldThumbUrl : null)
+                        || (isStoredUrl(previewImg?.getAttribute('data-saved-thumb-url')) ? previewImg.getAttribute('data-saved-thumb-url') : null) || null;
                     return { url: savedUrl || null, thumbUrl: savedThumb };
                 }
-                return { url: (oldUrl?.includes('firebasestorage.googleapis.com') ? oldUrl : null), thumbUrl: (oldThumbUrl?.includes('firebasestorage.googleapis.com') ? oldThumbUrl : null) };
+                return { url: (isPersistedStorageUrl(oldUrl) ? oldUrl : null), thumbUrl: (isPersistedStorageUrl(oldThumbUrl) ? oldThumbUrl : null) };
             };
 
             // === 모든 업로드를 병렬로 실행 ===
@@ -5188,7 +5185,7 @@ async function shareFileToAppsOrFallback(platform) {
                 content: {
                     title: '오늘의 해빛 인증 🌞',
                     description: shareText,
-                    imageUrl: 'https://habitschool.web.app/icons/og-image.png',
+                    imageUrl: APP_OG_IMAGE_URL,
                     link: { mobileWebUrl: window.location.href, webUrl: window.location.href }
                 },
                 buttons: [{ title: '갤러리 구경가기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }]
@@ -6509,7 +6506,7 @@ async function analyzeMealPhoto(meal) {
 
     // Firebase Storage URL 확보: previewImg.src → _pendingUploads 완료 결과 → data-saved-url
     let imageUrl = previewImg.src;
-    if (!imageUrl || imageUrl.startsWith('data:') || !imageUrl.includes('firebasestorage.googleapis.com')) {
+    if (!imageUrl || imageUrl.startsWith('data:') || !isPersistedStorageUrl(imageUrl)) {
         // 새로 선택한 파일의 pre-upload 완료 여부 확인
         const inputId = `diet-img-${meal}`;
         const pending = _pendingUploads.get(inputId);
@@ -6521,10 +6518,10 @@ async function analyzeMealPhoto(meal) {
             imageUrl = pending.result?.url || null;
         }
         // data-saved-url fallback
-        if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+        if (!imageUrl || !isPersistedStorageUrl(imageUrl)) {
             imageUrl = previewImg.getAttribute('data-saved-url') || null;
         }
-        if (!imageUrl || !imageUrl.includes('firebasestorage.googleapis.com')) {
+        if (!imageUrl || !isPersistedStorageUrl(imageUrl)) {
             showToast('⚠️ 사진을 먼저 저장한 후 분석해주세요.');
             return;
         }
@@ -6709,8 +6706,7 @@ async function completeOnboarding() {
 
     // 가입 축하 보너스 +200P
     try {
-        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'awardWelcomeBonus');
+        const fn = httpsCallable(functions, 'awardWelcomeBonus');
         const res = await fn({});
         if (res.data?.success) showToast('🎁 가입 축하 포인트 200P가 지급되었습니다!');
     } catch (e) {
@@ -6888,7 +6884,7 @@ window.shareReferralLink = function(platform) {
 // 앱 소개 공유 (친구 초대)
 // ============================================================
 function shareApp(platform) {
-    const url = 'https://habitschool.web.app/';
+    const url = `${APP_ORIGIN}/`;
     const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
     const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받는 건강 습관 앱! 🌞 함께 해봐요!';
     const encoded = encodeURIComponent;
@@ -6898,7 +6894,7 @@ function shareApp(platform) {
             _ensureKakao().then(() => {
                 Kakao.Share.sendDefault({
                     objectType: 'feed',
-                    content: { title, description: text, imageUrl: 'https://habitschool.web.app/icons/og-image.png', link: { mobileWebUrl: url, webUrl: url } },
+                    content: { title, description: text, imageUrl: APP_OG_IMAGE_URL, link: { mobileWebUrl: url, webUrl: url } },
                     buttons: [{ title: '시작하기', link: { mobileWebUrl: url, webUrl: url } }]
                 });
             }).catch(() => {
@@ -7438,8 +7434,7 @@ window.submitCreateChallenge = async function() {
     if (btn) { btn.disabled = true; btn.textContent = '생성 중...'; }
 
     try {
-        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'createSocialChallenge');
+        const fn = httpsCallable(functions, 'createSocialChallenge');
         await fn({
             type,
             inviteeIds: selectedFriends.map(f => f.uid),
@@ -7496,8 +7491,7 @@ window.respondChallenge = async function(accept) {
     closeChallengeInviteModal();
 
     try {
-        const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js');
-        const fn = httpsCallable(getFunctions(undefined, 'asia-northeast3'), 'respondSocialChallenge');
+        const fn = httpsCallable(functions, 'respondSocialChallenge');
         const result = await fn({ challengeId, accept });
         if (accept) {
             const msg = result.data?.status === 'active'

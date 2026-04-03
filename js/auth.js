@@ -1,7 +1,8 @@
 // 인증 관리 모듈
-import { auth, db } from './firebase-config.js';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
@@ -231,7 +232,7 @@ export function setupAuthListener(callbacks) {
 
                 // 프로필 탭 초대 카드 즉시 채우기 (updateAssetDisplay 호출 전에도 동작)
                 if (ud.referralCode) {
-                    const referralUrl = `https://habitschool.web.app?ref=${ud.referralCode}`;
+                    const referralUrl = `${APP_ORIGIN}?ref=${ud.referralCode}`;
                     const pBox = document.getElementById('profile-invite-link-box');
                     const pLink = document.getElementById('profile-invite-link');
                     const pCode = document.getElementById('profile-invite-code');
@@ -244,14 +245,11 @@ export function setupAuthListener(callbacks) {
                 const pendingCode = localStorage.getItem('pendingReferralCode');
                 if (pendingCode && !ud.referredBy) {
                     localStorage.removeItem('pendingReferralCode');
-                    import('https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js').then(({ getFunctions, httpsCallable }) => {
-                        const functions = getFunctions(undefined, 'asia-northeast3');
-                        const processReferral = httpsCallable(functions, 'processReferralSignup');
-                        processReferral({ code: pendingCode }).then(result => {
-                            if (result.data?.success) {
-                                showToast(`🎉 초대 보너스 ${result.data.bonus}P 지급되었습니다!`);
-                            }
-                        }).catch(() => {});
+                    const processReferral = httpsCallable(functions, 'processReferralSignup');
+                    processReferral({ code: pendingCode }).then(result => {
+                        if (result.data?.success) {
+                            showToast(`🎉 초대 보너스 ${result.data.bonus}P 지급되었습니다!`);
+                        }
                     }).catch(() => {});
                 }
 
@@ -462,6 +460,7 @@ window.deleteAccountAndData = async function () {
 
 // FCM 토큰 등록 — 알림 권한 요청 후 Firestore에 저장
 async function registerFCMToken(user) {
+    if (IS_LOCAL_ENV) return;
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
     if (Notification.permission === 'denied') return;
 
@@ -477,7 +476,7 @@ async function registerFCMToken(user) {
         const messaging = getMessaging();
         const swReg = await navigator.serviceWorker.ready;
         const token = await getToken(messaging, {
-            vapidKey: 'BD5hsiadZ0sOiiM-63QEEXM7u_z0YCXfSTWNljeydEeH8-9cXNKgXAP6pcMW9zxsICMaxQ-BzxSe619EGz_Hg4c',
+            vapidKey: FCM_PUBLIC_VAPID_KEY,
             serviceWorkerRegistration: swReg
         });
         if (!token) return;

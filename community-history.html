@@ -193,22 +193,9 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
-    authDomain: "habitschool-8497b.firebaseapp.com",
-    projectId: "habitschool-8497b",
-    storageBucket: "habitschool-8497b.firebasestorage.app",
-    messagingSenderId: "628617480821",
-    appId: "1:628617480821:web:2756952ab78e8edf97463c"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { auth, db } from './js/firebase-config.js';
 
 const content = document.getElementById('content');
 

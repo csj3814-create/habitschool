@@ -24,10 +24,22 @@ export function isValidStorageUrl(url) {
     if (!url) return false;
     // Firebase Storage URL 패턴
     const firebasePattern = /^https:\/\/firebasestorage\.googleapis\.com\//;
+    // Local Storage Emulator download URL 패턴
+    const emulatorPattern = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/v0\/b\/[^/]+\/o\//;
     // data: URL (Base64) 패턴
     const dataUrlPattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
     
-    return firebasePattern.test(url) || dataUrlPattern.test(url);
+    return firebasePattern.test(url) || emulatorPattern.test(url) || dataUrlPattern.test(url);
+}
+
+/**
+ * 실제 Storage에 저장된 미디어 URL 검증
+ * data URL은 제외하고, Firebase Storage / Emulator URL만 허용
+ * @param {string} url - 검증할 URL
+ * @returns {boolean} 저장된 미디어 URL 여부
+ */
+export function isPersistedStorageUrl(url) {
+    return !!url && !url.startsWith('data:') && isValidStorageUrl(url);
 }
 
 /**

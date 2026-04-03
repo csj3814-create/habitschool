@@ -1,14 +1,15 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { connectFirestoreEmulator, getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
+import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 // authDomain은 항상 firebaseapp.com 사용
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
 // → firebaseapp.com은 PWA scope 밖이므로 안전
 // → signInWithPopup은 postMessage 기반이므로 크로스오리진 문제 없음
-const firebaseConfig = {
+const PROD_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
     authDomain: "habitschool-8497b.firebaseapp.com",
     projectId: "habitschool-8497b",
@@ -17,11 +18,55 @@ const firebaseConfig = {
     appId: "1:628617480821:web:2756952ab78e8edf97463c"
 };
 
+const STAGING_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCFA1-cb_C8O3-9aFHaBu9GxcvpOHv_Q1Q",
+    authDomain: "habitschool-staging.firebaseapp.com",
+    projectId: "habitschool-staging",
+    storageBucket: "habitschool-staging.firebasestorage.app",
+    messagingSenderId: "227563724498",
+    appId: "1:227563724498:web:4810638c31ff8ccf0bd70b"
+};
+
+const PROD_VAPID_KEY = "BD5hsiadZ0sOiiM-63QEEXM7u_z0YCXfSTWNljeydEeH8-9cXNKgXAP6pcMW9zxsICMaxQ-BzxSe619EGz_Hg4c";
+const STAGING_VAPID_KEY = "BAol_2h3kie-9VCVgi5TiSxDPBPtQpXQV-wPwT0rkXO3lfb8OYs-D0hiwvaN-NdhhzmcVmyH8qFaJKfl0Zyb84U";
+const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1']);
+const FUNCTIONS_REGION = 'asia-northeast3';
+
+function detectAppEnv(hostname) {
+    if (LOCAL_HOSTNAMES.has(hostname)) return 'local';
+    if (hostname.includes('habitschool-staging')) return 'staging';
+    return 'prod';
+}
+
+function getCanonicalOrigin(appEnv) {
+    if (appEnv === 'local') return window.location.origin;
+    if (appEnv === 'staging') return 'https://habitschool-staging.web.app';
+    return 'https://habitschool.web.app';
+}
+
+export const APP_ENV = detectAppEnv(window.location.hostname);
+export const IS_LOCAL_ENV = APP_ENV === 'local';
+export const IS_STAGING_ENV = APP_ENV === 'staging';
+export const IS_PROD_ENV = APP_ENV === 'prod';
+export const FIREBASE_REGION = FUNCTIONS_REGION;
+export const APP_ORIGIN = getCanonicalOrigin(APP_ENV);
+export const APP_OG_IMAGE_URL = `${APP_ORIGIN}/icons/og-image.png`;
+export const FCM_PUBLIC_VAPID_KEY = IS_PROD_ENV ? PROD_VAPID_KEY : STAGING_VAPID_KEY;
+
+const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
+
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app, FUNCTIONS_REGION);
+
+if (IS_LOCAL_ENV) {
+    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+    connectStorageEmulator(storage, '127.0.0.1', 9199);
+}
 
 // 상수
 export const MAX_IMG_SIZE = 20 * 1024 * 1024;  // 20MB
@@ -203,4 +248,4 @@ export function getWeekId(dateStr) {
     return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, storage, functions };

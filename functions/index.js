@@ -23,12 +23,19 @@ const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { ethers } = require("ethers");
 const contractAbi = require("./contract-abi.json");
 
 // Firebase
 admin.initializeApp();
 const db = admin.firestore();
+const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
+const APP_BASE_URL = PROJECT_ID === "habitschool-staging"
+    ? "https://habitschool-staging.web.app"
+    : "https://habitschool.web.app";
+const APP_ICON_URL = `${APP_BASE_URL}/icons/icon-192.svg`;
+const ADMIN_EMAILS = ["csj3814@gmail.com"];
 
 // 비밀 키 (Firebase Secret Manager)
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
@@ -46,6 +53,24 @@ const EXPLORER_URL = "https://testnet.bscscan.com";
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
 const MIN_POINTS = 100;
+
+function normalizeEmail(email) {
+    return String(email || "").trim().toLowerCase();
+}
+
+function isBootstrapAdminEmail(email) {
+    return ADMIN_EMAILS.includes(normalizeEmail(email));
+}
+
+async function upsertAdminDoc(uid, email, extra = {}) {
+    const normalizedEmail = normalizeEmail(email);
+    await db.doc(`admins/${uid}`).set({
+        uid,
+        email: normalizedEmail,
+        updatedAt: new Date(),
+        ...extra
+    }, { merge: true });
+}
 
 /**
  * ethers Provider & Wallet 인스턴스 생성
@@ -102,7 +127,7 @@ exports.mintHBT = onCall(
                 }
             }
             await lockRef.set({
-                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                timestamp: FieldValue.serverTimestamp(),
                 pointAmount: pointAmount
             });
 
@@ -168,7 +193,7 @@ exports.mintHBT = onCall(
                     throw new HttpsError("failed-precondition", "포인트가 부족합니다 (동시 요청 감지).");
                 }
                 transaction.update(userRef, {
-                    coins: admin.firestore.FieldValue.increment(-pointAmount)
+                    coins: FieldValue.increment(-pointAmount)
                 });
             });
 
@@ -185,7 +210,7 @@ exports.mintHBT = onCall(
                 // 온체인 실패 시 포인트 복원
                 console.error("온체인 민팅 실패, 포인트 복원:", chainError.message);
                 await userRef.update({
-                    coins: admin.firestore.FieldValue.increment(pointAmount)
+                    coins: FieldValue.increment(pointAmount)
                 });
                 await lockRef.delete();
                 throw new HttpsError("internal", "온체인 민팅에 실패했습니다. 잠시 후 다시 시도해주세요.");
@@ -193,7 +218,7 @@ exports.mintHBT = onCall(
 
             // 5. Firestore 업데이트 (온체인 민팅 기록만, hbtBalance는 온체인이 진실의 원천)
             await userRef.update({
-                totalHbtEarned: admin.firestore.FieldValue.increment(hbtAmount)
+                totalHbtEarned: FieldValue.increment(hbtAmount)
             });
 
             // 6. 락 해제
@@ -210,7 +235,7 @@ exports.mintHBT = onCall(
                 txHash: txHash,
                 walletAddress: walletAddress,
                 date: today,
-                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                timestamp: FieldValue.serverTimestamp(),
                 status: "success",
                 network: "baseSepolia"
             });
@@ -331,7 +356,7 @@ exports.prefundWallet = onCall(
         const tx = await wallet.sendTransaction({ to: walletAddress, value: FUND_AMOUNT });
         await tx.wait();
 
-        await userRef.update({ lastGasFunded: admin.firestore.FieldValue.serverTimestamp() });
+        await userRef.update({ lastGasFunded: FieldValue.serverTimestamp() });
 
         console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
@@ -800,7 +825,7 @@ exports.awardPoints = onDocumentWritten(
 
         try {
             const userRef = db.doc(`users/${userId}`);
-            await userRef.set({ coins: admin.firestore.FieldValue.increment(diff) }, { merge: true });
+            await userRef.set({ coins: FieldValue.increment(diff) }, { merge: true });
             console.log(`awardPoints: ${userId} +${diff}P (total: ${newTotal})`);
 
             // 스트릭 계산 및 저장
@@ -856,7 +881,7 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
         const logSnap = await logRef.get();
         const notifiedDays = logSnap.exists() ? (logSnap.data().streakNotifiedDays || []) : [];
         if (notifiedDays.includes(streak)) return; // 이미 발송
-        await logRef.set({ streakNotifiedDays: admin.firestore.FieldValue.arrayUnion(streak) }, { merge: true });
+        await logRef.set({ streakNotifiedDays: FieldValue.arrayUnion(streak) }, { merge: true });
 
         // 친구 목록 조회
         const userSnap = await db.doc(`users/${userId}`).get();
@@ -874,7 +899,7 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
                 fromUserId: userId,
                 fromUserName: displayName,
                 streakDays: streak,
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
+                createdAt: FieldValue.serverTimestamp()
             });
         });
         await batch.commit();
@@ -893,14 +918,14 @@ async function checkReferralMilestone(userId, streak) {
 
     if (streak === 3 && !userData.referralDay3BonusGiven) {
         await db.doc(`users/${userData.referredBy}`).set(
-            { coins: admin.firestore.FieldValue.increment(500) }, { merge: true }
+            { coins: FieldValue.increment(500) }, { merge: true }
         );
         await db.doc(`users/${userId}`).set({ referralDay3BonusGiven: true }, { merge: true });
         console.log(`referral 3-day: ${userId} → referrer ${userData.referredBy} +500P`);
     }
     if (streak === 7 && !userData.referralDay7BonusGiven) {
         await db.doc(`users/${userId}`).set({
-            coins: admin.firestore.FieldValue.increment(300),
+            coins: FieldValue.increment(300),
             referralDay7BonusGiven: true
         }, { merge: true });
         console.log(`referral 7-day: ${userId} +300P`);
@@ -933,7 +958,7 @@ exports.awardMilestoneBonus = onDocumentWritten(
 
         try {
             const userRef = db.doc(`users/${event.params.userId}`);
-            await userRef.set({ coins: admin.firestore.FieldValue.increment(totalBonus) }, { merge: true });
+            await userRef.set({ coins: FieldValue.increment(totalBonus) }, { merge: true });
             console.log(`awardMilestoneBonus: ${event.params.userId} +${totalBonus}P`);
         } catch (err) {
             console.error("awardMilestoneBonus 오류:", err);
@@ -962,10 +987,10 @@ exports.awardReactionPoints = onDocumentWritten(
             for (const reactorUid of added) {
                 if (reactorUid === postOwnerId) continue;
                 await db.doc(`users/${reactorUid}`).set(
-                    { coins: admin.firestore.FieldValue.increment(1) }, { merge: true }
+                    { coins: FieldValue.increment(1) }, { merge: true }
                 );
                 await db.doc(`users/${postOwnerId}`).set(
-                    { coins: admin.firestore.FieldValue.increment(1) }, { merge: true }
+                    { coins: FieldValue.increment(1) }, { merge: true }
                 );
                 console.log(`reactionPoints: ${reactorUid} → ${postOwnerId} +1P each (${type})`);
             }
@@ -1010,7 +1035,7 @@ exports.processReferralSignup = onCall(
         // referredBy 저장 + 신규 가입 보너스 +200P
         await userRef.set({
             referredBy: referrerUid,
-            coins: admin.firestore.FieldValue.increment(200)
+            coins: FieldValue.increment(200)
         }, { merge: true });
 
         console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P`);
@@ -1037,11 +1062,56 @@ exports.awardWelcomeBonus = onCall(
 
         await userRef.set({
             welcomeBonusGiven: true,
-            coins: admin.firestore.FieldValue.increment(200)
+            coins: FieldValue.increment(200)
         }, { merge: true });
 
         console.log(`welcome bonus +200P: ${uid}`);
         return { success: true, bonus: 200 };
+    }
+);
+
+/**
+ * 기존 회원 전체 가입 축하금 소급 지급 (관리자 전용)
+ */
+exports.ensureAdminAccess = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+
+        const email = normalizeEmail(request.auth?.token?.email);
+        const uidRef = db.doc(`admins/${uid}`);
+        const uidSnap = await uidRef.get();
+        if (uidSnap.exists) {
+            if (email && uidSnap.data()?.email !== email) {
+                await upsertAdminDoc(uid, email);
+            }
+            return { success: true, source: "uid" };
+        }
+
+        if (email) {
+            const legacyEmailRef = db.doc(`admins/${email}`);
+            const legacyEmailSnap = await legacyEmailRef.get();
+            if (legacyEmailSnap.exists) {
+                const legacyData = legacyEmailSnap.data() || {};
+                await upsertAdminDoc(uid, email, {
+                    ...legacyData,
+                    legacySource: email,
+                    migratedFromLegacyEmailDoc: true
+                });
+                return { success: true, source: "legacy-email-doc" };
+            }
+        }
+
+        if (isBootstrapAdminEmail(email)) {
+            await upsertAdminDoc(uid, email, {
+                grantedByEmailWhitelist: true,
+                grantedAt: new Date()
+            });
+            return { success: true, source: "email-whitelist" };
+        }
+
+        throw new HttpsError("permission-denied", "관리자 권한 필요");
     }
 );
 
@@ -1072,7 +1142,7 @@ exports.grantWelcomeBonusToAll = onCall(
         const results = await Promise.allSettled(targets.map(d =>
             db.doc(`users/${d.id}`).set({
                 welcomeBonusGiven: true,
-                coins: admin.firestore.FieldValue.increment(200)
+                coins: FieldValue.increment(200)
             }, { merge: true })
         ));
 
@@ -1194,7 +1264,7 @@ exports.analyzeBloodTest = onCall(
             await db.doc(`users/${uid}/bloodTests/${dateStr}`).set({
                 ...analysis,
                 imageUrl,
-                analyzedAt: admin.firestore.FieldValue.serverTimestamp()
+                analyzedAt: FieldValue.serverTimestamp()
             });
 
             // healthProfile에 주요 수치 자동 반영
@@ -1357,7 +1427,7 @@ exports.startChallenge = onCall(
 
         const updateData = {};
         updateData[`activeChallenges.${def.tier}`] = challengeData;
-        if (userData.activeChallenge) updateData.activeChallenge = admin.firestore.FieldValue.delete();
+        if (userData.activeChallenge) updateData.activeChallenge = FieldValue.delete();
         await userRef.update(updateData);
 
         // 거래 기록
@@ -1369,7 +1439,7 @@ exports.startChallenge = onCall(
                 amount: stakeAmount,
                 stakeTxHash,
                 onChain: true,
-                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                timestamp: FieldValue.serverTimestamp(),
                 status: 'success'
             });
         }
@@ -1499,8 +1569,8 @@ exports.claimChallengeReward = onCall(
 
         // Firestore 업데이트 (hbtBalance 제거 — 온체인이 진실의 원천)
         const updateData = {};
-        updateData[`activeChallenges.${tier}`] = admin.firestore.FieldValue.delete();
-        if (rewardPoints > 0) updateData.coins = admin.firestore.FieldValue.increment(rewardPoints);
+        updateData[`activeChallenges.${tier}`] = FieldValue.delete();
+        if (rewardPoints > 0) updateData.coins = FieldValue.increment(rewardPoints);
 
         await userRef.update(updateData);
 
@@ -1518,7 +1588,7 @@ exports.claimChallengeReward = onCall(
             onChain: stakedOnChain,
             resolveTxHash,
             bonusTxHash,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: FieldValue.serverTimestamp(),
             status: 'success'
         });
 
@@ -1598,7 +1668,7 @@ exports.settleChallengeFailure = onCall(
 
         // Firestore 업데이트: 챌린지 제거
         const updateData = {};
-        updateData[`activeChallenges.${tier}`] = admin.firestore.FieldValue.delete();
+        updateData[`activeChallenges.${tier}`] = FieldValue.delete();
 
         await userRef.update(updateData);
 
@@ -1616,7 +1686,7 @@ exports.settleChallengeFailure = onCall(
             completedDays: challenge.completedDays || 0,
             onChain: stakedOnChain,
             resolveTxHash,
-            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: FieldValue.serverTimestamp(),
             status: 'success'
         });
 
@@ -1709,7 +1779,7 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
         const winner = ranked[i];
         const userRef = db.doc(`users/${winner.userId}`);
         batch.set(userRef, {
-            coins: admin.firestore.FieldValue.increment(reward.points)
+            coins: FieldValue.increment(reward.points)
         }, { merge: true });
         winners.push({
             rank: i + 1,
@@ -1726,7 +1796,7 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
     batch.set(rewardRef, {
         month: targetMonth,
         winners,
-        distributedAt: admin.firestore.FieldValue.serverTimestamp(),
+        distributedAt: FieldValue.serverTimestamp(),
         distributedBy
     });
 
@@ -1828,7 +1898,7 @@ exports.migrateHbtToCoins = onCall(
             const pointsToAdd = Math.round(offChainExcess);
             await userRef.update({
                 hbtBalance: 0,
-                coins: admin.firestore.FieldValue.increment(pointsToAdd)
+                coins: FieldValue.increment(pointsToAdd)
             });
 
             // 마이그레이션 기록
@@ -1839,7 +1909,7 @@ exports.migrateHbtToCoins = onCall(
                 onChainHbt,
                 stakedHbt,
                 convertedToCoins: pointsToAdd,
-                timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                timestamp: FieldValue.serverTimestamp(),
                 status: 'success'
             });
 
@@ -2119,7 +2189,7 @@ async function saveRateHistory(result, previousRate, last7DaysMinted, totalMined
 
     await db.collection("mining_rate_history").doc(weekId).set({
         weekId,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
         previousRate,
         newRate: result.newRate,
         newRateScaled: result.newRateScaled,
@@ -2378,7 +2448,7 @@ async function computeCommunityStatsLogic() {
         exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
         mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
         ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: FieldValue.serverTimestamp()
     };
 
     // 월이 바뀌면 기존 데이터를 아카이브에 저장
@@ -2520,7 +2590,7 @@ exports.backfillCommunityStatsArchive = onCall(
             exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
             mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
             ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: FieldValue.serverTimestamp()
         };
 
         await db.doc(`communityStats_archive/${targetMonth}`).set(archiveData);
@@ -2619,7 +2689,7 @@ exports.prefundWallet = onCall(
         const tx = await wallet.sendTransaction({ to: walletAddress, value: FUND_AMOUNT });
         await tx.wait();
 
-        await userRef.update({ lastGasFunded: admin.firestore.FieldValue.serverTimestamp() });
+        await userRef.update({ lastGasFunded: FieldValue.serverTimestamp() });
 
         console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
@@ -2726,8 +2796,6 @@ exports.sendReEngagementEmails = onCall(
             }
         });
 
-        const APP_URL = "https://habitschool.web.app";
-
         const sendResults = await Promise.allSettled(targets.map(async (t) => {
             const subject = days === 3
                 ? `[해빛스쿨] ${t.name}님, 오늘 건강 기록은 어떠세요? 🌟`
@@ -2736,7 +2804,7 @@ exports.sendReEngagementEmails = onCall(
             const html = days === 3 ? `
 <div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
   <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
-    <img src="https://habitschool.web.app/icons/icon-192.svg" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
+    <img src="${APP_ICON_URL}" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
     <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">오늘의 건강 기록 🌟</h2>
     <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">작은 기록이 큰 변화를 만들어요</p>
   </div>
@@ -2744,14 +2812,14 @@ exports.sendReEngagementEmails = onCall(
     <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${t.name}</strong>님, 안녕하세요 👋</p>
     <p style="font-size:15px;color:#555;line-height:1.7;">최근 3일간 해빛스쿨에 기록이 없으셨어요.<br>오늘 식단, 운동, 수면 기록 한 번만 해도 스트릭이 이어져요!</p>
     <div style="text-align:center;margin:28px 0;">
-      <a href="${APP_URL}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">지금 기록하러 가기 →</a>
+      <a href="${APP_BASE_URL}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">지금 기록하러 가기 →</a>
     </div>
     <p style="font-size:13px;color:#aaa;text-align:center;">꾸준한 기록이 건강한 습관을 만듭니다 💪</p>
   </div>
 </div>` : `
 <div style="font-family:Apple SD Gothic Neo,Malgun Gothic,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
   <div style="background:linear-gradient(135deg,#1565c0,#42a5f5);padding:32px 24px;text-align:center;">
-    <img src="https://habitschool.web.app/icons/icon-192.svg" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
+    <img src="${APP_ICON_URL}" width="60" style="border-radius:12px;" alt="해빛스쿨"/>
     <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">${t.name}님이 보고 싶어요 💙</h2>
     <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">함께하는 건강 여정을 기다리고 있어요</p>
   </div>
@@ -2762,7 +2830,7 @@ exports.sendReEngagementEmails = onCall(
       <p style="margin:0;font-size:14px;color:#666;">다시 시작하면 <strong style="color:#1565c0;">복귀 보너스 포인트</strong>가 기다려요 🎁</p>
     </div>
     <div style="text-align:center;margin:28px 0;">
-      <a href="${APP_URL}" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">해빛스쿨로 돌아가기 →</a>
+      <a href="${APP_BASE_URL}" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">해빛스쿨로 돌아가기 →</a>
     </div>
     <p style="font-size:13px;color:#aaa;text-align:center;">당신의 건강한 하루를 함께 만들어가고 싶어요 🌱</p>
   </div>
@@ -2777,9 +2845,9 @@ exports.sendReEngagementEmails = onCall(
 
             // 발송 이력 저장
             await db.collection("emailLogs").doc(t.uid).set({
-                lastSentAt: admin.firestore.FieldValue.serverTimestamp(),
+                lastSentAt: FieldValue.serverTimestamp(),
                 lastSentDays: days,
-                sentCount: admin.firestore.FieldValue.increment(1)
+                sentCount: FieldValue.increment(1)
             }, { merge: true });
 
             console.log(`✅ 이메일 발송: ${t.email} (${t.name})`);
@@ -2839,7 +2907,7 @@ async function sendMulticast(tokens, uids, title, body, tag) {
         res.responses.forEach((r, idx) => {
             if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
                 deletes.push(
-                    db.doc(`users/${chunkUids[idx]}`).set({ fcmToken: admin.firestore.FieldValue.delete() }, { merge: true })
+                    db.doc(`users/${chunkUids[idx]}`).set({ fcmToken: FieldValue.delete() }, { merge: true })
                 );
             }
         });
@@ -2964,7 +3032,7 @@ exports.adjustUserCoins = onCall(
         const targetSnap = await targetRef.get();
         if (!targetSnap.exists) throw new HttpsError("not-found", "유저를 찾을 수 없음");
 
-        await targetRef.set({ coins: admin.firestore.FieldValue.increment(amount) }, { merge: true });
+        await targetRef.set({ coins: FieldValue.increment(amount) }, { merge: true });
 
         // 조정 이력 기록
         await db.collection("pointAdjustments").add({
@@ -2972,7 +3040,7 @@ exports.adjustUserCoins = onCall(
             amount,
             reason,
             adjustedBy: uid,
-            adjustedAt: admin.firestore.FieldValue.serverTimestamp()
+            adjustedAt: FieldValue.serverTimestamp()
         });
 
         console.log(`adjustUserCoins: ${targetUid} ${amount > 0 ? '+' : ''}${amount}P (${reason}) by ${uid}`);
@@ -3083,12 +3151,12 @@ exports.createSocialChallenge = onCall(
         // 경쟁 모드: 스테이크 락업
         if (type === 'competition') {
             await db.doc(`users/${uid}`).update({
-                coins: admin.firestore.FieldValue.increment(-stakePoints)
+                coins: FieldValue.increment(-stakePoints)
             });
         }
 
         // 챌린지 문서 생성
-        const now = admin.firestore.FieldValue.serverTimestamp();
+        const now = FieldValue.serverTimestamp();
         const expiresAt = new Date(Date.now() + CHALLENGE_EXPIRE_HOURS * 60 * 60 * 1000);
         const challengeData = {
             type,
@@ -3159,7 +3227,7 @@ exports.respondSocialChallenge = onCall(
             await challengeRef.update({ status: 'cancelled' });
             if (challenge.type === 'competition' && challenge.stakes?.[challenge.creatorId]) {
                 await db.doc(`users/${challenge.creatorId}`).update({
-                    coins: admin.firestore.FieldValue.increment(challenge.stakes[challenge.creatorId])
+                    coins: FieldValue.increment(challenge.stakes[challenge.creatorId])
                 });
             }
             throw new HttpsError("deadline-exceeded", "챌린지 초대가 만료되었습니다.");
@@ -3173,7 +3241,7 @@ exports.respondSocialChallenge = onCall(
                 await challengeRef.update({ status: 'cancelled', invitees: [] });
                 if (challenge.type === 'competition' && challenge.stakes?.[challenge.creatorId]) {
                     await db.doc(`users/${challenge.creatorId}`).update({
-                        coins: admin.firestore.FieldValue.increment(challenge.stakes[challenge.creatorId])
+                        coins: FieldValue.increment(challenge.stakes[challenge.creatorId])
                     });
                 }
             } else {
@@ -3197,7 +3265,7 @@ exports.respondSocialChallenge = onCall(
                 throw new HttpsError("failed-precondition",
                     `포인트가 부족합니다. 필요: ${challenge.stakePoints}P, 보유: ${userData.coins || 0}P`);
             await db.doc(`users/${uid}`).update({
-                coins: admin.firestore.FieldValue.increment(-challenge.stakePoints)
+                coins: FieldValue.increment(-challenge.stakePoints)
             });
         }
 
@@ -3217,7 +3285,7 @@ exports.respondSocialChallenge = onCall(
             updateData.startDate = startDate;
             updateData.endDate = endDate;
 
-            const now = admin.firestore.FieldValue.serverTimestamp();
+            const now = FieldValue.serverTimestamp();
             for (const participantId of newParticipants) {
                 await db.collection('notifications').add({
                     postOwnerId: participantId,
@@ -3250,7 +3318,7 @@ async function settleChallengeById(challengeId) {
     if (challenge.status !== 'active') return;
 
     const { type, participants, startDate, endDate, stakePoints, stakes, durationDays } = challenge;
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
 
     // 각 참가자 기간 내 daily_logs 집계
     const participantStats = {};
@@ -3296,7 +3364,7 @@ async function settleChallengeById(challengeId) {
                 results[pid].outcome = 'success';
                 if (bonus > 0) {
                     await db.doc(`users/${pid}`).update({
-                        coins: admin.firestore.FieldValue.increment(bonus)
+                        coins: FieldValue.increment(bonus)
                     });
                 }
             }
@@ -3313,7 +3381,7 @@ async function settleChallengeById(challengeId) {
                 const refund = stakes?.[pid] || stakePoints || 0;
                 if (refund > 0) {
                     await db.doc(`users/${pid}`).update({
-                        coins: admin.firestore.FieldValue.increment(refund)
+                        coins: FieldValue.increment(refund)
                     });
                 }
             }
@@ -3325,7 +3393,7 @@ async function settleChallengeById(challengeId) {
                 const refund = stakes?.[pid] || stakePoints || 0;
                 if (refund > 0) {
                     await db.doc(`users/${pid}`).update({
-                        coins: admin.firestore.FieldValue.increment(refund)
+                        coins: FieldValue.increment(refund)
                     });
                 }
             }
@@ -3339,7 +3407,7 @@ async function settleChallengeById(challengeId) {
             const winnerBonus = Math.floor(participantStats[winnerId].totalPoints * COMPETITION_WIN_BONUS_PCT);
 
             await db.doc(`users/${winnerId}`).update({
-                coins: admin.firestore.FieldValue.increment(winnerStake + loserStake + winnerBonus)
+                coins: FieldValue.increment(winnerStake + loserStake + winnerBonus)
             });
 
             results[winnerId] = {
@@ -3392,7 +3460,7 @@ exports.settleDueSocialChallenges = onSchedule(
                 await docSnap.ref.update({ status: 'cancelled' });
                 if (data.type === 'competition' && data.stakes?.[data.creatorId]) {
                     await db.doc(`users/${data.creatorId}`).update({
-                        coins: admin.firestore.FieldValue.increment(data.stakes[data.creatorId])
+                        coins: FieldValue.increment(data.stakes[data.creatorId])
                     });
                 }
                 console.log(`[settleDue] pending 만료 취소: ${docSnap.id}`);

@@ -1,6 +1,25 @@
 # 개발 교훈 (Lessons Learned)
 
 ---
+## 2026-04-03 (로컬 포인트 적립 미반영 수정)
+
+### 59. Cloud Functions에서는 `admin.firestore.FieldValue.*`에 기대지 말고 `firebase-admin/firestore`의 `FieldValue`를 직접 써야 한다
+- **증상**: `daily_logs`는 저장되는데 `awardPoints` 트리거가 `Cannot read properties of undefined (reading 'increment')`로 깨져 `users.coins`가 오르지 않았다.
+- **근본 원인**: 이 프로젝트의 emulator/runtime 조합에서는 `admin.firestore.FieldValue`가 항상 안전하게 보장되지 않았고, 특히 Firestore 트리거 실행 시 `increment`, `serverTimestamp`, `delete` 호출이 중간에 터졌다.
+- **교훈**: Cloud Functions에서 Firestore sentinel 값을 쓸 때는 `const { FieldValue } = require("firebase-admin/firestore")`를 import하고, 코드 전반에서 `FieldValue.increment()`, `FieldValue.serverTimestamp()`, `FieldValue.delete()`처럼 직접 사용해야 한다. 포인트/보상처럼 트리거 기반 누적 로직은 emulator 로그까지 반드시 확인해 실제 반영을 증명해야 한다.
+
+## 2026-04-03 (신규 계정 로컬 저장 검증)
+
+### 57. 기존 계정만 확인하고 끝내지 말고 신규 가입 계정으로도 저장 흐름을 검증해야 한다
+- **증상**: 기존 계정에서는 로컬 저장이 되는 것처럼 보였지만, 새 계정에서는 로그인 직후 지갑 초기화가 `PERMISSION_DENIED`로 실패했다.
+- **근본 원인**: `users/{uid}` 규칙 화이트리스트에 실제 신규 사용자 초기화 필드(`walletCreatedAt`, `encryptedKey`, `walletIv`, `walletVersion`, `createdAt`)가 빠져 있었다.
+- **교훈**: Auth/온보딩/지갑 생성처럼 “처음 한 번만” 타는 경로는 기존 계정 회귀만으로는 놓친다. 로컬 검증 체크리스트에 **신규 가입 계정 1회 저장**을 반드시 포함한다.
+
+### 58. 로컬 emulator를 쓸 때는 Storage URL 검증이 운영 URL만 통과시키지 않는지 확인해야 한다
+- **증상**: Storage Emulator 업로드는 성공했지만, 저장된 사진 URL이 `http://127.0.0.1:9199/...` 형태라 UI가 “유효하지 않은 URL”로 판단해 사진을 복원하지 못했다.
+- **근본 원인**: `isValidStorageUrl`와 일부 저장/분석 로직이 `firebasestorage.googleapis.com`만 허용하도록 하드코딩돼 있었다.
+- **교훈**: staging/local 검증 환경을 도입하면 URL/도메인 검증도 함께 환경 인지형으로 바꿔야 한다. Storage/Hosting/Auth URL 검증은 운영 도메인만 전제하지 말 것.
+
 
 ## 2026-03-26 (모바일 버그 수정 + 성능 개선 세션)
 
@@ -348,3 +367,21 @@
 - [ ] Firebase SDK import 버전이 프로젝트 전체와 동일한가? (현재 10.8.0)
 - [ ] Gemini 모델이 `gemini-2.5-flash`인가? (gemini-2.0-flash 사용 금지)
 - [ ] **git commit + push 후 사용자 확인을 받았는가?** (확인 전 firebase deploy 금지)
+## 2026-04-03 (로컬 에뮬레이터 재시작/부분 장애 판별)
+
+### 59. 로컬 인프라 helper script는 "무언가 포트가 떠 있음"과 "서비스가 정상 구동 중"을 같은 뜻으로 취급하면 안 된다
+- **증상**: Firestore 일부 포트만 살아 있고 Hosting/UI가 죽은 상태인데 `start-firebase-emulators.ps1`가 "already running"으로 안내해 브라우저에서는 `ERR_CONNECTION_REFUSED`가 났다.
+- **근본 원인**: helper script가 에뮬레이터 관련 포트 중 하나라도 LISTEN이면 정상 실행으로 간주했고, 핵심 포트 세트가 완전한지 확인하지 않았다.
+- **교훈**: 로컬 인프라 시작 스크립트는 반드시 핵심 포트 집합의 완전성까지 검사해야 한다. 부분 장애 상태는 별도 에러로 취급하고, 자동 복구든 명시적 재시작 안내든 다음 행동을 정확히 제시해야 한다.
+## 2026-04-03 (관리자 권한 판정 일치)
+
+### 60. 관리자 화면의 프런트 권한 판정과 Firestore / Cloud Functions의 서버 권한 판정은 반드시 같은 기준이어야 한다
+- **증상**: 관리자 이메일은 프런트에서 통과했지만 `users` 컬렉션 list 쿼리와 관리자 callable이 모두 `permission-denied`로 막혀 대시보드가 비어 있었다.
+- **근본 원인**: `admin.html`은 이메일 화이트리스트만으로 관리자 진입을 허용했고, Firestore 규칙과 서버 함수는 `admins/{uid}` 문서 존재만 관리자 기준으로 봤다.
+- **교훈**: 관리자 같은 고권한 화면은 "UI 우회 허용 + 서버는 다른 기준" 구조를 만들면 바로 깨진다. 프런트가 먼저 서버 기준 권한을 보장하거나, 최소한 같은 단일 진실 원천으로 판정을 통일해야 한다.
+## 2026-04-03 (Firebase Admin SDK timestamp 사용)
+
+### 61. Firebase Admin SDK에서 클라이언트/예전 네임스페이스 방식의 `admin.firestore.FieldValue`를 당연하게 쓰면 런타임에서 바로 터질 수 있다
+- **증상**: `ensureAdminAccess` callable이 `500 INTERNAL`로 실패했고, 브라우저에서는 관리자 권한 없음처럼 보였다.
+- **근본 원인**: `admin.firestore.FieldValue.serverTimestamp()`를 사용했는데, 현재 실행 환경에서는 그 경로가 `undefined`였다.
+- **교훈**: Admin SDK 값을 새로 쓸 때는 로컬 함수 런타임에서 실제로 한 번 호출해 보며 검증해야 한다. 단순 import 성공이나 정적 읽기만으로는 충분하지 않다. 메타 기록용 시각은 필요 이상으로 `FieldValue`에 의존하지 말고 `Date` 또는 검증된 서버 SDK 경로를 사용한다.
