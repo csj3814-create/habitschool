@@ -758,6 +758,20 @@
                     <div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span
                             class="quest-check" id="quest-diet">미달성</span></div>
                 </div>
+                <div class="record-flow-card" aria-label="식단 빠른 기록 가이드">
+                    <div class="record-flow-head">
+                        <div>
+                            <div class="record-flow-kicker">빠른 기록</div>
+                            <h3>사진 1장부터 바로 저장할 수 있어요</h3>
+                            <p id="diet-guide-status">첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.</p>
+                        </div>
+                        <span class="record-flow-badge" id="diet-guide-badge">0/4</span>
+                    </div>
+                    <div class="record-flow-actions">
+                        <button class="record-flow-btn primary" type="button" onclick="clickNextEmptyDietSlot()">사진 바로 추가</button>
+                        <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">공복 지표 입력</button>
+                    </div>
+                </div>
                 <!-- 업로드 CTA -->
                 <div class="upload-cta" onclick="clickNextEmptyDietSlot()">
                     <div class="upload-cta-icon">📸</div>
@@ -891,6 +905,21 @@
                     <div class="quest-item"><span>🏃 <strong>유산소·걸음수 10+5P, 근력 운동 10+5P</strong></span><span
                             class="quest-check" id="quest-exercise">미달성</span></div>
                 </div>
+                <div class="record-flow-card" aria-label="운동 빠른 기록 가이드">
+                    <div class="record-flow-head">
+                        <div>
+                            <div class="record-flow-kicker">빠른 기록</div>
+                            <h3>걸음수만 입력해도 저장할 수 있어요</h3>
+                            <p id="exercise-guide-status">걸음수, 운동 사진, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
+                        </div>
+                        <span class="record-flow-badge" id="exercise-guide-badge">준비 0개</span>
+                    </div>
+                    <div class="record-flow-actions">
+                        <button class="record-flow-btn primary" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
+                        <button class="record-flow-btn" type="button" onclick="addCardioBlockWithFile()">운동 사진</button>
+                        <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">운동 영상</button>
+                    </div>
+                </div>
                 <!-- 걸음수 카드 -->
                 <div class="card step-card" id="step-card">
                     <h3>👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(유산소 인증 1건)</span></h3>
@@ -949,6 +978,21 @@
                 <div class="quest-board">
                     <div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span
                             class="quest-check" id="quest-mind">미달성</span></div>
+                </div>
+                <div class="record-flow-card" aria-label="마음과 수면 빠른 기록 가이드">
+                    <div class="record-flow-head">
+                        <div>
+                            <div class="record-flow-kicker">빠른 기록</div>
+                            <h3>수면 캡처나 감사 한 줄이면 충분해요</h3>
+                            <p id="mind-guide-status">수면 캡처, 명상 체크, 감사일기 중 하나만 남겨도 오늘 마음 기록을 저장할 수 있습니다.</p>
+                        </div>
+                        <span class="record-flow-badge" id="mind-guide-badge">준비 0개</span>
+                    </div>
+                    <div class="record-flow-actions">
+                        <button class="record-flow-btn primary" type="button" onclick="triggerSleepUpload()">수면 캡처</button>
+                        <button class="record-flow-btn" type="button" onclick="toggleMeditationQuickMark()">명상 체크</button>
+                        <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">감사 한 줄</button>
+                    </div>
                 </div>
                 <!-- 업로드 CTA -->
                 <div class="upload-cta" onclick="document.getElementById('sleep-img').click()">
@@ -1045,8 +1089,11 @@
             </div>
 
             <div class="bottom-bar" id="submit-bar" style="display: none;" role="complementary">
-                <button class="submit-btn" id="saveDataBtn" aria-label="현재 진행상황 저장 및 포인트 받기">현재 진행상황 저장 & 포인트 받기
-                    🅿️</button>
+                <div class="submit-bar-inner">
+                    <div class="submit-bar-helper" id="submit-bar-helper">사진 1장부터 바로 저장할 수 있어요.</div>
+                    <button class="submit-btn" id="saveDataBtn" aria-label="현재 진행상황 저장 및 포인트 받기">현재 진행상황 저장 & 포인트 받기
+                        🅿️</button>
+                </div>
             </div>
         </div>
     </div>

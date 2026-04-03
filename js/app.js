@@ -364,7 +364,7 @@ function addExerciseBlock(type, data = null) {
         dataUrl = data && data.imageUrl ? data.imageUrl : '';
 
         contentHtml = `
-            <button class="block-remove-btn" onclick="this.parentElement.remove()">X</button>
+            <button class="block-remove-btn" onclick="removeExerciseBlock(this.parentElement)">X</button>
             <label class="upload-area">
                 <input type="file" id="file_c_${id}" accept="image/*" class="exer-file" onchange="previewStaticImage(this, 'c_img_${id}', 'rm_c_${id}')">
                 <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">운동 이미지 올리기</span>
@@ -382,7 +382,7 @@ function addExerciseBlock(type, data = null) {
         dataUrl = data && data.videoUrl ? data.videoUrl : '';
 
         contentHtml = `
-            <button class="block-remove-btn" onclick="this.parentElement.remove()">X</button>
+            <button class="block-remove-btn" onclick="removeExerciseBlock(this.parentElement)">X</button>
             <label class="upload-area">
                 <input type="file" accept="video/*" class="exer-file" onchange="previewDynamicVid(this)">
                 <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">운동 영상 올리기</span>
@@ -404,6 +404,7 @@ function addExerciseBlock(type, data = null) {
         div.setAttribute('data-ai-analysis', JSON.stringify(data.aiAnalysis));
     }
     list.appendChild(div);
+    updateRecordFlowGuides('exercise');
 
     // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
@@ -419,6 +420,12 @@ function addExerciseBlock(type, data = null) {
             .catch(() => { });
     }
 }
+
+window.removeExerciseBlock = function(block) {
+    if (!block) return;
+    block.remove();
+    updateRecordFlowGuides('exercise');
+};
 
 // 호환성을 위한 wrapper 함수
 function addCardioBlock(data = null) {
@@ -490,6 +497,8 @@ window.previewDynamicVid = function (input) {
         .finally(() => {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
         });
+
+    updateRecordFlowGuides('exercise');
 };
 
 // AI 분석용 이미지 압축 (base64 data URL → 최대 480px 리사이즈, 품질 0.5)
@@ -727,6 +736,8 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                         if (aiBtn) aiBtn.removeAttribute('data-analyzed');
                     }
                 }
+
+                updateRecordFlowGuides(getVisibleTabName());
             }
             reader.readAsDataURL(file);
 
@@ -838,6 +849,8 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
             exerciseBlock.removeAttribute('data-url');
         }
     }
+
+    updateRecordFlowGuides(getVisibleTabName());
 };
 
 // 90° 시계방향 회전
@@ -1042,6 +1055,7 @@ function clearInputs() {
     document.getElementById('quest-mind').className = 'quest-check'; document.getElementById('quest-mind').innerText = '미달성';
 
     document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
+    updateRecordFlowGuides(getVisibleTabName());
 }
 
 // 데이터 로드 generation 카운터 (race condition 방지)
@@ -1183,6 +1197,8 @@ async function loadDataForSelectedDate(dateStr) {
         // 기본 블록은 추가
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
+    } finally {
+        updateRecordFlowGuides(getVisibleTabName());
     }
 }
 
@@ -2026,6 +2042,212 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 };
 
 // 탭 관리
+function getVisibleTabName() {
+    const tabNames = ['dashboard', 'diet', 'exercise', 'sleep', 'gallery', 'profile', 'assets'];
+    return tabNames.find(tabName => {
+        const el = document.getElementById(tabName);
+        return el && (el.style.display === 'block' || el.classList.contains('active'));
+    }) || 'dashboard';
+}
+
+function _hasPreviewImage(previewId) {
+    const preview = document.getElementById(previewId);
+    if (!preview) return false;
+    const rawSrc = preview.getAttribute('src') || preview.src || '';
+    return preview.style.display !== 'none' && !!rawSrc && rawSrc !== window.location.href;
+}
+
+function _getExerciseGuideCounts() {
+    const cardioBlocks = [...document.querySelectorAll('.cardio-block')];
+    const strengthBlocks = [...document.querySelectorAll('.strength-block')];
+
+    const cardioCount = cardioBlocks.filter(block => {
+        const input = block.querySelector('.exer-file');
+        const preview = block.querySelector('.preview-img');
+        const hasFile = !!(input?.files && input.files.length > 0);
+        const hasUrl = !!block.getAttribute('data-url');
+        const hasPreview = !!(preview && preview.style.display !== 'none' && preview.src && preview.src !== window.location.href);
+        return hasFile || hasUrl || hasPreview;
+    }).length;
+
+    const strengthCount = strengthBlocks.filter(block => {
+        const input = block.querySelector('.exer-file');
+        const preview = block.querySelector('.preview-strength');
+        const hasFile = !!(input?.files && input.files.length > 0);
+        const hasUrl = !!block.getAttribute('data-url');
+        const hasPreview = !!(preview && preview.style.display !== 'none');
+        return hasFile || hasUrl || hasPreview;
+    }).length;
+
+    return {
+        cardioCount,
+        strengthCount,
+        stepReady: (_stepData?.count || 0) > 0
+    };
+}
+
+function _getRecordGuideStates() {
+    const dietPhotos = ['breakfast', 'lunch', 'dinner', 'snack'].filter(slot => _hasPreviewImage(`preview-${slot}`)).length;
+    const fastingMetricsCount = ['weight', 'glucose', 'bp-systolic', 'bp-diastolic']
+        .map(id => document.getElementById(id)?.value?.trim() || '')
+        .filter(Boolean).length;
+
+    let dietHelper = '식단 사진 1장부터 바로 저장할 수 있어요.';
+    let dietStatus = '첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.';
+    if (dietPhotos > 0 && dietPhotos < 4) {
+        dietStatus = `식단 사진 ${dietPhotos}장이 준비됐어요. 더 올리면 최대 30P까지 반영됩니다.`;
+        dietHelper = `지금 식단 사진 ${dietPhotos}장과 공복 지표 ${fastingMetricsCount}개를 함께 저장할 수 있어요.`;
+    } else if (dietPhotos === 0 && fastingMetricsCount > 0) {
+        dietStatus = `공복 지표 ${fastingMetricsCount}개가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.`;
+        dietHelper = `공복 지표 ${fastingMetricsCount}개가 입력돼 있어요. 식단 사진 없이도 저장은 가능합니다.`;
+    } else if (dietPhotos === 4) {
+        dietStatus = '식단 칸이 모두 채워졌어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
+        dietHelper = '식단 사진이 충분히 준비됐어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
+    }
+
+    const { cardioCount, strengthCount, stepReady } = _getExerciseGuideCounts();
+    const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
+    let exerciseStatus = '걸음수, 운동 사진, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.';
+    let exerciseHelper = '걸음수 입력이나 운동 인증 1개만 있어도 저장됩니다.';
+    if (exerciseReadyCount > 0) {
+        exerciseStatus = `걸음수 ${stepReady ? '입력 완료' : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요. 저장하면 운동 포인트가 계산됩니다.`;
+        exerciseHelper = `운동 준비 ${exerciseReadyCount}개가 잡혀 있어요. 저장하면 오늘 운동 포인트가 반영됩니다.`;
+    }
+
+    const sleepReady = _hasPreviewImage('preview-sleep');
+    const meditationReady = !!document.getElementById('meditation-check')?.checked;
+    const gratitudeReady = !!document.getElementById('gratitude-journal')?.value?.trim();
+    const mindReadyCount = [sleepReady, meditationReady, gratitudeReady].filter(Boolean).length;
+    let mindStatus = '수면 캡처, 명상 체크, 감사일기 중 하나만 남겨도 오늘 마음 기록을 저장할 수 있습니다.';
+    let mindHelper = '수면 캡처 또는 감사 한 줄만 남겨도 저장할 수 있어요.';
+    if (mindReadyCount > 0) {
+        const pieces = [
+            sleepReady ? '수면 캡처' : null,
+            meditationReady ? '명상 체크' : null,
+            gratitudeReady ? '감사일기' : null
+        ].filter(Boolean);
+        mindStatus = `${pieces.join(', ')}가 준비됐어요. 저장하면 오늘 마음 기록 포인트가 반영됩니다.`;
+        mindHelper = `마음 기록 준비 ${mindReadyCount}개가 잡혀 있어요. 저장하고 오늘 흐름을 마무리해보세요.`;
+    }
+
+    return {
+        diet: {
+            badge: `사진 ${dietPhotos}/4`,
+            status: dietStatus,
+            helper: dietHelper
+        },
+        exercise: {
+            badge: `준비 ${exerciseReadyCount}개`,
+            status: exerciseStatus,
+            helper: exerciseHelper
+        },
+        sleep: {
+            badge: `준비 ${mindReadyCount}개`,
+            status: mindStatus,
+            helper: mindHelper
+        }
+    };
+}
+
+function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = null) {
+    const saveBtn = document.getElementById('saveDataBtn');
+    const helperEl = document.getElementById('submit-bar-helper');
+    if (!saveBtn || !helperEl) return;
+
+    const states = guideStates || _getRecordGuideStates();
+
+    if (tabName === 'diet') {
+        helperEl.style.display = 'block';
+        helperEl.textContent = states.diet.helper;
+        if (!saveBtn.disabled) saveBtn.innerText = '식단 저장하고 포인트 받기 🅿️';
+        return;
+    }
+
+    if (tabName === 'exercise') {
+        helperEl.style.display = 'block';
+        helperEl.textContent = states.exercise.helper;
+        if (!saveBtn.disabled) saveBtn.innerText = '운동 저장하고 포인트 받기 🅿️';
+        return;
+    }
+
+    if (tabName === 'sleep') {
+        helperEl.style.display = 'block';
+        helperEl.textContent = states.sleep.helper;
+        if (!saveBtn.disabled) saveBtn.innerText = '마음 기록 저장하고 포인트 받기 🅿️';
+        return;
+    }
+
+    helperEl.style.display = 'none';
+}
+
+function bindRecordFlowGuideListeners() {
+    const bindings = [
+        ['weight', 'input', 'diet'],
+        ['glucose', 'input', 'diet'],
+        ['bp-systolic', 'input', 'diet'],
+        ['bp-diastolic', 'input', 'diet'],
+        ['gratitude-journal', 'input', 'sleep'],
+        ['meditation-check', 'change', 'sleep']
+    ];
+
+    bindings.forEach(([id, eventName, tabName]) => {
+        const element = document.getElementById(id);
+        if (!element || element.dataset.recordGuideBound === 'true') return;
+        element.dataset.recordGuideBound = 'true';
+        element.addEventListener(eventName, () => updateRecordFlowGuides(tabName));
+    });
+}
+
+function updateRecordFlowGuides(activeTab = getVisibleTabName()) {
+    bindRecordFlowGuideListeners();
+    const guideStates = _getRecordGuideStates();
+
+    const dietStatusEl = document.getElementById('diet-guide-status');
+    const dietBadgeEl = document.getElementById('diet-guide-badge');
+    const exerciseStatusEl = document.getElementById('exercise-guide-status');
+    const exerciseBadgeEl = document.getElementById('exercise-guide-badge');
+    const mindStatusEl = document.getElementById('mind-guide-status');
+    const mindBadgeEl = document.getElementById('mind-guide-badge');
+
+    if (dietStatusEl) dietStatusEl.textContent = guideStates.diet.status;
+    if (dietBadgeEl) dietBadgeEl.textContent = guideStates.diet.badge;
+    if (exerciseStatusEl) exerciseStatusEl.textContent = guideStates.exercise.status;
+    if (exerciseBadgeEl) exerciseBadgeEl.textContent = guideStates.exercise.badge;
+    if (mindStatusEl) mindStatusEl.textContent = guideStates.sleep.status;
+    if (mindBadgeEl) mindBadgeEl.textContent = guideStates.sleep.badge;
+
+    updateContextualSaveBar(activeTab, guideStates);
+}
+
+window.focusStepManualInput = function() {
+    openTab('exercise');
+    const input = document.getElementById('step-manual-input');
+    if (input) {
+        input.focus();
+        input.select?.();
+    }
+};
+
+window.focusGratitudeJournal = function() {
+    openTab('sleep');
+    const journal = document.getElementById('gratitude-journal');
+    if (journal) journal.focus();
+};
+
+window.triggerSleepUpload = function() {
+    openTab('sleep');
+    document.getElementById('sleep-img')?.click();
+};
+
+window.toggleMeditationQuickMark = function() {
+    openTab('sleep');
+    const checkbox = document.getElementById('meditation-check');
+    if (!checkbox) return;
+    checkbox.checked = !checkbox.checked;
+    updateRecordFlowGuides('sleep');
+    showToast(checkbox.checked ? '🧘 명상 체크를 표시했어요.' : '🧘 명상 체크를 해제했어요.');
+};
+
 function openTab(tabName, pushState = true) {
     const user = auth.currentUser;
     if (!user && tabName !== 'gallery') {
@@ -2057,6 +2279,7 @@ function openTab(tabName, pushState = true) {
     const submitBar = document.getElementById('submit-bar');
     const saveBtn = document.getElementById('saveDataBtn');
     const chatBanner = document.getElementById('chat-banner');
+    const helperEl = document.getElementById('submit-bar-helper');
 
     if (tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
         submitBar.style.display = 'none';
@@ -2083,6 +2306,7 @@ function openTab(tabName, pushState = true) {
         }
     } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
+        if (helperEl) helperEl.style.display = 'none';
         if (!user) {
             saveBtn.innerText = '🌟 구글 로그인하고 함께 참여하기';
             saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
@@ -2098,11 +2322,11 @@ function openTab(tabName, pushState = true) {
         }
     } else {
         submitBar.style.display = 'block';
-        saveBtn.innerText = '현재 진행상황 저장 & 포인트 받기 🅿️';
         saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
         saveBtn.style.color = 'white';
         saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
         saveBtn.onclick = null; // 기본 이벤트 리스너로 복원
+        updateContextualSaveBar(tabName);
     }
 
     if (tabName === 'gallery') {
@@ -2128,6 +2352,7 @@ function openTab(tabName, pushState = true) {
 
     if (tabName === 'dashboard') renderDashboard();
 
+    updateRecordFlowGuides(tabName);
     setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
 };
 
@@ -4572,6 +4797,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             sortedFilteredDirty = true;
             _dashboardCache.ts = 0;
             _assetCache.ts = 0;
+            setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
 
             // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
             saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false;
@@ -7096,6 +7322,7 @@ function updateStepRing(count, goal = 8000) {
     const display = document.getElementById('step-count-display');
     if (display) display.textContent = count.toLocaleString();
 
+    updateRecordFlowGuides(getVisibleTabName());
 }
 
 function setManualSteps() {
