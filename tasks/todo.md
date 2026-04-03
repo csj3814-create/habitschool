@@ -636,3 +636,25 @@ const reserveWallet = "0xSafe_멀티시그_주소";
 
 - 원인은 관리자 UI가 `ADMIN_EMAILS`만으로 진입을 허용하는 반면, Firestore 규칙과 관리자용 Cloud Functions는 `admins/{uid}` 문서가 있어야만 관리자 읽기/실행을 허용한다는 불일치였다.
 - 이번 수정으로 화이트리스트 이메일 또는 레거시 `admins/{email}` 문서를 가진 사용자는 로그인 시 서버에서 `admins/{uid}` 문서를 자동 보장받고, 이후 Firestore 조회와 관리자 callable이 같은 기준으로 동작한다.
+# 2026-04-03 staging 배포 점검
+
+> **상태**: 일부 완료 / 추가 콘솔 설정 필요
+
+## 작업
+- [x] `git add`, `git commit`, `git push origin main` 완료
+- [x] `staging`에 `hosting`, `firestore.rules`, `firestore.indexes` 배포
+- [ ] `functions` 배포 재시도
+- [ ] `storage.rules` 배포 재시도
+
+## 확인 결과
+
+- `https://habitschool-staging.web.app` 배포 완료
+- `firebase deploy --project staging --only "hosting,functions,firestore:rules,firestore:indexes,storage"` 실행 시 `Firebase Storage has not been set up on project 'habitschool-staging'` 오류 발생
+- `firebase deploy --project staging --only "hosting,functions,firestore:rules,firestore:indexes"` 실행 시 `Secret Manager API` 비활성화로 `SERVER_MINTER_KEY` 조회 단계에서 `403` 발생
+- 이 환경에는 `gcloud` CLI가 없어 API 활성화를 셸에서 직접 처리하지 못함
+
+## 다음 액션
+
+- Firebase 콘솔에서 staging 프로젝트 `Storage` 시작하기 완료
+- Google Cloud 콘솔에서 staging 프로젝트 `Secret Manager API` 활성화
+- 완료 후 `firebase deploy --project staging --only "functions,storage"` 재실행
