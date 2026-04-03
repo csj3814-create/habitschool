@@ -658,3 +658,46 @@ const reserveWallet = "0xSafe_멀티시그_주소";
 - Firebase 콘솔에서 staging 프로젝트 `Storage` 시작하기 완료
 - Google Cloud 콘솔에서 staging 프로젝트 `Secret Manager API` 활성화
 - 완료 후 `firebase deploy --project staging --only "functions,storage"` 재실행
+
+# 2026-04-03 staging 배포 완료 후 다음 단계
+
+> **상태**: 진행 중
+
+## 작업
+- [x] `habitschool-staging`에 `hosting`, `firestore.rules`, `firestore.indexes`, `storage.rules`, `functions` 배포 완료
+- [x] staging 실사용 QA 체크리스트 문서화
+- [ ] staging P0 QA 실행
+- [ ] 홈 대시보드 1차 개편안 확정
+- [ ] 홈 화면 개편 구현 시작
+
+## 메모
+
+- staging URL: `https://habitschool-staging.web.app`
+- 초기 2세대 함수 배포에서 Eventarc 권한 전파 지연으로 Firestore 트리거 3개가 잠깐 실패했으나, 잠시 대기 후 재배포로 정상 반영됨
+- Artifact Registry cleanup policy는 `asia-northeast3`, `7일` 기준으로 설정 완료
+- 다음 기준 문서: `tasks/staging_실사용_QA_체크리스트.md`
+
+# 2026-04-03 홈 대시보드 1차 개편
+
+> **상태**: 진행 중
+
+## 작업
+- [x] 현재 대시보드 정보 구조를 `오늘 해야 할 행동 중심`으로 재구성
+- [x] 상단 요약 패널에 연속 기록 / 남은 행동 / 이번 주 진행률 / 다음 행동 CTA 반영
+- [x] 기존 오늘 인증 / 주간 현황 / 미션 영역을 새 구조에 맞게 재배치
+- [ ] 로컬 테스트 후 staging 기준으로 수동 확인 포인트 정리
+
+## 메모
+
+- 기능 변경보다 정보 구조와 참여 유도 문구 개선이 우선
+- 기존 저장/포인트/미션 로직은 유지하고, 홈 첫 화면에서 “무엇을 하면 되는지”가 먼저 보이게 만드는 것이 목표
+- 상단은 모바일 기준 단일 흐름, 태블릿 이상에서는 `행동 요약 + 상태 요약`이 동시에 읽히도록 2열 배치를 적용
+- 자동 검증 완료
+  - `npm test` 통과 (`117 passed`)
+  - `node --check` 기준 `js/app.js` 문법 확인
+  - localhost `http://127.0.0.1:5000` 응답 `200`
+- 수동 확인 포인트
+  - 홈 첫 화면에서 `오늘의 루틴` 요약 패널이 가장 먼저 보이는지
+  - 식단/운동/마음 중 미완료 항목 하나만 강조(`is-focus`)되는지
+  - 기록 후 `오늘 완료`, `이번 주 인증`, `다음 보상` 문구가 자연스럽게 바뀌는지
+  - 모바일과 넓은 화면에서 상단 패널 줄바꿈이 거슬리지 않는지

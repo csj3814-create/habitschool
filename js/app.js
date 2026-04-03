@@ -2483,6 +2483,148 @@ async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
     return result.data;
 }
 
+const DASHBOARD_ACTION_META = {
+    diet: {
+        buttonId: 'dashboard-action-diet',
+        labelId: 'dashboard-action-diet-label',
+        subId: 'dashboard-action-diet-sub',
+        name: '식단',
+        idleLabel: '식단 기록',
+        idleSub: '사진 한 장으로 시작',
+        focusLabel: '식단 먼저 기록',
+        focusSub: '가장 가볍게 시작할 수 있어요',
+        doneLabel: '식단 완료',
+        doneSub: '오늘 식단 인증이 반영됐어요'
+    },
+    exercise: {
+        buttonId: 'dashboard-action-exercise',
+        labelId: 'dashboard-action-exercise-label',
+        subId: 'dashboard-action-exercise-sub',
+        name: '운동',
+        idleLabel: '운동 기록',
+        idleSub: '움직인 만큼 체크',
+        focusLabel: '운동 이어가기',
+        focusSub: '짧게라도 기록을 남겨보세요',
+        doneLabel: '운동 완료',
+        doneSub: '오늘 운동 인증이 반영됐어요'
+    },
+    mind: {
+        buttonId: 'dashboard-action-mind',
+        labelId: 'dashboard-action-mind-label',
+        subId: 'dashboard-action-mind-sub',
+        name: '마음',
+        idleLabel: '마음 기록',
+        idleSub: '수면·감사 한 번에',
+        focusLabel: '마음 챙기기',
+        focusSub: '수면이나 감사 기록을 남겨보세요',
+        doneLabel: '마음 완료',
+        doneSub: '오늘 마음 인증이 반영됐어요'
+    }
+};
+
+function _renderDashboardHeroState({
+    todayAwarded = {},
+    streakCount = 0,
+    activeDays = 0,
+    isWeekActive = false,
+    overallRate = 0,
+    totalMissions = 0,
+    completedMissions = 0
+}) {
+    const order = ['diet', 'exercise', 'mind'];
+    const completedToday = order.filter(type => !!todayAwarded[type]).length;
+    const remainingToday = Math.max(0, order.length - completedToday);
+    const nextType = order.find(type => !todayAwarded[type]) || null;
+    const focusMeta = nextType ? DASHBOARD_ACTION_META[nextType] : null;
+    const weeklyDayRate = Math.round((activeDays / 7) * 100);
+
+    const heroPill = document.getElementById('dashboard-hero-pill');
+    const focusTitle = document.getElementById('dashboard-focus-title');
+    const focusBody = document.getElementById('dashboard-focus-body');
+    const streakEl = document.getElementById('dashboard-streak-count');
+    const completedEl = document.getElementById('dashboard-completed-count');
+    const weekRateEl = document.getElementById('dashboard-week-rate');
+    const nextRewardEl = document.getElementById('dashboard-next-reward');
+    const weekProgressTextEl = document.getElementById('dashboard-week-progress-text');
+    const weekProgressFillEl = document.getElementById('dashboard-week-progress-fill');
+    const weekSummaryEl = document.getElementById('dashboard-week-summary');
+    const missionIntroEl = document.getElementById('mission-card-intro');
+
+    if (heroPill) {
+        if (remainingToday === 0) heroPill.textContent = '오늘 완료';
+        else if (completedToday === 0) heroPill.textContent = '첫 기록 추천';
+        else heroPill.textContent = `남은 행동 ${remainingToday}개`;
+    }
+
+    if (focusTitle) {
+        if (remainingToday === 0) {
+            focusTitle.textContent = '오늘 루틴을 모두 마쳤어요. 좋은 흐름을 이어가고 있네요.';
+        } else if (focusMeta) {
+            focusTitle.textContent = `${focusMeta.name} 기록으로 오늘의 흐름을 이어가보세요.`;
+        } else {
+            focusTitle.textContent = '오늘 한 가지 기록으로 흐름을 시작해보세요.';
+        }
+    }
+
+    if (focusBody) {
+        if (remainingToday === 0) {
+            focusBody.textContent = isWeekActive
+                ? `이번 주 미션 달성률은 ${overallRate}%예요. 오늘 기록은 끝났으니 갤러리 공유나 내일 준비로 이어가면 좋습니다.`
+                : '오늘 할 일을 모두 마쳤어요. 내 기록을 돌아보거나 갤러리에서 다른 사람의 흐름을 살펴보세요.';
+        } else if (focusMeta) {
+            focusBody.textContent = `${focusMeta.focusSub}. 오늘은 ${completedToday}/3개를 마쳤고, 남은 행동은 ${remainingToday}개입니다.`;
+        }
+    }
+
+    if (streakEl) streakEl.textContent = `${streakCount}일`;
+    if (completedEl) completedEl.textContent = `${completedToday}/3`;
+    if (weekRateEl) weekRateEl.textContent = `${activeDays}일`;
+    if (nextRewardEl) nextRewardEl.textContent = remainingToday === 0 ? '오늘 완료' : '+10P';
+    if (weekProgressTextEl) weekProgressTextEl.textContent = `${weeklyDayRate}%`;
+    if (weekProgressFillEl) weekProgressFillEl.style.width = `${weeklyDayRate}%`;
+
+    if (weekSummaryEl) {
+        if (isWeekActive && totalMissions > 0) {
+            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록했고, 미션 ${completedMissions}/${totalMissions}개가 진행 중이에요. 현재 달성률은 ${overallRate}%입니다.`;
+        } else if (activeDays > 0) {
+            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록했어요. 오늘 한 번 더 기록하면 루틴이 더 안정됩니다.`;
+        } else {
+            weekSummaryEl.textContent = '이번 주 첫 기록을 남기면 주간 흐름이 여기서부터 채워집니다.';
+        }
+    }
+
+    if (missionIntroEl) {
+        missionIntroEl.textContent = isWeekActive && totalMissions > 0
+            ? `이번 주 미션 ${completedMissions}/${totalMissions}개가 진행 중이에요. 남은 날짜 안에 한 칸씩 채워보세요.`
+            : '이번 주 목표를 정하면 오늘 해야 할 행동이 더 선명해집니다.';
+    }
+
+    order.forEach(type => {
+        const meta = DASHBOARD_ACTION_META[type];
+        const button = document.getElementById(meta.buttonId);
+        const label = document.getElementById(meta.labelId);
+        const sub = document.getElementById(meta.subId);
+        const done = !!todayAwarded[type];
+        const isFocus = !done && type === nextType;
+
+        if (!button || !label || !sub) return;
+
+        button.classList.toggle('is-complete', done);
+        button.classList.toggle('is-focus', isFocus);
+
+        if (done) {
+            label.textContent = meta.doneLabel;
+            sub.textContent = meta.doneSub;
+        } else if (isFocus) {
+            label.textContent = meta.focusLabel;
+            sub.textContent = meta.focusSub;
+        } else {
+            label.textContent = meta.idleLabel;
+            sub.textContent = meta.idleSub;
+        }
+    });
+}
+
 async function renderDashboard() {
     const user = auth.currentUser;
     if (!user) return;
@@ -2638,6 +2780,10 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             if (logItem.awardedPoints?.exercise) statExer++;
             if (logItem.awardedPoints?.mind) statMind++;
         });
+        const activeDays = weekStrs.filter(dateStr => {
+            const awarded = logsMap[dateStr]?.awardedPoints || {};
+            return !!(awarded.diet || awarded.exercise || awarded.mind);
+        }).length;
 
         // ==========================================
         // 오늘의 인증 현황
@@ -2695,6 +2841,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         const missionArea = document.getElementById('mission-selection-area');
         const progContainer = document.getElementById('mission-progress-container');
         missionArea.innerHTML = '';
+        progContainer.style.display = 'none';
+        progContainer.innerHTML = '';
+        let totalMissions = weeklyMissionData?.missions?.length || 0;
+        let completedMissions = 0;
+        let overallRate = 0;
 
         // (A) 지난주 리포트 카드
         const lastWeek = missionHistory.length > 0 ? missionHistory[missionHistory.length - 1] : null;
@@ -2785,8 +2936,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             progContainer.style.display = 'block';
             progContainer.innerHTML = '';
 
-            let totalMissions = weeklyMissionData.missions.length;
-            let completedMissions = 0;
+            totalMissions = weeklyMissionData.missions.length;
 
             weeklyMissionData.missions.forEach(m => {
                 let currentVal = 0;
@@ -2819,7 +2969,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 let val = m.type === 'diet' ? statDiet : m.type === 'exercise' ? statExer : statMind;
                 totalProgress += Math.min(val / m.target, 1);
             });
-            const overallRate = totalMissions > 0 ? Math.round((totalProgress / totalMissions) * 100) : 0;
+            overallRate = totalMissions > 0 ? Math.round((totalProgress / totalMissions) * 100) : 0;
             const rateMsg = overallRate >= 100 ? '🎉 모든 미션 완료! 대단해요!' : overallRate >= 80 ? '🔥 거의 다 왔어요! 조금만 더!' : overallRate >= 50 ? '👍 절반 이상 달성! 이 페이스 유지!' : '💪 아직 시간 있어요, 화이팅!';
 
             // 남은 일수 계산
@@ -2878,6 +3028,16 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             }
             progContainer.style.display = 'none';
         }
+
+        _renderDashboardHeroState({
+            todayAwarded,
+            streakCount,
+            activeDays,
+            isWeekActive,
+            overallRate,
+            totalMissions,
+            completedMissions
+        });
 
         renderMissionBadges(missionBadges);
 
