@@ -3444,6 +3444,31 @@ function _loadDashboardFromLS(uid) {
     } catch (_) { return null; }
 }
 
+function _patchDashboardUserData(uid, patcher) {
+    const patchDashData = (dashData) => {
+        if (!dashData) return null;
+        const nextUd = { ...(dashData.ud || {}) };
+        patcher(nextUd);
+        return { ...dashData, ud: nextUd };
+    };
+
+    if (_dashboardCache.uid === uid && _dashboardCache.data) {
+        const nextData = patchDashData(_dashboardCache.data);
+        if (nextData) {
+            _dashboardCache = { uid, data: nextData, ts: Date.now() };
+        }
+    }
+
+    const lsData = _loadDashboardFromLS(uid);
+    if (lsData) {
+        const { uid: _storedUid, ts: _storedTs, ...storedDashData } = lsData;
+        const nextStoredData = patchDashData(storedDashData);
+        if (nextStoredData) {
+            _saveDashboardToLS(uid, nextStoredData);
+        }
+    }
+}
+
 async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
     const fn = httpsCallable(functions, 'getDashboardData');
     const result = await fn({ weekStart, weekEnd });
@@ -4307,6 +4332,14 @@ window._invalidateDashboardCache = function() {
     try { localStorage.removeItem(LS_DASHBOARD_KEY); } catch (_) {}
 };
 
+window._applyWeeklyMissionResetToDashboard = function(uid) {
+    if (!uid) return;
+    _patchDashboardUserData(uid, (ud) => {
+        ud.weeklyMissionData = null;
+        ud.selectedMissions = [];
+    });
+};
+
 // 난이도 선택기 초기화
 function initDifficultySelectors(level) {
     const levelData = MISSIONS[level] || MISSIONS[1];
@@ -4811,8 +4844,13 @@ window.resetWeeklyMissions = async function() {
     try {
         await setDoc(doc(db, "users", user.uid), { weeklyMissionData: null, selectedMissions: [] }, { merge: true });
         pendingCustomMissions = [];
-        showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
+        if (window._applyWeeklyMissionResetToDashboard) window._applyWeeklyMissionResetToDashboard(user.uid);
         renderDashboard();
+        const todayStr = getKSTDateString();
+        const weekStrs = getCurrentWeekDates(todayStr);
+        const currentWeekId = getWeekId(todayStr);
+        _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId).catch(() => {});
+        showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
     } catch (error) {
         console.error('미션 리셋 오류:', error);
         showToast('⚠️ 미션 리셋에 실패했습니다.');
