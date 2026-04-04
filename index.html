@@ -332,7 +332,6 @@
                 <div class="card metrics-card community-dashboard-card">
                     <div class="community-dashboard-head">
                         <h3>🤝 함께하기</h3>
-                        <p>친구, 챌린지, 응원 흐름만 간단히 봅니다.</p>
                     </div>
                     <div class="community-focus-panel" id="community-focus-panel">
                         <div class="community-focus-head">
@@ -345,45 +344,22 @@
                                 <p class="community-focus-body" id="community-focus-body">친구와 같이 움직일 다음 행동만 여기서 바로 고르면 돼요.</p>
                             </div>
                         </div>
+                        <div class="community-focus-stats" id="community-focus-stats"></div>
                         <div class="community-focus-actions" id="community-focus-actions"></div>
                     </div>
-
-                    <div id="friend-activity-card" class="community-module-card" style="display:none;">
-                        <div class="community-module-header">
-                            <div>
-                                <div class="community-module-kicker">친구 체크</div>
-                                <div class="community-module-title">오늘 친구 흐름</div>
-                            </div>
-                        </div>
-                        <div id="friend-activity-list"></div>
-                    </div>
-
-                    <div id="social-challenge-card" class="community-module-card" style="display:none;">
-                        <div class="community-module-header">
-                            <div>
-                                <div class="community-module-kicker">같이 도전</div>
-                                <div class="community-module-title">친구 챌린지</div>
-                            </div>
-                        </div>
-                        <div id="social-challenge-list"><div class="community-empty-state">진행 중인 챌린지가 없어요</div></div>
-                    </div>
-                    <div class="group-challenge-section community-module-card" id="group-challenge-section" style="display:none;">
-                        <div class="community-module-header">
-                            <div>
-                                <div class="community-module-kicker">함께 만든 흐름</div>
-                                <div class="community-module-title">이번 달 커뮤니티</div>
-                            </div>
-                        </div>
-                        <div id="group-challenge-content"></div>
-                    </div>
                 </div>
 
-                <div class="milestone-section" id="milestone-section" style="display:none;">
-                    <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
-                    <div class="badges-grid" id="badges-grid"></div>
-                </div>
+                <details class="dashboard-more-tools" id="dashboard-more-tools">
+                    <summary>기록 더보기</summary>
+                    <div class="dashboard-more-tools-body">
+                        <div class="milestone-section" id="milestone-section" style="display:none;">
+                            <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
+                            <div class="badges-grid" id="badges-grid"></div>
+                        </div>
 
-                <button class="pdf-btn" onclick="generate30DayReport()">📄 30일 종합 결과지 출력</button>
+                        <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지</button>
+                    </div>
+                </details>
             </div>
 
             <div id="profile" class="content-section" role="region" aria-label="내 프로필">

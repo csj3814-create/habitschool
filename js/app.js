@@ -3631,13 +3631,43 @@ const _communityFocusState = {
     activeFriends: 0,
     completeFriends: 0,
     pendingChallenges: 0,
-    activeChallenges: 0
+    activeChallenges: 0,
+    pendingChallengeId: '',
+    monthlyUsers: 0,
+    primaryAction: 'invite'
+};
+
+window.handleCommunityPrimaryAction = function() {
+    switch (_communityFocusState.primaryAction) {
+        case 'respond':
+            if (_communityFocusState.pendingChallengeId) {
+                openChallengeInviteModal(_communityFocusState.pendingChallengeId);
+            } else {
+                showToast('응답할 챌린지를 다시 불러오고 있어요.');
+            }
+            return;
+        case 'start':
+            openCreateChallengeModal();
+            return;
+        case 'record':
+            openTab(getNextRecordTab() || 'diet');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        case 'cheer':
+            focusGalleryFeed();
+            return;
+        case 'invite':
+        default:
+            openQRModal();
+            return;
+    }
 };
 
 function renderCommunityFocusPanel() {
     const titleEl = document.getElementById('community-focus-title');
     const bodyEl = document.getElementById('community-focus-body');
     const badgeEl = document.getElementById('community-focus-badge');
+    const statsEl = document.getElementById('community-focus-stats');
     const actionsEl = document.getElementById('community-focus-actions');
     if (!titleEl || !bodyEl || !badgeEl || !actionsEl) return;
 
@@ -3646,52 +3676,118 @@ function renderCommunityFocusPanel() {
         activeFriends,
         completeFriends,
         pendingChallenges,
-        activeChallenges
+        activeChallenges,
+        monthlyUsers
     } = _communityFocusState;
 
-    let actions = [];
+    let primaryLabel = '친구 초대';
+    let stats = [];
 
     if (pendingChallenges > 0) {
+        _communityFocusState.primaryAction = 'respond';
         titleEl.textContent = '응답할 챌린지가 있어요.';
-        bodyEl.textContent = '먼저 응답만 하면 됩니다. 그다음에 친구 기록을 보면 돼요.';
+        bodyEl.textContent = '지금은 수락이나 거절만 하면 됩니다.';
         badgeEl.textContent = `초대 ${pendingChallenges}건`;
-        actions = [
-            '<button type="button" class="community-focus-action primary" onclick="focusDashboardModule(\'social-challenge-card\')">챌린지 응답</button>',
-            '<button type="button" class="community-focus-action" onclick="focusGalleryFeed()">응원하기</button>'
-        ];
+        primaryLabel = '챌린지 응답';
     } else if (friendCount === 0) {
+        _communityFocusState.primaryAction = 'invite';
         titleEl.textContent = '친구 1명만 연결하면 같이 기록할 수 있어요.';
-        bodyEl.textContent = '지금은 친구 초대 한 가지만 하면 됩니다.';
+        bodyEl.textContent = '지금은 초대 코드 보내기만 하면 됩니다.';
         badgeEl.textContent = '친구 0명';
-        actions = [
-            '<button type="button" class="community-focus-action primary" onclick="openQRModal()">친구 초대</button>'
-        ];
+        primaryLabel = '친구 초대';
     } else if (activeChallenges === 0) {
+        _communityFocusState.primaryAction = 'start';
         titleEl.textContent = '친구가 준비됐어요.';
-        bodyEl.textContent = '다음은 챌린지를 시작하거나 친구 기록을 보는 순서면 됩니다.';
+        bodyEl.textContent = '다음 한 걸음은 챌린지 시작입니다.';
         badgeEl.textContent = `친구 ${friendCount}명`;
-        actions = [
-            '<button type="button" class="community-focus-action primary" onclick="openCreateChallengeModal()">챌린지 시작</button>',
-            '<button type="button" class="community-focus-action" onclick="focusDashboardModule(\'friend-activity-card\')">친구 보기</button>'
-        ];
+        primaryLabel = '챌린지 시작';
     } else if (activeFriends === 0) {
+        _communityFocusState.primaryAction = 'record';
         titleEl.textContent = '챌린지는 열려 있어요.';
-        bodyEl.textContent = '지금은 오늘 기록을 남기거나 친구 흐름만 확인하면 됩니다.';
+        bodyEl.textContent = '지금은 오늘 기록 하나만 남기면 됩니다.';
         badgeEl.textContent = `진행 ${activeChallenges}개`;
-        actions = [
-            '<button type="button" class="community-focus-action primary" onclick="openTab(\'diet\')">오늘 기록</button>',
-            '<button type="button" class="community-focus-action" onclick="focusDashboardModule(\'social-challenge-card\')">챌린지 보기</button>'
-        ];
+        primaryLabel = '오늘 기록';
     } else {
+        _communityFocusState.primaryAction = 'cheer';
         titleEl.textContent = '친구 흐름이 움직이고 있어요.';
-        bodyEl.textContent = `${activeFriends}명이 오늘 활동했어요. 지금은 응원이나 챌린지 확인만 하면 됩니다.`;
+        bodyEl.textContent = `${activeFriends}명이 오늘 활동했어요. 지금은 응원만 해도 충분합니다.`;
         badgeEl.textContent = `활동 ${activeFriends}명`;
-        actions = [
-            '<button type="button" class="community-focus-action primary" onclick="focusGalleryFeed()">응원하기</button>',
-            '<button type="button" class="community-focus-action" onclick="focusDashboardModule(\'social-challenge-card\')">챌린지 보기</button>'
-        ];
+        primaryLabel = '응원하러 가기';
     }
-    actionsEl.innerHTML = actions.join('');
+
+    if (friendCount > 0) stats.push(`친구 ${friendCount}명`);
+    if (activeChallenges > 0) stats.push(`진행 ${activeChallenges}개`);
+    if (completeFriends > 0) stats.push(`완료 ${completeFriends}명`);
+    if (monthlyUsers > 0) stats.push(`이달 ${monthlyUsers}명`);
+
+    if (statsEl) {
+        statsEl.innerHTML = stats.slice(0, 3).map(text => `<span class="community-focus-stat">${text}</span>`).join('');
+    }
+
+    actionsEl.innerHTML = `<button type="button" class="community-focus-action primary" onclick="handleCommunityPrimaryAction()">${primaryLabel}</button>`;
+}
+
+async function refreshCommunityFocusSummary(user, todayStr, communityStats = null) {
+    if (!user) return;
+
+    _communityFocusState.monthlyUsers = communityStats?.totalUsers || 0;
+    _communityFocusState.pendingChallengeId = '';
+
+    try {
+        await loadMyFriendships();
+        const activeFriendIds = getActiveFriendIds();
+        _communityFocusState.friendCount = activeFriendIds.length;
+
+        if (activeFriendIds.length === 0) {
+            _communityFocusState.activeFriends = 0;
+            _communityFocusState.completeFriends = 0;
+            _communityFocusState.pendingChallenges = 0;
+            _communityFocusState.activeChallenges = 0;
+            renderCommunityFocusPanel();
+            return;
+        }
+
+        const friendStatusRows = await Promise.all(activeFriendIds.map(async fid => {
+            const logSnap = await getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`));
+            if (!logSnap.exists()) return { active: false, complete: false };
+            const awarded = logSnap.data()?.awardedPoints || {};
+            const active = !!(awarded.diet || awarded.exercise || awarded.mind);
+            const complete = !!(awarded.diet && awarded.exercise && awarded.mind);
+            return { active, complete };
+        }));
+
+        _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
+        _communityFocusState.completeFriends = friendStatusRows.filter(row => row.complete).length;
+
+        const [asParticipant, asInvitee] = await Promise.all([
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('participants', 'array-contains', user.uid),
+                where('status', 'in', ['pending', 'active']),
+                limit(5)
+            )),
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('invitees', 'array-contains', user.uid),
+                where('status', '==', 'pending'),
+                limit(5)
+            ))
+        ]);
+
+        const challengeMap = new Map();
+        asParticipant.forEach(d => challengeMap.set(d.id, { id: d.id, ...d.data(), isInvite: false }));
+        asInvitee.forEach(d => challengeMap.set(d.id, { id: d.id, ...d.data(), isInvite: true }));
+
+        const challenges = [...challengeMap.values()];
+        const pendingChallenge = challenges.find(ch => ch.isInvite);
+        _communityFocusState.pendingChallenges = challenges.filter(ch => ch.isInvite).length;
+        _communityFocusState.activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
+        _communityFocusState.pendingChallengeId = pendingChallenge?.id || '';
+    } catch (e) {
+        console.warn('[refreshCommunityFocusSummary] 오류:', e.message);
+    }
+
+    renderCommunityFocusPanel();
 }
 
 function renderMissionFocusState({
@@ -4111,41 +4207,15 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         let completedMissions = 0;
         let overallRate = 0;
 
-        // (A) 지난주 리포트 카드는 설정 모드에서만 노출
-        const lastWeek = missionHistory.length > 0 ? missionHistory[missionHistory.length - 1] : null;
-        if (!isWeekActive && lastWeek) {
-            const rateClass = lastWeek.completionRate >= 80 ? 'rate-great' : lastWeek.completionRate >= 50 ? 'rate-good' : 'rate-low';
-            const rateEmoji = lastWeek.completionRate >= 80 ? '🎉' : lastWeek.completionRate >= 50 ? '👍' : '💪';
-            missionArea.innerHTML += `
-                <div class="week-report-card">
-                    <div class="week-report-header">
-                        <span>📊 지난주 결과 (${lastWeek.weekId})</span>
-                        <span class="week-report-rate ${rateClass}">${rateEmoji} ${lastWeek.completionRate}%</span>
-                    </div>
-                    <div class="week-report-stats">
-                        <span>🥗 ${lastWeek.stats?.diet || 0}일</span>
-                        <span>🏃 ${lastWeek.stats?.exercise || 0}일</span>
-                        <span>🧘 ${lastWeek.stats?.mind || 0}일</span>
-                    </div>
-                </div>`;
-        }
-
-        // (B) 스트릭 표시는 설정 모드에서만 노출
-        if (!isWeekActive && missionStreak > 0) {
-            missionArea.innerHTML += `
-                <div class="mission-streak-badge">
-                    🔥 <strong>${missionStreak}주 연속</strong> 달성 중!
-                </div>`;
-        }
-
         if (!isWeekActive) {
             // ========== 미션 설정 모드 ==========
             const levelData = MISSIONS[level] || MISSIONS[1];
             const categories = ['diet', 'exercise', 'mind'];
             const categoryLabels = { diet: '🥗 식단', exercise: '🏃 운동', mind: '🧘 마음' };
             const diffLabels = { easy: '쉬움', normal: '보통', hard: '도전' };
+            const customOpen = _customMissionComposerOpen || pendingCustomMissions.length > 0;
 
-            missionArea.innerHTML += `<p style="font-size:13px; color:#666; margin-bottom:12px;">카테고리별 난이도를 선택하고, 나만의 미션을 추가할 수 있어요!</p>`;
+            missionArea.innerHTML += `<div class="mission-setup-intro">식단, 운동, 마음 중 필요한 미션만 켜고 시작하세요.</div>`;
 
             categories.forEach(cat => {
                 const catData = levelData[cat];
@@ -4167,28 +4237,32 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                     </div>`;
             });
 
-            // 커스텀 미션 입력
             missionArea.innerHTML += `
-                <div class="custom-mission-section">
-                    <div class="custom-mission-header">✨ 나만의 미션 추가</div>
-                    <div id="custom-missions-list"></div>
-                    <div class="custom-mission-input-row">
-                        <select id="custom-mission-type">
-                            <option value="diet">🥗 식단</option>
-                            <option value="exercise">🏃 운동</option>
-                            <option value="mind">🧘 마음</option>
-                        </select>
-                        <input type="text" id="custom-mission-text" placeholder="예: 물 2L 마시기" maxlength="30">
-                        <select id="custom-mission-target">
-                            <option value="1">1일</option>
-                            <option value="2">2일</option>
-                            <option value="3" selected>3일</option>
-                            <option value="4">4일</option>
-                            <option value="5">5일</option>
-                            <option value="6">6일</option>
-                            <option value="7">7일</option>
-                        </select>
-                        <button class="add-custom-btn" onclick="addCustomMission()">+</button>
+                <div class="custom-mission-shell">
+                    <button type="button" class="mission-secondary-btn mission-inline-toggle" onclick="toggleCustomMissionComposer()">
+                        ${customOpen ? '직접 추가 닫기' : '직접 추가 열기'}
+                    </button>
+                    <div class="custom-mission-section" ${customOpen ? '' : 'hidden'}>
+                        <div class="custom-mission-header">✨ 직접 추가</div>
+                        <div id="custom-missions-list"></div>
+                        <div class="custom-mission-input-row">
+                            <select id="custom-mission-type">
+                                <option value="diet">🥗 식단</option>
+                                <option value="exercise">🏃 운동</option>
+                                <option value="mind">🧘 마음</option>
+                            </select>
+                            <input type="text" id="custom-mission-text" placeholder="예: 물 2L 마시기" maxlength="30">
+                            <select id="custom-mission-target">
+                                <option value="1">1일</option>
+                                <option value="2">2일</option>
+                                <option value="3" selected>3일</option>
+                                <option value="4">4일</option>
+                                <option value="5">5일</option>
+                                <option value="6">6일</option>
+                                <option value="7">7일</option>
+                            </select>
+                            <button class="add-custom-btn" onclick="addCustomMission()">+</button>
+                        </div>
                     </div>
                 </div>`;
 
@@ -4260,7 +4334,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                     </div>
                     <div class="mission-progress-actions">
                         ${levelUpHtml}
-                        <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">이번 주 미션 다시 정하기</button>
+                        <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">미션 다시 정하기</button>
                     </div>
                 </div>`;
 
@@ -4282,7 +4356,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 saveBtn.style.display = 'block';
                 saveBtn.style.opacity = '1';
                 saveBtn.style.cursor = 'pointer';
-                saveBtn.innerText = '🎯 이번 주 미션 시작!';
+                saveBtn.innerText = '🎯 이번 주 시작';
             }
             progContainer.style.display = 'none';
         }
@@ -4310,14 +4384,13 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         _communityFocusState.completeFriends = 0;
         _communityFocusState.pendingChallenges = 0;
         _communityFocusState.activeChallenges = 0;
+        _communityFocusState.pendingChallengeId = '';
+        _communityFocusState.monthlyUsers = data.communityStats?.totalUsers || 0;
         renderCommunityFocusPanel();
 
-        // 친구 오늘 활동 카드 (백그라운드 로드)
-        renderFriendActivityCard(user, todayStr).catch(() => {});
+        refreshCommunityFocusSummary(user, todayStr, data.communityStats).catch(() => {});
         // 친구 스트릭 달성 알림
         checkFriendStreakNotifications(user.uid).catch(() => {});
-        // 소셜 챌린지 카드
-        renderSocialChallenges(user).catch(() => {});
         // 챌린지 관련 알림
         checkChallengeNotifications(user.uid).catch(() => {});
 
@@ -4640,6 +4713,12 @@ window.selectDifficulty = function(cat, diff) {
 
 // 커스텀 미션 목록 (임시 저장)
 let pendingCustomMissions = [];
+let _customMissionComposerOpen = false;
+
+window.toggleCustomMissionComposer = function() {
+    _customMissionComposerOpen = !_customMissionComposerOpen;
+    renderDashboard();
+};
 
 window.addCustomMission = function() {
     const text = document.getElementById('custom-mission-text')?.value?.trim();
@@ -4660,12 +4739,14 @@ window.addCustomMission = function() {
     };
 
     pendingCustomMissions.push(mission);
+    _customMissionComposerOpen = true;
     renderPendingCustomMissions();
     document.getElementById('custom-mission-text').value = '';
 };
 
 window.removeCustomMission = function(id) {
     pendingCustomMissions = pendingCustomMissions.filter(m => m.id !== id);
+    if (pendingCustomMissions.length === 0) _customMissionComposerOpen = false;
     renderPendingCustomMissions();
 };
 
@@ -4825,6 +4906,7 @@ async function saveWeeklyMissions() {
         }, { merge: true });
 
         pendingCustomMissions = [];
+        _customMissionComposerOpen = false;
         showToast("🎯 이번 주 미션이 시작되었습니다! 화이팅!");
         if (window._invalidateDashboardCache) window._invalidateDashboardCache();
         renderDashboard();
@@ -4844,6 +4926,7 @@ window.resetWeeklyMissions = async function() {
     try {
         await setDoc(doc(db, "users", user.uid), { weeklyMissionData: null, selectedMissions: [] }, { merge: true });
         pendingCustomMissions = [];
+        _customMissionComposerOpen = false;
         if (window._applyWeeklyMissionResetToDashboard) window._applyWeeklyMissionResetToDashboard(user.uid);
         renderDashboard();
         const todayStr = getKSTDateString();
@@ -4887,6 +4970,7 @@ window.levelUp = async function (newLevel) {
             weeklyMissionData: null
         }, { merge: true });
         pendingCustomMissions = [];
+        _customMissionComposerOpen = false;
         alert(`🎉 축하합니다! 레벨 ${newLevel} (${MISSIONS[newLevel]?.name || ''})으로 승급하셨습니다!`);
         document.getElementById('level-modal').style.display = 'none';
         renderDashboard();
