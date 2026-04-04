@@ -1,4 +1,4 @@
-rules_version = '2';
+﻿rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
@@ -16,6 +16,16 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
+
+    // 헬퍼 함수: 공유 설정 검증
+    function isValidShareSettings(settings) {
+      return settings is map
+          && settings.keys().hasOnly(['hideIdentity', 'hideDate', 'hidePoints', 'hideMindText'])
+          && (!('hideIdentity' in settings) || settings.hideIdentity is bool)
+          && (!('hideDate' in settings) || settings.hideDate is bool)
+          && (!('hidePoints' in settings) || settings.hidePoints is bool)
+          && (!('hideMindText' in settings) || settings.hideMindText is bool);
+    }
     
     // 헬퍼 함수: 데이터 검증
     function isValidDailyLog() {
@@ -29,7 +39,8 @@ service cloud.firestore {
           && (!('metrics' in data) || data.metrics is map)
           && (!('diet' in data) || data.diet is map)
           && (!('exercise' in data) || data.exercise is map)
-          && (!('sleepAndMind' in data) || data.sleepAndMind is map);
+          && (!('sleepAndMind' in data) || data.sleepAndMind is map)
+          && (!('shareSettings' in data) || isValidShareSettings(data.shareSettings));
     }
     
     // 헬퍼 함수: 사용자 필드 화이트리스트

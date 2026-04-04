@@ -1,4 +1,4 @@
-/**
+﻿/**
  * app.js
  * 메인 애플리케이션 로직 모듈
  * index.html의 인라인 스크립트에서 추출
@@ -78,6 +78,241 @@ window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
 window.changeDisplayName = changeDisplayName;
 
+const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hidePoints', 'hideMindText'];
+let _shareSettingsDraft = getDefaultShareSettings();
+let _shareSettingsPersistTimer = null;
+
+function getDefaultShareSettings() {
+    return {
+        hideIdentity: false,
+        hideDate: false,
+        hidePoints: false,
+        hideMindText: false
+    };
+}
+
+function normalizeShareSettings(raw) {
+    const normalized = getDefaultShareSettings();
+    if (!raw || typeof raw !== 'object') return normalized;
+
+    SHARE_SETTING_KEYS.forEach(key => {
+        normalized[key] = raw[key] === true;
+    });
+    return normalized;
+}
+
+function getCurrentShareSettings() {
+    const controls = {
+        hideIdentity: document.getElementById('share-hide-identity')?.checked,
+        hideDate: document.getElementById('share-hide-date')?.checked,
+        hidePoints: document.getElementById('share-hide-points')?.checked,
+        hideMindText: document.getElementById('share-hide-mind-text')?.checked
+    };
+    const hasControls = Object.values(controls).some(value => typeof value === 'boolean');
+    return hasControls ? normalizeShareSettings(controls) : normalizeShareSettings(_shareSettingsDraft);
+}
+
+function updateShareSettingsSummary(settings = getCurrentShareSettings()) {
+    const summaryEl = document.getElementById('share-settings-summary');
+    if (!summaryEl) return;
+
+    const hiddenCount = Object.values(settings).filter(Boolean).length;
+    summaryEl.textContent = hiddenCount > 0
+        ? `${hiddenCount}개 항목을 가리고 공유 중이에요.`
+        : '기록은 기본 공유되고 있어요.';
+}
+
+function applyShareSettingsToControls(settings) {
+    const normalized = normalizeShareSettings(settings);
+    _shareSettingsDraft = normalized;
+
+    const controlMap = {
+        'share-hide-identity': 'hideIdentity',
+        'share-hide-date': 'hideDate',
+        'share-hide-points': 'hidePoints',
+        'share-hide-mind-text': 'hideMindText'
+    };
+
+    Object.entries(controlMap).forEach(([id, key]) => {
+        const control = document.getElementById(id);
+        if (control) control.checked = normalized[key];
+    });
+
+    updateShareSettingsSummary(normalized);
+    return normalized;
+}
+
+function getCurrentShareLog(userId) {
+    const { todayStr, yesterdayStr } = getDatesInfo();
+    return cachedGalleryLogs.find(item =>
+        item?.data?.userId === userId && (item.data.date === todayStr || item.data.date === yesterdayStr)
+    ) || null;
+}
+
+function collectShareCardImages(latest) {
+    if (!latest) return [];
+
+    const imgs = [];
+    if (latest.diet) {
+        ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
+            const thumb = latest.diet[`${meal}ThumbUrl`];
+            const orig = latest.diet[`${meal}Url`];
+            if (thumb) imgs.push(thumb);
+            else if (orig) imgs.push(orig);
+        });
+    }
+
+    if (latest.exercise) {
+        if (latest.exercise.cardioList?.length) {
+            latest.exercise.cardioList.forEach(item => {
+                if (item.imageThumbUrl) imgs.push(item.imageThumbUrl);
+                else if (item.imageUrl) imgs.push(item.imageUrl);
+            });
+        } else if (latest.exercise.cardioImageUrl) {
+            imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
+        }
+
+        if (latest.exercise.strengthList?.length) {
+            latest.exercise.strengthList.forEach(item => {
+                if (item.videoThumbUrl) imgs.push(item.videoThumbUrl);
+                else if (item.videoUrl) imgs.push(item.videoUrl);
+            });
+        } else if (latest.exercise.strengthVideoUrl) {
+            imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
+        }
+    }
+
+    if (latest.sleepAndMind?.sleepImageUrl) {
+        imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
+    }
+
+    return [...new Set(imgs)].filter(url => url && String(url).trim() !== '');
+}
+
+function renderShareCardState(user, latest, overrideSettings = null) {
+    const shareContainer = document.getElementById('my-share-container');
+    const shareButton = shareContainer?.querySelector('.btn-share-action');
+    const titleEl = document.getElementById('share-title-text');
+    const dateEl = document.getElementById('share-date');
+    const pointEl = document.getElementById('share-point');
+    const imgGrid = document.getElementById('share-imgs');
+    if (!shareContainer || !titleEl || !dateEl || !pointEl || !imgGrid) return;
+
+    const settings = applyShareSettingsToControls(overrideSettings || latest?.shareSettings || _shareSettingsDraft);
+    const applyHiddenState = (element, hidden) => {
+        element.classList.toggle('is-hidden', !!hidden);
+        if (element.parentElement) element.parentElement.classList.toggle('is-hidden', !!hidden);
+    };
+
+    shareContainer.style.display = 'flex';
+
+    if (latest && user) {
+        const displayName = settings.hideIdentity ? '익명 학생' : getUserDisplayName();
+        titleEl.innerText = settings.hideIdentity ? '오늘의 해빛 인증' : `${displayName}님의 해빛 인증`;
+        dateEl.innerText = settings.hideDate ? '날짜 가림' : latest.date.replace(/-/g, '.');
+
+        let points = (latest.awardedPoints?.dietPoints || 0)
+            + (latest.awardedPoints?.exercisePoints || 0)
+            + (latest.awardedPoints?.mindPoints || 0);
+        if (points === 0 && latest.awardedPoints) {
+            if (latest.awardedPoints.diet) points += 10;
+            if (latest.awardedPoints.exercise) points += 15;
+            if (latest.awardedPoints.mind) points += 5;
+        }
+        pointEl.innerText = settings.hidePoints ? '--' : String(points);
+        applyHiddenState(dateEl, settings.hideDate);
+        applyHiddenState(pointEl, settings.hidePoints);
+
+        if (shareButton) {
+            shareButton.innerText = '나의 해빛 기록 자랑하기';
+            shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
+        }
+
+        const imgs = collectShareCardImages(latest);
+        imgGrid.innerHTML = buildShareImageGrid(imgs, 4);
+        imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items', 'share-img-grid-empty');
+        if (imgs.length === 1) imgGrid.classList.add('single-item');
+        if (imgs.length === 2) imgGrid.classList.add('two-items');
+        if (imgs.length === 3) imgGrid.classList.add('three-items');
+        if (imgs.length >= 4) imgGrid.classList.add('four-items');
+        if (imgs.length === 0) {
+            imgGrid.classList.add('share-img-grid-empty');
+            imgGrid.innerHTML = '<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 준비!</div>';
+        }
+        return;
+    }
+
+    titleEl.innerText = '오늘의 해빛 인증';
+    dateEl.innerText = '기록 준비';
+    pointEl.innerText = settings.hidePoints ? '--' : '0';
+    applyHiddenState(dateEl, false);
+    applyHiddenState(pointEl, settings.hidePoints);
+    imgGrid.className = 'share-img-grid share-img-grid-empty';
+    imgGrid.innerHTML = `
+        <div class="share-placeholder-box">
+            <strong>아직 공유할 카드가 없어요</strong>
+            <span>오늘 기록을 저장하면 바로 자랑 카드가 생겨요.</span>
+        </div>`;
+    if (shareButton) {
+        shareButton.innerText = '오늘 기록 저장하고 공유 준비하기';
+        shareButton.onclick = goToGalleryRecordAction;
+    }
+}
+
+async function persistShareSettings() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const currentShareLog = getCurrentShareLog(user.uid);
+    if (!currentShareLog) return;
+
+    const nextSettings = getCurrentShareSettings();
+    try {
+        await setDoc(doc(db, 'daily_logs', currentShareLog.id), {
+            shareSettings: nextSettings
+        }, { merge: true });
+
+        const cached = cachedGalleryLogs.find(item => item.id === currentShareLog.id);
+        if (cached) cached.data.shareSettings = { ...nextSettings };
+        sortedFilteredDirty = true;
+
+        if (document.getElementById('gallery')?.classList.contains('active')) {
+            renderFeedOnly();
+            await buildShareCardAsync(user.uid, user, nextSettings);
+        }
+    } catch (error) {
+        console.error('share settings save error:', error);
+        showToast('공유 설정을 저장하지 못했어요.');
+        await buildShareCardAsync(user.uid, user);
+    }
+}
+
+function handleShareSettingsChange() {
+    const settings = getCurrentShareSettings();
+    _shareSettingsDraft = settings;
+    updateShareSettingsSummary(settings);
+
+    const user = auth.currentUser;
+    const currentShareLog = user ? getCurrentShareLog(user.uid) : null;
+    renderShareCardState(user, currentShareLog?.data || null, settings);
+
+    clearTimeout(_shareSettingsPersistTimer);
+    if (!currentShareLog) return;
+    _shareSettingsPersistTimer = setTimeout(() => {
+        persistShareSettings().catch(() => { });
+    }, 250);
+}
+
+function bindShareSettingListeners() {
+    ['share-hide-identity', 'share-hide-date', 'share-hide-points', 'share-hide-mind-text'].forEach(id => {
+        const element = document.getElementById(id);
+        if (!element || element.dataset.shareSettingBound === 'true') return;
+        element.dataset.shareSettingBound = 'true';
+        element.addEventListener('change', handleShareSettingsChange);
+    });
+    updateShareSettingsSummary(_shareSettingsDraft);
+}
+
 // ========== 닉네임 변경 ==========
 function getUserDisplayName() {
     return window._userDisplayName || auth.currentUser?.displayName || '사용자';
@@ -103,8 +338,7 @@ async function changeDisplayName() {
         document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(newName)}`;
 
         // 갤러리 공유 카드 이름 업데이트
-        const shareNameEl = document.getElementById('share-name');
-        if (shareNameEl) shareNameEl.innerText = newName;
+        renderShareCardState(user, getCurrentShareLog(user.uid)?.data || null, getCurrentShareSettings());
 
         // 리포트 이름 업데이트
         const reportNameEl = document.getElementById('report-user-name');
@@ -1060,6 +1294,7 @@ function clearInputs() {
     document.getElementById('quest-mind').className = 'quest-check'; document.getElementById('quest-mind').innerText = '미달성';
 
     document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
+    applyShareSettingsToControls(getDefaultShareSettings());
     updateRecordFlowGuides(getVisibleTabName());
 }
 
@@ -1092,6 +1327,7 @@ async function loadDataForSelectedDate(dateStr) {
         if (myLogDoc.exists()) {
             const data = myLogDoc.data();
             const awarded = data.awardedPoints || {};
+            applyShareSettingsToControls(data.shareSettings);
 
             if (data.metrics) {
                 document.getElementById('weight').value = data.metrics.weight || '';
@@ -1323,6 +1559,7 @@ document.addEventListener('keydown', function (e) {
 
 // 라이트박스 스와이프 지원
 document.addEventListener('DOMContentLoaded', function () {
+    bindShareSettingListeners();
     const modal = document.getElementById('lightbox-modal');
     if (!modal) return;
 
@@ -4981,6 +5218,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             // 기존 AI 분석 결과 보존
             const existingAnalysis = oldData.dietAnalysis || {};
             const existingSleepAnalysis = oldData.sleepAndMind?.sleepAnalysis || null;
+            const shareSettings = getCurrentShareSettings();
 
             const saveData = sanitize({
                 userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
@@ -4992,7 +5230,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 dietAnalysis: existingAnalysis,
                 exercise: { cardioList: cardioList, strengthList: strengthList },
                 steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: new Date().toISOString() } : (oldData.steps || null),
-                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText }
+                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText },
+                shareSettings: shareSettings
             });
 
             // Firestore 저장: 서버 ACK 최대 5초 대기, unavailable 에러 시 1회 자동 재시도
@@ -6516,94 +6755,11 @@ async function _loadGalleryDataInner() {
 }
 
 // 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
-async function buildShareCardAsync(myId, user) {
+async function buildShareCardAsync(myId, user, overrideSettings = null) {
     try {
-        const { todayStr, yesterdayStr } = getDatesInfo();
-        let myRecentLogs = [];
-        cachedGalleryLogs.forEach(item => {
-            if (item.data.userId === myId && (item.data.date === todayStr || item.data.date === yesterdayStr))
-                myRecentLogs.push(item.data);
-        });
-
-        if (user && myRecentLogs.length > 0) {
-            document.getElementById('my-share-container').style.display = 'flex';
-            const shareButton = document.querySelector('#my-share-container .btn-share-action');
-            const latest = myRecentLogs[0];
-            document.getElementById('share-name').innerText = getUserDisplayName();
-            document.getElementById('share-date').innerText = latest.date.replace(/-/g, '.');
-            let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
-            if (points === 0 && latest.awardedPoints) { if (latest.awardedPoints.diet) points += 10; if (latest.awardedPoints.exercise) points += 15; if (latest.awardedPoints.mind) points += 5; }
-            document.getElementById('share-point').innerText = points;
-            if (shareButton) {
-                shareButton.innerText = '🌟 나의 해빛 기록 자랑하기';
-                shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
-            }
-            updateGalleryPrimaryAction();
-
-            // 공유 카드용 이미지 - 썸네일 우선
-            let imgs = [];
-            if (latest.diet) {
-                ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
-                    const thumb = latest.diet[`${meal}ThumbUrl`];
-                    const orig = latest.diet[`${meal}Url`];
-                    if (thumb) imgs.push(thumb);
-                    else if (orig) imgs.push(orig);
-                });
-            }
-            if (latest.exercise) {
-                if (latest.exercise.cardioList && latest.exercise.cardioList.length > 0) {
-                    latest.exercise.cardioList.forEach(c => {
-                        if (c.imageThumbUrl) imgs.push(c.imageThumbUrl);
-                        else if (c.imageUrl) imgs.push(c.imageUrl);
-                    });
-                } else if (latest.exercise.cardioImageUrl) {
-                    imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
-                }
-                if (latest.exercise.strengthList && latest.exercise.strengthList.length > 0) {
-                    latest.exercise.strengthList.forEach(s => {
-                        if (s.videoThumbUrl) imgs.push(s.videoThumbUrl);
-                        else if (s.videoUrl) imgs.push(s.videoUrl);
-                    });
-                } else if (latest.exercise.strengthVideoUrl) {
-                    imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
-                }
-            }
-            if (latest.sleepAndMind?.sleepImageUrl) imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
-
-            imgs = [...new Set(imgs)].filter(url => url && url.trim() !== '');
-
-            const imgGrid = document.getElementById('share-imgs');
-            imgGrid.innerHTML = '';
-            imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items', 'share-img-grid-empty');
-
-            let htmlString = buildShareImageGrid(imgs, 4);
-            imgGrid.innerHTML = htmlString;
-            if (imgs.length === 1) imgGrid.classList.add('single-item');
-            if (imgs.length === 2) imgGrid.classList.add('two-items');
-            if (imgs.length === 3) imgGrid.classList.add('three-items');
-            if (imgs.length >= 4) imgGrid.classList.add('four-items');
-
-            if (imgs.length === 0) imgGrid.innerHTML = `<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 완료!</div>`;
-        } else {
-            const shareContainer = document.getElementById('my-share-container');
-            const shareButton = document.querySelector('#my-share-container .btn-share-action');
-            const imgGrid = document.getElementById('share-imgs');
-            shareContainer.style.display = 'flex';
-            document.getElementById('share-name').innerText = getUserDisplayName();
-            document.getElementById('share-date').innerText = '기록 준비';
-            document.getElementById('share-point').innerText = '0';
-            imgGrid.className = 'share-img-grid share-img-grid-empty';
-            imgGrid.innerHTML = `
-                <div class="share-placeholder-box">
-                    <strong>아직 공유할 카드가 없어요</strong>
-                    <span>오늘 기록을 저장하면 바로 자랑할 수 있어요.</span>
-                </div>`;
-            if (shareButton) {
-                shareButton.innerText = '📝 오늘 기록 저장하고 공유 준비하기';
-                shareButton.onclick = goToGalleryRecordAction;
-            }
-            updateGalleryPrimaryAction();
-        }
+        const latest = user ? getCurrentShareLog(myId)?.data || null : null;
+        renderShareCardState(user, latest, overrideSettings);
+        updateGalleryPrimaryAction();
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
@@ -6790,6 +6946,7 @@ function collectGalleryMedia(data) {
         mindHtml: '',
         mindText: ''
     };
+    const shareSettings = normalizeShareSettings(data.shareSettings);
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
     if (data.diet) {
@@ -6873,7 +7030,7 @@ function collectGalleryMedia(data) {
     }
 
     // 마음 텍스트
-    if (data.sleepAndMind?.gratitude) {
+    if (data.sleepAndMind?.gratitude && !shareSettings.hideMindText) {
         const safeGratitude = escapeHtml(data.sleepAndMind.gratitude);
         result.mindText = `<div style="font-size:13px; color:#555; background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:12px; font-style:italic;">💭 "${safeGratitude}"</div>`;
     }
@@ -6949,7 +7106,8 @@ function renderGalleryHeroStats(myId) {
 // 갤러리 카드 DOM 생성 (추출된 단일 카드 빌더)
 function buildGalleryCard(item, myId) {
     const data = item.data;
-    const isFriend = cachedMyFriends.includes(data.userId);
+    const shareSettings = normalizeShareSettings(data.shareSettings);
+    const isFriend = !shareSettings.hideIdentity && cachedMyFriends.includes(data.userId);
 
     const media = collectGalleryMedia(data);
     let contentHtml = '';
@@ -6983,9 +7141,12 @@ function buildGalleryCard(item, myId) {
 
     const comments = data.comments || [];
     const commentCount = comments.length;
-    const safeName = escapeHtml(data.userName || '익명');
+    const rawUserName = data.userName || '익명';
+    const displayUserName = shareSettings.hideIdentity ? '익명 학생' : rawUserName;
+    const safeName = escapeHtml(displayUserName);
     const safeUserId = escapeHtml(data.userId || '');
     const safeDocId = escapeHtml(item.id || '');
+    const safeFilterName = escapeHtml(rawUserName);
 
     let commentsHtml = '';
     const showComments = comments.slice(0, 1);
@@ -7001,45 +7162,46 @@ function buildGalleryCard(item, myId) {
         commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
     }
 
-    const avatarInitial = (data.userName || '?').charAt(0);
+    const avatarInitial = shareSettings.hideIdentity ? '익' : (rawUserName || '?').charAt(0);
     const pointTotal = getGalleryItemPointTotal(data);
     const typeLabels = getGalleryTypeLabels(data, media);
     const heartCountHtml = cHeart > 0 ? `<span class="action-count">${cHeart}</span>` : '';
     const fireCountHtml = cFire > 0 ? `<span class="action-count">${cFire}</span>` : '';
     const clapCountHtml = cClap > 0 ? `<span class="action-count">${cClap}</span>` : '';
     const commentCountHtml = commentCount > 0 ? `<span class="action-count" id="comment-count-${safeDocId}">${commentCount}</span>` : `<span class="action-count is-empty" id="comment-count-${safeDocId}"></span>`;
-    const metaHtml = (pointTotal > 0 || typeLabels.length > 0)
+    const showPointBadge = !shareSettings.hidePoints && pointTotal > 0;
+    const metaHtml = (showPointBadge || typeLabels.length > 0)
         ? `<div class="gallery-post-meta">
-            ${pointTotal > 0 ? `<span class="gallery-point-badge">🅿️ ${pointTotal}P</span>` : ''}
+            ${showPointBadge ? `<span class="gallery-point-badge">P ${pointTotal}</span>` : ''}
             ${typeLabels.length > 0 ? `<div class="gallery-type-tags">${typeLabels.map(label => `<span class="gallery-type-chip">${label}</span>`).join('')}</div>` : ''}
            </div>`
         : '';
 
-    // 연속 인증 스트릭 뱃지
     const streak = data.currentStreak || 0;
     const streakEmoji = streak >= 100 ? '👑' : streak >= 60 ? '💎' : streak >= 30 ? '⭐' : streak >= 7 ? '🔥' : '';
-    const streakHtml = streakEmoji ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
+    const streakHtml = (!shareSettings.hideDate && streakEmoji) ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
     const relationshipHtml = isFriend ? '<span class="gallery-relationship-chip">친구</span>' : '';
+    const dateHtml = shareSettings.hideDate ? '' : `<span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>`;
 
-    // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
-    const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
+    const friendBtnHtml = (isGuest || shareSettings.hideIdentity)
+        ? ''
+        : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '친구' : '+ 친구'}</button>` : '');
 
-    // 본인 게시물: ⋯ 메뉴 (삭제), 타인 게시물: ⋯ 메뉴 (신고)
     let postMenuHtml = '';
     if (!isGuest) {
         if (data.userId === myId) {
             postMenuHtml = `<div class="post-menu-container">
                 <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
                 <div class="post-menu-dropdown" style="display:none;">
-                    <button onclick="deleteGalleryPost('${safeDocId}')">🗑️ 삭제</button>
+                    <button onclick="deleteGalleryPost('${safeDocId}')">피드 삭제</button>
                 </div>
             </div>`;
         } else {
             postMenuHtml = `<div class="post-menu-container">
                 <button class="post-menu-btn" onclick="togglePostMenu(this)" aria-label="게시물 메뉴">⋯</button>
                 <div class="post-menu-dropdown" style="display:none;">
-                    <button onclick="reportPost('${safeDocId}', '${safeUserId}')">🚨 신고</button>
-                    <button onclick="blockUser('${safeUserId}', '${safeName}')">🚫 차단</button>
+                    <button onclick="reportPost('${safeDocId}', '${safeUserId}')">피드 신고</button>
+                    <button onclick="blockUser('${safeUserId}', '${safeName}')">사용자 숨기기</button>
                 </div>
             </div>`;
         }
@@ -7071,18 +7233,22 @@ function buildGalleryCard(item, myId) {
             </div>
            </div>`;
 
+    const headerActionAttr = shareSettings.hideIdentity
+        ? ''
+        : `onclick="setGalleryUserFilter('${safeUserId}','${safeFilterName}')" style="cursor:pointer;" title="게시물만 보기"`;
+
     const card = document.createElement('div');
     card.className = 'gallery-card';
     card.innerHTML = `
         <div class="gallery-header">
-            <div class="gallery-avatar" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">${avatarInitial}</div>
-            <div class="gallery-header-info" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">
+            <div class="gallery-avatar" ${headerActionAttr}>${avatarInitial}</div>
+            <div class="gallery-header-info" ${headerActionAttr}>
                 <div class="gallery-name-row">
                     <span class="gallery-name">${safeName}</span>
                     ${relationshipHtml}
                     ${streakHtml}
                 </div>
-                <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
+                ${dateHtml}
             </div>
             ${friendBtnHtml}
             ${postMenuHtml}
