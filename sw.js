@@ -47,7 +47,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v104';
+const CACHE_NAME = 'habitschool-v105';
 const STATIC_ASSETS = [
     './',
     './styles.css',
