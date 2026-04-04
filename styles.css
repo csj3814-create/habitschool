@@ -3330,39 +3330,40 @@ textarea {
 }
 
 .share-card-capture { 
-    width: 100%; 
-    max-width: 320px; 
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 1 / 1;
     background:
         radial-gradient(circle at top right, rgba(255, 207, 131, 0.62) 0%, transparent 28%),
         linear-gradient(160deg, #FFF8EA 0%, #FFFDF7 54%, #EEF8F1 100%);
-    padding: 14px; 
-    border-radius: 24px; 
+    padding: 14px;
+    border-radius: 24px;
     box-sizing: border-box;
-    display: flex; 
-    flex-direction: column; 
-    gap: 10px;
-    box-shadow: 0 14px 32px rgba(224, 151, 51, 0.16); 
-    border: 1px solid #EFC98F; 
+    display: grid;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    gap: 8px;
+    box-shadow: 0 14px 32px rgba(224, 151, 51, 0.16);
+    border: 1px solid #EFC98F;
     overflow: hidden;
 }
 
 .share-poster-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
 }
 
 .share-brand-mark {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
-    padding: 0 10px;
+    min-height: 22px;
+    padding: 0 8px;
     border-radius: 999px;
     background: rgba(255,255,255,0.92);
     border: 1px solid rgba(239, 201, 143, 0.95);
     color: #B76400;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 900;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -3375,25 +3376,30 @@ textarea {
 }
 
 .share-title { 
-    font-size: 24px; 
-    color: #2F261D; 
-    font-weight: 900; 
-    margin: 0; 
-    letter-spacing: -0.06em; 
-    line-height: 1.08;
+    font-size: 18px;
+    color: #2F261D;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: -0.05em;
+    line-height: 1.16;
 }
 
 .share-subtitle {
-    font-size: 12px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.45;
     color: #7A6754;
     font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .share-stat { 
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
     flex-wrap: wrap;
     font-variant-numeric: tabular-nums;
 }
@@ -3402,14 +3408,14 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
-    padding: 0 10px;
+    min-height: 24px;
+    padding: 0 8px;
     border-radius: 999px;
     background: rgba(255,255,255,0.92);
     border: 1px solid rgba(239, 201, 143, 0.95);
-    font-size: 11px; 
-    font-weight: 800; 
-    color: #A64B00; 
+    font-size: 10px;
+    font-weight: 800;
+    color: #A64B00;
     white-space: nowrap;
 }
 
@@ -3427,8 +3433,8 @@ textarea {
 .share-tag {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
-    padding: 0 10px;
+    min-height: 22px;
+    padding: 0 9px;
     border-radius: 999px;
     background: rgba(255,255,255,0.76);
     border: 1px solid rgba(223, 204, 171, 0.9);
@@ -3439,34 +3445,35 @@ textarea {
 
 .share-img-grid {
     width: 100%;
+    height: 100%;
+    min-height: 0;
 }
 
 .share-media-layout {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    height: 100%;
+    min-height: 0;
 }
 
 .share-media-layout.share-media-count-1 {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
 }
 
-.share-media-layout.share-media-count-1 .share-media-thumb {
-    min-height: 232px;
+.share-media-layout.share-media-count-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 1fr;
 }
 
-.share-media-layout.share-media-count-2 .share-media-thumb,
-.share-media-layout.share-media-count-4 .share-media-thumb {
-    min-height: 158px;
-}
-
-.share-media-layout.share-media-count-3 .share-media-thumb {
-    min-height: 110px;
+.share-media-layout.share-media-count-3,
+.share-media-layout.share-media-count-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
 .share-media-layout.share-media-count-3 .share-media-thumb:first-child {
     grid-row: span 2;
-    min-height: 228px;
 }
 
 .share-empty-state {
@@ -3474,8 +3481,9 @@ textarea {
     flex-direction: column;
     justify-content: center;
     gap: 8px;
-    min-height: 214px;
-    padding: 22px 18px;
+    height: 100%;
+    min-height: 0;
+    padding: 18px 16px;
     border-radius: 20px;
     background: rgba(255,255,255,0.7);
     border: 1px dashed rgba(191,54,12,0.2);
@@ -3483,13 +3491,13 @@ textarea {
 }
 
 .share-empty-state strong {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.25;
     color: #2F261D;
 }
 
 .share-empty-state span {
-    font-size: 12px;
+    font-size: 11px;
     line-height: 1.5;
     color: #806B57;
 }
@@ -3497,9 +3505,10 @@ textarea {
 .share-media-thumb {
     position: relative;
     width: 100%;
-    min-height: 140px;
+    min-height: 0;
+    height: 100%;
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 18px;
     border: 1px solid rgba(255,255,255,0.9);
     box-shadow: 0 10px 18px rgba(53, 34, 8, 0.08);
     background: linear-gradient(145deg, #FFF0D7 0%, #FFE2B5 100%);
@@ -6733,8 +6742,8 @@ textarea:focus-visible,
         grid-template-columns: repeat(2, 1fr); 
     }
     
-    .share-card-capture { 
-        max-width: 300px; 
+    .share-card-capture {
+        max-width: 340px;
     }
 }
 
@@ -6764,8 +6773,8 @@ textarea:focus-visible,
         grid-template-columns: repeat(3, 1fr); 
     }
     
-    .share-card-capture { 
-        max-width: 380px; 
+    .share-card-capture {
+        max-width: 340px;
     }
 }
 

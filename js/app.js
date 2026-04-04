@@ -92,6 +92,9 @@ const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercis
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
 let _shareSettingsExpanded = false;
+let _shareCardBuildToken = 0;
+let _latestPreparedShareMedia = [];
+let _latestPreparedShareSignature = '';
 let cachedMyFriends = [];
 let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
@@ -277,6 +280,112 @@ function buildShareTagRow(tags = []) {
     return tags.map(tag => `<span class="share-tag">${escapeHtml(tag)}</span>`).join('');
 }
 
+function buildShareMediaSignature(mediaItems = [], maxCount = 4) {
+    return mediaItems
+        .slice(0, maxCount)
+        .map(item => `${item.category || ''}|${item.type || ''}|${item.originalUrl || item.src || ''}`)
+        .join('||');
+}
+
+function buildSharePlaceholderMedia(mediaItems = [], maxCount = 4) {
+    return mediaItems.slice(0, maxCount).map((item, index) => {
+        const label = item.category || `기록 ${index + 1}`;
+        const placeholder = item.type === 'video'
+            ? createVideoPlaceholderBase64()
+            : createImagePlaceholderBase64(label);
+        return {
+            ...item,
+            src: placeholder,
+            prepared: false
+        };
+    });
+}
+
+async function withAsyncTimeout(task, timeoutMs, errorMessage = '작업 시간이 초과되었어요.') {
+    let timeoutId = null;
+    try {
+        return await Promise.race([
+            Promise.resolve(task),
+            new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+            })
+        ]);
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+}
+
+async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
+    const items = mediaItems.slice(0, maxCount);
+    if (!items.length) return [];
+
+    return await Promise.all(items.map(async (item, index) => {
+        const label = item.category || `기록 ${index + 1}`;
+        const placeholder = item.type === 'video'
+            ? createVideoPlaceholderBase64()
+            : createImagePlaceholderBase64(label);
+
+        if (item.type === 'video') {
+            return {
+                ...item,
+                src: placeholder,
+                prepared: true
+            };
+        }
+
+        const candidates = [item.src, item.originalUrl]
+            .map(value => String(value || '').trim())
+            .filter(Boolean);
+
+        for (const candidate of candidates) {
+            if (candidate.startsWith('data:')) {
+                return {
+                    ...item,
+                    src: candidate,
+                    prepared: true
+                };
+            }
+
+            try {
+                const base64 = await withAsyncTimeout(
+                    fetchImageAsBase64(candidate),
+                    6500,
+                    '공유 이미지 준비 시간이 초과되었어요.'
+                );
+                if (typeof base64 === 'string' && base64.startsWith('data:')) {
+                    return {
+                        ...item,
+                        src: base64,
+                        prepared: true
+                    };
+                }
+            } catch (error) {
+                console.warn('공유 미디어 준비 실패:', candidate, error);
+            }
+        }
+
+        return {
+            ...item,
+            src: placeholder,
+            prepared: true
+        };
+    }));
+}
+
+async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettings(), forceRefresh = false) {
+    const mediaItems = collectShareCardMedia(latest, settings);
+    const signature = buildShareMediaSignature(mediaItems);
+
+    if (!forceRefresh && signature && signature === _latestPreparedShareSignature && _latestPreparedShareMedia.length) {
+        return _latestPreparedShareMedia;
+    }
+
+    const prepared = await prepareShareMediaItems(mediaItems);
+    _latestPreparedShareMedia = prepared;
+    _latestPreparedShareSignature = signature;
+    return prepared;
+}
+
 function renderShareCardState(user, latest, overrideSettings = null, options = {}) {
     const shareContainer = document.getElementById('my-share-container');
     const shareButton = shareContainer?.querySelector('.btn-share-action');
@@ -299,7 +408,10 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     if (latest && user) {
         const displayName = settings.hideIdentity ? '익명 학생' : getUserDisplayName();
         const tags = getShareCategoryTags(latest, settings);
-        const mediaItems = Array.isArray(options.preparedMedia) ? options.preparedMedia : collectShareCardMedia(latest, settings);
+        const rawMediaItems = collectShareCardMedia(latest, settings);
+        const mediaItems = Array.isArray(options.preparedMedia)
+            ? options.preparedMedia
+            : buildSharePlaceholderMedia(rawMediaItems);
         titleEl.innerText = settings.hideIdentity ? '오늘의 해빛 루틴' : `${displayName}의 해빛 루틴`;
         subtitleEl.innerText = buildShareSubtitle(latest, tags);
         tagRowEl.innerHTML = buildShareTagRow(tags);
@@ -370,7 +482,11 @@ function handleShareSettingsChange() {
 
     const user = auth.currentUser;
     const currentShareLog = user ? getCurrentShareLog(user.uid) : null;
-    renderShareCardState(user, currentShareLog?.data || null, settings);
+    if (currentShareLog && user) {
+        buildShareCardAsync(user.uid, user, settings).catch(() => { });
+    } else {
+        renderShareCardState(user, currentShareLog?.data || null, settings);
+    }
 
     clearTimeout(_shareSettingsPersistTimer);
     if (!currentShareLog) return;
@@ -6531,10 +6647,14 @@ function buildShareImageGrid(mediaItems, maxCount = 4) {
     const html = items.map((item, index) => {
         const mediaType = item.type || (isVideoUrl(item.originalUrl || item.src || '') ? 'video' : 'image');
         const mediaSrc = item.src || item.originalUrl || '';
-        const safeSrc = toSafeAttr(mediaSrc || createImagePlaceholderBase64(item.category || '해빛 기록'));
+        const fallbackSrc = mediaType === 'video'
+            ? createVideoPlaceholderBase64()
+            : createImagePlaceholderBase64(item.category || '해빛 기록');
+        const safeSrc = toSafeAttr(mediaSrc || fallbackSrc);
+        const safeFallback = toSafeAttr(fallbackSrc);
         const safeOriginal = toSafeAttr(item.originalUrl || mediaSrc);
         const safeCategory = escapeHtml(item.category || '기록');
-        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous">`;
+        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous" onerror="this.onerror=null;this.src='${safeFallback}'">`;
 
         return `
             <div class="share-media-thumb" data-media-type="${mediaType}" data-media-src="${safeOriginal}">
@@ -6628,61 +6748,16 @@ async function prewarmThumbCache(logItems) {
 
 async function prepareShareThumbsForCapture() {
     const captureArea = document.getElementById('capture-area');
-    const thumbs = Array.from(captureArea?.querySelectorAll('.share-media-thumb') || []);
-    if (!thumbs.length) return;
-    await waitForImagesInElement(captureArea);
+    if (!captureArea) return;
 
-    const jobs = thumbs.map(async (thumb, index) => {
-        const mediaType = thumb.dataset.mediaType;
-        const mediaSrc = thumb.dataset.mediaSrc;
-        const label = thumb.querySelector('.share-media-chip')?.textContent?.trim() || `기록 ${index + 1}`;
-        let b64 = '';
+    const user = auth.currentUser;
+    const latest = user ? getCurrentShareLog(user.uid)?.data || null : null;
+    if (latest && user) {
+        const settings = getCurrentShareSettings();
+        const preparedMedia = await ensurePreparedShareMedia(latest, settings);
+        renderShareCardState(user, latest, settings, { preparedMedia });
+    }
 
-        if (mediaType === 'video') {
-            // 1) 비디오 요소에서 프레임 캡처 시도
-            const videoEl = thumb.querySelector('video');
-            if (videoEl && videoEl.readyState >= 2) {
-                try {
-                    const c = document.createElement('canvas');
-                    c.width = videoEl.videoWidth || 320;
-                    c.height = videoEl.videoHeight || 320;
-                    c.getContext('2d').drawImage(videoEl, 0, 0, c.width, c.height);
-                    b64 = c.toDataURL('image/jpeg', 0.85);
-                } catch (_) { }
-            }
-            // 2) 썸네일 이미지가 있으면 사용
-            if (!b64 || b64 === 'data:,') {
-                const renderedThumbImg = thumb.querySelector('img');
-                if (renderedThumbImg) {
-                    b64 = await imageElementToBase64(renderedThumbImg);
-                }
-                if ((!b64 || b64 === 'data:,') && renderedThumbImg?.src && !renderedThumbImg.src.startsWith('data:video')) {
-                    b64 = await fetchImageAsBase64(renderedThumbImg.src);
-                }
-            }
-            // 3) 최종 폴백: 플레이스홀더 생성
-            if (!b64 || b64 === 'data:,' || /^data:video/i.test(b64) || !String(b64).startsWith('data:')) {
-                b64 = createVideoPlaceholderBase64();
-            }
-        } else {
-            const renderedImage = thumb.querySelector('img');
-            b64 = await imageElementToBase64(renderedImage);
-            if (!b64 || !String(b64).startsWith('data:')) {
-                b64 = await fetchImageAsBase64(mediaSrc || renderedImage?.currentSrc || renderedImage?.src || '');
-            }
-            if (!b64 || !String(b64).startsWith('data:')) {
-                b64 = createImagePlaceholderBase64(label);
-            }
-        }
-
-        thumb.innerHTML = `
-            <img src="${b64}" alt="해빛 인증 ${index + 1}" crossorigin="anonymous">
-            <span class="share-media-chip">${escapeHtml(label)}</span>
-            ${mediaType === 'video' ? '<span class="share-media-play-badge">▶</span>' : ''}
-        `;
-    });
-
-    await Promise.all(jobs);
     await waitForImagesInElement(captureArea);
 }
 
@@ -6772,8 +6847,16 @@ window.shareMyCard = async function () {
     btn.disabled = true;
 
     try {
-        await prepareShareThumbsForCapture();
-        const blob = await createSquareShareBlob();
+        await withAsyncTimeout(
+            prepareShareThumbsForCapture(),
+            9000,
+            '공유 이미지를 준비하는 시간이 너무 오래 걸렸어요.'
+        );
+        const blob = await withAsyncTimeout(
+            createSquareShareBlob(),
+            12000,
+            '공유 이미지를 만드는 시간이 너무 오래 걸렸어요.'
+        );
         latestShareBlob = blob;
         latestShareFile = new File([blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
         latestShareCaption = buildShareCaption();
@@ -7656,8 +7739,30 @@ async function _loadGalleryDataInner() {
 async function buildShareCardAsync(myId, user, overrideSettings = null) {
     try {
         const latest = user ? getCurrentShareLog(myId)?.data || null : null;
-        renderShareCardState(user, latest, overrideSettings);
+        const settings = overrideSettings || latest?.shareSettings || _shareSettingsDraft;
+        const buildToken = ++_shareCardBuildToken;
+
+        if (!latest || !user) {
+            _latestPreparedShareMedia = [];
+            _latestPreparedShareSignature = '';
+            renderShareCardState(user, latest, settings, { preparedMedia: [] });
+            updateGalleryPrimaryAction();
+            return;
+        }
+
+        const placeholderMedia = buildSharePlaceholderMedia(collectShareCardMedia(latest, settings));
+        renderShareCardState(user, latest, settings, { preparedMedia: placeholderMedia });
         updateGalleryPrimaryAction();
+
+        if (!placeholderMedia.length) {
+            _latestPreparedShareMedia = [];
+            _latestPreparedShareSignature = '';
+            return;
+        }
+
+        const preparedMedia = await ensurePreparedShareMedia(latest, settings);
+        if (buildToken !== _shareCardBuildToken) return;
+        renderShareCardState(user, latest, settings, { preparedMedia });
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
