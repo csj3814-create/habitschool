@@ -8273,17 +8273,17 @@ function buildGalleryCard(item, myId) {
 
     const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">
-            <span class="action-btn"><span>❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</span>
-            <span class="action-btn"><span>🔥</span><span class="action-label">격려</span>${fireCountHtml}</span>
-            <span class="action-btn"><span>👏</span><span class="action-label">응원</span>${clapCountHtml}</span>
-            <span class="action-btn"><span>💬</span><span class="action-label">댓글</span>${commentCountHtml}</span>
-           </div>`
+            <span class="action-btn"><span class="action-icon">❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">🔥</span><span class="action-label">격려</span>${fireCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">👏</span><span class="action-label">응원</span>${clapCountHtml}</span>
+            <span class="action-btn"><span class="action-icon">💬</span><span class="action-label">댓글</span>${commentCountHtml}</span>
+            </div>`
         : `<div class="gallery-actions">
-            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span>❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</button>
-            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span>🔥</span><span class="action-label">격려</span>${fireCountHtml}</button>
-            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span>👏</span><span class="action-label">응원</span>${clapCountHtml}</button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span>💬</span><span class="action-label">댓글</span>${commentCountHtml}</button>
-           </div>`;
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span class="action-icon">❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span class="action-icon">🔥</span><span class="action-label">격려</span>${fireCountHtml}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span class="action-icon">👏</span><span class="action-label">응원</span>${clapCountHtml}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span class="action-icon">💬</span><span class="action-label">댓글</span>${commentCountHtml}</button>
+            </div>`;
 
     const commentSectionHtml = isGuest
         ? (commentsHtml ? `<div class="comment-section"><div class="comment-list" id="comment-list-${safeDocId}" data-expanded="false">${commentsHtml}</div></div>` : '')
