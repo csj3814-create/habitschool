@@ -78,16 +78,19 @@ window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
 window.changeDisplayName = changeDisplayName;
 
-const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hidePoints', 'hideMindText'];
+const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercise', 'hidePoints', 'hideMind'];
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
+let _shareSettingsExpanded = false;
 
 function getDefaultShareSettings() {
     return {
         hideIdentity: false,
         hideDate: false,
+        hideDiet: false,
+        hideExercise: false,
         hidePoints: false,
-        hideMindText: false
+        hideMind: false
     };
 }
 
@@ -98,6 +101,11 @@ function normalizeShareSettings(raw) {
     SHARE_SETTING_KEYS.forEach(key => {
         normalized[key] = raw[key] === true;
     });
+
+    // 레거시 호환: 기존 hideMindText 저장값을 hideMind로 승격
+    if (!('hideMind' in raw) && raw.hideMindText === true) {
+        normalized.hideMind = true;
+    }
     return normalized;
 }
 
@@ -105,8 +113,10 @@ function getCurrentShareSettings() {
     const controls = {
         hideIdentity: document.getElementById('share-hide-identity')?.checked,
         hideDate: document.getElementById('share-hide-date')?.checked,
+        hideDiet: document.getElementById('share-hide-diet')?.checked,
+        hideExercise: document.getElementById('share-hide-exercise')?.checked,
         hidePoints: document.getElementById('share-hide-points')?.checked,
-        hideMindText: document.getElementById('share-hide-mind-text')?.checked
+        hideMind: document.getElementById('share-hide-mind')?.checked
     };
     const hasControls = Object.values(controls).some(value => typeof value === 'boolean');
     return hasControls ? normalizeShareSettings(controls) : normalizeShareSettings(_shareSettingsDraft);
@@ -119,7 +129,7 @@ function updateShareSettingsSummary(settings = getCurrentShareSettings()) {
     const hiddenCount = Object.values(settings).filter(Boolean).length;
     summaryEl.textContent = hiddenCount > 0
         ? `${hiddenCount}개 숨김 · 공유 중`
-        : '기본 공유 중 · 숨길 정보만 선택';
+        : '기본 공유 중 · 숨길 항목 선택';
 }
 
 function applyShareSettingsToControls(settings) {
@@ -129,8 +139,10 @@ function applyShareSettingsToControls(settings) {
     const controlMap = {
         'share-hide-identity': 'hideIdentity',
         'share-hide-date': 'hideDate',
+        'share-hide-diet': 'hideDiet',
+        'share-hide-exercise': 'hideExercise',
         'share-hide-points': 'hidePoints',
-        'share-hide-mind-text': 'hideMindText'
+        'share-hide-mind': 'hideMind'
     };
 
     Object.entries(controlMap).forEach(([id, key]) => {
@@ -149,11 +161,11 @@ function getCurrentShareLog(userId) {
     ) || null;
 }
 
-function collectShareCardImages(latest) {
+function collectShareCardImages(latest, settings = getDefaultShareSettings()) {
     if (!latest) return [];
 
     const imgs = [];
-    if (latest.diet) {
+    if (latest.diet && !settings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
             const thumb = latest.diet[`${meal}ThumbUrl`];
             const orig = latest.diet[`${meal}Url`];
@@ -162,7 +174,7 @@ function collectShareCardImages(latest) {
         });
     }
 
-    if (latest.exercise) {
+    if (latest.exercise && !settings.hideExercise) {
         if (latest.exercise.cardioList?.length) {
             latest.exercise.cardioList.forEach(item => {
                 if (item.imageThumbUrl) imgs.push(item.imageThumbUrl);
@@ -182,7 +194,7 @@ function collectShareCardImages(latest) {
         }
     }
 
-    if (latest.sleepAndMind?.sleepImageUrl) {
+    if (latest.sleepAndMind?.sleepImageUrl && !settings.hideMind) {
         imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
     }
 
@@ -228,7 +240,7 @@ function renderShareCardState(user, latest, overrideSettings = null) {
             shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         }
 
-        const imgs = collectShareCardImages(latest);
+        const imgs = collectShareCardImages(latest, settings);
         imgGrid.innerHTML = buildShareImageGrid(imgs, 4);
         imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items', 'share-img-grid-empty');
         if (imgs.length === 1) imgGrid.classList.add('single-item');
@@ -304,13 +316,24 @@ function handleShareSettingsChange() {
 }
 
 function bindShareSettingListeners() {
-    ['share-hide-identity', 'share-hide-date', 'share-hide-points', 'share-hide-mind-text'].forEach(id => {
+    ['share-hide-identity', 'share-hide-date', 'share-hide-diet', 'share-hide-exercise', 'share-hide-points', 'share-hide-mind'].forEach(id => {
         const element = document.getElementById(id);
         if (!element || element.dataset.shareSettingBound === 'true') return;
         element.dataset.shareSettingBound = 'true';
         element.addEventListener('change', handleShareSettingsChange);
     });
     updateShareSettingsSummary(_shareSettingsDraft);
+}
+
+function setShareSettingsExpanded(expanded) {
+    _shareSettingsExpanded = !!expanded;
+    const shell = document.getElementById('gallery-share-settings-shell');
+    const toggle = document.getElementById('gallery-share-settings-toggle');
+    if (shell) shell.hidden = !_shareSettingsExpanded;
+    if (toggle) {
+        toggle.setAttribute('aria-expanded', String(_shareSettingsExpanded));
+        toggle.textContent = _shareSettingsExpanded ? '공유 설정 닫기' : '공유 설정 열기';
+    }
 }
 
 // ========== 닉네임 변경 ==========
@@ -1295,6 +1318,7 @@ function clearInputs() {
 
     document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
     applyShareSettingsToControls(getDefaultShareSettings());
+    setShareSettingsExpanded(false);
     updateRecordFlowGuides(getVisibleTabName());
 }
 
@@ -3021,27 +3045,45 @@ function handleMissionPrimaryAction() {
     }
 }
 
-function triggerGalleryShareAction() {
+async function triggerGalleryShareAction(forceExpanded = null) {
     if (!auth.currentUser) {
         document.getElementById('login-modal').style.display = 'flex';
         return;
     }
 
+    if (document.getElementById('gallery') && !document.getElementById('gallery')?.classList.contains('active')) {
+        openTab('gallery');
+    }
+
+    await buildShareCardAsync(auth.currentUser.uid, auth.currentUser);
+
     const shareContainer = document.getElementById('my-share-container');
     const shareButton = shareContainer?.querySelector('.btn-share-action');
-    const isVisible = !!shareContainer && shareContainer.style.display !== 'none';
+    const settingsShell = document.getElementById('gallery-share-settings-shell');
+    const hasShareCard = !!shareContainer && shareContainer.style.display !== 'none';
 
-    if (isVisible) {
-        shareContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (shareButton) {
-            setTimeout(() => shareButton.focus(), 250);
-        }
+    if (!hasShareCard) {
+        showToast('오늘 또는 어제 기록을 저장하면 바로 공유할 수 있어요.');
+        openTab('diet');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
     }
 
-    showToast('오늘 또는 어제 기록을 저장하면 바로 공유할 수 있어요.');
-    openTab('diet');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const shouldExpand = typeof forceExpanded === 'boolean' ? forceExpanded : !_shareSettingsExpanded;
+    setShareSettingsExpanded(shouldExpand);
+
+    const target = shouldExpand ? settingsShell : shareContainer;
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (shouldExpand) {
+        const firstControl = document.getElementById('share-hide-identity');
+        if (firstControl) setTimeout(() => firstControl.focus(), 220);
+        return;
+    }
+
+    if (shareButton) {
+        setTimeout(() => shareButton.focus(), 220);
+    }
 }
 
 function focusGalleryFeed() {
@@ -5387,7 +5429,20 @@ window.toggleFriend = async function (friendId) {
 let latestShareBlob = null;
 let latestShareFile = null;
 let latestShareText = '';
+let latestShareCaption = '';
 const thumbUrlCache = new Map();
+
+function getShareTargetUrl() {
+    return `${APP_ORIGIN}/#gallery`;
+}
+
+function buildShareCaption() {
+    return '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪';
+}
+
+function buildShareCopyText() {
+    return `${buildShareCaption()}\n\n👇 갤러리 구경가기 (가입 없이 가능)\n${getShareTargetUrl()}`;
+}
 
 // fetchImageAsBase64는 상단에서 직접 import
 
@@ -5899,7 +5954,8 @@ window.shareMyCard = async function () {
         const blob = await createSquareShareBlob();
         latestShareBlob = blob;
         latestShareFile = new File([blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
-        latestShareText = '오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪\n\n👇 갤러리 구경가기 (가입 없이 가능)\n' + window.location.href;
+        latestShareCaption = buildShareCaption();
+        latestShareText = buildShareCopyText();
 
         // 공유 미리보기 썸네일 설정
         const previewThumb = document.getElementById('share-preview-thumb');
@@ -5960,7 +6016,7 @@ window.shareViaSystem = async function () {
     } catch (_) { }
 };
 
-window.downloadShareImage = function () {
+window.downloadShareImage = function (silent = false) {
     if (!latestShareBlob) {
         showToast('먼저 자랑하기 버튼을 눌러주세요.');
         return;
@@ -5973,33 +6029,47 @@ window.downloadShareImage = function () {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('✅ 이미지가 다운로드 폴더에 저장되었습니다.');
-};
-
-window.copyShareLink = function () {
-    const url = window.location.href;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
-            showToast('✅ 링크가 복사되었습니다!');
-        }).catch(() => {
-            fallbackCopyToClipboard(url);
-        });
-    } else {
-        fallbackCopyToClipboard(url);
+    if (!silent) {
+        showToast('✅ 이미지가 다운로드 폴더에 저장되었습니다.');
     }
 };
 
-function fallbackCopyToClipboard(text) {
+function fallbackCopyToClipboard(text, successMessage = '✅ 복사되었습니다!', showMessage = true) {
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
     ta.style.left = '-9999px';
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand('copy'); showToast('✅ 링크가 복사되었습니다!'); }
+    try { document.execCommand('copy'); if (showMessage) showToast(successMessage); }
     catch (_) { showToast('⚠️ 복사에 실패했습니다. 직접 주소를 복사해주세요.'); }
     document.body.removeChild(ta);
 }
+
+async function copyTextToClipboard(text, successMessage = '✅ 복사되었습니다!', showMessage = true) {
+    if (!text) return false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            if (showMessage) showToast(successMessage);
+            return true;
+        } catch (_) {
+            fallbackCopyToClipboard(text, successMessage, showMessage);
+            return true;
+        }
+    }
+    fallbackCopyToClipboard(text, successMessage, showMessage);
+    return true;
+}
+
+window.copyShareCaption = function () {
+    const text = latestShareText || buildShareCopyText();
+    copyTextToClipboard(text, '✅ 캡션이 복사되었습니다!');
+};
+
+window.copyShareLink = function () {
+    copyTextToClipboard(getShareTargetUrl(), '✅ 링크가 복사되었습니다!');
+};
 
 async function shareFileToAppsOrFallback(platform) {
     // 모바일에서 Web Share API 재시도
@@ -6017,37 +6087,44 @@ async function shareFileToAppsOrFallback(platform) {
         } catch (_) { }
     }
 
-    // PC에서는 이미지 자동 다운로드 + 플랫폼 열기
-    downloadShareImage();
+    // PC에서는 이미지 저장 + 캡션 복사 + 플랫폼 열기
+    window.downloadShareImage(true);
+    await copyTextToClipboard(latestShareText || buildShareCopyText(), '✅ 캡션이 복사되었습니다!', false);
 
-    const pageUrl = encodeURIComponent(window.location.href);
-    const shareText = encodeURIComponent('오늘의 해빛스쿨 건강 습관 인증입니다! 함께해요 💪');
+    const shareUrl = getShareTargetUrl();
+    const pageUrl = encodeURIComponent(shareUrl);
+    const shareCaption = latestShareCaption || buildShareCaption();
+    const encodedCaption = encodeURIComponent(shareCaption);
+    const encodedTitle = encodeURIComponent('오늘의 해빛 인증');
 
     if (platform === 'instagram') {
-        window.open('https://www.instagram.com/', '_blank');
-        showToast('📥 이미지가 저장되었습니다!\n인스타그램에서 이미지를 선택하여 게시해주세요.');
+        window.open('https://www.instagram.com/', '_blank', 'noopener');
+        showToast('📥 이미지 저장 + 캡션 복사 완료!\n인스타그램에 이미지와 캡션을 붙여넣어 올려주세요.');
     } else if (platform === 'facebook') {
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${shareText}`, '_blank');
-        showToast('📥 이미지가 저장되었습니다!\n페이스북 창에서 이미지를 추가해주세요.');
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${encodedCaption}`, '_blank', 'noopener');
+        showToast('📥 이미지 저장 + 캡션 복사 완료!\n페이스북 창에서 이미지 추가만 하면 됩니다.');
     } else if (platform === 'x') {
-        window.open(`https://x.com/intent/tweet?text=${shareText}&url=${pageUrl}`, '_blank');
-        showToast('📥 이미지가 저장되었습니다!\nX 창에서 이미지를 추가해주세요.');
+        window.open(`https://x.com/intent/tweet?text=${encodedCaption}&url=${pageUrl}`, '_blank', 'noopener');
+        showToast('📥 이미지 저장 + 캡션 복사 완료!\nX 창에서 이미지 업로드 후 바로 올릴 수 있어요.');
+    } else if (platform === 'blog') {
+        window.open(`https://blog.naver.com/openapi/share?url=${pageUrl}&title=${encodedTitle}`, '_blank', 'noopener');
+        showToast('📥 이미지 저장 + 캡션 복사 완료!\n블로그 편집창에서 이미지와 문구를 붙여넣어 주세요.');
     } else if (platform === 'kakao') {
-        downloadShareImage();
         _ensureKakao().then(() => {
             Kakao.Share.sendDefault({
                 objectType: 'feed',
                 content: {
                     title: '오늘의 해빛 인증 🌞',
-                    description: shareText,
+                    description: shareCaption,
                     imageUrl: APP_OG_IMAGE_URL,
-                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href }
+                    link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
                 },
-                buttons: [{ title: '갤러리 구경가기', link: { mobileWebUrl: window.location.href, webUrl: window.location.href } }]
+                buttons: [{ title: '갤러리 구경가기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
             });
+            showToast('✅ 카카오톡 공유 창을 열었어요.\n이미지는 저장돼 있으니 필요하면 함께 첨부해 주세요.');
         }).catch(() => {
-            if (navigator.share) navigator.share({ title: '해빛스쿨 인증', text: shareText, url: window.location.href }).catch(() => {});
-            else showToast('📥 이미지가 저장되었습니다!\n카카오톡에서 직접 공유해주세요.');
+            if (navigator.share) navigator.share({ title: '해빛스쿨 인증', text: latestShareText, url: shareUrl }).catch(() => {});
+            else showToast('📥 이미지 저장 + 캡션 복사 완료!\n카카오톡에 붙여넣어 공유해 주세요.');
         });
     }
 
@@ -6638,6 +6715,7 @@ async function _loadGalleryDataInner() {
     const activitySummary = document.getElementById('gallery-activity-summary');
     if (!user) {
         if (shareContainer) shareContainer.style.display = 'none';
+        setShareSettingsExpanded(false);
         if (activitySummary) activitySummary.style.display = 'none';
     }
 
@@ -6763,6 +6841,7 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
+        setShareSettingsExpanded(false);
         updateGalleryPrimaryAction();
     }
 }
@@ -6949,7 +7028,7 @@ function collectGalleryMedia(data) {
     const shareSettings = normalizeShareSettings(data.shareSettings);
 
     // 식단 미디어 (썸네일 우선, 클릭 시 원본) - AI분석 오버레이 포함
-    if (data.diet) {
+    if (data.diet && !shareSettings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
             const origUrl = data.diet[`${meal}Url`];
             const thumbUrl = data.diet[`${meal}ThumbUrl`];
@@ -6969,7 +7048,7 @@ function collectGalleryMedia(data) {
     }
 
     // 운동 미디어 (중복 제거, 썸네일 우선) - AI분석 오버레이 포함
-    if (data.exercise) {
+    if (data.exercise && !shareSettings.hideExercise) {
         let addedUrls = new Set();
         const addImg = (url, thumbUrl, aiAnalysis) => {
             if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
@@ -7012,7 +7091,7 @@ function collectGalleryMedia(data) {
     }
 
     // 마음 미디어 (썸네일 우선) - 클릭 시 확대 + AI분석 오버레이
-    if (data.sleepAndMind?.sleepImageUrl) {
+    if (data.sleepAndMind?.sleepImageUrl && !shareSettings.hideMind) {
         const url = data.sleepAndMind.sleepImageUrl;
         const thumbUrl = data.sleepAndMind.sleepImageThumbUrl;
         if (isValidStorageUrl(url)) {
@@ -7030,7 +7109,7 @@ function collectGalleryMedia(data) {
     }
 
     // 마음 텍스트
-    if (data.sleepAndMind?.gratitude && !shareSettings.hideMindText) {
+    if (data.sleepAndMind?.gratitude && !shareSettings.hideMind) {
         const safeGratitude = escapeHtml(data.sleepAndMind.gratitude);
         result.mindText = `<div style="font-size:13px; color:#555; background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:12px; font-style:italic;">💭 "${safeGratitude}"</div>`;
     }

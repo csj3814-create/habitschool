@@ -3188,13 +3188,18 @@ textarea {
     width: 100%;
     max-width: 300px;
     padding: 12px;
-    border-radius: 16px;
+    border-radius: 14px;
     background: rgba(255, 255, 255, 0.82);
     border: 1px solid rgba(255, 204, 128, 0.95);
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+.share-privacy-panel-inline {
+    max-width: none;
+    width: 100%;
 }
 
 .share-privacy-header {
@@ -3564,26 +3569,38 @@ textarea {
     color: rgba(255,255,255,0.86);
 }
 
+.gallery-share-settings-stack {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .gallery-privacy-note {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin-top: 12px;
-    padding: 8px 10px;
-    border-radius: 999px;
+    width: 100%;
+    margin-top: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
     background: rgba(255,255,255,0.62);
     border: 1px solid rgba(255, 224, 178, 0.9);
+    box-sizing: border-box;
 }
 
-.gallery-privacy-note-action {
+.gallery-share-settings-toggle {
     width: 100%;
-    justify-content: space-between;
-}
-
-.gallery-privacy-note-action .community-inline-btn {
     min-height: 30px;
     padding: 0 10px;
+    border-radius: 14px;
+}
+
+.gallery-share-settings-shell {
+    width: 100%;
+    animation: fadeIn 0.18s ease;
 }
 
 .gallery-privacy-badge {
@@ -4560,12 +4577,8 @@ textarea {
         font-size: 20px;
     }
 
-    .gallery-privacy-note-action {
-        align-items: stretch;
-    }
-
-    .gallery-privacy-note-action .community-inline-btn {
-        width: 100%;
+    .gallery-share-settings-stack {
+        gap: 8px;
     }
 
     .gallery-feed-heading h3 {
@@ -4971,6 +4984,24 @@ textarea {
     line-height: 1.5;
 }
 
+.share-modal-tip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0 20px 14px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #fff7ea;
+    border: 1px solid #f5dcc0;
+    font-size: 11px;
+    color: #7a624a;
+    line-height: 1.45;
+}
+
+.share-modal-tip strong {
+    color: #9a4f08;
+}
+
 .share-section-label {
     font-size: 11px;
     font-weight: 700;
@@ -4982,7 +5013,7 @@ textarea {
 
 .share-platform-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px 0;
     padding: 4px 16px 14px;
 }
@@ -5020,6 +5051,7 @@ textarea {
 .insta-icon { background: linear-gradient(135deg, #833AB4, #E1306C, #F77737); }
 .fb-icon { background: #1877F2; }
 .x-icon { background: #000; }
+.blog-icon { background: #21C531; }
 
 .share-label {
     font-size: 11px;
@@ -5028,12 +5060,12 @@ textarea {
 }
 
 .share-action-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     padding: 6px 20px 8px;
 }
 .share-action-pill {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -6760,6 +6792,12 @@ body.dark-mode .share-platform-card { background: var(--white); }
 body.dark-mode .share-modal-close-x { background: #2B2830; color: #A8A3B0; }
 body.dark-mode .share-modal-close-x:hover { background: #3A3540; }
 body.dark-mode .share-preview-img-wrap { border-color: #3A3540; }
+body.dark-mode .share-modal-tip {
+    background: rgba(255,255,255,0.05);
+    border-color: #3A3540;
+    color: #C9B39A;
+}
+body.dark-mode .share-modal-tip strong { color: #FFD8A8; }
 body.dark-mode .share-action-pill {
     border-color: #3A3540;
     background: #242128;

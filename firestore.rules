@@ -20,10 +20,13 @@ service cloud.firestore {
     // 헬퍼 함수: 공유 설정 검증
     function isValidShareSettings(settings) {
       return settings is map
-          && settings.keys().hasOnly(['hideIdentity', 'hideDate', 'hidePoints', 'hideMindText'])
+          && settings.keys().hasOnly(['hideIdentity', 'hideDate', 'hideDiet', 'hideExercise', 'hidePoints', 'hideMind', 'hideMindText'])
           && (!('hideIdentity' in settings) || settings.hideIdentity is bool)
           && (!('hideDate' in settings) || settings.hideDate is bool)
+          && (!('hideDiet' in settings) || settings.hideDiet is bool)
+          && (!('hideExercise' in settings) || settings.hideExercise is bool)
           && (!('hidePoints' in settings) || settings.hidePoints is bool)
+          && (!('hideMind' in settings) || settings.hideMind is bool)
           && (!('hideMindText' in settings) || settings.hideMindText is bool);
     }
     
