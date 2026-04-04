@@ -3647,7 +3647,12 @@ textarea {
     box-shadow: 0 3px 12px rgba(255, 109, 0, 0.3); 
     transition: transform 0.12s, box-shadow 0.15s; 
     display: block; 
+    align-self: center;
+    justify-self: center;
+    text-align: center;
     letter-spacing: -0.3px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .btn-share-action:active { 
@@ -3663,8 +3668,8 @@ textarea {
 }
 
 .gallery-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 14px;
     padding: 18px 18px 16px;
     border-radius: 22px;
@@ -3676,6 +3681,14 @@ textarea {
 
 .gallery-hero-copy {
     min-width: 0;
+}
+
+.gallery-hero-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .gallery-hero-kicker {
@@ -3702,9 +3715,31 @@ textarea {
     max-width: 34ch;
 }
 
+.gallery-guide-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(241, 220, 192, 0.95);
+    background: rgba(255, 255, 255, 0.78);
+    color: #8a5a23;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.gallery-hero-guide-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .gallery-hero-actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 10px;
     margin-top: 16px;
 }
@@ -3714,6 +3749,7 @@ textarea {
     align-items: center;
     gap: 10px;
     min-width: 0;
+    width: 100%;
     padding: 10px 12px;
     border-radius: 16px;
     border: 1px solid #f1dcc0;
@@ -3869,7 +3905,15 @@ textarea {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-    align-self: end;
+    width: 100%;
+}
+
+.gallery-hero.is-collapsed {
+    padding-bottom: 14px;
+}
+
+.gallery-hero.is-collapsed .gallery-hero-desc {
+    max-width: none;
 }
 
 .gallery-hero-stat {
@@ -3990,6 +4034,9 @@ textarea {
 
 #my-share-container {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
@@ -4807,16 +4854,8 @@ textarea {
 }
 
 @media (max-width: 820px) {
-    .gallery-hero {
-        grid-template-columns: 1fr;
-    }
-
     .gallery-hero-title {
         font-size: 24px;
-    }
-
-    .gallery-hero-actions {
-        flex-direction: column;
     }
 
     .gallery-hero-stats,
@@ -4843,10 +4882,6 @@ textarea {
     .gallery-feed-shell {
         padding: 12px;
         border-radius: 16px;
-    }
-
-    .gallery-hero-action {
-        width: 100%;
     }
 
     .gallery-hero-stats {
@@ -5710,6 +5745,9 @@ textarea {
 }
 
 .dashboard-hero-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     position: relative;
     overflow: hidden;
     background:
@@ -5721,6 +5759,12 @@ textarea {
     box-shadow: 0 12px 30px rgba(233, 163, 54, 0.12);
     margin-bottom: 10px;
     animation: dashboardHeroRise 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dashboard-hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .dashboard-hero-copy,
@@ -5875,17 +5919,41 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 7px;
     margin-top: 8px;
+    align-items: start;
+    grid-auto-rows: minmax(0, auto);
+    align-content: start;
 }
 
 .dashboard-stat-card {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    min-height: 56px;
+    height: auto !important;
+    aspect-ratio: auto;
+    justify-content: flex-start;
     padding: 8px 9px;
     border-radius: 14px;
     background: rgba(255,255,255,0.74);
     border: 1px solid rgba(223, 204, 171, 0.9);
     backdrop-filter: blur(6px);
+}
+
+@media (min-width: 768px) {
+    .dashboard-hero-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-action-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dashboard-hero-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
 }
 
 .dashboard-stat-card.accent {
@@ -5906,6 +5974,7 @@ textarea {
     font-weight: 800;
     color: #27231D;
     letter-spacing: -0.04em;
+    line-height: 1.05;
 }
 
 .dashboard-week-card {
@@ -6002,13 +6071,14 @@ textarea {
     }
 
     .dashboard-stat-card {
-        padding: 8px;
+        padding: 6px 8px;
         border-radius: 13px;
-        min-height: 74px;
+        min-height: 52px;
+        height: auto !important;
     }
 
     .dashboard-stat-value {
-        font-size: 17px;
+        font-size: 16px;
     }
 
     .dashboard-hero-stats {
@@ -6024,8 +6094,9 @@ textarea {
     }
 
     .dashboard-stat-card {
-        padding: 7px;
-        min-height: 70px;
+        padding: 6px 7px;
+        min-height: 48px;
+        height: auto !important;
     }
 
     .dashboard-stat-label {
@@ -6034,6 +6105,23 @@ textarea {
 
     .dashboard-stat-value {
         font-size: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .record-flow-head {
+        flex-direction: column;
+    }
+
+    .record-flow-head-side {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .record-flow-toggle {
+        min-width: 72px;
     }
 }
 
@@ -7518,6 +7606,11 @@ body.dark-mode .gallery-privacy-badge {
     color: #FFCC80;
 }
 body.dark-mode .gallery-privacy-text { color: #C9B39A; }
+body.dark-mode .gallery-guide-toggle {
+    background: rgba(255,255,255,0.05);
+    border-color: #43372f;
+    color: #FFCC80;
+}
 body.dark-mode .gallery-hero-action {
     background: rgba(255,255,255,0.04);
     border-color: #43372f;
@@ -7669,6 +7762,11 @@ body.dark-mode .record-flow-card p { color: #A9A19A; }
 body.dark-mode .record-flow-badge {
     background: rgba(255,255,255,0.05);
     border-color: rgba(255,183,77,0.2);
+    color: #FFCC80;
+}
+body.dark-mode .record-flow-toggle {
+    background: rgba(255,255,255,0.05);
+    border-color: #4A423A;
     color: #FFCC80;
 }
 body.dark-mode .record-flow-btn {
@@ -8954,6 +9052,14 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     gap: 12px;
 }
 
+.record-flow-head-side {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 .record-flow-kicker {
     font-size: 11px;
     font-weight: 800;
@@ -8990,6 +9096,30 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     color: #A65800;
     font-size: 12px;
     font-weight: 800;
+}
+
+.record-flow-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(226, 216, 199, 0.95);
+    background: rgba(255,255,255,0.82);
+    color: #8a5a23;
+    font-size: 11px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.record-flow-body[hidden] {
+    display: none !important;
+}
+
+.record-flow-card.is-collapsed {
+    padding-bottom: 12px;
 }
 
 .record-flow-actions {

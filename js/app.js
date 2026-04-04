@@ -73,6 +73,8 @@ window.triggerGalleryShareAction = triggerGalleryShareAction;
 window.handleMissionPrimaryAction = handleMissionPrimaryAction;
 window.toggleCommunityRows = toggleCommunityRows;
 window.focusGalleryFeed = focusGalleryFeed;
+window.toggleGalleryHeroGuide = toggleGalleryHeroGuide;
+window.toggleRecordFlowCard = toggleRecordFlowCard;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
@@ -97,6 +99,12 @@ window.loadMyFriendships = loadMyFriendships;
 const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercise', 'hidePoints', 'hideMind'];
 const SHARE_TEMPLATE_STORAGE_KEY = 'habitschool_share_template';
 const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
+const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
+const RECORD_GUIDE_STORAGE_KEYS = {
+    diet: 'habitschool_record_guide_diet_collapsed',
+    exercise: 'habitschool_record_guide_exercise_collapsed',
+    sleep: 'habitschool_record_guide_sleep_collapsed'
+};
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
 let _shareSettingsExpanded = false;
@@ -106,6 +114,14 @@ let _latestPreparedShareSignature = '';
 let _shareTemplate = 'grid';
 let _latestShareRenderKey = '';
 let _latestSharePreviewDataUrl = '';
+let _guideCollapseStateUid = '';
+let _guideIntroFirstDay = false;
+let _galleryHeroCollapsed = null;
+let _recordGuideCollapsed = {
+    diet: null,
+    exercise: null,
+    sleep: null
+};
 let cachedMyFriends = [];
 let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
@@ -995,6 +1011,128 @@ function setShareSettingsExpanded(expanded) {
         toggle.setAttribute('aria-expanded', String(_shareSettingsExpanded));
         toggle.textContent = _shareSettingsExpanded ? '공유 설정 닫기' : '공유 설정 열기';
     }
+}
+
+function loadGuideCollapsedPreference(key) {
+    const storageKey = getGuidePreferenceStorageKey(key);
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw == null) return null;
+        return raw === '1';
+    } catch (_) {
+        return null;
+    }
+}
+
+function saveGuideCollapsedPreference(key, collapsed) {
+    const storageKey = getGuidePreferenceStorageKey(key);
+    try {
+        localStorage.setItem(storageKey, collapsed ? '1' : '0');
+    } catch (_) { }
+}
+
+function getGuidePreferenceStorageKey(baseKey) {
+    const uid = auth.currentUser?.uid || 'guest';
+    return `${baseKey}:${uid}`;
+}
+
+function isGuideIntroFirstDay(userData = null) {
+    const user = auth.currentUser;
+    const candidates = [
+        userData?.createdAt,
+        userData?.registeredAt,
+        user?.metadata?.creationTime
+    ];
+
+    for (const candidate of candidates) {
+        const parsed = toDateSafe(candidate);
+        if (!parsed) continue;
+        return (Date.now() - parsed.getTime()) < (24 * 60 * 60 * 1000);
+    }
+
+    return false;
+}
+
+function ensureGuideCollapseState(userData = null) {
+    const uid = auth.currentUser?.uid || 'guest';
+    if (_guideCollapseStateUid !== uid) {
+        _guideCollapseStateUid = uid;
+        _galleryHeroCollapsed = null;
+        _recordGuideCollapsed = { diet: null, exercise: null, sleep: null };
+    }
+
+    _guideIntroFirstDay = isGuideIntroFirstDay(userData);
+    const defaultCollapsed = !_guideIntroFirstDay;
+
+    if (_galleryHeroCollapsed == null) {
+        const stored = loadGuideCollapsedPreference(GALLERY_HERO_GUIDE_STORAGE_KEY);
+        _galleryHeroCollapsed = stored == null ? defaultCollapsed : stored;
+    }
+
+    Object.keys(RECORD_GUIDE_STORAGE_KEYS).forEach((tabName) => {
+        if (_recordGuideCollapsed[tabName] != null) return;
+        const stored = loadGuideCollapsedPreference(RECORD_GUIDE_STORAGE_KEYS[tabName]);
+        _recordGuideCollapsed[tabName] = stored == null ? defaultCollapsed : stored;
+    });
+}
+
+function setGalleryHeroCollapsed(collapsed, persist = true) {
+    _galleryHeroCollapsed = !!collapsed;
+    if (persist) saveGuideCollapsedPreference(GALLERY_HERO_GUIDE_STORAGE_KEY, _galleryHeroCollapsed);
+
+    const hero = document.getElementById('gallery-hero');
+    const body = document.getElementById('gallery-hero-guide-body');
+    const toggle = document.getElementById('gallery-hero-toggle');
+
+    if (hero) hero.classList.toggle('is-collapsed', _galleryHeroCollapsed);
+    if (body) body.hidden = _galleryHeroCollapsed;
+    if (toggle) {
+        toggle.textContent = _galleryHeroCollapsed ? '가이드 펼치기' : '가이드 접기';
+        toggle.setAttribute('aria-expanded', String(!_galleryHeroCollapsed));
+    }
+}
+
+function setRecordFlowCardCollapsed(tabName, collapsed, persist = true) {
+    if (!RECORD_GUIDE_STORAGE_KEYS[tabName]) return;
+
+    _recordGuideCollapsed[tabName] = !!collapsed;
+    if (persist) saveGuideCollapsedPreference(RECORD_GUIDE_STORAGE_KEYS[tabName], _recordGuideCollapsed[tabName]);
+
+    const card = document.querySelector(`.record-flow-card[data-record-guide="${tabName}"]`);
+    const body = document.getElementById(`${tabName}-guide-body`);
+    const toggle = document.getElementById(`${tabName}-guide-toggle`);
+
+    if (card) card.classList.toggle('is-collapsed', _recordGuideCollapsed[tabName]);
+    if (body) body.hidden = _recordGuideCollapsed[tabName];
+    if (toggle) {
+        toggle.textContent = _recordGuideCollapsed[tabName] ? '펼치기' : '접기';
+        toggle.setAttribute('aria-expanded', String(!_recordGuideCollapsed[tabName]));
+    }
+}
+
+function syncGuidePanels(tabName = null) {
+    ensureGuideCollapseState(_dashboardCache.uid === auth.currentUser?.uid ? _dashboardCache.data?.ud : null);
+    setGalleryHeroCollapsed(_galleryHeroCollapsed, false);
+    ['diet', 'exercise', 'sleep'].forEach(name => {
+        if (!tabName || tabName === name || document.querySelector(`.record-flow-card[data-record-guide="${name}"]`)) {
+            setRecordFlowCardCollapsed(name, _recordGuideCollapsed[name], false);
+        }
+    });
+}
+
+function toggleGalleryHeroGuide(forceExpanded = null) {
+    const nextCollapsed = typeof forceExpanded === 'boolean'
+        ? !forceExpanded
+        : !_galleryHeroCollapsed;
+    setGalleryHeroCollapsed(nextCollapsed, true);
+}
+
+function toggleRecordFlowCard(tabName, forceExpanded = null) {
+    if (!RECORD_GUIDE_STORAGE_KEYS[tabName]) return;
+    const nextCollapsed = typeof forceExpanded === 'boolean'
+        ? !forceExpanded
+        : !_recordGuideCollapsed[tabName];
+    setRecordFlowCardCollapsed(tabName, nextCollapsed, true);
 }
 
 function buildFriendshipId(uidA, uidB) {
@@ -3888,6 +4026,7 @@ function updateRecordFlowGuides(activeTab = getVisibleTabName()) {
     if (mindBadgeEl) mindBadgeEl.textContent = guideStates.sleep.badge;
 
     updateContextualSaveBar(activeTab, guideStates);
+    syncGuidePanels(activeTab);
 }
 
 window.focusStepManualInput = function() {
@@ -4023,6 +4162,7 @@ function openTab(tabName, pushState = true) {
     if (tabName === 'dashboard') renderDashboard();
 
     updateRecordFlowGuides(tabName);
+    syncGuidePanels(tabName);
     setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
 };
 
@@ -5013,6 +5153,7 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
 function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user) {
     try {
         const ud = data.ud || {};
+        ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderMilestones(user.uid, ud);
 
