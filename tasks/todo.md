@@ -788,3 +788,8 @@ bsc: {
 - 주간 미션 설정 화면을 한 줄 선택형으로 압축하고 배지는 `기록 더보기` 아래로 이동.
 - 미션 리셋은 `weeklyMissionData`와 레거시 `selectedMissions`를 함께 삭제하도록 수정.
 - 검증: `npm test`, `node --check js/app.js` 통과.
+
+# 2026-04-05 공유 카드 템플릿 렌더러 개편
+- 결과 문서: tasks/공유_카드_템플릿_개편_2026-04-05.md
+- 핵심: DOM 캡처 대신 캔버스 렌더러 + 템플릿 선택 UI로 전환
+- 검증: npm test 통과, esbuild 통과, staging 배포 완료

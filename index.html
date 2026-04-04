@@ -1121,6 +1121,14 @@
                                             </label>
                                         </div>
                                     </div>
+                                    <div class="share-template-panel" role="group" aria-label="공유 템플릿 선택">
+                                        <div class="share-template-label">공유 템플릿</div>
+                                        <div class="share-template-picker">
+                                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">정돈형</button>
+                                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">겹침형</button>
+                                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">포커스형</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1143,22 +1151,11 @@
                 <div id="my-share-container" style="display:none;">
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
-                            <div class="share-poster-head">
-                                <span class="share-brand-mark">HABIT SCHOOL</span>
-                                <div class="share-stat">
-                                    <span class="share-val share-date-pill">📅 <span id="share-date"></span></span>
-                                    <span class="share-val share-point-pill">Ⓟ <span id="share-point">0</span> P</span>
-                                </div>
-                            </div>
-                            <div class="share-heading-block">
-                                <div id="share-title-text" class="share-title">해빛 공유 카드</div>
-                                <div id="share-subtitle-text" class="share-subtitle">오늘 기록한 흐름을 한 장으로 정리했어요.</div>
-                            </div>
-                            <div id="share-tag-row" class="share-tag-row"></div>
-                            <div class="share-img-grid" id="share-imgs"></div>
-                            <div class="share-footer-row">
-                                <span class="share-footer-mark">해빛스쿨</span>
-                                <div class="share-footer">좋은 습관, 같이 이어가요</div>
+                            <img id="share-render-preview" class="share-render-preview" src="" alt="공유 이미지 미리보기" hidden />
+                            <div id="share-render-empty" class="share-render-empty">
+                                <span class="share-empty-kicker">SHARE READY</span>
+                                <strong class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>
+                                <span class="share-empty-desc">식단, 운동, 마음 썸네일을 한 장 이미지로 정리해서 인스타와 카톡에 바로 보낼 수 있어요.</span>
                             </div>
                         </div>
                         <button class="btn-share-action" onclick="shareMyCard()">
