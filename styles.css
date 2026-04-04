@@ -3260,6 +3260,8 @@ textarea {
     border-radius: 18px;
     border: 1px solid #F1D7AC;
     box-sizing: border-box;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .share-privacy-panel {
@@ -3352,6 +3354,11 @@ textarea {
     object-fit: cover;
     border-radius: 18px;
     background: linear-gradient(145deg, #fff4e2 0%, #ffe5c0 100%);
+}
+
+.share-render-preview[hidden],
+.share-render-empty[hidden] {
+    display: none !important;
 }
 
 .share-render-empty {
@@ -3983,6 +3990,7 @@ textarea {
 
 #my-share-container {
     width: 100%;
+    justify-content: center;
 }
 
 .gallery-filters { 
@@ -5541,6 +5549,19 @@ textarea {
     box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 
+@media (min-width: 768px) {
+    .bottom-bar {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(600px, calc(100% - 24px));
+        border-left: 1px solid var(--gray-200);
+        border-right: 1px solid var(--gray-200);
+        border-top-left-radius: 18px;
+        border-top-right-radius: 18px;
+    }
+}
+
 .submit-bar-inner {
     width: 100%;
     max-width: 440px;
@@ -5571,6 +5592,7 @@ textarea {
     margin-left: auto; 
     margin-right: auto; 
     letter-spacing: -0.3px;
+    text-align: center;
 }
 
 .submit-btn:active { 

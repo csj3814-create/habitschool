@@ -11,12 +11,12 @@ import {
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getBlob } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, functions, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
-import { sanitize, compressImage, fetchImageAsBase64 } from './data-manager.js';
+import { sanitize, compressImage } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
 import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis } from './diet-analysis.js';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
@@ -105,9 +105,20 @@ let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
 let _pendingFriendRequestId = null;
+const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 
 function normalizeShareTemplate(raw) {
     return SHARE_TEMPLATE_OPTIONS.includes(raw) ? raw : 'grid';
+}
+
+function replaceSharePreviewUrl(blob = null) {
+    if (_latestSharePreviewDataUrl && _latestSharePreviewDataUrl.startsWith('blob:')) {
+        try {
+            URL.revokeObjectURL(_latestSharePreviewDataUrl);
+        } catch (_) { }
+    }
+    _latestSharePreviewDataUrl = blob ? URL.createObjectURL(blob) : '';
+    return _latestSharePreviewDataUrl;
 }
 
 function loadShareTemplatePreference() {
@@ -367,65 +378,40 @@ async function withAsyncTimeout(task, timeoutMs, errorMessage = '작업 시간�
     }
 }
 
+async function requestPreparedShareMediaAssets(items = []) {
+    if (!auth.currentUser || !Array.isArray(items) || !items.length) return [];
+
+    try {
+        const result = await withAsyncTimeout(
+            prepareShareMediaAssetsFn({
+                items: items.slice(0, 4).map(item => ({
+                    category: item.category || '기록',
+                    type: item.type || 'image',
+                    candidateUrls: Array.isArray(item.candidateUrls)
+                        ? item.candidateUrls.map(value => String(value || '').trim()).filter(Boolean).slice(0, 6)
+                        : []
+                }))
+            }),
+            12000,
+            '공유 이미지를 준비하는 시간이 초과되었어요.'
+        );
+        return Array.isArray(result?.data?.items) ? result.data.items : [];
+    } catch (error) {
+        console.warn('공유 미디어 서버 준비 실패:', error);
+        return [];
+    }
+}
+
 async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
-    const items = mediaItems.slice(0, maxCount);
+    const items = mediaItems.slice(0, maxCount).map((item, index) => ({
+        ...item,
+        placeholderSrc: item.type === 'video'
+            ? createVideoPlaceholderBase64()
+            : createImagePlaceholderBase64(item.category || `기록 ${index + 1}`)
+    }));
     if (!items.length) return [];
 
-    const previewImages = Array.from(document.querySelectorAll('[data-share-preview-source="true"]'));
-
-    return await Promise.all(items.map(async (item, index) => {
-        const label = item.category || `기록 ${index + 1}`;
-        const placeholder = item.type === 'video'
-            ? createVideoPlaceholderBase64()
-            : createImagePlaceholderBase64(label);
-
-        if (item.type === 'video') {
-            const candidates = [
-                ...(Array.isArray(item.candidateUrls) ? item.candidateUrls : []),
-                item.originalUrl,
-                item.src
-            ]
-                .map(value => String(value || '').trim())
-                .filter(Boolean);
-
-            for (const candidate of candidates) {
-                try {
-                    const frameBase64 = await withAsyncTimeout(
-                        fetchVideoFrameAsBase64(candidate),
-                        6500,
-                        '운동 영상 미리보기를 준비하는 시간이 초과되었어요.'
-                    );
-                    if (typeof frameBase64 === 'string' && frameBase64.startsWith('data:')) {
-                        return {
-                            ...item,
-                            src: frameBase64,
-                            prepared: true
-                        };
-                    }
-                } catch (error) {
-                    console.warn('공유용 영상 썸네일 준비 실패:', candidate, error);
-                }
-            }
-
-            return {
-                ...item,
-                src: placeholder,
-                prepared: true
-            };
-        }
-
-        const renderedPreview = previewImages[index];
-        if (renderedPreview && renderedPreview.complete && renderedPreview.naturalWidth > 0) {
-            const renderedBase64 = await imageElementToBase64(renderedPreview);
-            if (typeof renderedBase64 === 'string' && renderedBase64.startsWith('data:')) {
-                return {
-                    ...item,
-                    src: renderedBase64,
-                    prepared: true
-                };
-            }
-        }
-
+    const directItems = items.map(item => {
         const candidates = [
             ...(Array.isArray(item.candidateUrls) ? item.candidateUrls : []),
             item.previewUrl,
@@ -434,49 +420,30 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
         ]
             .map(value => String(value || '').trim())
             .filter(Boolean);
+        const directDataUrl = candidates.find(candidate => candidate.startsWith('data:'));
+        return directDataUrl
+            ? { ...item, src: directDataUrl, prepared: true }
+            : null;
+    });
 
-        for (const candidate of candidates) {
-            if (candidate.startsWith('data:')) {
-                return {
-                    ...item,
-                    src: candidate,
-                    prepared: true
-                };
-            }
+    const remoteItems = await requestPreparedShareMediaAssets(items);
 
-            try {
-                const storageBase64 = await fetchStorageImageAsBase64(candidate);
-                if (typeof storageBase64 === 'string' && storageBase64.startsWith('data:')) {
-                    return {
-                        ...item,
-                        src: storageBase64,
-                        prepared: true
-                    };
-                }
-
-                const base64 = await withAsyncTimeout(
-                    fetchImageAsBase64(candidate),
-                    6500,
-                    '공유 이미지 준비 시간이 초과되었어요.'
-                );
-                if (typeof base64 === 'string' && base64.startsWith('data:')) {
-                    return {
-                        ...item,
-                        src: base64,
-                        prepared: true
-                    };
-                }
-            } catch (error) {
-                console.warn('공유 미디어 준비 실패:', candidate, error);
-            }
+    return items.map((item, index) => {
+        if (directItems[index]) return directItems[index];
+        const preparedSrc = String(remoteItems[index]?.src || '').trim();
+        if (preparedSrc.startsWith('data:')) {
+            return {
+                ...item,
+                src: preparedSrc,
+                prepared: true
+            };
         }
-
         return {
             ...item,
-            src: placeholder,
-            prepared: true
+            src: item.placeholderSrc,
+            prepared: false
         };
-    }));
+    });
 }
 
 async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettings(), forceRefresh = false) {
@@ -873,8 +840,7 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
 
     const blob = await createCanvasBlob(canvas, 'image/png');
     return {
-        blob,
-        dataUrl: canvas.toDataURL('image/png')
+        blob
     };
 }
 
@@ -889,19 +855,28 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     applyShareTemplateToControls(options.template || _shareTemplate);
     shareContainer.style.display = 'flex';
 
+    const setPreviewMode = (showPreview, previewSrc = '') => {
+        previewImage.hidden = !showPreview;
+        previewImage.style.display = showPreview ? 'block' : 'none';
+        if (showPreview) {
+            previewImage.src = previewSrc;
+        } else {
+            previewImage.removeAttribute('src');
+        }
+
+        emptyState.hidden = showPreview;
+        emptyState.style.display = showPreview ? 'none' : 'flex';
+    };
+
     if (latest && user && options.previewDataUrl) {
-        previewImage.hidden = false;
-        previewImage.src = options.previewDataUrl;
         previewImage.alt = '공유용 정사각형 이미지 미리보기';
-        emptyState.hidden = true;
+        setPreviewMode(true, options.previewDataUrl);
         shareButton.innerText = '공유하기';
         shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         return;
     }
 
-    previewImage.hidden = true;
-    previewImage.src = '';
-    emptyState.hidden = false;
+    setPreviewMode(false);
 
     if (latest && user) {
         const titleEl = emptyState.querySelector('.share-empty-title');
@@ -6764,8 +6739,6 @@ function buildShareCopyText() {
     return `${buildShareCaption()}\n\n👇 갤러리 구경가기 (가입 없이 가능)\n${getShareTargetUrl()}`;
 }
 
-// fetchImageAsBase64는 상단에서 직접 import
-
 function isVideoUrl(url) {
     return /\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(url || '');
 }
@@ -7102,63 +7075,6 @@ function createImagePlaceholderBase64(label = '해빛 기록') {
     return canvas.toDataURL('image/png');
 }
 
-async function imageElementToBase64(imageEl) {
-    if (!imageEl || !imageEl.complete || !imageEl.naturalWidth || !imageEl.naturalHeight) {
-        return '';
-    }
-
-    try {
-        const canvas = document.createElement('canvas');
-        canvas.width = imageEl.naturalWidth;
-        canvas.height = imageEl.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imageEl, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.9);
-    } catch (error) {
-        console.warn('이미지 요소 캡처 실패:', error);
-        return '';
-    }
-}
-
-function blobToDataUrl(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : '');
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-    });
-}
-
-function extractStoragePathFromUrl(rawUrl) {
-    if (!rawUrl) return '';
-    try {
-        const parsed = new URL(rawUrl);
-        const markerIndex = parsed.pathname.indexOf('/o/');
-        if (markerIndex === -1) return '';
-        const encodedPath = parsed.pathname.slice(markerIndex + 3);
-        return decodeURIComponent(encodedPath || '');
-    } catch (_) {
-        return '';
-    }
-}
-
-async function fetchStorageImageAsBase64(rawUrl) {
-    const storagePath = extractStoragePathFromUrl(rawUrl);
-    if (!storagePath) return '';
-    try {
-        const blob = await withAsyncTimeout(
-            getBlob(ref(storage, storagePath)),
-            6500,
-            '스토리지 이미지를 읽는 시간이 초과되었어요.'
-        );
-        if (!blob || !blob.size) return '';
-        return await blobToDataUrl(blob);
-    } catch (error) {
-        console.warn('스토리지 이미지 변환 실패:', rawUrl, error);
-        return '';
-    }
-}
-
 function createCanvasBlob(canvas, type = 'image/png', quality) {
     return new Promise((resolve, reject) => {
         canvas.toBlob((blob) => {
@@ -7188,6 +7104,19 @@ window.handleSharePreviewImageError = function (img) {
 
     img.onerror = null;
     img.src = placeholderSrc;
+};
+
+window.handleShareRenderPreviewError = function (img) {
+    const emptyState = document.getElementById('share-render-empty');
+    if (img) {
+        img.hidden = true;
+        img.style.display = 'none';
+        img.removeAttribute('src');
+    }
+    if (emptyState) {
+        emptyState.hidden = false;
+        emptyState.style.display = 'flex';
+    }
 };
 
 function buildShareImageGrid(mediaItems, maxCount = 4) {
@@ -8303,7 +8232,7 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
             _latestPreparedShareMedia = [];
             _latestPreparedShareSignature = '';
             _latestShareRenderKey = '';
-            _latestSharePreviewDataUrl = '';
+            replaceSharePreviewUrl(null);
             latestShareBlob = null;
             latestShareFile = null;
             latestShareText = '';
@@ -8335,17 +8264,17 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
         if (buildToken !== _shareCardBuildToken) return;
 
         _latestShareRenderKey = renderKey;
-        _latestSharePreviewDataUrl = asset.dataUrl;
         latestShareBlob = asset.blob;
         latestShareFile = new File([asset.blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
         latestShareCaption = buildShareCaption();
         latestShareText = buildShareCopyText();
+        const previewUrl = replaceSharePreviewUrl(asset.blob);
 
         const previewThumb = document.getElementById('share-preview-thumb');
-        if (previewThumb) previewThumb.src = asset.dataUrl;
+        if (previewThumb) previewThumb.src = previewUrl;
 
         renderShareCardState(user, latest, settings, {
-            previewDataUrl: asset.dataUrl,
+            previewDataUrl: previewUrl,
             template
         });
         updateGalleryPrimaryAction();

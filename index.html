@@ -1151,7 +1151,7 @@
                 <div id="my-share-container" style="display:none;">
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
-                            <img id="share-render-preview" class="share-render-preview" src="" alt="공유 이미지 미리보기" hidden />
+                            <img id="share-render-preview" class="share-render-preview" src="" alt="공유 이미지 미리보기" hidden onerror="window.handleShareRenderPreviewError(this)" />
                             <div id="share-render-empty" class="share-render-empty">
                                 <span class="share-empty-kicker">SHARE READY</span>
                                 <strong class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>

@@ -116,6 +116,69 @@ function applyFriendCacheUpdate(tx, uidA, uidB, isActive) {
     tx.set(db.doc(`users/${uidB}`), { friends: updateValue(uidA) }, { merge: true });
 }
 
+function extractStoragePathFromUrl(rawUrl) {
+    if (!rawUrl) return "";
+    try {
+        const parsed = new URL(String(rawUrl));
+        const markerIndex = parsed.pathname.indexOf("/o/");
+        if (markerIndex === -1) return "";
+        return decodeURIComponent(parsed.pathname.slice(markerIndex + 3) || "");
+    } catch (_) {
+        return "";
+    }
+}
+
+function inferImageContentType(storagePath = "") {
+    const lowerPath = String(storagePath || "").toLowerCase();
+    if (lowerPath.endsWith(".png")) return "image/png";
+    if (lowerPath.endsWith(".webp")) return "image/webp";
+    if (lowerPath.endsWith(".gif")) return "image/gif";
+    if (lowerPath.endsWith(".svg")) return "image/svg+xml";
+    return "image/jpeg";
+}
+
+function normalizeShareMediaRequestItem(rawItem = {}, index = 0) {
+    const candidateUrls = Array.isArray(rawItem?.candidateUrls)
+        ? rawItem.candidateUrls.map((value) => String(value || "").trim()).filter(Boolean).slice(0, 6)
+        : [];
+    return {
+        category: String(rawItem?.category || `기록 ${index + 1}`).trim() || `기록 ${index + 1}`,
+        type: String(rawItem?.type || "image").trim() || "image",
+        candidateUrls,
+    };
+}
+
+async function loadShareMediaDataUrl(candidateUrls = []) {
+    const bucket = admin.storage().bucket();
+
+    for (const rawUrl of candidateUrls) {
+        const storagePath = extractStoragePathFromUrl(rawUrl);
+        if (!storagePath) continue;
+        if (/\.(mp4|mov|webm|m4v)$/i.test(storagePath)) continue;
+
+        try {
+            const file = bucket.file(storagePath);
+            const [metadata] = await file.getMetadata();
+            const contentType = String(metadata?.contentType || inferImageContentType(storagePath));
+            if (!contentType.startsWith("image/")) continue;
+
+            const byteSize = Number(metadata?.size || 0);
+            if (byteSize > 6 * 1024 * 1024) {
+                console.warn("[prepareShareMediaAssets] skip oversized media:", storagePath, byteSize);
+                continue;
+            }
+
+            const [buffer] = await file.download();
+            if (!buffer || !buffer.length) continue;
+            return `data:${contentType};base64,${buffer.toString("base64")}`;
+        } catch (error) {
+            console.warn("[prepareShareMediaAssets] media load failed:", storagePath, error?.message || error);
+        }
+    }
+
+    return "";
+}
+
 async function getActiveFriendIds(userId) {
     const snap = await db.collection("friendships")
         .where("users", "array-contains", userId)
@@ -1222,6 +1285,30 @@ exports.generateChatbotLinkCode = onCall(
             expiresAt: expiresAt.toISOString(),
             ttlMinutes: CHATBOT_LINK_CODE_TTL_MINUTES
         };
+    }
+);
+
+exports.prepareShareMediaAssets = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const rawItems = Array.isArray(request.data?.items) ? request.data.items.slice(0, 4) : [];
+        if (!rawItems.length) return { items: [] };
+
+        const normalizedItems = rawItems.map((item, index) => normalizeShareMediaRequestItem(item, index));
+        const items = await Promise.all(normalizedItems.map(async (item) => {
+            const src = await loadShareMediaDataUrl(item.candidateUrls);
+            return {
+                category: item.category,
+                type: item.type,
+                src,
+                prepared: !!src,
+            };
+        }));
+
+        return { items };
     }
 );
 
