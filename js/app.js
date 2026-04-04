@@ -2753,6 +2753,66 @@ function focusGalleryFeed() {
     }
 }
 
+const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';
+window.openCommunityChat = function() {
+    window.open(COMMUNITY_CHAT_URL, '_blank', 'noopener');
+};
+
+const _communityFocusState = {
+    friendCount: 0,
+    activeFriends: 0,
+    completeFriends: 0,
+    pendingChallenges: 0,
+    activeChallenges: 0
+};
+
+function renderCommunityFocusPanel() {
+    const titleEl = document.getElementById('community-focus-title');
+    const bodyEl = document.getElementById('community-focus-body');
+    const badgeEl = document.getElementById('community-focus-badge');
+    if (!titleEl || !bodyEl || !badgeEl) return;
+
+    const {
+        friendCount,
+        activeFriends,
+        completeFriends,
+        pendingChallenges,
+        activeChallenges
+    } = _communityFocusState;
+
+    if (pendingChallenges > 0) {
+        titleEl.textContent = '응답할 챌린지가 있어요. 수락만 하면 바로 같이 기록할 수 있어요.';
+        bodyEl.textContent = '먼저 챌린지 응답을 확인하고, 남는 시간에 갤러리에서 친구 기록을 응원해보세요.';
+        badgeEl.textContent = `초대 ${pendingChallenges}건`;
+        return;
+    }
+
+    if (friendCount === 0) {
+        titleEl.textContent = '친구 1명만 있어도 같이 기록하고 챌린지를 시작할 수 있어요.';
+        bodyEl.textContent = '먼저 초대 코드나 QR을 보내고, 단톡에서 흐름을 같이 이어가보세요.';
+        badgeEl.textContent = '친구 0명';
+        return;
+    }
+
+    if (activeChallenges === 0) {
+        titleEl.textContent = '친구가 준비됐어요. 오늘은 같이 도전할 챌린지를 하나 열어보세요.';
+        bodyEl.textContent = '친구 초대는 끝났고, 다음은 챌린지를 시작하거나 갤러리에서 먼저 응원하는 순서가 좋아요.';
+        badgeEl.textContent = `친구 ${friendCount}명`;
+        return;
+    }
+
+    if (activeFriends === 0) {
+        titleEl.textContent = '챌린지는 열려 있어요. 이제 오늘 첫 기록 한 번으로 흐름을 깨워보세요.';
+        bodyEl.textContent = '아직 움직인 친구가 없다면 갤러리 응원이나 단톡 참여로 먼저 불을 붙이는 편이 좋습니다.';
+        badgeEl.textContent = `진행 ${activeChallenges}개`;
+        return;
+    }
+
+    titleEl.textContent = '함께 기록이 이어지고 있어요. 오늘은 응원과 챌린지 흐름만 챙기면 됩니다.';
+    bodyEl.textContent = `${activeFriends}명의 친구가 오늘 움직였고 ${completeFriends}명은 세 영역을 모두 채웠어요. 지금은 갤러리 응원이나 단톡 참여가 가장 빠릅니다.`;
+    badgeEl.textContent = `활동 ${activeFriends}명`;
+}
+
 const DASHBOARD_ACTION_META = {
     diet: {
         buttonId: 'dashboard-action-diet',
@@ -3316,6 +3376,13 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         } else {
             setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
         }
+
+        _communityFocusState.friendCount = 0;
+        _communityFocusState.activeFriends = 0;
+        _communityFocusState.completeFriends = 0;
+        _communityFocusState.pendingChallenges = 0;
+        _communityFocusState.activeChallenges = 0;
+        renderCommunityFocusPanel();
 
         // 친구 오늘 활동 카드 (백그라운드 로드)
         renderFriendActivityCard(user, todayStr).catch(() => {});
@@ -7657,6 +7724,264 @@ function loadStepData(logData) {
 }
 
 // ============================================================
+function buildCommunityEmptyState(title, body, actions = []) {
+    return `
+        <div class="community-empty-state">
+            <strong>${title}</strong>
+            <span>${body}</span>
+            ${actions.length ? `<div class="community-empty-actions">${actions.join('')}</div>` : ''}
+        </div>
+    `;
+}
+
+renderGroupChallengeFromData = function(s) {
+    const section = document.getElementById('group-challenge-section');
+    const content = document.getElementById('group-challenge-content');
+    if (!section || !content) return;
+    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
+
+    const ranked = s.ranked || [];
+    const medals = ['🥇', '🥈', '🥉'];
+    const rewardAmounts = ['5,000P', '2,000P', '500P'];
+
+    section.style.display = 'block';
+    content.innerHTML = `
+        <div class="community-month-summary">이번 달에는 <strong>${s.totalUsers}명</strong>이 함께 기록하고 있어요. 흐름을 보고, 바로 응원이나 단톡 참여로 이어가면 됩니다.</div>
+        <div class="community-inline-actions">
+            <button type="button" class="community-inline-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>
+            <button type="button" class="community-inline-btn" onclick="openCommunityChat()">💬 단톡 참여</button>
+            <a href="community-history.html" class="community-inline-btn">📚 지난 흐름</a>
+        </div>
+        <div class="group-stats-grid">
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalUsers}명</span><span class="group-stat-label">함께 기록한 친구</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.newMemberCount || 0}명</span><span class="group-stat-label">이번 달 합류</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalComments || 0}개</span><span class="group-stat-label">남긴 댓글</span></div>
+            <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">보낸 응원</span></div>
+        </div>
+        ${s.bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${s.bestStreakName}</strong> ${s.bestStreak}일</div>` : ''}
+        <div class="category-kings">
+            ${s.dietKing?.count > 0 ? `<span class="cat-king">🍽 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
+            ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
+            ${s.mindKing?.count > 0 ? `<span class="cat-king">🌙 <strong>${s.mindKing.name}</strong> ${s.mindKing.count}일</span>` : ''}
+        </div>
+        ${ranked.length ? `
+            <div class="mvp-ranking-title">🏆 이번 달 꾸준한 친구들</div>
+            <div class="mvp-ranking-list">
+                ${ranked.map((u, i) => `
+                    <div class="mvp-ranking-item rank-${i + 1}">
+                        <span class="mvp-medal">${medals[i]}</span>
+                        <span class="mvp-name">${u.name}</span>
+                        <span class="mvp-days">${u.days}일 · 💬${u.comments} · ✨${u.reactions}</span>
+                        <span class="mvp-reward">${rewardAmounts[i]}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="mvp-reward-info">기록과 응원 흐름으로 매월 자동 집계돼요.</div>
+        ` : ''}
+        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+    `;
+};
+
+renderFriendActivityCard = async function(user, todayStr) {
+    const card = document.getElementById('friend-activity-card');
+    const list = document.getElementById('friend-activity-list');
+    if (!card || !list) return;
+
+    try {
+        const mySnap = await getDoc(doc(db, 'users', user.uid));
+        const friends = mySnap.exists() ? (mySnap.data().friends || []) : [];
+        _communityFocusState.friendCount = friends.length;
+
+        if (friends.length === 0) {
+            list.innerHTML = buildCommunityEmptyState(
+                '친구를 먼저 추가해보세요',
+                '친구가 생기면 여기서 오늘 기록 흐름과 스트릭을 바로 볼 수 있어요.',
+                [
+                    '<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>',
+                    '<button type="button" class="community-empty-btn" onclick="openCommunityChat()">💬 단톡 참여</button>'
+                ]
+            );
+            card.style.display = 'block';
+            renderCommunityFocusPanel();
+            return;
+        }
+
+        const results = await Promise.all(friends.map(async fid => {
+            const [logSnap, userSnap] = await Promise.all([
+                getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`)),
+                getDoc(doc(db, 'users', fid))
+            ]);
+            const ud = userSnap.exists() ? userSnap.data() : {};
+            const name = ud.customDisplayName || ud.displayName || fid.slice(0, 8);
+            const streak = ud.currentStreak || 0;
+            if (!logSnap.exists()) return { name, streak, diet: false, exercise: false, mind: false };
+            const ap = logSnap.data().awardedPoints || {};
+            return {
+                name,
+                streak,
+                diet: (ap.dietPoints || 0) > 0,
+                exercise: (ap.exercisePoints || 0) > 0,
+                mind: (ap.mindPoints || 0) > 0
+            };
+        }));
+
+        const activeFriends = results.filter(r => r.diet || r.exercise || r.mind).length;
+        const completeFriends = results.filter(r => r.diet && r.exercise && r.mind).length;
+        _communityFocusState.activeFriends = activeFriends;
+        _communityFocusState.completeFriends = completeFriends;
+        renderCommunityFocusPanel();
+
+        list.innerHTML = `
+            <div class="friend-activity-summary">
+                <span class="friend-activity-pill">👥 친구 ${friends.length}명</span>
+                <span class="friend-activity-pill">🔥 활동 중 ${activeFriends}명</span>
+                <span class="friend-activity-pill">✅ 전체 완료 ${completeFriends}명</span>
+            </div>
+            <div class="friend-activity-rows">
+                ${results.map(r => `
+                    <div class="friend-activity-row">
+                        <span class="friend-activity-name">
+                            <span>${escapeHtml(r.name)}</span>
+                            ${r.streak >= 2 ? `<span class="friend-activity-streak">🔥 ${r.streak}일</span>` : ''}
+                        </span>
+                        <span class="friend-activity-checks">
+                            <span class="friend-activity-check ${r.diet ? 'is-on' : ''}">🍽</span>
+                            <span class="friend-activity-check ${r.exercise ? 'is-on' : ''}">🏃</span>
+                            <span class="friend-activity-check ${r.mind ? 'is-on' : ''}">🌙</span>
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        card.style.display = 'block';
+    } catch (e) {
+        console.warn('친구 활동 카드 오류:', e.message);
+        list.innerHTML = buildCommunityEmptyState(
+            '친구 흐름을 아직 불러오지 못했어요',
+            '잠시 후 다시 보거나, 먼저 갤러리에서 응원을 시작해보세요.',
+            ['<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>']
+        );
+        card.style.display = 'block';
+    }
+};
+
+renderSocialChallenges = async function(user) {
+    const card = document.getElementById('social-challenge-card');
+    const list = document.getElementById('social-challenge-list');
+    if (!card || !list) return;
+
+    try {
+        const mySnap = await getDoc(doc(db, 'users', user.uid));
+        const friends = mySnap.exists() ? (mySnap.data().friends || []) : [];
+        _communityFocusState.friendCount = friends.length;
+
+        if (friends.length === 0) {
+            _communityFocusState.pendingChallenges = 0;
+            _communityFocusState.activeChallenges = 0;
+            renderCommunityFocusPanel();
+            list.innerHTML = buildCommunityEmptyState(
+                '친구가 있어야 챌린지를 시작할 수 있어요',
+                '먼저 친구를 초대한 뒤 3일, 7일, 14일 챌린지를 바로 열 수 있어요.',
+                ['<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>']
+            );
+            card.style.display = 'block';
+            return;
+        }
+
+        const [asParticipant, asInvitee] = await Promise.all([
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('participants', 'array-contains', user.uid),
+                where('status', 'in', ['pending', 'active']),
+                limit(5)
+            )),
+            getDocs(query(
+                collection(db, 'social_challenges'),
+                where('invitees', 'array-contains', user.uid),
+                where('status', '==', 'pending'),
+                limit(5)
+            ))
+        ]);
+
+        const challenges = [];
+        asInvitee.forEach(d => challenges.push({ id: d.id, ...d.data(), isInvite: true }));
+        asParticipant.forEach(d => {
+            if (!challenges.find(c => c.id === d.id)) {
+                challenges.push({ id: d.id, ...d.data(), isInvite: false });
+            }
+        });
+
+        const pendingChallenges = challenges.filter(ch => ch.isInvite).length;
+        const activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
+        _communityFocusState.pendingChallenges = pendingChallenges;
+        _communityFocusState.activeChallenges = activeChallenges;
+        renderCommunityFocusPanel();
+
+        if (challenges.length === 0) {
+            list.innerHTML = buildCommunityEmptyState(
+                '아직 열려 있는 챌린지가 없어요',
+                '친구가 준비돼 있으니 지금 바로 첫 챌린지를 만들면 돼요.',
+                ['<button type="button" class="community-empty-btn" onclick="openCreateChallengeModal()">🏆 챌린지 시작</button>']
+            );
+            card.style.display = 'block';
+            return;
+        }
+
+        list.innerHTML = `
+            <div class="social-challenge-summary">
+                <span class="social-challenge-pill">🏆 진행 ${activeChallenges}개</span>
+                <span class="social-challenge-pill">📩 응답 대기 ${pendingChallenges}개</span>
+            </div>
+            <div class="social-challenge-rows">
+                ${challenges.map(ch => {
+                    const typeLabel = ch.type === 'competition' ? '1:1 경쟁' : '함께 목표';
+                    const durationLabel = `${ch.durationDays}일`;
+                    if (ch.isInvite) {
+                        return `
+                            <div class="social-challenge-item is-invite">
+                                <div class="social-challenge-main">
+                                    <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
+                                    <div class="social-challenge-meta">${escapeHtml(ch.creatorName || '친구')}님이 초대했어요${ch.type === 'competition' ? ` · 스테이크 ${ch.stakePoints}P` : ''}</div>
+                                    <div class="social-challenge-status is-pending">수락하면 오늘부터 바로 시작돼요</div>
+                                </div>
+                                <button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${ch.id}')">응답하기</button>
+                            </div>
+                        `;
+                    }
+
+                    const statusLabel = ch.status === 'active'
+                        ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
+                        : '수락 대기 중';
+
+                    return `
+                        <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}">
+                            <div class="social-challenge-main">
+                                <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
+                                <div class="social-challenge-status ${ch.status === 'active' ? 'is-active' : 'is-pending'}">${escapeHtml(statusLabel)}</div>
+                                ${ch.type === 'competition' ? `<div class="social-challenge-meta">스테이크 ${ch.stakePoints}P</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+
+        card.style.display = 'block';
+    } catch (e) {
+        console.warn('[renderSocialChallenges] 오류:', e.message);
+        list.innerHTML = buildCommunityEmptyState(
+            '챌린지 상태를 아직 불러오지 못했어요',
+            '잠시 후 다시 보거나, 먼저 친구 초대와 갤러리 응원부터 시작해보세요.',
+            [
+                '<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>',
+                '<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>'
+            ]
+        );
+        card.style.display = 'block';
+    }
+};
+
 // QR 코드 초대 모달
 // ============================================================
 const CHAT_QR_URL = 'https://open.kakao.com/o/gv23urgi';

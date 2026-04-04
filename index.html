@@ -316,21 +316,78 @@
                         <div class="mission-badges-title">🏅 미션 배지</div>
                         <div class="mission-badges-grid" id="mission-badges-grid"></div>
                     </div>
-                    <div id="friend-activity-card" style="display:none;margin:12px 0 4px;padding:12px 14px;background:var(--card-bg,#fff);border-radius:14px;border:1px solid var(--border,#e8e8e8);">
-                        <div style="font-size:13px;font-weight:700;color:var(--text-secondary,#555);margin-bottom:8px;">👥 친구 오늘 현황</div>
+                    <div class="community-focus-panel" id="community-focus-panel">
+                        <div class="community-focus-head">
+                            <div class="community-focus-copy">
+                                <div class="community-focus-kicker">함께하기</div>
+                                <div class="community-focus-title-row">
+                                    <h4 class="community-focus-title" id="community-focus-title">친구를 초대하고 같이 기록 흐름을 시작해보세요.</h4>
+                                    <span class="community-focus-badge" id="community-focus-badge">친구 0명</span>
+                                </div>
+                                <p class="community-focus-body" id="community-focus-body">초대, 챌린지, 갤러리 응원, 단톡 참여를 여기서 바로 시작할 수 있어요.</p>
+                            </div>
+                        </div>
+                        <div class="community-action-grid">
+                            <button type="button" class="community-action-card" onclick="openQRModal()">
+                                <span class="community-action-emoji">👥</span>
+                                <span class="community-action-copy">
+                                    <strong>친구 초대</strong>
+                                    <span>코드와 QR 보내기</span>
+                                </span>
+                            </button>
+                            <button type="button" class="community-action-card" onclick="openCreateChallengeModal()">
+                                <span class="community-action-emoji">🏆</span>
+                                <span class="community-action-copy">
+                                    <strong>챌린지 시작</strong>
+                                    <span>친구와 같이 도전</span>
+                                </span>
+                            </button>
+                            <button type="button" class="community-action-card" onclick="focusGalleryFeed()">
+                                <span class="community-action-emoji">✨</span>
+                                <span class="community-action-copy">
+                                    <strong>갤러리 응원</strong>
+                                    <span>최근 기록 둘러보기</span>
+                                </span>
+                            </button>
+                            <button type="button" class="community-action-card" onclick="openCommunityChat()">
+                                <span class="community-action-emoji">💬</span>
+                                <span class="community-action-copy">
+                                    <strong>단톡 참여</strong>
+                                    <span>지금 바로 입장</span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="friend-activity-card" class="community-module-card" style="display:none;">
+                        <div class="community-module-header">
+                            <div>
+                                <div class="community-module-kicker">친구 체크</div>
+                                <div class="community-module-title">오늘 친구 흐름</div>
+                            </div>
+                            <button type="button" class="community-module-link" onclick="openQRModal()">친구 초대</button>
+                        </div>
                         <div id="friend-activity-list"></div>
                     </div>
 
-                    <!-- 소셜 챌린지 카드 -->
-                    <div id="social-challenge-card" style="display:none;margin:12px 0 4px;padding:12px 14px;background:var(--card-bg,#fff);border-radius:14px;border:1px solid var(--border,#e8e8e8);">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                            <div style="font-size:13px;font-weight:700;color:var(--text-secondary,#555);">🏆 소셜 챌린지</div>
-                            <button onclick="openCreateChallengeModal()" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid #7C4DFF;color:#7C4DFF;background:transparent;cursor:pointer;">+ 새 챌린지</button>
+                    <div id="social-challenge-card" class="community-module-card" style="display:none;">
+                        <div class="community-module-header">
+                            <div>
+                                <div class="community-module-kicker">같이 도전</div>
+                                <div class="community-module-title">친구 챌린지</div>
+                            </div>
+                            <button type="button" class="community-module-link" onclick="openCreateChallengeModal()">새 챌린지</button>
                         </div>
-                        <div id="social-challenge-list"><div style="font-size:12px;color:#aaa;text-align:center;padding:8px 0;">진행 중인 챌린지가 없어요</div></div>
+                        <div id="social-challenge-list"><div class="community-empty-state">진행 중인 챌린지가 없어요</div></div>
                     </div>
-                    <div class="group-challenge-section" id="group-challenge-section" style="display:none;">
-                        <div class="group-challenge-title">👥 이번 달 커뮤니티 현황</div>
+                    <div class="group-challenge-section community-module-card" id="group-challenge-section" style="display:none;">
+                        <div class="community-module-header">
+                            <div>
+                                <div class="community-module-kicker">함께 만든 흐름</div>
+                                <div class="community-module-title">이번 달 커뮤니티</div>
+                            </div>
+                            <button type="button" class="community-module-link" onclick="openCommunityChat()">단톡 참여</button>
+                        </div>
                         <div id="group-challenge-content"></div>
                     </div>
                 </div>
