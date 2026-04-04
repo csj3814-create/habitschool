@@ -1852,9 +1852,9 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
-    margin: 6px 0 6px;
-    padding: 10px 12px;
+    gap: 10px;
+    margin: 4px 0 4px;
+    padding: 9px 10px;
     border-radius: 14px;
     background: linear-gradient(135deg, #EEF7FF 0%, #F6FBFF 100%);
     border: 1px solid #D7EAFE;
@@ -1873,9 +1873,9 @@ textarea {
 }
 
 .mission-focus-title {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.35;
     color: #243043;
 }
 
@@ -1897,7 +1897,7 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .mission-focus-tag {
@@ -1928,11 +1928,16 @@ textarea {
 }
 
 .community-dashboard-head {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .community-dashboard-head h3 {
     margin-bottom: 0;
+}
+
+.card-invite.is-highlighted {
+    box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.2), 0 12px 28px rgba(255, 152, 0, 0.18);
+    transition: box-shadow 0.2s ease;
 }
 
 .mission-item { 
@@ -1947,7 +1952,7 @@ textarea {
 /* 미션 카테고리 블록 */
 .mission-category-block {
     margin-bottom: 10px;
-    padding: 10px;
+    padding: 9px 10px;
     background: var(--gray-50, #f8f9fa);
     border-radius: 10px;
     border: 1px solid var(--gray-200, #e9ecef);
@@ -1956,8 +1961,27 @@ textarea {
 .mission-category-label {
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 0;
     color: var(--gray-700);
+}
+
+.mission-category-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mission-category-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 72px;
+}
+
+.mission-category-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
 }
 
 /* 난이도 탭 */
@@ -2019,6 +2043,15 @@ textarea {
     accent-color: var(--primary-color);
 }
 
+.mission-preview.compact {
+    margin-top: 7px;
+    gap: 0;
+}
+
+.mission-preview.compact span {
+    line-height: 1.4;
+}
+
 .mission-setup-intro {
     margin-bottom: 10px;
     font-size: 12px;
@@ -2026,13 +2059,13 @@ textarea {
 }
 
 .custom-mission-shell {
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .mission-inline-toggle {
     width: 100%;
-    min-height: 38px;
-    font-size: 13px;
+    min-height: 34px;
+    font-size: 12px;
 }
 
 /* 커스텀 미션 */
@@ -2289,8 +2322,8 @@ textarea {
 /* 커뮤니티 액션 허브 */
 .community-focus-panel {
     margin-top: 0;
-    padding: 12px;
-    border-radius: 16px;
+    padding: 10px;
+    border-radius: 14px;
     background:
         radial-gradient(circle at top right, rgba(255, 193, 7, 0.22), transparent 34%),
         linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 52%, #F8F3FF 100%);
@@ -2301,26 +2334,18 @@ textarea {
     margin-bottom: 0;
 }
 
-.community-focus-kicker {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #E65100;
-}
-
 .community-focus-title-row {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 6px;
+    margin-top: 0;
 }
 
 .community-focus-title {
     margin: 0;
-    font-size: 18px;
-    line-height: 1.4;
+    font-size: 16px;
+    line-height: 1.35;
     color: #3E2723;
 }
 
@@ -2336,9 +2361,9 @@ textarea {
 }
 
 .community-focus-body {
-    margin: 6px 0 0;
-    font-size: 13px;
-    line-height: 1.5;
+    margin: 5px 0 0;
+    font-size: 12px;
+    line-height: 1.45;
     color: #6D4C41;
 }
 
@@ -2346,7 +2371,7 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .community-focus-stat {
@@ -2364,7 +2389,7 @@ textarea {
 
 .community-focus-actions {
     display: block;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .community-focus-action {
@@ -2871,13 +2896,25 @@ textarea {
 
 @media (max-width: 640px) {
     .mission-focus-strip {
-        flex-direction: column;
-        align-items: stretch;
-        padding: 10px;
+        padding: 9px 10px;
     }
 
     .mission-focus-btn {
         width: 100%;
+    }
+
+    .mission-category-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .mission-category-check {
+        min-width: 0;
+    }
+
+    .mission-difficulty-tabs {
+        margin-bottom: 0;
     }
 
     .mission-progress-topline,
@@ -2939,6 +2976,30 @@ textarea {
     .mission-category-block {
         margin-bottom: 8px;
         padding: 9px;
+    }
+
+    .dashboard-action-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .dashboard-action-chip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 14px;
+    }
+
+    .dashboard-action-copy span {
+        display: none;
+    }
+
+    .dashboard-action-copy strong {
+        font-size: 12px;
+    }
+
+    .dashboard-action-emoji {
+        font-size: 20px;
     }
 
     .dashboard-more-tools summary {
@@ -5411,8 +5472,8 @@ textarea {
         radial-gradient(circle at top right, rgba(255, 211, 140, 0.55) 0%, transparent 30%),
         linear-gradient(145deg, #FFF8E8 0%, #FFFDF5 55%, #EEF7F0 100%);
     border: 1px solid #F3D8AE;
-    border-radius: 24px;
-    padding: 18px;
+    border-radius: 22px;
+    padding: 16px;
     box-shadow: 0 12px 30px rgba(233, 163, 54, 0.12);
     margin-bottom: 12px;
     animation: dashboardHeroRise 0.45s cubic-bezier(0.16, 1, 0.3, 1);
@@ -5480,7 +5541,7 @@ textarea {
 }
 
 .dashboard-hero-body {
-    margin: 10px 0 16px;
+    margin: 8px 0 12px;
     font-size: 14px;
     line-height: 1.6;
     color: #6B6256;
@@ -5488,18 +5549,20 @@ textarea {
 
 .dashboard-action-strip {
     display: grid;
-    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
 }
 
 .dashboard-action-chip {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     width: 100%;
     border: 1px solid rgba(223, 204, 171, 0.9);
     background: rgba(255,255,255,0.72);
-    border-radius: 18px;
-    padding: 12px 14px;
+    border-radius: 14px;
+    padding: 10px;
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     text-align: left;
@@ -5540,7 +5603,7 @@ textarea {
 }
 
 .dashboard-action-emoji {
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1;
     flex-shrink: 0;
 }
@@ -5553,27 +5616,28 @@ textarea {
 }
 
 .dashboard-action-copy strong {
-    font-size: 14px;
+    font-size: 13px;
     color: #2F2A22;
 }
 
 .dashboard-action-copy span {
-    font-size: 12px;
+    font-size: 11px;
     color: #7A7065;
+    line-height: 1.35;
 }
 
 .dashboard-hero-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
-    margin-top: 16px;
+    margin-top: 12px;
 }
 
 .dashboard-stat-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 14px;
+    padding: 12px;
     border-radius: 18px;
     background: rgba(255,255,255,0.74);
     border: 1px solid rgba(223, 204, 171, 0.9);
@@ -5600,15 +5664,11 @@ textarea {
     letter-spacing: -0.04em;
 }
 
-.dashboard-rhythm-grid {
-    display: grid;
-    gap: 12px;
-}
-
 .dashboard-week-card {
     border: 1px solid #EFE3CC;
     background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF8 100%);
     box-shadow: 0 8px 24px rgba(117, 93, 63, 0.06);
+    margin-top: 10px;
 }
 
 .dashboard-week-header {
@@ -5675,16 +5735,11 @@ textarea {
     .dashboard-hero-stats {
         margin-top: 0;
     }
-
-    .dashboard-rhythm-grid {
-        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-        align-items: stretch;
-    }
 }
 
 @media (max-width: 480px) {
     .dashboard-hero-panel {
-        padding: 16px;
+        padding: 14px;
         border-radius: 22px;
     }
 
@@ -5696,27 +5751,31 @@ textarea {
         font-size: 13px;
     }
 
+    .dashboard-action-strip {
+        gap: 6px;
+    }
+
     .dashboard-action-chip {
-        padding: 11px 12px;
+        padding: 9px 8px;
     }
 
     .dashboard-action-copy strong {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .dashboard-action-copy span,
     .dashboard-week-summary,
     .dashboard-week-caption,
     .mission-card-intro {
-        font-size: 12px;
+        font-size: 11px;
     }
 
     .dashboard-stat-card {
-        padding: 12px;
+        padding: 11px;
     }
 
     .dashboard-stat-value {
-        font-size: 20px;
+        font-size: 18px;
     }
 }
 
@@ -7463,7 +7522,6 @@ body.dark-mode .community-focus-panel {
         linear-gradient(135deg, #211D16 0%, #1E1A22 56%, #17151A 100%);
     border-color: rgba(255, 183, 77, 0.14);
 }
-body.dark-mode .community-focus-kicker { color: #FFB74D; }
 body.dark-mode .community-focus-title { color: #F3EEE8; }
 body.dark-mode .community-focus-body { color: #B7AFA6; }
 body.dark-mode .community-focus-badge {

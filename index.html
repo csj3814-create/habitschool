@@ -262,43 +262,19 @@
                         </div>
                     </div>
 
-                    <div class="dashboard-rhythm-grid">
-                        <div class="today-status-card" id="today-status-card">
-                            <div class="today-status-header">
-                                <span class="today-status-title">오늘 남은 행동</span>
-                                <span class="today-streak-badge" id="today-streak-badge" style="display:none;"></span>
+                    <div class="card dashboard-week-card">
+                        <div class="dashboard-week-header">
+                            <div>
+                                <h3 style="margin-bottom:0;">이번 주 흐름</h3>
+                                <p class="dashboard-week-caption">날짜를 누르면 해당 일의 기록으로 이동합니다.</p>
                             </div>
-                            <div class="today-status-items" id="today-status-items">
-                                <div class="today-status-item" onclick="openTab('diet')">
-                                    <span class="today-status-icon" id="ts-diet-icon">⬜</span>
-                                    <span class="today-status-label">식단</span>
-                                </div>
-                                <div class="today-status-item" onclick="openTab('exercise')">
-                                    <span class="today-status-icon" id="ts-exercise-icon">⬜</span>
-                                    <span class="today-status-label">운동</span>
-                                </div>
-                                <div class="today-status-item" onclick="openTab('sleep')">
-                                    <span class="today-status-icon" id="ts-mind-icon">⬜</span>
-                                    <span class="today-status-label">마음</span>
-                                </div>
-                            </div>
-                            <div class="today-status-cheer" id="today-status-cheer" style="display:none;"></div>
+                            <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
                         </div>
-
-                        <div class="card dashboard-week-card">
-                            <div class="dashboard-week-header">
-                                <div>
-                                    <h3 style="margin-bottom:0;">이번 주 흐름</h3>
-                                    <p class="dashboard-week-caption">날짜를 누르면 해당 일의 기록으로 이동합니다.</p>
-                                </div>
-                                <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
-                            </div>
-                            <div class="dashboard-week-progress-bar">
-                                <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
-                            </div>
-                            <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 루틴을 시작해보세요.</div>
-                            <div class="week-graph" id="week-graph"></div>
+                        <div class="dashboard-week-progress-bar">
+                            <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
                         </div>
+                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 루틴을 시작해보세요.</div>
+                        <div class="week-graph" id="week-graph"></div>
                     </div>
                 </section>
 
@@ -313,20 +289,11 @@
                         </div>
                         <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
                     </div>
-                    <div class="mission-focus-tags" id="mission-focus-tags">
-                        <span class="mission-focus-tag">오늘 0/3 완료</span>
-                        <span class="mission-focus-tag">미션 준비 전</span>
-                    </div>
-                    <p class="mission-card-intro" id="mission-card-intro">이번 주 목표를 정하면 오늘 해야 할 행동이 더 선명해집니다.</p>
                     <div id="mission-selection-area"></div>
                     <button class="submit-btn" id="btn-save-missions"
-                        style="margin-top: 15px; padding: 12px; font-size: 14px; background-color: #2196F3;"
-                        onclick="saveWeeklyMissions()">🎯 이번 주 미션 시작!</button>
+                        style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
+                        onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
                     <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
-                    <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
-                        <div class="mission-badges-title">🏅 미션 배지</div>
-                        <div class="mission-badges-grid" id="mission-badges-grid"></div>
-                    </div>
                 </div>
 
                 <div class="card metrics-card community-dashboard-card">
@@ -336,7 +303,6 @@
                     <div class="community-focus-panel" id="community-focus-panel">
                         <div class="community-focus-head">
                             <div class="community-focus-copy">
-                                <div class="community-focus-kicker">함께하기</div>
                                 <div class="community-focus-title-row">
                                     <h4 class="community-focus-title" id="community-focus-title">친구를 초대하고 같이 기록 흐름을 시작해보세요.</h4>
                                     <span class="community-focus-badge" id="community-focus-badge">친구 0명</span>
@@ -352,6 +318,11 @@
                 <details class="dashboard-more-tools" id="dashboard-more-tools">
                     <summary>기록 더보기</summary>
                     <div class="dashboard-more-tools-body">
+                        <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
+                            <div class="mission-badges-title">🏅 미션 배지</div>
+                            <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                        </div>
+
                         <div class="milestone-section" id="milestone-section" style="display:none;">
                             <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
                             <div class="badges-grid" id="badges-grid"></div>
@@ -489,7 +460,7 @@
                 </div>
 
                 <!-- 7. 친구 초대 공유 -->
-                <div class="card card-invite" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
+                <div class="card card-invite" id="profile-friend-invite-card" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
                     <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
                     <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 코드를 보내고, 카카오톡 해빛코치에서 <strong>!친구 코드</strong>를 입력하게 해보세요. 앱에서 수락하면 연결이 완료됩니다.</p>
                     <!-- 보상 안내 -->

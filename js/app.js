@@ -3637,6 +3637,24 @@ const _communityFocusState = {
     primaryAction: 'invite'
 };
 
+window.openFriendInviteFlow = function() {
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+
+    openTab('profile');
+    setTimeout(() => {
+        const inviteCard = document.getElementById('profile-friend-invite-card');
+        inviteCard?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+        inviteCard?.classList.add('is-highlighted');
+        window.setTimeout(() => inviteCard?.classList.remove('is-highlighted'), 1400);
+    }, 120);
+};
+
 window.handleCommunityPrimaryAction = function() {
     switch (_communityFocusState.primaryAction) {
         case 'respond':
@@ -3658,7 +3676,7 @@ window.handleCommunityPrimaryAction = function() {
             return;
         case 'invite':
         default:
-            openQRModal();
+            openFriendInviteFlow();
             return;
     }
 };
@@ -3680,25 +3698,25 @@ function renderCommunityFocusPanel() {
         monthlyUsers
     } = _communityFocusState;
 
-    let primaryLabel = '친구 초대';
+    let primaryLabel = '초대 코드 보기';
     let stats = [];
 
     if (pendingChallenges > 0) {
         _communityFocusState.primaryAction = 'respond';
         titleEl.textContent = '응답할 챌린지가 있어요.';
-        bodyEl.textContent = '지금은 수락이나 거절만 하면 됩니다.';
+        bodyEl.textContent = '지금 답변만 하면 바로 이어집니다.';
         badgeEl.textContent = `초대 ${pendingChallenges}건`;
         primaryLabel = '챌린지 응답';
     } else if (friendCount === 0) {
         _communityFocusState.primaryAction = 'invite';
-        titleEl.textContent = '친구 1명만 연결하면 같이 기록할 수 있어요.';
-        bodyEl.textContent = '지금은 초대 코드 보내기만 하면 됩니다.';
+        titleEl.textContent = '친구 1명만 연결하면 함께 시작할 수 있어요.';
+        bodyEl.textContent = '프로필 초대 카드로 이동해서 코드만 보내면 됩니다.';
         badgeEl.textContent = '친구 0명';
-        primaryLabel = '친구 초대';
+        primaryLabel = '초대 코드 보기';
     } else if (activeChallenges === 0) {
         _communityFocusState.primaryAction = 'start';
         titleEl.textContent = '친구가 준비됐어요.';
-        bodyEl.textContent = '다음 한 걸음은 챌린지 시작입니다.';
+        bodyEl.textContent = '지금은 챌린지 하나만 시작하면 됩니다.';
         badgeEl.textContent = `친구 ${friendCount}명`;
         primaryLabel = '챌린지 시작';
     } else if (activeFriends === 0) {
@@ -3710,18 +3728,18 @@ function renderCommunityFocusPanel() {
     } else {
         _communityFocusState.primaryAction = 'cheer';
         titleEl.textContent = '친구 흐름이 움직이고 있어요.';
-        bodyEl.textContent = `${activeFriends}명이 오늘 활동했어요. 지금은 응원만 해도 충분합니다.`;
+        bodyEl.textContent = `${activeFriends}명이 오늘 기록했어요. 지금은 응원만 하면 됩니다.`;
         badgeEl.textContent = `활동 ${activeFriends}명`;
         primaryLabel = '응원하러 가기';
     }
 
     if (friendCount > 0) stats.push(`친구 ${friendCount}명`);
     if (activeChallenges > 0) stats.push(`진행 ${activeChallenges}개`);
-    if (completeFriends > 0) stats.push(`완료 ${completeFriends}명`);
-    if (monthlyUsers > 0) stats.push(`이달 ${monthlyUsers}명`);
+    if (completeFriends > 0) stats.push(`오늘 완료 ${completeFriends}명`);
 
     if (statsEl) {
-        statsEl.innerHTML = stats.slice(0, 3).map(text => `<span class="community-focus-stat">${text}</span>`).join('');
+        statsEl.hidden = stats.length === 0;
+        statsEl.innerHTML = stats.slice(0, 2).map(text => `<span class="community-focus-stat">${text}</span>`).join('');
     }
 
     actionsEl.innerHTML = `<button type="button" class="community-focus-action primary" onclick="handleCommunityPrimaryAction()">${primaryLabel}</button>`;
@@ -3801,7 +3819,7 @@ function renderMissionFocusState({
     const titleEl = document.getElementById('mission-focus-title');
     const buttonEl = document.getElementById('mission-focus-btn');
     const tagsEl = document.getElementById('mission-focus-tags');
-    if (!kickerEl || !titleEl || !buttonEl || !tagsEl) return;
+    if (!kickerEl || !titleEl || !buttonEl) return;
 
     const doneToday = ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
     const remainingToday = Math.max(0, 3 - doneToday);
@@ -3812,27 +3830,33 @@ function renderMissionFocusState({
 
     if (!isWeekActive || totalMissions === 0) {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = '이번 주 미션을 먼저 정하세요.';
+        titleEl.textContent = '이번 주 미션 1~3개만 고르세요.';
         buttonEl.textContent = '미션 정하기';
         _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
-        tags.push('아직 미션 없음');
+        tags = ['미션 최대 3개'];
+        buttonEl.style.display = 'none';
     } else if (remainingToday > 0) {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 지금은 ${nextLabel}`;
+        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 다음은 ${nextLabel}`;
         buttonEl.textContent = `${nextLabel} 기록`;
         _missionPrimaryActionState = { type: 'record', tab: nextTab };
         tags.push(`주간 ${completedMissions}/${totalMissions}`);
         tags.push(`달성 ${overallRate}%`);
+        buttonEl.style.display = '';
     } else {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 오늘 기록 완료`;
+        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 오늘 기록 끝`;
         buttonEl.textContent = '갤러리 보기';
         _missionPrimaryActionState = { type: 'share', tab: 'gallery' };
         tags.push(`주간 ${completedMissions}/${totalMissions}`);
         tags.push(`달성 ${overallRate}%`);
+        buttonEl.style.display = '';
     }
 
-    tagsEl.innerHTML = tags.map(tag => `<span class="mission-focus-tag">${tag}</span>`).join('');
+    if (tagsEl) {
+        tagsEl.innerHTML = tags.map(tag => `<span class="mission-focus-tag">${tag}</span>`).join('');
+        tagsEl.style.display = tags.length > 0 ? 'flex' : 'none';
+    }
 }
 
 const DASHBOARD_ACTION_META = {
@@ -3900,7 +3924,6 @@ function _renderDashboardHeroState({
     const weekProgressTextEl = document.getElementById('dashboard-week-progress-text');
     const weekProgressFillEl = document.getElementById('dashboard-week-progress-fill');
     const weekSummaryEl = document.getElementById('dashboard-week-summary');
-    const missionIntroEl = document.getElementById('mission-card-intro');
 
     if (heroPill) {
         if (remainingToday === 0) heroPill.textContent = '오늘 완료';
@@ -3924,7 +3947,7 @@ function _renderDashboardHeroState({
                 ? `이번 주 미션 달성률은 ${overallRate}%예요. 오늘 기록은 끝났으니 갤러리 공유나 내일 준비로 이어가면 좋습니다.`
                 : '오늘 할 일을 모두 마쳤어요. 내 기록을 돌아보거나 갤러리에서 다른 사람의 흐름을 살펴보세요.';
         } else if (focusMeta) {
-            focusBody.textContent = `${focusMeta.focusSub}. 오늘은 ${completedToday}/3개를 마쳤고, 남은 행동은 ${remainingToday}개입니다.`;
+            focusBody.textContent = `${focusMeta.focusSub}. 오늘 ${completedToday}/3 완료 · 남은 행동 ${remainingToday}개`;
         }
     }
 
@@ -3952,12 +3975,6 @@ function _renderDashboardHeroState({
         totalMissions,
         completedMissions
     });
-
-    if (missionIntroEl) {
-        missionIntroEl.textContent = isWeekActive && totalMissions > 0
-            ? `이번 주 미션 ${completedMissions}/${totalMissions}개 진행 중`
-            : '이번 주 미션을 정하고 시작하세요.';
-    }
 
     order.forEach(type => {
         const meta = DASHBOARD_ACTION_META[type];
@@ -4150,10 +4167,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // ==========================================
         const todayLog = logsMap[todayStr];
         const todayAwarded = todayLog?.awardedPoints || {};
-        document.getElementById('ts-diet-icon').textContent = todayAwarded.diet ? '✅' : '⬜';
-        document.getElementById('ts-exercise-icon').textContent = todayAwarded.exercise ? '✅' : '⬜';
-        document.getElementById('ts-mind-icon').textContent = todayAwarded.mind ? '✅' : '⬜';
-
 
         let streakCount = 0;
         const streakLogs = data.streakLogs || [];
@@ -4161,26 +4174,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const awarded = log.awardedPoints || log.awarded || {};
             if (awarded.diet || awarded.exercise || awarded.mind) streakCount++;
             else break;
-        }
-        const streakBadge = document.getElementById('today-streak-badge');
-        const cheerEl = document.getElementById('today-status-cheer');
-        if (streakCount > 0) {
-            streakBadge.textContent = `🔥 ${streakCount}일 연속`;
-            streakBadge.style.display = '';
-            // 응원 메시지
-            let cheerMsg = '';
-            if (streakCount >= 100) cheerMsg = '🏆 100일 돌파! 진정한 습관 마스터!';
-            else if (streakCount >= 60) cheerMsg = '💎 60일 넘었어요! 습관이 체질이 되었네요!';
-            else if (streakCount >= 30) cheerMsg = '🌟 한 달 연속! 정말 대단해요!';
-            else if (streakCount >= 21) cheerMsg = '✨ 21일! 습관 형성의 마법 숫자 통과!';
-            else if (streakCount >= 14) cheerMsg = '💪 2주 연속! 꾸준함이 빛나요!';
-            else if (streakCount >= 7) cheerMsg = '🎉 일주일 연속! 습관이 만들어지고 있어요!';
-            else if (streakCount >= 3) cheerMsg = `👏 ${streakCount}일째! 좋은 흐름, 계속 가봐요!`;
-            else cheerMsg = '🌱 시작이 반! 연속 기록을 이어가요!';
-            if (cheerEl) { cheerEl.textContent = cheerMsg; cheerEl.style.display = ''; }
-        } else {
-            streakBadge.style.display = 'none';
-            if (cheerEl) { cheerEl.textContent = '🌱 첫 기록을 남기고 연속을 시작해보세요!'; cheerEl.style.display = ''; }
         }
 
         // 주간 그래프 (월~일)
@@ -4215,24 +4208,26 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const diffLabels = { easy: '쉬움', normal: '보통', hard: '도전' };
             const customOpen = _customMissionComposerOpen || pendingCustomMissions.length > 0;
 
-            missionArea.innerHTML += `<div class="mission-setup-intro">식단, 운동, 마음 중 필요한 미션만 켜고 시작하세요.</div>`;
-
             categories.forEach(cat => {
                 const catData = levelData[cat];
                 if (!catData) return;
                 missionArea.innerHTML += `
-                    <div class="mission-category-block">
-                        <div class="mission-category-label">${categoryLabels[cat]}</div>
-                        <div class="mission-difficulty-tabs" data-category="${cat}">
-                            ${Object.keys(catData).map(diff => `
-                                <button class="diff-tab ${diff === 'normal' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
-                                    ${diffLabels[diff]}
-                                </button>
-                            `).join('')}
+                    <div class="mission-category-block compact">
+                        <div class="mission-category-top">
+                            <label class="mission-category-check" for="chk_preset_${cat}">
+                                <input type="checkbox" id="chk_preset_${cat}" checked>
+                                <span class="mission-category-label">${categoryLabels[cat]}</span>
+                            </label>
+                            <div class="mission-difficulty-tabs" data-category="${cat}">
+                                ${Object.keys(catData).map(diff => `
+                                    <button class="diff-tab ${diff === 'normal' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
+                                        ${diffLabels[diff]}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>
-                        <div class="mission-preview" id="preview-${cat}">
-                            <input type="checkbox" id="chk_preset_${cat}" checked>
-                            <label for="chk_preset_${cat}" id="label_preset_${cat}">${catData.normal.text} (${catData.normal.target}일)</label>
+                        <div class="mission-preview compact" id="preview-${cat}">
+                            <span id="label_preset_${cat}">${catData.normal.text} · ${catData.normal.target}일</span>
                         </div>
                     </div>`;
             });
@@ -4240,7 +4235,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             missionArea.innerHTML += `
                 <div class="custom-mission-shell">
                     <button type="button" class="mission-secondary-btn mission-inline-toggle" onclick="toggleCustomMissionComposer()">
-                        ${customOpen ? '직접 추가 닫기' : '직접 추가 열기'}
+                        ${customOpen ? '직접 추가 닫기' : '직접 추가'}
                     </button>
                     <div class="custom-mission-section" ${customOpen ? '' : 'hidden'}>
                         <div class="custom-mission-header">✨ 직접 추가</div>
@@ -4372,6 +4367,10 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         });
 
         renderMissionBadges(missionBadges);
+        if (!isWeekActive) {
+            const missionBadgesSection = document.getElementById('mission-badges-section');
+            if (missionBadgesSection) missionBadgesSection.style.display = 'none';
+        }
 
         if (data.communityStats) {
             renderGroupChallengeFromData(data.communityStats);
@@ -4409,7 +4408,7 @@ window._applyWeeklyMissionResetToDashboard = function(uid) {
     if (!uid) return;
     _patchDashboardUserData(uid, (ud) => {
         ud.weeklyMissionData = null;
-        ud.selectedMissions = [];
+        delete ud.selectedMissions;
     });
 };
 
@@ -4421,7 +4420,7 @@ function initDifficultySelectors(level) {
         const label = document.getElementById(`label_preset_${cat}`);
         if (preview && label && levelData[cat]) {
             const m = levelData[cat].normal;
-            label.textContent = `${m.text} (${m.target}일)`;
+            label.textContent = `${m.text} · ${m.target}일`;
         }
     });
 }
@@ -4447,6 +4446,7 @@ function renderMissionBadges(earnedBadges) {
     }
 
     section.style.display = 'block';
+    if ('open' in section) section.open = false;
     grid.innerHTML = '';
     const allBadges = Object.values(MISSION_BADGES);
     allBadges.forEach(badge => {
@@ -4708,7 +4708,7 @@ window.selectDifficulty = function(cat, diff) {
 
     // 미션 텍스트 업데이트
     const label = document.getElementById(`label_preset_${cat}`);
-    if (label) label.textContent = `${m.text} (${m.target}일)`;
+    if (label) label.textContent = `${m.text} · ${m.target}일`;
 };
 
 // 커스텀 미션 목록 (임시 저장)
@@ -4830,7 +4830,7 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
     const shouldNullMissions = freshMissionWeekId === weeklyData.weekId;
 
     const updateData = {
-        ...(shouldNullMissions ? { weeklyMissionData: null } : {}),
+        ...(shouldNullMissions ? { weeklyMissionData: deleteField(), selectedMissions: deleteField() } : {}),
         missionHistory: newHistory,
         missionStreak: newStreak
     };
@@ -4923,21 +4923,30 @@ window.resetWeeklyMissions = async function() {
     const user = auth.currentUser;
     if (!user) return;
     if (!confirm('이번 주 미션을 재설정하시겠습니까?\n진행 중인 기록은 유지됩니다.')) return;
+
     try {
-        await setDoc(doc(db, "users", user.uid), { weeklyMissionData: null, selectedMissions: [] }, { merge: true });
-        pendingCustomMissions = [];
-        _customMissionComposerOpen = false;
-        if (window._applyWeeklyMissionResetToDashboard) window._applyWeeklyMissionResetToDashboard(user.uid);
-        renderDashboard();
-        const todayStr = getKSTDateString();
-        const weekStrs = getCurrentWeekDates(todayStr);
-        const currentWeekId = getWeekId(todayStr);
-        _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId).catch(() => {});
-        showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
+        await setDoc(doc(db, "users", user.uid), {
+            weeklyMissionData: deleteField(),
+            selectedMissions: deleteField()
+        }, { merge: true });
     } catch (error) {
         console.error('미션 리셋 오류:', error);
         showToast('⚠️ 미션 리셋에 실패했습니다.');
+        return;
     }
+
+    pendingCustomMissions = [];
+    _customMissionComposerOpen = false;
+    if (window._invalidateDashboardCache) window._invalidateDashboardCache();
+
+    try {
+        if (window._applyWeeklyMissionResetToDashboard) window._applyWeeklyMissionResetToDashboard(user.uid);
+        await renderDashboard();
+    } catch (uiError) {
+        console.warn('미션 리셋 후 화면 갱신 오류:', uiError);
+    }
+
+    showToast("🔄 미션이 초기화되었습니다. 다시 설정해주세요!");
 };
 
 /* 다크모드 토글 */
@@ -4967,7 +4976,8 @@ window.levelUp = async function (newLevel) {
     try {
         await setDoc(doc(db, "users", user.uid), {
             missionLevel: newLevel,
-            weeklyMissionData: null
+            weeklyMissionData: deleteField(),
+            selectedMissions: deleteField()
         }, { merge: true });
         pendingCustomMissions = [];
         _customMissionComposerOpen = false;
