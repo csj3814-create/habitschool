@@ -467,7 +467,7 @@ function renderChatbotLinkStatus(userData = {}) {
         codeEl.textContent = code;
         expiryEl.textContent = `만료 시간: ${formatDateTimeForUi(expiresAt)}`;
     } else {
-        statusEl.textContent = '아직 만든 연결 코드가 없어요.';
+        statusEl.textContent = '아직 만든 카카오 등록 코드가 없어요.';
         codeBox.style.display = 'none';
         codeEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
@@ -475,7 +475,7 @@ function renderChatbotLinkStatus(userData = {}) {
 
     lastUsedEl.textContent = lastUsedAt
         ? `최근 연결 완료: ${formatDateTimeForUi(lastUsedAt)}`
-        : '연결 후에는 새 코드를 다시 만들어야 해요.';
+        : '친구 추가는 아래 초대 코드를 사용해요.';
 }
 
 async function loadChatbotLinkStatus() {
@@ -794,23 +794,23 @@ async function generateChatbotLinkCode() {
             chatbotLinkCode: result.data?.code,
             chatbotLinkCodeExpiresAt: result.data?.expiresAt
         });
-        showToast(`연결 코드 ${result.data?.code || ''} 가 생성됐어요. 카카오톡에서 !등록 코드 로 입력해 주세요.`);
+        showToast(`카카오 등록 코드 ${result.data?.code || ''} 가 생성됐어요. 카카오톡에서 !등록 코드 로 입력해 주세요.`);
     } catch (error) {
         console.error('generate chatbot link code error:', error);
-        showToast(`⚠️ ${error.message || '연결 코드 생성에 실패했습니다.'}`);
+        showToast(`⚠️ ${error.message || '카카오 등록 코드 생성에 실패했습니다.'}`);
     }
 }
 
 async function copyChatbotLinkCode() {
     const code = document.getElementById('chatbot-link-code')?.textContent?.trim();
     if (!code || code === '-') {
-        showToast('먼저 연결 코드를 만들어 주세요.');
+        showToast('먼저 카카오 등록 코드를 만들어 주세요.');
         return;
     }
 
     try {
         await navigator.clipboard.writeText(code);
-        showToast('연결 코드를 복사했어요.');
+        showToast('카카오 등록 코드를 복사했어요.');
     } catch (_) {
         showToast('코드 복사에 실패했어요. 길게 눌러 직접 복사해 주세요.');
     }
