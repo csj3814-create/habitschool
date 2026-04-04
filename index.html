@@ -208,95 +208,87 @@
                 </div>
 
                 <section class="dashboard-hero-shell" aria-label="오늘의 행동 요약">
-                    <div class="dashboard-hero-panel">
+                    <div class="dashboard-hero-panel" id="dashboard-hero-panel">
                         <div class="dashboard-hero-copy">
                             <div class="dashboard-hero-topline">
                                 <span class="dashboard-hero-kicker">오늘의 루틴</span>
-                                <span class="dashboard-hero-pill" id="dashboard-hero-pill">시작 전</span>
+                                <div class="dashboard-hero-topline-actions">
+                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill">시작 전</span>
+                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
+                                </div>
                             </div>
                             <h2 class="dashboard-hero-title" id="dashboard-focus-title">오늘 한 가지 기록으로 흐름을 시작해보세요.</h2>
-                            <p class="dashboard-hero-body" id="dashboard-focus-body">식단, 운동, 마음 중 먼저 하나를 남기면 오늘 루틴이 선명해집니다.</p>
+                            <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
+                                <p class="dashboard-hero-body" id="dashboard-focus-body">식단, 운동, 마음 중 먼저 하나를 남기면 오늘 루틴이 선명해집니다.</p>
 
-                            <div class="dashboard-action-strip" aria-label="빠른 실행">
-                                <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
-                                    <span class="dashboard-action-emoji">🥗</span>
-                                    <span class="dashboard-action-copy">
-                                        <strong id="dashboard-action-diet-label">식단 기록</strong>
-                                        <span id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
-                                    </span>
-                                </button>
-                                <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
-                                    <span class="dashboard-action-emoji">🏃</span>
-                                    <span class="dashboard-action-copy">
-                                        <strong id="dashboard-action-exercise-label">운동 기록</strong>
-                                        <span id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
-                                    </span>
-                                </button>
-                                <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
-                                    <span class="dashboard-action-emoji">🌙</span>
-                                    <span class="dashboard-action-copy">
-                                        <strong id="dashboard-action-mind-label">마음 기록</strong>
-                                        <span id="dashboard-action-mind-sub">수면·감사 한 번에</span>
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
+                                <div class="dashboard-action-strip" aria-label="빠른 실행">
+                                    <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
+                                        <span class="dashboard-action-emoji">🥗</span>
+                                        <span class="dashboard-action-copy">
+                                            <strong id="dashboard-action-diet-label">식단 기록</strong>
+                                            <span id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
+                                        </span>
+                                    </button>
+                                    <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
+                                        <span class="dashboard-action-emoji">🏃</span>
+                                        <span class="dashboard-action-copy">
+                                            <strong id="dashboard-action-exercise-label">운동 기록</strong>
+                                            <span id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
+                                        </span>
+                                    </button>
+                                    <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
+                                        <span class="dashboard-action-emoji">🌙</span>
+                                        <span class="dashboard-action-copy">
+                                            <strong id="dashboard-action-mind-label">마음 기록</strong>
+                                            <span id="dashboard-action-mind-sub">수면·감사 한 번에</span>
+                                        </span>
+                                    </button>
+                                </div>
 
-                        <div class="dashboard-hero-stats" aria-label="오늘과 이번 주 요약">
-                            <div class="dashboard-stat-card">
-                                <span class="dashboard-stat-label">연속 기록</span>
-                                <strong class="dashboard-stat-value" id="dashboard-streak-count">0일</strong>
-                            </div>
-                            <div class="dashboard-stat-card">
-                                <span class="dashboard-stat-label">오늘 완료</span>
-                                <strong class="dashboard-stat-value" id="dashboard-completed-count">0/3</strong>
-                            </div>
-                            <div class="dashboard-stat-card">
-                                <span class="dashboard-stat-label">이번 주 인증</span>
-                                <strong class="dashboard-stat-value" id="dashboard-week-rate">0일</strong>
-                            </div>
-                            <div class="dashboard-stat-card accent">
-                                <span class="dashboard-stat-label">다음 보상</span>
-                                <strong class="dashboard-stat-value" id="dashboard-next-reward">+10P</strong>
+                                <div class="dashboard-hero-stats" aria-label="오늘과 이번 주 요약">
+                                    <div class="dashboard-stat-card">
+                                        <span class="dashboard-stat-label">연속 기록</span>
+                                        <strong class="dashboard-stat-value" id="dashboard-streak-count">0일</strong>
+                                    </div>
+                                    <div class="dashboard-stat-card">
+                                        <span class="dashboard-stat-label">오늘 완료</span>
+                                        <strong class="dashboard-stat-value" id="dashboard-completed-count">0/3</strong>
+                                    </div>
+                                    <div class="dashboard-stat-card">
+                                        <span class="dashboard-stat-label">이번 주 인증</span>
+                                        <strong class="dashboard-stat-value" id="dashboard-week-rate">0일</strong>
+                                    </div>
+                                    <div class="dashboard-stat-card accent">
+                                        <span class="dashboard-stat-label">다음 보상</span>
+                                        <strong class="dashboard-stat-value" id="dashboard-next-reward">+10P</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
                 </section>
 
-                <div class="card metrics-card mission-card-enhanced">
-                    <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
-                            onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
-                    </h3>
-                    <div class="mission-focus-strip" id="mission-focus-strip">
-                        <div class="mission-focus-copy">
-                            <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 한눈에</div>
-                            <div class="mission-focus-title" id="mission-focus-title">미션을 먼저 정하고 이번 주 흐름을 시작해보세요.</div>
-                        </div>
-                        <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
+                <section class="today-status-card" aria-label="오늘의 인증 현황">
+                    <div class="today-status-header">
+                        <div class="today-status-title">오늘의 인증 현황</div>
+                        <span class="today-streak-badge" id="today-status-badge">0/3 완료</span>
                     </div>
-                    <div id="mission-selection-area"></div>
-                    <button class="submit-btn" id="btn-save-missions"
-                        style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
-                        onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
-                    <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
-                </div>
-
-                <div class="card metrics-card community-dashboard-card">
-                    <div class="community-focus-panel" id="community-focus-panel">
-                        <div class="community-focus-head">
-                            <div class="community-focus-copy">
-                                <div class="community-focus-title-row">
-                                    <h4 class="community-focus-title" id="community-focus-title">친구를 초대하고 같이 기록 흐름을 시작해보세요.</h4>
-                                    <span class="community-focus-badge" id="community-focus-badge">친구 0명</span>
-                                </div>
-                                <p class="community-focus-body" id="community-focus-body">친구와 같이 움직일 다음 행동만 여기서 바로 고르면 돼요.</p>
-                            </div>
-                        </div>
-                        <div class="community-focus-stats" id="community-focus-stats"></div>
-                        <div class="community-focus-actions" id="community-focus-actions"></div>
+                    <div class="today-status-items">
+                        <button type="button" class="today-status-item" id="today-status-diet" onclick="openTab('diet')">
+                            <span class="today-status-icon">🥗</span>
+                            <span class="today-status-label" id="today-status-diet-label">식단 전</span>
+                        </button>
+                        <button type="button" class="today-status-item" id="today-status-exercise" onclick="openTab('exercise')">
+                            <span class="today-status-icon">🏃</span>
+                            <span class="today-status-label" id="today-status-exercise-label">운동 전</span>
+                        </button>
+                        <button type="button" class="today-status-item" id="today-status-mind" onclick="openTab('sleep')">
+                            <span class="today-status-icon">🌙</span>
+                            <span class="today-status-label" id="today-status-mind-label">마음 전</span>
+                        </button>
                     </div>
-                </div>
+                    <div class="today-status-cheer" id="today-status-cheer">오늘 루틴 3칸을 하나씩 채워보세요.</div>
+                </section>
 
                 <div class="dashboard-extra-stack" id="dashboard-extra-stack">
                     <div class="card dashboard-week-card">
@@ -314,15 +306,43 @@
                         <div class="week-graph" id="week-graph"></div>
                     </div>
 
-                    <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
-                        <div class="mission-badges-title">🏅 미션 배지</div>
-                        <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                    <div class="card metrics-card mission-card-enhanced">
+                        <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
+                                onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
+                        </h3>
+                        <div class="mission-focus-strip" id="mission-focus-strip">
+                            <div class="mission-focus-copy">
+                                <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 한눈에</div>
+                                <div class="mission-focus-title" id="mission-focus-title">미션을 먼저 정하고 이번 주 흐름을 시작해보세요.</div>
+                            </div>
+                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
+                        </div>
+                        <div id="mission-selection-area"></div>
+                        <button class="submit-btn" id="btn-save-missions"
+                            style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
+                            onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
+                        <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
                     </div>
 
-                    <div class="milestone-section" id="milestone-section" style="display:none;">
-                        <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
-                        <div class="badges-grid" id="badges-grid"></div>
-                    </div>
+                    <details class="dashboard-more-tools" id="dashboard-more-tools" open ontoggle="handleDashboardMoreToolsToggle()">
+                        <summary id="dashboard-more-tools-summary">미션 배지 · 커뮤니티 · 마일스톤 접기</summary>
+                        <div class="dashboard-more-tools-body">
+                            <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
+                                <div class="mission-badges-title">🏅 미션 배지</div>
+                                <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                            </div>
+
+                            <div class="card metrics-card community-dashboard-card" id="group-challenge-section" style="display:none;">
+                                <h3 style="margin-bottom:10px;">🏆 이번 달 커뮤니티 현황</h3>
+                                <div id="group-challenge-content"></div>
+                            </div>
+
+                            <div class="milestone-section" id="milestone-section" style="display:none;">
+                                <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
+                                <div class="badges-grid" id="badges-grid"></div>
+                            </div>
+                        </div>
+                    </details>
 
                     <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지</button>
                 </div>

@@ -75,6 +75,8 @@ window.toggleCommunityRows = toggleCommunityRows;
 window.focusGalleryFeed = focusGalleryFeed;
 window.toggleGalleryHeroGuide = toggleGalleryHeroGuide;
 window.toggleRecordFlowCard = toggleRecordFlowCard;
+window.toggleDashboardHero = toggleDashboardHero;
+window.handleDashboardMoreToolsToggle = handleDashboardMoreToolsToggle;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
@@ -100,6 +102,8 @@ const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercis
 const SHARE_TEMPLATE_STORAGE_KEY = 'habitschool_share_template';
 const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
 const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
+const DASHBOARD_HERO_COLLAPSE_KEY = 'habitschool_dashboard_hero_collapsed';
+const DASHBOARD_MORE_TOOLS_COLLAPSE_KEY = 'habitschool_dashboard_more_tools_collapsed';
 const RECORD_GUIDE_STORAGE_KEYS = {
     diet: 'habitschool_record_guide_diet_collapsed',
     exercise: 'habitschool_record_guide_exercise_collapsed',
@@ -116,6 +120,8 @@ let _latestShareRenderKey = '';
 let _latestSharePreviewDataUrl = '';
 let _guideCollapseStateUid = '';
 let _guideIntroFirstDay = false;
+let _dashboardHeroCollapsed = null;
+let _dashboardMoreCollapsed = null;
 let _galleryHeroCollapsed = null;
 let _recordGuideCollapsed = {
     diet: null,
@@ -1057,6 +1063,8 @@ function ensureGuideCollapseState(userData = null) {
     const uid = auth.currentUser?.uid || 'guest';
     if (_guideCollapseStateUid !== uid) {
         _guideCollapseStateUid = uid;
+        _dashboardHeroCollapsed = null;
+        _dashboardMoreCollapsed = null;
         _galleryHeroCollapsed = null;
         _recordGuideCollapsed = { diet: null, exercise: null, sleep: null };
     }
@@ -1074,6 +1082,18 @@ function ensureGuideCollapseState(userData = null) {
         const stored = loadGuideCollapsedPreference(RECORD_GUIDE_STORAGE_KEYS[tabName]);
         _recordGuideCollapsed[tabName] = stored == null ? defaultCollapsed : stored;
     });
+}
+
+function ensureDashboardPanelState() {
+    if (_dashboardHeroCollapsed == null) {
+        const stored = loadGuideCollapsedPreference(DASHBOARD_HERO_COLLAPSE_KEY);
+        _dashboardHeroCollapsed = stored == null ? false : stored;
+    }
+
+    if (_dashboardMoreCollapsed == null) {
+        const stored = loadGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY);
+        _dashboardMoreCollapsed = stored == null ? false : stored;
+    }
 }
 
 function setGalleryHeroCollapsed(collapsed, persist = true) {
@@ -1118,6 +1138,93 @@ function syncGuidePanels(tabName = null) {
             setRecordFlowCardCollapsed(name, _recordGuideCollapsed[name], false);
         }
     });
+}
+
+function setDashboardHeroCollapsed(collapsed, persist = true) {
+    _dashboardHeroCollapsed = !!collapsed;
+    if (persist) saveGuideCollapsedPreference(DASHBOARD_HERO_COLLAPSE_KEY, _dashboardHeroCollapsed);
+
+    const panel = document.getElementById('dashboard-hero-panel');
+    const body = document.getElementById('dashboard-hero-body-shell');
+    const toggle = document.getElementById('dashboard-hero-toggle');
+
+    if (panel) panel.classList.toggle('is-collapsed', _dashboardHeroCollapsed);
+    if (body) body.hidden = _dashboardHeroCollapsed;
+    if (toggle) {
+        toggle.textContent = _dashboardHeroCollapsed ? '펼치기' : '접기';
+        toggle.setAttribute('aria-expanded', String(!_dashboardHeroCollapsed));
+    }
+}
+
+function setDashboardMoreCollapsed(collapsed, persist = true) {
+    _dashboardMoreCollapsed = !!collapsed;
+    if (persist) saveGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY, _dashboardMoreCollapsed);
+
+    const details = document.getElementById('dashboard-more-tools');
+    if (details) details.open = !_dashboardMoreCollapsed;
+    updateDashboardMoreToolsSummary();
+}
+
+function updateDashboardMoreToolsSummary() {
+    const summary = document.getElementById('dashboard-more-tools-summary');
+    if (!summary) return;
+    summary.textContent = _dashboardMoreCollapsed
+        ? '미션 배지 · 커뮤니티 · 마일스톤 펼치기'
+        : '미션 배지 · 커뮤니티 · 마일스톤 접기';
+}
+
+function handleDashboardMoreToolsToggle() {
+    const details = document.getElementById('dashboard-more-tools');
+    if (!details) return;
+    _dashboardMoreCollapsed = !details.open;
+    saveGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY, _dashboardMoreCollapsed);
+    updateDashboardMoreToolsSummary();
+}
+
+function syncDashboardPanels() {
+    ensureDashboardPanelState();
+    setDashboardHeroCollapsed(_dashboardHeroCollapsed, false);
+    setDashboardMoreCollapsed(_dashboardMoreCollapsed, false);
+}
+
+function toggleDashboardHero(forceExpanded = null) {
+    ensureDashboardPanelState();
+    const nextCollapsed = typeof forceExpanded === 'boolean'
+        ? !forceExpanded
+        : !_dashboardHeroCollapsed;
+    setDashboardHeroCollapsed(nextCollapsed, true);
+}
+
+function updateTodayStatusCard(todayAwarded = {}, streakCount = 0) {
+    const items = [
+        { key: 'diet', buttonId: 'today-status-diet', labelId: 'today-status-diet-label', defaultLabel: '식단 전', doneLabel: '식단 완료', tab: 'diet' },
+        { key: 'exercise', buttonId: 'today-status-exercise', labelId: 'today-status-exercise-label', defaultLabel: '운동 전', doneLabel: '운동 완료', tab: 'exercise' },
+        { key: 'mind', buttonId: 'today-status-mind', labelId: 'today-status-mind-label', defaultLabel: '마음 전', doneLabel: '마음 완료', tab: 'sleep' }
+    ];
+
+    let completedCount = 0;
+    items.forEach((item) => {
+        const isDone = !!todayAwarded[item.key];
+        const button = document.getElementById(item.buttonId);
+        const label = document.getElementById(item.labelId);
+        if (button) {
+            button.classList.toggle('done', isDone);
+            button.setAttribute('aria-label', isDone ? `${item.doneLabel}, 탭으로 이동` : `${item.defaultLabel}, 탭으로 이동`);
+            button.dataset.targetTab = item.tab;
+        }
+        if (label) label.textContent = isDone ? item.doneLabel : item.defaultLabel;
+        if (isDone) completedCount++;
+    });
+
+    const badge = document.getElementById('today-status-badge');
+    if (badge) badge.textContent = `${completedCount}/3 완료`;
+
+    const cheer = document.getElementById('today-status-cheer');
+    if (cheer) {
+        if (completedCount === 3) cheer.textContent = `오늘 루틴을 모두 채웠어요. 연속 기록 ${streakCount}일 흐름을 이어가고 있어요.`;
+        else if (completedCount === 0) cheer.textContent = '오늘 인증 3칸 중 하나부터 채워보세요.';
+        else cheer.textContent = `좋아요. 오늘 ${completedCount}/3 완료예요. 남은 칸도 이어서 채워보세요.`;
+    }
 }
 
 function toggleGalleryHeroGuide(forceExpanded = null) {
@@ -4163,6 +4270,7 @@ function openTab(tabName, pushState = true) {
 
     updateRecordFlowGuides(tabName);
     syncGuidePanels(tabName);
+    if (tabName === 'dashboard') syncDashboardPanels();
     setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
 };
 
@@ -5249,6 +5357,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             if (awarded.diet || awarded.exercise || awarded.mind) streakCount++;
             else break;
         }
+        updateTodayStatusCard(todayAwarded, streakCount);
 
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
@@ -5439,6 +5548,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             totalMissions,
             completedMissions
         });
+        syncDashboardPanels();
 
         renderMissionBadges(missionBadges);
         if (!isWeekActive) {
