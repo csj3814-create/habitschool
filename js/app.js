@@ -7188,10 +7188,13 @@ function buildGalleryCard(item, myId) {
     const streakHtml = (!shareSettings.hideDate && streakEmoji) ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
     const relationshipHtml = isFriend ? '<span class="gallery-relationship-chip">친구</span>' : '';
     const dateHtml = shareSettings.hideDate ? '' : `<span class="gallery-date">${getGalleryDateLabel(data.date)}</span>`;
+    const statusRowHtml = (relationshipHtml || streakHtml || dateHtml)
+        ? `<div class="gallery-status-row">${relationshipHtml}${streakHtml}${dateHtml}</div>`
+        : '';
 
     const friendBtnHtml = (isGuest || shareSettings.hideIdentity)
         ? ''
-        : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '친구' : '+ 친구'}</button>` : '');
+        : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '친구' : '+친구'}</button>` : '');
 
     let postMenuHtml = '';
     if (!isGuest) {
@@ -7243,6 +7246,10 @@ function buildGalleryCard(item, myId) {
         ? ''
         : `onclick="setGalleryUserFilter('${safeUserId}','${safeFilterName}')" style="cursor:pointer;" title="게시물만 보기"`;
 
+    const headerActionsHtml = (friendBtnHtml || postMenuHtml)
+        ? `<div class="gallery-header-actions">${friendBtnHtml}${postMenuHtml}</div>`
+        : '';
+
     const card = document.createElement('div');
     card.className = 'gallery-card';
     card.innerHTML = `
@@ -7251,13 +7258,10 @@ function buildGalleryCard(item, myId) {
             <div class="gallery-header-info" ${headerActionAttr}>
                 <div class="gallery-name-row">
                     <span class="gallery-name">${safeName}</span>
-                    ${relationshipHtml}
-                    ${streakHtml}
                 </div>
-                ${dateHtml}
+                ${statusRowHtml}
             </div>
-            ${friendBtnHtml}
-            ${postMenuHtml}
+            ${headerActionsHtml}
         </div>
         ${metaHtml}
         ${contentHtml}

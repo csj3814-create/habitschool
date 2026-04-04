@@ -3815,15 +3815,13 @@ textarea {
     flex-direction: column; 
     flex: 1; 
     min-width: 0; 
-    gap: 2px;
+    gap: 3px;
 }
 
 .gallery-name-row {
     display: flex;
     align-items: center;
-    gap: 5px;
     min-width: 0;
-    flex-wrap: wrap;
 }
 
 .gallery-name { 
@@ -3836,28 +3834,44 @@ textarea {
     letter-spacing: -0.2px;
 }
 
+.gallery-status-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
 .gallery-relationship-chip {
     display: inline-flex;
     align-items: center;
-    min-height: 20px;
-    padding: 0 7px;
+    min-height: 18px;
+    padding: 0 6px;
     border-radius: 999px;
     background: #f7f3ec;
     color: #7a624a;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
 }
 
 .gallery-date { 
     display: inline-flex;
     align-items: center;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 999px;
     background: #f7f0e6;
     color: #8b7355;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     line-height: 1;
+}
+
+.gallery-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .gallery-post-meta {
@@ -4160,14 +4174,16 @@ textarea {
 .friend-btn { 
     background: none; 
     border: 1px solid var(--primary-color); 
-    font-size: 11px; 
+    font-size: 10px; 
     cursor: pointer; 
     color: var(--primary-color); 
     font-weight: 700; 
-    padding: 3px 9px; 
+    padding: 3px 8px; 
     border-radius: 999px; 
-    margin-left: auto;
     transition: all 0.15s;
+    line-height: 1.1;
+    min-height: 24px;
+    white-space: nowrap;
 }
 
 .friend-btn.is-friend {
@@ -4184,13 +4200,13 @@ textarea {
 .post-menu-btn {
     background: none;
     border: none;
-    font-size: 16px;
+    font-size: 14px;
     color: var(--gray-500);
     cursor: pointer;
-    padding: 4px 6px;
+    padding: 4px 5px;
     border-radius: 50%;
     line-height: 1;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
 }
 
 .post-menu-btn:hover {
@@ -7566,6 +7582,9 @@ body.dark-mode .empty-action-btn {
    ─────────────────────────────── */
 body.dark-mode .gallery-header { color: #D8D4DC; }
 body.dark-mode .gallery-actions button { color: #A09AAA; }
+body.dark-mode .gallery-date { background: rgba(255,255,255,0.08); color: #d4c0a5; }
+body.dark-mode .gallery-relationship-chip { background: rgba(255,255,255,0.08); color: #d7c6b5; }
+body.dark-mode .post-menu-btn:hover { background: rgba(255,255,255,0.08); }
 
 /* ───────────────────────────────
    마음 챙김·감사일기 다크모드
@@ -8672,13 +8691,12 @@ body.dark-mode .step-detail-item { color: #bbb; }
     display: inline-flex;
     align-items: center;
     gap: 2px;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #E65100;
     background: rgba(255, 152, 0, 0.12);
     border-radius: 8px;
-    padding: 1px 6px;
-    margin-left: 6px;
+    padding: 1px 5px;
     vertical-align: middle;
     white-space: nowrap;
 }
