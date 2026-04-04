@@ -2853,7 +2853,7 @@ function renderCommunityFocusPanel() {
 
     if (friendCount === 0) {
         titleEl.textContent = '친구 1명만 있어도 같이 기록하고 챌린지를 시작할 수 있어요.';
-        bodyEl.textContent = '먼저 초대 코드나 QR을 보내고, 단톡에서 흐름을 같이 이어가보세요.';
+        bodyEl.textContent = '먼저 초대 코드를 보내고, 대화에 합류해 흐름을 같이 이어가보세요.';
         badgeEl.textContent = '친구 0명';
         return;
     }
@@ -2867,13 +2867,13 @@ function renderCommunityFocusPanel() {
 
     if (activeFriends === 0) {
         titleEl.textContent = '챌린지는 열려 있어요. 이제 오늘 첫 기록 한 번으로 흐름을 깨워보세요.';
-        bodyEl.textContent = '아직 움직인 친구가 없다면 갤러리 응원이나 단톡 참여로 먼저 불을 붙이는 편이 좋습니다.';
+        bodyEl.textContent = '아직 움직인 친구가 없다면 응원하기나 대화 참여부터 가볍게 시작해보세요.';
         badgeEl.textContent = `진행 ${activeChallenges}개`;
         return;
     }
 
     titleEl.textContent = '함께 기록이 이어지고 있어요. 오늘은 응원과 챌린지 흐름만 챙기면 됩니다.';
-    bodyEl.textContent = `${activeFriends}명의 친구가 오늘 움직였고 ${completeFriends}명은 세 영역을 모두 채웠어요. 지금은 갤러리 응원이나 단톡 참여가 가장 빠릅니다.`;
+    bodyEl.textContent = `${activeFriends}명의 친구가 오늘 움직였고 ${completeFriends}명은 세 영역을 모두 채웠어요. 지금은 응원하기나 대화 참여가 가장 빠릅니다.`;
     badgeEl.textContent = `활동 ${activeFriends}명`;
 }
 
@@ -7954,11 +7954,11 @@ renderFriendActivityCard = async function(user, todayStr) {
 
         if (friends.length === 0) {
             list.innerHTML = buildCommunityEmptyState(
-                '친구를 먼저 추가해보세요',
-                '친구가 생기면 여기서 오늘 기록 흐름과 스트릭을 바로 볼 수 있어요.',
+                '친구를 먼저 초대해보세요',
+                '친구가 생기면 여기서 오늘 흐름을 바로 볼 수 있어요.',
                 [
                     '<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>',
-                    '<button type="button" class="community-empty-btn" onclick="openCommunityChat()">💬 단톡 참여</button>'
+                    '<button type="button" class="community-empty-btn" onclick="openCommunityChat()">💬 대화 참여</button>'
                 ]
             );
             card.style.display = 'block';
@@ -8026,9 +8026,9 @@ renderFriendActivityCard = async function(user, todayStr) {
     } catch (e) {
         console.warn('친구 활동 카드 오류:', e.message);
         list.innerHTML = buildCommunityEmptyState(
-            '친구 흐름을 아직 불러오지 못했어요',
-            '잠시 후 다시 보거나, 먼저 갤러리에서 응원을 시작해보세요.',
-            ['<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>']
+            '친구 흐름을 아직 못 불러왔어요',
+            '잠시 후 다시 보거나, 먼저 응원하기부터 시작해보세요.',
+            ['<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 응원하기</button>']
         );
         card.style.display = 'block';
     }
@@ -8050,7 +8050,7 @@ renderSocialChallenges = async function(user) {
             renderCommunityFocusPanel();
             list.innerHTML = buildCommunityEmptyState(
                 '친구가 있어야 챌린지를 시작할 수 있어요',
-                '먼저 친구를 초대한 뒤 3일, 7일, 14일 챌린지를 바로 열 수 있어요.',
+                '먼저 친구를 초대하면 바로 같이 도전할 수 있어요.',
                 ['<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>']
             );
             card.style.display = 'block';
@@ -8121,7 +8121,7 @@ renderSocialChallenges = async function(user) {
         if (challenges.length === 0) {
             list.innerHTML = buildCommunityEmptyState(
                 '아직 열려 있는 챌린지가 없어요',
-                '친구가 준비돼 있으니 지금 바로 첫 챌린지를 만들면 돼요.',
+                '친구가 준비돼 있으니 지금 바로 첫 챌린지를 열어보세요.',
                 ['<button type="button" class="community-empty-btn" onclick="openCreateChallengeModal()">🏆 챌린지 시작</button>']
             );
             card.style.display = 'block';
@@ -8140,11 +8140,11 @@ renderSocialChallenges = async function(user) {
     } catch (e) {
         console.warn('[renderSocialChallenges] 오류:', e.message);
         list.innerHTML = buildCommunityEmptyState(
-            '챌린지 상태를 아직 불러오지 못했어요',
-            '잠시 후 다시 보거나, 먼저 친구 초대와 갤러리 응원부터 시작해보세요.',
+            '챌린지 상태를 아직 못 불러왔어요',
+            '잠시 후 다시 보거나, 먼저 친구 초대와 응원하기부터 시작해보세요.',
             [
                 '<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>',
-                '<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>'
+                '<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 응원하기</button>'
             ]
         );
         card.style.display = 'block';

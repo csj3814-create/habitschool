@@ -162,7 +162,7 @@
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 대시보드</button>
         <button class="tab-btn" data-tab="members" onclick="switchTab('members')">👥 회원 관리</button>
-        <button class="tab-btn" data-tab="economy" onclick="switchTab('economy')">🏆 포인트 &amp; HBT</button>
+        <button class="tab-btn" data-tab="economy" onclick="switchTab('economy')">🏆 자산 &amp; HBT</button>
         <button class="tab-btn" data-tab="moderation" onclick="switchTab('moderation')">🚨 신고 관리</button>
         <button class="tab-btn" data-tab="system" onclick="switchTab('system')">⚙️ 초대 &amp; 시스템</button>
     </div>
@@ -175,7 +175,7 @@
             <div class="card"><div class="lbl">7일 활성</div><div class="val" id="s-week">-</div></div>
             <div class="card danger"><div class="lbl">미처리 신고</div><div class="val" id="s-reports">-</div></div>
             <div class="card danger"><div class="lbl">🚨 건강 경보</div><div class="val" id="s-health">-</div></div>
-            <div class="card green"><div class="lbl">총 HBT 발행</div><div class="val" id="s-hbt">-</div></div>
+            <div class="card green"><div class="lbl">누적 HBT 발행</div><div class="val" id="s-hbt">-</div></div>
             <div class="card"><div class="lbl">오늘 지급 포인트</div><div class="val" id="s-points">-</div></div>
             <div class="card"><div class="lbl">마이닝 레이트</div><div class="val" id="s-rate">-</div></div>
         </div>
@@ -187,7 +187,7 @@
             <div class="box">
                 <h3>🥇 포인트 TOP 5</h3>
                 <table>
-                    <thead><tr><th>순위</th><th>이름</th><th>포인트</th><th>HBT</th><th>스트릭</th></tr></thead>
+                    <thead><tr><th>순위</th><th>이름</th><th>현재 포인트</th><th>현재 HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top5-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
             </div>
@@ -227,8 +227,8 @@
                     <th>이메일</th>
                     <th>레벨</th>
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
-                    <th class="sort" onclick="sortBy('coins')">포인트 ↕</th>
-                    <th class="sort" onclick="sortBy('hbt')">HBT ↕</th>
+                    <th class="sort" onclick="sortBy('coins')">현재 포인트 ↕</th>
+                    <th class="sort" onclick="sortBy('hbt')">현재 HBT ↕</th>
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
@@ -239,13 +239,13 @@
         </div>
     </div>
 
-    <!-- Tab 3: 포인트 & HBT -->
+    <!-- Tab 3: 자산 & HBT -->
     <div id="tab-economy" class="tab-panel">
         <div class="two-col">
             <div class="box">
-                <h3>🥇 포인트 TOP 20</h3>
+                <h3>🥇 현재 포인트 TOP 20</h3>
                 <table>
-                    <thead><tr><th>#</th><th>이름</th><th>포인트</th><th>HBT</th><th>스트릭</th></tr></thead>
+                    <thead><tr><th>#</th><th>이름</th><th>현재 포인트</th><th>현재 HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top10-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
                 <div class="page-bar" id="top20-page-bar" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
@@ -255,7 +255,7 @@
                 </div>
             </div>
             <div class="box">
-                <h3>💸 최근 HBT 트랜잭션</h3>
+                <h3>💸 최근 HBT 거래</h3>
                 <table>
                     <thead><tr><th>날짜</th><th>유형</th><th>금액</th><th>TxHash</th></tr></thead>
                     <tbody id="tx-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>

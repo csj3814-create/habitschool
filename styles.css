@@ -2558,6 +2558,17 @@ textarea {
     margin-bottom: 10px;
 }
 
+.community-privacy-inline {
+    margin-top: 10px;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.community-privacy-inline .community-inline-btn {
+    min-height: 30px;
+    padding: 0 10px;
+}
+
 .community-detail-shell {
     margin-top: 10px;
     border-top: 1px dashed #E3E8EF;
@@ -2945,6 +2956,14 @@ textarea {
     .community-inline-actions {
         gap: 6px;
         margin-bottom: 10px;
+    }
+
+    .community-privacy-inline {
+        align-items: stretch;
+    }
+
+    .community-privacy-inline .community-inline-btn {
+        width: 100%;
     }
 
     .community-inline-btn,
