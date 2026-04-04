@@ -327,8 +327,12 @@
                         <div class="mission-badges-title">🏅 미션 배지</div>
                         <div class="mission-badges-grid" id="mission-badges-grid"></div>
                     </div>
-                    <div class="mission-section-divider">
-                        <span>같이 하면 더 오래 갑니다</span>
+                </div>
+
+                <div class="card metrics-card community-dashboard-card">
+                    <div class="community-dashboard-head">
+                        <h3>🤝 함께하기</h3>
+                        <p>친구, 챌린지, 응원 흐름만 간단히 봅니다.</p>
                     </div>
                     <div class="community-focus-panel" id="community-focus-panel">
                         <div class="community-focus-head">
@@ -341,41 +345,7 @@
                                 <p class="community-focus-body" id="community-focus-body">친구와 같이 움직일 다음 행동만 여기서 바로 고르면 돼요.</p>
                             </div>
                         </div>
-                        <div class="community-action-grid">
-                            <button type="button" class="community-action-card" onclick="openQRModal()">
-                                <span class="community-action-emoji">👥</span>
-                                <span class="community-action-copy">
-                                    <strong>친구 초대</strong>
-                                    <span>코드와 QR 보내기</span>
-                                </span>
-                            </button>
-                            <button type="button" class="community-action-card" onclick="openCreateChallengeModal()">
-                                <span class="community-action-emoji">🏆</span>
-                                <span class="community-action-copy">
-                                    <strong>챌린지 시작</strong>
-                                    <span>친구와 같이 도전</span>
-                                </span>
-                            </button>
-                            <button type="button" class="community-action-card" onclick="focusGalleryFeed()">
-                                <span class="community-action-emoji">✨</span>
-                                <span class="community-action-copy">
-                                    <strong>응원하기</strong>
-                                    <span>최근 기록 둘러보기</span>
-                                </span>
-                            </button>
-                            <button type="button" class="community-action-card" onclick="openCommunityChat()">
-                                <span class="community-action-emoji">💬</span>
-                                <span class="community-action-copy">
-                                    <strong>대화 참여</strong>
-                                    <span>지금 바로 입장</span>
-                                </span>
-                            </button>
-                        </div>
-                        <div class="gallery-privacy-note community-privacy-inline" role="note" aria-label="공개 범위 안내">
-                            <span class="gallery-privacy-badge">기본 공유</span>
-                            <span class="gallery-privacy-text">기본 공유, 숨길 정보만 고를 수 있어요</span>
-                            <button type="button" class="community-inline-btn" onclick="openTab('gallery')">공유 설정 보기</button>
-                        </div>
+                        <div class="community-focus-actions" id="community-focus-actions"></div>
                     </div>
 
                     <div id="friend-activity-card" class="community-module-card" style="display:none;">
@@ -384,7 +354,6 @@
                                 <div class="community-module-kicker">친구 체크</div>
                                 <div class="community-module-title">오늘 친구 흐름</div>
                             </div>
-                            <button type="button" class="community-module-link" onclick="openQRModal()">친구 초대</button>
                         </div>
                         <div id="friend-activity-list"></div>
                     </div>
@@ -395,7 +364,6 @@
                                 <div class="community-module-kicker">같이 도전</div>
                                 <div class="community-module-title">친구 챌린지</div>
                             </div>
-                            <button type="button" class="community-module-link" onclick="openCreateChallengeModal()">새 챌린지</button>
                         </div>
                         <div id="social-challenge-list"><div class="community-empty-state">진행 중인 챌린지가 없어요</div></div>
                     </div>
@@ -405,7 +373,6 @@
                                 <div class="community-module-kicker">함께 만든 흐름</div>
                                 <div class="community-module-title">이번 달 커뮤니티</div>
                             </div>
-                            <button type="button" class="community-module-link" onclick="openCommunityChat()">단톡 참여</button>
                         </div>
                         <div id="group-challenge-content"></div>
                     </div>
@@ -510,9 +477,45 @@
                     </div>
                 </div>
 
-                <!-- 5. 친구 초대 공유 -->
+                <!-- 5. 해빛코치 연결 -->
+                <div class="card chatbot-link-card">
+                    <div class="chatbot-link-head">
+                        <div>
+                            <h3>🤖 해빛코치 연결</h3>
+                            <p>프로필에서 코드를 만들고, 카카오톡에서 <strong>!등록 코드</strong>를 입력하면 연결됩니다.</p>
+                        </div>
+                        <span class="chatbot-link-badge">10분 유효</span>
+                    </div>
+                    <div id="chatbot-link-status" class="chatbot-link-status">아직 만든 연결 코드가 없어요.</div>
+                    <div id="chatbot-link-code-box" class="chatbot-link-code-box" style="display:none;">
+                        <div class="chatbot-link-code-row">
+                            <span class="chatbot-link-code-label">연결 코드</span>
+                            <strong id="chatbot-link-code" class="chatbot-link-code-value">-</strong>
+                        </div>
+                        <div class="chatbot-link-meta" id="chatbot-link-expiry">만료 시간: -</div>
+                    </div>
+                    <div class="chatbot-link-actions">
+                        <button class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">새 연결 코드 만들기</button>
+                        <button class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">코드 복사</button>
+                    </div>
+                    <div class="chatbot-link-foot" id="chatbot-link-last-used">연결 후에는 새 코드를 다시 만들어야 해요.</div>
+                </div>
+
+                <!-- 6. 친구 요청 -->
+                <div class="card friend-request-card" id="profile-friend-requests-card" style="display:none;">
+                    <div class="friend-request-head">
+                        <div>
+                            <h3>👥 친구 요청</h3>
+                            <p>챗봇이나 앱에서 온 친구 요청을 여기서 수락하거나 거절할 수 있어요.</p>
+                        </div>
+                    </div>
+                    <div id="profile-friend-requests-list" class="friend-request-list"></div>
+                </div>
+
+                <!-- 7. 친구 초대 공유 -->
                 <div class="card card-invite" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
                     <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
+                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 코드를 보내고, 카카오톡 해빛코치에서 <strong>!친구 코드</strong>를 입력하게 해보세요. 앱에서 수락하면 연결이 완료됩니다.</p>
                     <!-- 보상 안내 -->
                     <div class="referral-rewards" style="margin-bottom:14px;">
                         <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">친구 가입 즉시 <strong>+200P</strong></span></div>
@@ -536,7 +539,7 @@
                     </div>
                 </div>
 
-                <!-- 6. 업데이트 노트 -->
+                <!-- 8. 업데이트 노트 -->
                 <a href="/changelog.html" target="_blank" rel="noopener"
                     style="display:flex; align-items:center; justify-content:space-between; background:white; border-radius:16px; padding:18px 20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0; text-decoration:none; color:inherit;">
                     <div>
@@ -546,7 +549,7 @@
                     <span style="font-size:18px; color:#FF8C00;">›</span>
                 </a>
 
-                <!-- 7. 계정 설정 (이름 변경 + 로그아웃) -->
+                <!-- 9. 계정 설정 (이름 변경 + 로그아웃) -->
                 <div style="background:white; border-radius:16px; padding:20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0;">
                     <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">⚙️ 계정 설정</div>
                     <div style="margin-bottom:16px;">
@@ -783,6 +786,7 @@
                         <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
                         <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
                     </div>
+                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 코드를 보내고, 카카오톡 해빛코치에서 <strong>!친구 코드</strong>를 입력하게 해보세요. 앱에서 수락하면 연결이 완료됩니다.</p>
                     <div class="referral-link-box" style="flex-direction:column; gap:6px;">
                         <div style="font-size:12px; color:#888; margin-bottom:2px;">내 초대 코드: <strong id="referral-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
                         <div style="display:flex; gap:6px; align-items:center;">
@@ -1545,7 +1549,7 @@
 
             <!-- 친구 선택 -->
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">친구 선택 <span id="friend-select-hint" style="font-weight:400;color:#aaa;">(최대 3명)</span></div>
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">친구 선택 <span id="friend-select-hint" style="font-weight:400;color:#aaa;">(최대 2명)</span></div>
                 <div id="challenge-friend-list" style="display:flex;flex-direction:column;gap:6px;">
                     <div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">친구 목록 로딩 중...</div>
                 </div>
@@ -1595,6 +1599,19 @@
             <div style="display:flex;gap:10px;">
                 <button onclick="respondChallenge(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
                 <button onclick="respondChallenge(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#7C4DFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 친구 요청 응답 모달 ===== -->
+    <div id="friend-request-modal" onclick="if(event.target===this)closeFriendRequestModal()"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:320px;position:relative;">
+            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">👥 친구 요청</h3>
+            <div id="friend-request-info" style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;"></div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="respondPendingFriendRequest(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
+                <button onclick="respondPendingFriendRequest(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#FF8C00;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
             </div>
         </div>
     </div>
