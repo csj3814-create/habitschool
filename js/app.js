@@ -71,6 +71,7 @@ window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
 window.triggerGalleryShareAction = triggerGalleryShareAction;
 window.handleMissionPrimaryAction = handleMissionPrimaryAction;
+window.toggleCommunityRows = toggleCommunityRows;
 window.focusGalleryFeed = focusGalleryFeed;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
@@ -3384,6 +3385,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             progContainer.innerHTML = '';
 
             totalMissions = weeklyMissionData.missions.length;
+            let progressRowsHtml = '';
 
             weeklyMissionData.missions.forEach(m => {
                 let currentVal = 0;
@@ -3398,7 +3400,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 const statusIcon = percent >= 100 ? '✅' : percent >= 50 ? '🔄' : '⏳';
                 const customTag = m.isCustom ? '<span class="custom-tag">커스텀</span>' : '';
 
-                progContainer.innerHTML += `
+                progressRowsHtml += `
                     <div class="mp-row">
                         <div class="mp-label">
                             <span>${statusIcon} ${m.text} ${customTag}</span>
@@ -3422,46 +3424,44 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             // 남은 일수 계산
             const todayIdx = weekStrs.indexOf(todayStr);
             const remainingDays = todayIdx >= 0 ? 6 - todayIdx : 0;
-
-            progContainer.innerHTML += `
-                <div class="mission-overall-status">
-                    <div class="overall-rate">${rateMsg}</div>
-                    <div class="overall-stats">
-                        <span>달성률 <strong>${overallRate}%</strong></span>
-                        <span>남은 일수 <strong>${remainingDays}일</strong></span>
-                    </div>
-                </div>`;
-
-            // 미달성 경고 (남은 일수 적고 달성률 낮을 때)
-            if (remainingDays <= 2 && overallRate < 80) {
-                progContainer.innerHTML += `<div class="mission-warning">⚠️ 이번 주 ${remainingDays}일 남았어요! 미션을 서둘러 달성해보세요!</div>`;
-            }
-
-            // 레벨업 버튼
             const allDone = completedMissions === totalMissions && totalMissions > 0;
-            if (allDone && level < 5) {
-                progContainer.innerHTML += `<button class="submit-btn" style="margin-top:15px; background-color:#9C27B0; white-space:nowrap; font-size:13px; padding:12px 16px;" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`;
-            }
+            const isAtRisk = remainingDays <= 2 && overallRate < 80;
+            const levelUpHtml = allDone && level < 5
+                ? `<button class="submit-btn mission-progress-primary-btn" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`
+                : '';
 
-            // 미션 재설정 버튼 (진행 중에도 변경 가능)
-            progContainer.innerHTML += `<button class="submit-btn reset-mission-btn" onclick="resetWeeklyMissions()">🔄 이번 주 미션 재설정</button>`;
+            progContainer.innerHTML = `
+                <div class="mission-progress-shell">
+                    <div class="mission-progress-topline">
+                        <div class="overall-rate">${rateMsg}</div>
+                        <div class="mission-progress-pills">
+                            <span class="mission-progress-pill">주간 ${completedMissions}/${totalMissions} 완료</span>
+                            <span class="mission-progress-pill">달성 ${overallRate}%</span>
+                            <span class="mission-progress-pill">남은 ${remainingDays}일</span>
+                            ${isAtRisk ? '<span class="mission-progress-pill is-warning">마감 임박</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="mission-progress-actions">
+                        ${levelUpHtml}
+                        <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">이번 주 미션 다시 정하기</button>
+                    </div>
+                    <details class="mission-progress-detail-shell">
+                        <summary class="mission-progress-summary-toggle">이번 주 미션 상세</summary>
+                        <div class="mission-progress-detail-list">
+                            ${progressRowsHtml}
+                            ${isAtRisk ? `<div class="mission-warning">⚠️ 이번 주 ${remainingDays}일 남았어요. 남은 미션만 먼저 끝내면 따라잡을 수 있어요.</div>` : ''}
+                        </div>
+                    </details>
+                </div>`;
 
             // 저장 버튼 상태 업데이트
             const saveBtn = document.getElementById('btn-save-missions');
-            if (allDone) {
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.opacity = '0.5';
-                    saveBtn.style.cursor = 'not-allowed';
-                    saveBtn.innerText = '✅ 이번 주 미션 완료!';
-                }
-            } else {
-                if (saveBtn) {
-                    saveBtn.disabled = true;
-                    saveBtn.style.opacity = '0.5';
-                    saveBtn.style.cursor = 'not-allowed';
-                    saveBtn.innerText = '미션 진행 중...';
-                }
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.style.display = 'none';
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+                saveBtn.innerText = allDone ? '✅ 이번 주 미션 완료!' : '미션 진행 중...';
             }
         }
 
@@ -3469,6 +3469,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const saveBtn = document.getElementById('btn-save-missions');
             if (saveBtn) {
                 saveBtn.disabled = false;
+                saveBtn.style.display = 'block';
                 saveBtn.style.opacity = '1';
                 saveBtn.style.cursor = 'pointer';
                 saveBtn.innerText = '🎯 이번 주 미션 시작!';
@@ -7854,6 +7855,38 @@ function buildCommunityEmptyState(title, body, actions = []) {
     `;
 }
 
+function buildCommunityExpandableRows(sectionKey, rows, limit = 3) {
+    const visibleLimit = Math.max(1, limit);
+    const hiddenCount = Math.max(0, rows.length - visibleLimit);
+
+    return `
+        <div class="community-collapsible-list" id="${sectionKey}-list">
+            ${rows.map((row, index) => `
+                <div class="community-collapsible-row${index >= visibleLimit ? ' is-hidden' : ''}"${index >= visibleLimit ? ' hidden' : ''}>
+                    ${row}
+                </div>
+            `).join('')}
+        </div>
+        ${hiddenCount > 0 ? `<button type="button" class="community-more-btn" id="${sectionKey}-toggle" data-expanded="false" data-hidden-count="${hiddenCount}" onclick="toggleCommunityRows('${sectionKey}')">+${hiddenCount}개 더 보기</button>` : ''}
+    `;
+}
+
+function toggleCommunityRows(sectionKey) {
+    const rows = document.querySelectorAll(`#${sectionKey}-list .community-collapsible-row.is-hidden`);
+    const toggleBtn = document.getElementById(`${sectionKey}-toggle`);
+    if (!rows.length || !toggleBtn) return;
+
+    const expanded = toggleBtn.dataset.expanded === 'true';
+    rows.forEach(row => {
+        row.hidden = expanded;
+    });
+
+    toggleBtn.dataset.expanded = expanded ? 'false' : 'true';
+    toggleBtn.textContent = expanded
+        ? `+${toggleBtn.dataset.hiddenCount || rows.length}개 더 보기`
+        : '접기';
+}
+
 renderGroupChallengeFromData = function(s) {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
@@ -7866,11 +7899,10 @@ renderGroupChallengeFromData = function(s) {
 
     section.style.display = 'block';
     content.innerHTML = `
-        <div class="community-month-summary">이번 달에는 <strong>${s.totalUsers}명</strong>이 함께 기록하고 있어요. 흐름을 보고, 바로 응원이나 단톡 참여로 이어가면 됩니다.</div>
+        <div class="community-month-summary">이번 달 <strong>${s.totalUsers}명</strong>이 같이 기록 중이에요. 아래에서 바로 응원하거나 대화에 합류하면 됩니다.</div>
         <div class="community-inline-actions">
-            <button type="button" class="community-inline-btn" onclick="focusGalleryFeed()">✨ 갤러리 응원</button>
-            <button type="button" class="community-inline-btn" onclick="openCommunityChat()">💬 단톡 참여</button>
-            <a href="community-history.html" class="community-inline-btn">📚 지난 흐름</a>
+            <button type="button" class="community-inline-btn" onclick="focusGalleryFeed()">✨ 응원하기</button>
+            <button type="button" class="community-inline-btn" onclick="openCommunityChat()">💬 대화 참여</button>
         </div>
         <div class="group-stats-grid">
             <div class="group-stat-item"><span class="group-stat-num">${s.totalUsers}명</span><span class="group-stat-label">함께 기록한 친구</span></div>
@@ -7879,26 +7911,34 @@ renderGroupChallengeFromData = function(s) {
             <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">보낸 응원</span></div>
         </div>
         ${s.bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${s.bestStreakName}</strong> ${s.bestStreak}일</div>` : ''}
-        <div class="category-kings">
-            ${s.dietKing?.count > 0 ? `<span class="cat-king">🍽 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
-            ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
-            ${s.mindKing?.count > 0 ? `<span class="cat-king">🌙 <strong>${s.mindKing.name}</strong> ${s.mindKing.count}일</span>` : ''}
-        </div>
-        ${ranked.length ? `
-            <div class="mvp-ranking-title">🏆 이번 달 꾸준한 친구들</div>
-            <div class="mvp-ranking-list">
-                ${ranked.map((u, i) => `
-                    <div class="mvp-ranking-item rank-${i + 1}">
-                        <span class="mvp-medal">${medals[i]}</span>
-                        <span class="mvp-name">${u.name}</span>
-                        <span class="mvp-days">${u.days}일 · 💬${u.comments} · ✨${u.reactions}</span>
-                        <span class="mvp-reward">${rewardAmounts[i]}</span>
+        <details class="community-detail-shell">
+            <summary class="community-detail-toggle">이번 달 상세 보기</summary>
+            <div class="community-detail-body">
+                <div class="category-kings">
+                    ${s.dietKing?.count > 0 ? `<span class="cat-king">🍽 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
+                    ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
+                    ${s.mindKing?.count > 0 ? `<span class="cat-king">🌙 <strong>${s.mindKing.name}</strong> ${s.mindKing.count}일</span>` : ''}
+                </div>
+                ${ranked.length ? `
+                    <div class="mvp-ranking-title">🏆 이번 달 꾸준한 친구들</div>
+                    <div class="mvp-ranking-list">
+                        ${ranked.map((u, i) => `
+                            <div class="mvp-ranking-item rank-${i + 1}">
+                                <span class="mvp-medal">${medals[i]}</span>
+                                <span class="mvp-name">${u.name}</span>
+                                <span class="mvp-days">${u.days}일 · 💬${u.comments} · ✨${u.reactions}</span>
+                                <span class="mvp-reward">${rewardAmounts[i]}</span>
+                            </div>
+                        `).join('')}
                     </div>
-                `).join('')}
+                    <div class="mvp-reward-info">기록과 응원 흐름으로 매월 자동 집계돼요.</div>
+                ` : ''}
+                ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+                <div class="community-inline-actions" style="margin-top:10px; margin-bottom:0;">
+                    <a href="community-history.html" class="community-inline-btn">📚 지난 흐름</a>
+                </div>
             </div>
-            <div class="mvp-reward-info">기록과 응원 흐름으로 매월 자동 집계돼요.</div>
-        ` : ''}
-        ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
+        </details>
     `;
 };
 
@@ -7951,27 +7991,35 @@ renderFriendActivityCard = async function(user, todayStr) {
         _communityFocusState.completeFriends = completeFriends;
         renderCommunityFocusPanel();
 
+        results.sort((a, b) => {
+            const aDone = Number(a.diet) + Number(a.exercise) + Number(a.mind);
+            const bDone = Number(b.diet) + Number(b.exercise) + Number(b.mind);
+            if (bDone !== aDone) return bDone - aDone;
+            if ((b.streak || 0) !== (a.streak || 0)) return (b.streak || 0) - (a.streak || 0);
+            return (a.name || '').localeCompare(b.name || '', 'ko');
+        });
+
+        const friendRowsHtml = results.map(r => `
+            <div class="friend-activity-row">
+                <span class="friend-activity-name">
+                    <span>${escapeHtml(r.name)}</span>
+                    ${r.streak >= 2 ? `<span class="friend-activity-streak">🔥 ${r.streak}일</span>` : ''}
+                </span>
+                <span class="friend-activity-checks">
+                    <span class="friend-activity-check ${r.diet ? 'is-on' : ''}">🍽</span>
+                    <span class="friend-activity-check ${r.exercise ? 'is-on' : ''}">🏃</span>
+                    <span class="friend-activity-check ${r.mind ? 'is-on' : ''}">🌙</span>
+                </span>
+            </div>
+        `);
+
         list.innerHTML = `
             <div class="friend-activity-summary">
                 <span class="friend-activity-pill">👥 친구 ${friends.length}명</span>
                 <span class="friend-activity-pill">🔥 활동 중 ${activeFriends}명</span>
                 <span class="friend-activity-pill">✅ 전체 완료 ${completeFriends}명</span>
             </div>
-            <div class="friend-activity-rows">
-                ${results.map(r => `
-                    <div class="friend-activity-row">
-                        <span class="friend-activity-name">
-                            <span>${escapeHtml(r.name)}</span>
-                            ${r.streak >= 2 ? `<span class="friend-activity-streak">🔥 ${r.streak}일</span>` : ''}
-                        </span>
-                        <span class="friend-activity-checks">
-                            <span class="friend-activity-check ${r.diet ? 'is-on' : ''}">🍽</span>
-                            <span class="friend-activity-check ${r.exercise ? 'is-on' : ''}">🏃</span>
-                            <span class="friend-activity-check ${r.mind ? 'is-on' : ''}">🌙</span>
-                        </span>
-                    </div>
-                `).join('')}
-            </div>
+            ${buildCommunityExpandableRows('friend-activity', friendRowsHtml, 3)}
         `;
 
         card.style.display = 'block';
@@ -8038,6 +8086,38 @@ renderSocialChallenges = async function(user) {
         _communityFocusState.activeChallenges = activeChallenges;
         renderCommunityFocusPanel();
 
+        const orderedChallenges = challenges.slice().sort((a, b) => Number(b.isInvite) - Number(a.isInvite));
+        const challengeRowsHtml = orderedChallenges.map(ch => {
+            const typeLabel = ch.type === 'competition' ? '1:1 경쟁' : '함께 목표';
+            const durationLabel = `${ch.durationDays}일`;
+            if (ch.isInvite) {
+                return `
+                    <div class="social-challenge-item is-invite">
+                        <div class="social-challenge-main">
+                            <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
+                            <div class="social-challenge-meta">${escapeHtml(ch.creatorName || '친구')}님이 초대했어요${ch.type === 'competition' ? ` · 스테이크 ${ch.stakePoints}P` : ''}</div>
+                            <div class="social-challenge-status is-pending">수락하면 오늘부터 바로 시작돼요</div>
+                        </div>
+                        <button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${ch.id}')">응답하기</button>
+                    </div>
+                `;
+            }
+
+            const statusLabel = ch.status === 'active'
+                ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
+                : '수락 대기 중';
+
+            return `
+                <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}">
+                    <div class="social-challenge-main">
+                        <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
+                        <div class="social-challenge-status ${ch.status === 'active' ? 'is-active' : 'is-pending'}">${escapeHtml(statusLabel)}</div>
+                        ${ch.type === 'competition' ? `<div class="social-challenge-meta">스테이크 ${ch.stakePoints}P</div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
         if (challenges.length === 0) {
             list.innerHTML = buildCommunityEmptyState(
                 '아직 열려 있는 챌린지가 없어요',
@@ -8053,38 +8133,7 @@ renderSocialChallenges = async function(user) {
                 <span class="social-challenge-pill">🏆 진행 ${activeChallenges}개</span>
                 <span class="social-challenge-pill">📩 응답 대기 ${pendingChallenges}개</span>
             </div>
-            <div class="social-challenge-rows">
-                ${challenges.map(ch => {
-                    const typeLabel = ch.type === 'competition' ? '1:1 경쟁' : '함께 목표';
-                    const durationLabel = `${ch.durationDays}일`;
-                    if (ch.isInvite) {
-                        return `
-                            <div class="social-challenge-item is-invite">
-                                <div class="social-challenge-main">
-                                    <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
-                                    <div class="social-challenge-meta">${escapeHtml(ch.creatorName || '친구')}님이 초대했어요${ch.type === 'competition' ? ` · 스테이크 ${ch.stakePoints}P` : ''}</div>
-                                    <div class="social-challenge-status is-pending">수락하면 오늘부터 바로 시작돼요</div>
-                                </div>
-                                <button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${ch.id}')">응답하기</button>
-                            </div>
-                        `;
-                    }
-
-                    const statusLabel = ch.status === 'active'
-                        ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
-                        : '수락 대기 중';
-
-                    return `
-                        <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}">
-                            <div class="social-challenge-main">
-                                <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
-                                <div class="social-challenge-status ${ch.status === 'active' ? 'is-active' : 'is-pending'}">${escapeHtml(statusLabel)}</div>
-                                ${ch.type === 'competition' ? `<div class="social-challenge-meta">스테이크 ${ch.stakePoints}P</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
+            ${buildCommunityExpandableRows('social-challenges', challengeRowsHtml, 2)}
         `;
 
         card.style.display = 'block';

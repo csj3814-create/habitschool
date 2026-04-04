@@ -2557,6 +2557,64 @@ textarea {
     margin-bottom: 12px;
 }
 
+.community-detail-shell {
+    margin-top: 10px;
+    border-top: 1px dashed #E3E8EF;
+    padding-top: 10px;
+}
+
+.community-detail-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: #6C43E0;
+}
+
+.community-detail-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.community-detail-toggle::after {
+    content: "열기";
+    font-size: 11px;
+}
+
+.community-detail-shell[open] .community-detail-toggle::after {
+    content: "접기";
+}
+
+.community-detail-body {
+    padding-top: 10px;
+}
+
+.community-collapsible-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.community-collapsible-row[hidden] {
+    display: none !important;
+}
+
+.community-more-btn {
+    margin-top: 8px;
+    width: 100%;
+    min-height: 36px;
+    border: 1px dashed rgba(124, 77, 255, 0.28);
+    border-radius: 12px;
+    background: rgba(124, 77, 255, 0.06);
+    color: #6C43E0;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .social-challenge-item.is-invite {
     background: #F5F0FF;
     border-color: #DDD0FF;
@@ -2795,14 +2853,28 @@ textarea {
     .mission-focus-strip {
         flex-direction: column;
         align-items: stretch;
+        padding: 12px;
     }
 
     .mission-focus-btn {
         width: 100%;
     }
 
+    .mission-progress-topline,
+    .mission-progress-summary-toggle {
+        padding: 12px;
+    }
+
+    .mission-progress-detail-list {
+        padding: 0 12px 12px;
+    }
+
+    .mission-progress-actions {
+        flex-direction: column;
+    }
+
     .community-focus-panel {
-        padding: 16px;
+        padding: 14px;
     }
 
     .community-focus-title-row {
@@ -2815,7 +2887,36 @@ textarea {
     }
 
     .community-action-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .community-action-card {
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px 10px;
+        border-radius: 16px;
+    }
+
+    .community-action-emoji {
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+
+    .community-action-copy strong {
+        font-size: 12px;
+    }
+
+    .community-action-copy span {
+        font-size: 10px;
+        line-height: 1.35;
+    }
+
+    .community-module-card {
+        padding: 12px;
+        border-radius: 16px;
     }
 
     .community-module-header,
@@ -2834,6 +2935,23 @@ textarea {
     .friend-activity-checks {
         justify-content: flex-start;
     }
+
+    .community-inline-actions {
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .community-inline-btn,
+    .community-empty-btn,
+    .community-module-link,
+    .social-challenge-cta {
+        min-height: 34px;
+        font-size: 11px;
+    }
+
+    .group-stat-item {
+        padding: 7px 4px;
+    }
 }
 
 .mp-count {
@@ -2845,6 +2963,112 @@ textarea {
     margin-top: 15px; 
     border-top: 1px dashed var(--gray-200); 
     padding-top: 15px; 
+}
+
+.mission-progress-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mission-progress-topline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #F7FBFF;
+    border: 1px solid #D9E9F8;
+}
+
+.mission-progress-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mission-progress-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #FFFFFF;
+    border: 1px solid #D9E9F8;
+    color: #58708A;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.mission-progress-pill.is-warning {
+    background: #FFF3E0;
+    border-color: #FFCC80;
+    color: #E65100;
+}
+
+.mission-progress-detail-shell {
+    border: 1px solid #E4ECF5;
+    border-radius: 14px;
+    background: #FFFFFF;
+    overflow: hidden;
+}
+
+.mission-progress-summary-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: #5C6F82;
+}
+
+.mission-progress-summary-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.mission-progress-summary-toggle::after {
+    content: "자세히 보기";
+    font-size: 11px;
+    color: #2196F3;
+}
+
+.mission-progress-detail-shell[open] .mission-progress-summary-toggle::after {
+    content: "접기";
+}
+
+.mission-progress-detail-list {
+    padding: 0 14px 14px;
+}
+
+.mission-progress-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mission-progress-primary-btn,
+.mission-secondary-btn {
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mission-progress-primary-btn {
+    margin: 0 !important;
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%) !important;
+}
+
+.mission-secondary-btn {
+    border: 1px solid #D9E9F8;
+    background: #FFFFFF;
+    color: #58708A;
+    cursor: pointer;
 }
 
 .mp-row { 
@@ -6427,6 +6651,35 @@ body.dark-mode .mission-focus-tag {
     color: #B7C3D2;
 }
 body.dark-mode .mission-card-intro { color: #A09AAA; }
+body.dark-mode .mission-progress-topline {
+    background: #1D2630;
+    border-color: #324455;
+}
+body.dark-mode .mission-progress-pill {
+    background: #202933;
+    border-color: #324455;
+    color: #B7C3D2;
+}
+body.dark-mode .mission-progress-pill.is-warning {
+    background: #312719;
+    border-color: #5B4628;
+    color: #FFB74D;
+}
+body.dark-mode .mission-progress-detail-shell {
+    background: #191F27;
+    border-color: #2C3947;
+}
+body.dark-mode .mission-secondary-btn {
+    background: #202933;
+    border-color: #324455;
+    color: #B7C3D2;
+}
+body.dark-mode .mission-progress-summary-toggle {
+    color: #B7C3D2;
+}
+body.dark-mode .mission-progress-summary-toggle::after {
+    color: #7DC3FF;
+}
 body.dark-mode .mission-section-divider {
     border-top-color: #2D3F52;
     color: #A3ADBC;
@@ -6950,6 +7203,17 @@ body.dark-mode .friend-activity-row,
 body.dark-mode .social-challenge-item {
     background: #26222B;
     border-color: #383240;
+}
+body.dark-mode .community-detail-shell {
+    border-top-color: #352F3B;
+}
+body.dark-mode .community-detail-toggle {
+    color: #C9B7FF;
+}
+body.dark-mode .community-more-btn {
+    background: rgba(124, 77, 255, 0.12);
+    border-color: rgba(201, 183, 255, 0.26);
+    color: #D2C5FF;
 }
 body.dark-mode .community-empty-state { color: #A8A1AE; }
 body.dark-mode .community-empty-state strong,
