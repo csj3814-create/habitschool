@@ -8,10 +8,173 @@ import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
 // blockchain-manager는 동적 import (로드 실패해도 인증에 영향 없음)
 
+const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
+
+function normalizeInviteRefCode(rawCode) {
+    const normalized = String(rawCode || '').trim().toUpperCase();
+    return /^[A-Z0-9]{6}$/.test(normalized) ? normalized : '';
+}
+
+function getInviteRefFromUrl() {
+    return normalizeInviteRefCode(new URLSearchParams(window.location.search).get('ref'));
+}
+
+function persistPendingInviteRef(code) {
+    const normalized = normalizeInviteRefCode(code);
+    if (!normalized) return '';
+    localStorage.setItem(PENDING_REFERRAL_CODE_KEY, normalized);
+    return normalized;
+}
+
+function readPendingInviteRef() {
+    return normalizeInviteRefCode(localStorage.getItem(PENDING_REFERRAL_CODE_KEY));
+}
+
+function clearPendingInviteRef() {
+    localStorage.removeItem(PENDING_REFERRAL_CODE_KEY);
+}
+
+function clearInviteRefFromUrl() {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('ref')) return;
+    url.searchParams.delete('ref');
+    window.history.replaceState({}, '', url.toString());
+}
+
+function normalizeCallableErrorCode(rawCode) {
+    return String(rawCode || '').trim().toLowerCase();
+}
+
+function shouldClearInviteRefError(rawCode) {
+    const code = normalizeCallableErrorCode(rawCode);
+    return [
+        'functions/not-found',
+        'functions/invalid-argument',
+        'functions/already-exists',
+        'functions/failed-precondition',
+        'functions/permission-denied'
+    ].includes(code);
+}
+
+function getInviteLinkErrorMessage(rawCode) {
+    const code = normalizeCallableErrorCode(rawCode);
+    if (code === 'functions/not-found') return '유효한 초대 링크를 찾지 못했어요.';
+    if (code === 'functions/invalid-argument') return '내 링크이거나 사용할 수 없는 초대 링크예요.';
+    if (code === 'functions/already-exists') return '이미 이 초대 링크를 사용했어요.';
+    if (code === 'functions/failed-precondition') return '이미 처리된 친구 연결이에요.';
+    if (code === 'functions/permission-denied') return '이 초대 링크를 처리할 권한이 없어요.';
+    return '초대 링크 처리 중 문제가 생겼어요. 잠시 후 다시 시도해주세요.';
+}
+
+async function maybePromptExistingMemberInviteFriendship(code) {
+    const fn = httpsCallable(functions, 'acceptInviteLinkFriendship');
+
+    try {
+        const preview = await fn({ referralCode: code, previewOnly: true });
+        const previewData = preview.data || {};
+        const inviterName = previewData.inviterName || '친구';
+
+        if (previewData.status === 'self') {
+            showToast('내 초대 링크예요. 친구에게 보내보세요.');
+            clearPendingInviteRef();
+            clearInviteRefFromUrl();
+            return false;
+        }
+
+        if (previewData.status === 'already_active') {
+            showToast('이미 친구로 연결되어 있어요.');
+            clearPendingInviteRef();
+            clearInviteRefFromUrl();
+            return true;
+        }
+
+        const confirmMessage = previewData.status === 'pending_to_active'
+            ? `${inviterName}님과 바로 친구로 연결할까요?\n기존 요청이 있으면 바로 연결로 바뀝니다.`
+            : `${inviterName}님과 친구로 연결할까요?\n초대 링크로 바로 친구 연결이 완료됩니다.`;
+
+        const confirmed = window.confirm(confirmMessage);
+        if (!confirmed) {
+            clearPendingInviteRef();
+            clearInviteRefFromUrl();
+            return false;
+        }
+
+        const result = await fn({ referralCode: code });
+        const resultData = result.data || {};
+        showToast(resultData.status === 'already_active'
+            ? '이미 친구로 연결되어 있어요.'
+            : `${inviterName}님과 친구 연결이 완료됐어요.`);
+
+        clearPendingInviteRef();
+        clearInviteRefFromUrl();
+
+        try {
+            if (window.loadMyFriendships) await window.loadMyFriendships(true);
+            if (window.loadGalleryData) await window.loadGalleryData(true);
+            if (window.updateAssetDisplay) window.updateAssetDisplay();
+            if (window.renderDashboard) window.renderDashboard();
+        } catch (_) {}
+
+        return true;
+    } catch (error) {
+        console.error('existing member invite-link error:', error);
+        showToast(getInviteLinkErrorMessage(error.code || error.message));
+        if (shouldClearInviteRefError(error.code || error.message)) {
+            clearPendingInviteRef();
+            clearInviteRefFromUrl();
+        }
+        return false;
+    }
+}
+
+async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {}) {
+    const code = readPendingInviteRef();
+    if (!code) return false;
+
+    const ownCode = normalizeInviteRefCode(userData?.referralCode);
+    if (ownCode && ownCode === code) {
+        showToast('내 초대 링크예요. 친구에게 보내보세요.');
+        clearPendingInviteRef();
+        clearInviteRefFromUrl();
+        return false;
+    }
+
+    const isNewUser = options.isNewUser === true;
+    if (isNewUser && !userData?.referredBy) {
+        try {
+            const processReferral = httpsCallable(functions, 'processReferralSignup');
+            const result = await processReferral({ code });
+            const bonus = Number(result.data?.bonus || 0);
+            showToast(bonus > 0
+                ? `초대 보너스 ${bonus}P와 친구 연결이 완료됐어요.`
+                : '초대 링크가 적용되고 친구 연결이 완료됐어요.');
+            clearPendingInviteRef();
+            clearInviteRefFromUrl();
+            try {
+                if (window.loadMyFriendships) await window.loadMyFriendships(true);
+                if (window.loadGalleryData) await window.loadGalleryData(true);
+                if (window.updateAssetDisplay) window.updateAssetDisplay();
+                if (window.renderDashboard) window.renderDashboard();
+            } catch (_) {}
+            return true;
+        } catch (error) {
+            console.error('new member invite-link error:', error);
+            showToast(getInviteLinkErrorMessage(error.code || error.message));
+            if (shouldClearInviteRefError(error.code || error.message)) {
+                clearPendingInviteRef();
+                clearInviteRefFromUrl();
+            }
+            return false;
+        }
+    }
+
+    return maybePromptExistingMemberInviteFriendship(code);
+}
+
 // 페이지 로드 시 ?ref= 파라미터 저장 (초대 링크)
-const _refCode = new URLSearchParams(window.location.search).get('ref');
-if (_refCode && /^[A-Z0-9]{6}$/i.test(_refCode)) {
-    localStorage.setItem('pendingReferralCode', _refCode.toUpperCase());
+const _refCode = getInviteRefFromUrl();
+if (_refCode) {
+    persistPendingInviteRef(_refCode);
 }
 
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
@@ -235,9 +398,10 @@ export function setupAuthListener(callbacks) {
                     displayName: user.displayName || '사용자'
                 };
                 if (!userDoc.exists()) updateData.createdAt = serverTimestamp();
-                setDoc(userRef, updateData, { merge: true }).catch(() => {});
-                if (!userDoc.exists()) return;
-                const ud = userDoc.data();
+                await setDoc(userRef, updateData, { merge: true }).catch(() => {});
+                const ud = userDoc.exists()
+                    ? (userDoc.data() || {})
+                    : { ...updateData };
 
                 if (ud.customDisplayName) {
                     window._userDisplayName = ud.customDisplayName;
@@ -261,17 +425,9 @@ export function setupAuthListener(callbacks) {
                     if (pCode) pCode.textContent = ud.referralCode;
                 }
 
-                // 초대 코드 처리 (아직 referredBy 없는 신규 유저)
-                const pendingCode = localStorage.getItem('pendingReferralCode');
-                if (pendingCode && !ud.referredBy) {
-                    localStorage.removeItem('pendingReferralCode');
-                    const processReferral = httpsCallable(functions, 'processReferralSignup');
-                    processReferral({ code: pendingCode }).then(result => {
-                        if (result.data?.success) {
-                            showToast(`🎉 초대 보너스 ${result.data.bonus}P 지급되었습니다!`);
-                        }
-                    }).catch(() => {});
-                }
+                await maybeHandleInviteLinkAfterAuth(user, ud, {
+                    isNewUser: !userDoc.exists()
+                }).catch(() => {});
 
                 if (ud.adminFeedback && ud.feedbackDate) {
                     const fbDate = new Date(ud.feedbackDate);

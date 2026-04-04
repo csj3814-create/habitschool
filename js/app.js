@@ -1696,7 +1696,7 @@ function renderProfileFriendRequests() {
     `;
 
     if (incoming.length === 0 && outgoing.length === 0) {
-        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">아직 처리할 친구 요청이 없어요. 친구에게 코드를 보내고 해빛코치에서 <strong>!친구 코드</strong>를 입력하게 해보세요.</div>`;
+        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">아직 처리할 친구 요청이 없어요. 친구에게 초대 링크를 보내면 신규 가입도, 기존 회원 연결도 바로 이어져요.</div>`;
         return;
     }
 
@@ -9876,7 +9876,7 @@ window.shareReferralLink = function(platform) {
              || '';
     if (!url) { showToast('초대 링크를 불러오는 중입니다. 잠시 후 다시 시도해주세요.'); return; }
     const title = '해빛스쿨 - 즐겁게 좋은 습관 만들기';
-    const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크로 가입하면 보너스 포인트 지급 🎁';
+    const text = '매일 식단·운동·수면을 기록하고 HBT 토큰도 받아요! 초대 링크를 열면 신규 가입 보너스와 친구 연결이 이어져요 🎁';
     if (platform === 'kakao') {
         if (navigator.share) {
             // 모바일: 네이티브 공유 시트 (카카오톡 선택 가능)
@@ -10227,7 +10227,7 @@ renderSocialChallenges = async function(user) {
             renderCommunityFocusPanel();
             list.innerHTML = buildCommunityEmptyState(
                 '수락된 친구가 있어야 챌린지를 시작할 수 있어요',
-                '친구에게 코드를 보내고 해빛코치에서 !친구 코드 를 입력하게 한 뒤 앱에서 수락해 주세요.',
+                '친구에게 초대 링크를 보내면 신규 가입 보너스와 친구 연결이 한 번에 이어져요.',
                 ['<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>']
             );
             card.style.display = 'block';
@@ -10405,7 +10405,7 @@ window.openCreateChallengeModal = async function() {
     const friendIds = getActiveFriendIds();
 
     if (friendIds.length === 0) {
-        showToast('먼저 active friendship 친구를 만들어주세요.\n친구에게 코드를 보내고 해빛코치에서 !친구 코드 를 입력하게 해보세요 👥');
+        showToast('먼저 친구를 연결해 주세요.\n초대 링크를 보내면 신규 가입과 기존 회원 연결이 바로 이어져요 👥');
         return;
     }
 

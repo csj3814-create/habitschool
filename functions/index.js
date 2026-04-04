@@ -116,6 +116,68 @@ function applyFriendCacheUpdate(tx, uidA, uidB, isActive) {
     tx.set(db.doc(`users/${uidB}`), { friends: updateValue(uidA) }, { merge: true });
 }
 
+function upsertActiveFriendship(tx, {
+    uidA,
+    uidB,
+    nameA,
+    nameB,
+    source,
+    requesterUid = uidA,
+    requestedAt = FieldValue.serverTimestamp(),
+}) {
+    const friendshipId = buildFriendshipId(uidA, uidB);
+    const friendshipRef = db.doc(`friendships/${friendshipId}`);
+    const now = FieldValue.serverTimestamp();
+    const requesterName = requesterUid === uidA ? nameA : nameB;
+
+    tx.set(friendshipRef, {
+        users: buildFriendshipUsers(uidA, uidB),
+        userNames: {
+            [uidA]: nameA,
+            [uidB]: nameB,
+        },
+        status: "active",
+        requesterUid,
+        requesterName,
+        pendingForUid: null,
+        requestedAt,
+        acceptedAt: now,
+        respondedAt: now,
+        updatedAt: now,
+        expiresAt: null,
+        source,
+    }, { merge: true });
+
+    applyFriendCacheUpdate(tx, uidA, uidB, true);
+    return { friendshipId, friendshipRef };
+}
+
+function createFriendConnectedNotifications(tx, {
+    uidA,
+    uidB,
+    nameA,
+    nameB,
+    friendshipId,
+}) {
+    const now = FieldValue.serverTimestamp();
+    tx.set(db.collection("notifications").doc(), {
+        postOwnerId: uidA,
+        type: "friend_connected",
+        fromUserId: uidB,
+        fromUserName: nameB,
+        friendshipId,
+        createdAt: now,
+    });
+    tx.set(db.collection("notifications").doc(), {
+        postOwnerId: uidB,
+        type: "friend_connected",
+        fromUserId: uidA,
+        fromUserName: nameA,
+        friendshipId,
+        createdAt: now,
+    });
+}
+
 function extractStoragePathFromUrl(rawUrl) {
     if (!rawUrl) return "";
     try {
@@ -1153,21 +1215,70 @@ exports.processReferralSignup = onCall(
         // 자기 자신 초대 방지
         if (referrerUid === uid) throw new HttpsError("invalid-argument", "본인 초대 코드 사용 불가");
 
-        // 이미 referredBy 저장된 경우 중복 방지
         const userRef = db.doc(`users/${uid}`);
-        const userSnap = await userRef.get();
-        if (userSnap.exists && userSnap.data().referredBy) {
-            throw new HttpsError("already-exists", "이미 초대 코드를 사용했습니다");
-        }
+        const referrerRef = db.doc(`users/${referrerUid}`);
+        const friendshipRef = db.doc(`friendships/${buildFriendshipId(uid, referrerUid)}`);
 
-        // referredBy 저장 + 신규 가입 보너스 +200P
-        await userRef.set({
-            referredBy: referrerUid,
-            coins: FieldValue.increment(200)
-        }, { merge: true });
+        const outcome = await db.runTransaction(async (tx) => {
+            const [userSnap, referrerSnap, friendshipSnap] = await Promise.all([
+                tx.get(userRef),
+                tx.get(referrerRef),
+                tx.get(friendshipRef),
+            ]);
 
-        console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P`);
-        return { success: true, bonus: 200 };
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "가입 사용자 정보를 찾을 수 없습니다.");
+            }
+            if (!referrerSnap.exists) {
+                throw new HttpsError("not-found", "초대한 사용자를 찾을 수 없습니다.");
+            }
+            if (userSnap.data()?.referredBy) {
+                throw new HttpsError("already-exists", "이미 초대 코드를 사용했습니다");
+            }
+
+            const userData = userSnap.data() || {};
+            const referrerData = referrerSnap.data() || {};
+            const inviteeName = getUserLabel(userData, request.auth?.token?.name || "회원");
+            const referrerName = getUserLabel(referrerData, "친구");
+            const friendshipData = friendshipSnap.exists ? (friendshipSnap.data() || {}) : null;
+            const existingRequestedAt = friendshipData?.requestedAt || FieldValue.serverTimestamp();
+
+            tx.set(userRef, {
+                referredBy: referrerUid,
+                coins: FieldValue.increment(200),
+            }, { merge: true });
+
+            const { friendshipId } = upsertActiveFriendship(tx, {
+                uidA: referrerUid,
+                uidB: uid,
+                nameA: referrerName,
+                nameB: inviteeName,
+                source: "invite_link_signup",
+                requesterUid: friendshipData?.requesterUid || referrerUid,
+                requestedAt: existingRequestedAt,
+            });
+
+            if (friendshipData?.status !== "active") {
+                createFriendConnectedNotifications(tx, {
+                    uidA: referrerUid,
+                    uidB: uid,
+                    nameA: referrerName,
+                    nameB: inviteeName,
+                    friendshipId,
+                });
+            }
+
+            return {
+                success: true,
+                bonus: 200,
+                inviterUid: referrerUid,
+                inviterName: referrerName,
+                friendshipStatus: friendshipData?.status === "active" ? "already_active" : "connected",
+            };
+        });
+
+        console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P +friendship`);
+        return outcome;
     }
 );
 
@@ -1309,6 +1420,135 @@ exports.prepareShareMediaAssets = onCall(
         }));
 
         return { items };
+    }
+);
+
+exports.acceptInviteLinkFriendship = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+
+        const referralCode = String(request.data?.referralCode || "").trim().toUpperCase();
+        const previewOnly = request.data?.previewOnly === true;
+        if (!referralCode || referralCode.length !== 6) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 초대 코드");
+        }
+
+        const inviterQuery = await db.collection("users")
+            .where("referralCode", "==", referralCode)
+            .limit(1)
+            .get();
+
+        if (inviterQuery.empty) {
+            throw new HttpsError("not-found", "존재하지 않는 초대 링크입니다.");
+        }
+
+        const inviterUid = inviterQuery.docs[0].id;
+        const inviterRef = db.doc(`users/${inviterUid}`);
+        const userRef = db.doc(`users/${uid}`);
+        const friendshipRef = db.doc(`friendships/${buildFriendshipId(uid, inviterUid)}`);
+
+        if (inviterUid === uid) {
+            return { success: true, status: "self" };
+        }
+
+        if (previewOnly) {
+            const [userSnap, inviterSnap, friendshipSnap] = await Promise.all([
+                userRef.get(),
+                inviterRef.get(),
+                friendshipRef.get(),
+            ]);
+
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            }
+            if (!inviterSnap.exists) {
+                throw new HttpsError("not-found", "초대한 사용자를 찾을 수 없습니다.");
+            }
+
+            const inviterData = inviterSnap.data() || {};
+            const inviterName = getUserLabel(inviterData, "친구");
+            const friendshipData = friendshipSnap.exists ? (friendshipSnap.data() || {}) : null;
+
+            if (friendshipData?.status === "active") {
+                return {
+                    success: true,
+                    status: "already_active",
+                    inviterUid,
+                    inviterName,
+                };
+            }
+
+            return {
+                success: true,
+                status: friendshipData?.status === "pending" && !isPendingFriendshipExpired(friendshipData)
+                    ? "pending_to_active"
+                    : "ready_to_connect",
+                inviterUid,
+                inviterName,
+            };
+        }
+
+        return db.runTransaction(async (tx) => {
+            const [userSnap, inviterSnap, friendshipSnap] = await Promise.all([
+                tx.get(userRef),
+                tx.get(inviterRef),
+                tx.get(friendshipRef),
+            ]);
+
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            }
+            if (!inviterSnap.exists) {
+                throw new HttpsError("not-found", "초대한 사용자를 찾을 수 없습니다.");
+            }
+
+            const userData = userSnap.data() || {};
+            const inviterData = inviterSnap.data() || {};
+            const userName = getUserLabel(userData, request.auth?.token?.name || "회원");
+            const inviterName = getUserLabel(inviterData, "친구");
+            const friendshipData = friendshipSnap.exists ? (friendshipSnap.data() || {}) : null;
+
+            if (friendshipData?.status === "active") {
+                applyFriendCacheUpdate(tx, inviterUid, uid, true);
+                return {
+                    success: true,
+                    status: "already_active",
+                    inviterUid,
+                    inviterName,
+                };
+            }
+
+            const requestedAt = friendshipData?.requestedAt || FieldValue.serverTimestamp();
+            const { friendshipId } = upsertActiveFriendship(tx, {
+                uidA: inviterUid,
+                uidB: uid,
+                nameA: inviterName,
+                nameB: userName,
+                source: "invite_link_existing",
+                requesterUid: friendshipData?.requesterUid || inviterUid,
+                requestedAt,
+            });
+
+            createFriendConnectedNotifications(tx, {
+                uidA: inviterUid,
+                uidB: uid,
+                nameA: inviterName,
+                nameB: userName,
+                friendshipId,
+            });
+
+            return {
+                success: true,
+                status: friendshipData?.status === "pending" && !isPendingFriendshipExpired(friendshipData)
+                    ? "pending_promoted"
+                    : "connected",
+                inviterUid,
+                inviterName,
+                friendshipId,
+            };
+        });
     }
 );
 
