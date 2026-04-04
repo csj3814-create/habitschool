@@ -6,8 +6,8 @@
 
 // Firebase 모듈 임포트
 import {
-    increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, deleteDoc,
-    query, where, orderBy, limit, startAfter, serverTimestamp,
+    increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
+    query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
@@ -4925,10 +4925,10 @@ window.resetWeeklyMissions = async function() {
     if (!confirm('이번 주 미션을 재설정하시겠습니까?\n진행 중인 기록은 유지됩니다.')) return;
 
     try {
-        await setDoc(doc(db, "users", user.uid), {
-            weeklyMissionData: deleteField(),
-            selectedMissions: deleteField()
-        }, { merge: true });
+        await updateDoc(doc(db, "users", user.uid), {
+            weeklyMissionData: null,
+            selectedMissions: []
+        });
     } catch (error) {
         console.error('미션 리셋 오류:', error);
         showToast('⚠️ 미션 리셋에 실패했습니다.');
