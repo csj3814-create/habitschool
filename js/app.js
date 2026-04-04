@@ -68,6 +68,9 @@ window.completeOnboarding = completeOnboarding;
 window.goOnboardingStep = goOnboardingStep;
 window.openTab = openTab;
 window.loadGalleryData = loadGalleryData;
+window.goToGalleryRecordAction = goToGalleryRecordAction;
+window.triggerGalleryShareAction = triggerGalleryShareAction;
+window.focusGalleryFeed = focusGalleryFeed;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
@@ -2706,6 +2709,48 @@ async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
     const fn = httpsCallable(functions, 'getDashboardData');
     const result = await fn({ weekStart, weekEnd });
     return result.data;
+}
+
+function goToGalleryRecordAction() {
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+    openTab('diet');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function triggerGalleryShareAction() {
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+
+    const shareContainer = document.getElementById('my-share-container');
+    const shareButton = shareContainer?.querySelector('.btn-share-action');
+    const isVisible = !!shareContainer && shareContainer.style.display !== 'none';
+
+    if (isVisible) {
+        shareContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (shareButton) {
+            setTimeout(() => shareButton.focus(), 250);
+        }
+        return;
+    }
+
+    showToast('오늘 또는 어제 기록을 저장하면 바로 공유할 수 있어요.');
+    openTab('diet');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function focusGalleryFeed() {
+    openTab('gallery');
+    const feedHeading = document.getElementById('gallery-feed-title');
+    if (feedHeading) {
+        setTimeout(() => {
+            feedHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+    }
 }
 
 const DASHBOARD_ACTION_META = {
@@ -5760,6 +5805,9 @@ function getEmptyStateHtml(filter) {
         <div class="empty-emoji">${m.emoji}</div>
         <div class="empty-title">${m.title}</div>
         <div class="empty-desc">${m.desc}</div>
+        <div class="empty-actions">
+            <button class="empty-action-btn" onclick="goToGalleryRecordAction()">기록 시작하기</button>
+        </div>
     </div>`;
 }
 
@@ -6294,12 +6342,17 @@ async function buildShareCardAsync(myId, user) {
 
         if (user && myRecentLogs.length > 0) {
             document.getElementById('my-share-container').style.display = 'flex';
+            const shareButton = document.querySelector('#my-share-container .btn-share-action');
             const latest = myRecentLogs[0];
             document.getElementById('share-name').innerText = getUserDisplayName();
             document.getElementById('share-date').innerText = latest.date.replace(/-/g, '.');
             let points = (latest.awardedPoints?.dietPoints || 0) + (latest.awardedPoints?.exercisePoints || 0) + (latest.awardedPoints?.mindPoints || 0);
             if (points === 0 && latest.awardedPoints) { if (latest.awardedPoints.diet) points += 10; if (latest.awardedPoints.exercise) points += 15; if (latest.awardedPoints.mind) points += 5; }
             document.getElementById('share-point').innerText = points;
+            if (shareButton) {
+                shareButton.innerText = '🌟 나의 해빛 기록 자랑하기';
+                shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
+            }
 
             // 공유 카드용 이미지 - 썸네일 우선
             let imgs = [];
@@ -6335,7 +6388,7 @@ async function buildShareCardAsync(myId, user) {
 
             const imgGrid = document.getElementById('share-imgs');
             imgGrid.innerHTML = '';
-            imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items');
+            imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items', 'share-img-grid-empty');
 
             let htmlString = buildShareImageGrid(imgs, 4);
             imgGrid.innerHTML = htmlString;
@@ -6346,7 +6399,23 @@ async function buildShareCardAsync(myId, user) {
 
             if (imgs.length === 0) imgGrid.innerHTML = `<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 완료!</div>`;
         } else {
-            document.getElementById('my-share-container').style.display = 'none';
+            const shareContainer = document.getElementById('my-share-container');
+            const shareButton = document.querySelector('#my-share-container .btn-share-action');
+            const imgGrid = document.getElementById('share-imgs');
+            shareContainer.style.display = 'flex';
+            document.getElementById('share-name').innerText = getUserDisplayName();
+            document.getElementById('share-date').innerText = '기록 준비';
+            document.getElementById('share-point').innerText = '0';
+            imgGrid.className = 'share-img-grid share-img-grid-empty';
+            imgGrid.innerHTML = `
+                <div class="share-placeholder-box">
+                    <strong>아직 공유할 카드가 없어요</strong>
+                    <span>오늘 기록을 저장하면 바로 자랑할 수 있어요.</span>
+                </div>`;
+            if (shareButton) {
+                shareButton.innerText = '📝 오늘 기록 저장하고 공유 준비하기';
+                shareButton.onclick = goToGalleryRecordAction;
+            }
         }
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
@@ -6787,16 +6856,16 @@ function buildGalleryCard(item, myId) {
 
     const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">
-            <span class="action-btn">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</span>
-            <span class="action-btn">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</span>
-            <span class="action-btn">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</span>
-            <span class="action-btn">💬${commentCount > 0 ? ` <span>${commentCount}</span>` : ''}</span>
+            <span class="action-btn"><span>❤️</span><span class="action-label">좋아요</span>${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</span>
+            <span class="action-btn"><span>🔥</span><span class="action-label">격려</span>${cFire > 0 ? ` <span>${cFire}</span>` : ''}</span>
+            <span class="action-btn"><span>👏</span><span class="action-label">응원</span>${cClap > 0 ? ` <span>${cClap}</span>` : ''}</span>
+            <span class="action-btn"><span>💬</span><span class="action-label">댓글</span>${commentCount > 0 ? ` <span>${commentCount}</span>` : ''}</span>
            </div>`
         : `<div class="gallery-actions">
-            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)">❤️${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
-            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)">🔥${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
-            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)">👏${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()">💬${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span>❤️</span><span class="action-label">좋아요</span>${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span>🔥</span><span class="action-label">격려</span>${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span>👏</span><span class="action-label">응원</span>${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span>💬</span><span class="action-label">댓글</span>${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
            </div>`;
 
     const commentSectionHtml = isGuest

@@ -2525,6 +2525,35 @@ textarea {
     grid-template-columns: repeat(2, 1fr);
 }
 
+.share-img-grid.share-img-grid-empty {
+    grid-template-columns: 1fr;
+    min-height: 164px;
+}
+
+.share-placeholder-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-height: 164px;
+    padding: 18px 16px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.82);
+    border: 1px dashed rgba(191,54,12,0.25);
+    text-align: center;
+}
+
+.share-placeholder-box strong {
+    font-size: 14px;
+    color: #8d3b0f;
+}
+
+.share-placeholder-box span {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #9a5b35;
+}
+
 .share-img-grid img { 
     width: 100%; 
     aspect-ratio: 1 / 1;
@@ -2668,6 +2697,77 @@ textarea {
     line-height: 1.65;
     color: #6d5a45;
     max-width: 34ch;
+}
+
+.gallery-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.gallery-hero-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid #f1dcc0;
+    background: rgba(255, 255, 255, 0.72);
+    color: #463525;
+    cursor: pointer;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+.gallery-hero-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(77, 57, 27, 0.08);
+}
+
+.gallery-hero-action.primary {
+    background: linear-gradient(135deg, #ff9c3f 0%, #ff7b21 100%);
+    border-color: #ff8d35;
+    color: #fff;
+}
+
+.gallery-hero-action-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(70, 53, 37, 0.08);
+    font-size: 12px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.gallery-hero-action.primary .gallery-hero-action-step {
+    background: rgba(255,255,255,0.2);
+}
+
+.gallery-hero-action-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.gallery-hero-action-text strong {
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.gallery-hero-action-text span {
+    font-size: 11px;
+    line-height: 1.35;
+    color: rgba(70, 53, 37, 0.78);
+}
+
+.gallery-hero-action.primary .gallery-hero-action-text span {
+    color: rgba(255,255,255,0.86);
 }
 
 .gallery-hero-stats {
@@ -3082,38 +3182,49 @@ textarea {
 
 .gallery-actions { 
     display: flex; 
-    gap: 16px; 
+    gap: 8px; 
     align-items: center; 
-    padding: 10px 14px 6px; 
+    flex-wrap: wrap;
+    padding: 12px 14px 8px; 
 }
 
 .action-btn { 
-    background: none; 
-    border: none; 
-    font-size: 24px; 
-    padding: 4px 0; 
+    background: #fff8f0; 
+    border: 1px solid #f3e0c6; 
+    border-radius: 999px;
+    font-size: 14px; 
+    padding: 7px 11px; 
     display: flex; 
     align-items: center; 
-    gap: 4px; 
+    gap: 6px; 
     cursor: pointer; 
     color: var(--gray-800); 
-    transition: transform 0.15s ease; 
+    font-weight: 700;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease; 
     line-height: 1;
 }
 
+.action-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6f5d47;
+}
+
 .action-btn span {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--gray-600);
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .action-btn:active { 
-    transform: scale(1.2); 
+    transform: scale(0.97); 
 }
 
 .action-btn.active,
 .action-btn.reacted { 
     color: #E91E63; 
+    border-color: rgba(233, 30, 99, 0.28);
+    background: #fff1f6;
 }
 
 .action-btn.active span,
@@ -3121,11 +3232,16 @@ textarea {
     color: #E91E63;
 }
 
+.action-btn.active .action-label,
+.action-btn.reacted .action-label {
+    color: #C2185B;
+}
+
 /* 게스트 모드 갤러리 액션 (보기 전용) */
 .guest-actions .action-btn,
 .guest-actions span.action-btn {
     cursor: default;
-    opacity: 0.7;
+    opacity: 1;
 }
 .guest-actions .action-btn:active,
 .guest-actions span.action-btn:active {
@@ -3253,6 +3369,22 @@ textarea {
     font-size: 13px;
     color: var(--gray-500);
     line-height: 1.6;
+}
+
+.empty-actions {
+    margin-top: 16px;
+}
+
+.empty-action-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #ff9c3f 0%, #ff7b21 100%);
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(255, 123, 33, 0.18);
 }
 
 /* 주간 베스트 */
@@ -3464,6 +3596,10 @@ textarea {
         font-size: 24px;
     }
 
+    .gallery-hero-actions {
+        flex-direction: column;
+    }
+
     .gallery-hero-stats,
     .gallery-top-grid {
         grid-template-columns: 1fr;
@@ -3488,6 +3624,10 @@ textarea {
     .gallery-feed-shell {
         padding: 14px;
         border-radius: 18px;
+    }
+
+    .gallery-hero-action {
+        width: 100%;
     }
 
     .gallery-hero-stats {
@@ -3593,18 +3733,18 @@ textarea {
     gap: 8px;
     align-items: center;
     border-top: 1px solid var(--gray-100);
-    padding-top: 10px;
-    margin-top: 4px;
+    padding-top: 12px;
+    margin-top: 6px;
 }
 
 .comment-input {
     flex: 1;
-    border: none;
-    border-radius: 0;
-    padding: 6px 0;
+    border: 1px solid #f0e0cb;
+    border-radius: 999px;
+    padding: 10px 14px;
     font-size: 13px;
     outline: none;
-    background: transparent;
+    background: #fffaf4;
     transition: border-color 0.2s;
     color: var(--gray-800);
 }
@@ -3614,29 +3754,31 @@ textarea {
 }
 
 .comment-input:focus {
-    border-color: transparent;
-    background: transparent;
+    border-color: #ffb86b;
+    background: #fff;
 }
 
 .comment-submit-btn {
-    background: none;
+    background: linear-gradient(135deg, #ff9c3f 0%, #ff7b21 100%);
     border: none;
-    color: #0095F6;
+    color: white;
     font-weight: 700;
     font-size: 13px;
     cursor: pointer;
-    padding: 6px 4px;
+    padding: 10px 14px;
     white-space: nowrap;
-    opacity: 0.5;
-    transition: opacity 0.2s;
+    border-radius: 999px;
+    opacity: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 8px 16px rgba(255, 123, 33, 0.18);
 }
 
 .comment-submit-btn:hover {
-    opacity: 1;
+    transform: translateY(-1px);
 }
 
 .comment-btn {
-    margin-left: auto;
+    margin-left: 0;
 }
 
 /* 채팅 배너 */
@@ -5983,6 +6125,25 @@ body.dark-mode .gallery-hero-title,
 body.dark-mode .gallery-feed-heading h3 { color: #F4EEE6; }
 body.dark-mode .gallery-hero-desc,
 body.dark-mode .gallery-feed-heading p { color: #B9ADA0; }
+body.dark-mode .gallery-hero-action {
+    background: rgba(255,255,255,0.04);
+    border-color: #43372f;
+    color: #E8DED2;
+}
+body.dark-mode .gallery-hero-action-step {
+    background: rgba(255,255,255,0.08);
+}
+body.dark-mode .gallery-hero-action-text span {
+    color: #B9ADA0;
+}
+body.dark-mode .gallery-hero-action.primary {
+    background: linear-gradient(135deg, #D97706 0%, #C65A00 100%);
+    border-color: #D97706;
+    color: white;
+}
+body.dark-mode .gallery-hero-action.primary .gallery-hero-action-text span {
+    color: rgba(255,255,255,0.84);
+}
 body.dark-mode .gallery-hero-stat {
     background: rgba(255,255,255,0.04);
     border-color: #40352e;
@@ -6004,6 +6165,12 @@ body.dark-mode .gallery-card {
     border-color: #39343c;
     box-shadow: 0 12px 26px rgba(0,0,0,0.18);
 }
+body.dark-mode .action-btn {
+    background: #2A2520;
+    border-color: #43372f;
+    color: #E7DED3;
+}
+body.dark-mode .action-label { color: #C8B8A8; }
 body.dark-mode .gallery-point-badge {
     background: rgba(255, 183, 77, 0.12);
     color: #FFCC80;
@@ -6011,6 +6178,19 @@ body.dark-mode .gallery-point-badge {
 body.dark-mode .gallery-type-chip {
     background: #2B2830;
     color: #C0BCC6;
+}
+body.dark-mode .comment-input {
+    background: #26222a;
+    border-color: #3A3540;
+    color: #E8E4DF;
+}
+body.dark-mode .comment-input:focus {
+    border-color: #FFB74D;
+    background: #211f25;
+}
+body.dark-mode .comment-submit-btn {
+    background: linear-gradient(135deg, #D97706 0%, #C65A00 100%);
+    box-shadow: 0 8px 16px rgba(217, 119, 6, 0.2);
 }
 
 /* 스켈레톤 */
@@ -6296,6 +6476,16 @@ body.dark-mode .best-no-img { background: #3A3540; }
 body.dark-mode .best-score {
     background: rgba(255, 183, 77, 0.12);
     color: #FFCC80;
+}
+body.dark-mode .share-placeholder-box {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255, 183, 77, 0.24);
+}
+body.dark-mode .share-placeholder-box strong { color: #FFD8A8; }
+body.dark-mode .share-placeholder-box span { color: #C9B39A; }
+body.dark-mode .empty-action-btn {
+    background: linear-gradient(135deg, #D97706 0%, #C65A00 100%);
+    box-shadow: 0 8px 16px rgba(217, 119, 6, 0.2);
 }
 
 /* ───────────────────────────────

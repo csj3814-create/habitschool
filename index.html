@@ -1035,8 +1035,31 @@
                     <section class="gallery-hero">
                         <div class="gallery-hero-copy">
                             <div class="gallery-hero-kicker">HABIT FEED</div>
-                            <h2 class="gallery-hero-title">함께 인증하고 오래 가는 습관 만들기</h2>
-                            <p class="gallery-hero-desc">오늘의 기록을 가볍게 공유하고, 친구들의 꾸준함에서 다음 행동 힌트를 얻어보세요.</p>
+                            <h2 class="gallery-hero-title">기록하고, 공유하고, 서로 응원하기</h2>
+                            <p class="gallery-hero-desc">오늘 할 일만 짧게 보고 바로 움직여보세요.</p>
+                            <div class="gallery-hero-actions" role="group" aria-label="갤러리 빠른 행동">
+                                <button class="gallery-hero-action primary" onclick="goToGalleryRecordAction()">
+                                    <span class="gallery-hero-action-step">1</span>
+                                    <span class="gallery-hero-action-text">
+                                        <strong>기록 저장</strong>
+                                        <span>오늘 탭으로 이동</span>
+                                    </span>
+                                </button>
+                                <button class="gallery-hero-action" onclick="triggerGalleryShareAction()">
+                                    <span class="gallery-hero-action-step">2</span>
+                                    <span class="gallery-hero-action-text">
+                                        <strong>인증 공유</strong>
+                                        <span>내 카드 바로 열기</span>
+                                    </span>
+                                </button>
+                                <button class="gallery-hero-action" onclick="focusGalleryFeed()">
+                                    <span class="gallery-hero-action-step">3</span>
+                                    <span class="gallery-hero-action-text">
+                                        <strong>친구 응원</strong>
+                                        <span>최근 피드 보기</span>
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                         <div class="gallery-hero-stats" aria-label="갤러리 요약">
                             <div class="gallery-hero-stat">
