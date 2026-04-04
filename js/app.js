@@ -183,40 +183,46 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     if (!latest) return [];
 
     const items = [];
-    const addMedia = (url, category, type = null) => {
-        const normalizedUrl = String(url || '').trim();
-        if (!normalizedUrl) return;
-        const resolvedType = type || (isVideoUrl(normalizedUrl) ? 'video' : 'image');
+    const addMedia = (previewUrl, originalUrl, category, type = null) => {
+        const normalizedPreviewUrl = String(previewUrl || '').trim();
+        const normalizedOriginalUrl = String(originalUrl || '').trim();
+        const primaryUrl = normalizedPreviewUrl || normalizedOriginalUrl;
+        if (!primaryUrl) return;
+        const resolvedType = type || (isVideoUrl(normalizedOriginalUrl || primaryUrl) ? 'video' : 'image');
+        const candidateUrls = [normalizedPreviewUrl, normalizedOriginalUrl].filter(Boolean);
         items.push({
-            originalUrl: normalizedUrl,
-            src: normalizedUrl,
+            originalUrl: normalizedOriginalUrl || primaryUrl,
+            previewUrl: normalizedPreviewUrl || normalizedOriginalUrl || primaryUrl,
+            src: normalizedPreviewUrl || normalizedOriginalUrl || primaryUrl,
             type: resolvedType,
-            category
+            category,
+            candidateUrls
         });
     };
 
     if (latest.diet && !settings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
-            addMedia(latest.diet[`${meal}ThumbUrl`] || latest.diet[`${meal}Url`], '식단');
+            addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], '식단');
         });
     }
 
     if (latest.exercise && !settings.hideExercise) {
         if (latest.exercise.cardioList?.length) {
             latest.exercise.cardioList.forEach(item => {
-                addMedia(item.imageThumbUrl || item.imageUrl, '운동');
+                addMedia(item.imageThumbUrl, item.imageUrl, '운동');
             });
         } else {
-            addMedia(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl, '운동');
+            addMedia(latest.exercise.cardioImageThumbUrl, latest.exercise.cardioImageUrl, '운동');
         }
 
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
-                addMedia(item.videoThumbUrl || item.videoUrl, '운동', item.videoThumbUrl ? 'image' : 'video');
+                addMedia(item.videoThumbUrl, item.videoUrl, '운동', item.videoThumbUrl ? 'image' : 'video');
             });
         } else {
             addMedia(
-                latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl,
+                latest.exercise.strengthVideoThumbUrl,
+                latest.exercise.strengthVideoUrl,
                 '운동',
                 latest.exercise.strengthVideoThumbUrl ? 'image' : 'video'
             );
@@ -224,7 +230,7 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     }
 
     if (!settings.hideMind) {
-        addMedia(latest.sleepAndMind?.sleepImageThumbUrl || latest.sleepAndMind?.sleepImageUrl, '마음');
+        addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, '마음');
     }
 
     const deduped = [];
@@ -319,6 +325,8 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
     const items = mediaItems.slice(0, maxCount);
     if (!items.length) return [];
 
+    const previewImages = Array.from(document.querySelectorAll('#share-imgs .share-media-thumb img'));
+
     return await Promise.all(items.map(async (item, index) => {
         const label = item.category || `기록 ${index + 1}`;
         const placeholder = item.type === 'video'
@@ -333,7 +341,24 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
             };
         }
 
-        const candidates = [item.src, item.originalUrl]
+        const renderedPreview = previewImages[index];
+        if (renderedPreview && renderedPreview.complete && renderedPreview.naturalWidth > 0) {
+            const renderedBase64 = await imageElementToBase64(renderedPreview);
+            if (typeof renderedBase64 === 'string' && renderedBase64.startsWith('data:')) {
+                return {
+                    ...item,
+                    src: renderedBase64,
+                    prepared: true
+                };
+            }
+        }
+
+        const candidates = [
+            ...(Array.isArray(item.candidateUrls) ? item.candidateUrls : []),
+            item.previewUrl,
+            item.src,
+            item.originalUrl
+        ]
             .map(value => String(value || '').trim())
             .filter(Boolean);
 
@@ -408,10 +433,9 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     if (latest && user) {
         const displayName = settings.hideIdentity ? '익명 학생' : getUserDisplayName();
         const tags = getShareCategoryTags(latest, settings);
-        const rawMediaItems = collectShareCardMedia(latest, settings);
         const mediaItems = Array.isArray(options.preparedMedia)
             ? options.preparedMedia
-            : buildSharePlaceholderMedia(rawMediaItems);
+            : collectShareCardMedia(latest, settings);
         titleEl.innerText = settings.hideIdentity ? '오늘의 해빛 루틴' : `${displayName}의 해빛 루틴`;
         subtitleEl.innerText = buildShareSubtitle(latest, tags);
         tagRowEl.innerHTML = buildShareTagRow(tags);
@@ -6632,6 +6656,21 @@ function toSafeAttr(value) {
     return String(value || '').replace(/"/g, '&quot;');
 }
 
+window.handleSharePreviewImageError = function (img) {
+    if (!img) return;
+    const nextSrc = img.dataset.nextSrc || '';
+    const placeholderSrc = img.dataset.placeholderSrc || createImagePlaceholderBase64('해빛 기록');
+
+    if (nextSrc && img.src !== nextSrc) {
+        img.dataset.nextSrc = '';
+        img.src = nextSrc;
+        return;
+    }
+
+    img.onerror = null;
+    img.src = placeholderSrc;
+};
+
 function buildShareImageGrid(mediaItems, maxCount = 4) {
     const items = Array.isArray(mediaItems) ? mediaItems.slice(0, maxCount) : [];
     if (!items.length) {
@@ -6646,15 +6685,16 @@ function buildShareImageGrid(mediaItems, maxCount = 4) {
     const countClass = `share-media-count-${Math.min(items.length, 4)}`;
     const html = items.map((item, index) => {
         const mediaType = item.type || (isVideoUrl(item.originalUrl || item.src || '') ? 'video' : 'image');
-        const mediaSrc = item.src || item.originalUrl || '';
+        const mediaSrc = item.previewUrl || item.src || item.originalUrl || '';
         const fallbackSrc = mediaType === 'video'
             ? createVideoPlaceholderBase64()
             : createImagePlaceholderBase64(item.category || '해빛 기록');
         const safeSrc = toSafeAttr(mediaSrc || fallbackSrc);
         const safeFallback = toSafeAttr(fallbackSrc);
+        const safeNextSrc = toSafeAttr(item.originalUrl && item.originalUrl !== mediaSrc ? item.originalUrl : '');
         const safeOriginal = toSafeAttr(item.originalUrl || mediaSrc);
         const safeCategory = escapeHtml(item.category || '기록');
-        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous" onerror="this.onerror=null;this.src='${safeFallback}'">`;
+        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous" data-next-src="${safeNextSrc}" data-placeholder-src="${safeFallback}" onerror="window.handleSharePreviewImageError(this)">`;
 
         return `
             <div class="share-media-thumb" data-media-type="${mediaType}" data-media-src="${safeOriginal}">
@@ -6845,6 +6885,7 @@ window.shareMyCard = async function () {
     const originalText = btn.innerHTML;
     btn.innerText = '⏳ 이미지 생성 중...';
     btn.disabled = true;
+    const user = auth.currentUser;
 
     try {
         await withAsyncTimeout(
@@ -6887,6 +6928,9 @@ window.shareMyCard = async function () {
         console.error('공유 카드 생성 오류:', err);
         showToast('⚠️ 카드 생성에 실패했습니다. 다시 시도해주세요.');
     } finally {
+        if (user) {
+            buildShareCardAsync(user.uid, user).catch(() => { });
+        }
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
@@ -7740,7 +7784,6 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
     try {
         const latest = user ? getCurrentShareLog(myId)?.data || null : null;
         const settings = overrideSettings || latest?.shareSettings || _shareSettingsDraft;
-        const buildToken = ++_shareCardBuildToken;
 
         if (!latest || !user) {
             _latestPreparedShareMedia = [];
@@ -7750,19 +7793,9 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
             return;
         }
 
-        const placeholderMedia = buildSharePlaceholderMedia(collectShareCardMedia(latest, settings));
-        renderShareCardState(user, latest, settings, { preparedMedia: placeholderMedia });
+        ++_shareCardBuildToken;
+        renderShareCardState(user, latest, settings);
         updateGalleryPrimaryAction();
-
-        if (!placeholderMedia.length) {
-            _latestPreparedShareMedia = [];
-            _latestPreparedShareSignature = '';
-            return;
-        }
-
-        const preparedMedia = await ensurePreparedShareMedia(latest, settings);
-        if (buildToken !== _shareCardBuildToken) return;
-        renderShareCardState(user, latest, settings, { preparedMedia });
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
