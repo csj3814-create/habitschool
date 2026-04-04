@@ -3600,27 +3600,45 @@ textarea {
 .gallery-user-filter-bar {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    margin-bottom: 10px;
     background: #fff3e0;
-    border-radius: 14px;
+    border-radius: 999px;
     border: 1px solid #ffd6a5;
-    font-size: 13px;
+    font-size: 12px;
 }
 
-.gallery-user-filter-bar span {
-    flex: 1;
+.gallery-user-filter-kicker {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #b55a00;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+#gallery-user-filter-label {
     color: #e65100;
     font-weight: 700;
 }
 
-.gallery-user-filter-bar button {
-    background: none;
-    border: none;
-    font-size: 18px;
+.gallery-user-filter-clear {
+    margin-left: auto;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(230, 81, 0, 0.14);
+    background: rgba(255, 255, 255, 0.82);
+    font-size: 11px;
     line-height: 1;
     color: #e65100;
+    font-weight: 800;
     cursor: pointer;
 }
 
@@ -3689,14 +3707,14 @@ textarea {
 .gallery-header { 
     display: flex; 
     align-items: center; 
-    gap: 10px; 
+    gap: 8px; 
     padding: 12px 14px 10px; 
     border-bottom: none; 
 }
 
 .gallery-avatar {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: var(--white);
     display: flex;
@@ -3717,11 +3735,20 @@ textarea {
     flex-direction: column; 
     flex: 1; 
     min-width: 0; 
+    gap: 2px;
+}
+
+.gallery-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
 .gallery-name { 
-    font-weight: 600; 
-    font-size: 13px; 
+    font-weight: 700; 
+    font-size: 12px; 
     color: var(--gray-900); 
     white-space: nowrap; 
     overflow: hidden; 
@@ -3729,10 +3756,22 @@ textarea {
     letter-spacing: -0.2px;
 }
 
+.gallery-relationship-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #f7f3ec;
+    color: #7a624a;
+    font-size: 10px;
+    font-weight: 800;
+}
+
 .gallery-date { 
-    font-size: 11px; 
+    font-size: 10px; 
     color: var(--gray-400); 
-    margin-top: 2px; 
+    margin-top: 0; 
 }
 
 .gallery-post-meta {
@@ -4035,12 +4074,12 @@ textarea {
 .friend-btn { 
     background: none; 
     border: 1px solid var(--primary-color); 
-    font-size: 12px; 
+    font-size: 11px; 
     cursor: pointer; 
     color: var(--primary-color); 
     font-weight: 700; 
-    padding: 4px 10px; 
-    border-radius: 8px; 
+    padding: 3px 9px; 
+    border-radius: 999px; 
     margin-left: auto;
     transition: all 0.15s;
 }
@@ -4059,10 +4098,10 @@ textarea {
 .post-menu-btn {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--gray-500);
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 6px;
     border-radius: 50%;
     line-height: 1;
     letter-spacing: 2px;
@@ -4439,6 +4478,10 @@ textarea {
     .gallery-header {
         padding-left: 14px;
         padding-right: 14px;
+    }
+
+    .gallery-user-filter-clear {
+        width: 100%;
     }
 
     .gallery-actions {
@@ -6585,6 +6628,10 @@ body.dark-mode .gallery-card { border-bottom-color: var(--border-color); }
 body.dark-mode .gallery-avatar {
     background-image: linear-gradient(#1D1B20, #1D1B20), linear-gradient(135deg, #F77737, #E1306C, #833AB4);
 }
+body.dark-mode .gallery-relationship-chip {
+    background: rgba(255,255,255,0.06);
+    color: #D5C4B0;
+}
 body.dark-mode .gallery-photos { background: #2B2830; }
 body.dark-mode .gallery-photos img { background: #242128; }
 body.dark-mode .comment-text { color: #C0BCC6; }
@@ -7007,8 +7054,16 @@ body.dark-mode .gallery-user-filter-bar {
     background: #2E2518;
     border-color: #5C4A2E;
 }
-body.dark-mode .gallery-user-filter-bar span,
-body.dark-mode .gallery-user-filter-bar button { color: #FFB74D; }
+body.dark-mode #gallery-user-filter-label,
+body.dark-mode .gallery-user-filter-clear { color: #FFB74D; }
+body.dark-mode .gallery-user-filter-kicker {
+    background: rgba(255,255,255,0.06);
+    color: #FFD18A;
+}
+body.dark-mode .gallery-user-filter-clear {
+    background: rgba(255,255,255,0.06);
+    border-color: #5C4A2E;
+}
 body.dark-mode .gallery-card {
     background: #211f25;
     border-color: #39343c;

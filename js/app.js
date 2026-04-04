@@ -1226,7 +1226,7 @@ window.setGalleryUserFilter = function (userId, userName) {
     const bar = document.getElementById('gallery-user-filter-bar');
     const label = document.getElementById('gallery-user-filter-label');
     if (bar) bar.style.display = 'flex';
-    if (label) label.textContent = `👤 ${userName}님의 게시물만 보는 중`;
+    if (label) label.textContent = userName;
     renderFeedOnly();
     // 갤러리 영역 상단으로 스크롤
     document.getElementById('gallery-user-filter-bar')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -7019,6 +7019,7 @@ function buildGalleryCard(item, myId) {
     const streak = data.currentStreak || 0;
     const streakEmoji = streak >= 100 ? '👑' : streak >= 60 ? '💎' : streak >= 30 ? '⭐' : streak >= 7 ? '🔥' : '';
     const streakHtml = streakEmoji ? `<span class="streak-badge" title="${streak}일 연속 인증">${streakEmoji} ${streak}일</span>` : '';
+    const relationshipHtml = isFriend ? '<span class="gallery-relationship-chip">친구</span>' : '';
 
     // 게스트 모드: 반응/댓글 입력 숨김, 친구 버튼 숨김
     const friendBtnHtml = isGuest ? '' : (data.userId !== myId ? `<button class="friend-btn ${isFriend ? 'is-friend' : ''}" onclick="toggleFriend('${safeUserId}')">${isFriend ? '✕' : '+ 친구'}</button>` : '');
@@ -7076,8 +7077,12 @@ function buildGalleryCard(item, myId) {
         <div class="gallery-header">
             <div class="gallery-avatar" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">${avatarInitial}</div>
             <div class="gallery-header-info" onclick="setGalleryUserFilter('${safeUserId}','${safeName}')" style="cursor:pointer;" title="${safeName}님의 게시물만 보기">
-                <span class="gallery-name">${isFriend ? '⭐ ' : ''}${safeName}</span>
-                <span class="gallery-date">${data.date.replace(/-/g, '. ')}${streakHtml}</span>
+                <div class="gallery-name-row">
+                    <span class="gallery-name">${safeName}</span>
+                    ${relationshipHtml}
+                    ${streakHtml}
+                </div>
+                <span class="gallery-date">${data.date.replace(/-/g, '. ')}</span>
             </div>
             ${friendBtnHtml}
             ${postMenuHtml}
