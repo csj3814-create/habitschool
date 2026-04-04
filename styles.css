@@ -2474,7 +2474,7 @@ textarea {
 }
 
 .share-title { 
-    font-size: 14px; 
+    font-size: 13px; 
     color: #E65100; 
     font-weight: 900; 
     margin: 0; 
@@ -2620,13 +2620,14 @@ textarea {
 }
 
 .share-footer { 
-    font-size: 10px; 
+    font-size: 11px; 
     color: #BF360C; 
     font-weight: bold; 
     background: rgba(255,255,255,0.85); 
-    padding: 3px 10px; 
+    padding: 4px 10px; 
     border-radius: 12px; 
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    text-align: center;
 }
 
 .btn-share-action { 
@@ -2768,6 +2769,35 @@ textarea {
 
 .gallery-hero-action.primary .gallery-hero-action-text span {
     color: rgba(255,255,255,0.86);
+}
+
+.gallery-privacy-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.62);
+    border: 1px solid rgba(255, 224, 178, 0.9);
+}
+
+.gallery-privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #fff3d6;
+    color: #b55a00;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.gallery-privacy-text {
+    font-size: 12px;
+    color: #765d42;
+    font-weight: 700;
 }
 
 .gallery-hero-stats {
@@ -6125,6 +6155,15 @@ body.dark-mode .gallery-hero-title,
 body.dark-mode .gallery-feed-heading h3 { color: #F4EEE6; }
 body.dark-mode .gallery-hero-desc,
 body.dark-mode .gallery-feed-heading p { color: #B9ADA0; }
+body.dark-mode .gallery-privacy-note {
+    background: rgba(255,255,255,0.04);
+    border-color: #43372f;
+}
+body.dark-mode .gallery-privacy-badge {
+    background: rgba(255, 183, 77, 0.12);
+    color: #FFCC80;
+}
+body.dark-mode .gallery-privacy-text { color: #C9B39A; }
 body.dark-mode .gallery-hero-action {
     background: rgba(255,255,255,0.04);
     border-color: #43372f;
