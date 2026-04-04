@@ -6744,7 +6744,7 @@ function renderCommentList(docId, comments) {
     if (!list) return;
     const myId = auth.currentUser ? auth.currentUser.uid : '';
     const isExpanded = list.dataset.expanded === 'true';
-    const maxShow = isExpanded ? comments.length : 2;
+    const maxShow = isExpanded ? comments.length : 1;
     const visibleComments = comments.slice(0, maxShow);
 
     let html = '';
@@ -6756,7 +6756,7 @@ function renderCommentList(docId, comments) {
         html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}</div>`;
     });
 
-    if (comments.length > 2) {
+    if (comments.length > 1) {
         const toggleText = isExpanded ? '댓글 접기' : `댓글 ${comments.length}개 모두 보기`;
         html += `<button class="comment-toggle-btn" onclick="toggleComments('${escapeHtml(docId)}')">${toggleText}</button>`;
     }
@@ -6988,7 +6988,7 @@ function buildGalleryCard(item, myId) {
     const safeDocId = escapeHtml(item.id || '');
 
     let commentsHtml = '';
-    const showComments = comments.slice(0, 2);
+    const showComments = comments.slice(0, 1);
     showComments.forEach((c, idx) => {
         const cName = escapeHtml(c.userName || '익명');
         const cText = escapeHtml(c.text || '');
@@ -6997,15 +6997,17 @@ function buildGalleryCard(item, myId) {
         const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
         commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}${reportBtn}</div>`;
     });
-    if (comments.length > 2) {
+    if (comments.length > 1) {
         commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
     }
 
     const avatarInitial = (data.userName || '?').charAt(0);
-    const totalReactions = cHeart + cFire + cClap;
-    const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
     const pointTotal = getGalleryItemPointTotal(data);
     const typeLabels = getGalleryTypeLabels(data, media);
+    const heartCountHtml = cHeart > 0 ? `<span class="action-count">${cHeart}</span>` : '';
+    const fireCountHtml = cFire > 0 ? `<span class="action-count">${cFire}</span>` : '';
+    const clapCountHtml = cClap > 0 ? `<span class="action-count">${cClap}</span>` : '';
+    const commentCountHtml = commentCount > 0 ? `<span class="action-count" id="comment-count-${safeDocId}">${commentCount}</span>` : `<span class="action-count is-empty" id="comment-count-${safeDocId}"></span>`;
     const metaHtml = (pointTotal > 0 || typeLabels.length > 0)
         ? `<div class="gallery-post-meta">
             ${pointTotal > 0 ? `<span class="gallery-point-badge">🅿️ ${pointTotal}P</span>` : ''}
@@ -7044,16 +7046,16 @@ function buildGalleryCard(item, myId) {
 
     const actionsHtml = isGuest
         ? `<div class="gallery-actions guest-actions">
-            <span class="action-btn"><span>❤️</span><span class="action-label">좋아요</span>${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</span>
-            <span class="action-btn"><span>🔥</span><span class="action-label">격려</span>${cFire > 0 ? ` <span>${cFire}</span>` : ''}</span>
-            <span class="action-btn"><span>👏</span><span class="action-label">응원</span>${cClap > 0 ? ` <span>${cClap}</span>` : ''}</span>
-            <span class="action-btn"><span>💬</span><span class="action-label">댓글</span>${commentCount > 0 ? ` <span>${commentCount}</span>` : ''}</span>
+            <span class="action-btn"><span>❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</span>
+            <span class="action-btn"><span>🔥</span><span class="action-label">격려</span>${fireCountHtml}</span>
+            <span class="action-btn"><span>👏</span><span class="action-label">응원</span>${clapCountHtml}</span>
+            <span class="action-btn"><span>💬</span><span class="action-label">댓글</span>${commentCountHtml}</span>
            </div>`
         : `<div class="gallery-actions">
-            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span>❤️</span><span class="action-label">좋아요</span>${cHeart > 0 ? ` <span>${cHeart}</span>` : ''}</button>
-            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span>🔥</span><span class="action-label">격려</span>${cFire > 0 ? ` <span>${cFire}</span>` : ''}</button>
-            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span>👏</span><span class="action-label">응원</span>${cClap > 0 ? ` <span>${cClap}</span>` : ''}</button>
-            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span>💬</span><span class="action-label">댓글</span>${commentCount > 0 ? ` <span id="comment-count-${safeDocId}">${commentCount}</span>` : `<span id="comment-count-${safeDocId}"></span>`}</button>
+            <button class="action-btn ${aHeart}" onclick="toggleReaction('${safeDocId}', 'heart', this)"><span>❤️</span><span class="action-label">좋아요</span>${heartCountHtml}</button>
+            <button class="action-btn ${aFire}" onclick="toggleReaction('${safeDocId}', 'fire', this)"><span>🔥</span><span class="action-label">격려</span>${fireCountHtml}</button>
+            <button class="action-btn ${aClap}" onclick="toggleReaction('${safeDocId}', 'clap', this)"><span>👏</span><span class="action-label">응원</span>${clapCountHtml}</button>
+            <button class="action-btn comment-btn" onclick="document.getElementById('comment-input-${safeDocId}').focus()"><span>💬</span><span class="action-label">댓글</span>${commentCountHtml}</button>
            </div>`;
 
     const commentSectionHtml = isGuest
@@ -7083,7 +7085,6 @@ function buildGalleryCard(item, myId) {
         ${metaHtml}
         ${contentHtml}
         ${actionsHtml}
-        ${reactionSummaryHtml}
         ${commentSectionHtml}
     `;
     return card;
