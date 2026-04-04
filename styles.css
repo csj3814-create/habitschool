@@ -2615,6 +2615,10 @@ textarea {
     padding-top: 10px;
 }
 
+.community-detail-shell.is-open {
+    border-top: 1px dashed #E3E8EF;
+}
+
 .community-detail-toggle {
     display: flex;
     align-items: center;
@@ -2642,6 +2646,17 @@ textarea {
 
 .community-detail-body {
     padding-top: 10px;
+}
+
+.community-detail-body-always-open {
+    padding-top: 0;
+}
+
+.community-detail-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: #7A4E12;
+    margin-bottom: 10px;
 }
 
 .community-collapsible-list {
@@ -3037,9 +3052,8 @@ textarea {
         font-size: 20px;
     }
 
-    .dashboard-more-tools summary {
-        padding: 11px 12px;
-        font-size: 12px;
+    .dashboard-more-tools-head {
+        padding: 11px 12px 0;
     }
 
     .dashboard-more-tools-body {
@@ -3680,6 +3694,9 @@ textarea {
 }
 
 .gallery-hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     min-width: 0;
 }
 
@@ -3735,6 +3752,11 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    width: 100%;
+}
+
+.gallery-hero-guide-body[hidden] {
+    display: none !important;
 }
 
 .gallery-hero-actions {
@@ -3910,10 +3932,6 @@ textarea {
 
 .gallery-hero.is-collapsed {
     padding-bottom: 14px;
-}
-
-.gallery-hero.is-collapsed .gallery-hero-desc {
-    max-width: none;
 }
 
 .gallery-hero-stat {
@@ -5540,21 +5558,24 @@ textarea {
     background: #FCFCFC;
 }
 
-.dashboard-more-tools summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 12px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #555;
+.dashboard-more-tools-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px 0;
 }
 
-.dashboard-more-tools summary::-webkit-details-marker {
-    display: none;
+.dashboard-more-tools-toggle {
+    flex-shrink: 0;
 }
 
 .dashboard-more-tools-body {
     padding: 0 12px 12px;
+}
+
+.dashboard-more-tools-body[hidden] {
+    display: none !important;
 }
 
 .dashboard-more-tools .milestone-section {
@@ -5817,8 +5838,8 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
-    padding: 4px 12px;
+    min-height: 30px;
+    padding: 0 12px;
     border-radius: 999px;
     background: rgba(255,255,255,0.9);
     border: 1px solid rgba(229, 164, 88, 0.35);
@@ -5830,17 +5851,23 @@ textarea {
 
 .dashboard-hero-title {
     margin: 0;
-    font-size: 24px;
-    line-height: 1.18;
+    font-size: 22px;
+    line-height: 1.15;
     letter-spacing: -0.03em;
     color: #2A241B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dashboard-hero-body {
     margin: 6px 0 10px;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.35;
     color: #6B6256;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .dashboard-hero-body-shell[hidden] {
@@ -5851,13 +5878,13 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
-    padding: 0 10px;
+    min-height: 30px;
+    padding: 0 12px;
     border-radius: 999px;
     border: 1px solid rgba(229, 164, 88, 0.28);
     background: rgba(255,255,255,0.82);
     color: #8a5a23;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
@@ -5952,7 +5979,7 @@ textarea {
     gap: 7px;
     margin-top: 8px;
     align-items: start;
-    grid-auto-rows: minmax(0, auto);
+    grid-auto-rows: minmax(76px, auto);
     align-content: start;
 }
 
@@ -5960,8 +5987,8 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 3px;
-    min-height: 56px;
-    height: auto !important;
+    min-height: 0;
+    height: 100%;
     aspect-ratio: auto;
     justify-content: flex-start;
     padding: 8px 9px;
@@ -6076,11 +6103,11 @@ textarea {
     }
 
     .dashboard-hero-title {
-        font-size: 22px;
+        font-size: 19px;
     }
 
     .dashboard-hero-body {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .dashboard-action-strip {
@@ -6105,8 +6132,8 @@ textarea {
     .dashboard-stat-card {
         padding: 6px 8px;
         border-radius: 13px;
-        min-height: 52px;
-        height: auto !important;
+        min-height: 0;
+        height: 100%;
     }
 
     .dashboard-stat-value {
@@ -6116,6 +6143,7 @@ textarea {
     .dashboard-hero-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+        grid-auto-rows: minmax(72px, auto);
     }
 }
 
@@ -6127,8 +6155,8 @@ textarea {
 
     .dashboard-stat-card {
         padding: 6px 7px;
-        min-height: 48px;
-        height: auto !important;
+        min-height: 0;
+        height: 100%;
     }
 
     .dashboard-stat-label {
@@ -6146,10 +6174,10 @@ textarea {
     }
 
     .record-flow-head-side {
-        width: 100%;
+        width: auto;
         flex-direction: row;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
     }
 
     .record-flow-toggle {
@@ -8194,8 +8222,13 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
         border-radius: 16px;
     }
 
+    .record-flow-topline {
+        margin-bottom: 8px;
+    }
+
     .record-flow-head {
         flex-direction: column;
+        gap: 8px;
     }
 
     .record-flow-badge {
@@ -8203,7 +8236,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     }
 
     .record-flow-card h3 {
-        font-size: 17px;
+        font-size: 16px;
     }
 
     .record-flow-btn {
@@ -9096,6 +9129,14 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     box-shadow: 0 10px 24px rgba(90, 78, 58, 0.06);
 }
 
+.record-flow-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
 .record-flow-head {
     display: flex;
     align-items: flex-start;
@@ -9120,16 +9161,16 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-card h3 {
-    margin: 6px 0 6px;
-    font-size: 19px;
+    margin: 0 0 6px;
+    font-size: 18px;
     line-height: 1.3;
     color: #2C251C;
 }
 
 .record-flow-card p {
     margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.5;
     color: #6A6359;
 }
 

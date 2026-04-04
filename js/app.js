@@ -76,6 +76,7 @@ window.focusGalleryFeed = focusGalleryFeed;
 window.toggleGalleryHeroGuide = toggleGalleryHeroGuide;
 window.toggleRecordFlowCard = toggleRecordFlowCard;
 window.toggleDashboardHero = toggleDashboardHero;
+window.toggleDashboardMoreTools = toggleDashboardMoreTools;
 window.handleDashboardMoreToolsToggle = handleDashboardMoreToolsToggle;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
@@ -1160,25 +1161,22 @@ function setDashboardMoreCollapsed(collapsed, persist = true) {
     _dashboardMoreCollapsed = !!collapsed;
     if (persist) saveGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY, _dashboardMoreCollapsed);
 
-    const details = document.getElementById('dashboard-more-tools');
-    if (details) details.open = !_dashboardMoreCollapsed;
+    const shell = document.getElementById('dashboard-more-tools');
+    const body = document.getElementById('dashboard-more-tools-body');
+    if (shell) shell.classList.toggle('is-collapsed', _dashboardMoreCollapsed);
+    if (body) body.hidden = _dashboardMoreCollapsed;
     updateDashboardMoreToolsSummary();
 }
 
 function updateDashboardMoreToolsSummary() {
-    const summary = document.getElementById('dashboard-more-tools-summary');
-    if (!summary) return;
-    summary.textContent = _dashboardMoreCollapsed
-        ? '미션 배지 · 커뮤니티 · 마일스톤 펼치기'
-        : '미션 배지 · 커뮤니티 · 마일스톤 접기';
+    const toggle = document.getElementById('dashboard-more-tools-toggle');
+    if (!toggle) return;
+    toggle.textContent = _dashboardMoreCollapsed ? '전체 펼치기' : '전체 접기';
+    toggle.setAttribute('aria-expanded', String(!_dashboardMoreCollapsed));
 }
 
 function handleDashboardMoreToolsToggle() {
-    const details = document.getElementById('dashboard-more-tools');
-    if (!details) return;
-    _dashboardMoreCollapsed = !details.open;
-    saveGuideCollapsedPreference(DASHBOARD_MORE_TOOLS_COLLAPSE_KEY, _dashboardMoreCollapsed);
-    updateDashboardMoreToolsSummary();
+    setDashboardMoreCollapsed(!_dashboardMoreCollapsed, true);
 }
 
 function syncDashboardPanels() {
@@ -1193,6 +1191,14 @@ function toggleDashboardHero(forceExpanded = null) {
         ? !forceExpanded
         : !_dashboardHeroCollapsed;
     setDashboardHeroCollapsed(nextCollapsed, true);
+}
+
+function toggleDashboardMoreTools(forceExpanded = null) {
+    ensureDashboardPanelState();
+    const nextCollapsed = typeof forceExpanded === 'boolean'
+        ? !forceExpanded
+        : !_dashboardMoreCollapsed;
+    setDashboardMoreCollapsed(nextCollapsed, true);
 }
 
 function updateTodayStatusCard(todayAwarded = {}, streakCount = 0) {
@@ -4996,6 +5002,7 @@ function renderMissionFocusState({
     totalMissions = 0,
     completedMissions = 0
 }) {
+    const stripEl = document.getElementById('mission-focus-strip');
     const kickerEl = document.getElementById('mission-focus-kicker');
     const titleEl = document.getElementById('mission-focus-title');
     const buttonEl = document.getElementById('mission-focus-btn');
@@ -5007,30 +5014,30 @@ function renderMissionFocusState({
     const nextTab = getNextRecordTab(todayAwarded);
     const nextLabel = nextTab === 'diet' ? '식단' : nextTab === 'exercise' ? '운동' : nextTab === 'sleep' ? '마음' : '공유';
 
+    if (stripEl) stripEl.style.display = isWeekActive && totalMissions > 0 ? 'none' : 'flex';
+
     let tags = [`오늘 ${doneToday}/3 완료`];
 
     if (!isWeekActive || totalMissions === 0) {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = '이번 주 미션 1~3개만 고르세요.';
+        titleEl.textContent = '이번 주 미션 1~3개 고르기';
         buttonEl.textContent = '미션 정하기';
         _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
         tags = ['미션 최대 3개'];
-        buttonEl.style.display = 'none';
+        buttonEl.style.display = '';
     } else if (remainingToday > 0) {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 다음은 ${nextLabel}`;
+        titleEl.textContent = `다음은 ${nextLabel}`;
         buttonEl.textContent = `${nextLabel} 기록`;
         _missionPrimaryActionState = { type: 'record', tab: nextTab };
-        tags.push(`주간 ${completedMissions}/${totalMissions}`);
-        tags.push(`달성 ${overallRate}%`);
+        tags = [];
         buttonEl.style.display = '';
     } else {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = `${completedMissions}/${totalMissions} 완료 · 오늘 기록 끝`;
+        titleEl.textContent = '오늘 기록 끝';
         buttonEl.textContent = '갤러리 보기';
         _missionPrimaryActionState = { type: 'share', tab: 'gallery' };
-        tags.push(`주간 ${completedMissions}/${totalMissions}`);
-        tags.push(`달성 ${overallRate}%`);
+        tags = [];
         buttonEl.style.display = '';
     }
 
@@ -5114,21 +5121,21 @@ function _renderDashboardHeroState({
 
     if (focusTitle) {
         if (remainingToday === 0) {
-            focusTitle.textContent = '오늘 루틴을 모두 마쳤어요. 좋은 흐름을 이어가고 있네요.';
+            focusTitle.textContent = '오늘 루틴 완료';
         } else if (focusMeta) {
-            focusTitle.textContent = `${focusMeta.name} 기록으로 오늘의 흐름을 이어가보세요.`;
+            focusTitle.textContent = `${focusMeta.name} 기록 이어가기`;
         } else {
-            focusTitle.textContent = '오늘 한 가지 기록으로 흐름을 시작해보세요.';
+            focusTitle.textContent = '오늘 한 가지 기록 시작';
         }
     }
 
     if (focusBody) {
         if (remainingToday === 0) {
             focusBody.textContent = isWeekActive
-                ? `이번 주 미션 달성률은 ${overallRate}%예요. 오늘 기록은 끝났으니 갤러리 공유나 내일 준비로 이어가면 좋습니다.`
-                : '오늘 할 일을 모두 마쳤어요. 내 기록을 돌아보거나 갤러리에서 다른 사람의 흐름을 살펴보세요.';
+                ? `오늘 기록 끝 · 이번 주 ${overallRate}% 진행`
+                : '오늘 기록 끝 · 갤러리나 내 기록 보기';
         } else if (focusMeta) {
-            focusBody.textContent = `${focusMeta.focusSub}. 오늘 ${completedToday}/3 완료 · 남은 행동 ${remainingToday}개`;
+            focusBody.textContent = `오늘 ${completedToday}/3 완료 · 남은 행동 ${remainingToday}개`;
         }
     }
 
@@ -5141,7 +5148,7 @@ function _renderDashboardHeroState({
 
     if (weekSummaryEl) {
         if (isWeekActive && totalMissions > 0) {
-            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록 · 미션 ${completedMissions}/${totalMissions} · 달성 ${overallRate}%`;
+            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록 · 달성 ${overallRate}%`;
         } else if (activeDays > 0) {
             weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록 중이에요.`;
         } else {
@@ -10173,9 +10180,9 @@ renderGroupChallengeFromData = function(s) {
             <div class="group-stat-item"><span class="group-stat-num">${s.totalReactions || 0}개</span><span class="group-stat-label">보낸 응원</span></div>
         </div>
         ${s.bestStreak >= 2 ? `<div class="community-highlight">🔥 연속 기록: <strong>${s.bestStreakName}</strong> ${s.bestStreak}일</div>` : ''}
-        <details class="community-detail-shell">
-            <summary class="community-detail-toggle">이번 달 상세 보기</summary>
-            <div class="community-detail-body">
+        <div class="community-detail-shell is-open">
+            <div class="community-detail-body community-detail-body-always-open">
+                <div class="community-detail-title">이번 달 상세 보기</div>
                 <div class="category-kings">
                     ${s.dietKing?.count > 0 ? `<span class="cat-king">🍽 <strong>${s.dietKing.name}</strong> ${s.dietKing.count}일</span>` : ''}
                     ${s.exerciseKing?.count > 0 ? `<span class="cat-king">🏃 <strong>${s.exerciseKing.name}</strong> ${s.exerciseKing.count}일</span>` : ''}
@@ -10196,11 +10203,11 @@ renderGroupChallengeFromData = function(s) {
                     <div class="mvp-reward-info">기록과 응원 흐름으로 매월 자동 집계돼요.</div>
                 ` : ''}
                 ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
-                <div class="community-inline-actions" style="margin-top:10px; margin-bottom:0;">
-                    <a href="community-history.html" class="community-inline-btn">📚 지난 흐름</a>
+                <div class="community-history-btn-wrap">
+                    <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
                 </div>
             </div>
-        </details>
+        </div>
     `;
 };
 
