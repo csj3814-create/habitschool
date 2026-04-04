@@ -77,8 +77,14 @@ window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
 window.shareApp = shareApp;
 window.changeDisplayName = changeDisplayName;
+window.toggleChatbotLinkFallback = toggleChatbotLinkFallback;
 window.generateChatbotLinkCode = generateChatbotLinkCode;
 window.copyChatbotLinkCode = copyChatbotLinkCode;
+window.cancelChatbotConnect = cancelChatbotConnect;
+window.closeChatbotConnectModal = closeChatbotConnectModal;
+window.confirmChatbotConnect = confirmChatbotConnect;
+window.maybeHandleChatbotConnect = maybeHandleChatbotConnect;
+window.handleLoggedOutChatbotConnect = handleLoggedOutChatbotConnect;
 window.requestFriend = requestFriend;
 window.requestFriendByCode = requestFriendByCode;
 window.respondFriendRequest = respondFriendRequest;
@@ -105,7 +111,16 @@ let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
 let _pendingFriendRequestId = null;
+const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
+const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
+let _chatbotLinkFallbackExpanded = false;
+let _chatbotConnectToken = '';
+let _chatbotConnectInfo = null;
+let _chatbotConnectInfoPromise = null;
+let _chatbotConnectModalToken = '';
+let _chatbotConnectCompleting = false;
+let _chatbotConnectLoginPromptShown = false;
 
 function normalizeShareTemplate(raw) {
     return SHARE_TEMPLATE_OPTIONS.includes(raw) ? raw : 'grid';
@@ -1079,12 +1094,283 @@ function formatDateTimeForUi(value) {
     });
 }
 
+function getChatbotConnectTokenFromUrl() {
+    try {
+        return String(new URLSearchParams(window.location.search).get('chatbotConnectToken') || '').trim();
+    } catch (_) {
+        return '';
+    }
+}
+
+function getPendingChatbotConnectToken() {
+    const urlToken = getChatbotConnectTokenFromUrl();
+    if (urlToken) {
+        _chatbotConnectToken = urlToken;
+        try {
+            localStorage.setItem(CHATBOT_CONNECT_PENDING_KEY, urlToken);
+        } catch (_) { }
+        return urlToken;
+    }
+
+    if (_chatbotConnectToken) return _chatbotConnectToken;
+
+    try {
+        const stored = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
+        if (stored) {
+            _chatbotConnectToken = stored;
+            return stored;
+        }
+    } catch (_) { }
+
+    return '';
+}
+
+function clearChatbotConnectTokenFromUrl() {
+    _chatbotConnectToken = '';
+    _chatbotConnectInfo = null;
+    _chatbotConnectInfoPromise = null;
+    _chatbotConnectModalToken = '';
+    _chatbotConnectCompleting = false;
+    _chatbotConnectLoginPromptShown = false;
+
+    try {
+        localStorage.removeItem(CHATBOT_CONNECT_PENDING_KEY);
+    } catch (_) { }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('chatbotConnectToken');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+function setChatbotLinkFallbackExpanded(force) {
+    _chatbotLinkFallbackExpanded = typeof force === 'boolean'
+        ? force
+        : !_chatbotLinkFallbackExpanded;
+    const panel = document.getElementById('chatbot-link-fallback-panel');
+    const toggle = document.getElementById('chatbot-link-fallback-toggle');
+    if (panel) panel.style.display = _chatbotLinkFallbackExpanded ? 'block' : 'none';
+    if (toggle) toggle.textContent = _chatbotLinkFallbackExpanded ? '등록 코드 접기' : '등록 코드로 연결하기';
+}
+
+function toggleChatbotLinkFallback() {
+    setChatbotLinkFallbackExpanded();
+}
+
+function getChatbotConnectErrorMessage(code) {
+    switch (String(code || '').toLowerCase()) {
+        case 'login_required':
+        case 'missing_auth':
+        case 'unauthenticated':
+            return '로그인 후 해빛코치 연결을 완료해 주세요.';
+        case 'expired':
+        case 'token_expired':
+        case 'invalid_token':
+        case 'not_found':
+        case 'missing_token':
+            return '연결 링크가 만료되었어요. 카카오톡 1:1 채팅에서 !연결을 다시 입력해 주세요.';
+        case 'already_completed':
+        case 'already_used':
+        case 'completed':
+            return '이미 사용된 연결 링크예요. 카카오톡 1:1 채팅에서 !연결을 다시 입력해 주세요.';
+        case 'unauthorized':
+        case 'forbidden':
+        case 'permission-denied':
+            return '현재 로그인한 계정으로는 연결할 수 없어요. 로그인 계정을 다시 확인해 주세요.';
+        default:
+            return '해빛코치 연결을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.';
+    }
+}
+
+function shouldClearChatbotConnectToken(code) {
+    return [
+        'expired',
+        'token_expired',
+        'invalid_token',
+        'not_found',
+        'missing_token',
+        'already_completed',
+        'already_used',
+        'completed'
+    ].includes(String(code || '').toLowerCase());
+}
+
+async function fetchChatbotConnectTokenInfo(token) {
+    if (!token) throw Object.assign(new Error('missing_token'), { code: 'missing_token' });
+    if (_chatbotConnectInfo && _chatbotConnectInfo.token === token) return _chatbotConnectInfo;
+    if (_chatbotConnectInfoPromise) return _chatbotConnectInfoPromise;
+
+    _chatbotConnectInfoPromise = (async () => {
+        const response = await fetch(`${CHATBOT_CONNECT_API_ORIGIN}/api/chatbot-connect/${encodeURIComponent(token)}`, {
+            method: 'GET',
+            cache: 'no-store'
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data?.ok) {
+            const error = new Error(data?.message || 'invalid_token');
+            error.code = data?.code || `http_${response.status}`;
+            throw error;
+        }
+        if (data.status && data.status !== 'pending') {
+            const error = new Error(data.status);
+            error.code = data.status === 'completed' ? 'already_completed' : data.status;
+            throw error;
+        }
+        _chatbotConnectInfo = { ...data, token };
+        return _chatbotConnectInfo;
+    })();
+
+    try {
+        return await _chatbotConnectInfoPromise;
+    } finally {
+        _chatbotConnectInfoPromise = null;
+    }
+}
+
+async function completeChatbotConnectToken(token) {
+    const user = auth.currentUser;
+    if (!user) throw Object.assign(new Error('login_required'), { code: 'login_required' });
+
+    const idToken = await user.getIdToken();
+    const response = await fetch(`${CHATBOT_CONNECT_API_ORIGIN}/api/chatbot-connect/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ token })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data?.ok) {
+        const error = new Error(data?.message || 'connect_failed');
+        error.code = data?.code || `http_${response.status}`;
+        throw error;
+    }
+    return data;
+}
+
+function closeChatbotConnectModal() {
+    const modal = document.getElementById('chatbot-connect-modal');
+    const confirmBtn = document.getElementById('chatbot-connect-confirm-btn');
+    if (modal) modal.style.display = 'none';
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '연결하기';
+    }
+    _chatbotConnectModalToken = '';
+    document.body.style.overflow = '';
+}
+
+function cancelChatbotConnect() {
+    clearChatbotConnectTokenFromUrl();
+    closeChatbotConnectModal();
+}
+
+function openChatbotConnectModal(info) {
+    const modal = document.getElementById('chatbot-connect-modal');
+    const titleEl = document.getElementById('chatbot-connect-modal-title');
+    const copyEl = document.getElementById('chatbot-connect-modal-copy');
+    const kakaoNameEl = document.getElementById('chatbot-connect-kakao-name');
+    const appAccountEl = document.getElementById('chatbot-connect-app-account');
+    const expiryEl = document.getElementById('chatbot-connect-expiry');
+    if (!modal || !titleEl || !copyEl || !kakaoNameEl || !appAccountEl || !expiryEl) return;
+
+    const currentUser = auth.currentUser;
+    const appAccount = currentUser?.email || currentUser?.displayName || '현재 로그인 계정';
+    const kakaoName = info?.displayName || '카카오 사용자';
+    titleEl.textContent = `카카오 계정 "${kakaoName}"와 연결할까요?`;
+    copyEl.textContent = '현재 로그인한 해빛스쿨 계정과 연결됩니다. 확인하면 카카오 1:1 채팅과 바로 이어집니다.';
+    kakaoNameEl.textContent = kakaoName;
+    appAccountEl.textContent = appAccount;
+    expiryEl.textContent = formatDateTimeForUi(info?.expiresAt);
+    _chatbotConnectModalToken = info?.token || '';
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+async function confirmChatbotConnect() {
+    const token = _chatbotConnectModalToken || getPendingChatbotConnectToken();
+    if (!token || _chatbotConnectCompleting) return;
+
+    const confirmBtn = document.getElementById('chatbot-connect-confirm-btn');
+    _chatbotConnectCompleting = true;
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '연결 중...';
+    }
+
+    try {
+        const result = await completeChatbotConnectToken(token);
+        showToast(result?.alreadyCompleted
+            ? '이미 연결된 카카오 계정이에요.'
+            : `해빛코치 연결이 완료됐어요${result?.kakaoDisplayName ? ` · ${result.kakaoDisplayName}` : ''}`);
+        clearChatbotConnectTokenFromUrl();
+        closeChatbotConnectModal();
+        await loadChatbotLinkStatus();
+    } catch (error) {
+        console.error('chatbot connect complete error:', error);
+        showToast(getChatbotConnectErrorMessage(error.code || error.message));
+        if (shouldClearChatbotConnectToken(error.code || error.message)) {
+            clearChatbotConnectTokenFromUrl();
+            closeChatbotConnectModal();
+        }
+    } finally {
+        _chatbotConnectCompleting = false;
+        if (confirmBtn && _chatbotConnectModalToken) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '연결하기';
+        }
+    }
+}
+
+function handleLoggedOutChatbotConnect() {
+    const token = getPendingChatbotConnectToken();
+    if (!token || auth.currentUser || _chatbotConnectLoginPromptShown) return;
+    _chatbotConnectLoginPromptShown = true;
+    document.getElementById('login-modal').style.display = 'flex';
+    showToast('로그인 후 해빛코치 연결을 바로 이어갈게요.');
+}
+
+async function maybeHandleChatbotConnect() {
+    const token = getPendingChatbotConnectToken();
+    if (!token) return false;
+
+    if (!auth.currentUser) {
+        handleLoggedOutChatbotConnect();
+        return false;
+    }
+
+    if (getVisibleTabName() !== 'profile') {
+        openTab('profile', false);
+        return true;
+    }
+
+    if (_chatbotConnectCompleting || _chatbotConnectModalToken === token) {
+        return true;
+    }
+
+    try {
+        const info = await fetchChatbotConnectTokenInfo(token);
+        openChatbotConnectModal(info);
+        return true;
+    } catch (error) {
+        console.error('chatbot connect token error:', error);
+        showToast(getChatbotConnectErrorMessage(error.code || error.message));
+        if (shouldClearChatbotConnectToken(error.code || error.message)) {
+            clearChatbotConnectTokenFromUrl();
+            closeChatbotConnectModal();
+        }
+        return false;
+    }
+}
+
 function renderChatbotLinkStatus(userData = {}) {
     const statusEl = document.getElementById('chatbot-link-status');
+    const fallbackToggle = document.getElementById('chatbot-link-fallback-toggle');
     const codeBox = document.getElementById('chatbot-link-code-box');
     const codeEl = document.getElementById('chatbot-link-code');
     const expiryEl = document.getElementById('chatbot-link-expiry');
     const lastUsedEl = document.getElementById('chatbot-link-last-used');
+    const copyBtn = document.querySelector('.chatbot-link-copy-btn');
     if (!statusEl || !codeBox || !codeEl || !expiryEl || !lastUsedEl) return;
 
     const code = String(userData.chatbotLinkCode || '').trim().toUpperCase();
@@ -1093,15 +1379,21 @@ function renderChatbotLinkStatus(userData = {}) {
     const isActive = !!code && !!expiresAt && expiresAt.getTime() > Date.now();
 
     if (isActive) {
-        statusEl.textContent = '카카오톡 해빛코치에서 !등록 코드 로 입력해 주세요.';
+        statusEl.innerHTML = '기본 연결은 <strong>!연결</strong>이에요. 버튼 연결이 어려울 때만 아래 보조 등록 코드를 사용하세요.';
         codeBox.style.display = 'block';
         codeEl.textContent = code;
         expiryEl.textContent = `만료 시간: ${formatDateTimeForUi(expiresAt)}`;
     } else {
-        statusEl.textContent = '아직 만든 카카오 등록 코드가 없어요.';
+        statusEl.innerHTML = '카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 앱 버튼으로 바로 연결돼요.';
         codeBox.style.display = 'none';
         codeEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
+    }
+
+    if (copyBtn) copyBtn.disabled = !isActive;
+    if (fallbackToggle && !fallbackToggle.dataset.bound) {
+        fallbackToggle.dataset.bound = '1';
+        setChatbotLinkFallbackExpanded(false);
     }
 
     lastUsedEl.textContent = lastUsedAt
@@ -1421,11 +1713,12 @@ async function generateChatbotLinkCode() {
     try {
         const fn = httpsCallable(functions, 'generateChatbotLinkCode');
         const result = await fn();
+        setChatbotLinkFallbackExpanded(true);
         renderChatbotLinkStatus({
             chatbotLinkCode: result.data?.code,
             chatbotLinkCodeExpiresAt: result.data?.expiresAt
         });
-        showToast(`카카오 등록 코드 ${result.data?.code || ''} 가 생성됐어요. 카카오톡에서 !등록 코드 로 입력해 주세요.`);
+        showToast(`카카오 등록 코드 ${result.data?.code || ''} 가 생성됐어요. 버튼 연결이 어려우면 카카오톡에서 !등록 코드 로 입력해 주세요.`);
     } catch (error) {
         console.error('generate chatbot link code error:', error);
         showToast(`⚠️ ${error.message || '카카오 등록 코드 생성에 실패했습니다.'}`);
@@ -1435,7 +1728,7 @@ async function generateChatbotLinkCode() {
 async function copyChatbotLinkCode() {
     const code = document.getElementById('chatbot-link-code')?.textContent?.trim();
     if (!code || code === '-') {
-        showToast('먼저 카카오 등록 코드를 만들어 주세요.');
+        showToast('먼저 보조 등록 코드를 만들어 주세요.');
         return;
     }
 
@@ -3689,6 +3982,9 @@ function openTab(tabName, pushState = true) {
             });
             loadMyFriendships(true).catch(error => {
                 console.warn('친구 요청 상태 로드 실패:', error.message);
+            });
+            maybeHandleChatbotConnect().catch(error => {
+                console.warn('챗봇 연결 처리 실패:', error.message);
             });
         }
     } else if (tabName === 'gallery') {

@@ -797,3 +797,12 @@ bsc: {
 - [x] 브라우저 Storage fetch 경로 제거 후 callable 기반 공유 미디어 준비로 전환
 - [x] 공유 미리보기 상태 전환(display/hidden) 분리 및 CTA 정렬 보정
 - [x] 테스트: npm test, node --check functions/index.js, esbuild bundle check
+
+## 2026-04-05 해빛코치 !연결 매직링크 연동
+- [x] 가이드와 현재 챗봇 연결 UI/함수 흐름 점검
+- [ ] chatbotConnectToken URL 처리와 연결 완료 API 호출 구현
+- [ ] 프로필 카드에서 !연결 기본 / 등록 코드 fallback 구조로 정리
+- [ ] 테스트, 커밋, 푸시, staging 배포
+- [x] chatbotConnectToken URL 처리와 연결 완료 API 호출 구현
+- [x] 프로필 카드에서 !연결 기본 / 등록 코드 fallback 구조로 정리
+- [x] 테스트: npm test, esbuild(js/app.js, js/auth.js), 챗봇 API CORS 헤더 확인

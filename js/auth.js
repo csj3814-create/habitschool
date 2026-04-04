@@ -14,6 +14,12 @@ if (_refCode && /^[A-Z0-9]{6}$/i.test(_refCode)) {
     localStorage.setItem('pendingReferralCode', _refCode.toUpperCase());
 }
 
+const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
+const _chatbotConnectTokenFromUrl = String(new URLSearchParams(window.location.search).get('chatbotConnectToken') || '').trim();
+if (_chatbotConnectTokenFromUrl) {
+    localStorage.setItem(CHATBOT_CONNECT_PENDING_KEY, _chatbotConnectTokenFromUrl);
+}
+
 // WebView(인앱 브라우저) 감지
 function isWebView() {
     const ua = navigator.userAgent || navigator.vendor || '';
@@ -188,11 +194,25 @@ export function setupAuthListener(callbacks) {
             document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
 
             // 즉시 대시보드 열기 (renderDashboard가 자체 데이터 로딩 수행)
-            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            const params = new URLSearchParams(window.location.search);
+            const urlTab = params.get('tab');
+            const hashTab = window.location.hash.replace('#', '');
             const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
-            const targetTab = (urlTab && validTabs.includes(urlTab)) ? urlTab : 'dashboard';
+            const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
+            const targetTab = pendingChatbotToken
+                ? 'profile'
+                : (urlTab && validTabs.includes(urlTab))
+                    ? urlTab
+                    : (hashTab && validTabs.includes(hashTab))
+                        ? hashTab
+                        : 'dashboard';
             if (window.openTab) {
                 window.openTab(targetTab, false);
+            }
+            if (pendingChatbotToken && window.maybeHandleChatbotConnect) {
+                setTimeout(() => {
+                    window.maybeHandleChatbotConnect().catch(() => {});
+                }, 120);
             }
 
             // 식단/운동/마음 탭 데이터 로드 (백그라운드, 대시보드 렌더 차단하지 않음)
@@ -333,6 +353,12 @@ export function setupAuthListener(callbacks) {
                 window.openTab('gallery', false);
             }
             window._wasLoggedIn = false;
+            const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
+            if (pendingChatbotToken && window.handleLoggedOutChatbotConnect) {
+                setTimeout(() => {
+                    window.handleLoggedOutChatbotConnect();
+                }, 80);
+            }
 
             // 콜백 실행
             if (callbacks && callbacks.onLogout) {
