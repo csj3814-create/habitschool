@@ -2277,7 +2277,7 @@ textarea {
 /* 커뮤니티 액션 허브 */
 .community-focus-panel {
     margin-top: 14px;
-    padding: 18px;
+    padding: 16px;
     border-radius: 22px;
     background:
         radial-gradient(circle at top right, rgba(255, 193, 7, 0.22), transparent 34%),
@@ -2339,11 +2339,11 @@ textarea {
 .community-action-card {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    padding: 14px 12px;
+    padding: 12px 11px;
     border: none;
-    border-radius: 18px;
+    border-radius: 16px;
     background: rgba(255, 255, 255, 0.88);
     text-align: left;
     cursor: pointer;
@@ -2387,8 +2387,8 @@ textarea {
 
 .community-module-card {
     margin-top: 12px;
-    padding: 14px;
-    border-radius: 18px;
+    padding: 12px;
+    border-radius: 16px;
     background: var(--card-bg, #fff);
     border: 1px solid var(--border, #e8e8e8);
 }
@@ -2429,11 +2429,12 @@ textarea {
 }
 
 .community-empty-state {
-    padding: 14px;
+    padding: 12px;
     border-radius: 16px;
     background: #FAFAFA;
     border: 1px dashed #E0E0E0;
     font-size: 12px;
+    line-height: 1.55;
     color: #8A8A8A;
     text-align: center;
 }
@@ -2506,7 +2507,7 @@ textarea {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 9px 10px;
     border-radius: 14px;
     background: #FAFAFA;
     border: 1px solid #F0F0F0;
@@ -2545,16 +2546,16 @@ textarea {
 
 .community-month-summary {
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: #6D4C41;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .community-inline-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .community-detail-shell {
@@ -2873,6 +2874,11 @@ textarea {
         flex-direction: column;
     }
 
+    .mission-progress-primary-btn,
+    .mission-secondary-btn {
+        width: 100%;
+    }
+
     .community-focus-panel {
         padding: 14px;
     }
@@ -2960,9 +2966,9 @@ textarea {
 }
 
 .mission-progress-container { 
-    margin-top: 15px; 
+    margin-top: 12px; 
     border-top: 1px dashed var(--gray-200); 
-    padding-top: 15px; 
+    padding-top: 12px; 
 }
 
 .mission-progress-shell {
@@ -3073,6 +3079,10 @@ textarea {
 
 .mp-row { 
     margin-bottom: var(--spacing-md); 
+}
+
+.mp-row:last-child {
+    margin-bottom: 0;
 }
 
 .mp-label { 
