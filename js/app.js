@@ -3643,8 +3643,9 @@ window.openFriendInviteFlow = function() {
         return;
     }
 
+    window.location.hash = '#profile';
     openTab('profile');
-    setTimeout(() => {
+    const focusInviteCard = () => {
         const inviteCard = document.getElementById('profile-friend-invite-card');
         inviteCard?.scrollIntoView({
             behavior: 'smooth',
@@ -3652,7 +3653,11 @@ window.openFriendInviteFlow = function() {
         });
         inviteCard?.classList.add('is-highlighted');
         window.setTimeout(() => inviteCard?.classList.remove('is-highlighted'), 1400);
-    }, 120);
+    };
+
+    requestAnimationFrame(focusInviteCard);
+    setTimeout(focusInviteCard, 160);
+    setTimeout(focusInviteCard, 420);
 };
 
 window.handleCommunityPrimaryAction = function() {
@@ -3698,7 +3703,7 @@ function renderCommunityFocusPanel() {
         monthlyUsers
     } = _communityFocusState;
 
-    let primaryLabel = '초대 코드 보기';
+    let primaryLabel = '친구 초대';
     let stats = [];
 
     if (pendingChallenges > 0) {
@@ -3709,20 +3714,20 @@ function renderCommunityFocusPanel() {
         primaryLabel = '챌린지 응답';
     } else if (friendCount === 0) {
         _communityFocusState.primaryAction = 'invite';
-        titleEl.textContent = '친구 1명만 연결하면 함께 시작할 수 있어요.';
-        bodyEl.textContent = '프로필 초대 카드로 이동해서 코드만 보내면 됩니다.';
+        titleEl.textContent = '친구 1명만 초대하면 돼요.';
+        bodyEl.textContent = '프로필 초대 카드에서 코드만 보내면 됩니다.';
         badgeEl.textContent = '친구 0명';
-        primaryLabel = '초대 코드 보기';
+        primaryLabel = '친구 초대';
     } else if (activeChallenges === 0) {
         _communityFocusState.primaryAction = 'start';
-        titleEl.textContent = '친구가 준비됐어요.';
+        titleEl.textContent = '친구 연결은 끝났어요.';
         bodyEl.textContent = '지금은 챌린지 하나만 시작하면 됩니다.';
         badgeEl.textContent = `친구 ${friendCount}명`;
         primaryLabel = '챌린지 시작';
     } else if (activeFriends === 0) {
         _communityFocusState.primaryAction = 'record';
         titleEl.textContent = '챌린지는 열려 있어요.';
-        bodyEl.textContent = '지금은 오늘 기록 하나만 남기면 됩니다.';
+        bodyEl.textContent = '오늘 기록 하나만 남기면 됩니다.';
         badgeEl.textContent = `진행 ${activeChallenges}개`;
         primaryLabel = '오늘 기록';
     } else {
@@ -4213,18 +4218,16 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                 if (!catData) return;
                 missionArea.innerHTML += `
                     <div class="mission-category-block compact">
-                        <div class="mission-category-top">
+                        <div class="mission-category-top compact">
                             <label class="mission-category-check" for="chk_preset_${cat}">
                                 <input type="checkbox" id="chk_preset_${cat}" checked>
                                 <span class="mission-category-label">${categoryLabels[cat]}</span>
                             </label>
-                            <div class="mission-difficulty-tabs" data-category="${cat}">
+                            <select class="mission-difficulty-select" id="diff_preset_${cat}" onchange="selectDifficulty('${cat}', this.value)">
                                 ${Object.keys(catData).map(diff => `
-                                    <button class="diff-tab ${diff === 'normal' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
-                                        ${diffLabels[diff]}
-                                    </button>
+                                    <option value="${diff}" ${diff === 'normal' ? 'selected' : ''}>${diffLabels[diff]}</option>
                                 `).join('')}
-                            </div>
+                            </select>
                         </div>
                         <div class="mission-preview compact" id="preview-${cat}">
                             <span id="label_preset_${cat}">${catData.normal.text} · ${catData.normal.target}일</span>
@@ -4418,10 +4421,12 @@ function initDifficultySelectors(level) {
     ['diet', 'exercise', 'mind'].forEach(cat => {
         const preview = document.getElementById(`preview-${cat}`);
         const label = document.getElementById(`label_preset_${cat}`);
+        const select = document.getElementById(`diff_preset_${cat}`);
         if (preview && label && levelData[cat]) {
             const m = levelData[cat].normal;
             label.textContent = `${m.text} · ${m.target}일`;
         }
+        if (select) select.value = 'normal';
     });
 }
 
@@ -4701,14 +4706,12 @@ window.selectDifficulty = function(cat, diff) {
     const m = levelData[cat]?.[diff];
     if (!m) return;
 
-    // 탭 활성화
-    document.querySelectorAll(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab`).forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.diff === diff);
-    });
-
     // 미션 텍스트 업데이트
     const label = document.getElementById(`label_preset_${cat}`);
     if (label) label.textContent = `${m.text} · ${m.target}일`;
+
+    const select = document.getElementById(`diff_preset_${cat}`);
+    if (select && select.value !== diff) select.value = diff;
 };
 
 // 커스텀 미션 목록 (임시 저장)
@@ -4925,10 +4928,10 @@ window.resetWeeklyMissions = async function() {
     if (!confirm('이번 주 미션을 재설정하시겠습니까?\n진행 중인 기록은 유지됩니다.')) return;
 
     try {
-        await updateDoc(doc(db, "users", user.uid), {
-            weeklyMissionData: null,
-            selectedMissions: []
-        });
+        await setDoc(doc(db, "users", user.uid), {
+            weeklyMissionData: deleteField(),
+            selectedMissions: deleteField()
+        }, { merge: true });
     } catch (error) {
         console.error('미션 리셋 오류:', error);
         showToast('⚠️ 미션 리셋에 실패했습니다.');

@@ -1,6 +1,6 @@
 /**
- * Service Worker - 해빛스쿨 PWA
- * 오프라인 캐싱 및 백그라운드 동기화
+ * Service Worker for the Habitschool PWA.
+ * Uses network-first for same-origin GET requests and keeps a small offline cache.
  */
 
 const PROD_FIREBASE_CONFIG = {
@@ -27,7 +27,6 @@ const isStagingEnv = !isLocalEnv && hostname.includes('habitschool-staging');
 const firebaseConfig = isStagingEnv || isLocalEnv ? STAGING_FIREBASE_CONFIG : PROD_FIREBASE_CONFIG;
 
 if (!isLocalEnv) {
-    // Firebase Messaging (백그라운드 푸시 수신)
     importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
     importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
@@ -35,7 +34,6 @@ if (!isLocalEnv) {
 
     const messaging = firebase.messaging();
 
-    // 백그라운드 메시지 수신 (앱이 닫혀 있거나 탭이 비활성일 때)
     messaging.onBackgroundMessage((payload) => {
         const d = payload.data || {};
         self.registration.showNotification(d.title || '해빛스쿨', {
@@ -49,7 +47,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v98';
+const CACHE_NAME = 'habitschool-v100';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -75,54 +73,54 @@ const STATIC_ASSETS = [
 
 const INDEX_URL = new URL('./', self.location).href;
 
-// 설치: 즉시 활성화 (구버전 캐시로 인한 지연 방지)
 self.addEventListener('install', (event) => {
-    console.log('[SW] 설치 시작');
-    event.waitUntil(self.skipWaiting());
-});
-
-// 활성화: 구 캐시 정리 + 즉시 제어
-self.addEventListener('activate', (event) => {
-    console.log('[SW] 활성화');
+    console.log('[SW] install');
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames
-                    .filter(name => name !== CACHE_NAME)
-                    .map(name => {
-                        console.log('[SW] 구 캐시 삭제:', name);
-                        return caches.delete(name);
-                    })
-            );
-        }).then(() => self.clients.claim())
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS).catch(() => {}))
+            .then(() => self.skipWaiting())
     );
 });
 
-// 모든 요청: Network First, Cache Fallback (항상 최신 파일 우선)
+self.addEventListener('activate', (event) => {
+    console.log('[SW] activate');
+    event.waitUntil(
+        caches.keys().then((cacheNames) => Promise.all(
+            cacheNames
+                .filter((name) => name !== CACHE_NAME)
+                .map((name) => {
+                    console.log('[SW] delete old cache:', name);
+                    return caches.delete(name);
+                })
+        )).then(() => self.clients.claim())
+    );
+});
+
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    if (
-        request.method !== 'GET' ||
-        !request.url.startsWith(self.location.origin)
-    ) {
+    if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
         return;
     }
 
     event.respondWith(
         fetch(request)
-            .then(response => {
+            .then((response) => {
                 if (response.ok) {
                     const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
                 }
                 return response;
             })
-            .catch(() => caches.match(request).then(r => r || new Response('', { status: 503 })))
+            .catch(() => caches.match(request).then((cached) => {
+                if (cached) return cached;
+                if (request.mode === 'navigate') {
+                    return caches.match(INDEX_URL);
+                }
+                return new Response('', { status: 503 });
+            }))
     );
 });
 
-// 푸시 알림 클릭 처리
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
@@ -131,14 +129,12 @@ self.addEventListener('notificationclick', (event) => {
     const url = event.notification.data?.url || '/';
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-            .then(clientList => {
-                // 이미 열린 탭이 있으면 포커스
+            .then((clientList) => {
                 for (const client of clientList) {
                     if (client.url.includes(self.location.origin) && 'focus' in client) {
                         return client.focus();
                     }
                 }
-                // 새 탭 열기
                 return self.clients.openWindow(url);
             })
     );

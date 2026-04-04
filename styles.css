@@ -1971,6 +1971,10 @@ textarea {
     gap: 8px;
 }
 
+.mission-category-top.compact {
+    justify-content: space-between;
+}
+
 .mission-category-check {
     display: inline-flex;
     align-items: center;
@@ -1979,8 +1983,8 @@ textarea {
 }
 
 .mission-category-check input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     accent-color: var(--primary-color);
 }
 
@@ -1991,13 +1995,25 @@ textarea {
     margin-bottom: 6px;
 }
 
+.mission-difficulty-select {
+    min-width: 76px;
+    height: 30px;
+    padding: 0 26px 0 10px;
+    border: 1px solid var(--gray-300, #dee2e6);
+    border-radius: 8px;
+    background: white;
+    color: var(--gray-700);
+    font-size: 11px;
+    font-weight: 700;
+}
+
 .diff-tab {
     flex: 1;
     padding: 5px 8px;
     border: 1px solid var(--gray-300, #dee2e6);
     border-radius: 8px;
     background: white;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.2s;
     text-align: center;
@@ -2029,8 +2045,8 @@ textarea {
 .mission-preview {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 9px;
+    gap: 6px;
+    padding: 6px 8px;
     background: white;
     border-radius: 8px;
     font-size: 11px;
@@ -2038,18 +2054,19 @@ textarea {
 }
 
 .mission-preview input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
     accent-color: var(--primary-color);
 }
 
 .mission-preview.compact {
-    margin-top: 7px;
+    margin-top: 5px;
     gap: 0;
+    padding: 5px 8px;
 }
 
 .mission-preview.compact span {
-    line-height: 1.4;
+    line-height: 1.3;
 }
 
 .mission-setup-intro {
@@ -2059,19 +2076,19 @@ textarea {
 }
 
 .custom-mission-shell {
-    margin-top: 6px;
+    margin-top: 4px;
 }
 
 .mission-inline-toggle {
     width: 100%;
-    min-height: 34px;
+    min-height: 32px;
     font-size: 12px;
 }
 
 /* 커스텀 미션 */
 .custom-mission-section {
-    margin-top: 8px;
-    padding: 10px;
+    margin-top: 6px;
+    padding: 8px;
     background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
     border-radius: 10px;
     border: 1px solid #FFB74D;
@@ -2322,8 +2339,8 @@ textarea {
 /* 커뮤니티 액션 허브 */
 .community-focus-panel {
     margin-top: 0;
-    padding: 10px;
-    border-radius: 14px;
+    padding: 8px 9px;
+    border-radius: 13px;
     background:
         radial-gradient(circle at top right, rgba(255, 193, 7, 0.22), transparent 34%),
         linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 52%, #F8F3FF 100%);
@@ -2344,7 +2361,7 @@ textarea {
 
 .community-focus-title {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1.35;
     color: #3E2723;
 }
@@ -2361,9 +2378,9 @@ textarea {
 }
 
 .community-focus-body {
-    margin: 5px 0 0;
-    font-size: 12px;
-    line-height: 1.45;
+    margin: 4px 0 0;
+    font-size: 10px;
+    line-height: 1.35;
     color: #6D4C41;
 }
 
@@ -2389,18 +2406,18 @@ textarea {
 
 .community-focus-actions {
     display: block;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .community-focus-action {
     width: 100%;
-    min-height: 40px;
+    min-height: 34px;
     padding: 0 14px;
     border-radius: 12px;
     border: 1px solid #E3D4C0;
     background: rgba(255, 255, 255, 0.92);
     color: #6D4C41;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     cursor: pointer;
     transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
@@ -2896,7 +2913,7 @@ textarea {
 
 @media (max-width: 640px) {
     .mission-focus-strip {
-        padding: 9px 10px;
+        padding: 8px 9px;
     }
 
     .mission-focus-btn {
@@ -2915,6 +2932,18 @@ textarea {
 
     .mission-difficulty-tabs {
         margin-bottom: 0;
+    }
+
+    .dashboard-hero-title {
+        font-size: 22px;
+    }
+
+    .dashboard-action-strip {
+        gap: 6px;
+    }
+
+    .dashboard-hero-stats {
+        gap: 6px;
     }
 
     .mission-progress-topline,
@@ -2975,7 +3004,17 @@ textarea {
 
     .mission-category-block {
         margin-bottom: 8px;
-        padding: 9px;
+        padding: 7px 8px;
+    }
+
+    .mission-category-top.compact {
+        gap: 6px;
+    }
+
+    .mission-difficulty-select {
+        min-width: 72px;
+        height: 28px;
+        font-size: 10px;
     }
 
     .dashboard-action-strip {
@@ -5462,7 +5501,7 @@ textarea {
 
 /* 대시보드 상단 개편 */
 .dashboard-hero-shell {
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: 14px;
 }
 
 .dashboard-hero-panel {
@@ -5472,10 +5511,10 @@ textarea {
         radial-gradient(circle at top right, rgba(255, 211, 140, 0.55) 0%, transparent 30%),
         linear-gradient(145deg, #FFF8E8 0%, #FFFDF5 55%, #EEF7F0 100%);
     border: 1px solid #F3D8AE;
-    border-radius: 22px;
-    padding: 16px;
+    border-radius: 20px;
+    padding: 14px;
     box-shadow: 0 12px 30px rgba(233, 163, 54, 0.12);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     animation: dashboardHeroRise 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -5503,7 +5542,7 @@ textarea {
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .dashboard-hero-kicker {
@@ -5534,16 +5573,16 @@ textarea {
 
 .dashboard-hero-title {
     margin: 0;
-    font-size: 27px;
+    font-size: 24px;
     line-height: 1.18;
     letter-spacing: -0.03em;
     color: #2A241B;
 }
 
 .dashboard-hero-body {
-    margin: 8px 0 12px;
-    font-size: 14px;
-    line-height: 1.6;
+    margin: 6px 0 10px;
+    font-size: 13px;
+    line-height: 1.5;
     color: #6B6256;
 }
 
@@ -5561,8 +5600,8 @@ textarea {
     width: 100%;
     border: 1px solid rgba(223, 204, 171, 0.9);
     background: rgba(255,255,255,0.72);
-    border-radius: 14px;
-    padding: 10px;
+    border-radius: 13px;
+    padding: 9px;
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
     text-align: left;
@@ -5603,7 +5642,7 @@ textarea {
 }
 
 .dashboard-action-emoji {
-    font-size: 20px;
+    font-size: 18px;
     line-height: 1;
     flex-shrink: 0;
 }
@@ -5616,12 +5655,12 @@ textarea {
 }
 
 .dashboard-action-copy strong {
-    font-size: 13px;
+    font-size: 12px;
     color: #2F2A22;
 }
 
 .dashboard-action-copy span {
-    font-size: 11px;
+    font-size: 10px;
     color: #7A7065;
     line-height: 1.35;
 }
@@ -5629,16 +5668,16 @@ textarea {
 .dashboard-hero-stats {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 12px;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .dashboard-stat-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px;
-    border-radius: 18px;
+    padding: 10px;
+    border-radius: 16px;
     background: rgba(255,255,255,0.74);
     border: 1px solid rgba(223, 204, 171, 0.9);
     backdrop-filter: blur(6px);
@@ -5658,7 +5697,7 @@ textarea {
 }
 
 .dashboard-stat-value {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     color: #27231D;
     letter-spacing: -0.04em;
@@ -5668,7 +5707,7 @@ textarea {
     border: 1px solid #EFE3CC;
     background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF8 100%);
     box-shadow: 0 8px 24px rgba(117, 93, 63, 0.06);
-    margin-top: 10px;
+    margin-top: 0;
 }
 
 .dashboard-week-header {
@@ -5744,7 +5783,7 @@ textarea {
     }
 
     .dashboard-hero-title {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .dashboard-hero-body {
