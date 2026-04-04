@@ -1031,6 +1031,29 @@
             </div>
 
             <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="모두의 갤러리">
+                <div class="gallery-stage">
+                    <section class="gallery-hero">
+                        <div class="gallery-hero-copy">
+                            <div class="gallery-hero-kicker">HABIT FEED</div>
+                            <h2 class="gallery-hero-title">함께 인증하고 오래 가는 습관 만들기</h2>
+                            <p class="gallery-hero-desc">오늘의 기록을 가볍게 공유하고, 친구들의 꾸준함에서 다음 행동 힌트를 얻어보세요.</p>
+                        </div>
+                        <div class="gallery-hero-stats" aria-label="갤러리 요약">
+                            <div class="gallery-hero-stat">
+                                <strong id="gallery-total-posts">0</strong>
+                                <span>최근 인증</span>
+                            </div>
+                            <div class="gallery-hero-stat">
+                                <strong id="gallery-total-members">0</strong>
+                                <span>참여 학생</span>
+                            </div>
+                            <div class="gallery-hero-stat">
+                                <strong id="gallery-my-streak">0일</strong>
+                                <span>내 최장 흐름</span>
+                            </div>
+                        </div>
+                    </section>
+
                 <div id="my-share-container" style="display:none;">
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
@@ -1048,28 +1071,39 @@
                     </div>
                 </div>
 
+                <div class="gallery-top-grid">
                 <!-- 인스타그램 스타일 반응 요약 배너 -->
                 <div id="gallery-activity-summary" class="activity-summary" style="display:none;" role="status"
                     aria-label="내 게시물 반응 요약"></div>
 
                 <!-- 주간 베스트 -->
                 <div id="weekly-best-container" style="display:none;"></div>
-
-                <!-- 유저 필터 배너 (아바타/이름 클릭 시 표시) -->
-                <div id="gallery-user-filter-bar" style="display:none; align-items:center; gap:8px; padding:8px 12px; background:#fff3e0; border-radius:10px; margin-bottom:8px; font-size:13px;">
-                    <span id="gallery-user-filter-label" style="flex:1; color:#e65100; font-weight:600;"></span>
-                    <button onclick="clearGalleryUserFilter()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#e65100; line-height:1;">✕</button>
                 </div>
 
-                <div class="gallery-filters" role="group" aria-label="갤러리 필터">
-                    <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
-                        aria-pressed="true">전체보기</button>
-                    <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
-                        aria-label="식단 필터">🥗 식단</button>
-                    <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"
-                        aria-label="운동 필터">🏃 운동</button>
-                    <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false"
-                        aria-label="마음 필터">🧘 마음</button>
+                <section class="gallery-feed-shell">
+                <!-- 유저 필터 배너 (아바타/이름 클릭 시 표시) -->
+                <div id="gallery-user-filter-bar" class="gallery-user-filter-bar" style="display:none;">
+                    <span id="gallery-user-filter-label"></span>
+                    <button onclick="clearGalleryUserFilter()" aria-label="유저 필터 해제">✕</button>
+                </div>
+
+                <div class="gallery-feed-toolbar">
+                    <div class="gallery-feed-heading">
+                        <div class="gallery-feed-kicker" id="gallery-feed-kicker">RECENT FEED</div>
+                        <h3 id="gallery-feed-title">모두의 최근 인증</h3>
+                        <p id="gallery-feed-desc">식단, 운동, 마음 기록을 한 번에 둘러보고 가볍게 응원해보세요.</p>
+                    </div>
+
+                    <div class="gallery-filters" role="group" aria-label="갤러리 필터">
+                        <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
+                            aria-pressed="true">전체보기</button>
+                        <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
+                            aria-label="식단 필터">🥗 식단</button>
+                        <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"
+                            aria-label="운동 필터">🏃 운동</button>
+                        <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false"
+                            aria-label="마음 필터">🧘 마음</button>
+                    </div>
                 </div>
 
                 <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
@@ -1080,6 +1114,8 @@
                         <span class="loading-dot"></span>
                         <span class="loading-dot"></span>
                     </div>
+                </div>
+                </section>
                 </div>
             </div>
 

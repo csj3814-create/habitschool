@@ -5836,7 +5836,16 @@ async function buildWeeklyBestSection() {
         return;
     }
 
-    let html = '<div class="weekly-best-header">🏅 이번 주 열심 학생</div><div class="weekly-best-list">';
+    let html = `
+        <div class="gallery-insight-head">
+            <div class="gallery-insight-kicker">WEEKLY SPOTLIGHT</div>
+            <div class="gallery-insight-title-row">
+                <div class="weekly-best-header">🏅 이번 주 열심 학생</div>
+                <span class="gallery-insight-note">최근 7일 흐름 기준</span>
+            </div>
+            <p class="gallery-insight-desc">이번 주 가장 꾸준하게 기록한 학생을 한눈에 보고, 좋은 흐름을 참고해보세요.</p>
+        </div>
+        <div class="weekly-best-list">`;
     ranked.forEach((u, idx) => {
         const medal = ['🥇', '🥈', '🥉'][idx];
         const name = escapeHtml(u.name);
@@ -5865,9 +5874,13 @@ async function buildWeeklyBestSection() {
             <span class="best-medal">${medal}</span>
             <div class="best-thumb">${thumbHtml}</div>
             <div class="best-info">
-                <span class="best-name">${name}${streakHtml}</span>
+                <span class="best-name-row">
+                    <span class="best-name">${name}</span>
+                    ${streakHtml}
+                </span>
                 <span class="best-stats">📅 ${u.daysCount}일 · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
             </div>
+            <span class="best-score">${u.score}점</span>
         </div>`;
     });
     html += '</div>';
@@ -6254,6 +6267,7 @@ async function _loadGalleryDataInner() {
         container.innerHTML = getEmptyStateHtml(galleryFilter);
     }
 
+    renderGalleryHeroStats(myId);
     // 갤러리 반응 요약 배너
     renderActivitySummary(myId);
     buildWeeklyBestSection().catch(() => {});
@@ -6346,8 +6360,10 @@ function renderActivitySummary(myId) {
     if (!summaryEl || !myId) { if (summaryEl) summaryEl.style.display = 'none'; return; }
 
     let totalHeart = 0, totalFire = 0, totalClap = 0, totalComments = 0;
+    let totalPosts = 0;
     cachedGalleryLogs.forEach(item => {
         if (item.data.userId !== myId) return;
+        totalPosts += 1;
         const rx = item.data.reactions || {};
         // 자기 자신 반응 제외
         totalHeart += (rx.heart || []).filter(uid => uid !== myId).length;
@@ -6377,8 +6393,17 @@ function renderActivitySummary(myId) {
     const newBadge = newCount > 0 ? `<span class="new-reaction-badge">+${newCount} 새 반응!</span>` : '';
 
     summaryEl.innerHTML = `
+        <div class="gallery-insight-head">
+            <div class="gallery-insight-kicker">MY REACTIONS</div>
+            <div class="gallery-insight-title-row">
+                <div class="weekly-best-header">내 게시물 반응</div>
+                ${newBadge}
+            </div>
+            <p class="gallery-insight-desc">최근 30일 동안 공유한 기록 ${totalPosts}건에 쌓인 반응이에요.</p>
+        </div>
         <div class="summary-content">
-            <div class="summary-stats">${newBadge}${parts.join('')}</div>
+            <div class="summary-label">받은 반응</div>
+            <div class="summary-stats">${parts.join('')}</div>
         </div>
     `;
     summaryEl.style.display = 'flex';
@@ -6599,6 +6624,71 @@ function collectGalleryMedia(data) {
     return result;
 }
 
+function getGalleryItemPointTotal(data) {
+    const awarded = data.awardedPoints || {};
+    const explicitTotal = (awarded.dietPoints || 0) + (awarded.exercisePoints || 0) + (awarded.mindPoints || 0);
+    if (explicitTotal > 0) return explicitTotal;
+
+    let fallbackTotal = 0;
+    if (awarded.diet) fallbackTotal += 10;
+    if (awarded.exercise) fallbackTotal += 15;
+    if (awarded.mind) fallbackTotal += 5;
+    return fallbackTotal;
+}
+
+function getGalleryTypeLabels(data, media) {
+    const labels = [];
+    if (media.dietHtml) labels.push('식단');
+    if (media.exerciseHtml || (data.steps?.count || 0) > 0) labels.push('운동');
+    if (media.mindHtml || media.mindText) labels.push('마음');
+    return labels;
+}
+
+function updateGalleryFeedHeader() {
+    const titleEl = document.getElementById('gallery-feed-title');
+    const descEl = document.getElementById('gallery-feed-desc');
+    const kickerEl = document.getElementById('gallery-feed-kicker');
+    if (!titleEl || !descEl || !kickerEl) return;
+
+    if (galleryUserFilter) {
+        titleEl.textContent = `${galleryUserFilter.userName}님의 최근 인증`;
+        descEl.textContent = `최근 30일 동안 올라온 기록 ${sortedFilteredCache.length}건을 보고 있어요.`;
+        kickerEl.textContent = 'PERSONAL FEED';
+        return;
+    }
+
+    const variants = {
+        all: ['RECENT FEED', '모두의 최근 인증', '식단, 운동, 마음 기록을 한 번에 둘러보고 가볍게 응원해보세요.'],
+        diet: ['DIET FEED', '식단 인증만 모아보기', '오늘 무엇을 먹었는지 빠르게 참고하고, 좋은 식사 흐름을 저장해보세요.'],
+        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', '걸음수와 운동 사진, 영상을 한 흐름으로 보고 바로 반응할 수 있어요.'],
+        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '수면과 감사일기, 명상 기록을 조용히 둘러보며 오늘 흐름을 정리해보세요.']
+    };
+
+    const [kicker, title, desc] = variants[galleryFilter] || variants.all;
+    kickerEl.textContent = kicker;
+    titleEl.textContent = title;
+    descEl.textContent = desc;
+}
+
+function renderGalleryHeroStats(myId) {
+    const totalPostsEl = document.getElementById('gallery-total-posts');
+    const totalMembersEl = document.getElementById('gallery-total-members');
+    const myStreakEl = document.getElementById('gallery-my-streak');
+    if (!totalPostsEl || !totalMembersEl || !myStreakEl) return;
+
+    const visibleItems = sortedFilteredCache || [];
+    const uniqueUsers = new Set(visibleItems.map(item => item.data?.userId).filter(Boolean));
+    const myBestStreak = (cachedGalleryLogs || [])
+        .filter(item => item.data?.userId === myId)
+        .reduce((max, item) => Math.max(max, item.data?.currentStreak || 0), 0);
+
+    totalPostsEl.textContent = String(visibleItems.length);
+    totalMembersEl.textContent = String(uniqueUsers.size);
+    myStreakEl.textContent = `${myBestStreak}일`;
+
+    updateGalleryFeedHeader();
+}
+
 // 갤러리 카드 DOM 생성 (추출된 단일 카드 빌더)
 function buildGalleryCard(item, myId) {
     const data = item.data;
@@ -6657,6 +6747,14 @@ function buildGalleryCard(item, myId) {
     const avatarInitial = (data.userName || '?').charAt(0);
     const totalReactions = cHeart + cFire + cClap;
     const reactionSummaryHtml = totalReactions > 0 ? `<div class="gallery-reaction-summary">좋아요 ${totalReactions}개</div>` : '';
+    const pointTotal = getGalleryItemPointTotal(data);
+    const typeLabels = getGalleryTypeLabels(data, media);
+    const metaHtml = (pointTotal > 0 || typeLabels.length > 0)
+        ? `<div class="gallery-post-meta">
+            ${pointTotal > 0 ? `<span class="gallery-point-badge">🅿️ ${pointTotal}P</span>` : ''}
+            ${typeLabels.length > 0 ? `<div class="gallery-type-tags">${typeLabels.map(label => `<span class="gallery-type-chip">${label}</span>`).join('')}</div>` : ''}
+           </div>`
+        : '';
 
     // 연속 인증 스트릭 뱃지
     const streak = data.currentStreak || 0;
@@ -6725,6 +6823,7 @@ function buildGalleryCard(item, myId) {
             ${friendBtnHtml}
             ${postMenuHtml}
         </div>
+        ${metaHtml}
         ${contentHtml}
         ${actionsHtml}
         ${reactionSummaryHtml}
@@ -6741,6 +6840,7 @@ function renderFeedOnly() {
     const sentinel = document.getElementById('gallery-sentinel');
 
     refreshSortedFiltered();
+    renderGalleryHeroStats(myId);
 
     const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
 
