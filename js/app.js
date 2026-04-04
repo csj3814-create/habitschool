@@ -70,6 +70,7 @@ window.openTab = openTab;
 window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
 window.triggerGalleryShareAction = triggerGalleryShareAction;
+window.handleMissionPrimaryAction = handleMissionPrimaryAction;
 window.focusGalleryFeed = focusGalleryFeed;
 window.uploadBloodTestPhoto = uploadBloodTestPhoto;
 window.loadBloodTestHistory = loadBloodTestHistory;
@@ -2309,20 +2310,7 @@ function openTab(tabName, pushState = true) {
         }
     } else if (tabName === 'gallery') {
         submitBar.style.display = 'block';
-        if (helperEl) helperEl.style.display = 'none';
-        if (!user) {
-            saveBtn.innerText = '🌟 구글 로그인하고 함께 참여하기';
-            saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
-            saveBtn.style.color = 'white';
-            saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
-            saveBtn.onclick = () => { document.getElementById('login-modal').style.display = 'flex'; };
-        } else {
-            saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
-            saveBtn.style.background = '#FEE500';
-            saveBtn.style.color = '#3E2723';
-            saveBtn.style.boxShadow = '0 4px 14px rgba(254,229,0,0.4)';
-            saveBtn.onclick = () => window.open('https://open.kakao.com/o/gv23urgi', '_blank');
-        }
+        updateGalleryPrimaryAction();
     } else {
         submitBar.style.display = 'block';
         saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
@@ -2720,6 +2708,81 @@ function goToGalleryRecordAction() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+let _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
+
+function getNextRecordTab(todayAwarded = {}) {
+    if (!todayAwarded.diet) return 'diet';
+    if (!todayAwarded.exercise) return 'exercise';
+    if (!todayAwarded.mind) return 'sleep';
+    return 'gallery';
+}
+
+function updateGalleryPrimaryAction() {
+    const saveBtn = document.getElementById('saveDataBtn');
+    const helperEl = document.getElementById('submit-bar-helper');
+    if (!saveBtn || !helperEl) return;
+
+    if (!auth.currentUser) {
+        helperEl.style.display = 'block';
+        helperEl.textContent = '로그인하면 내 기록 공유와 친구 응원을 바로 확인할 수 있어요.';
+        saveBtn.innerText = '✨ 구글로 로그인하고 함께 참여하기';
+        saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
+        saveBtn.style.color = 'white';
+        saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
+        saveBtn.onclick = () => { document.getElementById('login-modal').style.display = 'flex'; };
+        return;
+    }
+
+    const shareContainer = document.getElementById('my-share-container');
+    const canShare = !!shareContainer && shareContainer.style.display !== 'none';
+
+    helperEl.style.display = 'block';
+    saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
+    saveBtn.style.color = 'white';
+    saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
+
+    if (canShare) {
+        helperEl.textContent = '오늘 기록 카드가 준비됐어요. 지금 바로 공유하고 응원을 받아보세요.';
+        saveBtn.innerText = '✨ 내 인증 공유하기';
+        saveBtn.onclick = () => triggerGalleryShareAction();
+        return;
+    }
+
+    helperEl.textContent = '공유할 기록이 아직 없어요. 식단, 운동, 마음 중 하나부터 시작해보세요.';
+    saveBtn.innerText = '📝 오늘 기록 시작하기';
+    saveBtn.onclick = () => goToGalleryRecordAction();
+}
+
+function handleMissionPrimaryAction() {
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+
+    const selectionArea = document.getElementById('mission-selection-area');
+    const progressArea = document.getElementById('mission-progress-container');
+
+    switch (_missionPrimaryActionState.type) {
+        case 'record':
+            openTab(_missionPrimaryActionState.tab || 'diet');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        case 'share':
+            openTab('gallery');
+            setTimeout(() => triggerGalleryShareAction(), 80);
+            return;
+        case 'review':
+            openTab('dashboard');
+            progressArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        case 'setup':
+        default:
+            openTab('dashboard');
+            selectionArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+    }
+}
+
 function triggerGalleryShareAction() {
     if (!auth.currentUser) {
         document.getElementById('login-modal').style.display = 'flex';
@@ -2811,6 +2874,52 @@ function renderCommunityFocusPanel() {
     titleEl.textContent = '함께 기록이 이어지고 있어요. 오늘은 응원과 챌린지 흐름만 챙기면 됩니다.';
     bodyEl.textContent = `${activeFriends}명의 친구가 오늘 움직였고 ${completeFriends}명은 세 영역을 모두 채웠어요. 지금은 갤러리 응원이나 단톡 참여가 가장 빠릅니다.`;
     badgeEl.textContent = `활동 ${activeFriends}명`;
+}
+
+function renderMissionFocusState({
+    todayAwarded = {},
+    isWeekActive = false,
+    overallRate = 0,
+    totalMissions = 0,
+    completedMissions = 0
+}) {
+    const kickerEl = document.getElementById('mission-focus-kicker');
+    const titleEl = document.getElementById('mission-focus-title');
+    const buttonEl = document.getElementById('mission-focus-btn');
+    const tagsEl = document.getElementById('mission-focus-tags');
+    if (!kickerEl || !titleEl || !buttonEl || !tagsEl) return;
+
+    const doneToday = ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
+    const remainingToday = Math.max(0, 3 - doneToday);
+    const nextTab = getNextRecordTab(todayAwarded);
+    const nextLabel = nextTab === 'diet' ? '식단' : nextTab === 'exercise' ? '운동' : nextTab === 'sleep' ? '마음' : '공유';
+
+    let tags = [`오늘 ${doneToday}/3 완료`];
+
+    if (!isWeekActive || totalMissions === 0) {
+        kickerEl.textContent = '이번 주 준비';
+        titleEl.textContent = '미션을 먼저 정하면 이번 주에 무엇을 반복해야 하는지 더 또렷해져요.';
+        buttonEl.textContent = '이번 주 미션 정하기';
+        _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
+        tags.push('미션 아직 없음');
+        tags.push('설정 후 바로 시작');
+    } else if (remainingToday > 0) {
+        kickerEl.textContent = '오늘 먼저 할 일';
+        titleEl.textContent = `${nextLabel} 기록부터 하면 오늘 흐름과 이번 주 진행률이 함께 올라갑니다.`;
+        buttonEl.textContent = `${nextLabel} 시작하기`;
+        _missionPrimaryActionState = { type: 'record', tab: nextTab };
+        tags.push(`주간 ${completedMissions}/${totalMissions} 완료`);
+        tags.push(`달성 ${overallRate}%`);
+    } else {
+        kickerEl.textContent = '오늘 기록 완료';
+        titleEl.textContent = '오늘 기록은 모두 마쳤어요. 이제 인증을 공유하고 응원 흐름으로 이어가면 됩니다.';
+        buttonEl.textContent = '내 인증 공유하기';
+        _missionPrimaryActionState = { type: 'share', tab: 'gallery' };
+        tags.push(`주간 ${completedMissions}/${totalMissions} 완료`);
+        tags.push(`달성 ${overallRate}%`);
+    }
+
+    tagsEl.innerHTML = tags.map(tag => `<span class="mission-focus-tag">${tag}</span>`).join('');
 }
 
 const DASHBOARD_ACTION_META = {
@@ -2922,6 +3031,14 @@ function _renderDashboardHeroState({
             weekSummaryEl.textContent = '이번 주 첫 기록을 남기면 주간 흐름이 여기서부터 채워집니다.';
         }
     }
+
+    renderMissionFocusState({
+        todayAwarded,
+        isWeekActive,
+        overallRate,
+        totalMissions,
+        completedMissions
+    });
 
     if (missionIntroEl) {
         missionIntroEl.textContent = isWeekActive && totalMissions > 0
@@ -6420,6 +6537,7 @@ async function buildShareCardAsync(myId, user) {
                 shareButton.innerText = '🌟 나의 해빛 기록 자랑하기';
                 shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
             }
+            updateGalleryPrimaryAction();
 
             // 공유 카드용 이미지 - 썸네일 우선
             let imgs = [];
@@ -6483,10 +6601,12 @@ async function buildShareCardAsync(myId, user) {
                 shareButton.innerText = '📝 오늘 기록 저장하고 공유 준비하기';
                 shareButton.onclick = goToGalleryRecordAction;
             }
+            updateGalleryPrimaryAction();
         }
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';
+        updateGalleryPrimaryAction();
     }
 }
 

@@ -306,6 +306,17 @@
                     <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
                             onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
                     </h3>
+                    <div class="mission-focus-strip" id="mission-focus-strip">
+                        <div class="mission-focus-copy">
+                            <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 한눈에</div>
+                            <div class="mission-focus-title" id="mission-focus-title">미션을 먼저 정하고 이번 주 흐름을 시작해보세요.</div>
+                        </div>
+                        <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
+                    </div>
+                    <div class="mission-focus-tags" id="mission-focus-tags">
+                        <span class="mission-focus-tag">오늘 0/3 완료</span>
+                        <span class="mission-focus-tag">미션 준비 전</span>
+                    </div>
                     <p class="mission-card-intro" id="mission-card-intro">이번 주 목표를 정하면 오늘 해야 할 행동이 더 선명해집니다.</p>
                     <div id="mission-selection-area"></div>
                     <button class="submit-btn" id="btn-save-missions"
@@ -315,6 +326,9 @@
                     <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
                         <div class="mission-badges-title">🏅 미션 배지</div>
                         <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                    </div>
+                    <div class="mission-section-divider">
+                        <span>같이 하면 더 오래 갑니다</span>
                     </div>
                     <div class="community-focus-panel" id="community-focus-panel">
                         <div class="community-focus-head">

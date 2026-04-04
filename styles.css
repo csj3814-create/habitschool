@@ -1848,11 +1848,95 @@ textarea {
     box-shadow: 0 10px 26px rgba(33, 150, 243, 0.07);
 }
 
-.mission-card-intro {
-    margin: -6px 0 14px;
+.mission-focus-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 8px 0 10px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #EEF7FF 0%, #F6FBFF 100%);
+    border: 1px solid #D7EAFE;
+}
+
+.mission-focus-copy {
+    min-width: 0;
+}
+
+.mission-focus-kicker {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #2196F3;
+    margin-bottom: 4px;
+}
+
+.mission-focus-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.45;
+    color: #243043;
+}
+
+.mission-focus-btn {
+    flex-shrink: 0;
+    min-height: 42px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #2196F3 0%, #1E88E5 100%);
+    color: white;
     font-size: 13px;
-    line-height: 1.6;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(33, 150, 243, 0.18);
+}
+
+.mission-focus-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.mission-focus-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #FFFFFF;
+    border: 1px solid #DFE8F3;
+    color: #607086;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mission-card-intro {
+    margin: 0 0 14px;
+    font-size: 12px;
+    line-height: 1.55;
     color: #6E7683;
+}
+
+.mission-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed #D6E4F4;
+    color: #7A869A;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.mission-section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(214, 228, 244, 0.8) 0%, rgba(214, 228, 244, 0) 100%);
 }
 
 .mission-item { 
@@ -2192,7 +2276,7 @@ textarea {
 
 /* 커뮤니티 액션 허브 */
 .community-focus-panel {
-    margin-top: 16px;
+    margin-top: 14px;
     padding: 18px;
     border-radius: 22px;
     background:
@@ -2708,6 +2792,15 @@ textarea {
 }
 
 @media (max-width: 640px) {
+    .mission-focus-strip {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mission-focus-btn {
+        width: 100%;
+    }
+
     .community-focus-panel {
         padding: 16px;
     }
@@ -6318,7 +6411,29 @@ body.dark-mode .mission-card-enhanced {
     border-color: #2F425C !important;
     background: linear-gradient(180deg, #1D2028 0%, #1A212C 100%) !important;
 }
+body.dark-mode .mission-focus-strip {
+    background: linear-gradient(135deg, #182231 0%, #1A2735 100%);
+    border-color: #2D4A63;
+}
+body.dark-mode .mission-focus-kicker { color: #7DC3FF; }
+body.dark-mode .mission-focus-title { color: #E8EEF5; }
+body.dark-mode .mission-focus-btn {
+    background: linear-gradient(135deg, #2B8DFF 0%, #2378D8 100%);
+    box-shadow: 0 10px 20px rgba(28, 104, 190, 0.24);
+}
+body.dark-mode .mission-focus-tag {
+    background: #222A35;
+    border-color: #334457;
+    color: #B7C3D2;
+}
 body.dark-mode .mission-card-intro { color: #A09AAA; }
+body.dark-mode .mission-section-divider {
+    border-top-color: #2D3F52;
+    color: #A3ADBC;
+}
+body.dark-mode .mission-section-divider::after {
+    background: linear-gradient(90deg, rgba(62, 86, 110, 0.85) 0%, rgba(62, 86, 110, 0) 100%);
+}
 
 /* 마일스톤 */
 body.dark-mode .milestone-section {
