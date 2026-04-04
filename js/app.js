@@ -4223,11 +4223,13 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                                 <input type="checkbox" id="chk_preset_${cat}" checked>
                                 <span class="mission-category-label">${categoryLabels[cat]}</span>
                             </label>
-                            <select class="mission-difficulty-select" id="diff_preset_${cat}" onchange="selectDifficulty('${cat}', this.value)">
+                            <div class="mission-difficulty-tabs compact" data-category="${cat}">
                                 ${Object.keys(catData).map(diff => `
-                                    <option value="${diff}" ${diff === 'normal' ? 'selected' : ''}>${diffLabels[diff]}</option>
+                                    <button class="diff-tab ${diff === 'normal' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
+                                        ${diffLabels[diff]}
+                                    </button>
                                 `).join('')}
-                            </select>
+                            </div>
                         </div>
                         <div class="mission-preview compact" id="preview-${cat}">
                             <span id="label_preset_${cat}">${catData.normal.text} · ${catData.normal.target}일</span>
@@ -4421,12 +4423,13 @@ function initDifficultySelectors(level) {
     ['diet', 'exercise', 'mind'].forEach(cat => {
         const preview = document.getElementById(`preview-${cat}`);
         const label = document.getElementById(`label_preset_${cat}`);
-        const select = document.getElementById(`diff_preset_${cat}`);
         if (preview && label && levelData[cat]) {
             const m = levelData[cat].normal;
             label.textContent = `${m.text} · ${m.target}일`;
         }
-        if (select) select.value = 'normal';
+        document.querySelectorAll(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab`).forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.diff === 'normal');
+        });
     });
 }
 
@@ -4706,12 +4709,13 @@ window.selectDifficulty = function(cat, diff) {
     const m = levelData[cat]?.[diff];
     if (!m) return;
 
+    document.querySelectorAll(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab`).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.diff === diff);
+    });
+
     // 미션 텍스트 업데이트
     const label = document.getElementById(`label_preset_${cat}`);
     if (label) label.textContent = `${m.text} · ${m.target}일`;
-
-    const select = document.getElementById(`diff_preset_${cat}`);
-    if (select && select.value !== diff) select.value = diff;
 };
 
 // 커스텀 미션 목록 (임시 저장)

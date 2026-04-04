@@ -1997,18 +1997,6 @@ textarea {
     margin-bottom: 6px;
 }
 
-.mission-difficulty-select {
-    min-width: 76px;
-    height: 30px;
-    padding: 0 26px 0 10px;
-    border: 1px solid var(--gray-300, #dee2e6);
-    border-radius: 8px;
-    background: white;
-    color: var(--gray-700);
-    font-size: 11px;
-    font-weight: 700;
-}
-
 .diff-tab {
     flex: 1;
     padding: 5px 8px;
@@ -3020,10 +3008,9 @@ textarea {
         gap: 6px;
     }
 
-    .mission-difficulty-select {
-        min-width: 72px;
-        height: 28px;
-        font-size: 10px;
+    .mission-difficulty-tabs.compact {
+        width: 100%;
+        margin-bottom: 0;
     }
 
     .dashboard-action-strip {
