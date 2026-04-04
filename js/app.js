@@ -6909,16 +6909,16 @@ function updateGalleryFeedHeader() {
 
     if (galleryUserFilter) {
         titleEl.textContent = `${galleryUserFilter.userName}님의 최근 인증`;
-        descEl.textContent = `최근 30일 동안 올라온 기록 ${sortedFilteredCache.length}건을 보고 있어요.`;
+        descEl.textContent = `최근 30일 기록 ${sortedFilteredCache.length}건을 보고 있어요.`;
         kickerEl.textContent = 'PERSONAL FEED';
         return;
     }
 
     const variants = {
-        all: ['RECENT FEED', '모두의 최근 인증', '식단, 운동, 마음 기록을 한 번에 둘러보고 가볍게 응원해보세요.'],
-        diet: ['DIET FEED', '식단 인증만 모아보기', '오늘 무엇을 먹었는지 빠르게 참고하고, 좋은 식사 흐름을 저장해보세요.'],
-        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', '걸음수와 운동 사진, 영상을 한 흐름으로 보고 바로 반응할 수 있어요.'],
-        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '수면과 감사일기, 명상 기록을 조용히 둘러보며 오늘 흐름을 정리해보세요.']
+        all: ['RECENT FEED', '모두의 최근 인증', '세 영역 기록을 빠르게 보고 바로 응원해보세요.'],
+        diet: ['DIET FEED', '식단 인증만 모아보기', '오늘 식사 흐름만 빠르게 보고 참고해보세요.'],
+        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', '걸음수와 운동 기록만 바로 이어서 볼 수 있어요.'],
+        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '수면, 명상, 감사일기 흐름만 조용히 살펴보세요.']
     };
 
     const [kicker, title, desc] = variants[galleryFilter] || variants.all;

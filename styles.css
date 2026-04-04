@@ -2386,8 +2386,8 @@ textarea {
 }
 
 .community-module-card {
-    margin-top: 12px;
-    padding: 12px;
+    margin-top: 10px;
+    padding: 10px;
     border-radius: 16px;
     background: var(--card-bg, #fff);
     border: 1px solid var(--border, #e8e8e8);
@@ -2397,8 +2397,8 @@ textarea {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .community-module-kicker {
@@ -2429,7 +2429,7 @@ textarea {
 }
 
 .community-empty-state {
-    padding: 12px;
+    padding: 10px;
     border-radius: 16px;
     background: #FAFAFA;
     border: 1px dashed #E0E0E0;
@@ -2477,7 +2477,7 @@ textarea {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .friend-activity-pill,
@@ -2506,8 +2506,8 @@ textarea {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 9px 10px;
+    gap: 10px;
+    padding: 8px 9px;
     border-radius: 14px;
     background: #FAFAFA;
     border: 1px solid #F0F0F0;
@@ -2559,7 +2559,7 @@ textarea {
 }
 
 .community-privacy-inline {
-    margin-top: 10px;
+    margin-top: 8px;
     justify-content: space-between;
     width: 100%;
 }
@@ -3496,6 +3496,16 @@ textarea {
     border: 1px solid rgba(255, 224, 178, 0.9);
 }
 
+.gallery-privacy-note-action {
+    width: 100%;
+    justify-content: space-between;
+}
+
+.gallery-privacy-note-action .community-inline-btn {
+    min-height: 30px;
+    padding: 0 10px;
+}
+
 .gallery-privacy-badge {
     display: inline-flex;
     align-items: center;
@@ -4365,8 +4375,8 @@ textarea {
 
     .gallery-hero,
     .gallery-feed-shell {
-        padding: 14px;
-        border-radius: 18px;
+        padding: 12px;
+        border-radius: 16px;
     }
 
     .gallery-hero-action {
@@ -4384,6 +4394,14 @@ textarea {
 
     .gallery-hero-stat strong {
         font-size: 20px;
+    }
+
+    .gallery-privacy-note-action {
+        align-items: stretch;
+    }
+
+    .gallery-privacy-note-action .community-inline-btn {
+        width: 100%;
     }
 
     .gallery-feed-heading h3 {

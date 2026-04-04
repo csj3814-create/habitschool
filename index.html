@@ -1112,7 +1112,7 @@
                         <div class="gallery-hero-copy">
                             <div class="gallery-hero-kicker">HABIT FEED</div>
                             <h2 class="gallery-hero-title">기록하고, 공유하고, 서로 응원하기</h2>
-                            <p class="gallery-hero-desc">오늘 할 일만 짧게 보고 바로 움직여보세요.</p>
+                            <p class="gallery-hero-desc">공유한 기록만 보여요. 보고, 응원하고, 올리고 싶을 때만 올리세요.</p>
                             <div class="gallery-hero-actions" role="group" aria-label="갤러리 빠른 행동">
                                 <button class="gallery-hero-action primary" onclick="goToGalleryRecordAction()">
                                     <span class="gallery-hero-action-step">1</span>
@@ -1136,9 +1136,10 @@
                                     </span>
                                 </button>
                             </div>
-                            <div class="gallery-privacy-note" role="note" aria-label="공개 범위 안내">
+                            <div class="gallery-privacy-note gallery-privacy-note-action" role="note" aria-label="공개 범위 안내">
                                 <span class="gallery-privacy-badge">기본 비공개</span>
-                                <span class="gallery-privacy-text">공유할 때만 갤러리에 보여요.</span>
+                                <span class="gallery-privacy-text">공유 전에는 나만 볼 수 있어요.</span>
+                                <button type="button" class="community-inline-btn" onclick="triggerGalleryShareAction()">공유 카드 열기</button>
                             </div>
                         </div>
                         <div class="gallery-hero-stats" aria-label="갤러리 요약">
