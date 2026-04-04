@@ -176,54 +176,117 @@ function getCurrentShareLog(userId) {
     ) || null;
 }
 
-function collectShareCardImages(latest, settings = getDefaultShareSettings()) {
+function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     if (!latest) return [];
 
-    const imgs = [];
+    const items = [];
+    const addMedia = (url, category, type = null) => {
+        const normalizedUrl = String(url || '').trim();
+        if (!normalizedUrl) return;
+        const resolvedType = type || (isVideoUrl(normalizedUrl) ? 'video' : 'image');
+        items.push({
+            originalUrl: normalizedUrl,
+            src: normalizedUrl,
+            type: resolvedType,
+            category
+        });
+    };
+
     if (latest.diet && !settings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
-            const thumb = latest.diet[`${meal}ThumbUrl`];
-            const orig = latest.diet[`${meal}Url`];
-            if (thumb) imgs.push(thumb);
-            else if (orig) imgs.push(orig);
+            addMedia(latest.diet[`${meal}ThumbUrl`] || latest.diet[`${meal}Url`], '식단');
         });
     }
 
     if (latest.exercise && !settings.hideExercise) {
         if (latest.exercise.cardioList?.length) {
             latest.exercise.cardioList.forEach(item => {
-                if (item.imageThumbUrl) imgs.push(item.imageThumbUrl);
-                else if (item.imageUrl) imgs.push(item.imageUrl);
+                addMedia(item.imageThumbUrl || item.imageUrl, '운동');
             });
-        } else if (latest.exercise.cardioImageUrl) {
-            imgs.push(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl);
+        } else {
+            addMedia(latest.exercise.cardioImageThumbUrl || latest.exercise.cardioImageUrl, '운동');
         }
 
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
-                if (item.videoThumbUrl) imgs.push(item.videoThumbUrl);
-                else if (item.videoUrl) imgs.push(item.videoUrl);
+                addMedia(item.videoThumbUrl || item.videoUrl, '운동', item.videoThumbUrl ? 'image' : 'video');
             });
-        } else if (latest.exercise.strengthVideoUrl) {
-            imgs.push(latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl);
+        } else {
+            addMedia(
+                latest.exercise.strengthVideoThumbUrl || latest.exercise.strengthVideoUrl,
+                '운동',
+                latest.exercise.strengthVideoThumbUrl ? 'image' : 'video'
+            );
         }
     }
 
-    if (latest.sleepAndMind?.sleepImageUrl && !settings.hideMind) {
-        imgs.push(latest.sleepAndMind.sleepImageThumbUrl || latest.sleepAndMind.sleepImageUrl);
+    if (!settings.hideMind) {
+        addMedia(latest.sleepAndMind?.sleepImageThumbUrl || latest.sleepAndMind?.sleepImageUrl, '마음');
     }
 
-    return [...new Set(imgs)].filter(url => url && String(url).trim() !== '');
+    const deduped = [];
+    const seen = new Set();
+    for (const item of items) {
+        const key = `${item.category}|${item.originalUrl}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(item);
+    }
+    return deduped;
 }
 
-function renderShareCardState(user, latest, overrideSettings = null) {
+function getShareCategoryTags(latest, settings = getDefaultShareSettings()) {
+    if (!latest) return [];
+    const tags = [];
+    const hasDietMedia = !!collectShareCardMedia({ diet: latest.diet }, { ...getDefaultShareSettings(), hideDiet: false, hideExercise: true, hideMind: true }).length;
+    const hasExerciseMedia = !!collectShareCardMedia({ exercise: latest.exercise }, { ...getDefaultShareSettings(), hideDiet: true, hideExercise: false, hideMind: true }).length;
+    const hasMindMedia = !!collectShareCardMedia({ sleepAndMind: latest.sleepAndMind }, { ...getDefaultShareSettings(), hideDiet: true, hideExercise: true, hideMind: false }).length;
+
+    if (!settings.hideDiet && (hasDietMedia || latest.diet)) tags.push('식단');
+    if (!settings.hideExercise && (hasExerciseMedia || latest.exercise)) tags.push('운동');
+    if (!settings.hideMind && (hasMindMedia || latest.sleepAndMind?.gratitudeJournal || latest.sleepAndMind?.meditationDone)) tags.push('마음');
+    if ((latest.currentStreak || 0) > 0) tags.push(`${latest.currentStreak}일 연속`);
+    return tags.slice(0, 4);
+}
+
+function getSharePoints(latest) {
+    let points = (latest?.awardedPoints?.dietPoints || 0)
+        + (latest?.awardedPoints?.exercisePoints || 0)
+        + (latest?.awardedPoints?.mindPoints || 0);
+    if (points === 0 && latest?.awardedPoints) {
+        if (latest.awardedPoints.diet) points += 10;
+        if (latest.awardedPoints.exercise) points += 15;
+        if (latest.awardedPoints.mind) points += 5;
+    }
+    return points;
+}
+
+function buildShareSubtitle(latest, tags = []) {
+    if (!latest) return '오늘 기록한 흐름을 한 장으로 정리했어요.';
+    if (tags.length) {
+        const categoryTags = tags.filter(tag => !tag.includes('연속'));
+        if (categoryTags.length) {
+            return `오늘 ${categoryTags.join(' · ')} 흐름을 한 장으로 남겼어요.`;
+        }
+    }
+    return '오늘의 해빛 흐름을 카드로 정리했어요.';
+}
+
+function buildShareTagRow(tags = []) {
+    if (!tags.length) return '';
+    return tags.map(tag => `<span class="share-tag">${escapeHtml(tag)}</span>`).join('');
+}
+
+function renderShareCardState(user, latest, overrideSettings = null, options = {}) {
     const shareContainer = document.getElementById('my-share-container');
     const shareButton = shareContainer?.querySelector('.btn-share-action');
     const titleEl = document.getElementById('share-title-text');
+    const subtitleEl = document.getElementById('share-subtitle-text');
+    const tagRowEl = document.getElementById('share-tag-row');
     const dateEl = document.getElementById('share-date');
     const pointEl = document.getElementById('share-point');
     const imgGrid = document.getElementById('share-imgs');
-    if (!shareContainer || !titleEl || !dateEl || !pointEl || !imgGrid) return;
+    if (!shareContainer || !titleEl || !subtitleEl || !tagRowEl || !dateEl || !pointEl || !imgGrid) return;
 
     const settings = applyShareSettingsToControls(overrideSettings || latest?.shareSettings || _shareSettingsDraft);
     const applyHiddenState = (element, hidden) => {
@@ -235,18 +298,14 @@ function renderShareCardState(user, latest, overrideSettings = null) {
 
     if (latest && user) {
         const displayName = settings.hideIdentity ? '익명 학생' : getUserDisplayName();
-        titleEl.innerText = settings.hideIdentity ? '해빛 공유 카드' : `${displayName} 기록`;
+        const tags = getShareCategoryTags(latest, settings);
+        const mediaItems = Array.isArray(options.preparedMedia) ? options.preparedMedia : collectShareCardMedia(latest, settings);
+        titleEl.innerText = settings.hideIdentity ? '오늘의 해빛 루틴' : `${displayName}의 해빛 루틴`;
+        subtitleEl.innerText = buildShareSubtitle(latest, tags);
+        tagRowEl.innerHTML = buildShareTagRow(tags);
+        tagRowEl.style.display = tags.length ? 'flex' : 'none';
         dateEl.innerText = settings.hideDate ? '날짜 숨김' : latest.date.replace(/-/g, '.');
-
-        let points = (latest.awardedPoints?.dietPoints || 0)
-            + (latest.awardedPoints?.exercisePoints || 0)
-            + (latest.awardedPoints?.mindPoints || 0);
-        if (points === 0 && latest.awardedPoints) {
-            if (latest.awardedPoints.diet) points += 10;
-            if (latest.awardedPoints.exercise) points += 15;
-            if (latest.awardedPoints.mind) points += 5;
-        }
-        pointEl.innerText = settings.hidePoints ? '--' : String(points);
+        pointEl.innerText = settings.hidePoints ? '--' : String(getSharePoints(latest));
         applyHiddenState(dateEl, settings.hideDate);
         applyHiddenState(pointEl, settings.hidePoints);
 
@@ -255,31 +314,21 @@ function renderShareCardState(user, latest, overrideSettings = null) {
             shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         }
 
-        const imgs = collectShareCardImages(latest, settings);
-        imgGrid.innerHTML = buildShareImageGrid(imgs, 4);
-        imgGrid.classList.remove('single-item', 'two-items', 'three-items', 'four-items', 'share-img-grid-empty');
-        if (imgs.length === 1) imgGrid.classList.add('single-item');
-        if (imgs.length === 2) imgGrid.classList.add('two-items');
-        if (imgs.length === 3) imgGrid.classList.add('three-items');
-        if (imgs.length >= 4) imgGrid.classList.add('four-items');
-        if (imgs.length === 0) {
-            imgGrid.classList.add('share-img-grid-empty');
-            imgGrid.innerHTML = '<div style="font-size:12px; color:#888; padding:15px; background:rgba(255,255,255,0.8); border-radius:8px; grid-column: span 2;">텍스트 인증 준비!</div>';
-        }
+        imgGrid.className = 'share-img-grid';
+        imgGrid.innerHTML = buildShareImageGrid(mediaItems, 4);
         return;
     }
 
-    titleEl.innerText = '해빛 공유 카드';
+    titleEl.innerText = '오늘의 해빛 루틴';
+    subtitleEl.innerText = '오늘 기록을 저장하면 바로 공유 카드가 완성돼요.';
+    tagRowEl.innerHTML = '';
+    tagRowEl.style.display = 'none';
     dateEl.innerText = '기록 준비';
     pointEl.innerText = settings.hidePoints ? '--' : '0';
     applyHiddenState(dateEl, false);
     applyHiddenState(pointEl, settings.hidePoints);
-    imgGrid.className = 'share-img-grid share-img-grid-empty';
-    imgGrid.innerHTML = `
-        <div class="share-placeholder-box">
-            <strong>아직 공유할 카드가 없어요</strong>
-            <span>오늘 기록을 저장하면 바로 자랑 카드가 생겨요.</span>
-        </div>`;
+    imgGrid.className = 'share-img-grid';
+    imgGrid.innerHTML = buildShareImageGrid([], 4);
     if (shareButton) {
         shareButton.innerText = '기록 저장 후 공유 준비';
         shareButton.onclick = goToGalleryRecordAction;
@@ -6402,24 +6451,120 @@ function createVideoPlaceholderBase64() {
     return canvas.toDataURL('image/png');
 }
 
+function createImagePlaceholderBase64(label = '해빛 기록') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 320;
+    const ctx = canvas.getContext('2d');
+
+    const bg = ctx.createLinearGradient(0, 0, 320, 320);
+    bg.addColorStop(0, '#FFF4E0');
+    bg.addColorStop(0.55, '#FFE0B8');
+    bg.addColorStop(1, '#FFD19A');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 320, 320);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.88)';
+    ctx.fillRect(54, 72, 212, 140);
+
+    ctx.strokeStyle = '#F3A54E';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(54, 72, 212, 140);
+
+    ctx.fillStyle = '#FF8C00';
+    ctx.beginPath();
+    ctx.arc(120, 132, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#FFB347';
+    ctx.beginPath();
+    ctx.moveTo(84, 188);
+    ctx.lineTo(140, 132);
+    ctx.lineTo(182, 174);
+    ctx.lineTo(212, 142);
+    ctx.lineTo(236, 188);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#9A4A00';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, 160, 262);
+
+    return canvas.toDataURL('image/png');
+}
+
+async function imageElementToBase64(imageEl) {
+    if (!imageEl || !imageEl.complete || !imageEl.naturalWidth || !imageEl.naturalHeight) {
+        return '';
+    }
+
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = imageEl.naturalWidth;
+        canvas.height = imageEl.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imageEl, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.9);
+    } catch (error) {
+        console.warn('이미지 요소 캡처 실패:', error);
+        return '';
+    }
+}
+
 function toSafeAttr(value) {
     return String(value || '').replace(/"/g, '&quot;');
 }
 
-function buildShareImageGrid(urls, maxCount = 4) {
-    let htmlString = '';
-    for (let i = 0; i < Math.min(urls.length, maxCount); i++) {
-        const mediaUrl = urls[i];
-        const isVideo = isVideoUrl(mediaUrl);
-        const safeUrl = toSafeAttr(mediaUrl);
-
-        if (isVideo) {
-            htmlString += `<div class="share-media-thumb" data-media-type="video" data-media-src="${safeUrl}"><video src="${safeUrl}#t=0.5" muted playsinline preload="metadata" crossorigin="anonymous" style="width:100%;height:100%;object-fit:cover;pointer-events:none;border-radius:8px;"></video></div>`;
-        } else {
-            htmlString += `<div class="share-media-thumb" data-media-type="image" data-media-src="${safeUrl}"><img src="${safeUrl}" alt="해빛 인증 사진 ${i + 1}" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;"></div>`;
-        }
+function buildShareImageGrid(mediaItems, maxCount = 4) {
+    const items = Array.isArray(mediaItems) ? mediaItems.slice(0, maxCount) : [];
+    if (!items.length) {
+        return `
+            <div class="share-empty-state">
+                <strong>오늘 기록을 저장하면 카드가 완성돼요</strong>
+                <span>사진이 없어도 기록 흐름은 바로 공유할 수 있어요.</span>
+            </div>
+        `;
     }
-    return htmlString;
+
+    const countClass = `share-media-count-${Math.min(items.length, 4)}`;
+    const html = items.map((item, index) => {
+        const mediaType = item.type || (isVideoUrl(item.originalUrl || item.src || '') ? 'video' : 'image');
+        const mediaSrc = item.src || item.originalUrl || '';
+        const safeSrc = toSafeAttr(mediaSrc || createImagePlaceholderBase64(item.category || '해빛 기록'));
+        const safeOriginal = toSafeAttr(item.originalUrl || mediaSrc);
+        const safeCategory = escapeHtml(item.category || '기록');
+        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous">`;
+
+        return `
+            <div class="share-media-thumb" data-media-type="${mediaType}" data-media-src="${safeOriginal}">
+                ${imageMarkup}
+                <span class="share-media-chip">${safeCategory}</span>
+                ${mediaType === 'video' ? '<span class="share-media-play-badge">▶</span>' : ''}
+            </div>
+        `;
+    }).join('');
+
+    return `<div class="share-media-layout ${countClass}">${html}</div>`;
+}
+
+async function waitForImagesInElement(root) {
+    if (!root) return;
+    const images = Array.from(root.querySelectorAll('img'));
+    if (!images.length) return;
+
+    await Promise.all(images.map(img => new Promise(resolve => {
+        if (img.complete && img.naturalWidth > 0) {
+            resolve();
+            return;
+        }
+        const finish = () => resolve();
+        img.addEventListener('load', finish, { once: true });
+        img.addEventListener('error', finish, { once: true });
+    })));
+
+    await Promise.all(images.map(img => (typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve())));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 }
 
 async function hydrateThumbImages(scopeElement) {
@@ -6482,12 +6627,15 @@ async function prewarmThumbCache(logItems) {
 }
 
 async function prepareShareThumbsForCapture() {
-    const thumbs = Array.from(document.querySelectorAll('.share-media-thumb'));
+    const captureArea = document.getElementById('capture-area');
+    const thumbs = Array.from(captureArea?.querySelectorAll('.share-media-thumb') || []);
     if (!thumbs.length) return;
+    await waitForImagesInElement(captureArea);
 
     const jobs = thumbs.map(async (thumb, index) => {
         const mediaType = thumb.dataset.mediaType;
         const mediaSrc = thumb.dataset.mediaSrc;
+        const label = thumb.querySelector('.share-media-chip')?.textContent?.trim() || `기록 ${index + 1}`;
         let b64 = '';
 
         if (mediaType === 'video') {
@@ -6505,25 +6653,37 @@ async function prepareShareThumbsForCapture() {
             // 2) 썸네일 이미지가 있으면 사용
             if (!b64 || b64 === 'data:,') {
                 const renderedThumbImg = thumb.querySelector('img');
-                if (renderedThumbImg?.src && !renderedThumbImg.src.startsWith('data:video')) {
+                if (renderedThumbImg) {
+                    b64 = await imageElementToBase64(renderedThumbImg);
+                }
+                if ((!b64 || b64 === 'data:,') && renderedThumbImg?.src && !renderedThumbImg.src.startsWith('data:video')) {
                     b64 = await fetchImageAsBase64(renderedThumbImg.src);
                 }
             }
             // 3) 최종 폴백: 플레이스홀더 생성
-            if (!b64 || b64 === 'data:,' || /^data:video/i.test(b64)) {
+            if (!b64 || b64 === 'data:,' || /^data:video/i.test(b64) || !String(b64).startsWith('data:')) {
                 b64 = createVideoPlaceholderBase64();
             }
         } else {
-            b64 = await fetchImageAsBase64(mediaSrc);
-            if (!b64) b64 = mediaSrc;
+            const renderedImage = thumb.querySelector('img');
+            b64 = await imageElementToBase64(renderedImage);
+            if (!b64 || !String(b64).startsWith('data:')) {
+                b64 = await fetchImageAsBase64(mediaSrc || renderedImage?.currentSrc || renderedImage?.src || '');
+            }
+            if (!b64 || !String(b64).startsWith('data:')) {
+                b64 = createImagePlaceholderBase64(label);
+            }
         }
 
-        // 1:1 정사각형 크롭 (화면 비율 증상 방지)
-        const croppedB64 = await cropToSquareBase64(b64);
-        thumb.innerHTML = `<img src="${croppedB64}" alt="해빛 인증 ${index + 1}" style="width:100%;height:100%;object-fit:cover;">`;
+        thumb.innerHTML = `
+            <img src="${b64}" alt="해빛 인증 ${index + 1}" crossorigin="anonymous">
+            <span class="share-media-chip">${escapeHtml(label)}</span>
+            ${mediaType === 'video' ? '<span class="share-media-play-badge">▶</span>' : ''}
+        `;
     });
 
     await Promise.all(jobs);
+    await waitForImagesInElement(captureArea);
 }
 
 // 이미지를 1:1 정사각형으로 크롭하여 base64 반환
@@ -6559,6 +6719,7 @@ window.closeSharePlatformModal = function () {
 async function createSquareShareBlob() {
     await _ensureHtml2Canvas();
     const captureArea = document.getElementById('capture-area');
+    await waitForImagesInElement(captureArea);
     const width = captureArea.offsetWidth;
     const height = captureArea.offsetHeight;
 
@@ -6575,22 +6736,20 @@ async function createSquareShareBlob() {
         height
     });
 
-    // 1:1 정사각형으로 강제 변환 (인스타그램 최적화)
+    // 1:1 정사각형 출력 유지
     const size = Math.max(sourceCanvas.width, sourceCanvas.height);
     const squareCanvas = document.createElement('canvas');
     squareCanvas.width = size;
     squareCanvas.height = size;
     const ctx = squareCanvas.getContext('2d');
 
-    // 배경 그라데이션 (카드 배경과 어울리게)
     const grd = ctx.createLinearGradient(0, 0, size, size);
     grd.addColorStop(0, '#FFF8E1');
-    grd.addColorStop(0.4, '#FFE0B2');
-    grd.addColorStop(1, '#FFCC80');
+    grd.addColorStop(0.5, '#FFE5BF');
+    grd.addColorStop(1, '#FFD59C');
     ctx.fillStyle = grd;
     ctx.fillRect(0, 0, size, size);
 
-    // 중앙 배치
     const offsetX = (size - sourceCanvas.width) / 2;
     const offsetY = (size - sourceCanvas.height) / 2;
     ctx.drawImage(sourceCanvas, offsetX, offsetY);

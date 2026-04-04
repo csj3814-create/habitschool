@@ -298,37 +298,34 @@
                     </div>
                 </div>
 
-                <details class="dashboard-more-tools" id="dashboard-more-tools">
-                    <summary>기록 더보기</summary>
-                    <div class="dashboard-more-tools-body">
-                        <div class="card dashboard-week-card">
-                            <div class="dashboard-week-header">
-                                <div>
-                                    <h3 style="margin-bottom:0;">이번 주 흐름</h3>
-                                    <p class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
-                                </div>
-                                <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
+                <div class="dashboard-extra-stack" id="dashboard-extra-stack">
+                    <div class="card dashboard-week-card">
+                        <div class="dashboard-week-header">
+                            <div>
+                                <h3 style="margin-bottom:0;">이번 주 흐름</h3>
+                                <p class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
                             </div>
-                            <div class="dashboard-week-progress-bar">
-                                <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
-                            </div>
-                            <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 루틴을 시작해보세요.</div>
-                            <div class="week-graph" id="week-graph"></div>
+                            <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
                         </div>
-
-                        <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
-                            <div class="mission-badges-title">🏅 미션 배지</div>
-                            <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                        <div class="dashboard-week-progress-bar">
+                            <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
                         </div>
-
-                        <div class="milestone-section" id="milestone-section" style="display:none;">
-                            <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
-                            <div class="badges-grid" id="badges-grid"></div>
-                        </div>
-
-                        <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지</button>
+                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 루틴을 시작해보세요.</div>
+                        <div class="week-graph" id="week-graph"></div>
                     </div>
-                </details>
+
+                    <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
+                        <div class="mission-badges-title">🏅 미션 배지</div>
+                        <div class="mission-badges-grid" id="mission-badges-grid"></div>
+                    </div>
+
+                    <div class="milestone-section" id="milestone-section" style="display:none;">
+                        <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
+                        <div class="badges-grid" id="badges-grid"></div>
+                    </div>
+
+                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지</button>
+                </div>
             </div>
 
             <div id="profile" class="content-section" role="region" aria-label="내 프로필">
@@ -1146,13 +1143,23 @@
                 <div id="my-share-container" style="display:none;">
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
-                            <div id="share-title-text" class="share-title">해빛 공유 카드</div>
-                            <div class="share-stat">
-                                <div class="share-val">📅 <span id="share-date"></span></div>
-                                <div class="share-val">Ⓟ <span id="share-point">0</span> P</div>
+                            <div class="share-poster-head">
+                                <span class="share-brand-mark">HABIT SCHOOL</span>
+                                <div class="share-stat">
+                                    <span class="share-val share-date-pill">📅 <span id="share-date"></span></span>
+                                    <span class="share-val share-point-pill">Ⓟ <span id="share-point">0</span> P</span>
+                                </div>
                             </div>
+                            <div class="share-heading-block">
+                                <div id="share-title-text" class="share-title">해빛 공유 카드</div>
+                                <div id="share-subtitle-text" class="share-subtitle">오늘 기록한 흐름을 한 장으로 정리했어요.</div>
+                            </div>
+                            <div id="share-tag-row" class="share-tag-row"></div>
                             <div class="share-img-grid" id="share-imgs"></div>
-                            <div class="share-footer">좋은 습관, 같이 이어가요</div>
+                            <div class="share-footer-row">
+                                <span class="share-footer-mark">해빛스쿨</span>
+                                <div class="share-footer">좋은 습관, 같이 이어가요</div>
+                            </div>
                         </div>
                         <button class="btn-share-action" onclick="shareMyCard()">
                             나의 해빛 기록 자랑하기
