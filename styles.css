@@ -399,13 +399,14 @@ body {
 
 /* 자산 요약 카드 */
 .wallet-asset-card {
-    background: linear-gradient(135deg, #FFB347 0%, #FF8C00 50%, #FF7700 100%);
+    background: linear-gradient(135deg, #FFAF3F 0%, #F57C00 52%, #E06200 100%);
     color: white;
-    border: none;
+    border: 1px solid rgba(191, 86, 0, 0.18);
     border-radius: 16px;
     padding: 20px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 14px 30px rgba(196, 98, 9, 0.16);
 }
 
 .wallet-asset-card::before {
@@ -433,12 +434,12 @@ body {
 }
 
 .wallet-asset-item {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.13);
     backdrop-filter: blur(10px);
     padding: 14px 12px 10px;
     border-radius: 12px;
     text-align: center;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
     transition: background 0.2s;
     min-width: 0;
 }
@@ -498,10 +499,11 @@ body {
 
 /* 지갑 정보 카드 */
 .wallet-info-card {
-    background: white;
-    border: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, #fffdf8 0%, #fff8ef 100%);
+    border: 1px solid #f0d7b6;
     border-radius: 14px;
     padding: 16px;
+    box-shadow: 0 8px 20px rgba(89, 69, 39, 0.05);
 }
 
 .wallet-info-header {
@@ -514,26 +516,27 @@ body {
 .wallet-info-header h3 {
     margin: 0;
     font-size: 14px;
-    color: var(--gray-800);
+    color: #5c3414;
 }
 
 .wallet-network-badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: #E8F5E9;
+    background: #fff3de;
+    border: 1px solid #f3cf9b;
     padding: 3px 8px;
     border-radius: 10px;
     font-size: 10px;
     font-weight: 600;
-    color: #2E7D32;
+    color: #9b5200;
     margin-left: auto;
 }
 
 .wallet-network-badge .dot {
     width: 6px;
     height: 6px;
-    background: #4CAF50;
+    background: #F57C00;
     border-radius: 50%;
 }
 
@@ -541,10 +544,10 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: var(--gray-50);
+    background: rgba(255,255,255,0.88);
     padding: 10px 12px;
     border-radius: 10px;
-    border: 1px solid var(--gray-200);
+    border: 1px solid #ecd9bf;
 }
 
 .wallet-address-text {
@@ -610,7 +613,7 @@ body {
 }
 
 .wallet-link-btn.primary {
-    background: linear-gradient(135deg, #FF8C00, #FFA726);
+    background: linear-gradient(135deg, #F57C00, #FF9F1C);
     color: white;
     border: none;
     box-shadow: 0 2px 6px rgba(255,140,0,0.3);
@@ -620,18 +623,20 @@ body {
 .wallet-convert-card {
     border-radius: 14px;
     padding: 16px;
-    background: white;
-    border: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, #fffdf8 0%, #fff8ef 100%);
+    border: 1px solid #f0d7b6;
+    box-shadow: 0 8px 20px rgba(89, 69, 39, 0.05);
 }
 
 .wallet-convert-card h3 {
     margin: 0 0 4px 0;
     font-size: 14px;
+    color: #5c3414;
 }
 
 .wallet-convert-desc {
     font-size: 12px;
-    color: var(--gray-500);
+    color: #866b4d;
     margin: 0 0 14px 0;
 }
 
@@ -755,10 +760,11 @@ body {
 
 /* 반감기 카드 */
 .wallet-halving-card {
-    background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
-    border: none;
+    background: linear-gradient(135deg, #FFF4D6 0%, #FFE2A4 100%);
+    border: 1px solid #f0cf8f;
     border-radius: 14px;
     padding: 16px;
+    box-shadow: 0 8px 20px rgba(89, 69, 39, 0.05);
 }
 
 .wallet-halving-card h3 {
@@ -877,13 +883,15 @@ body {
 .wallet-tx-card {
     border-radius: 14px;
     padding: 16px;
-    background: white;
-    border: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, #fffdf8 0%, #fff8ef 100%);
+    border: 1px solid #f0d7b6;
+    box-shadow: 0 8px 20px rgba(89, 69, 39, 0.05);
 }
 
 .wallet-tx-card h3 {
     margin: 0 0 12px 0;
     font-size: 14px;
+    color: #5c3414;
 }
 
 .wallet-tx-list {
@@ -1033,8 +1041,16 @@ body {
 .wallet-minichart {
     margin-top: 12px;
     padding: 10px 12px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.16);
     border-radius: 10px;
+}
+
+.wallet-asset-note {
+    font-size: 10px;
+    color: rgba(255,255,255,0.82);
+    margin-top: 8px;
+    line-height: 1.45;
+    text-align: center;
 }
 
 .wallet-minichart-label {
@@ -1091,8 +1107,8 @@ body {
     display: inline-block;
     padding: 4px 10px;
     border-radius: 12px;
-    background: #FFF3E0;
-    color: #E65100;
+    background: #FFE8C6;
+    color: #B15900;
     font-size: 11px;
     font-weight: 600;
     margin-bottom: 12px;
@@ -1254,18 +1270,20 @@ body {
 .wallet-challenge-card {
     border-radius: 14px;
     padding: 16px;
-    background: white;
-    border: 1px solid var(--gray-200);
+    background: linear-gradient(180deg, #fffdf8 0%, #fff8ef 100%);
+    border: 1px solid #f0d7b6;
+    box-shadow: 0 8px 20px rgba(89, 69, 39, 0.05);
 }
 
 .wallet-challenge-title {
     margin: 0 0 4px 0;
     font-size: 14px;
+    color: #5c3414;
 }
 
 .wallet-challenge-desc {
     font-size: 12px;
-    color: #888;
+    color: #866b4d;
     margin: 0 0 12px 0;
 }
 
@@ -9347,8 +9365,9 @@ body.dark-mode .step-detail-item { color: #bbb; }
 
 .chatbot-link-card,
 .friend-request-card {
-    border: 1.5px solid #f0d6b2;
-    background: linear-gradient(135deg, #fffdf7, #fff8ee);
+    border: 1.5px solid #ebc893;
+    background: linear-gradient(135deg, #fffdf8, #fff5e8);
+    box-shadow: 0 8px 18px rgba(95, 66, 28, 0.05);
 }
 
 .chatbot-link-head,
@@ -9372,8 +9391,8 @@ body.dark-mode .step-detail-item { color: #bbb; }
 .friend-request-head p {
     margin: 0;
     font-size: 12px;
-    line-height: 1.55;
-    color: #78624c;
+    line-height: 1.5;
+    color: #6f583f;
 }
 
 .chatbot-link-steps {
@@ -9435,7 +9454,7 @@ body.dark-mode .step-detail-item { color: #bbb; }
 .chatbot-link-foot {
     font-size: 12px;
     line-height: 1.5;
-    color: #7c6956;
+    color: #735c43;
 }
 
 .chatbot-link-status strong {
@@ -9523,6 +9542,103 @@ body.dark-mode .step-detail-item { color: #bbb; }
 .chatbot-link-copy-btn:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+.profile-update-card {
+    border: 1.5px solid #ebc893;
+    background: linear-gradient(135deg, #fffdf8, #fff6ea);
+    box-shadow: 0 8px 18px rgba(95, 66, 28, 0.05);
+}
+
+.profile-update-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.profile-update-head h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #3b2f1e;
+}
+
+.profile-update-head p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #735c43;
+}
+
+.profile-update-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #efd7bd;
+    color: #a45a10;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.profile-update-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-update-day {
+    padding: 14px 14px 12px;
+    border-radius: 14px;
+    border: 1px solid #f1deca;
+    background: rgba(255,255,255,0.9);
+}
+
+.profile-update-day-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.profile-update-date {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffb347, #ff8c00);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.profile-update-day-head strong {
+    font-size: 13px;
+    color: #4a3014;
+}
+
+.profile-update-items {
+    margin: 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.profile-update-items li {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #6a553d;
 }
 
 .chatbot-connect-modal-content {
@@ -9778,6 +9894,32 @@ body.dark-mode .friend-request-card {
     border-color: #6b573f;
 }
 
+body.dark-mode .profile-update-card {
+    background: linear-gradient(135deg, #2a241a, #231d15);
+    border-color: #6b573f;
+}
+
+body.dark-mode .profile-update-head h3,
+body.dark-mode .profile-update-day-head strong {
+    color: #f1e6d6;
+}
+
+body.dark-mode .profile-update-head p,
+body.dark-mode .profile-update-items li {
+    color: #cbb59c;
+}
+
+body.dark-mode .profile-update-day {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .profile-update-link {
+    background: #2b2620;
+    border-color: #5b4a39;
+    color: #e2d2c0;
+}
+
 body.dark-mode .chatbot-link-head h3,
 body.dark-mode .friend-request-head h3,
 body.dark-mode .friend-request-name {
@@ -9834,6 +9976,10 @@ body.dark-mode .friend-request-btn.accept {
     border-color: transparent;
 }
 
+body.dark-mode .wallet-asset-note {
+    color: rgba(255,255,255,0.72);
+}
+
 body.dark-mode .referral-link-input {
     background: #1e1e1e;
     border-color: #444;
@@ -9864,6 +10010,15 @@ body.dark-mode .streak-badge {
     }
 
     .chatbot-link-copy-btn {
+        width: 100%;
+    }
+
+    .profile-update-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profile-update-link {
         width: 100%;
     }
 }

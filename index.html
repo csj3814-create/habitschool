@@ -446,9 +446,8 @@
                     <div class="chatbot-link-head">
                         <div>
                             <h3>🤖 해빛코치 계정 연결</h3>
-                            <p>카카오톡 해빛코치 1:1 채팅에서는 <strong>!연결</strong>, 친구 초대는 아래 <strong>내 초대 코드</strong>를 써요.</p>
+                            <p>카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 이어집니다.</p>
                         </div>
-                        <span class="chatbot-link-badge">!연결 기본</span>
                     </div>
                     <div class="chatbot-link-steps">
                         <div class="chatbot-link-step">
@@ -466,7 +465,7 @@
                             </div>
                         </div>
                     </div>
-                    <div id="chatbot-link-status" class="chatbot-link-status">카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 앱 버튼으로 바로 연결돼요.</div>
+                    <div id="chatbot-link-status" class="chatbot-link-status"><strong>!연결</strong>이 기본 연결이에요. 버튼 연결이 어려울 때만 아래 등록 코드를 써요.</div>
                     <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">등록 코드로 연결하기</button>
                     <div id="chatbot-link-fallback-panel" class="chatbot-link-fallback-panel" style="display:none;">
                         <div class="chatbot-link-fallback-copy">버튼 연결이 어려울 때만 보조 등록 코드를 만들어 사용하세요.</div>
@@ -524,14 +523,50 @@
                 </div>
 
                 <!-- 8. 업데이트 노트 -->
-                <a href="/changelog.html" target="_blank" rel="noopener"
-                    style="display:flex; align-items:center; justify-content:space-between; background:white; border-radius:16px; padding:18px 20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0; text-decoration:none; color:inherit;">
-                    <div>
-                        <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:2px;">📋 업데이트 노트</div>
-                        <div style="font-size:11px; color:#aaa;">해빛스쿨이 걸어온 길 · v0.9.0 → v0.9.7</div>
+                <div class="card profile-update-card">
+                    <div class="profile-update-head">
+                        <div>
+                            <h3>📋 업데이트 노트</h3>
+                            <p>최근 작업 흐름을 날짜별로 정리했어요.</p>
+                        </div>
+                        <a href="/changelog.html" target="_blank" rel="noopener" class="profile-update-link">전체 기록</a>
                     </div>
-                    <span style="font-size:18px; color:#FF8C00;">›</span>
-                </a>
+                    <div class="profile-update-list">
+                        <article class="profile-update-day">
+                            <div class="profile-update-day-head">
+                                <span class="profile-update-date">04.05</span>
+                                <strong>공유 · 연결 · 마감 다듬기</strong>
+                            </div>
+                            <ul class="profile-update-items">
+                                <li>공유 카드 템플릿과 정사각형 공유 이미지를 정리했어요.</li>
+                                <li>해빛코치 매직링크, 초대 링크, 친구 연결 흐름을 이어 붙였어요.</li>
+                                <li>프로필 안내 문구와 자산 탭 컬러를 더 선명하게 다듬었어요.</li>
+                            </ul>
+                        </article>
+                        <article class="profile-update-day">
+                            <div class="profile-update-day-head">
+                                <span class="profile-update-date">04.04</span>
+                                <strong>홈 · 기록 · 커뮤니티 개편</strong>
+                            </div>
+                            <ul class="profile-update-items">
+                                <li>홈 대시보드와 기록 흐름을 더 짧고 바로 행동하게 바꿨어요.</li>
+                                <li>갤러리, 커뮤니티, 진행 화면을 겹치지 않게 다시 묶었어요.</li>
+                                <li>기본 공유와 숨김 옵션, 친구 요청/수락 구조를 정리했어요.</li>
+                            </ul>
+                        </article>
+                        <article class="profile-update-day">
+                            <div class="profile-update-day-head">
+                                <span class="profile-update-date">04.03</span>
+                                <strong>검증 환경 · 규칙 · 운영 점검</strong>
+                            </div>
+                            <ul class="profile-update-items">
+                                <li>로컬 에뮬레이터와 staging 환경을 분리해서 배포 전 검증이 쉬워졌어요.</li>
+                                <li>사용자 흐름, 데이터 모델, 포인트/챌린지 규칙을 문서로 정리했어요.</li>
+                                <li>관리자 화면, 공개 범위, 알림 구조를 점검하고 우선순위를 잡았어요.</li>
+                            </ul>
+                        </article>
+                    </div>
+                </div>
 
                 <!-- 9. 계정 설정 (이름 변경 + 로그아웃) -->
                 <div style="background:white; border-radius:16px; padding:20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0;">
@@ -588,7 +623,7 @@
                             <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
                         </div>
                     </div>
-                    <p class="hbt-disclaimer" style="font-size:10px; color:#555; margin-top:8px; line-height:1.4; text-align:center;">⚠️ HBT 토큰은 앱 내 보상 수단이며 법정 화폐가 아닙니다. 금전적 가치 및 가치 상승을 보장하지 않습니다.</p>
+                    <p class="hbt-disclaimer wallet-asset-note">⚠️ HBT는 앱 내 보상 수단이며 금전적 가치 상승을 보장하지 않습니다.</p>
                     <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
                         <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
@@ -599,7 +634,7 @@
                 <!-- 건강 습관 챌린지 섹션 -->
                 <div class="card wallet-challenge-card">
                     <h3 class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
-                    <p class="wallet-challenge-desc">식단·운동·마음 모두 인증해야 하루 완료!</p>
+                    <p class="wallet-challenge-desc">식단·운동·마음을 모두 채우면 하루 완료예요.</p>
 
                     <!-- 진행 중인 챌린지 (링 차트) -->
                     <div id="active-challenge-container" class="wallet-challenge-active" style="display: none;">
@@ -673,7 +708,7 @@
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
                     <h3>🔄 포인트 → HBT 변환</h3>
-                    <p class="wallet-convert-desc">포인트를 HBT 토큰으로 변환하세요. 100P 단위로 변환 가능합니다.</p>
+                    <p class="wallet-convert-desc">100P 단위로 HBT로 바꿔서 지갑에 쌓을 수 있어요.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
                         현재 A구간 · 1:1 비율
                     </div>
@@ -789,7 +824,7 @@
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
                         <h3>🔐 블록체인 지갑</h3>
-                        <span class="wallet-network-badge"><span class="dot"></span> BSC Testnet</span>
+                        <span class="wallet-network-badge"><span class="dot"></span> BSC 테스트넷</span>
                     </div>
                     <div class="wallet-address-box">
                         <span class="wallet-address-text" id="wallet-address-display">로딩 중...</span>

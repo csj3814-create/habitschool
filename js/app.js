@@ -1629,12 +1629,12 @@ function renderChatbotLinkStatus(userData = {}) {
     const isActive = !!code && !!expiresAt && expiresAt.getTime() > Date.now();
 
     if (isActive) {
-        statusEl.innerHTML = '기본 연결은 <strong>!연결</strong>이에요. 버튼 연결이 어려울 때만 아래 보조 등록 코드를 사용하세요.';
+        statusEl.innerHTML = '<strong>!연결</strong>이 기본이에요. 어려울 때만 아래 등록 코드를 사용하세요.';
         codeBox.style.display = 'block';
         codeEl.textContent = code;
         expiryEl.textContent = `만료 시간: ${formatDateTimeForUi(expiresAt)}`;
     } else {
-        statusEl.innerHTML = '카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 앱 버튼으로 바로 연결돼요.';
+        statusEl.innerHTML = '카카오톡 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 연결돼요.';
         codeBox.style.display = 'none';
         codeEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
@@ -1648,7 +1648,7 @@ function renderChatbotLinkStatus(userData = {}) {
 
     lastUsedEl.textContent = lastUsedAt
         ? `최근 연결 완료: ${formatDateTimeForUi(lastUsedAt)}`
-        : '친구 추가는 아래 초대 코드를 사용해요.';
+        : '최근 연결 이력은 아직 없어요.';
 }
 
 async function loadChatbotLinkStatus() {
