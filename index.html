@@ -332,6 +332,32 @@
                         <div id="social-challenge-list"></div>
                     </div>
 
+                    <div class="card referral-card card-invite friend-invite-shared" id="referral-section" style="display:none; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
+                        <div class="referral-header">
+                            <h3>🎁 친구 초대</h3>
+                            <span class="referral-badge">초대 보너스</span>
+                        </div>
+                        <div class="referral-rewards">
+                            <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">신규 가입 즉시 <strong>+200P</strong></span></div>
+                            <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
+                            <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
+                        </div>
+                        <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 초대 링크를 보내세요. 아직 가입 전이면 보너스가 지급되고, 이미 가입한 친구도 링크를 열어 바로 연결할 수 있어요.</p>
+                        <div class="referral-link-box" style="flex-direction:column; gap:6px;">
+                            <div style="font-size:12px; color:#888; margin-bottom:2px;">내 초대 코드: <strong id="referral-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <input type="text" id="referral-link-display" class="referral-link-input" readonly onclick="this.select()">
+                                <button class="referral-copy-btn" onclick="copyReferralLink('referral-link-display')">복사</button>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+                            <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
+                                onclick="shareReferralLink('kakao')">💬 카카오톡</button>
+                            <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
+                                onclick="openQRModal()">📱 QR 코드</button>
+                        </div>
+                    </div>
+
                     <div class="dashboard-more-tools" id="dashboard-more-tools">
                         <div class="dashboard-more-tools-head">
                             <div class="mission-badges-title">🏅 미션 배지</div>
@@ -783,33 +809,6 @@
                 </div>
 
                 <!-- 지갑 정보 -->
-                <!-- 친구 초대 링크 -->
-                <div class="card referral-card card-invite friend-invite-shared" id="referral-section" style="display:none; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
-                    <div class="referral-header">
-                        <h3>🎁 친구 초대</h3>
-                        <span class="referral-badge">초대 보너스</span>
-                    </div>
-                    <div class="referral-rewards">
-                        <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">신규 가입 즉시 <strong>+200P</strong></span></div>
-                        <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
-                        <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
-                    </div>
-                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 초대 링크를 보내세요. 아직 가입 전이면 보너스가 지급되고, 이미 가입한 친구도 링크를 열어 바로 연결할 수 있어요.</p>
-                    <div class="referral-link-box" style="flex-direction:column; gap:6px;">
-                        <div style="font-size:12px; color:#888; margin-bottom:2px;">내 초대 코드: <strong id="referral-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
-                        <div style="display:flex; gap:6px; align-items:center;">
-                            <input type="text" id="referral-link-display" class="referral-link-input" readonly onclick="this.select()">
-                            <button class="referral-copy-btn" onclick="copyReferralLink('referral-link-display')">복사</button>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
-                            onclick="shareReferralLink('kakao')">💬 카카오톡</button>
-                        <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
-                            onclick="openQRModal()">📱 QR 코드</button>
-                    </div>
-                </div>
-
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
                         <h3>🔐 블록체인 지갑</h3>
