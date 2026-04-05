@@ -312,14 +312,16 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
 
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
-                addMedia(item.videoThumbUrl, item.videoUrl, '운동', item.videoThumbUrl ? 'image' : 'video');
+                const localThumb = findLocalExerciseVideoThumb(item.videoUrl);
+                addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', (localThumb || item.videoThumbUrl) ? 'image' : 'video');
             });
         } else {
+            const localThumb = findLocalExerciseVideoThumb(latest.exercise.strengthVideoUrl);
             addMedia(
-                latest.exercise.strengthVideoThumbUrl,
+                localThumb || latest.exercise.strengthVideoThumbUrl,
                 latest.exercise.strengthVideoUrl,
                 '운동',
-                latest.exercise.strengthVideoThumbUrl ? 'image' : 'video'
+                (localThumb || latest.exercise.strengthVideoThumbUrl) ? 'image' : 'video'
             );
         }
     }
@@ -370,10 +372,10 @@ function buildShareSubtitle(latest, tags = []) {
     if (tags.length) {
         const categoryTags = tags.filter(tag => !tag.includes('연속'));
         if (categoryTags.length) {
-            return `오늘 ${categoryTags.join(' · ')} 흐름을 한 장으로 남겼어요.`;
+            return `오늘 ${categoryTags.join('·')} 흐름을 담았어요.`;
         }
     }
-    return '오늘의 해빛 흐름을 카드로 정리했어요.';
+    return '오늘 해빛 흐름을 담았어요.';
 }
 
 function buildShareTagRow(tags = []) {
@@ -496,6 +498,26 @@ async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettin
     _latestPreparedShareMedia = prepared;
     _latestPreparedShareSignature = signature;
     return prepared;
+}
+
+function findLocalExerciseVideoThumb(videoUrl = '') {
+    const normalizedVideoUrl = String(videoUrl || '').trim();
+    const blocks = Array.from(document.querySelectorAll('.strength-block'));
+    for (const block of blocks) {
+        const previewImg = block.querySelector('.preview-strength-img');
+        const localThumb = String(
+            block.getAttribute('data-local-thumb')
+            || previewImg?.getAttribute('data-local-thumb')
+            || ''
+        ).trim();
+        if (!localThumb.startsWith('data:image/')) continue;
+
+        const blockUrl = String(block.getAttribute('data-url') || '').trim();
+        if (!normalizedVideoUrl || (blockUrl && blockUrl === normalizedVideoUrl)) {
+            return localThumb;
+        }
+    }
+    return '';
 }
 
 function getShareTemplateLabel(template) {
@@ -629,14 +651,16 @@ function getShareTemplateFrames(template, count, bounds) {
     if (safeCount <= 0) return [];
 
     if (normalizeShareTemplate(template) === 'overlap') {
-        const size = Math.min(bounds.w * 0.68, bounds.h * 0.68);
-        const centerX = bounds.x + (bounds.w / 2);
-        const centerY = bounds.y + (bounds.h / 2);
+        const size = Math.min(bounds.w * 0.42, bounds.h * 0.46);
+        const left = bounds.x + 34;
+        const right = bounds.x + bounds.w - size - 34;
+        const top = bounds.y + 28;
+        const bottom = bounds.y + bounds.h - size - 18;
         const frames = [
-            { x: centerX - size - 14, y: centerY - size - 18, w: size, h: size, rotate: -0.08 },
-            { x: centerX - 2, y: centerY - size + 8, w: size, h: size, rotate: 0.07 },
-            { x: centerX - size - 30, y: centerY - 6, w: size, h: size, rotate: -0.05 },
-            { x: centerX + 12, y: centerY + 14, w: size, h: size, rotate: 0.06 }
+            { x: left + 4, y: top + 6, w: size, h: size, rotate: -0.06 },
+            { x: right - 4, y: top + 18, w: size, h: size, rotate: 0.06 },
+            { x: left - 6, y: bottom - 10, w: size, h: size, rotate: -0.05 },
+            { x: right + 6, y: bottom + 2, w: size, h: size, rotate: 0.05 }
         ];
         return frames.slice(0, safeCount);
     }
@@ -841,13 +865,12 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
         });
     }
 
-    const compactSubtitle = subtitle.length > 28 ? `${subtitle.slice(0, 27)}…` : subtitle;
     ctx.save();
     ctx.font = '900 38px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textBaseline = 'top';
     drawCanvasTextLines(ctx, displayName, 58, 98, 780, 44, 2, '#2f261d');
     ctx.font = '700 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    drawCanvasTextLines(ctx, compactSubtitle, 58, 150, 760, 24, 1, '#725f4d');
+    drawCanvasTextLines(ctx, subtitle, 58, 150, 760, 22, 2, '#725f4d');
     ctx.restore();
 
     let tagX = 58;
@@ -2457,7 +2480,12 @@ window.previewDynamicVid = function (input) {
     const objectUrl = URL.createObjectURL(file);
     extractVideoThumbFromFile(file)
         .then((thumbDataUrl) => {
-            if (thumbDataUrl) previewImg.src = thumbDataUrl;
+            if (thumbDataUrl) {
+                previewImg.src = thumbDataUrl;
+                previewImg.setAttribute('data-local-thumb', thumbDataUrl);
+                const currentBlock = input.closest('.strength-block');
+                if (currentBlock) currentBlock.setAttribute('data-local-thumb', thumbDataUrl);
+            }
         })
         .catch(() => { })
         .finally(() => {
