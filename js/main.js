@@ -302,7 +302,8 @@ window.addStakePct = function(tier, pct) {
 
 // 챌린지 슬라이더 최대값을 사용자 HBT 잔액에 맞게 업데이트
 window.updateChallengeSliderBounds = function(balance) {
-    const numericBalance = Number.isFinite(balance) ? Math.floor(balance) : 0;
+    const hasKnownBalance = Number.isFinite(balance) && balance >= 0;
+    const numericBalance = hasKnownBalance ? Math.floor(balance) : null;
     const applySliderBounds = (tier, minStake, capStake) => {
         const slider = document.getElementById('stake-slider-' + tier);
         const maxLabel = document.getElementById('stake-max-label-' + tier);
@@ -310,17 +311,17 @@ window.updateChallengeSliderBounds = function(balance) {
         const hiddenInput = document.getElementById('stake-' + tier);
         if (!slider) return;
 
-        const balanceCap = numericBalance > 0 ? Math.min(capStake, numericBalance) : capStake;
-        const effectiveMax = balanceCap >= minStake ? balanceCap : minStake;
+        const balanceCap = hasKnownBalance ? Math.min(capStake, Math.max(0, numericBalance)) : capStake;
+        const effectiveMax = hasKnownBalance ? Math.max(minStake, balanceCap) : capStake;
         slider.max = effectiveMax;
         slider.dataset.balanceCap = String(balanceCap);
-        slider.disabled = numericBalance > 0 && balanceCap < minStake;
+        slider.disabled = hasKnownBalance && balanceCap < minStake;
 
         const nextValue = Math.min(Math.max(parseInt(slider.value) || minStake, minStake), effectiveMax);
         slider.value = nextValue;
         if (hiddenInput) hiddenInput.value = nextValue;
         if (valueEl) valueEl.textContent = `${nextValue} HBT`;
-        if (maxLabel) maxLabel.textContent = (numericBalance > 0 ? balanceCap : capStake).toLocaleString();
+        if (maxLabel) maxLabel.textContent = (hasKnownBalance ? balanceCap : capStake).toLocaleString();
 
         if (window.updateStakeSlider) window.updateStakeSlider(tier);
     };
