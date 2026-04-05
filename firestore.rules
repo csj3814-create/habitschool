@@ -56,7 +56,7 @@ service cloud.firestore {
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
-                    'missionBadges', 'selectedMissions',
+                    'missionBadges', 'selectedMissions', 'missionLevelUpDate',
                     'referralCode', 'currentStreak', 'onboardingComplete', 'friends',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt']);

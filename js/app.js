@@ -625,16 +625,18 @@ function drawCanvasChip(ctx, x, y, text, options = {}) {
 
 function getShareTemplateFrames(template, count, bounds) {
     const safeCount = Math.max(0, Math.min(count || 0, 4));
-    const gap = 18;
+    const gap = 10;
     if (safeCount <= 0) return [];
 
     if (normalizeShareTemplate(template) === 'overlap') {
-        const size = Math.min(bounds.w * 0.56, bounds.h * 0.56);
+        const size = Math.min(bounds.w * 0.68, bounds.h * 0.68);
+        const centerX = bounds.x + (bounds.w / 2);
+        const centerY = bounds.y + (bounds.h / 2);
         const frames = [
-            { x: bounds.x + 34, y: bounds.y + 18, w: size, h: size, rotate: -0.08 },
-            { x: bounds.x + bounds.w - size - 34, y: bounds.y + 38, w: size, h: size, rotate: 0.07 },
-            { x: bounds.x + 58, y: bounds.y + bounds.h - size - 64, w: size, h: size, rotate: -0.04 },
-            { x: bounds.x + bounds.w - size - 58, y: bounds.y + bounds.h - size - 44, w: size, h: size, rotate: 0.06 }
+            { x: centerX - size - 14, y: centerY - size - 18, w: size, h: size, rotate: -0.08 },
+            { x: centerX - 2, y: centerY - size + 8, w: size, h: size, rotate: 0.07 },
+            { x: centerX - size - 30, y: centerY - 6, w: size, h: size, rotate: -0.05 },
+            { x: centerX + 12, y: centerY + 14, w: size, h: size, rotate: 0.06 }
         ];
         return frames.slice(0, safeCount);
     }
@@ -645,13 +647,15 @@ function getShareTemplateFrames(template, count, bounds) {
             return [{ x: bounds.x + ((bounds.w - size) / 2), y: bounds.y + ((bounds.h - size) / 2), w: size, h: size, rotate: 0 }];
         }
 
-        const big = Math.min(bounds.w * 0.66, bounds.h * 0.66);
-        const small = Math.min((bounds.w - big - gap), (bounds.h - gap) / 2);
+        const big = Math.min(bounds.w * 0.76, bounds.h * 0.62);
+        const small = Math.min((bounds.w - gap) / 2, bounds.h - big - gap);
+        const bigX = bounds.x + ((bounds.w - big) / 2);
+        const bottomY = bounds.y + big + gap;
         const frames = [
-            { x: bounds.x, y: bounds.y + ((bounds.h - big) / 2), w: big, h: big, rotate: 0 },
-            { x: bounds.x + big + gap, y: bounds.y, w: small, h: small, rotate: 0 },
-            { x: bounds.x + big + gap, y: bounds.y + small + gap, w: small, h: small, rotate: 0 },
-            { x: bounds.x + big - small + 28, y: bounds.y + bounds.h - small, w: small, h: small, rotate: -0.06 }
+            { x: bigX, y: bounds.y, w: big, h: big, rotate: 0 },
+            { x: bounds.x, y: bottomY, w: small, h: small, rotate: 0 },
+            { x: bounds.x + bounds.w - small, y: bottomY, w: small, h: small, rotate: 0 },
+            { x: bounds.x + ((bounds.w - small) / 2), y: bottomY, w: small, h: small, rotate: 0 }
         ];
         return frames.slice(0, safeCount);
     }
@@ -745,32 +749,32 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
             frame.y = -(frame.h / 2);
         }
 
-        fillRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.94)');
+        fillRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.96)');
         strokeRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.92)', 3);
 
         try {
             const img = await loadCanvasImageSource(item?.src || '');
             ctx.save();
-            roundRectPath(ctx, frame.x + 10, frame.y + 10, frame.w - 20, frame.h - 20, radius - 10);
+            roundRectPath(ctx, frame.x + 6, frame.y + 6, frame.w - 12, frame.h - 12, radius - 8);
             ctx.clip();
             const sourceWidth = img.width || 1;
             const sourceHeight = img.height || 1;
-            const scale = Math.max((frame.w - 20) / sourceWidth, (frame.h - 20) / sourceHeight);
+            const scale = Math.max((frame.w - 12) / sourceWidth, (frame.h - 12) / sourceHeight);
             const drawWidth = sourceWidth * scale;
             const drawHeight = sourceHeight * scale;
-            const drawX = frame.x + 10 + (((frame.w - 20) - drawWidth) / 2);
-            const drawY = frame.y + 10 + (((frame.h - 20) - drawHeight) / 2);
+            const drawX = frame.x + 6 + (((frame.w - 12) - drawWidth) / 2);
+            const drawY = frame.y + 6 + (((frame.h - 12) - drawHeight) / 2);
             ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
             ctx.restore();
         } catch (_) {
             drawPosterPlaceholderTile(ctx, frame, item?.category || '기록');
         }
 
-        drawCanvasChip(ctx, frame.x + 18, frame.y + frame.h - 56, item?.category || '기록', {
-            padX: 16,
-            height: 38,
-            radius: 19,
-            font: '800 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        drawCanvasChip(ctx, frame.x + 14, frame.y + frame.h - 48, item?.category || '기록', {
+            padX: 12,
+            height: 32,
+            radius: 16,
+            font: '800 14px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         });
         ctx.restore();
     }
@@ -802,9 +806,9 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     ctx.fill();
     ctx.restore();
 
-    const cardX = 36;
-    const cardY = 36;
-    const cardSize = size - 72;
+    const cardX = 28;
+    const cardY = 28;
+    const cardSize = size - 56;
     fillRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(255, 252, 245, 0.9)');
     strokeRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(245, 191, 112, 0.55)', 3);
 
@@ -812,67 +816,68 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     const tags = getShareCategoryTags(latest, settings);
     const subtitle = buildShareSubtitle(latest, tags);
 
-    let chipX = 72;
-    chipX += drawCanvasChip(ctx, chipX, 70, 'HABIT SCHOOL', {
-        padX: 14,
-        height: 38,
-        radius: 19,
-        font: '900 16px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    let chipX = 58;
+    chipX += drawCanvasChip(ctx, chipX, 50, 'HABIT SCHOOL', {
+        padX: 12,
+        height: 30,
+        radius: 15,
+        font: '900 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
         color: '#b76400'
     }) + 12;
     if (!settings.hideDate) {
-        chipX += drawCanvasChip(ctx, chipX, 70, `📅 ${String(latest?.date || '').replace(/-/g, '.')}`, {
-            padX: 14,
-            height: 38,
-            radius: 19,
-            font: '800 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        chipX += drawCanvasChip(ctx, chipX, 50, `📅 ${String(latest?.date || '').replace(/-/g, '.')}`, {
+            padX: 12,
+            height: 30,
+            radius: 15,
+            font: '800 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         }) + 12;
     }
     if (!settings.hidePoints) {
-        drawCanvasChip(ctx, size - 196, 70, `Ⓟ ${getSharePoints(latest)}P`, {
-            padX: 14,
-            height: 38,
-            radius: 19,
-            font: '900 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        drawCanvasChip(ctx, size - 150, 50, `Ⓟ ${getSharePoints(latest)}P`, {
+            padX: 12,
+            height: 30,
+            radius: 15,
+            font: '900 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         });
     }
 
+    const compactSubtitle = subtitle.length > 28 ? `${subtitle.slice(0, 27)}…` : subtitle;
     ctx.save();
-    ctx.font = '900 50px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.font = '900 38px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textBaseline = 'top';
-    drawCanvasTextLines(ctx, displayName, 72, 136, 820, 60, 2, '#2f261d');
-    ctx.font = '700 25px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    drawCanvasTextLines(ctx, subtitle, 72, 250, 820, 32, 2, '#725f4d');
+    drawCanvasTextLines(ctx, displayName, 58, 98, 780, 44, 2, '#2f261d');
+    ctx.font = '700 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    drawCanvasTextLines(ctx, compactSubtitle, 58, 150, 760, 24, 1, '#725f4d');
     ctx.restore();
 
-    let tagX = 72;
-    tags.slice(0, 3).forEach((tag) => {
-        const width = drawCanvasChip(ctx, tagX, 316, tag, {
-            padX: 14,
-            height: 36,
-            radius: 18,
-            font: '800 17px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    let tagX = 58;
+    tags.slice(0, 4).forEach((tag) => {
+        const width = drawCanvasChip(ctx, tagX, 192, tag, {
+            padX: 11,
+            height: 28,
+            radius: 14,
+            font: '800 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
             background: 'rgba(255,255,255,0.9)'
         });
-        tagX += width + 10;
+        tagX += width + 8;
     });
 
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 72, y: 372, w: 936, h: 572 });
+    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 234, w: 976, h: 694 });
 
-    drawCanvasChip(ctx, 72, 982, '해빛스쿨', {
-        padX: 14,
-        height: 38,
-        radius: 19,
-        font: '900 16px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    drawCanvasChip(ctx, 58, 972, '해빛스쿨', {
+        padX: 12,
+        height: 30,
+        radius: 15,
+        font: '900 14px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
         background: 'rgba(255,255,255,0.88)'
     });
 
     ctx.save();
     ctx.fillStyle = '#8a6336';
-    ctx.font = '900 28px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.font = '900 22px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText('좋은 습관, 같이 이어가요', 1002, 1001);
+    ctx.fillText('좋은 습관, 같이 이어가요', 1006, 987);
     ctx.restore();
 
     const blob = await createCanvasBlob(canvas, 'image/png');
@@ -2355,8 +2360,35 @@ function addStrengthBlock(data = null) {
 window.addCardioBlock = addCardioBlock;
 window.addStrengthBlock = addStrengthBlock;
 
+function findReusableExerciseBlock(type) {
+    const selector = type === 'cardio' ? '.cardio-block' : '.strength-block';
+    return Array.from(document.querySelectorAll(selector)).find((block) => {
+        return isExerciseBlockEmpty(block);
+    }) || null;
+}
+
+function isExerciseBlockEmpty(block) {
+    if (!block) return false;
+    const input = block.querySelector('.exer-file');
+    const previewImg = block.querySelector('.preview-img, .preview-strength-img');
+    const previewWrap = block.querySelector('.preview-strength');
+    const hasFile = !!(input?.files && input.files.length > 0);
+    const hasUrl = !!block.getAttribute('data-url');
+    const hasThumb = !!block.getAttribute('data-thumb-url');
+    const srcValue = previewImg?.getAttribute('src') || '';
+    const hasPreview = !!srcValue && !srcValue.startsWith('data:image/gif;base64,R0lGODlhAQAB');
+    const previewVisible = !!(previewWrap && previewWrap.style.display && previewWrap.style.display !== 'none');
+    return !(hasFile || hasUrl || hasThumb || hasPreview || previewVisible);
+}
+
 // CTA에서 블록 생성 후 파일 선택 다이얼로그 열기
 window.addCardioBlockWithFile = function() {
+    const reusableBlock = findReusableExerciseBlock('cardio');
+    if (reusableBlock) {
+        const reusableInput = reusableBlock.querySelector('.exer-file');
+        if (reusableInput) reusableInput.click();
+        return;
+    }
     addCardioBlock();
     const blocks = document.querySelectorAll('.cardio-block');
     const lastBlock = blocks[blocks.length - 1];
@@ -2367,6 +2399,12 @@ window.addCardioBlockWithFile = function() {
 };
 
 window.addStrengthBlockWithFile = function() {
+    const reusableBlock = findReusableExerciseBlock('strength');
+    if (reusableBlock) {
+        const reusableInput = reusableBlock.querySelector('.exer-file');
+        if (reusableInput) reusableInput.click();
+        return;
+    }
     addStrengthBlock();
     const blocks = document.querySelectorAll('.strength-block');
     const lastBlock = blocks[blocks.length - 1];
@@ -2425,6 +2463,15 @@ window.previewDynamicVid = function (input) {
         .finally(() => {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
         });
+
+    const currentBlock = input.closest('.strength-block');
+    const strengthList = document.getElementById('strength-list');
+    if (currentBlock && strengthList) {
+        const firstBlock = strengthList.querySelector('.strength-block');
+        if (firstBlock && firstBlock !== currentBlock && isExerciseBlockEmpty(firstBlock)) {
+            strengthList.insertBefore(currentBlock, firstBlock);
+        }
+    }
 
     updateRecordFlowGuides('exercise');
 };
@@ -4069,12 +4116,16 @@ function _getRecordGuideStates() {
     }
 
     const { cardioCount, strengthCount, stepReady } = _getExerciseGuideCounts();
+    const stepCount = Number(_stepData?.count || 0);
+    const stepPointReady = stepCount >= 8000;
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
-    let exerciseStatus = '걸음수, 운동 사진, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.';
-    let exerciseHelper = '걸음수 입력이나 운동 인증 1개만 있어도 저장됩니다.';
+    let exerciseStatus = '걸음수, 운동 사진, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
+    let exerciseHelper = '걸음수는 8천보부터 포인트가 반영됩니다.';
     if (exerciseReadyCount > 0) {
-        exerciseStatus = `걸음수 ${stepReady ? '입력 완료' : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요. 저장하면 운동 포인트가 계산됩니다.`;
-        exerciseHelper = `운동 준비 ${exerciseReadyCount}개가 잡혀 있어요. 저장하면 오늘 운동 포인트가 반영됩니다.`;
+        exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
+        exerciseHelper = stepPointReady
+            ? `운동 준비 ${exerciseReadyCount}개 · 8천보 달성으로 포인트가 반영됩니다.`
+            : `운동 준비 ${exerciseReadyCount}개 · 걸음수는 8천보부터 포인트가 반영됩니다.`;
     }
 
     const sleepReady = _hasPreviewImage('preview-sleep');
@@ -4721,35 +4772,18 @@ function updateGalleryPrimaryAction() {
     const helperEl = document.getElementById('submit-bar-helper');
     if (!saveBtn || !helperEl) return;
 
-    if (!auth.currentUser) {
-        helperEl.style.display = 'block';
-        helperEl.textContent = '로그인하면 내 기록 공유와 친구 응원을 바로 확인할 수 있어요.';
-        saveBtn.innerText = '✨ 구글로 로그인하고 함께 참여하기';
-        saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
-        saveBtn.style.color = 'white';
-        saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
-        saveBtn.onclick = () => { document.getElementById('login-modal').style.display = 'flex'; };
-        return;
-    }
-
     const shareContainer = document.getElementById('my-share-container');
     const canShare = !!shareContainer && shareContainer.style.display !== 'none';
 
     helperEl.style.display = 'block';
-    saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
-    saveBtn.style.color = 'white';
-    saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
-
-    if (canShare) {
-        helperEl.textContent = '오늘 기록 카드가 준비됐어요. 지금 바로 공유하고 응원을 받아보세요.';
-        saveBtn.innerText = '✨ 내 인증 공유하기';
-        saveBtn.onclick = () => triggerGalleryShareAction();
-        return;
-    }
-
-    helperEl.textContent = '공유할 기록이 아직 없어요. 식단, 운동, 마음 중 하나부터 시작해보세요.';
-    saveBtn.innerText = '📝 오늘 기록 시작하기';
-    saveBtn.onclick = () => goToGalleryRecordAction();
+    helperEl.textContent = canShare
+        ? '기록 카드 준비 완료. 단톡방에 공유해보세요.'
+        : '단톡방에서 오늘 기록을 이어가보세요.';
+    saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
+    saveBtn.style.background = '#FEE500';
+    saveBtn.style.color = '#3C1E1E';
+    saveBtn.style.boxShadow = '0 8px 18px rgba(254,229,0,0.28)';
+    saveBtn.onclick = () => openCommunityChat();
 }
 
 function handleMissionPrimaryAction() {
@@ -5041,7 +5075,8 @@ function renderMissionFocusState({
     isWeekActive = false,
     overallRate = 0,
     totalMissions = 0,
-    completedMissions = 0
+    completedMissions = 0,
+    levelUpLockedToday = false
 }) {
     const stripEl = document.getElementById('mission-focus-strip');
     const kickerEl = document.getElementById('mission-focus-kicker');
@@ -5059,7 +5094,14 @@ function renderMissionFocusState({
 
     let tags = [`오늘 ${doneToday}/3 완료`];
 
-    if (!isWeekActive || totalMissions === 0) {
+    if (levelUpLockedToday) {
+        kickerEl.textContent = '레벨업 완료';
+        titleEl.textContent = '새 미션은 내일 다시 정할 수 있어요';
+        buttonEl.textContent = '내일 다시 열기';
+        _missionPrimaryActionState = { type: 'locked', tab: 'dashboard' };
+        tags = ['오늘은 새 미션 대기'];
+        buttonEl.style.display = 'none';
+    } else if (!isWeekActive || totalMissions === 0) {
         kickerEl.textContent = '이번 주 미션';
         titleEl.textContent = '이번 주 미션 1~3개 고르기';
         buttonEl.textContent = '미션 정하기';
@@ -5096,8 +5138,8 @@ const DASHBOARD_ACTION_META = {
         name: '식단',
         idleLabel: '식단 기록',
         idleSub: '사진 한 장으로 시작',
-        focusLabel: '식단 먼저 기록',
-        focusSub: '가장 가볍게 시작할 수 있어요',
+        focusLabel: '식단부터 기록해요',
+        focusSub: '사진 한 장이면 충분해요',
         doneLabel: '식단 완료',
         doneSub: '오늘 식단 인증이 반영됐어요'
     },
@@ -5108,8 +5150,8 @@ const DASHBOARD_ACTION_META = {
         name: '운동',
         idleLabel: '운동 기록',
         idleSub: '움직인 만큼 체크',
-        focusLabel: '운동 이어가기',
-        focusSub: '짧게라도 기록을 남겨보세요',
+        focusLabel: '운동부터 기록해요',
+        focusSub: '짧게라도 한 번 남겨보세요',
         doneLabel: '운동 완료',
         doneSub: '오늘 운동 인증이 반영됐어요'
     },
@@ -5120,8 +5162,8 @@ const DASHBOARD_ACTION_META = {
         name: '마음',
         idleLabel: '마음 기록',
         idleSub: '수면·감사 한 번에',
-        focusLabel: '마음 챙기기',
-        focusSub: '수면이나 감사 기록을 남겨보세요',
+        focusLabel: '마음 기록해요',
+        focusSub: '수면이나 감사 한 줄이면 충분해요',
         doneLabel: '마음 완료',
         doneSub: '오늘 마음 인증이 반영됐어요'
     }
@@ -5134,7 +5176,8 @@ function _renderDashboardHeroState({
     isWeekActive = false,
     overallRate = 0,
     totalMissions = 0,
-    completedMissions = 0
+    completedMissions = 0,
+    levelUpLockedToday = false
 }) {
     const order = ['diet', 'exercise', 'mind'];
     const completedToday = order.filter(type => !!todayAwarded[type]).length;
@@ -5163,10 +5206,12 @@ function _renderDashboardHeroState({
     if (focusTitle) {
         if (remainingToday === 0) {
             focusTitle.textContent = '오늘 루틴 완료';
+        } else if (levelUpLockedToday) {
+            focusTitle.textContent = '오늘은 레벨업 완료';
         } else if (focusMeta) {
-            focusTitle.textContent = `${focusMeta.name} 기록 이어가기`;
+            focusTitle.textContent = focusMeta.focusLabel;
         } else {
-            focusTitle.textContent = '오늘 한 가지 기록 시작';
+            focusTitle.textContent = '오늘 한 가지 시작해보세요';
         }
     }
 
@@ -5175,8 +5220,10 @@ function _renderDashboardHeroState({
             focusBody.textContent = isWeekActive
                 ? `오늘 기록 끝 · 이번 주 ${overallRate}% 진행`
                 : '오늘 기록 끝 · 갤러리나 내 기록 보기';
+        } else if (levelUpLockedToday) {
+            focusBody.textContent = '새 주간 미션은 내일 다시 고를 수 있어요.';
         } else if (focusMeta) {
-            focusBody.textContent = `오늘 ${completedToday}/3 완료 · 남은 행동 ${remainingToday}개`;
+            focusBody.textContent = `오늘 ${completedToday}/3 · 남은 ${remainingToday}개`;
         }
     }
 
@@ -5202,7 +5249,8 @@ function _renderDashboardHeroState({
         isWeekActive,
         overallRate,
         totalMissions,
-        completedMissions
+        completedMissions,
+        levelUpLockedToday
     });
 
     order.forEach(type => {
@@ -5375,6 +5423,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         }
 
         const isWeekActive = weeklyMissionData && weeklyMissionData.weekId === currentWeekId && weeklyMissionData.missions && weeklyMissionData.missions.length > 0;
+        const levelUpLockedToday = !isWeekActive && ud.missionLevelUpDate === todayStr;
 
         // 레벨 뱃지 업데이트
         document.getElementById('user-level-badge').innerText = `Lv. ${level} ${MISSIONS[level]?.name || ''} ℹ️`;
@@ -5431,7 +5480,13 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         let completedMissions = 0;
         let overallRate = 0;
 
-        if (!isWeekActive) {
+        if (!isWeekActive && levelUpLockedToday) {
+            missionArea.innerHTML = `
+                <div class="mission-levelup-lock">
+                    <div class="mission-levelup-lock-title">레벨업 완료</div>
+                    <div class="mission-levelup-lock-body">오늘은 승급만 반영됐어요. 새 주간 미션은 내일 다시 고를 수 있어요.</div>
+                </div>`;
+        } else if (!isWeekActive) {
             // ========== 미션 설정 모드 ==========
             const levelData = MISSIONS[level] || MISSIONS[1];
             const categories = ['diet', 'exercise', 'mind'];
@@ -5547,7 +5602,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             progContainer.innerHTML = `
                 <div class="mission-progress-shell">
                     <div class="mission-progress-topline">
-                        <div class="overall-rate">이번 주 미션 ${completedMissions}/${totalMissions} 완료</div>
                         <div class="mission-progress-pills">
                             <span class="mission-progress-pill">달성 ${overallRate}%</span>
                             <span class="mission-progress-pill">남은 ${remainingDays}일</span>
@@ -5578,11 +5632,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         if (!isWeekActive) {
             const saveBtn = document.getElementById('btn-save-missions');
             if (saveBtn) {
-                saveBtn.disabled = false;
-                saveBtn.style.display = 'block';
-                saveBtn.style.opacity = '1';
-                saveBtn.style.cursor = 'pointer';
-                saveBtn.innerText = '🎯 이번 주 시작';
+                saveBtn.disabled = !!levelUpLockedToday;
+                saveBtn.style.display = levelUpLockedToday ? 'none' : 'block';
+                saveBtn.style.opacity = levelUpLockedToday ? '0.5' : '1';
+                saveBtn.style.cursor = levelUpLockedToday ? 'not-allowed' : 'pointer';
+                saveBtn.innerText = levelUpLockedToday ? '내일 다시 설정' : '🎯 이번 주 시작';
             }
             progContainer.style.display = 'none';
         }
@@ -5594,15 +5648,12 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             isWeekActive,
             overallRate,
             totalMissions,
-            completedMissions
+            completedMissions,
+            levelUpLockedToday
         });
         syncDashboardPanels();
 
         renderMissionBadges(missionBadges);
-        if (!isWeekActive) {
-            const missionBadgesSection = document.getElementById('mission-badges-section');
-            if (missionBadgesSection) missionBadgesSection.style.display = 'none';
-        }
 
         if (data.communityStats) {
             renderGroupChallengeFromData(data.communityStats);
@@ -5641,6 +5692,16 @@ window._applyWeeklyMissionResetToDashboard = function(uid) {
     _patchDashboardUserData(uid, (ud) => {
         ud.weeklyMissionData = null;
         delete ud.selectedMissions;
+    });
+};
+
+window._applyMissionLevelUpToDashboard = function(uid, newLevel, dateStr) {
+    if (!uid) return;
+    _patchDashboardUserData(uid, (ud) => {
+        ud.missionLevel = newLevel;
+        ud.weeklyMissionData = null;
+        delete ud.selectedMissions;
+        ud.missionLevelUpDate = dateStr;
     });
 };
 
@@ -6136,7 +6197,8 @@ async function saveWeeklyMissions() {
                 weekId: currentWeekId,
                 missions: missions
             },
-            missionBadges: existingBadges
+            missionBadges: existingBadges,
+            missionLevelUpDate: deleteField()
         }, { merge: true });
 
         pendingCustomMissions = [];
@@ -6208,16 +6270,20 @@ window.levelUp = async function (newLevel) {
     const user = auth.currentUser;
     if (!user) return;
     try {
+        const { todayStr } = getDatesInfo();
         await setDoc(doc(db, "users", user.uid), {
             missionLevel: newLevel,
             weeklyMissionData: deleteField(),
-            selectedMissions: deleteField()
+            selectedMissions: deleteField(),
+            missionLevelUpDate: todayStr
         }, { merge: true });
         pendingCustomMissions = [];
         _customMissionComposerOpen = false;
-        alert(`🎉 축하합니다! 레벨 ${newLevel} (${MISSIONS[newLevel]?.name || ''})으로 승급하셨습니다!`);
+        if (window._applyMissionLevelUpToDashboard) window._applyMissionLevelUpToDashboard(user.uid, newLevel, todayStr);
         document.getElementById('level-modal').style.display = 'none';
-        renderDashboard();
+        await renderDashboard();
+        document.getElementById('mission-selection-area')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        showToast(`🎉 레벨 ${newLevel} (${MISSIONS[newLevel]?.name || ''}) 승급 완료! 내일 새 미션을 고를 수 있어요.`);
     } catch (error) {
         console.error('레벨업 오류:', error);
         showToast('⚠️ 레벨업에 실패했습니다.');
@@ -7185,7 +7251,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             // 운동: 유산소·걸음수 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
             let newExerPts = 0;
-            const cardioCredits = cardioList.length + (_stepData.count > 0 ? 1 : 0);
+            const qualifiesForStepPoints = (_stepData.count || 0) >= 8000;
+            const cardioCredits = cardioList.length + (qualifiesForStepPoints ? 1 : 0);
             if (cardioCredits >= 1) newExerPts += 10;
             if (cardioCredits >= 2) newExerPts += 5;
             if (strengthList.length >= 1) newExerPts += 10;
@@ -8449,7 +8516,7 @@ async function buildWeeklyBestSection() {
             <div class="gallery-insight-kicker">WEEKLY SPOTLIGHT</div>
             <div class="gallery-insight-title-row">
                 <div class="weekly-best-header">🏅 이번 주 열심 학생</div>
-                <span class="gallery-insight-note">최근 7일 흐름 기준</span>
+                <span class="gallery-insight-note">최근 7일</span>
             </div>
             <p class="gallery-insight-desc">이번 주 가장 꾸준하게 기록한 학생을 한눈에 보고, 좋은 흐름을 참고해보세요.</p>
         </div>
@@ -9082,26 +9149,37 @@ window.toggleComments = function (docId) {
     if (item) renderCommentList(docId, item.data.comments || []);
 };
 
+const COMMENT_COLLAPSED_LIMIT = 5;
+
+function getVisibleCommentEntries(comments, isExpanded) {
+    const safeComments = Array.isArray(comments) ? comments : [];
+    if (isExpanded || safeComments.length <= COMMENT_COLLAPSED_LIMIT) {
+        return safeComments.map((comment, index) => ({ comment, index }));
+    }
+    const startIndex = Math.max(0, safeComments.length - COMMENT_COLLAPSED_LIMIT);
+    return safeComments.slice(startIndex).map((comment, offset) => ({ comment, index: startIndex + offset }));
+}
+
 // 댓글 목록 렌더링
 function renderCommentList(docId, comments) {
     const list = document.getElementById(`comment-list-${docId}`);
     if (!list) return;
     const myId = auth.currentUser ? auth.currentUser.uid : '';
     const isExpanded = list.dataset.expanded === 'true';
-    const maxShow = isExpanded ? comments.length : 1;
-    const visibleComments = comments.slice(0, maxShow);
+    const visibleComments = getVisibleCommentEntries(comments, isExpanded);
 
     let html = '';
-    visibleComments.forEach((c, idx) => {
+    visibleComments.forEach(({ comment: c, index: idx }) => {
         const safeName = escapeHtml(c.userName || '익명');
         const safeText = escapeHtml(c.text || '');
         const timeStr = formatCommentTime(c.timestamp);
         const deleteBtn = c.userId === myId ? `<button class="comment-delete-btn" onclick="deleteComment('${escapeHtml(docId)}', ${idx})" title="삭제">✕</button>` : '';
-        html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}</div>`;
+        const reportBtn = c.userId && c.userId !== myId ? `<button class="comment-delete-btn" onclick="reportComment('${escapeHtml(docId)}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
+        html += `<div class="comment-item"><span class="comment-author">${safeName}</span><span class="comment-text">${safeText}</span><span class="comment-time">${timeStr}</span>${deleteBtn}${reportBtn}</div>`;
     });
 
-    if (comments.length > 1) {
-        const toggleText = isExpanded ? '댓글 접기' : `댓글 ${comments.length}개 모두 보기`;
+    if (comments.length > COMMENT_COLLAPSED_LIMIT) {
+        const toggleText = isExpanded ? '댓글 접기' : '댓글 모두 보기';
         html += `<button class="comment-toggle-btn" onclick="toggleComments('${escapeHtml(docId)}')">${toggleText}</button>`;
     }
 
@@ -9266,10 +9344,10 @@ function updateGalleryFeedHeader() {
     }
 
     const variants = {
-        all: ['RECENT FEED', '모두의 최근 인증', '최근 기록을 보고 바로 응원해보세요.'],
-        diet: ['DIET FEED', '식단 인증만 모아보기', '식단 기록만 빠르게 볼 수 있어요.'],
-        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', '운동 기록만 이어서 볼 수 있어요.'],
-        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '마음 기록만 조용히 볼 수 있어요.']
+        all: ['RECENT FEED', '모두의 최근 인증', ''],
+        diet: ['DIET FEED', '식단 인증만 모아보기', ''],
+        exercise: ['ACTIVE FEED', '운동 인증만 모아보기', ''],
+        mind: ['MINDFUL FEED', '마음 기록만 모아보기', '']
     };
 
     const [kicker, title, desc] = variants[galleryFilter] || variants.all;
@@ -9344,8 +9422,8 @@ function buildGalleryCard(item, myId) {
     const safeFilterName = escapeHtml(rawUserName);
 
     let commentsHtml = '';
-    const showComments = comments.slice(0, 1);
-    showComments.forEach((c, idx) => {
+    const showComments = getVisibleCommentEntries(comments, false);
+    showComments.forEach(({ comment: c, index: idx }) => {
         const cName = escapeHtml(c.userName || '익명');
         const cText = escapeHtml(c.text || '');
         const cTime = formatCommentTime(c.timestamp);
@@ -9353,8 +9431,8 @@ function buildGalleryCard(item, myId) {
         const reportBtn = (!isGuest && c.userId !== myId) ? `<button class="comment-delete-btn" onclick="reportComment('${safeDocId}', ${idx})" title="신고" style="color:#E53935;">⚑</button>` : '';
         commentsHtml += `<div class="comment-item"><span class="comment-author">${cName}</span><span class="comment-text">${cText}</span><span class="comment-time">${cTime}</span>${delBtn}${reportBtn}</div>`;
     });
-    if (comments.length > 1) {
-        commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 ${comments.length}개 모두 보기</button>`;
+    if (comments.length > COMMENT_COLLAPSED_LIMIT) {
+        commentsHtml += `<button class="comment-toggle-btn" onclick="toggleComments('${safeDocId}')">댓글 모두 보기</button>`;
     }
 
     const avatarInitial = shareSettings.hideIdentity ? '익' : (rawUserName || '?').charAt(0);
