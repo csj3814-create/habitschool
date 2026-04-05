@@ -10808,6 +10808,7 @@ function renderGroupChallengeFromDataLegacy(s) {
 function setSocialChallengeHeadAction(mode = 'start') {
     const button = document.querySelector('.social-challenge-head-btn');
     if (!button) return;
+    button.disabled = false;
 
     if (mode === 'requests') {
         button.textContent = '요청 확인';
@@ -10824,6 +10825,12 @@ function setSocialChallengeHeadAction(mode = 'start') {
     if (mode === 'retry') {
         button.textContent = '다시 불러오기';
         button.onclick = () => window.retrySocialChallengesCard();
+        return;
+    }
+
+    if (mode === 'blocked') {
+        button.textContent = '5일 필요';
+        button.onclick = () => showToast('최근 30일 5일 이상 기록한 친구가 있어야 챌린지를 시작할 수 있어요.');
         return;
     }
 
@@ -10855,6 +10862,129 @@ function buildSocialChallengeFriendSummary(activeFriendIds = []) {
             ${pills}
         </div>
         ${namesLine}
+    `;
+}
+
+let _socialChallengeFriendReadinessCache = {
+    uid: '',
+    todayStr: '',
+    loadedAt: 0,
+    items: []
+};
+
+function addDaysFromKstDateString(dateStr, diffDays) {
+    const base = new Date(`${dateStr}T12:00:00Z`);
+    base.setUTCDate(base.getUTCDate() + diffDays);
+    return base.toISOString().split('T')[0];
+}
+
+function countCompletedHabitBuckets(awardedPoints = {}) {
+    const dietDone = (awardedPoints.dietPoints || 0) > 0 || !!awardedPoints.diet;
+    const exerciseDone = (awardedPoints.exercisePoints || 0) > 0 || !!awardedPoints.exercise;
+    const mindDone = (awardedPoints.mindPoints || 0) > 0 || !!awardedPoints.mind;
+    return [dietDone, exerciseDone, mindDone].filter(Boolean).length;
+}
+
+async function loadSocialChallengeFriendReadiness(user, { forceReload = false } = {}) {
+    const { todayStr, weekStrs } = getDatesInfo();
+    const activeFriendIds = getActiveFriendIds();
+
+    if (!forceReload
+        && _socialChallengeFriendReadinessCache.uid === user.uid
+        && _socialChallengeFriendReadinessCache.todayStr === todayStr
+        && Date.now() - _socialChallengeFriendReadinessCache.loadedAt < 60000) {
+        return _socialChallengeFriendReadinessCache.items;
+    }
+
+    if (activeFriendIds.length === 0) {
+        _socialChallengeFriendReadinessCache = {
+            uid: user.uid,
+            todayStr,
+            loadedAt: Date.now(),
+            items: []
+        };
+        return [];
+    }
+
+    const weekSet = new Set(weekStrs);
+    const thirtyDaysAgo = addDaysFromKstDateString(todayStr, -30);
+
+    const items = await Promise.all(activeFriendIds.map(async friendId => {
+        const friendship = cachedMyFriendships.get(friendId);
+        const name = getFriendshipName(friendship, user.uid) || '친구';
+        const logsSnap = await getDocs(query(
+            collection(db, 'daily_logs'),
+            where('userId', '==', friendId),
+            where('date', '>=', thirtyDaysAgo)
+        ));
+
+        let recentDays = 0;
+        let weekDays = 0;
+        let todayCompleted = 0;
+
+        logsSnap.forEach(logDoc => {
+            const data = logDoc.data() || {};
+            const date = data.date || '';
+            recentDays += 1;
+            if (weekSet.has(date)) weekDays += 1;
+            if (date === todayStr) {
+                todayCompleted = countCompletedHabitBuckets(data.awardedPoints || {});
+            }
+        });
+
+        const eligible = recentDays >= 5;
+        const shortfall = Math.max(0, 5 - recentDays);
+
+        return {
+            uid: friendId,
+            name,
+            todayCompleted,
+            weekDays,
+            recentDays,
+            eligible,
+            shortfall
+        };
+    }));
+
+    items.sort((a, b) => {
+        if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
+        if (a.weekDays !== b.weekDays) return b.weekDays - a.weekDays;
+        if (a.todayCompleted !== b.todayCompleted) return b.todayCompleted - a.todayCompleted;
+        return a.name.localeCompare(b.name, 'ko');
+    });
+
+    _socialChallengeFriendReadinessCache = {
+        uid: user.uid,
+        todayStr,
+        loadedAt: Date.now(),
+        items
+    };
+
+    return items;
+}
+
+function buildSocialChallengeFriendReadinessSection(readinessItems = []) {
+    if (!readinessItems.length) return '';
+
+    const readyCount = readinessItems.filter(item => item.eligible).length;
+    const blockedCount = Math.max(0, readinessItems.length - readyCount);
+    const rows = readinessItems.map(item => `
+        <div class="social-challenge-item" style="background:${item.eligible ? '#F7FBF4' : '#FFFAF3'};border-color:${item.eligible ? '#DCEAD3' : '#F2DFC5'};">
+            <div class="social-challenge-main" style="flex:1 1 auto;">
+                <div class="social-challenge-type">${escapeHtml(item.name)}</div>
+                <div class="social-challenge-meta">오늘 ${item.todayCompleted}/3 · 이번 주 ${item.weekDays}일 · 최근 30일 ${item.recentDays}일</div>
+            </div>
+            <div style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:62px;min-height:30px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;background:${item.eligible ? '#EAF7E2' : '#FFF0DE'};color:${item.eligible ? '#2E7D32' : '#C56A1D'};">${item.eligible ? '바로 가능' : `${item.shortfall}일 부족`}</div>
+        </div>
+    `);
+
+    return `
+        <div class="social-challenge-summary" style="margin-top:10px;">
+            <span class="social-challenge-pill">⚡ 바로 가능 ${readyCount}명</span>
+            ${blockedCount > 0 ? `<span class="social-challenge-pill">🗓 5일 필요 ${blockedCount}명</span>` : ''}
+        </div>
+        <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">친구별 챌린지 상태</div>
+        ${buildCommunityExpandableRows('social-challenge-friends', rows, 3)}
     `;
 }
 
@@ -10903,6 +11033,9 @@ async function renderSocialChallenges(user) {
         const activeFriendIds = friendshipState.activeFriendIds;
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
         const summaryHtml = buildSocialChallengeFriendSummary(activeFriendIds);
+        const readinessItems = await loadSocialChallengeFriendReadiness(user);
+        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems);
+        const readyCount = readinessItems.filter(item => item.eligible).length;
         _communityFocusState.friendCount = activeFriendIds.length;
 
         if (friendshipState.timedOut && cachedMyFriendships.size === 0) {
@@ -10942,7 +11075,7 @@ async function renderSocialChallenges(user) {
             return;
         }
 
-        setSocialChallengeHeadAction('start');
+        setSocialChallengeHeadAction(readyCount > 0 ? 'start' : 'blocked');
         const [asParticipant, asInvitee] = await loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS);
 
         const challenges = [];
@@ -10994,9 +11127,10 @@ async function renderSocialChallenges(user) {
         if (challenges.length === 0) {
             list.innerHTML = `
                 ${summaryHtml}
+                ${readinessHtml}
                 ${buildCommunityEmptyState(
-                    '친구는 준비됐어요',
-                    '오른쪽 버튼으로 첫 챌린지를 시작해 보세요.'
+                    readyCount > 0 ? '바로 챌린지 가능한 친구가 있어요' : '아직 5일 기록이 필요한 친구가 있어요',
+                    readyCount > 0 ? '오른쪽 버튼으로 첫 챌린지를 시작해 보세요.' : '최근 30일 기준 5일 이상 기록한 친구부터 챌린지를 시작할 수 있어요.'
                 )}
             `;
             return;
@@ -11004,6 +11138,7 @@ async function renderSocialChallenges(user) {
 
         list.innerHTML = `
             ${summaryHtml}
+            ${readinessHtml}
             <div class="social-challenge-summary">
                 <span class="social-challenge-pill">🏆 진행 ${activeChallenges}개</span>
                 <span class="social-challenge-pill">📩 응답 대기 ${pendingChallenges}개</span>
@@ -11102,6 +11237,8 @@ window.openCreateChallengeModal = async function() {
         const friendshipState = await waitForFriendshipsForUi({ forceReload: true, timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
         const friendIds = getActiveFriendIds();
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
+        const readinessItems = await loadSocialChallengeFriendReadiness(user, { forceReload: true });
+        const eligibleFriends = readinessItems.filter(item => item.eligible);
 
         if (friendIds.length === 0) {
             if (hasPendingRequests) {
@@ -11117,15 +11254,21 @@ window.openCreateChallengeModal = async function() {
             return;
         }
 
-        _challengeState.friends = friendIds
-            .map(friendId => {
-                const friendship = cachedMyFriendships.get(friendId);
-                return {
-                    uid: friendId,
-                    name: friendship ? getFriendshipName(friendship, user.uid) : friendId.slice(0, 8)
-                };
-            })
-            .filter(Boolean);
+        if (eligibleFriends.length === 0) {
+            showToast('최근 30일 5일 이상 기록한 친구가 아직 없어요.');
+            renderSocialChallenges(user).catch(() => {});
+            return;
+        }
+
+        _challengeState.friends = readinessItems.map(item => ({
+            uid: item.uid,
+            name: item.name,
+            eligible: item.eligible,
+            shortfall: item.shortfall,
+            todayCompleted: item.todayCompleted,
+            weekDays: item.weekDays,
+            recentDays: item.recentDays
+        }));
 
         // 상태 초기화
         _challengeState.type = 'group_goal';
@@ -11160,18 +11303,30 @@ function renderChallengeFriendList() {
     const isCompetition = _challengeState.type === 'competition';
     container.innerHTML = _challengeState.friends.map(f => {
         const isSelected = _challengeState.selectedFriends.some(s => s.uid === f.uid);
+        const isEligible = f.eligible !== false;
+        const statusLabel = isEligible
+            ? `오늘 ${f.todayCompleted || 0}/3 · 이번 주 ${f.weekDays || 0}일`
+            : `${f.shortfall || Math.max(0, 5 - (f.recentDays || 0))}일 더 기록 필요`;
         return `<div onclick="toggleChallengeFriend('${f.uid}', '${escapeHtml(f.name)}')"
-            style="padding:8px 12px;border-radius:10px;border:2px solid ${isSelected ? '#7C4DFF' : '#e8e8e8'};
-                   background:${isSelected ? '#f3f0ff' : 'transparent'};cursor:pointer;
-                   display:flex;align-items:center;justify-content:space-between;font-size:13px;">
-            <span style="font-weight:${isSelected ? '700' : '400'};color:${isSelected ? '#5e35b1' : '#333'};">${escapeHtml(f.name)}</span>
-            ${isSelected ? '<span style="color:#7C4DFF;font-size:14px;">✓</span>' : ''}
+            style="padding:8px 12px;border-radius:10px;border:2px solid ${isSelected ? '#7C4DFF' : isEligible ? '#e8e8e8' : '#F0E0D6'};
+                   background:${isSelected ? '#f3f0ff' : isEligible ? 'transparent' : '#FAF6F3'};cursor:${isEligible ? 'pointer' : 'not-allowed'};
+                   opacity:${isEligible ? '1' : '.72'};display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;">
+            <div style="min-width:0;">
+                <div style="font-weight:${isSelected ? '700' : '600'};color:${isSelected ? '#5e35b1' : '#333'};">${escapeHtml(f.name)}</div>
+                <div style="margin-top:3px;font-size:11px;color:${isEligible ? '#7B7285' : '#C56A1D'};">${statusLabel}</div>
+            </div>
+            ${isSelected ? '<span style="color:#7C4DFF;font-size:14px;">✓</span>' : `<span style="font-size:11px;font-weight:700;color:${isEligible ? '#2E7D32' : '#C56A1D'};">${isEligible ? '가능' : '대기'}</span>`}
         </div>`;
     }).join('');
 }
 
 window.toggleChallengeFriend = function(uid, name) {
     const isCompetition = _challengeState.type === 'competition';
+    const friend = _challengeState.friends.find(item => item.uid === uid);
+    if (friend && friend.eligible === false) {
+        showToast(`최근 30일 ${friend.shortfall || 1}일 더 기록하면 챌린지에 참여할 수 있어요.`);
+        return;
+    }
     const idx = _challengeState.selectedFriends.findIndex(f => f.uid === uid);
     if (idx >= 0) {
         _challengeState.selectedFriends.splice(idx, 1);
