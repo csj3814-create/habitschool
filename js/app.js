@@ -386,7 +386,18 @@ function buildShareTagRow(tags = []) {
 function buildShareMediaSignature(mediaItems = [], maxCount = 4) {
     return mediaItems
         .slice(0, maxCount)
-        .map(item => `${item.category || ''}|${item.type || ''}|${item.originalUrl || item.src || ''}`)
+        .map(item => {
+            const urls = [
+                ...(Array.isArray(item.candidateUrls) ? item.candidateUrls : []),
+                item.previewUrl,
+                item.originalUrl,
+                item.src
+            ]
+                .map(value => String(value || '').trim())
+                .filter(Boolean)
+                .join('|');
+            return `${item.category || ''}|${item.type || ''}|${urls}`;
+        })
         .join('||');
 }
 
@@ -510,11 +521,16 @@ function findLocalExerciseVideoThumb(videoUrl = '') {
             || previewImg?.getAttribute('data-local-thumb')
             || ''
         ).trim();
-        if (!localThumb.startsWith('data:image/')) continue;
+        const savedThumb = String(
+            block.getAttribute('data-thumb-url')
+            || previewImg?.getAttribute('data-saved-thumb-url')
+            || ''
+        ).trim();
 
         const blockUrl = String(block.getAttribute('data-url') || '').trim();
         if (!normalizedVideoUrl || (blockUrl && blockUrl === normalizedVideoUrl)) {
-            return localThumb;
+            if (localThumb.startsWith('data:image/')) return localThumb;
+            if (isPersistedStorageUrl(savedThumb)) return savedThumb;
         }
     }
     return '';
@@ -2353,15 +2369,19 @@ function addExerciseBlock(type, data = null) {
     // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
         const thumbImg = document.getElementById(`s_img_${id}`);
-        if (thumbImg) thumbImg.src = createVideoPlaceholderBase64();
-        // Firebase Storage URL에서도 프레임 추출 시도 (CORS 지원)
-        extractVideoThumbFromUrl(data.videoUrl)
-            .then((thumbDataUrl) => {
-                if (!thumbDataUrl) return;
-                const ti = document.getElementById(`s_img_${id}`);
-                if (ti) ti.src = thumbDataUrl;
-            })
-            .catch(() => { });
+        if (thumbImg && data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
+            thumbImg.src = data.videoThumbUrl;
+        } else {
+            if (thumbImg) thumbImg.src = createVideoPlaceholderBase64();
+            // Firebase Storage URL에서도 프레임 추출 시도 (CORS 지원)
+            extractVideoThumbFromUrl(data.videoUrl)
+                .then((thumbDataUrl) => {
+                    if (!thumbDataUrl) return;
+                    const ti = document.getElementById(`s_img_${id}`);
+                    if (ti) ti.src = thumbDataUrl;
+                })
+                .catch(() => { });
+        }
     }
 }
 
@@ -7204,6 +7224,11 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
 
     if (thumbUrl) block.setAttribute('data-thumb-url', thumbUrl);
     else block.removeAttribute('data-thumb-url');
+
+    const previewImg = block.querySelector('.preview-strength-img');
+    if (previewImg && thumbUrl && isPersistedStorageUrl(thumbUrl)) {
+        previewImg.src = thumbUrl;
+    }
 }
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
@@ -7330,11 +7355,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const strengthBlocks = document.querySelectorAll('.strength-block');
             const strengthPromise = Promise.all([...strengthBlocks].map(async (block) => {
                 const fileInput = block.querySelector('.exer-file');
+                const previewImg = block.querySelector('.preview-strength-img');
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
-                const localThumb = String(
+                let localThumb = String(
                     block.getAttribute('data-local-thumb')
-                    || block.querySelector('.preview-strength-img')?.getAttribute('data-local-thumb')
+                    || previewImg?.getAttribute('data-local-thumb')
+                    || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
                     || ''
                 ).trim();
                 let aiAnalysis = null;
@@ -7352,6 +7379,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         console.error('⚠️ 근력 영상 업로드 실패:', err);
                         url = null;
                     }
+                }
+                if (url && !thumbUrl && !localThumb.startsWith('data:image/') && fileInput.files[0]) {
+                    try {
+                        localThumb = await extractVideoThumbFromFile(fileInput.files[0]);
+                        if (localThumb.startsWith('data:image/')) {
+                            if (previewImg) {
+                                previewImg.src = localThumb;
+                                previewImg.setAttribute('data-local-thumb', localThumb);
+                            }
+                            block.setAttribute('data-local-thumb', localThumb);
+                        }
+                    } catch (_) {}
                 }
                 if (url && !thumbUrl && localThumb.startsWith('data:image/')) {
                     thumbUrl = await uploadDataUrlThumbnail(localThumb, 'exercise_videos', user.uid);
@@ -7522,6 +7561,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const item = strengthResults[idx];
                 if (item?.videoUrl) persistSavedExerciseBlock(block, item.videoUrl, item.videoThumbUrl);
             });
+            _latestPreparedShareMedia = [];
+            _latestPreparedShareSignature = '';
+            _latestShareRenderKey = '';
             updateDailyLogCache(docId, {
                 ...oldData,
                 ...saveData,
