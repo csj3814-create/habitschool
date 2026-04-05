@@ -10754,7 +10754,7 @@ function toggleCommunityRows(sectionKey) {
         : '접기';
 }
 
-renderGroupChallengeFromData = function(s) {
+function renderGroupChallengeFromDataLegacy(s) {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
@@ -10803,7 +10803,7 @@ renderGroupChallengeFromData = function(s) {
             </div>
         </div>
     `;
-};
+}
 
 function setSocialChallengeHeadAction(mode = 'start') {
     const button = document.querySelector('.social-challenge-head-btn');
@@ -10886,7 +10886,7 @@ window.retrySocialChallengesCard = function() {
     renderSocialChallenges(user).catch(() => {});
 };
 
-renderSocialChallenges = async function(user) {
+async function renderSocialChallenges(user) {
     const card = document.getElementById('social-challenge-card');
     const list = document.getElementById('social-challenge-list');
     if (!card || !list) return;
@@ -11024,7 +11024,7 @@ renderSocialChallenges = async function(user) {
         );
         card.style.display = 'block';
     }
-};
+}
 
 // QR 코드 초대 모달
 // ============================================================
