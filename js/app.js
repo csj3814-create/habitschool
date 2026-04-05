@@ -145,6 +145,7 @@ let _chatbotConnectInfoPromise = null;
 let _chatbotConnectModalToken = '';
 let _chatbotConnectCompleting = false;
 let _chatbotConnectLoginPromptShown = false;
+let _floatingBarLayoutFrame = 0;
 
 function normalizeShareTemplate(raw) {
     return SHARE_TEMPLATE_OPTIONS.includes(raw) ? raw : 'grid';
@@ -196,6 +197,38 @@ function applyShareTemplateToControls(template) {
 }
 
 _shareTemplate = loadShareTemplatePreference();
+
+function updateFloatingBarLayout() {
+    _floatingBarLayoutFrame = 0;
+
+    const appContainer = document.querySelector('.app-container');
+    if (!appContainer) return;
+
+    const rect = appContainer.getBoundingClientRect();
+    const centerX = rect.left + (rect.width / 2);
+
+    const submitBar = document.getElementById('submit-bar');
+    if (submitBar) {
+        submitBar.style.left = `${centerX}px`;
+        submitBar.style.right = 'auto';
+        submitBar.style.transform = 'translateX(-50%)';
+        submitBar.style.width = `${Math.max(rect.width, 0)}px`;
+    }
+
+    const chatBanner = document.getElementById('chat-banner');
+    if (chatBanner) {
+        const bannerWidth = Math.min(Math.max(rect.width - 40, 0), 440);
+        chatBanner.style.left = `${centerX}px`;
+        chatBanner.style.right = 'auto';
+        chatBanner.style.transform = 'translateX(-50%)';
+        chatBanner.style.width = `${bannerWidth}px`;
+    }
+}
+
+function scheduleFloatingBarLayoutUpdate() {
+    if (_floatingBarLayoutFrame) cancelAnimationFrame(_floatingBarLayoutFrame);
+    _floatingBarLayoutFrame = requestAnimationFrame(updateFloatingBarLayout);
+}
 
 function getDefaultShareSettings() {
     return {
@@ -3438,6 +3471,7 @@ document.addEventListener('keydown', function (e) {
 document.addEventListener('DOMContentLoaded', function () {
     bindShareSettingListeners();
     bindShareTemplateListeners();
+    scheduleFloatingBarLayoutUpdate();
     const modal = document.getElementById('lightbox-modal');
     if (!modal) return;
 
@@ -3459,6 +3493,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (prevBtn) prevBtn.addEventListener('click', function (e) { e.stopPropagation(); navigateLightbox(-1); });
     if (nextBtn) nextBtn.addEventListener('click', function (e) { e.stopPropagation(); navigateLightbox(1); });
 });
+
+window.addEventListener('resize', scheduleFloatingBarLayoutUpdate, { passive: true });
+window.addEventListener('scroll', scheduleFloatingBarLayoutUpdate, { passive: true });
 
 // 갤러리 비디오 인라인 재생 (썸네일 → video 태그 교체)
 window.playGalleryVideo = function (wrapper) {
