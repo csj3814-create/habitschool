@@ -10996,8 +10996,7 @@ async function renderSocialChallenges(user) {
                 ${summaryHtml}
                 ${buildCommunityEmptyState(
                     '친구는 준비됐어요',
-                    '지금 바로 첫 챌린지를 시작해 보세요.',
-                    ['<button type="button" class="community-empty-btn" onclick="openCreateChallengeModal()">🏆 챌린지 시작</button>']
+                    '오른쪽 버튼으로 첫 챌린지를 시작해 보세요.'
                 )}
             `;
             return;
