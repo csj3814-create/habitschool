@@ -324,12 +324,17 @@
                         <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
                     </div>
 
-                    <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card" style="display:none;">
+                    <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
                         <div class="social-challenge-dashboard-head">
                             <h3>🤝 친구 챌린지</h3>
                             <button type="button" class="social-challenge-head-btn" onclick="openCreateChallengeModal()">챌린지 시작</button>
                         </div>
-                        <div id="social-challenge-list"></div>
+                        <div id="social-challenge-list">
+                            <div class="community-empty-state">
+                                <strong>친구 챌린지를 준비하고 있어요</strong>
+                                <span>친구 상태와 열린 챌린지를 불러오는 중입니다.</span>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card referral-card card-invite friend-invite-shared" id="referral-section" style="display:none; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">

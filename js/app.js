@@ -10753,6 +10753,13 @@ renderSocialChallenges = async function(user) {
     if (!card || !list) return;
 
     try {
+        card.style.display = 'block';
+        if (!list.innerHTML.trim()) {
+            list.innerHTML = buildCommunityEmptyState(
+                '친구 챌린지를 준비하고 있어요',
+                '친구 상태와 열린 챌린지를 불러오는 중입니다.'
+            );
+        }
         await loadMyFriendships();
         const activeFriendIds = getActiveFriendIds();
         _communityFocusState.friendCount = activeFriendIds.length;
