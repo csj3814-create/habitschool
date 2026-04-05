@@ -85,7 +85,7 @@ window._loadBlockchainModule = function() {
 };
 
 // ========== 챌린지 신청 토글 ==========
-window.toggleChallengeSelection = function() {
+window.toggleChallengeSelection = async function() {
     const wrap = document.getElementById('challenge-tier-wrap');
     const arrow = document.getElementById('challenge-toggle-arrow');
     const text = document.getElementById('challenge-toggle-text');
@@ -97,10 +97,9 @@ window.toggleChallengeSelection = function() {
     if (isHidden) {
         // 패널 열 때 누적값 리셋 — 이전 스테이킹 시도의 잔여 % 제거
         window._stakePctAccum = { weekly: 0, master: 0 };
-        // 슬라이더 최대치를 현재 보유 HBT로 즉시 업데이트
-        const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
-        const bal = parseFloat(hbtText.replace(/[^0-9.]/g, '')) || 0;
-        if (bal > 0 && window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(bal);
+        if (window.refreshChallengeSliderBounds) {
+            await window.refreshChallengeSliderBounds();
+        }
     }
 };
 
@@ -303,34 +302,56 @@ window.addStakePct = function(tier, pct) {
 
 // 챌린지 슬라이더 최대값을 사용자 HBT 잔액에 맞게 업데이트
 window.updateChallengeSliderBounds = function(balance) {
-    if (!balance || balance <= 0) return; // 잔액 미로드 시 슬라이더 범위 변경 금지
-    const floor = Math.floor(balance);
+    const numericBalance = Number.isFinite(balance) ? Math.floor(balance) : 0;
+    const applySliderBounds = (tier, minStake, capStake) => {
+        const slider = document.getElementById('stake-slider-' + tier);
+        const maxLabel = document.getElementById('stake-max-label-' + tier);
+        const valueEl = document.getElementById('stake-value-' + tier);
+        const hiddenInput = document.getElementById('stake-' + tier);
+        if (!slider) return;
 
-    // weekly: min 50, max 5000 → 사용자 잔액으로 제한
-    const weeklyMax = Math.max(50, Math.min(5000, floor));
-    const weeklySlider = document.getElementById('stake-slider-weekly');
-    if (weeklySlider) {
-        weeklySlider.max = weeklyMax;
-        if (parseInt(weeklySlider.value) > weeklyMax) {
-            weeklySlider.value = weeklyMax;
-            window.updateStakeSlider('weekly');
-        }
-    }
-    const maxLabelW = document.getElementById('stake-max-label-weekly');
-    if (maxLabelW) maxLabelW.textContent = weeklyMax.toLocaleString();
+        const balanceCap = numericBalance > 0 ? Math.min(capStake, numericBalance) : capStake;
+        const effectiveMax = balanceCap >= minStake ? balanceCap : minStake;
+        slider.max = effectiveMax;
+        slider.dataset.balanceCap = String(balanceCap);
+        slider.disabled = numericBalance > 0 && balanceCap < minStake;
 
-    // master: min 100, max 10000 → 사용자 잔액으로 제한
-    const masterMax = Math.max(100, Math.min(10000, floor));
-    const masterSlider = document.getElementById('stake-slider-master');
-    if (masterSlider) {
-        masterSlider.max = masterMax;
-        if (parseInt(masterSlider.value) > masterMax) {
-            masterSlider.value = masterMax;
-            window.updateStakeSlider('master');
+        const nextValue = Math.min(Math.max(parseInt(slider.value) || minStake, minStake), effectiveMax);
+        slider.value = nextValue;
+        if (hiddenInput) hiddenInput.value = nextValue;
+        if (valueEl) valueEl.textContent = `${nextValue} HBT`;
+        if (maxLabel) maxLabel.textContent = (numericBalance > 0 ? balanceCap : capStake).toLocaleString();
+
+        if (window.updateStakeSlider) window.updateStakeSlider(tier);
+    };
+
+    applySliderBounds('weekly', 50, 5000);
+    applySliderBounds('master', 100, 10000);
+};
+
+window.refreshChallengeSliderBounds = async function() {
+    let balance = 0;
+
+    try {
+        if (window.fetchOnchainBalance) {
+            const data = await window.fetchOnchainBalance();
+            const fetched = parseFloat(data?.balanceFormatted);
+            if (Number.isFinite(fetched) && fetched > 0) {
+                balance = fetched;
+            }
         }
+    } catch (error) {
+        console.warn('챌린지 슬라이더 잔액 재조회 실패:', error?.message || error);
     }
-    const maxLabelM = document.getElementById('stake-max-label-master');
-    if (maxLabelM) maxLabelM.textContent = masterMax.toLocaleString();
+
+    if (!(balance > 0)) {
+        const hbtText = document.getElementById('asset-hbt-display')?.textContent || '0';
+        balance = parseFloat(String(hbtText).replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    if (window.updateChallengeSliderBounds) {
+        window.updateChallengeSliderBounds(balance);
+    }
 };
 
 // cleanupGalleryResources는 app.js에서 window에 설정됨

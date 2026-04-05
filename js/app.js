@@ -3593,6 +3593,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("timestamp", "desc"),
             limit(20)
         )).catch(() => null);
+        const _p_pointHistory = getDocs(query(
+            collection(db, "daily_logs"),
+            where("userId", "==", user.uid),
+            limit(50)
+        )).catch(() => null);
         // 오늘 전체 로그 (리액션 포인트 집계용)
         const _p_todayAllLogs = getDocs(query(
             collection(db, 'daily_logs'),
@@ -3988,17 +3993,34 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (txContainer) {
                 try {
                     const txSnap = await _p_txHistory;
+                    const pointSnap = await _p_pointHistory;
 
-                    if (!txSnap || txSnap.empty) {
-                        txContainer.innerHTML = `
-                            <div class="wallet-tx-empty-cta">
-                                <div class="wallet-tx-empty-icon">💎</div>
-                                <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
-                                <div class="wallet-tx-empty-sub">포인트를 HBT로 변환하면 여기에 기록됩니다</div>
-                                <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
-                            </div>`;
-                    } else {
-                        let txHtml = '';
+                    const renderHistoryItem = ({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) => `
+                        <div class="wallet-tx-item">
+                            <div class="wallet-tx-left">
+                                <div class="wallet-tx-icon ${iconClass}">${icon}</div>
+                                <div>
+                                    <div class="wallet-tx-label">${label}</div>
+                                    <div class="wallet-tx-date">${date}</div>
+                                </div>
+                            </div>
+                            <div class="wallet-tx-right">
+                                <div class="wallet-tx-amount ${amountClass}">${amountText}</div>
+                                <div class="wallet-tx-status">${statusText}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    const sectionWrapStyle = 'margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(240, 215, 182, 0.9);';
+                    const sectionTitleStyle = 'margin: 0 0 8px; font-size: 12px; font-weight: 800; color: #8d5620; letter-spacing: 0.02em;';
+                    const sectionEmptyStyle = 'padding: 10px 2px 2px; font-size: 12px; color: #9b7b58;';
+
+                    const buildHbtHistoryHtml = () => {
+                        if (!txSnap || txSnap.empty) {
+                            return `<div style="${sectionEmptyStyle}">아직 HBT 거래 기록이 없습니다.</div>`;
+                        }
+
+                        let html = '';
                         txSnap.forEach(txDoc => {
                             const tx = txDoc.data();
                             const txDate = tx.timestamp?.toDate?.() ? tx.timestamp.toDate().toLocaleDateString('ko-KR') : '-';
@@ -4041,23 +4063,112 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 amountText = `${parseFloat(tx.amount) || 0} HBT`;
                             }
 
-                            txHtml += `
-                                <div class="wallet-tx-item">
-                                    <div class="wallet-tx-left">
-                                        <div class="wallet-tx-icon ${iconClass}">${icon}</div>
-                                        <div>
-                                            <div class="wallet-tx-label">${label}</div>
-                                            <div class="wallet-tx-date">${txDate}</div>
-                                        </div>
-                                    </div>
-                                    <div class="wallet-tx-right">
-                                        <div class="wallet-tx-amount ${amountClass}">${amountText}</div>
-                                        <div class="wallet-tx-status">${statusText}</div>
-                                    </div>
-                                </div>
-                            `;
+                            html += renderHistoryItem({
+                                icon,
+                                iconClass,
+                                label,
+                                date: txDate,
+                                amountText,
+                                amountClass,
+                                statusText
+                            });
                         });
-                        txContainer.innerHTML = txHtml;
+                        return html;
+                    };
+
+                    const buildPointHistoryHtml = () => {
+                        const pointItems = [];
+
+                        if (pointSnap && !pointSnap.empty) {
+                            pointSnap.forEach(pointDoc => {
+                                const log = pointDoc.data();
+                                const awarded = log.awardedPoints || {};
+                                const earnedPoints =
+                                    (awarded.dietPoints || 0) +
+                                    (awarded.exercisePoints || 0) +
+                                    (awarded.mindPoints || 0);
+                                if (earnedPoints <= 0) return;
+
+                                const completedTags = [];
+                                if (awarded.dietPoints > 0) completedTags.push('식단');
+                                if (awarded.exercisePoints > 0) completedTags.push('운동');
+                                if (awarded.mindPoints > 0) completedTags.push('마음');
+
+                                pointItems.push({
+                                    sortKey: `${log.date || ''}T23:59:59`,
+                                    icon: '🪙',
+                                    iconClass: 'convert',
+                                    label: completedTags.length > 0 ? `${completedTags.join('·')} 기록` : '일일 기록',
+                                    date: log.date || '-',
+                                    amountText: `+${earnedPoints}P`,
+                                    amountClass: 'positive',
+                                    statusText: '✅ 적립'
+                                });
+                            });
+                        }
+
+                        if (txSnap && !txSnap.empty) {
+                            txSnap.forEach(txDoc => {
+                                const tx = txDoc.data();
+                                const txDateObj = tx.timestamp?.toDate?.();
+                                const txDate = txDateObj ? txDateObj.toLocaleDateString('ko-KR') : (tx.date || '-');
+
+                                if (tx.pointsUsed > 0) {
+                                    pointItems.push({
+                                        sortKey: txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`,
+                                        icon: '📉',
+                                        iconClass: 'withdraw',
+                                        label: 'HBT 변환 사용',
+                                        date: txDate,
+                                        amountText: `-${parseFloat(tx.pointsUsed) || 0}P`,
+                                        amountClass: 'negative',
+                                        statusText: tx.status === 'success' ? '✅ 차감' : '⏳ 처리 중'
+                                    });
+                                }
+
+                                if (tx.rewardPoints > 0) {
+                                    pointItems.push({
+                                        sortKey: txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`,
+                                        icon: '🎁',
+                                        iconClass: 'settle',
+                                        label: '챌린지 보상',
+                                        date: txDate,
+                                        amountText: `+${parseFloat(tx.rewardPoints) || 0}P`,
+                                        amountClass: 'positive',
+                                        statusText: tx.status === 'success' ? '✅ 적립' : '⏳ 처리 중'
+                                    });
+                                }
+                            });
+                        }
+
+                        pointItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
+
+                        if (pointItems.length === 0) {
+                            return `<div style="${sectionEmptyStyle}">아직 포인트 기록이 없습니다.</div>`;
+                        }
+
+                        return pointItems.slice(0, 20).map(item => renderHistoryItem(item)).join('');
+                    };
+
+                    if ((!txSnap || txSnap.empty) && (!pointSnap || pointSnap.empty)) {
+                        txContainer.innerHTML = `
+                            <div class="wallet-tx-empty-cta">
+                                <div class="wallet-tx-empty-icon">💎</div>
+                                <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
+                                <div class="wallet-tx-empty-sub">HBT 거래와 포인트 적립 내역이 여기에 함께 쌓여요</div>
+                                <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
+                            </div>`;
+                    } else {
+                        txContainer.innerHTML = `
+                            <div>
+                                <div style="${sectionTitleStyle}">HBT 거래 기록</div>
+                                ${buildHbtHistoryHtml()}
+                            </div>
+                            <div style="${sectionWrapStyle}">
+                                <div style="${sectionTitleStyle}">포인트 기록</div>
+                                ${buildPointHistoryHtml()}
+                            </div>
+                        `;
                     }
                 } catch (txErr) {
                     console.warn('⚠️ 거래 기록 로드 스킵:', txErr.message);
