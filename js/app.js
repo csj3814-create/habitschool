@@ -2488,9 +2488,13 @@ window.previewDynamicVid = function (input) {
 
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
-        const p = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid);
-        _pendingUploads.set(input.id, { promise: p, done: false, result: null });
-        p.then(r => {
+        const localThumbSeed = String(
+            input.closest('.strength-block')?.getAttribute('data-local-thumb')
+            || ''
+        ).trim();
+        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed);
+        _pendingUploads.set(input.id, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null });
+        pendingUpload.promise.then(r => {
             const entry = _pendingUploads.get(input.id);
             if (entry) { entry.done = true; entry.result = r; }
         }).catch(() => _pendingUploads.delete(input.id));
@@ -2505,6 +2509,8 @@ window.previewDynamicVid = function (input) {
                 previewImg.setAttribute('data-local-thumb', thumbDataUrl);
                 const currentBlock = input.closest('.strength-block');
                 if (currentBlock) currentBlock.setAttribute('data-local-thumb', thumbDataUrl);
+                const pendingEntry = _pendingUploads.get(input.id);
+                if (pendingEntry) pendingEntry.localThumbDataUrl = thumbDataUrl;
             }
         })
         .catch(() => { })
@@ -7132,34 +7138,53 @@ function uploadWithThumb(file, folder, userId) {
     return originalPromise;
 }
 
-function uploadVideoWithThumb(file, folder, userId) {
-    if (!file) return Promise.resolve({ url: null, thumbUrl: null });
+function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '') {
+    if (!file) return { promise: Promise.resolve({ url: null, thumbUrl: null }), thumbPromise: Promise.resolve(null) };
 
     const originalPromise = uploadFileAndGetUrl(file, folder, userId)
         .then(url => url ? { url, thumbUrl: null } : { url: null, thumbUrl: null })
         .catch(() => ({ url: null, thumbUrl: null }));
 
-    originalPromise.then(async ({ url }) => {
-        if (!url) return;
+    const thumbPromise = (async () => {
+        const { url } = await originalPromise;
+        if (!url) return null;
         try {
-            const thumbBlob = await generateVideoThumbnailBlob(file).catch(() => null);
-            if (!thumbBlob) return;
-            const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
-            const tr = ref(storage, tp);
-            const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
-            await Promise.race([uploadBytes(tr, thumbBlob), tout(15000)]);
-            const thumbUrl = await Promise.race([getDownloadURL(tr), tout(10000)]);
-            for (const [, entry] of _pendingUploads) {
-                if (entry.result && entry.result.url === url) {
-                    entry.result.thumbUrl = thumbUrl;
+            let thumbDataUrl = String(localThumbDataUrl || '').trim();
+            if (!thumbDataUrl.startsWith('data:image/')) {
+                thumbDataUrl = await extractVideoThumbFromFile(file).catch(() => '');
+            }
+
+            let thumbUrl = null;
+            if (thumbDataUrl.startsWith('data:image/')) {
+                thumbUrl = await uploadDataUrlThumbnail(thumbDataUrl, folder, userId);
+            }
+
+            if (!thumbUrl) {
+                const thumbBlob = await generateVideoThumbnailBlob(file).catch(() => null);
+                if (thumbBlob) {
+                    const tp = `${folder}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
+                    const tr = ref(storage, tp);
+                    const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+                    await Promise.race([uploadBytes(tr, thumbBlob), tout(15000)]);
+                    thumbUrl = await Promise.race([getDownloadURL(tr), tout(10000)]);
                 }
             }
+
+            if (thumbUrl) {
+                for (const [, entry] of _pendingUploads) {
+                    if (entry.result && entry.result.url === url) {
+                        entry.result.thumbUrl = thumbUrl;
+                    }
+                }
+            }
+            return thumbUrl || null;
         } catch (e) {
             console.warn('영상 썸네일 백그라운드 업로드 실패:', e.message);
+            return null;
         }
-    });
+    })();
 
-    return originalPromise;
+    return { promise: originalPromise, thumbPromise };
 }
 
 async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
@@ -7189,6 +7214,13 @@ async function resolvePendingUploadResult(inputId) {
         if (!entry.done || !entry.result) {
             entry.result = await entry.promise;
             entry.done = true;
+        }
+        if (entry.result?.url && !entry.result.thumbUrl && entry.thumbPromise) {
+            const pendingThumb = await Promise.race([
+                entry.thumbPromise.catch(() => null),
+                new Promise(resolve => setTimeout(() => resolve(null), 5000))
+            ]);
+            if (pendingThumb) entry.result.thumbUrl = pendingThumb;
         }
         return entry.result?.url ? entry.result : null;
     } catch (_) {
@@ -7228,6 +7260,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     const previewImg = block.querySelector('.preview-strength-img');
     if (previewImg && thumbUrl && isPersistedStorageUrl(thumbUrl)) {
         previewImg.src = thumbUrl;
+        previewImg.setAttribute('data-saved-thumb-url', thumbUrl);
     }
 }
 
