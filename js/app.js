@@ -4910,6 +4910,10 @@ function updateGalleryPrimaryAction() {
     const saveBtn = document.getElementById('saveDataBtn');
     const helperEl = document.getElementById('submit-bar-helper');
     if (!saveBtn || !helperEl) return;
+    if (getVisibleTabName() !== 'gallery') {
+        updateContextualSaveBar(getVisibleTabName());
+        return;
+    }
 
     const shareContainer = document.getElementById('my-share-container');
     const canShare = !!shareContainer && shareContainer.style.display !== 'none';
