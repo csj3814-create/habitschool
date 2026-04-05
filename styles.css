@@ -4032,10 +4032,10 @@ textarea {
 }
 
 .gallery-feed-shell {
-    padding: 18px;
-    border-radius: 22px;
-    background: linear-gradient(180deg, #ffffff 0%, #fffdf9 100%);
-    border: 1px solid #f3e5cf;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
 }
 
 .gallery-feed-toolbar {
@@ -4176,11 +4176,11 @@ textarea {
 /* 갤러리 카드 - 인스타그램 스타일 */
 .gallery-card { 
     background: var(--white); 
-    border: 1px solid #f1e5d5;
-    border-radius: 18px; 
+    border: none;
+    border-radius: 0; 
     padding: 0; 
-    margin-bottom: 12px; 
-    box-shadow: 0 10px 24px rgba(31, 22, 12, 0.04); 
+    margin-bottom: 16px; 
+    box-shadow: none; 
     contain: layout style paint;
     content-visibility: auto;
     overflow: hidden;
@@ -4477,9 +4477,9 @@ textarea {
 .gallery-actions { 
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
     align-items: stretch;
-    padding: 10px 14px 6px; 
+    padding: 10px 0 6px; 
 }
 
 .action-btn { 
@@ -4488,13 +4488,13 @@ textarea {
     border-radius: 14px;
     width: 100%;
     min-width: 0;
-    min-height: 38px;
+    min-height: 36px;
     font-size: 14px; 
-    padding: 7px 4px;
+    padding: 6px 3px;
     display: flex; 
     align-items: center; 
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     flex-wrap: nowrap;
     cursor: pointer; 
     color: var(--gray-800); 
@@ -4507,12 +4507,12 @@ textarea {
 
 .action-icon {
     flex: 0 0 auto;
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1;
 }
 
 .action-label {
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
     color: #6f5d47;
     line-height: 1;
@@ -4537,13 +4537,13 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
     border-radius: 999px;
     background: rgba(255, 140, 0, 0.12);
     color: #cc6b00;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 800;
     line-height: 1;
     white-space: nowrap;
@@ -4976,8 +4976,8 @@ textarea {
 
     .gallery-hero,
     .gallery-feed-shell {
-        padding: 12px;
-        border-radius: 16px;
+        padding: 0;
+        border-radius: 0;
     }
 
     .gallery-hero-stats {
@@ -5007,8 +5007,8 @@ textarea {
 
     .gallery-post-meta,
     .gallery-header {
-        padding-left: 14px;
-        padding-right: 14px;
+        padding-left: 6px;
+        padding-right: 6px;
     }
 
     .gallery-user-filter-clear {
@@ -5016,12 +5016,60 @@ textarea {
     }
 
     .gallery-actions {
-        padding-left: 14px;
-        padding-right: 14px;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .gallery-photos {
         margin: 0;
+    }
+
+    .gallery-feed-toolbar {
+        padding: 0 2px;
+        margin-bottom: 10px;
+    }
+
+    .gallery-card {
+        margin-bottom: 14px;
+    }
+
+    .gallery-header {
+        gap: 8px;
+        padding-top: 10px;
+        padding-bottom: 8px;
+    }
+
+    .gallery-post-meta {
+        padding-bottom: 6px;
+    }
+
+    .gallery-actions {
+        gap: 3px;
+        padding-top: 8px;
+        padding-bottom: 6px;
+    }
+
+    .action-btn {
+        min-height: 34px;
+        border-radius: 12px;
+        padding: 5px 2px;
+    }
+
+    .action-label {
+        font-size: 8.5px;
+        letter-spacing: -0.02em;
+    }
+
+    .action-count {
+        min-width: 15px;
+        height: 15px;
+        padding: 0 3px;
+        font-size: 8px;
+    }
+
+    .comment-section {
+        padding-left: 6px;
+        padding-right: 6px;
     }
 }
 
@@ -7812,8 +7860,8 @@ body.dark-mode .gallery-hero-stat {
 body.dark-mode .gallery-hero-stat strong { color: #FFF3E0; }
 body.dark-mode .gallery-hero-stat span { color: #C0AC96; }
 body.dark-mode .gallery-feed-shell {
-    background: linear-gradient(180deg, #1d1b20 0%, #1b1a1f 100%);
-    border-color: #39343c;
+    background: transparent;
+    border-color: transparent;
 }
 body.dark-mode .gallery-user-filter-bar {
     background: #2E2518;
@@ -7831,8 +7879,8 @@ body.dark-mode .gallery-user-filter-clear {
 }
 body.dark-mode .gallery-card {
     background: #211f25;
-    border-color: #39343c;
-    box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+    border-color: transparent;
+    box-shadow: none;
 }
 body.dark-mode .action-btn {
     background: #2A2520;
