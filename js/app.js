@@ -4916,8 +4916,8 @@ function updateGalleryPrimaryAction() {
 
     helperEl.style.display = 'block';
     helperEl.textContent = canShare
-        ? '기록 카드 준비 완료. 단톡방에 공유해보세요.'
-        : '단톡방에서 오늘 기록을 이어가보세요.';
+        ? '기록 카드 준비 완료. 단톡방에 공유해요.'
+        : '단톡방에서 오늘 기록 이어가기';
     saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
     saveBtn.style.background = '#FEE500';
     saveBtn.style.color = '#3C1E1E';
@@ -5357,10 +5357,10 @@ function _renderDashboardHeroState({
     if (focusBody) {
         if (remainingToday === 0) {
             focusBody.textContent = isWeekActive
-                ? `오늘 기록 끝 · 이번 주 ${overallRate}% 진행`
-                : '오늘 기록 끝 · 갤러리나 내 기록 보기';
+                ? `오늘 완료 · 이번 주 ${overallRate}%`
+                : '오늘 완료 · 기록 보기';
         } else if (levelUpLockedToday) {
-            focusBody.textContent = '새 주간 미션은 내일 다시 고를 수 있어요.';
+            focusBody.textContent = '새 미션은 내일 고를 수 있어요.';
         } else if (focusMeta) {
             focusBody.textContent = `오늘 ${completedToday}/3 · 남은 ${remainingToday}개`;
         }
@@ -5375,11 +5375,11 @@ function _renderDashboardHeroState({
 
     if (weekSummaryEl) {
         if (isWeekActive && totalMissions > 0) {
-            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록 · 달성 ${overallRate}%`;
+            weekSummaryEl.textContent = `${activeDays}일 기록 · 달성 ${overallRate}%`;
         } else if (activeDays > 0) {
-            weekSummaryEl.textContent = `이번 주 ${activeDays}일 기록 중이에요.`;
+            weekSummaryEl.textContent = `${activeDays}일째 기록 중`;
         } else {
-            weekSummaryEl.textContent = '이번 주 첫 기록을 남겨보세요.';
+            weekSummaryEl.textContent = '첫 기록을 남겨보세요.';
         }
     }
 
@@ -5749,7 +5749,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                     </div>
                     <div class="mission-progress-detail-list mission-progress-detail-list-plain">
                         ${progressRowsHtml}
-                        ${isAtRisk ? `<div class="mission-warning">이번 주 ${remainingDays}일 남았어요. 남은 미션부터 끝내세요.</div>` : ''}
+                        ${isAtRisk ? `<div class="mission-warning">남은 ${remainingDays}일 · 미션 먼저 끝내기</div>` : ''}
                     </div>
                     <div class="mission-progress-actions">
                         ${levelUpHtml}
