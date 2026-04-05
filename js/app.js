@@ -134,7 +134,10 @@ let cachedMyFriends = [];
 let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
+let _friendshipsLoadingStartedAt = 0;
 let _pendingFriendRequestId = null;
+const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
+const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
@@ -1844,6 +1847,7 @@ async function loadMyFriendships(forceReload = false) {
         cachedMyFriendships = new Map();
         cachedMyFriends = [];
         _friendshipsLoadedForUid = '';
+        _friendshipsLoadingStartedAt = 0;
         renderProfileFriendRequests();
         return cachedMyFriendships;
     }
@@ -1854,10 +1858,19 @@ async function loadMyFriendships(forceReload = false) {
     }
 
     if (_friendshipsLoadingPromise && !forceReload) {
-        await _friendshipsLoadingPromise;
-        return cachedMyFriendships;
+        const isStaleLoad = _friendshipsLoadingStartedAt
+            && (Date.now() - _friendshipsLoadingStartedAt) > (FRIENDSHIP_LOAD_TIMEOUT_MS * 2);
+        if (isStaleLoad) {
+            console.warn('[loadMyFriendships] stale friendship load discarded');
+            _friendshipsLoadingPromise = null;
+            _friendshipsLoadingStartedAt = 0;
+        } else {
+            await _friendshipsLoadingPromise;
+            return cachedMyFriendships;
+        }
     }
 
+    _friendshipsLoadingStartedAt = Date.now();
     _friendshipsLoadingPromise = (async () => {
         const snap = await getDocs(query(
             collection(db, 'friendships'),
@@ -1882,9 +1895,36 @@ async function loadMyFriendships(forceReload = false) {
         await _friendshipsLoadingPromise;
     } finally {
         _friendshipsLoadingPromise = null;
+        _friendshipsLoadingStartedAt = 0;
     }
 
     return cachedMyFriendships;
+}
+
+async function waitForFriendshipsForUi({ forceReload = false, timeoutMs = FRIENDSHIP_LOAD_TIMEOUT_MS } = {}) {
+    try {
+        await Promise.race([
+            loadMyFriendships(forceReload),
+            new Promise((_, reject) => {
+                window.setTimeout(() => reject(new Error('friendships_timeout')), timeoutMs);
+            })
+        ]);
+        return { timedOut: false, activeFriendIds: getActiveFriendIds() };
+    } catch (error) {
+        if (error?.message === 'friendships_timeout') {
+            console.warn('[friendships] timeout, using current cache');
+            _friendshipsLoadingPromise = null;
+            _friendshipsLoadingStartedAt = 0;
+            return { timedOut: true, activeFriendIds: getActiveFriendIds() };
+        }
+
+        if (cachedMyFriendships.size > 0) {
+            console.warn('[friendships] load failed, using cache:', error.message);
+            return { timedOut: true, activeFriendIds: getActiveFriendIds() };
+        }
+
+        throw error;
+    }
 }
 
 async function refreshFriendshipDependentUi(reloadGallery = false) {
@@ -5156,6 +5196,19 @@ const _communityFocusState = {
     primaryAction: 'invite'
 };
 
+function focusProfileFriendCard(preferRequests = false) {
+    const requestCard = document.getElementById('profile-friend-requests-card');
+    const inviteCard = document.getElementById('profile-friend-invite-card');
+    const hasRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
+    const targetCard = preferRequests && hasRequests ? requestCard : (inviteCard || requestCard);
+    targetCard?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+    targetCard?.classList.add('is-highlighted');
+    window.setTimeout(() => targetCard?.classList.remove('is-highlighted'), 1400);
+}
+
 window.openFriendInviteFlow = function() {
     if (!auth.currentUser) {
         document.getElementById('login-modal').style.display = 'flex';
@@ -5164,19 +5217,24 @@ window.openFriendInviteFlow = function() {
 
     window.location.hash = '#profile';
     openTab('profile');
-    const focusInviteCard = () => {
-        const inviteCard = document.getElementById('profile-friend-invite-card');
-        inviteCard?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-        inviteCard?.classList.add('is-highlighted');
-        window.setTimeout(() => inviteCard?.classList.remove('is-highlighted'), 1400);
-    };
-
+    const focusInviteCard = () => focusProfileFriendCard(false);
     requestAnimationFrame(focusInviteCard);
     setTimeout(focusInviteCard, 160);
     setTimeout(focusInviteCard, 420);
+};
+
+window.openFriendRequestFlow = function() {
+    if (!auth.currentUser) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+
+    window.location.hash = '#profile';
+    openTab('profile');
+    const focusRequestCard = () => focusProfileFriendCard(true);
+    requestAnimationFrame(focusRequestCard);
+    setTimeout(focusRequestCard, 160);
+    setTimeout(focusRequestCard, 420);
 };
 
 window.handleCommunityPrimaryAction = function() {
@@ -10747,37 +10805,62 @@ renderGroupChallengeFromData = function(s) {
     `;
 };
 
-renderSocialChallenges = async function(user) {
-    const card = document.getElementById('social-challenge-card');
-    const list = document.getElementById('social-challenge-list');
-    if (!card || !list) return;
+function setSocialChallengeHeadAction(mode = 'start') {
+    const button = document.querySelector('.social-challenge-head-btn');
+    if (!button) return;
 
-    try {
-        card.style.display = 'block';
-        if (!list.innerHTML.trim()) {
-            list.innerHTML = buildCommunityEmptyState(
-                '친구 챌린지를 준비하고 있어요',
-                '친구 상태와 열린 챌린지를 불러오는 중입니다.'
-            );
-        }
-        await loadMyFriendships();
-        const activeFriendIds = getActiveFriendIds();
-        _communityFocusState.friendCount = activeFriendIds.length;
+    if (mode === 'requests') {
+        button.textContent = '요청 확인';
+        button.onclick = () => window.openFriendRequestFlow();
+        return;
+    }
 
-        if (activeFriendIds.length === 0) {
-            _communityFocusState.pendingChallenges = 0;
-            _communityFocusState.activeChallenges = 0;
-            renderCommunityFocusPanel();
-            list.innerHTML = buildCommunityEmptyState(
-                '수락된 친구가 있어야 챌린지를 시작할 수 있어요',
-                '친구에게 초대 링크를 보내면 신규 가입 보너스와 친구 연결이 한 번에 이어져요.',
-                ['<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>']
-            );
-            card.style.display = 'block';
-            return;
-        }
+    if (mode === 'invite') {
+        button.textContent = '친구 연결';
+        button.onclick = () => window.openFriendInviteFlow();
+        return;
+    }
 
-        const [asParticipant, asInvitee] = await Promise.all([
+    if (mode === 'retry') {
+        button.textContent = '다시 불러오기';
+        button.onclick = () => window.retrySocialChallengesCard();
+        return;
+    }
+
+    button.textContent = '챌린지 시작';
+    button.onclick = () => window.openCreateChallengeModal();
+}
+
+function buildSocialChallengeFriendSummary(activeFriendIds = []) {
+    const myUid = auth.currentUser?.uid;
+    const incomingCount = getIncomingFriendRequests().length;
+    const outgoingCount = getOutgoingFriendRequests().length;
+    const previewNames = activeFriendIds
+        .slice(0, 3)
+        .map(friendId => escapeHtml(getFriendshipName(cachedMyFriendships.get(friendId), myUid)))
+        .filter(Boolean);
+
+    const pills = [
+        `<span class="social-challenge-pill">👥 친구 ${activeFriendIds.length}명</span>`,
+        incomingCount > 0 ? `<span class="social-challenge-pill">📩 받은 ${incomingCount}건</span>` : '',
+        outgoingCount > 0 ? `<span class="social-challenge-pill">🕓 보낸 ${outgoingCount}건</span>` : ''
+    ].filter(Boolean).join('');
+
+    const namesLine = previewNames.length > 0
+        ? `<div class="social-challenge-meta">연결 친구 · ${previewNames.join(', ')}${activeFriendIds.length > previewNames.length ? ` 외 ${activeFriendIds.length - previewNames.length}명` : ''}</div>`
+        : '';
+
+    return `
+        <div class="social-challenge-summary">
+            ${pills}
+        </div>
+        ${namesLine}
+    `;
+}
+
+async function loadOpenSocialChallengesForUser(user, timeoutMs = SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS) {
+    return Promise.race([
+        Promise.all([
             getDocs(query(
                 collection(db, 'social_challenges'),
                 where('participants', 'array-contains', user.uid),
@@ -10790,7 +10873,77 @@ renderSocialChallenges = async function(user) {
                 where('status', '==', 'pending'),
                 limit(5)
             ))
-        ]);
+        ]),
+        new Promise((_, reject) => {
+            window.setTimeout(() => reject(new Error('social_challenges_timeout')), timeoutMs);
+        })
+    ]);
+}
+
+window.retrySocialChallengesCard = function() {
+    const user = auth.currentUser;
+    if (!user) return;
+    renderSocialChallenges(user).catch(() => {});
+};
+
+renderSocialChallenges = async function(user) {
+    const card = document.getElementById('social-challenge-card');
+    const list = document.getElementById('social-challenge-list');
+    if (!card || !list) return;
+
+    try {
+        card.style.display = 'block';
+        setSocialChallengeHeadAction('start');
+        list.innerHTML = buildCommunityEmptyState(
+            '친구 챌린지를 준비하고 있어요',
+            '친구 상태와 열린 챌린지를 불러오는 중입니다.'
+        );
+
+        const friendshipState = await waitForFriendshipsForUi({ timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
+        const activeFriendIds = friendshipState.activeFriendIds;
+        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
+        const summaryHtml = buildSocialChallengeFriendSummary(activeFriendIds);
+        _communityFocusState.friendCount = activeFriendIds.length;
+
+        if (friendshipState.timedOut && cachedMyFriendships.size === 0) {
+            setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
+            _communityFocusState.pendingChallenges = 0;
+            _communityFocusState.activeChallenges = 0;
+            renderCommunityFocusPanel();
+            list.innerHTML = `
+                ${summaryHtml}
+                ${buildCommunityEmptyState(
+                    '친구 상태를 아직 못 불러왔어요',
+                    '프로필에서 친구 요청을 확인하거나 잠시 후 다시 불러와 주세요.',
+                    [
+                        `<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`,
+                        '<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">🔄 다시 불러오기</button>'
+                    ]
+                )}
+            `;
+            return;
+        }
+
+        if (activeFriendIds.length === 0) {
+            setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
+            _communityFocusState.pendingChallenges = 0;
+            _communityFocusState.activeChallenges = 0;
+            renderCommunityFocusPanel();
+            list.innerHTML = `
+                ${summaryHtml}
+                ${buildCommunityEmptyState(
+                    hasPendingRequests ? '친구 요청부터 확인해 주세요' : '수락된 친구가 있어야 챌린지를 시작할 수 있어요',
+                    hasPendingRequests
+                        ? '프로필 탭에서 요청을 수락하면 바로 친구 챌린지를 시작할 수 있어요.'
+                        : '친구에게 초대 링크를 보내면 신규 가입 보너스와 친구 연결이 한 번에 이어져요.',
+                    [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
+                )}
+            `;
+            return;
+        }
+
+        setSocialChallengeHeadAction('start');
+        const [asParticipant, asInvitee] = await loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS);
 
         const challenges = [];
         asInvitee.forEach(d => challenges.push({ id: d.id, ...d.data(), isInvite: true }));
@@ -10839,32 +10992,34 @@ renderSocialChallenges = async function(user) {
         });
 
         if (challenges.length === 0) {
-            list.innerHTML = buildCommunityEmptyState(
-                '아직 열려 있는 챌린지가 없어요',
-                '친구가 준비돼 있으니 지금 바로 첫 챌린지를 열어보세요.',
-                ['<button type="button" class="community-empty-btn" onclick="openCreateChallengeModal()">🏆 챌린지 시작</button>']
-            );
-            card.style.display = 'block';
+            list.innerHTML = `
+                ${summaryHtml}
+                ${buildCommunityEmptyState(
+                    '친구는 준비됐어요',
+                    '지금 바로 첫 챌린지를 시작해 보세요.',
+                    ['<button type="button" class="community-empty-btn" onclick="openCreateChallengeModal()">🏆 챌린지 시작</button>']
+                )}
+            `;
             return;
         }
 
         list.innerHTML = `
+            ${summaryHtml}
             <div class="social-challenge-summary">
                 <span class="social-challenge-pill">🏆 진행 ${activeChallenges}개</span>
                 <span class="social-challenge-pill">📩 응답 대기 ${pendingChallenges}개</span>
             </div>
             ${buildCommunityExpandableRows('social-challenges', challengeRowsHtml, 2)}
         `;
-
-        card.style.display = 'block';
     } catch (e) {
         console.warn('[renderSocialChallenges] 오류:', e.message);
+        setSocialChallengeHeadAction('retry');
         list.innerHTML = buildCommunityEmptyState(
             '챌린지 상태를 아직 못 불러왔어요',
-            '잠시 후 다시 보거나, 먼저 친구 초대와 응원하기부터 시작해보세요.',
+            '잠시 후 다시 보거나, 먼저 친구 연결을 확인해 주세요.',
             [
-                '<button type="button" class="community-empty-btn" onclick="openQRModal()">👥 친구 초대</button>',
-                '<button type="button" class="community-empty-btn" onclick="focusGalleryFeed()">✨ 응원하기</button>'
+                '<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">🔄 다시 불러오기</button>',
+                '<button type="button" class="community-empty-btn" onclick="openFriendInviteFlow()">👥 친구 연결</button>'
             ]
         );
         card.style.display = 'block';
@@ -10944,38 +11099,54 @@ window.openCreateChallengeModal = async function() {
     const user = auth.currentUser;
     if (!user) { showToast('로그인이 필요합니다'); return; }
 
-    await loadMyFriendships();
-    const friendIds = getActiveFriendIds();
+    try {
+        const friendshipState = await waitForFriendshipsForUi({ forceReload: true, timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
+        const friendIds = getActiveFriendIds();
+        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
 
-    if (friendIds.length === 0) {
-        showToast('먼저 친구를 연결해 주세요.\n초대 링크를 보내면 신규 가입과 기존 회원 연결이 바로 이어져요 👥');
-        return;
+        if (friendIds.length === 0) {
+            if (hasPendingRequests) {
+                showToast('친구 요청을 먼저 확인해 주세요.');
+                openFriendRequestFlow();
+            } else if (friendshipState.timedOut) {
+                showToast('친구 상태를 아직 못 불러왔어요. 프로필에서 연결 상태를 확인해 주세요.');
+                openFriendInviteFlow();
+            } else {
+                showToast('먼저 친구를 연결해 주세요.');
+                openFriendInviteFlow();
+            }
+            return;
+        }
+
+        _challengeState.friends = friendIds
+            .map(friendId => {
+                const friendship = cachedMyFriendships.get(friendId);
+                return {
+                    uid: friendId,
+                    name: friendship ? getFriendshipName(friendship, user.uid) : friendId.slice(0, 8)
+                };
+            })
+            .filter(Boolean);
+
+        // 상태 초기화
+        _challengeState.type = 'group_goal';
+        _challengeState.duration = 3;
+        _challengeState.stake = 50;
+        _challengeState.selectedFriends = [];
+
+        // 친구 목록 렌더링
+        renderChallengeFriendList();
+        selectChallengeType('group_goal');
+        selectDuration(3);
+        selectStake(50);
+
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } catch (e) {
+        console.error('[openCreateChallengeModal]', e);
+        showToast('친구 상태를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        renderSocialChallenges(user).catch(() => {});
     }
-
-    _challengeState.friends = friendIds
-        .map(friendId => {
-            const friendship = cachedMyFriendships.get(friendId);
-            return {
-                uid: friendId,
-                name: friendship ? getFriendshipName(friendship, user.uid) : friendId.slice(0, 8)
-            };
-        })
-        .filter(Boolean);
-
-    // 상태 초기화
-    _challengeState.type = 'group_goal';
-    _challengeState.duration = 3;
-    _challengeState.stake = 50;
-    _challengeState.selectedFriends = [];
-
-    // 친구 목록 렌더링
-    renderChallengeFriendList();
-    selectChallengeType('group_goal');
-    selectDuration(3);
-    selectStake(50);
-
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
 };
 
 window.closeCreateChallengeModal = function() {
