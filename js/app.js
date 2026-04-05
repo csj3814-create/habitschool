@@ -7027,6 +7027,24 @@ function uploadVideoWithThumb(file, folder, userId) {
     return originalPromise;
 }
 
+async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
+    const normalized = String(dataUrl || '').trim();
+    if (!normalized.startsWith('data:image/')) return null;
+    try {
+        const response = await fetch(normalized);
+        const blob = await response.blob();
+        if (!blob || !blob.size) return null;
+        const tp = `${folder}_thumbnails/${userId}/${Date.now()}_local_thumb.jpg`;
+        const tr = ref(storage, tp);
+        const tout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+        await Promise.race([uploadBytes(tr, blob, { contentType: 'image/jpeg' }), tout(15000)]);
+        return await Promise.race([getDownloadURL(tr), tout(10000)]);
+    } catch (e) {
+        console.warn('로컬 썸네일 업로드 실패:', e.message);
+        return null;
+    }
+}
+
 async function resolvePendingUploadResult(inputId) {
     if (!inputId) return null;
     const entry = _pendingUploads.get(inputId);
@@ -7199,6 +7217,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const fileInput = block.querySelector('.exer-file');
                 let url = block.getAttribute('data-url') || null;
                 let thumbUrl = block.getAttribute('data-thumb-url') || null;
+                const localThumb = String(
+                    block.getAttribute('data-local-thumb')
+                    || block.querySelector('.preview-strength-img')?.getAttribute('data-local-thumb')
+                    || ''
+                ).trim();
                 let aiAnalysis = null;
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
                 const pending = await resolvePendingUploadResult(fileInput.id);
@@ -7214,6 +7237,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         console.error('⚠️ 근력 영상 업로드 실패:', err);
                         url = null;
                     }
+                }
+                if (url && !thumbUrl && localThumb.startsWith('data:image/')) {
+                    thumbUrl = await uploadDataUrlThumbnail(localThumb, 'exercise_videos', user.uid);
                 }
                 return url ? { videoUrl: url, videoThumbUrl: thumbUrl, aiAnalysis } : null;
             }));
