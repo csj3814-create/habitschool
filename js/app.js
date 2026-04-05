@@ -92,6 +92,7 @@ window.maybeHandleChatbotConnect = maybeHandleChatbotConnect;
 window.handleLoggedOutChatbotConnect = handleLoggedOutChatbotConnect;
 window.requestFriend = requestFriend;
 window.requestFriendByCode = requestFriendByCode;
+window.submitProfileFriendCode = submitProfileFriendCode;
 window.respondFriendRequest = respondFriendRequest;
 window.respondPendingFriendRequest = respondPendingFriendRequest;
 window.removeFriendship = removeFriendship;
@@ -1376,6 +1377,29 @@ function getFriendRelationship(targetUid) {
     };
 }
 
+function setOptimisticPendingFriendship(targetUid, targetName = '친구') {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid || !targetUid || targetUid === myUid) return;
+
+    const requestedAt = new Date();
+    cachedMyFriendships.set(targetUid, {
+        id: buildFriendshipId(myUid, targetUid),
+        users: [myUid, targetUid].sort(),
+        userNames: {
+            [myUid]: userData?.customDisplayName || userData?.displayName || auth.currentUser?.displayName || '회원',
+            [targetUid]: targetName || '친구'
+        },
+        status: 'pending',
+        requesterUid: myUid,
+        requesterName: userData?.customDisplayName || userData?.displayName || auth.currentUser?.displayName || '회원',
+        pendingForUid: targetUid,
+        requestedAt,
+        updatedAt: requestedAt
+    });
+    cachedMyFriends = getActiveFriendIds();
+    renderProfileFriendRequests();
+}
+
 function formatDateTimeForUi(value) {
     const date = toDateSafe(value);
     if (!date) return '-';
@@ -1834,7 +1858,11 @@ async function refreshFriendshipDependentUi(reloadGallery = false) {
     const user = auth.currentUser;
     if (!user) return;
 
-    await loadMyFriendships(true);
+    try {
+        await loadMyFriendships(true);
+    } catch (error) {
+        console.warn('friendship refresh skipped:', error.message);
+    }
     sortedFilteredDirty = true;
 
     if (getVisibleTabName() === 'dashboard') {
@@ -1857,7 +1885,11 @@ async function requestFriend(targetUid) {
         return;
     }
 
-    await loadMyFriendships();
+    try {
+        await loadMyFriendships();
+    } catch (error) {
+        console.warn('friendship preload skipped:', error.message);
+    }
     const relation = getFriendRelationship(targetUid);
     if (relation.status === 'active') {
         showToast('이미 연결된 친구예요.');
@@ -1882,6 +1914,7 @@ async function requestFriend(targetUid) {
         } else if (status === 'already_friends') {
             showToast('이미 친구로 연결되어 있어요.');
         } else {
+            setOptimisticPendingFriendship(targetUid, result.data?.targetName);
             showToast('친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.');
         }
         await refreshFriendshipDependentUi(true);
@@ -1904,6 +1937,9 @@ async function requestFriendByCode(friendCode) {
         if (result.data?.status === 'incoming_pending') {
             openFriendRequestModal(result.data?.friendshipId || '');
         } else {
+            if (result.data?.targetUid) {
+                setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
+            }
             showToast('친구 요청을 보냈어요. 앱에서 수락을 기다려주세요.');
         }
         await refreshFriendshipDependentUi(true);
@@ -1911,6 +1947,26 @@ async function requestFriendByCode(friendCode) {
         console.error('friend request by code error:', error);
         showToast(`⚠️ ${error.message || '친구 요청에 실패했습니다.'}`);
     }
+}
+
+async function submitProfileFriendCode() {
+    const input = document.getElementById('profile-friend-code-input');
+    const friendCode = String(input?.value || '').trim().toUpperCase();
+
+    if (!friendCode) {
+        showToast('친구 코드를 입력해 주세요.');
+        input?.focus();
+        return;
+    }
+
+    if (friendCode.length !== 6) {
+        showToast('친구 코드는 6자리예요.');
+        input?.focus();
+        return;
+    }
+
+    await requestFriendByCode(friendCode);
+    if (input) input.value = '';
 }
 
 function closeFriendRequestModal() {
@@ -5830,6 +5886,8 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
         }
 
+        renderSocialChallenges(user).catch(() => {});
+
         _communityFocusState.friendCount = 0;
         _communityFocusState.activeFriends = 0;
         _communityFocusState.completeFriends = 0;
@@ -7685,7 +7743,11 @@ window.toggleReaction = async function (docId, reactionType, btnElement) {
 };
 
 window.toggleFriend = async function (friendId) {
-    await loadMyFriendships();
+    try {
+        await loadMyFriendships();
+    } catch (error) {
+        console.warn('friendship preload skipped:', error.message);
+    }
     const relation = getFriendRelationship(friendId);
     if (relation.status === 'active') {
         await removeFriendship(relation.id);
@@ -9712,16 +9774,16 @@ function buildGalleryCard(item, myId) {
         : (() => {
             if (data.userId === myId) return '';
             if (relationship.status === 'active') {
-                return `<button class="friend-btn is-friend is-remove" onclick="removeFriendship('${escapeHtml(relationship.id)}')">친구 삭제</button>`;
+                return `<button class="friend-btn is-friend is-remove" onclick="toggleFriend('${safeUserId}')">친구 삭제</button>`;
             }
             if (relationship.status === 'pending') {
                 const friendship = findFriendshipById(relationship.id);
                 if (friendship?.pendingForUid === myId) {
-                    return `<button class="friend-btn is-incoming" onclick="openFriendRequestModal('${escapeHtml(relationship.id)}')">수락하기</button>`;
+                    return `<button class="friend-btn is-incoming" onclick="toggleFriend('${safeUserId}')">수락하기</button>`;
                 }
-                return `<button class="friend-btn is-pending" disabled>요청 중</button>`;
+                return `<button class="friend-btn is-pending" disabled>신청중</button>`;
             }
-            return `<button class="friend-btn" onclick="requestFriend('${safeUserId}')">+ 친구</button>`;
+            return `<button class="friend-btn" onclick="toggleFriend('${safeUserId}')">+ 친구</button>`;
         })();
 
     let postMenuHtml = '';

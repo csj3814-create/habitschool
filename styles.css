@@ -2790,6 +2790,34 @@ textarea {
     cursor: pointer;
 }
 
+.social-challenge-dashboard-card {
+    margin-top: 12px;
+}
+
+.social-challenge-dashboard-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.social-challenge-dashboard-head h3 {
+    margin: 0;
+}
+
+.social-challenge-head-btn {
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid rgba(124, 77, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(124, 77, 255, 0.08);
+    color: #6C43E0;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 /* 그룹 챌린지 */
 .group-challenge-section {
     margin-top: 12px;
@@ -9921,6 +9949,66 @@ body.dark-mode .step-detail-item { color: #bbb; }
     padding: 2px 0;
 }
 
+.friend-request-code-shell {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border: 1px dashed #f0d8b5;
+    border-radius: 14px;
+    background: rgba(255, 252, 246, 0.92);
+}
+
+.friend-request-code-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #5a3c12;
+}
+
+.friend-request-code-copy {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #8a7764;
+}
+
+.friend-request-code-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.friend-request-code-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid #e4d7c6;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #3c2f24;
+    background: #fff;
+    text-transform: uppercase;
+}
+
+.friend-request-code-row .friend-request-btn {
+    flex-shrink: 0;
+}
+
+.friend-invite-shared .referral-header {
+    margin-bottom: 10px;
+}
+
+.friend-invite-shared .referral-header h3 {
+    color: #E65100;
+}
+
+.friend-invite-shared .referral-badge {
+    background: rgba(255, 179, 0, 0.18);
+}
+
+.friend-invite-shared .referral-link-box {
+    margin-bottom: 12px;
+}
+
 .referral-header {
     display: flex;
     align-items: center;
@@ -10063,7 +10151,8 @@ body.dark-mode .friend-request-empty {
 body.dark-mode .chatbot-link-step,
 body.dark-mode .chatbot-link-code-box,
 body.dark-mode .friend-request-row,
-body.dark-mode .chatbot-link-fallback-panel {
+ body.dark-mode .chatbot-link-fallback-panel,
+ body.dark-mode .friend-request-code-shell {
     background: rgba(255, 255, 255, 0.04);
     border-color: rgba(255, 255, 255, 0.08);
 }
@@ -10078,13 +10167,15 @@ body.dark-mode .friend-request-name {
 body.dark-mode .chatbot-link-step small,
 body.dark-mode .chatbot-link-fallback-copy,
 body.dark-mode .chatbot-connect-modal-copy,
-body.dark-mode .chatbot-connect-summary-row {
+ body.dark-mode .chatbot-connect-summary-row,
+ body.dark-mode .friend-request-code-copy {
     color: #dec7ae;
 }
 
 body.dark-mode .chatbot-link-fallback-toggle,
 body.dark-mode .chatbot-link-copy-btn,
-body.dark-mode .friend-request-btn {
+ body.dark-mode .friend-request-btn,
+ body.dark-mode .social-challenge-head-btn {
     background: #2b2620;
     border-color: #5b4a39;
     color: #e2d2c0;
@@ -10108,6 +10199,16 @@ body.dark-mode .referral-link-input {
     background: #1e1e1e;
     border-color: #444;
     color: #e0e0e0;
+}
+
+body.dark-mode .friend-request-code-title {
+    color: #f1e6d6;
+}
+
+body.dark-mode .friend-request-code-input {
+    background: #1e1e1e;
+    border-color: #444;
+    color: #f1e6d6;
 }
 
 body.dark-mode .referral-share-btn {

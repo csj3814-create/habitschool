@@ -324,6 +324,14 @@
                         <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
                     </div>
 
+                    <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card" style="display:none;">
+                        <div class="social-challenge-dashboard-head">
+                            <h3>🤝 친구 챌린지</h3>
+                            <button type="button" class="social-challenge-head-btn" onclick="openCreateChallengeModal()">챌린지 시작</button>
+                        </div>
+                        <div id="social-challenge-list"></div>
+                    </div>
+
                     <div class="dashboard-more-tools" id="dashboard-more-tools">
                         <div class="dashboard-more-tools-head">
                             <div class="mission-badges-title">🏅 미션 배지</div>
@@ -493,10 +501,26 @@
                         </div>
                     </div>
                     <div id="profile-friend-requests-list" class="friend-request-list"></div>
+                    <div class="friend-request-code-shell">
+                        <div class="friend-request-code-title">🔎 친구 코드로 신청</div>
+                        <div class="friend-request-code-copy">상대가 앱 회원이면 초대 코드 6자리만 입력해도 바로 요청할 수 있어요.</div>
+                        <div class="friend-request-code-row">
+                            <input
+                                type="text"
+                                id="profile-friend-code-input"
+                                class="friend-request-code-input"
+                                placeholder="친구 코드 입력"
+                                maxlength="6"
+                                autocomplete="off"
+                                autocapitalize="characters"
+                                oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)">
+                            <button type="button" class="friend-request-btn accept" onclick="submitProfileFriendCode()">친구 신청</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 7. 친구 초대 공유 -->
-                <div class="card card-invite" id="profile-friend-invite-card" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
+                <div class="card card-invite friend-invite-shared" id="profile-friend-invite-card" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
                     <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
                     <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 초대 링크를 보내세요. 아직 가입 전이면 보너스가 지급되고, 이미 가입한 친구도 링크를 열어 바로 연결할 수 있어요.</p>
                     <!-- 보상 안내 -->
@@ -760,7 +784,7 @@
 
                 <!-- 지갑 정보 -->
                 <!-- 친구 초대 링크 -->
-                <div class="card referral-card" id="referral-section" style="display:none;">
+                <div class="card referral-card card-invite friend-invite-shared" id="referral-section" style="display:none; background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
                     <div class="referral-header">
                         <h3>🎁 친구 초대</h3>
                         <span class="referral-badge">초대 보너스</span>

@@ -1611,17 +1611,17 @@ exports.requestFriend = onCall(
 
             if (friendshipData?.status === "active") {
                 applyFriendCacheUpdate(tx, uid, targetUid, true);
-                return { status: "already_friends", friendshipId, targetName };
+                return { status: "already_friends", friendshipId, targetUid, targetName };
             }
 
             if (friendshipData?.status === "pending" && !isPendingFriendshipExpired(friendshipData)) {
                 if (friendshipData.pendingForUid === uid) {
-                    return { status: "incoming_pending", friendshipId, targetName };
+                    return { status: "incoming_pending", friendshipId, targetUid, targetName };
                 }
                 if (friendshipData.requesterUid === uid) {
-                    return { status: "pending_exists", friendshipId, targetName };
+                    return { status: "pending_exists", friendshipId, targetUid, targetName };
                 }
-                return { status: "pending_exists", friendshipId, targetName };
+                return { status: "pending_exists", friendshipId, targetUid, targetName };
             }
 
             if (isPendingFriendshipExpired(friendshipData)) {
@@ -1663,7 +1663,7 @@ exports.requestFriend = onCall(
                 expiresAt: admin.firestore.Timestamp.fromDate(expiresAt)
             });
 
-            return { status: "pending_created", friendshipId, targetName };
+            return { status: "pending_created", friendshipId, targetUid, targetName };
         });
 
         return outcome;
