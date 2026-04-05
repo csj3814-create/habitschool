@@ -625,16 +625,16 @@ function drawCanvasChip(ctx, x, y, text, options = {}) {
 
 function getShareTemplateFrames(template, count, bounds) {
     const safeCount = Math.max(0, Math.min(count || 0, 4));
-    const gap = 22;
+    const gap = 18;
     if (safeCount <= 0) return [];
 
     if (normalizeShareTemplate(template) === 'overlap') {
-        const size = Math.min(bounds.w * 0.52, bounds.h * 0.52);
+        const size = Math.min(bounds.w * 0.56, bounds.h * 0.56);
         const frames = [
-            { x: bounds.x + 54, y: bounds.y + 36, w: size, h: size, rotate: -0.09 },
-            { x: bounds.x + bounds.w - size - 54, y: bounds.y + 60, w: size, h: size, rotate: 0.08 },
-            { x: bounds.x + 86, y: bounds.y + bounds.h - size - 88, w: size, h: size, rotate: -0.05 },
-            { x: bounds.x + bounds.w - size - 86, y: bounds.y + bounds.h - size - 70, w: size, h: size, rotate: 0.07 }
+            { x: bounds.x + 34, y: bounds.y + 18, w: size, h: size, rotate: -0.08 },
+            { x: bounds.x + bounds.w - size - 34, y: bounds.y + 38, w: size, h: size, rotate: 0.07 },
+            { x: bounds.x + 58, y: bounds.y + bounds.h - size - 64, w: size, h: size, rotate: -0.04 },
+            { x: bounds.x + bounds.w - size - 58, y: bounds.y + bounds.h - size - 44, w: size, h: size, rotate: 0.06 }
         ];
         return frames.slice(0, safeCount);
     }
@@ -645,7 +645,7 @@ function getShareTemplateFrames(template, count, bounds) {
             return [{ x: bounds.x + ((bounds.w - size) / 2), y: bounds.y + ((bounds.h - size) / 2), w: size, h: size, rotate: 0 }];
         }
 
-        const big = Math.min(bounds.w * 0.62, bounds.h * 0.62);
+        const big = Math.min(bounds.w * 0.66, bounds.h * 0.66);
         const small = Math.min((bounds.w - big - gap), (bounds.h - gap) / 2);
         const frames = [
             { x: bounds.x, y: bounds.y + ((bounds.h - big) / 2), w: big, h: big, rotate: 0 },
@@ -802,78 +802,77 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     ctx.fill();
     ctx.restore();
 
-    const cardX = 52;
-    const cardY = 52;
-    const cardSize = size - 104;
-    fillRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 46, 'rgba(255, 252, 245, 0.88)');
-    strokeRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 46, 'rgba(245, 191, 112, 0.55)', 3);
+    const cardX = 36;
+    const cardY = 36;
+    const cardSize = size - 72;
+    fillRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(255, 252, 245, 0.9)');
+    strokeRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(245, 191, 112, 0.55)', 3);
 
     const displayName = settings.hideIdentity ? '오늘의 해빛 루틴' : `${getUserDisplayName()}의 해빛 루틴`;
     const tags = getShareCategoryTags(latest, settings);
     const subtitle = buildShareSubtitle(latest, tags);
-    const templateLabel = getShareTemplateLabel(template);
 
-    let chipX = 92;
-    chipX += drawCanvasChip(ctx, chipX, 86, 'HABIT SCHOOL', {
-        padX: 16,
-        height: 42,
-        radius: 21,
-        font: '900 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    let chipX = 72;
+    chipX += drawCanvasChip(ctx, chipX, 70, 'HABIT SCHOOL', {
+        padX: 14,
+        height: 38,
+        radius: 19,
+        font: '900 16px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
         color: '#b76400'
     }) + 12;
     if (!settings.hideDate) {
-        chipX += drawCanvasChip(ctx, chipX, 86, `📅 ${String(latest?.date || '').replace(/-/g, '.')}`, {
-            padX: 16,
-            height: 42,
-            radius: 21,
-            font: '800 20px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        chipX += drawCanvasChip(ctx, chipX, 70, `📅 ${String(latest?.date || '').replace(/-/g, '.')}`, {
+            padX: 14,
+            height: 38,
+            radius: 19,
+            font: '800 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         }) + 12;
     }
     if (!settings.hidePoints) {
-        drawCanvasChip(ctx, size - 212, 86, `Ⓟ ${getSharePoints(latest)}P`, {
-            padX: 16,
-            height: 42,
-            radius: 21,
-            font: '900 20px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        drawCanvasChip(ctx, size - 196, 70, `Ⓟ ${getSharePoints(latest)}P`, {
+            padX: 14,
+            height: 38,
+            radius: 19,
+            font: '900 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         });
     }
 
     ctx.save();
-    ctx.font = '900 56px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.font = '900 50px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textBaseline = 'top';
-    drawCanvasTextLines(ctx, displayName, 94, 164, 760, 68, 2, '#2f261d');
-    ctx.font = '700 28px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    drawCanvasTextLines(ctx, subtitle, 94, 296, 760, 36, 2, '#725f4d');
+    drawCanvasTextLines(ctx, displayName, 72, 136, 820, 60, 2, '#2f261d');
+    ctx.font = '700 25px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    drawCanvasTextLines(ctx, subtitle, 72, 250, 820, 32, 2, '#725f4d');
     ctx.restore();
 
-    let tagX = 94;
-    [...tags.slice(0, 3), templateLabel].forEach((tag, index) => {
-        const width = drawCanvasChip(ctx, tagX, 364, tag, {
+    let tagX = 72;
+    tags.slice(0, 3).forEach((tag) => {
+        const width = drawCanvasChip(ctx, tagX, 316, tag, {
             padX: 14,
-            height: 40,
-            radius: 20,
-            font: '800 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
-            background: index === tags.slice(0, 3).length ? 'rgba(255, 239, 212, 0.94)' : 'rgba(255,255,255,0.88)'
+            height: 36,
+            radius: 18,
+            font: '800 17px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+            background: 'rgba(255,255,255,0.9)'
         });
         tagX += width + 10;
     });
 
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 94, y: 424, w: 892, h: 452 });
+    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 72, y: 372, w: 936, h: 572 });
 
-    drawCanvasChip(ctx, 94, 916, '해빛스쿨', {
-        padX: 16,
-        height: 42,
-        radius: 21,
-        font: '900 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+    drawCanvasChip(ctx, 72, 982, '해빛스쿨', {
+        padX: 14,
+        height: 38,
+        radius: 19,
+        font: '900 16px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
         background: 'rgba(255,255,255,0.88)'
     });
 
     ctx.save();
     ctx.fillStyle = '#8a6336';
-    ctx.font = '900 30px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.font = '900 28px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText('좋은 습관, 같이 이어가요', 984, 938);
+    ctx.fillText('좋은 습관, 같이 이어가요', 1002, 1001);
     ctx.restore();
 
     const blob = await createCanvasBlob(canvas, 'image/png');

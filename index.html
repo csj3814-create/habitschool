@@ -1188,14 +1188,6 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="share-template-panel" role="group" aria-label="공유 템플릿 선택">
-                                        <div class="share-template-label">공유 템플릿</div>
-                                        <div class="share-template-picker">
-                                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">정돈형</button>
-                                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">겹침형</button>
-                                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">포커스형</button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                             <div class="gallery-hero-stats" aria-label="갤러리 요약">
@@ -1216,7 +1208,15 @@
                         </div>
                     </section>
 
-                <div id="my-share-container" style="display:none;">
+                <div id="my-share-container" class="share-card-shell" style="display:none;">
+                    <div class="share-template-panel share-template-panel-visible" role="group" aria-label="공유 템플릿 선택">
+                        <div class="share-template-label">공유 템플릿</div>
+                        <div class="share-template-picker">
+                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">정돈형</button>
+                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">겹침형</button>
+                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">포커스형</button>
+                        </div>
+                    </div>
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
                             <img id="share-render-preview" class="share-render-preview" src="" alt="공유 이미지 미리보기" hidden onerror="window.handleShareRenderPreviewError(this)" />
