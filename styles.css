@@ -110,6 +110,7 @@
     --transition-fast: 0.1s;
     --transition-base: 0.3s;
     --transition-slow: 0.5s;
+    --app-shell-max-width: 480px;
 }
 
 body { 
@@ -4346,6 +4347,28 @@ textarea {
     overflow: hidden;
 }
 
+.gallery-date-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0 10px;
+    padding: 0 2px;
+}
+
+.gallery-date-divider-label {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 800;
+    color: #B7771D;
+    white-space: nowrap;
+}
+
+.gallery-date-divider-line {
+    flex: 1 1 auto;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(255, 177, 79, 0.75), rgba(255, 177, 79, 0.12));
+}
+
 .filter-chip { 
     padding: 7px 10px; 
     border-radius: 20px; 
@@ -5256,6 +5279,16 @@ textarea {
         margin-bottom: 14px;
     }
 
+    .gallery-date-divider {
+        gap: 8px;
+        margin: 6px 0 8px;
+        padding: 0 1px;
+    }
+
+    .gallery-date-divider-label {
+        font-size: 11px;
+    }
+
     .gallery-header {
         gap: 8px;
         padding-top: 10px;
@@ -5419,19 +5452,19 @@ textarea {
 .chat-banner-fixed { 
     position: fixed; 
     bottom: 70px; 
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 40px);
-    max-width: 440px;
-    padding: 12px 16px;
-    background: #FEE500; 
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    padding: 0 16px;
+    background: transparent; 
     color: #3C1E1E; 
     text-align: center; 
     font-weight: 700; 
     font-size: 14px;
     cursor: pointer; 
-    border-radius: 14px;
-    box-shadow: 0 4px 16px rgba(254,229,0,0.4); 
+    border-radius: 0;
+    box-shadow: none; 
     z-index: 45; 
     display: none; 
     box-sizing: border-box; 
@@ -5439,18 +5472,21 @@ textarea {
 }
 
 .chat-banner-fixed:active {
-    transform: translateX(-50%) scale(0.97);
+    transform: scale(0.97);
 }
 
 /* 카카오톡 배너 배경 (뒤 콘텐츠 가림) */
 .chat-banner-fixed::before {
     content: '';
-    position: fixed;
-    bottom: 70px;
-    left: 0;
-    right: 0;
-    height: calc(12px * 2 + 1.5em);
-    background-color: var(--bg-color);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(680px, calc(100vw - 32px));
+    border-radius: 14px;
+    background-color: #FEE500;
+    box-shadow: 0 4px 16px rgba(254,229,0,0.4);
     z-index: -1;
 }
 
@@ -5775,11 +5811,13 @@ textarea {
 #pwa-install-banner {
     position: fixed;
     bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    transform: none;
     z-index: 1100;
-    width: calc(100% - 28px);
-    max-width: 400px;
+    width: 100%;
+    padding: 0 12px;
+    box-sizing: border-box;
 }
 .pwa-install-content {
     display: flex;
@@ -5790,6 +5828,8 @@ textarea {
     padding: 12px 14px;
     box-shadow: 0 6px 28px rgba(0,0,0,0.18);
     border: 1px solid var(--gray-200);
+    width: min(560px, calc(100vw - 24px));
+    margin: 0 auto;
 }
 .pwa-install-icon {
     width: 44px;
@@ -5839,15 +5879,15 @@ textarea {
     animation: pwaBannerIn 0.4s ease-out;
 }
 @keyframes pwaBannerIn {
-    from { transform: translateX(-50%) translateY(30px); opacity: 0; }
-    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 .pwa-banner-fadeout {
     animation: pwaBannerOut 0.5s ease-in forwards;
 }
 @keyframes pwaBannerOut {
-    from { transform: translateX(-50%) translateY(0); opacity: 1; }
-    to { transform: translateX(-50%) translateY(30px); opacity: 0; }
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(30px); opacity: 0; }
 }
 
 /* 버튼들 */
@@ -5943,8 +5983,9 @@ textarea {
     bottom: 0; 
     left: 0; 
     right: 0; 
+    transform: none;
     width: 100%; 
-    padding: 12px 20px; 
+    padding: 12px 16px; 
     background-color: white; 
     border-top: 1px solid var(--gray-200); 
     box-sizing: border-box; 
@@ -5955,11 +5996,11 @@ textarea {
 }
 
 @media (min-width: 768px) {
+    :root {
+        --app-shell-max-width: 600px;
+    }
+
     .bottom-bar {
-        left: 50%;
-        right: auto;
-        transform: translateX(-50%);
-        width: min(600px, calc(100% - 24px));
         border-left: 1px solid var(--gray-200);
         border-right: 1px solid var(--gray-200);
         border-top-left-radius: 18px;
@@ -5968,8 +6009,9 @@ textarea {
 }
 
 .submit-bar-inner {
-    width: 100%;
-    max-width: 440px;
+    width: min(720px, calc(100vw - 32px));
+    max-width: none;
+    margin: 0 auto;
 }
 
 .submit-bar-helper {
@@ -5982,7 +6024,7 @@ textarea {
 
 .submit-btn { 
     width: 100%; 
-    max-width: 440px; 
+    max-width: none; 
     background: linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%); 
     color: white; 
     border: none; 

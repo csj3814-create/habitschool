@@ -204,27 +204,28 @@ _shareTemplate = loadShareTemplatePreference();
 function updateFloatingBarLayout() {
     _floatingBarLayoutFrame = 0;
 
-    const appContainer = document.querySelector('.app-container');
-    if (!appContainer) return;
-
-    const rect = appContainer.getBoundingClientRect();
-    const centerX = rect.left + (rect.width / 2);
-
     const submitBar = document.getElementById('submit-bar');
     if (submitBar) {
-        submitBar.style.left = `${centerX}px`;
-        submitBar.style.right = 'auto';
-        submitBar.style.transform = 'translateX(-50%)';
-        submitBar.style.width = `${Math.max(rect.width, 0)}px`;
+        submitBar.style.left = '0';
+        submitBar.style.right = '0';
+        submitBar.style.transform = 'none';
+        submitBar.style.width = '100%';
     }
 
     const chatBanner = document.getElementById('chat-banner');
     if (chatBanner) {
-        const bannerWidth = Math.min(Math.max(rect.width - 40, 0), 440);
-        chatBanner.style.left = `${centerX}px`;
-        chatBanner.style.right = 'auto';
-        chatBanner.style.transform = 'translateX(-50%)';
-        chatBanner.style.width = `${bannerWidth}px`;
+        chatBanner.style.left = '0';
+        chatBanner.style.right = '0';
+        chatBanner.style.transform = 'none';
+        chatBanner.style.width = '100%';
+    }
+
+    const installBanner = document.getElementById('pwa-install-banner');
+    if (installBanner) {
+        installBanner.style.left = '0';
+        installBanner.style.right = '0';
+        installBanner.style.transform = 'none';
+        installBanner.style.width = '100%';
     }
 }
 
@@ -232,6 +233,8 @@ function scheduleFloatingBarLayoutUpdate() {
     if (_floatingBarLayoutFrame) cancelAnimationFrame(_floatingBarLayoutFrame);
     _floatingBarLayoutFrame = requestAnimationFrame(updateFloatingBarLayout);
 }
+
+window.scheduleFloatingBarLayoutUpdate = scheduleFloatingBarLayoutUpdate;
 
 function getDefaultShareSettings() {
     return {
@@ -3535,6 +3538,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (nextBtn) nextBtn.addEventListener('click', function (e) { e.stopPropagation(); navigateLightbox(1); });
 });
 
+window.addEventListener('load', scheduleFloatingBarLayoutUpdate, { passive: true });
 window.addEventListener('resize', scheduleFloatingBarLayoutUpdate, { passive: true });
 window.addEventListener('scroll', scheduleFloatingBarLayoutUpdate, { passive: true });
 
@@ -4671,6 +4675,7 @@ function openTab(tabName, pushState = true) {
     updateRecordFlowGuides(tabName);
     syncGuidePanels(tabName);
     if (tabName === 'dashboard') syncDashboardPanels();
+    scheduleFloatingBarLayoutUpdate();
     setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
 };
 
@@ -9036,9 +9041,16 @@ function refreshSortedFiltered() {
         sorted = sorted.filter(item => item.data.userId === galleryUserFilter.userId);
     }
     sorted.sort((a, b) => {
+        const aDate = String(a?.data?.date || '');
+        const bDate = String(b?.data?.date || '');
+        const dateCompare = bDate.localeCompare(aDate);
+        if (dateCompare !== 0) return dateCompare;
+
         const aFr = cachedMyFriends.includes(a.data.userId);
         const bFr = cachedMyFriends.includes(b.data.userId);
-        return (aFr === bFr) ? 0 : aFr ? -1 : 1;
+        if (aFr !== bFr) return aFr ? -1 : 1;
+
+        return 0;
     });
     sortedFilteredCache = sorted.filter(item => hasMediaForFilter(item.data, galleryFilter));
     sortedFilteredDirty = false;
@@ -9128,8 +9140,7 @@ async function loadMoreGalleryItems() {
     const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
 
     for (let i = start; i < end; i++) {
-        const card = buildGalleryCard(sortedFilteredCache[i], myId);
-        if (card) container.appendChild(card);
+        appendGalleryFeedItem(container, sortedFilteredCache[i], i, myId);
     }
 
     galleryDisplayCount = end;
@@ -9331,8 +9342,7 @@ async function _loadGalleryDataInner() {
     const end = Math.min(INITIAL_LOAD, sortedFilteredCache.length);
 
     for (let i = 0; i < end; i++) {
-        const card = buildGalleryCard(sortedFilteredCache[i], myId);
-        if (card) container.appendChild(card);
+        appendGalleryFeedItem(container, sortedFilteredCache[i], i, myId);
     }
 
     galleryDisplayCount = end;
@@ -9735,6 +9745,48 @@ function getGalleryDateLabel(dateStr) {
     if (!dateStr || !dateStr.includes('-')) return dateStr || '';
     const [, month, day] = dateStr.split('-');
     return `${month}.${day}`;
+}
+
+function getGalleryDateSectionLabel(dateStr) {
+    if (!dateStr) return '이전 자료';
+    const { todayStr } = getDatesInfo();
+    if (dateStr === todayStr) return '오늘 자료';
+
+    const yesterdayStr = addDaysFromKstDateString(todayStr, -1);
+    if (dateStr === yesterdayStr) return '어제 자료';
+
+    const todayMid = new Date(`${todayStr}T12:00:00Z`);
+    const targetMid = new Date(`${dateStr}T12:00:00Z`);
+    const diffDays = Math.round((todayMid - targetMid) / 86400000);
+
+    if (diffDays >= 2 && diffDays <= 6) return `${diffDays}일 전 자료`;
+
+    const [, month, day] = dateStr.split('-');
+    return `${month}/${day} 자료`;
+}
+
+function buildGalleryDateDivider(dateStr) {
+    const divider = document.createElement('div');
+    divider.className = 'gallery-date-divider';
+    divider.innerHTML = `
+        <span class="gallery-date-divider-label">${escapeHtml(getGalleryDateSectionLabel(dateStr))}</span>
+        <span class="gallery-date-divider-line" aria-hidden="true"></span>
+    `;
+    return divider;
+}
+
+function appendGalleryFeedItem(container, item, index, myId) {
+    if (!container || !item) return;
+
+    const currentDate = item?.data?.date || '';
+    const previousDate = index > 0 ? (sortedFilteredCache[index - 1]?.data?.date || '') : '';
+
+    if (currentDate && currentDate !== previousDate) {
+        container.appendChild(buildGalleryDateDivider(currentDate));
+    }
+
+    const card = buildGalleryCard(item, myId);
+    if (card) container.appendChild(card);
 }
 
 function updateGalleryFeedHeader() {

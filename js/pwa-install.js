@@ -1,16 +1,39 @@
-// Service Worker 등록 & PWA 설치 프롬프트
+// Service Worker registration & PWA install prompt
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
+    window.addEventListener('load', async () => {
+        const isLocalHost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
+        if (isLocalHost) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                await Promise.all(registrations.map(reg => reg.unregister()));
+
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(
+                        keys
+                            .filter(key => key.startsWith('habitschool-'))
+                            .map(key => caches.delete(key))
+                    );
+                }
+
+                console.log('🧹 localhost에서는 SW와 캐시를 비활성화했습니다.');
+            } catch (err) {
+                console.warn('localhost SW 정리 실패:', err);
+            }
+            return;
+        }
+
+        navigator.serviceWorker.register('./sw.js?v=111')
             .then(reg => {
                 console.log('✅ SW 등록:', reg.scope);
                 reg.update();
             })
-            .catch(err => console.warn('⚠️ SW 등록 실패:', err));
+            .catch(err => console.warn('모바일 SW 등록 실패:', err));
     });
 }
 
-// PWA 앱 설치 프롬프트
+// PWA install prompt
 let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -20,6 +43,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     if (banner) {
         banner.style.display = 'flex';
         banner.classList.add('pwa-banner-animate');
+        window.scheduleFloatingBarLayoutUpdate?.();
         setTimeout(() => {
             banner.classList.add('pwa-banner-fadeout');
             setTimeout(() => {
@@ -30,23 +54,23 @@ window.addEventListener('beforeinstallprompt', (e) => {
     }
 });
 
-// 이미 설치된 상태면 배너 숨기기
+// Hide banner after install
 window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
     const banner = document.getElementById('pwa-install-banner');
     if (banner) banner.style.display = 'none';
-    console.log('✅ 해빛스쿨 앱 설치 완료!');
+    console.log('✅ 앱 설치 완료');
 });
 
 function installPWA() {
     if (!deferredInstallPrompt) {
-        alert('홈 화면에 추가하려면:\n\n📱 iOS: 공유 버튼(□↑) → "홈 화면에 추가"\n💻 PC: 주소창 오른쪽 설치 아이콘 클릭');
+        alert('홈 화면에 추가하려면\n\niOS: 공유 버튼(□↑) → "홈 화면에 추가"\nPC: 주소창 오른쪽 설치 아이콘 클릭');
         return;
     }
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.then(choice => {
         if (choice.outcome === 'accepted') {
-            console.log('✅ 사용자가 앱 설치를 수락했습니다.');
+            console.log('사용자가 앱 설치를 허용했습니다.');
         }
         deferredInstallPrompt = null;
         document.getElementById('pwa-install-banner').style.display = 'none';
@@ -56,5 +80,6 @@ function installPWA() {
 function dismissInstallBanner() {
     const banner = document.getElementById('pwa-install-banner');
     if (banner) banner.style.display = 'none';
+    window.scheduleFloatingBarLayoutUpdate?.();
     localStorage.setItem('pwa_install_dismissed', Date.now());
 }
