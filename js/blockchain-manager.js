@@ -73,6 +73,11 @@ let externalWalletProviderType = null;
 let externalWalletChainId = null;
 let externalWalletProvider = null;
 let externalWalletWeb3Provider = null;
+let legacyWalletEncryptedKey = null;
+let legacyWalletIv = null;
+let legacyWalletExportAvailable = false;
+let legacyWalletPrivateKeyCache = null;
+let legacyWalletRevealed = false;
 
 const BSC_TESTNET_CHAIN_ID = BASE_CONFIG.testnet.chainId;
 const BSC_TESTNET_CHAIN_HEX = `0x${BSC_TESTNET_CHAIN_ID.toString(16)}`;
@@ -131,6 +136,40 @@ async function getConnectedWallet() {
 
 function getEffectiveWalletAddress() {
     return externalWalletAddress || userWalletAddress || null;
+}
+
+function updateLegacyWalletExportState(userData = {}) {
+    legacyWalletEncryptedKey = userData?.encryptedKey || null;
+    legacyWalletIv = userData?.walletIv || null;
+    legacyWalletExportAvailable = !!(userData?.walletVersion === 2 && legacyWalletEncryptedKey && legacyWalletIv);
+}
+
+function resetLegacyWalletExportSession() {
+    legacyWalletPrivateKeyCache = null;
+    legacyWalletRevealed = false;
+
+    const secretEl = document.getElementById('legacy-wallet-private-key');
+    const revealBtn = document.getElementById('legacy-wallet-reveal-btn');
+    const copyBtn = document.getElementById('legacy-wallet-copy-btn');
+
+    if (secretEl) {
+        secretEl.value = '';
+        secretEl.placeholder = '아직 표시되지 않았습니다.';
+    }
+    if (revealBtn) {
+        revealBtn.disabled = false;
+        revealBtn.textContent = '1회 보기';
+    }
+    if (copyBtn) {
+        copyBtn.disabled = true;
+    }
+}
+
+function syncLegacyWalletExportUi() {
+    const row = document.getElementById('legacy-wallet-export-row');
+    const note = document.getElementById('wallet-export-note');
+    if (row) row.style.display = legacyWalletExportAvailable ? 'flex' : 'none';
+    if (note) note.style.display = legacyWalletExportAvailable ? 'block' : 'none';
 }
 
 function getWalletProviderLabel(type) {
@@ -1331,6 +1370,7 @@ function refreshWalletUi(address = null) {
     if (trustBtn) trustBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'trustwallet' && !!externalWalletProvider;
     if (walletConnectBtn) walletConnectBtn.disabled = false;
     if (disconnectBtn) disconnectBtn.disabled = !externalWalletAddress;
+    syncLegacyWalletExportUi();
 }
 
 export async function initializeWalletExternalFirst() {
@@ -1352,6 +1392,7 @@ export async function initializeWalletExternalFirst() {
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef);
         const userData = userSnap.data() || {};
+        updateLegacyWalletExportState(userData);
 
         await ensureUserReferralCode(userRef, userData).catch(() => {});
 
@@ -1391,6 +1432,96 @@ export async function initializeWalletExternalFirst() {
         console.error('❌ 외부 지갑 우선 초기화 오류:', error);
         refreshWalletUi(null);
         return null;
+    }
+}
+
+async function ensureLegacyWalletExportReady() {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        throw new Error('로그인 후 다시 시도해 주세요.');
+    }
+
+    if (!legacyWalletExportAvailable) {
+        const userSnap = await getDocFromServer(doc(db, "users", currentUser.uid));
+        const userData = userSnap.data() || {};
+        updateLegacyWalletExportState(userData);
+    }
+
+    if (!legacyWalletExportAvailable || !legacyWalletEncryptedKey || !legacyWalletIv) {
+        throw new Error('내보낼 기존 앱 지갑이 없습니다.');
+    }
+
+    return currentUser;
+}
+
+export async function openLegacyWalletExportModal() {
+    try {
+        await ensureLegacyWalletExportReady();
+        resetLegacyWalletExportSession();
+        const modal = document.getElementById('legacy-wallet-export-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    } catch (error) {
+        showToast(error.message || '지갑 내보내기를 열 수 없어요.');
+    }
+}
+
+export function closeLegacyWalletExportModal() {
+    const modal = document.getElementById('legacy-wallet-export-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    resetLegacyWalletExportSession();
+}
+
+export async function revealLegacyWalletPrivateKey() {
+    try {
+        const currentUser = await ensureLegacyWalletExportReady();
+        const secretEl = document.getElementById('legacy-wallet-private-key');
+        const revealBtn = document.getElementById('legacy-wallet-reveal-btn');
+        const copyBtn = document.getElementById('legacy-wallet-copy-btn');
+
+        if (!legacyWalletRevealed) {
+            const privateKeyHex = await decryptPrivateKey(
+                legacyWalletEncryptedKey,
+                legacyWalletIv,
+                currentUser.uid,
+                currentUser.email
+            );
+            legacyWalletPrivateKeyCache = privateKeyHex;
+            legacyWalletRevealed = true;
+        }
+
+        if (secretEl) {
+            secretEl.value = legacyWalletPrivateKeyCache || '';
+        }
+        if (revealBtn) {
+            revealBtn.disabled = true;
+            revealBtn.textContent = '표시 완료';
+        }
+        if (copyBtn) {
+            copyBtn.disabled = !legacyWalletPrivateKeyCache;
+        }
+    } catch (error) {
+        console.error('기존 앱 지갑 개인키 표시 실패:', error);
+        showToast(error.message || '개인키를 표시할 수 없어요.');
+    }
+}
+
+export async function copyLegacyWalletPrivateKey() {
+    try {
+        if (!legacyWalletPrivateKeyCache) {
+            showToast('먼저 1회 보기를 눌러 주세요.');
+            return false;
+        }
+        await navigator.clipboard.writeText(legacyWalletPrivateKeyCache);
+        showToast('개인키를 복사했어요. 안전한 곳에서만 붙여넣어 주세요.');
+        return true;
+    } catch (error) {
+        console.error('기존 앱 지갑 개인키 복사 실패:', error);
+        showToast('복사에 실패했어요. 다시 시도해 주세요.');
+        return false;
     }
 }
 

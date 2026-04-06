@@ -45,6 +45,10 @@ window.connectMetaMaskWallet = () => { alert('블록체인 모듈 로딩 중입�
 window.connectTrustWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.openWalletConnectGuide = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.disconnectWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.openLegacyWalletExportModal = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.closeLegacyWalletExportModal = () => {};
+window.revealLegacyWalletPrivateKey = async () => null;
+window.copyLegacyWalletPrivateKey = async () => null;
 window.initializeUserWallet = async () => null;
 window._blockchainLoaded = false;
 // 변환 비율: 온체인 currentRate (RATE_SCALE=1e8 기준). 기본값 1e8 = 1:1 (Era A)
@@ -72,6 +76,10 @@ window._loadBlockchainModule = function() {
         window.connectTrustWallet = mod.connectTrustWallet;
         window.openWalletConnectGuide = mod.openWalletConnectGuide;
         window.disconnectWallet = mod.disconnectExternalWallet || mod.disconnectWallet;
+        window.openLegacyWalletExportModal = mod.openLegacyWalletExportModal;
+        window.closeLegacyWalletExportModal = mod.closeLegacyWalletExportModal;
+        window.revealLegacyWalletPrivateKey = mod.revealLegacyWalletPrivateKey;
+        window.copyLegacyWalletPrivateKey = mod.copyLegacyWalletPrivateKey;
         window.initializeUserWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
         window.fetchOnchainBalance = mod.fetchOnchainBalance;
         window.fetchTokenStats = mod.fetchTokenStats;

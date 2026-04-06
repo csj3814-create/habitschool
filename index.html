@@ -821,6 +821,12 @@
                     <div class="wallet-links wallet-links-secondary">
                         <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">연결 해제</button>
                     </div>
+                    <div class="wallet-links wallet-links-secondary" id="legacy-wallet-export-row" style="display:none;">
+                        <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
+                    </div>
+                    <div class="wallet-export-note" id="wallet-export-note" style="display:none;">
+                        기존 앱 지갑 사용자는 개인키를 1회 확인해 MetaMask 또는 Trust Wallet으로 옮길 수 있어요.
+                    </div>
                     <div class="wallet-links">
                         <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
                     </div>
@@ -1678,6 +1684,48 @@
             <div style="display:flex;gap:10px;">
                 <button onclick="respondPendingFriendRequest(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
                 <button onclick="respondPendingFriendRequest(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#FF8C00;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 기존 앱 지갑 내보내기 모달 ===== -->
+    <div id="legacy-wallet-export-modal" class="wallet-modal-overlay" style="display:none;" onclick="if(event.target===this)closeLegacyWalletExportModal()">
+        <div class="wallet-modal legacy-wallet-modal">
+            <div class="wallet-modal-title">🔐 기존 앱 지갑 내보내기</div>
+            <div class="wallet-modal-body">
+                <div class="wallet-modal-summary">
+                    <div class="wallet-modal-row">
+                        <span>용도</span>
+                        <span class="highlight">외부 지갑 이전</span>
+                    </div>
+                    <div class="wallet-modal-row">
+                        <span>지원 지갑</span>
+                        <span>MetaMask / Trust Wallet</span>
+                    </div>
+                </div>
+                <div class="legacy-wallet-warning">
+                    <strong>주의</strong>
+                    <p>개인키를 가진 사람은 지갑을 완전히 가져갈 수 있어요. 혼자 있는 곳에서만 확인하고, 메모나 채팅에 남기지 마세요.</p>
+                </div>
+                <div class="legacy-wallet-secret-box">
+                    <label for="legacy-wallet-private-key">개인키</label>
+                    <textarea id="legacy-wallet-private-key" class="legacy-wallet-secret-value" readonly spellcheck="false" placeholder="아직 표시되지 않았습니다."></textarea>
+                </div>
+                <div class="legacy-wallet-secret-actions">
+                    <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" onclick="revealLegacyWalletPrivateKey()">1회 보기</button>
+                    <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>복사</button>
+                </div>
+                <div class="legacy-wallet-import-guide">
+                    <strong>가져오기 순서</strong>
+                    <ol>
+                        <li>MetaMask 또는 Trust Wallet에서 기존 지갑 가져오기를 엽니다.</li>
+                        <li>개인키 입력을 선택하고, 여기서 복사한 키를 붙여넣습니다.</li>
+                        <li>가져오기가 끝나면 해빛스쿨 자산 탭에서 외부 지갑 연결로 전환합니다.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="wallet-modal-actions">
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeLegacyWalletExportModal()">닫기</button>
             </div>
         </div>
     </div>

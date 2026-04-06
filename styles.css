@@ -644,6 +644,17 @@ body {
     background: #fffaf1;
 }
 
+.wallet-export-note {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255, 243, 224, 0.88);
+    border: 1px solid rgba(240, 183, 90, 0.35);
+    color: #8a5a11;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 .wallet-link-btn.is-disabled,
 .wallet-addr-btn:disabled,
 .wallet-link-btn:disabled {
@@ -1282,6 +1293,84 @@ body {
     transform: scale(0.97);
 }
 
+.legacy-wallet-modal {
+    max-width: 380px;
+}
+
+.legacy-wallet-warning {
+    margin-bottom: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #fff6ec;
+    border: 1px solid rgba(245, 124, 0, 0.2);
+    color: #8a4b10;
+}
+
+.legacy-wallet-warning strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.legacy-wallet-warning p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.legacy-wallet-secret-box {
+    margin-bottom: 12px;
+}
+
+.legacy-wallet-secret-box label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-600);
+}
+
+.legacy-wallet-secret-value {
+    width: 100%;
+    min-height: 88px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ead8bf;
+    background: #fffdf8;
+    color: #3f2b13;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.legacy-wallet-secret-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.legacy-wallet-import-guide {
+    padding: 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #475569;
+    font-size: 12px;
+}
+
+.legacy-wallet-import-guide strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #334155;
+}
+
+.legacy-wallet-import-guide ol {
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.55;
+}
+
 /* 스켈레톤 로딩 */
 .wallet-skeleton {
     display: flex;
@@ -1583,6 +1672,38 @@ body.dark-mode .wallet-modal-row { color: #ccc; }
 body.dark-mode .wallet-modal-btn.cancel {
     background: #2A2A3A;
     color: #ccc;
+}
+
+body.dark-mode .wallet-export-note {
+    background: rgba(66, 47, 18, 0.75);
+    border-color: rgba(244, 197, 125, 0.25);
+    color: #f4c57d;
+}
+
+body.dark-mode .legacy-wallet-warning {
+    background: rgba(66, 47, 18, 0.75);
+    border-color: rgba(244, 197, 125, 0.22);
+    color: #f7d29a;
+}
+
+body.dark-mode .legacy-wallet-secret-box label {
+    color: #d6c2a0;
+}
+
+body.dark-mode .legacy-wallet-secret-value {
+    background: #161622;
+    border-color: #333;
+    color: #f5f5f5;
+}
+
+body.dark-mode .legacy-wallet-import-guide {
+    background: #161622;
+    border-color: #333;
+    color: #cbd5e1;
+}
+
+body.dark-mode .legacy-wallet-import-guide strong {
+    color: #e2e8f0;
 }
 
 body.dark-mode .wallet-convert-rate-badge {
@@ -3870,16 +3991,17 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 16px;
-    padding: 0 9px;
+    min-height: 28px;
+    padding: 0 14px;
     border-radius: 999px;
     border: 1px solid rgba(241, 220, 192, 0.95);
     background: rgba(255, 255, 255, 0.78);
     color: #8a5a23;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .gallery-hero-guide-body {
@@ -8467,12 +8589,12 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 @media (max-width: 480px) {
     .record-flow-card {
-        padding: 4px 8px;
+        padding: 8px 10px;
         border-radius: 12px;
     }
 
     .record-flow-topline {
-        min-height: 18px;
+        min-height: 28px;
         margin-bottom: 0;
     }
 
@@ -8496,9 +8618,9 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     }
 
     .record-flow-toggle {
-        min-height: 15px;
-        padding: 0 8px;
-        font-size: 6.5px;
+        min-height: 28px;
+        padding: 0 14px;
+        font-size: 12px;
     }
 
     .record-flow-btn {
@@ -9384,7 +9506,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 .record-flow-card {
     margin: 4px 0 8px;
-    padding: 4px 10px;
+    padding: 8px 12px;
     border-radius: 12px;
     border: 1px solid #E6E1D8;
     background: linear-gradient(135deg, #FFF9EE 0%, #F8FBFF 100%);
@@ -9397,7 +9519,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    min-height: 18px;
+    min-height: 28px;
     margin-bottom: 0;
 }
 
@@ -9417,7 +9539,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-kicker {
-    font-size: 6px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.06em;
     color: #C56A00;
@@ -9465,16 +9587,17 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 16px;
-    padding: 0 8px;
+    min-height: 28px;
+    padding: 0 14px;
     border-radius: 999px;
     border: 1px solid rgba(226, 216, 199, 0.95);
     background: rgba(255,255,255,0.82);
     color: #8a5a23;
-    font-size: 7px;
+    font-size: 12px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
+    box-sizing: border-box;
 }
 
 .record-flow-body[hidden] {
@@ -9482,7 +9605,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-card.is-collapsed {
-    padding: 4px 10px;
+    padding: 8px 12px;
 }
 
 .record-flow-actions {
