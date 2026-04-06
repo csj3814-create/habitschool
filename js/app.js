@@ -8746,6 +8746,7 @@ window.blockUser = async function (targetUserId, targetName) {
 window.reportComment = async function (docId, commentIdx) {
     const user = auth.currentUser;
     if (!user) return;
+    if (!confirm('이 댓글을 신고하시겠습니까?\n신고 후 검토 대기 상태가 됩니다.')) return;
     try {
         await setDoc(doc(db, 'reports', `${user.uid}_${docId}_c${commentIdx}`), {
             reporterUid: user.uid,
@@ -9530,6 +9531,7 @@ window.deleteComment = async function (docId, commentIdx) {
     if (!item || !item.data.comments) return;
     const comment = item.data.comments[commentIdx];
     if (!comment || comment.userId !== user.uid) { showToast('본인 댓글만 삭제할 수 있습니다.'); return; }
+    if (!confirm('이 댓글을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
 
     try {
         const logRef = doc(db, "daily_logs", docId);
