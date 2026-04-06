@@ -4602,7 +4602,10 @@ function openTab(tabName, pushState = true) {
             updateAssetDisplay();
             // 블록체인 모듈은 백그라운드 로드 → 완료 후 HBT 잔액만 갱신
             const load = window._loadBlockchainModule || (() => Promise.resolve());
-            load().then(() => {
+            load().then(async () => {
+                if (window.initializeUserWallet) {
+                    await window.initializeUserWallet().catch(() => {});
+                }
                 if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
                 // updateAssetDisplay 시점에 blockchain 미로드였으면 HBT 잔액 보완
                 if (window.fetchOnchainBalance && !document.getElementById('asset-hbt-display')?.textContent.includes('HBT')) {
@@ -11125,13 +11128,15 @@ async function renderSocialChallenges(user) {
         });
 
         if (challenges.length === 0) {
+            const emptyTitle = readyCount > 0 ? '바로 챌린지 가능한 친구가 있어요' : '아직 5일 기록이 필요한 친구가 있어요';
+            const emptyBody = readyCount > 0 ? '오른쪽 버튼으로 시작해 보세요.' : '5일 이상 기록한 친구부터 시작할 수 있어요.';
             list.innerHTML = `
                 ${summaryHtml}
                 ${readinessHtml}
-                ${buildCommunityEmptyState(
-                    readyCount > 0 ? '바로 챌린지 가능한 친구가 있어요' : '아직 5일 기록이 필요한 친구가 있어요',
-                    readyCount > 0 ? '오른쪽 버튼으로 첫 챌린지를 시작해 보세요.' : '최근 30일 기준 5일 이상 기록한 친구부터 챌린지를 시작할 수 있어요.'
-                )}
+                <div class="community-empty-state">
+                    <strong>${emptyTitle}</strong>
+                    <span>${emptyBody}</span>
+                </div>
             `;
             return;
         }
