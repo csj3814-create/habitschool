@@ -803,12 +803,23 @@
                         <h3>🔐 블록체인 지갑</h3>
                         <span class="wallet-network-badge"><span class="dot"></span> BSC 테스트넷</span>
                     </div>
+                    <div class="wallet-connection-copy">
+                        <div class="wallet-connection-status" id="wallet-connection-status">외부 지갑을 연결하세요</div>
+                        <div class="wallet-connection-sub" id="wallet-connection-sub">MetaMask 또는 Trust Wallet을 연결하면 HBT를 직접 보관할 수 있어요.</div>
+                    </div>
                     <div class="wallet-address-box">
-                        <span class="wallet-address-text" id="wallet-address-display">로딩 중...</span>
+                        <span class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
                         <div class="wallet-addr-actions">
                             <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="주소 복사">📋</button>
                             <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
                         </div>
+                    </div>
+                    <div class="wallet-links">
+                        <button type="button" class="wallet-link-btn primary" id="wallet-connect-metamask-btn" onclick="connectMetaMaskWallet()">🦊 MetaMask 연결</button>
+                        <button type="button" class="wallet-link-btn" id="wallet-connect-trust-btn" onclick="connectTrustWallet()">🛡️ Trust Wallet 연결</button>
+                    </div>
+                    <div class="wallet-links wallet-links-secondary">
+                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">연결 해제</button>
                     </div>
                     <div class="wallet-links">
                         <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>

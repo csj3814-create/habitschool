@@ -88,6 +88,10 @@ function getUserLabel(userData, fallback = "회원") {
     return userData?.customDisplayName || userData?.displayName || fallback;
 }
 
+function getEffectiveWalletAddress(userData) {
+    return String(userData?.externalWalletAddress || userData?.walletAddress || '').trim() || null;
+}
+
 function toDateFromValue(value) {
     if (!value) return null;
     if (value instanceof Date) return value;
@@ -333,7 +337,7 @@ exports.mintHBT = onCall(
 
             const userData = userSnap.data();
             const currentCoins = userData.coins || 0;
-            const walletAddress = userData.walletAddress;
+            const walletAddress = getEffectiveWalletAddress(userData);
 
             if (!walletAddress) {
                 throw new HttpsError("failed-precondition", "지갑이 생성되지 않았습니다. 앱을 다시 로드해주세요.");
@@ -472,7 +476,7 @@ exports.getOnchainBalance = onCall(
                 throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
             }
 
-            const walletAddress = userSnap.data().walletAddress;
+            const walletAddress = getEffectiveWalletAddress(userSnap.data());
             if (!walletAddress) {
                 return { balance: "0", balanceFormatted: "0" };
             }
@@ -521,7 +525,7 @@ exports.prefundWallet = onCall(
         }
 
         const userData = userSnap.data();
-        const walletAddress = userData.walletAddress;
+        const walletAddress = getEffectiveWalletAddress(userData);
         if (!walletAddress) {
             throw new HttpsError("failed-precondition", "지갑 주소가 없습니다.");
         }
@@ -2246,7 +2250,7 @@ exports.claimChallengeReward = onCall(
 
         // 온체인 정산: resolveChallenge(user, true) → 스테이킹 100% 반환
         if (stakedOnChain && staked > 0 && successRate >= 0.8) {
-            const userWalletAddress = userData.walletAddress;
+            const userWalletAddress = getEffectiveWalletAddress(userData);
             if (!userWalletAddress) {
                 throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
             }
@@ -2376,7 +2380,7 @@ exports.settleChallengeFailure = onCall(
 
         // 온체인 정산: resolveChallenge(user, false) → 50% 소각 + 50% 반환
         if (stakedOnChain && staked > 0) {
-            const userWalletAddress = userData.walletAddress;
+            const userWalletAddress = getEffectiveWalletAddress(userData);
             if (!userWalletAddress) {
                 throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
             }
@@ -2600,7 +2604,7 @@ exports.migrateHbtToCoins = onCall(
             // 온체인 잔액 + 스테이킹 잔액 조회
             let onChainHbt = 0;
             let stakedHbt = 0;
-            const walletAddress = userData.walletAddress;
+            const walletAddress = getEffectiveWalletAddress(userData);
             if (walletAddress) {
                 try {
                     const rawBalance = await habitContract.balanceOf(walletAddress);
@@ -3391,7 +3395,7 @@ exports.prefundWallet = onCall(
         }
 
         const userData = userSnap.data();
-        const walletAddress = userData.walletAddress;
+        const walletAddress = getEffectiveWalletAddress(userData);
         if (!walletAddress) {
             throw new HttpsError("failed-precondition", "지갑 주소가 없습니다.");
         }

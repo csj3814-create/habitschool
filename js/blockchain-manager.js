@@ -68,6 +68,25 @@ async function ensureFunctions() {
 
 let userWallet = null; // ethers.Wallet 인스턴스
 let userWalletAddress = null; // 0x... 주소
+let externalWalletAddress = null;
+let externalWalletProviderType = null;
+let externalWalletChainId = null;
+let externalWalletProvider = null;
+let externalWalletWeb3Provider = null;
+
+const BSC_TESTNET_CHAIN_ID = BASE_CONFIG.testnet.chainId;
+const BSC_TESTNET_CHAIN_HEX = `0x${BSC_TESTNET_CHAIN_ID.toString(16)}`;
+const BSC_TESTNET_PARAMS = {
+    chainId: BSC_TESTNET_CHAIN_HEX,
+    chainName: 'BSC Testnet',
+    nativeCurrency: {
+        name: 'tBNB',
+        symbol: 'tBNB',
+        decimals: 18
+    },
+    rpcUrls: [BASE_CONFIG.testnet.rpcUrl],
+    blockExplorerUrls: [BASE_CONFIG.testnet.explorer]
+};
 
 // HBT 토큰 컨트랙트 ABI (stakeForChallenge용 최소 ABI)
 const HBT_STAKE_ABI = [
@@ -81,13 +100,226 @@ const HBT_STAKE_ABI = [
  * 사용자 지갑을 BSC 테스트넷 프로바이더에 연결
  * @returns {ethers.Wallet} 연결된 지갑 (서명+전송 가능)
  */
-function getConnectedWallet() {
+async function getConnectedWallet() {
+    if (externalWalletProvider) {
+        await ensureInjectedNetwork(externalWalletProvider);
+        externalWalletWeb3Provider = new ethers.providers.Web3Provider(externalWalletProvider, 'any');
+        const signer = externalWalletWeb3Provider.getSigner();
+        const address = ethers.utils.getAddress(await signer.getAddress());
+        externalWalletAddress = address;
+        return {
+            signer,
+            provider: externalWalletWeb3Provider,
+            address,
+            type: 'external'
+        };
+    }
+
     if (!userWallet) return null;
     const provider = new ethers.providers.JsonRpcProvider(
         BASE_CONFIG.testnet.rpcUrl,
         BASE_CONFIG.testnet.chainId
     );
-    return userWallet.connect(provider);
+    const signer = userWallet.connect(provider);
+    return {
+        signer,
+        provider,
+        address: signer.address,
+        type: 'internal'
+    };
+}
+
+function getEffectiveWalletAddress() {
+    return externalWalletAddress || userWalletAddress || null;
+}
+
+function getWalletProviderLabel(type) {
+    switch (type) {
+        case 'metamask':
+            return 'MetaMask';
+        case 'trustwallet':
+            return 'Trust Wallet';
+        case 'walletconnect':
+            return 'WalletConnect';
+        case 'internal':
+            return '앱 지갑';
+        default:
+            return '외부 지갑';
+    }
+}
+
+function getInjectedProviders() {
+    const providers = [];
+    if (Array.isArray(window.ethereum?.providers) && window.ethereum.providers.length > 0) {
+        providers.push(...window.ethereum.providers);
+    } else if (window.ethereum) {
+        providers.push(window.ethereum);
+    }
+    if (window.trustwallet && !providers.includes(window.trustwallet)) {
+        providers.push(window.trustwallet);
+    }
+    return providers.filter(Boolean);
+}
+
+function getInjectedProviderType(provider) {
+    if (!provider) return null;
+    if (provider.isMetaMask) return 'metamask';
+    if (provider.isTrust || provider.isTrustWallet) return 'trustwallet';
+    return 'injected';
+}
+
+function findInjectedProvider(preferredType = null) {
+    const providers = getInjectedProviders();
+    if (!providers.length) return null;
+
+    if (preferredType === 'metamask') {
+        return providers.find(provider => provider.isMetaMask) || null;
+    }
+    if (preferredType === 'trustwallet') {
+        return providers.find(provider => provider.isTrust || provider.isTrustWallet) || null;
+    }
+    return providers[0] || null;
+}
+
+function openWalletInstallLink(preferredType = 'metamask') {
+    const currentUrl = window.location.href;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    let url = 'https://metamask.io/download/';
+
+    if (preferredType === 'trustwallet') {
+        url = isMobile
+            ? `https://link.trustwallet.com/open_url?url=${encodeURIComponent(currentUrl)}`
+            : 'https://trustwallet.com/browser-extension';
+    } else if (preferredType === 'metamask') {
+        url = isMobile
+            ? `https://metamask.app.link/dapp/${encodeURIComponent(currentUrl)}`
+            : 'https://metamask.io/download/';
+    }
+
+    window.open(url, '_blank', 'noopener');
+}
+
+async function ensureInjectedNetwork(provider) {
+    if (!provider?.request) return null;
+    try {
+        const chainHex = await provider.request({ method: 'eth_chainId' });
+        if (parseInt(chainHex, 16) === BSC_TESTNET_CHAIN_ID) {
+            return BSC_TESTNET_CHAIN_ID;
+        }
+        await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: BSC_TESTNET_CHAIN_HEX }]
+        });
+        return BSC_TESTNET_CHAIN_ID;
+    } catch (error) {
+        if (error?.code === 4902) {
+            await provider.request({
+                method: 'wallet_addEthereumChain',
+                params: [BSC_TESTNET_PARAMS]
+            });
+            return BSC_TESTNET_CHAIN_ID;
+        }
+        throw error;
+    }
+}
+
+async function ensureUserReferralCode(userRef, userData) {
+    if (userData?.referralCode) return userData.referralCode;
+    const referralCode = generateReferralCode();
+    await setDoc(userRef, { referralCode }, { merge: true });
+    return referralCode;
+}
+
+async function reconnectStoredExternalWallet({ preferredType = null, expectedAddress = null } = {}) {
+    const provider = findInjectedProvider(preferredType);
+    if (!provider?.request) return null;
+    try {
+        const accounts = await provider.request({ method: 'eth_accounts' });
+        if (!Array.isArray(accounts) || accounts.length === 0) return null;
+
+        const matchedAddress = expectedAddress
+            ? accounts.find(account => account?.toLowerCase() === expectedAddress.toLowerCase())
+            : accounts[0];
+
+        if (!matchedAddress) return null;
+
+        externalWalletProvider = provider;
+        externalWalletWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
+        externalWalletAddress = ethers.utils.getAddress(matchedAddress);
+        externalWalletProviderType = preferredType || getInjectedProviderType(provider);
+
+        const chainHex = await provider.request({ method: 'eth_chainId' }).catch(() => null);
+        externalWalletChainId = chainHex ? parseInt(chainHex, 16) : null;
+        return externalWalletAddress;
+    } catch (error) {
+        console.warn('외부 지갑 재연결 실패:', error.message);
+        return null;
+    }
+}
+
+async function connectInjectedWallet(preferredType = 'metamask') {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showToast('🔐 로그인 후 지갑을 연결해 주세요.');
+        return null;
+    }
+
+    const provider = findInjectedProvider(preferredType);
+    if (!provider?.request) {
+        const providerLabel = getWalletProviderLabelSafe(preferredType);
+        showToast(`${providerLabel} 앱 또는 확장 프로그램을 먼저 열어 주세요.`);
+        openWalletInstallLink(preferredType);
+        return null;
+    }
+
+    try {
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+            showToast('지갑 주소를 찾지 못했어요.');
+            return null;
+        }
+
+        await ensureInjectedNetwork(provider);
+
+        externalWalletProvider = provider;
+        externalWalletWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
+        const signer = externalWalletWeb3Provider.getSigner();
+        const address = ethers.utils.getAddress(await signer.getAddress());
+        const network = await externalWalletWeb3Provider.getNetwork().catch(() => ({ chainId: BSC_TESTNET_CHAIN_ID }));
+
+        externalWalletAddress = address;
+        externalWalletProviderType = preferredType || getInjectedProviderType(provider);
+        externalWalletChainId = network?.chainId || BSC_TESTNET_CHAIN_ID;
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef).catch(() => null);
+        const userData = userSnap?.data?.() || {};
+        await ensureUserReferralCode(userRef, userData);
+        await setDoc(userRef, {
+            externalWalletAddress: address,
+            walletConnectionMode: 'external',
+            walletProviderType: externalWalletProviderType,
+            walletChainId: externalWalletChainId,
+            walletConnectedAt: serverTimestamp()
+        }, { merge: true });
+
+        refreshWalletUi(address);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        showToast(`${getWalletProviderLabelSafe(externalWalletProviderType)} 연결 완료`);
+        return address;
+        showToast(`${getWalletProviderLabel(externalWalletProviderType)} 연결 완료`);
+        return address;
+    } catch (error) {
+        if (error?.code === 4001) {
+            showToast('지갑 연결이 취소되었어요.');
+            return null;
+        }
+        console.error('외부 지갑 연결 오류:', error);
+        showToast(error?.message?.includes('chain')
+            ? 'BSC 테스트넷으로 전환한 뒤 다시 시도해 주세요.'
+            : '지갑 연결에 실패했어요. 다시 시도해 주세요.');
+        return null;
+    }
 }
 
 // ========== 보안 지갑 관리 (v2) ==========
@@ -966,6 +1198,300 @@ export async function fetchTokenStats() {
         console.error('⚠️ 토큰 통계 조회 오류:', error);
         return null;
     }
+}
+
+function getWalletProviderLabelSafe(type) {
+    switch (type) {
+        case 'metamask':
+            return 'MetaMask';
+        case 'trustwallet':
+            return 'Trust Wallet';
+        case 'walletconnect':
+            return 'WalletConnect';
+        case 'internal':
+            return '앱 지갑';
+        default:
+            return '외부 지갑';
+    }
+}
+
+function refreshWalletUi(address = null) {
+    const effectiveAddress = address || getEffectiveWalletAddress();
+    const walletDisplay = document.getElementById('wallet-address-display');
+    const statusEl = document.getElementById('wallet-connection-status');
+    const subEl = document.getElementById('wallet-connection-sub');
+    const copyBtn = document.querySelector('.wallet-addr-btn[onclick*="copyWallet"]');
+    const explorerBtn = document.querySelector('.wallet-addr-btn[onclick*="openWalletExplorer"]');
+    const metaMaskBtn = document.getElementById('wallet-connect-metamask-btn');
+    const trustBtn = document.getElementById('wallet-connect-trust-btn');
+    const walletConnectBtn = document.getElementById('wallet-connect-walletconnect-btn');
+    const disconnectBtn = document.getElementById('wallet-disconnect-btn');
+
+    let status = '외부 지갑을 연결하세요';
+    let sub = 'MetaMask 또는 Trust Wallet을 연결하면 HBT를 직접 보관할 수 있어요.';
+
+    if (externalWalletAddress && externalWalletProvider) {
+        status = `${getWalletProviderLabelSafe(externalWalletProviderType)} 연결됨`;
+        sub = '지갑에서 직접 보관하고 챌린지를 시작할 수 있어요.';
+    } else if (externalWalletAddress) {
+        status = '외부 지갑 주소 연결됨';
+        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 챌린지를 시작할 수 있어요.`;
+    } else if (userWallet) {
+        status = '앱 지갑 사용 중';
+        sub = '기존 앱 지갑 주소입니다. 외부 지갑 연결로 전환할 수 있어요.';
+    } else if (userWalletAddress) {
+        status = '기존 지갑 주소만 있어요';
+        sub = '외부 지갑을 연결하면 직접 보관과 챌린지가 가능해요.';
+    }
+
+    if (walletDisplay) {
+        if (effectiveAddress) {
+            walletDisplay.textContent = `${effectiveAddress.substring(0, 8)}...${effectiveAddress.substring(effectiveAddress.length - 6)}`;
+            walletDisplay.style.color = '#333';
+        } else {
+            walletDisplay.textContent = '지갑 미연결';
+            walletDisplay.style.color = '';
+        }
+    }
+
+    if (statusEl) statusEl.textContent = status;
+    if (subEl) subEl.textContent = sub;
+
+    const hasAddress = !!effectiveAddress;
+    [copyBtn, explorerBtn].forEach(button => {
+        if (!button) return;
+        button.disabled = !hasAddress;
+    });
+
+    if (metaMaskBtn) metaMaskBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'metamask' && !!externalWalletProvider;
+    if (trustBtn) trustBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'trustwallet' && !!externalWalletProvider;
+    if (walletConnectBtn) walletConnectBtn.disabled = false;
+    if (disconnectBtn) disconnectBtn.disabled = !externalWalletAddress;
+}
+
+export async function initializeWalletExternalFirst() {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.warn('⚠️ 로그인되지 않음. 지갑 초기화 중단.');
+            return null;
+        }
+
+        externalWalletAddress = null;
+        externalWalletProviderType = null;
+        externalWalletChainId = null;
+        externalWalletProvider = null;
+        externalWalletWeb3Provider = null;
+        userWallet = null;
+        userWalletAddress = null;
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data() || {};
+
+        await ensureUserReferralCode(userRef, userData).catch(() => {});
+
+        if (userData.externalWalletAddress) {
+            externalWalletAddress = userData.externalWalletAddress;
+            externalWalletProviderType = userData.walletProviderType || null;
+            externalWalletChainId = userData.walletChainId || null;
+            await reconnectStoredExternalWallet({
+                preferredType: externalWalletProviderType,
+                expectedAddress: externalWalletAddress
+            });
+        }
+
+        if (!externalWalletAddress && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+            try {
+                const privateKeyHex = await decryptPrivateKey(
+                    userData.encryptedKey,
+                    userData.walletIv,
+                    currentUser.uid,
+                    currentUser.email
+                );
+                const wallet = new ethers.Wallet(privateKeyHex);
+                userWallet = wallet;
+                userWalletAddress = wallet.address;
+                console.log('✅ 앱 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
+            } catch (error) {
+                console.error('⚠️ 앱 지갑 복호화 실패:', error);
+                userWalletAddress = userData.walletAddress || null;
+            }
+        } else if (!externalWalletAddress && userData?.walletAddress) {
+            userWalletAddress = userData.walletAddress;
+        }
+
+        refreshWalletUi(getEffectiveWalletAddress());
+        return getEffectiveWalletAddress();
+    } catch (error) {
+        console.error('❌ 외부 지갑 우선 초기화 오류:', error);
+        refreshWalletUi(null);
+        return null;
+    }
+}
+
+export async function startChallenge30DWithConnectedWallet(challengeId) {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            showToast('❌ 로그인이 필요합니다.');
+            return false;
+        }
+
+        const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
+        const challengeDef = CHALLENGES[resolvedId];
+        if (!challengeDef) {
+            showToast('❌ 알 수 없는 챌린지입니다.');
+            return false;
+        }
+
+        const duration = challengeDef.duration || 30;
+        const minStake = challengeDef.hbtStake || 0;
+        const maxStake = challengeDef.maxStake || 10000;
+        const tier = challengeDef.tier || 'master';
+
+        let hbtAmount = 0;
+        if (minStake > 0) {
+            const stakeInput = document.getElementById('stake-' + tier);
+            hbtAmount = parseFloat(stakeInput?.value || 0);
+            if (!Number.isFinite(hbtAmount) || hbtAmount < minStake) {
+                showToast(`❌ 최소 ${minStake} HBT 이상 예치해야 합니다.`);
+                return false;
+            }
+            if (Math.round(hbtAmount * 100) !== hbtAmount * 100) {
+                showToast('❌ HBT는 소수점 2자리까지만 입력 가능합니다.');
+                return false;
+            }
+            if (hbtAmount > maxStake) {
+                showToast(`❌ 최대 ${maxStake} HBT까지만 예치 가능합니다.`);
+                return false;
+            }
+        }
+
+        showToast(`⏳ ${duration}일 챌린지 시작 중...`);
+
+        let stakeTxHash = null;
+        if (hbtAmount > 0) {
+            const connectedWallet = await getConnectedWallet();
+            if (!connectedWallet) {
+                showToast(externalWalletAddress
+                    ? '❌ 외부 지갑을 다시 연결한 뒤 챌린지를 시작해 주세요.'
+                    : '❌ MetaMask 또는 Trust Wallet을 연결해 주세요.');
+                return false;
+            }
+
+            const hbtContract = new ethers.Contract(
+                HBT_TOKEN.testnetAddress,
+                HBT_STAKE_ABI,
+                connectedWallet.signer
+            );
+
+            const rawAmount = ethers.utils.parseUnits(String(hbtAmount), HBT_TOKEN.decimals);
+            const onchainBalance = await hbtContract.balanceOf(connectedWallet.address);
+            if (onchainBalance.lt(rawAmount)) {
+                const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
+                showToast(`❌ 온체인 HBT 잔액이 부족해요. 보유 ${displayBalance} HBT / 필요 ${hbtAmount} HBT`);
+                return false;
+            }
+
+            const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
+            const minGas = ethers.utils.parseEther("0.001");
+            if (ethBalance.lt(minGas)) {
+                showToast('⛽ 가스 부족 → 자동 충전 중...');
+                await ensureFunctions();
+                if (!prefundWalletFunction) {
+                    showToast('❌ 가스 충전 함수를 불러오지 못했어요.');
+                    return false;
+                }
+                try {
+                    await prefundWalletFunction();
+                    await new Promise(resolve => setTimeout(resolve, 4000));
+                } catch (error) {
+                    console.warn('가스 충전 실패:', error.message);
+                    showToast('❌ 가스(tBNB) 자동 충전에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
+                    return false;
+                }
+            }
+
+            showToast('🔐 온체인 예치 트랜잭션 전송 중...');
+            try {
+                const tx = await hbtContract.stakeForChallenge(rawAmount);
+                showToast('⏳ 블록체인 확인 대기 중...');
+                const receipt = await tx.wait();
+                stakeTxHash = receipt.transactionHash;
+            } catch (error) {
+                console.error('❌ 온체인 예치 실패:', error);
+                showToast('❌ 온체인 예치에 실패했어요. 가스(tBNB)와 지갑 연결을 확인해 주세요.');
+                return false;
+            }
+        }
+
+        await ensureFunctions();
+        if (!startChallengeFunction) {
+            showToast('❌ 서버 연결에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
+            return false;
+        }
+
+        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
+        const data = result.data;
+
+        if (data.hbtStaked > 0) {
+            showToast(`✅ ${data.duration}일 챌린지 시작! ${data.hbtStaked} HBT 예치 완료`);
+        } else {
+            showToast(`✅ ${data.duration}일 챌린지 시작! ${challengeDef.rewardPoints}P 보상 도전`);
+        }
+
+        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+        return true;
+    } catch (error) {
+        console.error('❌ 외부 지갑 챌린지 시작 오류:', error);
+        const msg = error.message || '알 수 없는 오류';
+        showToast(`❌ 오류: ${msg}`);
+        return false;
+    }
+}
+
+export function getWalletAddressForUI() {
+    return getEffectiveWalletAddress();
+}
+
+export async function disconnectExternalWallet() {
+    externalWalletAddress = null;
+    externalWalletProviderType = null;
+    externalWalletChainId = null;
+    externalWalletProvider = null;
+    externalWalletWeb3Provider = null;
+
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        try {
+            await setDoc(doc(db, "users", currentUser.uid), {
+                externalWalletAddress: deleteField(),
+                walletConnectionMode: deleteField(),
+                walletProviderType: deleteField(),
+                walletChainId: deleteField(),
+                walletConnectedAt: deleteField()
+            }, { merge: true });
+        } catch (error) {
+            console.warn('외부 지갑 연결 정보 삭제 실패:', error.message);
+        }
+    }
+
+    refreshWalletUi(getEffectiveWalletAddress());
+    if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+    showToast('외부 지갑 연결을 해제했어요.');
+}
+
+export async function connectMetaMaskWallet() {
+    return connectInjectedWallet('metamask');
+}
+
+export async function connectTrustWallet() {
+    return connectInjectedWallet('trustwallet');
+}
+
+export function openWalletConnectGuide() {
+    showToast('WalletConnect는 본서버 적용 전에 projectId 설정 후 활성화할게요. 지금은 MetaMask 또는 Trust Wallet 연결을 사용해 주세요.');
 }
 
 /**

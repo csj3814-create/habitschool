@@ -519,6 +519,25 @@ body {
     color: #5c3414;
 }
 
+.wallet-connection-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.wallet-connection-status {
+    font-size: 14px;
+    font-weight: 700;
+    color: #6b3f12;
+}
+
+.wallet-connection-sub {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #8a673e;
+}
+
 .wallet-network-badge {
     display: inline-flex;
     align-items: center;
@@ -592,6 +611,8 @@ body {
 }
 
 .wallet-link-btn {
+    box-sizing: border-box;
+    min-width: 0;
     flex: 1;
     display: flex;
     align-items: center;
@@ -617,6 +638,18 @@ body {
     color: white;
     border: none;
     box-shadow: 0 2px 6px rgba(255,140,0,0.3);
+}
+
+.wallet-links-secondary .wallet-link-btn {
+    background: #fffaf1;
+}
+
+.wallet-link-btn.is-disabled,
+.wallet-addr-btn:disabled,
+.wallet-link-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
 }
 
 /* 변환 카드 */
@@ -1892,8 +1925,8 @@ textarea {
     justify-content: space-between;
     gap: 8px;
     margin: 2px 0 6px;
-    padding: 8px 10px;
-    border-radius: 12px;
+    padding: 6px 10px;
+    border-radius: 14px;
     background: linear-gradient(135deg, #EEF7FF 0%, #F6FBFF 100%);
     border: 1px solid #D7EAFE;
 }
@@ -3779,9 +3812,11 @@ textarea {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    width: 100%;
     padding: 18px 18px 16px;
     border-radius: 24px;
-    overflow: clip;
+    box-sizing: border-box;
+    overflow: hidden;
     background:
         radial-gradient(circle at top left, rgba(255, 214, 102, 0.35), transparent 38%),
         linear-gradient(135deg, #fffdf4 0%, #fff8ec 58%, #fff3df 100%);
@@ -3833,13 +3868,13 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 22px;
-    padding: 0 9px;
+    min-height: 18px;
+    padding: 0 8px;
     border-radius: 999px;
     border: 1px solid rgba(241, 220, 192, 0.95);
     background: rgba(255, 255, 255, 0.78);
     color: #8a5a23;
-    font-size: 10px;
+    font-size: 8px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
@@ -4030,8 +4065,8 @@ textarea {
 
 .gallery-hero.is-collapsed {
     gap: 8px;
-    padding: 10px 12px;
-    border-radius: 22px;
+    padding: 8px 12px;
+    border-radius: 24px;
 }
 
 .gallery-hero.is-collapsed .gallery-hero-header {
@@ -5031,14 +5066,14 @@ textarea {
     }
 
     .gallery-guide-toggle {
-        min-height: 20px;
-        padding: 0 8px;
-        font-size: 9px;
+        min-height: 17px;
+        padding: 0 7px;
+        font-size: 7px;
     }
 
     .gallery-hero.is-collapsed {
-        padding: 8px 10px;
-        border-radius: 20px;
+        padding: 7px 10px;
+        border-radius: 22px;
     }
 
     .gallery-hero-stats {
@@ -7767,6 +7802,8 @@ body.dark-mode .wallet-address-box {
     background: #161622;
     border-color: #333;
 }
+body.dark-mode .wallet-connection-status { color: #f4c57d; }
+body.dark-mode .wallet-connection-sub { color: #d5b88c; }
 body.dark-mode .wallet-address-text { color: #ccc; }
 body.dark-mode .wallet-addr-btn {
     background: #2A2A3A;
@@ -7778,6 +7815,7 @@ body.dark-mode .wallet-link-btn {
     border-color: #444;
     color: #ccc;
 }
+body.dark-mode .wallet-links-secondary .wallet-link-btn { background: #1b1b28; }
 body.dark-mode .wallet-convert-card {
     background: #1E1E2E;
     border-color: #333;
@@ -8241,6 +8279,7 @@ body.dark-mode .social-challenge-pill {
 body.dark-mode .community-month-summary,
 body.dark-mode .social-challenge-meta,
 body.dark-mode .social-challenge-status { color: #B7B0BE; }
+
 body.dark-mode .group-challenge-title { color: #D8D4DC; }
 body.dark-mode .group-stat-item {
     background: linear-gradient(135deg, #1E2E1E 0%, #1A2A1E 100%);
@@ -8423,12 +8462,13 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 @media (max-width: 480px) {
     .record-flow-card {
-        padding: 7px 9px;
-        border-radius: 11px;
+        padding: 5px 9px;
+        border-radius: 13px;
     }
 
     .record-flow-topline {
-        margin-bottom: 2px;
+        min-height: 20px;
+        margin-bottom: 1px;
     }
 
     .record-flow-head {
@@ -8451,9 +8491,9 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     }
 
     .record-flow-toggle {
-        min-height: 19px;
-        padding: 0 8px;
-        font-size: 8px;
+        min-height: 17px;
+        padding: 0 7px;
+        font-size: 7px;
     }
 
     .record-flow-btn {
@@ -9339,11 +9379,12 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 .record-flow-card {
     margin: 4px 0 8px;
-    padding: 8px 10px;
-    border-radius: 12px;
+    padding: 6px 10px;
+    border-radius: 14px;
     border: 1px solid #E6E1D8;
     background: linear-gradient(135deg, #FFF9EE 0%, #F8FBFF 100%);
     box-shadow: 0 8px 18px rgba(90, 78, 58, 0.05);
+    box-sizing: border-box;
 }
 
 .record-flow-topline {
@@ -9351,7 +9392,8 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    margin-bottom: 3px;
+    min-height: 22px;
+    margin-bottom: 1px;
 }
 
 .record-flow-head {
@@ -9370,9 +9412,9 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-kicker {
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: #C56A00;
     text-transform: uppercase;
     line-height: 1;
@@ -9418,13 +9460,13 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 20px;
-    padding: 0 8px;
+    min-height: 18px;
+    padding: 0 7px;
     border-radius: 999px;
     border: 1px solid rgba(226, 216, 199, 0.95);
     background: rgba(255,255,255,0.82);
     color: #8a5a23;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;

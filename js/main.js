@@ -41,6 +41,11 @@ window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니�
 window.startChallenge30D = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
 window.fetchOnchainBalance = async () => null;
 window.fetchTokenStats = async () => null;
+window.connectMetaMaskWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.connectTrustWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.openWalletConnectGuide = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.disconnectWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
+window.initializeUserWallet = async () => null;
 window._blockchainLoaded = false;
 // 변환 비율: 온체인 currentRate (RATE_SCALE=1e8 기준). 기본값 1e8 = 1:1 (Era A)
 window._currentConversionRate = 1e8;
@@ -62,10 +67,15 @@ window._loadBlockchainModule = function() {
     };
     return loadEthers().then(() => import('./blockchain-manager.js')).then(mod => {
         window.convertPointsToHBT = mod.convertPointsToHBT;
-        window.startChallenge30D = mod.startChallenge30D;
+        window.startChallenge30D = mod.startChallenge30DWithConnectedWallet || mod.startChallenge30D;
+        window.connectMetaMaskWallet = mod.connectMetaMaskWallet;
+        window.connectTrustWallet = mod.connectTrustWallet;
+        window.openWalletConnectGuide = mod.openWalletConnectGuide;
+        window.disconnectWallet = mod.disconnectExternalWallet || mod.disconnectWallet;
+        window.initializeUserWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
         window.fetchOnchainBalance = mod.fetchOnchainBalance;
         window.fetchTokenStats = mod.fetchTokenStats;
-        window.getWalletAddress = mod.getWalletAddress;
+        window.getWalletAddress = mod.getWalletAddressForUI || mod.getWalletAddress;
         window.settleExpiredChallenges = mod.settleExpiredChallenges;
         window.forfeitChallenge = mod.forfeitChallenge;
         window.claimChallengeReward = mod.claimChallengeReward;

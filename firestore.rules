@@ -51,7 +51,8 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['email', 'displayName', 'customDisplayName', 'photoURL', 'createdAt',
                     'walletAddress', 'walletCreatedAt', 'encryptedKey', 'walletIv', 'walletVersion',
-                    'oldWalletAddress', 'encryptedWallet',
+                    'oldWalletAddress', 'encryptedWallet', 'externalWalletAddress',
+                    'walletConnectionMode', 'walletProviderType', 'walletChainId', 'walletConnectedAt',
                     'activeChallenge', 'activeChallenges', 'milestones', 'settings',
                     'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',

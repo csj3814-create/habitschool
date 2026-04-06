@@ -474,7 +474,8 @@ export function setupAuthListener(callbacks) {
                 if (window._loadBlockchainModule) {
                     window._loadBlockchainModule().then(() => {
                         import('./blockchain-manager.js').then(mod => {
-                            mod.initializeUserWallet().catch(() => {});
+                            const initWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
+                            initWallet?.().catch(() => {});
                             mod.settleExpiredChallenges().then(() => {
                                 getDoc(userRef).then(snap => {
                                     const ac = snap.data()?.activeChallenges || {};
