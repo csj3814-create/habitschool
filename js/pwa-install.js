@@ -24,7 +24,7 @@ if ('serviceWorker' in navigator) {
             return;
         }
 
-        navigator.serviceWorker.register('./sw.js?v=111')
+        navigator.serviceWorker.register('./sw.js?v=112')
             .then(reg => {
                 console.log('✅ SW 등록:', reg.scope);
                 reg.update();

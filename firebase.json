@@ -33,6 +33,7 @@
         "**/node_modules/**",
         "contracts/**",
         "functions/**",
+        "tasks/**",
         "*.md",
         "*.txt",
         ".gitignore",

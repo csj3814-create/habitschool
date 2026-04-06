@@ -203,29 +203,33 @@ _shareTemplate = loadShareTemplatePreference();
 
 function updateFloatingBarLayout() {
     _floatingBarLayoutFrame = 0;
+    const appContainer = document.querySelector('.app-container');
+    const rect = appContainer?.getBoundingClientRect();
+    const targetLeft = rect ? `${Math.max(rect.left, 0)}px` : '0px';
+    const targetWidth = rect ? `${Math.min(rect.width, window.innerWidth)}px` : '100%';
 
     const submitBar = document.getElementById('submit-bar');
     if (submitBar) {
-        submitBar.style.left = '0';
-        submitBar.style.right = '0';
+        submitBar.style.left = targetLeft;
+        submitBar.style.right = 'auto';
         submitBar.style.transform = 'none';
-        submitBar.style.width = '100%';
+        submitBar.style.width = targetWidth;
     }
 
     const chatBanner = document.getElementById('chat-banner');
     if (chatBanner) {
-        chatBanner.style.left = '0';
-        chatBanner.style.right = '0';
+        chatBanner.style.left = targetLeft;
+        chatBanner.style.right = 'auto';
         chatBanner.style.transform = 'none';
-        chatBanner.style.width = '100%';
+        chatBanner.style.width = targetWidth;
     }
 
     const installBanner = document.getElementById('pwa-install-banner');
     if (installBanner) {
-        installBanner.style.left = '0';
-        installBanner.style.right = '0';
+        installBanner.style.left = targetLeft;
+        installBanner.style.right = 'auto';
         installBanner.style.transform = 'none';
-        installBanner.style.width = '100%';
+        installBanner.style.width = targetWidth;
     }
 }
 
