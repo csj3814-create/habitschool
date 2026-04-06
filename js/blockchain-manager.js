@@ -161,6 +161,16 @@ function getInjectedProviders() {
     return providers.filter(Boolean);
 }
 
+function isMetaMaskInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    return /MetaMaskMobile/i.test(ua) || (!!window.ethereum && !!window.ethereum.isMetaMask);
+}
+
+function isTrustWalletInAppBrowser() {
+    const ua = navigator.userAgent || '';
+    return /TrustWallet/i.test(ua) || (!!window.ethereum && !!(window.ethereum.isTrust || window.ethereum.isTrustWallet));
+}
+
 function getInjectedProviderType(provider) {
     if (!provider) return null;
     if (provider.isMetaMask) return 'metamask';
@@ -168,23 +178,72 @@ function getInjectedProviderType(provider) {
     return 'injected';
 }
 
-function findInjectedProvider(preferredType = null) {
+function findInjectedProvider(preferredType = null, options = {}) {
+    const allowLooseMatch = !!options.allowLooseMatch;
     const providers = getInjectedProviders();
     if (!providers.length) return null;
 
     if (preferredType === 'metamask') {
-        return providers.find(provider => provider.isMetaMask) || null;
+        return providers.find(provider => provider.isMetaMask)
+            || (allowLooseMatch && isMetaMaskInAppBrowser() ? providers[0] : null);
     }
     if (preferredType === 'trustwallet') {
-        return providers.find(provider => provider.isTrust || provider.isTrustWallet) || null;
+        return providers.find(provider => provider.isTrust || provider.isTrustWallet)
+            || (allowLooseMatch && isTrustWalletInAppBrowser() ? providers[0] : null);
     }
     return providers[0] || null;
+}
+
+async function waitForInjectedProvider(preferredType = null, timeoutMs = 2200) {
+    const immediateProvider = findInjectedProvider(preferredType, { allowLooseMatch: true });
+    if (immediateProvider?.request) return immediateProvider;
+
+    return new Promise(resolve => {
+        let settled = false;
+        let intervalId = null;
+        let timeoutId = null;
+
+        const cleanup = () => {
+            if (intervalId) clearInterval(intervalId);
+            if (timeoutId) clearTimeout(timeoutId);
+            window.removeEventListener('ethereum#initialized', attemptResolve);
+        };
+
+        const finish = provider => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            resolve(provider || null);
+        };
+
+        const attemptResolve = () => {
+            const provider = findInjectedProvider(preferredType, { allowLooseMatch: true });
+            if (provider?.request) {
+                finish(provider);
+            }
+        };
+
+        intervalId = setInterval(attemptResolve, 120);
+        timeoutId = setTimeout(() => finish(null), timeoutMs);
+        window.addEventListener('ethereum#initialized', attemptResolve);
+        setTimeout(attemptResolve, 60);
+    });
 }
 
 function openWalletInstallLink(preferredType = 'metamask') {
     const currentUrl = window.location.href;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
     let url = 'https://metamask.io/download/';
+
+    if (preferredType === 'metamask' && isMetaMaskInAppBrowser()) {
+        showToast('MetaMask 앱 브라우저에서 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+        return;
+    }
+
+    if (preferredType === 'trustwallet' && isTrustWalletInAppBrowser()) {
+        showToast('Trust Wallet 앱 브라우저에서 페이지를 새로고침한 뒤 다시 시도해 주세요.');
+        return;
+    }
 
     if (preferredType === 'trustwallet') {
         url = isMobile
@@ -231,7 +290,7 @@ async function ensureUserReferralCode(userRef, userData) {
 }
 
 async function reconnectStoredExternalWallet({ preferredType = null, expectedAddress = null } = {}) {
-    const provider = findInjectedProvider(preferredType);
+    const provider = await waitForInjectedProvider(preferredType, 1600);
     if (!provider?.request) return null;
     try {
         const accounts = await provider.request({ method: 'eth_accounts' });
@@ -264,9 +323,14 @@ async function connectInjectedWallet(preferredType = 'metamask') {
         return null;
     }
 
-    const provider = findInjectedProvider(preferredType);
+    const provider = await waitForInjectedProvider(preferredType);
     if (!provider?.request) {
         const providerLabel = getWalletProviderLabelSafe(preferredType);
+        if ((preferredType === 'metamask' && isMetaMaskInAppBrowser())
+            || (preferredType === 'trustwallet' && isTrustWalletInAppBrowser())) {
+            showToast(`${providerLabel} 앱 브라우저에서 페이지를 새로고침한 뒤 다시 시도해 주세요.`);
+            return null;
+        }
         showToast(`${providerLabel} 앱 또는 확장 프로그램을 먼저 열어 주세요.`);
         openWalletInstallLink(preferredType);
         return null;
