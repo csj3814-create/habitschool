@@ -1418,16 +1418,17 @@ function setOptimisticPendingFriendship(targetUid, targetName = '친구') {
     if (!myUid || !targetUid || targetUid === myUid) return;
 
     const requestedAt = new Date();
+    const requesterName = getUserDisplayName();
     cachedMyFriendships.set(targetUid, {
         id: buildFriendshipId(myUid, targetUid),
         users: [myUid, targetUid].sort(),
         userNames: {
-            [myUid]: userData?.customDisplayName || userData?.displayName || auth.currentUser?.displayName || '회원',
+            [myUid]: requesterName,
             [targetUid]: targetName || '친구'
         },
         status: 'pending',
         requesterUid: myUid,
-        requesterName: userData?.customDisplayName || userData?.displayName || auth.currentUser?.displayName || '회원',
+        requesterName,
         pendingForUid: targetUid,
         requestedAt,
         updatedAt: requestedAt
@@ -11051,12 +11052,9 @@ async function renderSocialChallenges(user) {
             list.innerHTML = `
                 ${summaryHtml}
                 ${buildCommunityEmptyState(
-                    '친구 상태를 아직 못 불러왔어요',
-                    '프로필에서 친구 요청을 확인하거나 잠시 후 다시 불러와 주세요.',
-                    [
-                        `<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`,
-                        '<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">🔄 다시 불러오기</button>'
-                    ]
+                    hasPendingRequests ? '친구 요청을 먼저 확인해요' : '친구를 먼저 연결해요',
+                    hasPendingRequests ? '프로필에서 요청을 확인해요.' : '프로필에서 친구를 추가해요.',
+                    [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
                 )}
             `;
             return;
@@ -11154,14 +11152,19 @@ async function renderSocialChallenges(user) {
         `;
     } catch (e) {
         console.warn('[renderSocialChallenges] 오류:', e.message);
-        setSocialChallengeHeadAction('retry');
+        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
+        const activeFriendIds = getActiveFriendIds();
+        setSocialChallengeHeadAction(activeFriendIds.length > 0 ? 'start' : (hasPendingRequests ? 'requests' : 'invite'));
         list.innerHTML = buildCommunityEmptyState(
-            '챌린지 상태를 아직 못 불러왔어요',
-            '잠시 후 다시 보거나, 먼저 친구 연결을 확인해 주세요.',
-            [
-                '<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">🔄 다시 불러오기</button>',
-                '<button type="button" class="community-empty-btn" onclick="openFriendInviteFlow()">👥 친구 연결</button>'
-            ]
+            activeFriendIds.length > 0
+                ? '친구 상태를 다시 확인 중이에요'
+                : (hasPendingRequests ? '친구 요청을 먼저 확인해요' : '친구를 먼저 연결해요'),
+            activeFriendIds.length > 0
+                ? '잠시 후 다시 확인해요.'
+                : (hasPendingRequests ? '프로필에서 요청을 확인해요.' : '프로필에서 친구를 추가해요.'),
+            activeFriendIds.length > 0
+                ? []
+                : [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
         );
         card.style.display = 'block';
     }
@@ -11252,7 +11255,7 @@ window.openCreateChallengeModal = async function() {
                 showToast('친구 요청을 먼저 확인해 주세요.');
                 openFriendRequestFlow();
             } else if (friendshipState.timedOut) {
-                showToast('친구 상태를 아직 못 불러왔어요. 프로필에서 연결 상태를 확인해 주세요.');
+                showToast('친구 연결 상태를 먼저 확인해 주세요.');
                 openFriendInviteFlow();
             } else {
                 showToast('먼저 친구를 연결해 주세요.');
