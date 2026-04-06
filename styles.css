@@ -3814,9 +3814,11 @@ textarea {
     gap: 14px;
     width: 100%;
     padding: 18px 18px 16px;
-    border-radius: 24px;
+    border-radius: 28px;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: clip;
+    clip-path: inset(0 round 28px);
+    isolation: isolate;
     background:
         radial-gradient(circle at top left, rgba(255, 214, 102, 0.35), transparent 38%),
         linear-gradient(135deg, #fffdf4 0%, #fff8ec 58%, #fff3df 100%);
@@ -3868,13 +3870,13 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 18px;
-    padding: 0 8px;
+    min-height: 16px;
+    padding: 0 9px;
     border-radius: 999px;
     border: 1px solid rgba(241, 220, 192, 0.95);
     background: rgba(255, 255, 255, 0.78);
     color: #8a5a23;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
@@ -4065,8 +4067,9 @@ textarea {
 
 .gallery-hero.is-collapsed {
     gap: 8px;
-    padding: 8px 12px;
-    border-radius: 24px;
+    padding: 6px 12px;
+    border-radius: 28px;
+    clip-path: inset(0 round 28px);
 }
 
 .gallery-hero.is-collapsed .gallery-hero-header {
@@ -5048,7 +5051,8 @@ textarea {
 
     .gallery-hero {
         padding: 10px 12px;
-        border-radius: 22px;
+        border-radius: 24px;
+        clip-path: inset(0 round 24px);
     }
 
     .gallery-feed-shell {
@@ -5066,14 +5070,15 @@ textarea {
     }
 
     .gallery-guide-toggle {
-        min-height: 17px;
-        padding: 0 7px;
-        font-size: 7px;
+        min-height: 16px;
+        padding: 0 8px;
+        font-size: 6.5px;
     }
 
     .gallery-hero.is-collapsed {
-        padding: 7px 10px;
-        border-radius: 22px;
+        padding: 5px 10px;
+        border-radius: 24px;
+        clip-path: inset(0 round 24px);
     }
 
     .gallery-hero-stats {
@@ -8462,13 +8467,13 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 @media (max-width: 480px) {
     .record-flow-card {
-        padding: 5px 9px;
-        border-radius: 13px;
+        padding: 4px 8px;
+        border-radius: 12px;
     }
 
     .record-flow-topline {
-        min-height: 20px;
-        margin-bottom: 1px;
+        min-height: 18px;
+        margin-bottom: 0;
     }
 
     .record-flow-head {
@@ -8491,9 +8496,9 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     }
 
     .record-flow-toggle {
-        min-height: 17px;
-        padding: 0 7px;
-        font-size: 7px;
+        min-height: 15px;
+        padding: 0 8px;
+        font-size: 6.5px;
     }
 
     .record-flow-btn {
@@ -9379,8 +9384,8 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 .record-flow-card {
     margin: 4px 0 8px;
-    padding: 6px 10px;
-    border-radius: 14px;
+    padding: 4px 10px;
+    border-radius: 12px;
     border: 1px solid #E6E1D8;
     background: linear-gradient(135deg, #FFF9EE 0%, #F8FBFF 100%);
     box-shadow: 0 8px 18px rgba(90, 78, 58, 0.05);
@@ -9392,8 +9397,8 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    min-height: 22px;
-    margin-bottom: 1px;
+    min-height: 18px;
+    margin-bottom: 0;
 }
 
 .record-flow-head {
@@ -9412,7 +9417,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-kicker {
-    font-size: 7px;
+    font-size: 6px;
     font-weight: 800;
     letter-spacing: 0.06em;
     color: #C56A00;
@@ -9460,13 +9465,13 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 18px;
-    padding: 0 7px;
+    min-height: 16px;
+    padding: 0 8px;
     border-radius: 999px;
     border: 1px solid rgba(226, 216, 199, 0.95);
     background: rgba(255,255,255,0.82);
     color: #8a5a23;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 800;
     cursor: pointer;
     white-space: nowrap;
@@ -9477,7 +9482,7 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-card.is-collapsed {
-    padding-bottom: 10px;
+    padding: 4px 10px;
 }
 
 .record-flow-actions {
