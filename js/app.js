@@ -462,18 +462,9 @@ async function importPendingDietShareTarget() {
             await loadDataForSelectedDate(selectedDate);
         }
 
-        const tempInput = document.createElement('input');
-        tempInput.type = 'file';
-        tempInput.accept = 'image/*';
-        tempInput.multiple = true;
-
-        const transfer = new DataTransfer();
-        files.forEach((file) => transfer.items.add(file));
-        tempInput.files = transfer.files;
-
-        await window.smartUpload(tempInput);
+        const importedCount = await importDietFilesIntoEmptySlots(files);
         await clearPendingDietShareTarget(manifest);
-        return files.length;
+        return importedCount;
     })().finally(() => {
         _pendingSharedDietImportPromise = null;
     });
@@ -3662,106 +3653,161 @@ window.clickNextEmptyDietSlot = function (source = 'library') {
     showToast('모든 식단 칸이 채워져 있습니다.');
 };
 
-window.smartUpload = async function (input) {
-    const files = Array.from(input.files);
-    if (!files || files.length === 0) return;
+function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
+    const parsedTimestamp = Number(timestamp);
+    const safeDate = Number.isFinite(parsedTimestamp) ? new Date(parsedTimestamp) : new Date();
+    return {
+        date: safeDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }),
+        time: safeDate.toLocaleTimeString('en-GB', {
+            timeZone: 'Asia/Seoul',
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        })
+    };
+}
 
-    for (let f of files) {
-        if (f.size > MAX_IMG_SIZE) { 
-            alert("20MB 이하만 가능합니다."); 
-            input.value = ""; 
-            return; 
+function getDietFileFallbackDateTime(file) {
+    return getKstDateTimePartsFromTimestamp(file?.lastModified || Date.now());
+}
+
+function readDietFileExifDateTime(file) {
+    return new Promise((resolve) => {
+        if (typeof EXIF === 'undefined') {
+            resolve(null);
+            return;
+        }
+        try {
+            EXIF.getData(file, function () {
+                const exifDate = EXIF.getTag(this, 'DateTimeOriginal') || EXIF.getTag(this, 'DateTime');
+                if (!exifDate) {
+                    resolve(null);
+                    return;
+                }
+
+                const parts = String(exifDate).trim().split(' ');
+                const resolvedDate = parts[0] ? parts[0].replace(/:/g, '-') : '';
+                if (!resolvedDate) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve({
+                    date: resolvedDate,
+                    time: parts[1] || '99:99:99'
+                });
+            });
+        } catch (_) {
+            resolve(null);
+        }
+    });
+}
+
+async function buildDietAutoUploadEntries(files, validDate) {
+    const exifReady = await _ensureExif().then(() => typeof EXIF !== 'undefined').catch(() => false);
+    const entries = [];
+    let skippedCount = 0;
+
+    for (const file of files) {
+        const captureInfo = (exifReady ? await readDietFileExifDateTime(file) : null) || getDietFileFallbackDateTime(file);
+        if (captureInfo.date !== validDate) {
+            skippedCount++;
+            continue;
+        }
+        entries.push({
+            file,
+            time: captureInfo.time || '99:99:99'
+        });
+    }
+
+    return { entries, skippedCount };
+}
+
+async function importDietFilesIntoEmptySlots(files) {
+    if (!Array.isArray(files) || files.length === 0) return 0;
+
+    for (const file of files) {
+        if (file.size > MAX_IMG_SIZE) {
+            alert("20MB 이하만 가능합니다.");
+            return 0;
         }
     }
 
     const dateInput = document.getElementById('selected-date');
-    const validDate = dateInput.value;
-
-    if (typeof EXIF === 'undefined') {
-        alert("⚠️ 이미지 분석 모듈이 없습니다.");
-        input.value = ""; return;
+    const validDate = dateInput?.value;
+    if (!validDate) {
+        alert("⚠️ 인증 날짜를 먼저 선택해 주세요.");
+        return 0;
     }
 
-    // 시간 추출 헬퍼 (비동기)
-    const extractTime = (f) => _ensureExif().then(() => new Promise((resolve) => {
-        try {
-            EXIF.getData(f, function () {
-                const exifDate = EXIF.getTag(this, "DateTimeOriginal") || EXIF.getTag(this, "DateTime");
-                if (exifDate) {
-                    const parts = String(exifDate).trim().split(" ");
-                    if (parts.length >= 2) {
-                        const dStr = parts[0].replace(/:/g, "-");
-                        if (dStr !== validDate) {
-                            resolve(null); // 날짜 불일치
-                            return;
-                        }
-                        resolve(parts[1]); // "HH:MM:SS"
-                        return;
-                    }
-                }
-                resolve("99:99:99"); // 시간정보가 없으면 제일 뒤로
-            });
-        } catch {
-            resolve("99:99:99"); // 오류 시 제일 뒤로
+    const { entries, skippedCount } = await buildDietAutoUploadEntries(files, validDate);
+    if (skippedCount > 0) {
+        alert(`⚠️ 촬영일이 선택한 날짜(${validDate})와 다른 사진 ${skippedCount}장이 제외되었습니다.`);
+    }
+    if (entries.length === 0) {
+        return 0;
+    }
+
+    entries.sort((a, b) => a.time.localeCompare(b.time));
+
+    const categories = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const emptySlots = categories.filter(c => {
+        const preview = document.getElementById(`preview-${c}`);
+        return (!preview || preview.style.display === 'none' || !preview.src || preview.src.endsWith(location.host + '/') || preview.src.trim() === '');
+    });
+
+    if (emptySlots.length === 0) {
+        alert("⚠️ 등록 가능한 식사 칸이 없어 사진을 저장하지 못했습니다.");
+        return 0;
+    }
+
+    let assigned = 0;
+    for (let i = 0; i < entries.length; i++) {
+        if (i >= emptySlots.length) {
+            alert("⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
+            break;
         }
-    }));
+        const cat = emptySlots[i];
+        const targetInput = document.getElementById(`diet-img-${cat}`);
+        if (!targetInput) continue;
+
+        try {
+            const dt = new DataTransfer();
+            dt.items.add(entries[i].file);
+            targetInput.files = dt.files;
+
+            const box = document.getElementById(`diet-box-${cat}`);
+            if (box) box.style.display = 'block';
+
+            window.previewStaticImage(targetInput, `preview-${cat}`, `rm-${cat}`, true);
+            targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+            assigned++;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    if (assigned > 0) {
+        showToast(`✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
+    }
+
+    return assigned;
+}
+
+window.smartUpload = async function (input) {
+    const files = Array.from(input?.files || []);
+    if (!files.length) return 0;
 
     try {
-        const fileData = [];
-        for (let f of files) {
-            let t = await extractTime(f);
-            if (t === null) {
-                alert(`⚠️ 촬영일이 선택한 날짜(${validDate})와 다른 사진이 제외되었습니다.`);
-                continue;
-            }
-            fileData.push({ file: f, time: t });
-        }
-
-        // 시간순 오름차순 정렬
-        fileData.sort((a, b) => a.time.localeCompare(b.time));
-
-        const categories = ['breakfast', 'lunch', 'dinner', 'snack'];
-        
-        // 빈 슬롯 찾기
-        const emptySlots = categories.filter(c => {
-             const preview = document.getElementById(`preview-${c}`);
-             return (!preview || preview.style.display === 'none' || !preview.src || preview.src.endsWith(location.host + '/') || preview.src.trim() === '');
-        });
-
-        let assigned = 0;
-        for (let i = 0; i < fileData.length; i++) {
-            if (i >= emptySlots.length) {
-                alert("⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
-                break;
-            }
-            const cat = emptySlots[i];
-            const targetInput = document.getElementById(`diet-img-${cat}`);
-            
-            try {
-                const dt = new DataTransfer();
-                dt.items.add(fileData[i].file);
-                targetInput.files = dt.files;
-                
-                // 해당 컨테이너 상자 보이기
-                const box = document.getElementById(`diet-box-${cat}`);
-                if (box) box.style.display = 'block';
-
-                window.previewStaticImage(targetInput, `preview-${cat}`, `rm-${cat}`, true);
-                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-                assigned++;
-            } catch (err) {
-                console.error(err);
-            }
-        }
-        
-        if (assigned > 0) {
-            showToast(`✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
-        }
+        return await importDietFilesIntoEmptySlots(files);
     } catch (err) {
         console.error(err);
         alert("⚠️ 자동 업로드 중 오류가 발생했습니다.");
+        return 0;
+    } finally {
+        if (input) input.value = "";
     }
-    input.value = "";
 };
 
 function clearInputs() {
