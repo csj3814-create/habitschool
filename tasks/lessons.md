@@ -568,3 +568,7 @@
 ### 82. After editing browser entry modules, run the real browser bundle check
 - A syntax error in `js/auth.js` can break login even if the rest of the app looks mostly unchanged.
 - After touching auth or other top-level browser modules, run the esbuild bundle check immediately before reporting success.
+
+### 83. Preserve UTF-8 when touching user-facing Korean strings
+- If a JS file contains Korean UI copy, avoid shell rewrite patterns that can silently corrupt encoding into mojibake.
+- After editing user-facing text, verify the actual rendered copy on staging or with a bundle check before calling it done.

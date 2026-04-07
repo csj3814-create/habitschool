@@ -60,12 +60,12 @@ function shouldClearInviteRefError(rawCode) {
 
 function getInviteLinkErrorMessage(rawCode) {
     const code = normalizeCallableErrorCode(rawCode);
-    if (code === 'functions/not-found') return '?좏슚??珥덈? 留곹겕瑜?李얠? 紐삵뻽?댁슂.';
-    if (code === 'functions/invalid-argument') return '??留곹겕?닿굅???ъ슜?????녿뒗 珥덈? 留곹겕?덉슂.';
-    if (code === 'functions/already-exists') return '?대? ??珥덈? 留곹겕瑜??ъ슜?덉뼱??';
-    if (code === 'functions/failed-precondition') return '?대? 泥섎━??移쒓뎄 ?곌껐?댁뿉??';
-    if (code === 'functions/permission-denied') return '??珥덈? 留곹겕瑜?泥섎━??沅뚰븳???놁뼱??';
-    return '珥덈? 留곹겕 泥섎━ 以?臾몄젣媛 ?앷꼈?댁슂. ?좎떆 ???ㅼ떆 ?쒕룄?댁＜?몄슂.';
+    if (code === 'functions/not-found') return '유효한 초대 링크를 찾지 못했어요.';
+    if (code === 'functions/invalid-argument') return '내 링크이거나 사용할 수 없는 초대 링크예요.';
+    if (code === 'functions/already-exists') return '이미 이 초대 링크를 사용했어요.';
+    if (code === 'functions/failed-precondition') return '이미 처리된 친구 연결이에요.';
+    if (code === 'functions/permission-denied') return '이 초대 링크를 처리할 권한이 없어요.';
+    return '초대 링크 처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.';
 }
 
 async function maybePromptExistingMemberInviteFriendship(code) {
@@ -74,25 +74,25 @@ async function maybePromptExistingMemberInviteFriendship(code) {
     try {
         const preview = await fn({ referralCode: code, previewOnly: true });
         const previewData = preview.data || {};
-        const inviterName = previewData.inviterName || '移쒓뎄';
+        const inviterName = previewData.inviterName || '친구';
 
         if (previewData.status === 'self') {
-            showToast('??珥덈? 留곹겕?덉슂. 移쒓뎄?먭쾶 蹂대궡蹂댁꽭??');
+            showToast('내 초대 링크예요. 친구에게 보내보세요.');
             clearPendingInviteRef();
             clearInviteRefFromUrl();
             return false;
         }
 
         if (previewData.status === 'already_active') {
-            showToast('?대? 移쒓뎄濡??곌껐?섏뼱 ?덉뼱??');
+            showToast('이미 친구로 연결되어 있어요.');
             clearPendingInviteRef();
             clearInviteRefFromUrl();
             return true;
         }
 
         const confirmMessage = previewData.status === 'pending_to_active'
-            ? `${inviterName}?섍낵 諛붾줈 移쒓뎄濡??곌껐?좉퉴??\n湲곗〈 ?붿껌???덉쑝硫?諛붾줈 ?곌껐濡?諛붾앸땲??`
-            : `${inviterName}?섍낵 移쒓뎄濡??곌껐?좉퉴??\n珥덈? 留곹겕濡?諛붾줈 移쒓뎄 ?곌껐???꾨즺?⑸땲??`;
+            ? `${inviterName}님과 바로 친구로 연결할까요?\n기존 요청이 있으면 바로 연결로 바뀝니다.`
+            : `${inviterName}님과 친구로 연결할까요?\n초대 링크로 바로 친구 연결이 완료됩니다.`;
 
         const confirmed = window.confirm(confirmMessage);
         if (!confirmed) {
@@ -104,8 +104,8 @@ async function maybePromptExistingMemberInviteFriendship(code) {
         const result = await fn({ referralCode: code });
         const resultData = result.data || {};
         showToast(resultData.status === 'already_active'
-            ? '?대? 移쒓뎄濡??곌껐?섏뼱 ?덉뼱??'
-            : `${inviterName}?섍낵 移쒓뎄 ?곌껐???꾨즺?먯뼱??`);
+            ? '이미 친구로 연결되어 있어요.'
+            : `${inviterName}님과 친구 연결이 완료됐어요.`);
 
         clearPendingInviteRef();
         clearInviteRefFromUrl();
@@ -135,7 +135,7 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
 
     const ownCode = normalizeInviteRefCode(userData?.referralCode);
     if (ownCode && ownCode === code) {
-        showToast('??珥덈? 留곹겕?덉슂. 移쒓뎄?먭쾶 蹂대궡蹂댁꽭??');
+        showToast('내 초대 링크예요. 친구에게 보내보세요.');
         clearPendingInviteRef();
         clearInviteRefFromUrl();
         return false;
@@ -148,8 +148,8 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
             const result = await processReferral({ code });
             const bonus = Number(result.data?.bonus || 0);
             showToast(bonus > 0
-                ? `珥덈? 蹂대꼫??${bonus}P? 移쒓뎄 ?곌껐???꾨즺?먯뼱??`
-                : '珥덈? 留곹겕媛 ?곸슜?섍퀬 移쒓뎄 ?곌껐???꾨즺?먯뼱??');
+                ? `초대 보너스 ${bonus}P와 친구 연결이 완료됐어요.`
+                : '초대 링크가 적용되고 친구 연결이 완료됐어요.');
             clearPendingInviteRef();
             clearInviteRefFromUrl();
             try {
@@ -241,7 +241,7 @@ export function initAuth() {
     const webviewWarning = document.getElementById('webview-warning');
 
     if (!loginBtn) {
-        console.error('濡쒓렇??踰꾪듉??李얠쓣 ???놁뒿?덈떎.');
+        console.error('로그인 버튼을 찾을 수 없습니다.');
         return;
     }
 
@@ -258,7 +258,7 @@ export function initAuth() {
             if (copyLinkBtn) {
                 copyLinkBtn.addEventListener('click', () => {
                     navigator.clipboard.writeText(window.location.href).then(() => {
-                        showToast('??留곹겕媛 蹂듭궗?섏뿀?듬땲?? 釉뚮씪?곗???遺숈뿬?ｊ린 ?댁＜?몄슂!');
+                        showToast('링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
                     }).catch(() => {
                         // clipboard API ?ㅽ뙣 ???대갚
                         const textArea = document.createElement('textarea');
@@ -267,7 +267,7 @@ export function initAuth() {
                         textArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(textArea);
-                        showToast('??留곹겕媛 蹂듭궗?섏뿀?듬땲?? 釉뚮씪?곗???遺숈뿬?ｊ린 ?댁＜?몄슂!');
+                        showToast('링크가 복사되었습니다. 브라우저에 붙여넣기 해주세요!');
                     });
                 });
             }
@@ -283,7 +283,7 @@ export function initAuth() {
         signInWithPopup(auth, provider).then(() => {
             window.location.reload();
         }).catch(error => {
-            console.error('濡쒓렇???ㅻ쪟:', error.code, error.message, error);
+            console.error('로그인 오류:', error.code, error.message, error);
 
             if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
                 showWebViewWarning();
@@ -295,15 +295,15 @@ export function initAuth() {
             }
             window._isPopupLogin = false;
 
-            let errorMsg = '濡쒓렇?몄뿉 ?ㅽ뙣?덉뒿?덈떎.';
+            let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
-                errorMsg = '?앹뾽??李⑤떒?섏뿀?듬땲?? 釉뚮씪?곗? ?ㅼ젙?먯꽌 ?앹뾽???덉슜?댁＜?몄슂.';
+                errorMsg = '팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.';
             } else if (error.code === 'auth/network-request-failed') {
-                errorMsg = '?ㅽ듃?뚰겕 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎. ?명꽣???곌껐???뺤씤?댁＜?몄슂.';
+                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
             } else if (error.code === 'auth/unauthorized-domain') {
-                errorMsg = '???꾨찓?몄? ?뱀씤?섏? ?딆븯?듬땲?? 愿由ъ옄?먭쾶 臾몄쓽?섏꽭??';
+                errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
             }
-            showToast(`?좑툘 ${errorMsg} [${error.code || 'unknown'}]`);
+            showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
         });
     });
 }
@@ -323,7 +323,7 @@ function showWebViewWarning() {
         if (copyLinkBtn) {
             copyLinkBtn.addEventListener('click', () => {
                 navigator.clipboard.writeText(window.location.href).then(() => {
-                    showToast('??留곹겕媛 蹂듭궗?섏뿀?듬땲??');
+                    showToast('링크가 복사되었습니다.');
                 }).catch(() => {
                     const ta = document.createElement('textarea');
                     ta.value = window.location.href;
@@ -331,7 +331,7 @@ function showWebViewWarning() {
                     ta.select();
                     document.execCommand('copy');
                     document.body.removeChild(ta);
-                    showToast('??留곹겕媛 蹂듭궗?섏뿀?듬땲??');
+                    showToast('링크가 복사되었습니다.');
                 });
             });
         }
@@ -457,7 +457,7 @@ export function setupAuthListener(callbacks) {
                     }
                     if (prof.updatedAt) {
                         const dateEl = el('prof-last-date');
-                        if (dateEl) dateEl.textContent = `留덉?留?痢≪젙: ${prof.updatedAt.slice(0, 10)}`;
+                        if (dateEl) dateEl.textContent = `마지막 측정: ${prof.updatedAt.slice(0, 10)}`;
                     }
                 }
             }).catch(() => {});
@@ -485,7 +485,7 @@ export function setupAuthListener(callbacks) {
                                     const ac = snap.data()?.activeChallenges || {};
                                     const claimable = Object.keys(ac).filter(t => ac[t]?.status === 'claimable');
                                     if (claimable.length > 0) {
-                                        showToast('?럦 ?꾨즺??梨뚮┛吏媛 ?덉뒿?덈떎! ??吏媛묒뿉??蹂댁긽???섎졊?섏꽭??');
+                                        showToast('완료된 챌린지가 있습니다. 내 지갑에서 보상을 수령해 주세요.');
                                     }
                                 }).catch(() => {});
                             }).catch(() => {});
@@ -535,7 +535,7 @@ window.logoutAndReset = async function () {
     try {
         await signOut(auth);
     } catch (e) {
-        console.warn('濡쒓렇?꾩썐 ?ㅻ쪟:', e.message);
+        console.warn('로그아웃 오류:', e.message);
         location.reload();
     }
 };
@@ -544,22 +544,21 @@ window.logoutAndReset = async function () {
 window.deleteAccountAndData = async function () {
     const user = auth.currentUser;
     if (!user) {
-        showToast('?좑툘 濡쒓렇?몄씠 ?꾩슂?⑸땲??');
+        showToast('로그인이 필요합니다.');
         return;
     }
 
-    // 2?④퀎 ?뺤씤
-    if (!confirm('?뺣쭚濡?怨꾩젙????젣?섏떆寃좎뒿?덇퉴?\n\n紐⑤뱺 ?곗씠???앸떒, ?대룞, ?섎㈃ 湲곕줉, ?ъ쭊, 嫄닿컯 ?꾨줈????媛 ?곴뎄 ??젣?섎ŉ 蹂듦뎄?????놁뒿?덈떎.')) {
+    if (!confirm('정말로 계정을 삭제하시겠습니까?\n\n모든 데이터(식단, 운동, 수면 기록, 사진, 건강 프로필 등)가 영구 삭제되며 복구할 수 없습니다.')) {
         return;
     }
-    if (!confirm('?좑툘 留덉?留??뺤씤?낅땲??\n\n??젣???곗씠?곕뒗 ?덈? 蹂듦뎄?????놁뒿?덈떎.\n?뺣쭚 ??젣?섏떆寃좎뒿?덇퉴?')) {
+    if (!confirm('마지막 확인입니다.\n\n삭제된 데이터는 절대 복구할 수 없습니다.\n정말 삭제하시겠습니까?')) {
         return;
     }
 
     const deleteBtn = document.getElementById('delete-account-btn');
     if (deleteBtn) {
         deleteBtn.disabled = true;
-        deleteBtn.textContent = '?뿊截???젣 以?..';
+        deleteBtn.textContent = '계정 삭제 중...';
     }
 
     try {
@@ -613,7 +612,7 @@ window.deleteAccountAndData = async function () {
             const fileList = await listAll(userStorageRef);
             await Promise.all(fileList.items.map(item => deleteObject(item)));
         } catch (storageErr) {
-            console.warn('Storage ?뚯씪 ??젣 ?쇰? ?ㅽ뙣 (怨꾩냽 吏꾪뻾):', storageErr.message);
+            console.warn('Storage 파일 삭제 일부 실패 (계속 진행):', storageErr.message);
         }
 
         // 6. Firebase Auth 怨꾩젙 ??젣 (?ъ씤利??꾩슂?????덉쓬)
@@ -621,7 +620,7 @@ window.deleteAccountAndData = async function () {
             await deleteUser(user);
         } catch (authErr) {
             if (authErr.code === 'auth/requires-recent-login') {
-                showToast('?뵎 蹂댁븞???꾪빐 ?ㅼ떆 濡쒓렇?명빐二쇱꽭??');
+                showToast('보안을 위해 다시 로그인해주세요.');
                 const provider = new GoogleAuthProvider();
                 await reauthenticateWithPopup(user, provider);
                 await deleteUser(user);
@@ -633,15 +632,15 @@ window.deleteAccountAndData = async function () {
         // 濡쒖뺄 ?곗씠???뺣━
         localStorage.clear();
 
-        showToast('??怨꾩젙???꾩쟾????젣?섏뿀?듬땲??');
+        showToast('계정이 완전히 삭제되었습니다.');
         setTimeout(() => location.reload(), 1500);
 
     } catch (err) {
-        console.error('怨꾩젙 ??젣 ?ㅻ쪟:', err);
-        showToast('??怨꾩젙 ??젣 以??ㅻ쪟媛 諛쒖깮?덉뒿?덈떎: ' + err.message);
+        console.error('계정 삭제 오류:', err);
+        showToast('계정 삭제 중 오류가 발생했습니다: ' + err.message);
         if (deleteBtn) {
             deleteBtn.disabled = false;
-            deleteBtn.textContent = '?뿊截?怨꾩젙 ??젣';
+            deleteBtn.textContent = '계정 삭제';
         }
     }
 };
@@ -663,20 +662,20 @@ function isPushSupportedInBrowser() {
 function getPushBlockedInstructions() {
     if (isIOSPushDevice()) {
         return [
-            '?뚮┝??李⑤떒?섏뼱 ?덉뼱??',
+            '알림이 차단되어 있어요.',
             '',
-            '1. iPhone ?ㅼ젙?먯꽌 Safari ?먮뒗 ???붾㈃ ?깆쓽 ?뚮┝ ?ㅼ젙???댁뼱二쇱꽭??',
-            '2. ?대튆?ㅼ엥 ?뚮┝???덉슜?쇰줈 諛붽퓭二쇱꽭??',
-            '3. ?ㅼ떆 ?깆쑝濡??뚯븘? ?뚮┝ ?ㅼ떆 ?곌껐???뚮윭二쇱꽭??'
+            '1. iPhone 설정에서 Safari 또는 홈 화면 앱의 알림 설정으로 들어가 주세요.',
+            '2. 해빛스쿨 알림을 허용으로 바꿔 주세요.',
+            '3. 다시 앱으로 돌아와 알림 다시 연결 버튼을 눌러 주세요.'
         ].join('\n');
     }
 
     return [
-        '?뚮┝??李⑤떒?섏뼱 ?덉뼱??',
+        '알림이 차단되어 있어요.',
         '',
-        '1. 釉뚮씪?곗? 二쇱냼李??쇱そ???ъ씠???ㅼ젙???댁뼱二쇱꽭??',
-        '2. ?뚮┝ 沅뚰븳???덉슜?쇰줈 諛붽퓭二쇱꽭??',
-        '3. ?ㅼ떆 ?뚯븘? ?뚮┝ ?ㅼ떆 ?곌껐???뚮윭二쇱꽭??'
+        '1. 브라우저 주소창 왼쪽의 사이트 설정으로 들어가 주세요.',
+        '2. 알림 권한을 허용으로 바꿔 주세요.',
+        '3. 다시 돌아와 알림 다시 연결 버튼을 눌러 주세요.'
     ].join('\n');
 }
 
