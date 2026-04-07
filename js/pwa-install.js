@@ -22,6 +22,14 @@ function persistInstalledAppState(isInstalled) {
     } catch (_) {}
 }
 
+function getRelatedManifestUrlCandidates() {
+    const candidates = new Set(['/manifest.json']);
+    try {
+        candidates.add(new URL('/manifest.json', location.origin).href);
+    } catch (_) {}
+    return candidates;
+}
+
 function isLocalHost() {
     return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 }
@@ -84,10 +92,12 @@ async function detectInstalledRelatedWebApp() {
     if (typeof navigator.getInstalledRelatedApps !== 'function') return null;
     try {
         const installedApps = await navigator.getInstalledRelatedApps();
+        const manifestUrlCandidates = getRelatedManifestUrlCandidates();
         return installedApps.some((app) => {
             const platform = String(app?.platform || '').toLowerCase();
             const id = String(app?.id || '').trim();
-            return platform === 'webapp' && (!id || id === '/');
+            const url = String(app?.url || '').trim();
+            return platform === 'webapp' && (id === '/' || manifestUrlCandidates.has(url));
         });
     } catch (error) {
         console.warn('설치 앱 감지 실패:', error?.message || error);
@@ -263,8 +273,7 @@ window.addEventListener('load', async () => {
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    persistInstalledAppState(false);
-    notifyInstallCtaStateChanged();
+    refreshInstalledAppState().catch(() => notifyInstallCtaStateChanged());
 });
 
 window.addEventListener('appinstalled', () => {
@@ -281,6 +290,11 @@ document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
         refreshInstalledAppState().catch(() => notifyInstallCtaStateChanged());
     }
+});
+window.addEventListener('storage', (event) => {
+    if (event.key !== INSTALL_STATE_STORAGE_KEY) return;
+    cachedInstalledAppState = readStoredInstallState();
+    notifyInstallCtaStateChanged();
 });
 
 window.getInstallCtaState = getInstallCopy;
