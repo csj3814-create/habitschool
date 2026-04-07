@@ -10542,8 +10542,11 @@ body.dark-mode .step-detail-item { color: #bbb; }
 .notification-guide-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
     margin-top: 18px;
+}
+
+.notification-guide-actions .wallet-modal-btn {
+    min-width: 132px;
 }
 
 .profile-update-list {
@@ -11232,7 +11235,7 @@ body.dark-mode .streak-badge {
     }
 
     .notification-guide-actions {
-        flex-direction: column-reverse;
+        flex-direction: column;
     }
 
     .notification-guide-actions .wallet-modal-btn {

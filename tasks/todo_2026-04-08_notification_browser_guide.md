@@ -14,4 +14,5 @@
 - Added a dedicated notification permission guide modal with a dark overlay and browser-specific step panels.
 - Changed the denied-permission state from a disabled button into an active `설정 안내 보기` action that opens the guide instead of showing a long alert.
 - Added browser-aware visual guidance for Android Chromium browsers, desktop Chromium browsers, iPhone/iPad, and a generic fallback.
+- Simplified the modal footer to a single `확인했어요` action because the extra `닫기` button did the same thing.
 - Verified with `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js` and `npm test`.

@@ -580,3 +580,7 @@
 ### 85. When browser settings block recovery, replace text walls with guided visuals
 - If a web permission cannot be re-enabled in-app, do not leave users with a long paragraph or alert.
 - Provide a browser-aware guide modal with a mocked visual path so users can map the instructions to what they see on screen.
+
+### 86. Do not duplicate modal dismiss actions without distinct value
+- If a modal already has one clear confirmation/dismiss CTA, avoid adding a second footer button that performs the same close action.
+- Redundant close controls make simple guidance modals feel more complex than they are.
