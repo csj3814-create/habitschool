@@ -47,7 +47,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v112';
+const CACHE_NAME = 'habitschool-v113';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -127,15 +127,21 @@ self.addEventListener('notificationclick', (event) => {
     if (event.action === 'close') return;
 
     const url = event.notification.data?.url || '/';
+    const destination = new URL(url, self.location.origin).href;
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then((clientList) => {
                 for (const client of clientList) {
-                    if (client.url.includes(self.location.origin) && 'focus' in client) {
-                        return client.focus();
+                    if (client.url.startsWith(self.location.origin)) {
+                        if ('navigate' in client) {
+                            return client.navigate(destination).then(() => client.focus());
+                        }
+                        if ('focus' in client) {
+                            return client.focus();
+                        }
                     }
                 }
-                return self.clients.openWindow(url);
+                return self.clients.openWindow(destination);
             })
     );
 });

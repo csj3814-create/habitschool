@@ -10165,6 +10165,74 @@ body.dark-mode .step-detail-item { color: #bbb; }
     white-space: nowrap;
 }
 
+.profile-notification-card {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border: 1px solid #ffe0b2;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fff9f0 0%, #fff4e3 100%);
+}
+
+.profile-notification-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profile-notification-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #6d3c00;
+}
+
+.profile-notification-status {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #8a5a1d;
+}
+
+.profile-notification-helper {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #8a6a42;
+}
+
+.profile-notification-btn {
+    flex-shrink: 0;
+    min-width: 112px;
+    border: none;
+    border-radius: 11px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #4a2a00;
+    background: linear-gradient(135deg, #ffd54f 0%, #ffb300 100%);
+    box-shadow: 0 8px 18px rgba(255, 179, 0, 0.18);
+    cursor: pointer;
+}
+
+.profile-notification-btn.is-secondary {
+    color: #8a4b00;
+    background: #fff;
+    border: 1px solid #ffd08a;
+    box-shadow: none;
+}
+
+.profile-notification-btn.is-muted {
+    color: #8c857a;
+    background: #f5efe6;
+    border: 1px solid #e7d8c6;
+    box-shadow: none;
+}
+
+.profile-notification-btn:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
 .profile-update-list {
     display: flex;
     flex-direction: column;
@@ -10611,6 +10679,11 @@ body.dark-mode .profile-update-card {
     border-color: #6b573f;
 }
 
+body.dark-mode .profile-notification-card {
+    background: linear-gradient(135deg, #2a241a, #231d15);
+    border-color: #6b573f;
+}
+
 body.dark-mode .profile-update-head h3,
 body.dark-mode .profile-update-day-head strong {
     color: #f1e6d6;
@@ -10619,6 +10692,27 @@ body.dark-mode .profile-update-day-head strong {
 body.dark-mode .profile-update-head p,
 body.dark-mode .profile-update-items li {
     color: #cbb59c;
+}
+
+body.dark-mode .profile-notification-title {
+    color: #f1e6d6;
+}
+
+body.dark-mode .profile-notification-status,
+body.dark-mode .profile-notification-helper {
+    color: #d8c19b;
+}
+
+body.dark-mode .profile-notification-btn.is-secondary {
+    background: #2b2620;
+    border-color: #5b4a39;
+    color: #e2d2c0;
+}
+
+body.dark-mode .profile-notification-btn.is-muted {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #bcae9a;
 }
 
 body.dark-mode .profile-update-day {
@@ -10754,6 +10848,15 @@ body.dark-mode .streak-badge {
         width: 100%;
         max-width: 100%;
         align-self: stretch;
+    }
+
+    .profile-notification-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-notification-btn {
+        width: 100%;
     }
 }
 

@@ -194,6 +194,116 @@ function extractStoragePathFromUrl(rawUrl) {
     }
 }
 
+async function sendPushToUsers(userIds, payload) {
+    const targetIds = [...new Set((userIds || []).filter(Boolean))];
+    if (targetIds.length === 0) return 0;
+
+    const userDocs = await Promise.all(targetIds.map(uid => db.doc(`users/${uid}`).get()));
+    const tokens = [];
+    const uids = [];
+
+    userDocs.forEach((snap, index) => {
+        const token = String(snap.data()?.fcmToken || "").trim();
+        if (token) {
+            tokens.push(token);
+            uids.push(targetIds[index]);
+        }
+    });
+
+    if (tokens.length === 0) return 0;
+    await sendMulticast(tokens, uids, payload);
+    return tokens.length;
+}
+
+function buildFriendRequestPushPayload(requesterName) {
+    return {
+        title: "Friend request",
+        body: `${requesterName || "A friend"} sent you a request.`,
+        tag: "friend-request",
+        url: "/#profile"
+    };
+}
+
+function buildFriendConnectedPushPayload(friendName) {
+    return {
+        title: "Friend connected",
+        body: `${friendName || "A friend"} is now connected with you.`,
+        tag: "friend-connected",
+        url: "/#profile"
+    };
+}
+
+function buildFriendDeclinedPushPayload(friendName) {
+    return {
+        title: "Friend request update",
+        body: `${friendName || "A friend"} declined this request.`,
+        tag: "friend-declined",
+        url: "/#profile"
+    };
+}
+
+function buildChallengeInvitePushPayload({ creatorName, type, durationDays, stakePoints }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "1:1 challenge invite" : "Group goal invite",
+        body: isCompetition
+            ? `${creatorName || "A friend"} invited you to a ${durationDays}-day challenge for ${stakePoints || 0}P.`
+            : `${creatorName || "A friend"} invited you to a ${durationDays}-day group goal.`,
+        tag: isCompetition ? "challenge-invite-competition" : "challenge-invite-group",
+        url: "/#dashboard"
+    };
+}
+
+function buildChallengeStartedPushPayload({ type, durationDays }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "1:1 challenge started" : "Group goal started",
+        body: `${durationDays}-day challenge is now active.`,
+        tag: isCompetition ? "challenge-started-competition" : "challenge-started-group",
+        url: "/#dashboard"
+    };
+}
+
+function buildChallengePendingUpdatePushPayload({ accepterName, type }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "Challenge response received" : "Group goal response received",
+        body: `${accepterName || "A friend"} accepted the invite. Waiting for the rest.`,
+        tag: isCompetition ? "challenge-pending-competition" : "challenge-pending-group",
+        url: "/#dashboard"
+    };
+}
+
+function buildChallengeDeclinedPushPayload({ responderName, type }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "Challenge declined" : "Group goal declined",
+        body: `${responderName || "A friend"} declined the invite.`,
+        tag: isCompetition ? "challenge-declined-competition" : "challenge-declined-group",
+        url: "/#dashboard"
+    };
+}
+
+function buildChallengeCancelledPushPayload({ creatorName, type }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "Challenge cancelled" : "Group goal cancelled",
+        body: `${creatorName || "A friend"} cancelled the pending challenge.`,
+        tag: isCompetition ? "challenge-cancelled-competition" : "challenge-cancelled-group",
+        url: "/#dashboard"
+    };
+}
+
+function buildChallengeSettledPushPayload({ type, outcome, bonusPoints }) {
+    const isCompetition = type === "competition";
+    return {
+        title: isCompetition ? "Challenge result is ready" : "Group goal result is ready",
+        body: `Outcome: ${outcome || "unknown"}${bonusPoints > 0 ? `, bonus ${bonusPoints}P` : ""}.`,
+        tag: isCompetition ? "challenge-settled-competition" : "challenge-settled-group",
+        url: "/#dashboard"
+    };
+}
+
 function inferImageContentType(storagePath = "") {
     const lowerPath = String(storagePath || "").toLowerCase();
     if (lowerPath.endsWith(".png")) return "image/png";
@@ -1281,6 +1391,10 @@ exports.processReferralSignup = onCall(
             };
         });
 
+        if (outcome.friendshipStatus === "connected") {
+            await sendPushToUsers([referrerUid], buildFriendConnectedPushPayload(outcome.inviterName));
+        }
+
         console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P +friendship`);
         return outcome;
     }
@@ -1494,7 +1608,7 @@ exports.acceptInviteLinkFriendship = onCall(
             };
         }
 
-        return db.runTransaction(async (tx) => {
+        const outcome = await db.runTransaction(async (tx) => {
             const [userSnap, inviterSnap, friendshipSnap] = await Promise.all([
                 tx.get(userRef),
                 tx.get(inviterRef),
@@ -1553,6 +1667,12 @@ exports.acceptInviteLinkFriendship = onCall(
                 friendshipId,
             };
         });
+
+        if (outcome.status === "connected" || outcome.status === "pending_promoted") {
+            await sendPushToUsers([inviterUid], buildFriendConnectedPushPayload(outcome.inviterName));
+        }
+
+        return outcome;
     }
 );
 
@@ -1667,8 +1787,12 @@ exports.requestFriend = onCall(
                 expiresAt: admin.firestore.Timestamp.fromDate(expiresAt)
             });
 
-            return { status: "pending_created", friendshipId, targetUid, targetName };
+            return { status: "pending_created", friendshipId, targetUid, targetName, requesterName };
         });
+
+        if (outcome.status === "pending_created") {
+            await sendPushToUsers([outcome.targetUid], buildFriendRequestPushPayload(outcome.requesterName));
+        }
 
         return outcome;
     }
@@ -1761,7 +1885,13 @@ exports.respondFriendRequest = onCall(
                     createdAt: now
                 });
 
-                return { result: "declined", friendshipId, friendName: requesterName };
+                return {
+                    result: "declined",
+                    friendshipId,
+                    friendName: requesterName,
+                    requesterUid,
+                    responderName: targetName
+                };
             }
 
             tx.set(friendshipRef, {
@@ -1795,8 +1925,20 @@ exports.respondFriendRequest = onCall(
                 createdAt: now
             });
 
-            return { result: "accepted", friendshipId, friendName: requesterName };
+            return {
+                result: "accepted",
+                friendshipId,
+                friendName: requesterName,
+                requesterUid,
+                responderName: targetName
+            };
         });
+
+        if (outcome.result === "accepted" && outcome.requesterUid) {
+            await sendPushToUsers([outcome.requesterUid], buildFriendConnectedPushPayload(outcome.responderName));
+        } else if (outcome.result === "declined" && outcome.requesterUid) {
+            await sendPushToUsers([outcome.requesterUid], buildFriendDeclinedPushPayload(outcome.responderName));
+        }
 
         return outcome;
     }
@@ -3624,15 +3766,27 @@ async function getTodayLoggedUserIds(todayKST) {
  * FCM 일괄 발송 (500개 청크 분할)
  * 유효하지 않은 토큰은 Firestore에서 자동 삭제
  */
-async function sendMulticast(tokens, uids, title, body, tag) {
+async function sendMulticast(tokens, uids, payload) {
     if (tokens.length === 0) return;
+    const {
+        title = "",
+        body = "",
+        tag = "general",
+        url = "/",
+        icon = APP_ICON_URL
+    } = payload || {};
     const CHUNK = 500;
     for (let i = 0; i < tokens.length; i += CHUNK) {
         const chunkTokens = tokens.slice(i, i + CHUNK);
         const chunkUids = uids.slice(i, i + CHUNK);
         const res = await admin.messaging().sendEachForMulticast({
             tokens: chunkTokens,
-            data: { title, body, tag, url: "/" }
+            data: { title, body, tag, url, icon },
+            webpush: {
+                fcmOptions: {
+                    link: url.startsWith("http") ? url : `${APP_BASE_URL}${url}`
+                }
+            }
         });
         // 유효하지 않은 토큰 정리
         const deletes = [];
@@ -3671,11 +3825,11 @@ exports.sendDailyReminder = onSchedule(
         });
 
         console.log(`sendDailyReminder: 대상 ${tokens.length}명 / 오늘 기록 ${loggedIds.size}명`);
-        await sendMulticast(tokens, uids,
+        await sendMulticast(tokens, uids, { title: "Daily reminder", body: "Log your health routine today.", tag: "daily-reminder", url: "/#dashboard" }); /*
             "🌞 오늘 건강 기록하셨나요?",
             "식단·운동·수면 기록으로 건강 습관을 이어가세요!",
             "daily-reminder"
-        );
+        ); */
     }
 );
 
@@ -3703,13 +3857,13 @@ exports.sendStreakAlert = onSchedule(
         });
 
         console.log(`sendStreakAlert: 대상 ${sendJobs.length}명`);
-        await sendMulticast(
+        await sendMulticast(sendJobs.map(j => j.token), sendJobs.map(j => j.uid), { title: "Streak reminder", body: "Log now to keep your streak alive.", tag: "streak-alert", url: "/#dashboard" }); /*
             sendJobs.map(j => j.token),
             sendJobs.map(j => j.uid),
             "🔥 연속 습관 달성이 끊길 위기!",
             "지금 기록하면 연속 달성을 지킬 수 있어요",
             "streak-alert"
-        );
+        ); */
     }
 );
 
@@ -3738,7 +3892,7 @@ exports.sendBroadcastNotification = onCall(
         });
 
         if (tokens.length === 0) return { sentCount: 0 };
-        await sendMulticast(tokens, uids, title, body, "broadcast");
+        await sendMulticast(tokens, uids, { title, body, tag: "broadcast", url: "/#dashboard" });
         console.log(`sendBroadcastNotification: ${tokens.length}명 발송 완료`);
         return { sentCount: tokens.length };
     }
@@ -3951,6 +4105,11 @@ exports.createSocialChallenge = onCall(
             });
         }
 
+        await sendPushToUsers(
+            inviteeIds,
+            buildChallengeInvitePushPayload({ creatorName, type, durationDays, stakePoints })
+        );
+
         console.log(`[createSocialChallenge] ${uid} → ${inviteeIds.join(',')} (${type}, ${durationDays}일)`);
         return { challengeId };
     }
@@ -4004,6 +4163,10 @@ exports.respondSocialChallenge = onCall(
             } else {
                 await challengeRef.update({ invitees: newInvitees });
             }
+            await sendPushToUsers(
+                [challenge.creatorId],
+                buildChallengeDeclinedPushPayload({ responderName: null, type: challenge.type })
+            );
             console.log(`[respondSocialChallenge] ${uid} 거절: ${challengeId}`);
             return { result: 'declined' };
         }
@@ -4015,6 +4178,7 @@ exports.respondSocialChallenge = onCall(
 
         const userSnap = await db.doc(`users/${uid}`).get();
         const userData = userSnap.data();
+        const responderName = getUserLabel(userData, request.auth?.token?.name || "Friend");
 
         // 경쟁 모드: 포인트 락업
         if (challenge.type === 'competition') {
@@ -4055,6 +4219,15 @@ exports.respondSocialChallenge = onCall(
                     createdAt: now
                 });
             }
+            await sendPushToUsers(
+                newParticipants,
+                buildChallengeStartedPushPayload({ type: challenge.type, durationDays: challenge.durationDays })
+            );
+        } else {
+            await sendPushToUsers(
+                [challenge.creatorId],
+                buildChallengePendingUpdatePushPayload({ accepterName: responderName, type: challenge.type })
+            );
         }
 
         await challengeRef.update(updateData);
@@ -4109,9 +4282,22 @@ exports.cancelSocialChallenge = onCall(
             return {
                 result: "cancelled",
                 challengeId,
-                refundPoints
+                refundPoints,
+                inviteeIds: Array.isArray(challenge.invitees) ? challenge.invitees : [],
+                creatorName: challenge.creatorName || null,
+                challengeType: challenge.type || "group_goal"
             };
         });
+
+        if (outcome.inviteeIds?.length) {
+            await sendPushToUsers(
+                outcome.inviteeIds,
+                buildChallengeCancelledPushPayload({
+                    creatorName: outcome.creatorName,
+                    type: outcome.challengeType
+                })
+            );
+        }
 
         console.log(`[cancelSocialChallenge] ${uid} 취소: ${challengeId}`);
         return outcome;
@@ -4249,6 +4435,17 @@ async function settleChallengeById(challengeId) {
             bonusPoints: results[pid]?.bonusPoints || 0,
             createdAt: now
         });
+    }
+
+    for (const pid of participants) {
+        await sendPushToUsers(
+            [pid],
+            buildChallengeSettledPushPayload({
+                type,
+                outcome: results[pid]?.outcome || "unknown",
+                bonusPoints: results[pid]?.bonusPoints || 0
+            })
+        );
     }
 
     console.log(`[settleChallengeById] ${challengeId} settled (${type})`);

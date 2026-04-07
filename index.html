@@ -587,6 +587,20 @@
                                 onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">변경</button>
                         </div>
                     </div>
+                    <div class="profile-notification-card">
+                        <div class="profile-notification-head">
+                            <div>
+                                <div class="profile-notification-title">🔔 앱 알림</div>
+                                <div id="notification-permission-status" class="profile-notification-status">알림 상태를 확인 중이에요.</div>
+                            </div>
+                            <button type="button" id="notification-permission-btn" class="profile-notification-btn" onclick="requestAppNotificationPermission()">
+                                알림 켜기
+                            </button>
+                        </div>
+                        <p id="notification-permission-helper" class="profile-notification-helper">
+                            친구 요청, 챌린지 초대, 리마인더를 앱 알림으로 받을 수 있어요.
+                        </p>
+                    </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
                             onclick="logoutAndReset()">🚪 로그아웃</button>

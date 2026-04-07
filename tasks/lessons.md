@@ -560,3 +560,11 @@
 ### 80. Shared CTA helpers must not clobber special tab modes
 - If a bottom CTA slot is reused across tabs, the shared update helper must explicitly skip tab-specific modes like install or community chat.
 - Otherwise background guide refreshes can keep the old label while resetting the style and behavior underneath it.
+
+### 81. Web push permission must be explicit and platform-aware
+- Do not auto-call `Notification.requestPermission()` after login or page load.
+- Keep web push opt-in behind a clear user action, and on iPhone require the installed home screen app path before asking for permission.
+
+### 82. After editing browser entry modules, run the real browser bundle check
+- A syntax error in `js/auth.js` can break login even if the rest of the app looks mostly unchanged.
+- After touching auth or other top-level browser modules, run the esbuild bundle check immediately before reporting success.
