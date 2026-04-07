@@ -572,3 +572,7 @@
 ### 83. Preserve UTF-8 when touching user-facing Korean strings
 - If a JS file contains Korean UI copy, avoid shell rewrite patterns that can silently corrupt encoding into mojibake.
 - After editing user-facing text, verify the actual rendered copy on staging or with a bundle check before calling it done.
+
+### 84. Browser permission state and app push state are different UX problems
+- A granted browser notification permission does not mean the app should always be actively subscribed to push.
+- For simpler UX, keep browser permission as a prerequisite and offer a separate app-level one-tap push on/off toggle once permission is granted.

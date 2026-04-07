@@ -1,7 +1,7 @@
 ﻿// ?몄쬆 愿由?紐⑤뱢
 import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
@@ -11,6 +11,8 @@ import { escapeHtml } from './security.js';
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
+let _pushTokenLinked = false;
+let _pushTokenValue = '';
 
 function normalizeInviteRefCode(rawCode) {
     const normalized = String(rawCode || '').trim().toUpperCase();
@@ -405,6 +407,10 @@ export function setupAuthListener(callbacks) {
                     ? (userDoc.data() || {})
                     : { ...updateData };
 
+                _pushTokenLinked = Boolean(ud.fcmToken);
+                _pushTokenValue = typeof ud.fcmToken === 'string' ? ud.fcmToken : '';
+                updateNotificationPermissionCard(user);
+
                 if (ud.customDisplayName) {
                     window._userDisplayName = ud.customDisplayName;
                     document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(ud.customDisplayName)}`;
@@ -514,6 +520,8 @@ export function setupAuthListener(callbacks) {
                 window.openTab('gallery', false);
             }
             window._wasLoggedIn = false;
+            _pushTokenLinked = false;
+            _pushTokenValue = '';
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
             if (pendingChatbotToken && window.handleLoggedOutChatbotConnect) {
                 setTimeout(() => {
@@ -659,24 +667,8 @@ function isPushSupportedInBrowser() {
     return !IS_LOCAL_ENV && ('Notification' in window) && ('serviceWorker' in navigator);
 }
 
-function getPushBlockedInstructions() {
-    if (isIOSPushDevice()) {
-        return [
-            '알림이 차단되어 있어요.',
-            '',
-            '1. iPhone 설정에서 Safari 또는 홈 화면 앱의 알림 설정으로 들어가 주세요.',
-            '2. 해빛스쿨 알림을 허용으로 바꿔 주세요.',
-            '3. 다시 앱으로 돌아와 알림 다시 연결 버튼을 눌러 주세요.'
-        ].join('\n');
-    }
-
-    return [
-        '알림이 차단되어 있어요.',
-        '',
-        '1. 브라우저 주소창 왼쪽의 사이트 설정으로 들어가 주세요.',
-        '2. 알림 권한을 허용으로 바꿔 주세요.',
-        '3. 다시 돌아와 알림 다시 연결 버튼을 눌러 주세요.'
-    ].join('\n');
+function isAppPushConnected() {
+    return _pushTokenLinked === true;
 }
 
 function getPushPermissionUiState(user = auth.currentUser) {
@@ -704,18 +696,28 @@ function getPushPermissionUiState(user = auth.currentUser) {
         return {
             status: 'iPhone과 iPad에서는 홈 화면에 추가한 뒤 알림을 켤 수 있어요.',
             helper: '먼저 해빛스쿨을 홈 화면에 추가한 뒤, 설치된 앱에서 이 버튼을 눌러 알림을 켜주세요.',
-            buttonLabel: '설치 안내',
+            buttonLabel: '홈 화면에 추가',
             buttonMode: 'secondary',
             disabled: false
         };
     }
 
     if (Notification.permission === 'granted') {
+        if (isAppPushConnected()) {
+            return {
+                status: '이 기기에서 해빛스쿨 푸시 알림이 켜져 있어요.',
+                helper: '원하면 버튼 한 번으로 해빛스쿨 푸시 알림만 끌 수 있어요.',
+                buttonLabel: '알림 끄기',
+                buttonMode: 'secondary',
+                disabled: false
+            };
+        }
+
         return {
-            status: '이 기기에서 푸시 알림이 켜져 있어요.',
-            helper: '친구 요청, 챌린지 초대, 리마인더를 즉시 푸시 알림으로 받을 수 있어요.',
-            buttonLabel: '알림 다시 연결',
-            buttonMode: 'secondary',
+            status: '브라우저 알림 권한은 허용되어 있어요.',
+            helper: '버튼 한 번으로 해빛스쿨 푸시 알림을 바로 켤 수 있어요.',
+            buttonLabel: '알림 켜기',
+            buttonMode: 'primary',
             disabled: false
         };
     }
@@ -723,10 +725,10 @@ function getPushPermissionUiState(user = auth.currentUser) {
     if (Notification.permission === 'denied') {
         return {
             status: '브라우저에서 알림이 차단되어 있어요.',
-            helper: '설정에서 알림을 허용으로 바꾼 뒤 다시 연결하면 푸시 알림을 받을 수 있어요.',
-            buttonLabel: '설정 방법 보기',
-            buttonMode: 'secondary',
-            disabled: false
+            helper: '주소창 왼쪽 아이콘의 사이트 설정에서 알림을 허용으로 바꾸면 다시 켤 수 있어요.',
+            buttonLabel: '브라우저에서 차단됨',
+            buttonMode: 'muted',
+            disabled: true
         };
     }
 
@@ -758,7 +760,7 @@ async function ensureFirebaseMessaging() {
     if (_messagingPromise) return _messagingPromise;
 
     _messagingPromise = import('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js')
-        .then(({ getMessaging, getToken, onMessage }) => {
+        .then(({ getMessaging, getToken, deleteToken, onMessage }) => {
             const messaging = getMessaging();
 
             if (!_foregroundPushListenerBound) {
@@ -769,7 +771,7 @@ async function ensureFirebaseMessaging() {
                 _foregroundPushListenerBound = true;
             }
 
-            return { messaging, getToken };
+            return { messaging, getToken, deleteToken };
         });
 
     return _messagingPromise;
@@ -793,6 +795,8 @@ async function registerFCMToken(user) {
             fcmToken: token
         }, { merge: true });
 
+        _pushTokenLinked = true;
+        _pushTokenValue = token;
         return { status: 'granted', token };
     } catch (e) {
         console.warn('[FCM] 토큰 등록 실패:', e.message);
@@ -800,10 +804,51 @@ async function registerFCMToken(user) {
     }
 }
 
+async function disableFCMToken(user) {
+    if (!user || !isPushSupportedInBrowser()) return { status: 'unsupported' };
+    if (Notification.permission !== 'granted') return { status: Notification.permission || 'default' };
+
+    try {
+        const { messaging, getToken, deleteToken } = await ensureFirebaseMessaging();
+        const swReg = await navigator.serviceWorker.ready;
+        let currentToken = '';
+
+        try {
+            currentToken = await getToken(messaging, {
+                vapidKey: FCM_PUBLIC_VAPID_KEY,
+                serviceWorkerRegistration: swReg
+            }) || '';
+        } catch (_) {}
+
+        await deleteToken(messaging).catch(() => false);
+
+        const userRef = doc(db, 'users', user.uid);
+        const storedSnap = await getDoc(userRef).catch(() => null);
+        const storedToken = storedSnap?.data?.()?.fcmToken || '';
+        if (!storedToken || !currentToken || storedToken === currentToken || storedToken === _pushTokenValue) {
+            await setDoc(userRef, { fcmToken: deleteField() }, { merge: true });
+        }
+
+        _pushTokenLinked = false;
+        _pushTokenValue = '';
+        return { status: 'disabled' };
+    } catch (e) {
+        console.warn('[FCM] 토큰 해제 실패:', e.message);
+        return { status: 'error', message: e.message };
+    }
+}
+
 async function syncCurrentPushState(user = auth.currentUser) {
     if (!user) {
+        _pushTokenLinked = false;
+        _pushTokenValue = '';
         updateNotificationPermissionCard(null);
         return { status: 'signed-out' };
+    }
+
+    if (Notification.permission === 'granted' && !_pushTokenLinked) {
+        updateNotificationPermissionCard(user);
+        return { status: 'granted-unlinked' };
     }
 
     const result = await registerFCMToken(user);
@@ -825,14 +870,12 @@ window.requestAppNotificationPermission = async function () {
     }
 
     if (isIOSPushDevice() && !isStandalonePushMode()) {
-        showToast('iPhone에서는 홈 화면에 추가한 앱에서만 알림을 켤 수 있어요.');
         window.handleInstallCtaAction?.();
         updateNotificationPermissionCard(user);
         return;
     }
 
     if (Notification.permission === 'denied') {
-        window.alert(getPushBlockedInstructions());
         updateNotificationPermissionCard(user);
         return;
     }
@@ -844,6 +887,17 @@ window.requestAppNotificationPermission = async function () {
     }
 
     try {
+        if (Notification.permission === 'granted' && isAppPushConnected()) {
+            const result = await disableFCMToken(user);
+            if (result.status === 'disabled') {
+                showToast('이 기기의 해빛스쿨 푸시 알림을 껐어요.');
+            } else {
+                showToast('알림 끄기 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
+            }
+            updateNotificationPermissionCard(user);
+            return;
+        }
+
         if (Notification.permission !== 'granted') {
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
