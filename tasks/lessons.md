@@ -540,3 +540,7 @@
 ### 75. Mirror UI concurrency rules on the server
 - If the modal disables a challenge type or filters out a busy friend, the callable must enforce the same rules.
 - This prevents stale tabs or race conditions from creating invalid challenge combinations.
+
+### 76. Save flows must read the current analysis state, not stale loaded data
+- If AI analysis can be generated after the page loads, the save payload must be built from the current UI or refreshed cache.
+- Reusing the originally loaded document can silently overwrite freshly saved analysis and break restore or gallery badges.

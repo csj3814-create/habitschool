@@ -3091,7 +3091,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                     // 수면 분석 초기화
                     if (meal === 'sleep') {
                         const sleepResult = document.getElementById('sleep-analysis-result');
-                        if (sleepResult) { sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
+                        if (sleepResult) { sleepResult._analysisData = null; sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
                         if (aiBtn) aiBtn.removeAttribute('data-analyzed');
                     }
                 }
@@ -3197,7 +3197,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
         // 수면 분석 초기화
         if (meal === 'sleep') {
             const sleepResult = document.getElementById('sleep-analysis-result');
-            if (sleepResult) { sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
+            if (sleepResult) { sleepResult._analysisData = null; sleepResult.innerHTML = ''; sleepResult.style.display = 'none'; }
             if (aiBtn) aiBtn.removeAttribute('data-analyzed');
         }
     }
@@ -3403,7 +3403,7 @@ function clearInputs() {
 
     // 수면 분석 결과 초기화
     const sleepResultBox = document.getElementById('sleep-analysis-result');
-    if (sleepResultBox) { sleepResultBox.innerHTML = ''; sleepResultBox.style.display = 'none'; }
+    if (sleepResultBox) { sleepResultBox._analysisData = null; sleepResultBox.innerHTML = ''; sleepResultBox.style.display = 'none'; }
     // 마음 분석 결과 초기화
     const mindResultBox = document.getElementById('mind-analysis-result');
     if (mindResultBox) { mindResultBox.innerHTML = ''; mindResultBox.style.display = 'none'; }
@@ -3442,6 +3442,27 @@ function updateDailyLogCache(docId, data) {
 function getCachedDailyLog(docId) {
     if (_dailyLogCache.docId !== docId || !_dailyLogCache.data) return null;
     return cloneDailyLogData(_dailyLogCache.data);
+}
+
+function collectCurrentDietAnalysisFromUi() {
+    const meals = ['breakfast', 'lunch', 'dinner', 'snack'];
+    const dietAnalysis = {};
+
+    meals.forEach(meal => {
+        const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+        const analysis = resultContainer?._analysisData;
+        if (analysis && typeof analysis === 'object') {
+            dietAnalysis[meal] = analysis;
+        }
+    });
+
+    return dietAnalysis;
+}
+
+function getCurrentSleepAnalysisFromUi() {
+    const resultBox = document.getElementById('sleep-analysis-result');
+    const analysis = resultBox?._analysisData;
+    return analysis && typeof analysis === 'object' ? analysis : null;
 }
 
 // 데이터 로드 generation 카운터 (race condition 방지)
@@ -3544,6 +3565,7 @@ async function loadDataForSelectedDate(dateStr) {
                     const sleepAiBtn = document.getElementById('ai-btn-sleep');
                     if (sleepResultBox && typeof renderSleepMindAnalysisResult === 'function') {
                         renderSleepMindAnalysisResult(data.sleepAndMind.sleepAnalysis, sleepResultBox);
+                        sleepResultBox._analysisData = data.sleepAndMind.sleepAnalysis;
                         sleepResultBox.style.display = 'none';
                         if (sleepAiBtn) {
                             sleepAiBtn.setAttribute('data-analyzed', 'true');
@@ -7875,9 +7897,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             awarded.exercise = newExerPts > 0;
             awarded.mind = newMindPts > 0;
 
-            // 기존 AI 분석 결과 보존
-            const existingAnalysis = oldData.dietAnalysis || {};
-            const existingSleepAnalysis = oldData.sleepAndMind?.sleepAnalysis || null;
+            const currentDietAnalysis = collectCurrentDietAnalysisFromUi();
+            const currentSleepAnalysis = getCurrentSleepAnalysisFromUi();
             const shareSettings = getCurrentShareSettings();
 
             const saveData = sanitize({
@@ -7887,10 +7908,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,
                     breakfastThumbUrl: bThumbUrl, lunchThumbUrl: lThumbUrl, dinnerThumbUrl: dThumbUrl, snackThumbUrl: sThumbUrl
                 },
-                dietAnalysis: existingAnalysis,
+                dietAnalysis: currentDietAnalysis,
                 exercise: { cardioList: cardioList, strengthList: strengthList },
                 steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: new Date().toISOString() } : (oldData.steps || null),
-                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: existingSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText },
+                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: currentSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText },
                 shareSettings: shareSettings
             });
 
@@ -10410,6 +10431,14 @@ async function analyzeMealPhoto(meal) {
                 await setDoc(doc(db, "daily_logs", docId), {
                     dietAnalysis: { [meal]: analysis }
                 }, { merge: true });
+                const cachedData = getCachedDailyLog(docId) || {};
+                updateDailyLogCache(docId, {
+                    ...cachedData,
+                    dietAnalysis: {
+                        ...(cachedData.dietAnalysis || {}),
+                        [meal]: analysis
+                    }
+                });
             }
             showToast('✅ AI 식단 분석 완료!');
             updateDietDaySummary();
@@ -10677,6 +10706,7 @@ window.analyzeSleepData = async function() {
         const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
         if (analysis) {
             renderSleepMindAnalysisResult(analysis, resultBox);
+            resultBox._analysisData = analysis;
             if (aiBtn) {
                 aiBtn.textContent = '🤖 분석 접기';
                 aiBtn.setAttribute('data-analyzed', 'true');
@@ -10689,6 +10719,14 @@ window.analyzeSleepData = async function() {
                 await setDoc(doc(db, "daily_logs", docId), {
                     sleepAndMind: { sleepAnalysis: analysis }
                 }, { merge: true });
+                const cachedData = getCachedDailyLog(docId) || {};
+                updateDailyLogCache(docId, {
+                    ...cachedData,
+                    sleepAndMind: {
+                        ...(cachedData.sleepAndMind || {}),
+                        sleepAnalysis: analysis
+                    }
+                });
             }
         } else {
             resultBox.innerHTML = '<p style="color:#ef4444; padding:10px; font-size:13px;">분석 결과를 받지 못했습니다.</p>';
