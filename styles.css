@@ -9706,23 +9706,42 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 
 @media (max-width: 420px) {
     .upload-cta-split {
-        grid-template-columns: 1fr;
+        grid-template-columns: 52px minmax(0, 1fr);
         grid-template-areas:
-            "icon"
-            "text"
-            "actions";
+            "icon text"
+            "icon actions";
+        column-gap: 10px;
+        row-gap: 8px;
+        padding: 12px 14px;
     }
 
     .upload-cta-split .upload-cta-icon {
-        justify-self: start;
+        align-self: center;
+        justify-self: center;
+        font-size: 26px;
+    }
+
+    .upload-cta-split .upload-cta-text strong {
+        font-size: 13px;
+    }
+
+    .upload-cta-split .upload-cta-text span {
+        font-size: 10px;
+        line-height: 1.35;
     }
 
     .upload-cta-split .upload-cta-actions {
         width: 100%;
+        gap: 6px;
+        flex-wrap: nowrap;
     }
 
     .upload-cta-split .upload-cta-btn {
-        flex-basis: calc(50% - 4px);
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 38px;
+        padding: 0 8px;
+        font-size: 12px;
     }
 }
 

@@ -544,3 +544,7 @@
 ### 76. Save flows must read the current analysis state, not stale loaded data
 - If AI analysis can be generated after the page loads, the save payload must be built from the current UI or refreshed cache.
 - Reusing the originally loaded document can silently overwrite freshly saved analysis and break restore or gallery badges.
+
+### 77. Mobile layout changes need screenshot-level checks, not just desktop logic
+- If a new CTA uses a custom mobile media query, verify the stacked result on a narrow viewport before calling the layout done.
+- Do not switch a compact two-row card to a single-column mobile layout unless the screenshot clearly proves that wrapping is better.
