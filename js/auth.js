@@ -667,9 +667,293 @@ function isPushSupportedInBrowser() {
     return !IS_LOCAL_ENV && ('Notification' in window) && ('serviceWorker' in navigator);
 }
 
+function getNotificationGuideProfile() {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    const isAndroid = /Android/i.test(ua);
+    const isDesktop = /Windows NT|Macintosh|Linux/i.test(ua) && !isAndroid && !isIOSPushDevice();
+    const isSamsungBrowser = /SamsungBrowser/i.test(ua);
+    const isEdge = /EdgA|Edg\//i.test(ua);
+    const isWhale = /Whale/i.test(ua);
+
+    if (isIOSPushDevice()) {
+        return {
+            badge: 'iPhone / iPad 안내',
+            title: '설정 앱에서 해빛스쿨 알림을 다시 켜요',
+            copy: 'iPhone과 iPad는 설치된 앱 권한을 설정 앱에서 바꾸면 됩니다.',
+            note: '기기마다 문구가 조금 달라도 보통 설정 앱의 알림 메뉴 안에 있어요.',
+            panels: [
+                {
+                    step: 'STEP 1',
+                    title: '설정 앱을 열어요',
+                    copy: '브라우저가 아니라 iPhone 설정 앱으로 이동해 주세요.',
+                    variant: 'ios-settings-home'
+                },
+                {
+                    step: 'STEP 2',
+                    title: '알림 메뉴를 눌러요',
+                    copy: '설정 목록에서 알림 메뉴를 열면 앱별 권한을 찾을 수 있어요.',
+                    variant: 'ios-settings-notifications'
+                },
+                {
+                    step: 'STEP 3',
+                    title: '해빛스쿨 알림을 허용으로 바꿔요',
+                    copy: '허용으로 바꾼 뒤 앱으로 돌아오면 다시 알림 켜기를 할 수 있어요.',
+                    variant: 'ios-settings-app'
+                }
+            ]
+        };
+    }
+
+    if (isAndroid) {
+        const browserLabel = isSamsungBrowser
+            ? '삼성 인터넷'
+            : isEdge
+                ? 'Edge'
+                : isWhale
+                    ? 'Whale'
+                    : 'Chrome';
+
+        return {
+            badge: `${browserLabel} 안드로이드 안내`,
+            title: '주소창 왼쪽 아이콘에서 알림을 다시 켜요',
+            copy: '지금 보신 화면처럼 주소창 왼쪽 아이콘을 누르면 권한 메뉴로 들어갈 수 있어요.',
+            note: '브라우저마다 이름은 조금 달라도 보통 `권한` 또는 `사이트 설정` 메뉴 안에 있어요.',
+            panels: [
+                {
+                    step: 'STEP 1',
+                    title: '주소창 왼쪽 아이콘을 눌러요',
+                    copy: '사이트 정보 패널을 여는 버튼입니다.',
+                    variant: 'android-address'
+                },
+                {
+                    step: 'STEP 2',
+                    title: '권한 메뉴를 눌러요',
+                    copy: '`권한` 또는 `사이트 설정` 줄을 열면 알림 상태를 바꿀 수 있어요.',
+                    variant: 'android-permissions'
+                },
+                {
+                    step: 'STEP 3',
+                    title: '알림을 허용으로 바꿔요',
+                    copy: '허용으로 바꾼 뒤 해빛스쿨로 돌아오면 바로 다시 연결할 수 있어요.',
+                    variant: 'android-allow'
+                }
+            ]
+        };
+    }
+
+    if (isDesktop) {
+        const browserLabel = isEdge ? 'Edge' : isWhale ? 'Whale' : 'Chrome';
+        return {
+            badge: `${browserLabel} 데스크톱 안내`,
+            title: '주소창 왼쪽 사이트 아이콘에서 알림을 다시 켜요',
+            copy: '데스크톱 브라우저도 거의 같은 위치에서 사이트 알림 권한을 바꿀 수 있어요.',
+            note: '브라우저마다 메뉴 이름은 조금 달라도 보통 사이트 설정 또는 권한 메뉴에 있어요.',
+            panels: [
+                {
+                    step: 'STEP 1',
+                    title: '주소창 왼쪽 아이콘을 눌러요',
+                    copy: '자물쇠나 사이트 정보 아이콘을 클릭해 주세요.',
+                    variant: 'desktop-address'
+                },
+                {
+                    step: 'STEP 2',
+                    title: '사이트 설정 또는 권한을 열어요',
+                    copy: '작은 팝업 안에서 사이트 설정으로 들어가 주세요.',
+                    variant: 'desktop-settings'
+                },
+                {
+                    step: 'STEP 3',
+                    title: '알림을 허용으로 바꿔요',
+                    copy: '허용으로 바꾸면 다시 해빛스쿨 푸시를 켤 수 있어요.',
+                    variant: 'desktop-allow'
+                }
+            ]
+        };
+    }
+
+    return {
+        badge: '브라우저 안내',
+        title: '사이트 설정에서 알림을 다시 켜요',
+        copy: '브라우저마다 모양은 조금 달라도 보통 주소창 주변의 사이트 설정에서 바꿀 수 있어요.',
+        note: '`권한`, `사이트 설정`, `알림` 같은 이름을 찾으면 됩니다.',
+        panels: [
+            {
+                step: 'STEP 1',
+                title: '주소창 주변의 사이트 아이콘을 눌러요',
+                copy: '자물쇠, 정보, 슬라이더 같은 아이콘일 수 있어요.',
+                variant: 'generic-address'
+            },
+            {
+                step: 'STEP 2',
+                title: '권한 또는 사이트 설정을 열어요',
+                copy: '브라우저마다 이름은 달라도 권한 메뉴 안에 알림이 있어요.',
+                variant: 'generic-settings'
+            },
+            {
+                step: 'STEP 3',
+                title: '알림을 허용으로 바꿔요',
+                copy: '허용으로 바꾼 뒤 해빛스쿨로 돌아와 다시 켜면 됩니다.',
+                variant: 'generic-allow'
+            }
+        ]
+    };
+}
+
 function isAppPushConnected() {
     return _pushTokenLinked === true;
 }
+
+function buildNotificationGuideVisual(variant) {
+    switch (variant) {
+        case 'android-address':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-browser is-mobile">
+                    <div class="notification-guide-callout top-left">여기를 눌러요</div>
+                    <div class="notification-guide-browser-bar">
+                        <div class="notification-guide-icon-pill is-highlight">≡</div>
+                        <div class="notification-guide-url-pill">habitschool-staging.web.app</div>
+                        <div class="notification-guide-toolbar-dot"></div>
+                    </div>
+                </div>`;
+        case 'android-permissions':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-sheet">
+                    <div class="notification-guide-sheet-row">이 연결은 안전합니다.</div>
+                    <div class="notification-guide-sheet-row is-highlight">
+                        <div>권한</div>
+                        <small>알림 차단됨</small>
+                    </div>
+                    <div class="notification-guide-sheet-row">최근 방문: 오늘</div>
+                </div>`;
+        case 'android-allow':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-settings">
+                    <div class="notification-guide-setting-row is-highlight">
+                        <span>알림</span>
+                        <span class="notification-guide-toggle is-on"><span></span></span>
+                    </div>
+                    <div class="notification-guide-setting-hint">허용으로 바꾸면 끝나요</div>
+                </div>`;
+        case 'desktop-address':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-browser is-desktop">
+                    <div class="notification-guide-callout top-left">여기를 눌러요</div>
+                    <div class="notification-guide-browser-top"></div>
+                    <div class="notification-guide-browser-bar">
+                        <div class="notification-guide-icon-pill is-highlight">🔒</div>
+                        <div class="notification-guide-url-pill">habitschool-staging.web.app</div>
+                        <div class="notification-guide-toolbar-dots"><span></span><span></span><span></span></div>
+                    </div>
+                </div>`;
+        case 'desktop-settings':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-sheet">
+                    <div class="notification-guide-sheet-row">연결은 안전합니다.</div>
+                    <div class="notification-guide-sheet-row is-highlight">
+                        <div>사이트 설정</div>
+                        <small>권한 보기</small>
+                    </div>
+                    <div class="notification-guide-sheet-row">쿠키 및 사이트 데이터</div>
+                </div>`;
+        case 'desktop-allow':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-settings">
+                    <div class="notification-guide-setting-row is-highlight">
+                        <span>알림</span>
+                        <span class="notification-guide-setting-value">허용</span>
+                    </div>
+                    <div class="notification-guide-setting-hint">드롭다운에서 허용을 선택해 주세요</div>
+                </div>`;
+        case 'ios-settings-home':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-ios">
+                    <div class="notification-guide-callout top-left">설정 앱</div>
+                    <div class="notification-guide-ios-icon is-highlight">⚙️</div>
+                    <div class="notification-guide-ios-label">설정</div>
+                </div>`;
+        case 'ios-settings-notifications':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-settings">
+                    <div class="notification-guide-setting-row">일반</div>
+                    <div class="notification-guide-setting-row is-highlight">
+                        <span>알림</span>
+                        <span class="notification-guide-setting-value">열기</span>
+                    </div>
+                    <div class="notification-guide-setting-row">개인정보 보호 및 보안</div>
+                </div>`;
+        case 'ios-settings-app':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-settings">
+                    <div class="notification-guide-setting-row is-highlight">
+                        <span>해빛스쿨</span>
+                        <span class="notification-guide-toggle is-on"><span></span></span>
+                    </div>
+                    <div class="notification-guide-setting-hint">알림 허용을 켜 주세요</div>
+                </div>`;
+        case 'generic-settings':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-sheet">
+                    <div class="notification-guide-sheet-row is-highlight">
+                        <div>사이트 설정</div>
+                        <small>또는 권한</small>
+                    </div>
+                    <div class="notification-guide-sheet-row">쿠키 및 사이트 데이터</div>
+                </div>`;
+        case 'generic-allow':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-settings">
+                    <div class="notification-guide-setting-row is-highlight">
+                        <span>알림</span>
+                        <span class="notification-guide-setting-value">허용</span>
+                    </div>
+                </div>`;
+        case 'generic-address':
+        default:
+            return `
+                <div class="notification-guide-mock notification-guide-mock-browser is-mobile">
+                    <div class="notification-guide-callout top-left">사이트 아이콘</div>
+                    <div class="notification-guide-browser-bar">
+                        <div class="notification-guide-icon-pill is-highlight">ⓘ</div>
+                        <div class="notification-guide-url-pill">habitschool-staging.web.app</div>
+                        <div class="notification-guide-toolbar-dot"></div>
+                    </div>
+                </div>`;
+    }
+}
+
+function renderNotificationPermissionGuide() {
+    const profile = getNotificationGuideProfile();
+    const badgeEl = document.getElementById('notification-guide-badge');
+    const titleEl = document.getElementById('notification-guide-title');
+    const copyEl = document.getElementById('notification-guide-copy');
+    const noteEl = document.getElementById('notification-guide-note');
+    const panelsEl = document.getElementById('notification-guide-panels');
+    if (!badgeEl || !titleEl || !copyEl || !noteEl || !panelsEl) return;
+
+    badgeEl.textContent = profile.badge;
+    titleEl.textContent = profile.title;
+    copyEl.textContent = profile.copy;
+    noteEl.textContent = profile.note;
+    panelsEl.innerHTML = profile.panels.map(panel => `
+        <section class="notification-guide-panel">
+            <div class="notification-guide-panel-step">${panel.step}</div>
+            <div class="notification-guide-panel-title">${panel.title}</div>
+            <div class="notification-guide-panel-copy">${panel.copy}</div>
+            ${buildNotificationGuideVisual(panel.variant)}
+        </section>
+    `).join('');
+}
+
+window.openNotificationPermissionGuide = function () {
+    renderNotificationPermissionGuide();
+    const modal = document.getElementById('notification-permission-guide-modal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeNotificationPermissionGuide = function () {
+    const modal = document.getElementById('notification-permission-guide-modal');
+    if (modal) modal.style.display = 'none';
+};
 
 function getPushPermissionUiState(user = auth.currentUser) {
     if (!user) {
@@ -678,7 +962,8 @@ function getPushPermissionUiState(user = auth.currentUser) {
             helper: '친구 요청, 챌린지 초대, 리마인더를 푸시 알림으로 받을 수 있어요.',
             buttonLabel: '로그인 필요',
             buttonMode: 'muted',
-            disabled: true
+            disabled: true,
+            action: 'login'
         };
     }
 
@@ -688,7 +973,8 @@ function getPushPermissionUiState(user = auth.currentUser) {
             helper: 'Chrome, Edge, Safari 같은 지원 브라우저에서 알림을 켤 수 있어요.',
             buttonLabel: '알림 미지원',
             buttonMode: 'muted',
-            disabled: true
+            disabled: true,
+            action: 'unsupported'
         };
     }
 
@@ -698,7 +984,8 @@ function getPushPermissionUiState(user = auth.currentUser) {
             helper: '먼저 해빛스쿨을 홈 화면에 추가한 뒤, 설치된 앱에서 이 버튼을 눌러 알림을 켜주세요.',
             buttonLabel: '홈 화면에 추가',
             buttonMode: 'secondary',
-            disabled: false
+            disabled: false,
+            action: 'install'
         };
     }
 
@@ -709,7 +996,8 @@ function getPushPermissionUiState(user = auth.currentUser) {
                 helper: '원하면 버튼 한 번으로 해빛스쿨 푸시 알림만 끌 수 있어요.',
                 buttonLabel: '알림 끄기',
                 buttonMode: 'secondary',
-                disabled: false
+                disabled: false,
+                action: 'disable'
             };
         }
 
@@ -718,17 +1006,19 @@ function getPushPermissionUiState(user = auth.currentUser) {
             helper: '버튼 한 번으로 해빛스쿨 푸시 알림을 바로 켤 수 있어요.',
             buttonLabel: '알림 켜기',
             buttonMode: 'primary',
-            disabled: false
+            disabled: false,
+            action: 'enable'
         };
     }
 
     if (Notification.permission === 'denied') {
         return {
             status: '브라우저에서 알림이 차단되어 있어요.',
-            helper: '주소창 왼쪽 아이콘의 사이트 설정에서 알림을 허용으로 바꾸면 다시 켤 수 있어요.',
-            buttonLabel: '브라우저에서 차단됨',
-            buttonMode: 'muted',
-            disabled: true
+            helper: '버튼을 누르면 지금 쓰는 브라우저 화면 기준으로 어디를 눌러야 하는지 그림으로 보여드려요.',
+            buttonLabel: '설정 안내 보기',
+            buttonMode: 'secondary',
+            disabled: false,
+            action: 'guide'
         };
     }
 
@@ -737,7 +1027,8 @@ function getPushPermissionUiState(user = auth.currentUser) {
         helper: '특히 iPhone은 설치된 홈 화면 앱에서 직접 눌러야 알림 권한을 요청할 수 있어요.',
         buttonLabel: '알림 켜기',
         buttonMode: 'primary',
-        disabled: false
+        disabled: false,
+        action: 'enable'
     };
 }
 
@@ -752,6 +1043,7 @@ function updateNotificationPermissionCard(user = auth.currentUser) {
     helperEl.textContent = state.helper;
     buttonEl.textContent = state.buttonLabel;
     buttonEl.disabled = !!state.disabled;
+    buttonEl.dataset.action = state.action || '';
     buttonEl.classList.toggle('is-secondary', state.buttonMode === 'secondary');
     buttonEl.classList.toggle('is-muted', state.buttonMode === 'muted');
 }
@@ -858,24 +1150,26 @@ async function syncCurrentPushState(user = auth.currentUser) {
 
 window.requestAppNotificationPermission = async function () {
     const user = auth.currentUser;
+    const state = getPushPermissionUiState(user);
     if (!user) {
         showToast('먼저 로그인해 주세요.');
         return;
     }
 
-    if (!isPushSupportedInBrowser()) {
+    if (state.action === 'unsupported') {
         showToast('이 브라우저에서는 푸시 알림을 지원하지 않아요.');
         updateNotificationPermissionCard(user);
         return;
     }
 
-    if (isIOSPushDevice() && !isStandalonePushMode()) {
+    if (state.action === 'install') {
         window.handleInstallCtaAction?.();
         updateNotificationPermissionCard(user);
         return;
     }
 
-    if (Notification.permission === 'denied') {
+    if (state.action === 'guide') {
+        openNotificationPermissionGuide();
         updateNotificationPermissionCard(user);
         return;
     }
@@ -887,7 +1181,7 @@ window.requestAppNotificationPermission = async function () {
     }
 
     try {
-        if (Notification.permission === 'granted' && isAppPushConnected()) {
+        if (state.action === 'disable') {
             const result = await disableFCMToken(user);
             if (result.status === 'disabled') {
                 showToast('이 기기의 해빛스쿨 푸시 알림을 껐어요.');

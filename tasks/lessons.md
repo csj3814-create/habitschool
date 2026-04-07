@@ -576,3 +576,7 @@
 ### 84. Browser permission state and app push state are different UX problems
 - A granted browser notification permission does not mean the app should always be actively subscribed to push.
 - For simpler UX, keep browser permission as a prerequisite and offer a separate app-level one-tap push on/off toggle once permission is granted.
+
+### 85. When browser settings block recovery, replace text walls with guided visuals
+- If a web permission cannot be re-enabled in-app, do not leave users with a long paragraph or alert.
+- Provide a browser-aware guide modal with a mocked visual path so users can map the instructions to what they see on screen.

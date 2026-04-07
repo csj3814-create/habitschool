@@ -1413,6 +1413,21 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="notification-permission-guide-modal" onclick="if(event.target===this)closeNotificationPermissionGuide()">
+        <div class="modal-content notification-guide-modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeNotificationPermissionGuide()">×</button>
+            <div id="notification-guide-badge" class="notification-guide-badge">브라우저 안내</div>
+            <h3 id="notification-guide-title" class="notification-guide-title">여기를 눌러 알림을 다시 켜요</h3>
+            <p id="notification-guide-copy" class="notification-guide-copy">현재 브라우저에 맞는 위치를 그림으로 보여드릴게요.</p>
+            <div id="notification-guide-note" class="notification-guide-note">브라우저마다 이름은 조금 달라도 보통 같은 위치에 있어요.</div>
+            <div id="notification-guide-panels" class="notification-guide-panels"></div>
+            <div class="notification-guide-actions">
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeNotificationPermissionGuide()">닫기</button>
+                <button type="button" class="wallet-modal-btn confirm" onclick="closeNotificationPermissionGuide()">확인했어요</button>
+            </div>
+        </div>
+    </div>
+
     <div id="lightbox-modal" role="dialog" aria-label="이미지 확대 보기" tabindex="-1" onclick="this.style.display='none'">
         <button id="lightbox-prev" class="lightbox-nav lightbox-prev" aria-label="이전 이미지">‹</button>
         <img id="lightbox-img" src="" crossorigin="anonymous" onclick="event.stopPropagation()" alt="확대된 이미지">
