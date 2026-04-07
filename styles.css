@@ -9867,6 +9867,43 @@ body.dark-mode .step-detail-item { color: #bbb; }
     color: #a85d00;
 }
 
+.chatbot-link-warning {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid #f0d8bf;
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.chatbot-link-warning-copy {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #825a22;
+}
+
+.chatbot-link-warning-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.chatbot-link-warning-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: #ff9800;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.chatbot-link-warning-btn.is-secondary {
+    background: rgba(143, 87, 23, 0.12);
+    color: #8f5717;
+}
+
 .chatbot-link-fallback-toggle {
     width: 100%;
     margin-top: 12px;
@@ -10475,6 +10512,7 @@ body.dark-mode .friend-request-head p,
 body.dark-mode .chatbot-link-status,
 body.dark-mode .chatbot-link-foot,
 body.dark-mode .chatbot-link-meta,
+body.dark-mode .chatbot-link-warning-copy,
 body.dark-mode .friend-request-meta,
 body.dark-mode .friend-request-empty {
     color: #c8b49d;
@@ -10504,8 +10542,14 @@ body.dark-mode .chatbot-connect-modal-copy,
     color: #dec7ae;
 }
 
+body.dark-mode .chatbot-link-warning {
+    border-color: rgba(255, 176, 0, 0.28);
+    background: rgba(255, 255, 255, 0.06);
+}
+
 body.dark-mode .chatbot-link-fallback-toggle,
 body.dark-mode .chatbot-link-copy-btn,
+body.dark-mode .chatbot-link-warning-btn.is-secondary,
  body.dark-mode .friend-request-btn,
  body.dark-mode .social-challenge-head-btn {
     background: #2b2620;

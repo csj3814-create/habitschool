@@ -90,6 +90,8 @@ window.closeChatbotConnectModal = closeChatbotConnectModal;
 window.confirmChatbotConnect = confirmChatbotConnect;
 window.maybeHandleChatbotConnect = maybeHandleChatbotConnect;
 window.handleLoggedOutChatbotConnect = handleLoggedOutChatbotConnect;
+window.retryPendingChatbotConnect = retryPendingChatbotConnect;
+window.dismissPendingChatbotConnect = dismissPendingChatbotConnect;
 window.requestFriend = requestFriend;
 window.requestFriendByCode = requestFriendByCode;
 window.submitProfileFriendCode = submitProfileFriendCode;
@@ -140,6 +142,8 @@ const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
+const CHATBOT_CONNECT_FAILURE_KEY = 'pendingChatbotConnectFailure';
+const CHATBOT_CONNECT_RETRY_COOLDOWN_MS = 60 * 1000;
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
@@ -148,6 +152,7 @@ let _chatbotConnectInfoPromise = null;
 let _chatbotConnectModalToken = '';
 let _chatbotConnectCompleting = false;
 let _chatbotConnectLoginPromptShown = false;
+let _chatbotLinkStatusCache = {};
 let _floatingBarLayoutFrame = 0;
 
 function normalizeShareTemplate(raw) {
@@ -1420,6 +1425,38 @@ function getFriendRelationship(targetUid) {
     };
 }
 
+function buildFallbackActiveFriendship(myUid, targetUid, targetName = '친구') {
+    const now = new Date();
+    const requesterName = getUserDisplayName();
+    return {
+        id: buildFriendshipId(myUid, targetUid),
+        users: [myUid, targetUid].sort(),
+        userNames: {
+            [myUid]: requesterName,
+            [targetUid]: targetName || '친구'
+        },
+        status: 'active',
+        requesterUid: myUid,
+        requesterName,
+        pendingForUid: null,
+        requestedAt: now,
+        acceptedAt: now,
+        respondedAt: now,
+        updatedAt: now,
+        source: 'user_cache'
+    };
+}
+
+function setOptimisticActiveFriendship(targetUid, targetName = '친구') {
+    const myUid = auth.currentUser?.uid;
+    if (!myUid || !targetUid || targetUid === myUid) return;
+
+    cachedMyFriendships.set(targetUid, buildFallbackActiveFriendship(myUid, targetUid, targetName));
+    cachedMyFriends = getActiveFriendIds();
+    sortedFilteredDirty = true;
+    renderProfileFriendRequests();
+}
+
 function setOptimisticPendingFriendship(targetUid, targetName = '친구') {
     const myUid = auth.currentUser?.uid;
     if (!myUid || !targetUid || targetUid === myUid) return;
@@ -1441,6 +1478,7 @@ function setOptimisticPendingFriendship(targetUid, targetName = '친구') {
         updatedAt: requestedAt
     });
     cachedMyFriends = getActiveFriendIds();
+    sortedFilteredDirty = true;
     renderProfileFriendRequests();
 }
 
@@ -1497,11 +1535,80 @@ function clearChatbotConnectTokenFromUrl() {
 
     try {
         localStorage.removeItem(CHATBOT_CONNECT_PENDING_KEY);
+        localStorage.removeItem(CHATBOT_CONNECT_FAILURE_KEY);
     } catch (_) { }
 
     const url = new URL(window.location.href);
     url.searchParams.delete('chatbotConnectToken');
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+function normalizeChatbotConnectErrorCode(rawCode) {
+    return String(rawCode || '').trim().toLowerCase();
+}
+
+function readChatbotConnectFailure() {
+    try {
+        const raw = localStorage.getItem(CHATBOT_CONNECT_FAILURE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        return {
+            token: String(parsed.token || '').trim(),
+            code: normalizeChatbotConnectErrorCode(parsed.code),
+            failedAt: Number(parsed.failedAt || 0)
+        };
+    } catch (_) {
+        return null;
+    }
+}
+
+function rememberChatbotConnectFailure(token, code) {
+    try {
+        localStorage.setItem(CHATBOT_CONNECT_FAILURE_KEY, JSON.stringify({
+            token: String(token || '').trim(),
+            code: normalizeChatbotConnectErrorCode(code),
+            failedAt: Date.now()
+        }));
+    } catch (_) { }
+}
+
+function clearChatbotConnectFailure() {
+    try {
+        localStorage.removeItem(CHATBOT_CONNECT_FAILURE_KEY);
+    } catch (_) { }
+}
+
+function isTransientChatbotConnectError(rawCode) {
+    const code = normalizeChatbotConnectErrorCode(rawCode);
+    if (!code) return true;
+    if (code === 'error' || code === 'connect_failed') return true;
+    if (code.startsWith('http_5')) return true;
+    return [
+        'failed to fetch',
+        'networkerror',
+        'load failed',
+        'fetch failed',
+        'timeout'
+    ].some(fragment => code.includes(fragment));
+}
+
+function buildPendingChatbotConnectNotice() {
+    const token = getPendingChatbotConnectToken();
+    const failure = readChatbotConnectFailure();
+    if (!token || !failure || failure.token !== token || !isTransientChatbotConnectError(failure.code)) {
+        return '';
+    }
+
+    return `
+        <div class="chatbot-link-warning">
+            <div class="chatbot-link-warning-copy">보류된 연결 정보를 아직 불러오지 못했어요. 다시 확인하거나 정리할 수 있어요.</div>
+            <div class="chatbot-link-warning-actions">
+                <button type="button" class="chatbot-link-warning-btn" onclick="retryPendingChatbotConnect()">다시 확인</button>
+                <button type="button" class="chatbot-link-warning-btn is-secondary" onclick="dismissPendingChatbotConnect()">보류 정리</button>
+            </div>
+        </div>
+    `;
 }
 
 function setChatbotLinkFallbackExpanded(force) {
@@ -1538,6 +1645,9 @@ function getChatbotConnectErrorMessage(code) {
         case 'forbidden':
         case 'permission-denied':
             return '현재 로그인한 계정으로는 연결할 수 없어요. 로그인 계정을 다시 확인해 주세요.';
+        case 'error':
+        case 'connect_failed':
+            return '해빛코치 서버와 잠시 연결이 불안정해요. 잠시 후 다시 시도해 주세요.';
         default:
             return '해빛코치 연결을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.';
     }
@@ -1625,6 +1735,7 @@ function closeChatbotConnectModal() {
 function cancelChatbotConnect() {
     clearChatbotConnectTokenFromUrl();
     closeChatbotConnectModal();
+    renderChatbotLinkStatus(_chatbotLinkStatusCache);
 }
 
 function openChatbotConnectModal(info) {
@@ -1665,11 +1776,16 @@ async function confirmChatbotConnect() {
         showToast(result?.alreadyCompleted
             ? '이미 연결된 카카오 계정이에요.'
             : `해빛코치 연결이 완료됐어요${result?.kakaoDisplayName ? ` · ${result.kakaoDisplayName}` : ''}`);
+        clearChatbotConnectFailure();
         clearChatbotConnectTokenFromUrl();
         closeChatbotConnectModal();
         await loadChatbotLinkStatus();
     } catch (error) {
         console.error('chatbot connect complete error:', error);
+        if (isTransientChatbotConnectError(error.code || error.message)) {
+            rememberChatbotConnectFailure(token, error.code || error.message);
+            renderChatbotLinkStatus(_chatbotLinkStatusCache);
+        }
         showToast(getChatbotConnectErrorMessage(error.code || error.message));
         if (shouldClearChatbotConnectToken(error.code || error.message)) {
             clearChatbotConnectTokenFromUrl();
@@ -1692,9 +1808,19 @@ function handleLoggedOutChatbotConnect() {
     showToast('로그인 후 해빛코치 연결을 바로 이어갈게요.');
 }
 
-async function maybeHandleChatbotConnect() {
+async function maybeHandleChatbotConnect({ interactive = false, force = false } = {}) {
     const token = getPendingChatbotConnectToken();
     if (!token) return false;
+
+    const lastFailure = readChatbotConnectFailure();
+    if (!force
+        && !interactive
+        && lastFailure?.token === token
+        && isTransientChatbotConnectError(lastFailure.code)
+        && (Date.now() - lastFailure.failedAt) < CHATBOT_CONNECT_RETRY_COOLDOWN_MS) {
+        renderChatbotLinkStatus(_chatbotLinkStatusCache);
+        return false;
+    }
 
     if (!auth.currentUser) {
         handleLoggedOutChatbotConnect();
@@ -1712,17 +1838,36 @@ async function maybeHandleChatbotConnect() {
 
     try {
         const info = await fetchChatbotConnectTokenInfo(token);
+        clearChatbotConnectFailure();
         openChatbotConnectModal(info);
         return true;
     } catch (error) {
         console.error('chatbot connect token error:', error);
-        showToast(getChatbotConnectErrorMessage(error.code || error.message));
         if (shouldClearChatbotConnectToken(error.code || error.message)) {
             clearChatbotConnectTokenFromUrl();
             closeChatbotConnectModal();
+        } else if (isTransientChatbotConnectError(error.code || error.message)) {
+            rememberChatbotConnectFailure(token, error.code || error.message);
+            renderChatbotLinkStatus(_chatbotLinkStatusCache);
+            if (interactive) {
+                showToast(getChatbotConnectErrorMessage(error.code || error.message));
+            }
+        } else {
+            showToast(getChatbotConnectErrorMessage(error.code || error.message));
         }
         return false;
     }
+}
+
+function retryPendingChatbotConnect() {
+    maybeHandleChatbotConnect({ interactive: true, force: true }).catch(() => {});
+}
+
+function dismissPendingChatbotConnect() {
+    clearChatbotConnectTokenFromUrl();
+    closeChatbotConnectModal();
+    renderChatbotLinkStatus(_chatbotLinkStatusCache);
+    showToast('보류된 해빛코치 연결을 정리했어요.');
 }
 
 function renderChatbotLinkStatus(userData = {}) {
@@ -1739,14 +1884,15 @@ function renderChatbotLinkStatus(userData = {}) {
     const expiresAt = toDateSafe(userData.chatbotLinkCodeExpiresAt);
     const lastUsedAt = toDateSafe(userData.chatbotLinkCodeLastUsedAt);
     const isActive = !!code && !!expiresAt && expiresAt.getTime() > Date.now();
+    const pendingNoticeHtml = buildPendingChatbotConnectNotice();
 
     if (isActive) {
-        statusEl.innerHTML = '<strong>!연결</strong>이 기본이에요. 어려울 때만 아래 등록 코드를 사용하세요.';
+        statusEl.innerHTML = `<strong>!연결</strong>이 기본이에요. 어려울 때만 아래 등록 코드를 사용하세요.${pendingNoticeHtml}`;
         codeBox.style.display = 'block';
         codeEl.textContent = code;
         expiryEl.textContent = `만료 시간: ${formatDateTimeForUi(expiresAt)}`;
     } else {
-        statusEl.innerHTML = '카카오톡 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 연결돼요.';
+        statusEl.innerHTML = `카카오톡 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 연결돼요.${pendingNoticeHtml}`;
         codeBox.style.display = 'none';
         codeEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
@@ -1766,17 +1912,20 @@ function renderChatbotLinkStatus(userData = {}) {
 async function loadChatbotLinkStatus() {
     const user = auth.currentUser;
     if (!user) {
+        _chatbotLinkStatusCache = {};
         renderChatbotLinkStatus({});
         return null;
     }
 
     const snap = await getDoc(doc(db, 'users', user.uid));
     if (!snap.exists()) {
+        _chatbotLinkStatusCache = {};
         renderChatbotLinkStatus({});
         return null;
     }
 
     const userData = snap.data() || {};
+    _chatbotLinkStatusCache = userData;
     renderChatbotLinkStatus(userData);
     return userData;
 }
@@ -1856,6 +2005,7 @@ async function loadMyFriendships(forceReload = false) {
         cachedMyFriends = [];
         _friendshipsLoadedForUid = '';
         _friendshipsLoadingStartedAt = 0;
+        sortedFilteredDirty = true;
         renderProfileFriendRequests();
         return cachedMyFriendships;
     }
@@ -1880,22 +2030,50 @@ async function loadMyFriendships(forceReload = false) {
 
     _friendshipsLoadingStartedAt = Date.now();
     _friendshipsLoadingPromise = (async () => {
-        const snap = await getDocs(query(
+        const nextMap = new Map();
+        try {
+            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            const fallbackFriendIds = Array.isArray(userSnap.data()?.friends)
+                ? [...new Set(userSnap.data().friends.map(value => String(value || '').trim()).filter(friendUid => friendUid && friendUid !== user.uid))]
+                : [];
+            fallbackFriendIds.forEach(friendUid => {
+                nextMap.set(friendUid, buildFallbackActiveFriendship(user.uid, friendUid));
+            });
+            if (nextMap.size > 0) {
+                cachedMyFriendships = new Map(nextMap);
+                cachedMyFriends = getActiveFriendIds();
+                _friendshipsLoadedForUid = user.uid;
+                sortedFilteredDirty = true;
+                renderProfileFriendRequests();
+            }
+        } catch (error) {
+            console.warn('[loadMyFriendships] user cache seed skipped:', error.message);
+        }
+
+        const friendshipQuery = query(
             collection(db, 'friendships'),
             where('users', 'array-contains', user.uid)
-        ));
+        );
 
-        const nextMap = new Map();
-        snap.forEach(docSnap => {
-            const friendship = { id: docSnap.id, ...docSnap.data() };
-            const otherUid = getFriendshipOtherUid(friendship, user.uid);
-            if (!otherUid) return;
-            nextMap.set(otherUid, friendship);
-        });
+        try {
+            const snap = forceReload
+                ? await getDocsFromServer(friendshipQuery).catch(() => getDocs(friendshipQuery))
+                : await getDocs(friendshipQuery);
+            snap.forEach(docSnap => {
+                const friendship = { id: docSnap.id, ...docSnap.data() };
+                const otherUid = getFriendshipOtherUid(friendship, user.uid);
+                if (!otherUid) return;
+                nextMap.set(otherUid, friendship);
+            });
+        } catch (error) {
+            if (nextMap.size === 0) throw error;
+            console.warn('[loadMyFriendships] live query failed, using user cache:', error.message);
+        }
 
         cachedMyFriendships = nextMap;
         cachedMyFriends = getActiveFriendIds();
         _friendshipsLoadedForUid = user.uid;
+        sortedFilteredDirty = true;
         renderProfileFriendRequests();
     })();
 
@@ -1993,7 +2171,11 @@ async function requestFriend(targetUid) {
             showToast('상대가 먼저 요청을 보냈어요. 앱에서 바로 응답해보세요.');
             openFriendRequestModal(result.data?.friendshipId || relation.id);
         } else if (status === 'already_friends') {
+            setOptimisticActiveFriendship(targetUid, result.data?.targetName);
             showToast('이미 친구로 연결되어 있어요.');
+        } else if (status === 'pending_exists') {
+            setOptimisticPendingFriendship(targetUid, result.data?.targetName);
+            showToast('이미 친구 요청을 보냈어요.');
         } else {
             setOptimisticPendingFriendship(targetUid, result.data?.targetName);
             showToast('친구 요청을 보냈어요. 상대가 앱에서 수락하면 연결됩니다.');
@@ -2017,6 +2199,16 @@ async function requestFriendByCode(friendCode) {
         const result = await fn({ friendCode });
         if (result.data?.status === 'incoming_pending') {
             openFriendRequestModal(result.data?.friendshipId || '');
+        } else if (result.data?.status === 'already_friends') {
+            if (result.data?.targetUid) {
+                setOptimisticActiveFriendship(result.data.targetUid, result.data?.targetName);
+            }
+            showToast('이미 친구로 연결되어 있어요.');
+        } else if (result.data?.status === 'pending_exists') {
+            if (result.data?.targetUid) {
+                setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
+            }
+            showToast('이미 친구 요청을 보냈어요.');
         } else {
             if (result.data?.targetUid) {
                 setOptimisticPendingFriendship(result.data.targetUid, result.data?.targetName);
