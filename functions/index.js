@@ -37,6 +37,7 @@ const APP_BASE_URL = PROJECT_ID === "habitschool-staging"
     : "https://habitschool.web.app";
 const APP_ICON_URL = `${APP_BASE_URL}/icons/icon-192.svg`;
 const ADMIN_EMAILS = ["csj3814@gmail.com"];
+const PUSH_TOKEN_SUBCOLLECTION = "pushTokens";
 
 // 비밀 키 (Firebase Secret Manager)
 const SERVER_MINTER_KEY = defineSecret("SERVER_MINTER_KEY");
@@ -198,21 +199,115 @@ async function sendPushToUsers(userIds, payload) {
     const targetIds = [...new Set((userIds || []).filter(Boolean))];
     if (targetIds.length === 0) return 0;
 
-    const userDocs = await Promise.all(targetIds.map(uid => db.doc(`users/${uid}`).get()));
-    const tokens = [];
-    const uids = [];
+    const targets = await collectPushTargetsForUsers(targetIds);
+    if (targets.length === 0) return 0;
+    await sendMulticast(targets, payload);
+    return targets.length;
+}
 
-    userDocs.forEach((snap, index) => {
+function addPushTarget(targetMap, {
+    token,
+    uid,
+    tokenDocRef = null,
+    legacyUserRef = null
+}) {
+    const normalizedToken = String(token || "").trim();
+    if (!normalizedToken || !uid) return;
+
+    const existing = targetMap.get(normalizedToken) || {
+        token: normalizedToken,
+        uid,
+        userIds: new Set(),
+        tokenDocRefs: [],
+        legacyUserRefs: []
+    };
+
+    existing.userIds.add(uid);
+    if (tokenDocRef) existing.tokenDocRefs.push(tokenDocRef);
+    if (legacyUserRef) existing.legacyUserRefs.push(legacyUserRef);
+    targetMap.set(normalizedToken, existing);
+}
+
+function finalizePushTargets(targetMap) {
+    return Array.from(targetMap.values()).map((target) => ({
+        token: target.token,
+        uid: target.uid,
+        userIds: Array.from(target.userIds),
+        tokenDocRefs: target.tokenDocRefs,
+        legacyUserRefs: target.legacyUserRefs
+    }));
+}
+
+async function collectLegacyPushTargets(targetMap, userIds = null) {
+    let usersSnap;
+    if (Array.isArray(userIds) && userIds.length > 0) {
+        const userDocs = await Promise.all(userIds.map(uid => db.doc(`users/${uid}`).get()));
+        usersSnap = { docs: userDocs.filter((snap) => snap.exists) };
+    } else {
+        usersSnap = await db.collection("users")
+            .where("fcmToken", "!=", "")
+            .select("fcmToken")
+            .get();
+    }
+
+    usersSnap.docs.forEach((snap) => {
         const token = String(snap.data()?.fcmToken || "").trim();
-        if (token) {
-            tokens.push(token);
-            uids.push(targetIds[index]);
-        }
+        if (!token) return;
+        addPushTarget(targetMap, {
+            token,
+            uid: snap.id,
+            legacyUserRef: snap.ref
+        });
+    });
+}
+
+async function collectPushTargetsForUsers(userIds) {
+    const targetMap = new Map();
+    const uniqueUserIds = [...new Set((userIds || []).filter(Boolean))];
+    if (uniqueUserIds.length === 0) return [];
+
+    await Promise.all(uniqueUserIds.map(async (uid) => {
+        const tokenSnap = await db.collection(`users/${uid}/${PUSH_TOKEN_SUBCOLLECTION}`)
+            .select("token", "enabled")
+            .get()
+            .catch(() => null);
+
+        tokenSnap?.docs?.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            if (data.enabled === false) return;
+            addPushTarget(targetMap, {
+                token: data.token,
+                uid,
+                tokenDocRef: docSnap.ref
+            });
+        });
+    }));
+
+    await collectLegacyPushTargets(targetMap, uniqueUserIds);
+    return finalizePushTargets(targetMap);
+}
+
+async function collectAllPushTargets() {
+    const targetMap = new Map();
+
+    const tokenSnap = await db.collectionGroup(PUSH_TOKEN_SUBCOLLECTION)
+        .where("enabled", "==", true)
+        .select("token")
+        .get()
+        .catch(() => null);
+
+    tokenSnap?.docs?.forEach((docSnap) => {
+        const uid = docSnap.ref.parent?.parent?.id;
+        if (!uid) return;
+        addPushTarget(targetMap, {
+            token: docSnap.data()?.token,
+            uid,
+            tokenDocRef: docSnap.ref
+        });
     });
 
-    if (tokens.length === 0) return 0;
-    await sendMulticast(tokens, uids, payload);
-    return tokens.length;
+    await collectLegacyPushTargets(targetMap);
+    return finalizePushTargets(targetMap);
 }
 
 function buildAppPath(tab = "dashboard", extras = {}) {
@@ -3851,8 +3946,8 @@ async function getTodayLoggedUserIds(todayKST) {
  * FCM 일괄 발송 (500개 청크 분할)
  * 유효하지 않은 토큰은 Firestore에서 자동 삭제
  */
-async function sendMulticast(tokens, uids, payload) {
-    if (tokens.length === 0) return;
+async function sendMulticast(targets, payload) {
+    if (!Array.isArray(targets) || targets.length === 0) return;
     const {
         title = "",
         body = "",
@@ -3869,9 +3964,9 @@ async function sendMulticast(tokens, uids, payload) {
         return acc;
     }, {});
     const CHUNK = 500;
-    for (let i = 0; i < tokens.length; i += CHUNK) {
-        const chunkTokens = tokens.slice(i, i + CHUNK);
-        const chunkUids = uids.slice(i, i + CHUNK);
+    for (let i = 0; i < targets.length; i += CHUNK) {
+        const chunkTargets = targets.slice(i, i + CHUNK);
+        const chunkTokens = chunkTargets.map((target) => target.token);
         const res = await admin.messaging().sendEachForMulticast({
             tokens: chunkTokens,
             data: {
@@ -3895,9 +3990,13 @@ async function sendMulticast(tokens, uids, payload) {
         const deletes = [];
         res.responses.forEach((r, idx) => {
             if (!r.success && r.error?.code === 'messaging/registration-token-not-registered') {
-                deletes.push(
-                    db.doc(`users/${chunkUids[idx]}`).set({ fcmToken: FieldValue.delete() }, { merge: true })
-                );
+                const target = chunkTargets[idx];
+                (target?.tokenDocRefs || []).forEach((ref) => {
+                    deletes.push(ref.delete());
+                });
+                (target?.legacyUserRefs || []).forEach((ref) => {
+                    deletes.push(ref.set({ fcmToken: FieldValue.delete() }, { merge: true }));
+                });
             }
         });
         if (deletes.length) await Promise.allSettled(deletes);
@@ -3914,22 +4013,12 @@ exports.sendDailyReminder = onSchedule(
         const todayKST = getTodayKST();
         const loggedIds = await getTodayLoggedUserIds(todayKST);
 
-        const usersSnap = await db.collection("users")
-            .where("fcmToken", "!=", "")
-            .select("fcmToken")
-            .get();
+        const targets = (await collectAllPushTargets())
+            .filter((target) => !loggedIds.has(target.uid));
 
-        const tokens = [], uids = [];
-        usersSnap.docs.forEach(d => {
-            if (!loggedIds.has(d.id) && d.data().fcmToken) {
-                tokens.push(d.data().fcmToken);
-                uids.push(d.id);
-            }
-        });
-
-        console.log(`sendDailyReminder: 대상 ${tokens.length}명 / 오늘 기록 ${loggedIds.size}명`);
+        console.log(`sendDailyReminder: ${targets.length} targets / ${loggedIds.size} logged today`);
         const reminderUrl = buildAppPath("diet", { focus: "upload" });
-        await sendMulticast(tokens, uids, {
+        await sendMulticast(targets, {
             title: "오늘 기록을 시작해 볼까요?",
             body: "식단 사진 한 장부터 올리면 오늘 루틴이 바로 시작돼요.",
             tag: "daily-reminder",
@@ -3955,22 +4044,21 @@ exports.sendStreakAlert = onSchedule(
         const loggedIds = await getTodayLoggedUserIds(todayKST);
 
         const usersSnap = await db.collection("users")
-            .where("fcmToken", "!=", "")
             .where("currentStreak", ">", 0)
-            .select("fcmToken", "currentStreak")
+            .select("currentStreak")
             .get();
 
-        const sendJobs = [];
-        usersSnap.docs.forEach(d => {
-            if (!loggedIds.has(d.id) && d.data().fcmToken) {
-                const streak = d.data().currentStreak || 0;
-                sendJobs.push({ token: d.data().fcmToken, uid: d.id, streak });
+        const eligibleUserIds = [];
+        usersSnap.docs.forEach((d) => {
+            if (!loggedIds.has(d.id)) {
+                eligibleUserIds.push(d.id);
             }
         });
 
-        console.log(`sendStreakAlert: 대상 ${sendJobs.length}명`);
+        const targets = await collectPushTargetsForUsers(eligibleUserIds);
+        console.log(`sendStreakAlert: ${targets.length} targets`);
         const streakUrl = buildAppPath("diet", { focus: "upload" });
-        await sendMulticast(sendJobs.map(j => j.token), sendJobs.map(j => j.uid), {
+        await sendMulticast(targets, {
             title: "연속 기록을 이어갈 시간이에요",
             body: "지금 기록하면 이어온 흐름을 지킬 수 있어요.",
             tag: "streak-alert",
@@ -4002,20 +4090,11 @@ exports.sendBroadcastNotification = onCall(
         const { title, body } = request.data;
         if (!title || !body) throw new HttpsError("invalid-argument", "제목과 내용 필요");
 
-        const usersSnap = await db.collection("users")
-            .where("fcmToken", "!=", "")
-            .select("fcmToken")
-            .get();
-
-        const tokens = [], uids = [];
-        usersSnap.docs.forEach(d => {
-            if (d.data().fcmToken) { tokens.push(d.data().fcmToken); uids.push(d.id); }
-        });
-
-        if (tokens.length === 0) return { sentCount: 0 };
-        await sendMulticast(tokens, uids, { title, body, tag: "broadcast", url: buildAppPath("dashboard") });
-        console.log(`sendBroadcastNotification: ${tokens.length}명 발송 완료`);
-        return { sentCount: tokens.length };
+        const targets = await collectAllPushTargets();
+        if (targets.length === 0) return { sentCount: 0 };
+        await sendMulticast(targets, { title, body, tag: "broadcast", url: buildAppPath("dashboard") });
+        console.log(`sendBroadcastNotification: ${targets.length} targets sent`);
+        return { sentCount: targets.length };
     }
 );
 

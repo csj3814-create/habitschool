@@ -9,10 +9,80 @@ import { escapeHtml } from './security.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
+const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
+const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
+
+function generatePushDeviceId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `push-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function getPushDeviceId() {
+    try {
+        let deviceId = String(localStorage.getItem(PUSH_DEVICE_ID_STORAGE_KEY) || '').trim();
+        if (!deviceId) {
+            deviceId = generatePushDeviceId();
+            localStorage.setItem(PUSH_DEVICE_ID_STORAGE_KEY, deviceId);
+        }
+        return deviceId;
+    } catch (_) {
+        return generatePushDeviceId();
+    }
+}
+
+function getPushTokenDocRef(userId, deviceId = getPushDeviceId()) {
+    return doc(db, 'users', userId, PUSH_TOKEN_SUBCOLLECTION, deviceId);
+}
+
+function getPushPlatformLabel() {
+    if (isIOSPushDevice()) return 'ios';
+    if (isAndroidPushDevice()) return 'android';
+    return 'desktop';
+}
+
+function getPushBrowserLabel() {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    if (/SamsungBrowser/i.test(ua)) return 'samsung-internet';
+    if (/Whale/i.test(ua)) return 'whale';
+    if (/EdgA|Edg\//i.test(ua)) return 'edge';
+    if (/Firefox|FxiOS/i.test(ua)) return 'firefox';
+    if (/CriOS|Chrome/i.test(ua)) return 'chrome';
+    if (/Safari/i.test(ua)) return 'safari';
+    return 'unknown';
+}
+
+function getPushDisplayModeLabel() {
+    return isStandalonePushMode() ? 'standalone' : 'browser';
+}
+
+async function hydratePushTokenLinkState(user, legacyUserData = null) {
+    if (!user) {
+        _pushTokenLinked = false;
+        _pushTokenValue = '';
+        return { linked: false, token: '' };
+    }
+
+    try {
+        const tokenDoc = await getDoc(getPushTokenDocRef(user.uid));
+        const tokenData = tokenDoc.data() || {};
+        const storedToken = typeof tokenData.token === 'string' ? tokenData.token.trim() : '';
+        if (tokenDoc.exists() && tokenData.enabled !== false && storedToken) {
+            _pushTokenLinked = true;
+            _pushTokenValue = storedToken;
+            return { linked: true, token: storedToken };
+        }
+    } catch (error) {
+        console.warn('[FCM] 현재 기기 토큰 상태 확인 실패:', error.message);
+    }
+
+    _pushTokenLinked = false;
+    _pushTokenValue = '';
+    return { linked: false, token: '' };
+}
 
 function normalizeInviteRefCode(rawCode) {
     const normalized = String(rawCode || '').trim().toUpperCase();
@@ -417,9 +487,13 @@ export function setupAuthListener(callbacks) {
                     ? (userDoc.data() || {})
                     : { ...updateData };
 
-                _pushTokenLinked = Boolean(ud.fcmToken);
-                _pushTokenValue = typeof ud.fcmToken === 'string' ? ud.fcmToken : '';
+                await hydratePushTokenLinkState(user, ud);
                 updateNotificationPermissionCard(user);
+                if (Notification.permission === 'granted') {
+                    setTimeout(() => {
+                        syncCurrentPushState(user).catch(() => {});
+                    }, 400);
+                }
 
                 if (ud.customDisplayName) {
                     window._userDisplayName = ud.customDisplayName;
@@ -620,10 +694,18 @@ window.deleteAccountAndData = async function () {
             await batchBlood.commit();
         }
 
-        // 4. users/{uid} 硫붿씤 臾몄꽌 ??젣
+        // 4. users/{uid}/pushTokens 서브컬렉션 삭제
+        const pushTokenSnap = await getDocs(collection(db, 'users', uid, PUSH_TOKEN_SUBCOLLECTION));
+        if (!pushTokenSnap.empty) {
+            const batchPushTokens = writeBatch(db);
+            pushTokenSnap.docs.forEach(d => batchPushTokens.delete(d.ref));
+            await batchPushTokens.commit();
+        }
+
+        // 5. users/{uid} 메인 문서 삭제
         await deleteDoc(doc(db, 'users', uid));
 
-        // 5. Storage ?뚯씪 ??젣 (Firebase Storage???대씪?댁뼵?몄뿉???대뜑 ??젣 遺덇? ??媛쒕퀎 ??젣 ?쒕룄)
+        // 6. Storage ?뚯씪 ??젣 (Firebase Storage???대씪?댁뼵?몄뿉???대뜑 ??젣 遺덇? ??媛쒕퀎 ??젣 ?쒕룄)
         try {
             const { storage } = await import('./firebase-config.js');
             const { ref, listAll, deleteObject } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
@@ -634,7 +716,7 @@ window.deleteAccountAndData = async function () {
             console.warn('Storage 파일 삭제 일부 실패 (계속 진행):', storageErr.message);
         }
 
-        // 6. Firebase Auth 怨꾩젙 ??젣 (?ъ씤利??꾩슂?????덉쓬)
+        // 7. Firebase Auth 怨꾩젙 ??젣 (?ъ씤利??꾩슂?????덉쓬)
         try {
             await deleteUser(user);
         } catch (authErr) {
@@ -1142,6 +1224,18 @@ async function registerFCMToken(user) {
         });
         if (!token) return { status: 'token-missing' };
 
+        await setDoc(getPushTokenDocRef(user.uid), {
+            userId: user.uid,
+            token,
+            enabled: true,
+            permission: Notification.permission,
+            platform: getPushPlatformLabel(),
+            browser: getPushBrowserLabel(),
+            displayMode: getPushDisplayModeLabel(),
+            linkedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+
         await setDoc(doc(db, 'users', user.uid), {
             fcmToken: token
         }, { merge: true });
@@ -1176,6 +1270,7 @@ async function disableFCMToken(user) {
         const userRef = doc(db, 'users', user.uid);
         const storedSnap = await getDoc(userRef).catch(() => null);
         const storedToken = storedSnap?.data?.()?.fcmToken || '';
+        await deleteDoc(getPushTokenDocRef(user.uid)).catch(() => {});
         if (!storedToken || !currentToken || storedToken === currentToken || storedToken === _pushTokenValue) {
             await setDoc(userRef, { fcmToken: deleteField() }, { merge: true });
         }
@@ -1197,9 +1292,10 @@ async function syncCurrentPushState(user = auth.currentUser) {
         return { status: 'signed-out' };
     }
 
-    if (Notification.permission === 'granted' && !_pushTokenLinked) {
+    if (Notification.permission !== 'granted') {
+        await hydratePushTokenLinkState(user);
         updateNotificationPermissionCard(user);
-        return { status: 'granted-unlinked' };
+        return { status: Notification.permission || 'default' };
     }
 
     const result = await registerFCMToken(user);

@@ -87,6 +87,25 @@ service cloud.firestore {
         allow update: if isAdmin();
         allow delete: if isOwner(userId) || isAdmin();
       }
+
+      // ===== Push Tokens Subcollection =====
+      match /pushTokens/{deviceId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create, update: if isOwner(userId)
+          && request.resource.data.userId == userId
+          && request.resource.data.keys().hasOnly([
+            'userId', 'token', 'enabled', 'permission',
+            'platform', 'browser', 'displayMode', 'linkedAt', 'updatedAt'
+          ])
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 20
+          && request.resource.data.enabled is bool
+          && (!('permission' in request.resource.data) || request.resource.data.permission is string)
+          && (!('platform' in request.resource.data) || request.resource.data.platform is string)
+          && (!('browser' in request.resource.data) || request.resource.data.browser is string)
+          && (!('displayMode' in request.resource.data) || request.resource.data.displayMode is string);
+        allow delete: if isOwner(userId) || isAdmin();
+      }
     }
     
     // ===== Daily Logs Collection =====
