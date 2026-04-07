@@ -5883,7 +5883,7 @@ textarea {
 /* PWA 설치 배너 */
 #pwa-install-banner {
     position: fixed;
-    bottom: 70px;
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
     left: 0;
     right: auto;
     transform: none;
@@ -5903,6 +5903,7 @@ textarea {
     border: 1px solid var(--gray-200);
     width: 100%;
     margin: 0 auto;
+    transition: padding 0.2s ease, border-radius 0.2s ease, box-shadow 0.2s ease, gap 0.2s ease;
 }
 .pwa-install-icon {
     width: 44px;
@@ -5948,6 +5949,37 @@ textarea {
     line-height: 1;
     flex-shrink: 0;
 }
+#pwa-install-banner.is-collapsed .pwa-install-content {
+    width: auto;
+    max-width: 100%;
+    display: inline-flex;
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+#pwa-install-banner.is-collapsed .pwa-install-icon {
+    display: none;
+}
+#pwa-install-banner.is-collapsed .pwa-install-text {
+    flex: 0 1 auto;
+}
+#pwa-install-banner.is-collapsed .pwa-install-text span {
+    display: none;
+}
+#pwa-install-banner.is-collapsed .pwa-install-text strong {
+    font-size: 13px;
+    white-space: nowrap;
+}
+#pwa-install-banner.is-collapsed .pwa-install-btn {
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+#pwa-install-banner.is-collapsed .pwa-install-dismiss {
+    font-size: 18px;
+}
 .pwa-banner-animate {
     animation: pwaBannerIn 0.4s ease-out;
 }
@@ -5961,6 +5993,36 @@ textarea {
 @keyframes pwaBannerOut {
     from { transform: translateY(0); opacity: 1; }
     to { transform: translateY(30px); opacity: 0; }
+}
+
+@media (max-width: 420px) {
+    #pwa-install-banner {
+        bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+        padding: 0 10px;
+    }
+
+    .pwa-install-content {
+        gap: 8px;
+        padding: 10px 12px;
+    }
+
+    .pwa-install-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .pwa-install-text strong {
+        font-size: 13px;
+    }
+
+    .pwa-install-text span {
+        font-size: 10px;
+    }
+
+    .pwa-install-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
 }
 
 /* 버튼들 */

@@ -548,3 +548,7 @@
 ### 77. Mobile layout changes need screenshot-level checks, not just desktop logic
 - If a new CTA uses a custom mobile media query, verify the stacked result on a narrow viewport before calling the layout done.
 - Do not switch a compact two-row card to a single-column mobile layout unless the screenshot clearly proves that wrapping is better.
+
+### 78. Event-gated install prompts need manual fallbacks on mobile
+- If a first-screen install CTA depends only on beforeinstallprompt, iOS and many mobile browser contexts will never show it.
+- Pair the native prompt path with manual install guidance, dismissal expiry, and a compact fallback state so the CTA remains discoverable.

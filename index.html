@@ -61,12 +61,13 @@
     <meta name="theme-color" content="#FF9800" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#17151A" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     <meta name="naver-site-verification" content="1a68411ce68b625dc6c131aa71fc5a06acc7ae68" />
     <!-- Google Search Console (HTML 파일 인증 완료, 메타태그 백업) -->
     <meta name="google-site-verification" content="f3171fd1f953cdf0" />
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
 
     <!-- 구조화 데이터 (Google 리치 결과) -->
     <script type="application/ld+json">
@@ -1504,14 +1505,14 @@
 
     <!-- PWA 앱 설치 배너 -->
     <div id="pwa-install-banner" style="display:none;">
-        <div class="pwa-install-content">
+        <div class="pwa-install-content" onclick="expandInstallBanner(event)">
             <img src="icons/icon-192.svg" alt="해빛스쿨" class="pwa-install-icon">
             <div class="pwa-install-text">
-                <strong>해빛스쿨 앱 설치</strong>
-                <span>홈 화면에 추가하면 더 빠르게!</span>
+                <strong id="pwa-install-title">해빛스쿨 앱 설치</strong>
+                <span id="pwa-install-subtitle">홈 화면에 추가하면 더 빠르게!</span>
             </div>
-            <button class="pwa-install-btn" onclick="installPWA()">설치</button>
-            <button class="pwa-install-dismiss" onclick="dismissInstallBanner()" aria-label="닫기">&times;</button>
+            <button class="pwa-install-btn" id="pwa-install-action" type="button" onclick="installPWA(event)">설치</button>
+            <button class="pwa-install-dismiss" type="button" onclick="dismissInstallBanner(event)" aria-label="닫기">&times;</button>
         </div>
     </div>
 
