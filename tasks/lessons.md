@@ -556,3 +556,7 @@
 ### 79. Critical install CTAs should use persistent contextual surfaces
 - If installation is a key action, place it in a stable CTA slot instead of a transient floating banner.
 - Auto-dismissing or event-gated install banners are too easy to miss on mobile and too dependent on browser prompt timing.
+
+### 80. Shared CTA helpers must not clobber special tab modes
+- If a bottom CTA slot is reused across tabs, the shared update helper must explicitly skip tab-specific modes like install or community chat.
+- Otherwise background guide refreshes can keep the old label while resetting the style and behavior underneath it.

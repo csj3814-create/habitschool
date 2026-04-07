@@ -4772,6 +4772,18 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     const helperEl = document.getElementById('submit-bar-helper');
     if (!saveBtn || !helperEl) return;
 
+    if (tabName === 'dashboard') {
+        const submitBar = document.getElementById('submit-bar');
+        if (submitBar && !applyDashboardInstallCta()) {
+            submitBar.style.display = 'none';
+        }
+        return;
+    }
+
+    if (tabName === 'gallery') {
+        return;
+    }
+
     resetSubmitBarMode();
     const states = guideStates || _getRecordGuideStates();
 
