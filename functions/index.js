@@ -215,92 +215,162 @@ async function sendPushToUsers(userIds, payload) {
     return tokens.length;
 }
 
-function buildFriendRequestPushPayload(requesterName) {
+function buildAppPath(tab = "dashboard", extras = {}) {
+    const params = new URLSearchParams();
+    if (tab) params.set("tab", tab);
+    Object.entries(extras || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        params.set(key, String(value));
+    });
+    const query = params.toString();
+    return query ? `/?${query}` : "/";
+}
+
+function buildNotificationActions(actions = []) {
+    return (actions || [])
+        .filter(action => action?.action && action?.title)
+        .slice(0, 2)
+        .map(action => ({
+            action: String(action.action),
+            title: String(action.title),
+            url: action.url ? String(action.url) : ""
+        }));
+}
+
+function buildFriendRequestPushPayload({ requesterName, friendshipId }) {
+    const url = buildAppPath("profile", { panel: "friends", friendshipId });
     return {
-        title: "Friend request",
-        body: `${requesterName || "A friend"} sent you a request.`,
+        title: "친구 요청이 도착했어요",
+        body: `${requesterName || "친구"}님이 친구 요청을 보냈어요.`,
         tag: "friend-request",
-        url: "/#profile"
+        url,
+        requireInteraction: true,
+        actions: buildNotificationActions([
+            { action: "open-friends", title: "요청 확인", url },
+            { action: "dismiss", title: "나중에" }
+        ])
     };
 }
 
-function buildFriendConnectedPushPayload(friendName) {
+function buildFriendConnectedPushPayload({ friendName, friendshipId = "" }) {
+    const url = buildAppPath("profile", { panel: "friends", friendshipId });
     return {
-        title: "Friend connected",
-        body: `${friendName || "A friend"} is now connected with you.`,
+        title: "친구 연결이 완료됐어요",
+        body: `${friendName || "친구"}님과 이제 함께 기록할 수 있어요.`,
         tag: "friend-connected",
-        url: "/#profile"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-friends", title: "친구 보기", url }
+        ])
     };
 }
 
-function buildFriendDeclinedPushPayload(friendName) {
+function buildFriendDeclinedPushPayload({ friendName, friendshipId = "" }) {
+    const url = buildAppPath("profile", { panel: "friends", friendshipId });
     return {
-        title: "Friend request update",
-        body: `${friendName || "A friend"} declined this request.`,
+        title: "친구 요청이 보류됐어요",
+        body: `${friendName || "상대"}님이 이번 친구 요청은 보류했어요.`,
         tag: "friend-declined",
-        url: "/#profile"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-friends", title: "다시 확인", url }
+        ])
     };
 }
 
-function buildChallengeInvitePushPayload({ creatorName, type, durationDays, stakePoints }) {
+function buildChallengeInvitePushPayload({ challengeId, creatorName, type, durationDays, stakePoints }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
     return {
-        title: isCompetition ? "1:1 challenge invite" : "Group goal invite",
+        title: isCompetition ? "1:1 경쟁 초대가 왔어요" : "단체 목표 초대가 왔어요",
         body: isCompetition
-            ? `${creatorName || "A friend"} invited you to a ${durationDays}-day challenge for ${stakePoints || 0}P.`
-            : `${creatorName || "A friend"} invited you to a ${durationDays}-day group goal.`,
+            ? `${creatorName || "친구"}님이 ${durationDays}일 경쟁에 ${stakePoints || 0}P 스테이크로 초대했어요.`
+            : `${creatorName || "친구"}님이 ${durationDays}일 단체 목표에 초대했어요.`,
         tag: isCompetition ? "challenge-invite-competition" : "challenge-invite-group",
-        url: "/#dashboard"
+        url,
+        requireInteraction: true,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "초대 확인", url },
+            { action: "dismiss", title: "나중에" }
+        ])
     };
 }
 
-function buildChallengeStartedPushPayload({ type, durationDays }) {
+function buildChallengeStartedPushPayload({ challengeId, type, durationDays }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
     return {
-        title: isCompetition ? "1:1 challenge started" : "Group goal started",
-        body: `${durationDays}-day challenge is now active.`,
+        title: isCompetition ? "1:1 경쟁이 시작됐어요" : "단체 목표가 시작됐어요",
+        body: `${durationDays}일 동안 같이 달려볼까요?`,
         tag: isCompetition ? "challenge-started-competition" : "challenge-started-group",
-        url: "/#dashboard"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "챌린지 보기", url }
+        ])
     };
 }
 
-function buildChallengePendingUpdatePushPayload({ accepterName, type }) {
+function buildChallengePendingUpdatePushPayload({ challengeId, accepterName, type }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
     return {
-        title: isCompetition ? "Challenge response received" : "Group goal response received",
-        body: `${accepterName || "A friend"} accepted the invite. Waiting for the rest.`,
+        title: isCompetition ? "경쟁 응답이 도착했어요" : "단체 목표 응답이 도착했어요",
+        body: `${accepterName || "친구"}님이 수락했어요. 나머지 응답을 기다리는 중이에요.`,
         tag: isCompetition ? "challenge-pending-competition" : "challenge-pending-group",
-        url: "/#dashboard"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "상태 확인", url }
+        ])
     };
 }
 
-function buildChallengeDeclinedPushPayload({ responderName, type }) {
+function buildChallengeDeclinedPushPayload({ challengeId, responderName, type }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
     return {
-        title: isCompetition ? "Challenge declined" : "Group goal declined",
-        body: `${responderName || "A friend"} declined the invite.`,
+        title: isCompetition ? "경쟁 초대가 거절됐어요" : "단체 목표 초대가 거절됐어요",
+        body: `${responderName || "친구"}님이 이번 초대는 보류했어요.`,
         tag: isCompetition ? "challenge-declined-competition" : "challenge-declined-group",
-        url: "/#dashboard"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "다시 확인", url }
+        ])
     };
 }
 
-function buildChallengeCancelledPushPayload({ creatorName, type }) {
+function buildChallengeCancelledPushPayload({ challengeId, creatorName, type }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
     return {
-        title: isCompetition ? "Challenge cancelled" : "Group goal cancelled",
-        body: `${creatorName || "A friend"} cancelled the pending challenge.`,
+        title: isCompetition ? "경쟁 초대가 취소됐어요" : "단체 목표 초대가 취소됐어요",
+        body: `${creatorName || "친구"}님이 대기 중이던 챌린지를 취소했어요.`,
         tag: isCompetition ? "challenge-cancelled-competition" : "challenge-cancelled-group",
-        url: "/#dashboard"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "챌린지 보기", url }
+        ])
     };
 }
 
-function buildChallengeSettledPushPayload({ type, outcome, bonusPoints }) {
+function buildChallengeSettledPushPayload({ challengeId, type, outcome, bonusPoints }) {
     const isCompetition = type === "competition";
+    const url = buildAppPath("dashboard", { panel: "challenge", challengeId });
+    const outcomeTextMap = {
+        success: "단체 목표를 달성했어요",
+        win: "경쟁에서 승리했어요",
+        loss: "이번 경쟁은 아쉬웠어요",
+        draw: "이번 경쟁은 무승부예요",
+        void: "활동 부족으로 챌린지가 무효 처리됐어요",
+        missed: "이번 목표는 달성하지 못했어요"
+    };
     return {
-        title: isCompetition ? "Challenge result is ready" : "Group goal result is ready",
-        body: `Outcome: ${outcome || "unknown"}${bonusPoints > 0 ? `, bonus ${bonusPoints}P` : ""}.`,
+        title: isCompetition ? "챌린지 결과가 나왔어요" : "단체 목표 결과가 나왔어요",
+        body: `${outcomeTextMap[outcome] || "결과를 확인해 보세요"}${bonusPoints > 0 ? ` · 보너스 ${bonusPoints}P` : ""}`,
         tag: isCompetition ? "challenge-settled-competition" : "challenge-settled-group",
-        url: "/#dashboard"
+        url,
+        actions: buildNotificationActions([
+            { action: "open-challenge", title: "결과 보기", url }
+        ])
     };
 }
 
@@ -1392,7 +1462,10 @@ exports.processReferralSignup = onCall(
         });
 
         if (outcome.friendshipStatus === "connected") {
-            await sendPushToUsers([referrerUid], buildFriendConnectedPushPayload(outcome.inviterName));
+            await sendPushToUsers([referrerUid], buildFriendConnectedPushPayload({
+                friendName: outcome.inviterName,
+                friendshipId: outcome.friendshipId
+            }));
         }
 
         console.log(`referral signup: ${uid} ← ${referrerUid} (code: ${upperCode}) +200P +friendship`);
@@ -1669,7 +1742,10 @@ exports.acceptInviteLinkFriendship = onCall(
         });
 
         if (outcome.status === "connected" || outcome.status === "pending_promoted") {
-            await sendPushToUsers([inviterUid], buildFriendConnectedPushPayload(outcome.inviterName));
+            await sendPushToUsers([inviterUid], buildFriendConnectedPushPayload({
+                friendName: outcome.inviterName,
+                friendshipId: outcome.friendshipId
+            }));
         }
 
         return outcome;
@@ -1791,7 +1867,10 @@ exports.requestFriend = onCall(
         });
 
         if (outcome.status === "pending_created") {
-            await sendPushToUsers([outcome.targetUid], buildFriendRequestPushPayload(outcome.requesterName));
+            await sendPushToUsers([outcome.targetUid], buildFriendRequestPushPayload({
+                requesterName: outcome.requesterName,
+                friendshipId: outcome.friendshipId
+            }));
         }
 
         return outcome;
@@ -1935,9 +2014,15 @@ exports.respondFriendRequest = onCall(
         });
 
         if (outcome.result === "accepted" && outcome.requesterUid) {
-            await sendPushToUsers([outcome.requesterUid], buildFriendConnectedPushPayload(outcome.responderName));
+            await sendPushToUsers([outcome.requesterUid], buildFriendConnectedPushPayload({
+                friendName: outcome.responderName,
+                friendshipId: outcome.friendshipId
+            }));
         } else if (outcome.result === "declined" && outcome.requesterUid) {
-            await sendPushToUsers([outcome.requesterUid], buildFriendDeclinedPushPayload(outcome.responderName));
+            await sendPushToUsers([outcome.requesterUid], buildFriendDeclinedPushPayload({
+                friendName: outcome.responderName,
+                friendshipId: outcome.friendshipId
+            }));
         }
 
         return outcome;
@@ -3773,15 +3858,33 @@ async function sendMulticast(tokens, uids, payload) {
         body = "",
         tag = "general",
         url = "/",
-        icon = APP_ICON_URL
+        icon = APP_ICON_URL,
+        actions = [],
+        requireInteraction = false,
+        badgeCount = null
     } = payload || {};
+    const normalizedActions = buildNotificationActions(actions);
+    const actionUrls = normalizedActions.reduce((acc, action) => {
+        if (action.url) acc[action.action] = action.url;
+        return acc;
+    }, {});
     const CHUNK = 500;
     for (let i = 0; i < tokens.length; i += CHUNK) {
         const chunkTokens = tokens.slice(i, i + CHUNK);
         const chunkUids = uids.slice(i, i + CHUNK);
         const res = await admin.messaging().sendEachForMulticast({
             tokens: chunkTokens,
-            data: { title, body, tag, url, icon },
+            data: {
+                title,
+                body,
+                tag,
+                url,
+                icon,
+                actions: JSON.stringify(normalizedActions.map(({ action, title }) => ({ action, title }))),
+                actionUrls: JSON.stringify(actionUrls),
+                requireInteraction: requireInteraction ? "true" : "false",
+                badgeCount: badgeCount == null ? "" : String(badgeCount)
+            },
             webpush: {
                 fcmOptions: {
                     link: url.startsWith("http") ? url : `${APP_BASE_URL}${url}`
@@ -3825,7 +3928,16 @@ exports.sendDailyReminder = onSchedule(
         });
 
         console.log(`sendDailyReminder: 대상 ${tokens.length}명 / 오늘 기록 ${loggedIds.size}명`);
-        await sendMulticast(tokens, uids, { title: "Daily reminder", body: "Log your health routine today.", tag: "daily-reminder", url: "/#dashboard" }); /*
+        const reminderUrl = buildAppPath("diet", { focus: "upload" });
+        await sendMulticast(tokens, uids, {
+            title: "오늘 기록을 시작해 볼까요?",
+            body: "식단 사진 한 장부터 올리면 오늘 루틴이 바로 시작돼요.",
+            tag: "daily-reminder",
+            url: reminderUrl,
+            actions: buildNotificationActions([
+                { action: "record-now", title: "지금 기록", url: reminderUrl }
+            ])
+        }); /*
             "🌞 오늘 건강 기록하셨나요?",
             "식단·운동·수면 기록으로 건강 습관을 이어가세요!",
             "daily-reminder"
@@ -3857,7 +3969,16 @@ exports.sendStreakAlert = onSchedule(
         });
 
         console.log(`sendStreakAlert: 대상 ${sendJobs.length}명`);
-        await sendMulticast(sendJobs.map(j => j.token), sendJobs.map(j => j.uid), { title: "Streak reminder", body: "Log now to keep your streak alive.", tag: "streak-alert", url: "/#dashboard" }); /*
+        const streakUrl = buildAppPath("diet", { focus: "upload" });
+        await sendMulticast(sendJobs.map(j => j.token), sendJobs.map(j => j.uid), {
+            title: "연속 기록을 이어갈 시간이에요",
+            body: "지금 기록하면 이어온 흐름을 지킬 수 있어요.",
+            tag: "streak-alert",
+            url: streakUrl,
+            actions: buildNotificationActions([
+                { action: "record-now", title: "지금 기록", url: streakUrl }
+            ])
+        }); /*
             sendJobs.map(j => j.token),
             sendJobs.map(j => j.uid),
             "🔥 연속 습관 달성이 끊길 위기!",
@@ -3892,7 +4013,7 @@ exports.sendBroadcastNotification = onCall(
         });
 
         if (tokens.length === 0) return { sentCount: 0 };
-        await sendMulticast(tokens, uids, { title, body, tag: "broadcast", url: "/#dashboard" });
+        await sendMulticast(tokens, uids, { title, body, tag: "broadcast", url: buildAppPath("dashboard") });
         console.log(`sendBroadcastNotification: ${tokens.length}명 발송 완료`);
         return { sentCount: tokens.length };
     }
@@ -4107,7 +4228,7 @@ exports.createSocialChallenge = onCall(
 
         await sendPushToUsers(
             inviteeIds,
-            buildChallengeInvitePushPayload({ creatorName, type, durationDays, stakePoints })
+            buildChallengeInvitePushPayload({ challengeId, creatorName, type, durationDays, stakePoints })
         );
 
         console.log(`[createSocialChallenge] ${uid} → ${inviteeIds.join(',')} (${type}, ${durationDays}일)`);
@@ -4165,7 +4286,7 @@ exports.respondSocialChallenge = onCall(
             }
             await sendPushToUsers(
                 [challenge.creatorId],
-                buildChallengeDeclinedPushPayload({ responderName: null, type: challenge.type })
+                buildChallengeDeclinedPushPayload({ challengeId, responderName: null, type: challenge.type })
             );
             console.log(`[respondSocialChallenge] ${uid} 거절: ${challengeId}`);
             return { result: 'declined' };
@@ -4221,12 +4342,12 @@ exports.respondSocialChallenge = onCall(
             }
             await sendPushToUsers(
                 newParticipants,
-                buildChallengeStartedPushPayload({ type: challenge.type, durationDays: challenge.durationDays })
+                buildChallengeStartedPushPayload({ challengeId, type: challenge.type, durationDays: challenge.durationDays })
             );
         } else {
             await sendPushToUsers(
                 [challenge.creatorId],
-                buildChallengePendingUpdatePushPayload({ accepterName: responderName, type: challenge.type })
+                buildChallengePendingUpdatePushPayload({ challengeId, accepterName: responderName, type: challenge.type })
             );
         }
 
@@ -4293,6 +4414,7 @@ exports.cancelSocialChallenge = onCall(
             await sendPushToUsers(
                 outcome.inviteeIds,
                 buildChallengeCancelledPushPayload({
+                    challengeId,
                     creatorName: outcome.creatorName,
                     type: outcome.challengeType
                 })
@@ -4441,6 +4563,7 @@ async function settleChallengeById(challengeId) {
         await sendPushToUsers(
             [pid],
             buildChallengeSettledPushPayload({
+                challengeId,
                 type,
                 outcome: results[pid]?.outcome || "unknown",
                 bonusPoints: results[pid]?.bonusPoints || 0

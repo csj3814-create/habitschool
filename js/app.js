@@ -303,6 +303,199 @@ function refreshDashboardInstallCta() {
 window.refreshDashboardInstallCta = refreshDashboardInstallCta;
 window.addEventListener('install-cta-state-changed', refreshDashboardInstallCta);
 
+const _pwaActionableBadgeState = {
+    friendRequests: 0,
+    challengeInvites: 0
+};
+
+function supportsPwaActionableBadge() {
+    return typeof navigator !== 'undefined'
+        && (typeof navigator.setAppBadge === 'function' || typeof navigator.clearAppBadge === 'function');
+}
+
+async function syncPwaActionableBadge() {
+    if (!supportsPwaActionableBadge()) return 0;
+    const total = Math.max(0,
+        Number(_pwaActionableBadgeState.friendRequests || 0)
+        + Number(_pwaActionableBadgeState.challengeInvites || 0)
+    );
+
+    try {
+        if (total > 0 && typeof navigator.setAppBadge === 'function') {
+            await navigator.setAppBadge(total);
+        } else if (total === 0 && typeof navigator.clearAppBadge === 'function') {
+            await navigator.clearAppBadge();
+        }
+    } catch (_) {}
+
+    return total;
+}
+
+function updatePwaActionableBadge(nextCounts = {}) {
+    if (nextCounts && Object.prototype.hasOwnProperty.call(nextCounts, 'friendRequests')) {
+        _pwaActionableBadgeState.friendRequests = Math.max(0, Number(nextCounts.friendRequests) || 0);
+    }
+    if (nextCounts && Object.prototype.hasOwnProperty.call(nextCounts, 'challengeInvites')) {
+        _pwaActionableBadgeState.challengeInvites = Math.max(0, Number(nextCounts.challengeInvites) || 0);
+    }
+    return syncPwaActionableBadge();
+}
+
+function clearPwaActionableBadge() {
+    _pwaActionableBadgeState.friendRequests = 0;
+    _pwaActionableBadgeState.challengeInvites = 0;
+    return syncPwaActionableBadge();
+}
+
+window.updatePwaActionableBadge = updatePwaActionableBadge;
+window.clearPwaActionableBadge = clearPwaActionableBadge;
+window.refreshPwaActionableBadgeFromServer = async function(user = auth.currentUser) {
+    if (!user) {
+        await clearPwaActionableBadge();
+        return 0;
+    }
+
+    try {
+        await loadMyFriendships();
+    } catch (_) {}
+
+    let challengeInvites = _pwaActionableBadgeState.challengeInvites;
+    try {
+        const inviteSnap = await getDocs(query(
+            collection(db, 'social_challenges'),
+            where('invitees', 'array-contains', user.uid),
+            where('status', '==', 'pending'),
+            limit(10)
+        ));
+        challengeInvites = inviteSnap.size;
+    } catch (_) {}
+
+    return updatePwaActionableBadge({
+        friendRequests: getIncomingFriendRequests().length,
+        challengeInvites
+    });
+};
+
+function focusElementWithHighlight(target) {
+    if (!target) return;
+    target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+    target.classList.add('is-highlighted');
+    window.setTimeout(() => target.classList.remove('is-highlighted'), 1500);
+}
+
+function getAppEntryDeepLinkParams() {
+    const url = new URL(window.location.href);
+    return {
+        tab: String(url.searchParams.get('tab') || '').trim(),
+        panel: String(url.searchParams.get('panel') || '').trim(),
+        focus: String(url.searchParams.get('focus') || '').trim(),
+        friendshipId: String(url.searchParams.get('friendshipId') || '').trim(),
+        challengeId: String(url.searchParams.get('challengeId') || '').trim()
+    };
+}
+
+function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
+    const url = new URL(window.location.href);
+    let changed = false;
+    ['tab', 'panel', 'focus', 'friendshipId', 'challengeId'].forEach(key => {
+        if (url.searchParams.has(key)) {
+            url.searchParams.delete(key);
+            changed = true;
+        }
+    });
+    if (!changed) return;
+    url.hash = `#${tabName || getVisibleTabName() || 'dashboard'}`;
+    history.replaceState({ tab: tabName || getVisibleTabName() || 'dashboard' }, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+async function handleProfileFriendsDeepLink({ friendshipId = '', panel = 'friends' } = {}) {
+    await loadMyFriendships();
+    const preferRequests = panel !== 'invite';
+    const focusCard = () => {
+        const target = preferRequests
+            ? document.getElementById('profile-friend-requests-card')
+            : document.getElementById('profile-friend-invite-card');
+        if (target) {
+            focusElementWithHighlight(target);
+            return;
+        }
+        focusProfileFriendCard(preferRequests);
+    };
+
+    requestAnimationFrame(focusCard);
+    window.setTimeout(focusCard, 180);
+
+    if (friendshipId && preferRequests) {
+        window.setTimeout(() => {
+            openFriendRequestModal(friendshipId).catch(error => {
+                console.warn('[handleAppEntryDeepLink] friend request modal failed:', error.message);
+            });
+        }, 260);
+    }
+}
+
+async function handleChallengeDeepLink(challengeId = '') {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    await renderSocialChallenges(user).catch(error => {
+        console.warn('[handleAppEntryDeepLink] challenge card render failed:', error.message);
+    });
+
+    const focusCard = () => {
+        const card = document.getElementById('social-challenge-card');
+        if (card) focusElementWithHighlight(card);
+    };
+    requestAnimationFrame(focusCard);
+    window.setTimeout(focusCard, 180);
+
+    if (challengeId) {
+        window.setTimeout(() => {
+            Promise.resolve(window.openChallengeInviteModal?.(challengeId)).catch(error => {
+                console.warn('[handleAppEntryDeepLink] challenge invite modal failed:', error.message);
+            });
+        }, 260);
+    }
+}
+
+function handleDietUploadDeepLink() {
+    const target = document.querySelector('#diet .upload-cta-split')
+        || document.querySelector('#diet .record-flow-card');
+    focusElementWithHighlight(target);
+}
+
+window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
+    const params = getAppEntryDeepLinkParams();
+    if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
+
+    if (params.panel === 'friends' || params.panel === 'invite' || params.friendshipId) {
+        await handleProfileFriendsDeepLink({
+            friendshipId: params.friendshipId,
+            panel: params.panel || 'friends'
+        });
+        clearAppEntryDeepLinkParams('profile');
+        return true;
+    }
+
+    if (params.panel === 'challenge' || params.challengeId) {
+        await handleChallengeDeepLink(params.challengeId);
+        clearAppEntryDeepLinkParams('dashboard');
+        return true;
+    }
+
+    if (params.focus === 'upload' && (params.tab === 'diet' || initialTab === 'diet')) {
+        requestAnimationFrame(handleDietUploadDeepLink);
+        window.setTimeout(handleDietUploadDeepLink, 180);
+        clearAppEntryDeepLinkParams('diet');
+        return true;
+    }
+
+    return false;
+};
+
 function getDefaultShareSettings() {
     return {
         hideIdentity: false,
@@ -2065,11 +2258,13 @@ async function loadMyFriendships(forceReload = false) {
         _friendshipsLoadingStartedAt = 0;
         sortedFilteredDirty = true;
         renderProfileFriendRequests();
+        updatePwaActionableBadge({ friendRequests: 0 });
         return cachedMyFriendships;
     }
 
     if (!forceReload && _friendshipsLoadedForUid === user.uid && cachedMyFriendships.size > 0) {
         renderProfileFriendRequests();
+        updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
         return cachedMyFriendships;
     }
 
@@ -2103,6 +2298,7 @@ async function loadMyFriendships(forceReload = false) {
                 _friendshipsLoadedForUid = user.uid;
                 sortedFilteredDirty = true;
                 renderProfileFriendRequests();
+                updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
             }
         } catch (error) {
             console.warn('[loadMyFriendships] user cache seed skipped:', error.message);
@@ -2133,6 +2329,7 @@ async function loadMyFriendships(forceReload = false) {
         _friendshipsLoadedForUid = user.uid;
         sortedFilteredDirty = true;
         renderProfileFriendRequests();
+        updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
     })();
 
     try {
@@ -11563,6 +11760,7 @@ async function renderSocialChallenges(user) {
             setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
             _communityFocusState.pendingChallenges = 0;
             _communityFocusState.activeChallenges = 0;
+            updatePwaActionableBadge({ challengeInvites: 0 });
             renderCommunityFocusPanel();
             list.innerHTML = `
                 ${summaryHtml}
@@ -11579,6 +11777,7 @@ async function renderSocialChallenges(user) {
             setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
             _communityFocusState.pendingChallenges = 0;
             _communityFocusState.activeChallenges = 0;
+            updatePwaActionableBadge({ challengeInvites: 0 });
             renderCommunityFocusPanel();
             list.innerHTML = `
                 ${summaryHtml}
@@ -11611,6 +11810,7 @@ async function renderSocialChallenges(user) {
 
         const pendingChallenges = challenges.filter(ch => ch.isInvite).length;
         const activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
+        updatePwaActionableBadge({ challengeInvites: pendingChallenges });
         setSocialChallengeHeadAction(readyCount > 0 && hasAvailableType ? 'start' : 'blocked');
         _communityFocusState.pendingChallenges = pendingChallenges;
         _communityFocusState.activeChallenges = activeChallenges;

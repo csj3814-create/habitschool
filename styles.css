@@ -2150,7 +2150,10 @@ textarea {
     margin-bottom: 0;
 }
 
-.card-invite.is-highlighted {
+.card-invite.is-highlighted,
+.friend-request-card.is-highlighted,
+.social-challenge-dashboard-card.is-highlighted,
+.upload-cta.is-highlighted {
     box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.2), 0 12px 28px rgba(255, 152, 0, 0.18);
     transition: box-shadow 0.2s ease;
 }

@@ -1,61 +1,100 @@
 {
-    "name": "해빛스쿨 - 건강 습관 트래커",
-    "short_name": "해빛스쿨",
-    "description": "매일 건강 습관을 기록하고 포인트를 모으세요! 식단, 운동, 수면을 기록하고 HBT 토큰을 획득하는 Move-to-Earn 건강 앱",
-    "start_url": "/",
-    "display": "standalone",
-    "orientation": "portrait",
-    "background_color": "#FFFFFF",
-    "theme_color": "#FF9800",
-    "lang": "ko",
-    "id": "/",
-    "icons": [
+  "name": "해빛스쿨 - 즐겁게 좋은 습관 만들기",
+  "short_name": "해빛스쿨",
+  "description": "매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FF9800",
+  "lang": "ko",
+  "categories": [
+    "health",
+    "fitness",
+    "lifestyle"
+  ],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "식단 촬영",
+      "short_name": "식단",
+      "description": "식단 사진을 바로 올려요",
+      "url": "/?tab=diet&focus=upload",
+      "icons": [
         {
-            "src": "icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "maskable"
-        },
-        {
-            "src": "icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
-        },
-        {
-            "src": "icons/icon-512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
-    ],
-    "categories": ["health", "fitness", "lifestyle"],
-    "screenshots": [],
-    "prefer_related_applications": false,
-    "shortcuts": [
+      ]
+    },
+    {
+      "name": "운동 기록",
+      "short_name": "운동",
+      "description": "오늘 운동을 바로 기록해요",
+      "url": "/?tab=exercise",
+      "icons": [
         {
-            "name": "식단 기록",
-            "short_name": "식단",
-            "url": "/?tab=diet",
-            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
-        },
-        {
-            "name": "운동 기록",
-            "short_name": "운동",
-            "url": "/?tab=exercise",
-            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
-        },
-        {
-            "name": "걸음수 입력",
-            "short_name": "걸음수",
-            "url": "/?tab=exercise&section=steps",
-            "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
-    ]
+      ]
+    },
+    {
+      "name": "친구 챌린지",
+      "short_name": "챌린지",
+      "description": "응답 대기 중인 챌린지와 친구 상태를 확인해요",
+      "url": "/?tab=dashboard&panel=challenge",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "친구 초대",
+      "short_name": "친구",
+      "description": "초대 링크와 코드로 친구를 바로 연결해요",
+      "url": "/?tab=profile&panel=invite",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }

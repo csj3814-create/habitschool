@@ -364,7 +364,7 @@ export function setupAuthListener(callbacks) {
             const params = new URLSearchParams(window.location.search);
             const urlTab = params.get('tab');
             const hashTab = window.location.hash.replace('#', '');
-            const validTabs = ['dashboard', 'profile', 'gallery', 'assets'];
+            const validTabs = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets'];
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
             const targetTab = pendingChatbotToken
                 ? 'profile'
@@ -375,6 +375,16 @@ export function setupAuthListener(callbacks) {
                         : 'dashboard';
             if (window.openTab) {
                 window.openTab(targetTab, false);
+            }
+            if (window.refreshPwaActionableBadgeFromServer) {
+                setTimeout(() => {
+                    window.refreshPwaActionableBadgeFromServer(user).catch(() => {});
+                }, 180);
+            }
+            if (!pendingChatbotToken && window.handleAppEntryDeepLink) {
+                setTimeout(() => {
+                    window.handleAppEntryDeepLink({ initialTab: targetTab }).catch(() => {});
+                }, 120);
             }
             if (pendingChatbotToken && window.maybeHandleChatbotConnect) {
                 setTimeout(() => {
@@ -522,6 +532,7 @@ export function setupAuthListener(callbacks) {
             window._wasLoggedIn = false;
             _pushTokenLinked = false;
             _pushTokenValue = '';
+            window.clearPwaActionableBadge?.();
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
             if (pendingChatbotToken && window.handleLoggedOutChatbotConnect) {
                 setTimeout(() => {

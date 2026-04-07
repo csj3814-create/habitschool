@@ -26,6 +26,14 @@ const isLocalEnv = hostname === 'localhost' || hostname === '127.0.0.1';
 const isStagingEnv = !isLocalEnv && hostname.includes('habitschool-staging');
 const firebaseConfig = isStagingEnv || isLocalEnv ? STAGING_FIREBASE_CONFIG : PROD_FIREBASE_CONFIG;
 
+function parseJson(rawValue, fallbackValue) {
+    try {
+        return rawValue ? JSON.parse(rawValue) : fallbackValue;
+    } catch (_) {
+        return fallbackValue;
+    }
+}
+
 if (!isLocalEnv) {
     importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
     importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
@@ -36,18 +44,41 @@ if (!isLocalEnv) {
 
     messaging.onBackgroundMessage((payload) => {
         const d = payload.data || {};
-        self.registration.showNotification(d.title || '해빛스쿨', {
+        const actions = parseJson(d.actions, [])
+            .filter(action => action?.action && action?.title)
+            .slice(0, 2);
+        const actionUrls = parseJson(d.actionUrls, {});
+        const badgeCount = Number(d.badgeCount || '');
+        const options = {
             body: d.body || '',
             icon: d.icon || './icons/icon-192.svg',
             badge: './icons/icon-192.svg',
             tag: d.tag || 'habitschool',
-            data: { url: d.url || '/' },
+            data: {
+                url: d.url || '/',
+                actionUrls
+            },
+            actions,
             vibrate: [100, 50, 100]
-        });
+        };
+
+        if (d.requireInteraction === 'true') {
+            options.requireInteraction = true;
+        }
+
+        self.registration.showNotification(d.title || '해빛스쿨', options)
+            .then(() => {
+                if (typeof self.navigator?.setAppBadge !== 'function') return;
+                if (Number.isFinite(badgeCount) && badgeCount > 0) {
+                    return self.navigator.setAppBadge(badgeCount).catch(() => {});
+                }
+                return self.navigator.setAppBadge().catch(() => {});
+            })
+            .catch(() => {});
     });
 }
 
-const CACHE_NAME = 'habitschool-v113';
+const CACHE_NAME = 'habitschool-v114';
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -124,9 +155,13 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
-    if (event.action === 'close') return;
+    if (event.action === 'close' || event.action === 'dismiss') return;
 
-    const url = event.notification.data?.url || '/';
+    const actionUrls = event.notification.data?.actionUrls || {};
+    const actionUrl = event.action && typeof actionUrls[event.action] === 'string'
+        ? actionUrls[event.action]
+        : '';
+    const url = actionUrl || event.notification.data?.url || '/';
     const destination = new URL(url, self.location.origin).href;
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true })
