@@ -11276,11 +11276,53 @@ function buildSocialChallengeFriendContextMap(challenges = [], myUid = auth.curr
     return contextMap;
 }
 
-function buildSocialChallengeFriendReadinessSection(readinessItems = [], challengeContextMap = new Map()) {
-    if (!readinessItems.length) return '';
+function mergeOpenSocialChallenges(asParticipant = [], asInvitee = []) {
+    const challengeMap = new Map();
 
-    const readyCount = readinessItems.filter(item => item.eligible).length;
-    const blockedCount = Math.max(0, readinessItems.length - readyCount);
+    asInvitee.forEach(docSnap => {
+        if (!docSnap?.id) return;
+        challengeMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data(), isInvite: true });
+    });
+
+    asParticipant.forEach(docSnap => {
+        if (!docSnap?.id || challengeMap.has(docSnap.id)) return;
+        challengeMap.set(docSnap.id, { id: docSnap.id, ...docSnap.data(), isInvite: false });
+    });
+
+    return [...challengeMap.values()];
+}
+
+function buildSocialChallengeCreateAvailability(challenges = [], myUid = auth.currentUser?.uid) {
+    const busyFriendIds = new Set();
+    const disabledTypes = {
+        group_goal: false,
+        competition: false
+    };
+    if (!myUid) return { busyFriendIds, disabledTypes };
+
+    challenges.forEach(challenge => {
+        if (!challenge || !['pending', 'active'].includes(challenge.status)) return;
+
+        getSocialChallengePeerIds(challenge, myUid).forEach(friendUid => {
+            busyFriendIds.add(friendUid);
+        });
+
+        if (challenge.creatorId === myUid) {
+            const challengeType = challenge.type === 'competition' ? 'competition' : 'group_goal';
+            disabledTypes[challengeType] = true;
+        }
+    });
+
+    return { busyFriendIds, disabledTypes };
+}
+
+function buildSocialChallengeFriendReadinessSection(readinessItems = [], challengeContextMap = new Map(), options = {}) {
+    if (!readinessItems.length) return '';
+    const canStartAnyChallenge = options.canStartAnyChallenge !== false;
+
+    const availableItems = readinessItems.filter(item => !challengeContextMap.has(item.uid));
+    const readyCount = canStartAnyChallenge ? availableItems.filter(item => item.eligible).length : 0;
+    const blockedCount = canStartAnyChallenge ? availableItems.filter(item => !item.eligible).length : 0;
     const rows = readinessItems.map(item => {
         const challengeContext = challengeContextMap.get(item.uid) || null;
         const rowClasses = ['social-challenge-item', 'social-challenge-readiness-row'];
@@ -11291,18 +11333,16 @@ function buildSocialChallengeFriendReadinessSection(readinessItems = [], challen
             actionHtml = `<button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${challengeContext.challengeId}')">응답하기</button>`;
         } else if (challengeContext?.status === 'outgoing_pending') {
             rowClasses.push('is-pending');
-            actionHtml = `
-                <div class="social-challenge-row-actions">
-                    <button type="button" class="social-challenge-cta is-pending" disabled>수락 대기중</button>
-                    <button type="button" class="social-challenge-inline-btn cancel" onclick="cancelPendingSocialChallenge('${challengeContext.challengeId}')">취소</button>
-                </div>
-            `;
+            actionHtml = `<button type="button" class="social-challenge-cta is-pending" disabled>수락 대기중</button>`;
         } else if (challengeContext?.status === 'active') {
             rowClasses.push('is-active');
             actionHtml = `<button type="button" class="social-challenge-cta is-active" disabled>진행 중</button>`;
-        } else if (item.eligible) {
+        } else if (item.eligible && canStartAnyChallenge) {
             rowClasses.push('is-ready');
             actionHtml = `<button type="button" class="social-challenge-cta" onclick="openCreateChallengeModalForFriend('${item.uid}')">챌린지 시작</button>`;
+        } else if (item.eligible) {
+            rowClasses.push('is-pending');
+            actionHtml = `<button type="button" class="social-challenge-cta is-pending" disabled>생성 대기</button>`;
         } else {
             rowClasses.push('is-blocked');
             actionHtml = `<div class="social-challenge-readiness-pill is-blocked">${item.shortfall}일 부족</div>`;
@@ -11415,20 +11455,20 @@ async function renderSocialChallenges(user) {
             loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS)
         ]);
 
-        const challenges = [];
-        asInvitee.forEach(d => challenges.push({ id: d.id, ...d.data(), isInvite: true }));
-        asParticipant.forEach(d => {
-            if (!challenges.find(c => c.id === d.id)) {
-                challenges.push({ id: d.id, ...d.data(), isInvite: false });
-            }
-        });
+        const challenges = mergeOpenSocialChallenges(asParticipant, asInvitee);
+        const { busyFriendIds, disabledTypes } = buildSocialChallengeCreateAvailability(challenges, user.uid);
+        const hasAvailableType = !disabledTypes.group_goal || !disabledTypes.competition;
         const challengeContextMap = buildSocialChallengeFriendContextMap(challenges, user.uid);
-        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems, challengeContextMap);
-        const readyCount = readinessItems.filter(item => item.eligible).length;
+        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems, challengeContextMap, {
+            canStartAnyChallenge: hasAvailableType
+        });
+        const readyCount = hasAvailableType
+            ? readinessItems.filter(item => item.eligible && !busyFriendIds.has(item.uid)).length
+            : 0;
 
         const pendingChallenges = challenges.filter(ch => ch.isInvite).length;
         const activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
-        setSocialChallengeHeadAction(readyCount > 0 ? 'start' : 'blocked');
+        setSocialChallengeHeadAction(readyCount > 0 && hasAvailableType ? 'start' : 'blocked');
         _communityFocusState.pendingChallenges = pendingChallenges;
         _communityFocusState.activeChallenges = activeChallenges;
         renderCommunityFocusPanel();
@@ -11572,7 +11612,11 @@ let _challengeState = {
     duration: 3,
     selectedFriends: [],   // { uid, name }[]
     friends: [],           // 내 친구 목록 { uid, name }[]
-    pendingInviteId: null  // 응답 대기 중인 챌린지 ID
+    pendingInviteId: null, // 응답 대기 중인 챌린지 ID
+    disabledTypes: {
+        group_goal: false,
+        competition: false
+    }
 };
 
 /** 챌린지 생성 모달 열기 */
@@ -11590,8 +11634,15 @@ window.openCreateChallengeModal = async function(options = {}) {
         const friendshipState = await waitForFriendshipsForUi({ forceReload: true, timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
         const friendIds = getActiveFriendIds();
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
-        const readinessItems = await loadSocialChallengeFriendReadiness(user, { forceReload: true });
-        const eligibleFriends = readinessItems.filter(item => item.eligible);
+        const [readinessItems, [asParticipant, asInvitee]] = await Promise.all([
+            loadSocialChallengeFriendReadiness(user, { forceReload: true }),
+            loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS)
+        ]);
+        const challenges = mergeOpenSocialChallenges(asParticipant, asInvitee);
+        const { busyFriendIds, disabledTypes } = buildSocialChallengeCreateAvailability(challenges, user.uid);
+        const availableTypes = ['group_goal', 'competition'].filter(type => !disabledTypes[type]);
+        const availableFriends = readinessItems.filter(item => !busyFriendIds.has(item.uid));
+        const eligibleFriends = availableFriends.filter(item => item.eligible);
 
         if (friendIds.length === 0) {
             if (hasPendingRequests) {
@@ -11607,13 +11658,19 @@ window.openCreateChallengeModal = async function(options = {}) {
             return;
         }
 
-        if (eligibleFriends.length === 0) {
-            showToast('최근 30일 5일 이상 기록한 친구가 아직 없어요.');
+        if (availableTypes.length === 0) {
+            showToast('이미 진행 중인 1:1 경쟁과 단체 목표가 있어 새 챌린지를 더 만들 수 없어요.');
             renderSocialChallenges(user).catch(() => {});
             return;
         }
 
-        _challengeState.friends = readinessItems.map(item => ({
+        if (eligibleFriends.length === 0) {
+            showToast('이미 진행 중인 챌린지를 제외하면 지금 바로 초대할 수 있는 친구가 없어요.');
+            renderSocialChallenges(user).catch(() => {});
+            return;
+        }
+
+        _challengeState.friends = availableFriends.map(item => ({
             uid: item.uid,
             name: item.name,
             eligible: item.eligible,
@@ -11628,8 +11685,10 @@ window.openCreateChallengeModal = async function(options = {}) {
         _challengeState.duration = 3;
         _challengeState.stake = 50;
         _challengeState.selectedFriends = [];
+        _challengeState.disabledTypes = disabledTypes;
 
-        selectChallengeType('group_goal');
+        const defaultType = availableTypes.includes('group_goal') ? 'group_goal' : 'competition';
+        selectChallengeType(defaultType);
         selectDuration(3);
         selectStake(50);
         if (preselectedFriendUid) {
@@ -11662,7 +11721,10 @@ window.closeCreateChallengeModal = function() {
 function renderChallengeFriendList() {
     const container = document.getElementById('challenge-friend-list');
     if (!container) return;
-    const isCompetition = _challengeState.type === 'competition';
+    if (!_challengeState.friends.length) {
+        container.innerHTML = '<div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">선택할 수 있는 친구가 아직 없어요.</div>';
+        return;
+    }
     container.innerHTML = _challengeState.friends.map(f => {
         const isSelected = _challengeState.selectedFriends.some(s => s.uid === f.uid);
         const isEligible = f.eligible !== false;
@@ -11680,6 +11742,16 @@ function renderChallengeFriendList() {
             ${isSelected ? '<span style="color:#7C4DFF;font-size:14px;">✓</span>' : `<span style="font-size:11px;font-weight:700;color:${isEligible ? '#2E7D32' : '#C56A1D'};">${isEligible ? '가능' : '대기'}</span>`}
         </div>`;
     }).join('');
+}
+
+function setChallengeTypeButtonVisual(button, isSelected, isDisabled) {
+    if (!button) return;
+    button.disabled = isDisabled;
+    button.style.borderColor = isSelected ? '#7C4DFF' : isDisabled ? '#E6D8F8' : '#e8e8e8';
+    button.style.background = isSelected ? '#7C4DFF' : isDisabled ? '#F6F1FF' : 'transparent';
+    button.style.color = isSelected ? '#fff' : isDisabled ? '#B39DDB' : '#666';
+    button.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+    button.style.opacity = isDisabled ? '0.72' : '1';
 }
 
 window.toggleChallengeFriend = function(uid, name) {
@@ -11707,6 +11779,7 @@ window.toggleChallengeFriend = function(uid, name) {
 };
 
 window.selectChallengeType = function(type) {
+    if (_challengeState.disabledTypes?.[type]) return;
     _challengeState.type = type;
     _challengeState.selectedFriends = [];
 
@@ -11715,17 +11788,11 @@ window.selectChallengeType = function(type) {
     const desc = document.getElementById('type-desc');
     const stakeSection = document.getElementById('stake-section');
     const hint = document.getElementById('friend-select-hint');
+    const groupDisabled = Boolean(_challengeState.disabledTypes?.group_goal);
+    const competitionDisabled = Boolean(_challengeState.disabledTypes?.competition);
 
-    if (btnGroup) {
-        btnGroup.style.borderColor = type === 'group_goal' ? '#7C4DFF' : '#e8e8e8';
-        btnGroup.style.background  = type === 'group_goal' ? '#7C4DFF' : 'transparent';
-        btnGroup.style.color       = type === 'group_goal' ? '#fff' : '#666';
-    }
-    if (btnComp) {
-        btnComp.style.borderColor = type === 'competition' ? '#7C4DFF' : '#e8e8e8';
-        btnComp.style.background  = type === 'competition' ? '#7C4DFF' : 'transparent';
-        btnComp.style.color       = type === 'competition' ? '#fff' : '#666';
-    }
+    setChallengeTypeButtonVisual(btnGroup, type === 'group_goal', groupDisabled);
+    setChallengeTypeButtonVisual(btnComp, type === 'competition', competitionDisabled);
 
     const durHint = document.getElementById('duration-hint');
     if (type === 'group_goal') {
@@ -11793,6 +11860,12 @@ window.submitCreateChallenge = async function() {
     if (!user) return;
 
     const { type, duration, selectedFriends } = _challengeState;
+    if (_challengeState.disabledTypes?.[type]) {
+        showToast(type === 'competition'
+            ? '지금은 1:1 경쟁을 새로 만들 수 없어요.'
+            : '지금은 단체 목표를 새로 만들 수 없어요.');
+        return;
+    }
     if (selectedFriends.length === 0) {
         showToast('친구를 한 명 이상 선택해주세요');
         return;

@@ -3877,11 +3877,33 @@ exports.createSocialChallenge = onCall(
         const existingSnap = await db.collection('social_challenges')
             .where('creatorId', '==', uid)
             .where('status', 'in', ['pending', 'active'])
-            .limit(1)
             .get();
-        if (!existingSnap.empty)
-            throw new HttpsError("already-exists",
-                "이미 진행 중인 챌린지가 있습니다. 완료 후 새 챌린지를 만들어주세요.");
+        const openTypes = new Set();
+        const busyFriendIds = new Set();
+        existingSnap.forEach(docSnap => {
+            const challenge = docSnap.data() || {};
+            openTypes.add(challenge.type === 'competition' ? 'competition' : 'group_goal');
+            const participants = Array.isArray(challenge.participants) ? challenge.participants : [];
+            const invitees = Array.isArray(challenge.invitees) ? challenge.invitees : [];
+            [...participants, ...invitees].forEach(participantId => {
+                if (participantId && participantId !== uid) busyFriendIds.add(participantId);
+            });
+        });
+        if (openTypes.has(type)) {
+            throw new HttpsError(
+                "already-exists",
+                type === 'competition'
+                    ? "이미 진행 중이거나 수락 대기 중인 1:1 경쟁이 있어요. 기존 경쟁을 정리한 뒤 다시 시도해 주세요."
+                    : "이미 진행 중이거나 수락 대기 중인 단체 목표가 있어요. 기존 목표를 정리한 뒤 다시 시도해 주세요."
+            );
+        }
+
+        if (inviteeIds.some(inviteeId => busyFriendIds.has(inviteeId))) {
+            throw new HttpsError(
+                "failed-precondition",
+                "이미 진행 중이거나 수락 대기 중인 친구는 새 챌린지에 다시 초대할 수 없어요."
+            );
+        }
 
         // 경쟁 모드: 스테이크 락업
         if (type === 'competition') {
