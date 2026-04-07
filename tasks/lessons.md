@@ -552,3 +552,7 @@
 ### 78. Event-gated install prompts need manual fallbacks on mobile
 - If a first-screen install CTA depends only on beforeinstallprompt, iOS and many mobile browser contexts will never show it.
 - Pair the native prompt path with manual install guidance, dismissal expiry, and a compact fallback state so the CTA remains discoverable.
+
+### 79. Critical install CTAs should use persistent contextual surfaces
+- If installation is a key action, place it in a stable CTA slot instead of a transient floating banner.
+- Auto-dismissing or event-gated install banners are too easy to miss on mobile and too dependent on browser prompt timing.

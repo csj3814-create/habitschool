@@ -228,14 +228,6 @@ function updateFloatingBarLayout() {
         chatBanner.style.transform = 'none';
         chatBanner.style.width = targetWidth;
     }
-
-    const installBanner = document.getElementById('pwa-install-banner');
-    if (installBanner) {
-        installBanner.style.left = targetLeft;
-        installBanner.style.right = 'auto';
-        installBanner.style.transform = 'none';
-        installBanner.style.width = targetWidth;
-    }
 }
 
 function scheduleFloatingBarLayoutUpdate() {
@@ -244,6 +236,72 @@ function scheduleFloatingBarLayoutUpdate() {
 }
 
 window.scheduleFloatingBarLayoutUpdate = scheduleFloatingBarLayoutUpdate;
+
+function getInstallCtaState() {
+    if (typeof window.getInstallCtaState !== 'function') {
+        return { visible: false };
+    }
+
+    try {
+        return window.getInstallCtaState() || { visible: false };
+    } catch (error) {
+        console.warn('설치 CTA 상태 조회 실패:', error.message);
+        return { visible: false };
+    }
+}
+
+function resetSubmitBarMode() {
+    const submitBar = document.getElementById('submit-bar');
+    const saveBtn = document.getElementById('saveDataBtn');
+    if (!submitBar || !saveBtn) return;
+
+    submitBar.classList.remove('install-mode');
+    saveBtn.classList.remove('install-mode');
+    saveBtn.style.background = '';
+    saveBtn.style.color = '';
+    saveBtn.style.boxShadow = '';
+    saveBtn.onclick = null;
+    saveBtn.dataset.mode = 'save';
+}
+
+function applyDashboardInstallCta() {
+    const submitBar = document.getElementById('submit-bar');
+    const saveBtn = document.getElementById('saveDataBtn');
+    const helperEl = document.getElementById('submit-bar-helper');
+    if (!submitBar || !saveBtn || !helperEl) return false;
+
+    const installState = getInstallCtaState();
+    if (!installState.visible) {
+        resetSubmitBarMode();
+        helperEl.style.display = 'none';
+        saveBtn.dataset.mode = '';
+        return false;
+    }
+
+    resetSubmitBarMode();
+    submitBar.style.display = 'block';
+    submitBar.classList.add('install-mode');
+    helperEl.style.display = 'block';
+    helperEl.textContent = installState.helperText || '홈 화면에 추가하면 더 빠르게 다시 열 수 있어요.';
+    saveBtn.classList.add('install-mode');
+    saveBtn.dataset.mode = 'install';
+    saveBtn.disabled = false;
+    saveBtn.innerText = installState.buttonLabel || '해빛스쿨 앱 설치';
+    return true;
+}
+
+function refreshDashboardInstallCta() {
+    if (getVisibleTabName() !== 'dashboard') return;
+    const submitBar = document.getElementById('submit-bar');
+    if (!submitBar) return;
+    if (!applyDashboardInstallCta()) {
+        submitBar.style.display = 'none';
+    }
+    scheduleFloatingBarLayoutUpdate();
+}
+
+window.refreshDashboardInstallCta = refreshDashboardInstallCta;
+window.addEventListener('install-cta-state-changed', refreshDashboardInstallCta);
 
 function getDefaultShareSettings() {
     return {
@@ -4714,6 +4772,7 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     const helperEl = document.getElementById('submit-bar-helper');
     if (!saveBtn || !helperEl) return;
 
+    resetSubmitBarMode();
     const states = guideStates || _getRecordGuideStates();
 
     if (tabName === 'diet') {
@@ -4842,7 +4901,12 @@ function openTab(tabName, pushState = true) {
     const chatBanner = document.getElementById('chat-banner');
     const helperEl = document.getElementById('submit-bar-helper');
 
-    if (tabName === 'dashboard' || tabName === 'profile' || tabName === 'assets') {
+    if (tabName === 'dashboard') {
+        if (!applyDashboardInstallCta()) {
+            submitBar.style.display = 'none';
+        }
+    } else if (tabName === 'profile' || tabName === 'assets') {
+        resetSubmitBarMode();
         submitBar.style.display = 'none';
 
         // 자산 탭 열릴 때: Firestore 데이터 즉시 표시 (블록체인 로드 대기 없이)
@@ -4885,10 +4949,7 @@ function openTab(tabName, pushState = true) {
         updateGalleryPrimaryAction();
     } else {
         submitBar.style.display = 'block';
-        saveBtn.style.background = 'linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%)';
-        saveBtn.style.color = 'white';
-        saveBtn.style.boxShadow = '0 4px 14px rgba(255,109,0,0.3)';
-        saveBtn.onclick = null; // 기본 이벤트 리스너로 복원
+        resetSubmitBarMode();
         updateContextualSaveBar(tabName);
     }
 
@@ -5326,6 +5387,7 @@ function updateGalleryPrimaryAction() {
         return;
     }
 
+    resetSubmitBarMode();
     const shareContainer = document.getElementById('my-share-container');
     const canShare = !!shareContainer && shareContainer.style.display !== 'none';
 
@@ -5333,11 +5395,12 @@ function updateGalleryPrimaryAction() {
     helperEl.textContent = canShare
         ? '기록 카드 준비 완료. 단톡방에 공유해요.'
         : '단톡방에서 오늘 기록 이어가기';
+    saveBtn.dataset.mode = 'chat';
+    saveBtn.disabled = false;
     saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
     saveBtn.style.background = '#FEE500';
     saveBtn.style.color = '#3C1E1E';
     saveBtn.style.boxShadow = '0 8px 18px rgba(254,229,0,0.28)';
-    saveBtn.onclick = () => openCommunityChat();
 }
 
 function handleMissionPrimaryAction() {
@@ -7670,14 +7733,19 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
 }
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
+    const saveBtn = document.getElementById('saveDataBtn');
+    const mode = saveBtn?.dataset.mode || 'save';
+    if (mode === 'install') {
+        window.handleInstallCtaAction?.();
+        return;
+    }
+    if (mode === 'chat') {
+        openCommunityChat();
+        return;
+    }
+
     const user = auth.currentUser;
     if (!user) return;
-
-    // 갤러리 탭에서는 오픈단톡방 버튼으로 사용 → 저장 로직 실행 안함
-    const gallerySection = document.getElementById('gallery');
-    if (gallerySection && gallerySection.style.display === 'block') return;
-
-    const saveBtn = document.getElementById('saveDataBtn');
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
     showToast("백그라운드에서 저장 중입니다! 🚀");
 
