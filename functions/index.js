@@ -4043,6 +4043,60 @@ exports.respondSocialChallenge = onCall(
 );
 
 /**
+ * cancelSocialChallenge — 생성자가 보낸 pending 챌린지 초대 취소
+ */
+exports.cancelSocialChallenge = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        if (!request.auth) throw new HttpsError("unauthenticated", "로그인이 필요");
+        const uid = request.auth.uid;
+        const challengeId = typeof request.data?.challengeId === "string" ? request.data.challengeId.trim() : "";
+        if (!challengeId) throw new HttpsError("invalid-argument", "챌린지 ID 필요");
+
+        const challengeRef = db.doc(`social_challenges/${challengeId}`);
+        const outcome = await db.runTransaction(async (tx) => {
+            const challengeSnap = await tx.get(challengeRef);
+            if (!challengeSnap.exists) {
+                throw new HttpsError("not-found", "챌린지를 찾을 수 없습니다.");
+            }
+
+            const challenge = challengeSnap.data() || {};
+            if (challenge.creatorId !== uid) {
+                throw new HttpsError("permission-denied", "이 챌린지를 취소할 권한이 없습니다.");
+            }
+            if (challenge.status !== "pending") {
+                throw new HttpsError("failed-precondition", "이미 시작되었거나 종료된 챌린지예요.");
+            }
+
+            const now = FieldValue.serverTimestamp();
+            tx.update(challengeRef, {
+                status: "cancelled",
+                cancelledAt: now,
+                updatedAt: now
+            });
+
+            const refundPoints = challenge.type === "competition"
+                ? Number(challenge.stakes?.[uid] || challenge.stakePoints || 0)
+                : 0;
+            if (refundPoints > 0) {
+                tx.update(db.doc(`users/${uid}`), {
+                    coins: FieldValue.increment(refundPoints)
+                });
+            }
+
+            return {
+                result: "cancelled",
+                challengeId,
+                refundPoints
+            };
+        });
+
+        console.log(`[cancelSocialChallenge] ${uid} 취소: ${challengeId}`);
+        return outcome;
+    }
+);
+
+/**
  * 챌린지 결산 내부 헬퍼
  */
 async function settleChallengeById(challengeId) {

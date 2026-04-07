@@ -10970,7 +10970,7 @@ function buildCommunityEmptyState(title, body, actions = []) {
     return `
         <div class="community-empty-state">
             <strong>${title}</strong>
-            <span>${body}</span>
+            ${body ? `<span>${body}</span>` : ''}
             ${actions.length ? `<div class="community-empty-actions">${actions.join('')}</div>` : ''}
         </div>
     `;
@@ -11217,20 +11217,107 @@ async function loadSocialChallengeFriendReadiness(user, { forceReload = false } 
     return items;
 }
 
-function buildSocialChallengeFriendReadinessSection(readinessItems = []) {
+function getSocialChallengeFriendContextPriority(status = '') {
+    switch (status) {
+    case 'incoming_pending':
+        return 0;
+    case 'outgoing_pending':
+        return 1;
+    case 'active':
+        return 2;
+    default:
+        return 99;
+    }
+}
+
+function getSocialChallengePeerIds(challenge, myUid) {
+    const peerIds = new Set();
+    const participants = Array.isArray(challenge?.participants) ? challenge.participants : [];
+    const invitees = Array.isArray(challenge?.invitees) ? challenge.invitees : [];
+    [...participants, ...invitees].forEach(uid => {
+        if (uid && uid !== myUid) peerIds.add(uid);
+    });
+    return [...peerIds];
+}
+
+function buildSocialChallengeFriendContextMap(challenges = [], myUid = auth.currentUser?.uid) {
+    const contextMap = new Map();
+    if (!myUid) return contextMap;
+
+    challenges.forEach(challenge => {
+        let status = '';
+        if (challenge?.isInvite) {
+            status = 'incoming_pending';
+        } else if (challenge?.status === 'pending' && challenge?.creatorId === myUid) {
+            status = 'outgoing_pending';
+        } else if (challenge?.status === 'active') {
+            status = 'active';
+        }
+        if (!status) return;
+
+        const context = {
+            challengeId: challenge.id || '',
+            status,
+            type: challenge.type || 'group_goal',
+            durationDays: Number(challenge.durationDays) || 3,
+            creatorId: challenge.creatorId || '',
+            creatorName: challenge.creatorName || '',
+            stakePoints: Number(challenge.stakePoints) || 0
+        };
+
+        getSocialChallengePeerIds(challenge, myUid).forEach(friendUid => {
+            const existing = contextMap.get(friendUid);
+            if (!existing || getSocialChallengeFriendContextPriority(status) < getSocialChallengeFriendContextPriority(existing.status)) {
+                contextMap.set(friendUid, context);
+            }
+        });
+    });
+
+    return contextMap;
+}
+
+function buildSocialChallengeFriendReadinessSection(readinessItems = [], challengeContextMap = new Map()) {
     if (!readinessItems.length) return '';
 
     const readyCount = readinessItems.filter(item => item.eligible).length;
     const blockedCount = Math.max(0, readinessItems.length - readyCount);
-    const rows = readinessItems.map(item => `
-        <div class="social-challenge-item" style="background:${item.eligible ? '#F7FBF4' : '#FFFAF3'};border-color:${item.eligible ? '#DCEAD3' : '#F2DFC5'};">
-            <div class="social-challenge-main" style="flex:1 1 auto;">
+    const rows = readinessItems.map(item => {
+        const challengeContext = challengeContextMap.get(item.uid) || null;
+        const rowClasses = ['social-challenge-item', 'social-challenge-readiness-row'];
+        let actionHtml = '';
+
+        if (challengeContext?.status === 'incoming_pending') {
+            rowClasses.push('is-invite');
+            actionHtml = `<button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${challengeContext.challengeId}')">응답하기</button>`;
+        } else if (challengeContext?.status === 'outgoing_pending') {
+            rowClasses.push('is-pending');
+            actionHtml = `
+                <div class="social-challenge-row-actions">
+                    <button type="button" class="social-challenge-cta is-pending" disabled>수락 대기중</button>
+                    <button type="button" class="social-challenge-inline-btn cancel" onclick="cancelPendingSocialChallenge('${challengeContext.challengeId}')">취소</button>
+                </div>
+            `;
+        } else if (challengeContext?.status === 'active') {
+            rowClasses.push('is-active');
+            actionHtml = `<button type="button" class="social-challenge-cta is-active" disabled>진행 중</button>`;
+        } else if (item.eligible) {
+            rowClasses.push('is-ready');
+            actionHtml = `<button type="button" class="social-challenge-cta" onclick="openCreateChallengeModalForFriend('${item.uid}')">챌린지 시작</button>`;
+        } else {
+            rowClasses.push('is-blocked');
+            actionHtml = `<div class="social-challenge-readiness-pill is-blocked">${item.shortfall}일 부족</div>`;
+        }
+
+        return `
+        <div class="${rowClasses.join(' ')}">
+            <div class="social-challenge-main social-challenge-readiness-main">
                 <div class="social-challenge-type">${escapeHtml(item.name)}</div>
                 <div class="social-challenge-meta">오늘 ${item.todayCompleted}/3 · 이번 주 ${item.weekDays}일 · 최근 30일 ${item.recentDays}일</div>
             </div>
-            <div style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;min-width:62px;min-height:30px;padding:0 10px;border-radius:999px;font-size:11px;font-weight:800;background:${item.eligible ? '#EAF7E2' : '#FFF0DE'};color:${item.eligible ? '#2E7D32' : '#C56A1D'};">${item.eligible ? '바로 가능' : `${item.shortfall}일 부족`}</div>
+            ${actionHtml}
         </div>
-    `);
+    `;
+    });
 
     return `
         <div class="social-challenge-summary" style="margin-top:10px;">
@@ -11287,9 +11374,6 @@ async function renderSocialChallenges(user) {
         const activeFriendIds = friendshipState.activeFriendIds;
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
         const summaryHtml = buildSocialChallengeFriendSummary(activeFriendIds);
-        const readinessItems = await loadSocialChallengeFriendReadiness(user);
-        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems);
-        const readyCount = readinessItems.filter(item => item.eligible).length;
         _communityFocusState.friendCount = activeFriendIds.length;
 
         if (friendshipState.timedOut && cachedMyFriendships.size === 0) {
@@ -11326,8 +11410,10 @@ async function renderSocialChallenges(user) {
             return;
         }
 
-        setSocialChallengeHeadAction(readyCount > 0 ? 'start' : 'blocked');
-        const [asParticipant, asInvitee] = await loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS);
+        const [readinessItems, [asParticipant, asInvitee]] = await Promise.all([
+            loadSocialChallengeFriendReadiness(user),
+            loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS)
+        ]);
 
         const challenges = [];
         asInvitee.forEach(d => challenges.push({ id: d.id, ...d.data(), isInvite: true }));
@@ -11336,9 +11422,13 @@ async function renderSocialChallenges(user) {
                 challenges.push({ id: d.id, ...d.data(), isInvite: false });
             }
         });
+        const challengeContextMap = buildSocialChallengeFriendContextMap(challenges, user.uid);
+        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems, challengeContextMap);
+        const readyCount = readinessItems.filter(item => item.eligible).length;
 
         const pendingChallenges = challenges.filter(ch => ch.isInvite).length;
         const activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
+        setSocialChallengeHeadAction(readyCount > 0 ? 'start' : 'blocked');
         _communityFocusState.pendingChallenges = pendingChallenges;
         _communityFocusState.activeChallenges = activeChallenges;
         renderCommunityFocusPanel();
@@ -11363,27 +11453,29 @@ async function renderSocialChallenges(user) {
             const statusLabel = ch.status === 'active'
                 ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
                 : '수락 대기 중';
+            const isOutgoingPending = ch.status === 'pending' && ch.creatorId === user.uid;
 
             return `
-                <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}">
+                <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}${isOutgoingPending ? ' is-pending' : ''}">
                     <div class="social-challenge-main">
                         <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
                         <div class="social-challenge-status ${ch.status === 'active' ? 'is-active' : 'is-pending'}">${escapeHtml(statusLabel)}</div>
                         ${ch.type === 'competition' ? `<div class="social-challenge-meta">스테이크 ${ch.stakePoints}P</div>` : ''}
                     </div>
+                    ${isOutgoingPending ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="cancelPendingSocialChallenge('${ch.id}')">취소</button>` : ''}
                 </div>
             `;
         });
 
         if (challenges.length === 0) {
             const emptyTitle = readyCount > 0 ? '바로 챌린지 가능한 친구가 있어요' : '아직 5일 기록이 필요한 친구가 있어요';
-            const emptyBody = readyCount > 0 ? '오른쪽 버튼으로 시작해 보세요.' : '5일 이상 기록한 친구부터 시작할 수 있어요.';
+            const emptyBody = readyCount > 0 ? '' : '5일 이상 기록한 친구부터 시작할 수 있어요.';
             list.innerHTML = `
                 ${summaryHtml}
                 ${readinessHtml}
                 <div class="community-empty-state">
                     <strong>${emptyTitle}</strong>
-                    <span>${emptyBody}</span>
+                    ${emptyBody ? `<span>${emptyBody}</span>` : ''}
                 </div>
             `;
             return;
@@ -11484,12 +11576,15 @@ let _challengeState = {
 };
 
 /** 챌린지 생성 모달 열기 */
-window.openCreateChallengeModal = async function() {
+window.openCreateChallengeModal = async function(options = {}) {
     const modal = document.getElementById('create-challenge-modal');
     if (!modal) return;
 
     const user = auth.currentUser;
     if (!user) { showToast('로그인이 필요합니다'); return; }
+    const preselectedFriendUid = typeof options?.preselectedFriendUid === 'string'
+        ? options.preselectedFriendUid.trim()
+        : '';
 
     try {
         const friendshipState = await waitForFriendshipsForUi({ forceReload: true, timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
@@ -11534,11 +11629,16 @@ window.openCreateChallengeModal = async function() {
         _challengeState.stake = 50;
         _challengeState.selectedFriends = [];
 
-        // 친구 목록 렌더링
-        renderChallengeFriendList();
         selectChallengeType('group_goal');
         selectDuration(3);
         selectStake(50);
+        if (preselectedFriendUid) {
+            const preselectedFriend = _challengeState.friends.find(friend => friend.uid === preselectedFriendUid && friend.eligible !== false);
+            if (preselectedFriend) {
+                _challengeState.selectedFriends = [{ uid: preselectedFriend.uid, name: preselectedFriend.name }];
+            }
+        }
+        renderChallengeFriendList();
 
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -11547,6 +11647,10 @@ window.openCreateChallengeModal = async function() {
         showToast('친구 상태를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
         renderSocialChallenges(user).catch(() => {});
     }
+};
+
+window.openCreateChallengeModalForFriend = function(friendUid) {
+    return window.openCreateChallengeModal({ preselectedFriendUid: String(friendUid || '').trim() });
 };
 
 window.closeCreateChallengeModal = function() {
@@ -11727,6 +11831,22 @@ window.submitCreateChallenge = async function() {
         showToast(`⚠️ ${e.message || '챌린지 생성에 실패했어요'}`);
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = '챌린지 시작하기 🚀'; }
+    }
+};
+
+window.cancelPendingSocialChallenge = async function(challengeId) {
+    const user = auth.currentUser;
+    if (!user || !challengeId) return;
+    if (!window.confirm('보낸 챌린지 초대를 취소할까요?')) return;
+
+    try {
+        const fn = httpsCallable(functions, 'cancelSocialChallenge');
+        await fn({ challengeId });
+        showToast('보낸 챌린지 초대를 취소했어요.');
+        renderSocialChallenges(user).catch(() => {});
+    } catch (e) {
+        console.error('[cancelPendingSocialChallenge]', e);
+        showToast(`⚠️ ${e.message || '챌린지 취소에 실패했어요.'}`);
     }
 };
 

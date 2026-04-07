@@ -2905,8 +2905,17 @@ textarea {
     border-color: #DCEAD3;
 }
 
+.social-challenge-item.is-pending {
+    background: #FFF8EE;
+    border-color: #F2DFC5;
+}
+
 .social-challenge-main {
     min-width: 0;
+}
+
+.social-challenge-readiness-main {
+    flex: 1 1 auto;
 }
 
 .social-challenge-type {
@@ -2932,6 +2941,13 @@ textarea {
     font-weight: 700;
 }
 
+.social-challenge-row-actions {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .social-challenge-cta {
     flex-shrink: 0;
     min-height: 36px;
@@ -2943,6 +2959,62 @@ textarea {
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.social-challenge-cta.is-pending,
+.social-challenge-cta.is-active {
+    cursor: default;
+}
+
+.social-challenge-cta.is-pending {
+    background: #FFF0DE;
+    color: #C56A1D;
+}
+
+.social-challenge-cta.is-active {
+    background: #EAF7E2;
+    color: #2E7D32;
+}
+
+.social-challenge-cta:disabled {
+    opacity: 1;
+}
+
+.social-challenge-readiness-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 62px;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.social-challenge-readiness-pill.is-blocked {
+    background: #FFF0DE;
+    color: #C56A1D;
+}
+
+.social-challenge-inline-btn {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 11px;
+    border: 1px solid #E6D8F8;
+    border-radius: 11px;
+    background: #fff;
+    color: #7C4DFF;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.social-challenge-inline-btn.cancel {
+    border-color: #F2DFC5;
+    background: #FFF8EE;
+    color: #C56A1D;
 }
 
 .social-challenge-dashboard-card {
@@ -8449,6 +8521,25 @@ body.dark-mode .social-challenge-pill {
 body.dark-mode .community-month-summary,
 body.dark-mode .social-challenge-meta,
 body.dark-mode .social-challenge-status { color: #B7B0BE; }
+body.dark-mode .social-challenge-cta.is-pending {
+    background: rgba(245, 124, 0, 0.16);
+    color: #FFCA8C;
+}
+body.dark-mode .social-challenge-cta.is-active {
+    background: rgba(76, 175, 80, 0.18);
+    color: #A9E2AD;
+}
+body.dark-mode .social-challenge-readiness-pill.is-blocked,
+body.dark-mode .social-challenge-inline-btn.cancel {
+    background: rgba(245, 124, 0, 0.12);
+    border-color: rgba(245, 124, 0, 0.26);
+    color: #FFCA8C;
+}
+body.dark-mode .social-challenge-inline-btn {
+    background: rgba(124, 77, 255, 0.08);
+    border-color: rgba(201, 183, 255, 0.26);
+    color: #D2C5FF;
+}
 
 body.dark-mode .group-challenge-title { color: #D8D4DC; }
 body.dark-mode .group-stat-item {
