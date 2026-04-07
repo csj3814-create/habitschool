@@ -584,3 +584,11 @@
 ### 86. Do not duplicate modal dismiss actions without distinct value
 - If a modal already has one clear confirmation/dismiss CTA, avoid adding a second footer button that performs the same close action.
 - Redundant close controls make simple guidance modals feel more complex than they are.
+
+### 87. Install CTA visibility should track installed state, not just standalone mode
+- If an install CTA is shown in a persistent bottom bar, hiding it only in standalone mode is not enough.
+- On supported browsers, combine `appinstalled` memory with installed-app detection so browser tabs stop showing install guidance after installation, and let the CTA return only when the browser reports installation is available again.
+
+### 88. Installed PWA copy must not keep saying "browser" when the user is in the app shell
+- Android installed PWAs can still inherit blocked web notification permissions, but the UX should describe that state in app language first.
+- If recovery still requires browser/site settings, explain that clearly in the helper or guide instead of showing a browser-only phrase on the main card.

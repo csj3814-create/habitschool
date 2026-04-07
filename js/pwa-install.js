@@ -1,5 +1,26 @@
 // Service Worker registration & fixed install CTA orchestration
 let deferredInstallPrompt = null;
+const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
+let cachedInstalledAppState = readStoredInstallState();
+
+function readStoredInstallState() {
+    try {
+        return localStorage.getItem(INSTALL_STATE_STORAGE_KEY) === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function persistInstalledAppState(isInstalled) {
+    cachedInstalledAppState = !!isInstalled;
+    try {
+        if (isInstalled) {
+            localStorage.setItem(INSTALL_STATE_STORAGE_KEY, '1');
+        } else {
+            localStorage.removeItem(INSTALL_STATE_STORAGE_KEY);
+        }
+    } catch (_) {}
+}
 
 function isLocalHost() {
     return location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -59,10 +80,39 @@ function isStandaloneInstallMode() {
     return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
 
+async function detectInstalledRelatedWebApp() {
+    if (typeof navigator.getInstalledRelatedApps !== 'function') return null;
+    try {
+        const installedApps = await navigator.getInstalledRelatedApps();
+        return installedApps.some((app) => {
+            const platform = String(app?.platform || '').toLowerCase();
+            const id = String(app?.id || '').trim();
+            return platform === 'webapp' && (!id || id === '/');
+        });
+    } catch (error) {
+        console.warn('설치 앱 감지 실패:', error?.message || error);
+        return null;
+    }
+}
+
+async function refreshInstalledAppState() {
+    let nextInstalled = isStandaloneInstallMode();
+    if (!nextInstalled) {
+        const relatedInstalled = await detectInstalledRelatedWebApp();
+        if (relatedInstalled !== null) {
+            nextInstalled = relatedInstalled;
+        }
+    }
+    persistInstalledAppState(nextInstalled);
+    notifyInstallCtaStateChanged();
+    return nextInstalled;
+}
+
 function shouldShowInstallCta() {
     if (isLocalHost()) return false;
     if (!isMobileInstallDevice()) return false;
     if (isStandaloneInstallMode()) return false;
+    if (cachedInstalledAppState) return false;
     return true;
 }
 
@@ -123,7 +173,7 @@ function getInstallCopy() {
         return {
             visible: true,
             buttonLabel: '해빛스쿨 앱 설치',
-            helperText: '홈 화면에 추가하면 해빛스쿨을 더 빠르게 다시 열 수 있어요.'
+            helperText: '설치하면 앱처럼 바로 열 수 있어요.'
         };
     }
 
@@ -132,8 +182,8 @@ function getInstallCopy() {
             visible: true,
             buttonLabel: '설치 방법 보기',
             helperText: isSafariBrowser()
-                ? 'Safari 공유 메뉴에서 홈 화면에 추가하면 앱처럼 사용할 수 있어요.'
-                : 'Safari로 열면 홈 화면에 추가해서 앱처럼 사용할 수 있어요.'
+                ? '홈 화면에 추가하면 앱처럼 쓸 수 있어요.'
+                : 'Safari로 열면 설치할 수 있어요.'
         };
     }
 
@@ -141,14 +191,14 @@ function getInstallCopy() {
         return {
             visible: true,
             buttonLabel: '설치 방법 보기',
-            helperText: '기본 브라우저에서 열면 해빛스쿨 앱 설치가 더 쉬워집니다.'
+            helperText: '기본 브라우저로 열면 설치할 수 있어요.'
         };
     }
 
     return {
         visible: true,
         buttonLabel: deferredInstallPrompt ? '해빛스쿨 앱 설치' : '설치 방법 보기',
-        helperText: '브라우저 메뉴나 주소창 설치 아이콘으로 해빛스쿨을 앱처럼 둘 수 있어요.'
+        helperText: '설치하면 앱처럼 바로 열 수 있어요.'
     };
 }
 
@@ -207,25 +257,29 @@ window.addEventListener('load', async () => {
         }
     }
 
-    notifyInstallCtaStateChanged();
+    await refreshInstalledAppState();
 });
 
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
+    persistInstalledAppState(false);
     notifyInstallCtaStateChanged();
 });
 
 window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
+    persistInstalledAppState(true);
     notifyInstallCtaStateChanged();
     console.log('PWA installed');
 });
 
-window.addEventListener('pageshow', notifyInstallCtaStateChanged);
+window.addEventListener('pageshow', () => {
+    refreshInstalledAppState().catch(() => notifyInstallCtaStateChanged());
+});
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-        notifyInstallCtaStateChanged();
+        refreshInstalledAppState().catch(() => notifyInstallCtaStateChanged());
     }
 });
 

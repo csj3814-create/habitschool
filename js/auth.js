@@ -670,6 +670,11 @@ function isIOSPushDevice() {
     return /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
 
+function isAndroidPushDevice() {
+    const ua = navigator.userAgent || navigator.vendor || '';
+    return /Android/i.test(ua);
+}
+
 function isStandalonePushMode() {
     return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -680,7 +685,7 @@ function isPushSupportedInBrowser() {
 
 function getNotificationGuideProfile() {
     const ua = navigator.userAgent || navigator.vendor || '';
-    const isAndroid = /Android/i.test(ua);
+    const isAndroid = isAndroidPushDevice();
     const isDesktop = /Windows NT|Macintosh|Linux/i.test(ua) && !isAndroid && !isIOSPushDevice();
     const isSamsungBrowser = /SamsungBrowser/i.test(ua);
     const isEdge = /EdgA|Edg\//i.test(ua);
@@ -723,6 +728,35 @@ function getNotificationGuideProfile() {
                 : isWhale
                     ? 'Whale'
                     : 'Chrome';
+
+        if (isStandalonePushMode()) {
+            return {
+                badge: '안드로이드 설치 앱 안내',
+                title: `${browserLabel} 사이트 설정에서 해빛스쿨 알림을 다시 켜요`,
+                copy: '설치 앱에서도 알림 권한은 같은 사이트 권한으로 관리돼요. 한 번만 브라우저에서 열어 바꿔 주세요.',
+                note: '설치 앱 안에는 주소창이 없어서, 같은 주소를 브라우저 탭으로 열어 권한을 바꿔야 해요.',
+                panels: [
+                    {
+                        step: 'STEP 1',
+                        title: `${browserLabel}에서 해빛스쿨을 열어요`,
+                        copy: '설치 앱이 아니라 브라우저 탭으로 habitschool 웹사이트를 다시 열어 주세요.',
+                        variant: 'android-standalone-open-browser'
+                    },
+                    {
+                        step: 'STEP 2',
+                        title: '주소창 왼쪽 아이콘을 눌러요',
+                        copy: '사이트 정보 패널을 열고 `권한` 또는 `사이트 설정`으로 들어가 주세요.',
+                        variant: 'android-address'
+                    },
+                    {
+                        step: 'STEP 3',
+                        title: '알림을 허용으로 바꿔요',
+                        copy: '허용으로 바꾼 뒤 설치 앱으로 돌아오면 다시 알림을 켤 수 있어요.',
+                        variant: 'android-allow'
+                    }
+                ]
+            };
+        }
 
         return {
             badge: `${browserLabel} 안드로이드 안내`,
@@ -825,6 +859,14 @@ function buildNotificationGuideVisual(variant) {
                         <div class="notification-guide-url-pill">habitschool-staging.web.app</div>
                         <div class="notification-guide-toolbar-dot"></div>
                     </div>
+                </div>`;
+        case 'android-standalone-open-browser':
+            return `
+                <div class="notification-guide-mock notification-guide-mock-android-app">
+                    <div class="notification-guide-mini-card">해빛스쿨 앱</div>
+                    <div class="notification-guide-arrow-down">↓</div>
+                    <div class="notification-guide-mini-card is-highlight">Chrome에서 열기</div>
+                    <div class="notification-guide-setting-hint">같은 주소를 브라우저 탭으로 한 번 열어 주세요</div>
                 </div>`;
         case 'android-permissions':
             return `
@@ -1013,7 +1055,9 @@ function getPushPermissionUiState(user = auth.currentUser) {
         }
 
         return {
-            status: '브라우저 알림 권한은 허용되어 있어요.',
+            status: isStandalonePushMode()
+                ? '이 기기 알림 권한은 허용되어 있어요.'
+                : '브라우저 알림 권한은 허용되어 있어요.',
             helper: '버튼 한 번으로 해빛스쿨 푸시 알림을 바로 켤 수 있어요.',
             buttonLabel: '알림 켜기',
             buttonMode: 'primary',
@@ -1024,8 +1068,12 @@ function getPushPermissionUiState(user = auth.currentUser) {
 
     if (Notification.permission === 'denied') {
         return {
-            status: '브라우저에서 알림이 차단되어 있어요.',
-            helper: '버튼을 누르면 지금 쓰는 브라우저 화면 기준으로 어디를 눌러야 하는지 그림으로 보여드려요.',
+            status: isStandalonePushMode()
+                ? '이 기기에서 해빛스쿨 알림이 차단되어 있어요.'
+                : '브라우저에서 알림이 차단되어 있어요.',
+            helper: isStandalonePushMode()
+                ? '설정 안내를 열면 브라우저에서 다시 켜는 순서를 그림으로 보여드려요.'
+                : '버튼을 누르면 지금 쓰는 브라우저 화면 기준으로 어디를 눌러야 하는지 그림으로 보여드려요.',
             buttonLabel: '설정 안내 보기',
             buttonMode: 'secondary',
             disabled: false,

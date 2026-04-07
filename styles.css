@@ -10486,6 +10486,41 @@ body.dark-mode .step-detail-item { color: #bbb; }
     font-weight: 700;
 }
 
+.notification-guide-mock-android-app {
+    min-height: 150px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 8px;
+    padding: 14px 12px;
+    background: linear-gradient(180deg, #fff7ec 0%, #ffffff 100%);
+}
+
+.notification-guide-mini-card {
+    min-width: 156px;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid #efd8b8;
+    background: #fff;
+    color: #7b5d35;
+    font-size: 13px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.notification-guide-mini-card.is-highlight {
+    background: #fff4c7;
+    border-color: #ffc46c;
+    box-shadow: inset 0 0 0 2px rgba(255, 196, 108, 0.18);
+}
+
+.notification-guide-arrow-down {
+    font-size: 18px;
+    font-weight: 900;
+    color: #ff8c00;
+    line-height: 1;
+}
+
 .notification-guide-toggle {
     width: 42px;
     height: 24px;

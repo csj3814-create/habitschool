@@ -15,6 +15,12 @@
     "fitness",
     "lifestyle"
   ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "id": "/"
+    }
+  ],
   "prefer_related_applications": false,
   "icons": [
     {
