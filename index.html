@@ -873,13 +873,16 @@
                             class="quest-check" id="quest-diet">미달성</span></div>
                 </div>
                 <!-- 업로드 CTA -->
-                <div class="upload-cta" onclick="clickNextEmptyDietSlot()">
+                <div class="upload-cta upload-cta-split">
                     <div class="upload-cta-icon">📸</div>
                     <div class="upload-cta-text">
                         <strong>식단 사진을 올려보세요!</strong>
                         <span>AI가 초가공식품을 판별하고 영양소를 분석해드려요</span>
                     </div>
-                    <div class="upload-cta-arrow">›</div>
+                    <div class="upload-cta-actions">
+                        <button class="upload-cta-btn primary" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
+                        <button class="upload-cta-btn" type="button" onclick="clickNextEmptyDietSlot('library')">보관함에서 선택</button>
+                    </div>
                 </div>
                 <!-- 오늘의 식단 총평 -->
                 <div id="diet-day-summary-container" style="display:none;"></div>

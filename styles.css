@@ -8315,6 +8315,15 @@ body.dark-mode .upload-cta:active {
 body.dark-mode .upload-cta-text strong { color: #81C784; }
 body.dark-mode .upload-cta-text span { color: #A09AAA; }
 body.dark-mode .upload-cta-arrow { color: #81C784; }
+body.dark-mode .upload-cta-split .upload-cta-btn {
+    background: rgba(22, 24, 30, 0.82);
+    border-color: rgba(129, 199, 132, 0.18);
+    color: #A5D6A7;
+}
+body.dark-mode .upload-cta-split .upload-cta-btn.primary {
+    background: linear-gradient(135deg, #2E7D32 0%, #43A047 100%);
+    color: #fff;
+}
 body.dark-mode .record-flow-card {
     background: linear-gradient(135deg, #231F1B 0%, #1D2128 100%);
     border-color: #403831;
@@ -9636,6 +9645,85 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     font-size: 24px;
     color: #4CAF50;
     font-weight: bold;
+}
+
+.upload-cta-split {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "icon text"
+        "icon actions";
+    column-gap: 12px;
+    row-gap: 10px;
+    cursor: default;
+}
+
+.upload-cta-split:active {
+    transform: none;
+    background: linear-gradient(135deg, #e8f5e9 0%, #f3e5f5 100%);
+}
+
+.upload-cta-split .upload-cta-icon {
+    grid-area: icon;
+}
+
+.upload-cta-split .upload-cta-text {
+    grid-area: text;
+    min-width: 0;
+}
+
+.upload-cta-split .upload-cta-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.upload-cta-split .upload-cta-btn {
+    flex: 1 1 140px;
+    min-height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(76, 175, 80, 0.22);
+    background: rgba(255, 255, 255, 0.82);
+    color: #2E7D32;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.upload-cta-split .upload-cta-btn:active {
+    transform: scale(0.98);
+}
+
+.upload-cta-split .upload-cta-btn.primary {
+    border-color: transparent;
+    background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(76, 175, 80, 0.22);
+}
+
+@media (max-width: 420px) {
+    .upload-cta-split {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "icon"
+            "text"
+            "actions";
+    }
+
+    .upload-cta-split .upload-cta-icon {
+        justify-self: start;
+    }
+
+    .upload-cta-split .upload-cta-actions {
+        width: 100%;
+    }
+
+    .upload-cta-split .upload-cta-btn {
+        flex-basis: calc(50% - 4px);
+    }
 }
 
 .record-flow-card {

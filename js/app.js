@@ -3249,16 +3249,41 @@ window.rotateImage = function (e, previewId, inputId) {
     tempImg.src = img.src;
 };
 
+function openDietSlotPicker(slot, source = 'library') {
+    const input = document.getElementById(`diet-img-${slot}`);
+    const box = document.getElementById(`diet-box-${slot}`);
+    if (!input) return false;
+
+    if (box) box.style.display = 'block';
+
+    const normalizedSource = source === 'camera' ? 'camera' : 'library';
+    const cleanup = () => {
+        input.removeAttribute('capture');
+        input.removeEventListener('change', cleanup, true);
+        window.removeEventListener('focus', handleFocus, true);
+    };
+    const handleFocus = () => window.setTimeout(cleanup, 0);
+
+    if (normalizedSource === 'camera') {
+        input.setAttribute('capture', 'environment');
+    } else {
+        input.removeAttribute('capture');
+    }
+
+    input.addEventListener('change', cleanup, { once: true, capture: true });
+    window.addEventListener('focus', handleFocus, { once: true, capture: true });
+    input.click();
+    return true;
+}
+
 /* CTA 버튼: 다음 빈 식단 칸으로 이동 */
-window.clickNextEmptyDietSlot = function () {
+window.clickNextEmptyDietSlot = function (source = 'library') {
     const slots = ['breakfast', 'lunch', 'dinner', 'snack'];
     for (const slot of slots) {
         const preview = document.getElementById(`preview-${slot}`);
         const isEmpty = !preview || preview.style.display === 'none' || !preview.src || preview.src === '' || preview.src === window.location.href;
         if (isEmpty) {
-            const box = document.getElementById(`diet-box-${slot}`);
-            if (box) box.style.display = 'block';
-            document.getElementById(`diet-img-${slot}`).click();
+            openDietSlotPicker(slot, source);
             return;
         }
     }
