@@ -78,7 +78,79 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v114';
+const CACHE_NAME = 'habitschool-v115';
+const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
+const SHARE_TARGET_ACTION_PATH = '/share-target';
+const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', self.location.origin).href;
+
+function buildShareTargetFileUrl(index) {
+    return new URL(`/__share_target__/diet/${index}`, self.location.origin).href;
+}
+
+async function clearPendingDietShareTarget(cache, manifestData = null) {
+    const targetCache = cache || await caches.open(SHARE_TARGET_CACHE_NAME);
+    let manifest = manifestData;
+    if (!manifest) {
+        const manifestResponse = await targetCache.match(SHARE_TARGET_MANIFEST_URL);
+        manifest = manifestResponse ? await manifestResponse.json().catch(() => null) : null;
+    }
+
+    const itemUrls = Array.isArray(manifest?.items)
+        ? manifest.items.map((item) => String(item?.url || '')).filter(Boolean)
+        : [];
+
+    await Promise.all([
+        targetCache.delete(SHARE_TARGET_MANIFEST_URL),
+        ...itemUrls.map((url) => targetCache.delete(url))
+    ]);
+}
+
+async function storePendingDietShareTarget(files) {
+    const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
+    await clearPendingDietShareTarget(cache);
+
+    const createdAt = Date.now();
+    const items = [];
+    for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const url = buildShareTargetFileUrl(index);
+        const type = String(file?.type || 'image/jpeg').trim() || 'image/jpeg';
+        const name = String(file?.name || `shared-diet-${index + 1}.jpg`).trim() || `shared-diet-${index + 1}.jpg`;
+        const lastModified = Number(file?.lastModified || createdAt) || createdAt;
+
+        items.push({ url, type, name, lastModified });
+        await cache.put(url, new Response(file, {
+            headers: {
+                'content-type': type
+            }
+        }));
+    }
+
+    await cache.put(SHARE_TARGET_MANIFEST_URL, new Response(JSON.stringify({
+        createdAt,
+        items
+    }), {
+        headers: {
+            'content-type': 'application/json'
+        }
+    }));
+}
+
+async function handleDietShareTarget(request) {
+    const formData = await request.formData();
+    const sharedFiles = formData.getAll('dietPhotos')
+        .filter((value) => value instanceof File)
+        .filter((file) => file.size > 0)
+        .filter((file) => String(file.type || '').startsWith('image/'));
+
+    if (sharedFiles.length > 0) {
+        await storePendingDietShareTarget(sharedFiles);
+    }
+
+    const redirectUrl = new URL('/?tab=diet&focus=shared-upload#diet', self.location.origin);
+    return Response.redirect(redirectUrl.href, 303);
+}
+
 const STATIC_ASSETS = [
     './',
     './styles.css',
@@ -117,7 +189,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => Promise.all(
             cacheNames
-                .filter((name) => name !== CACHE_NAME)
+                .filter((name) => ![CACHE_NAME, SHARE_TARGET_CACHE_NAME].includes(name))
                 .map((name) => {
                     console.log('[SW] delete old cache:', name);
                     return caches.delete(name);
@@ -128,8 +200,24 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    const requestUrl = new URL(request.url);
 
-    if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) {
+    if (!request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    if (request.method === 'POST' && requestUrl.pathname === SHARE_TARGET_ACTION_PATH) {
+        event.respondWith(
+            handleDietShareTarget(request).catch((error) => {
+                console.warn('[SW] share target handling failed:', error?.message || error);
+                const fallbackUrl = new URL('/?tab=diet&focus=upload#diet', self.location.origin);
+                return Response.redirect(fallbackUrl.href, 303);
+            })
+        );
+        return;
+    }
+
+    if (request.method !== 'GET') {
         return;
     }
 

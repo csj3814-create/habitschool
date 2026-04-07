@@ -113,6 +113,8 @@ const RECORD_GUIDE_STORAGE_KEYS = {
     exercise: 'habitschool_record_guide_exercise_collapsed',
     sleep: 'habitschool_record_guide_sleep_collapsed'
 };
+const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
+const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', window.location.origin).href;
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
 let _shareSettingsExpanded = false;
@@ -138,6 +140,7 @@ let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
 let _friendshipsLoadingStartedAt = 0;
 let _pendingFriendRequestId = null;
+let _pendingSharedDietImportPromise = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
@@ -386,6 +389,98 @@ function focusElementWithHighlight(target) {
     window.setTimeout(() => target.classList.remove('is-highlighted'), 1500);
 }
 
+async function getPendingDietShareManifest() {
+    if (!('caches' in window)) return null;
+    try {
+        const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
+        const response = await cache.match(SHARE_TARGET_MANIFEST_URL);
+        if (!response) return null;
+        return await response.json();
+    } catch (_) {
+        return null;
+    }
+}
+
+async function clearPendingDietShareTarget(manifest = null) {
+    if (!('caches' in window)) return;
+    const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
+    const currentManifest = manifest || await getPendingDietShareManifest();
+    const itemUrls = Array.isArray(currentManifest?.items)
+        ? currentManifest.items.map(item => String(item?.url || '')).filter(Boolean)
+        : [];
+    await Promise.all([
+        cache.delete(SHARE_TARGET_MANIFEST_URL),
+        ...itemUrls.map((url) => cache.delete(url))
+    ]);
+}
+
+async function readPendingDietShareFiles(manifest = null) {
+    if (!('caches' in window)) return { manifest: null, files: [] };
+    const currentManifest = manifest || await getPendingDietShareManifest();
+    if (!currentManifest || !Array.isArray(currentManifest.items) || currentManifest.items.length === 0) {
+        return { manifest: currentManifest, files: [] };
+    }
+
+    const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
+    const files = [];
+    for (let index = 0; index < currentManifest.items.length; index += 1) {
+        const item = currentManifest.items[index];
+        const itemUrl = String(item?.url || '').trim();
+        if (!itemUrl) continue;
+
+        const response = await cache.match(itemUrl);
+        if (!response) continue;
+        const blob = await response.blob();
+        const type = String(item?.type || blob.type || 'image/jpeg').trim() || 'image/jpeg';
+        if (!type.startsWith('image/')) continue;
+
+        const name = String(item?.name || `shared-diet-${index + 1}.jpg`).trim() || `shared-diet-${index + 1}.jpg`;
+        const lastModified = Number(item?.lastModified || currentManifest.createdAt || Date.now()) || Date.now();
+        files.push(new File([blob], name, { type, lastModified }));
+    }
+
+    return { manifest: currentManifest, files };
+}
+
+async function importPendingDietShareTarget() {
+    if (_pendingSharedDietImportPromise) {
+        return _pendingSharedDietImportPromise;
+    }
+
+    _pendingSharedDietImportPromise = (async () => {
+        const { manifest, files } = await readPendingDietShareFiles();
+        if (!manifest || files.length === 0) {
+            if (manifest) {
+                await clearPendingDietShareTarget(manifest);
+            }
+            return 0;
+        }
+
+        openTab('diet', false);
+        const selectedDate = document.getElementById('selected-date')?.value;
+        if (selectedDate && typeof loadDataForSelectedDate === 'function') {
+            await loadDataForSelectedDate(selectedDate);
+        }
+
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.accept = 'image/*';
+        tempInput.multiple = true;
+
+        const transfer = new DataTransfer();
+        files.forEach((file) => transfer.items.add(file));
+        tempInput.files = transfer.files;
+
+        await window.smartUpload(tempInput);
+        await clearPendingDietShareTarget(manifest);
+        return files.length;
+    })().finally(() => {
+        _pendingSharedDietImportPromise = null;
+    });
+
+    return _pendingSharedDietImportPromise;
+}
+
 function getAppEntryDeepLinkParams() {
     const url = new URL(window.location.href);
     return {
@@ -467,6 +562,22 @@ function handleDietUploadDeepLink() {
     focusElementWithHighlight(target);
 }
 
+async function handleSharedDietUploadDeepLink() {
+    const importedCount = await importPendingDietShareTarget().catch((error) => {
+        console.warn('[handleSharedDietUploadDeepLink] shared diet import failed:', error?.message || error);
+        return 0;
+    });
+
+    requestAnimationFrame(handleDietUploadDeepLink);
+    window.setTimeout(handleDietUploadDeepLink, 180);
+
+    if (importedCount > 0) {
+        showToast(`📥 공유한 식단 사진 ${importedCount}장을 불러왔어요.`);
+    }
+
+    return importedCount;
+}
+
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
@@ -483,6 +594,12 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     if (params.panel === 'challenge' || params.challengeId) {
         await handleChallengeDeepLink(params.challengeId);
         clearAppEntryDeepLinkParams('dashboard');
+        return true;
+    }
+
+    if (params.focus === 'shared-upload' && (params.tab === 'diet' || initialTab === 'diet')) {
+        await handleSharedDietUploadDeepLink();
+        clearAppEntryDeepLinkParams('diet');
         return true;
     }
 
