@@ -607,3 +607,7 @@
 ### 90. Native shell branding must reuse the real app icon from day one
 - If the repo already has a production PWA/app icon, do not ship the Android shell with a placeholder launcher icon.
 - Before sharing a test APK, verify launcher icon, app label, and other visible branding assets match the existing product brand to avoid duplicate-looking installs.
+
+### 91. Adaptive launcher icons need inset-safe foregrounds
+- Reusing the real product icon is not enough for Android launcher icons; adaptive icons crop the foreground inside a mask on many launchers.
+- Before shipping a test APK, verify the launcher icon on a real Samsung/One UI device and keep text or logos away from the mask edges by using an inset foreground asset.

@@ -52,6 +52,22 @@
             android:theme="@style/Theme.Habitschool" />
 
         <activity
+            android:name=".NativeEntryActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Habitschool.TransparentLauncher">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="habitschool"
+                    android:host="health-connect"
+                    android:path="/sync" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".PermissionsRationaleActivity"
             android:exported="true"
             android:label="@string/native_health_privacy_title"

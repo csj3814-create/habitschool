@@ -1,0 +1,7 @@
+# Copy this file to android/release-signing.properties and fill in your real values.
+# The keystore file itself should stay outside git, for example under android/signing/.
+
+storeFile=signing/habitschool-release.keystore
+storePassword=REPLACE_ME
+keyAlias=habitschool
+keyPassword=REPLACE_ME

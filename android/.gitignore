@@ -2,3 +2,6 @@
 build/
 app/build/
 local.properties
+signing/
+release-signing.properties
+release-signing.local.properties

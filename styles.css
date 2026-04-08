@@ -8287,6 +8287,11 @@ body.dark-mode .record-flow-btn.primary {
     background: linear-gradient(135deg, #D97706 0%, #C65A00 100%);
     color: white;
 }
+body.dark-mode .record-flow-btn.native-sync {
+    background: linear-gradient(135deg, rgba(29, 73, 54, 0.95) 0%, rgba(21, 55, 69, 0.95) 100%);
+    border-color: #335847;
+    color: #CBECD7;
+}
 body.dark-mode .submit-bar-helper { color: #A59DA8; }
 
 /* 인라인 팁 박스 다크모드 */
@@ -9818,6 +9823,11 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     background: linear-gradient(135deg, #FF9A1F 0%, #FF7A00 100%);
     color: white;
     box-shadow: 0 8px 18px rgba(255, 138, 0, 0.18);
+}
+.record-flow-btn.native-sync {
+    border-color: #C8E1D1;
+    background: linear-gradient(135deg, #F1FBF5 0%, #F5FBFF 100%);
+    color: #276548;
 }
 
 /* ==========================================

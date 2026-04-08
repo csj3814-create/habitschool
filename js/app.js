@@ -474,6 +474,33 @@ async function importPendingDietShareTarget() {
 
 let _pendingNativeStepImport = null;
 let _activeNativeStepImport = null;
+const NATIVE_APP_SOURCE_SESSION_KEY = 'habitschoolNativeAppSource';
+
+function rememberNativeAppSource(params = getAppEntryDeepLinkParams()) {
+    const source = String(params?.native || '').trim();
+    if (!source) return getRememberedNativeAppSource();
+    try {
+        sessionStorage.setItem(NATIVE_APP_SOURCE_SESSION_KEY, source);
+    } catch (_) { }
+    return source;
+}
+
+function getRememberedNativeAppSource() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const source = String(params.get('native') || '').trim();
+        if (source) {
+            sessionStorage.setItem(NATIVE_APP_SOURCE_SESSION_KEY, source);
+            return source;
+        }
+    } catch (_) { }
+
+    try {
+        return String(sessionStorage.getItem(NATIVE_APP_SOURCE_SESSION_KEY) || '').trim();
+    } catch (_) {
+        return '';
+    }
+}
 
 function getAppEntryDeepLinkParams() {
     const url = new URL(window.location.href);
@@ -609,6 +636,8 @@ function getNativeSurfaceLabel(nativeSource = '') {
             return '홈 위젯';
         case 'android-tile':
             return '퀵패널 타일';
+        case 'android-web-sync':
+            return '운동 탭 버튼';
         case 'widget':
         case 'android-widget-sync':
             return 'Android 위젯';
@@ -619,6 +648,36 @@ function getNativeSurfaceLabel(nativeSource = '') {
     }
 }
 
+function renderExerciseNativeSyncCta() {
+    const button = document.getElementById('exercise-health-connect-btn');
+    if (!button) return;
+
+    const nativeSource = getRememberedNativeAppSource();
+    if (!nativeSource) {
+        button.style.display = 'none';
+        return;
+    }
+
+    button.style.display = 'inline-flex';
+    button.textContent = String(_stepData?.source || '').trim() === 'health_connect'
+        ? 'Health Connect 다시 동기화'
+        : 'Health Connect 동기화';
+}
+
+function startNativeHealthConnectSync() {
+    const nativeSource = getRememberedNativeAppSource();
+    if (!nativeSource) {
+        showToast('Android 앱 셸에서만 Health Connect 동기화를 시작할 수 있어요.');
+        return;
+    }
+
+    const syncUrl = new URL('habitschool://health-connect/sync');
+    syncUrl.searchParams.set('source', 'android-web-sync');
+    window.location.href = syncUrl.toString();
+}
+
+window.startNativeHealthConnectSync = startNativeHealthConnectSync;
+
 function renderStepImportBanner() {
     const banner = document.getElementById('step-import-banner');
     if (!banner) return;
@@ -627,6 +686,7 @@ function renderStepImportBanner() {
         banner.style.display = 'none';
         banner.classList.remove('is-visible');
         banner.innerHTML = '';
+        renderExerciseNativeSyncCta();
         return;
     }
 
@@ -635,6 +695,7 @@ function renderStepImportBanner() {
         banner.style.display = 'none';
         banner.classList.remove('is-visible');
         banner.innerHTML = '';
+        renderExerciseNativeSyncCta();
         return;
     }
 
@@ -654,6 +715,7 @@ function renderStepImportBanner() {
     `;
     banner.style.display = 'flex';
     banner.classList.add('is-visible');
+    renderExerciseNativeSyncCta();
 }
 
 function applyPendingNativeStepImport() {
@@ -729,6 +791,7 @@ function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams()) {
 
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
+    rememberNativeAppSource(params);
     if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
 
     if (params.panel === 'friends' || params.panel === 'invite' || params.friendshipId) {
@@ -5363,6 +5426,7 @@ function bindRecordFlowGuideListeners() {
 
 function updateRecordFlowGuides(activeTab = getVisibleTabName()) {
     bindRecordFlowGuideListeners();
+    renderExerciseNativeSyncCta();
     const guideStates = _getRecordGuideStates();
 
     const dietStatusEl = document.getElementById('diet-guide-status');
