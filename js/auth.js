@@ -9,12 +9,29 @@ import { escapeHtml } from './security.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
+const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
+
+function rememberPendingSignupOnboarding(user) {
+    try {
+        if (!user?.uid) return;
+        sessionStorage.setItem(PENDING_SIGNUP_ONBOARDING_KEY, JSON.stringify({
+            uid: user.uid,
+            createdAt: Date.now()
+        }));
+    } catch (_) {}
+}
+
+function clearPendingSignupOnboarding() {
+    try {
+        sessionStorage.removeItem(PENDING_SIGNUP_ONBOARDING_KEY);
+    } catch (_) {}
+}
 
 function generatePushDeviceId() {
     if (window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -352,7 +369,12 @@ export function initAuth() {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        signInWithPopup(auth, provider).then(() => {
+        signInWithPopup(auth, provider).then((result) => {
+            if (result?.additionalUserInfo?.isNewUser) {
+                rememberPendingSignupOnboarding(result.user);
+            } else {
+                clearPendingSignupOnboarding();
+            }
             window.location.reload();
         }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);

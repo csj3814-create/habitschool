@@ -655,3 +655,13 @@
 ### 98. Do not re-tune a launcher icon that already passed on-device validation without rechecking the device result
 - **Symptom**: The launcher icon looked correct in one verified APK, then regressed back to a face-only crop after a later inset tweak.
 - **Lesson**: Once a launcher icon has been explicitly approved on the target device family, treat that asset/layout as locked. Any later icon adjustment must be justified by a new issue and followed by fresh device validation before shipping another APK.
+
+## 2026-04-08 (onboarding and gallery engagement)
+
+### 99. Signup onboarding must be gated by the actual signup event, not by a missing profile flag alone
+- **Symptom**: An existing user saw the signup welcome modal again after installing the Android APK because `onboardingComplete` was missing in Firestore.
+- **Lesson**: Treat onboarding as a one-time signup event, not a generic app-entry state. Show signup onboarding only when the current auth flow explicitly reports a fresh signup, and never re-trigger it just because a legacy profile field is absent.
+
+### 100. Gallery engagement scores must count unique users per post, not raw interaction volume
+- **Symptom**: Multiple comments on the same post and switching between reaction types could inflate gallery/community scores and reaction coin awards.
+- **Lesson**: For anti-abuse scoring, count at most one qualifying comment and one qualifying reaction per user per post. Apply the same rule consistently in client rankings, backend community stats, and any point-award function.

@@ -105,6 +105,7 @@ window.loadMyFriendships = loadMyFriendships;
 const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercise', 'hidePoints', 'hideMind'];
 const SHARE_TEMPLATE_STORAGE_KEY = 'habitschool_share_template';
 const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
+const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
 const DASHBOARD_HERO_COLLAPSE_KEY = 'habitschool_dashboard_hero_collapsed';
 const DASHBOARD_MORE_TOOLS_COLLAPSE_KEY = 'habitschool_dashboard_more_tools_collapsed';
@@ -258,6 +259,33 @@ function getInstallCtaState() {
         console.warn('설치 CTA 상태 조회 실패:', error.message);
         return { visible: false };
     }
+}
+
+function readPendingSignupOnboardingState() {
+    try {
+        const raw = sessionStorage.getItem(PENDING_SIGNUP_ONBOARDING_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return null;
+        const uid = String(parsed.uid || '').trim();
+        const createdAt = Number(parsed.createdAt || 0);
+        if (!uid || !Number.isFinite(createdAt) || createdAt <= 0) return null;
+        return { uid, createdAt };
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearPendingSignupOnboardingState() {
+    try {
+        sessionStorage.removeItem(PENDING_SIGNUP_ONBOARDING_KEY);
+    } catch (_) { }
+}
+
+function hasPendingSignupOnboarding(user) {
+    const pending = readPendingSignupOnboardingState();
+    if (!user?.uid || !pending || pending.uid !== user.uid) return false;
+    return (Date.now() - pending.createdAt) <= 30 * 60 * 1000;
 }
 
 function resetSubmitBarMode() {
@@ -4821,18 +4849,16 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         const ap = todayLogSnap.data().awardedPoints || {};
                         todayPoints += (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
                         // 2) 내 오늘 게시물에 달린 리액션 수신 (+1P each)
-                        const rx = todayLogSnap.data().reactions || {};
-                        todayPoints += (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0);
+                        todayPoints += getUniqueReactionCount(todayLogSnap.data());
                     }
                     // 3) 오늘 다른 사람 게시물에 내가 준 리액션 (+1P each)
                     const todayAllSnap = await _p_todayAllLogs;
                     if (todayAllSnap) {
                         todayAllSnap.forEach(d => {
                             if (d.data().userId === user.uid) return;
-                            const rx = d.data().reactions || {};
-                            if ((rx.heart || []).includes(user.uid)) todayPoints++;
-                            if ((rx.fire || []).includes(user.uid)) todayPoints++;
-                            if ((rx.clap || []).includes(user.uid)) todayPoints++;
+                            if (getUniqueReactionUserIdsForPost(d.data()).includes(user.uid)) {
+                                todayPoints++;
+                            }
                         });
                     }
                 } catch (_) {}
@@ -9859,6 +9885,31 @@ function getEmptyStateHtml(filter) {
     </div>`;
 }
 
+function getUniqueReactionUserIdsForPost(logData = {}) {
+    const uniqueUserIds = new Set();
+    const reactions = logData?.reactions || {};
+    ['heart', 'fire', 'clap'].forEach((type) => {
+        const userIds = Array.isArray(reactions[type]) ? reactions[type] : [];
+        userIds.forEach((uid) => {
+            if (uid) uniqueUserIds.add(uid);
+        });
+    });
+    return [...uniqueUserIds];
+}
+
+function getUniqueReactionCount(logData = {}) {
+    return getUniqueReactionUserIdsForPost(logData).length;
+}
+
+function getUniqueCommentCount(logData = {}) {
+    const uniqueUserIds = new Set();
+    const comments = Array.isArray(logData?.comments) ? logData.comments : [];
+    comments.forEach((comment) => {
+        if (comment?.userId) uniqueUserIds.add(comment.userId);
+    });
+    return uniqueUserIds.size;
+}
+
 // 주간 베스트 갤러리 (성실 기록 + 응원 + 댓글 종합 점수 기준, 유저 단위)
 async function buildWeeklyBestSection() {
     const container = document.getElementById('weekly-best-container');
@@ -9910,12 +9961,12 @@ async function buildWeeklyBestSection() {
         }
         const u = userMap[uid];
         u.days.add(item.data.date);
-        const rx = item.data.reactions || {};
-        const rxCount = (rx.heart?.length || 0) + (rx.fire?.length || 0) + (rx.clap?.length || 0);
+        const rxCount = getUniqueReactionCount(item.data);
+        const commentCount = getUniqueCommentCount(item.data);
         u.reactions += rxCount;
-        u.comments += (item.data.comments?.length || 0);
+        u.comments += commentCount;
         // 가장 인기 있는 포스트를 썸네일로
-        const itemScore = rxCount + (item.data.comments?.length || 0);
+        const itemScore = rxCount + commentCount;
         if (itemScore > u.bestItemScore) { u.bestItem = item; u.bestItemScore = itemScore; }
         // 최신 streak 반영
         if ((item.data.currentStreak || 0) > u.streak) u.streak = item.data.currentStreak;
@@ -11380,6 +11431,7 @@ async function completeOnboarding() {
 
     // 모달 즉시 닫기 (저장 실패해도 진행)
     document.getElementById('onboarding-modal').style.display = 'none';
+    clearPendingSignupOnboardingState();
     showToast('🌞 환영합니다! 건강 습관 여정을 시작합니다!');
 
     try {
@@ -11444,9 +11496,26 @@ async function checkOnboarding() {
     try {
         const userSnap = await getDoc(doc(db, "users", user.uid));
         const userData = userSnap.exists() ? userSnap.data() : {};
+        const isPendingSignup = hasPendingSignupOnboarding(user);
+        const modal = document.getElementById('onboarding-modal');
 
-        if (!userData.onboardingComplete) {
-            document.getElementById('onboarding-modal').style.display = 'flex';
+        if (userData.onboardingComplete || userData.welcomeBonusGiven) {
+            clearPendingSignupOnboardingState();
+            if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        if (!isPendingSignup) {
+            if (modal) modal.style.display = 'none';
+            await setDoc(doc(db, "users", user.uid), {
+                onboardingComplete: true
+            }, { merge: true }).catch(() => {});
+            clearPendingSignupOnboardingState();
+            return;
+        }
+
+        if (modal) {
+            modal.style.display = 'flex';
         }
     } catch (e) {
         console.warn('온보딩 체크 스킵:', e.message);

@@ -104,6 +104,27 @@ function toDateFromValue(value) {
     return null;
 }
 
+function getUniqueReactionUserIds(logData = {}) {
+    const uniqueUserIds = new Set();
+    const reactions = logData?.reactions || {};
+    ["heart", "fire", "clap"].forEach((type) => {
+        const userIds = Array.isArray(reactions[type]) ? reactions[type] : [];
+        userIds.forEach((uid) => {
+            if (uid) uniqueUserIds.add(uid);
+        });
+    });
+    return [...uniqueUserIds];
+}
+
+function getUniqueCommentUserIds(logData = {}) {
+    const uniqueUserIds = new Set();
+    const comments = Array.isArray(logData?.comments) ? logData.comments : [];
+    comments.forEach((comment) => {
+        if (comment?.userId) uniqueUserIds.add(comment.userId);
+    });
+    return [...uniqueUserIds];
+}
+
 function isPendingFriendshipExpired(friendshipData) {
     if (!friendshipData || friendshipData.status !== "pending") return false;
     const expiresAt = toDateFromValue(friendshipData.expiresAt);
@@ -1449,19 +1470,42 @@ exports.awardReactionPoints = onDocumentWritten(
         const postOwnerId = after.userId;
         if (!postOwnerId) return;
 
-        for (const type of ["heart", "fire", "clap"]) {
-            const afterList = after.reactions?.[type] || [];
-            const beforeList = before?.reactions?.[type] || [];
-            const added = afterList.filter(uid => !beforeList.includes(uid));
-            for (const reactorUid of added) {
-                if (reactorUid === postOwnerId) continue;
-                await db.doc(`users/${reactorUid}`).set(
-                    { coins: FieldValue.increment(1) }, { merge: true }
-                );
-                await db.doc(`users/${postOwnerId}`).set(
-                    { coins: FieldValue.increment(1) }, { merge: true }
-                );
-                console.log(`reactionPoints: ${reactorUid} → ${postOwnerId} +1P each (${type})`);
+        const beforeReactors = new Set(getUniqueReactionUserIds(before));
+        const afterReactors = getUniqueReactionUserIds(after);
+        const firstTimeReactors = afterReactors.filter((uid) => !beforeReactors.has(uid));
+        if (firstTimeReactors.length === 0) return;
+
+        const logRef = event.data.after.ref;
+        for (const reactorUid of firstTimeReactors) {
+            if (!reactorUid || reactorUid === postOwnerId) continue;
+
+            const awarded = await db.runTransaction(async (tx) => {
+                const logSnap = await tx.get(logRef);
+                if (!logSnap.exists) return false;
+
+                const currentLog = logSnap.data() || {};
+                const currentReactors = new Set(getUniqueReactionUserIds(currentLog));
+                if (!currentReactors.has(reactorUid)) return false;
+
+                const rewardedUserIds = Array.isArray(currentLog.reactionPointAwardedUserIds)
+                    ? currentLog.reactionPointAwardedUserIds
+                    : [];
+                if (rewardedUserIds.includes(reactorUid)) return false;
+
+                tx.set(db.doc(`users/${reactorUid}`), {
+                    coins: FieldValue.increment(1)
+                }, { merge: true });
+                tx.set(db.doc(`users/${postOwnerId}`), {
+                    coins: FieldValue.increment(1)
+                }, { merge: true });
+                tx.set(logRef, {
+                    reactionPointAwardedUserIds: FieldValue.arrayUnion(reactorUid)
+                }, { merge: true });
+                return true;
+            });
+
+            if (awarded) {
+                console.log(`reactionPoints: ${reactorUid} → ${postOwnerId} +1P each (first reaction on post)`);
             }
         }
     }
@@ -2794,20 +2838,21 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
             userStats[log.userId].days++;
         }
         if (log.comments && Array.isArray(log.comments)) {
-            log.comments.forEach(c => {
-                if (!c.userId) return;
-                if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, name: c.userName || '익명' };
-                userStats[c.userId].comments++;
+            getUniqueCommentUserIds(log).forEach((commenterUid) => {
+                const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
+                if (!userStats[commenterUid]) {
+                    userStats[commenterUid] = {
+                        days: 0, comments: 0, reactions: 0,
+                        name: commentEntry.userName || "익명"
+                    };
+                }
+                userStats[commenterUid].comments++;
             });
         }
         if (log.reactions) {
-            ['heart', 'fire', 'clap'].forEach(type => {
-                if (Array.isArray(log.reactions[type])) {
-                    log.reactions[type].forEach(uid => {
-                        if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, name: '회원' };
-                        userStats[uid].reactions++;
-                    });
-                }
+            getUniqueReactionUserIds(log).forEach((reactorUid) => {
+                if (!userStats[reactorUid]) userStats[reactorUid] = { days: 0, comments: 0, reactions: 0, name: "회원" };
+                userStats[reactorUid].reactions++;
             });
         }
     });
@@ -3428,20 +3473,26 @@ async function computeCommunityStatsLogic() {
         userDates[uid].add(log.date);
 
         if (log.comments && Array.isArray(log.comments)) {
-            log.comments.forEach(c => {
-                if (!c.userId) return;
-                if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: c.userName || "익명" };
-                userStats[c.userId].comments++;
+            getUniqueCommentUserIds(log).forEach((commenterUid) => {
+                const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
+                if (!userStats[commenterUid]) {
+                    userStats[commenterUid] = {
+                        days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
+                        name: commentEntry.userName || "익명"
+                    };
+                }
+                userStats[commenterUid].comments++;
             });
         }
         if (log.reactions) {
-            ["heart", "fire", "clap"].forEach(type => {
-                if (Array.isArray(log.reactions[type])) {
-                    log.reactions[type].forEach(ruid => {
-                        if (!userStats[ruid]) userStats[ruid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: "회원" };
-                        userStats[ruid].reactions++;
-                    });
+            getUniqueReactionUserIds(log).forEach((reactorUid) => {
+                if (!userStats[reactorUid]) {
+                    userStats[reactorUid] = {
+                        days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
+                        name: "회원"
+                    };
                 }
+                userStats[reactorUid].reactions++;
             });
         }
     });
@@ -3571,20 +3622,26 @@ exports.backfillCommunityStatsArchive = onCall(
             if (!userDates[uid]) userDates[uid] = new Set();
             userDates[uid].add(log.date);
             if (log.comments && Array.isArray(log.comments)) {
-                log.comments.forEach(c => {
-                    if (!c.userId) return;
-                    if (!userStats[c.userId]) userStats[c.userId] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: c.userName || "익명" };
-                    userStats[c.userId].comments++;
+                getUniqueCommentUserIds(log).forEach((commenterUid) => {
+                    const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
+                    if (!userStats[commenterUid]) {
+                        userStats[commenterUid] = {
+                            days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
+                            name: commentEntry.userName || "익명"
+                        };
+                    }
+                    userStats[commenterUid].comments++;
                 });
             }
             if (log.reactions) {
-                ["heart", "fire", "clap"].forEach(type => {
-                    if (Array.isArray(log.reactions[type])) {
-                        log.reactions[type].forEach(ruid => {
-                            if (!userStats[ruid]) userStats[ruid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: "회원" };
-                            userStats[ruid].reactions++;
-                        });
+                getUniqueReactionUserIds(log).forEach((reactorUid) => {
+                    if (!userStats[reactorUid]) {
+                        userStats[reactorUid] = {
+                            days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
+                            name: "회원"
+                        };
                     }
+                    userStats[reactorUid].reactions++;
                 });
             }
         });
