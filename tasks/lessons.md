@@ -645,3 +645,13 @@
 ### 96. A PWA share target does not make the Android shell appear in the native share sheet
 - **Symptom**: The user could share images into the installed PWA earlier, but the debug APK itself did not appear in Samsung's app share list and looked like a regression.
 - **Lesson**: Treat the PWA and the Android shell as separate share surfaces. If the Android APK must appear in the native share sheet, add the full TWA share-target contract on the Android side: share-target metadata, `SEND` and `SEND_MULTIPLE` intent filters, the Trusted Web Activity delegation service, and a matching asset links fingerprint set for the build being tested.
+
+## 2026-04-08 (Android repeat regressions)
+
+### 97. Source filtering alone is not enough to match Samsung Health step totals
+- **Symptom**: After switching from generic Health Connect totals to Samsung Health-only aggregation, the Android shell still showed a lower step count than the Samsung Health app.
+- **Lesson**: For Health Connect step sync, do not assume one aggregate query is the whole truth. Compare multiple views of the same day, including source-filtered aggregates and raw `StepsRecord` sums, and choose the best available value before labeling it as a Samsung Health import.
+
+### 98. Do not re-tune a launcher icon that already passed on-device validation without rechecking the device result
+- **Symptom**: The launcher icon looked correct in one verified APK, then regressed back to a face-only crop after a later inset tweak.
+- **Lesson**: Once a launcher icon has been explicitly approved on the target device family, treat that asset/layout as locked. Any later icon adjustment must be justified by a new issue and followed by fresh device validation before shipping another APK.

@@ -8,6 +8,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import java.time.Instant
 import java.time.LocalDate
@@ -76,24 +77,34 @@ class HealthConnectManager(private val context: Context) {
             startTime = startTime,
             endTime = endTime
         ) ?: 0L
-        val samsungHealthStepsCount = aggregateSteps(
+        val samsungHealthAggregateStepsCount = aggregateSteps(
             client = client,
             startTime = startTime,
             endTime = endTime,
             dataOriginFilter = setOf(DataOrigin(SAMSUNG_HEALTH_PACKAGE_NAME))
         )
+        val samsungHealthRawStepsCount = readStepsSum(
+            client = client,
+            startTime = startTime,
+            endTime = endTime,
+            dataOriginFilter = setOf(DataOrigin(SAMSUNG_HEALTH_PACKAGE_NAME))
+        )
+        val samsungHealthStepsCount = listOfNotNull(
+            samsungHealthAggregateStepsCount,
+            samsungHealthRawStepsCount
+        ).maxOrNull()
 
-        val resolvedStepsCount = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+        val resolvedStepsCount = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
             samsungHealthStepsCount
         } else {
             totalStepsCount
         }
-        val resolvedOriginPackage = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+        val resolvedOriginPackage = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
             SAMSUNG_HEALTH_PACKAGE_NAME
         } else {
             null
         }
-        val resolvedOriginLabel = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+        val resolvedOriginLabel = if ((samsungHealthStepsCount ?: 0L) >= totalStepsCount && (samsungHealthStepsCount ?: 0L) > 0L) {
             SAMSUNG_HEALTH_LABEL
         } else {
             HEALTH_CONNECT_LABEL
@@ -124,6 +135,36 @@ class HealthConnectManager(private val context: Context) {
             )
         )
         return response[StepsRecord.COUNT_TOTAL]
+    }
+
+    private suspend fun readStepsSum(
+        client: HealthConnectClient,
+        startTime: Instant,
+        endTime: Instant,
+        dataOriginFilter: Set<DataOrigin> = emptySet()
+    ): Long? {
+        var pageToken: String? = null
+        var totalCount = 0L
+        var foundAnyRecord = false
+
+        do {
+            val response = client.readRecords(
+                ReadRecordsRequest(
+                    recordType = StepsRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
+                    dataOriginFilter = dataOriginFilter,
+                    pageToken = pageToken
+                )
+            )
+
+            response.records.forEach { record ->
+                foundAnyRecord = true
+                totalCount += record.count
+            }
+            pageToken = response.pageToken
+        } while (!pageToken.isNullOrBlank())
+
+        return if (foundAnyRecord) totalCount else null
     }
 
     private fun getClientOrNull(): HealthConnectClient? {
