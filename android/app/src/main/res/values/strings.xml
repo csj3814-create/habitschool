@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">해빛스쿨</string>
     <string name="asset_statements">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://habitschool.web.app\"}}]</string>
+    <string name="twa_share_target">{\"action\":\"/share-target\",\"method\":\"POST\",\"enctype\":\"multipart/form-data\",\"params\":{\"files\":[{\"name\":\"dietPhotos\",\"accept\":[\"image/*\"]}]}}</string>
 
     <string name="native_health_title">Health Connect 읽기 전용 연결</string>
     <string name="native_health_permission_copy">오늘 걸음 수만 읽어서 Android 위젯과 퀵패널 타일에 보여주는 1차 PoC입니다. 서버 자동 업로드나 Firestore 직접 쓰기는 아직 하지 않습니다.</string>

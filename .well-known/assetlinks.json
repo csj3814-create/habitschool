@@ -1,8 +1,15 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.habitschool.app",
-        "sha256_cert_fingerprints": ["C6:BE:28:7B:3E:90:32:5B:94:44:41:C5:15:D6:9E:5E:59:B1:05:89:12:3F:5B:C1:35:7E:37:15:69:E8:E8:24"]
-      }
-    }]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.habitschool.app",
+      "sha256_cert_fingerprints": [
+        "C6:BE:28:7B:3E:90:32:5B:94:44:41:C5:15:D6:9E:5E:59:B1:05:89:12:3F:5B:C1:35:7E:37:15:69:E8:E8:24",
+        "6E:3D:9E:72:C1:89:E3:EF:33:B7:5E:E0:07:C4:82:93:B2:AD:E9:D8:10:53:F4:8C:34:09:DC:C3:81:F4:29:7C"
+      ]
+    }
+  }
+]

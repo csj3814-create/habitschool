@@ -639,3 +639,9 @@
 ### 95. Fasting helper copy should describe the metric group, not the raw field count
 - **Symptom**: The diet-tab save helper said things like `?? 4?`, which sounded unnatural and product-hostile even though it was technically counting filled fields.
 - **Lesson**: For user-facing health copy, prefer the domain term such as `?? ??` over raw input counts unless the count itself is meaningful to the user.
+
+## 2026-04-08 (Android share sheet)
+
+### 96. A PWA share target does not make the Android shell appear in the native share sheet
+- **Symptom**: The user could share images into the installed PWA earlier, but the debug APK itself did not appear in Samsung's app share list and looked like a regression.
+- **Lesson**: Treat the PWA and the Android shell as separate share surfaces. If the Android APK must appear in the native share sheet, add the full TWA share-target contract on the Android side: share-target metadata, `SEND` and `SEND_MULTIPLE` intent filters, the Trusted Web Activity delegation service, and a matching asset links fingerprint set for the build being tested.

@@ -29,9 +29,27 @@
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"
                 android:value="https://habitschool.web.app/" />
 
+            <meta-data
+                android:name="android.support.customtabs.trusted.METADATA_SHARE_TARGET"
+                android:resource="@string/twa_share_target" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
             </intent-filter>
 
             <intent-filter android:autoVerify="true">
@@ -108,6 +126,15 @@
                 <action android:name="android.health.connect.action.SHOW_ONBOARDING" />
             </intent-filter>
         </activity-alias>
+
+        <service
+            android:name="com.google.androidbrowserhelper.trusted.DelegationService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+            </intent-filter>
+        </service>
 
         <receiver
             android:name=".widget.HabitschoolWidgetProvider"
