@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">해빛스쿨</string>
+    <string name="asset_statements">[{\"relation\":[\"delegate_permission/common.handle_all_urls\"],\"target\":{\"namespace\":\"web\",\"site\":\"https://habitschool.web.app\"}}]</string>
+
+    <string name="native_health_title">Health Connect 읽기 전용 연결</string>
+    <string name="native_health_permission_copy">오늘 걸음 수만 읽어서 Android 위젯과 퀵패널 타일에 보여주는 1차 PoC입니다. 서버 자동 업로드나 Firestore 직접 쓰기는 아직 하지 않습니다.</string>
+    <string name="native_health_grant_permission">걸음 수 권한 허용</string>
+    <string name="native_health_open_exercise">운동 탭 열기</string>
+    <string name="native_health_sync_again">다시 동기화</string>
+    <string name="native_health_close">닫기</string>
+    <string name="native_health_not_synced">아직 동기화 없음</string>
+    <string name="native_health_synced_title">오늘 %1$s보를 읽었어요</string>
+    <string name="native_health_synced_copy">Health Connect에서 오늘 걸음 수 %1$s보를 읽었습니다. 마지막 갱신: %2$s. 이 값은 현재 Android 위젯과 퀵패널 타일에만 반영됩니다.</string>
+    <string name="native_health_install_title">Health Connect 설치가 필요해요</string>
+    <string name="native_health_install_copy">이 기기에서 걸음 수를 읽으려면 Health Connect 제공자를 설치하거나 업데이트해야 합니다.</string>
+    <string name="native_health_install_cta">Play 스토어 열기</string>
+    <string name="native_health_unavailable_title">이 기기에서는 아직 Health Connect를 사용할 수 없어요</string>
+    <string name="native_health_unavailable_copy">하이브리드 셸 자체는 사용할 수 있지만, Health Connect 읽기 PoC는 지원 기기에서만 동작합니다.</string>
+
+    <string name="native_health_onboarding_title">걸음 수를 네이티브 카드에 붙입니다</string>
+    <string name="native_health_onboarding_copy">해빛스쿨 Android 셸은 웹앱을 그대로 열되, 걸음 수는 Health Connect에서 읽어 위젯과 퀵패널 타일에 즉시 보여줄 수 있게 준비합니다.</string>
+    <string name="native_health_onboarding_cta">연결 시작</string>
+
+    <string name="native_health_privacy_title">Health Connect 권한 안내</string>
+    <string name="native_health_privacy_copy">이번 단계에서는 걸음 수 읽기 권한만 요청합니다. 원본 건강 데이터는 앱 밖으로 임의 전송하지 않고, 위젯과 타일에 보여줄 요약값만 로컬에 캐시합니다. 자세한 정책은 기존 웹 개인정보처리방침과 동일 기준을 따릅니다.</string>
+    <string name="native_health_privacy_cta">개인정보처리방침 보기</string>
+
+    <string name="widget_connect_required">Health Connect 연결</string>
+    <string name="widget_install_required">설치 필요</string>
+    <string name="widget_steps_value">%1$s보</string>
+    <string name="widget_synced_at">마지막 갱신 %1$s</string>
+    <string name="widget_permission_copy">걸음 수 권한을 주면 홈 화면에서 오늘 기록을 바로 볼 수 있어요.</string>
+    <string name="widget_install_copy">Health Connect를 설치한 뒤 다시 동기화해 주세요.</string>
+    <string name="widget_unavailable_copy">이 기기에서는 걸음 수 연동이 아직 지원되지 않습니다.</string>
+    <string name="widget_sync_cta">동기화</string>
+    <string name="widget_open_cta">열기</string>
+
+    <string name="tile_label">해빛스쿨</string>
+    <string name="tile_connect_required">권한 연결 필요</string>
+    <string name="tile_install_required">설치 필요</string>
+    <string name="tile_steps_value">오늘 %1$s보</string>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="habitschool_primary">#FF9800</color>
+    <color name="habitschool_primary_dark">#E65100</color>
+    <color name="habitschool_surface">#FFF8F0</color>
+    <color name="habitschool_card">#FFFFFFFF</color>
+    <color name="habitschool_text">#1F1A14</color>
+    <color name="habitschool_text_muted">#6C5A48</color>
+    <color name="launcher_background">#FF9800</color>
+</resources>

@@ -433,6 +433,7 @@ export function setupAuthListener(callbacks) {
             // 利됱떆 ??쒕낫???닿린 (renderDashboard媛 ?먯껜 ?곗씠??濡쒕뵫 ?섑뻾)
             const params = new URLSearchParams(window.location.search);
             const urlTab = params.get('tab');
+            const appEntryFocus = params.get('focus');
             const hashTab = window.location.hash.replace('#', '');
             const validTabs = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets'];
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
@@ -446,25 +447,30 @@ export function setupAuthListener(callbacks) {
             if (window.openTab) {
                 window.openTab(targetTab, false);
             }
+            const initialDailyLoadPromise = window.loadDataForSelectedDate
+                ? Promise.resolve(window.loadDataForSelectedDate(todayStr)).catch(() => {})
+                : Promise.resolve();
             if (window.refreshPwaActionableBadgeFromServer) {
                 setTimeout(() => {
                     window.refreshPwaActionableBadgeFromServer(user).catch(() => {});
                 }, 180);
             }
             if (!pendingChatbotToken && window.handleAppEntryDeepLink) {
-                setTimeout(() => {
+                const runAppEntryDeepLink = () => {
                     window.handleAppEntryDeepLink({ initialTab: targetTab }).catch(() => {});
-                }, 120);
+                };
+                if (appEntryFocus === 'health-connect-steps') {
+                    initialDailyLoadPromise.finally(() => {
+                        setTimeout(runAppEntryDeepLink, 80);
+                    });
+                } else {
+                    setTimeout(runAppEntryDeepLink, 120);
+                }
             }
             if (pendingChatbotToken && window.maybeHandleChatbotConnect) {
                 setTimeout(() => {
                     window.maybeHandleChatbotConnect().catch(() => {});
                 }, 120);
-            }
-
-            // ?앸떒/?대룞/留덉쓬 ???곗씠??濡쒕뱶 (諛깃렇?쇱슫?? ??쒕낫???뚮뜑 李⑤떒?섏? ?딆쓬)
-            if (window.loadDataForSelectedDate) {
-                window.loadDataForSelectedDate(todayStr);
             }
 
             // 媛ㅻ윭由?+ 吏媛??곗씠??諛깃렇?쇱슫??pre-fetch (???대┃ ?꾩뿉 誘몃━ 濡쒕뱶)

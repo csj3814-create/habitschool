@@ -472,12 +472,19 @@ async function importPendingDietShareTarget() {
     return _pendingSharedDietImportPromise;
 }
 
+let _pendingNativeStepImport = null;
+let _activeNativeStepImport = null;
+
 function getAppEntryDeepLinkParams() {
     const url = new URL(window.location.href);
     return {
         tab: String(url.searchParams.get('tab') || '').trim(),
+        native: String(url.searchParams.get('native') || '').trim(),
         panel: String(url.searchParams.get('panel') || '').trim(),
         focus: String(url.searchParams.get('focus') || '').trim(),
+        stepCount: String(url.searchParams.get('stepCount') || '').trim(),
+        stepSource: String(url.searchParams.get('stepSource') || '').trim(),
+        syncedAt: String(url.searchParams.get('syncedAt') || '').trim(),
         friendshipId: String(url.searchParams.get('friendshipId') || '').trim(),
         challengeId: String(url.searchParams.get('challengeId') || '').trim()
     };
@@ -486,7 +493,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'panel', 'focus', 'friendshipId', 'challengeId'].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -569,6 +576,157 @@ async function handleSharedDietUploadDeepLink() {
     return importedCount;
 }
 
+function parseNativeStepImportPayload(params = getAppEntryDeepLinkParams()) {
+    if (params.focus !== 'health-connect-steps') return null;
+
+    const stepCount = Number.parseInt(params.stepCount, 10);
+    if (!Number.isFinite(stepCount) || stepCount < 0) return null;
+
+    const syncedAtEpochMillis = Number.parseInt(params.syncedAt, 10);
+    return {
+        stepCount,
+        stepSource: 'health_connect',
+        nativeSource: params.native || 'android-shell',
+        syncedAtEpochMillis: Number.isFinite(syncedAtEpochMillis) && syncedAtEpochMillis > 0 ? syncedAtEpochMillis : 0
+    };
+}
+
+function formatNativeStepSyncTime(epochMillis = 0) {
+    if (!Number.isFinite(epochMillis) || epochMillis <= 0) return '';
+    try {
+        return new Intl.DateTimeFormat('ko-KR', {
+            hour: 'numeric',
+            minute: '2-digit'
+        }).format(new Date(epochMillis));
+    } catch (_) {
+        return '';
+    }
+}
+
+function getNativeSurfaceLabel(nativeSource = '') {
+    switch (String(nativeSource || '').trim()) {
+        case 'android-widget':
+            return '홈 위젯';
+        case 'android-tile':
+            return '퀵패널 타일';
+        case 'widget':
+        case 'android-widget-sync':
+            return 'Android 위젯';
+        case 'qs-tile':
+            return '퀵패널';
+        default:
+            return 'Android 앱';
+    }
+}
+
+function renderStepImportBanner() {
+    const banner = document.getElementById('step-import-banner');
+    if (!banner) return;
+
+    if (String(_stepData?.source || '').trim() !== 'health_connect') {
+        banner.style.display = 'none';
+        banner.classList.remove('is-visible');
+        banner.innerHTML = '';
+        return;
+    }
+
+    const stepCount = Number.parseInt(_stepData?.count, 10);
+    if (!Number.isFinite(stepCount) || stepCount < 0) {
+        banner.style.display = 'none';
+        banner.classList.remove('is-visible');
+        banner.innerHTML = '';
+        return;
+    }
+
+    const surfaceLabel = getNativeSurfaceLabel(_activeNativeStepImport?.nativeSource);
+    const savedSyncedAt = Date.parse(_stepData?.updatedAt || '');
+    const syncedAtEpochMillis = Number.isFinite(_activeNativeStepImport?.syncedAtEpochMillis)
+        ? _activeNativeStepImport.syncedAtEpochMillis
+        : (Number.isFinite(savedSyncedAt) ? savedSyncedAt : 0);
+    const syncTimeLabel = formatNativeStepSyncTime(syncedAtEpochMillis);
+
+    banner.innerHTML = `
+        <div class="step-import-banner-icon" aria-hidden="true">📲</div>
+        <div class="step-import-banner-copy">
+            <div class="step-import-banner-title">Health Connect ${stepCount.toLocaleString()}보 반영됨</div>
+            <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
+        </div>
+    `;
+    banner.style.display = 'flex';
+    banner.classList.add('is-visible');
+}
+
+function applyPendingNativeStepImport() {
+    if (!_pendingNativeStepImport) return false;
+
+    const payload = _pendingNativeStepImport;
+    _pendingNativeStepImport = null;
+    _activeNativeStepImport = payload;
+
+    const updatedAt = payload.syncedAtEpochMillis > 0
+        ? new Date(payload.syncedAtEpochMillis).toISOString()
+        : new Date().toISOString();
+
+    _stepData = {
+        count: payload.stepCount,
+        source: payload.stepSource,
+        screenshotUrl: null,
+        screenshotThumbUrl: null,
+        imageHash: null,
+        distance_km: null,
+        calories: null,
+        active_minutes: null,
+        updatedAt
+    };
+
+    const preview = document.getElementById('preview-step-screenshot');
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+
+    const detailsDiv = document.getElementById('step-details');
+    if (detailsDiv) detailsDiv.style.display = 'none';
+
+    const aiBtn = document.getElementById('ai-btn-step');
+    if (aiBtn) aiBtn.style.display = 'none';
+
+    const resultBox = document.getElementById('step-analysis-result');
+    if (resultBox) {
+        resultBox.style.display = 'none';
+        resultBox.innerHTML = '';
+    }
+
+    const manualInput = document.getElementById('step-manual-input');
+    if (manualInput) manualInput.value = String(payload.stepCount);
+
+    updateStepRing(payload.stepCount);
+    renderStepImportBanner();
+    showToast(`👟 Health Connect에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+    return true;
+}
+
+function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams()) {
+    const payload = parseNativeStepImportPayload(params);
+    if (!payload) return false;
+
+    _pendingNativeStepImport = payload;
+    if (getVisibleTabName() !== 'exercise') {
+        openTab('exercise', false);
+    }
+
+    const tryApply = () => {
+        if (!applyPendingNativeStepImport()) return;
+        const target = document.getElementById('step-card');
+        requestAnimationFrame(() => focusElementWithHighlight(target));
+        window.setTimeout(() => focusElementWithHighlight(target), 180);
+    };
+
+    requestAnimationFrame(tryApply);
+    window.setTimeout(tryApply, 220);
+    return true;
+}
+
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
@@ -585,6 +743,12 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     if (params.panel === 'challenge' || params.challengeId) {
         await handleChallengeDeepLink(params.challengeId);
         clearAppEntryDeepLinkParams('dashboard');
+        return true;
+    }
+
+    if (params.focus === 'health-connect-steps' && (params.tab === 'exercise' || initialTab === 'exercise')) {
+        handleNativeStepImportDeepLink(params);
+        clearAppEntryDeepLinkParams('exercise');
         return true;
     }
 
@@ -3813,6 +3977,7 @@ window.smartUpload = async function (input) {
 function clearInputs() {
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('meditation-check').checked = false;
+    loadStepData(null);
 
     ['breakfast', 'lunch', 'dinner', 'snack', 'sleep'].forEach(k => {
         const pv = document.getElementById(`preview-${k}`);
@@ -4045,6 +4210,12 @@ async function loadDataForSelectedDate(dateStr) {
             updateDailyLogCache(docId, { awardedPoints: {} });
             addExerciseBlock('cardio'); addExerciseBlock('strength');
         }
+
+        if (applyPendingNativeStepImport()) {
+            const stepCard = document.getElementById('step-card');
+            requestAnimationFrame(() => focusElementWithHighlight(stepCard));
+            window.setTimeout(() => focusElementWithHighlight(stepCard), 180);
+        }
     } catch (error) {
         // race condition으로 취소된 경우 에러 무시
         if (thisGeneration !== _loadDataGeneration) return;
@@ -4054,6 +4225,7 @@ async function loadDataForSelectedDate(dateStr) {
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
     } finally {
+        renderStepImportBanner();
         updateRecordFlowGuides(getVisibleTabName());
     }
 }
@@ -8375,7 +8547,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 },
                 dietAnalysis: currentDietAnalysis,
                 exercise: { cardioList: cardioList, strengthList: strengthList },
-                steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: new Date().toISOString() } : (oldData.steps || null),
+                steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: _stepData.updatedAt || new Date().toISOString() } : (oldData.steps || null),
                 sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: currentSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText },
                 shareSettings: shareSettings
             });
@@ -11316,7 +11488,10 @@ function setManualSteps() {
     _stepData.source = 'manual';
     _stepData.imageHash = null;
     _stepData.screenshotUrl = null;
+    _stepData.screenshotThumbUrl = null;
+    _activeNativeStepImport = null;
     updateStepRing(val);
+    renderStepImportBanner();
     showToast(`👟 ${val.toLocaleString()}보 입력 완료!`);
 }
 
@@ -11387,8 +11562,10 @@ async function handleStepScreenshot(fileInput) {
             calories: analysis.calories || null,
             active_minutes: analysis.active_minutes || null
         };
+        _activeNativeStepImport = null;
 
         updateStepRing(_stepData.count);
+        renderStepImportBanner();
 
         // 5. 상세 정보 표시
         const detailsDiv = document.getElementById('step-details');
@@ -11431,6 +11608,17 @@ async function analyzeStepScreenshot() {
 function loadStepData(logData) {
     if (logData?.steps) {
         _stepData = { ...logData.steps };
+        if (String(_stepData.source || '').trim() === 'health_connect') {
+            const savedSyncedAt = Date.parse(_stepData.updatedAt || '');
+            _activeNativeStepImport = {
+                stepCount: Number.parseInt(_stepData.count, 10) || 0,
+                stepSource: 'health_connect',
+                nativeSource: '',
+                syncedAtEpochMillis: Number.isFinite(savedSyncedAt) ? savedSyncedAt : 0
+            };
+        } else {
+            _activeNativeStepImport = null;
+        }
         updateStepRing(_stepData.count || 0);
 
         if (_stepData.screenshotUrl) {
@@ -11453,6 +11641,7 @@ function loadStepData(logData) {
         const manualInput = document.getElementById('step-manual-input');
         if (manualInput && _stepData.count > 0) manualInput.value = _stepData.count;
     } else {
+        _activeNativeStepImport = null;
         _stepData = { count: 0, source: null, screenshotUrl: null, screenshotThumbUrl: null, imageHash: null, distance_km: null, calories: null, active_minutes: null };
         updateStepRing(0);
         const preview = document.getElementById('preview-step-screenshot');
@@ -11466,6 +11655,7 @@ function loadStepData(logData) {
         const manualInput = document.getElementById('step-manual-input');
         if (manualInput) manualInput.value = '';
     }
+    renderStepImportBanner();
 }
 
 // ============================================================

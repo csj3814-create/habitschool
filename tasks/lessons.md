@@ -603,3 +603,7 @@
 - Symptom: Android share-target opened the diet tab but showed `이미지 분석 모듈이 없습니다.` and saved nothing.
 - Root cause: shared files were routed through `smartUpload()`, which blocked the entire import when `EXIF` had not loaded yet.
 - Lesson: share-target and other non-picker upload paths should accept raw `File` arrays directly and fall back to `lastModified` metadata when EXIF is unavailable. Optional analysis helpers must never block the basic save flow.
+
+### 90. Native shell branding must reuse the real app icon from day one
+- If the repo already has a production PWA/app icon, do not ship the Android shell with a placeholder launcher icon.
+- Before sharing a test APK, verify launcher icon, app label, and other visible branding assets match the existing product brand to avoid duplicate-looking installs.

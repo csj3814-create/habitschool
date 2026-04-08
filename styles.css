@@ -9849,6 +9849,39 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     white-space: nowrap; transition: background 0.2s;
 }
 .step-input-btn:active { background: #388E3C; }
+.step-import-banner {
+    margin-top: 10px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(76, 175, 80, 0.18);
+    background: linear-gradient(135deg, #EEF8EE 0%, #F4FAFF 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.step-import-banner.is-visible {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.step-import-banner-icon {
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.step-import-banner-copy {
+    min-width: 0;
+}
+.step-import-banner-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #24533B;
+    line-height: 1.35;
+}
+.step-import-banner-body {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #537162;
+}
 .step-screenshot-btn {
     display: block; text-align: center; padding: 10px 8px; background: #f8f9fa;
     border: 1.5px dashed #ccc; border-radius: 10px; font-size: 13px;
@@ -9874,6 +9907,13 @@ body.dark-mode .step-count { color: #e0e0e0; }
 body.dark-mode .step-ring-bg { stroke: #333; }
 body.dark-mode .step-number-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }
 body.dark-mode .step-number-input:focus { border-color: #66BB6A; }
+body.dark-mode .step-import-banner {
+    background: linear-gradient(135deg, rgba(33, 58, 42, 0.92) 0%, rgba(23, 41, 53, 0.92) 100%);
+    border-color: rgba(123, 201, 140, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+body.dark-mode .step-import-banner-title { color: #C9F3D2; }
+body.dark-mode .step-import-banner-body { color: #A9C5B0; }
 body.dark-mode .step-screenshot-btn { background: #2a2a2a; border-color: #444; color: #aaa; }
 body.dark-mode .step-analysis-box { background: #1b3a1b; border-left-color: #66BB6A; }
 body.dark-mode .step-detail-item { color: #bbb; }

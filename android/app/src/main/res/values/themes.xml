@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Habitschool" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/habitschool_primary</item>
+        <item name="colorPrimaryDark">@color/habitschool_primary_dark</item>
+        <item name="colorAccent">@color/habitschool_primary</item>
+        <item name="android:windowBackground">@color/habitschool_surface</item>
+    </style>
+
+    <style name="Theme.Habitschool.TransparentLauncher" parent="@android:style/Theme.Translucent.NoTitleBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+</resources>
