@@ -632,3 +632,10 @@
 ### 94. Generic Health Connect aggregates do not necessarily match a specific source app's visible total
 - **Symptom**: The imported step count was much lower than the Samsung Health number shown on the same device.
 - **Lesson**: For Activity data like steps, Health Connect aggregate reads can be deduped across apps and reflect sync timing rather than a single provider's UI total. If the product promise is "match Samsung Health," prefer Samsung Health's `DataOrigin` when available and label the imported source explicitly.
+
+
+## 2026-04-08 (diet helper copy)
+
+### 95. Fasting helper copy should describe the metric group, not the raw field count
+- **Symptom**: The diet-tab save helper said things like `?? 4?`, which sounded unnatural and product-hostile even though it was technically counting filled fields.
+- **Lesson**: For user-facing health copy, prefer the domain term such as `?? ??` over raw input counts unless the count itself is meaningful to the user.

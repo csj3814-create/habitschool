@@ -5308,11 +5308,11 @@ function _getRecordGuideStates() {
     if (dietPhotos > 0 && dietPhotos < 4) {
         dietStatus = `식단 사진 ${dietPhotos}장이 준비됐어요. 더 올리면 최대 30P까지 반영됩니다.`;
         dietHelper = fastingMetricsCount > 0
-            ? `식단 ${dietPhotos}장 · 공복 ${fastingMetricsCount}개를 함께 저장할 수 있어요.`
+            ? `식단 ${dietPhotos}장 · 공복 지표를 함께 저장할 수 있어요.`
             : `식단 사진 ${dietPhotos}장을 지금 저장할 수 있어요.`;
     } else if (dietPhotos === 0 && fastingMetricsCount > 0) {
-        dietStatus = `공복 지표 ${fastingMetricsCount}개가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.`;
-        dietHelper = `공복 지표 ${fastingMetricsCount}개 입력됨 · 지금 저장할 수 있어요.`;
+        dietStatus = '공복 지표가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.';
+        dietHelper = '공복 지표를 지금 저장할 수 있어요.';
     } else if (dietPhotos === 4) {
         dietStatus = '식단 칸이 모두 채워졌어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
         dietHelper = '식단 준비 완료 · 저장하면 반영돼요.';
