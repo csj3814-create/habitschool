@@ -196,7 +196,8 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
             return AppRoutes.exerciseImportUri(
                 nativeSource = nativeSource,
                 stepsCount = snapshot.stepsCount,
-                syncedAtEpochMillis = snapshot.syncedAtEpochMillis
+                syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
+                stepProviderLabel = snapshot.dataOriginLabel
             )
         }
 

@@ -26,7 +26,8 @@ object HealthConnectUiText {
                 context.getString(
                     R.string.native_health_synced_copy,
                     formatSteps(snapshot.stepsCount),
-                    relativeTime(context, snapshot.syncedAtEpochMillis)
+                    relativeTime(context, snapshot.syncedAtEpochMillis),
+                    snapshot.dataOriginLabel ?: context.getString(R.string.native_health_default_source)
                 )
 
             snapshot.availabilityState == HealthConnectAvailabilityState.UPDATE_REQUIRED ->

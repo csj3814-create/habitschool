@@ -625,3 +625,10 @@
 ### 93. Bottom-bar helper copy should be written for one-line mobile fit first
 - **Symptom**: The mind-tab save helper wrapped into two lines on Android because it tried to explain both readiness count and motivational guidance in the fixed bottom bar.
 - **Lesson**: For the bottom save bar, prefer one compact sentence that communicates only the next action or readiness state. Treat longer motivational copy as optional and keep helper strings short enough for narrow mobile screens first.
+
+
+## 2026-04-08 (Health Connect step alignment)
+
+### 94. Generic Health Connect aggregates do not necessarily match a specific source app's visible total
+- **Symptom**: The imported step count was much lower than the Samsung Health number shown on the same device.
+- **Lesson**: For Activity data like steps, Health Connect aggregate reads can be deduped across apps and reflect sync timing rather than a single provider's UI total. If the product promise is "match Samsung Health," prefer Samsung Health's `DataOrigin` when available and label the imported source explicitly.

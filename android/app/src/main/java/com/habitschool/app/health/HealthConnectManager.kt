@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -20,9 +21,12 @@ enum class HealthConnectAvailabilityState {
 
 data class HealthConnectSnapshot(
     val stepsCount: Long? = null,
+    val allOriginsStepsCount: Long? = null,
     val syncedAtEpochMillis: Long = 0L,
     val availabilityState: HealthConnectAvailabilityState = HealthConnectAvailabilityState.UNAVAILABLE,
-    val permissionGranted: Boolean = false
+    val permissionGranted: Boolean = false,
+    val dataOriginPackageName: String? = null,
+    val dataOriginLabel: String? = null
 )
 
 class HealthConnectManager(private val context: Context) {
@@ -67,19 +71,59 @@ class HealthConnectManager(private val context: Context) {
         val zoneId = ZoneId.systemDefault()
         val startTime = LocalDate.now(zoneId).atStartOfDay(zoneId).toInstant()
         val endTime = Instant.now()
+        val totalStepsCount = aggregateSteps(
+            client = client,
+            startTime = startTime,
+            endTime = endTime
+        ) ?: 0L
+        val samsungHealthStepsCount = aggregateSteps(
+            client = client,
+            startTime = startTime,
+            endTime = endTime,
+            dataOriginFilter = setOf(DataOrigin(SAMSUNG_HEALTH_PACKAGE_NAME))
+        )
+
+        val resolvedStepsCount = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+            samsungHealthStepsCount
+        } else {
+            totalStepsCount
+        }
+        val resolvedOriginPackage = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+            SAMSUNG_HEALTH_PACKAGE_NAME
+        } else {
+            null
+        }
+        val resolvedOriginLabel = if ((samsungHealthStepsCount ?: 0L) > 0L) {
+            SAMSUNG_HEALTH_LABEL
+        } else {
+            HEALTH_CONNECT_LABEL
+        }
+
+        return HealthConnectSnapshot(
+            stepsCount = resolvedStepsCount,
+            allOriginsStepsCount = totalStepsCount,
+            syncedAtEpochMillis = System.currentTimeMillis(),
+            availabilityState = availability,
+            permissionGranted = true,
+            dataOriginPackageName = resolvedOriginPackage,
+            dataOriginLabel = resolvedOriginLabel
+        )
+    }
+
+    private suspend fun aggregateSteps(
+        client: HealthConnectClient,
+        startTime: Instant,
+        endTime: Instant,
+        dataOriginFilter: Set<DataOrigin> = emptySet()
+    ): Long? {
         val response = client.aggregate(
             AggregateRequest(
                 metrics = setOf(StepsRecord.COUNT_TOTAL),
-                timeRangeFilter = TimeRangeFilter.between(startTime, endTime)
+                timeRangeFilter = TimeRangeFilter.between(startTime, endTime),
+                dataOriginFilter = dataOriginFilter
             )
         )
-
-        return HealthConnectSnapshot(
-            stepsCount = response[StepsRecord.COUNT_TOTAL] ?: 0L,
-            syncedAtEpochMillis = System.currentTimeMillis(),
-            availabilityState = availability,
-            permissionGranted = true
-        )
+        return response[StepsRecord.COUNT_TOTAL]
     }
 
     private fun getClientOrNull(): HealthConnectClient? {
@@ -89,6 +133,9 @@ class HealthConnectManager(private val context: Context) {
 
     companion object {
         const val PROVIDER_PACKAGE_NAME = "com.google.android.apps.healthdata"
+        const val SAMSUNG_HEALTH_PACKAGE_NAME = "com.sec.android.app.shealth"
+        const val SAMSUNG_HEALTH_LABEL = "Samsung Health"
+        const val HEALTH_CONNECT_LABEL = "Health Connect"
 
         val requiredPermissions: Set<String> = setOf(
             HealthPermission.getReadPermission(StepsRecord::class)

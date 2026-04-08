@@ -17,7 +17,8 @@ object AppRoutes {
         nativeSource: String = "android-shell",
         stepsCount: Long,
         syncedAtEpochMillis: Long,
-        stepSource: String = "health_connect"
+        stepSource: String = "health_connect",
+        stepProviderLabel: String? = null
     ): Uri =
         buildUri(
             "/",
@@ -27,6 +28,7 @@ object AppRoutes {
                 "focus" to "health-connect-steps",
                 "stepCount" to stepsCount.toString(),
                 "stepSource" to stepSource,
+                "stepProvider" to stepProviderLabel,
                 "syncedAt" to syncedAtEpochMillis.toString()
             )
         )

@@ -511,6 +511,7 @@ function getAppEntryDeepLinkParams() {
         focus: String(url.searchParams.get('focus') || '').trim(),
         stepCount: String(url.searchParams.get('stepCount') || '').trim(),
         stepSource: String(url.searchParams.get('stepSource') || '').trim(),
+        stepProvider: String(url.searchParams.get('stepProvider') || '').trim(),
         syncedAt: String(url.searchParams.get('syncedAt') || '').trim(),
         friendshipId: String(url.searchParams.get('friendshipId') || '').trim(),
         challengeId: String(url.searchParams.get('challengeId') || '').trim()
@@ -520,7 +521,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -613,6 +614,7 @@ function parseNativeStepImportPayload(params = getAppEntryDeepLinkParams()) {
     return {
         stepCount,
         stepSource: 'health_connect',
+        stepProviderLabel: params.stepProvider || 'Health Connect',
         nativeSource: params.native || 'android-shell',
         syncedAtEpochMillis: Number.isFinite(syncedAtEpochMillis) && syncedAtEpochMillis > 0 ? syncedAtEpochMillis : 0
     };
@@ -709,7 +711,7 @@ function renderStepImportBanner() {
     banner.innerHTML = `
         <div class="step-import-banner-icon" aria-hidden="true">📲</div>
         <div class="step-import-banner-copy">
-            <div class="step-import-banner-title">Health Connect ${stepCount.toLocaleString()}보 반영됨</div>
+            <div class="step-import-banner-title">${_activeNativeStepImport?.stepProviderLabel || 'Health Connect'} ${stepCount.toLocaleString()}보 반영됨</div>
             <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
         </div>
     `;
@@ -764,7 +766,7 @@ function applyPendingNativeStepImport() {
 
     updateStepRing(payload.stepCount);
     renderStepImportBanner();
-    showToast(`👟 Health Connect에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+    showToast(`👟 ${payload.stepProviderLabel || 'Health Connect'}에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
     return true;
 }
 

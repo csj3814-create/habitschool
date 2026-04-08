@@ -72,7 +72,8 @@ class HabitschoolWidgetProvider : AppWidgetProvider() {
                 AppRoutes.exerciseImportUri(
                     nativeSource = "android-widget",
                     stepsCount = snapshot.stepsCount,
-                    syncedAtEpochMillis = snapshot.syncedAtEpochMillis
+                    syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
+                    stepProviderLabel = snapshot.dataOriginLabel
                 )
             } else {
                 AppRoutes.exerciseUri("android-widget")
