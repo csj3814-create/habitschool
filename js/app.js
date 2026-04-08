@@ -115,6 +115,12 @@ const RECORD_GUIDE_STORAGE_KEYS = {
 };
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', window.location.origin).href;
+const DIET_CATEGORY_LABELS = {
+    breakfast: '첫 식사',
+    lunch: '두 번째 식사',
+    dinner: '세 번째 식사',
+    snack: '간식'
+};
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
 let _shareSettingsExpanded = false;
@@ -141,6 +147,7 @@ let _friendshipsLoadingPromise = null;
 let _friendshipsLoadingStartedAt = 0;
 let _pendingFriendRequestId = null;
 let _pendingSharedDietImportPromise = null;
+let _lastDietAutoImportResult = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
@@ -588,14 +595,75 @@ function handleDietUploadDeepLink() {
     focusElementWithHighlight(target);
 }
 
+function renderDietShareImportBanner() {
+    const banner = document.getElementById('diet-share-import-banner');
+    if (!banner) return;
+
+    const result = _lastDietAutoImportResult;
+    if (!result || !Number.isFinite(result.assignedCount) || result.assignedCount <= 0) {
+        banner.style.display = 'none';
+        banner.classList.remove('is-visible');
+        banner.innerHTML = '';
+        return;
+    }
+
+    const assignedLabels = (result.assignedCategories || [])
+        .map((category) => DIET_CATEGORY_LABELS[category] || category)
+        .filter(Boolean);
+    const assignedCopy = assignedLabels.length > 0
+        ? `${assignedLabels.join(', ')} 칸에 바로 배치했어요.`
+        : '빈 식사 칸에 바로 배치했어요.';
+    const skippedCopy = result.skippedCount > 0
+        ? `선택한 날짜와 다른 사진 ${result.skippedCount}장은 제외됐어요.`
+        : '';
+    const overflowCopy = result.overflowCount > 0
+        ? `빈 칸이 부족해 ${result.overflowCount}장은 아직 넣지 못했어요.`
+        : '';
+    const bodyParts = [assignedCopy, skippedCopy, overflowCopy].filter(Boolean);
+
+    banner.innerHTML = `
+        <div class="diet-share-import-banner-icon" aria-hidden="true">📥</div>
+        <div class="diet-share-import-banner-copy">
+            <div class="diet-share-import-banner-title">공유한 식단 사진 ${result.assignedCount}장을 불러왔어요</div>
+            <div class="diet-share-import-banner-body">${bodyParts.join(' ')}</div>
+        </div>
+    `;
+    banner.style.display = 'flex';
+    banner.classList.add('is-visible');
+}
+
+function focusDietImportResult() {
+    const assignedCategories = Array.isArray(_lastDietAutoImportResult?.assignedCategories)
+        ? _lastDietAutoImportResult.assignedCategories
+        : [];
+    const firstCategory = assignedCategories[0];
+    if (!firstCategory) {
+        handleDietUploadDeepLink();
+        return;
+    }
+
+    const target = document.getElementById(`diet-box-${firstCategory}`)
+        || document.getElementById(`preview-${firstCategory}`)
+        || document.querySelector('#diet .card');
+    focusElementWithHighlight(target);
+}
+
 async function handleSharedDietUploadDeepLink() {
     const importedCount = await importPendingDietShareTarget().catch((error) => {
         console.warn('[handleSharedDietUploadDeepLink] shared diet import failed:', error?.message || error);
         return 0;
     });
 
-    requestAnimationFrame(handleDietUploadDeepLink);
-    window.setTimeout(handleDietUploadDeepLink, 180);
+    const focusSharedImport = () => {
+        if ((_lastDietAutoImportResult?.assignedCount || 0) > 0) {
+            focusDietImportResult();
+            return;
+        }
+        handleDietUploadDeepLink();
+    };
+
+    requestAnimationFrame(focusSharedImport);
+    window.setTimeout(focusSharedImport, 180);
 
     if (importedCount > 0) {
         showToast(`📥 공유한 식단 사진 ${importedCount}장을 불러왔어요.`);
@@ -3954,6 +4022,14 @@ async function buildDietAutoUploadEntries(files, validDate) {
 }
 
 async function importDietFilesIntoEmptySlots(files) {
+    _lastDietAutoImportResult = {
+        assignedCount: 0,
+        assignedCategories: [],
+        skippedCount: 0,
+        overflowCount: 0
+    };
+    renderDietShareImportBanner();
+
     if (!Array.isArray(files) || files.length === 0) return 0;
 
     for (const file of files) {
@@ -3992,6 +4068,7 @@ async function importDietFilesIntoEmptySlots(files) {
     }
 
     let assigned = 0;
+    const assignedCategories = [];
     for (let i = 0; i < entries.length; i++) {
         if (i >= emptySlots.length) {
             alert("⚠️ 등록 가능한 식사 칸이 모자라 일부 사진만 업로드되었습니다.");
@@ -4012,10 +4089,19 @@ async function importDietFilesIntoEmptySlots(files) {
             window.previewStaticImage(targetInput, `preview-${cat}`, `rm-${cat}`, true);
             targetInput.dispatchEvent(new Event('change', { bubbles: true }));
             assigned++;
+            assignedCategories.push(cat);
         } catch (err) {
             console.error(err);
         }
     }
+
+    _lastDietAutoImportResult = {
+        assignedCount: assigned,
+        assignedCategories,
+        skippedCount,
+        overflowCount: Math.max(0, entries.length - assigned)
+    };
+    renderDietShareImportBanner();
 
     if (assigned > 0) {
         showToast(`✨ ${assigned}개의 사진이 시간순으로 자동 배치되었습니다.`);
@@ -4043,6 +4129,8 @@ function clearInputs() {
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('meditation-check').checked = false;
     loadStepData(null);
+    _lastDietAutoImportResult = null;
+    renderDietShareImportBanner();
 
     ['breakfast', 'lunch', 'dinner', 'snack', 'sleep'].forEach(k => {
         const pv = document.getElementById(`preview-${k}`);
