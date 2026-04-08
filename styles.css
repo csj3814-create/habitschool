@@ -9859,6 +9859,26 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     white-space: nowrap; transition: background 0.2s;
 }
 .step-input-btn:active { background: #388E3C; }
+.step-native-sync-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #C8E1D1;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #F1FBF5 0%, #F5FBFF 100%);
+    color: #276548;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s ease, box-shadow 0.2s;
+}
+.step-native-sync-btn:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
 .step-import-banner {
     margin-top: 10px;
     padding: 11px 12px;
@@ -9917,6 +9937,12 @@ body.dark-mode .step-count { color: #e0e0e0; }
 body.dark-mode .step-ring-bg { stroke: #333; }
 body.dark-mode .step-number-input { background: #2a2a2a; color: #e0e0e0; border-color: #444; }
 body.dark-mode .step-number-input:focus { border-color: #66BB6A; }
+body.dark-mode .step-native-sync-btn {
+    background: linear-gradient(135deg, rgba(29, 73, 54, 0.95) 0%, rgba(21, 55, 69, 0.95) 100%);
+    border-color: #335847;
+    color: #CBECD7;
+    box-shadow: none;
+}
 body.dark-mode .step-import-banner {
     background: linear-gradient(135deg, rgba(33, 58, 42, 0.92) 0%, rgba(23, 41, 53, 0.92) 100%);
     border-color: rgba(123, 201, 140, 0.28);

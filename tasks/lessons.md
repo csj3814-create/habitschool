@@ -611,3 +611,10 @@
 ### 91. Adaptive launcher icons need inset-safe foregrounds
 - Reusing the real product icon is not enough for Android launcher icons; adaptive icons crop the foreground inside a mask on many launchers.
 - Before shipping a test APK, verify the launcher icon on a real Samsung/One UI device and keep text or logos away from the mask edges by using an inset foreground asset.
+
+
+## 2026-04-08 (Android shell follow-up)
+
+### 92. Android-only actions must live in always-visible task surfaces
+- **Symptom**: The user could not find the Health Connect action because it was placed inside a collapsible guide row, and launcher entry did not always preserve the explicit Android-shell marker.
+- **Lesson**: If an Android-specific action supports a primary workflow like step entry, place it inside the relevant working card near the input controls. Also stamp launcher entry with an explicit `native=android-shell` marker instead of depending on later deep-link flows.

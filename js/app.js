@@ -660,8 +660,8 @@ function renderExerciseNativeSyncCta() {
 
     button.style.display = 'inline-flex';
     button.textContent = String(_stepData?.source || '').trim() === 'health_connect'
-        ? 'Health Connect 다시 동기화'
-        : 'Health Connect 동기화';
+        ? 'Health Connect 다시 가져오기'
+        : 'Health Connect에서 가져오기';
 }
 
 function startNativeHealthConnectSync() {

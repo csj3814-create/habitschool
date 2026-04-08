@@ -1036,7 +1036,6 @@
                         </div>
                         <div class="record-flow-actions">
                             <button class="record-flow-btn primary" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
-                            <button class="record-flow-btn native-sync" id="exercise-health-connect-btn" type="button" onclick="startNativeHealthConnectSync()" style="display:none;">Health Connect 동기화</button>
                             <button class="record-flow-btn" type="button" onclick="addCardioBlockWithFile()">운동 사진</button>
                             <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">운동 영상</button>
                         </div>
@@ -1067,6 +1066,7 @@
                                     placeholder="직접 입력" min="0" max="200000" inputmode="numeric">
                                 <button class="step-input-btn" onclick="setManualSteps()">입력</button>
                             </div>
+                            <button class="step-native-sync-btn" id="exercise-health-connect-btn" type="button" onclick="startNativeHealthConnectSync()" style="display:none;">Health Connect에서 가져오기</button>
                         </div>
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
