@@ -5301,17 +5301,19 @@ function _getRecordGuideStates() {
         .map(id => document.getElementById(id)?.value?.trim() || '')
         .filter(Boolean).length;
 
-    let dietHelper = '식단 사진 1장부터 바로 저장할 수 있어요.';
+    let dietHelper = '식단 사진 1장부터 저장할 수 있어요.';
     let dietStatus = '첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.';
     if (dietPhotos > 0 && dietPhotos < 4) {
         dietStatus = `식단 사진 ${dietPhotos}장이 준비됐어요. 더 올리면 최대 30P까지 반영됩니다.`;
-        dietHelper = `지금 식단 사진 ${dietPhotos}장과 공복 지표 ${fastingMetricsCount}개를 함께 저장할 수 있어요.`;
+        dietHelper = fastingMetricsCount > 0
+            ? `식단 ${dietPhotos}장 · 공복 ${fastingMetricsCount}개를 함께 저장할 수 있어요.`
+            : `식단 사진 ${dietPhotos}장을 지금 저장할 수 있어요.`;
     } else if (dietPhotos === 0 && fastingMetricsCount > 0) {
         dietStatus = `공복 지표 ${fastingMetricsCount}개가 입력됐어요. 식단 사진을 더하면 한 번에 같이 저장됩니다.`;
-        dietHelper = `공복 지표 ${fastingMetricsCount}개가 입력돼 있어요. 식단 사진 없이도 저장은 가능합니다.`;
+        dietHelper = `공복 지표 ${fastingMetricsCount}개 입력됨 · 지금 저장할 수 있어요.`;
     } else if (dietPhotos === 4) {
         dietStatus = '식단 칸이 모두 채워졌어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
-        dietHelper = '식단 사진이 충분히 준비됐어요. 저장하면 오늘 식단 포인트가 반영됩니다.';
+        dietHelper = '식단 준비 완료 · 저장하면 반영돼요.';
     }
 
     const { cardioCount, strengthCount, stepReady } = _getExerciseGuideCounts();
@@ -5319,12 +5321,12 @@ function _getRecordGuideStates() {
     const stepPointReady = stepCount >= 8000;
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
     let exerciseStatus = '걸음수, 운동 사진, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
-    let exerciseHelper = '걸음수는 8천보부터 포인트가 반영됩니다.';
+    let exerciseHelper = '걸음수는 8천보부터 반영돼요.';
     if (exerciseReadyCount > 0) {
         exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
         exerciseHelper = stepPointReady
-            ? `운동 준비 ${exerciseReadyCount}개 · 8천보 달성으로 포인트가 반영됩니다.`
-            : `운동 준비 ${exerciseReadyCount}개 · 걸음수는 8천보부터 포인트가 반영됩니다.`;
+            ? `운동 준비 ${exerciseReadyCount}개 · 저장하면 반영돼요.`
+            : `운동 준비 ${exerciseReadyCount}개 · 8천보부터 반영돼요.`;
     }
 
     const sleepReady = _hasPreviewImage('preview-sleep');
@@ -5332,7 +5334,7 @@ function _getRecordGuideStates() {
     const gratitudeReady = !!document.getElementById('gratitude-journal')?.value?.trim();
     const mindReadyCount = [sleepReady, meditationReady, gratitudeReady].filter(Boolean).length;
     let mindStatus = '수면 캡처, 명상 체크, 감사일기 중 하나만 남겨도 오늘 마음 기록을 저장할 수 있습니다.';
-    let mindHelper = '수면 캡처 또는 감사 한 줄만 남겨도 저장할 수 있어요.';
+    let mindHelper = '수면 캡처나 감사 한 줄만 있어도 저장할 수 있어요.';
     if (mindReadyCount > 0) {
         const pieces = [
             sleepReady ? '수면 캡처' : null,
@@ -5340,7 +5342,7 @@ function _getRecordGuideStates() {
             gratitudeReady ? '감사일기' : null
         ].filter(Boolean);
         mindStatus = `${pieces.join(', ')}가 준비됐어요. 저장하면 오늘 마음 기록 포인트가 반영됩니다.`;
-        mindHelper = `마음 기록 준비 ${mindReadyCount}개가 잡혀 있어요. 저장하고 오늘 흐름을 마무리해보세요.`;
+        mindHelper = `마음 기록 ${mindReadyCount}개 준비됨 · 지금 저장할 수 있어요.`;
     }
 
     return {

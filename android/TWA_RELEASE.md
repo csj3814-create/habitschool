@@ -39,6 +39,13 @@ cd C:\SJ\antigravity\habitschool\android
 .\gradlew.bat printReleaseSigningStatus
 ```
 
+Or run the consolidated readiness check from the repo root:
+
+```powershell
+cd C:\SJ\antigravity\habitschool
+powershell -ExecutionPolicy Bypass -File .\android\scripts\Check-TwaReleaseReadiness.ps1
+```
+
 ## 3. Compare the expected fingerprint with assetlinks
 
 ```powershell

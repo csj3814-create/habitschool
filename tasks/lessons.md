@@ -618,3 +618,10 @@
 ### 92. Android-only actions must live in always-visible task surfaces
 - **Symptom**: The user could not find the Health Connect action because it was placed inside a collapsible guide row, and launcher entry did not always preserve the explicit Android-shell marker.
 - **Lesson**: If an Android-specific action supports a primary workflow like step entry, place it inside the relevant working card near the input controls. Also stamp launcher entry with an explicit `native=android-shell` marker instead of depending on later deep-link flows.
+
+
+## 2026-04-08 (mobile helper copy)
+
+### 93. Bottom-bar helper copy should be written for one-line mobile fit first
+- **Symptom**: The mind-tab save helper wrapped into two lines on Android because it tried to explain both readiness count and motivational guidance in the fixed bottom bar.
+- **Lesson**: For the bottom save bar, prefer one compact sentence that communicates only the next action or readiness state. Treat longer motivational copy as optional and keep helper strings short enough for narrow mobile screens first.
