@@ -352,6 +352,79 @@ body {
     opacity: 0.7; 
 }
 
+.simple-mode-banner {
+    display: none;
+    margin: 16px 20px 0;
+    padding: 20px 18px;
+    border-radius: 24px;
+    border: 1px solid #FFD9A8;
+    background:
+        radial-gradient(circle at top right, rgba(255, 244, 214, 0.95), transparent 42%),
+        linear-gradient(140deg, #FFFDF8 0%, #FFF3DD 52%, #FFE2BA 100%);
+    box-shadow: 0 16px 32px rgba(255, 140, 0, 0.12);
+    flex-direction: column;
+    gap: 14px;
+}
+
+.simple-mode-banner-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.simple-mode-banner-kicker {
+    display: inline-flex;
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255, 140, 0, 0.12);
+    color: #C25E00;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.simple-mode-banner-title {
+    margin: 0;
+    color: #5B3410;
+    font-size: 26px;
+    line-height: 1.32;
+    letter-spacing: -0.03em;
+}
+
+.simple-mode-banner-desc {
+    margin: 0;
+    color: #7B5A34;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.simple-mode-switch-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 56px;
+    border: 1px solid #F2B25A;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.9);
+    color: #8B4E08;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(255, 140, 0, 0.08);
+}
+
+html.simple-mode .simple-mode-banner,
+body.simple-mode .simple-mode-banner {
+    display: flex;
+}
+
+html.simple-mode .simple-mode-switch-btn,
+body.simple-mode .simple-mode-switch-btn {
+    display: inline-flex;
+}
+
 /* 콘텐츠 섹션 */
 .content-section { 
     display: none; 
@@ -361,6 +434,169 @@ body {
 
 .content-section.active { 
     display: block; 
+}
+
+html.simple-mode #user-greeting,
+body.simple-mode #user-greeting {
+    cursor: default !important;
+    pointer-events: none;
+}
+
+html.simple-mode #point-badge-ui,
+html.simple-mode #dark-mode-toggle,
+html.simple-mode #dashboard,
+html.simple-mode #assets,
+html.simple-mode #gallery,
+html.simple-mode #profile,
+html.simple-mode .chat-banner-fixed,
+html.simple-mode #admin-feedback-box,
+html.simple-mode .quest-board,
+html.simple-mode .upload-cta,
+html.simple-mode #fasting-graph-card,
+html.simple-mode .diet-ai-btn,
+html.simple-mode .diet-analysis-result,
+html.simple-mode .guide-btn,
+html.simple-mode #diet-day-summary-container,
+body.simple-mode #point-badge-ui,
+body.simple-mode #dark-mode-toggle,
+body.simple-mode #dashboard,
+body.simple-mode #assets,
+body.simple-mode #gallery,
+body.simple-mode #profile,
+body.simple-mode .chat-banner-fixed,
+body.simple-mode #admin-feedback-box,
+body.simple-mode .quest-board,
+body.simple-mode .upload-cta,
+body.simple-mode #fasting-graph-card,
+body.simple-mode .diet-ai-btn,
+body.simple-mode .diet-analysis-result,
+body.simple-mode .guide-btn,
+body.simple-mode #diet-day-summary-container {
+    display: none !important;
+}
+
+html.simple-mode button[onclick*="openTab('dashboard'"],
+html.simple-mode button[onclick*="openTab('assets'"],
+html.simple-mode button[onclick*="openTab('gallery'"],
+body.simple-mode button[onclick*="openTab('dashboard'"],
+body.simple-mode button[onclick*="openTab('assets'"],
+body.simple-mode button[onclick*="openTab('gallery'"] {
+    display: none !important;
+}
+
+html.simple-mode .tab-btn,
+body.simple-mode .tab-btn {
+    font-size: 17px;
+    padding: 15px 6px;
+    min-height: 58px;
+}
+
+html.simple-mode .content-section,
+body.simple-mode .content-section {
+    padding: 18px 16px 132px;
+}
+
+html.simple-mode .record-flow-card,
+body.simple-mode .record-flow-card {
+    border-radius: 22px;
+    padding: 22px 18px;
+}
+
+html.simple-mode .record-flow-toggle,
+body.simple-mode .record-flow-toggle {
+    display: none;
+}
+
+html.simple-mode .record-flow-card h3,
+html.simple-mode .card h3,
+body.simple-mode .record-flow-card h3,
+body.simple-mode .card h3 {
+    font-size: 22px;
+    line-height: 1.4;
+}
+
+html.simple-mode .record-flow-card p,
+body.simple-mode .record-flow-card p {
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+html.simple-mode .record-flow-actions,
+body.simple-mode .record-flow-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+html.simple-mode .record-flow-btn,
+body.simple-mode .record-flow-btn {
+    width: 100%;
+    min-height: 58px;
+    border-radius: 18px;
+    font-size: 18px;
+}
+
+html.simple-mode .card,
+body.simple-mode .card {
+    border-radius: 22px;
+    padding: 22px 18px;
+}
+
+html.simple-mode input,
+html.simple-mode textarea,
+html.simple-mode select,
+body.simple-mode input,
+body.simple-mode textarea,
+body.simple-mode select {
+    font-size: 18px;
+}
+
+html.simple-mode textarea,
+body.simple-mode textarea {
+    min-height: 140px;
+}
+
+html.simple-mode .upload-area,
+body.simple-mode .upload-area {
+    min-height: 190px;
+    border-radius: 20px;
+}
+
+html.simple-mode .upload-area span,
+body.simple-mode .upload-area span {
+    font-size: 16px !important;
+}
+
+html.simple-mode .step-input-btn,
+html.simple-mode .step-native-sync-btn,
+body.simple-mode .step-input-btn,
+body.simple-mode .step-native-sync-btn {
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 17px;
+}
+
+html.simple-mode .submit-bar-helper,
+body.simple-mode .submit-bar-helper {
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+html.simple-mode .submit-btn,
+body.simple-mode .submit-btn {
+    padding: 18px 20px;
+    font-size: 20px;
+    border-radius: 18px;
+}
+
+html.simple-mode .step-card .step-display,
+body.simple-mode .step-card .step-display {
+    gap: 18px;
+}
+
+html.simple-mode .step-input-group,
+body.simple-mode .step-input-group {
+    gap: 10px;
 }
 
 @keyframes fadeIn { 

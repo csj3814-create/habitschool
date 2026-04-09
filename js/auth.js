@@ -6,6 +6,7 @@ import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
@@ -457,15 +458,17 @@ export function setupAuthListener(callbacks) {
             const urlTab = params.get('tab');
             const appEntryFocus = params.get('focus');
             const hashTab = window.location.hash.replace('#', '');
-            const validTabs = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets'];
+            const appMode = getAppModeFromPath(window.location.pathname);
+            const validTabs = getAllowedTabsForMode(appMode);
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
-            const targetTab = pendingChatbotToken
+            const requestedTab = pendingChatbotToken
                 ? 'profile'
                 : (urlTab && validTabs.includes(urlTab))
                     ? urlTab
                     : (hashTab && validTabs.includes(hashTab))
                         ? hashTab
-                        : 'dashboard';
+                        : getDefaultTabForMode(appMode);
+            const targetTab = normalizeTabForMode(requestedTab, appMode);
             if (window.openTab) {
                 window.openTab(targetTab, false);
             }

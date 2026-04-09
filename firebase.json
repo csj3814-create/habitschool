@@ -47,6 +47,19 @@
         "firestore.rules",
         "storage.rules"
       ],
+      "redirects": [
+        {
+          "source": "/simple/",
+          "destination": "/simple",
+          "type": 301
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/simple",
+          "destination": "/index.html"
+        }
+      ],
       "headers": [
         {
           "source": "/.well-known/assetlinks.json",

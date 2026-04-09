@@ -7,6 +7,12 @@
     if (location.hostname === 'habitschool.kr') {
         location.replace('https://habitschool.web.app' + location.pathname + location.search + location.hash);
     }
+    (function() {
+        const normalizedPath = location.pathname.replace(/\/+$/, '') || '/';
+        if (normalizedPath === '/simple') {
+            document.documentElement.classList.add('simple-mode');
+        }
+    })();
     // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {
@@ -98,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=112">
+    <link rel="stylesheet" href="styles.css?v=113">
 
     <script src="js/webview-detect.js"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
@@ -197,6 +203,15 @@
                 <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
                     갤러리</button>
             </nav>
+
+            <section class="simple-mode-banner" aria-label="간편 모드 안내">
+                <div class="simple-mode-banner-copy">
+                    <span class="simple-mode-banner-kicker">간편 모드</span>
+                    <h2 class="simple-mode-banner-title">오늘 기록할 항목을 선택해 주세요</h2>
+                    <p class="simple-mode-banner-desc">식단, 운동, 마음만 남겼어요. 기록을 남기고 아래 저장 버튼을 눌러 주세요.</p>
+                </div>
+                <button type="button" id="simple-mode-switch-btn" class="simple-mode-switch-btn" onclick="switchToDefaultMode()">기본 모드로 보기</button>
+            </section>
 
             <div id="dashboard" class="content-section active" role="main">
                 <div id="admin-feedback-box" role="alert" aria-live="polite">
@@ -1112,7 +1127,7 @@
                         <div class="record-flow-head">
                             <div>
                                 <h3>수면 캡처나 감사 한 줄이면 충분해요</h3>
-                                <p id="mind-guide-status">수면 캡처, 명상 체크, 감사일기 중 하나만 남겨도 오늘 마음 기록을 저장할 수 있습니다.</p>
+                                <p id="mind-guide-status">수면 캡처, 10분 명상, 감사일기를 남겨보세요.</p>
                             </div>
                             <div class="record-flow-head-side">
                                 <span class="record-flow-badge" id="mind-guide-badge">준비 0개</span>
@@ -1578,8 +1593,8 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=112"></script>
-    <script type="module" src="js/main.js?v=112"></script>
+<script type="module" src="js/app.js?v=113"></script>
+<script type="module" src="js/main.js?v=113"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 

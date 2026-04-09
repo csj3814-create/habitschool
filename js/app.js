@@ -15,6 +15,8 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, functions, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
+import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
@@ -67,6 +69,7 @@ window.analyzeMealPhoto = analyzeMealPhoto;
 window.completeOnboarding = completeOnboarding;
 window.goOnboardingStep = goOnboardingStep;
 window.openTab = openTab;
+window.switchToDefaultMode = switchToDefaultMode;
 window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
 window.triggerGalleryShareAction = triggerGalleryShareAction;
@@ -165,6 +168,8 @@ let _chatbotConnectCompleting = false;
 let _chatbotConnectLoginPromptShown = false;
 let _chatbotLinkStatusCache = {};
 let _floatingBarLayoutFrame = 0;
+
+applyAppModeChrome();
 
 function normalizeShareTemplate(raw) {
     return SHARE_TEMPLATE_OPTIONS.includes(raw) ? raw : 'grid';
@@ -563,8 +568,9 @@ function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
         }
     });
     if (!changed) return;
-    url.hash = `#${tabName || getVisibleTabName() || 'dashboard'}`;
-    history.replaceState({ tab: tabName || getVisibleTabName() || 'dashboard' }, '', `${url.pathname}${url.search}${url.hash}`);
+    const nextTab = tabName || getVisibleTabName() || getDefaultTabForMode();
+    url.hash = `#${nextTab}`;
+    history.replaceState({ tab: nextTab }, '', `${url.pathname}${url.search}${url.hash}`);
 }
 
 async function handleProfileFriendsDeepLink({ friendshipId = '', panel = 'friends' } = {}) {
@@ -695,6 +701,8 @@ async function handleSharedDietUploadDeepLink() {
 
     if (importedCount > 0) {
         showToast(`📥 공유한 식단 사진 ${importedCount}장을 불러왔어요.`);
+    } else {
+        showToast('공유한 사진은 자동 저장되지 않아요. 원하는 칸에 직접 올려 주세요.');
     }
 
     return importedCount;
@@ -1892,18 +1900,19 @@ function setGalleryHeroCollapsed(collapsed, persist = true) {
 function setRecordFlowCardCollapsed(tabName, collapsed, persist = true) {
     if (!RECORD_GUIDE_STORAGE_KEYS[tabName]) return;
 
-    _recordGuideCollapsed[tabName] = !!collapsed;
-    if (persist) saveGuideCollapsedPreference(RECORD_GUIDE_STORAGE_KEYS[tabName], _recordGuideCollapsed[tabName]);
+    const effectiveCollapsed = isSimpleMode() ? false : !!collapsed;
+    _recordGuideCollapsed[tabName] = effectiveCollapsed;
+    if (persist && !isSimpleMode()) saveGuideCollapsedPreference(RECORD_GUIDE_STORAGE_KEYS[tabName], _recordGuideCollapsed[tabName]);
 
     const card = document.querySelector(`.record-flow-card[data-record-guide="${tabName}"]`);
     const body = document.getElementById(`${tabName}-guide-body`);
     const toggle = document.getElementById(`${tabName}-guide-toggle`);
 
-    if (card) card.classList.toggle('is-collapsed', _recordGuideCollapsed[tabName]);
-    if (body) body.hidden = _recordGuideCollapsed[tabName];
+    if (card) card.classList.toggle('is-collapsed', effectiveCollapsed);
+    if (body) body.hidden = effectiveCollapsed;
     if (toggle) {
-        toggle.textContent = _recordGuideCollapsed[tabName] ? '펼치기' : '접기';
-        toggle.setAttribute('aria-expanded', String(!_recordGuideCollapsed[tabName]));
+        toggle.textContent = effectiveCollapsed ? '펼치기' : '접기';
+        toggle.setAttribute('aria-expanded', String(!effectiveCollapsed));
     }
 }
 
@@ -2017,6 +2026,7 @@ function toggleGalleryHeroGuide(forceExpanded = null) {
 }
 
 function toggleRecordFlowCard(tabName, forceExpanded = null) {
+    if (isSimpleMode()) return;
     if (!RECORD_GUIDE_STORAGE_KEYS[tabName]) return;
     const nextCollapsed = typeof forceExpanded === 'boolean'
         ? !forceExpanded
@@ -3112,8 +3122,6 @@ async function checkMilestones(userId) {
         let milestones = userData.milestones || {};
         let newMilestones = [];
 
-        const coins = userData.coins || 0;
-
         // 일일 기록 조회
         const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(61));
         let logs = [];
@@ -3162,7 +3170,14 @@ async function checkMilestones(userId) {
             }
         }
 
-        const saveFields = (newMilestones.length > 0 || migrated)
+        const reconciled = reconcileMilestoneState(milestones, MILESTONES, {
+            statMap,
+            today: getKstDateString()
+        });
+        milestones = reconciled.milestones;
+        newMilestones = reconciled.freshMilestones;
+
+        const saveFields = (newMilestones.length > 0 || migrated || reconciled.changed)
             ? { milestones, currentStreak: streak }
             : { currentStreak: streak };
         // failed-precondition(동시 쓰기 충돌) 시 1회 재시도
@@ -3193,7 +3208,16 @@ async function renderMilestones(userId, prefetchedData) {
             const userSnap = await getDoc(userRef);
             userData = userSnap.exists() ? userSnap.data() : {};
         }
-        const milestones = userData.milestones || {};
+        const reconciled = reconcileMilestoneState(userData.milestones || {}, MILESTONES, {
+            today: getKstDateString()
+        });
+        const milestones = reconciled.milestones;
+
+        if (reconciled.changed) {
+            setDoc(doc(db, "users", userId), { milestones }, { merge: true }).catch(error => {
+                console.warn('마일스톤 정규화 저장 스킵:', error.code || error.message);
+            });
+        }
 
         const grid = document.getElementById('badges-grid');
         grid.innerHTML = '';
@@ -5368,11 +5392,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
 // 탭 관리
 function getVisibleTabName() {
-    const tabNames = ['dashboard', 'diet', 'exercise', 'sleep', 'gallery', 'profile', 'assets'];
+    const tabNames = getAllowedTabsForMode();
     return tabNames.find(tabName => {
         const el = document.getElementById(tabName);
         return el && (el.style.display === 'block' || el.classList.contains('active'));
-    }) || 'dashboard';
+    }) || getDefaultTabForMode();
 }
 
 function _hasPreviewImage(previewId) {
@@ -5449,7 +5473,7 @@ function _getRecordGuideStates() {
     const meditationReady = !!document.getElementById('meditation-check')?.checked;
     const gratitudeReady = !!document.getElementById('gratitude-journal')?.value?.trim();
     const mindReadyCount = [sleepReady, meditationReady, gratitudeReady].filter(Boolean).length;
-    let mindStatus = '수면 캡처, 명상 체크, 감사일기 중 하나만 남겨도 오늘 마음 기록을 저장할 수 있습니다.';
+    let mindStatus = '수면 캡처, 10분 명상, 감사일기를 남겨보세요.';
     let mindHelper = '수면 캡처나 감사 한 줄만 있어도 저장할 수 있어요.';
     if (mindReadyCount > 0) {
         const pieces = [
@@ -5595,11 +5619,12 @@ window.toggleMeditationQuickMark = function() {
 };
 
 function openTab(tabName, pushState = true) {
+    const resolvedTabName = normalizeTabForMode(tabName);
     const user = auth.currentUser;
-    if (!user && tabName !== 'gallery') {
+    if (!user && resolvedTabName !== 'gallery') {
         document.getElementById('login-modal').style.display = 'flex'; return;
     }
-    if (pushState) history.pushState({ tab: tabName }, '', '#' + tabName);
+    if (pushState) history.pushState({ tab: resolvedTabName }, '', '#' + resolvedTabName);
 
     const contents = document.getElementsByClassName("content-section");
     for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; contents[i].classList.remove("active"); }
@@ -5611,32 +5636,32 @@ function openTab(tabName, pushState = true) {
 
     // 갤러리 탭은 ID로 직접 선택 (더 안정적)
     let targetBtn;
-    if (tabName === 'gallery') {
+    if (resolvedTabName === 'gallery') {
         targetBtn = document.getElementById('btn-tab-gallery');
     } else {
-        targetBtn = document.querySelector(`button[onclick*="openTab('${tabName}'"]`);
+        targetBtn = document.querySelector(`button[onclick*="openTab('${resolvedTabName}'"]`);
     }
     if (targetBtn) {
         targetBtn.classList.add("active");
         targetBtn.setAttribute("aria-current", "page");
     }
-    document.getElementById(tabName).style.display = "block";
+    document.getElementById(resolvedTabName).style.display = "block";
 
     const submitBar = document.getElementById('submit-bar');
     const saveBtn = document.getElementById('saveDataBtn');
     const chatBanner = document.getElementById('chat-banner');
     const helperEl = document.getElementById('submit-bar-helper');
 
-    if (tabName === 'dashboard') {
+    if (resolvedTabName === 'dashboard') {
         if (!applyDashboardInstallCta()) {
             submitBar.style.display = 'none';
         }
-    } else if (tabName === 'profile' || tabName === 'assets') {
+    } else if (resolvedTabName === 'profile' || resolvedTabName === 'assets') {
         resetSubmitBarMode();
         submitBar.style.display = 'none';
 
         // 자산 탭 열릴 때: Firestore 데이터 즉시 표시 (블록체인 로드 대기 없이)
-        if (tabName === 'assets' && user) {
+        if (resolvedTabName === 'assets' && user) {
             updateAssetDisplay();
             // 블록체인 모듈은 백그라운드 로드 → 완료 후 HBT 잔액만 갱신
             const load = window._loadBlockchainModule || (() => Promise.resolve());
@@ -5659,7 +5684,7 @@ function openTab(tabName, pushState = true) {
             });
         }
 
-        if (tabName === 'profile' && user) {
+        if (resolvedTabName === 'profile' && user) {
             loadChatbotLinkStatus().catch(error => {
                 console.warn('챗봇 연결 코드 상태 로드 실패:', error.message);
             });
@@ -5670,16 +5695,16 @@ function openTab(tabName, pushState = true) {
                 console.warn('챗봇 연결 처리 실패:', error.message);
             });
         }
-    } else if (tabName === 'gallery') {
+    } else if (resolvedTabName === 'gallery') {
         submitBar.style.display = 'block';
         updateGalleryPrimaryAction();
     } else {
         submitBar.style.display = 'block';
         resetSubmitBarMode();
-        updateContextualSaveBar(tabName);
+        updateContextualSaveBar(resolvedTabName);
     }
 
-    if (tabName === 'gallery') {
+    if (resolvedTabName === 'gallery') {
         chatBanner.style.display = 'none';
         loadGalleryData();
     } else {
@@ -5695,24 +5720,28 @@ function openTab(tabName, pushState = true) {
         // 입력 폼 탭 전환 시 데이터 재로드 불필요 (이미 로드된 상태)
         // 날짜 변경 시에만 loadDataForSelectedDate 호출됨
         // 식단 탭에서 공복 지표 그래프 로드
-        if (tabName === 'diet' && user) {
+        if (resolvedTabName === 'diet' && user) {
             loadFastingGraphData(user.uid);
         }
     }
 
-    if (tabName === 'dashboard') renderDashboard();
+    if (resolvedTabName === 'dashboard') renderDashboard();
 
-    updateRecordFlowGuides(tabName);
-    syncGuidePanels(tabName);
-    if (tabName === 'dashboard') syncDashboardPanels();
+    updateRecordFlowGuides(resolvedTabName);
+    syncGuidePanels(resolvedTabName);
+    if (resolvedTabName === 'dashboard') syncDashboardPanels();
     scheduleFloatingBarLayoutUpdate();
-    setTimeout(() => { document.getElementById(tabName).classList.add("active"); }, 10);
+    setTimeout(() => { document.getElementById(resolvedTabName).classList.add("active"); }, 10);
 };
 
 window.addEventListener('popstate', (e) => {
     if (e.state && e.state.tab) openTab(e.state.tab, false);
-    else openTab('dashboard', false);
+    else openTab(getDefaultTabForMode(), false);
 });
+
+function switchToDefaultMode() {
+    window.location.assign(buildAppModeUrl('default', getVisibleTabName()));
+}
 
 // 페이지 종료 시 리소스 정리 (메모리 누수 방지)
 window.addEventListener('beforeunload', () => {
