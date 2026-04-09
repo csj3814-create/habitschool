@@ -352,76 +352,25 @@ body {
     opacity: 0.7; 
 }
 
-.simple-mode-banner {
-    display: none;
-    margin: 16px 20px 0;
-    padding: 20px 18px;
-    border-radius: 24px;
-    border: 1px solid #FFD9A8;
-    background:
-        radial-gradient(circle at top right, rgba(255, 244, 214, 0.95), transparent 42%),
-        linear-gradient(140deg, #FFFDF8 0%, #FFF3DD 52%, #FFE2BA 100%);
-    box-shadow: 0 16px 32px rgba(255, 140, 0, 0.12);
-    flex-direction: column;
-    gap: 14px;
-}
-
-.simple-mode-banner-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.simple-mode-banner-kicker {
-    display: inline-flex;
-    align-self: flex-start;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: rgba(255, 140, 0, 0.12);
-    color: #C25E00;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-}
-
-.simple-mode-banner-title {
-    margin: 0;
-    color: #5B3410;
-    font-size: 26px;
-    line-height: 1.32;
-    letter-spacing: -0.03em;
-}
-
-.simple-mode-banner-desc {
-    margin: 0;
-    color: #7B5A34;
-    font-size: 16px;
-    line-height: 1.6;
-}
-
-.simple-mode-switch-btn {
+.simple-mode-default-btn {
     display: none;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    min-height: 56px;
+    min-width: 56px;
+    min-height: 38px;
+    padding: 0 14px;
     border: 1px solid #F2B25A;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.9);
+    border-radius: 999px;
+    background: linear-gradient(180deg, #FFFDF8 0%, #FFF3DD 100%);
     color: #8B4E08;
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(255, 140, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(255, 140, 0, 0.12);
 }
 
-html.simple-mode .simple-mode-banner,
-body.simple-mode .simple-mode-banner {
-    display: flex;
-}
-
-html.simple-mode .simple-mode-switch-btn,
-body.simple-mode .simple-mode-switch-btn {
+html.simple-mode .simple-mode-default-btn,
+body.simple-mode .simple-mode-default-btn {
     display: inline-flex;
 }
 
@@ -499,7 +448,7 @@ body.simple-mode .content-section {
 html.simple-mode .record-flow-card,
 body.simple-mode .record-flow-card {
     border-radius: 22px;
-    padding: 22px 18px;
+    padding: 18px 18px;
 }
 
 html.simple-mode .record-flow-toggle,
@@ -507,18 +456,13 @@ body.simple-mode .record-flow-toggle {
     display: none;
 }
 
-html.simple-mode .record-flow-card h3,
-html.simple-mode .card h3,
-body.simple-mode .record-flow-card h3,
-body.simple-mode .card h3 {
-    font-size: 22px;
-    line-height: 1.4;
-}
-
-html.simple-mode .record-flow-card p,
-body.simple-mode .record-flow-card p {
-    font-size: 17px;
-    line-height: 1.65;
+html.simple-mode .record-flow-topline,
+html.simple-mode .record-flow-head,
+html.simple-mode .submit-bar-helper,
+body.simple-mode .record-flow-topline,
+body.simple-mode .record-flow-head,
+body.simple-mode .submit-bar-helper {
+    display: none !important;
 }
 
 html.simple-mode .record-flow-actions,
@@ -526,6 +470,11 @@ body.simple-mode .record-flow-actions {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
+}
+
+html.simple-mode .record-flow-body,
+body.simple-mode .record-flow-body {
+    display: block !important;
 }
 
 html.simple-mode .record-flow-btn,
@@ -10094,6 +10043,20 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
 }
 
 .record-flow-btn.primary {
+    border: none;
+    background: linear-gradient(135deg, #FF9A1F 0%, #FF7A00 100%);
+    color: white;
+    box-shadow: 0 8px 18px rgba(255, 138, 0, 0.18);
+}
+
+.record-flow-btn.tone-success {
+    border: none;
+    background: linear-gradient(135deg, #41B75B 0%, #249E44 100%);
+    color: white;
+    box-shadow: 0 8px 18px rgba(36, 158, 68, 0.2);
+}
+
+.record-flow-btn.tone-accent {
     border: none;
     background: linear-gradient(135deg, #FF9A1F 0%, #FF7A00 100%);
     color: white;

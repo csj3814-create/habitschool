@@ -190,6 +190,7 @@
                         aria-label="해빛 포인트 정보" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
                     <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙</button>
+                    <button type="button" id="simple-mode-default-btn" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본</button>
                 </div>
             </div>
 
@@ -203,15 +204,6 @@
                 <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
                     갤러리</button>
             </nav>
-
-            <section class="simple-mode-banner" aria-label="간편 모드 안내">
-                <div class="simple-mode-banner-copy">
-                    <span class="simple-mode-banner-kicker">간편 모드</span>
-                    <h2 class="simple-mode-banner-title">오늘 기록할 항목을 선택해 주세요</h2>
-                    <p class="simple-mode-banner-desc">식단, 운동, 마음만 남겼어요. 기록을 남기고 아래 저장 버튼을 눌러 주세요.</p>
-                </div>
-                <button type="button" id="simple-mode-switch-btn" class="simple-mode-switch-btn" onclick="switchToDefaultMode()">기본 모드로 보기</button>
-            </section>
 
             <div id="dashboard" class="content-section active" role="main">
                 <div id="admin-feedback-box" role="alert" aria-live="polite">
@@ -893,7 +885,8 @@
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn primary" type="button" onclick="clickNextEmptyDietSlot()">사진 바로 추가</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">사진 바로 추가</button>
                             <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">공복 지표 입력</button>
                         </div>
                     </div>
@@ -1044,15 +1037,15 @@
                         <div class="record-flow-head">
                             <div>
                                 <h3>걸음수만 입력해도 저장할 수 있어요</h3>
-                                <p id="exercise-guide-status">걸음수, 운동 사진, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
+                                <p id="exercise-guide-status">걸음수, 운동 이미지, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
                             </div>
                             <div class="record-flow-head-side">
                                 <span class="record-flow-badge" id="exercise-guide-badge">준비 0개</span>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn primary" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
-                            <button class="record-flow-btn" type="button" onclick="addCardioBlockWithFile()">운동 사진</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile()">운동 이미지</button>
                             <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">운동 영상</button>
                         </div>
                     </div>
@@ -1126,17 +1119,17 @@
                     <div class="record-flow-body" id="sleep-guide-body">
                         <div class="record-flow-head">
                             <div>
-                                <h3>수면 캡처나 감사 한 줄이면 충분해요</h3>
-                                <p id="mind-guide-status">수면 캡처, 10분 명상, 감사일기를 남겨보세요.</p>
+                                <h3>수면 캡처나 감사 일기면 충분해요</h3>
+                                <p id="mind-guide-status">수면 캡처, 10분 명상, 감사 일기를 남겨보세요.</p>
                             </div>
                             <div class="record-flow-head-side">
                                 <span class="record-flow-badge" id="mind-guide-badge">준비 0개</span>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn primary" type="button" onclick="triggerSleepUpload()">수면 캡처</button>
-                            <button class="record-flow-btn" type="button" onclick="toggleMeditationQuickMark()">명상 체크</button>
-                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">감사 한 줄</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="triggerSleepUpload()">수면 캡처</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="toggleMeditationQuickMark()">명상 체크</button>
+                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">감사 일기</button>
                         </div>
                     </div>
                 </div>
@@ -1172,7 +1165,7 @@
                     <div id="sleep-analysis-result" class="diet-analysis-result" style="display:none;"></div>
                 </div>
                 <div class="card">
-                    <h3>🧘 마음 챙김 및 감사일기</h3>
+                    <h3>🧘 마음 챙김 및 감사 일기</h3>
                     <label style="font-size: 14px; display: block; margin-bottom: 10px;"><input type="checkbox"
                             id="meditation-check"> ✅ 오늘 10분 명상 완료</label>
                     <textarea id="gratitude-journal" placeholder="오늘 하루 감사했던 일 기록하기"></textarea>
@@ -1593,8 +1586,8 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-<script type="module" src="js/app.js?v=113"></script>
-<script type="module" src="js/main.js?v=113"></script>
+<script type="module" src="js/app.js?v=114"></script>
+<script type="module" src="js/main.js?v=114"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 

@@ -5460,7 +5460,7 @@ function _getRecordGuideStates() {
     const stepCount = Number(_stepData?.count || 0);
     const stepPointReady = stepCount >= 8000;
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
-    let exerciseStatus = '걸음수, 운동 사진, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
+    let exerciseStatus = '걸음수, 운동 이미지, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
     let exerciseHelper = '걸음수는 8천보부터 반영돼요.';
     if (exerciseReadyCount > 0) {
         exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
@@ -5473,13 +5473,13 @@ function _getRecordGuideStates() {
     const meditationReady = !!document.getElementById('meditation-check')?.checked;
     const gratitudeReady = !!document.getElementById('gratitude-journal')?.value?.trim();
     const mindReadyCount = [sleepReady, meditationReady, gratitudeReady].filter(Boolean).length;
-    let mindStatus = '수면 캡처, 10분 명상, 감사일기를 남겨보세요.';
-    let mindHelper = '수면 캡처나 감사 한 줄만 있어도 저장할 수 있어요.';
+    let mindStatus = '수면 캡처, 10분 명상, 감사 일기를 남겨보세요.';
+    let mindHelper = '수면 캡처나 감사 일기면 충분해요.';
     if (mindReadyCount > 0) {
         const pieces = [
             sleepReady ? '수면 캡처' : null,
             meditationReady ? '명상 체크' : null,
-            gratitudeReady ? '감사일기' : null
+            gratitudeReady ? '감사 일기' : null
         ].filter(Boolean);
         mindStatus = `${pieces.join(', ')}가 준비됐어요. 저장하면 오늘 마음 기록 포인트가 반영됩니다.`;
         mindHelper = `마음 기록 ${mindReadyCount}개 준비됨 · 지금 저장할 수 있어요.`;
@@ -6553,7 +6553,7 @@ const DASHBOARD_ACTION_META = {
         idleLabel: '마음 기록',
         idleSub: '수면·감사 한 번에',
         focusLabel: '마음 기록해요',
-        focusSub: '수면이나 감사 한 줄이면 충분해요',
+        focusSub: '수면이나 감사 일기면 충분해요',
         doneLabel: '마음 완료',
         doneSub: '오늘 마음 인증이 반영됐어요'
     }
@@ -7804,7 +7804,7 @@ window.generate30DayReport = async function () {
                     <div class="report-cat-emoji">🧘</div>
                     <div class="report-cat-name">마음</div>
                     <div class="report-cat-stat">${mindDays}일 / ${logs.length}일</div>
-                    <div class="report-cat-detail">🧘 명상 ${meditationCount}회 · 감사일기 ${gratitudeCount}회 · ${totalMind}P</div>
+                    <div class="report-cat-detail">🧘 명상 ${meditationCount}회 · 감사 일기 ${gratitudeCount}회 · ${totalMind}P</div>
                     <div class="report-cat-bar"><div class="report-cat-fill" style="width:${Math.round(mindDays / logs.length * 100)}%; background:#9C27B0;"></div></div>
                 </div>
             </div>
@@ -9900,8 +9900,8 @@ function getEmptyStateHtml(filter) {
     const messages = {
         all: { emoji: '📷', title: '아직 기록이 없어요', desc: '식단, 운동, 마음 기록을 시작해보세요!<br>기록 탭에서 오늘의 건강 습관을 인증할 수 있어요.' },
         diet: { emoji: '🥗', title: '식단 기록이 없어요', desc: '오늘 먹은 식사를 사진으로 기록해보세요!<br>AI가 영양 분석도 해드려요.' },
-        exercise: { emoji: '🏃', title: '운동 기록이 없어요', desc: '운동 사진이나 영상을 올려보세요!<br>함께 운동하면 더 즐거워요.' },
-        mind: { emoji: '🧘', title: '마음 기록이 없어요', desc: '오늘의 감사일기나 수면 기록을 남겨보세요!<br>작은 기록이 큰 변화를 만들어요.' }
+        exercise: { emoji: '🏃', title: '운동 기록이 없어요', desc: '운동 이미지나 영상을 올려보세요!<br>함께 운동하면 더 즐거워요.' },
+        mind: { emoji: '🧘', title: '마음 기록이 없어요', desc: '오늘의 감사 일기나 수면 기록을 남겨보세요!<br>작은 기록이 큰 변화를 만들어요.' }
     };
     const m = messages[filter] || messages.all;
     return `<div class="gallery-empty-state">
