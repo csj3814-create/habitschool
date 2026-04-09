@@ -5541,7 +5541,7 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
     if (tabName === 'sleep') {
         helperEl.style.display = 'block';
         helperEl.textContent = states.sleep.helper;
-        if (!saveBtn.disabled) saveBtn.innerText = '마음 기록 저장하고 포인트 받기 🅿️';
+        if (!saveBtn.disabled) saveBtn.innerText = '마음 저장하고 포인트 받기 🅿️';
         return;
     }
 

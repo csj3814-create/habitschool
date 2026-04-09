@@ -27,6 +27,7 @@
 - [x] Implement a first-pass simple mode that only exposes `식단`, `운동`, and `마음`.
 - [x] Add a clear `기본 모드로 보기` escape hatch from `/simple`.
 - [x] Show a plain-language toast when Android share opens the diet flow without auto-saving the shared image.
+- [x] Enlarge the simple-mode brand header, relabel the escape button to `기본형`, and shorten the mind save CTA copy.
 - [x] Verification after the simple-mode change:
   `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
 

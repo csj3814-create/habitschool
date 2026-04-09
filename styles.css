@@ -10062,6 +10062,27 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     color: white;
     box-shadow: 0 8px 18px rgba(255, 138, 0, 0.18);
 }
+
+html.simple-mode .header-top,
+body.simple-mode .header-top {
+    gap: 8px;
+}
+
+html.simple-mode .header h1,
+body.simple-mode .header h1 {
+    font-size: 19px;
+    max-width: none;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+html.simple-mode #user-greeting img,
+body.simple-mode #user-greeting img {
+    width: 30px !important;
+    height: 30px !important;
+    margin-right: 6px !important;
+}
+
 .record-flow-btn.native-sync {
     border-color: #C8E1D1;
     background: linear-gradient(135deg, #F1FBF5 0%, #F5FBFF 100%);
