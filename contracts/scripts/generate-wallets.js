@@ -47,12 +47,12 @@ function main() {
     console.log("─────────────────────────────────────────");
     console.log(`SERVER_MINTER_ADDRESS=${serverWallet.address}`);
     console.log(`SERVER_MINTER_PRIVATE_KEY=${serverWallet.privateKey}`);
-    console.log(`RESERVE_WALLET_ADDRESS=${reserveWallet.address}`);
+    console.log(`RESERVE_MULTISIG_ADDRESS=${reserveWallet.address}`);
     console.log(`RESERVE_WALLET_PRIVATE_KEY=${reserveWallet.privateKey}`);
     console.log("─────────────────────────────────────────");
     console.log("");
-    console.log("2. Deployer가 setMinter() 호출:");
-    console.log(`   npx hardhat run scripts/setup-minter.js --network baseSepolia`);
+    console.log("2. 배포 후 server 역할 부여:");
+    console.log(`   npx hardhat run scripts/setup-minter.js --network bscTestnet`);
     console.log("");
     console.log("3. Firebase Cloud Function에 SERVER_MINTER_PRIVATE_KEY 설정:");
     console.log(`   firebase functions:secrets:set SERVER_MINTER_KEY`);

@@ -8,42 +8,28 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
+        runs: 200,
+      },
+    },
   },
   networks: {
-    // BSC 테스트넷 (Chapel)
     bscTestnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      url: process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545/",
       chainId: 97,
-      accounts: process.env.DEPLOYER_PRIVATE_KEY
-        ? [process.env.DEPLOYER_PRIVATE_KEY]
-        : [],
-      gasPrice: 10000000000 // 10 gwei
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      gasPrice: 10_000_000_000,
     },
-    // BSC 메인넷
     bsc: {
-      url: "https://bsc-dataseed.binance.org/",
+      url: process.env.BSC_MAINNET_RPC_URL || "https://bsc-dataseed.binance.org/",
       chainId: 56,
-      accounts: process.env.DEPLOYER_PRIVATE_KEY
-        ? [process.env.DEPLOYER_PRIVATE_KEY]
-        : [],
-      gasPrice: 3000000000 // 3 gwei
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      gasPrice: 3_000_000_000,
     },
-    // Base Sepolia 테스트넷
-    baseSepolia: {
-      url: "https://sepolia.base.org",
-      chainId: 84532,
-      accounts: process.env.DEPLOYER_PRIVATE_KEY
-        ? [process.env.DEPLOYER_PRIVATE_KEY]
-        : []
-    }
   },
   etherscan: {
     apiKey: {
       bscTestnet: process.env.BSCSCAN_API_KEY || "",
-      bsc: process.env.BSCSCAN_API_KEY || ""
-    }
-  }
+      bsc: process.env.BSCSCAN_API_KEY || "",
+    },
+  },
 };

@@ -9,7 +9,18 @@ class HabitschoolLauncherActivity : LauncherActivity() {
         val launchingUrl = super.getLaunchingUrl()
         val action = intent?.action
         if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
-            return launchingUrl
+            if (launchingUrl.scheme == "https"
+                && launchingUrl.host == Uri.parse(AppRoutes.WEB_ORIGIN).host
+                && (launchingUrl.encodedPath == "/share-target"
+                    || (launchingUrl.getQueryParameter("tab") == "diet"
+                        && launchingUrl.getQueryParameter("focus") == "shared-upload"))
+            ) {
+                return launchingUrl
+            }
+
+            // Fallback for cases where the browser does not hand the share intent
+            // to the PWA share target endpoint and would otherwise open the home tab.
+            return AppRoutes.dietSharedUploadUri(nativeSource = "android-share")
         }
         if (launchingUrl.scheme != "https" || launchingUrl.host != Uri.parse(AppRoutes.WEB_ORIGIN).host) {
             return launchingUrl

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 /**
  * @title HaBit (HBT) Token — v2
  * @notice ERC-20 토큰 — 건강 습관 인증 채굴 + 주간 난이도 조절 + 챌린지 스테이킹
- * @dev Base 체인 배포, 8 decimals
+ * @dev BSC 배포, 8 decimals
  *
  * 핵심 메커니즘:
  * - 최대 발행량: 100,000,000 HBT (하드캡)
@@ -124,6 +124,7 @@ contract HaBit is ERC20, ERC20Burnable, AccessControl, ReentrancyGuard {
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
+        _grantRole(RATE_UPDATER_ROLE, msg.sender);
 
         // 리저브 30M 프리민트
         _mint(reserveWallet, RESERVE);

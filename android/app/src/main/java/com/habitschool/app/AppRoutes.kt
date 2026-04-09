@@ -13,6 +13,16 @@ object AppRoutes {
     fun exerciseUri(nativeSource: String = "android-shell"): Uri =
         buildUri("/", mapOf("tab" to "exercise", "native" to nativeSource))
 
+    fun dietSharedUploadUri(nativeSource: String = "android-share"): Uri =
+        buildUri(
+            "/",
+            mapOf(
+                "tab" to "diet",
+                "native" to nativeSource,
+                "focus" to "shared-upload"
+            )
+        )
+
     fun exerciseImportUri(
         nativeSource: String = "android-shell",
         stepsCount: Long,

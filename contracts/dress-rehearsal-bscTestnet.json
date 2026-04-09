@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-04-09T15:02:28.251Z",
+  "network": "bscTestnet",
+  "chain": "BSC Testnet",
+  "deployer": "0x02DdE9bEc9B6ecb78961424bDda763352C1197FB",
+  "reserveAddress": "0xcF405Ca1Adc2A3bd80DFDcAE287B83C7d0C706ce",
+  "serverMinter": "0xDc84e09C6F62591e788B84Ff1051d51EbEDA8230",
+  "contracts": {
+    "HaBit": "0x5c50cc3D3d4c86775B79C0D0281D4420F198f7F7",
+    "HaBitStaking": "0xDdE157A7A20f04a55C15f7541508667bbcC4dF8f"
+  },
+  "roleVerification": {
+    "hasMinterRole": true,
+    "hasRateUpdaterRole": true,
+    "hasStakingOperator": true
+  },
+  "funding": {
+    "serverMinterGasFundTx": null,
+    "rehearsalUserGasFunds": [
+      {
+        "wallet": "0x4E1c74386c79748C8ab50ae25110e9950435d5aB",
+        "txHash": "0x5fd2f6b847aaf206eac153133880f403feac78ca06f2daedb5fe2da8363d3eb2"
+      },
+      {
+        "wallet": "0x195e5Ab114e2f44aA9722249134867dEE9cb7D32",
+        "txHash": "0xc3756eae82504420bfe008c180992b7b1f94bf7b27330a00bfe3d266ad8b44cf"
+      }
+    ]
+  },
+  "minting": [
+    {
+      "wallet": "0x4E1c74386c79748C8ab50ae25110e9950435d5aB",
+      "txHash": "0xfa4bdb0cc9b8ce857f2a8fd864c1398dd40d69c98983c0ee1a4db4531c731959"
+    },
+    {
+      "wallet": "0x195e5Ab114e2f44aA9722249134867dEE9cb7D32",
+      "txHash": "0x49e77154ac4fa698321b2240da5c646c08e7cb03715bc0054539d1e936ed2657"
+    }
+  ],
+  "stakeFlow": {
+    "successUser": "0x4E1c74386c79748C8ab50ae25110e9950435d5aB",
+    "failureUser": "0x195e5Ab114e2f44aA9722249134867dEE9cb7D32",
+    "successStakeHbt": "120",
+    "failureStakeHbt": "100",
+    "successStakeTxHash": "0x84f56eda51b1bbf7b887fc4e6ca17a4b3bacf99ae19bd5840aed7edb39b4d804",
+    "failureStakeTxHash": "0x0d902cf2ac53525321b6091628ada655fab8c659cb4f890c43f75eaf2d433bed",
+    "successResolveTxHash": "0xd3e6bd89a933c4eb42231375cb12b1c519bddaaf851f034069b2544430ab8e7e",
+    "failureResolveTxHash": "0xf05dd1465b13097ee380c1e670388e4754e05ed0f9442d6616271ae1efa97678"
+  },
+  "balances": {
+    "mintedHbtPerUser": "300.0",
+    "userAPostStakeHbt": "180.0",
+    "userBPostStakeHbt": "200.0",
+    "userASuccessFinalHbt": "300.0",
+    "userBFailureFinalHbt": "250.0"
+  }
+}

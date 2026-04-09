@@ -1,13 +1,16 @@
 {
   "name": "habit-contracts",
   "version": "1.0.0",
-  "description": "HaBit (HBT) smart contracts for Base chain",
+  "description": "HaBit (HBT) smart contracts for BNB Smart Chain",
   "scripts": {
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
-    "deploy:sepolia": "npx hardhat run scripts/deploy.js --network baseSepolia",
-    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network base",
-    "verify:sepolia": "npx hardhat verify --network baseSepolia"
+    "export:abi": "node scripts/export-abi.js",
+    "deploy:testnet": "npx hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network bsc",
+    "dress-rehearsal:testnet": "npx hardhat run scripts/dress-rehearsal.js --network bscTestnet",
+    "verify:testnet": "npx hardhat verify --network bscTestnet",
+    "verify:mainnet": "npx hardhat verify --network bsc"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

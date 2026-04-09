@@ -1,118 +1,79 @@
 /**
- * HaBit (HBT) v2 배포 스크립트
- * 
- * 사용법:
- *   1. contracts/.env 파일 생성 (DEPLOYER_PRIVATE_KEY, SERVER_MINTER_ADDRESS 필수)
- *   2. cd contracts && npm install
- *   3. npx hardhat compile
- *   4. npx hardhat run scripts/deploy.js --network baseSepolia
- * 
- * 배포 순서:
- *   1. HaBit.sol v2 (ERC-20 토큰 — reserveWallet에 30M 프리민트)
- *   2. HaBitStaking.sol (챌린지 예치)
- *   3. 서버 민터 MINTER_ROLE 부여 (AccessControl)
+ * Canonical BSC deployment script for the HaBit two-contract model.
+ *
+ * Required env:
+ * - DEPLOYER_PRIVATE_KEY
+ * - RESERVE_MULTISIG_ADDRESS
+ *
+ * Usage:
+ *   npx hardhat run scripts/deploy.js --network bscTestnet
+ *   npx hardhat run scripts/deploy.js --network bsc
  */
 
 const hre = require("hardhat");
+const {
+  getChainConfig,
+  writeDeployments,
+  requireEnvAddress,
+  logExplorerLinks,
+} = require("./_helpers");
 
 async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-    
-    console.log("========================================");
-    console.log("🚀 HaBit (HBT) v2 배포 시작");
-    console.log("========================================");
-    console.log(`배포자: ${deployer.address}`);
-    console.log(`네트워크: ${hre.network.name}`);
-    console.log(`잔액: ${hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address))} ETH`);
-    console.log("----------------------------------------");
+  const [deployer] = await hre.ethers.getSigners();
+  const chain = getChainConfig(hre.network.name);
+  const reserveMultisig = requireEnvAddress("RESERVE_MULTISIG_ADDRESS");
 
-    // 1. HaBit v2 토큰 배포 (리저브 30M → deployer 지갑으로 프리민트)
-    console.log("\n📦 1/3: HaBit (HBT) v2 토큰 배포 중...");
-    const HaBit = await hre.ethers.getContractFactory("HaBit");
-    const habit = await HaBit.deploy(deployer.address);
-    await habit.waitForDeployment();
-    const habitAddress = await habit.getAddress();
-    console.log(`✅ HaBit v2 배포 완료: ${habitAddress}`);
-    console.log(`   리저브 30M HBT → ${deployer.address}`);
+  console.log("========================================");
+  console.log("HaBit + HaBitStaking deployment");
+  console.log("========================================");
+  console.log(`Network:          ${chain.label} (${hre.network.name})`);
+  console.log(`Deployer:         ${deployer.address}`);
+  console.log(`Reserve multisig: ${reserveMultisig}`);
+  console.log(`Gas balance:      ${hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address))} ${chain.gasToken}`);
+  console.log("----------------------------------------");
 
-    // 2. HaBitStaking 배포
-    console.log("\n📦 2/3: HaBitStaking 배포 중...");
-    const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
-    const staking = await HaBitStaking.deploy(habitAddress);
-    await staking.waitForDeployment();
-    const stakingAddress = await staking.getAddress();
-    console.log(`✅ HaBitStaking 배포 완료: ${stakingAddress}`);
+  const HaBit = await hre.ethers.getContractFactory("HaBit");
+  const habit = await HaBit.deploy(reserveMultisig);
+  await habit.waitForDeployment();
+  const habitAddress = await habit.getAddress();
+  console.log(`HaBit deployed:       ${habitAddress}`);
 
-    // 3. 서버 민터 역할 부여 (AccessControl — MINTER_ROLE + RATE_UPDATER_ROLE)
-    const serverMinter = process.env.SERVER_MINTER_ADDRESS;
-    if (serverMinter && serverMinter !== "0x0000000000000000000000000000000000000000") {
-        console.log("\n🔑 3/3: 서버 민터 권한 설정 중...");
-        
-        // HaBit에 MINTER_ROLE 부여 (채굴 mint 호출용)
-        const MINTER_ROLE = await habit.MINTER_ROLE();
-        const tx1 = await habit.grantRole(MINTER_ROLE, serverMinter);
-        await tx1.wait();
-        console.log(`✅ HaBit MINTER_ROLE 부여: ${serverMinter}`);
+  const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
+  const staking = await HaBitStaking.deploy(habitAddress);
+  await staking.waitForDeployment();
+  const stakingAddress = await staking.getAddress();
+  console.log(`HaBitStaking deployed:${stakingAddress}`);
 
-        // HaBit에 RATE_UPDATER_ROLE 부여 (updateRate 호출용)
-        const RATE_UPDATER_ROLE = await habit.RATE_UPDATER_ROLE();
-        const tx1b = await habit.grantRole(RATE_UPDATER_ROLE, serverMinter);
-        await tx1b.wait();
-        console.log(`✅ HaBit RATE_UPDATER_ROLE 부여: ${serverMinter}`);
+  const deployment = {
+    network: hre.network.name,
+    chainId: hre.network.config.chainId,
+    label: chain.label,
+    explorer: chain.explorer,
+    gasToken: chain.gasToken,
+    deployer: deployer.address,
+    reserveMultisig,
+    serverMinter: null,
+    contracts: {
+      HaBit: habitAddress,
+      HaBitStaking: stakingAddress,
+    },
+    deployedAt: new Date().toISOString(),
+  };
 
-        // Staking에 운영자 권한 부여
-        const tx2 = await staking.setOperator(serverMinter, true);
-        await tx2.wait();
-        console.log(`✅ Staking 운영자 설정: ${serverMinter}`);
-    } else {
-        console.log("\n⚠️ 3/3: SERVER_MINTER_ADDRESS 미설정 — 나중에 수동 설정 필요");
-    }
+  const deploymentPath = writeDeployments(hre.network.name, deployment);
 
-    // 결과 요약
-    console.log("\n========================================");
-    console.log("🎉 배포 완료!");
-    console.log("========================================");
-    console.log(`HaBit (HBT) v2:  ${habitAddress}`);
-    console.log(`HaBitStaking:    ${stakingAddress}`);
-    console.log(`네트워크:         ${hre.network.name}`);
-    
-    const explorerBase = hre.network.name === "base" 
-        ? "https://basescan.org" 
-        : "https://sepolia.basescan.org";
-    console.log(`\n🔍 탐색기:`);
-    console.log(`   HaBit:    ${explorerBase}/address/${habitAddress}`);
-    console.log(`   Staking:  ${explorerBase}/address/${stakingAddress}`);
+  console.log("\nExplorer links");
+  logExplorerLinks(chain.explorer, deployment.contracts);
 
-    // blockchain-config.js 업데이트 안내
-    console.log("\n📝 다음 단계:");
-    console.log("   js/blockchain-config.js 에 아래 주소를 입력하세요:");
-    console.log(`   testnetAddress: '${habitAddress}'`);
-    console.log(`   stakingTestnet: '${stakingAddress}'`);
-    console.log("========================================");
-
-    // 배포 정보 파일 저장
-    const deployInfo = {
-        network: hre.network.name,
-        chainId: hre.network.config.chainId,
-        deployer: deployer.address,
-        contracts: {
-            HaBit: habitAddress,
-            HaBitStaking: stakingAddress
-        },
-        timestamp: new Date().toISOString()
-    };
-
-    const fs = require("fs");
-    fs.writeFileSync(
-        `deployments-${hre.network.name}.json`,
-        JSON.stringify(deployInfo, null, 2)
-    );
-    console.log(`\n💾 배포 정보 저장: deployments-${hre.network.name}.json`);
+  console.log("\nDeployment file");
+  console.log(deploymentPath);
+  console.log("\nNext step");
+  console.log(`npx hardhat run scripts/setup-minter.js --network ${hre.network.name}`);
 }
 
 main()
-    .then(() => process.exit(0))
-    .catch((error) => {
-        console.error("❌ 배포 실패:", error);
-        process.exit(1);
-    });
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("Deployment failed:", error);
+    process.exit(1);
+  });

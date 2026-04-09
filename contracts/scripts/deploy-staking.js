@@ -1,56 +1,74 @@
 /**
- * HaBitStaking 단독 배포 스크립트 (HaBit 토큰 이미 배포된 상태)
+ * Deploy only HaBitStaking for an existing HaBit token deployment.
+ *
+ * Required env:
+ * - HABIT_TOKEN_ADDRESS
+ *
+ * Optional env:
+ * - SERVER_MINTER_ADDRESS
  */
+
 const hre = require("hardhat");
+const {
+  getChainConfig,
+  requireEnvAddress,
+  optionalEnvAddress,
+  logExplorerLinks,
+  writeDeployments,
+} = require("./_helpers");
 
 async function main() {
-    const [deployer] = await hre.ethers.getSigners();
-    const habitAddress = "0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29";
-    
-    console.log("📦 HaBitStaking 배포 중...");
-    console.log(`배포자: ${deployer.address}`);
-    console.log(`HaBit 토큰: ${habitAddress}`);
-    console.log(`잔액: ${hre.ethers.formatEther(await hre.ethers.provider.getBalance(deployer.address))} ETH`);
+  const [deployer] = await hre.ethers.getSigners();
+  const chain = getChainConfig(hre.network.name);
+  const habitAddress = requireEnvAddress("HABIT_TOKEN_ADDRESS");
+  const serverMinter = optionalEnvAddress("SERVER_MINTER_ADDRESS");
 
-    const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
-    const staking = await HaBitStaking.deploy(habitAddress);
-    await staking.waitForDeployment();
-    const stakingAddress = await staking.getAddress();
-    console.log(`✅ HaBitStaking 배포 완료: ${stakingAddress}`);
+  console.log("========================================");
+  console.log("Deploy HaBitStaking only");
+  console.log("========================================");
+  console.log(`Network:       ${chain.label}`);
+  console.log(`Deployer:      ${deployer.address}`);
+  console.log(`HaBit:         ${habitAddress}`);
+  console.log(`Server minter: ${serverMinter || "(skip role setup)"}`);
+  console.log("----------------------------------------");
 
-    // 서버 민터 권한 설정
-    const serverMinter = process.env.SERVER_MINTER_ADDRESS;
-    if (serverMinter) {
-        // HaBit에 민터 권한 (이미 배포된 컨트랙트에 연결)
-        const HaBit = await hre.ethers.getContractFactory("HaBit");
-        const habit = HaBit.attach(habitAddress);
-        
-        const tx1 = await habit.setMinter(serverMinter, true);
-        await tx1.wait();
-        console.log(`✅ HaBit 민터 설정: ${serverMinter}`);
+  const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
+  const staking = await HaBitStaking.deploy(habitAddress);
+  await staking.waitForDeployment();
+  const stakingAddress = await staking.getAddress();
 
-        const tx2 = await staking.setOperator(serverMinter, true);
-        await tx2.wait();
-        console.log(`✅ Staking 운영자 설정: ${serverMinter}`);
-    }
+  if (serverMinter) {
+    await (await staking.setOperator(serverMinter, true)).wait();
+  }
 
-    console.log("\n========================================");
-    console.log("🎉 배포 완료!");
-    console.log(`HaBit (HBT):     ${habitAddress}`);
-    console.log(`HaBitStaking:    ${stakingAddress}`);
-    console.log(`🔍 https://sepolia.basescan.org/address/${stakingAddress}`);
-    console.log("========================================");
+  const deployment = {
+    network: hre.network.name,
+    chainId: hre.network.config.chainId,
+    label: chain.label,
+    explorer: chain.explorer,
+    gasToken: chain.gasToken,
+    deployer: deployer.address,
+    reserveMultisig: null,
+    serverMinter,
+    contracts: {
+      HaBit: habitAddress,
+      HaBitStaking: stakingAddress,
+    },
+    deployedAt: new Date().toISOString(),
+    note: "staking-only deployment",
+  };
 
-    const fs = require("fs");
-    const deployInfo = {
-        network: hre.network.name,
-        chainId: hre.network.config.chainId,
-        deployer: deployer.address,
-        contracts: { HaBit: habitAddress, HaBitStaking: stakingAddress },
-        timestamp: new Date().toISOString()
-    };
-    fs.writeFileSync(`deployments-${hre.network.name}.json`, JSON.stringify(deployInfo, null, 2));
-    console.log(`💾 배포 정보 저장: deployments-${hre.network.name}.json`);
+  const deploymentPath = writeDeployments(hre.network.name, deployment);
+
+  console.log(`HaBitStaking deployed: ${stakingAddress}`);
+  console.log(`Deployment file:       ${deploymentPath}`);
+  console.log("\nExplorer links");
+  logExplorerLinks(chain.explorer, deployment.contracts);
 }
 
-main().then(() => process.exit(0)).catch(e => { console.error("❌ 실패:", e); process.exit(1); });
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("Staking deployment failed:", error);
+    process.exit(1);
+  });

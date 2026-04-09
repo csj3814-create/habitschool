@@ -1,49 +1,66 @@
 /**
- * Deployer → Server Minter로 ETH 가스비 전송
+ * Send native gas token from deployer to SERVER_MINTER_ADDRESS.
+ *
+ * Required env:
+ * - DEPLOYER_PRIVATE_KEY
+ * - SERVER_MINTER_ADDRESS
+ *
+ * Optional env:
+ * - FUND_AMOUNT (default 0.01)
+ * - ONCHAIN_NETWORK=testnet|mainnet (default testnet)
  */
+
 require("dotenv").config();
 const { ethers } = require("ethers");
+const { requireEnvAddress } = require("./_helpers");
 
-const RPC_URL = "https://sepolia.base.org";
-const CHAIN_ID = 84532;
-const SERVER_MINTER = "0xDc84e09C6F62591e788B84Ff1051d51EbEDA8230";
+const NETWORKS = {
+  testnet: {
+    rpcUrl: process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    chainId: 97,
+    gasToken: "tBNB",
+  },
+  mainnet: {
+    rpcUrl: process.env.BSC_MAINNET_RPC_URL || "https://bsc-dataseed.binance.org/",
+    chainId: 56,
+    gasToken: "BNB",
+  },
+};
 
 async function main() {
-    const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
-    const deployer = new ethers.Wallet(process.env.DEPLOYER_PRIVATE_KEY, provider);
+  const deployerKey = process.env.DEPLOYER_PRIVATE_KEY;
+  if (!deployerKey) {
+    throw new Error("DEPLOYER_PRIVATE_KEY is required.");
+  }
 
-    const balance = await provider.getBalance(deployer.address);
-    console.log(`Deployer: ${deployer.address}`);
-    console.log(`Deployer 잔액: ${ethers.formatEther(balance)} ETH`);
+  const networkKey = process.env.ONCHAIN_NETWORK === "mainnet" ? "mainnet" : "testnet";
+  const network = NETWORKS[networkKey];
+  const recipient = requireEnvAddress("SERVER_MINTER_ADDRESS");
+  const amount = process.env.FUND_AMOUNT || "0.01";
 
-    // 가스비 계산
-    const gasPrice = (await provider.getFeeData()).gasPrice;
-    const gasCost = gasPrice * 21000n;
-    
-    // 잔액에서 가스비의 2배를 빼고 나머지 전송 (안전 마진)
-    const sendAmount = balance - (gasCost * 3n);
-    
-    if (sendAmount <= 0n) {
-        console.log("❌ 잔액 부족");
-        return;
-    }
+  const provider = new ethers.JsonRpcProvider(network.rpcUrl, network.chainId);
+  const deployer = new ethers.Wallet(deployerKey, provider);
 
-    console.log(`가스비 예상: ${ethers.formatEther(gasCost)} ETH`);
-    console.log(`전송 금액: ${ethers.formatEther(sendAmount)} ETH`);
-    console.log(`보낼 주소: ${SERVER_MINTER}`);
-    console.log("");
+  console.log("========================================");
+  console.log("Fund server minter");
+  console.log("========================================");
+  console.log(`Network:   ${networkKey}`);
+  console.log(`Deployer:  ${deployer.address}`);
+  console.log(`Recipient: ${recipient}`);
+  console.log(`Amount:    ${amount} ${network.gasToken}`);
+  console.log("----------------------------------------");
 
-    const tx = await deployer.sendTransaction({
-        to: SERVER_MINTER,
-        value: sendAmount,
-    });
-    console.log(`TX 전송됨: ${tx.hash}`);
-    
-    const receipt = await tx.wait();
-    console.log(`✅ 확인됨! 블록: ${receipt.blockNumber}`);
-    
-    const newBalance = await provider.getBalance(SERVER_MINTER);
-    console.log(`Server Minter 잔액: ${ethers.formatEther(newBalance)} ETH`);
+  const tx = await deployer.sendTransaction({
+    to: recipient,
+    value: ethers.parseEther(amount),
+  });
+  console.log(`Submitted: ${tx.hash}`);
+
+  const receipt = await tx.wait();
+  console.log(`Confirmed: block ${receipt.blockNumber}`);
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error("Funding failed:", error);
+  process.exit(1);
+});

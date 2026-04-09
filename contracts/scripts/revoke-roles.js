@@ -1,12 +1,12 @@
 /**
- * Grant live server roles for the HaBit two-contract model.
+ * Revoke live server roles for the HaBit two-contract model.
  *
  * Required env:
  * - SERVER_MINTER_ADDRESS
  *
  * Usage:
- *   npx hardhat run scripts/setup-minter.js --network bscTestnet
- *   npx hardhat run scripts/setup-minter.js --network bsc
+ *   npx hardhat run scripts/revoke-roles.js --network bscTestnet
+ *   npx hardhat run scripts/revoke-roles.js --network bsc
  */
 
 const hre = require("hardhat");
@@ -32,33 +32,31 @@ async function main() {
   const RATE_UPDATER_ROLE = await habit.RATE_UPDATER_ROLE();
 
   console.log("========================================");
-  console.log("Grant server roles");
+  console.log("Revoke server roles");
   console.log("========================================");
   console.log(`Network:       ${chain.label}`);
   console.log(`Server minter: ${serverMinter}`);
-  console.log(`HaBit:         ${deployments.contracts.HaBit}`);
-  console.log(`HaBitStaking:  ${deployments.contracts.HaBitStaking}`);
   console.log("----------------------------------------");
 
-  if (!(await habit.hasRole(MINTER_ROLE, serverMinter))) {
-    await (await habit.grantRole(MINTER_ROLE, serverMinter)).wait();
-    console.log("Granted MINTER_ROLE");
+  if (await habit.hasRole(MINTER_ROLE, serverMinter)) {
+    await (await habit.revokeRole(MINTER_ROLE, serverMinter)).wait();
+    console.log("Revoked MINTER_ROLE");
   } else {
-    console.log("MINTER_ROLE already granted");
+    console.log("MINTER_ROLE already absent");
   }
 
-  if (!(await habit.hasRole(RATE_UPDATER_ROLE, serverMinter))) {
-    await (await habit.grantRole(RATE_UPDATER_ROLE, serverMinter)).wait();
-    console.log("Granted RATE_UPDATER_ROLE");
+  if (await habit.hasRole(RATE_UPDATER_ROLE, serverMinter)) {
+    await (await habit.revokeRole(RATE_UPDATER_ROLE, serverMinter)).wait();
+    console.log("Revoked RATE_UPDATER_ROLE");
   } else {
-    console.log("RATE_UPDATER_ROLE already granted");
+    console.log("RATE_UPDATER_ROLE already absent");
   }
 
-  if (!(await staking.operators(serverMinter))) {
-    await (await staking.setOperator(serverMinter, true)).wait();
-    console.log("Granted staking operator");
+  if (await staking.operators(serverMinter)) {
+    await (await staking.setOperator(serverMinter, false)).wait();
+    console.log("Revoked staking operator");
   } else {
-    console.log("Staking operator already granted");
+    console.log("Staking operator already absent");
   }
 
   console.log("\nVerification");
@@ -77,6 +75,6 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("Grant roles failed:", error);
+    console.error("Revoke roles failed:", error);
     process.exit(1);
   });

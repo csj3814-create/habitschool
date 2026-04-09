@@ -1,36 +1,52 @@
 /**
- * Staking 운영자 권한 설정 (nonce 충돌 복구용)
+ * Emergency helper to toggle a staking operator without touching token roles.
+ *
+ * Required env:
+ * - OPERATOR_ADDRESS
+ *
+ * Optional env:
+ * - OPERATOR_ENABLED=true|false (default true)
  */
+
 const hre = require("hardhat");
+const {
+  getChainConfig,
+  readDeployments,
+  requireEnvAddress,
+  logExplorerLinks,
+} = require("./_helpers");
 
 async function main() {
-    const stakingAddress = "0x7e8c29699F382B553891f853299e615257491F9D";
-    const serverMinter = process.env.SERVER_MINTER_ADDRESS;
-    
-    console.log("Staking 운영자 설정 중:", serverMinter);
-    
-    const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
-    const staking = HaBitStaking.attach(stakingAddress);
-    
-    const tx = await staking.setOperator(serverMinter, true);
-    await tx.wait();
-    console.log("✅ Staking 운영자 설정 완료");
-    
-    // deployments 파일 업데이트
-    const fs = require("fs");
-    const [deployer] = await hre.ethers.getSigners();
-    const deployInfo = {
-        network: hre.network.name,
-        chainId: hre.network.config.chainId,
-        deployer: deployer.address,
-        contracts: {
-            HaBit: "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B",
-            HaBitStaking: stakingAddress
-        },
-        timestamp: new Date().toISOString()
-    };
-    fs.writeFileSync(`deployments-${hre.network.name}.json`, JSON.stringify(deployInfo, null, 2));
-    console.log(`💾 배포 정보 저장: deployments-${hre.network.name}.json`);
+  const chain = getChainConfig(hre.network.name);
+  const deployments = readDeployments(hre.network.name);
+  const operatorAddress = requireEnvAddress("OPERATOR_ADDRESS");
+  const enabled = String(process.env.OPERATOR_ENABLED || "true").toLowerCase() !== "false";
+
+  const HaBitStaking = await hre.ethers.getContractFactory("HaBitStaking");
+  const staking = HaBitStaking.attach(deployments.contracts.HaBitStaking);
+
+  console.log("========================================");
+  console.log("Toggle staking operator");
+  console.log("========================================");
+  console.log(`Network:  ${chain.label}`);
+  console.log(`Staking:  ${deployments.contracts.HaBitStaking}`);
+  console.log(`Operator: ${operatorAddress}`);
+  console.log(`Enabled:  ${enabled}`);
+  console.log("----------------------------------------");
+
+  await (await staking.setOperator(operatorAddress, enabled)).wait();
+  console.log(`Result: ${await staking.operators(operatorAddress)}`);
+
+  console.log("\nExplorer links");
+  logExplorerLinks(chain.explorer, {
+    Operator: operatorAddress,
+    HaBitStaking: deployments.contracts.HaBitStaking,
+  });
 }
 
-main().then(() => process.exit(0)).catch(e => { console.error("❌", e.message); process.exit(1); });
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("Operator toggle failed:", error);
+    process.exit(1);
+  });

@@ -6,6 +6,8 @@
 
 // 인증 모듈 (initializeApp에서 직접 호출)
 import { initAuth, setupAuthListener } from './auth.js';
+import { APP_ENV } from './firebase-config.js';
+import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js';
 
 // ========== 인증 초기화를 최우선으로 실행 ==========
 function initializeApp() {
@@ -54,6 +56,7 @@ window._blockchainLoaded = false;
 // 변환 비율: 온체인 currentRate (RATE_SCALE=1e8 기준). 기본값 1e8 = 1:1 (Era A)
 window._currentConversionRate = 1e8;
 window._currentConversionPhase = 1;
+window._currentChallengeBonusPolicy = null;
 
 window._loadBlockchainModule = function() {
     if (window._blockchainLoaded) return Promise.resolve();
@@ -94,6 +97,13 @@ window._loadBlockchainModule = function() {
                 window._currentConversionRate = stats.currentRate;
                 window._currentConversionPhase = stats.currentPhase || 1;
                 window.updateConvertPreview();
+            }
+            if (stats?.challengeBonusPolicy) {
+                window._currentChallengeBonusPolicy = stats.challengeBonusPolicy;
+                if (window.updateStakeSlider) {
+                    window.updateStakeSlider('weekly');
+                    window.updateStakeSlider('master');
+                }
             }
         }).catch(() => {});
     }).catch(e => {
@@ -154,8 +164,13 @@ window.openWalletExplorer = function() {
         alert('지갑 주소가 아직 생성되지 않았습니다.');
         return;
     }
-    const tokenAddr = '0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29';
-    window.open(`https://testnet.bscscan.com/token/${tokenAddr}?a=${addr}`, '_blank');
+    const tokenAddr = getActiveHbtTokenAddress(APP_ENV);
+    const network = getActiveBscNetwork(APP_ENV);
+    if (!tokenAddr || tokenAddr === '0x0000000000000000000000000000000000000000') {
+        alert('현재 활성 체인의 HBT 주소가 아직 설정되지 않았습니다.');
+        return;
+    }
+    window.open(`${network.explorer}/token/${tokenAddr}?a=${addr}`, '_blank');
 };
 
 // 변환 금액 프리셋 설정
@@ -262,6 +277,16 @@ window.hideWalletSkeleton = function() {
     if (skeleton) skeleton.classList.add('hidden');
 };
 
+function formatChallengeBonusHbt(value) {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric)) return '0';
+    return numeric.toFixed(numeric >= 100 ? 0 : 2).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+}
+
+function getLiveChallengeTierPolicy(tier) {
+    return window._currentChallengeBonusPolicy?.tiers?.[tier] || null;
+}
+
 // 챌린지 예치 슬라이더
 window.updateStakeSlider = function(tier) {
     const slider = document.getElementById('stake-slider-' + tier);
@@ -278,8 +303,13 @@ window.updateStakeSlider = function(tier) {
 
     if (rewardEl) {
         if (rounded > 0) {
-            const bonus = tier === 'weekly' ? 0.5 : 2.0;
-            rewardEl.textContent = `100% 달성 시 +${Math.round(rounded * bonus)} HBT 보너스`;
+            const tierPolicy = getLiveChallengeTierPolicy(tier);
+            if (tierPolicy && Number.isFinite(Number(tierPolicy.bonusBps))) {
+                const bonusAmount = rounded * (Number(tierPolicy.bonusBps) / 10000);
+                rewardEl.textContent = `100% 달성 시 +${formatChallengeBonusHbt(bonusAmount)} HBT 보너스 (${tierPolicy.bonusPercentLabel})`;
+            } else {
+                rewardEl.textContent = '현재 정책 기준 보너스 계산 중';
+            }
         } else {
             rewardEl.textContent = '';
         }

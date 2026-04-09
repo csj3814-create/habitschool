@@ -19,7 +19,7 @@
 |------|------|
 | 프론트엔드 | HTML5, CSS3, JavaScript (ES6 Modules) |
 | 백엔드 | Firebase (Auth, Firestore, Storage) |
-| 블록체인 | Base Chain (L2), Solidity, Hardhat |
+| 블록체인 | BNB Smart Chain (BSC), Solidity, Hardhat |
 | 라이브러리 | EXIF.js, html2canvas, ethers.js, Chart.js |
 
 ## 프로젝트 구조
@@ -66,8 +66,13 @@ cd contracts
 npm install
 npm run compile
 npm run test
-npm run deploy:sepolia  # Base Sepolia 테스트넷 배포
+npm run deploy:testnet  # BSC 테스트넷 배포
 ```
+
+## 메인넷 운영 문서
+
+- 출시 체크리스트: [tasks/mainnet-launch-guide.md](/C:/SJ/antigravity/habitschool/tasks/mainnet-launch-guide.md)
+- 운영 런북: [tasks/bsc-mainnet-operations-runbook.md](/C:/SJ/antigravity/habitschool/tasks/bsc-mainnet-operations-runbook.md)
 
 ## 라이선스
 
