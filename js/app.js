@@ -266,6 +266,125 @@ function getInstallCtaState() {
     }
 }
 
+const SIMPLE_PROFILE_CHAT_QR_SIZE = 180;
+
+function readSimpleProfilePointFallback() {
+    const pointText = String(document.getElementById('point-balance')?.textContent || '').trim();
+    const parsedPoint = Number.parseInt(pointText.replace(/[^\d-]/g, ''), 10);
+    if (Number.isFinite(parsedPoint)) {
+        return parsedPoint;
+    }
+
+    const user = auth.currentUser;
+    if (!user?.uid) return 0;
+
+    try {
+        const cached = JSON.parse(localStorage.getItem(`hs_wallet_${user.uid}`) || 'null');
+        const cachedCoins = Number.parseInt(String(cached?.coins ?? '').replace(/[^\d-]/g, ''), 10);
+        return Number.isFinite(cachedCoins) ? cachedCoins : 0;
+    } catch (_) {
+        return 0;
+    }
+}
+
+function readSimpleProfileReferralDomState() {
+    const codeCandidates = [
+        document.getElementById('simple-profile-invite-code')?.textContent,
+        document.getElementById('profile-invite-code')?.textContent,
+        document.getElementById('referral-invite-code')?.textContent
+    ];
+    const linkCandidates = [
+        document.getElementById('simple-profile-invite-link')?.value,
+        document.getElementById('profile-invite-link')?.value,
+        document.getElementById('referral-link-display')?.value
+    ];
+
+    const code = codeCandidates
+        .map((value) => String(value || '').trim())
+        .find((value) => value && value !== '-') || '';
+    const link = linkCandidates
+        .map((value) => String(value || '').trim())
+        .find(Boolean) || (code ? `${APP_ORIGIN}?ref=${code}` : '');
+
+    return { code, link };
+}
+
+function updateSimpleProfileInviteUi({ code = '', link = '' } = {}) {
+    const inviteCodeEl = document.getElementById('simple-profile-invite-code');
+    const inviteLinkEl = document.getElementById('simple-profile-invite-link');
+    const inviteStatusEl = document.getElementById('simple-profile-invite-status');
+    if (!inviteCodeEl || !inviteLinkEl || !inviteStatusEl) return;
+
+    inviteCodeEl.textContent = code || '-';
+    inviteLinkEl.value = link || '';
+    inviteStatusEl.textContent = link ? '카메라로 비추세요' : '초대 QR을 준비 중이에요.';
+    renderSimpleProfileQr(document.getElementById('simple-profile-invite-qr'), link);
+}
+
+function renderSimpleProfileQr(container, text, size = SIMPLE_PROFILE_CHAT_QR_SIZE) {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!text) return;
+
+    if (!window.QRCode) {
+        container.textContent = 'QR 준비 중';
+        window.setTimeout(() => renderSimpleProfileQr(container, text, size), 180);
+        return;
+    }
+
+    new window.QRCode(container, {
+        text,
+        width: size,
+        height: size,
+        colorDark: '#1A1A1A',
+        colorLight: '#FFFFFF',
+        correctLevel: window.QRCode.CorrectLevel.H
+    });
+}
+
+async function renderSimpleProfilePanel(sourceUserData = null) {
+    if (!isSimpleMode()) return;
+
+    const shell = document.getElementById('simple-profile-shell');
+    if (!shell) return;
+
+    let resolvedUserData = sourceUserData;
+    let points = Number.parseInt(String(sourceUserData?.coins ?? ''), 10);
+    let { code, link } = readSimpleProfileReferralDomState();
+
+    if (!Number.isFinite(points) || !code || !link) {
+        const user = auth.currentUser;
+        if (user?.uid) {
+            try {
+                const snap = await getDoc(doc(db, 'users', user.uid));
+                if (snap.exists()) {
+                    resolvedUserData = { ...(resolvedUserData || {}), ...snap.data() };
+                }
+            } catch (error) {
+                console.warn('간편 프로필 정보 로드 실패:', error.message);
+            }
+        }
+    }
+
+    points = Number.parseInt(String(resolvedUserData?.coins ?? ''), 10);
+    if (!Number.isFinite(points)) {
+        points = readSimpleProfilePointFallback();
+    }
+
+    code = String(resolvedUserData?.referralCode || code || '').trim();
+    link = String(link || (code ? `${APP_ORIGIN}?ref=${code}` : '')).trim();
+
+    const pointEl = document.getElementById('simple-profile-points');
+    if (pointEl) {
+        pointEl.textContent = `${Number(points || 0).toLocaleString()}P`;
+    }
+
+    updateSimpleProfileInviteUi({ code, link });
+    renderSimpleProfileQr(document.getElementById('simple-profile-chat-qr'), COMMUNITY_CHAT_URL);
+}
+
+window.refreshSimpleProfilePanel = renderSimpleProfilePanel;
+
 function readPendingSignupOnboardingState() {
     try {
         const raw = sessionStorage.getItem(PENDING_SIGNUP_ONBOARDING_KEY);
@@ -333,6 +452,32 @@ function applyDashboardInstallCta() {
     return true;
 }
 
+function applySimpleProfileInstallCta() {
+    const submitBar = document.getElementById('submit-bar');
+    const saveBtn = document.getElementById('saveDataBtn');
+    const helperEl = document.getElementById('submit-bar-helper');
+    if (!submitBar || !saveBtn || !helperEl) return false;
+
+    const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+        resetSubmitBarMode();
+        helperEl.style.display = 'none';
+        submitBar.style.display = 'none';
+        return false;
+    }
+
+    const installState = getInstallCtaState();
+    resetSubmitBarMode();
+    submitBar.style.display = 'block';
+    submitBar.classList.add('install-mode');
+    helperEl.style.display = 'none';
+    saveBtn.classList.add('install-mode');
+    saveBtn.dataset.mode = 'install';
+    saveBtn.disabled = false;
+    saveBtn.innerText = installState.buttonLabel || '해빛스쿨 앱 설치';
+    return true;
+}
+
 function refreshDashboardInstallCta() {
     if (getVisibleTabName() !== 'dashboard') return;
     const submitBar = document.getElementById('submit-bar');
@@ -343,8 +488,16 @@ function refreshDashboardInstallCta() {
     scheduleFloatingBarLayoutUpdate();
 }
 
+function refreshSimpleProfileInstallCta() {
+    if (getVisibleTabName() !== 'profile' || !isSimpleMode()) return;
+    applySimpleProfileInstallCta();
+    scheduleFloatingBarLayoutUpdate();
+}
+
 window.refreshDashboardInstallCta = refreshDashboardInstallCta;
+window.refreshSimpleProfileInstallCta = refreshSimpleProfileInstallCta;
 window.addEventListener('install-cta-state-changed', refreshDashboardInstallCta);
+window.addEventListener('install-cta-state-changed', refreshSimpleProfileInstallCta);
 
 const _pwaActionableBadgeState = {
     friendRequests: 0,
@@ -3146,7 +3299,8 @@ async function checkMilestones(userId) {
             if (log.awarded?.mind) mindCount++;
         }
 
-        const statMap = { streak, diet: dietCount, exercise: exerciseCount, mind: mindCount, points: coins };
+        const points = Number.parseInt(String(userData.coins ?? 0), 10) || 0;
+        const statMap = { streak, diet: dietCount, exercise: exerciseCount, mind: mindCount, points };
 
         // 각 마일스톤 확인
         for (const [category, catData] of Object.entries(MILESTONES)) {
@@ -3304,6 +3458,7 @@ window.claimMilestoneBonus = async function (milestoneId, reward) {
         const pointEl = document.getElementById('point-balance');
         const currentPts = parseInt(pointEl?.textContent) || 0;
         if (pointEl) pointEl.textContent = currentPts + reward;
+        renderSimpleProfilePanel({ coins: currentPts + reward }).catch(() => {});
 
         renderMilestones(currentUser.uid);
     } catch (error) {
@@ -5046,6 +5201,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (pointBadge) {
                 pointBadge.textContent = (userData.coins || 0);
             }
+            renderSimpleProfilePanel(userData).catch(() => {});
 
             // ========== 활성 챌린지 UI (통합 전용, 미니→위클리→마스터 순) ==========
             const challengeContainer = document.getElementById('active-challenge-container');
@@ -5517,6 +5673,14 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
         return;
     }
 
+    if (tabName === 'profile' && isSimpleMode()) {
+        const submitBar = document.getElementById('submit-bar');
+        if (submitBar && !applySimpleProfileInstallCta()) {
+            submitBar.style.display = 'none';
+        }
+        return;
+    }
+
     if (tabName === 'gallery') {
         return;
     }
@@ -5685,6 +5849,12 @@ function openTab(tabName, pushState = true) {
         }
 
         if (resolvedTabName === 'profile' && user) {
+            renderSimpleProfilePanel().catch(error => {
+                console.warn('간편 프로필 렌더링 실패:', error.message);
+            });
+            if (isSimpleMode()) {
+                applySimpleProfileInstallCta();
+            }
             loadChatbotLinkStatus().catch(error => {
                 console.warn('챗봇 연결 코드 상태 로드 실패:', error.message);
             });
@@ -6749,6 +6919,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         const ud = data.ud || {};
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
+        renderSimpleProfilePanel(ud).catch(() => {});
         renderMilestones(user.uid, ud);
 
         let level = typeof ud.missionLevel === 'number' ? ud.missionLevel : 1;
@@ -8785,6 +8956,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             } else if (pointsToGive > 0) {
                 const currentDisplayed = parseInt(document.getElementById('point-balance').innerText) || 0;
                 document.getElementById('point-balance').innerText = currentDisplayed + pointsToGive;
+                renderSimpleProfilePanel({ coins: currentDisplayed + pointsToGive }).catch(() => {});
                 showToast(`🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
             } else { showToast(`🎉 데이터가 업데이트되었습니다.`); }
 

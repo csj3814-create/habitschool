@@ -387,8 +387,8 @@ body.simple-mode .simple-mode-default-btn {
 
 html.simple-mode #user-greeting,
 body.simple-mode #user-greeting {
-    cursor: default !important;
-    pointer-events: none;
+    cursor: pointer !important;
+    pointer-events: auto;
 }
 
 html.simple-mode #point-badge-ui,
@@ -396,7 +396,6 @@ html.simple-mode #dark-mode-toggle,
 html.simple-mode #dashboard,
 html.simple-mode #assets,
 html.simple-mode #gallery,
-html.simple-mode #profile,
 html.simple-mode .chat-banner-fixed,
 html.simple-mode #admin-feedback-box,
 html.simple-mode .quest-board,
@@ -411,7 +410,6 @@ body.simple-mode #dark-mode-toggle,
 body.simple-mode #dashboard,
 body.simple-mode #assets,
 body.simple-mode #gallery,
-body.simple-mode #profile,
 body.simple-mode .chat-banner-fixed,
 body.simple-mode #admin-feedback-box,
 body.simple-mode .quest-board,
@@ -445,6 +443,22 @@ body.simple-mode .content-section {
     padding: 18px 16px 132px;
 }
 
+.simple-profile-shell {
+    display: none;
+}
+
+html.simple-mode .simple-profile-shell,
+body.simple-mode .simple-profile-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+html.simple-mode #profile > :not(.simple-profile-shell),
+body.simple-mode #profile > :not(.simple-profile-shell) {
+    display: none !important;
+}
+
 html.simple-mode .record-flow-card,
 body.simple-mode .record-flow-card {
     border-radius: 22px;
@@ -470,6 +484,21 @@ body.simple-mode .record-flow-actions {
     display: grid;
     grid-template-columns: 1fr;
     gap: 12px;
+}
+
+.simple-mode-record-title {
+    display: none;
+}
+
+html.simple-mode .simple-mode-record-title,
+body.simple-mode .simple-mode-record-title {
+    display: block;
+    margin-bottom: 14px;
+    color: #5B3410;
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.28;
+    letter-spacing: -0.03em;
 }
 
 html.simple-mode .record-flow-body,
@@ -10082,6 +10111,111 @@ body.simple-mode #user-greeting img {
     height: 30px !important;
     margin-right: 6px !important;
 }
+
+.simple-profile-hero {
+    padding: 4px 2px 0;
+}
+
+.simple-profile-hero h2 {
+    margin: 0;
+    color: #5B3410;
+    font-size: 28px;
+    line-height: 1.3;
+    letter-spacing: -0.04em;
+}
+
+.simple-profile-card {
+    border-radius: 24px;
+    padding: 22px 18px;
+    border: 1px solid rgba(242, 178, 90, 0.45);
+    background:
+        radial-gradient(circle at top right, rgba(255, 249, 237, 0.92), transparent 44%),
+        linear-gradient(145deg, #FFFDF8 0%, #FFF6E7 52%, #FFE8C5 100%);
+    box-shadow: 0 16px 28px rgba(255, 140, 0, 0.09);
+}
+
+.simple-profile-points-card {
+    background:
+        radial-gradient(circle at top right, rgba(255, 255, 255, 0.92), transparent 46%),
+        linear-gradient(140deg, #FFF4C4 0%, #FFE08A 54%, #FFC44D 100%);
+    border-color: rgba(255, 177, 32, 0.46);
+}
+
+.simple-profile-card-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #8D5A12;
+}
+
+#simple-profile-points {
+    display: block;
+    margin-top: 10px;
+    color: #7A3F00;
+    font-size: 40px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.simple-profile-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.simple-profile-card-head h3 {
+    margin: 0;
+    color: #5B3410;
+    font-size: 24px;
+    line-height: 1.3;
+    letter-spacing: -0.03em;
+}
+
+.simple-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 138, 0, 0.14);
+    color: #B45C00;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.simple-profile-chip.tone-chat {
+    background: rgba(90, 84, 215, 0.12);
+    color: #4A45A7;
+}
+
+.simple-profile-copy {
+    margin: 0 0 14px;
+    color: #6B4A24;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.simple-profile-qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 4px 0 0;
+}
+
+.simple-profile-qr {
+    width: 180px;
+    height: 180px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 24px;
+    background: #FFFFFF;
+    box-shadow: inset 0 0 0 1px rgba(91, 52, 16, 0.08), 0 8px 22px rgba(91, 52, 16, 0.08);
+}
+
 
 .record-flow-btn.native-sync {
     border-color: #C8E1D1;

@@ -3,7 +3,7 @@ const SIMPLE_MODE = 'simple';
 const SIMPLE_MODE_PATH = '/simple';
 
 const DEFAULT_TABS = ['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets'];
-const SIMPLE_TABS = ['diet', 'exercise', 'sleep'];
+const SIMPLE_TABS = ['diet', 'exercise', 'sleep', 'profile'];
 
 export function normalizeAppPath(pathname = '/') {
     const normalized = String(pathname || '/').replace(/\/+$/, '');
@@ -57,8 +57,8 @@ export function applyAppModeChrome(doc = document) {
 
     const userGreeting = doc.getElementById('user-greeting');
     if (userGreeting) {
-        userGreeting.setAttribute('tabindex', simpleMode ? '-1' : '0');
-        userGreeting.setAttribute('aria-label', simpleMode ? '해빛스쿨 간편 모드' : '프로필 열기');
+        userGreeting.setAttribute('tabindex', '0');
+        userGreeting.setAttribute('aria-label', simpleMode ? '간편 프로필 열기' : '프로필 열기');
     }
 
     return simpleMode;

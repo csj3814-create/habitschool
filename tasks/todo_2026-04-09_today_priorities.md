@@ -28,6 +28,9 @@
 - [x] Add a clear `기본 모드로 보기` escape hatch from `/simple`.
 - [x] Show a plain-language toast when Android share opens the diet flow without auto-saving the shared image.
 - [x] Enlarge the simple-mode brand header, relabel the escape button to `기본형`, and shorten the mind save CTA copy.
+- [x] Add a simple-mode profile surface from the header with points, QR-first invite/community access, and a bottom install CTA.
+- [x] Fix the simple-profile footer install CTA so it keeps the install action instead of silently reverting to the default save flow.
+- [x] Replace the simple-mode tab hero copy with direct `오늘 ... 기록하세요` headings and remove the redundant `간편 프로필` label.
 - [x] Verification after the simple-mode change:
   `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
 
@@ -50,5 +53,7 @@
 - Android share fallback now routes `ACTION_SEND` / `ACTION_SEND_MULTIPLE` launches to the diet shared-upload deep link when the browser does not hand the payload to `/share-target`, so the user lands in the diet flow instead of the dashboard.
 - The launcher icon inset was restored to the previously user-validated asymmetric spacing to avoid Samsung/One UI cropping down to only the face.
 - The milestone card now normalizes legacy category progress so lower steps such as `diet1`, `exercise1`, or `mind1` are auto-filled from higher claimed levels instead of resurfacing as fresh `start +5P` rewards.
+- The simple-profile footer install CTA now has its own `profile` branch in the shared submit-bar updater so the visible label and the underlying action mode stay aligned, and the milestone checker no longer references an undefined `coins` variable.
+- The latest simple-mode polish replaces hidden guide copy with direct tab headings such as `오늘 식단 기록하세요` and removes the extra `간편 프로필` chip so each screen starts with the actual task, not the mode label.
 - TWA release-signing and fullscreen verification were explicitly deferred to the next phase.
 - Older untracked task notes from `2026-04-07` remain outside today's scope unless priorities change.

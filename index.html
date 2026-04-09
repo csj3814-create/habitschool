@@ -104,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=115">
+    <link rel="stylesheet" href="styles.css?v=116">
 
     <script src="js/webview-detect.js"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
@@ -382,6 +382,41 @@
             </div>
 
             <div id="profile" class="content-section" role="region" aria-label="내 프로필">
+                <div class="simple-profile-shell" id="simple-profile-shell">
+                    <div class="simple-profile-hero">
+                        <h2>내 포인트와 초대 정보</h2>
+                    </div>
+
+                    <div class="simple-profile-card simple-profile-points-card">
+                        <span class="simple-profile-card-label">현재 포인트</span>
+                        <strong id="simple-profile-points">0P</strong>
+                    </div>
+
+                    <div class="simple-profile-card">
+                        <div class="simple-profile-card-head">
+                            <h3>친구 초대</h3>
+                            <span class="simple-profile-chip">QR</span>
+                        </div>
+                        <p id="simple-profile-invite-status" class="simple-profile-copy">카메라로 비추세요</p>
+                        <div class="simple-profile-qr-wrap">
+                            <div id="simple-profile-invite-qr" class="simple-profile-qr" aria-label="내 초대 QR 코드"></div>
+                        </div>
+                        <input type="hidden" id="simple-profile-invite-link">
+                        <span id="simple-profile-invite-code" hidden>-</span>
+                    </div>
+
+                    <div class="simple-profile-card">
+                        <div class="simple-profile-card-head">
+                            <h3>해빛스쿨 단톡방</h3>
+                            <span class="simple-profile-chip tone-chat">QR</span>
+                        </div>
+                        <p class="simple-profile-copy">카메라로 비추세요</p>
+                        <div class="simple-profile-qr-wrap">
+                            <div id="simple-profile-chat-qr" class="simple-profile-qr" aria-label="해빛스쿨 단톡방 QR 코드"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 🧬 대사건강 점수 카드 -->
                 <div id="metabolic-score-container" style="display:none;"></div>
 
@@ -875,6 +910,7 @@
                         <button type="button" id="diet-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="diet-guide-body" onclick="toggleRecordFlowCard('diet')">접기</button>
                     </div>
                     <div class="record-flow-body" id="diet-guide-body">
+                        <div class="simple-mode-record-title">오늘 식단 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
                                 <h3>사진 1장부터 바로 저장할 수 있어요</h3>
@@ -1034,6 +1070,7 @@
                         <button type="button" id="exercise-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="exercise-guide-body" onclick="toggleRecordFlowCard('exercise')">접기</button>
                     </div>
                     <div class="record-flow-body" id="exercise-guide-body">
+                        <div class="simple-mode-record-title">오늘 운동 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
                                 <h3>걸음수만 입력해도 저장할 수 있어요</h3>
@@ -1117,6 +1154,7 @@
                         <button type="button" id="sleep-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="sleep-guide-body" onclick="toggleRecordFlowCard('sleep')">접기</button>
                     </div>
                     <div class="record-flow-body" id="sleep-guide-body">
+                        <div class="simple-mode-record-title">오늘 마음 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
                                 <h3>수면 캡처나 감사 일기면 충분해요</h3>
@@ -1586,8 +1624,8 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-<script type="module" src="js/app.js?v=115"></script>
-<script type="module" src="js/main.js?v=115"></script>
+<script type="module" src="js/app.js?v=116"></script>
+<script type="module" src="js/main.js?v=116"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 
