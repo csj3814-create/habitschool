@@ -1,7 +1,7 @@
 ﻿// ?몄쬆 愿由?紐⑤뱢
 import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV } from './firebase-config.js';
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
@@ -116,6 +116,63 @@ function persistPendingInviteRef(code) {
     if (!normalized) return '';
     localStorage.setItem(PENDING_REFERRAL_CODE_KEY, normalized);
     return normalized;
+}
+
+async function resolveLatestUserDocData(userRef, initialSnap) {
+    let resolvedSnap = initialSnap;
+    let resolvedData = initialSnap.exists() ? (initialSnap.data() || {}) : {};
+    const needsServerRefresh = !initialSnap.exists()
+        || resolvedData.coins == null
+        || !normalizeInviteRefCode(resolvedData.referralCode);
+
+    if (needsServerRefresh) {
+        try {
+            const serverSnap = await getDocFromServer(userRef);
+            if (serverSnap.exists()) {
+                resolvedSnap = serverSnap;
+                resolvedData = serverSnap.data() || {};
+            }
+        } catch (error) {
+            console.warn('사용자 최신 정보 서버 조회 실패:', error.message);
+        }
+    }
+
+    return { snap: resolvedSnap, data: resolvedData };
+}
+
+async function applySignedInUserUi(user, userData = {}) {
+    const nextDisplayName = String(userData.customDisplayName || user.displayName || '사용자').trim() || '사용자';
+    window._userDisplayName = nextDisplayName;
+
+    const greetingEl = document.getElementById('user-greeting');
+    if (greetingEl) {
+        greetingEl.innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(nextDisplayName)}`;
+    }
+
+    const nicknameInput = document.getElementById('profile-nickname');
+    if (nicknameInput) nicknameInput.value = nextDisplayName;
+
+    window._blockedUsers = Array.isArray(userData.blockedUsers) ? userData.blockedUsers : [];
+
+    const pointBalanceEl = document.getElementById('point-balance');
+    if (pointBalanceEl && userData.coins != null) {
+        pointBalanceEl.innerText = userData.coins;
+    }
+
+    const referralCode = normalizeInviteRefCode(userData.referralCode);
+    const referralUrl = referralCode ? `${APP_ORIGIN}?ref=${referralCode}` : '';
+    const profileLinkBox = document.getElementById('profile-invite-link-box');
+    const profileLinkEl = document.getElementById('profile-invite-link');
+    const profileCodeEl = document.getElementById('profile-invite-code');
+    if (profileLinkBox) profileLinkBox.style.display = referralUrl ? 'block' : 'none';
+    if (profileLinkEl) profileLinkEl.value = referralUrl;
+    if (profileCodeEl) profileCodeEl.textContent = referralCode || '-';
+
+    if (window.refreshSimpleProfilePanel) {
+        await window.refreshSimpleProfilePanel(userData).catch(error => {
+            console.warn('간편 프로필 후속 갱신 실패:', error.message);
+        });
+    }
 }
 
 function readPendingInviteRef() {
@@ -507,16 +564,18 @@ export function setupAuthListener(callbacks) {
             // 諛깃렇?쇱슫?? ?ъ슜??臾몄꽌 濡쒕뱶 (?됰꽕??肄붿씤/?꾨줈???낅뜲?댄듃??
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
-                // email + displayName ???(愿由ъ옄 ?붾㈃ ?쒖떆??, ?좉퇋 媛????createdAt 異붽?
+                const { snap: resolvedUserDoc, data: resolvedUserData } = await resolveLatestUserDocData(userRef, userDoc);
+                const isNewUser = !resolvedUserDoc.exists();
                 const updateData = {
                     email: user.email || '',
                     displayName: user.displayName || '사용자'
                 };
-                if (!userDoc.exists()) updateData.createdAt = serverTimestamp();
+                if (isNewUser) updateData.createdAt = serverTimestamp();
                 await setDoc(userRef, updateData, { merge: true }).catch(() => {});
-                const ud = userDoc.exists()
-                    ? (userDoc.data() || {})
-                    : { ...updateData };
+                const ud = {
+                    ...resolvedUserData,
+                    ...updateData
+                };
 
                 await hydratePushTokenLinkState(user, ud);
                 updateNotificationPermissionCard(user);
@@ -526,30 +585,10 @@ export function setupAuthListener(callbacks) {
                     }, 400);
                 }
 
-                if (ud.customDisplayName) {
-                    window._userDisplayName = ud.customDisplayName;
-                    document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(ud.customDisplayName)}`;
-                }
-                const nicknameInput = document.getElementById('profile-nickname');
-                if (nicknameInput) nicknameInput.value = window._userDisplayName;
-
-                window._blockedUsers = ud.blockedUsers || [];
-
-                if (ud.coins) document.getElementById('point-balance').innerText = ud.coins;
-
-                // ?꾨줈????珥덈? 移대뱶 利됱떆 梨꾩슦湲?(updateAssetDisplay ?몄텧 ?꾩뿉???숈옉)
-                if (ud.referralCode) {
-                    const referralUrl = `${APP_ORIGIN}?ref=${ud.referralCode}`;
-                    const pBox = document.getElementById('profile-invite-link-box');
-                    const pLink = document.getElementById('profile-invite-link');
-                    const pCode = document.getElementById('profile-invite-code');
-                    if (pBox) pBox.style.display = 'block';
-                    if (pLink) pLink.value = referralUrl;
-                    if (pCode) pCode.textContent = ud.referralCode;
-                }
+                await applySignedInUserUi(user, ud);
 
                 await maybeHandleInviteLinkAfterAuth(user, ud, {
-                    isNewUser: !userDoc.exists()
+                    isNewUser
                 }).catch(() => {});
 
                 if (ud.adminFeedback && ud.feedbackDate) {

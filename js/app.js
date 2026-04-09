@@ -6,7 +6,7 @@
 
 // Firebase 모듈 임포트
 import {
-    increment, collection, doc, getDoc, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
+    increment, collection, doc, getDoc, getDocFromServer, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -342,6 +342,11 @@ function renderSimpleProfileQr(container, text, size = SIMPLE_PROFILE_CHAT_QR_SI
     });
 }
 
+function isSimpleProfileCoreDataIncomplete(userData = null) {
+    if (!userData || typeof userData !== 'object') return true;
+    return userData.coins == null || !String(userData.referralCode || '').trim();
+}
+
 async function renderSimpleProfilePanel(sourceUserData = null) {
     if (!isSimpleMode()) return;
 
@@ -355,13 +360,25 @@ async function renderSimpleProfilePanel(sourceUserData = null) {
     if (!Number.isFinite(points) || !code || !link) {
         const user = auth.currentUser;
         if (user?.uid) {
+            const userRef = doc(db, 'users', user.uid);
             try {
-                const snap = await getDoc(doc(db, 'users', user.uid));
+                const snap = await getDoc(userRef);
                 if (snap.exists()) {
                     resolvedUserData = { ...(resolvedUserData || {}), ...snap.data() };
                 }
             } catch (error) {
                 console.warn('간편 프로필 정보 로드 실패:', error.message);
+            }
+
+            if (isSimpleProfileCoreDataIncomplete(resolvedUserData)) {
+                try {
+                    const serverSnap = await getDocFromServer(userRef);
+                    if (serverSnap.exists()) {
+                        resolvedUserData = { ...(resolvedUserData || {}), ...serverSnap.data() };
+                    }
+                } catch (error) {
+                    console.warn('간편 프로필 최신 정보 로드 실패:', error.message);
+                }
             }
         }
     }
