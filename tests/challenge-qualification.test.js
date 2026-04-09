@@ -1,0 +1,87 @@
+import { describe, expect, it } from 'vitest';
+import {
+    CHALLENGE_DAILY_MIN_POINTS,
+    doesAwardedPointsMeetChallengeRule,
+    formatChallengeQualificationLabel,
+    getAwardedPointsTotal,
+    getDefaultChallengeQualificationPolicy,
+    normalizeChallengeQualificationPolicy
+} from '../js/blockchain-config.js';
+
+describe('challenge qualification policy', () => {
+    it('uses 65-point rule for new weekly and master challenges', () => {
+        expect(getDefaultChallengeQualificationPolicy('weekly')).toMatchObject({
+            type: 'daily_min_points',
+            dailyMinPoints: CHALLENGE_DAILY_MIN_POINTS
+        });
+        expect(getDefaultChallengeQualificationPolicy('master')).toMatchObject({
+            type: 'daily_min_points',
+            dailyMinPoints: CHALLENGE_DAILY_MIN_POINTS
+        });
+    });
+
+    it('keeps legacy all-category rule for mini challenges', () => {
+        expect(getDefaultChallengeQualificationPolicy('mini')).toMatchObject({
+            type: 'all_categories',
+            requiredCategories: ['diet', 'exercise', 'mind']
+        });
+    });
+
+    it('counts explicit awarded point totals for new token challenges', () => {
+        expect(getAwardedPointsTotal({
+            dietPoints: 30,
+            exercisePoints: 30,
+            mindPoints: 0
+        })).toBe(60);
+
+        expect(doesAwardedPointsMeetChallengeRule({
+            dietPoints: 30,
+            exercisePoints: 30,
+            mindPoints: 0
+        }, 'weekly')).toBe(false);
+
+        expect(doesAwardedPointsMeetChallengeRule({
+            dietPoints: 30,
+            exercisePoints: 15,
+            mindPoints: 20
+        }, 'weekly')).toBe(true);
+    });
+
+    it('falls back to legacy booleans when point fields are absent', () => {
+        expect(getAwardedPointsTotal({
+            diet: true,
+            exercise: true,
+            mind: true
+        })).toBe(30);
+    });
+
+    it('normalizes stored point-based policies and formats labels', () => {
+        const normalized = normalizeChallengeQualificationPolicy({
+            type: 'daily_min_points',
+            ruleVersion: 2,
+            dailyMinPoints: 65,
+            pointsScaleMax: 80
+        }, 'master');
+
+        expect(normalized).toMatchObject({
+            type: 'daily_min_points',
+            ruleVersion: 2,
+            tier: 'master',
+            dailyMinPoints: 65
+        });
+        expect(formatChallengeQualificationLabel(normalized)).toBe('하루 65P 이상이면 1일 인정');
+    });
+
+    it('preserves legacy all-category requirement for existing challenges without a stored policy', () => {
+        const legacyPolicy = normalizeChallengeQualificationPolicy(null, 'master');
+        expect(legacyPolicy.type).toBe('all_categories');
+        expect(doesAwardedPointsMeetChallengeRule({
+            dietPoints: 30,
+            exercisePoints: 30,
+            mindPoints: 0,
+            diet: true,
+            exercise: true,
+            mind: false
+        }, legacyPolicy)).toBe(false);
+    });
+});

@@ -14,8 +14,9 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
+import { formatChallengeQualificationLabel, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
@@ -5148,7 +5149,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         const onchainBadge = document.getElementById('asset-hbt-onchain');
                         if (onchainBadge) {
                             const onchainText = document.getElementById('asset-hbt-onchain-text');
-                            if (onchainText) onchainText.textContent = `온체인 (BSC Testnet)`;
+                            if (onchainText) onchainText.textContent = `온체인 (${getActiveOnchainLabel(APP_ENV)})`;
                             onchainBadge.style.display = 'inline-flex';
                         }
                     }
@@ -5247,7 +5248,22 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const tierLabels = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
             const tierColors = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
             const tierRewardP = { mini: 30, weekly: 100, master: 500 };
-            const tierBonusRate = { mini: 0, weekly: 0.5, master: 2.0 };
+            const legacyTierBonusBps = { mini: 0, weekly: 5000, master: 20000 };
+            const formatChallengeHbt = (value) => {
+                const numeric = Number(value || 0);
+                if (!Number.isFinite(numeric)) return '0';
+                return numeric.toFixed(numeric >= 100 ? 0 : 2).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+            };
+            const getChallengeBonusBps = (challenge, tier) => {
+                const stored = Number(challenge?.bonusPolicy?.rateBps ?? challenge?.bonusRateBps);
+                return Number.isFinite(stored) ? stored : (legacyTierBonusBps[tier] || 0);
+            };
+            const getChallengeQualificationText = (challenge, tier) => {
+                const policy = challenge?.qualificationPolicy
+                    ? normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier)
+                    : tier;
+                return formatChallengeQualificationLabel(policy);
+            };
 
             if (activeTiers.length > 0) {
                 let challengeHtml = '';
@@ -5282,6 +5298,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 <div class="challenge-ring-name">${tierLabels[tier]} 성공!</div>
                                 <div class="challenge-ring-date">${completed}/${totalDays}일 달성 (${progressPct}%)</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
+                                <div class="challenge-ring-date">${escapeHtml(getChallengeQualificationText(ch, tier))}</div>
                                 <div class="challenge-ring-claim">👆 탭하여 보상 수령</div>
                             </div>
                         </div>
@@ -5303,11 +5320,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 <div class="challenge-ring-name">${tierLabels[tier]}</div>
                                 <div class="challenge-ring-date">${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
+                                <div class="challenge-ring-date">${escapeHtml(getChallengeQualificationText(ch, tier))}</div>
                                 <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${(() => {
                                     const pts = tierRewardP[tier];
                                     if (ch.hbtStaked > 0) {
-                                        const totalHbt = ch.hbtStaked + Math.floor(ch.hbtStaked * tierBonusRate[tier]);
-                                        return `${pts}P + ${totalHbt} HBT`;
+                                        const bonusBps = getChallengeBonusBps(ch, tier);
+                                        const totalHbt = Number(ch.hbtStaked || 0) + ((Number(ch.hbtStaked || 0) * bonusBps) / 10000);
+                                        return `${pts}P + ${formatChallengeHbt(totalHbt)} HBT`;
                                     }
                                     return `${pts}P`;
                                 })()}</div>

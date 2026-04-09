@@ -46,11 +46,40 @@ const GMAIL_USER = defineSecret("GMAIL_USER");
 const GMAIL_APP_PASSWORD = defineSecret("GMAIL_APP_PASSWORD");
 
 // 컨트랙트 주소 (BSC Chapel 테스트넷) — v4 (RATE_UPDATER_ROLE 추가)
-const HABIT_ADDRESS = "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B";
-const STAKING_ADDRESS = "0x7e8c29699F382B553891f853299e615257491F9D";
-const RPC_URL = "https://data-seed-prebsc-1-s1.binance.org:8545/";
-const CHAIN_ID = 97;
-const EXPLORER_URL = "https://testnet.bscscan.com";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const BSC_CHAIN_CONFIG = {
+    testnet: {
+        key: "testnet",
+        label: "BSC Testnet",
+        networkTag: "bscTestnet",
+        chainId: 97,
+        rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+        explorerUrl: "https://testnet.bscscan.com",
+        gasToken: "tBNB",
+        habitAddress: process.env.HABIT_TESTNET_ADDRESS || "0xb144a143be3bC44fb13F3FAE28c9447Cee541d1B",
+        stakingAddress: process.env.STAKING_TESTNET_ADDRESS || "0x7e8c29699F382B553891f853299e615257491F9D",
+    },
+    mainnet: {
+        key: "mainnet",
+        label: "BSC Mainnet",
+        networkTag: "bsc",
+        chainId: 56,
+        rpcUrl: "https://bsc-dataseed.binance.org/",
+        explorerUrl: "https://bscscan.com",
+        gasToken: "BNB",
+        habitAddress: process.env.HABIT_MAINNET_ADDRESS || ZERO_ADDRESS,
+        stakingAddress: process.env.STAKING_MAINNET_ADDRESS || ZERO_ADDRESS,
+    }
+};
+const DEFAULT_CHAIN_KEY = "testnet";
+const ACTIVE_CHAIN_KEY = process.env.ONCHAIN_NETWORK === "mainnet" ? "mainnet" : DEFAULT_CHAIN_KEY;
+const ACTIVE_CHAIN = BSC_CHAIN_CONFIG[ACTIVE_CHAIN_KEY];
+const HABIT_ADDRESS = ACTIVE_CHAIN.habitAddress;
+const STAKING_ADDRESS = ACTIVE_CHAIN.stakingAddress;
+const RPC_URL = ACTIVE_CHAIN.rpcUrl;
+const CHAIN_ID = ACTIVE_CHAIN.chainId;
+const EXPLORER_URL = ACTIVE_CHAIN.explorerUrl;
+const GAS_TOKEN_SYMBOL = ACTIVE_CHAIN.gasToken;
 
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
@@ -61,6 +90,14 @@ const FRIEND_REQUEST_TTL_DAYS = 3;
 
 function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
+}
+
+function isConfiguredAddress(address) {
+    return !!address && String(address).trim() !== "" && String(address).toLowerCase() !== ZERO_ADDRESS.toLowerCase();
+}
+
+function normalizeAddress(address) {
+    return String(address || "").trim().toLowerCase();
 }
 
 function isBootstrapAdminEmail(email) {
@@ -579,6 +616,50 @@ function getHabitContract(signerOrProvider) {
     return new ethers.Contract(HABIT_ADDRESS, contractAbi.HaBit, signerOrProvider);
 }
 
+function getStakingContract(signerOrProvider) {
+    if (!isConfiguredAddress(STAKING_ADDRESS) || !contractAbi.HaBitStaking) {
+        return null;
+    }
+    return new ethers.Contract(STAKING_ADDRESS, contractAbi.HaBitStaking, signerOrProvider);
+}
+
+function resolveStakeContractModeFromReceipt(receipt) {
+    const target = normalizeAddress(receipt?.to || receipt?.contractAddress);
+    if (target && target === normalizeAddress(STAKING_ADDRESS) && isConfiguredAddress(STAKING_ADDRESS)) {
+        return "staking";
+    }
+    if (target && target === normalizeAddress(HABIT_ADDRESS)) {
+        return "legacy";
+    }
+    return isConfiguredAddress(STAKING_ADDRESS) ? "staking" : "legacy";
+}
+
+async function resolveChallengeStake(wallet, userWalletAddress, isSuccess, preferredMode = "staking") {
+    const modes = preferredMode === "legacy"
+        ? ["legacy", "staking"]
+        : ["staking", "legacy"];
+
+    let lastError = null;
+    for (const mode of modes) {
+        try {
+            if (mode === "staking") {
+                const stakingContract = getStakingContract(wallet);
+                if (!stakingContract) continue;
+                const tx = await stakingContract.resolveChallenge(userWalletAddress, isSuccess);
+                return { tx, mode };
+            }
+
+            const habitContract = getHabitContract(wallet);
+            const tx = await habitContract.resolveChallenge(userWalletAddress, isSuccess);
+            return { tx, mode };
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError || new Error("No challenge settlement contract available");
+}
+
 // ========================================
 // 1. 포인트에서 HBT 온체인 민팅
 // ========================================
@@ -728,7 +809,7 @@ exports.mintHBT = onCall(
                 date: today,
                 timestamp: FieldValue.serverTimestamp(),
                 status: "success",
-                network: "baseSepolia"
+                network: ACTIVE_CHAIN.networkTag
             });
 
             return {
@@ -821,6 +902,32 @@ exports.prefundWallet = onCall(
         }
 
         const userData = userSnap.data();
+        let appliedChallengeBonusPolicy = null;
+
+        try {
+            const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+            const habitContract = getHabitContract(provider);
+            const stats = await habitContract.getTokenStats();
+            const currentPhase = Number(stats[4]) || 1;
+            const challengeMetrics = await getChallengeBonusMetrics();
+            const currentBonusPolicy = buildChallengeBonusPolicy({
+                phase: currentPhase,
+                mse30: challengeMetrics.mse30
+            });
+            const tierPolicy = currentBonusPolicy.tiers[def.tier] || currentBonusPolicy.tiers.mini;
+            appliedChallengeBonusPolicy = {
+                phase: currentBonusPolicy.phase,
+                mse30: currentBonusPolicy.mse30,
+                extraHalvingApplied: currentBonusPolicy.extraHalvingApplied,
+                rateBps: tierPolicy.bonusBps,
+                rateLabel: tierPolicy.bonusPercentLabel,
+                halvingCount: tierPolicy.effectiveHalvingCount,
+                windowDays: currentBonusPolicy.windowDays
+            };
+        } catch (policyError) {
+            console.error("챌린지 보너스 정책 조회 오류:", policyError?.message || policyError);
+            throw new HttpsError("internal", "현재 챌린지 보상 정책을 불러오지 못했습니다.");
+        }
         const walletAddress = getEffectiveWalletAddress(userData);
         if (!walletAddress) {
             throw new HttpsError("failed-precondition", "지갑 주소가 없습니다.");
@@ -840,7 +947,7 @@ exports.prefundWallet = onCall(
         const THRESHOLD = ethers.parseEther("0.003");
 
         if (bnbBalance >= THRESHOLD) {
-            return { funded: false, reason: "BNB 잔액 충분" };
+            return { funded: false, reason: `${GAS_TOKEN_SYMBOL} 잔액 충분` };
         }
 
         const FUND_AMOUNT = ethers.parseEther("0.005");
@@ -849,7 +956,7 @@ exports.prefundWallet = onCall(
 
         await userRef.update({ lastGasFunded: FieldValue.serverTimestamp() });
 
-        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
+        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 ${GAS_TOKEN_SYMBOL}`);
         return { funded: true, amount: "0.005", txHash: tx.hash };
     }
 );
@@ -869,6 +976,26 @@ exports.getTokenStats = onCall(
 
             const stats = await habitContract.getTokenStats();
             const decimals = await habitContract.decimals();
+            let totalStaked = stats[7];
+            let totalSlashed = stats[8];
+            const currentPhase = Number(stats[4]);
+
+            try {
+                const stakingContract = getStakingContract(provider);
+                if (stakingContract) {
+                    const stakingStats = await stakingContract.getStakingStats();
+                    totalStaked = stakingStats[0];
+                    totalSlashed = stakingStats[2];
+                }
+            } catch (stakingError) {
+                console.warn("[getTokenStats] staking stats fallback to token contract:", stakingError?.message || stakingError);
+            }
+
+            const challengeMetrics = await getChallengeBonusMetrics();
+            const challengeBonusPolicy = buildChallengeBonusPolicy({
+                phase: currentPhase,
+                mse30: challengeMetrics.mse30
+            });
 
             // v2 getTokenStats 반환: totalSupply, totalMined, totalBurned, currentRate, currentPhase, weeklyTarget, remainingInPool, totalStaked, totalSlashed
             return {
@@ -876,11 +1003,17 @@ exports.getTokenStats = onCall(
                 totalMined: ethers.formatUnits(stats[1], decimals),
                 totalBurned: ethers.formatUnits(stats[2], decimals),
                 currentRate: Number(stats[3]),
-                currentPhase: Number(stats[4]),
+                currentPhase,
                 weeklyTarget: ethers.formatUnits(stats[5], decimals),
                 remainingInPool: ethers.formatUnits(stats[6], decimals),
-                totalStaked: ethers.formatUnits(stats[7], decimals),
-                totalSlashed: ethers.formatUnits(stats[8], decimals)
+                totalStaked: ethers.formatUnits(totalStaked, decimals),
+                totalSlashed: ethers.formatUnits(totalSlashed, decimals),
+                challengeBonusPolicy: {
+                    ...challengeBonusPolicy,
+                    masterFullCompletionStaked: challengeMetrics.masterFullCompletionStaked,
+                    masterFullCompletionCount: challengeMetrics.masterFullCompletionCount,
+                    updatedDate: challengeMetrics.updatedDate
+                }
             };
 
         } catch (error) {
@@ -2420,6 +2553,251 @@ const CHALLENGE_DEFS = {
     'challenge-30d': { duration: 30, hbtStake: 100, maxStake: 10000, category: 'all', tier: 'master' }
 };
 
+const CHALLENGE_BASE_BONUS_BPS = {
+    mini: 0,
+    weekly: 5000,
+    master: 20000
+};
+const CHALLENGE_DAILY_MIN_POINTS = 65;
+const LEGACY_CHALLENGE_REQUIRED_CATEGORIES = ["diet", "exercise", "mind"];
+const CHALLENGE_BONUS_WINDOW_DAYS = 30;
+const CHALLENGE_MSE30_DIVISOR = 10000;
+const CHALLENGE_MSE30_EXTRA_HALVING_THRESHOLD = 3;
+const CHALLENGE_BONUS_DAILY_COLLECTION = "challenge_bonus_daily";
+const CHALLENGE_BONUS_META_DOC = "meta/challenge_bonus_policy";
+
+function getCurrentKstDateString(date = new Date()) {
+    const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    return kst.toISOString().slice(0, 10);
+}
+
+function getRecentKstDateStrings(days = CHALLENGE_BONUS_WINDOW_DAYS, date = new Date()) {
+    const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+    return Array.from({ length: days }, (_, index) => {
+        const target = new Date(kst);
+        target.setUTCDate(target.getUTCDate() - index);
+        return target.toISOString().slice(0, 10);
+    });
+}
+
+function halveInteger(value, count) {
+    let next = Math.max(0, Number(value) || 0);
+    for (let i = 0; i < count; i += 1) {
+        next = Math.floor(next / 2);
+    }
+    return next;
+}
+
+function roundMetric(value, digits = 3) {
+    const factor = 10 ** digits;
+    return Math.round((Number(value) || 0) * factor) / factor;
+}
+
+function formatBonusPercentLabel(bps = 0) {
+    const pct = (Number(bps) || 0) / 100;
+    if (Number.isInteger(pct)) return `${pct}%`;
+    return `${pct.toFixed(pct >= 10 ? 1 : 2).replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1")}%`;
+}
+
+function getLegacyChallengeBonusBps(tier = "") {
+    return CHALLENGE_BASE_BONUS_BPS[tier] || 0;
+}
+
+function buildLegacyChallengeQualificationPolicy(tier = "mini") {
+    return {
+        type: "all_categories",
+        ruleVersion: 1,
+        tier,
+        requiredCategories: [...LEGACY_CHALLENGE_REQUIRED_CATEGORIES]
+    };
+}
+
+function buildDefaultChallengeQualificationPolicy(tier = "mini") {
+    if (tier === "weekly" || tier === "master") {
+        return {
+            type: "daily_min_points",
+            ruleVersion: 2,
+            tier,
+            dailyMinPoints: CHALLENGE_DAILY_MIN_POINTS,
+            pointsScaleMax: 80
+        };
+    }
+    return buildLegacyChallengeQualificationPolicy(tier);
+}
+
+function normalizeChallengeQualificationPolicy(policy, tier = "mini") {
+    if (policy?.type === "daily_min_points" && Number(policy.dailyMinPoints) > 0) {
+        return {
+            type: "daily_min_points",
+            ruleVersion: Number(policy.ruleVersion) || 2,
+            tier: policy.tier || tier,
+            dailyMinPoints: Number(policy.dailyMinPoints),
+            pointsScaleMax: Number(policy.pointsScaleMax) || 80
+        };
+    }
+    if (policy?.type === "all_categories") {
+        return {
+            type: "all_categories",
+            ruleVersion: Number(policy.ruleVersion) || 1,
+            tier: policy.tier || tier,
+            requiredCategories: Array.isArray(policy.requiredCategories) && policy.requiredCategories.length
+                ? [...policy.requiredCategories]
+                : [...LEGACY_CHALLENGE_REQUIRED_CATEGORIES]
+        };
+    }
+    return buildLegacyChallengeQualificationPolicy(tier);
+}
+
+function getAwardedPointsTotal(awarded = {}) {
+    const hasExplicitPoints =
+        Object.prototype.hasOwnProperty.call(awarded, "dietPoints") ||
+        Object.prototype.hasOwnProperty.call(awarded, "exercisePoints") ||
+        Object.prototype.hasOwnProperty.call(awarded, "mindPoints");
+
+    const explicitTotal =
+        (Number(awarded.dietPoints) || 0) +
+        (Number(awarded.exercisePoints) || 0) +
+        (Number(awarded.mindPoints) || 0);
+
+    if (hasExplicitPoints || explicitTotal > 0) {
+        return explicitTotal;
+    }
+
+    let fallbackTotal = 0;
+    if (awarded.diet) fallbackTotal += 10;
+    if (awarded.exercise) fallbackTotal += 15;
+    if (awarded.mind) fallbackTotal += 5;
+    return fallbackTotal;
+}
+
+function doesAwardedPointsMeetChallengeRule(awarded = {}, policyOrTier = "mini") {
+    const policy = typeof policyOrTier === "string"
+        ? buildDefaultChallengeQualificationPolicy(policyOrTier)
+        : normalizeChallengeQualificationPolicy(policyOrTier, policyOrTier?.tier || "mini");
+
+    if (policy.type === "daily_min_points") {
+        return getAwardedPointsTotal(awarded) >= Number(policy.dailyMinPoints || 0);
+    }
+
+    return !!(awarded.diet && awarded.exercise && awarded.mind);
+}
+
+function formatChallengeQualificationLabel(policyOrTier = "mini") {
+    const policy = typeof policyOrTier === "string"
+        ? buildDefaultChallengeQualificationPolicy(policyOrTier)
+        : normalizeChallengeQualificationPolicy(policyOrTier, policyOrTier?.tier || "mini");
+
+    if (policy.type === "daily_min_points") {
+        return `하루 ${Number(policy.dailyMinPoints || CHALLENGE_DAILY_MIN_POINTS)}P 이상이면 1일 인정`;
+    }
+
+    return "식단·운동·마음을 모두 기록하면 1일 인정";
+}
+
+function buildChallengeBonusPolicy({ phase = 1, mse30 = 0 } = {}) {
+    const safePhase = Math.max(1, Number(phase) || 1);
+    const safeMse30 = Math.max(0, Number(mse30) || 0);
+    const phaseHalvingCount = Math.max(0, safePhase - 1);
+    const extraHalvingApplied = safeMse30 >= CHALLENGE_MSE30_EXTRA_HALVING_THRESHOLD;
+
+    const buildTierPolicy = (tier) => {
+        const baseBonusBps = CHALLENGE_BASE_BONUS_BPS[tier] || 0;
+        const effectiveHalvingCount = phaseHalvingCount + (extraHalvingApplied && baseBonusBps > 0 ? 1 : 0);
+        const effectiveBonusBps = halveInteger(baseBonusBps, effectiveHalvingCount);
+        return {
+            tier,
+            baseBonusBps,
+            effectiveHalvingCount,
+            bonusBps: effectiveBonusBps,
+            bonusPercentLabel: formatBonusPercentLabel(effectiveBonusBps)
+        };
+    };
+
+    return {
+        phase: safePhase,
+        mse30: roundMetric(safeMse30, 3),
+        extraHalvingApplied,
+        windowDays: CHALLENGE_BONUS_WINDOW_DAYS,
+        tiers: {
+            mini: buildTierPolicy("mini"),
+            weekly: buildTierPolicy("weekly"),
+            master: buildTierPolicy("master")
+        }
+    };
+}
+
+async function recomputeChallengeBonusMetrics(date = new Date()) {
+    const dateIds = getRecentKstDateStrings(CHALLENGE_BONUS_WINDOW_DAYS, date);
+    const refs = dateIds.map((dateId) => db.doc(`${CHALLENGE_BONUS_DAILY_COLLECTION}/${dateId}`));
+    const snaps = refs.length ? await db.getAll(...refs) : [];
+
+    const masterFullCompletionStaked = snaps.reduce((sum, snap) => {
+        return sum + Number(snap.data()?.masterFullCompletionStaked || 0);
+    }, 0);
+    const masterFullCompletionCount = snaps.reduce((sum, snap) => {
+        return sum + Number(snap.data()?.masterFullCompletionCount || 0);
+    }, 0);
+    const mse30 = masterFullCompletionStaked / CHALLENGE_MSE30_DIVISOR;
+
+    const snapshot = {
+        updatedDate: getCurrentKstDateString(date),
+        updatedAt: FieldValue.serverTimestamp(),
+        windowDays: CHALLENGE_BONUS_WINDOW_DAYS,
+        masterFullCompletionStaked: roundMetric(masterFullCompletionStaked, 4),
+        masterFullCompletionCount,
+        mse30: roundMetric(mse30, 3),
+        extraHalvingApplied: mse30 >= CHALLENGE_MSE30_EXTRA_HALVING_THRESHOLD
+    };
+
+    await db.doc(CHALLENGE_BONUS_META_DOC).set(snapshot, { merge: true });
+    return snapshot;
+}
+
+async function getChallengeBonusMetrics(date = new Date()) {
+    const today = getCurrentKstDateString(date);
+    const snap = await db.doc(CHALLENGE_BONUS_META_DOC).get();
+    if (snap.exists) {
+        const data = snap.data() || {};
+        if (data.updatedDate === today && Number.isFinite(Number(data.mse30))) {
+            return {
+                updatedDate: data.updatedDate,
+                windowDays: Number(data.windowDays || CHALLENGE_BONUS_WINDOW_DAYS),
+                masterFullCompletionStaked: Number(data.masterFullCompletionStaked || 0),
+                masterFullCompletionCount: Number(data.masterFullCompletionCount || 0),
+                mse30: Number(data.mse30 || 0),
+                extraHalvingApplied: !!data.extraHalvingApplied
+            };
+        }
+    }
+    return recomputeChallengeBonusMetrics(date);
+}
+
+function getStoredChallengeBonusBps(challenge, tier) {
+    const stored = Number(
+        challenge?.bonusPolicy?.rateBps ??
+        challenge?.bonusRateBps
+    );
+    if (Number.isFinite(stored)) {
+        return stored;
+    }
+    return getLegacyChallengeBonusBps(tier);
+}
+
+async function recordMasterFullCompletionStake(stakedAmount, date = new Date()) {
+    const safeAmount = Number(stakedAmount || 0);
+    if (!(safeAmount > 0)) return null;
+
+    const dateId = getCurrentKstDateString(date);
+    await db.doc(`${CHALLENGE_BONUS_DAILY_COLLECTION}/${dateId}`).set({
+        date: dateId,
+        masterFullCompletionStaked: FieldValue.increment(safeAmount),
+        masterFullCompletionCount: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    return recomputeChallengeBonusMetrics(date);
+}
+
 exports.startChallenge = onCall(
     {
         secrets: [SERVER_MINTER_KEY],
@@ -2441,6 +2819,7 @@ exports.startChallenge = onCall(
         }
 
         const stakeAmount = parseFloat(hbtAmount) || 0;
+        let stakeContractMode = stakeAmount > 0 ? "legacy" : null;
         if (def.hbtStake > 0 && stakeAmount < def.hbtStake) {
             throw new HttpsError("invalid-argument", `최소 ${def.hbtStake} HBT 이상 예치해야 합니다.`);
         }
@@ -2470,6 +2849,7 @@ exports.startChallenge = onCall(
                 if (!receipt || receipt.status !== 1) {
                     throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 실패했거나 아직 확인되지 않았습니다.");
                 }
+                stakeContractMode = resolveStakeContractModeFromReceipt(receipt);
             } catch (verifyErr) {
                 if (verifyErr.code) throw verifyErr; // HttpsError는 그대로 전달
                 console.error("온체인 검증 오류:", verifyErr.message);
@@ -2493,6 +2873,8 @@ exports.startChallenge = onCall(
         endDateObj.setUTCDate(endDateObj.getUTCDate() + def.duration);
         const endDate = endDateObj.toISOString().split('T')[0];
 
+        const qualificationPolicy = buildDefaultChallengeQualificationPolicy(def.tier);
+
         // 오늘 인증 확인
         let initialCompletedDays = 0;
         let initialCompletedDates = [];
@@ -2500,7 +2882,7 @@ exports.startChallenge = onCall(
             const todayLogSnap = await db.doc(`daily_logs/${uid}_${startDate}`).get();
             if (todayLogSnap.exists) {
                 const ap = todayLogSnap.data().awardedPoints || {};
-                if (ap.diet && ap.exercise && ap.mind) {
+                if (doesAwardedPointsMeetChallengeRule(ap, qualificationPolicy)) {
                     initialCompletedDays = 1;
                     initialCompletedDates = [startDate];
                 }
@@ -2519,6 +2901,12 @@ exports.startChallenge = onCall(
             hbtStaked: stakeAmount,
             stakeTxHash: stakeTxHash || null,
             stakedOnChain: stakeAmount > 0,
+            stakeContract: stakeContractMode,
+            bonusPolicy: {
+                ...appliedChallengeBonusPolicy,
+                calculatedAt: FieldValue.serverTimestamp()
+            },
+            qualificationPolicy,
             status: 'ongoing',
             tier: def.tier
         };
@@ -2547,7 +2935,14 @@ exports.startChallenge = onCall(
             tier: def.tier,
             duration: def.duration,
             hbtStaked: stakeAmount,
-            initialCompletedDays
+            initialCompletedDays,
+            bonusRateBps: appliedChallengeBonusPolicy?.rateBps || 0,
+            bonusRateLabel: appliedChallengeBonusPolicy?.rateLabel || "0%",
+            bonusPhase: appliedChallengeBonusPolicy?.phase || 1,
+            bonusMse30: appliedChallengeBonusPolicy?.mse30 || 0,
+            bonusExtraHalvingApplied: !!appliedChallengeBonusPolicy?.extraHalvingApplied,
+            qualificationPolicy,
+            qualificationLabel: formatChallengeQualificationLabel(qualificationPolicy)
         };
     }
 );
@@ -2596,11 +2991,13 @@ exports.claimChallengeReward = onCall(
         let rewardPoints = 0;
         let resolveTxHash = null;
         let bonusTxHash = null;
+        const preferredStakeContract = challenge.stakeContract || "legacy";
+        const bonusRateBps = getStoredChallengeBonusBps(challenge, tier);
+        const bonusRateLabel = formatBonusPercentLabel(bonusRateBps);
 
         if (staked > 0) {
             if (successRate >= 1.0) {
-                const bonusRate = tier === 'master' ? 2.0 : 0.5;
-                rewardHbt = staked + (staked * bonusRate);
+                rewardHbt = staked + ((staked * bonusRateBps) / 10000);
                 rewardPoints = baseRewardP;
             } else if (successRate >= 0.8) {
                 rewardHbt = staked;
@@ -2626,7 +3023,12 @@ exports.claimChallengeReward = onCall(
                 const habitContract = getHabitContract(wallet);
 
                 // 1) resolveChallenge(user, true) — 스테이킹 원금 100% 반환
-                const resolveTx = await habitContract.resolveChallenge(userWalletAddress, true);
+                const { tx: resolveTx } = await resolveChallengeStake(
+                    wallet,
+                    userWalletAddress,
+                    true,
+                    preferredStakeContract
+                );
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
 
@@ -2634,8 +3036,7 @@ exports.claimChallengeReward = onCall(
                 if (successRate >= 1.0) {
                     const DECIMALS = 8;
                     const stakedRaw = ethers.parseUnits(staked.toString(), DECIMALS);
-                    const bonusMultiplier = tier === 'master' ? 200n : 50n;
-                    const bonusHbtRaw = stakedRaw * bonusMultiplier / 100n;
+                    const bonusHbtRaw = stakedRaw * BigInt(bonusRateBps) / 10000n;
 
                     if (bonusHbtRaw > 0n) {
                         const currentRate = await habitContract.currentRate();
@@ -2665,6 +3066,14 @@ exports.claimChallengeReward = onCall(
             }
         }
 
+        if (tier === "master" && successRate >= 1.0 && staked > 0) {
+            try {
+                await recordMasterFullCompletionStake(staked);
+            } catch (metricsError) {
+                console.warn("master completion aggregate update failed:", metricsError?.message || metricsError);
+            }
+        }
+
         // Firestore 업데이트 (hbtBalance 제거 — 온체인이 진실의 원천)
         const updateData = {};
         updateData[`activeChallenges.${tier}`] = FieldValue.delete();
@@ -2683,6 +3092,12 @@ exports.claimChallengeReward = onCall(
             staked: staked,
             successRate: successRate,
             completedDays: challenge.completedDays || 0,
+            tier,
+            bonusRateBps,
+            bonusRateLabel,
+            bonusPolicyPhase: challenge?.bonusPolicy?.phase || null,
+            bonusPolicyMse30: challenge?.bonusPolicy?.mse30 || 0,
+            bonusExtraHalvingApplied: !!challenge?.bonusPolicy?.extraHalvingApplied,
             onChain: stakedOnChain,
             resolveTxHash,
             bonusTxHash,
@@ -2695,6 +3110,8 @@ exports.claimChallengeReward = onCall(
             rewardHbt,
             rewardPoints,
             tier,
+            bonusRateBps,
+            bonusRateLabel,
             successRate: Math.round(successRate * 100),
             resolveTxHash,
             bonusTxHash
@@ -2743,6 +3160,7 @@ exports.settleChallengeFailure = onCall(
         const totalDays = challenge.totalDays || 30;
         const successRate = (challenge.completedDays || 0) / totalDays;
         let resolveTxHash = null;
+        const preferredStakeContract = challenge.stakeContract || "legacy";
 
         // 온체인 정산: resolveChallenge(user, false) → 50% 소각 + 50% 반환
         if (stakedOnChain && staked > 0) {
@@ -2753,9 +3171,12 @@ exports.settleChallengeFailure = onCall(
 
             try {
                 const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-                const habitContract = getHabitContract(wallet);
-
-                const resolveTx = await habitContract.resolveChallenge(userWalletAddress, false);
+                const { tx: resolveTx } = await resolveChallengeStake(
+                    wallet,
+                    userWalletAddress,
+                    false,
+                    preferredStakeContract
+                );
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
             } catch (onChainErr) {
@@ -3752,62 +4173,6 @@ exports.getDashboardData = onCall(
 );
 
 // ========================================
-// 사용자 지갑 가스(ETH) 자동 충전
-// ========================================
-exports.prefundWallet = onCall(
-    {
-        secrets: [SERVER_MINTER_KEY],
-        region: "asia-northeast3",
-        maxInstances: 10
-    },
-    async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
-        }
-
-        const uid = request.auth.uid;
-        const userRef = db.collection("users").doc(uid);
-        const userSnap = await userRef.get();
-
-        if (!userSnap.exists) {
-            throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
-        }
-
-        const userData = userSnap.data();
-        const walletAddress = getEffectiveWalletAddress(userData);
-        if (!walletAddress) {
-            throw new HttpsError("failed-precondition", "지갑 주소가 없습니다.");
-        }
-
-        // 24시간 충전 제한
-        const lastFunded = userData.lastGasFunded;
-        if (lastFunded) {
-            const elapsed = Date.now() - lastFunded.toMillis();
-            if (elapsed < 24 * 60 * 60 * 1000) {
-                return { funded: false, reason: "24시간 내 이미 충전됨" };
-            }
-        }
-
-        const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-        const bnbBalance = await provider.getBalance(walletAddress);
-        const THRESHOLD = ethers.parseEther("0.003");
-
-        if (bnbBalance >= THRESHOLD) {
-            return { funded: false, reason: "BNB 잔액 충분" };
-        }
-
-        const FUND_AMOUNT = ethers.parseEther("0.005");
-        const tx = await wallet.sendTransaction({ to: walletAddress, value: FUND_AMOUNT });
-        await tx.wait();
-
-        await userRef.update({ lastGasFunded: FieldValue.serverTimestamp() });
-
-        console.log(`✅ 가스 충전 완료: ${walletAddress} +0.005 BNB`);
-        return { funded: true, amount: "0.005", txHash: tx.hash };
-    }
-);
-
-// ========================================
 // 미활동 유저 재참여 이메일 발송
 // ========================================
 exports.sendReEngagementEmails = onCall(
@@ -4750,3 +5115,4 @@ exports.settleDueSocialChallenges = onSchedule(
         }
     }
 );
+

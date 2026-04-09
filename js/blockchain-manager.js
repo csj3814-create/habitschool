@@ -12,11 +12,19 @@
  */
 
 import { 
-    BASE_CONFIG, 
     HBT_TOKEN, 
-    STAKING_CONTRACT, 
     CONVERSION_RULES,
-    CHALLENGES
+    CHALLENGES,
+    formatChallengeQualificationLabel,
+    getDefaultChallengeQualificationPolicy,
+    getAwardedPointsTotal,
+    doesAwardedPointsMeetChallengeRule,
+    normalizeChallengeQualificationPolicy,
+    getActiveBscNetwork,
+    getActiveGasTokenLabel,
+    getActiveHbtTokenAddress,
+    getActiveStakingAddress,
+    getActiveChainKey
 } from './blockchain-config.js';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
@@ -35,7 +43,7 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION } from './firebase-config.js';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV } from './firebase-config.js';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js';
@@ -79,27 +87,96 @@ let legacyWalletExportAvailable = false;
 let legacyWalletPrivateKeyCache = null;
 let legacyWalletRevealed = false;
 
-const BSC_TESTNET_CHAIN_ID = BASE_CONFIG.testnet.chainId;
-const BSC_TESTNET_CHAIN_HEX = `0x${BSC_TESTNET_CHAIN_ID.toString(16)}`;
-const BSC_TESTNET_PARAMS = {
-    chainId: BSC_TESTNET_CHAIN_HEX,
-    chainName: 'BSC Testnet',
+const ACTIVE_CHAIN_KEY = getActiveChainKey(APP_ENV);
+const ACTIVE_BSC_NETWORK = getActiveBscNetwork(APP_ENV);
+const ACTIVE_GAS_TOKEN = getActiveGasTokenLabel(APP_ENV);
+const ACTIVE_HBT_ADDRESS = getActiveHbtTokenAddress(APP_ENV);
+const ACTIVE_STAKING_ADDRESS = getActiveStakingAddress(APP_ENV);
+const ACTIVE_CHAIN_ID = ACTIVE_BSC_NETWORK.chainId;
+const ACTIVE_CHAIN_HEX = `0x${ACTIVE_CHAIN_ID.toString(16)}`;
+const ACTIVE_CHAIN_PARAMS = {
+    chainId: ACTIVE_CHAIN_HEX,
+    chainName: ACTIVE_BSC_NETWORK.label,
     nativeCurrency: {
-        name: 'tBNB',
-        symbol: 'tBNB',
+        name: ACTIVE_GAS_TOKEN,
+        symbol: ACTIVE_GAS_TOKEN,
         decimals: 18
     },
-    rpcUrls: [BASE_CONFIG.testnet.rpcUrl],
-    blockExplorerUrls: [BASE_CONFIG.testnet.explorer]
+    rpcUrls: [ACTIVE_BSC_NETWORK.rpcUrl],
+    blockExplorerUrls: [ACTIVE_BSC_NETWORK.explorer]
 };
 
+function getChallengeQualificationPolicy(challenge = null, tier = 'mini') {
+    if (challenge?.qualificationPolicy) {
+        return normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier);
+    }
+    if (challenge) {
+        return normalizeChallengeQualificationPolicy(null, tier);
+    }
+    return getDefaultChallengeQualificationPolicy(tier);
+}
+
+function describeChallengeQualification(policyOrTier = 'mini') {
+    return formatChallengeQualificationLabel(policyOrTier);
+}
+
+function doesDailyLogQualifyForChallenge(dailyLogData, challenge = null, tier = 'mini') {
+    const policy = getChallengeQualificationPolicy(challenge, tier);
+    const awarded = dailyLogData?.awardedPoints || {};
+    return {
+        policy,
+        totalPoints: getAwardedPointsTotal(awarded),
+        qualified: doesAwardedPointsMeetChallengeRule(awarded, policy)
+    };
+}
+
 // HBT 토큰 컨트랙트 ABI (stakeForChallenge용 최소 ABI)
-const HBT_STAKE_ABI = [
-    'function stakeForChallenge(uint256 amount) external',
-    'function challengeStakes(address) view returns (uint256)',
-    'function balanceOf(address) view returns (uint256)',
+const ERC20_ABI = [
+    'function approve(address spender, uint256 amount) external returns (bool)',
+    'function allowance(address owner, address spender) view returns (uint256)',
+    'function balanceOf(address owner) view returns (uint256)',
     'function decimals() view returns (uint8)'
 ];
+
+const LEGACY_HBT_STAKE_ABI = [
+    'function stakeForChallenge(uint256 amount) external',
+    'function challengeStakes(address) view returns (uint256)'
+];
+
+const STAKING_ABI = [
+    'function stakeForChallenge(uint256 amount) external',
+    'function challengeStakes(address) view returns (uint256)',
+    'function getStakingStats() view returns (uint256,uint256,uint256,uint256)'
+];
+
+function isConfiguredContractAddress(address) {
+    return !!address && address !== '0x0000000000000000000000000000000000000000';
+}
+
+function getErc20Contract(signerOrProvider) {
+    return new ethers.Contract(ACTIVE_HBT_ADDRESS, ERC20_ABI, signerOrProvider);
+}
+
+function getLegacyStakeContract(signerOrProvider) {
+    return new ethers.Contract(ACTIVE_HBT_ADDRESS, LEGACY_HBT_STAKE_ABI, signerOrProvider);
+}
+
+function getStakingContract(signerOrProvider) {
+    if (!isConfiguredContractAddress(ACTIVE_STAKING_ADDRESS)) return null;
+    return new ethers.Contract(ACTIVE_STAKING_ADDRESS, STAKING_ABI, signerOrProvider);
+}
+
+async function canUseDedicatedStakingContract(signerOrProvider) {
+    if (!isConfiguredContractAddress(ACTIVE_STAKING_ADDRESS)) return false;
+    try {
+        const contract = getStakingContract(signerOrProvider);
+        if (!contract) return false;
+        await contract.getStakingStats();
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
 
 /**
  * 사용자 지갑을 BSC 테스트넷 프로바이더에 연결
@@ -122,8 +199,8 @@ async function getConnectedWallet() {
 
     if (!userWallet) return null;
     const provider = new ethers.providers.JsonRpcProvider(
-        BASE_CONFIG.testnet.rpcUrl,
-        BASE_CONFIG.testnet.chainId
+        ACTIVE_BSC_NETWORK.rpcUrl,
+        ACTIVE_BSC_NETWORK.chainId
     );
     const signer = userWallet.connect(provider);
     return {
@@ -301,21 +378,21 @@ async function ensureInjectedNetwork(provider) {
     if (!provider?.request) return null;
     try {
         const chainHex = await provider.request({ method: 'eth_chainId' });
-        if (parseInt(chainHex, 16) === BSC_TESTNET_CHAIN_ID) {
-            return BSC_TESTNET_CHAIN_ID;
+        if (parseInt(chainHex, 16) === ACTIVE_CHAIN_ID) {
+            return ACTIVE_CHAIN_ID;
         }
         await provider.request({
             method: 'wallet_switchEthereumChain',
-            params: [{ chainId: BSC_TESTNET_CHAIN_HEX }]
+            params: [{ chainId: ACTIVE_CHAIN_HEX }]
         });
-        return BSC_TESTNET_CHAIN_ID;
+        return ACTIVE_CHAIN_ID;
     } catch (error) {
         if (error?.code === 4902) {
             await provider.request({
                 method: 'wallet_addEthereumChain',
-                params: [BSC_TESTNET_PARAMS]
+                params: [ACTIVE_CHAIN_PARAMS]
             });
-            return BSC_TESTNET_CHAIN_ID;
+            return ACTIVE_CHAIN_ID;
         }
         throw error;
     }
@@ -388,11 +465,11 @@ async function connectInjectedWallet(preferredType = 'metamask') {
         externalWalletWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
         const signer = externalWalletWeb3Provider.getSigner();
         const address = ethers.utils.getAddress(await signer.getAddress());
-        const network = await externalWalletWeb3Provider.getNetwork().catch(() => ({ chainId: BSC_TESTNET_CHAIN_ID }));
+        const network = await externalWalletWeb3Provider.getNetwork().catch(() => ({ chainId: ACTIVE_CHAIN_ID }));
 
         externalWalletAddress = address;
         externalWalletProviderType = preferredType || getInjectedProviderType(provider);
-        externalWalletChainId = network?.chainId || BSC_TESTNET_CHAIN_ID;
+        externalWalletChainId = network?.chainId || ACTIVE_CHAIN_ID;
 
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef).catch(() => null);
@@ -827,23 +904,22 @@ export async function startChallenge30D(challengeId) {
         // 온체인 스테이킹 (HBT 예치가 있는 경우)
         let stakeTxHash = null;
         if (hbtAmount > 0) {
-            const connectedWallet = getConnectedWallet();
+            const connectedWallet = await getConnectedWallet();
             if (!connectedWallet) {
                 showToast('❌ 지갑이 초기화되지 않았습니다. 페이지를 새로고침해주세요.');
                 return false;
             }
 
-            const hbtContract = new ethers.Contract(
-                HBT_TOKEN.testnetAddress,
-                HBT_STAKE_ABI,
-                connectedWallet
-            );
+            const erc20Contract = getErc20Contract(connectedWallet.signer);
+            const legacyStakeContract = getLegacyStakeContract(connectedWallet.signer);
+            const useDedicatedStaking = await canUseDedicatedStakingContract(connectedWallet.signer);
+            const stakingContract = useDedicatedStaking ? getStakingContract(connectedWallet.signer) : null;
 
             // raw amount: HBT * 10^decimals
             const rawAmount = ethers.utils.parseUnits(String(hbtAmount), HBT_TOKEN.decimals);
 
             // 온체인 잔액 확인
-            const onchainBalance = await hbtContract.balanceOf(connectedWallet.address);
+            const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
             if (onchainBalance.lt(rawAmount)) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
                 showToast(`❌ 온체인 HBT 잔액이 부족합니다.\n보유: ${displayBalance} HBT, 필요: ${hbtAmount} HBT\n먼저 포인트를 HBT로 변환해주세요.`);
@@ -854,27 +930,39 @@ export async function startChallenge30D(challengeId) {
             const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
             const MIN_GAS = ethers.utils.parseEther("0.001");
             if (ethBalance.lt(MIN_GAS)) {
-                showToast('⏳ 가스(ETH) 부족 — 자동 충전 중...');
+                showToast(`⏳ 가스(${ACTIVE_GAS_TOKEN}) 부족 — 자동 충전 중...`);
                 try {
+                    await ensureFunctions();
                     await prefundWalletFunction();
                     await new Promise(r => setTimeout(r, 4000));
                 } catch (fundErr) {
                     console.warn('가스 충전 실패:', fundErr.message);
-                    showToast('❌ 가스(tBNB) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                    showToast(`❌ 가스(${ACTIVE_GAS_TOKEN}) 자동 충전에 실패했습니다. 잠시 후 다시 시도해주세요.`);
                     return false;
                 }
             }
 
             showToast('⏳ 온체인 예치 트랜잭션 전송 중...');
             try {
-                const tx = await hbtContract.stakeForChallenge(rawAmount);
+                let tx;
+                if (stakingContract) {
+                    const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
+                    if (allowance.lt(rawAmount)) {
+                        showToast('??HBT ?덉튂 沅뚰븳 ?듅씤 以?..');
+                        const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
+                        await approveTx.wait();
+                    }
+                    tx = await stakingContract.stakeForChallenge(rawAmount);
+                } else {
+                    tx = await legacyStakeContract.stakeForChallenge(rawAmount);
+                }
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
                 console.log('✅ 온체인 스테이킹 완료:', stakeTxHash);
             } catch (txError) {
                 console.error('❌ 온체인 스테이킹 실패:', txError);
-                showToast('❌ 온체인 예치에 실패했습니다. 가스(tBNB)가 부족할 수 있습니다.');
+                showToast(`❌ 온체인 예치에 실패했습니다. 가스(${ACTIVE_GAS_TOKEN})가 부족할 수 있습니다.`);
                 return false;
             }
         }
@@ -889,10 +977,11 @@ export async function startChallenge30D(challengeId) {
         const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
         const data = result.data;
 
+        const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
         if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n100% 달성 시 예치금 + 보너스, 80%+ 시 예치금 반환`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} · 80%+ 시 예치금 반환`);
         } else {
-            showToast(`✅ ${data.duration}일 챌린지 시작!${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
         }
 
         window.updateAssetDisplay && window.updateAssetDisplay(true);
@@ -1005,11 +1094,10 @@ export async function updateChallengeProgress() {
                     continue;
                 }
 
-                // 통합 챌린지: 식단+운동+마음 모두 완수했는지 확인
+                const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
                 if (dailyLogData) {
-                    const ap = dailyLogData.awardedPoints || {};
-                    if (!ap.diet || !ap.exercise || !ap.mind) {
-                        console.log(`ℹ️ 챌린지: 아직 3개 카테고리 미완수 (diet:${!!ap.diet}, exercise:${!!ap.exercise}, mind:${!!ap.mind})`);
+                    if (!dailyQualification.qualified) {
+                        console.log(`ℹ️ 챌린지: 오늘 인정 미달 (${dailyQualification.totalPoints}P, 기준: ${describeChallengeQualification(dailyQualification.policy)})`);
                         continue;
                     }
                 } else {
@@ -1161,7 +1249,8 @@ export async function claimChallengeReward(tier) {
         let resultParts = [];
         if (data.rewardHbt > 0) resultParts.push(`+${data.rewardHbt} HBT`);
         if (data.rewardPoints > 0) resultParts.push(`+${data.rewardPoints}P`);
-        showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}`);
+        const policySuffix = data.bonusRateLabel ? ` (보너스 ${data.bonusRateLabel})` : '';
+        showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}${policySuffix}`);
 
         if (window.updateAssetDisplay) window.updateAssetDisplay(true);
         // 챌린지 카드 UI 갱신 (카드가 그대로 남아 재시도 방지)
@@ -1575,14 +1664,13 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 return false;
             }
 
-            const hbtContract = new ethers.Contract(
-                HBT_TOKEN.testnetAddress,
-                HBT_STAKE_ABI,
-                connectedWallet.signer
-            );
+            const erc20Contract = getErc20Contract(connectedWallet.signer);
+            const legacyStakeContract = getLegacyStakeContract(connectedWallet.signer);
+            const useDedicatedStaking = await canUseDedicatedStakingContract(connectedWallet.signer);
+            const stakingContract = useDedicatedStaking ? getStakingContract(connectedWallet.signer) : null;
 
             const rawAmount = ethers.utils.parseUnits(String(hbtAmount), HBT_TOKEN.decimals);
-            const onchainBalance = await hbtContract.balanceOf(connectedWallet.address);
+            const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
             if (onchainBalance.lt(rawAmount)) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
                 showToast(`❌ 온체인 HBT 잔액이 부족해요. 보유 ${displayBalance} HBT / 필요 ${hbtAmount} HBT`);
@@ -1603,20 +1691,31 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                     await new Promise(resolve => setTimeout(resolve, 4000));
                 } catch (error) {
                     console.warn('가스 충전 실패:', error.message);
-                    showToast('❌ 가스(tBNB) 자동 충전에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
+                    showToast(`❌ 가스(${ACTIVE_GAS_TOKEN}) 자동 충전에 실패했어요. 잠시 뒤 다시 시도해 주세요.`);
                     return false;
                 }
             }
 
             showToast('🔐 온체인 예치 트랜잭션 전송 중...');
             try {
-                const tx = await hbtContract.stakeForChallenge(rawAmount);
+                let tx;
+                if (stakingContract) {
+                    const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
+                    if (allowance.lt(rawAmount)) {
+                        showToast('??HBT ?덉튂 沅뚰븳 ?듅씤 以?..');
+                        const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
+                        await approveTx.wait();
+                    }
+                    tx = await stakingContract.stakeForChallenge(rawAmount);
+                } else {
+                    tx = await legacyStakeContract.stakeForChallenge(rawAmount);
+                }
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
             } catch (error) {
                 console.error('❌ 온체인 예치 실패:', error);
-                showToast('❌ 온체인 예치에 실패했어요. 가스(tBNB)와 지갑 연결을 확인해 주세요.');
+                showToast(`❌ 온체인 예치에 실패했어요. 가스(${ACTIVE_GAS_TOKEN})와 지갑 연결을 확인해 주세요.`);
                 return false;
             }
         }
@@ -1630,10 +1729,11 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
         const data = result.data;
 
+        const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
         if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작! ${data.hbtStaked} HBT 예치 완료`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 예치 완료`);
         } else {
-            showToast(`✅ ${data.duration}일 챌린지 시작! ${challengeDef.rewardPoints}P 보상 도전`);
+            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${challengeDef.rewardPoints}P 보상 도전`);
         }
 
         if (window.updateAssetDisplay) window.updateAssetDisplay(true);
