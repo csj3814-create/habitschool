@@ -401,8 +401,6 @@ html.simple-mode #admin-feedback-box,
 html.simple-mode .quest-board,
 html.simple-mode .upload-cta,
 html.simple-mode #fasting-graph-card,
-html.simple-mode .diet-ai-btn,
-html.simple-mode .diet-analysis-result,
 html.simple-mode .guide-btn,
 html.simple-mode #diet-day-summary-container,
 body.simple-mode #point-badge-ui,
@@ -415,8 +413,6 @@ body.simple-mode #admin-feedback-box,
 body.simple-mode .quest-board,
 body.simple-mode .upload-cta,
 body.simple-mode #fasting-graph-card,
-body.simple-mode .diet-ai-btn,
-body.simple-mode .diet-analysis-result,
 body.simple-mode .guide-btn,
 body.simple-mode #diet-day-summary-container {
     display: none !important;
@@ -512,6 +508,19 @@ body.simple-mode .record-flow-btn {
     min-height: 58px;
     border-radius: 18px;
     font-size: 18px;
+}
+
+html.simple-mode .diet-ai-btn,
+body.simple-mode .diet-ai-btn {
+    margin-top: 10px;
+    min-height: 54px;
+    border-radius: 16px;
+    font-size: 17px;
+}
+
+html.simple-mode .diet-analysis-result,
+body.simple-mode .diet-analysis-result {
+    margin-top: 10px;
 }
 
 html.simple-mode .card,

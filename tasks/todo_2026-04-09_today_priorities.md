@@ -31,6 +31,7 @@
 - [x] Add a simple-mode profile surface from the header with points, QR-first invite/community access, and a bottom install CTA.
 - [x] Fix the simple-profile footer install CTA so it keeps the install action instead of silently reverting to the default save flow.
 - [x] Replace the simple-mode tab hero copy with direct `오늘 ... 기록하세요` headings and remove the redundant `간편 프로필` label.
+- [x] Restore the diet and mind AI analysis buttons in simple mode instead of hiding those actions with the simplified layout CSS.
 - [x] Verification after the simple-mode change:
   `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
 
@@ -55,5 +56,6 @@
 - The milestone card now normalizes legacy category progress so lower steps such as `diet1`, `exercise1`, or `mind1` are auto-filled from higher claimed levels instead of resurfacing as fresh `start +5P` rewards.
 - The simple-profile footer install CTA now has its own `profile` branch in the shared submit-bar updater so the visible label and the underlying action mode stay aligned, and the milestone checker no longer references an undefined `coins` variable.
 - The latest simple-mode polish replaces hidden guide copy with direct tab headings such as `오늘 식단 기록하세요` and removes the extra `간편 프로필` chip so each screen starts with the actual task, not the mode label.
+- Simple mode no longer suppresses the existing diet/sleep AI analysis buttons or result panels, and those buttons are styled larger so key analysis actions remain visible for senior-facing users.
 - TWA release-signing and fullscreen verification were explicitly deferred to the next phase.
 - Older untracked task notes from `2026-04-07` remain outside today's scope unless priorities change.
