@@ -750,3 +750,9 @@
 ### 115. After bulk documentation edits, verify the actual served HTML page instead of trusting only the markdown source or git diff
 - Symptom: `HBT_TOKENOMICS.md` stayed readable, but `tokenomics.html` was committed with broken Korean text and the staging page visibly rendered garbled copy.
 - Lesson: When a public document exists in both markdown and HTML, validate the HTML bytes and the served page before closing the task. If one source is corrupted, restore from the last known-good revision and then reapply only the intended textual changes in small, reviewable edits.
+
+## 2026-04-10 (wallet and tokenomics copy alignment)
+
+### 116. When a policy number changes, update the wallet fallback text and tokenomics docs together so the user never sees mixed limits
+- Symptom: Runtime code already used a `12,000 HBT` daily cap, but the wallet's initial HTML and tokenomics docs still showed `5,000 HBT`, which made the product look inconsistent.
+- Lesson: Any change to a user-facing policy number like an HBT cap must be reflected in the runtime constant, wallet fallback HTML, and tokenomics pages/docs in the same pass. If the product wants the current rule shown plainly, do not keep legacy qualifiers like `신규` in the primary UI copy.
