@@ -461,7 +461,7 @@
         return ADMIN_EMAILS.includes(normalizeEmail(user?.email));
     }
     async function hasAdminRecord(user) {
-        }
+        try {
             if ((await getDoc(doc(db, 'admins', user.uid))).exists()) return true;
             const email = normalizeEmail(user.email);
             if (email && (await getDoc(doc(db, 'admins', email))).exists()) return true;
@@ -472,7 +472,7 @@
         const knownAdmin = isKnownAdminEmail(user);
         const hasRecord = await hasAdminRecord(user);
         if (!knownAdmin && !hasRecord) return false;
-        }
+        try {
             await ensureAdminAccessCallable({});
             return true;
         } catch (e) {

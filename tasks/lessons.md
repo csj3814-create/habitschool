@@ -844,3 +844,7 @@
 ### 137. When changing an admin ranking metric, update every related admin view and summary card to the same source of truth
 - Symptom: The economy tab TOP 20 was changed to a combined `points + HBT` ranking, but the dashboard TOP 5 and headline stats still used older per-field shortcuts, so operators saw inconsistent ordering and misleading totals.
 - Lesson: For admin/ops surfaces, treat ranking logic and KPI cards as one package. If the ranking formula or source data changes, update the dashboard summary, detail table, and supporting stat cards together so the control tower never shows mixed definitions.
+
+### 138. After patching `admin.html`, verify the extracted module script directly before assuming the control tower login still works
+- Symptom: The control tower Google popup could complete, but the page stayed on the login screen because `admin.html` had stray braces and a broken inline module block around the admin auth helpers.
+- Lesson: `admin.html` does not go through the main app bundle, so `app.js` and `main.js` build checks are not enough. After any manual edit to the control tower page, extract the module script from the raw file bytes and run `node --check` on it before deploying. Avoid `Get-Content`-based extraction when the file contains Korean text, because PowerShell encoding can create false negatives during syntax verification.
