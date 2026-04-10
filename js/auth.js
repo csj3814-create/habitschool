@@ -11,12 +11,23 @@ import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normal
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
+const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
+const TRUST_WALLET_CONNECT_PENDING_KEY = 'habitschool:trustwallet-connect-pending';
 const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
+
+function hasPendingExternalWalletReconnect() {
+    try {
+        return !!sessionStorage.getItem(METAMASK_CONNECT_PENDING_KEY)
+            || !!sessionStorage.getItem(TRUST_WALLET_CONNECT_PENDING_KEY);
+    } catch (_) {
+        return false;
+    }
+}
 
 function rememberPendingSignupOnboarding(user) {
     try {
@@ -633,13 +644,24 @@ export function setupAuthListener(callbacks) {
                 syncCurrentPushState(user).catch(() => {});
             }, 5000);
 
-            // 10珥???釉붾줉泥댁씤 (媛????? ?곗꽑?쒖쐞)
+            const bootstrapBlockchainWallet = () => {
+                if (!window._loadBlockchainModule) return;
+                window._loadBlockchainModule().then(() => {
+                    import('./blockchain-manager.js').then(mod => {
+                        const initWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
+                        initWallet?.().catch(() => {});
+                    }).catch(() => {});
+                });
+            };
+
+            const blockchainInitDelayMs = hasPendingExternalWalletReconnect() ? 250 : 1200;
+            setTimeout(bootstrapBlockchainWallet, blockchainInitDelayMs);
+
+            // 10초 뒤 챌린지 정산 점검
             setTimeout(() => {
                 if (window._loadBlockchainModule) {
                     window._loadBlockchainModule().then(() => {
                         import('./blockchain-manager.js').then(mod => {
-                            const initWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
-                            initWallet?.().catch(() => {});
                             mod.settleExpiredChallenges().then(() => {
                                 getDoc(userRef).then(snap => {
                                     const ac = snap.data()?.activeChallenges || {};

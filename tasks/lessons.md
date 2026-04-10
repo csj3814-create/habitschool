@@ -772,3 +772,7 @@
 ### 119. When a mobile wallet handoff leaves the browser and returns later, do not rely on a single immediate recovery check
 - Symptom: After approving MetaMask from the app, the browser returned to HaBit but the wallet UI stayed unchanged because recovery checked `eth_accounts` only once, before the SDK finished restoring the session.
 - Lesson: For mobile wallet deeplink or WalletConnect returns, combine a short retry window with provider event listeners like `connect`, `accountsChanged`, and `chainChanged`. Restored sessions can arrive slightly after focus returns, so the UI must react to late events instead of assuming recovery is synchronous.
+
+### 120. Do not delay wallet bootstrap so long that a post-approval browser return looks like a no-op
+- Symptom: Mobile wallet approval could reload the browser tab, but wallet initialization still waited 10 seconds after login, so the user came back to an apparently unchanged wallet card.
+- Lesson: If an external wallet handoff is pending, initialize wallet recovery almost immediately after auth resumes. Heavy blockchain tasks can stay delayed, but the visible wallet state must rehydrate quickly enough that the user sees the connection take effect.

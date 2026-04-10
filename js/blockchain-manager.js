@@ -123,6 +123,7 @@ let metaMaskRecoveryListenersBound = false;
 let walletConnectProviderModulePromise = null;
 let trustWalletConnectProviderPromise = null;
 let trustWalletConnectProvider = null;
+let pendingWalletLaunchBridge = null;
 
 function getChallengeQualificationPolicy(challenge = null, tier = 'mini') {
     if (challenge?.qualificationPolicy) {
@@ -377,6 +378,52 @@ function clearTrustWalletConnectPendingState() {
     } catch (_) {}
 }
 
+function prepareWalletLaunchBridge(providerType) {
+    if (!isMobileWalletBrowser()) return null;
+    try {
+        pendingWalletLaunchBridge = {
+            providerType,
+            windowRef: window.open('', '_blank', 'noopener')
+        };
+        return pendingWalletLaunchBridge.windowRef || null;
+    } catch (_) {
+        pendingWalletLaunchBridge = null;
+        return null;
+    }
+}
+
+function consumeWalletLaunchBridge(providerType) {
+    if (!pendingWalletLaunchBridge) return null;
+    if (providerType && pendingWalletLaunchBridge.providerType !== providerType) return null;
+    const bridge = pendingWalletLaunchBridge.windowRef || null;
+    pendingWalletLaunchBridge = null;
+    return bridge;
+}
+
+function cleanupWalletLaunchBridge(providerType, closeWindow = false) {
+    const bridge = consumeWalletLaunchBridge(providerType);
+    if (!bridge || !closeWindow) return;
+    try {
+        bridge.close();
+    } catch (_) {}
+}
+
+function redirectWalletLaunchBridge(providerType, targetUrl) {
+    const bridge = consumeWalletLaunchBridge(providerType);
+    if (bridge) {
+        try {
+            bridge.location.replace(targetUrl);
+            return true;
+        } catch (_) {}
+    }
+    try {
+        window.location.assign(targetUrl);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 async function loadMetaMaskConnectModule() {
     if (metaMaskConnectModulePromise) return metaMaskConnectModulePromise;
     metaMaskConnectModulePromise = import(METAMASK_CONNECT_BUNDLE_PATH);
@@ -420,7 +467,7 @@ async function ensureMetaMaskConnectClient() {
                 useDeeplink: true,
                 preferredOpenLink: (deeplink) => {
                     setMetaMaskConnectPendingState({ deeplinkOpened: true });
-                    window.location.assign(deeplink);
+                    redirectWalletLaunchBridge('metamask', deeplink);
                 }
             },
             analytics: {
@@ -526,7 +573,7 @@ async function ensureTrustWalletConnectProvider() {
                 if (!isMobileWalletBrowser()) return;
                 setTrustWalletConnectPendingState({ deeplinkOpened: true });
                 const trustWalletDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
-                window.location.assign(trustWalletDeepLink);
+                redirectWalletLaunchBridge('trustwallet', trustWalletDeepLink);
             });
             provider.on('connect', (payload) => {
                 syncTrustWalletProviderState({ chainId: payload?.chainId }).catch(() => {});
@@ -845,10 +892,12 @@ async function reconnectStoredExternalWallet({ preferredType = null, expectedAdd
 
 async function connectMetaMaskWithConnect(currentUser) {
     let client = null;
+    prepareWalletLaunchBridge('metamask');
     try {
         client = await ensureMetaMaskConnectClient();
         const provider = client?.getProvider?.();
         if (!provider?.request) {
+            cleanupWalletLaunchBridge('metamask', true);
             showToast('MetaMask 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
             return null;
         }
@@ -875,9 +924,11 @@ async function connectMetaMaskWithConnect(currentUser) {
             chainId: normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID),
             persist: true
         });
+        cleanupWalletLaunchBridge('metamask', true);
         showToast('MetaMask 연결 완료');
         return address;
     } catch (error) {
+        cleanupWalletLaunchBridge('metamask', true);
         if (error?.code === 4001) {
             clearMetaMaskConnectPendingState();
             showToast('지갑 연결을 취소했어요.');
@@ -901,9 +952,11 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
         return null;
     }
 
+    prepareWalletLaunchBridge('trustwallet');
     try {
         const provider = await ensureTrustWalletConnectProvider();
         if (!provider?.request) {
+            cleanupWalletLaunchBridge('trustwallet', true);
             showToast('Trust Wallet 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
             return null;
         }
@@ -927,9 +980,11 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
             chainId: normalizeWalletChainId(chainHex, ACTIVE_CHAIN_ID),
             persist: true
         });
+        cleanupWalletLaunchBridge('trustwallet', true);
         showToast('Trust Wallet 연결 완료');
         return address;
     } catch (error) {
+        cleanupWalletLaunchBridge('trustwallet', true);
         if (error?.code === 4001) {
             clearTrustWalletConnectPendingState();
             showToast('지갑 연결을 취소했어요.');
@@ -1987,6 +2042,10 @@ async function recoverPendingMetaMaskConnectSession() {
 
     if (!shouldAttempt || document.hidden) return null;
 
+    if (shouldUseMetaMaskConnect()) {
+        await ensureMetaMaskConnectClient().catch(() => null);
+    }
+
     const restoredAddress = await reconnectStoredExternalWallet({
         preferredType: 'metamask',
         expectedAddress: externalWalletAddress || null
@@ -2006,6 +2065,10 @@ async function recoverPendingTrustWalletConnectSession() {
         (externalWalletProviderType === 'trustwallet' && !!externalWalletAddress && !externalWalletProvider);
 
     if (!shouldAttempt || document.hidden) return null;
+
+    if (shouldUseTrustWalletConnect()) {
+        await ensureTrustWalletConnectProvider().catch(() => null);
+    }
 
     const restoredAddress = await reconnectStoredExternalWallet({
         preferredType: 'trustwallet',
@@ -2062,6 +2125,16 @@ export async function initializeWalletExternalFirst() {
 
         await ensureUserReferralCode(userRef, userData).catch(() => {});
 
+        const hasPendingMetaMaskConnect = !!getMetaMaskConnectPendingState();
+        const hasPendingTrustWalletConnect = !!getTrustWalletConnectPendingState();
+
+        if (hasPendingMetaMaskConnect && shouldUseMetaMaskConnect()) {
+            await ensureMetaMaskConnectClient().catch(() => null);
+        }
+        if (hasPendingTrustWalletConnect && shouldUseTrustWalletConnect()) {
+            await ensureTrustWalletConnectProvider().catch(() => null);
+        }
+
         if (userData.externalWalletAddress) {
             externalWalletAddress = userData.externalWalletAddress;
             externalWalletProviderType = userData.walletProviderType || null;
@@ -2090,6 +2163,13 @@ export async function initializeWalletExternalFirst() {
             }
         } else if (!externalWalletAddress && userData?.walletAddress) {
             userWalletAddress = userData.walletAddress;
+        }
+
+        if (!externalWalletAddress && hasPendingMetaMaskConnect) {
+            await recoverPendingMetaMaskConnectSession().catch(() => null);
+        }
+        if (!externalWalletAddress && hasPendingTrustWalletConnect) {
+            await recoverPendingTrustWalletConnectSession().catch(() => null);
         }
 
         refreshWalletUi(getEffectiveWalletAddress());
