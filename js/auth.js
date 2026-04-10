@@ -436,7 +436,11 @@ export function initAuth() {
     }
 
     loginBtn.addEventListener('click', () => {
+        if (window._isPopupLogin) {
+            return;
+        }
         window._isPopupLogin = true;
+        loginBtn.disabled = true;
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -446,7 +450,6 @@ export function initAuth() {
             } else {
                 clearPendingSignupOnboarding();
             }
-            window.location.reload();
         }).catch(error => {
             console.error('로그인 오류:', error.code, error.message, error);
 
@@ -456,9 +459,12 @@ export function initAuth() {
             }
 
             if (error.code === 'auth/popup-closed-by-user') {
+                window._isPopupLogin = false;
+                loginBtn.disabled = false;
                 return;
             }
             window._isPopupLogin = false;
+            loginBtn.disabled = false;
 
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
@@ -511,9 +517,9 @@ export function setupAuthListener(callbacks) {
         if (user) {
             if (window._isPopupLogin) {
                 window._isPopupLogin = false;
-                window.location.reload();
-                return;
             }
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) loginBtn.disabled = false;
 
             document.getElementById('login-modal').style.display = 'none';
             document.getElementById('point-badge-ui').style.display = 'block';
@@ -681,6 +687,8 @@ export function setupAuthListener(callbacks) {
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
             // 濡쒓렇?꾩썐 ??紐⑤뱺 由ъ냼???뺣━ (硫붾え由??꾩닔 諛⑹?)
+            const loginBtn = document.getElementById('loginBtn');
+            if (loginBtn) loginBtn.disabled = false;
             document.getElementById('login-modal').style.display = 'flex';
             document.getElementById('point-badge-ui').style.display = 'none';
             document.getElementById('date-ui').style.display = 'none';

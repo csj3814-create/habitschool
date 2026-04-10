@@ -800,3 +800,7 @@
 ### 126. When debugging a PWA on staging, ship runtime cache-busting with behavior fixes or users may keep seeing the old bug
 - Symptom: The wallet connection code changed repeatedly, but the user still experienced the same behavior because `app.js` and `main.js` version strings stayed unchanged, dynamic `blockchain-manager.js` imports had no version query, and the service-worker cache name was not bumped.
 - Lesson: For staging fixes that depend on updated browser code, bump the visible script version, version any dynamic imports involved in the flow, and rotate the service-worker cache name in the same patch. Otherwise a user can truthfully report “nothing changed” even when the repository diff is correct.
+
+### 127. Do not force a full-page reload after popup auth success unless the product truly depends on it
+- Symptom: On staging mobile browsers, Google popup login completed account selection but the app stayed on the landing screen because the code forced `window.location.reload()` both after `signInWithPopup()` resolved and again inside `onAuthStateChanged()`.
+- Lesson: For popup-based Firebase login, let `onAuthStateChanged()` finish the signed-in UI transition naturally. A forced reload can race persistence in mobile browsers and erase the visible login success. If duplicate clicks are the concern, disable the login button while the popup is in flight instead of reloading the page.
