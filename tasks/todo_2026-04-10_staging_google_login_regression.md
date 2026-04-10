@@ -12,6 +12,8 @@
 - The Google popup success path forced `window.location.reload()` in two places: immediately after `signInWithPopup()` resolved and again inside `onAuthStateChanged()` when `_isPopupLogin` was set.
 - On mobile browsers, that eager reload can happen before Firebase Auth persistence fully settles in the opener tab, leaving the app back on the landing state even though the popup login itself succeeded.
 - The minimal fix was to let `onAuthStateChanged()` complete the signed-in transition naturally instead of forcing a reload, and to disable the login button while popup auth is in flight so duplicate clicks do not stack.
+- A second issue remained: even after removing reloads, Samsung Internet could still feel stuck on the landing screen because the opener tab waited for `onAuthStateChanged()` before hiding the login modal.
+- The follow-up fix was to bridge the popup success into an immediate signed-in shell UI update, then let `onAuthStateChanged()` finish the full authenticated hydration.
 
 ## Verification
 - `npm test`
@@ -20,4 +22,5 @@
 
 ## Review
 - The change is intentionally narrow to the popup login flow in `js/auth.js`.
-- No deployment has been done yet; staging still needs an explicit deploy after user confirmation.
+- Verified again after the shell-UI bridge change with `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`, and `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-main-check.js`.
+- Added cache-busting on `main.js`, `auth.js`, and `sw.js` so staging devices actually receive the updated login flow.

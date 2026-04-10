@@ -824,3 +824,7 @@
 ### 132. When a high-friction advanced feature is failing, do not keep presenting it as the default path in the main product UI
 - Symptom: External wallet connection was unreliable on the target mobile browsers, but the wallet card still framed MetaMask and Trust Wallet as the primary next step, which made the product feel broken even though the app wallet flow itself worked.
 - Lesson: If an advanced flow is not reliable enough for the core audience, move it out of the primary path. Update the main UI copy so the working default is unmistakable, and keep advanced actions secondary until the experience is proven on real devices.
+
+### 133. For popup auth on mobile browsers, do not make the first visible signed-in transition depend entirely on `onAuthStateChanged()`
+- Symptom: Google popup login technically succeeded, but Samsung Internet could still sit on the landing screen after account selection because the opener tab waited for the auth-state event before hiding the login modal and revealing the signed-in shell.
+- Lesson: When popup auth resolves successfully, bridge the opener tab into a lightweight signed-in shell state immediately, then let `onAuthStateChanged()` finish the full hydration. This preserves correctness while removing the “I chose an account and nothing happened” feeling on slower mobile browsers.

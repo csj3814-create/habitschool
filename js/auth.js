@@ -445,6 +445,7 @@ export function initAuth() {
         provider.setCustomParameters({ prompt: 'select_account' });
 
         signInWithPopup(auth, provider).then((result) => {
+            bridgePopupLoginSuccess(result?.user || null);
             if (result?.additionalUserInfo?.isNewUser) {
                 rememberPendingSignupOnboarding(result.user);
             } else {
@@ -509,6 +510,45 @@ function showWebViewWarning() {
     }
 }
 
+function applySignedInShellUi(user) {
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) loginBtn.disabled = false;
+
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'none';
+
+    const pointBadgeUi = document.getElementById('point-badge-ui');
+    if (pointBadgeUi) pointBadgeUi.style.display = 'block';
+
+    const dateUi = document.getElementById('date-ui');
+    if (dateUi) dateUi.style.display = 'flex';
+
+    window._wasLoggedIn = true;
+    window._userDisplayName = user?.displayName || '사용자';
+
+    const greetingEl = document.getElementById('user-greeting');
+    if (greetingEl) {
+        greetingEl.innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
+    }
+}
+
+function bridgePopupLoginSuccess(user) {
+    applySignedInShellUi(user);
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    const tick = () => {
+        if (auth.currentUser) return;
+        attempts += 1;
+        applySignedInShellUi(user);
+        if (attempts < maxAttempts) {
+            setTimeout(tick, 120);
+        }
+    };
+
+    setTimeout(tick, 120);
+}
+
 // ?몄쬆 ?곹깭 蹂寃?由ъ뒪??
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
@@ -518,16 +558,7 @@ export function setupAuthListener(callbacks) {
             if (window._isPopupLogin) {
                 window._isPopupLogin = false;
             }
-            const loginBtn = document.getElementById('loginBtn');
-            if (loginBtn) loginBtn.disabled = false;
-
-            document.getElementById('login-modal').style.display = 'none';
-            document.getElementById('point-badge-ui').style.display = 'block';
-            document.getElementById('date-ui').style.display = 'flex';
-            window._wasLoggedIn = true;
-
-            window._userDisplayName = user.displayName || '사용자';
-            document.getElementById('user-greeting').innerHTML = `<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">${escapeHtml(window._userDisplayName)}`;
+            applySignedInShellUi(user);
 
             // 利됱떆 ??쒕낫???닿린 (renderDashboard媛 ?먯껜 ?곗씠??濡쒕뵫 ?섑뻾)
             const params = new URLSearchParams(window.location.search);
