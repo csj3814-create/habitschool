@@ -115,8 +115,8 @@ const WALLETCONNECT_PROVIDER_BUNDLE_PATH = './vendor/walletconnect-ethereum-prov
 const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
 const TRUST_WALLET_CONNECT_PENDING_KEY = 'habitschool:trustwallet-connect-pending';
 const METAMASK_CONNECT_PENDING_TTL_MS = 10 * 60 * 1000;
-const WALLET_BROWSER_PROVIDER_QUERY_KEY = 'walletProvider';
-const WALLET_BROWSER_AUTOCONNECT_QUERY_KEY = 'walletAutoConnect';
+const TRUST_WALLET_DISPLAY_URI_TIMEOUT_MS = 15 * 1000;
+const TRUST_WALLET_SESSION_CHECK_DELAY_MS = 2000;
 
 let metaMaskConnectModulePromise = null;
 let metaMaskConnectClientPromise = null;
@@ -379,44 +379,15 @@ function clearTrustWalletConnectPendingState() {
     } catch (_) {}
 }
 
-function getWalletBrowserAutoConnectIntent() {
-    try {
-        const url = new URL(window.location.href);
-        const providerType = String(url.searchParams.get(WALLET_BROWSER_PROVIDER_QUERY_KEY) || '').trim().toLowerCase();
-        const shouldAutoConnect = String(url.searchParams.get(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY) || '').trim() === '1';
-        if (!shouldAutoConnect) return null;
-        if (providerType !== 'metamask' && providerType !== 'trustwallet') return null;
-        return providerType;
-    } catch (_) {
-        return null;
+function prewarmExternalWalletConnectors() {
+    if (!isMobileWalletBrowser()) return;
+    if (!shouldUseMetaMaskConnect() && !shouldUseTrustWalletConnect()) return;
+
+    if (shouldUseMetaMaskConnect()) {
+        ensureMetaMaskConnectClient().catch(() => null);
     }
-}
-
-function clearWalletBrowserAutoConnectIntent() {
-    try {
-        const url = new URL(window.location.href);
-        url.searchParams.delete(WALLET_BROWSER_PROVIDER_QUERY_KEY);
-        url.searchParams.delete(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY);
-        window.history.replaceState({}, document.title, url.toString());
-    } catch (_) {}
-}
-
-function buildWalletBrowserAutoConnectUrl(providerType) {
-    const url = new URL(window.location.href);
-    url.searchParams.set(WALLET_BROWSER_PROVIDER_QUERY_KEY, providerType);
-    url.searchParams.set(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY, '1');
-    return url.toString();
-}
-
-function openWalletInAppBrowser(preferredType = 'metamask') {
-    const targetUrl = buildWalletBrowserAutoConnectUrl(preferredType);
-    if (preferredType === 'metamask') {
-        window.location.assign(`https://metamask.app.link/dapp/${encodeURIComponent(targetUrl)}`);
-        return;
-    }
-    if (preferredType === 'trustwallet') {
-        window.location.assign(`trust://open_url?url=${encodeURIComponent(targetUrl)}`);
-        return;
+    if (shouldUseTrustWalletConnect()) {
+        ensureTrustWalletConnectProvider().catch(() => null);
     }
 }
 
@@ -564,13 +535,6 @@ async function ensureTrustWalletConnectProvider() {
                     persist: true
                 });
             };
-
-            provider.on('display_uri', (uri) => {
-                if (!isMobileWalletBrowser()) return;
-                setTrustWalletConnectPendingState({ deeplinkOpened: true });
-                const trustWalletDeepLink = `trust://wc?uri=${encodeURIComponent(uri)}`;
-                window.location.assign(trustWalletDeepLink);
-            });
             provider.on('connect', (payload) => {
                 syncTrustWalletProviderState({ chainId: payload?.chainId }).catch(() => {});
             });
@@ -601,6 +565,57 @@ async function ensureTrustWalletConnectProvider() {
     });
 
     return trustWalletConnectProviderPromise;
+}
+
+function attachTrustWalletMobileDisplayUriHandler(provider) {
+    if (!provider?.on || !shouldUseTrustWalletConnect()) {
+        return () => {};
+    }
+
+    let visibilityHandler = null;
+    let timeoutId = null;
+
+    const cleanupVisibilityHandler = () => {
+        if (visibilityHandler) {
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            visibilityHandler = null;
+        }
+    };
+
+    const handleDisplayUri = (uri) => {
+        provider.removeListener?.('display_uri', handleDisplayUri);
+        setTrustWalletConnectPendingState({ deeplinkOpened: true });
+
+        const trustWalletDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
+        visibilityHandler = () => {
+            if (document.visibilityState !== 'visible') return;
+            cleanupVisibilityHandler();
+            window.setTimeout(() => {
+                if (!provider.session) {
+                    clearTrustWalletConnectPendingState();
+                    showToast('Trust Wallet 연결이 확인되지 않았어요. BSC 지갑으로 다시 시도해 주세요.');
+                }
+            }, TRUST_WALLET_SESSION_CHECK_DELAY_MS);
+        };
+
+        document.addEventListener('visibilitychange', visibilityHandler);
+        provider.once?.('connect', cleanupVisibilityHandler);
+        window.location.href = trustWalletDeepLink;
+    };
+
+    provider.on('display_uri', handleDisplayUri);
+    timeoutId = window.setTimeout(() => {
+        provider.removeListener?.('display_uri', handleDisplayUri);
+    }, TRUST_WALLET_DISPLAY_URI_TIMEOUT_MS);
+
+    return () => {
+        provider.removeListener?.('display_uri', handleDisplayUri);
+        cleanupVisibilityHandler();
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+    };
 }
 
 function getInjectedProviderType(provider) {
@@ -944,6 +959,7 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
         return null;
     }
 
+    let cleanupDisplayUriHandler = () => {};
     try {
         const provider = await ensureTrustWalletConnectProvider();
         if (!provider?.request) {
@@ -954,7 +970,9 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
         setTrustWalletConnectPendingState({ providerType: 'trustwallet' });
         showToast('Trust Wallet 앱이 열리면 연결을 승인해 주세요.');
 
+        cleanupDisplayUriHandler = attachTrustWalletMobileDisplayUriHandler(provider);
         const accounts = await provider.enable();
+        cleanupDisplayUriHandler();
         if (!Array.isArray(accounts) || accounts.length === 0) {
             showToast('지갑 주소를 찾지 못했어요.');
             return null;
@@ -973,6 +991,7 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
         showToast('Trust Wallet 연결 완료');
         return address;
     } catch (error) {
+        cleanupDisplayUriHandler();
         if (error?.code === 4001) {
             clearTrustWalletConnectPendingState();
             showToast('지갑 연결을 취소했어요.');
@@ -988,17 +1007,6 @@ async function connectInjectedWallet(preferredType = 'metamask') {
     const currentUser = auth.currentUser;
     if (!currentUser) {
         showToast('🔐 로그인 후 지갑을 연결해 주세요.');
-        return null;
-    }
-
-    if (preferredType === 'metamask' && shouldUseMetaMaskConnect()) {
-        showToast('MetaMask 앱 브라우저에서 연결을 이어갈게요.');
-        openWalletInAppBrowser('metamask');
-        return null;
-    }
-    if (preferredType === 'trustwallet' && shouldUseTrustWalletConnect()) {
-        showToast('Trust Wallet 앱 브라우저에서 연결을 이어갈게요.');
-        openWalletInAppBrowser('trustwallet');
         return null;
     }
 
@@ -2096,6 +2104,7 @@ function bindMetaMaskRecoveryListeners() {
 export async function initializeWalletExternalFirst() {
     try {
         bindMetaMaskRecoveryListeners();
+        prewarmExternalWalletConnectors();
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.warn('⚠️ 로그인되지 않음. 지갑 초기화 중단.');
@@ -2114,7 +2123,6 @@ export async function initializeWalletExternalFirst() {
         const userSnap = await getDoc(userRef);
         const userData = userSnap.data() || {};
         updateLegacyWalletExportState(userData);
-        const walletBrowserAutoConnectIntent = getWalletBrowserAutoConnectIntent();
 
         await ensureUserReferralCode(userRef, userData).catch(() => {});
 
@@ -2163,18 +2171,6 @@ export async function initializeWalletExternalFirst() {
         }
         if (!externalWalletAddress && hasPendingTrustWalletConnect) {
             await recoverPendingTrustWalletConnectSession().catch(() => null);
-        }
-
-        if (!externalWalletAddress && walletBrowserAutoConnectIntent) {
-            const isMatchingWalletBrowser =
-                (walletBrowserAutoConnectIntent === 'metamask' && isMetaMaskInAppBrowser())
-                || (walletBrowserAutoConnectIntent === 'trustwallet' && isTrustWalletInAppBrowser());
-            clearWalletBrowserAutoConnectIntent();
-            if (isMatchingWalletBrowser) {
-                await connectInjectedWallet(walletBrowserAutoConnectIntent).catch((error) => {
-                    console.warn('Wallet browser auto-connect failed:', error?.message || error);
-                });
-            }
         }
 
         refreshWalletUi(getEffectiveWalletAddress());
@@ -2460,10 +2456,16 @@ export async function disconnectExternalWallet() {
 }
 
 export async function connectMetaMaskWallet() {
+    if (shouldUseMetaMaskConnect()) {
+        return connectMetaMaskWithConnect(auth.currentUser);
+    }
     return connectInjectedWallet('metamask');
 }
 
 export async function connectTrustWallet() {
+    if (shouldUseTrustWalletConnect()) {
+        return connectTrustWalletWithWalletConnect(auth.currentUser);
+    }
     return connectInjectedWallet('trustwallet');
 }
 

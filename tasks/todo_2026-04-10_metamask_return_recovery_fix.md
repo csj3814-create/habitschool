@@ -37,3 +37,14 @@
 - `npm test`
 - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
 - `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-main-check.js`
+
+## Correction after device validation
+- The temporary pivot into MetaMask/Trust Wallet in-app browsers was rejected because HaBit is login-gated and that flow would strand users in an unauthenticated browser context.
+- The deeper bug was that the UI buttons were not actually calling `connectMetaMaskWithConnect()` or `connectTrustWalletWithWalletConnect()`; they still routed through the generic injected-wallet path, so the new mobile handlers were effectively dead code.
+- Trust Wallet also worked better when aligned with the live BMB Swap pattern: wait for `display_uri`, then redirect the current browser to `https://link.trustwallet.com/wc?uri=...`, and use `visibilitychange` plus `provider.session` to detect failed returns.
+
+## Revised fix
+- Removed the in-app-browser auto-connect URL flow entirely.
+- Wired the public MetaMask and Trust Wallet button handlers to the dedicated mobile connect implementations.
+- Added connector prewarming during wallet initialization so the first tap is less likely to be spent only loading SDK bundles.
+- Moved Trust Wallet mobile deeplinking to the BMB-style universal link flow and attached the `display_uri` listener only for the active connect attempt.

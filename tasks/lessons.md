@@ -781,6 +781,18 @@
 - Symptom: A workaround that pre-opened a blank browser tab kept the wallet launch tied to the original click, but on real devices it visibly showed an `about:blank` page and looked more broken than the original issue.
 - Lesson: For mobile wallet handoffs, prefer same-tab deeplinks or clearly branded helper pages. Never expose a raw blank bridge tab in production UX, even if it improves popup reliability in theory.
 
-### 122. Prefer wallet in-app browsers over cross-browser return flows when mobile wallet sessions stay unreliable
-- Symptom: Even after recovery polling and provider event sync, MetaMask and Trust Wallet still produced flaky results from Android browsers: repeated taps to open, manual return confusion, and no-op Trust launches.
-- Lesson: If a mobile wallet repeatedly fails to maintain a smooth external-browser return flow, move the primary UX to the wallet's own in-app browser and auto-connect there. Persist the connected address to backend state so the rest of the app can recognize the wallet later, rather than forcing a brittle browser-to-app-to-browser session model.
+### 122. Treat wallet in-app browsers as a fallback, not a default, until session continuity is proven
+- Symptom: External-browser return flows were flaky enough that an in-app browser pivot looked attractive, but in a login-gated app that pivot introduced a larger product bug by dropping the authenticated session.
+- Lesson: When mobile wallet return flows fail, do not jump straight to the wallet's in-app browser. First ask whether the app can preserve login continuity there. Only use the in-app browser as a primary path if authentication and state handoff are intentionally supported.
+
+### 123. Do not pivot a login-gated app into wallet in-app browsers unless an auth handoff is explicitly designed
+- Symptom: Sending HaBit into the MetaMask or Trust Wallet in-app browser broke the product model itself, because the user would lose the existing Firebase-authenticated session and land in an unauthenticated copy of the app.
+- Lesson: Before adopting an in-app browser wallet flow, check whether the product depends on an existing login session. If the answer is yes, keep the wallet connection in the original browser unless you have implemented a deliberate auth handoff mechanism.
+
+### 124. When adding a new wallet connection path, verify the actual button handler invokes that path
+- Symptom: MetaMask Connect and Trust WalletConnect logic had been implemented, but the exported button handlers still called the generic injected-wallet function, so the new code never ran on real devices.
+- Lesson: After adding alternative connection code, verify the public entrypoints used by the UI buttons call it in the intended environments. Do not assume helper functions are live just because they exist in the file.
+
+### 125. For Trust Wallet mobile browser handoff, prefer the proven `link.trustwallet.com/wc?uri=` pattern over custom schemes
+- Symptom: A custom `trust://` deeplink produced `ERR_UNKNOWN_URL_SCHEME`, while a working production site used `https://link.trustwallet.com/wc?uri=...` and recovered correctly after wallet approval.
+- Lesson: When a live production reference and wallet docs converge on a specific deeplink pattern, copy that pattern instead of inventing a custom scheme. Validate mobile wallet handoff against a known-good implementation before shipping.
