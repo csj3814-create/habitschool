@@ -45,9 +45,6 @@ window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니�
 window.startChallenge30D = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
 window.fetchOnchainBalance = async () => null;
 window.fetchTokenStats = async () => null;
-window.connectMetaMaskWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
-window.connectTrustWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
-window.openWalletConnectGuide = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.disconnectWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.openLegacyWalletExportModal = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.closeLegacyWalletExportModal = () => {};
@@ -77,10 +74,7 @@ window._loadBlockchainModule = function() {
     return loadEthers().then(() => import(BLOCKCHAIN_MANAGER_MODULE_PATH)).then(mod => {
         window.convertPointsToHBT = mod.convertPointsToHBT;
         window.startChallenge30D = mod.startChallenge30DWithConnectedWallet || mod.startChallenge30D;
-        window.connectMetaMaskWallet = mod.connectMetaMaskWallet;
-        window.connectTrustWallet = mod.connectTrustWallet;
-        window.openWalletConnectGuide = mod.openWalletConnectGuide;
-        window.disconnectWallet = mod.disconnectExternalWallet || mod.disconnectWallet;
+        window.disconnectWallet = mod.disconnectExternalWallet;
         window.openLegacyWalletExportModal = mod.openLegacyWalletExportModal;
         window.closeLegacyWalletExportModal = mod.closeLegacyWalletExportModal;
         window.revealLegacyWalletPrivateKey = mod.revealLegacyWalletPrivateKey;

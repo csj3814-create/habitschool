@@ -28,6 +28,9 @@ Thumbs.db
 
 # Local emulator artifacts
 .firebase/
+tmp/
+%TEMP%/
+tasks/tmp_*.png
 
 # Local Codex / Claude workspace files
 .claude/settings.local.json

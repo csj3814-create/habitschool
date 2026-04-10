@@ -2020,9 +2020,6 @@ function refreshWalletUi(address = null) {
     const subEl = document.getElementById('wallet-connection-sub');
     const copyBtn = document.querySelector('.wallet-addr-btn[onclick*="copyWallet"]');
     const explorerBtn = document.querySelector('.wallet-addr-btn[onclick*="openWalletExplorer"]');
-    const metaMaskBtn = document.getElementById('wallet-connect-metamask-btn');
-    const trustBtn = document.getElementById('wallet-connect-trust-btn');
-    const walletConnectBtn = document.getElementById('wallet-connect-walletconnect-btn');
     const disconnectBtn = document.getElementById('wallet-disconnect-btn');
     const disconnectRow = document.getElementById('wallet-disconnect-row');
 
@@ -2062,9 +2059,6 @@ function refreshWalletUi(address = null) {
         button.disabled = !hasAddress;
     });
 
-    if (metaMaskBtn) metaMaskBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'metamask' && !!externalWalletProvider;
-    if (trustBtn) trustBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'trustwallet' && !!externalWalletProvider;
-    if (walletConnectBtn) walletConnectBtn.disabled = false;
     if (disconnectBtn) disconnectBtn.disabled = !externalWalletAddress;
     if (disconnectRow) disconnectRow.style.display = externalWalletAddress ? 'flex' : 'none';
     syncLegacyWalletExportUi();
@@ -2489,33 +2483,6 @@ export async function disconnectExternalWallet() {
     refreshWalletUi(getEffectiveWalletAddress());
     if (window.updateAssetDisplay) window.updateAssetDisplay(true);
     showToast('외부 지갑 연결을 해제했어요.');
-}
-
-export async function connectMetaMaskWallet() {
-    if (shouldUseMetaMaskConnect()) {
-        return connectMetaMaskWithConnect(auth.currentUser);
-    }
-    return connectInjectedWallet('metamask');
-}
-
-export async function connectTrustWallet() {
-    if (shouldUseTrustWalletConnect()) {
-        return connectTrustWalletWithWalletConnect(auth.currentUser);
-    }
-    return connectInjectedWallet('trustwallet');
-}
-
-export function openWalletConnectGuide() {
-    showToast('WalletConnect는 본서버 적용 전에 projectId 설정 후 활성화할게요. 지금은 MetaMask 또는 Trust Wallet 연결을 사용해 주세요.');
-}
-
-/**
- * 지갑 연결 해제
- */
-export function disconnectWallet() {
-    userWallet = null;
-    userWalletAddress = null;
-    console.log('✅ 외부 지갑 연결이 해제되었습니다.');
 }
 
 console.log('✅ 블록체인 매니저 로드됨. (내장형 지갑, HBT, Staking)');
