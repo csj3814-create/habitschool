@@ -9,6 +9,8 @@ import { initAuth, setupAuthListener } from './auth.js';
 import { APP_ENV } from './firebase-config.js';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js';
 
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=117';
+
 // ========== 인증 초기화를 최우선으로 실행 ==========
 function initializeApp() {
     console.log('🚀 애플리케이션 초기화 시작...');
@@ -72,7 +74,7 @@ window._loadBlockchainModule = function() {
             document.head.appendChild(s);
         });
     };
-    return loadEthers().then(() => import('./blockchain-manager.js')).then(mod => {
+    return loadEthers().then(() => import(BLOCKCHAIN_MANAGER_MODULE_PATH)).then(mod => {
         window.convertPointsToHBT = mod.convertPointsToHBT;
         window.startChallenge30D = mod.startChallenge30DWithConnectedWallet || mod.startChallenge30D;
         window.connectMetaMaskWallet = mod.connectMetaMaskWallet;

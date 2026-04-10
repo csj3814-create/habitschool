@@ -796,3 +796,7 @@
 ### 125. For Trust Wallet mobile browser handoff, prefer the proven `link.trustwallet.com/wc?uri=` pattern over custom schemes
 - Symptom: A custom `trust://` deeplink produced `ERR_UNKNOWN_URL_SCHEME`, while a working production site used `https://link.trustwallet.com/wc?uri=...` and recovered correctly after wallet approval.
 - Lesson: When a live production reference and wallet docs converge on a specific deeplink pattern, copy that pattern instead of inventing a custom scheme. Validate mobile wallet handoff against a known-good implementation before shipping.
+
+### 126. When debugging a PWA on staging, ship runtime cache-busting with behavior fixes or users may keep seeing the old bug
+- Symptom: The wallet connection code changed repeatedly, but the user still experienced the same behavior because `app.js` and `main.js` version strings stayed unchanged, dynamic `blockchain-manager.js` imports had no version query, and the service-worker cache name was not bumped.
+- Lesson: For staging fixes that depend on updated browser code, bump the visible script version, version any dynamic imports involved in the flow, and rotate the service-worker cache name in the same patch. Otherwise a user can truthfully report “nothing changed” even when the repository diff is correct.

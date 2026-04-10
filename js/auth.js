@@ -9,6 +9,8 @@ import { escapeHtml } from './security.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=117';
+
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
@@ -647,7 +649,7 @@ export function setupAuthListener(callbacks) {
             const bootstrapBlockchainWallet = () => {
                 if (!window._loadBlockchainModule) return;
                 window._loadBlockchainModule().then(() => {
-                    import('./blockchain-manager.js').then(mod => {
+                    import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
                         const initWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
                         initWallet?.().catch(() => {});
                     }).catch(() => {});
@@ -661,7 +663,7 @@ export function setupAuthListener(callbacks) {
             setTimeout(() => {
                 if (window._loadBlockchainModule) {
                     window._loadBlockchainModule().then(() => {
-                        import('./blockchain-manager.js').then(mod => {
+                        import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
                             mod.settleExpiredChallenges().then(() => {
                                 getDoc(userRef).then(snap => {
                                     const ac = snap.data()?.activeChallenges || {};

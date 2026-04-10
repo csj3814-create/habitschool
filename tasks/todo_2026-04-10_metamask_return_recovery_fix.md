@@ -48,3 +48,4 @@
 - Wired the public MetaMask and Trust Wallet button handlers to the dedicated mobile connect implementations.
 - Added connector prewarming during wallet initialization so the first tap is less likely to be spent only loading SDK bundles.
 - Moved Trust Wallet mobile deeplinking to the BMB-style universal link flow and attached the `display_uri` listener only for the active connect attempt.
+- Added cache-busting for the wallet runtime by versioning `app.js`, `main.js`, and every dynamic `blockchain-manager.js` import, and bumped the service-worker cache name so staging devices stop serving an older wallet bundle after deploy.
