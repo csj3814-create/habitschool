@@ -16,6 +16,7 @@
 - We also were not listening to the provider's later `connect/accountsChanged/chainChanged` events, so a restored session could exist without updating the visible wallet UI.
 - On login, blockchain wallet bootstrap was deferred by 10 seconds, so a browser tab reloaded after wallet approval could come back looking unchanged for too long.
 - Trust Wallet deeplinking depended on a late async URI callback, which mobile browsers can ignore more easily than a launch path tied to the original click.
+- A bridge-tab workaround exposed a visible `about:blank` tab in real mobile browsers, which made the flow feel broken even before wallet approval.
 
 ## Fix
 - Added a short account polling window during external-wallet recovery instead of a single immediate `eth_accounts` check.
@@ -24,6 +25,8 @@
 - Mirrored the same provider-state sync pattern for Trust Wallet WalletConnect to keep the two mobile paths aligned.
 - Pre-open a mobile handoff window from the original click and reuse it when MetaMask/Trust deeplinks become available, which keeps wallet launching closer to the user gesture.
 - Bootstrap wallet recovery shortly after login, and prioritize it even earlier when a mobile wallet handoff is pending.
+- Removed the bridge-tab workaround after real-device feedback and returned MetaMask to same-tab deeplinks.
+- Switched Trust Wallet mobile deeplinks to the direct `trust://wc` scheme so installed-app launches do not depend on an intermediate universal-link landing step.
 
 ## Verification
 - `npm test`

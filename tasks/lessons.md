@@ -776,3 +776,7 @@
 ### 120. Do not delay wallet bootstrap so long that a post-approval browser return looks like a no-op
 - Symptom: Mobile wallet approval could reload the browser tab, but wallet initialization still waited 10 seconds after login, so the user came back to an apparently unchanged wallet card.
 - Lesson: If an external wallet handoff is pending, initialize wallet recovery almost immediately after auth resumes. Heavy blockchain tasks can stay delayed, but the visible wallet state must rehydrate quickly enough that the user sees the connection take effect.
+
+### 121. Do not ship mobile wallet popup bridges that surface raw `about:blank` tabs to users
+- Symptom: A workaround that pre-opened a blank browser tab kept the wallet launch tied to the original click, but on real devices it visibly showed an `about:blank` page and looked more broken than the original issue.
+- Lesson: For mobile wallet handoffs, prefer same-tab deeplinks or clearly branded helper pages. Never expose a raw blank bridge tab in production UX, even if it improves popup reliability in theory.
