@@ -115,6 +115,8 @@ const WALLETCONNECT_PROVIDER_BUNDLE_PATH = './vendor/walletconnect-ethereum-prov
 const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
 const TRUST_WALLET_CONNECT_PENDING_KEY = 'habitschool:trustwallet-connect-pending';
 const METAMASK_CONNECT_PENDING_TTL_MS = 10 * 60 * 1000;
+const WALLET_BROWSER_PROVIDER_QUERY_KEY = 'walletProvider';
+const WALLET_BROWSER_AUTOCONNECT_QUERY_KEY = 'walletAutoConnect';
 
 let metaMaskConnectModulePromise = null;
 let metaMaskConnectClientPromise = null;
@@ -375,6 +377,47 @@ function clearTrustWalletConnectPendingState() {
     try {
         sessionStorage.removeItem(TRUST_WALLET_CONNECT_PENDING_KEY);
     } catch (_) {}
+}
+
+function getWalletBrowserAutoConnectIntent() {
+    try {
+        const url = new URL(window.location.href);
+        const providerType = String(url.searchParams.get(WALLET_BROWSER_PROVIDER_QUERY_KEY) || '').trim().toLowerCase();
+        const shouldAutoConnect = String(url.searchParams.get(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY) || '').trim() === '1';
+        if (!shouldAutoConnect) return null;
+        if (providerType !== 'metamask' && providerType !== 'trustwallet') return null;
+        return providerType;
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearWalletBrowserAutoConnectIntent() {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(WALLET_BROWSER_PROVIDER_QUERY_KEY);
+        url.searchParams.delete(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY);
+        window.history.replaceState({}, document.title, url.toString());
+    } catch (_) {}
+}
+
+function buildWalletBrowserAutoConnectUrl(providerType) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(WALLET_BROWSER_PROVIDER_QUERY_KEY, providerType);
+    url.searchParams.set(WALLET_BROWSER_AUTOCONNECT_QUERY_KEY, '1');
+    return url.toString();
+}
+
+function openWalletInAppBrowser(preferredType = 'metamask') {
+    const targetUrl = buildWalletBrowserAutoConnectUrl(preferredType);
+    if (preferredType === 'metamask') {
+        window.location.assign(`https://metamask.app.link/dapp/${encodeURIComponent(targetUrl)}`);
+        return;
+    }
+    if (preferredType === 'trustwallet') {
+        window.location.assign(`trust://open_url?url=${encodeURIComponent(targetUrl)}`);
+        return;
+    }
 }
 
 async function loadMetaMaskConnectModule() {
@@ -949,10 +992,14 @@ async function connectInjectedWallet(preferredType = 'metamask') {
     }
 
     if (preferredType === 'metamask' && shouldUseMetaMaskConnect()) {
-        return connectMetaMaskWithConnect(currentUser);
+        showToast('MetaMask 앱 브라우저에서 연결을 이어갈게요.');
+        openWalletInAppBrowser('metamask');
+        return null;
     }
     if (preferredType === 'trustwallet' && shouldUseTrustWalletConnect()) {
-        return connectTrustWalletWithWalletConnect(currentUser);
+        showToast('Trust Wallet 앱 브라우저에서 연결을 이어갈게요.');
+        openWalletInAppBrowser('trustwallet');
+        return null;
     }
 
     const provider = await waitForPreferredWalletProvider(preferredType);
@@ -2067,6 +2114,7 @@ export async function initializeWalletExternalFirst() {
         const userSnap = await getDoc(userRef);
         const userData = userSnap.data() || {};
         updateLegacyWalletExportState(userData);
+        const walletBrowserAutoConnectIntent = getWalletBrowserAutoConnectIntent();
 
         await ensureUserReferralCode(userRef, userData).catch(() => {});
 
@@ -2115,6 +2163,18 @@ export async function initializeWalletExternalFirst() {
         }
         if (!externalWalletAddress && hasPendingTrustWalletConnect) {
             await recoverPendingTrustWalletConnectSession().catch(() => null);
+        }
+
+        if (!externalWalletAddress && walletBrowserAutoConnectIntent) {
+            const isMatchingWalletBrowser =
+                (walletBrowserAutoConnectIntent === 'metamask' && isMetaMaskInAppBrowser())
+                || (walletBrowserAutoConnectIntent === 'trustwallet' && isTrustWalletInAppBrowser());
+            clearWalletBrowserAutoConnectIntent();
+            if (isMatchingWalletBrowser) {
+                await connectInjectedWallet(walletBrowserAutoConnectIntent).catch((error) => {
+                    console.warn('Wallet browser auto-connect failed:', error?.message || error);
+                });
+            }
         }
 
         refreshWalletUi(getEffectiveWalletAddress());
