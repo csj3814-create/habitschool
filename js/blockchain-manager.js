@@ -24,7 +24,11 @@ import {
     getActiveGasTokenLabel,
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
-    getActiveChainKey
+    getActiveChainKey,
+    getMetaMaskConnectApiKey,
+    getMetaMaskConnectDappUrl,
+    getTrustWalletConnectDappUrl,
+    getTrustWalletConnectProjectId
 } from './blockchain-config.js';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
@@ -105,6 +109,20 @@ const ACTIVE_CHAIN_PARAMS = {
     rpcUrls: [ACTIVE_BSC_NETWORK.rpcUrl],
     blockExplorerUrls: [ACTIVE_BSC_NETWORK.explorer]
 };
+
+const METAMASK_CONNECT_BUNDLE_PATH = './vendor/metamask-connect-evm.bundle.js';
+const WALLETCONNECT_PROVIDER_BUNDLE_PATH = './vendor/walletconnect-ethereum-provider.bundle.js';
+const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
+const TRUST_WALLET_CONNECT_PENDING_KEY = 'habitschool:trustwallet-connect-pending';
+const METAMASK_CONNECT_PENDING_TTL_MS = 10 * 60 * 1000;
+
+let metaMaskConnectModulePromise = null;
+let metaMaskConnectClientPromise = null;
+let metaMaskConnectClient = null;
+let metaMaskRecoveryListenersBound = false;
+let walletConnectProviderModulePromise = null;
+let trustWalletConnectProviderPromise = null;
+let trustWalletConnectProvider = null;
 
 function getChallengeQualificationPolicy(challenge = null, tier = 'mini') {
     if (challenge?.qualificationPolicy) {
@@ -287,6 +305,196 @@ function isTrustWalletInAppBrowser() {
     return /TrustWallet/i.test(ua) || (!!window.ethereum && !!(window.ethereum.isTrust || window.ethereum.isTrustWallet));
 }
 
+function isMobileWalletBrowser() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+}
+
+function shouldUseMetaMaskConnect() {
+    return isMobileWalletBrowser() && !isMetaMaskInAppBrowser();
+}
+
+function shouldUseTrustWalletConnect() {
+    return isMobileWalletBrowser() && !isTrustWalletInAppBrowser();
+}
+
+function getMetaMaskConnectPendingState() {
+    try {
+        const raw = sessionStorage.getItem(METAMASK_CONNECT_PENDING_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.requestedAt || (Date.now() - Number(parsed.requestedAt)) > METAMASK_CONNECT_PENDING_TTL_MS) {
+            sessionStorage.removeItem(METAMASK_CONNECT_PENDING_KEY);
+            return null;
+        }
+        return parsed;
+    } catch (_) {
+        return null;
+    }
+}
+
+function setMetaMaskConnectPendingState(payload = {}) {
+    try {
+        sessionStorage.setItem(METAMASK_CONNECT_PENDING_KEY, JSON.stringify({
+            requestedAt: Date.now(),
+            ...payload
+        }));
+    } catch (_) {}
+}
+
+function clearMetaMaskConnectPendingState() {
+    try {
+        sessionStorage.removeItem(METAMASK_CONNECT_PENDING_KEY);
+    } catch (_) {}
+}
+
+function getTrustWalletConnectPendingState() {
+    try {
+        const raw = sessionStorage.getItem(TRUST_WALLET_CONNECT_PENDING_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.requestedAt || (Date.now() - Number(parsed.requestedAt)) > METAMASK_CONNECT_PENDING_TTL_MS) {
+            sessionStorage.removeItem(TRUST_WALLET_CONNECT_PENDING_KEY);
+            return null;
+        }
+        return parsed;
+    } catch (_) {
+        return null;
+    }
+}
+
+function setTrustWalletConnectPendingState(payload = {}) {
+    try {
+        sessionStorage.setItem(TRUST_WALLET_CONNECT_PENDING_KEY, JSON.stringify({
+            requestedAt: Date.now(),
+            ...payload
+        }));
+    } catch (_) {}
+}
+
+function clearTrustWalletConnectPendingState() {
+    try {
+        sessionStorage.removeItem(TRUST_WALLET_CONNECT_PENDING_KEY);
+    } catch (_) {}
+}
+
+async function loadMetaMaskConnectModule() {
+    if (metaMaskConnectModulePromise) return metaMaskConnectModulePromise;
+    metaMaskConnectModulePromise = import(METAMASK_CONNECT_BUNDLE_PATH);
+    return metaMaskConnectModulePromise;
+}
+
+async function loadWalletConnectProviderModule() {
+    if (walletConnectProviderModulePromise) return walletConnectProviderModulePromise;
+    walletConnectProviderModulePromise = import(WALLETCONNECT_PROVIDER_BUNDLE_PATH);
+    return walletConnectProviderModulePromise;
+}
+
+async function ensureMetaMaskConnectClient() {
+    if (metaMaskConnectClient) return metaMaskConnectClient;
+    if (metaMaskConnectClientPromise) return metaMaskConnectClientPromise;
+
+    metaMaskConnectClientPromise = (async () => {
+        const mod = await loadMetaMaskConnectModule();
+        const metaMaskDeveloperApiKey = getMetaMaskConnectApiKey(APP_ENV);
+        const infuraNetworks = metaMaskDeveloperApiKey
+            ? mod.getInfuraRpcUrls({ infuraApiKey: metaMaskDeveloperApiKey, chainIds: ['0x1'] })
+            : {};
+        const client = await mod.createEVMClient({
+            dapp: {
+                name: 'HaBit',
+                url: getMetaMaskConnectDappUrl(APP_ENV),
+                iconUrl: `${getMetaMaskConnectDappUrl(APP_ENV)}/icons/icon-192.png`
+            },
+            api: {
+                supportedNetworks: {
+                    ...infuraNetworks,
+                    [ACTIVE_CHAIN_HEX]: ACTIVE_BSC_NETWORK.rpcUrl
+                }
+            },
+            ui: {
+                headless: true,
+                preferExtension: false,
+                showInstallModal: false
+            },
+            mobile: {
+                useDeeplink: true,
+                preferredOpenLink: (deeplink) => {
+                    setMetaMaskConnectPendingState({ deeplinkOpened: true });
+                    window.location.assign(deeplink);
+                }
+            },
+            analytics: {
+                integrationType: 'direct'
+            },
+            eventHandlers: {
+                disconnect: () => {
+                    externalWalletProvider = null;
+                    externalWalletWeb3Provider = null;
+                    externalWalletChainId = null;
+                }
+            },
+            debug: APP_ENV !== 'prod'
+        });
+        metaMaskConnectClient = client;
+        return client;
+    })().catch((error) => {
+        metaMaskConnectClientPromise = null;
+        throw error;
+    });
+
+    return metaMaskConnectClientPromise;
+}
+
+async function ensureTrustWalletConnectProvider() {
+    if (trustWalletConnectProvider) return trustWalletConnectProvider;
+    if (trustWalletConnectProviderPromise) return trustWalletConnectProviderPromise;
+
+    const projectId = getTrustWalletConnectProjectId(APP_ENV);
+    if (!projectId) return null;
+
+    trustWalletConnectProviderPromise = (async () => {
+        const mod = await loadWalletConnectProviderModule();
+        const provider = await mod.EthereumProvider.init({
+            projectId,
+            optionalChains: [ACTIVE_CHAIN_ID],
+            showQrModal: !isMobileWalletBrowser(),
+            rpcMap: {
+                [ACTIVE_CHAIN_ID]: ACTIVE_BSC_NETWORK.rpcUrl
+            },
+            metadata: {
+                name: 'HaBit',
+                description: 'Healthy habits with onchain rewards',
+                url: getTrustWalletConnectDappUrl(APP_ENV),
+                icons: [`${getTrustWalletConnectDappUrl(APP_ENV)}/icons/icon-192.png`]
+            }
+        });
+
+        if (typeof provider.on === 'function') {
+            provider.on('display_uri', (uri) => {
+                if (!isMobileWalletBrowser()) return;
+                setTrustWalletConnectPendingState({ deeplinkOpened: true });
+                const trustWalletDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
+                window.location.assign(trustWalletDeepLink);
+            });
+            provider.on('disconnect', () => {
+                externalWalletProvider = null;
+                externalWalletWeb3Provider = null;
+                if (externalWalletProviderType === 'trustwallet') {
+                    externalWalletChainId = null;
+                }
+            });
+        }
+
+        trustWalletConnectProvider = provider;
+        return provider;
+    })().catch((error) => {
+        trustWalletConnectProviderPromise = null;
+        throw error;
+    });
+
+    return trustWalletConnectProviderPromise;
+}
+
 function getInjectedProviderType(provider) {
     if (!provider) return null;
     if (provider.isMetaMask) return 'metamask';
@@ -344,6 +552,32 @@ async function waitForInjectedProvider(preferredType = null, timeoutMs = 2200) {
         window.addEventListener('ethereum#initialized', attemptResolve);
         setTimeout(attemptResolve, 60);
     });
+}
+
+async function waitForPreferredWalletProvider(preferredType = null, timeoutMs = 2200) {
+    const injectedProvider = await waitForInjectedProvider(preferredType, timeoutMs);
+    if (injectedProvider?.request) return injectedProvider;
+
+    if (preferredType === 'metamask' && shouldUseMetaMaskConnect()) {
+        try {
+            const client = await ensureMetaMaskConnectClient();
+            const provider = client?.getProvider?.();
+            if (provider?.request) return provider;
+        } catch (error) {
+            console.warn('MetaMask Connect provider init failed:', error?.message || error);
+        }
+    }
+
+    if (preferredType === 'trustwallet' && shouldUseTrustWalletConnect()) {
+        try {
+            const provider = await ensureTrustWalletConnectProvider();
+            if (provider?.request) return provider;
+        } catch (error) {
+            console.warn('Trust WalletConnect provider init failed:', error?.message || error);
+        }
+    }
+
+    return null;
 }
 
 function openWalletInstallLink(preferredType = 'metamask') {
@@ -405,8 +639,18 @@ async function ensureUserReferralCode(userRef, userData) {
     return referralCode;
 }
 
+function setExternalWalletRuntimeState({ provider, address, providerType, chainId }) {
+    externalWalletProvider = provider || null;
+    externalWalletWeb3Provider = provider?.request
+        ? new ethers.providers.Web3Provider(provider, 'any')
+        : null;
+    externalWalletAddress = address ? ethers.utils.getAddress(address) : null;
+    externalWalletProviderType = providerType || getInjectedProviderType(provider) || null;
+    externalWalletChainId = Number(chainId) || null;
+}
+
 async function reconnectStoredExternalWallet({ preferredType = null, expectedAddress = null } = {}) {
-    const provider = await waitForInjectedProvider(preferredType, 1600);
+    const provider = await waitForPreferredWalletProvider(preferredType, 1600);
     if (!provider?.request) return null;
     try {
         const accounts = await provider.request({ method: 'eth_accounts' });
@@ -418,16 +662,147 @@ async function reconnectStoredExternalWallet({ preferredType = null, expectedAdd
 
         if (!matchedAddress) return null;
 
-        externalWalletProvider = provider;
-        externalWalletWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
-        externalWalletAddress = ethers.utils.getAddress(matchedAddress);
-        externalWalletProviderType = preferredType || getInjectedProviderType(provider);
-
         const chainHex = await provider.request({ method: 'eth_chainId' }).catch(() => null);
-        externalWalletChainId = chainHex ? parseInt(chainHex, 16) : null;
+        setExternalWalletRuntimeState({
+            provider,
+            address: matchedAddress,
+            providerType: preferredType || getInjectedProviderType(provider),
+            chainId: chainHex ? parseInt(chainHex, 16) : null
+        });
+        clearMetaMaskConnectPendingState();
         return externalWalletAddress;
     } catch (error) {
         console.warn('외부 지갑 재연결 실패:', error.message);
+        return null;
+    }
+}
+
+async function connectMetaMaskWithConnect(currentUser) {
+    let client = null;
+    try {
+        client = await ensureMetaMaskConnectClient();
+        const provider = client?.getProvider?.();
+        if (!provider?.request) {
+            showToast('MetaMask 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
+            return null;
+        }
+
+        setMetaMaskConnectPendingState({ requestedAt: Date.now(), providerType: 'metamask' });
+        showToast('MetaMask 앱이 열리면 연결을 승인해 주세요.');
+
+        const { accounts = [], chainId } = await client.connect({
+            chainIds: [ACTIVE_CHAIN_HEX],
+            forceRequest: true
+        });
+
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+            showToast('지갑 주소를 찾지 못했어요.');
+            return null;
+        }
+
+        await ensureInjectedNetwork(provider);
+
+        const address = ethers.utils.getAddress(accounts[0]);
+        setExternalWalletRuntimeState({
+            provider,
+            address,
+            providerType: 'metamask',
+            chainId: chainId ? parseInt(chainId, 16) : ACTIVE_CHAIN_ID
+        });
+        clearMetaMaskConnectPendingState();
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef).catch(() => null);
+        const userData = userSnap?.data?.() || {};
+        await ensureUserReferralCode(userRef, userData);
+        await setDoc(userRef, {
+            externalWalletAddress: address,
+            walletConnectionMode: 'external',
+            walletProviderType: 'metamask',
+            walletChainId: externalWalletChainId || ACTIVE_CHAIN_ID,
+            walletConnectedAt: serverTimestamp()
+        }, { merge: true });
+
+        refreshWalletUi(address);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        showToast('MetaMask 연결 완료');
+        return address;
+    } catch (error) {
+        if (error?.code === 4001) {
+            clearMetaMaskConnectPendingState();
+            showToast('지갑 연결을 취소했어요.');
+            return null;
+        }
+        if (error?.code === -32002) {
+            showToast('MetaMask에서 이미 연결 승인 대기 중이에요.');
+            return null;
+        }
+        console.error('MetaMask Connect 연결 오류:', error);
+        showToast('MetaMask 연결에 실패했어요. 다시 시도해 주세요.');
+        return null;
+    }
+}
+
+async function connectTrustWalletWithWalletConnect(currentUser) {
+    const projectId = getTrustWalletConnectProjectId(APP_ENV);
+    if (!projectId) {
+        showToast('Trust Wallet 원클릭 연결을 켜려면 WalletConnect projectId가 필요해요. 지금은 앱 브라우저 연결만 가능해요.');
+        openWalletInstallLink('trustwallet');
+        return null;
+    }
+
+    try {
+        const provider = await ensureTrustWalletConnectProvider();
+        if (!provider?.request) {
+            showToast('Trust Wallet 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
+            return null;
+        }
+
+        setTrustWalletConnectPendingState({ providerType: 'trustwallet' });
+        showToast('Trust Wallet 앱이 열리면 연결을 승인해 주세요.');
+
+        const accounts = await provider.enable();
+        if (!Array.isArray(accounts) || accounts.length === 0) {
+            showToast('지갑 주소를 찾지 못했어요.');
+            return null;
+        }
+
+        await ensureInjectedNetwork(provider);
+
+        const address = ethers.utils.getAddress(accounts[0]);
+        const chainHex = await provider.request({ method: 'eth_chainId' }).catch(() => ACTIVE_CHAIN_HEX);
+        setExternalWalletRuntimeState({
+            provider,
+            address,
+            providerType: 'trustwallet',
+            chainId: chainHex ? parseInt(chainHex, 16) : ACTIVE_CHAIN_ID
+        });
+        clearTrustWalletConnectPendingState();
+
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef).catch(() => null);
+        const userData = userSnap?.data?.() || {};
+        await ensureUserReferralCode(userRef, userData);
+        await setDoc(userRef, {
+            externalWalletAddress: address,
+            walletConnectionMode: 'external',
+            walletProviderType: 'trustwallet',
+            walletChainId: externalWalletChainId || ACTIVE_CHAIN_ID,
+            walletConnectedAt: serverTimestamp()
+        }, { merge: true });
+
+        refreshWalletUi(address);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        showToast('Trust Wallet 연결 완료');
+        return address;
+    } catch (error) {
+        if (error?.code === 4001) {
+            clearTrustWalletConnectPendingState();
+            showToast('지갑 연결을 취소했어요.');
+            return null;
+        }
+        console.error('Trust Wallet 연결 오류:', error);
+        showToast('Trust Wallet 연결에 실패했어요. 다시 시도해 주세요.');
         return null;
     }
 }
@@ -439,7 +814,14 @@ async function connectInjectedWallet(preferredType = 'metamask') {
         return null;
     }
 
-    const provider = await waitForInjectedProvider(preferredType);
+    if (preferredType === 'metamask' && shouldUseMetaMaskConnect()) {
+        return connectMetaMaskWithConnect(currentUser);
+    }
+    if (preferredType === 'trustwallet' && shouldUseTrustWalletConnect()) {
+        return connectTrustWalletWithWalletConnect(currentUser);
+    }
+
+    const provider = await waitForPreferredWalletProvider(preferredType);
     if (!provider?.request) {
         const providerLabel = getWalletProviderLabelSafe(preferredType);
         if ((preferredType === 'metamask' && isMetaMaskInAppBrowser())
@@ -461,15 +843,18 @@ async function connectInjectedWallet(preferredType = 'metamask') {
 
         await ensureInjectedNetwork(provider);
 
-        externalWalletProvider = provider;
-        externalWalletWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
-        const signer = externalWalletWeb3Provider.getSigner();
+        const connectedWeb3Provider = new ethers.providers.Web3Provider(provider, 'any');
+        const signer = connectedWeb3Provider.getSigner();
         const address = ethers.utils.getAddress(await signer.getAddress());
-        const network = await externalWalletWeb3Provider.getNetwork().catch(() => ({ chainId: ACTIVE_CHAIN_ID }));
+        const network = await connectedWeb3Provider.getNetwork().catch(() => ({ chainId: ACTIVE_CHAIN_ID }));
 
-        externalWalletAddress = address;
-        externalWalletProviderType = preferredType || getInjectedProviderType(provider);
-        externalWalletChainId = network?.chainId || ACTIVE_CHAIN_ID;
+        setExternalWalletRuntimeState({
+            provider,
+            address,
+            providerType: preferredType || getInjectedProviderType(provider),
+            chainId: network?.chainId || ACTIVE_CHAIN_ID
+        });
+        clearMetaMaskConnectPendingState();
 
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userRef).catch(() => null);
@@ -486,8 +871,6 @@ async function connectInjectedWallet(preferredType = 'metamask') {
         refreshWalletUi(address);
         if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         showToast(`${getWalletProviderLabelSafe(externalWalletProviderType)} 연결 완료`);
-        return address;
-        showToast(`${getWalletProviderLabel(externalWalletProviderType)} 연결 완료`);
         return address;
     } catch (error) {
         if (error?.code === 4001) {
@@ -1462,8 +1845,68 @@ function refreshWalletUi(address = null) {
     syncLegacyWalletExportUi();
 }
 
+async function recoverPendingMetaMaskConnectSession() {
+    const pendingState = getMetaMaskConnectPendingState();
+    const shouldAttempt =
+        !!pendingState ||
+        (externalWalletProviderType === 'metamask' && !!externalWalletAddress && !externalWalletProvider);
+
+    if (!shouldAttempt || document.hidden) return null;
+
+    const restoredAddress = await reconnectStoredExternalWallet({
+        preferredType: 'metamask',
+        expectedAddress: externalWalletAddress || null
+    });
+
+    if (!restoredAddress) return null;
+
+    refreshWalletUi(restoredAddress);
+    if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+    return restoredAddress;
+}
+
+async function recoverPendingTrustWalletConnectSession() {
+    const pendingState = getTrustWalletConnectPendingState();
+    const shouldAttempt =
+        !!pendingState ||
+        (externalWalletProviderType === 'trustwallet' && !!externalWalletAddress && !externalWalletProvider);
+
+    if (!shouldAttempt || document.hidden) return null;
+
+    const restoredAddress = await reconnectStoredExternalWallet({
+        preferredType: 'trustwallet',
+        expectedAddress: externalWalletAddress || null
+    });
+
+    if (!restoredAddress) return null;
+
+    clearTrustWalletConnectPendingState();
+    refreshWalletUi(restoredAddress);
+    if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+    return restoredAddress;
+}
+
+function bindMetaMaskRecoveryListeners() {
+    if (metaMaskRecoveryListenersBound) return;
+    metaMaskRecoveryListenersBound = true;
+
+    const scheduleRecovery = () => {
+        window.setTimeout(() => {
+            recoverPendingMetaMaskConnectSession().catch(() => {});
+            recoverPendingTrustWalletConnectSession().catch(() => {});
+        }, 180);
+    };
+
+    window.addEventListener('pageshow', scheduleRecovery);
+    window.addEventListener('focus', scheduleRecovery);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) scheduleRecovery();
+    });
+}
+
 export async function initializeWalletExternalFirst() {
     try {
+        bindMetaMaskRecoveryListeners();
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.warn('⚠️ 로그인되지 않음. 지갑 초기화 중단.');
@@ -1751,6 +2194,26 @@ export function getWalletAddressForUI() {
 }
 
 export async function disconnectExternalWallet() {
+    clearMetaMaskConnectPendingState();
+    clearTrustWalletConnectPendingState();
+    if (metaMaskConnectClient) {
+        try {
+            await metaMaskConnectClient.disconnect();
+        } catch (error) {
+            console.warn('MetaMask Connect disconnect failed:', error?.message || error);
+        }
+    }
+    if (trustWalletConnectProvider?.disconnect) {
+        try {
+            await trustWalletConnectProvider.disconnect();
+        } catch (error) {
+            console.warn('Trust WalletConnect disconnect failed:', error?.message || error);
+        }
+    }
+    metaMaskConnectClient = null;
+    metaMaskConnectClientPromise = null;
+    trustWalletConnectProvider = null;
+    trustWalletConnectProviderPromise = null;
     externalWalletAddress = null;
     externalWalletProviderType = null;
     externalWalletChainId = null;

@@ -6,6 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "build:metamask-connect": "npx esbuild node_modules/@metamask/connect-evm/dist/browser/es/connect-evm.mjs --bundle --format=esm --platform=browser --minify --outfile=js/vendor/metamask-connect-evm.bundle.js",
+    "build:walletconnect-provider": "npx esbuild node_modules/@walletconnect/ethereum-provider/dist/index.js --bundle --format=esm --platform=browser --minify --outfile=js/vendor/walletconnect-ethereum-provider.bundle.js",
     "deploy": "firebase deploy --only hosting",
     "emulators": "firebase emulators:start --project staging",
     "deploy:staging": "firebase deploy --project staging --only hosting,functions,firestore:rules,firestore:indexes,storage",
@@ -16,6 +18,8 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@metamask/connect-evm": "^0.9.1",
+    "@walletconnect/ethereum-provider": "^2.23.9",
     "sharp": "^0.34.5",
     "vitest": "^4.0.18"
   }

@@ -756,3 +756,13 @@
 ### 116. When a policy number changes, update the wallet fallback text and tokenomics docs together so the user never sees mixed limits
 - Symptom: Runtime code already used a `12,000 HBT` daily cap, but the wallet's initial HTML and tokenomics docs still showed `5,000 HBT`, which made the product look inconsistent.
 - Lesson: Any change to a user-facing policy number like an HBT cap must be reflected in the runtime constant, wallet fallback HTML, and tokenomics pages/docs in the same pass. If the product wants the current rule shown plainly, do not keep legacy qualifiers like `신규` in the primary UI copy.
+## 2026-04-10 (tokenomics update stamp)
+
+### 117. When public tokenomics content changes, update the visible "최종 업데이트" stamp in both the HTML page and the source docs in the same pass
+- Symptom: The tokenomics content had been revised, but the visible update stamp still showed `2026년 3월 31일`, making the page look stale even after recent policy changes.
+- Lesson: Treat the tokenomics update date as part of the shipped content. When copy or policy changes on the page, update the visible stamp in `tokenomics.html` and the mirrored source documents together before closing the task.
+## 2026-04-10 (external dashboard certainty)
+
+### 118. Do not state third-party dashboard security options as facts unless they are confirmed in current docs or UI
+- Symptom: I advised setting a MetaMask Developer domain allowlist as if it were definitely available, but the current official docs and visible dashboard state did not clearly confirm a separate origin allowlist control.
+- Lesson: For third-party developer consoles, verify the exact current UI or official docs before giving step-by-step security instructions. If a control is not confirmed, say so explicitly and only recommend settings that are actually visible or documented.
