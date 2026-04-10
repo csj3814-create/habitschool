@@ -60,3 +60,15 @@
 - Added a `display_uri` listener only to mark a pending MetaMask handoff, while leaving the actual app launch to the SDK's browser logic.
 - Changed Trust Wallet mobile connect to build a fresh WalletConnect provider per tap, request a required `chains: [ACTIVE_CHAIN_ID]` session, call `connect()`, and only then request `eth_requestAccounts`.
 - Limited connector prewarming to true reconnect situations so the app does not carry a stale mobile wallet session object into the next tap.
+
+## Third revision after staging still felt inert
+- Device feedback showed that neither wallet button produced a meaningful app launch in Samsung Internet, which means the bottleneck was still before approval-return handling.
+- The MetaMask path was still forcing `mobile.useDeeplink: true`, which biases toward the custom `metamask://` scheme instead of the more browser-friendly universal-link path.
+- The Trust Wallet path had also drifted from the official `@walletconnect/ethereum-provider` README by initializing with `chains` only, even though the package expects `optionalChains` in normal web flows.
+- Connector prewarming had been cut back so far that the first user tap still had to pay for bundle load and client/provider setup before any wallet launch could happen.
+
+## Third revised fix
+- Preload the MetaMask Connect and WalletConnect bundles again on mobile so the first tap does not spend the gesture budget on loading code.
+- Keep MetaMask Connect client/provider objects warm ahead of time, but stop forcing the `metamask://` scheme; let the SDK use its normal browser-friendly launch path.
+- Restore `optionalChains` to Trust Wallet provider initialization while keeping the active BSC chain explicit.
+- Reuse the warmed client/provider on the first tap so the click goes into the actual connect request sooner, while leaving explicit reset helpers available for later recovery work if needed.

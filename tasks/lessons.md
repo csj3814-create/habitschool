@@ -812,3 +812,7 @@
 ### 129. For mobile WalletConnect retries, prefer a fresh provider per tap over reusing a warmed singleton
 - Symptom: Trust Wallet taps could still feel like no-ops because a reused provider instance could carry a stale half-open WalletConnect state from an earlier failed attempt.
 - Lesson: When a mobile WalletConnect flow is click-driven and user-facing, create a fresh provider for a fresh tap unless you are explicitly recovering an existing pending session. Reusing a warmed singleton is fine for reconnect recovery, but it is risky as the default for first-time connection attempts.
+
+### 130. Do not spend the first mobile wallet tap loading SDK bundles or forcing custom URI schemes unless the official web defaults are proven wrong
+- Symptom: MetaMask and Trust Wallet buttons still felt inert on Samsung Internet because the click path was paying for module/client setup before reaching the actual connect call, MetaMask was still forced onto the `metamask://` scheme, and Trust Wallet had drifted from the provider's documented `optionalChains` init path.
+- Lesson: For mobile wallet launch flows, preload SDK bundles before the user taps, stay close to the wallet SDK's documented web defaults, and only force custom schemes or non-default init options after they are proven necessary on a real device.

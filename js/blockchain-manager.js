@@ -381,9 +381,8 @@ function clearTrustWalletConnectPendingState() {
 
 function prewarmExternalWalletConnectors() {
     if (!isMobileWalletBrowser()) return;
-    const hasPendingWalletReconnect = !!getMetaMaskConnectPendingState() || !!getTrustWalletConnectPendingState();
-    if (!hasPendingWalletReconnect) return;
-    if (!shouldUseMetaMaskConnect() && !shouldUseTrustWalletConnect()) return;
+    loadMetaMaskConnectModule().catch(() => null);
+    loadWalletConnectProviderModule().catch(() => null);
 
     if (shouldUseMetaMaskConnect()) {
         ensureMetaMaskConnectClient().catch(() => null);
@@ -446,7 +445,7 @@ async function ensureMetaMaskConnectClient({ forceFresh = false } = {}) {
                 showInstallModal: false
             },
             mobile: {
-                useDeeplink: true
+                useDeeplink: false
             },
             analytics: {
                 integrationType: 'direct'
@@ -529,6 +528,7 @@ async function ensureTrustWalletConnectProvider({ forceFresh = false } = {}) {
         const provider = await mod.EthereumProvider.init({
             projectId,
             chains: [ACTIVE_CHAIN_ID],
+            optionalChains: [ACTIVE_CHAIN_ID],
             showQrModal: !isMobileWalletBrowser(),
             rpcMap: {
                 [ACTIVE_CHAIN_ID]: ACTIVE_BSC_NETWORK.rpcUrl
@@ -929,7 +929,7 @@ async function connectMetaMaskWithConnect(currentUser) {
     let client = null;
     let displayUriHandler = null;
     try {
-        client = await ensureMetaMaskConnectClient({ forceFresh: true });
+        client = await ensureMetaMaskConnectClient();
         const provider = client?.getProvider?.();
         if (!provider?.request) {
             showToast('MetaMask 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
@@ -994,7 +994,7 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
 
     let cleanupDisplayUriHandler = () => {};
     try {
-        const provider = await ensureTrustWalletConnectProvider({ forceFresh: true });
+        const provider = await ensureTrustWalletConnectProvider();
         if (!provider?.request) {
             showToast('Trust Wallet 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
             return null;
