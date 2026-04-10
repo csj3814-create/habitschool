@@ -96,6 +96,17 @@ function isConfiguredAddress(address) {
     return !!address && String(address).trim() !== "" && String(address).toLowerCase() !== ZERO_ADDRESS.toLowerCase();
 }
 
+function assertOnchainRuntimeConfigured() {
+    if (!isConfiguredAddress(HABIT_ADDRESS)) {
+        throw new Error(`[onchain-config] HABIT address is not configured for ${ACTIVE_CHAIN_KEY}.`);
+    }
+    if (ACTIVE_CHAIN_KEY === "mainnet" && !isConfiguredAddress(STAKING_ADDRESS)) {
+        throw new Error("[onchain-config] STAKING address is required for mainnet runtime.");
+    }
+}
+
+assertOnchainRuntimeConfigured();
+
 function normalizeAddress(address) {
     return String(address || "").trim().toLowerCase();
 }
@@ -613,6 +624,9 @@ function getProviderAndWallet(privateKey) {
  * HaBit 컨트랙트 인스턴스 생성
  */
 function getHabitContract(signerOrProvider) {
+    if (!contractAbi.HaBit) {
+        throw new Error("[onchain-config] HaBit ABI is missing.");
+    }
     return new ethers.Contract(HABIT_ADDRESS, contractAbi.HaBit, signerOrProvider);
 }
 
