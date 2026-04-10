@@ -32,10 +32,11 @@
 - [x] Fix the simple-profile footer install CTA so it keeps the install action instead of silently reverting to the default save flow.
 - [x] Replace the simple-mode tab hero copy with direct `오늘 ... 기록하세요` headings and remove the redundant `간편 프로필` label.
 - [x] Restore the diet and mind AI analysis buttons in simple mode instead of hiding those actions with the simplified layout CSS.
+- [x] Fix the simple/default profile hydration race so points and invite QR stop appearing blank until a manual refresh.
 - [x] Verification after the simple-mode change:
   `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
 
-- [ ] Deploy the latest simple-mode action-only polish to staging after local review.
+- [x] Deploy the latest simple-mode action-only polish to staging after local review.
 
 ## Sources
 
@@ -48,7 +49,7 @@
 
 ## Notes
 
-- `main` and `origin/main` were recorded at `3294ced` in the latest wrap-up.
+- `main` and `origin/main` were recorded at `ab46781` after the simple-mode AI action restore and production deploy.
 - Health Connect step import was user-verified on-device on 2026-04-09.
 - The remaining immediate risk is the Android photo-share path opening the app without completing the diet import flow.
 - Android share fallback now routes `ACTION_SEND` / `ACTION_SEND_MULTIPLE` launches to the diet shared-upload deep link when the browser does not hand the payload to `/share-target`, so the user lands in the diet flow instead of the dashboard.
@@ -57,5 +58,7 @@
 - The simple-profile footer install CTA now has its own `profile` branch in the shared submit-bar updater so the visible label and the underlying action mode stay aligned, and the milestone checker no longer references an undefined `coins` variable.
 - The latest simple-mode polish replaces hidden guide copy with direct tab headings such as `오늘 식단 기록하세요` and removes the extra `간편 프로필` chip so each screen starts with the actual task, not the mode label.
 - Simple mode no longer suppresses the existing diet/sleep AI analysis buttons or result panels, and those buttons are styled larger so key analysis actions remain visible for senior-facing users.
+- Staging and production now both serve the latest `/simple` flow, including the simple profile, direct tab headings, and restored diet/mind AI analysis actions.
+- Auth bootstrap and simple-profile rendering now both re-check the signed-in user document against fresh server data when points or referral info look incomplete, then immediately rehydrate the visible profile UI so mode switches no longer depend on a manual refresh to replace `0P` and empty QR placeholders.
 - TWA release-signing and fullscreen verification were explicitly deferred to the next phase.
 - Older untracked task notes from `2026-04-07` remain outside today's scope unless priorities change.
