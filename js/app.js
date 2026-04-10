@@ -3707,8 +3707,10 @@ window.previewDynamicVid = function (input) {
             input.closest('.strength-block')?.getAttribute('data-local-thumb')
             || ''
         ).trim();
-        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed);
-        _pendingUploads.set(input.id, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null });
+        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
+            onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
+        });
+        _pendingUploads.set(input.id, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null, progress: 0, reportProgress: false });
         pendingUpload.promise.then(r => {
             const entry = _pendingUploads.get(input.id);
             if (entry) { entry.done = true; entry.result = r; }
@@ -3918,8 +3920,10 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                          : input.id.startsWith('file_c_') ? 'exercise_images' : null;
             if (folder) {
                 _pendingUploads.delete(input.id);
-                const p = uploadWithThumb(file, folder, auth.currentUser.uid);
-                _pendingUploads.set(input.id, { promise: p, done: false, result: null });
+                const p = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                    onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
+                });
+                _pendingUploads.set(input.id, { promise: p, done: false, result: null, progress: 0, reportProgress: false });
                 p.then(r => {
                     const entry = _pendingUploads.get(input.id);
                     if (entry) { entry.done = true; entry.result = r; }
@@ -8452,7 +8456,14 @@ function drawFastingChart() {
     });
 }
 
-async function uploadFileAndGetUrl(file, folderName, userId) {
+function updateSaveButtonUploadProgress(pct) {
+    const saveBtn = document.getElementById('saveDataBtn');
+    if (!saveBtn || !saveBtn.disabled) return;
+    const normalized = Math.max(1, Math.min(99, Math.round(Number(pct) || 0)));
+    saveBtn.innerText = `저장 중... ${normalized}%`;
+}
+
+async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     if (!file) return null;
 
     if (!isValidFileType(file)) {
@@ -8480,6 +8491,7 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
     const storageRef = ref(storage, storagePath);
     const maxRetries = 2;
     const timeoutMs = 30000;
+    const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -8489,10 +8501,7 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
                 uploadTask.on('state_changed',
                     (snapshot) => {
                         const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        if (pct > 0 && pct < 100) {
-                            const saveBtn = document.getElementById('saveDataBtn');
-                            if (saveBtn) saveBtn.innerText = `저장 중... ${pct}%`;
-                        }
+                        onProgress?.(pct);
                     },
                     reject,
                     resolve
@@ -8534,14 +8543,34 @@ async function uploadFileAndGetUrl(file, folderName, userId) {
 // === 파일 선택 즉시 업로드를 위한 상태 저장소 ===
 const _pendingUploads = new Map(); // inputId → { promise, done, result }
 
+function updatePendingUploadProgress(inputId, pct) {
+    if (!inputId) return;
+    const entry = _pendingUploads.get(inputId);
+    if (!entry) return;
+    entry.progress = Math.max(entry.progress || 0, Math.round(Number(pct) || 0));
+    if (entry.reportProgress && entry.progress > 0 && entry.progress < 100) {
+        updateSaveButtonUploadProgress(entry.progress);
+    }
+}
+
+function enablePendingUploadProgress() {
+    for (const entry of _pendingUploads.values()) {
+        if (!entry) continue;
+        entry.reportProgress = true;
+        if (!entry.done && entry.progress > 0 && entry.progress < 100) {
+            updateSaveButtonUploadProgress(entry.progress);
+        }
+    }
+}
+
 // 원본 + 썸네일 업로드 (모듈 레벨 함수 — previewStaticImage에서도 호출 가능)
 // 전략: 원본 URL 획득 즉시 resolve → 썸네일은 백그라운드에서 계속 업로드
 // _pendingUploads 엔트리의 result.thumbUrl을 나중에 갱신함
-function uploadWithThumb(file, folder, userId) {
+function uploadWithThumb(file, folder, userId, options = {}) {
     if (!file) return Promise.resolve({ url: null, thumbUrl: null });
 
     // 원본 업로드 Promise → 완료 즉시 resolve
-    const originalPromise = uploadFileAndGetUrl(file, folder, userId)
+    const originalPromise = uploadFileAndGetUrl(file, folder, userId, options)
         .then(url => url ? { url, thumbUrl: null } : { url: null, thumbUrl: null })
         .catch(() => ({ url: null, thumbUrl: null }));
 
@@ -8569,10 +8598,10 @@ function uploadWithThumb(file, folder, userId) {
     return originalPromise;
 }
 
-function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '') {
+function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', options = {}) {
     if (!file) return { promise: Promise.resolve({ url: null, thumbUrl: null }), thumbPromise: Promise.resolve(null) };
 
-    const originalPromise = uploadFileAndGetUrl(file, folder, userId)
+    const originalPromise = uploadFileAndGetUrl(file, folder, userId, options)
         .then(url => url ? { url, thumbUrl: null } : { url: null, thumbUrl: null })
         .catch(() => ({ url: null, thumbUrl: null }));
 
@@ -8710,6 +8739,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     const user = auth.currentUser;
     if (!user) return;
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
+    enablePendingUploadProgress();
     showToast("백그라운드에서 저장 중입니다! 🚀");
 
     (async () => {
@@ -8753,7 +8783,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (el && el.files[0] && hasVisiblePreview) {
                     // fallback: 지금 업로드
                     try {
-                        const result = await uploadWithThumb(el.files[0], folder, user.uid);
+                        const result = await uploadWithThumb(el.files[0], folder, user.uid, {
+                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
+                        });
                         if (result.url) return result;
                         uploadFailures.push(id);
                         return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
@@ -8809,7 +8841,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (pending.thumbUrl) thumbUrl = pending.thumbUrl;
                 } else if (fileInput.files[0]) {
                     try {
-                        const result = await uploadWithThumb(fileInput.files[0], 'exercise_images', user.uid);
+                        const result = await uploadWithThumb(fileInput.files[0], 'exercise_images', user.uid, {
+                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
+                        });
                         url = result.url;
                         if (result.thumbUrl) thumbUrl = result.thumbUrl;
                     } catch (err) {
@@ -8841,7 +8875,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (pending.thumbUrl) thumbUrl = pending.thumbUrl;
                 } else if (fileInput.files[0]) {
                     try {
-                        const result = await uploadVideoWithThumb(fileInput.files[0], 'exercise_videos', user.uid);
+                        const pendingUpload = uploadVideoWithThumb(fileInput.files[0], 'exercise_videos', user.uid, '', {
+                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
+                        });
+                        const result = await pendingUpload.promise;
+                        if (result.url && !result.thumbUrl && pendingUpload.thumbPromise) {
+                            const pendingThumb = await Promise.race([
+                                pendingUpload.thumbPromise.catch(() => null),
+                                new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                            ]);
+                            if (pendingThumb) result.thumbUrl = pendingThumb;
+                        }
                         url = result.url;
                         if (result.thumbUrl) thumbUrl = result.thumbUrl;
                     } catch (err) {
@@ -8878,7 +8922,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (sleepPending.thumbUrl) sThumbUrl = sleepPending.thumbUrl;
                 } else if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
                     try {
-                        const result = await uploadWithThumb(sleepFile.files[0], 'sleep_images', user.uid);
+                        const result = await uploadWithThumb(sleepFile.files[0], 'sleep_images', user.uid, {
+                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
+                        });
                         sUrl = result.url;
                         sThumbUrl = result.thumbUrl;
                     } catch (err) {

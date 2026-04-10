@@ -832,3 +832,7 @@
 ### 134. When an experimental integration is removed from the product path, delete its heavy browser assets too
 - Symptom: External wallet connection had already been de-prioritized in the UI, but the large MetaMask/WalletConnect browser bundles were still shipped and cached, which pushed Android site data to roughly 4.6MB even though users could no longer benefit from those assets.
 - Lesson: After a feature pivot, remove the dead runtime imports, vendor bundles, package scripts, and cache references in the same pass. Otherwise the product keeps paying the storage and cache cost of an abandoned experiment.
+
+### 135. Background uploads must not hijack the save CTA before the user actually presses save
+- Symptom: Selecting an exercise video immediately changed the main save button to a `saving... XX%` state, which made it feel like the record was already being saved before the user pressed `운동 저장하고 포인트 받기`.
+- Lesson: Background media uploads can start early for performance, but their progress should stay internal until the user presses the save CTA. Only after save begins should upload progress be reflected in the visible button text or save-state UI.
