@@ -766,3 +766,9 @@
 ### 118. Do not state third-party dashboard security options as facts unless they are confirmed in current docs or UI
 - Symptom: I advised setting a MetaMask Developer domain allowlist as if it were definitely available, but the current official docs and visible dashboard state did not clearly confirm a separate origin allowlist control.
 - Lesson: For third-party developer consoles, verify the exact current UI or official docs before giving step-by-step security instructions. If a control is not confirmed, say so explicitly and only recommend settings that are actually visible or documented.
+
+## 2026-04-10 (mobile wallet return flows)
+
+### 119. When a mobile wallet handoff leaves the browser and returns later, do not rely on a single immediate recovery check
+- Symptom: After approving MetaMask from the app, the browser returned to HaBit but the wallet UI stayed unchanged because recovery checked `eth_accounts` only once, before the SDK finished restoring the session.
+- Lesson: For mobile wallet deeplink or WalletConnect returns, combine a short retry window with provider event listeners like `connect`, `accountsChanged`, and `chainChanged`. Restored sessions can arrive slightly after focus returns, so the UI must react to late events instead of assuming recovery is synchronous.

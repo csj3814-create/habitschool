@@ -435,6 +435,40 @@ async function ensureMetaMaskConnectClient() {
             },
             debug: APP_ENV !== 'prod'
         });
+        const provider = client.getProvider?.();
+        const syncMetaMaskProviderState = async ({
+            accounts = provider?.accounts,
+            chainId = provider?.selectedChainId || client.getChainId?.()
+        } = {}) => {
+            const firstAccount = Array.isArray(accounts) && accounts.length > 0
+                ? accounts[0]
+                : client.getAccount?.() || provider?.selectedAccount;
+            if (!provider?.request || !firstAccount) return null;
+
+            return applyExternalWalletConnectionState({
+                provider,
+                address: firstAccount,
+                providerType: 'metamask',
+                chainId: normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID),
+                persist: true
+            });
+        };
+
+        if (typeof provider?.on === 'function') {
+            provider.on('connect', ({ chainId, accounts }) => {
+                syncMetaMaskProviderState({ accounts, chainId }).catch(() => {});
+            });
+            provider.on('accountsChanged', (accounts) => {
+                syncMetaMaskProviderState({ accounts }).catch(() => {});
+            });
+            provider.on('chainChanged', (chainId) => {
+                syncMetaMaskProviderState({ chainId }).catch(() => {});
+            });
+        }
+
+        if (client.getAccount?.() || provider?.selectedAccount) {
+            await syncMetaMaskProviderState().catch(() => {});
+        }
         metaMaskConnectClient = client;
         return client;
     })().catch((error) => {
@@ -470,11 +504,38 @@ async function ensureTrustWalletConnectProvider() {
         });
 
         if (typeof provider.on === 'function') {
+            const syncTrustWalletProviderState = async ({
+                accounts = provider.accounts,
+                chainId = provider.chainId
+            } = {}) => {
+                const firstAccount = Array.isArray(accounts) && accounts.length > 0
+                    ? accounts[0]
+                    : null;
+                if (!provider?.request || !firstAccount) return null;
+
+                return applyExternalWalletConnectionState({
+                    provider,
+                    address: firstAccount,
+                    providerType: 'trustwallet',
+                    chainId: normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID),
+                    persist: true
+                });
+            };
+
             provider.on('display_uri', (uri) => {
                 if (!isMobileWalletBrowser()) return;
                 setTrustWalletConnectPendingState({ deeplinkOpened: true });
                 const trustWalletDeepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
                 window.location.assign(trustWalletDeepLink);
+            });
+            provider.on('connect', (payload) => {
+                syncTrustWalletProviderState({ chainId: payload?.chainId }).catch(() => {});
+            });
+            provider.on('accountsChanged', (accounts) => {
+                syncTrustWalletProviderState({ accounts }).catch(() => {});
+            });
+            provider.on('chainChanged', (chainId) => {
+                syncTrustWalletProviderState({ chainId }).catch(() => {});
             });
             provider.on('disconnect', () => {
                 externalWalletProvider = null;
@@ -483,6 +544,10 @@ async function ensureTrustWalletConnectProvider() {
                     externalWalletChainId = null;
                 }
             });
+
+            if (Array.isArray(provider.accounts) && provider.accounts.length > 0) {
+                await syncTrustWalletProviderState().catch(() => {});
+            }
         }
 
         trustWalletConnectProvider = provider;
@@ -649,27 +714,128 @@ function setExternalWalletRuntimeState({ provider, address, providerType, chainI
     externalWalletChainId = Number(chainId) || null;
 }
 
+function normalizeWalletChainId(chainId, fallback = ACTIVE_CHAIN_ID) {
+    if (typeof chainId === 'number' && Number.isFinite(chainId)) {
+        return chainId;
+    }
+    if (typeof chainId === 'string' && chainId.trim()) {
+        const trimmed = chainId.trim();
+        const parsed = trimmed.startsWith('0x')
+            ? parseInt(trimmed, 16)
+            : Number(trimmed);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            return parsed;
+        }
+    }
+    return fallback;
+}
+
+async function persistExternalWalletConnection(address, providerType, chainId = ACTIVE_CHAIN_ID) {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !address) return;
+
+    const normalizedAddress = ethers.utils.getAddress(address);
+    const normalizedChainId = normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID);
+    const userRef = doc(db, "users", currentUser.uid);
+    const userSnap = await getDoc(userRef).catch(() => null);
+    const userData = userSnap?.data?.() || {};
+
+    await ensureUserReferralCode(userRef, userData).catch(() => {});
+
+    if (
+        userData.externalWalletAddress === normalizedAddress
+        && userData.walletConnectionMode === 'external'
+        && userData.walletProviderType === providerType
+        && normalizeWalletChainId(userData.walletChainId, ACTIVE_CHAIN_ID) === normalizedChainId
+    ) {
+        return;
+    }
+
+    await setDoc(userRef, {
+        externalWalletAddress: normalizedAddress,
+        walletConnectionMode: 'external',
+        walletProviderType: providerType,
+        walletChainId: normalizedChainId,
+        walletConnectedAt: serverTimestamp()
+    }, { merge: true });
+}
+
+async function applyExternalWalletConnectionState({
+    provider,
+    address,
+    providerType,
+    chainId,
+    persist = false,
+    refreshAssets = true
+} = {}) {
+    if (!provider?.request || !address) return null;
+
+    const normalizedAddress = ethers.utils.getAddress(address);
+    const normalizedChainId = normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID);
+
+    setExternalWalletRuntimeState({
+        provider,
+        address: normalizedAddress,
+        providerType,
+        chainId: normalizedChainId
+    });
+
+    if (providerType === 'metamask') clearMetaMaskConnectPendingState();
+    if (providerType === 'trustwallet') clearTrustWalletConnectPendingState();
+
+    if (persist) {
+        await persistExternalWalletConnection(normalizedAddress, providerType, normalizedChainId).catch((error) => {
+            console.warn(`${getWalletProviderLabelSafe(providerType)} connection sync failed:`, error?.message || error);
+        });
+    }
+
+    refreshWalletUi(normalizedAddress);
+    if (refreshAssets && window.updateAssetDisplay) {
+        await window.updateAssetDisplay(true);
+    }
+
+    return normalizedAddress;
+}
+
+async function waitForPermittedWalletAccount(provider, expectedAddress = null, timeoutMs = 4200) {
+    if (!provider?.request) return null;
+
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+        try {
+            const accounts = await provider.request({ method: 'eth_accounts' });
+            if (Array.isArray(accounts) && accounts.length > 0) {
+                const matchedAddress = expectedAddress
+                    ? accounts.find((account) => account?.toLowerCase() === expectedAddress.toLowerCase())
+                    : accounts[0];
+                if (matchedAddress) {
+                    return ethers.utils.getAddress(matchedAddress);
+                }
+            }
+        } catch (error) {
+            console.warn('Wallet account polling failed:', error?.message || error);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    return null;
+}
+
 async function reconnectStoredExternalWallet({ preferredType = null, expectedAddress = null } = {}) {
     const provider = await waitForPreferredWalletProvider(preferredType, 1600);
     if (!provider?.request) return null;
     try {
-        const accounts = await provider.request({ method: 'eth_accounts' });
-        if (!Array.isArray(accounts) || accounts.length === 0) return null;
-
-        const matchedAddress = expectedAddress
-            ? accounts.find(account => account?.toLowerCase() === expectedAddress.toLowerCase())
-            : accounts[0];
-
+        const matchedAddress = await waitForPermittedWalletAccount(provider, expectedAddress, 4200);
         if (!matchedAddress) return null;
 
         const chainHex = await provider.request({ method: 'eth_chainId' }).catch(() => null);
-        setExternalWalletRuntimeState({
+        await applyExternalWalletConnectionState({
             provider,
             address: matchedAddress,
             providerType: preferredType || getInjectedProviderType(provider),
-            chainId: chainHex ? parseInt(chainHex, 16) : null
+            chainId: normalizeWalletChainId(chainHex, ACTIVE_CHAIN_ID),
+            persist: true
         });
-        clearMetaMaskConnectPendingState();
         return externalWalletAddress;
     } catch (error) {
         console.warn('외부 지갑 재연결 실패:', error.message);
@@ -702,29 +868,13 @@ async function connectMetaMaskWithConnect(currentUser) {
 
         await ensureInjectedNetwork(provider);
 
-        const address = ethers.utils.getAddress(accounts[0]);
-        setExternalWalletRuntimeState({
+        const address = await applyExternalWalletConnectionState({
             provider,
-            address,
+            address: accounts[0],
             providerType: 'metamask',
-            chainId: chainId ? parseInt(chainId, 16) : ACTIVE_CHAIN_ID
+            chainId: normalizeWalletChainId(chainId, ACTIVE_CHAIN_ID),
+            persist: true
         });
-        clearMetaMaskConnectPendingState();
-
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef).catch(() => null);
-        const userData = userSnap?.data?.() || {};
-        await ensureUserReferralCode(userRef, userData);
-        await setDoc(userRef, {
-            externalWalletAddress: address,
-            walletConnectionMode: 'external',
-            walletProviderType: 'metamask',
-            walletChainId: externalWalletChainId || ACTIVE_CHAIN_ID,
-            walletConnectedAt: serverTimestamp()
-        }, { merge: true });
-
-        refreshWalletUi(address);
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         showToast('MetaMask 연결 완료');
         return address;
     } catch (error) {
@@ -769,30 +919,14 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
 
         await ensureInjectedNetwork(provider);
 
-        const address = ethers.utils.getAddress(accounts[0]);
         const chainHex = await provider.request({ method: 'eth_chainId' }).catch(() => ACTIVE_CHAIN_HEX);
-        setExternalWalletRuntimeState({
+        const address = await applyExternalWalletConnectionState({
             provider,
-            address,
+            address: accounts[0],
             providerType: 'trustwallet',
-            chainId: chainHex ? parseInt(chainHex, 16) : ACTIVE_CHAIN_ID
+            chainId: normalizeWalletChainId(chainHex, ACTIVE_CHAIN_ID),
+            persist: true
         });
-        clearTrustWalletConnectPendingState();
-
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef).catch(() => null);
-        const userData = userSnap?.data?.() || {};
-        await ensureUserReferralCode(userRef, userData);
-        await setDoc(userRef, {
-            externalWalletAddress: address,
-            walletConnectionMode: 'external',
-            walletProviderType: 'trustwallet',
-            walletChainId: externalWalletChainId || ACTIVE_CHAIN_ID,
-            walletConnectedAt: serverTimestamp()
-        }, { merge: true });
-
-        refreshWalletUi(address);
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         showToast('Trust Wallet 연결 완료');
         return address;
     } catch (error) {
