@@ -9,7 +9,7 @@ import { initAuth, setupAuthListener } from './auth.js';
 import { APP_ENV } from './firebase-config.js';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js';
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=119';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=120';
 
 // ========== 인증 초기화를 최우선으로 실행 ==========
 function initializeApp() {

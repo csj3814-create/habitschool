@@ -868,6 +868,17 @@ body.simple-mode .step-input-group {
     background: #fffaf1;
 }
 
+.wallet-policy-note {
+    margin-top: 10px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: rgba(255, 249, 238, 0.95);
+    border: 1px solid rgba(230, 188, 120, 0.32);
+    color: #7a5120;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
 .wallet-export-note {
     margin-top: 10px;
     padding: 10px 12px;
@@ -1902,6 +1913,12 @@ body.dark-mode .wallet-export-note {
     background: rgba(66, 47, 18, 0.75);
     border-color: rgba(244, 197, 125, 0.25);
     color: #f4c57d;
+}
+
+body.dark-mode .wallet-policy-note {
+    background: rgba(54, 41, 21, 0.78);
+    border-color: rgba(244, 197, 125, 0.2);
+    color: #f2d3a0;
 }
 
 body.dark-mode .legacy-wallet-warning {

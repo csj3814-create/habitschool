@@ -816,3 +816,11 @@
 ### 130. Do not spend the first mobile wallet tap loading SDK bundles or forcing custom URI schemes unless the official web defaults are proven wrong
 - Symptom: MetaMask and Trust Wallet buttons still felt inert on Samsung Internet because the click path was paying for module/client setup before reaching the actual connect call, MetaMask was still forced onto the `metamask://` scheme, and Trust Wallet had drifted from the provider's documented `optionalChains` init path.
 - Lesson: For mobile wallet launch flows, preload SDK bundles before the user taps, stay close to the wallet SDK's documented web defaults, and only force custom schemes or non-default init options after they are proven necessary on a real device.
+
+### 131. After repeated real-device reports of “no improvement,” stop claiming progress and explicitly pivot or pause
+- Symptom: Several staging redeploys changed wallet connection internals, but the user still experienced the same no-op behavior on the phone. My responses focused too much on what changed in code, not on the fact that the user-facing result had not improved.
+- Lesson: For device-specific UX bugs, the only meaningful progress is observable behavior on the user’s device. If two or more rounds still produce “nothing changed,” stop iterating on the same implementation path, say clearly that the current approach has not been solved, and propose a new architecture or a pause instead of implying the latest patch should fix it.
+
+### 132. When a high-friction advanced feature is failing, do not keep presenting it as the default path in the main product UI
+- Symptom: External wallet connection was unreliable on the target mobile browsers, but the wallet card still framed MetaMask and Trust Wallet as the primary next step, which made the product feel broken even though the app wallet flow itself worked.
+- Lesson: If an advanced flow is not reliable enough for the core audience, move it out of the primary path. Update the main UI copy so the working default is unmistakable, and keep advanced actions secondary until the experience is proven on real devices.

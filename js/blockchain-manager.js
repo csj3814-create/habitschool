@@ -2024,22 +2024,23 @@ function refreshWalletUi(address = null) {
     const trustBtn = document.getElementById('wallet-connect-trust-btn');
     const walletConnectBtn = document.getElementById('wallet-connect-walletconnect-btn');
     const disconnectBtn = document.getElementById('wallet-disconnect-btn');
+    const disconnectRow = document.getElementById('wallet-disconnect-row');
 
-    let status = '외부 지갑을 연결하세요';
-    let sub = 'MetaMask 또는 Trust Wallet을 연결하면 HBT를 직접 보관할 수 있어요.';
+    let status = '앱 지갑 사용 중';
+    let sub = '로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.';
 
     if (externalWalletAddress && externalWalletProvider) {
         status = `${getWalletProviderLabelSafe(externalWalletProviderType)} 연결됨`;
-        sub = '지갑에서 직접 보관하고 챌린지를 시작할 수 있어요.';
+        sub = '고급 모드로 외부 지갑에서 직접 보관 중이에요.';
     } else if (externalWalletAddress) {
-        status = '외부 지갑 주소 연결됨';
-        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 챌린지를 시작할 수 있어요.`;
+        status = '외부 지갑 주소 저장됨';
+        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 같은 주소로 이어서 사용할 수 있어요.`;
     } else if (userWallet) {
         status = '앱 지갑 사용 중';
-        sub = '기존 앱 지갑 주소입니다. 외부 지갑 연결로 전환할 수 있어요.';
+        sub = '로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.';
     } else if (userWalletAddress) {
-        status = '기존 지갑 주소만 있어요';
-        sub = '외부 지갑을 연결하면 직접 보관과 챌린지가 가능해요.';
+        status = '앱 지갑 주소 준비됨';
+        sub = '앱 지갑으로 HBT 변환과 챌린지를 이어서 사용할 수 있어요.';
     }
 
     if (walletDisplay) {
@@ -2065,6 +2066,7 @@ function refreshWalletUi(address = null) {
     if (trustBtn) trustBtn.disabled = !!externalWalletAddress && externalWalletProviderType === 'trustwallet' && !!externalWalletProvider;
     if (walletConnectBtn) walletConnectBtn.disabled = false;
     if (disconnectBtn) disconnectBtn.disabled = !externalWalletAddress;
+    if (disconnectRow) disconnectRow.style.display = externalWalletAddress ? 'flex' : 'none';
     syncLegacyWalletExportUi();
 }
 
@@ -2513,7 +2515,7 @@ export function openWalletConnectGuide() {
 export function disconnectWallet() {
     userWallet = null;
     userWalletAddress = null;
-    console.log('✅ 지갑이 연결 해제되었습니다.');
+    console.log('✅ 외부 지갑 연결이 해제되었습니다.');
 }
 
 console.log('✅ 블록체인 매니저 로드됨. (내장형 지갑, HBT, Staking)');

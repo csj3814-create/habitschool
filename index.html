@@ -104,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=116">
+    <link rel="stylesheet" href="styles.css?v=117">
 
     <script src="js/webview-detect.js"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
@@ -861,8 +861,8 @@
                         <span class="wallet-network-badge"><span class="dot"></span> BSC 테스트넷</span>
                     </div>
                     <div class="wallet-connection-copy">
-                        <div class="wallet-connection-status" id="wallet-connection-status">외부 지갑을 연결하세요</div>
-                        <div class="wallet-connection-sub" id="wallet-connection-sub">MetaMask 또는 Trust Wallet을 연결하면 HBT를 직접 보관할 수 있어요.</div>
+                        <div class="wallet-connection-status" id="wallet-connection-status">앱 지갑 사용 중</div>
+                        <div class="wallet-connection-sub" id="wallet-connection-sub">로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.</div>
                     </div>
                     <div class="wallet-address-box">
                         <span class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
@@ -871,18 +871,17 @@
                             <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
                         </div>
                     </div>
-                    <div class="wallet-links">
-                        <button type="button" class="wallet-link-btn primary" id="wallet-connect-metamask-btn" onclick="connectMetaMaskWallet()">🦊 MetaMask 연결</button>
-                        <button type="button" class="wallet-link-btn" id="wallet-connect-trust-btn" onclick="connectTrustWallet()">🛡️ Trust Wallet 연결</button>
+                    <div class="wallet-policy-note">
+                        기본 사용 방식은 앱 지갑입니다. 지금은 로그인만으로 HBT 변환과 예치를 바로 진행할 수 있어요.
                     </div>
-                    <div class="wallet-links wallet-links-secondary">
-                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">연결 해제</button>
+                    <div class="wallet-links wallet-links-secondary" id="wallet-disconnect-row" style="display:none;">
+                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">외부 지갑 연결 해제</button>
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="legacy-wallet-export-row" style="display:none;">
                         <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
                     </div>
                     <div class="wallet-export-note" id="wallet-export-note" style="display:none;">
-                        기존 앱 지갑 사용자는 개인키를 1회 확인해 MetaMask 또는 Trust Wallet으로 옮길 수 있어요.
+                        외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요.
                     </div>
                     <div class="wallet-links">
                         <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
@@ -1624,8 +1623,8 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=119"></script>
-    <script type="module" src="js/main.js?v=119"></script>
+    <script type="module" src="js/app.js?v=120"></script>
+    <script type="module" src="js/main.js?v=120"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 
@@ -1788,7 +1787,7 @@
                     <ol>
                         <li>MetaMask 또는 Trust Wallet에서 기존 지갑 가져오기를 엽니다.</li>
                         <li>개인키 입력을 선택하고, 여기서 복사한 키를 붙여넣습니다.</li>
-                        <li>가져오기가 끝나면 해빛스쿨 자산 탭에서 외부 지갑 연결로 전환합니다.</li>
+                        <li>가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</li>
                     </ol>
                 </div>
             </div>
