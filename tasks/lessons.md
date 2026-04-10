@@ -804,3 +804,11 @@
 ### 127. Do not force a full-page reload after popup auth success unless the product truly depends on it
 - Symptom: On staging mobile browsers, Google popup login completed account selection but the app stayed on the landing screen because the code forced `window.location.reload()` both after `signInWithPopup()` resolved and again inside `onAuthStateChanged()`.
 - Lesson: For popup-based Firebase login, let `onAuthStateChanged()` finish the signed-in UI transition naturally. A forced reload can race persistence in mobile browsers and erase the visible login success. If duplicate clicks are the concern, disable the login button while the popup is in flight instead of reloading the page.
+
+### 128. Do not override a wallet SDK's browser deeplink handler with a React Native-style hook unless web behavior is proven
+- Symptom: MetaMask mobile connection still felt inert because the app replaced the SDK's own browser deeplink/universal-link opening logic with a custom `preferredOpenLink` callback that was intended more for React Native environments than for Samsung Internet or Chrome.
+- Lesson: On the web, prefer the wallet SDK's built-in browser deeplink flow first. Only override the open-link handler if the official web path is known to be broken and the replacement is verified on a real device.
+
+### 129. For mobile WalletConnect retries, prefer a fresh provider per tap over reusing a warmed singleton
+- Symptom: Trust Wallet taps could still feel like no-ops because a reused provider instance could carry a stale half-open WalletConnect state from an earlier failed attempt.
+- Lesson: When a mobile WalletConnect flow is click-driven and user-facing, create a fresh provider for a fresh tap unless you are explicitly recovering an existing pending session. Reusing a warmed singleton is fine for reconnect recovery, but it is risky as the default for first-time connection attempts.

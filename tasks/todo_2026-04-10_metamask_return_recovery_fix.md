@@ -49,3 +49,14 @@
 - Added connector prewarming during wallet initialization so the first tap is less likely to be spent only loading SDK bundles.
 - Moved Trust Wallet mobile deeplinking to the BMB-style universal link flow and attached the `display_uri` listener only for the active connect attempt.
 - Added cache-busting for the wallet runtime by versioning `app.js`, `main.js`, and every dynamic `blockchain-manager.js` import, and bumped the service-worker cache name so staging devices stop serving an older wallet bundle after deploy.
+
+## Second revision after more device feedback
+- MetaMask still did not launch reliably from the external browser, and Trust Wallet taps still often produced no visible action.
+- The MetaMask implementation was overriding the SDK's built-in browser deeplink/universal-link behavior via `mobile.preferredOpenLink`, even though the package README describes that hook mainly for React Native-style environments.
+- Trust Wallet was also reusing a warmed singleton provider and calling `enable()` directly, which made repeated mobile attempts more likely to reuse a stale half-open WalletConnect state.
+
+## Second revised fix
+- Let MetaMask Connect use its default browser deeplink flow on web again, instead of overriding it with a custom `preferredOpenLink`.
+- Added a `display_uri` listener only to mark a pending MetaMask handoff, while leaving the actual app launch to the SDK's browser logic.
+- Changed Trust Wallet mobile connect to build a fresh WalletConnect provider per tap, request a required `chains: [ACTIVE_CHAIN_ID]` session, call `connect()`, and only then request `eth_requestAccounts`.
+- Limited connector prewarming to true reconnect situations so the app does not carry a stale mobile wallet session object into the next tap.

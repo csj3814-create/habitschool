@@ -381,6 +381,8 @@ function clearTrustWalletConnectPendingState() {
 
 function prewarmExternalWalletConnectors() {
     if (!isMobileWalletBrowser()) return;
+    const hasPendingWalletReconnect = !!getMetaMaskConnectPendingState() || !!getTrustWalletConnectPendingState();
+    if (!hasPendingWalletReconnect) return;
     if (!shouldUseMetaMaskConnect() && !shouldUseTrustWalletConnect()) return;
 
     if (shouldUseMetaMaskConnect()) {
@@ -403,7 +405,20 @@ async function loadWalletConnectProviderModule() {
     return walletConnectProviderModulePromise;
 }
 
-async function ensureMetaMaskConnectClient() {
+async function resetMetaMaskConnectClient() {
+    if (metaMaskConnectClient?.disconnect) {
+        try {
+            await metaMaskConnectClient.disconnect();
+        } catch (_) {}
+    }
+    metaMaskConnectClient = null;
+    metaMaskConnectClientPromise = null;
+}
+
+async function ensureMetaMaskConnectClient({ forceFresh = false } = {}) {
+    if (forceFresh) {
+        await resetMetaMaskConnectClient();
+    }
     if (metaMaskConnectClient) return metaMaskConnectClient;
     if (metaMaskConnectClientPromise) return metaMaskConnectClientPromise;
 
@@ -431,11 +446,7 @@ async function ensureMetaMaskConnectClient() {
                 showInstallModal: false
             },
             mobile: {
-                useDeeplink: true,
-                preferredOpenLink: (deeplink) => {
-                    setMetaMaskConnectPendingState({ deeplinkOpened: true });
-                    window.location.assign(deeplink);
-                }
+                useDeeplink: true
             },
             analytics: {
                 integrationType: 'direct'
@@ -493,7 +504,20 @@ async function ensureMetaMaskConnectClient() {
     return metaMaskConnectClientPromise;
 }
 
-async function ensureTrustWalletConnectProvider() {
+async function resetTrustWalletConnectProvider() {
+    if (trustWalletConnectProvider?.disconnect) {
+        try {
+            await trustWalletConnectProvider.disconnect();
+        } catch (_) {}
+    }
+    trustWalletConnectProvider = null;
+    trustWalletConnectProviderPromise = null;
+}
+
+async function ensureTrustWalletConnectProvider({ forceFresh = false } = {}) {
+    if (forceFresh) {
+        await resetTrustWalletConnectProvider();
+    }
     if (trustWalletConnectProvider) return trustWalletConnectProvider;
     if (trustWalletConnectProviderPromise) return trustWalletConnectProviderPromise;
 
@@ -504,7 +528,7 @@ async function ensureTrustWalletConnectProvider() {
         const mod = await loadWalletConnectProviderModule();
         const provider = await mod.EthereumProvider.init({
             projectId,
-            optionalChains: [ACTIVE_CHAIN_ID],
+            chains: [ACTIVE_CHAIN_ID],
             showQrModal: !isMobileWalletBrowser(),
             rpcMap: {
                 [ACTIVE_CHAIN_ID]: ACTIVE_BSC_NETWORK.rpcUrl
@@ -903,21 +927,26 @@ async function reconnectStoredExternalWallet({ preferredType = null, expectedAdd
 
 async function connectMetaMaskWithConnect(currentUser) {
     let client = null;
+    let displayUriHandler = null;
     try {
-        client = await ensureMetaMaskConnectClient();
+        client = await ensureMetaMaskConnectClient({ forceFresh: true });
         const provider = client?.getProvider?.();
         if (!provider?.request) {
             showToast('MetaMask 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
             return null;
         }
 
-        setMetaMaskConnectPendingState({ requestedAt: Date.now(), providerType: 'metamask' });
         showToast('MetaMask 앱이 열리면 연결을 승인해 주세요.');
+        displayUriHandler = () => {
+            setMetaMaskConnectPendingState({ requestedAt: Date.now(), providerType: 'metamask', deeplinkOpened: true });
+        };
+        provider.on?.('display_uri', displayUriHandler);
 
         const { accounts = [], chainId } = await client.connect({
             chainIds: [ACTIVE_CHAIN_HEX],
             forceRequest: true
         });
+        provider.removeListener?.('display_uri', displayUriHandler);
 
         if (!Array.isArray(accounts) || accounts.length === 0) {
             showToast('지갑 주소를 찾지 못했어요.');
@@ -936,6 +965,10 @@ async function connectMetaMaskWithConnect(currentUser) {
         showToast('MetaMask 연결 완료');
         return address;
     } catch (error) {
+        if (displayUriHandler) {
+            const provider = client?.getProvider?.();
+            provider?.removeListener?.('display_uri', displayUriHandler);
+        }
         if (error?.code === 4001) {
             clearMetaMaskConnectPendingState();
             showToast('지갑 연결을 취소했어요.');
@@ -961,7 +994,7 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
 
     let cleanupDisplayUriHandler = () => {};
     try {
-        const provider = await ensureTrustWalletConnectProvider();
+        const provider = await ensureTrustWalletConnectProvider({ forceFresh: true });
         if (!provider?.request) {
             showToast('Trust Wallet 연결 모듈을 준비하지 못했어요. 다시 시도해 주세요.');
             return null;
@@ -971,7 +1004,8 @@ async function connectTrustWalletWithWalletConnect(currentUser) {
         showToast('Trust Wallet 앱이 열리면 연결을 승인해 주세요.');
 
         cleanupDisplayUriHandler = attachTrustWalletMobileDisplayUriHandler(provider);
-        const accounts = await provider.enable();
+        await provider.connect({ chains: [ACTIVE_CHAIN_ID] });
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
         cleanupDisplayUriHandler();
         if (!Array.isArray(accounts) || accounts.length === 0) {
             showToast('지갑 주소를 찾지 못했어요.');
