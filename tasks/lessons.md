@@ -828,3 +828,7 @@
 ### 133. For popup auth on mobile browsers, do not make the first visible signed-in transition depend entirely on `onAuthStateChanged()`
 - Symptom: Google popup login technically succeeded, but Samsung Internet could still sit on the landing screen after account selection because the opener tab waited for the auth-state event before hiding the login modal and revealing the signed-in shell.
 - Lesson: When popup auth resolves successfully, bridge the opener tab into a lightweight signed-in shell state immediately, then let `onAuthStateChanged()` finish the full hydration. This preserves correctness while removing the “I chose an account and nothing happened” feeling on slower mobile browsers.
+
+### 134. When an experimental integration is removed from the product path, delete its heavy browser assets too
+- Symptom: External wallet connection had already been de-prioritized in the UI, but the large MetaMask/WalletConnect browser bundles were still shipped and cached, which pushed Android site data to roughly 4.6MB even though users could no longer benefit from those assets.
+- Lesson: After a feature pivot, remove the dead runtime imports, vendor bundles, package scripts, and cache references in the same pass. Otherwise the product keeps paying the storage and cache cost of an abandoned experiment.

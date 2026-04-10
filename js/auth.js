@@ -9,27 +9,16 @@ import { escapeHtml } from './security.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=120';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=122';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
-const METAMASK_CONNECT_PENDING_KEY = 'habitschool:metamask-connect-pending';
-const TRUST_WALLET_CONNECT_PENDING_KEY = 'habitschool:trustwallet-connect-pending';
 const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
-
-function hasPendingExternalWalletReconnect() {
-    try {
-        return !!sessionStorage.getItem(METAMASK_CONNECT_PENDING_KEY)
-            || !!sessionStorage.getItem(TRUST_WALLET_CONNECT_PENDING_KEY);
-    } catch (_) {
-        return false;
-    }
-}
 
 function rememberPendingSignupOnboarding(user) {
     try {
@@ -693,8 +682,7 @@ export function setupAuthListener(callbacks) {
                 });
             };
 
-            const blockchainInitDelayMs = hasPendingExternalWalletReconnect() ? 250 : 1200;
-            setTimeout(bootstrapBlockchainWallet, blockchainInitDelayMs);
+            setTimeout(bootstrapBlockchainWallet, 1200);
 
             // 10초 뒤 챌린지 정산 점검
             setTimeout(() => {

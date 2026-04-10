@@ -60,36 +60,6 @@ export const STAKING_CONTRACT = {
     maxStakeAmount: 10000
 };
 
-export const METAMASK_CONNECT = {
-    local: {
-        apiKey: 'b6d3939620a84960b9c3b37f7d8a49ac',
-        dappUrl: 'http://127.0.0.1:5000'
-    },
-    staging: {
-        apiKey: 'b6d3939620a84960b9c3b37f7d8a49ac',
-        dappUrl: 'https://habitschool-staging.web.app'
-    },
-    prod: {
-        apiKey: 'b6d3939620a84960b9c3b37f7d8a49ac',
-        dappUrl: 'https://habitschool.web.app'
-    }
-};
-
-export const TRUST_WALLET_CONNECT = {
-    local: {
-        projectId: '0d60d22978143c659db19c0ba7852994',
-        dappUrl: 'http://127.0.0.1:5000'
-    },
-    staging: {
-        projectId: '0d60d22978143c659db19c0ba7852994',
-        dappUrl: 'https://habitschool-staging.web.app'
-    },
-    prod: {
-        projectId: '0d60d22978143c659db19c0ba7852994',
-        dappUrl: 'https://habitschool.web.app'
-    }
-};
-
 export const hasConfiguredMainnetContracts =
     HBT_TOKEN.mainnetAddress !== ZERO_ADDRESS &&
     STAKING_CONTRACT.mainnetAddress !== ZERO_ADDRESS;
@@ -129,30 +99,6 @@ export function getActiveGasTokenLabel(appEnv = 'staging') {
 
 export function getActiveOnchainLabel(appEnv = 'staging') {
     return getActiveBscNetwork(appEnv).label;
-}
-
-export function getMetaMaskConnectConfig(appEnv = 'staging') {
-    return METAMASK_CONNECT[appEnv] || METAMASK_CONNECT.staging;
-}
-
-export function getMetaMaskConnectApiKey(appEnv = 'staging') {
-    return getMetaMaskConnectConfig(appEnv).apiKey;
-}
-
-export function getMetaMaskConnectDappUrl(appEnv = 'staging') {
-    return getMetaMaskConnectConfig(appEnv).dappUrl;
-}
-
-export function getTrustWalletConnectConfig(appEnv = 'staging') {
-    return TRUST_WALLET_CONNECT[appEnv] || TRUST_WALLET_CONNECT.staging;
-}
-
-export function getTrustWalletConnectProjectId(appEnv = 'staging') {
-    return String(getTrustWalletConnectConfig(appEnv).projectId || '').trim();
-}
-
-export function getTrustWalletConnectDappUrl(appEnv = 'staging') {
-    return getTrustWalletConnectConfig(appEnv).dappUrl;
 }
 
 export function getLegacyChallengeQualificationPolicy(tier = 'mini') {
