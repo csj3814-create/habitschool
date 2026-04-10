@@ -185,7 +185,7 @@
                 <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
             </div>
             <div class="box">
-                <h3>🥇 포인트 TOP 5</h3>
+                <h3>🥇 현재 포인트+HBT TOP 5</h3>
                 <table>
                     <thead><tr><th>순위</th><th>이름</th><th>현재 포인트</th><th>현재 HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top5-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
@@ -243,7 +243,7 @@
     <div id="tab-economy" class="tab-panel">
         <div class="two-col">
             <div class="box">
-                <h3>🥇 현재 포인트 TOP 20</h3>
+                <h3>🥇 현재 포인트+HBT TOP 20</h3>
                 <table>
                     <thead><tr><th>#</th><th>이름</th><th>현재 포인트</th><th>현재 HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top10-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
@@ -461,7 +461,7 @@
         return ADMIN_EMAILS.includes(normalizeEmail(user?.email));
     }
     async function hasAdminRecord(user) {
-        try {
+        }
             if ((await getDoc(doc(db, 'admins', user.uid))).exists()) return true;
             const email = normalizeEmail(user.email);
             if (email && (await getDoc(doc(db, 'admins', email))).exists()) return true;
@@ -472,7 +472,7 @@
         const knownAdmin = isKnownAdminEmail(user);
         const hasRecord = await hasAdminRecord(user);
         if (!knownAdmin && !hasRecord) return false;
-        try {
+        }
             await ensureAdminAccessCallable({});
             return true;
         } catch (e) {
@@ -543,6 +543,7 @@
     window.refreshTab = function() {
         const name = document.querySelector('.tab-btn.active')?.dataset.tab || 'dashboard';
         tabLoaded[name] = false;
+        adminTokenStatsCache = null;
         if (name === 'members') cache = null;
         loadTab(name);
     };
@@ -563,34 +564,42 @@
         const { snap, usersQ } = await getData();
         const ago7 = new Date(todayStr);
         ago7.setDate(ago7.getDate() - 6);
-        const ago7str = ago7.toISOString().split('T')[0];
+        const ago7str = toDateKey(ago7);
+
+        const [weekSnap, reportsSnap, tokenStats, todayBonusPoints] = await Promise.all([
+            getDocs(query(
+                collection(db, 'daily_logs'),
+                where('date', '>=', ago7str),
+                where('date', '<=', todayStr)
+            )),
+            getDocs(collection(db, 'reports')),
+            loadAdminTokenStats(),
+            loadTodayBonusPoints(usersQ)
+        ]);
 
         const dayMap = {};
         for (let i = 6; i >= 0; i--) {
             const d = new Date(todayStr); d.setDate(d.getDate() - i);
-            dayMap[d.toISOString().split('T')[0]] = new Set();
+            dayMap[toDateKey(d)] = new Set();
         }
 
-        let todaySet = new Set(), weekSet = new Set(), alerts = 0, pts = 0;
-        snap.forEach(d => {
+        let todaySet = new Set(), weekSet = new Set(), alerts = 0, todayLogPoints = 0;
+        weekSnap.forEach(d => {
             const r = d.data();
             if (r.date === todayStr) {
                 todaySet.add(r.userId);
-                const ap = r.awardedPoints || {};
-                pts += (ap.diet||0) + (ap.exercise||0) + (ap.mind||0);
+                todayLogPoints += getAwardedPointsTotal(r.awardedPoints || {});
                 if ((r.metrics?.glucose||0) >= 126 || (r.metrics?.bpSystolic||0) >= 140) alerts++;
             }
             if (r.date >= ago7str) { weekSet.add(r.userId); if (dayMap[r.date]) dayMap[r.date].add(r.userId); }
         });
 
-        const reportsSnap = await getDocs(collection(db, 'reports'));
-
         let totalHbt = '-', rate = '-';
-        try { const m = (await getDoc(doc(db, 'meta', 'communityStats'))).data(); if (m?.totalHbtMinted) totalHbt = m.totalHbtMinted.toLocaleString(); } catch(_) {}
-        try {
-            const rs = await getDocs(query(collection(db, 'mining_rate_history'), orderBy('timestamp', 'desc'), limit(1)));
-            if (!rs.empty) { const f = rs.docs[0].data().adjustmentFactor; if (f != null) rate = `×${f}`; }
-        } catch(_) {}
+        if (tokenStats) {
+            totalHbt = `${formatAdminNumber(tokenStats.totalMined, 0)} HBT`;
+            const per100 = currentConversionRatePerPoint * 100;
+            rate = `${phaseToLabel(Number(tokenStats.currentPhase) || 1)}구간 · 100P = ${formatAdminNumber(per100)} HBT`;
+        }
 
         document.getElementById('s-total').textContent = usersQ.size;
         document.getElementById('s-today').textContent = todaySet.size;
@@ -598,7 +607,7 @@
         document.getElementById('s-reports').textContent = reportsSnap.size;
         document.getElementById('s-health').textContent = alerts;
         document.getElementById('s-hbt').textContent = totalHbt;
-        document.getElementById('s-points').textContent = pts.toLocaleString();
+        document.getElementById('s-points').textContent = (todayLogPoints + todayBonusPoints).toLocaleString();
         document.getElementById('s-rate').textContent = rate;
 
         // Activity chart
@@ -609,8 +618,9 @@
         activityChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: '활성 유저', data: vals, backgroundColor: 'rgba(156,39,176,0.6)', borderColor: '#9C27B0', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
 
         // Top 5
-        const arr = []; usersQ.forEach(u => { const d = u.data(); arr.push({ name: d.customDisplayName || d.displayName || u.id.slice(0,8), coins: d.coins||0, hbt: d.hbtBalance||d.totalHbtEarned||0, streak: d.currentStreak||0 }); });
-        arr.sort((a,b) => b.coins - a.coins);
+        const arr = [];
+        usersQ.forEach(u => arr.push(buildCombinedRankRow(u)));
+        sortCombinedRankRows(arr);
         document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
 
         // 기록 유형별 도넛 차트 — awardedPoints 기준 (사진 없는 기록도 포함)
@@ -781,12 +791,15 @@
     };
 
     // ── Tab 3: Economy ────────────────────────────────────────
+    const RATE_SCALE = 1e8;
     const PAGE_SIZE_TOP20 = 20;
     const PAGE_SIZE_TX = 20;
     const PAGE_SIZE_POINTS = 30;
     let top20AllRows = [], top20CurrentPage = 0;
     let txCursors = [null], txCurrentPage = 0;
     let pointsUsersMap = {};
+    let currentConversionRatePerPoint = 1;
+    let adminTokenStatsCache = null;
 
     function renderTop20() {
         const start = top20CurrentPage * PAGE_SIZE_TOP20;
@@ -804,6 +817,163 @@
         top20CurrentPage = next;
         renderTop20();
     };
+
+    function getAwardedPointsTotal(awarded = {}) {
+        const hasExplicitPoints =
+            Object.prototype.hasOwnProperty.call(awarded, 'dietPoints') ||
+            Object.prototype.hasOwnProperty.call(awarded, 'exercisePoints') ||
+            Object.prototype.hasOwnProperty.call(awarded, 'mindPoints');
+
+        const explicitTotal =
+            (Number(awarded.dietPoints) || 0) +
+            (Number(awarded.exercisePoints) || 0) +
+            (Number(awarded.mindPoints) || 0);
+
+        if (hasExplicitPoints || explicitTotal > 0) {
+            return explicitTotal;
+        }
+
+        return (awarded.diet ? 10 : 0) + (awarded.exercise ? 15 : 0) + (awarded.mind ? 5 : 0);
+    }
+
+    function formatAdminNumber(value, maxFractionDigits = 2) {
+        const num = Number(value);
+        if (!Number.isFinite(num)) return '-';
+        return num.toLocaleString('ko-KR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: Math.abs(num % 1) > 0 ? maxFractionDigits : 0
+        });
+    }
+
+    function toDateKey(date) {
+        if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function dateKeyFromValue(value) {
+        if (!value) return '';
+
+        if (typeof value === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+            const parsed = new Date(value);
+            return toDateKey(parsed);
+        }
+
+        if (value instanceof Date) return toDateKey(value);
+        if (typeof value.toDate === 'function') return toDateKey(value.toDate());
+        if (typeof value.seconds === 'number') return toDateKey(new Date(value.seconds * 1000));
+
+        return '';
+    }
+
+    function phaseToLabel(phase) {
+        if (phase === 1) return 'A';
+        if (phase === 2) return 'B';
+        if (phase === 3) return 'C';
+        return 'D+';
+    }
+
+    function buildCombinedRankRow(userDoc) {
+        const data = typeof userDoc.data === 'function' ? userDoc.data() : userDoc;
+        const coins = Number(data.coins) || 0;
+        const hbt = Number(data.hbtBalance || data.totalHbtEarned) || 0;
+        return {
+            name: data.customDisplayName || data.displayName || userDoc.id?.slice(0, 8) || '-',
+            coins,
+            hbt,
+            streak: Number(data.currentStreak) || 0,
+            combinedScore: (coins * currentConversionRatePerPoint) + hbt
+        };
+    }
+
+    function sortCombinedRankRows(rows) {
+        rows.sort((a, b) => {
+            if (b.combinedScore !== a.combinedScore) return b.combinedScore - a.combinedScore;
+            if (b.coins !== a.coins) return b.coins - a.coins;
+            return b.hbt - a.hbt;
+        });
+        return rows;
+    }
+
+    async function loadAdminTokenStats() {
+        if (adminTokenStatsCache) return adminTokenStatsCache;
+        try {
+            const result = await httpsCallable(fns, 'getTokenStats')({});
+            const stats = result?.data || null;
+            const rawRate = Number(stats?.currentRate);
+            if (rawRate > 0) {
+                currentConversionRatePerPoint = rawRate / RATE_SCALE;
+            } else {
+                currentConversionRatePerPoint = 1;
+            }
+            adminTokenStatsCache = stats;
+            return adminTokenStatsCache;
+        } catch (e) {
+            console.warn('관리자 토큰 통계 조회 오류:', e);
+        }
+        currentConversionRatePerPoint = 1;
+        adminTokenStatsCache = null;
+        return null;
+    }
+
+    async function loadTodayBonusPoints(usersQ) {
+        let total = 0;
+
+        try {
+            const [challengeSnap, monthlyRewardsSnap] = await Promise.all([
+                getDocs(query(
+                    collection(db, 'blockchain_transactions'),
+                    where('type', '==', 'challenge_settlement'),
+                    limit(200)
+                )),
+                getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(24)))
+            ]);
+
+            challengeSnap.forEach(d => {
+                const tx = d.data();
+                if (tx.status !== 'success') return;
+                const dateKey = tx.date || dateKeyFromValue(tx.updatedAt) || dateKeyFromValue(tx.timestamp);
+                if (dateKey === todayStr) {
+                    total += Number(tx.rewardPoints) || 0;
+                }
+            });
+
+            monthlyRewardsSnap.forEach(d => {
+                const reward = d.data();
+                const dateKey = dateKeyFromValue(reward.distributedAt);
+                if (dateKey !== todayStr) return;
+                (reward.winners || []).forEach(winner => {
+                    total += Number(winner.reward) || 0;
+                });
+            });
+        } catch (e) {
+            console.warn('오늘 추가 포인트 집계 오류:', e);
+        }
+
+        usersQ.forEach(u => {
+            const data = u.data();
+            const createdDate = dateKeyFromValue(data.createdAt);
+            if (createdDate === todayStr) {
+                if (data.welcomeBonusGiven) total += 200;
+                if (data.referredBy) total += 200;
+            }
+
+            const referralDay3Date =
+                dateKeyFromValue(data.referralDay3BonusAt) ||
+                dateKeyFromValue(data.referralDay3BonusDate);
+            if (data.referralDay3BonusGiven && referralDay3Date === todayStr) total += 500;
+
+            const referralDay7Date =
+                dateKeyFromValue(data.referralDay7BonusAt) ||
+                dateKeyFromValue(data.referralDay7BonusDate);
+            if (data.referralDay7BonusGiven && referralDay7Date === todayStr) total += 300;
+        });
+
+        return total;
+    }
 
     async function loadTxPage() {
         try {
@@ -943,9 +1113,26 @@
     async function loadEconomy() {
         // TOP 20 (전체 사용자 클라이언트 정렬)
         const { usersQ } = await getData();
+        await loadAdminTokenStats();
+        const conversionRatePerPoint = currentConversionRatePerPoint;
         top20AllRows = [];
-        usersQ.forEach(u => { const d=u.data(); top20AllRows.push({ name: d.customDisplayName||d.displayName||u.id.slice(0,8), coins:d.coins||0, hbt:d.hbtBalance||d.totalHbtEarned||0, streak:d.currentStreak||0 }); });
-        top20AllRows.sort((a,b) => b.coins-a.coins);
+        usersQ.forEach(u => {
+            const d = u.data();
+            const coins = d.coins || 0;
+            const hbt = d.hbtBalance || d.totalHbtEarned || 0;
+            top20AllRows.push({
+                name: d.customDisplayName || d.displayName || u.id.slice(0,8),
+                coins,
+                hbt,
+                streak: d.currentStreak || 0,
+                combinedScore: (coins * conversionRatePerPoint) + hbt
+            });
+        });
+        top20AllRows.sort((a, b) => {
+            if (b.combinedScore !== a.combinedScore) return b.combinedScore - a.combinedScore;
+            if (b.coins !== a.coins) return b.coins - a.coins;
+            return b.hbt - a.hbt;
+        });
         top20CurrentPage = 0;
         renderTop20();
 
@@ -969,7 +1156,9 @@
             const rows = []; mSnap.forEach(d => rows.push(d.data()));
             document.getElementById('rate-history-body').innerHTML = rows.length ? rows.map(r => {
                 const ts=r.timestamp, date=ts ? new Date(ts.seconds?ts.seconds*1000:ts).toLocaleDateString('ko') : (r.weekId||'-');
-                return `<tr><td>${date}</td><td>×${r.adjustmentFactor??'-'}</td><td>${escapeHtml(r.reason||'-')}</td></tr>`;
+                const ratePer100 = Number(r.newRate) > 0 ? Number(r.newRate) * 100 : null;
+                const rateLabel = ratePer100 ? `100P = ${formatAdminNumber(ratePer100)} HBT` : `×${r.adjustmentFactor??'-'}`;
+                return `<tr><td>${date}</td><td>${rateLabel}</td><td>${escapeHtml(r.reason||'-')}</td></tr>`;
             }).join('') : '<tr><td colspan="3" style="color:#999;">이력 없음</td></tr>';
 
             if (rows.length > 1) {

@@ -836,3 +836,11 @@
 ### 135. Background uploads must not hijack the save CTA before the user actually presses save
 - Symptom: Selecting an exercise video immediately changed the main save button to a `saving... XX%` state, which made it feel like the record was already being saved before the user pressed `운동 저장하고 포인트 받기`.
 - Lesson: Background media uploads can start early for performance, but their progress should stay internal until the user presses the save CTA. Only after save begins should upload progress be reflected in the visible button text or save-state UI.
+
+### 136. User-facing update notes should use plain language first, not internal engineering terms
+- Symptom: The changelog wording used terms like `fail-fast`, `mainnet readiness`, and other internal phrases that make sense to engineers but feel hard to scan for regular users.
+- Lesson: For release notes, prefer short user outcomes over implementation terms. Write what changed in everyday language, and keep technical details for internal docs rather than the public update page.
+
+### 137. When changing an admin ranking metric, update every related admin view and summary card to the same source of truth
+- Symptom: The economy tab TOP 20 was changed to a combined `points + HBT` ranking, but the dashboard TOP 5 and headline stats still used older per-field shortcuts, so operators saw inconsistent ordering and misleading totals.
+- Lesson: For admin/ops surfaces, treat ranking logic and KPI cards as one package. If the ranking formula or source data changes, update the dashboard summary, detail table, and supporting stat cards together so the control tower never shows mixed definitions.

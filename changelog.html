@@ -28,13 +28,23 @@
             padding: 20px 16px 40px;
         }
         .back-btn {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
             margin-bottom: 16px;
+            background: white;
+            border: none;
+            border-radius: 12px;
             font-size: 14px;
+            font-weight: 600;
             color: #FF8C00;
             text-decoration: none;
-            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
+        .back-btn:active { transform: scale(0.96); }
         .header {
             text-align: center;
             padding: 32px 20px 24px;
@@ -130,6 +140,26 @@
         .tag-new { background: #E8F5E9; color: #2E7D32; }
         .tag-fix { background: #FFF3E0; color: #E65100; }
         .tag-improve { background: #E3F2FD; color: #1565C0; }
+        .footer {
+            text-align: center;
+            padding: 28px 24px 12px;
+            font-size: 14px;
+            color: #5D4037;
+        }
+        .footer p:first-child {
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .footer a {
+            color: #fff;
+            background: #FF8C00;
+            text-decoration: none;
+            padding: 10px 28px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            display: inline-block;
+        }
         @media (max-width: 420px) {
             .container { padding: 12px 10px 32px; }
             .header h1 { font-size: 24px; }
@@ -139,7 +169,7 @@
 </head>
 <body>
     <div class="container">
-        <a href="/#profile" class="back-btn">프로필로 돌아가기</a>
+        <a href="/#profile" class="back-btn">← 프로필로 돌아가기</a>
 
         <div class="header">
             <h1>업데이트 노트</h1>
@@ -152,14 +182,14 @@
                 <span class="version-badge">v1.0.4</span>
                 <span class="version-date">2026년 4월 10일</span>
             </div>
-            <div class="version-title">챌린지 기준 정리, 앱 지갑 기본 전환, 메인넷 준비 점검</div>
+            <div class="version-title">챌린지 기준을 쉽게 정리하고 앱 사용 흐름을 다듬었습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 위클리·마스터 챌린지의 하루 인정 기준을 65점 이상으로 정리하고, 80% 환급과 100% 달성 보상 문구를 더 쉽게 다듬었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 토크노믹스와 내 지갑 화면의 HBT 일일 한도, 위클리·마스터 안내, 최종 업데이트 날짜를 실제 운영 기준으로 맞췄습니다.</li>
-                <li><span class="tag tag-fix">수정</span> staging Google 로그인에서 계정 선택 후 첫 화면에 머무르던 흐름을 보완해 대시보드 전환이 더 자연스럽게 이어지도록 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 운동 동영상은 백그라운드 업로드를 유지하되, 저장 진행률은 `운동 저장하고 포인트 받기` 버튼을 누른 뒤에만 보이도록 바꿨습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 외부 지갑 연결을 메인 사용자 경로에서 내리고, 앱 지갑을 기본 흐름으로 다시 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> `firebase-functions`와 `firebase-admin`을 최신 버전으로 올리고, 메인넷 주소가 비어 있으면 서버가 즉시 실패하도록 fail-fast 가드를 추가했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 위클리와 마스터 챌린지 안내를 더 쉽게 바꿔서, 하루 65점 기준과 보상 조건을 한눈에 볼 수 있게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 내 지갑과 토크노믹스 화면의 한도와 안내 문구를 실제 운영 기준에 맞게 다시 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 구글 로그인 뒤에 첫 화면에서 잠깐 멈추던 흐름을 줄여서 앱으로 더 자연스럽게 들어오게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 운동 동영상을 고른 직후 바로 저장 중으로 보이지 않게 하고, 저장 버튼을 눌렀을 때만 진행 상황이 보이게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 외부 지갑 대신 앱 지갑을 기본 사용 방식으로 다시 정리해 더 쉽게 쓸 수 있게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 메인넷 준비용 서버 점검과 배포 전 확인 항목을 다시 정리했습니다.</li>
             </ul>
         </div>
 
@@ -170,11 +200,11 @@
             </div>
             <div class="version-title">간편 모드, 마일스톤 정리, Android 공유 보완</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> `/simple` 간편 모드를 추가하고 식단, 운동, 마음만 보이는 진입 흐름을 만들었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 간편 프로필에 현재 포인트, 친구 초대 QR, 해빛스쿨 단톡방 QR, 앱 설치 CTA를 한 화면에 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 간편 모드 문구와 상단 구조를 더 단순하게 바꾸고 식단과 마음 탭의 AI 분석 버튼을 다시 보이게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 기존 회원에게 시작 마일스톤 보상이 다시 뜨던 문제를 정리해, 이미 높은 단계가 완료된 카테고리는 낮은 단계가 재등장하지 않게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> Android 사진 공유가 자동 저장되지 않더라도 앱이 바로 식단 흐름으로 들어가도록 fallback을 보완했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> `/simple` 간편 모드를 추가하고 식단, 운동, 마음만 보이는 진입 흐름을 만들었습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 간편 프로필에 현재 포인트, 친구 초대 QR, 해빛스쿨 단톡방 QR, 앱 설치 버튼을 정리했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 간편 모드 문구와 상단 구성을 더 단순하게 바꾸고 식단과 마음의 AI 분석 버튼을 다시 보이게 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 기존 회원에게 시작 마일스톤 보상이 다시 뜨던 문제를 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> Android 사진 공유가 자동 저장되지 않더라도 식단 화면으로 바로 들어가도록 보완했습니다.</li>
             </ul>
         </div>
 
@@ -183,13 +213,13 @@
                 <span class="version-badge">v1.0.2</span>
                 <span class="version-date">2026년 4월 8일</span>
             </div>
-            <div class="version-title">Android 연동, 공유 결과 안내, TWA 릴리즈 준비</div>
+            <div class="version-title">Android 연동, 공유 안내, TWA 준비</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> Android shell에서 Health Connect 걸음수 데이터를 운동 탭으로 넘기는 handoff와 안내 배너를 추가했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> Android share sheet 노출 복구와 런처 아이콘 inset 조정으로 Samsung/One UI 잘림 문제를 보완했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 공유된 식단 사진이 어떤 칸에 배치되는지 diet 탭 안에서 바로 확인할 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> release signing, assetlinks, fullscreen TWA 준비 상태를 다음 단계로 넘길 수 있도록 스크립트와 문서를 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 기존 회원 대상 APK 설치 시 보이던 갤러리 반응과 포인트 중복 계산 문제를 함께 보완했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> Android에서 Health Connect 걸음수 연동과 관련 안내 흐름을 보강했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> Android 공유 목록 노출과 앱 아이콘 여백을 조정해 삼성 기기 표시 문제를 보완했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 공유한 사진이 식단 기록 흐름으로 자연스럽게 이어지도록 보완했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> release signing, assetlinks, fullscreen TWA 준비 문서를 다음 단계로 이어지게 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 기존 회원 APK 설치 후 갤러리 반응과 포인트 계산 문제를 추가로 보완했습니다.</li>
             </ul>
         </div>
 
@@ -200,11 +230,11 @@
             </div>
             <div class="version-title">설치 흐름, 알림, AI 분석 저장 보강</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 설치 배너와 하단 CTA에서 앱 설치를 더 분명하게 안내하고, iOS와 인앱브라우저 설치 흐름을 보강했습니다.</li>
-                <li><span class="tag tag-new">신규</span> 프로필에서 직접 켜는 알림 권한 카드와 친구·챌린지 web push 알림 흐름을 추가했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 식단 AI 분석 결과가 저장되고 새로고침 후에도 유지되며 갤러리에서도 다시 보이도록 보완했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 친구 챌린지 카드에서 바로 시작, 대기, 취소를 처리할 수 있게 흐름을 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 프로덕션 friendship 및 social challenge 권한 배포 누락으로 생기던 오류를 줄였습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 설치 배너와 하단 버튼에서 앱 설치를 더 분명하게 안내하고, iOS 홈 화면 설치 흐름도 보강했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> 프로필에서 직접 켜는 알림 권한 카드와 친구·챌린지 관련 알림 흐름을 추가했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 식단 AI 분석 결과가 저장되고 새로고침 뒤에도 다시 보이도록 보완했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 친구 챌린지 카드에서 바로 시작, 대기, 취소를 처리하기 쉽게 흐름을 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 친구 연결과 소셜 챌린지 권한 쪽 배포 문제를 보완했습니다.</li>
             </ul>
         </div>
 
@@ -217,8 +247,8 @@
             <ul class="change-list">
                 <li><span class="tag tag-improve">개선</span> 기록, 갤러리, 자산, 프로필 화면을 모바일 기준으로 다시 정리했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 친구 연결, 친구 챌린지, 초대 링크, 해빛코치 연동 흐름을 한 방향으로 정돈했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 공유 카드, 피드, 반응, 하단 CTA를 읽기 쉬운 구조로 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 관리자 화면, 영상 썸네일, 주간 미션 등 주요 버그를 함께 보완했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 공유 카드, 필드, 반응, 하단 버튼을 읽기 쉬운 구조로 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 관리자 화면, 영상 업로드, 주간 미션 등 주요 버그를 보완했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 본서버 배포 전 최종 문서와 운영 체크리스트를 정리했습니다.</li>
             </ul>
         </div>
@@ -232,7 +262,7 @@
             <ul class="change-list">
                 <li><span class="tag tag-improve">개선</span> 공유 카드와 공개 범위 안내를 더 단순한 흐름으로 정리했습니다.</li>
                 <li><span class="tag tag-fix">수정</span> 사진, 영상 업로드와 썸네일 관리 쪽 오류를 보완했습니다.</li>
-                <li><span class="tag tag-new">신규</span> 초대 링크, 친구 연결, 해빛코치 명령 연동 흐름을 추가했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> 초대 링크, 친구 연결, 해빛코치 명령 연동 흐름을 추가했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 대시보드, 갤러리, 프로필, 자산 화면의 정보 배치를 조정했습니다.</li>
             </ul>
         </div>
@@ -244,10 +274,10 @@
             </div>
             <div class="version-title">staging 검증 체계와 대시보드 1차 개편</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> staging Firebase 프로젝트와 emulator 기반 사전 검증 체계를 마련했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> staging Firebase 프로젝트와 emulator 기반 사전 검증 체계를 마련했습니다.</li>
                 <li><span class="tag tag-fix">수정</span> 관리자 권한, 로그인, staging QA 경로와 배포 스크립트 문제를 정리했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 대시보드 기록 입력, 갤러리, 커뮤니티 구조 개편을 시작했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 공개 범위와 공유 설정 안내를 사용자 중심으로 다시 배치했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 공개 범위와 공유 설정 안내를 사용 중단 흐름으로 다시 배치했습니다.</li>
             </ul>
         </div>
 
@@ -258,9 +288,9 @@
             </div>
             <div class="version-title">챌린지 상태와 토큰 흐름 조정</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> HBT 예치 밸런스와 챌린지 시작 오류를 보완했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> HBT 예치 관련 챌린지 시작 오류를 보완했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 마스터 챌린지 보상과 위클리 보너스 구조를 조정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 토큰 변환 흐름과 지갑 안내를 더 명확하게 다듬었습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 토큰 변환 흐름과 지갑 안내를 더 명확하게 바꿨습니다.</li>
             </ul>
         </div>
 
@@ -272,7 +302,7 @@
             <div class="version-title">집단 버그 수정과 관리자 관리 강화</div>
             <ul class="change-list">
                 <li><span class="tag tag-fix">수정</span> 주간 미션, 챌린지 보상, 통계 계산 관련 주요 버그를 수정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 관리자 회원, HBT, 수동 전환 관리 화면을 보강했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 관리자 회원, HBT, 활동 전환 관리 화면을 보강했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 운영자가 보는 목록, 통계, 필터 구조를 정리했습니다.</li>
             </ul>
         </div>
@@ -284,10 +314,15 @@
             </div>
             <div class="version-title">푸시 알림, 커뮤니티 보상, 초대 기능</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> FCM 알림과 관리자 알림 발송 흐름을 추가했습니다.</li>
-                <li><span class="tag tag-new">신규</span> 주간 MVP 보상과 친구 초대 QR, 카카오 공유 기능을 추가했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> FCM 알림과 관리자 알림 발송 흐름을 추가했습니다.</li>
+                <li><span class="tag tag-new">새 기능</span> 월간 MVP 보상, 친구 초대 QR, 카카오 공유 기능을 추가했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 기록 요약 차트, 챌린지 전환, 프로필 초대 UX를 보강했습니다.</li>
             </ul>
+        </div>
+
+        <div class="footer">
+            <p>해빛스쿨 — 건강한 습관이 가치가 되는 곳</p>
+            <p><a href="/#profile">해빛스쿨로 돌아가기</a></p>
         </div>
     </div>
 </body>
