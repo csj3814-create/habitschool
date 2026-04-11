@@ -46,3 +46,10 @@
 - [x] Restyle the wallet history into separate HBT / point boxes with no list scroll
 - [x] Add reaction and social-challenge point records where current data sources allow it
 - [x] Bump app/service-worker cache version to `124` for the wallet-history box refresh
+
+## Gas Prefund Fix
+
+- [x] Reproduce the wallet gas-prefund failure from the browser console symptom
+- [x] Trace the `prefundWallet` Cloud Function failure path
+- [x] Remove the stray challenge-bonus policy lookup from `prefundWallet`
+- [ ] Deploy the Functions fix after commit/push and user approval

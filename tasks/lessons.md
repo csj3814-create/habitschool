@@ -18,6 +18,11 @@
 - Root cause: the first pass built point history only from `daily_logs.awardedPoints` plus a small subset of blockchain transactions, while several other point flows either live in different collections or are not logged as history at all.
 - Lesson: before shipping any wallet history UI, enumerate every `coins` mutation path first. Then separate them into: 1) directly renderable from existing collections, 2) derivable with acceptable queries, 3) impossible to reconstruct because no history is stored. If category 3 exists, call it out and plan a dedicated point-history write path instead of pretending the history is complete.
 
+### 63. Keep helper Cloud Functions narrowly scoped; do not copy challenge-policy logic into unrelated wallet funding flows
+- Symptom: wallet gas prefunding failed with a 500 and the client showed `현재 챌린지 보상 정책을 불러오지 못했습니다` even though the user was only trying to get BNB gas.
+- Root cause: `prefundWallet` accidentally contained a copied challenge-bonus policy block and referenced `def.tier`, which does not exist in that function. A simple gas top-up path was therefore blocked by unrelated business logic.
+- Lesson: for operational helpers like gas prefund, wallet export, or balance checks, keep dependencies minimal and audit for pasted logic before deploy. If a function does not need challenge state or tokenomics policy to do its job, it should not fetch them.
+
 ## 2026-04-03
 
 ### 59. Cloud Functions?占쎌꽌??`admin.firestore.FieldValue.*`??湲곤옙?吏 留먭퀬 `firebase-admin/firestore`??`FieldValue`占?吏곸젒 ?占쎌빞 ?占쎈떎
