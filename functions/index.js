@@ -78,6 +78,13 @@ const HABIT_ADDRESS = ACTIVE_CHAIN.habitAddress;
 const STAKING_ADDRESS = ACTIVE_CHAIN.stakingAddress;
 const RPC_URL = ACTIVE_CHAIN.rpcUrl;
 const CHAIN_ID = ACTIVE_CHAIN.chainId;
+const HISTORY_RPC_URLS = ACTIVE_CHAIN_KEY === "mainnet"
+    ? [
+        "https://bsc-rpc.publicnode.com",
+        "https://1rpc.io/bnb",
+        RPC_URL
+    ]
+    : [RPC_URL];
 const EXPLORER_URL = ACTIVE_CHAIN.explorerUrl;
 const GAS_TOKEN_SYMBOL = ACTIVE_CHAIN.gasToken;
 const MAINNET_CHALLENGE_CUTOVER_DATE = "2026-04-12";
@@ -88,8 +95,9 @@ const HBT_TRANSFER_INTERFACE = new ethers.Interface([
 const HBT_TRANSFER_TOPIC = ethers.id("Transfer(address,address,uint256)");
 const DEFAULT_HBT_TRANSFER_HISTORY_LIMIT = 50;
 const MAX_HBT_TRANSFER_HISTORY_LIMIT = 100;
-const HBT_TRANSFER_SCAN_CHUNK = ACTIVE_CHAIN_KEY === "mainnet" ? 200000 : 400000;
-const HBT_TRANSFER_MAX_CHUNKS = ACTIVE_CHAIN_KEY === "mainnet" ? 24 : 12;
+const HBT_TRANSFER_SCAN_CHUNK = ACTIVE_CHAIN_KEY === "mainnet" ? 50000 : 200000;
+const HBT_TRANSFER_MIN_SCAN_CHUNK = ACTIVE_CHAIN_KEY === "mainnet" ? 5000 : 50000;
+const HBT_TRANSFER_MAX_CHUNKS = ACTIVE_CHAIN_KEY === "mainnet" ? 20 : 20;
 
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
@@ -786,6 +794,12 @@ function getStakingContract(signerOrProvider) {
     return new ethers.Contract(STAKING_ADDRESS, contractAbi.HaBitStaking, signerOrProvider);
 }
 
+function createReadOnlyProvider(rpcUrl = RPC_URL) {
+    return new ethers.JsonRpcProvider(rpcUrl, CHAIN_ID, {
+        batchMaxCount: 1
+    });
+}
+
 function getIndexedAddressTopic(address) {
     return ethers.zeroPadValue(ethers.getAddress(address), 32);
 }
@@ -823,6 +837,28 @@ function classifyHbtTransfer(fromAddress, toAddress, walletAddress) {
     return { direction, kind, counterparty };
 }
 
+function isRpcRateLimitError(error) {
+    const batchedErrors = Array.isArray(error?.value) ? error.value : [];
+    const messages = [
+        error?.shortMessage,
+        error?.message,
+        error?.info?.error?.message,
+        ...batchedErrors.map(entry => entry?.error?.message)
+    ]
+        .map(value => String(value || "").toLowerCase())
+        .filter(Boolean);
+
+    const errorCodes = batchedErrors
+        .map(entry => Number(entry?.error?.code))
+        .filter(code => Number.isFinite(code));
+
+    return errorCodes.includes(-32005) || messages.some(message =>
+        message.includes("rate limit") ||
+        message.includes("too many requests") ||
+        message.includes("limit exceeded")
+    );
+}
+
 async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFAULT_HBT_TRANSFER_HISTORY_LIMIT) {
     const safeLimit = Math.min(
         Math.max(Number(limit) || DEFAULT_HBT_TRANSFER_HISTORY_LIMIT, 1),
@@ -834,23 +870,47 @@ async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFA
     const collected = new Map();
     let toBlock = latestBlock;
     let chunkCount = 0;
+    let chunkSize = HBT_TRANSFER_SCAN_CHUNK;
 
     while (toBlock >= 0 && chunkCount < HBT_TRANSFER_MAX_CHUNKS && collected.size < safeLimit) {
-        const fromBlock = Math.max(0, toBlock - HBT_TRANSFER_SCAN_CHUNK + 1);
-        const [incomingLogs, outgoingLogs] = await Promise.all([
-            provider.getLogs({
+        const fromBlock = Math.max(0, toBlock - chunkSize + 1);
+        let incomingLogs = [];
+        let outgoingLogs = [];
+
+        try {
+            incomingLogs = await provider.getLogs({
                 address: HABIT_ADDRESS,
                 topics: [HBT_TRANSFER_TOPIC, null, walletTopic],
                 fromBlock,
                 toBlock
-            }),
-            provider.getLogs({
+            });
+
+            outgoingLogs = await provider.getLogs({
                 address: HABIT_ADDRESS,
                 topics: [HBT_TRANSFER_TOPIC, walletTopic, null],
                 fromBlock,
                 toBlock
-            })
-        ]);
+            });
+        } catch (error) {
+            if (!isRpcRateLimitError(error)) throw error;
+
+            if (chunkSize > HBT_TRANSFER_MIN_SCAN_CHUNK) {
+                const nextChunkSize = Math.max(
+                    HBT_TRANSFER_MIN_SCAN_CHUNK,
+                    Math.floor(chunkSize / 2)
+                );
+                console.warn(
+                    `[hbt-history] RPC rate limited for blocks ${fromBlock}-${toBlock}; retrying with chunk ${nextChunkSize}`
+                );
+                chunkSize = nextChunkSize;
+                continue;
+            }
+
+            console.warn(
+                `[hbt-history] RPC rate limited at minimum chunk ${chunkSize}; returning partial HBT history`
+            );
+            break;
+        }
 
         [...incomingLogs, ...outgoingLogs].forEach((log) => {
             const mapKey = `${String(log.transactionHash || "").toLowerCase()}:${log.index}`;
@@ -896,6 +956,9 @@ async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFA
 
         toBlock = fromBlock - 1;
         chunkCount += 1;
+        if (chunkSize < HBT_TRANSFER_SCAN_CHUNK) {
+            chunkSize = Math.min(HBT_TRANSFER_SCAN_CHUNK, chunkSize * 2);
+        }
     }
 
     const sortedTransfers = Array.from(collected.values())
@@ -909,12 +972,12 @@ async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFA
 
     const uniqueBlockNumbers = [...new Set(sortedTransfers.map((item) => item.blockNumber))];
     const blockTimestampMap = new Map();
-    await Promise.all(uniqueBlockNumbers.map(async (blockNumber) => {
-        const block = await provider.getBlock(blockNumber);
+    for (const blockNumber of uniqueBlockNumbers) {
+        const block = await provider.getBlock(blockNumber).catch(() => null);
         if (block) {
             blockTimestampMap.set(blockNumber, Number(block.timestamp) * 1000);
         }
-    }));
+    }
 
     return sortedTransfers.map((transfer) => {
         const timestampMs = blockTimestampMap.get(transfer.blockNumber) || 0;
@@ -926,6 +989,25 @@ async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFA
                 : ""
         };
     });
+}
+
+async function getRecentHbtTransferHistoryWithFallbacks(walletAddress, limit = DEFAULT_HBT_TRANSFER_HISTORY_LIMIT) {
+    let lastError = null;
+
+    for (const rpcUrl of HISTORY_RPC_URLS) {
+        try {
+            const provider = createReadOnlyProvider(rpcUrl);
+            return await getRecentHbtTransferHistory(provider, walletAddress, limit);
+        } catch (error) {
+            lastError = error;
+            console.warn(
+                `[hbt-history] provider failed: ${rpcUrl} :: ${error?.shortMessage || error?.message || error}`
+            );
+        }
+    }
+
+    if (lastError) throw lastError;
+    return [];
 }
 
 function resolveStakeContractModeFromReceipt(receipt) {
@@ -1221,8 +1303,7 @@ exports.getHbtTransferHistory = onCall(
                 };
             }
 
-            const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
-            const transfers = await getRecentHbtTransferHistory(provider, walletAddress, limit);
+            const transfers = await getRecentHbtTransferHistoryWithFallbacks(walletAddress, limit);
 
             return {
                 walletAddress,

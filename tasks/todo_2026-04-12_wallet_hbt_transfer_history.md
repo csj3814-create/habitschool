@@ -18,6 +18,7 @@
 - Kept the wallet's existing app-authored transaction rows for semantic events like conversion and challenge settlement, then merged uncaptured onchain inflow/outflow rows in `js/app.js`.
 - Deduped generic onchain rows by known app tx hashes (`txHash`, `stakeTxHash`, `resolveTxHash`, `bonusTxHash`) so the same movement does not appear twice.
 - Bumped the app/service-worker version to `127` so wallet history changes are not hidden behind stale PWA cache.
+- Hardened the callable after the first prod rollout: BSC mainnet `bsc-dataseed` RPC was rate-limiting `eth_getLogs`, so wallet HBT history now prefers history-safe public RPC fallbacks (`bsc-rpc.publicnode.com`, `1rpc.io/bnb`) before the default endpoint and keeps `eth_getLogs` sequential/non-batched.
 - Verification passed:
   - `node -c functions/index.js`
   - `npm test`

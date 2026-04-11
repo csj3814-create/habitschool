@@ -895,6 +895,10 @@
 ### 138. After patching `admin.html`, verify the extracted module script directly before assuming the control tower login still works
 - Symptom: The control tower Google popup could complete, but the page stayed on the login screen because `admin.html` had stray braces and a broken inline module block around the admin auth helpers.
 - Lesson: `admin.html` does not go through the main app bundle, so `app.js` and `main.js` build checks are not enough. After any manual edit to the control tower page, extract the module script from the raw file bytes and run `node --check` on it before deploying. Avoid `Get-Content`-based extraction when the file contains Korean text, because PowerShell encoding can create false negatives during syntax verification.
+
+### 139. On BSC mainnet, wallet transfer history must not depend on the default dataseed RPC for `eth_getLogs`
+- Symptom: The HBT wallet history UI shipped a merge path for real onchain inflow/outflow, but prod still showed only challenge staking rows because `getHbtTransferHistory` kept failing with `method eth_getLogs in batch triggered rate limit` / `limit exceeded`.
+- Lesson: For BSC mainnet history features, prove the chosen RPC can serve `eth_getLogs` before shipping. Do not assume the default `bsc-dataseed.binance.org` endpoint is suitable for transfer-history scans. Use a history-safe fallback provider order, keep `eth_getLogs` sequential/non-batched, and verify with a real wallet address that recent transfers are returned before deploying.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
