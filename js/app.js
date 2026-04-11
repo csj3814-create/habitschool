@@ -3272,7 +3272,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=122';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=124';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -5073,7 +5073,7 @@ function renderAssetHistory() {
             <div class="wallet-tx-empty-cta">
                 <div class="wallet-tx-empty-icon">💎</div>
                 <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
-                <div class="wallet-tx-empty-sub">HBT 거래와 포인트 적립 내역이 여기에 함께 쌓여요</div>
+                <div class="wallet-tx-empty-sub">HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요</div>
                 <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
             </div>
         `;
@@ -5212,6 +5212,16 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
             orderBy("date", "desc"),
+            limit(100)
+        )).catch(() => null);
+        const _p_reactionAwardHistory = getDocs(query(
+            collection(db, "daily_logs"),
+            where("reactionPointAwardedUserIds", "array-contains", user.uid),
+            limit(100)
+        )).catch(() => null);
+        const _p_notificationHistory = getDocs(query(
+            collection(db, "notifications"),
+            where("postOwnerId", "==", user.uid),
             limit(100)
         )).catch(() => null);
         // 오늘 전체 로그 (리액션 포인트 집계용)
@@ -5647,6 +5657,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 try {
                     const txSnap = await _p_txHistory;
                     const pointSnap = await _p_pointHistory;
+                    const reactionAwardSnap = await _p_reactionAwardHistory;
+                    const notificationSnap = await _p_notificationHistory;
                     const hbtItems = [];
                     const pointItems = [];
 
@@ -5758,22 +5770,89 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 (awarded.dietPoints || 0) +
                                 (awarded.exercisePoints || 0) +
                                 (awarded.mindPoints || 0);
-                            if (earnedPoints <= 0) return;
 
                             const completedTags = [];
                             if (awarded.dietPoints > 0) completedTags.push('식단');
                             if (awarded.exercisePoints > 0) completedTags.push('운동');
                             if (awarded.mindPoints > 0) completedTags.push('마음');
 
+                            if (earnedPoints > 0) {
+                                pointItems.push({
+                                    sortKey: `${log.date || ''}T23:59:59`,
+                                    icon: '🪙',
+                                    iconClass: 'convert',
+                                    label: completedTags.length > 0 ? `${completedTags.join('·')} 기록` : '일일 기록',
+                                    date: log.date || '-',
+                                    amountText: `+${formatAssetHistoryAmount(earnedPoints, 'P')}`,
+                                    amountClass: 'positive',
+                                    statusText: '적립'
+                                });
+                            }
+
+                            const incomingReactionPoints = Array.isArray(log.reactionPointAwardedUserIds)
+                                ? log.reactionPointAwardedUserIds.length
+                                : 0;
+                            if (incomingReactionPoints > 0) {
+                                pointItems.push({
+                                    sortKey: `${log.date || ''}T21:00:00`,
+                                    icon: '❤️',
+                                    iconClass: 'settle',
+                                    label: '받은 응원 포인트',
+                                    date: log.date || '-',
+                                    amountText: `+${formatAssetHistoryAmount(incomingReactionPoints, 'P')}`,
+                                    amountClass: 'positive',
+                                    statusText: '리액션'
+                                });
+                            }
+                        });
+                    }
+
+                    if (reactionAwardSnap && !reactionAwardSnap.empty) {
+                        const outgoingReactionByDate = new Map();
+                        reactionAwardSnap.forEach(reactionDoc => {
+                            const log = reactionDoc.data() || {};
+                            if (log.userId === user.uid) return;
+                            const dateKey = String(log.date || '').trim() || '-';
+                            outgoingReactionByDate.set(dateKey, (outgoingReactionByDate.get(dateKey) || 0) + 1);
+                        });
+
+                        outgoingReactionByDate.forEach((count, dateKey) => {
                             pointItems.push({
-                                sortKey: `${log.date || ''}T23:59:59`,
-                                icon: '🪙',
+                                sortKey: `${dateKey}T20:00:00`,
+                                icon: '👏',
                                 iconClass: 'convert',
-                                label: completedTags.length > 0 ? `${completedTags.join('·')} 기록` : '일일 기록',
-                                date: log.date || '-',
-                                amountText: `+${formatAssetHistoryAmount(earnedPoints, 'P')}`,
+                                label: '보낸 응원 포인트',
+                                date: dateKey,
+                                amountText: `+${formatAssetHistoryAmount(count, 'P')}`,
                                 amountClass: 'positive',
-                                statusText: '적립'
+                                statusText: '리액션'
+                            });
+                        });
+                    }
+
+                    if (notificationSnap && !notificationSnap.empty) {
+                        notificationSnap.forEach(notificationDoc => {
+                            const notification = notificationDoc.data() || {};
+                            if (notification.type !== 'challenge_settled') return;
+
+                            const bonusPoints = Number(notification.bonusPoints || 0);
+                            if (!(bonusPoints > 0)) return;
+
+                            const createdAt = notification.createdAt?.toDate?.();
+                            const dateText = formatAssetHistoryDate(createdAt, '-');
+                            const challengeLabel = notification.challengeType === 'competition'
+                                ? '경쟁 챌린지 보상'
+                                : '소셜 챌린지 보상';
+
+                            pointItems.push({
+                                sortKey: createdAt ? createdAt.toISOString() : `${dateText}T19:00:00`,
+                                icon: '🏅',
+                                iconClass: 'settle',
+                                label: challengeLabel,
+                                date: dateText,
+                                amountText: `+${formatAssetHistoryAmount(bonusPoints, 'P')}`,
+                                amountClass: 'positive',
+                                statusText: notification.outcome || '정산'
                             });
                         });
                     }

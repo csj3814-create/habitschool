@@ -43,3 +43,6 @@
 - [x] Point the challenge/staking link at the token-holder view for the staking contract
 - [x] Replace visible `currentRate` copy in the wallet tab with `비율`
 - [x] Bump app/service-worker cache version to `123` for the wallet-history refresh
+- [x] Restyle the wallet history into separate HBT / point boxes with no list scroll
+- [x] Add reaction and social-challenge point records where current data sources allow it
+- [x] Bump app/service-worker cache version to `124` for the wallet-history box refresh

@@ -13,6 +13,11 @@
 - Root cause: the HBT transaction feed was querying user history without an active-chain filter, the wallet links pointed to generic address pages instead of token-holder views, and cache-busted asset versions were not bumped alongside the wallet UI refresh.
 - Lesson: whenever wallet copy or explorer links change, verify 1) HBT history is filtered to the active chain, 2) holder-facing links use the token page with the relevant address parameter, 3) visible wording matches product language (`비율`), and 4) app + service worker versions are bumped together so users actually receive the fix.
 
+### 62. Point history UI must be designed from the real earning sources, not just the most obvious collection
+- Symptom: the wallet showed only diet/exercise/mind entries even though users also earn or spend points through reactions, challenge results, admin adjustments, referrals, and bonuses.
+- Root cause: the first pass built point history only from `daily_logs.awardedPoints` plus a small subset of blockchain transactions, while several other point flows either live in different collections or are not logged as history at all.
+- Lesson: before shipping any wallet history UI, enumerate every `coins` mutation path first. Then separate them into: 1) directly renderable from existing collections, 2) derivable with acceptable queries, 3) impossible to reconstruct because no history is stored. If category 3 exists, call it out and plan a dedicated point-history write path instead of pretending the history is complete.
+
 ## 2026-04-03
 
 ### 59. Cloud Functions?占쎌꽌??`admin.firestore.FieldValue.*`??湲곤옙?吏 留먭퀬 `firebase-admin/firestore`??`FieldValue`占?吏곸젒 ?占쎌빞 ?占쎈떎
