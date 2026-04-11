@@ -2901,6 +2901,32 @@ exports.startChallenge = onCall(
 
         let userData = userSnap.data();
         userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
+        let appliedChallengeBonusPolicy = null;
+
+        try {
+            const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+            const habitContract = getHabitContract(provider);
+            const stats = await habitContract.getTokenStats();
+            const currentPhase = Number(stats[4]) || 1;
+            const challengeMetrics = await getChallengeBonusMetrics();
+            const currentBonusPolicy = buildChallengeBonusPolicy({
+                phase: currentPhase,
+                mse30: challengeMetrics.mse30
+            });
+            const tierPolicy = currentBonusPolicy.tiers[def.tier] || currentBonusPolicy.tiers.mini;
+            appliedChallengeBonusPolicy = {
+                phase: currentBonusPolicy.phase,
+                mse30: currentBonusPolicy.mse30,
+                extraHalvingApplied: currentBonusPolicy.extraHalvingApplied,
+                rateBps: tierPolicy.bonusBps,
+                rateLabel: tierPolicy.bonusPercentLabel,
+                halvingCount: tierPolicy.effectiveHalvingCount,
+                windowDays: currentBonusPolicy.windowDays
+            };
+        } catch (policyError) {
+            console.error("챌린지 보너스 정책 조회 오류:", policyError?.message || policyError);
+            throw new HttpsError("internal", "현재 챌린지 보상 정책을 불러오지 못했습니다.");
+        }
 
         // 온체인 스테이킹 검증 (HBT 예치가 있는 경우)
         if (stakeAmount > 0) {
