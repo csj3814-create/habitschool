@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 66. App fixes must go to staging first, then only go to prod after explicit user confirmation
+- Symptom: some recent fixes were pushed straight to production even though the intended release flow was staging validation first.
+- Root cause: I treated a small UI/runtime fix as safe enough for direct production deploy and did not consistently enforce the repo's deployment rule at the release step.
+- Lesson: for every hosting/functions change, deploy to staging first, report the staging URL/status, wait for the user's go-ahead, and only then deploy to production. Do not skip the staging hop just because the patch looks small.
+
 ### 65. Transient wallet/challenge toasts need explicit UTF-8 verification before deploy
 - Symptom: the challenge application flow briefly showed mojibake during the HBT approval wait state even though most permanent wallet UI text looked correct.
 - Root cause: a copied toast string in `js/blockchain-manager.js` contained broken Korean text, and because it only appears during a short-lived approval state it was easy to miss in normal smoke checks.
