@@ -769,7 +769,7 @@
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
                     <h3>🔄 포인트 → HBT 변환</h3>
-                    <p class="wallet-convert-desc">100P 단위로 HBT로 바꾸며, 실제 수량은 현재 온체인 비율(currentRate)로 계산돼요.</p>
+                    <p class="wallet-convert-desc" id="wallet-convert-desc">100P 단위로 HBT로 바꾸며, 현재 온체인 비율을 불러오고 있어요.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
                         현재 비율 불러오는 중...
                     </div>
@@ -823,7 +823,7 @@
                     <h3>⛏️ 채굴 반감기 현황</h3>
                     <div class="wallet-halving-progress">
                         <div class="wallet-halving-progress-header">
-                            <span>구간 진행도</span>
+                            <span id="halving-progress-source-label">구간 진행도</span>
                             <span id="halving-progress-text">0 / 35,000,000 HBT</span>
                         </div>
                         <div class="wallet-halving-bar-bg">
@@ -849,8 +849,8 @@
                             </div>
                         </div>
                     </div>
-                    <p class="wallet-halving-tip">
-                        ⚡ 실제 전환 비율은 온체인 currentRate로 매주 자동 조절됩니다.
+                    <p class="wallet-halving-tip" id="wallet-halving-tip">
+                        ⚡ 현재 온체인 currentRate를 불러오고 있어요.
                     </p>
                 </div>
 

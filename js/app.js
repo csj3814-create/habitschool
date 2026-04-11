@@ -16,7 +16,7 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 // 프로젝트 모듈 임포트
 import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
-import { formatChallengeQualificationLabel, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
@@ -4889,6 +4889,88 @@ function getHalvingReferenceRateLabel(phaseIdx) {
     }
 }
 
+const ACTIVE_WALLET_CHAIN_KEY = getActiveChainKey(APP_ENV);
+const MAINNET_CHALLENGE_CUTOVER_DATE = '2026-04-12';
+
+function normalizeChallengeChainKey(challenge = null) {
+    const explicitChainKey = String(challenge?.chainKey || '').trim().toLowerCase();
+    if (explicitChainKey === 'mainnet' || explicitChainKey === 'testnet') {
+        return explicitChainKey;
+    }
+
+    const networkTag = String(challenge?.network || challenge?.networkTag || '').trim();
+    if (networkTag === 'bsc') return 'mainnet';
+    if (networkTag === 'bscTestnet') return 'testnet';
+    return '';
+}
+
+function shouldDropChallengeForActiveChain(challenge = null) {
+    if (!challenge || typeof challenge !== 'object') return false;
+
+    const status = String(challenge.status || '').trim();
+    if (!['ongoing', 'claimable', 'expired'].includes(status)) {
+        return false;
+    }
+
+    const challengeChainKey = normalizeChallengeChainKey(challenge);
+    if (challengeChainKey && challengeChainKey !== ACTIVE_WALLET_CHAIN_KEY) {
+        return true;
+    }
+
+    if (ACTIVE_WALLET_CHAIN_KEY !== 'mainnet' || challengeChainKey === 'mainnet') {
+        return false;
+    }
+
+    const startDate = String(challenge.startDate || '').trim();
+    return !!startDate && startDate < MAINNET_CHALLENGE_CUTOVER_DATE;
+}
+
+function sanitizeChallengeStateForActiveChain(userData = {}) {
+    const activeChallenges = (userData.activeChallenges && typeof userData.activeChallenges === 'object')
+        ? { ...userData.activeChallenges }
+        : {};
+    const cleanupUpdate = {};
+
+    Object.entries(activeChallenges).forEach(([tier, challenge]) => {
+        if (shouldDropChallengeForActiveChain(challenge)) {
+            delete activeChallenges[tier];
+            cleanupUpdate[`activeChallenges.${tier}`] = deleteField();
+        }
+    });
+
+    let legacyActiveChallenge = userData.activeChallenge || null;
+    if (shouldDropChallengeForActiveChain(legacyActiveChallenge)) {
+        legacyActiveChallenge = null;
+        cleanupUpdate.activeChallenge = deleteField();
+    }
+
+    return {
+        activeChallenges,
+        legacyActiveChallenge,
+        cleanupUpdate
+    };
+}
+
+function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnchainLabel(APP_ENV)) {
+    const formattedPer100 = formatPer100HbtDisplay(per100Hbt);
+    const phaseLabel = `${eraToLabel(currentPhase)}구간`;
+
+    const convertDescEl = document.getElementById('wallet-convert-desc');
+    if (convertDescEl) {
+        convertDescEl.textContent = `100P 단위로 HBT로 바꾸며, 현재 ${chainLabel} 온체인 비율은 100P = ${formattedPer100} HBT (${phaseLabel})예요.`;
+    }
+
+    const progressSourceEl = document.getElementById('halving-progress-source-label');
+    if (progressSourceEl) {
+        progressSourceEl.textContent = `구간 진행도 · ${chainLabel} 기준`;
+    }
+
+    const tipEl = document.getElementById('wallet-halving-tip');
+    if (tipEl) {
+        tipEl.innerHTML = `⚡ 지금은 <strong>${phaseLabel}</strong>! ${chainLabel} 온체인 비율은 <strong>100P = ${formattedPer100} HBT</strong>이며, currentRate가 매주 자동 조절됩니다.`;
+    }
+}
+
 // 반감기 스케줄 테이블 활성 구간 하이라이트 + 현재 비율 동적 표시
 function updateHalvingScheduleUI(currentPhase, per100Hbt) {
     const schedule = document.getElementById('halving-schedule');
@@ -4911,11 +4993,7 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
             if (spans[1]) spans[1].textContent = getHalvingReferenceRateLabel(phaseIdx);
         }
     }
-    // 하단 안내 문구 업데이트
-    const tipEl = schedule.parentElement?.parentElement?.querySelector('.wallet-halving-tip');
-    if (tipEl) {
-        tipEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentPhase)}구간</strong>! 실제 전환 비율은 온체인 currentRate로 매주 자동 조절됩니다.`;
-    }
+    updateWalletRateCopy(currentPhase, per100Hbt);
 }
 
 // 자산 표시 캐시 (30초 TTL)
@@ -4926,6 +5004,14 @@ const ASSET_CACHE_TTL = 30_000;
 window.updateAssetDisplay = async function (forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return;
+
+    const cachedRate = Number(window._currentConversionRate);
+    if (cachedRate > 0) {
+        updateWalletRateCopy(
+            Number(window._currentConversionPhase) || 1,
+            (cachedRate / 1e8) * 100
+        );
+    }
 
     // 캐시 히트: 30초 이내 같은 유저 → 스킵 (스켈레톤만 해제)
     const now = Date.now();
@@ -5008,6 +5094,25 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
         if (userSnap.exists()) {
             const userData = userSnap.data();
+
+            const {
+                activeChallenges: sanitizedActiveChallenges,
+                legacyActiveChallenge,
+                cleanupUpdate
+            } = sanitizeChallengeStateForActiveChain(userData);
+            if (Object.keys(cleanupUpdate).length > 0) {
+                try {
+                    await updateDoc(userRef, cleanupUpdate);
+                } catch (cleanupError) {
+                    console.warn('active challenge cleanup skipped:', cleanupError?.message || cleanupError);
+                }
+            }
+            userData.activeChallenges = sanitizedActiveChallenges;
+            if (legacyActiveChallenge) {
+                userData.activeChallenge = legacyActiveChallenge;
+            } else {
+                delete userData.activeChallenge;
+            }
 
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
@@ -5192,6 +5297,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 }
                 const globalMinted = parseFloat(stats.totalMined) || 0;
                 const phase = stats.currentPhase || 1;
+                const statsChainLabel = String(stats.chainLabel || getActiveOnchainLabel(APP_ENV));
                 // v2: currentRate는 RATE_SCALE(10^8) 단위
                 const RATE_SCALE = 1e8;
                 const ratePerPoint = (stats.currentRate || RATE_SCALE) / RATE_SCALE;
@@ -5207,11 +5313,12 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
                 // 반감기 스케줄 테이블 활성 구간 + 동적 비율 표시
                 updateHalvingScheduleUI(phase, per100);
+                updateWalletRateCopy(phase, per100, statsChainLabel);
 
                 // 변환 비율 배지 업데이트 (전체 기준)
                 const rateBadge = document.getElementById('convert-rate-badge');
                 if (rateBadge) {
-                    rateBadge.textContent = `현재 ${eraToLabel(phase)}구간 · 100P = ${formatPer100HbtDisplay(per100)} HBT`;
+                    rateBadge.textContent = `현재 ${statsChainLabel} ${eraToLabel(phase)}구간 · 100P = ${formatPer100HbtDisplay(per100)} HBT`;
                 }
 
                 // v2 Phase 경계 기반 진행률 계산

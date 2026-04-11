@@ -80,6 +80,7 @@ const RPC_URL = ACTIVE_CHAIN.rpcUrl;
 const CHAIN_ID = ACTIVE_CHAIN.chainId;
 const EXPLORER_URL = ACTIVE_CHAIN.explorerUrl;
 const GAS_TOKEN_SYMBOL = ACTIVE_CHAIN.gasToken;
+const MAINNET_CHALLENGE_CUTOVER_DATE = "2026-04-12";
 
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
@@ -106,6 +107,74 @@ function assertOnchainRuntimeConfigured() {
 }
 
 assertOnchainRuntimeConfigured();
+
+function getChallengeChainKey(challenge = null) {
+    const explicitChainKey = String(challenge?.chainKey || "").trim().toLowerCase();
+    if (explicitChainKey === "mainnet" || explicitChainKey === "testnet") {
+        return explicitChainKey;
+    }
+
+    const networkTag = String(challenge?.network || challenge?.networkTag || "").trim();
+    if (networkTag === "bsc") return "mainnet";
+    if (networkTag === "bscTestnet") return "testnet";
+    return "";
+}
+
+function shouldDropChallengeForActiveChain(challenge = null) {
+    if (!challenge || typeof challenge !== "object") return false;
+
+    const status = String(challenge.status || "").trim();
+    if (!["ongoing", "claimable", "expired"].includes(status)) {
+        return false;
+    }
+
+    const challengeChainKey = getChallengeChainKey(challenge);
+    if (challengeChainKey && challengeChainKey !== ACTIVE_CHAIN_KEY) {
+        return true;
+    }
+
+    if (ACTIVE_CHAIN_KEY !== "mainnet" || challengeChainKey === "mainnet") {
+        return false;
+    }
+
+    const startDate = String(challenge.startDate || "").trim();
+    return !!startDate && startDate < MAINNET_CHALLENGE_CUTOVER_DATE;
+}
+
+async function sanitizeUserChallengesForActiveChain(userRef, userData = {}) {
+    const activeChallenges = userData.activeChallenges && typeof userData.activeChallenges === "object"
+        ? { ...userData.activeChallenges }
+        : {};
+    const cleanupUpdate = {};
+
+    Object.entries(activeChallenges).forEach(([tier, challenge]) => {
+        if (shouldDropChallengeForActiveChain(challenge)) {
+            delete activeChallenges[tier];
+            cleanupUpdate[`activeChallenges.${tier}`] = FieldValue.delete();
+        }
+    });
+
+    let legacyActiveChallenge = userData.activeChallenge || null;
+    if (shouldDropChallengeForActiveChain(legacyActiveChallenge)) {
+        legacyActiveChallenge = null;
+        cleanupUpdate.activeChallenge = FieldValue.delete();
+    }
+
+    if (Object.keys(cleanupUpdate).length > 0) {
+        await userRef.update(cleanupUpdate);
+    }
+
+    const sanitizedUserData = {
+        ...userData,
+        activeChallenges
+    };
+    if (legacyActiveChallenge) {
+        sanitizedUserData.activeChallenge = legacyActiveChallenge;
+    } else {
+        delete sanitizedUserData.activeChallenge;
+    }
+    return sanitizedUserData;
+}
 
 function normalizeAddress(address) {
     return String(address || "").trim().toLowerCase();
@@ -744,6 +813,7 @@ exports.mintHBT = onCall(
                 .where("userId", "==", uid)
                 .where("type", "==", "conversion")
                 .where("status", "==", "success")
+                .where("network", "==", ACTIVE_CHAIN.networkTag)
                 .where("date", "==", today)
                 .get();
 
@@ -915,7 +985,8 @@ exports.prefundWallet = onCall(
             throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
         }
 
-        const userData = userSnap.data();
+        let userData = userSnap.data();
+        userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         let appliedChallengeBonusPolicy = null;
 
         try {
@@ -1018,6 +1089,11 @@ exports.getTokenStats = onCall(
                 totalBurned: ethers.formatUnits(stats[2], decimals),
                 currentRate: Number(stats[3]),
                 currentPhase,
+                chainKey: ACTIVE_CHAIN.key,
+                chainLabel: ACTIVE_CHAIN.label,
+                networkTag: ACTIVE_CHAIN.networkTag,
+                habitAddress: HABIT_ADDRESS,
+                stakingAddress: STAKING_ADDRESS,
                 weeklyTarget: ethers.formatUnits(stats[5], decimals),
                 remainingInPool: ethers.formatUnits(stats[6], decimals),
                 totalStaked: ethers.formatUnits(totalStaked, decimals),
@@ -2849,7 +2925,8 @@ exports.startChallenge = onCall(
             throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
         }
 
-        const userData = userSnap.data();
+        let userData = userSnap.data();
+        userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
 
         // 온체인 스테이킹 검증 (HBT 예치가 있는 경우)
         if (stakeAmount > 0) {
@@ -2922,7 +2999,11 @@ exports.startChallenge = onCall(
             },
             qualificationPolicy,
             status: 'ongoing',
-            tier: def.tier
+            tier: def.tier,
+            chainKey: ACTIVE_CHAIN.key,
+            network: ACTIVE_CHAIN.networkTag,
+            chainId: ACTIVE_CHAIN.chainId,
+            chainLabel: ACTIVE_CHAIN.label
         };
 
         const updateData = {};
@@ -2939,6 +3020,7 @@ exports.startChallenge = onCall(
                 amount: stakeAmount,
                 stakeTxHash,
                 onChain: true,
+                network: ACTIVE_CHAIN.networkTag,
                 timestamp: FieldValue.serverTimestamp(),
                 status: 'success'
             });
@@ -2986,7 +3068,8 @@ exports.claimChallengeReward = onCall(
             throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
         }
 
-        const userData = userSnap.data();
+        let userData = userSnap.data();
+        userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         const activeChallenges = userData.activeChallenges || {};
         const challenge = activeChallenges[tier];
 
@@ -3113,6 +3196,7 @@ exports.claimChallengeReward = onCall(
             bonusPolicyMse30: challenge?.bonusPolicy?.mse30 || 0,
             bonusExtraHalvingApplied: !!challenge?.bonusPolicy?.extraHalvingApplied,
             onChain: stakedOnChain,
+            network: ACTIVE_CHAIN.networkTag,
             resolveTxHash,
             bonusTxHash,
             timestamp: FieldValue.serverTimestamp(),
@@ -3161,7 +3245,8 @@ exports.settleChallengeFailure = onCall(
             throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
         }
 
-        const userData = userSnap.data();
+        let userData = userSnap.data();
+        userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         const activeChallenges = userData.activeChallenges || {};
         const challenge = activeChallenges[tier];
 
@@ -3218,6 +3303,7 @@ exports.settleChallengeFailure = onCall(
             successRate: successRate,
             completedDays: challenge.completedDays || 0,
             onChain: stakedOnChain,
+            network: ACTIVE_CHAIN.networkTag,
             resolveTxHash,
             timestamp: FieldValue.serverTimestamp(),
             status: 'success'
@@ -3443,6 +3529,7 @@ exports.migrateHbtToCoins = onCall(
                 onChainHbt,
                 stakedHbt,
                 convertedToCoins: pointsToAdd,
+                network: ACTIVE_CHAIN.networkTag,
                 timestamp: FieldValue.serverTimestamp(),
                 status: 'success'
             });
@@ -3635,6 +3722,7 @@ exports.adjustMiningRate = onSchedule(
             const txQuery = db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
                 .where("status", "==", "success")
+                .where("network", "==", ACTIVE_CHAIN.networkTag)
                 .where("date", ">=", startDateStr)
                 .where("date", "<=", endDateStr);
 
@@ -3785,6 +3873,7 @@ exports.adjustMiningRateManual = onCall(
             const txSnap = await db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
                 .where("status", "==", "success")
+                .where("network", "==", ACTIVE_CHAIN.networkTag)
                 .where("date", ">=", startDateStr)
                 .where("date", "<=", endDateStr)
                 .get();
