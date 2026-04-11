@@ -78,7 +78,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v126';
+const CACHE_NAME = 'habitschool-v127';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', self.location.origin).href;

@@ -81,6 +81,15 @@ const CHAIN_ID = ACTIVE_CHAIN.chainId;
 const EXPLORER_URL = ACTIVE_CHAIN.explorerUrl;
 const GAS_TOKEN_SYMBOL = ACTIVE_CHAIN.gasToken;
 const MAINNET_CHALLENGE_CUTOVER_DATE = "2026-04-12";
+const HBT_DECIMALS = 8;
+const HBT_TRANSFER_INTERFACE = new ethers.Interface([
+    "event Transfer(address indexed from, address indexed to, uint256 value)"
+]);
+const HBT_TRANSFER_TOPIC = ethers.id("Transfer(address,address,uint256)");
+const DEFAULT_HBT_TRANSFER_HISTORY_LIMIT = 50;
+const MAX_HBT_TRANSFER_HISTORY_LIMIT = 100;
+const HBT_TRANSFER_SCAN_CHUNK = ACTIVE_CHAIN_KEY === "mainnet" ? 200000 : 400000;
+const HBT_TRANSFER_MAX_CHUNKS = ACTIVE_CHAIN_KEY === "mainnet" ? 24 : 12;
 
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
@@ -241,6 +250,14 @@ async function sanitizeUserChallengesForActiveChain(userRef, userData = {}) {
 
 function normalizeAddress(address) {
     return String(address || "").trim().toLowerCase();
+}
+
+function toChecksumAddressOrEmpty(address) {
+    try {
+        return ethers.getAddress(String(address || "").trim());
+    } catch (_) {
+        return "";
+    }
 }
 
 function isBootstrapAdminEmail(email) {
@@ -769,6 +786,148 @@ function getStakingContract(signerOrProvider) {
     return new ethers.Contract(STAKING_ADDRESS, contractAbi.HaBitStaking, signerOrProvider);
 }
 
+function getIndexedAddressTopic(address) {
+    return ethers.zeroPadValue(ethers.getAddress(address), 32);
+}
+
+function classifyHbtTransfer(fromAddress, toAddress, walletAddress) {
+    const normalizedWallet = normalizeAddress(walletAddress);
+    const normalizedFrom = normalizeAddress(fromAddress);
+    const normalizedTo = normalizeAddress(toAddress);
+    const normalizedStaking = normalizeAddress(STAKING_ADDRESS);
+
+    const direction = normalizedFrom === normalizedWallet && normalizedTo === normalizedWallet
+        ? "self"
+        : normalizedTo === normalizedWallet
+            ? "in"
+            : "out";
+
+    let kind = "external";
+    if (normalizedFrom === normalizeAddress(ZERO_ADDRESS)) {
+        kind = "mint";
+    } else if (normalizedTo === normalizeAddress(ZERO_ADDRESS)) {
+        kind = "burn";
+    } else if (
+        normalizedStaking &&
+        (normalizedFrom === normalizedStaking || normalizedTo === normalizedStaking)
+    ) {
+        kind = "staking";
+    } else if (direction === "self") {
+        kind = "self";
+    }
+
+    const counterparty = direction === "in"
+        ? toChecksumAddressOrEmpty(fromAddress)
+        : toChecksumAddressOrEmpty(toAddress);
+
+    return { direction, kind, counterparty };
+}
+
+async function getRecentHbtTransferHistory(provider, walletAddress, limit = DEFAULT_HBT_TRANSFER_HISTORY_LIMIT) {
+    const safeLimit = Math.min(
+        Math.max(Number(limit) || DEFAULT_HBT_TRANSFER_HISTORY_LIMIT, 1),
+        MAX_HBT_TRANSFER_HISTORY_LIMIT
+    );
+    const normalizedWallet = ethers.getAddress(walletAddress);
+    const walletTopic = getIndexedAddressTopic(normalizedWallet);
+    const latestBlock = await provider.getBlockNumber();
+    const collected = new Map();
+    let toBlock = latestBlock;
+    let chunkCount = 0;
+
+    while (toBlock >= 0 && chunkCount < HBT_TRANSFER_MAX_CHUNKS && collected.size < safeLimit) {
+        const fromBlock = Math.max(0, toBlock - HBT_TRANSFER_SCAN_CHUNK + 1);
+        const [incomingLogs, outgoingLogs] = await Promise.all([
+            provider.getLogs({
+                address: HABIT_ADDRESS,
+                topics: [HBT_TRANSFER_TOPIC, null, walletTopic],
+                fromBlock,
+                toBlock
+            }),
+            provider.getLogs({
+                address: HABIT_ADDRESS,
+                topics: [HBT_TRANSFER_TOPIC, walletTopic, null],
+                fromBlock,
+                toBlock
+            })
+        ]);
+
+        [...incomingLogs, ...outgoingLogs].forEach((log) => {
+            const mapKey = `${String(log.transactionHash || "").toLowerCase()}:${log.index}`;
+            if (collected.has(mapKey)) return;
+
+            let parsed;
+            try {
+                parsed = HBT_TRANSFER_INTERFACE.parseLog(log);
+            } catch (_) {
+                return;
+            }
+
+            const fromAddress = parsed?.args?.from;
+            const toAddress = parsed?.args?.to;
+            const rawValue = parsed?.args?.value;
+            if (!fromAddress || !toAddress || rawValue === undefined || rawValue === null) {
+                return;
+            }
+
+            const amountRaw = BigInt(rawValue.toString());
+            if (!(amountRaw > 0n)) return;
+
+            const { direction, kind, counterparty } = classifyHbtTransfer(
+                fromAddress,
+                toAddress,
+                normalizedWallet
+            );
+
+            collected.set(mapKey, {
+                txHash: log.transactionHash,
+                logIndex: log.index,
+                blockNumber: log.blockNumber,
+                from: toChecksumAddressOrEmpty(fromAddress),
+                to: toChecksumAddressOrEmpty(toAddress),
+                amount: ethers.formatUnits(amountRaw, HBT_DECIMALS),
+                amountRaw: amountRaw.toString(),
+                direction,
+                kind,
+                counterparty,
+                network: ACTIVE_CHAIN.networkTag
+            });
+        });
+
+        toBlock = fromBlock - 1;
+        chunkCount += 1;
+    }
+
+    const sortedTransfers = Array.from(collected.values())
+        .sort((a, b) => {
+            if (a.blockNumber !== b.blockNumber) {
+                return b.blockNumber - a.blockNumber;
+            }
+            return b.logIndex - a.logIndex;
+        })
+        .slice(0, safeLimit);
+
+    const uniqueBlockNumbers = [...new Set(sortedTransfers.map((item) => item.blockNumber))];
+    const blockTimestampMap = new Map();
+    await Promise.all(uniqueBlockNumbers.map(async (blockNumber) => {
+        const block = await provider.getBlock(blockNumber);
+        if (block) {
+            blockTimestampMap.set(blockNumber, Number(block.timestamp) * 1000);
+        }
+    }));
+
+    return sortedTransfers.map((transfer) => {
+        const timestampMs = blockTimestampMap.get(transfer.blockNumber) || 0;
+        return {
+            ...transfer,
+            timestampMs,
+            date: timestampMs
+                ? new Date(timestampMs + 9 * 60 * 60 * 1000).toISOString().split("T")[0]
+                : ""
+        };
+    });
+}
+
 function resolveStakeContractModeFromReceipt(receipt) {
     const target = normalizeAddress(receipt?.to || receipt?.contractAddress);
     if (target && target === normalizeAddress(STAKING_ADDRESS) && isConfiguredAddress(STAKING_ADDRESS)) {
@@ -1029,6 +1188,56 @@ exports.getOnchainBalance = onCall(
 // ========================================
 // 2-1. 사용자 지갑 가스(ETH) 자동 충전
 // ========================================
+exports.getHbtTransferHistory = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const uid = request.auth.uid;
+        const requestedLimit = Number(request.data?.limit);
+        const limit = Number.isFinite(requestedLimit)
+            ? requestedLimit
+            : DEFAULT_HBT_TRANSFER_HISTORY_LIMIT;
+
+        try {
+            const userSnap = await db.collection("users").doc(uid).get();
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+            }
+
+            const walletAddress = getEffectiveWalletAddress(userSnap.data());
+            if (!walletAddress) {
+                return {
+                    walletAddress: "",
+                    chainKey: ACTIVE_CHAIN.key,
+                    network: ACTIVE_CHAIN.networkTag,
+                    transfers: []
+                };
+            }
+
+            const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+            const transfers = await getRecentHbtTransferHistory(provider, walletAddress, limit);
+
+            return {
+                walletAddress,
+                chainKey: ACTIVE_CHAIN.key,
+                network: ACTIVE_CHAIN.networkTag,
+                transfers
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("getHbtTransferHistory error:", error);
+            throw new HttpsError("internal", "HBT 거래 이력을 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+);
+
 exports.prefundWallet = onCall(
     {
         secrets: [SERVER_MINTER_KEY],

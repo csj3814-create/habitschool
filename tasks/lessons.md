@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
+- Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
+- Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.
+- Lesson: for wallet asset history, start by enumerating every real balance-changing path. If the product can receive or send HBT outside a narrow app flow, merge app-authored semantic events with onchain token transfer history and dedupe by tx hash instead of assuming Firestore alone is enough.
+
 ### 66. App fixes must go to staging first, then only go to prod after explicit user confirmation
 - Symptom: some recent fixes were pushed straight to production even though the intended release flow was staging validation first.
 - Root cause: I treated a small UI/runtime fix as safe enough for direct production deploy and did not consistently enforce the repo's deployment rule at the release step.

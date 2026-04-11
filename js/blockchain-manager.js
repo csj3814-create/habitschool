@@ -54,6 +54,7 @@ import { checkRateLimit } from './security.js';
 let mintHBTFunction = null;
 let getOnchainBalanceFunction = null;
 let getTokenStatsFunction = null;
+let getHbtTransferHistoryFunction = null;
 let claimChallengeFunction = null;
 let startChallengeFunction = null;
 let prefundWalletFunction = null;
@@ -66,6 +67,7 @@ async function ensureFunctions() {
         mintHBTFunction = httpsCallable(functions, 'mintHBT');
         getOnchainBalanceFunction = httpsCallable(functions, 'getOnchainBalance');
         getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
+        getHbtTransferHistoryFunction = httpsCallable(functions, 'getHbtTransferHistory');
         startChallengeFunction = httpsCallable(functions, 'startChallenge');
         prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
         ensureReferralCodeFunction = httpsCallable(functions, 'ensureReferralCode');
@@ -1599,6 +1601,20 @@ export async function fetchTokenStats() {
     } catch (error) {
         console.error('⚠️ 토큰 통계 조회 오류:', error);
         return null;
+    }
+}
+
+export async function fetchHbtTransferHistory(limit = 50) {
+    try {
+        await ensureFunctions();
+        const currentUser = auth.currentUser;
+        if (!currentUser || !getHbtTransferHistoryFunction) return [];
+
+        const result = await getHbtTransferHistoryFunction({ limit });
+        return Array.isArray(result.data?.transfers) ? result.data.transfers : [];
+    } catch (error) {
+        console.error('⚠️ 최근 HBT 온체인 거래 이력 조회 오류:', error);
+        return [];
     }
 }
 

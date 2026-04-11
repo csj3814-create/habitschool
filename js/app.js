@@ -3272,17 +3272,22 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=126';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=127';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
 let fetchTokenStats = async () => null;
+let fetchHbtTransferHistory = async () => [];
 import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     updateChallengeProgress = mod.updateChallengeProgress;
     getConversionRate = mod.getConversionRate;
     getCurrentEra = mod.getCurrentEra;
     fetchTokenStats = mod.fetchTokenStats;
+    fetchHbtTransferHistory = mod.fetchHbtTransferHistory;
     console.log('✅ app.js: 블록체인 모듈 로드');
+    if (auth.currentUser && typeof window.updateAssetDisplay === 'function') {
+        Promise.resolve().then(() => window.updateAssetDisplay(true)).catch(() => { });
+    }
 }).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
@@ -5008,6 +5013,97 @@ function doesTransactionMatchActiveChain(tx = {}) {
         : txDate < MAINNET_CHALLENGE_CUTOVER_DATE;
 }
 
+function normalizeAssetHistoryTxHash(value) {
+    const raw = String(value || '').trim();
+    return /^0x[a-fA-F0-9]{64}$/.test(raw) ? raw.toLowerCase() : '';
+}
+
+function collectAssetHistoryTxHashes(tx = {}) {
+    return ['txHash', 'stakeTxHash', 'resolveTxHash', 'bonusTxHash']
+        .map(key => normalizeAssetHistoryTxHash(tx[key]))
+        .filter(Boolean);
+}
+
+function formatAssetHistoryAddress(address, fallback = '외부 지갑') {
+    const raw = String(address || '').trim();
+    if (!/^0x[a-fA-F0-9]{40}$/.test(raw)) return fallback;
+    return `${raw.slice(0, 6)}...${raw.slice(-4)}`;
+}
+
+function buildOnchainHbtHistoryItem(transfer = {}) {
+    const direction = String(transfer.direction || '').trim();
+    const kind = String(transfer.kind || '').trim();
+    const amount = transfer.amount || 0;
+    const timestampMs = Number(transfer.timestampMs || 0);
+    const date = formatAssetHistoryDate(
+        timestampMs > 0 ? new Date(timestampMs) : null,
+        transfer.date || '-'
+    );
+    const sortKey = timestampMs > 0
+        ? new Date(timestampMs).toISOString()
+        : `${transfer.date || ''}T12:00:00`;
+
+    let label = 'HBT 이동';
+    let icon = '💸';
+    let iconClass = 'convert';
+    let amountText = formatAssetHistoryAmount(amount, 'HBT');
+    let amountClass = '';
+
+    if (direction === 'in') {
+        label = kind === 'mint'
+            ? '온체인 민팅'
+            : kind === 'staking'
+                ? '챌린지 반환'
+                : 'HBT 입금';
+        icon = kind === 'mint' ? '✨' : '📥';
+        iconClass = 'settle';
+        amountText = `+${formatAssetHistoryAmount(amount, 'HBT')}`;
+        amountClass = 'positive';
+    } else if (direction === 'out') {
+        label = kind === 'burn'
+            ? 'HBT 소각'
+            : kind === 'staking'
+                ? '챌린지 컨트랙트 이동'
+                : 'HBT 출금';
+        icon = kind === 'burn' ? '🔥' : '📤';
+        iconClass = 'withdraw';
+        amountText = `-${formatAssetHistoryAmount(amount, 'HBT')}`;
+        amountClass = 'negative';
+    } else if (direction === 'self') {
+        label = 'HBT 자체 이동';
+        icon = '🔁';
+        iconClass = 'convert';
+        amountText = formatAssetHistoryAmount(amount, 'HBT');
+    }
+
+    const counterpartyText = kind === 'mint'
+        ? '토큰 컨트랙트'
+        : kind === 'burn'
+            ? '소각'
+            : kind === 'staking'
+                ? '챌린지 컨트랙트'
+                : direction === 'self'
+                    ? '내 지갑'
+                    : formatAssetHistoryAddress(transfer.counterparty, '외부 지갑');
+
+    const statusText = direction === 'in'
+        ? `입금 · ${counterpartyText}`
+        : direction === 'out'
+            ? `출금 · ${counterpartyText}`
+            : `이동 · ${counterpartyText}`;
+
+    return {
+        sortKey,
+        icon,
+        iconClass,
+        label,
+        date,
+        amountText,
+        amountClass,
+        statusText
+    };
+}
+
 function renderAssetHistoryItem({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) {
     return `
         <div class="wallet-tx-item">
@@ -5208,6 +5304,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("timestamp", "desc"),
             limit(100)
         )).catch(() => null);
+        const _p_onchainHbtTransfers = fetchHbtTransferHistory(50).catch(() => []);
         const _p_pointHistory = getDocs(query(
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
@@ -5659,13 +5756,16 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const pointSnap = await _p_pointHistory;
                     const reactionAwardSnap = await _p_reactionAwardHistory;
                     const notificationSnap = await _p_notificationHistory;
+                    const onchainHbtTransfers = await _p_onchainHbtTransfers;
                     const hbtItems = [];
                     const pointItems = [];
+                    const knownHbtTxHashes = new Set();
 
                     if (txSnap && !txSnap.empty) {
                         txSnap.forEach(txDoc => {
                             const tx = txDoc.data();
                             if (!doesTransactionMatchActiveChain(tx)) return;
+                            collectAssetHistoryTxHashes(tx).forEach(hash => knownHbtTxHashes.add(hash));
 
                             const txDateObj = tx.timestamp?.toDate?.();
                             const txDate = formatAssetHistoryDate(txDateObj, tx.date || '-');
@@ -5759,6 +5859,18 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                     statusText: tx.status === 'success' ? '적립' : '처리 중'
                                 });
                             }
+                        });
+                    }
+
+                    if (Array.isArray(onchainHbtTransfers) && onchainHbtTransfers.length > 0) {
+                        onchainHbtTransfers.forEach((transfer) => {
+                            const networkTag = String(transfer.network || '').trim();
+                            if (networkTag && networkTag !== ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG) return;
+
+                            const transferHash = normalizeAssetHistoryTxHash(transfer.txHash);
+                            if (transferHash && knownHbtTxHashes.has(transferHash)) return;
+
+                            hbtItems.push(buildOnchainHbtHistoryItem(transfer));
                         });
                     }
 
