@@ -106,6 +106,159 @@ const ACTIVE_CHAIN_PARAMS = {
     blockExplorerUrls: [ACTIVE_BSC_NETWORK.explorer]
 };
 
+const PENDING_CHALLENGE_START_KEY_PREFIX = 'habitschool:pending-challenge-start';
+
+function getPendingChallengeStartStorageKey(uid) {
+    return `${PENDING_CHALLENGE_START_KEY_PREFIX}:${ACTIVE_CHAIN_KEY}:${uid}`;
+}
+
+function readPendingChallengeStart(uid) {
+    if (!uid) return null;
+    try {
+        const raw = localStorage.getItem(getPendingChallengeStartStorageKey(uid));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (error) {
+        console.warn('⚠️ pending challenge start 읽기 실패:', error?.message || error);
+        return null;
+    }
+}
+
+function writePendingChallengeStart(uid, payload) {
+    if (!uid || !payload?.stakeTxHash) return;
+    try {
+        localStorage.setItem(
+            getPendingChallengeStartStorageKey(uid),
+            JSON.stringify({
+                ...payload,
+                chainKey: ACTIVE_CHAIN_KEY,
+                savedAt: new Date().toISOString()
+            })
+        );
+    } catch (error) {
+        console.warn('⚠️ pending challenge start 저장 실패:', error?.message || error);
+    }
+}
+
+function clearPendingChallengeStart(uid) {
+    if (!uid) return;
+    try {
+        localStorage.removeItem(getPendingChallengeStartStorageKey(uid));
+    } catch (error) {
+        console.warn('⚠️ pending challenge start 삭제 실패:', error?.message || error);
+    }
+}
+
+function isOpenChallengeStatus(status = '') {
+    return status === 'ongoing' || status === 'claimable';
+}
+
+function getRecordedOnchainStakeRaw(activeChallenges = {}) {
+    return Object.values(activeChallenges || {}).reduce((sum, challenge) => {
+        if (!challenge?.stakedOnChain || !isOpenChallengeStatus(challenge?.status)) {
+            return sum;
+        }
+        const amount = Number(challenge?.hbtStaked || 0);
+        if (!(amount > 0)) {
+            return sum;
+        }
+        try {
+            return sum.add(ethers.utils.parseUnits(String(amount), HBT_TOKEN.decimals));
+        } catch (error) {
+            console.warn('⚠️ 기록된 예치 금액 파싱 실패:', amount, error?.message || error);
+            return sum;
+        }
+    }, ethers.BigNumber.from(0));
+}
+
+async function inspectChallengeStakeAudit(currentUser, connectedWallet) {
+    if (!currentUser || !connectedWallet) return null;
+
+    const userRef = doc(db, 'users', currentUser.uid);
+    let userSnap = null;
+
+    try {
+        userSnap = await getDocFromServer(userRef);
+    } catch (error) {
+        userSnap = await getDoc(userRef);
+    }
+
+    const userData = userSnap?.exists() ? (userSnap.data() || {}) : {};
+    const activeChallenges = userData.activeChallenges || {};
+    const recordedRaw = getRecordedOnchainStakeRaw(activeChallenges);
+
+    const useDedicatedStaking = await canUseDedicatedStakingContract(connectedWallet.signer);
+    const stakeContract = useDedicatedStaking
+        ? getStakingContract(connectedWallet.signer)
+        : getLegacyStakeContract(connectedWallet.signer);
+    const onchainRaw = stakeContract
+        ? await stakeContract.challengeStakes(connectedWallet.address)
+        : ethers.BigNumber.from(0);
+    const driftRaw = onchainRaw.gt(recordedRaw)
+        ? onchainRaw.sub(recordedRaw)
+        : ethers.BigNumber.from(0);
+
+    return {
+        userData,
+        activeChallenges,
+        recordedRaw,
+        onchainRaw,
+        driftRaw,
+        driftHbt: ethers.utils.formatUnits(driftRaw, HBT_TOKEN.decimals),
+        contractMode: useDedicatedStaking ? 'staking' : 'legacy'
+    };
+}
+
+function showChallengeStartSuccessToast(data, challengeDef, duration, tier, recovered = false) {
+    const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
+    const recoveryPrefix = recovered || data?.recovered ? '♻️ 이전 예치 복구 완료!\n' : '';
+    if (data.hbtStaked > 0) {
+        showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n🎉 오늘 인증분 1일 반영!' : ''}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} / 80%+ 시 예치금 반환`);
+        return;
+    }
+    showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}${data.initialCompletedDays > 0 ? '\n🎉 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
+}
+
+async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount) {
+    const pending = readPendingChallengeStart(currentUser?.uid);
+    if (!pending) {
+        return { handled: false, success: false };
+    }
+
+    const sameChallenge = pending.challengeId === resolvedId;
+    const sameTier = pending.tier === tier;
+    const sameAmount = Number(pending.hbtAmount || 0) === Number(hbtAmount || 0);
+
+    if (!sameChallenge || !sameTier || !sameAmount) {
+        showToast('⚠️ 이전 온체인 예치 복구가 아직 남아 있어 새 예치를 막았어요. 먼저 같은 챌린지로 복구를 완료해 주세요.');
+        return { handled: true, success: false };
+    }
+
+    await ensureFunctions();
+    if (!startChallengeFunction) {
+        showToast('⚠️ 이전 온체인 예치 복구를 위해 서버 연결이 필요합니다. 잠시 뒤 다시 시도해 주세요.');
+        return { handled: true, success: false };
+    }
+
+    try {
+        showToast('♻️ 이전 온체인 예치를 복구 중...');
+        const result = await startChallengeFunction({
+            challengeId: resolvedId,
+            hbtAmount: pending.hbtAmount,
+            stakeTxHash: pending.stakeTxHash
+        });
+        clearPendingChallengeStart(currentUser.uid);
+        showChallengeStartSuccessToast(result.data, challengeDef, challengeDef.duration || 30, tier, true);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        return { handled: true, success: true };
+    } catch (error) {
+        console.error('❌ pending challenge 복구 실패:', error);
+        showToast('⚠️ 이전 예치 복구가 아직 완료되지 않았습니다. 새 예치는 막아두었어요. 잠시 뒤 다시 시도해 주세요.');
+        return { handled: true, success: false };
+    }
+}
+
 function getChallengeQualificationPolicy(challenge = null, tier = 'mini') {
     if (challenge?.qualificationPolicy) {
         return normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier);
@@ -923,6 +1076,11 @@ export async function startChallenge30D(challengeId) {
         // 온체인 스테이킹 (HBT 예치가 있는 경우)
         let stakeTxHash = null;
         if (hbtAmount > 0) {
+            const pendingRecovery = await recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount);
+            if (pendingRecovery.handled) {
+                return pendingRecovery.success;
+            }
+
             const connectedWallet = await getConnectedWallet();
             if (!connectedWallet) {
                 showToast('❌ 지갑이 초기화되지 않았습니다. 페이지를 새로고침해주세요.');
@@ -946,6 +1104,12 @@ export async function startChallenge30D(challengeId) {
             }
 
             // ETH 잔액 확인 → 부족 시 서버에서 가스 자동 충전
+            const stakeAudit = await inspectChallengeStakeAudit(currentUser, connectedWallet);
+            if (stakeAudit?.driftRaw?.gt?.(ethers.BigNumber.from(0))) {
+                showToast(`⚠️ 이전 온체인 예치 ${stakeAudit.driftHbt} HBT가 아직 챌린지 기록과 맞지 않습니다.\n새 예치를 막았어요. 먼저 복구 또는 운영 정리가 필요합니다.`);
+                return false;
+            }
+
             const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
             const MIN_GAS = ethers.utils.parseEther("0.001");
             if (ethBalance.lt(MIN_GAS)) {
@@ -978,6 +1142,13 @@ export async function startChallenge30D(challengeId) {
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
+                writePendingChallengeStart(currentUser.uid, {
+                    challengeId: resolvedId,
+                    tier,
+                    hbtAmount,
+                    stakeTxHash,
+                    walletAddress: connectedWallet.address
+                });
                 console.log('✅ 온체인 스테이킹 완료:', stakeTxHash);
             } catch (txError) {
                 console.error('❌ 온체인 스테이킹 실패:', txError);
@@ -988,6 +1159,10 @@ export async function startChallenge30D(challengeId) {
 
         // Cloud Function 호출 (서버에서 Firestore 챌린지 기록)
         await ensureFunctions();
+        if (!startChallengeFunction && stakeTxHash) {
+            showToast('⚠️ 온체인 예치는 성공했지만 서버 연결이 되지 않았습니다.\n같은 챌린지를 다시 누르면 새로 예치하지 않고 복구를 시도합니다.');
+            return false;
+        }
         if (!startChallengeFunction) {
             showToast('❌ 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
             return false;
@@ -995,6 +1170,7 @@ export async function startChallenge30D(challengeId) {
 
         const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
         const data = result.data;
+        clearPendingChallengeStart(currentUser.uid);
 
         const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
         if (data.hbtStaked > 0) {
@@ -1694,6 +1870,11 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 
         let stakeTxHash = null;
         if (hbtAmount > 0) {
+            const pendingRecovery = await recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount);
+            if (pendingRecovery.handled) {
+                return pendingRecovery.success;
+            }
+
             const connectedWallet = await getConnectedWallet();
             if (!connectedWallet) {
                 showToast(externalWalletAddress
@@ -1712,6 +1893,12 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             if (onchainBalance.lt(rawAmount)) {
                 const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
                 showToast(`❌ 온체인 HBT 잔액이 부족해요. 보유 ${displayBalance} HBT / 필요 ${hbtAmount} HBT`);
+                return false;
+            }
+
+            const stakeAudit = await inspectChallengeStakeAudit(currentUser, connectedWallet);
+            if (stakeAudit?.driftRaw?.gt?.(ethers.BigNumber.from(0))) {
+                showToast(`⚠️ 이전 온체인 예치 ${stakeAudit.driftHbt} HBT가 아직 챌린지 기록과 맞지 않습니다.\n새 예치를 막았어요. 먼저 복구 또는 운영 정리가 필요합니다.`);
                 return false;
             }
 
@@ -1751,6 +1938,13 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
+                writePendingChallengeStart(currentUser.uid, {
+                    challengeId: resolvedId,
+                    tier,
+                    hbtAmount,
+                    stakeTxHash,
+                    walletAddress: connectedWallet.address
+                });
             } catch (error) {
                 console.error('❌ 온체인 예치 실패:', error);
                 showToast(`❌ 온체인 예치에 실패했어요. 가스(${ACTIVE_GAS_TOKEN})와 지갑 연결을 확인해 주세요.`);
@@ -1759,6 +1953,10 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         }
 
         await ensureFunctions();
+        if (!startChallengeFunction && stakeTxHash) {
+            showToast('⚠️ 온체인 예치는 성공했지만 서버 연결이 되지 않았습니다.\n같은 챌린지를 다시 누르면 새로 예치하지 않고 복구를 시도합니다.');
+            return false;
+        }
         if (!startChallengeFunction) {
             showToast('❌ 서버 연결에 실패했어요. 잠시 뒤 다시 시도해 주세요.');
             return false;
@@ -1766,6 +1964,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 
         const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
         const data = result.data;
+        clearPendingChallengeStart(currentUser.uid);
 
         const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
         if (data.hbtStaked > 0) {

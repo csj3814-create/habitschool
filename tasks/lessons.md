@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 64. Any flow that stakes onchain before writing Firestore must persist a recovery handle and detect stake drift before allowing retries
+- Symptom: a `5000 HBT` weekly challenge start could shrink the wallet by `10000 HBT` when the callable failed after the first successful onchain stake and the user retried the same challenge.
+- Root cause: the client submitted `stakeForChallenge()` before the `startChallenge` callable created the Firestore record. When the callable threw a 500, there was no persisted `stakeTxHash` recovery path and no client-side check for unreconciled onchain stake, so a retry could send a second identical stake.
+- Lesson: for every challenge-start or similar two-phase flow, 1) persist the successful onchain tx hash locally before the post-tx callable, 2) retry the callable idempotently using that tx hash, 3) compare onchain aggregate stake vs recorded active challenge stake before allowing a new deposit, and 4) do not treat a same-tx retry as a duplicate active challenge on the backend.
+
 ### 60. Mainnet cutover must include Functions env, service-worker cache bump, and stale chain-state cleanup together
 - Symptom: production wallet copy looked partly updated, but halving progress still showed testnet totals (`49,200`), weekly/master challenge state from testnet kept rendering, and users could keep seeing stale chain-era data after hosting deploys.
 - Root cause: hosting switched to mainnet copy, but production callable Functions were still falling back to testnet env defaults, the PWA service worker version lagged behind the app asset version, and legacy `activeChallenges` documents had no chain metadata so they survived the cutover untouched.

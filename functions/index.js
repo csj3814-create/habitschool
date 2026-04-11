@@ -2950,6 +2950,35 @@ exports.startChallenge = onCall(
 
         // 같은 티어에 진행 중인 챌린지 확인
         const activeChallenges = userData.activeChallenges || {};
+        const existingChallenge = activeChallenges[def.tier] || null;
+        if (existingChallenge &&
+            (existingChallenge.status === 'ongoing' || existingChallenge.status === 'claimable')) {
+            const normalizedExistingId = CHALLENGE_ID_MAP[existingChallenge.challengeId] || existingChallenge.challengeId;
+            const sameStakeTx =
+                !!stakeTxHash &&
+                !!existingChallenge.stakeTxHash &&
+                existingChallenge.stakeTxHash === stakeTxHash;
+            const sameStakeAmount = Math.abs(Number(existingChallenge.hbtStaked || 0) - stakeAmount) < 0.0000001;
+            if (sameStakeTx && sameStakeAmount && normalizedExistingId === resolvedId) {
+                const recoveredQualificationPolicy = normalizeChallengeQualificationPolicy(existingChallenge.qualificationPolicy, def.tier);
+                const recoveredBonusRateBps = getStoredChallengeBonusBps(existingChallenge, def.tier);
+                return {
+                    success: true,
+                    recovered: true,
+                    tier: def.tier,
+                    duration: def.duration,
+                    hbtStaked: Number(existingChallenge.hbtStaked || stakeAmount),
+                    initialCompletedDays: Number(existingChallenge.completedDays || 0),
+                    bonusRateBps: recoveredBonusRateBps,
+                    bonusRateLabel: existingChallenge?.bonusPolicy?.rateLabel || formatBonusPercentLabel(recoveredBonusRateBps),
+                    bonusPhase: Number(existingChallenge?.bonusPolicy?.phase || 1),
+                    bonusMse30: Number(existingChallenge?.bonusPolicy?.mse30 || 0),
+                    bonusExtraHalvingApplied: !!existingChallenge?.bonusPolicy?.extraHalvingApplied,
+                    qualificationPolicy: recoveredQualificationPolicy,
+                    qualificationLabel: formatChallengeQualificationLabel(recoveredQualificationPolicy)
+                };
+            }
+        }
         if (activeChallenges[def.tier] && 
             (activeChallenges[def.tier].status === 'ongoing' || activeChallenges[def.tier].status === 'claimable')) {
             throw new HttpsError("failed-precondition", "이미 해당 티어에 진행 중인 챌린지가 있습니다.");
