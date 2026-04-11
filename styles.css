@@ -1117,11 +1117,14 @@ body.simple-mode .step-input-group {
     background: rgba(255,255,255,0.6);
     border-radius: 10px;
     overflow: hidden;
+    --wallet-halving-columns: minmax(44px, 0.72fr) minmax(0, 1.9fr) minmax(72px, 0.95fr);
 }
 
 .wallet-halving-schedule-header {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr;
+    grid-template-columns: var(--wallet-halving-columns);
+    gap: 10px;
+    align-items: center;
     font-size: 10px;
     font-weight: 700;
     color: #E65100;
@@ -1133,11 +1136,30 @@ body.simple-mode .step-input-group {
 
 .wallet-halving-row {
     display: grid;
-    grid-template-columns: 1fr 2fr 2fr;
+    grid-template-columns: var(--wallet-halving-columns);
+    gap: 10px;
+    align-items: center;
     padding: 6px 10px;
     font-size: 11px;
     color: #555;
     transition: background 0.2s;
+}
+
+.wallet-halving-schedule-header > span:first-child,
+.wallet-halving-row > span:first-child {
+    text-align: center;
+}
+
+.wallet-halving-schedule-header > span:nth-child(2),
+.wallet-halving-row > span:nth-child(2) {
+    min-width: 0;
+}
+
+.wallet-halving-schedule-header > span:last-child,
+.wallet-halving-row > span:last-child {
+    text-align: right;
+    justify-self: end;
+    font-variant-numeric: tabular-nums;
 }
 
 .wallet-halving-row.active {
