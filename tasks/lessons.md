@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 65. Transient wallet/challenge toasts need explicit UTF-8 verification before deploy
+- Symptom: the challenge application flow briefly showed mojibake during the HBT approval wait state even though most permanent wallet UI text looked correct.
+- Root cause: a copied toast string in `js/blockchain-manager.js` contained broken Korean text, and because it only appears during a short-lived approval state it was easy to miss in normal smoke checks.
+- Lesson: when changing wallet or challenge flows, verify not only the steady-state screen but also transient toasts, loading messages, approval prompts, and retry warnings in the actual interaction sequence. If any user-facing copy changes, bump the cache/app version in the same fix so stale PWA assets do not preserve the broken text.
+
 ### 64. Any flow that stakes onchain before writing Firestore must persist a recovery handle and detect stake drift before allowing retries
 - Symptom: a `5000 HBT` weekly challenge start could shrink the wallet by `10000 HBT` when the callable failed after the first successful onchain stake and the user retried the same challenge.
 - Root cause: the client submitted `stakeForChallenge()` before the `startChallenge` callable created the Firestore record. When the callable threw a 500, there was no persisted `stakeTxHash` recovery path and no client-side check for unreconciled onchain stake, so a retry could send a second identical stake.

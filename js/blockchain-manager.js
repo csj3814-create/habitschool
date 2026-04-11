@@ -1131,7 +1131,7 @@ export async function startChallenge30D(challengeId) {
                 if (stakingContract) {
                     const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
                     if (allowance.lt(rawAmount)) {
-                        showToast('??HBT ?덉튂 沅뚰븳 ?듅씤 以?..');
+                        showToast('⏳ HBT 예치 권한 승인 중...');
                         const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
                         await approveTx.wait();
                     }
@@ -1927,7 +1927,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 if (stakingContract) {
                     const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
                     if (allowance.lt(rawAmount)) {
-                        showToast('??HBT ?덉튂 沅뚰븳 ?듅씤 以?..');
+                        showToast('⏳ HBT 예치 권한 승인 중...');
                         const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
                         await approveTx.wait();
                     }
