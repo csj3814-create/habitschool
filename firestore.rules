@@ -58,7 +58,7 @@ service cloud.firestore {
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
                     'missionBadges', 'selectedMissions', 'missionLevelUpDate',
-                    'referralCode', 'currentStreak', 'onboardingComplete', 'friends',
+                    'currentStreak', 'onboardingComplete', 'friends',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt']);
     }

@@ -9,7 +9,7 @@ import { escapeHtml } from './security.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=124';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=126';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -19,6 +19,14 @@ let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
+let _ensureReferralCodeCallable = null;
+
+function getEnsureReferralCodeCallable() {
+    if (!_ensureReferralCodeCallable) {
+        _ensureReferralCodeCallable = httpsCallable(functions, 'ensureReferralCode');
+    }
+    return _ensureReferralCodeCallable;
+}
 
 function rememberPendingSignupOnboarding(user) {
     try {
@@ -140,6 +148,18 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
     }
 
     return { snap: resolvedSnap, data: resolvedData };
+}
+
+async function ensureSignedInUserReferralCode(userData = {}) {
+    const existingCode = normalizeInviteRefCode(userData?.referralCode);
+    if (existingCode) return existingCode;
+    try {
+        const result = await getEnsureReferralCodeCallable()({});
+        return normalizeInviteRefCode(result?.data?.referralCode);
+    } catch (error) {
+        console.warn('초대 코드 보장 실패:', error?.message || error);
+        return '';
+    }
 }
 
 async function applySignedInUserUi(user, userData = {}) {
@@ -615,6 +635,10 @@ export function setupAuthListener(callbacks) {
                     ...resolvedUserData,
                     ...updateData
                 };
+                const ensuredReferralCode = await ensureSignedInUserReferralCode(ud);
+                if (ensuredReferralCode) {
+                    ud.referralCode = ensuredReferralCode;
+                }
 
                 await hydratePushTokenLinkState(user, ud);
                 updateNotificationPermissionCard(user);

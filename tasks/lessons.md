@@ -8,6 +8,11 @@
 - Root cause: I treated a small UI/runtime fix as safe enough for direct production deploy and did not consistently enforce the repo's deployment rule at the release step.
 - Lesson: for every hosting/functions change, deploy to staging first, report the staging URL/status, wait for the user's go-ahead, and only then deploy to production. Do not skip the staging hop just because the patch looks small.
 
+### 67. Stable invite codes must be issued server-side once, never regenerated opportunistically on the client
+- Symptom: a user's invite link could appear to change because several client-side wallet/auth flows silently generated a fresh `referralCode` whenever the field looked missing or stale.
+- Root cause: referral code issuance lived in multiple browser paths instead of a single authoritative server path, and Firestore rules still allowed the client to write `referralCode` directly.
+- Lesson: any user-facing identifier that must stay stable should be owned by one server-side ensure/claim path. Clients may request or display it, but they should not mint or overwrite it. When tightening this kind of ownership, remove the field from client-write rules in the same change and verify cache/version bumps so old browser code stops trying legacy writes.
+
 ### 65. Transient wallet/challenge toasts need explicit UTF-8 verification before deploy
 - Symptom: the challenge application flow briefly showed mojibake during the HBT approval wait state even though most permanent wallet UI text looked correct.
 - Root cause: a copied toast string in `js/blockchain-manager.js` contained broken Korean text, and because it only appears during a short-lived approval state it was easy to miss in normal smoke checks.

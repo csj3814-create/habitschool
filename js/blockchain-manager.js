@@ -57,6 +57,7 @@ let getTokenStatsFunction = null;
 let claimChallengeFunction = null;
 let startChallengeFunction = null;
 let prefundWalletFunction = null;
+let ensureReferralCodeFunction = null;
 let _functionsInitialized = false;
 
 async function ensureFunctions() {
@@ -67,6 +68,7 @@ async function ensureFunctions() {
         getTokenStatsFunction = httpsCallable(functions, 'getTokenStats');
         startChallengeFunction = httpsCallable(functions, 'startChallenge');
         prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
+        ensureReferralCodeFunction = httpsCallable(functions, 'ensureReferralCode');
         _functionsInitialized = true;
         console.log(`✅ Cloud Functions 초기화 완료 (${FIREBASE_REGION})`);
     } catch (e) {
@@ -532,9 +534,17 @@ async function ensureInjectedNetwork(provider) {
 }
 
 async function ensureUserReferralCode(userRef, userData) {
-    if (userData?.referralCode) return userData.referralCode;
-    const referralCode = generateReferralCode();
-    await setDoc(userRef, { referralCode }, { merge: true });
+    const existingCode = String(userData?.referralCode || '').trim().toUpperCase();
+    if (/^[A-Z0-9]{6}$/.test(existingCode)) return existingCode;
+    await ensureFunctions();
+    if (!ensureReferralCodeFunction) {
+        throw new Error('ensureReferralCode callable is unavailable');
+    }
+    const result = await ensureReferralCodeFunction({});
+    const referralCode = String(result?.data?.referralCode || '').trim().toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(referralCode)) {
+        throw new Error('ensureReferralCode returned an invalid referral code');
+    }
     return referralCode;
 }
 
@@ -778,8 +788,8 @@ export async function initializeUserWallet() {
             // 기존 사용자에게 초대 코드가 없으면 생성 (복호화 try/catch 밖에서 처리)
             if (!userData.referralCode) {
                 try {
-                    const referralCode = generateReferralCode();
-                    await updateDoc(userRef, { referralCode });
+                    const referralCode = await ensureUserReferralCode(userRef, userData);
+                    await Promise.resolve();
                     console.log('✅ 초대 코드 생성 (Case 1):', referralCode);
                 } catch (e) {
                     console.warn('⚠️ 초대 코드 저장 실패 (권한 미배포):', e.message);
@@ -809,10 +819,12 @@ export async function initializeUserWallet() {
                 oldWalletAddress: userData.walletAddress // 기존 주소 백업
             };
             if (!userData.referralCode) {
-                migrateData.referralCode = generateReferralCode();
-                console.log('✅ 초대 코드 생성 (Case 2):', migrateData.referralCode);
+                console.log('✅ 초대 코드 보장 요청 (Case 2)');
             }
             await updateDoc(userRef, migrateData);
+            await ensureUserReferralCode(userRef, userData).catch((e) => {
+                console.warn('?좑툘 珥덈? 肄붾뱶 蹂댁옣 ?ㅽ뙣 (Case 2):', e?.message || e);
+            });
 
             console.log('✅ v2 지갑 마이그레이션 완료:', userWalletAddress.substring(0, 10) + '...');
             updateWalletUI(userWalletAddress);
@@ -832,16 +844,19 @@ export async function initializeUserWallet() {
 
         // 6자리 초대 코드 생성 (영숫자 대문자), users/{uid}.referralCode에 저장
         // processReferralSignup Cloud Function에서 users 컬렉션 쿼리로 역방향 조회
-        const referralCode = generateReferralCode();
+        let referralCode = '';
 
         await setDoc(userRef, {
             walletAddress: userWalletAddress,
             walletCreatedAt: serverTimestamp(),
             encryptedKey: encrypted,
             walletIv: iv,
-            walletVersion: 2,
-            referralCode: referralCode
+            walletVersion: 2
         }, { merge: true });
+        referralCode = await ensureUserReferralCode(userRef, userData).catch((e) => {
+            console.warn('?좑툘 珥덈? 肄붾뱶 蹂댁옣 ?ㅽ뙣 (Case 3):', e?.message || e);
+            return '';
+        });
 
         console.log('✅ v2 지갑 생성 완료:', userWalletAddress.substring(0, 10) + '...', '초대코드:', referralCode);
         updateWalletUI(userWalletAddress);

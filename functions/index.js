@@ -88,9 +88,72 @@ const MIN_POINTS = 100;
 const CHATBOT_LINK_CODE_LENGTH = 8;
 const CHATBOT_LINK_CODE_TTL_MINUTES = 10;
 const FRIEND_REQUEST_TTL_DAYS = 3;
+const REFERRAL_CODE_LENGTH = 6;
+const REFERRAL_CODE_MAX_ATTEMPTS = 24;
+const REFERRAL_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
+}
+
+function normalizeReferralCode(rawCode) {
+    const normalized = String(rawCode || "").trim().toUpperCase();
+    const pattern = new RegExp(`^[A-Z0-9]{${REFERRAL_CODE_LENGTH}}$`);
+    return pattern.test(normalized) ? normalized : "";
+}
+
+function generateReferralCodeCandidate() {
+    let code = "";
+    for (let i = 0; i < REFERRAL_CODE_LENGTH; i += 1) {
+        code += REFERRAL_CODE_CHARS[Math.floor(Math.random() * REFERRAL_CODE_CHARS.length)];
+    }
+    return code;
+}
+
+async function ensureStableReferralCode(userRef) {
+    return db.runTransaction(async (tx) => {
+        const userSnap = await tx.get(userRef);
+        if (!userSnap.exists) {
+            throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+        }
+
+        const existingCode = normalizeReferralCode(userSnap.data()?.referralCode);
+        if (existingCode) {
+            const codeRef = db.doc(`referral_codes/${existingCode}`);
+            const codeSnap = await tx.get(codeRef);
+            const mappedUid = String(codeSnap.data()?.uid || "").trim();
+            if (!codeSnap.exists || !mappedUid || mappedUid === userRef.id) {
+                tx.set(codeRef, {
+                    uid: userRef.id,
+                    createdAt: codeSnap.data()?.createdAt || FieldValue.serverTimestamp(),
+                    updatedAt: FieldValue.serverTimestamp()
+                }, { merge: true });
+            }
+            return existingCode;
+        }
+
+        for (let attempt = 0; attempt < REFERRAL_CODE_MAX_ATTEMPTS; attempt += 1) {
+            const candidate = generateReferralCodeCandidate();
+            const codeRef = db.doc(`referral_codes/${candidate}`);
+            const codeSnap = await tx.get(codeRef);
+            if (codeSnap.exists) continue;
+            const duplicateUserQuery = db.collection("users")
+                .where("referralCode", "==", candidate)
+                .limit(1);
+            const duplicateUserSnap = await tx.get(duplicateUserQuery);
+            if (!duplicateUserSnap.empty) continue;
+
+            tx.set(codeRef, {
+                uid: userRef.id,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp()
+            });
+            tx.set(userRef, { referralCode: candidate }, { merge: true });
+            return candidate;
+        }
+
+        throw new HttpsError("resource-exhausted", "초대 코드를 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    });
 }
 
 function isConfiguredAddress(address) {
@@ -1947,6 +2010,22 @@ exports.prepareShareMediaAssets = onCall(
         }));
 
         return { items };
+    }
+);
+
+exports.ensureReferralCode = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const userRef = db.doc(`users/${uid}`);
+        const referralCode = await ensureStableReferralCode(userRef);
+        return {
+            success: true,
+            referralCode,
+            link: `${APP_BASE_URL}?ref=${referralCode}`
+        };
     }
 );
 
