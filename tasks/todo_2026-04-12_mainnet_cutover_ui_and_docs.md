@@ -33,3 +33,13 @@
 - [x] Write chain metadata on challenge records and challenge transaction logs
 - [x] Prepare prod/staging Functions env files so the next deploy pins prod to mainnet
 - [ ] Re-verify the live callable `getTokenStats` response before the next production deploy
+
+## Wallet History Follow-up
+
+- [x] Verify whether the wallet transaction history is filtered to the active chain
+- [x] Split the wallet history box into paginated HBT and point sections
+- [x] Show 5 items per page for HBT history and point history
+- [x] Point the wallet HBT link at the token-holder view for the active wallet address
+- [x] Point the challenge/staking link at the token-holder view for the staking contract
+- [x] Replace visible `currentRate` copy in the wallet tab with `비율`
+- [x] Bump app/service-worker cache version to `123` for the wallet-history refresh

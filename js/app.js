@@ -4890,6 +4890,7 @@ function getHalvingReferenceRateLabel(phaseIdx) {
 }
 
 const ACTIVE_WALLET_CHAIN_KEY = getActiveChainKey(APP_ENV);
+const ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG = ACTIVE_WALLET_CHAIN_KEY === 'mainnet' ? 'bsc' : 'bscTestnet';
 const MAINNET_CHALLENGE_CUTOVER_DATE = '2026-04-12';
 
 function normalizeChallengeChainKey(challenge = null) {
@@ -4967,9 +4968,138 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 
     const tipEl = document.getElementById('wallet-halving-tip');
     if (tipEl) {
-        tipEl.innerHTML = `⚡ 지금은 <strong>${phaseLabel}</strong>! ${chainLabel} 온체인 비율은 <strong>100P = ${formattedPer100} HBT</strong>이며, currentRate가 매주 자동 조절됩니다.`;
+        tipEl.innerHTML = `⚡ 지금은 <strong>${phaseLabel}</strong>! ${chainLabel} 온체인 비율은 <strong>100P = ${formattedPer100} HBT</strong>이며, 비율이 매주 자동 조절됩니다.`;
     }
 }
+
+const ASSET_HISTORY_PAGE_SIZE = 5;
+const _assetHistoryState = {
+    hbtItems: [],
+    pointItems: [],
+    hbtPage: 0,
+    pointPage: 0
+};
+
+function formatAssetHistoryDate(value, fallback = '-') {
+    if (!value) return fallback;
+    if (value instanceof Date) return value.toLocaleDateString('ko-KR');
+    return String(value);
+}
+
+function formatAssetHistoryAmount(value = 0, unit = '') {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric)) return `0${unit ? ` ${unit}` : ''}`;
+    const formatted = numeric.toLocaleString('ko-KR', {
+        maximumFractionDigits: Number.isInteger(numeric) ? 0 : 2
+    });
+    return `${formatted}${unit ? ` ${unit}` : ''}`;
+}
+
+function doesTransactionMatchActiveChain(tx = {}) {
+    const networkTag = String(tx.network || tx.networkTag || '').trim();
+    if (networkTag) {
+        return networkTag === ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG;
+    }
+
+    const txDate = String(tx.date || '').trim();
+    if (!txDate) return ACTIVE_WALLET_CHAIN_KEY !== 'mainnet';
+    return ACTIVE_WALLET_CHAIN_KEY === 'mainnet'
+        ? txDate >= MAINNET_CHALLENGE_CUTOVER_DATE
+        : txDate < MAINNET_CHALLENGE_CUTOVER_DATE;
+}
+
+function renderAssetHistoryItem({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) {
+    return `
+        <div class="wallet-tx-item">
+            <div class="wallet-tx-left">
+                <div class="wallet-tx-icon ${iconClass}">${icon}</div>
+                <div>
+                    <div class="wallet-tx-label">${label}</div>
+                    <div class="wallet-tx-date">${date}</div>
+                </div>
+            </div>
+            <div class="wallet-tx-right">
+                <div class="wallet-tx-amount ${amountClass}">${amountText}</div>
+                <div class="wallet-tx-status">${statusText}</div>
+            </div>
+        </div>
+    `;
+}
+
+function renderAssetHistorySection(kind, title, caption, items, pageIndex) {
+    const safePageIndex = Math.max(0, pageIndex || 0);
+    const pageCount = Math.max(1, Math.ceil(items.length / ASSET_HISTORY_PAGE_SIZE));
+    const clampedPage = Math.min(safePageIndex, pageCount - 1);
+    const start = clampedPage * ASSET_HISTORY_PAGE_SIZE;
+    const pagedItems = items.slice(start, start + ASSET_HISTORY_PAGE_SIZE);
+    const emptyText = kind === 'hbt'
+        ? `아직 ${title}이 없습니다.`
+        : `아직 ${title}이 없습니다.`;
+
+    const pagerHtml = items.length > ASSET_HISTORY_PAGE_SIZE ? `
+        <div class="wallet-history-pager">
+            <button type="button" class="wallet-history-pager-btn" onclick="changeAssetHistoryPage('${kind}', -1)" ${clampedPage === 0 ? 'disabled' : ''}>이전</button>
+            <span class="wallet-history-pager-label">${clampedPage + 1} / ${pageCount}</span>
+            <button type="button" class="wallet-history-pager-btn" onclick="changeAssetHistoryPage('${kind}', 1)" ${clampedPage >= pageCount - 1 ? 'disabled' : ''}>다음</button>
+        </div>
+    ` : '';
+
+    return `
+        <div class="wallet-tx-section">
+            <div class="wallet-tx-section-header">
+                <div>
+                    <div class="wallet-tx-section-title">${title}</div>
+                    <div class="wallet-tx-section-caption">${caption}</div>
+                </div>
+                ${pagerHtml}
+            </div>
+            ${pagedItems.length > 0
+                ? pagedItems.map(item => renderAssetHistoryItem(item)).join('')
+                : `<div class="wallet-tx-subempty">${emptyText}</div>`
+            }
+        </div>
+    `;
+}
+
+function renderAssetHistory() {
+    const txContainer = document.getElementById('transaction-history');
+    if (!txContainer) return;
+
+    const hbtItems = _assetHistoryState.hbtItems || [];
+    const pointItems = _assetHistoryState.pointItems || [];
+
+    if (hbtItems.length === 0 && pointItems.length === 0) {
+        txContainer.innerHTML = `
+            <div class="wallet-tx-empty-cta">
+                <div class="wallet-tx-empty-icon">💎</div>
+                <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
+                <div class="wallet-tx-empty-sub">HBT 거래와 포인트 적립 내역이 여기에 함께 쌓여요</div>
+                <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
+            </div>
+        `;
+        return;
+    }
+
+    const chainCaption = ACTIVE_WALLET_CHAIN_KEY === 'mainnet'
+        ? '메인넷 HBT 최근 5개씩'
+        : '테스트넷 HBT 최근 5개씩';
+    txContainer.innerHTML = `
+        ${renderAssetHistorySection('hbt', 'HBT 거래 기록', chainCaption, hbtItems, _assetHistoryState.hbtPage)}
+        ${renderAssetHistorySection('point', '포인트 기록', '포인트 최근 5개씩', pointItems, _assetHistoryState.pointPage)}
+    `;
+}
+
+window.changeAssetHistoryPage = function (kind, delta) {
+    const pageKey = kind === 'point' ? 'pointPage' : 'hbtPage';
+    const items = kind === 'point' ? _assetHistoryState.pointItems : _assetHistoryState.hbtItems;
+    const pageCount = Math.max(1, Math.ceil(items.length / ASSET_HISTORY_PAGE_SIZE));
+    const nextPage = Math.min(
+        Math.max((_assetHistoryState[pageKey] || 0) + Number(delta || 0), 0),
+        pageCount - 1
+    );
+    _assetHistoryState[pageKey] = nextPage;
+    renderAssetHistory();
+};
 
 // 반감기 스케줄 테이블 활성 구간 하이라이트 + 현재 비율 동적 표시
 function updateHalvingScheduleUI(currentPhase, per100Hbt) {
@@ -5076,12 +5206,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             collection(db, "blockchain_transactions"),
             where("userId", "==", user.uid),
             orderBy("timestamp", "desc"),
-            limit(20)
+            limit(100)
         )).catch(() => null);
         const _p_pointHistory = getDocs(query(
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
-            limit(50)
+            orderBy("date", "desc"),
+            limit(100)
         )).catch(() => null);
         // 오늘 전체 로그 (리액션 포인트 집계용)
         const _p_todayAllLogs = getDocs(query(
@@ -5516,76 +5647,72 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 try {
                     const txSnap = await _p_txHistory;
                     const pointSnap = await _p_pointHistory;
+                    const hbtItems = [];
+                    const pointItems = [];
 
-                    const renderHistoryItem = ({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) => `
-                        <div class="wallet-tx-item">
-                            <div class="wallet-tx-left">
-                                <div class="wallet-tx-icon ${iconClass}">${icon}</div>
-                                <div>
-                                    <div class="wallet-tx-label">${label}</div>
-                                    <div class="wallet-tx-date">${date}</div>
-                                </div>
-                            </div>
-                            <div class="wallet-tx-right">
-                                <div class="wallet-tx-amount ${amountClass}">${amountText}</div>
-                                <div class="wallet-tx-status">${statusText}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    const sectionWrapStyle = 'margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(240, 215, 182, 0.9);';
-                    const sectionTitleStyle = 'margin: 0 0 8px; font-size: 12px; font-weight: 800; color: #8d5620; letter-spacing: 0.02em;';
-                    const sectionEmptyStyle = 'padding: 10px 2px 2px; font-size: 12px; color: #9b7b58;';
-
-                    const buildHbtHistoryHtml = () => {
-                        if (!txSnap || txSnap.empty) {
-                            return `<div style="${sectionEmptyStyle}">아직 HBT 거래 기록이 없습니다.</div>`;
-                        }
-
-                        let html = '';
+                    if (txSnap && !txSnap.empty) {
                         txSnap.forEach(txDoc => {
                             const tx = txDoc.data();
-                            const txDate = tx.timestamp?.toDate?.() ? tx.timestamp.toDate().toLocaleDateString('ko-KR') : '-';
+                            if (!doesTransactionMatchActiveChain(tx)) return;
+
+                            const txDateObj = tx.timestamp?.toDate?.();
+                            const txDate = formatAssetHistoryDate(txDateObj, tx.date || '-');
+                            const sortKey = txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`;
+
                             const txIcons = {
-                                'conversion': '🔄',
-                                'staking': '🔐',
-                                'challenge_settlement': '🏆',
-                                'withdrawal': '📤'
+                                conversion: '🔄',
+                                staking: '🔐',
+                                challenge_settlement: '🏆',
+                                challenge_failure: '🧯',
+                                withdrawal: '📤',
+                                hbt_migration: '🪄'
                             };
                             const txLabels = {
-                                'conversion': 'P→HBT 변환',
-                                'staking': '챌린지 예치',
-                                'challenge_settlement': '챌린지 정산',
-                                'withdrawal': '출금'
+                                conversion: 'P→HBT 변환',
+                                staking: '챌린지 예치',
+                                challenge_settlement: '챌린지 정산',
+                                challenge_failure: '챌린지 실패 정산',
+                                withdrawal: '출금',
+                                hbt_migration: 'HBT 마이그레이션'
                             };
                             const txIconClass = {
-                                'conversion': 'convert',
-                                'staking': 'stake',
-                                'challenge_settlement': 'settle',
-                                'withdrawal': 'withdraw'
+                                conversion: 'convert',
+                                staking: 'stake',
+                                challenge_settlement: 'settle',
+                                challenge_failure: 'withdraw',
+                                withdrawal: 'withdraw',
+                                hbt_migration: 'settle'
                             };
                             const icon = txIcons[tx.type] || '📋';
                             const label = txLabels[tx.type] || escapeHtml(String(tx.type));
                             const iconClass = txIconClass[tx.type] || 'convert';
-                            const statusText = tx.status === 'success' ? '✅ 완료' : tx.status === 'failed' ? '❌ 실패' : '⏳ 대기';
+                            const statusText = tx.status === 'success' ? '완료' : tx.status === 'failed' ? '실패' : '대기';
 
                             let amountText = '';
                             let amountClass = '';
                             if (tx.type === 'conversion') {
-                                amountText = `+${parseFloat(tx.hbtReceived) || 0} HBT`;
+                                amountText = `+${formatAssetHistoryAmount(tx.hbtReceived, 'HBT')}`;
                                 amountClass = 'positive';
                             } else if (tx.type === 'staking') {
-                                amountText = `-${parseFloat(tx.amount) || 0} HBT`;
+                                amountText = `-${formatAssetHistoryAmount(tx.amount, 'HBT')}`;
                                 amountClass = 'negative';
                             } else if (tx.type === 'challenge_settlement') {
-                                const amt = parseFloat(tx.amount);
-                                amountText = amt > 0 ? `+${amt} HBT` : '소멸';
-                                amountClass = amt > 0 ? 'positive' : 'negative';
+                                const amount = Number(tx.amount || 0);
+                                amountText = amount > 0 ? `+${formatAssetHistoryAmount(amount, 'HBT')}` : '0 HBT';
+                                amountClass = amount > 0 ? 'positive' : '';
+                            } else if (tx.type === 'challenge_failure') {
+                                const burned = Number(tx.burned || 0);
+                                const returned = Number(tx.returned || 0);
+                                amountText = `반환 ${formatAssetHistoryAmount(returned, 'HBT')} · 소각 ${formatAssetHistoryAmount(burned, 'HBT')}`;
+                                amountClass = burned > 0 ? 'negative' : '';
+                            } else if (tx.type === 'hbt_migration') {
+                                amountText = `${formatAssetHistoryAmount(tx.offChainHbt, 'HBT')} 정리`;
                             } else {
-                                amountText = `${parseFloat(tx.amount) || 0} HBT`;
+                                amountText = formatAssetHistoryAmount(tx.amount, 'HBT');
                             }
 
-                            html += renderHistoryItem({
+                            hbtItems.push({
+                                sortKey,
                                 icon,
                                 iconClass,
                                 label,
@@ -5594,104 +5721,71 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 amountClass,
                                 statusText
                             });
-                        });
-                        return html;
-                    };
 
-                    const buildPointHistoryHtml = () => {
-                        const pointItems = [];
-
-                        if (pointSnap && !pointSnap.empty) {
-                            pointSnap.forEach(pointDoc => {
-                                const log = pointDoc.data();
-                                const awarded = log.awardedPoints || {};
-                                const earnedPoints =
-                                    (awarded.dietPoints || 0) +
-                                    (awarded.exercisePoints || 0) +
-                                    (awarded.mindPoints || 0);
-                                if (earnedPoints <= 0) return;
-
-                                const completedTags = [];
-                                if (awarded.dietPoints > 0) completedTags.push('식단');
-                                if (awarded.exercisePoints > 0) completedTags.push('운동');
-                                if (awarded.mindPoints > 0) completedTags.push('마음');
-
+                            if (tx.pointsUsed > 0) {
                                 pointItems.push({
-                                    sortKey: `${log.date || ''}T23:59:59`,
-                                    icon: '🪙',
-                                    iconClass: 'convert',
-                                    label: completedTags.length > 0 ? `${completedTags.join('·')} 기록` : '일일 기록',
-                                    date: log.date || '-',
-                                    amountText: `+${earnedPoints}P`,
-                                    amountClass: 'positive',
-                                    statusText: '✅ 적립'
+                                    sortKey,
+                                    icon: '📉',
+                                    iconClass: 'withdraw',
+                                    label: 'HBT 변환 사용',
+                                    date: txDate,
+                                    amountText: `-${formatAssetHistoryAmount(tx.pointsUsed, 'P')}`,
+                                    amountClass: 'negative',
+                                    statusText: tx.status === 'success' ? '차감' : '처리 중'
                                 });
-                            });
-                        }
+                            }
 
-                        if (txSnap && !txSnap.empty) {
-                            txSnap.forEach(txDoc => {
-                                const tx = txDoc.data();
-                                const txDateObj = tx.timestamp?.toDate?.();
-                                const txDate = txDateObj ? txDateObj.toLocaleDateString('ko-KR') : (tx.date || '-');
-
-                                if (tx.pointsUsed > 0) {
-                                    pointItems.push({
-                                        sortKey: txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`,
-                                        icon: '📉',
-                                        iconClass: 'withdraw',
-                                        label: 'HBT 변환 사용',
-                                        date: txDate,
-                                        amountText: `-${parseFloat(tx.pointsUsed) || 0}P`,
-                                        amountClass: 'negative',
-                                        statusText: tx.status === 'success' ? '✅ 차감' : '⏳ 처리 중'
-                                    });
-                                }
-
-                                if (tx.rewardPoints > 0) {
-                                    pointItems.push({
-                                        sortKey: txDateObj ? txDateObj.toISOString() : `${tx.date || ''}T12:00:00`,
-                                        icon: '🎁',
-                                        iconClass: 'settle',
-                                        label: '챌린지 보상',
-                                        date: txDate,
-                                        amountText: `+${parseFloat(tx.rewardPoints) || 0}P`,
-                                        amountClass: 'positive',
-                                        statusText: tx.status === 'success' ? '✅ 적립' : '⏳ 처리 중'
-                                    });
-                                }
-                            });
-                        }
-
-                        pointItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
-
-                        if (pointItems.length === 0) {
-                            return `<div style="${sectionEmptyStyle}">아직 포인트 기록이 없습니다.</div>`;
-                        }
-
-                        return pointItems.slice(0, 20).map(item => renderHistoryItem(item)).join('');
-                    };
-
-                    if ((!txSnap || txSnap.empty) && (!pointSnap || pointSnap.empty)) {
-                        txContainer.innerHTML = `
-                            <div class="wallet-tx-empty-cta">
-                                <div class="wallet-tx-empty-icon">💎</div>
-                                <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
-                                <div class="wallet-tx-empty-sub">HBT 거래와 포인트 적립 내역이 여기에 함께 쌓여요</div>
-                                <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
-                            </div>`;
-                    } else {
-                        txContainer.innerHTML = `
-                            <div>
-                                <div style="${sectionTitleStyle}">HBT 거래 기록</div>
-                                ${buildHbtHistoryHtml()}
-                            </div>
-                            <div style="${sectionWrapStyle}">
-                                <div style="${sectionTitleStyle}">포인트 기록</div>
-                                ${buildPointHistoryHtml()}
-                            </div>
-                        `;
+                            if (tx.rewardPoints > 0) {
+                                pointItems.push({
+                                    sortKey,
+                                    icon: '🎁',
+                                    iconClass: 'settle',
+                                    label: '챌린지 포인트 보상',
+                                    date: txDate,
+                                    amountText: `+${formatAssetHistoryAmount(tx.rewardPoints, 'P')}`,
+                                    amountClass: 'positive',
+                                    statusText: tx.status === 'success' ? '적립' : '처리 중'
+                                });
+                            }
+                        });
                     }
+
+                    if (pointSnap && !pointSnap.empty) {
+                        pointSnap.forEach(pointDoc => {
+                            const log = pointDoc.data();
+                            const awarded = log.awardedPoints || {};
+                            const earnedPoints =
+                                (awarded.dietPoints || 0) +
+                                (awarded.exercisePoints || 0) +
+                                (awarded.mindPoints || 0);
+                            if (earnedPoints <= 0) return;
+
+                            const completedTags = [];
+                            if (awarded.dietPoints > 0) completedTags.push('식단');
+                            if (awarded.exercisePoints > 0) completedTags.push('운동');
+                            if (awarded.mindPoints > 0) completedTags.push('마음');
+
+                            pointItems.push({
+                                sortKey: `${log.date || ''}T23:59:59`,
+                                icon: '🪙',
+                                iconClass: 'convert',
+                                label: completedTags.length > 0 ? `${completedTags.join('·')} 기록` : '일일 기록',
+                                date: log.date || '-',
+                                amountText: `+${formatAssetHistoryAmount(earnedPoints, 'P')}`,
+                                amountClass: 'positive',
+                                statusText: '적립'
+                            });
+                        });
+                    }
+
+                    hbtItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
+                    pointItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
+
+                    _assetHistoryState.hbtItems = hbtItems;
+                    _assetHistoryState.pointItems = pointItems;
+                    _assetHistoryState.hbtPage = 0;
+                    _assetHistoryState.pointPage = 0;
+                    renderAssetHistory();
                 } catch (txErr) {
                     console.warn('⚠️ 거래 기록 로드 스킵:', txErr.message);
                     if (txErr.message?.includes('index')) {

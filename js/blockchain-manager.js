@@ -1479,12 +1479,14 @@ function refreshWalletUi(address = null) {
     if (policyNoteEl) policyNoteEl.textContent = policyNote;
     if (exportNoteEl) exportNoteEl.textContent = exportNote;
     if (tokenLinkEl) {
-        tokenLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/address/${ACTIVE_HBT_ADDRESS}`;
-        tokenLinkEl.textContent = '🔗 HBT 컨트랙트 보기';
+        tokenLinkEl.href = effectiveAddress
+            ? `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}?a=${effectiveAddress}`
+            : `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}`;
+        tokenLinkEl.textContent = '🔗 내 HBT 보기';
     }
     if (stakingLinkEl) {
-        stakingLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/address/${ACTIVE_STAKING_ADDRESS}`;
-        stakingLinkEl.textContent = '🏦 챌린지 컨트랙트 보기';
+        stakingLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}?a=${ACTIVE_STAKING_ADDRESS}`;
+        stakingLinkEl.textContent = '🏦 챌린지 예치 HBT 보기';
     }
 
     const hasAddress = !!effectiveAddress;

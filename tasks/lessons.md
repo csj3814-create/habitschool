@@ -8,6 +8,11 @@
 - Root cause: hosting switched to mainnet copy, but production callable Functions were still falling back to testnet env defaults, the PWA service worker version lagged behind the app asset version, and legacy `activeChallenges` documents had no chain metadata so they survived the cutover untouched.
 - Lesson: for every future chain cutover, treat the release as a 3-part migration: 1) bump app + service-worker cache version together, 2) pin project-specific Functions env files so prod/staging resolve to the intended chain at deploy time, 3) add chain metadata plus cleanup logic for existing Firestore challenge state before calling the rollout complete.
 
+### 61. Wallet asset history and explorer links must resolve through the active chain, not generic contract pages
+- Symptom: after the mainnet launch, the wallet tab could still show mixed-chain HBT history, plain contract-address links, and stale `currentRate` wording that made the source of truth harder to verify.
+- Root cause: the HBT transaction feed was querying user history without an active-chain filter, the wallet links pointed to generic address pages instead of token-holder views, and cache-busted asset versions were not bumped alongside the wallet UI refresh.
+- Lesson: whenever wallet copy or explorer links change, verify 1) HBT history is filtered to the active chain, 2) holder-facing links use the token page with the relevant address parameter, 3) visible wording matches product language (`비율`), and 4) app + service worker versions are bumped together so users actually receive the fix.
+
 ## 2026-04-03
 
 ### 59. Cloud Functions?占쎌꽌??`admin.firestore.FieldValue.*`??湲곤옙?吏 留먭퀬 `firebase-admin/firestore`??`FieldValue`占?吏곸젒 ?占쎌빞 ?占쎈떎
