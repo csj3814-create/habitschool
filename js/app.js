@@ -4870,6 +4870,25 @@ function eraToLabel(era) {
     return String.fromCharCode(64 + Math.min(era, 26)); // 1→A, 2→B, ...26→Z
 }
 
+function formatPer100HbtDisplay(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return '0';
+    return numeric.toLocaleString('ko-KR', { maximumFractionDigits: 4 });
+}
+
+function getHalvingReferenceRateLabel(phaseIdx) {
+    switch (phaseIdx) {
+        case 1:
+            return '주간 조절 50~400 HBT';
+        case 2:
+            return '주간 조절 25~200 HBT';
+        case 3:
+            return '주간 조절 12.5~100 HBT';
+        default:
+            return '이전 구간의 절반씩';
+    }
+}
+
 // 반감기 스케줄 테이블 활성 구간 하이라이트 + 현재 비율 동적 표시
 function updateHalvingScheduleUI(currentPhase, per100Hbt) {
     const schedule = document.getElementById('halving-schedule');
@@ -4884,18 +4903,18 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
             if (spans[0]) spans[0].textContent = `${label} 👈`;
             // 현재 구간은 온체인 비율로 동적 표시
             if (spans[1] && per100Hbt !== undefined) {
-                const display = per100Hbt % 1 === 0 ? per100Hbt : per100Hbt.toFixed(1);
-                spans[1].textContent = `100P = ${display} HBT`;
+                spans[1].textContent = `100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
             }
         } else {
             rows[i].className = phaseIdx < currentPhase ? 'wallet-halving-row' : 'wallet-halving-row future';
             if (spans[0]) spans[0].textContent = label;
+            if (spans[1]) spans[1].textContent = getHalvingReferenceRateLabel(phaseIdx);
         }
     }
     // 하단 안내 문구 업데이트
     const tipEl = schedule.parentElement?.parentElement?.querySelector('.wallet-halving-tip');
     if (tipEl) {
-        tipEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentPhase)}구간</strong>! 전환 비율은 매주 자동 조절됩니다. 채굴이 적으면 비율이 올라가요!`;
+        tipEl.innerHTML = `⚡ 지금은 <strong>${eraToLabel(currentPhase)}구간</strong>! 실제 전환 비율은 온체인 currentRate로 매주 자동 조절됩니다.`;
     }
 }
 
@@ -5176,14 +5195,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 // v2: currentRate는 RATE_SCALE(10^8) 단위
                 const RATE_SCALE = 1e8;
                 const ratePerPoint = (stats.currentRate || RATE_SCALE) / RATE_SCALE;
-                const per100 = Math.round(ratePerPoint * 100 * 100) / 100; // 100P 기준
+                const per100 = ratePerPoint * 100; // 100P 기준
 
                 const halvingEraEl = document.getElementById('halving-era');
                 if (halvingEraEl) halvingEraEl.textContent = eraToLabel(phase);
 
                 const halvingRateEl = document.getElementById('halving-rate');
                 if (halvingRateEl) {
-                    halvingRateEl.textContent = `100P = ${per100} HBT`;
+                    halvingRateEl.textContent = `100P = ${formatPer100HbtDisplay(per100)} HBT`;
                 }
 
                 // 반감기 스케줄 테이블 활성 구간 + 동적 비율 표시
@@ -5192,8 +5211,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 // 변환 비율 배지 업데이트 (전체 기준)
                 const rateBadge = document.getElementById('convert-rate-badge');
                 if (rateBadge) {
-                    const display = per100 % 1 === 0 ? per100 : per100.toFixed(1);
-                    rateBadge.textContent = `현재 ${eraToLabel(phase)}구간 · 100P = ${display} HBT`;
+                    rateBadge.textContent = `현재 ${eraToLabel(phase)}구간 · 100P = ${formatPer100HbtDisplay(per100)} HBT`;
                 }
 
                 // v2 Phase 경계 기반 진행률 계산

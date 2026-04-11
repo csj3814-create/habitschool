@@ -10,6 +10,43 @@ import { APP_ENV } from './firebase-config.js';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js';
 
 const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=122';
+const CONVERSION_RATE_CACHE_KEY = `hs_conversion_rate_${APP_ENV}`;
+
+function readCachedConversionStats() {
+    try {
+        const raw = localStorage.getItem(CONVERSION_RATE_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        const rate = Number(parsed?.rate);
+        const phase = Number(parsed?.phase) || 1;
+        if (!(rate > 0)) return null;
+        return { rate, phase };
+    } catch (_) {
+        return null;
+    }
+}
+
+function cacheConversionStats(stats = {}) {
+    const rate = Number(stats?.currentRate);
+    if (!(rate > 0)) return;
+    const phase = Number(stats?.currentPhase) || 1;
+    try {
+        localStorage.setItem(CONVERSION_RATE_CACHE_KEY, JSON.stringify({
+            rate,
+            phase,
+            cachedAt: Date.now()
+        }));
+    } catch (_) {}
+}
+
+function formatPer100Hbt(rateScaled = 0) {
+    const rate = Number(rateScaled);
+    if (!(rate > 0)) return '0';
+    const per100 = (rate / 1e8) * 100;
+    return per100.toLocaleString('ko-KR', { maximumFractionDigits: 4 });
+}
+
+const cachedConversionStats = readCachedConversionStats();
 
 // ========== 인증 초기화를 최우선으로 실행 ==========
 function initializeApp() {
@@ -52,9 +89,9 @@ window.revealLegacyWalletPrivateKey = async () => null;
 window.copyLegacyWalletPrivateKey = async () => null;
 window.initializeUserWallet = async () => null;
 window._blockchainLoaded = false;
-// 변환 비율: 온체인 currentRate (RATE_SCALE=1e8 기준). 기본값 1e8 = 1:1 (Era A)
-window._currentConversionRate = 1e8;
-window._currentConversionPhase = 1;
+// 변환 비율: 온체인 currentRate (RATE_SCALE=1e8 기준). 최근 조회값이 있으면 먼저 복원합니다.
+window._currentConversionRate = cachedConversionStats?.rate || null;
+window._currentConversionPhase = cachedConversionStats?.phase || 1;
 window._currentChallengeBonusPolicy = null;
 
 window._loadBlockchainModule = function() {
@@ -92,6 +129,7 @@ window._loadBlockchainModule = function() {
             if (stats && typeof stats.currentRate === 'number' && stats.currentRate > 0) {
                 window._currentConversionRate = stats.currentRate;
                 window._currentConversionPhase = stats.currentPhase || 1;
+                cacheConversionStats(stats);
                 window.updateConvertPreview();
             }
             if (stats?.challengeBonusPolicy) {
@@ -183,12 +221,7 @@ window.setConvertAmount = function(amount) {
     if (activeBtn) {
         activeBtn.classList.add('active');
     }
-    // 결과 미리보기 업데이트
-    const preview = document.getElementById('convert-result-preview');
-    if (preview) {
-        const hbt = Math.floor(amount * (window._currentConversionRate || 1e8) / 1e8);
-        preview.textContent = hbt + ' HBT';
-    }
+    window.updateConvertPreview?.();
     // 버튼 활성화
     const submitBtn = document.getElementById('convert-submit-btn');
     if (submitBtn) {
@@ -204,8 +237,15 @@ window.updateConvertPreview = function() {
     if (!input || !preview) return;
 
     const amount = parseInt(input.value) || 0;
-    const hbt = Math.floor(amount * (window._currentConversionRate || 1e8) / 1e8);
-    preview.textContent = amount > 0 ? `${hbt} HBT` : '0 HBT';
+    const rate = Number(window._currentConversionRate);
+    if (amount > 0 && rate > 0) {
+        const hbt = Math.floor(amount * rate / 1e8);
+        preview.textContent = `${hbt} HBT`;
+    } else if (amount > 0) {
+        preview.textContent = '비율 확인 중...';
+    } else {
+        preview.textContent = '0 HBT';
+    }
 
     if (submitBtn) {
         submitBtn.disabled = amount < 100 || amount % 100 !== 0;
@@ -213,7 +253,7 @@ window.updateConvertPreview = function() {
 };
 
 // 변환 실행 → 확인 모달 열기
-window.executeConversion = function() {
+window.executeConversion = async function() {
     const input = document.getElementById('convert-point-input');
     const amount = parseInt(input?.value) || 0;
     if (amount < 100 || amount % 100 !== 0) {
@@ -222,11 +262,29 @@ window.executeConversion = function() {
     }
     // 모달에 정보 채우기 — 실제 온체인 비율 사용
     const RATE_SCALE = 1e8;
-    const rate = window._currentConversionRate || RATE_SCALE;
+    let rate = Number(window._currentConversionRate);
+    let phase = window._currentConversionPhase || 1;
+    if (!(rate > 0) && typeof window.fetchTokenStats === 'function') {
+        try {
+            const stats = await window.fetchTokenStats();
+            if (stats && typeof stats.currentRate === 'number' && stats.currentRate > 0) {
+                rate = stats.currentRate;
+                phase = stats.currentPhase || 1;
+                window._currentConversionRate = rate;
+                window._currentConversionPhase = phase;
+                cacheConversionStats(stats);
+                window.updateConvertPreview?.();
+            }
+        } catch (_) {}
+    }
+    if (!(rate > 0)) {
+        alert('현재 전환 비율을 아직 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        return;
+    }
     const hbt = Math.floor(amount * rate / RATE_SCALE);
     const phaseLabels = { 1: 'A구간', 2: 'B구간', 3: 'C구간', 4: 'D구간' };
-    const phaseLabel = phaseLabels[window._currentConversionPhase || 1] || 'A구간';
-    const rateLabel = `${(rate / RATE_SCALE).toFixed(rate < RATE_SCALE ? 4 : 0)}:1 (${phaseLabel})`;
+    const phaseLabel = phaseLabels[phase] || 'A구간';
+    const rateLabel = `100P = ${formatPer100Hbt(rate)} HBT · ${phaseLabel}`;
     document.getElementById('modal-convert-points').textContent = amount + 'P';
     document.getElementById('modal-convert-hbt').textContent = hbt + ' HBT';
     document.getElementById('modal-convert-rate').textContent = rateLabel;

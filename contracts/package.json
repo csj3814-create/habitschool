@@ -6,6 +6,7 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "export:abi": "node scripts/export-abi.js",
+    "preflight:mainnet": "node scripts/preflight-mainnet.js",
     "deploy:testnet": "npx hardhat run scripts/deploy.js --network bscTestnet",
     "deploy:mainnet": "npx hardhat run scripts/deploy.js --network bsc",
     "dress-rehearsal:testnet": "npx hardhat run scripts/dress-rehearsal.js --network bscTestnet",

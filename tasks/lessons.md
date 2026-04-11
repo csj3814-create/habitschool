@@ -848,3 +848,14 @@
 ### 138. After patching `admin.html`, verify the extracted module script directly before assuming the control tower login still works
 - Symptom: The control tower Google popup could complete, but the page stayed on the login screen because `admin.html` had stray braces and a broken inline module block around the admin auth helpers.
 - Lesson: `admin.html` does not go through the main app bundle, so `app.js` and `main.js` build checks are not enough. After any manual edit to the control tower page, extract the module script from the raw file bytes and run `node --check` on it before deploying. Avoid `Get-Content`-based extraction when the file contains Korean text, because PowerShell encoding can create false negatives during syntax verification.
+# 2026-04-11 (Mainnet Migration Economics)
+
+### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
+- Symptom: it is easy to assume a fresh mainnet deployment can start from the constructor default rate (`1P = 1 HBT`) and then migrate balances afterward.
+- Root cause: deploy-time defaults and migration-time economics are different concerns. Users already earned balances under the live source-chain rate and policy, so resetting the destination chain changes effective value.
+- Lesson: when planning a chain cutover, snapshot the live source-chain rate/policy first and preserve that economics during migration. Do not design migration math around fresh deploy defaults if users have already accrued balances under another live rate.
+
+### 61. Mainnet cutover copy must follow the active chain config and onchain rate, not stale defaults
+- Symptom: wallet and tokenomics surfaces can keep showing strings like `BSC 테스트넷`, `1:1`, or `100P = 100 HBT` even after the live addresses and `currentRate` changed.
+- Root cause: default UI placeholders and docs were written for an earlier rollout stage and were not tied back to the active chain config or live onchain stats.
+- Lesson: during chain cutover work, make wallet copy, explorer links, network badges, and tokenomics notes derive from the active chain config and current onchain rate where possible. Avoid hardcoding launch-era or testnet-era values into wallet defaults.

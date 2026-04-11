@@ -13,8 +13,10 @@ const hre = require("hardhat");
 const {
   getChainConfig,
   readDeployments,
+  writeDeployments,
   requireEnvAddress,
   logExplorerLinks,
+  waitForExpectedValue,
 } = require("./_helpers");
 
 async function main() {
@@ -59,10 +61,42 @@ async function main() {
     console.log("Staking operator already absent");
   }
 
+  const minterRoleGranted = await waitForExpectedValue(
+    () => habit.hasRole(MINTER_ROLE, serverMinter),
+    (value) => value === false,
+    "MINTER_ROLE revoke",
+  );
+  const rateUpdaterRoleGranted = await waitForExpectedValue(
+    () => habit.hasRole(RATE_UPDATER_ROLE, serverMinter),
+    (value) => value === false,
+    "RATE_UPDATER_ROLE revoke",
+  );
+  const stakingOperatorEnabled = await waitForExpectedValue(
+    () => staking.operators(serverMinter),
+    (value) => value === false,
+    "staking operator revoke",
+  );
+
   console.log("\nVerification");
-  console.log(`MINTER_ROLE:       ${await habit.hasRole(MINTER_ROLE, serverMinter)}`);
-  console.log(`RATE_UPDATER_ROLE: ${await habit.hasRole(RATE_UPDATER_ROLE, serverMinter)}`);
-  console.log(`STAKING_OPERATOR:  ${await staking.operators(serverMinter)}`);
+  console.log(`MINTER_ROLE:       ${minterRoleGranted}`);
+  console.log(`RATE_UPDATER_ROLE: ${rateUpdaterRoleGranted}`);
+  console.log(`STAKING_OPERATOR:  ${stakingOperatorEnabled}`);
+
+  const updatedDeployments = {
+    ...deployments,
+    serverMinter,
+    serverRoles: {
+      ...(deployments.serverRoles || {}),
+      minterRoleGranted,
+      rateUpdaterRoleGranted,
+      stakingOperatorEnabled,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  const deploymentPath = writeDeployments(hre.network.name, updatedDeployments);
+
+  console.log("\nDeployment file");
+  console.log(deploymentPath);
 
   console.log("\nExplorer links");
   logExplorerLinks(chain.explorer, {

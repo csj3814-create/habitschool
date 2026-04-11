@@ -53,6 +53,12 @@ async function main() {
     deployer: deployer.address,
     reserveMultisig,
     serverMinter: null,
+    serverRoles: {
+      minterRoleGranted: false,
+      rateUpdaterRoleGranted: false,
+      stakingOperatorEnabled: false,
+      updatedAt: null,
+    },
     contracts: {
       HaBit: habitAddress,
       HaBitStaking: stakingAddress,

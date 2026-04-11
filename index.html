@@ -609,7 +609,7 @@
                     <div class="profile-update-head">
                         <div>
                             <h3>📋 업데이트 노트</h3>
-                            <p>최근 변경은 changelog에서 날짜별로 볼 수 있어요.</p>
+                            <p>최근 변경과 메인넷 전환 진행은 changelog에서 날짜별로 볼 수 있어요.</p>
                         </div>
                         <a href="/changelog.html" class="profile-update-link">노트 보기</a>
                     </div>
@@ -761,7 +761,7 @@
                             </div>
                         </div>
                         <div class="challenge-rules-note">
-                            📌 하루 65점 이상이면 1일 인정돼요. 80% 이상 채우면 예치금과 포인트를 돌려받고, 전부 달성하면 HBT 보너스가 더 붙어요. 목표를 못 채우면 예치금은 절반만 돌아와요.
+                            📌 하루 65점 이상이면 1일 인정돼요. 80% 이상 달성하면 예치금과 포인트를 돌려받고, 100% 달성하면 HBT 보너스까지 받아요. 80% 미만이면 예치금은 절반만 돌아와요.
                         </div>
                     </div>
                 </div>
@@ -769,9 +769,9 @@
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
                     <h3>🔄 포인트 → HBT 변환</h3>
-                    <p class="wallet-convert-desc">100P 단위로 HBT로 바꿔서 지갑에 쌓을 수 있어요.</p>
+                    <p class="wallet-convert-desc">100P 단위로 HBT로 바꾸며, 실제 수량은 현재 온체인 비율(currentRate)로 계산돼요.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
-                        현재 A구간 · 1:1 비율
+                        현재 비율 불러오는 중...
                     </div>
                     <div class="wallet-convert-presets">
                         <button class="wallet-preset-btn" onclick="setConvertAmount(100)">100P</button>
@@ -806,7 +806,7 @@
                                 </div>
                                 <div class="wallet-modal-row">
                                     <span>적용 비율</span>
-                                    <span id="modal-convert-rate">1:1</span>
+                                    <span id="modal-convert-rate">불러오는 중...</span>
                                 </div>
                             </div>
                             <p class="wallet-modal-warn">⚠️ 변환 후 취소할 수 없습니다.</p>
@@ -836,21 +836,21 @@
                         </div>
                         <div id="halving-schedule">
                             <div class="wallet-halving-row active">
-                                <span>A 👈</span><span>100P = 100 HBT</span><span>3,500만</span>
+                                <span>A 👈</span><span>주간 조절 50~400 HBT</span><span>3,500만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>B</span><span>주간 목표 ÷2</span><span>1,750만</span>
+                                <span>B</span><span>주간 조절 25~200 HBT</span><span>1,750만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>C</span><span>주간 목표 ÷4</span><span>875만</span>
+                                <span>C</span><span>주간 조절 12.5~100 HBT</span><span>875만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>D</span><span>주간 목표 ÷8</span><span>875만</span>
+                                <span>D</span><span>이전 구간의 절반씩</span><span>875만</span>
                             </div>
                         </div>
                     </div>
                     <p class="wallet-halving-tip">
-                        ⚡ 지금은 A구간! 전환 비율은 매주 자동 조절됩니다. 채굴이 적으면 비율이 올라가요!
+                        ⚡ 실제 전환 비율은 온체인 currentRate로 매주 자동 조절됩니다.
                     </p>
                 </div>
 
@@ -858,7 +858,7 @@
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
                         <h3>🔐 블록체인 지갑</h3>
-                        <span class="wallet-network-badge"><span class="dot"></span> BSC 테스트넷</span>
+                        <span class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> 활성 체인 확인 중</span>
                     </div>
                     <div class="wallet-connection-copy">
                         <div class="wallet-connection-status" id="wallet-connection-status">앱 지갑 사용 중</div>
@@ -871,8 +871,8 @@
                             <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
                         </div>
                     </div>
-                    <div class="wallet-policy-note">
-                        기본 사용 방식은 앱 지갑입니다. 지금은 로그인만으로 HBT 변환과 예치를 바로 진행할 수 있어요.
+                    <div class="wallet-policy-note" id="wallet-policy-note">
+                        기본 사용 방식은 앱 지갑입니다. 현재 활성 체인에서 HBT 변환과 예치를 바로 진행할 수 있어요.
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="wallet-disconnect-row" style="display:none;">
                         <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">외부 지갑 연결 해제</button>
@@ -881,7 +881,11 @@
                         <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
                     </div>
                     <div class="wallet-export-note" id="wallet-export-note" style="display:none;">
-                        외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요.
+                        외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요. 내보낸 뒤에는 같은 주소를 직접 관리할 수 있어요.
+                    </div>
+                    <div class="wallet-links wallet-links-secondary">
+                        <a href="#" class="wallet-link-btn" id="wallet-token-link" target="_blank" rel="noopener">🔗 HBT 컨트랙트 보기</a>
+                        <a href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">🏦 챌린지 컨트랙트 보기</a>
                     </div>
                     <div class="wallet-links">
                         <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
@@ -895,7 +899,7 @@
                         <div class="wallet-tx-empty-cta">
                             <div class="wallet-tx-empty-icon">💎</div>
                             <div class="wallet-tx-empty-text">아직 거래 기록이 없습니다</div>
-                            <div class="wallet-tx-empty-sub">포인트를 HBT로 변환하면 여기에 기록됩니다</div>
+                            <div class="wallet-tx-empty-sub">HBT 거래, 챌린지 정산, 포인트 적립 내역이 여기에 함께 쌓여요</div>
                             <button class="wallet-tx-empty-btn" onclick="document.getElementById('convert-point-input')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>
                         </div>
                     </div>

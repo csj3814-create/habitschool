@@ -6,6 +6,9 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "mainnet:config:check": "node scripts/sync-mainnet-config.js --check",
+    "mainnet:config:sync": "node scripts/sync-mainnet-config.js",
+    "mainnet:config:enable": "node scripts/sync-mainnet-config.js --enable-prod-mainnet",
     "deploy": "firebase deploy --only hosting",
     "emulators": "firebase emulators:start --project staging",
     "deploy:staging": "firebase deploy --project staging --only hosting,functions,firestore:rules,firestore:indexes,storage",

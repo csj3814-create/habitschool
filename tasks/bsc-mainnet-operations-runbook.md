@@ -58,6 +58,8 @@
 
 ### Go 조건
 
+- [ ] `cd contracts && npm run preflight:mainnet` 통과
+- [ ] `npm run mainnet:config:check` 통과
 - [ ] `npx hardhat test` 통과
 - [ ] `npm test` 통과
 - [ ] `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js` 통과
@@ -107,6 +109,8 @@
 ### 배포
 
 ```bash
+cd contracts
+npm run preflight:mainnet
 npx hardhat run scripts/deploy.js --network bsc
 ```
 
@@ -258,3 +262,22 @@ pause 기능이 없으므로 아래 순서로 축소한다.
 - 메인넷 배포 전에 주소를 먼저 바꾸지 않는다.
 - mainnet 전환은 `deployments-bsc.json`, frontend config, Functions env가 모두 일치한 뒤 한 번에 한다.
 - 메인넷에서 문제가 나면 가장 먼저 역할을 회수하고, 그 다음 사용자 공지와 원인 분석으로 간다.
+
+---
+
+## 10. Helper Commands
+
+- Preflight before a real deploy:
+  `cd contracts && npm run preflight:mainnet`
+- Sync frontend mainnet addresses from the deployment artifact:
+  `npm run mainnet:config:sync`
+- Verify that `js/blockchain-config.js` matches `contracts/deployments-bsc.json`:
+  `npm run mainnet:config:check`
+- Final prod-mainnet switch commit:
+  `npm run mainnet:config:enable`
+
+## 2026-04-11 Verify Note
+
+- Hardhat verify now uses the Etherscan V2 single-key flow.
+- Prefer `ETHERSCAN_API_KEY` in `contracts/.env`.
+- `BSCSCAN_API_KEY` can remain as a fallback, but verification may fail if only the old explorer-specific key is present.

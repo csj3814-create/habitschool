@@ -69,6 +69,32 @@ function logExplorerLinks(explorer, contracts) {
   });
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForExpectedValue(readValue, isExpected, description, options = {}) {
+  const attempts = options.attempts || 8;
+  const delayMs = options.delayMs || 1500;
+  let lastValue;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    lastValue = await readValue();
+    if (isExpected(lastValue)) {
+      return lastValue;
+    }
+
+    if (attempt < attempts) {
+      console.log(
+        `[wait] ${description} not settled yet (${attempt}/${attempts}, current=${lastValue}). Retrying in ${delayMs}ms...`,
+      );
+      await sleep(delayMs);
+    }
+  }
+
+  throw new Error(`${description} did not reach the expected state. Last value: ${lastValue}`);
+}
+
 module.exports = {
   ZERO_ADDRESS,
   getChainConfig,
@@ -77,4 +103,5 @@ module.exports = {
   requireEnvAddress,
   optionalEnvAddress,
   logExplorerLinks,
+  waitForExpectedValue,
 };

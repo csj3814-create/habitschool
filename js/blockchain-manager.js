@@ -179,7 +179,7 @@ async function canUseDedicatedStakingContract(signerOrProvider) {
 }
 
 /**
- * 사용자 지갑을 BSC 테스트넷 프로바이더에 연결
+ * 사용자 지갑을 현재 활성 BSC 네트워크 프로바이더에 연결
  * @returns {ethers.Wallet} 연결된 지갑 (서명+전송 가능)
  */
 async function getConnectedWallet() {
@@ -1431,26 +1431,36 @@ function refreshWalletUi(address = null) {
     const walletDisplay = document.getElementById('wallet-address-display');
     const statusEl = document.getElementById('wallet-connection-status');
     const subEl = document.getElementById('wallet-connection-sub');
+    const networkBadgeEl = document.getElementById('wallet-network-badge');
+    const policyNoteEl = document.getElementById('wallet-policy-note');
+    const exportNoteEl = document.getElementById('wallet-export-note');
+    const tokenLinkEl = document.getElementById('wallet-token-link');
+    const stakingLinkEl = document.getElementById('wallet-staking-link');
     const copyBtn = document.querySelector('.wallet-addr-btn[onclick*="copyWallet"]');
     const explorerBtn = document.querySelector('.wallet-addr-btn[onclick*="openWalletExplorer"]');
     const disconnectBtn = document.getElementById('wallet-disconnect-btn');
     const disconnectRow = document.getElementById('wallet-disconnect-row');
+    const chainLabel = ACTIVE_BSC_NETWORK.label;
 
     let status = '앱 지갑 사용 중';
-    let sub = '로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.';
+    let sub = `로그인만 하면 ${chainLabel}에서 HBT 변환과 챌린지를 바로 진행할 수 있어요.`;
+    let policyNote = `기본 사용 방식은 앱 지갑입니다. ${chainLabel}에서 HBT 변환과 예치를 바로 진행할 수 있어요.`;
+    const exportNote = `외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요. 내보낸 뒤에는 ${chainLabel}에서 같은 주소를 직접 관리할 수 있어요.`;
 
     if (externalWalletAddress && externalWalletProvider) {
         status = `${getWalletProviderLabelSafe(externalWalletProviderType)} 연결됨`;
-        sub = '고급 모드로 외부 지갑에서 직접 보관 중이에요.';
+        sub = `고급 모드로 ${chainLabel} 외부 지갑에서 직접 보관 중이에요.`;
+        policyNote = `현재 연결된 외부 지갑 주소로 ${chainLabel} HBT와 챌린지를 직접 관리하고 있어요.`;
     } else if (externalWalletAddress) {
         status = '외부 지갑 주소 저장됨';
-        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 같은 주소로 이어서 사용할 수 있어요.`;
+        sub = `${getWalletProviderLabelSafe(externalWalletProviderType)}을 다시 연결하면 ${chainLabel}에서 같은 주소로 이어서 사용할 수 있어요.`;
+        policyNote = `저장된 외부 지갑 주소는 ${chainLabel} 기준으로 유지돼요. 다시 연결하면 같은 주소를 이어서 사용할 수 있어요.`;
     } else if (userWallet) {
         status = '앱 지갑 사용 중';
-        sub = '로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.';
+        sub = `로그인만 하면 ${chainLabel}에서 HBT 변환과 챌린지를 바로 진행할 수 있어요.`;
     } else if (userWalletAddress) {
         status = '앱 지갑 주소 준비됨';
-        sub = '앱 지갑으로 HBT 변환과 챌린지를 이어서 사용할 수 있어요.';
+        sub = `앱 지갑으로 ${chainLabel} HBT 변환과 챌린지를 이어서 사용할 수 있어요.`;
     }
 
     if (walletDisplay) {
@@ -1465,6 +1475,17 @@ function refreshWalletUi(address = null) {
 
     if (statusEl) statusEl.textContent = status;
     if (subEl) subEl.textContent = sub;
+    if (networkBadgeEl) networkBadgeEl.innerHTML = `<span class="dot"></span> ${chainLabel}`;
+    if (policyNoteEl) policyNoteEl.textContent = policyNote;
+    if (exportNoteEl) exportNoteEl.textContent = exportNote;
+    if (tokenLinkEl) {
+        tokenLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/address/${ACTIVE_HBT_ADDRESS}`;
+        tokenLinkEl.textContent = '🔗 HBT 컨트랙트 보기';
+    }
+    if (stakingLinkEl) {
+        stakingLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/address/${ACTIVE_STAKING_ADDRESS}`;
+        stakingLinkEl.textContent = '🏦 챌린지 컨트랙트 보기';
+    }
 
     const hasAddress = !!effectiveAddress;
     [copyBtn, explorerBtn].forEach(button => {

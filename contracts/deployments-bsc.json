@@ -1,0 +1,21 @@
+{
+  "network": "bsc",
+  "chainId": 56,
+  "label": "BSC Mainnet",
+  "explorer": "https://bscscan.com",
+  "gasToken": "BNB",
+  "deployer": "0x02DdE9bEc9B6ecb78961424bDda763352C1197FB",
+  "reserveMultisig": "0xD71129AaFA1cB0f3117DA9b617Bea2e713ca0DCD",
+  "serverMinter": "0xDc84e09C6F62591e788B84Ff1051d51EbEDA8230",
+  "serverRoles": {
+    "minterRoleGranted": true,
+    "rateUpdaterRoleGranted": true,
+    "stakingOperatorEnabled": true,
+    "updatedAt": "2026-04-11T12:35:48.228Z"
+  },
+  "contracts": {
+    "HaBit": "0xCa499c14afE8B80E86D9e382AFf76f9f9c4e2E29",
+    "HaBitStaking": "0xaad072f6be392D30a4E094Ce1E33C36929EfE6b8"
+  },
+  "deployedAt": "2026-04-11T12:33:51.691Z"
+}

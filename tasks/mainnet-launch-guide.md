@@ -81,6 +81,7 @@ npm test
 npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js
 npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-main-check.js
 cd contracts
+npm run preflight:mainnet
 npx hardhat compile
 npx hardhat test
 npx hardhat run scripts/deploy.js --network bscTestnet
@@ -138,13 +139,19 @@ npx hardhat verify --network bsc <STAKING_ADDRESS> <HABIT_ADDRESS>
 ### 5. 앱/Functions 주소 반영
 
 - `js/blockchain-config.js`
-  - `HBT_TOKEN.mainnetAddress`
-  - `STAKING_CONTRACT.mainnetAddress`
+  - sync from `contracts/deployments-bsc.json`
   - keep `ENABLE_PROD_MAINNET = false`
+  - command: `npm run mainnet:config:sync`
 - Functions runtime env
   - `HABIT_MAINNET_ADDRESS`
   - `STAKING_MAINNET_ADDRESS`
   - `ONCHAIN_NETWORK=mainnet`
+
+Address sync check:
+
+```bash
+npm run mainnet:config:check
+```
 
 ### 6. 배포 준비 커밋
 
@@ -158,7 +165,7 @@ Release sequence:
 2. `git commit`
 3. `git push origin main`
 4. Ask the user to confirm deployment
-5. Create the final `ENABLE_PROD_MAINNET = true` switch commit
+5. Create the final `ENABLE_PROD_MAINNET = true` switch commit with `npm run mainnet:config:enable`
 6. `firebase deploy --only hosting,functions`
 ---
 
@@ -214,3 +221,8 @@ ONCHAIN_NETWORK=mainnet FUND_AMOUNT=0.02 node scripts/fund-minter.js
 ## 런북
 
 - 메인넷 운영 절차와 사고 대응은 [bsc-mainnet-operations-runbook.md](/C:/SJ/antigravity/habitschool/tasks/bsc-mainnet-operations-runbook.md)를 기준으로 진행한다.
+## 2026-04-11 Verify Note
+
+- Hardhat verify now uses the Etherscan V2 single-key flow.
+- Prefer `ETHERSCAN_API_KEY` in `contracts/.env`.
+- `BSCSCAN_API_KEY` can remain as a fallback, but verification may fail if only the old explorer-specific key is present.

@@ -12,8 +12,10 @@ const hre = require("hardhat");
 const {
   getChainConfig,
   readDeployments,
+  writeDeployments,
   requireEnvAddress,
   logExplorerLinks,
+  waitForExpectedValue,
 } = require("./_helpers");
 
 async function main() {
@@ -35,7 +37,34 @@ async function main() {
   console.log("----------------------------------------");
 
   await (await staking.setOperator(operatorAddress, enabled)).wait();
-  console.log(`Result: ${await staking.operators(operatorAddress)}`);
+  const operatorState = await waitForExpectedValue(
+    () => staking.operators(operatorAddress),
+    (value) => value === enabled,
+    `staking operator=${enabled}`,
+  );
+  console.log(`Result: ${operatorState}`);
+
+  const tracksServerMinter =
+    deployments.serverMinter &&
+    deployments.serverMinter.toLowerCase() === operatorAddress.toLowerCase();
+
+  const updatedDeployments = {
+    ...deployments,
+    serverRoles: {
+      ...(deployments.serverRoles || {}),
+      ...(tracksServerMinter ? { stakingOperatorEnabled: operatorState } : {}),
+      updatedAt: new Date().toISOString(),
+    },
+    lastOperatorChange: {
+      operatorAddress,
+      enabled: operatorState,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  const deploymentPath = writeDeployments(hre.network.name, updatedDeployments);
+
+  console.log("\nDeployment file");
+  console.log(deploymentPath);
 
   console.log("\nExplorer links");
   logExplorerLinks(chain.explorer, {
