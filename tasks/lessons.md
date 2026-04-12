@@ -18,6 +18,11 @@
 - Root cause: the pending token was preserved, but the recovery path only performed one automatic fetch and then entered a long cooldown on transient errors. That left the user in limbo during exactly the unstable few seconds after browser handoff.
 - Lesson: for token handoff flows, keep the pending token and add a few automatic follow-up retries after transient failures. A pending banner is useful, but it should be backup UI, not the only recovery mechanism.
 
+### 72. External integration domains must be added to CSP `connect-src` before relying on browser-side fetch
+- Symptom: the Haebit Coach `!연결` flow kept sitting in a pending state even after retry improvements because the browser could not successfully fetch the chatbot API.
+- Root cause: hosting CSP allowed Google, Firebase, BSC, and Kakao domains, but it did not include `https://habitchatbot.onrender.com`, so browser fetches to the chatbot server could be blocked at the policy layer.
+- Lesson: every time a browser feature talks directly to a new external API, update `firebase.json` CSP `connect-src` in the same change and verify the actual domain is present before debugging retries, tokens, or auth state.
+
 ### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
 - Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
 - Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.

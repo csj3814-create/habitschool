@@ -11,5 +11,5 @@
 - [ ] Verify with tests and bundle checks
 
 ## Review
-- Root cause: after one transient fetch failure, the pending chatbot-connect flow could cool down into a passive "보류" state and stop trying again unless the user manually pressed `다시 확인`.
-- Fix: keep the pending token, schedule a few automatic follow-up retries, and clear those timers immediately on success, completion, or non-retryable failure. Cache version was bumped with the same change.
+- Root cause: there were two layers. First, the pending chatbot-connect flow could cool down into a passive "보류" state after one transient failure. More importantly, the app hosting CSP `connect-src` header did not include `https://habitchatbot.onrender.com`, so the browser could block the Haebit Coach API fetch entirely.
+- Fix: keep the pending token, schedule a few automatic follow-up retries, and add `https://habitchatbot.onrender.com` to the hosting CSP `connect-src` allowlist. Cache version was already bumped in the same series.
