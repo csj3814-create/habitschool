@@ -9,7 +9,7 @@ import { escapeHtml } from './security.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=130';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=131';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -577,13 +577,11 @@ export function setupAuthListener(callbacks) {
             const appMode = getAppModeFromPath(window.location.pathname);
             const validTabs = getAllowedTabsForMode(appMode);
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
-            const requestedTab = pendingChatbotToken
-                ? 'profile'
-                : (urlTab && validTabs.includes(urlTab))
-                    ? urlTab
-                    : (hashTab && validTabs.includes(hashTab))
-                        ? hashTab
-                        : getDefaultTabForMode(appMode);
+            const requestedTab = (urlTab && validTabs.includes(urlTab))
+                ? urlTab
+                : (hashTab && validTabs.includes(hashTab))
+                    ? hashTab
+                    : getDefaultTabForMode(appMode);
             const targetTab = normalizeTabForMode(requestedTab, appMode);
             if (window.openTab) {
                 window.openTab(targetTab, false);

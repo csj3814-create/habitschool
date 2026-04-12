@@ -8,6 +8,11 @@
 - Root cause: the client waited for the slow `getHbtTransferHistory` callable before rendering any transaction history, and the static HTML placeholder said "아직 거래 기록이 없습니다" before JavaScript had a chance to reconcile cached or Firestore-backed history.
 - Lesson: when a wallet screen combines fast local/app history with slow onchain reconciliation, render in stages. Show cached history immediately, render fast Firestore history first, label the panel as syncing while onchain rows load, and only show a true empty state after every source has completed.
 
+### 70. Pending integration state must not hijack the app's normal first tab
+- Symptom: the app could open on `프로필` instead of `내 기록` because a leftover Haebit Coach connect token overrode the normal first-tab selection after sign-in.
+- Root cause: the signed-in bootstrap treated any pending chatbot-connect token as a reason to force the `profile` tab, even though the actual connect confirmation can be handled with a modal from any tab.
+- Lesson: when an integration has pending state, surface it with a modal, banner, or lightweight prompt first. Do not let unrelated pending flow state replace the product's primary landing tab unless the user explicitly deep-linked there.
+
 ### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
 - Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
 - Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.
