@@ -23,6 +23,11 @@
 - Root cause: hosting CSP allowed Google, Firebase, BSC, and Kakao domains, but it did not include `https://habitchatbot.onrender.com`, so browser fetches to the chatbot server could be blocked at the policy layer.
 - Lesson: every time a browser feature talks directly to a new external API, update `firebase.json` CSP `connect-src` in the same change and verify the actual domain is present before debugging retries, tokens, or auth state.
 
+### 73. `!연결` UX must distinguish magic-link completions from fallback registration-code history
+- Symptom: after a successful Haebit Coach `!연결`, the profile card could still say `최근 연결 이력은 아직 없어요`, and the modal could show a vague Kakao label like `사용자`.
+- Root cause: the app only displayed `chatbotLinkCodeLastUsedAt`, which belongs to the fallback registration-code path, and it trusted the chatbot token display name even when Kakao did not provide a real nickname.
+- Lesson: when a product supports both magic-link connect and fallback code connect, store and render separate history for each path. Also treat generic placeholder names like `사용자` as unnamed labels in the UI instead of presenting them as trusted account identity.
+
 ### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
 - Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
 - Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.

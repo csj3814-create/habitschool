@@ -2457,6 +2457,18 @@ function normalizeChatbotConnectErrorCode(rawCode) {
     return String(rawCode || '').trim().toLowerCase();
 }
 
+function normalizeChatbotConnectDisplayName(rawValue) {
+    const value = String(rawValue || '').trim();
+    if (!value) return '';
+
+    const lowered = value.toLowerCase();
+    if (lowered === '사용자' || lowered === '카카오 사용자' || lowered === 'kakao user') {
+        return '';
+    }
+
+    return value;
+}
+
 function readChatbotConnectFailure() {
     try {
         const raw = localStorage.getItem(CHATBOT_CONNECT_FAILURE_KEY);
@@ -2697,10 +2709,12 @@ function openChatbotConnectModal(info) {
 
     const currentUser = auth.currentUser;
     const appAccount = currentUser?.email || currentUser?.displayName || '현재 로그인 계정';
-    const kakaoName = info?.displayName || '카카오 사용자';
-    titleEl.textContent = `카카오 계정 "${kakaoName}"와 연결할까요?`;
+    const kakaoName = normalizeChatbotConnectDisplayName(info?.displayName);
+    titleEl.textContent = kakaoName
+        ? `카카오 계정 "${kakaoName}"와 연결할까요?`
+        : '현재 카카오 1:1 계정과 연결할까요?';
     copyEl.textContent = '현재 로그인한 해빛스쿨 계정과 연결됩니다. 확인하면 카카오 1:1 채팅과 바로 이어집니다.';
-    kakaoNameEl.textContent = kakaoName;
+    kakaoNameEl.textContent = kakaoName || '표시 이름 미확인';
     appAccountEl.textContent = appAccount;
     expiryEl.textContent = formatDateTimeForUi(info?.expiresAt);
     _chatbotConnectModalToken = info?.token || '';
@@ -2721,10 +2735,28 @@ async function confirmChatbotConnect() {
 
     try {
         const result = await completeChatbotConnectToken(token);
+        const normalizedKakaoName = normalizeChatbotConnectDisplayName(result?.kakaoDisplayName);
+        const optimisticLinkedAt = new Date().toISOString();
+        try {
+            const currentUid = auth.currentUser?.uid;
+            if (currentUid) {
+                await setDoc(doc(db, 'users', currentUid), {
+                    chatbotConnectLastLinkedAt: serverTimestamp(),
+                    chatbotConnectLastKakaoDisplayName: normalizedKakaoName || deleteField()
+                }, { merge: true });
+                _chatbotLinkStatusCache = {
+                    ...(_chatbotLinkStatusCache || {}),
+                    chatbotConnectLastLinkedAt: optimisticLinkedAt,
+                    chatbotConnectLastKakaoDisplayName: normalizedKakaoName || ''
+                };
+            }
+        } catch (persistError) {
+            console.warn('chatbot connect status persist error:', persistError);
+        }
         clearChatbotConnectAutoRetry();
         showToast(result?.alreadyCompleted
             ? '이미 연결된 카카오 계정이에요.'
-            : `해빛코치 연결이 완료됐어요${result?.kakaoDisplayName ? ` · ${result.kakaoDisplayName}` : ''}`);
+            : `해빛코치 연결이 완료됐어요${normalizedKakaoName ? ` · ${normalizedKakaoName}` : ''}`);
         clearChatbotConnectFailure();
         clearChatbotConnectTokenFromUrl();
         closeChatbotConnectModal();
@@ -2835,7 +2867,9 @@ function renderChatbotLinkStatus(userData = {}) {
 
     const code = String(userData.chatbotLinkCode || '').trim().toUpperCase();
     const expiresAt = toDateSafe(userData.chatbotLinkCodeExpiresAt);
-    const lastUsedAt = toDateSafe(userData.chatbotLinkCodeLastUsedAt);
+    const codeLastUsedAt = toDateSafe(userData.chatbotLinkCodeLastUsedAt);
+    const connectLastLinkedAt = toDateSafe(userData.chatbotConnectLastLinkedAt);
+    const connectLastKakaoName = normalizeChatbotConnectDisplayName(userData.chatbotConnectLastKakaoDisplayName);
     const isActive = !!code && !!expiresAt && expiresAt.getTime() > Date.now();
     const pendingNoticeHtml = buildPendingChatbotConnectNotice();
 
@@ -2857,9 +2891,15 @@ function renderChatbotLinkStatus(userData = {}) {
         setChatbotLinkFallbackExpanded(false);
     }
 
-    lastUsedEl.textContent = lastUsedAt
-        ? `최근 연결 완료: ${formatDateTimeForUi(lastUsedAt)}`
-        : '최근 연결 이력은 아직 없어요.';
+    if (connectLastLinkedAt && (!codeLastUsedAt || connectLastLinkedAt.getTime() >= codeLastUsedAt.getTime())) {
+        lastUsedEl.textContent = connectLastKakaoName
+            ? `최근 !연결 완료: ${formatDateTimeForUi(connectLastLinkedAt)} · ${connectLastKakaoName}`
+            : `최근 !연결 완료: ${formatDateTimeForUi(connectLastLinkedAt)}`;
+    } else if (codeLastUsedAt) {
+        lastUsedEl.textContent = `최근 등록 코드 연결: ${formatDateTimeForUi(codeLastUsedAt)}`;
+    } else {
+        lastUsedEl.textContent = '최근 !연결 / 등록 코드 이력은 아직 없어요.';
+    }
 }
 
 async function loadChatbotLinkStatus() {
@@ -3360,7 +3400,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=132';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=133';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;

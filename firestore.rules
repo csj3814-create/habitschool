@@ -60,7 +60,8 @@ service cloud.firestore {
                     'missionBadges', 'selectedMissions', 'missionLevelUpDate',
                     'currentStreak', 'onboardingComplete', 'friends',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
-                    'chatbotLinkCodeLastUsedAt']);
+                    'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
+                    'chatbotConnectLastKakaoDisplayName']);
     }
     
     // ===== Users Collection =====
