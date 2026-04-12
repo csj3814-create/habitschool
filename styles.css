@@ -10644,6 +10644,47 @@ body.dark-mode .step-detail-item { color: #bbb; }
     background: rgba(255, 255, 255, 0.86);
 }
 
+.chatbot-link-step-copy {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.chatbot-link-step--kakao {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: transform 0.12s ease, box-shadow 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.chatbot-link-step--kakao:hover,
+.chatbot-link-step--kakao:focus-visible {
+    border-color: #E2C200;
+    background: linear-gradient(135deg, rgba(254, 229, 0, 0.94), rgba(255, 241, 118, 0.98));
+    box-shadow: 0 10px 20px rgba(254, 229, 0, 0.28);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.chatbot-link-step--kakao strong,
+.chatbot-link-step--kakao small {
+    color: #2F2415;
+}
+
+.chatbot-link-step-cta {
+    flex-shrink: 0;
+    align-self: center;
+    min-width: 52px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    background: rgba(25, 25, 25, 0.1);
+    color: #191919;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: center;
+}
+
 .chatbot-link-step-no {
     width: 24px;
     height: 24px;
@@ -11857,6 +11898,21 @@ body.dark-mode .chatbot-connect-modal-copy,
  body.dark-mode .chatbot-connect-summary-row,
  body.dark-mode .friend-request-code-copy {
     color: #dec7ae;
+}
+
+body.dark-mode .chatbot-link-step--kakao {
+    border-color: rgba(254, 229, 0, 0.36);
+    background: linear-gradient(135deg, rgba(254, 229, 0, 0.92), rgba(255, 241, 118, 0.98));
+}
+
+body.dark-mode .chatbot-link-step--kakao strong,
+body.dark-mode .chatbot-link-step--kakao small,
+body.dark-mode .chatbot-link-step--kakao .chatbot-link-step-cta {
+    color: #221A0D;
+}
+
+body.dark-mode .chatbot-link-step--kakao .chatbot-link-step-cta {
+    background: rgba(25, 25, 25, 0.12);
 }
 
 body.dark-mode .chatbot-link-warning {

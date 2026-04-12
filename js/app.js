@@ -96,6 +96,7 @@ window.maybeHandleChatbotConnect = maybeHandleChatbotConnect;
 window.handleLoggedOutChatbotConnect = handleLoggedOutChatbotConnect;
 window.retryPendingChatbotConnect = retryPendingChatbotConnect;
 window.dismissPendingChatbotConnect = dismissPendingChatbotConnect;
+window.openChatbotKakaoChat = openChatbotKakaoChat;
 window.requestFriend = requestFriend;
 window.requestFriendByCode = requestFriendByCode;
 window.submitProfileFriendCode = submitProfileFriendCode;
@@ -156,6 +157,7 @@ let _lastDietAutoImportResult = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
+const CHATBOT_KAKAO_CHAT_URL = 'https://pf.kakao.com/_QDZZX/chat';
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
 const CHATBOT_CONNECT_FAILURE_KEY = 'pendingChatbotConnectFailure';
 const CHATBOT_CONNECT_RETRY_COOLDOWN_MS = 60 * 1000;
@@ -177,6 +179,14 @@ let _chatbotConnectAutoRetryIndex = 0;
 let _floatingBarLayoutFrame = 0;
 
 applyAppModeChrome();
+
+function openChatbotKakaoChat() {
+    try {
+        window.open(CHATBOT_KAKAO_CHAT_URL, '_blank', 'noopener');
+    } catch (_) {
+        window.location.href = CHATBOT_KAKAO_CHAT_URL;
+    }
+}
 
 function normalizeShareTemplate(raw) {
     return SHARE_TEMPLATE_OPTIONS.includes(raw) ? raw : 'grid';
