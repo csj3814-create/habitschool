@@ -159,6 +159,8 @@ const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
 const CHATBOT_CONNECT_FAILURE_KEY = 'pendingChatbotConnectFailure';
 const CHATBOT_CONNECT_RETRY_COOLDOWN_MS = 60 * 1000;
+const CHATBOT_CONNECT_FETCH_TIMEOUT_MS = 8000;
+const CHATBOT_CONNECT_FETCH_RETRY_DELAYS_MS = [1200, 3000];
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
@@ -2449,6 +2451,7 @@ function isTransientChatbotConnectError(rawCode) {
     if (!code) return true;
     if (code === 'error' || code === 'connect_failed') return true;
     if (code.startsWith('http_5')) return true;
+    if (code === 'http_408' || code === 'http_429') return true;
     return [
         'failed to fetch',
         'networkerror',
@@ -2456,6 +2459,56 @@ function isTransientChatbotConnectError(rawCode) {
         'fetch failed',
         'timeout'
     ].some(fragment => code.includes(fragment));
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fetchChatbotConnectJson(path, options = {}) {
+    const {
+        timeoutMs = CHATBOT_CONNECT_FETCH_TIMEOUT_MS,
+        retryDelays = CHATBOT_CONNECT_FETCH_RETRY_DELAYS_MS,
+        ...fetchOptions
+    } = options;
+
+    let lastError = null;
+
+    for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = controller
+            ? setTimeout(() => controller.abort(), timeoutMs)
+            : null;
+
+        try {
+            const response = await fetch(`${CHATBOT_CONNECT_API_ORIGIN}${path}`, {
+                cache: 'no-store',
+                ...fetchOptions,
+                signal: controller?.signal
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data?.ok) {
+                const error = new Error(data?.message || `http_${response.status}`);
+                error.code = data?.code || `http_${response.status}`;
+                throw error;
+            }
+            return data;
+        } catch (error) {
+            if (!error.code && error?.name === 'AbortError') {
+                error.code = 'timeout';
+            }
+            lastError = error;
+            const errorCode = error.code || error.message;
+            if (attempt >= retryDelays.length || !isTransientChatbotConnectError(errorCode)) {
+                throw error;
+            }
+            await sleep(retryDelays[attempt]);
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+        }
+    }
+
+    throw lastError || Object.assign(new Error('connect_failed'), { code: 'connect_failed' });
 }
 
 function buildPendingChatbotConnectNotice() {
@@ -2467,7 +2520,7 @@ function buildPendingChatbotConnectNotice() {
 
     return `
         <div class="chatbot-link-warning">
-            <div class="chatbot-link-warning-copy">보류된 연결 정보를 아직 불러오지 못했어요. 다시 확인하거나 정리할 수 있어요.</div>
+            <div class="chatbot-link-warning-copy">연결 정보를 확인하는 중이에요. 브라우저 전환 직후에는 몇 초 더 걸릴 수 있어요. 다시 확인하거나 정리할 수 있어요.</div>
             <div class="chatbot-link-warning-actions">
                 <button type="button" class="chatbot-link-warning-btn" onclick="retryPendingChatbotConnect()">다시 확인</button>
                 <button type="button" class="chatbot-link-warning-btn is-secondary" onclick="dismissPendingChatbotConnect()">보류 정리</button>
@@ -2537,16 +2590,9 @@ async function fetchChatbotConnectTokenInfo(token) {
     if (_chatbotConnectInfoPromise) return _chatbotConnectInfoPromise;
 
     _chatbotConnectInfoPromise = (async () => {
-        const response = await fetch(`${CHATBOT_CONNECT_API_ORIGIN}/api/chatbot-connect/${encodeURIComponent(token)}`, {
-            method: 'GET',
-            cache: 'no-store'
+        const data = await fetchChatbotConnectJson(`/api/chatbot-connect/${encodeURIComponent(token)}`, {
+            method: 'GET'
         });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok || !data?.ok) {
-            const error = new Error(data?.message || 'invalid_token');
-            error.code = data?.code || `http_${response.status}`;
-            throw error;
-        }
         if (data.status && data.status !== 'pending') {
             const error = new Error(data.status);
             error.code = data.status === 'completed' ? 'already_completed' : data.status;
@@ -2568,7 +2614,7 @@ async function completeChatbotConnectToken(token) {
     if (!user) throw Object.assign(new Error('login_required'), { code: 'login_required' });
 
     const idToken = await user.getIdToken();
-    const response = await fetch(`${CHATBOT_CONNECT_API_ORIGIN}/api/chatbot-connect/complete`, {
+    const data = await fetchChatbotConnectJson('/api/chatbot-connect/complete', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -2576,12 +2622,6 @@ async function completeChatbotConnectToken(token) {
         },
         body: JSON.stringify({ token })
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data?.ok) {
-        const error = new Error(data?.message || 'connect_failed');
-        error.code = data?.code || `http_${response.status}`;
-        throw error;
-    }
     return data;
 }
 
