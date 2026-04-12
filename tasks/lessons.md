@@ -909,6 +909,11 @@
 - Symptom: The live wallet stayed stuck on only challenge staking rows even after the onchain history merge shipped.
 - Root cause: `getHbtTransferHistory` only recognized classic rate-limit messages, but providers such as `1rpc.io/bnb` fail large `eth_getLogs` scans with messages like `limited to 0 - 10000 blocks range`. That bypassed the chunk-shrink path and left the wallet with empty onchain transfer results.
 - Lesson: In HBT transfer history scans, classify provider block-range-limit errors as retryable alongside rate limits. Read `error.error.message` as well as top-level messages, then shrink the scan chunk instead of falling through to an empty history.
+
+### 142. Post-save gallery refreshes must preserve cached feed items until Firestore catches up
+- Symptom: Right after uploading a photo or video, moving to the gallery tab could show an empty feed even though the save had succeeded.
+- Root cause: the save flow cleared `cachedGalleryLogs` immediately and relied on an asynchronous gallery reload to repopulate it. Users who switched tabs before that fetch completed landed on a blank cache.
+- Lesson: For save -> gallery flows, never wipe the feed cache before the replacement data arrives. Optimistically upsert the saved record into the gallery cache, render from the last known cache first, and treat background refresh failures as non-destructive when cached content already exists.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
