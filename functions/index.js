@@ -842,6 +842,7 @@ function isRpcRateLimitError(error) {
     const messages = [
         error?.shortMessage,
         error?.message,
+        error?.error?.message,
         error?.info?.error?.message,
         ...batchedErrors.map(entry => entry?.error?.message)
     ]
@@ -855,7 +856,11 @@ function isRpcRateLimitError(error) {
     return errorCodes.includes(-32005) || messages.some(message =>
         message.includes("rate limit") ||
         message.includes("too many requests") ||
-        message.includes("limit exceeded")
+        message.includes("limit exceeded") ||
+        message.includes("blocks range") ||
+        message.includes("block range") ||
+        message.includes("0 - 10000") ||
+        message.includes("limited to")
     );
 }
 

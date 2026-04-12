@@ -904,6 +904,11 @@
 - Symptom: The points/HBT cards would occasionally show missing data until the user refreshed several times.
 - Root cause: `updateAssetDisplay()` treated a timed-out Firestore read like an empty user doc, replaced visible HBT with a loading placeholder, and gave up after a single failed onchain read.
 - Lesson: For balance surfaces, never clear good values just because one live read is slow or transiently fails. Cache the last known points/HBT values, render them immediately, and retry failed Firestore/onchain balance reads in the background before asking the user to refresh.
+
+### 141. Mainnet HBT history RPC fallbacks must treat provider block-range limits like retryable scan shrink signals
+- Symptom: The live wallet stayed stuck on only challenge staking rows even after the onchain history merge shipped.
+- Root cause: `getHbtTransferHistory` only recognized classic rate-limit messages, but providers such as `1rpc.io/bnb` fail large `eth_getLogs` scans with messages like `limited to 0 - 10000 blocks range`. That bypassed the chunk-shrink path and left the wallet with empty onchain transfer results.
+- Lesson: In HBT transfer history scans, classify provider block-range-limit errors as retryable alongside rate limits. Read `error.error.message` as well as top-level messages, then shrink the scan chunk instead of falling through to an empty history.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
