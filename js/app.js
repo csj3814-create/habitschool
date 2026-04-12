@@ -9576,10 +9576,21 @@ async function resolvePendingUploadResult(inputId) {
 
 function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
+    const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
+
+    if (keepPendingUpload) {
+        return;
+    }
+
     if (input?.id) {
         _pendingUploads.delete(input.id);
-        setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
-        scheduleInlineUploadProgressHide(input.id);
+        if (url) {
+            setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+            scheduleInlineUploadProgressHide(input.id);
+        } else {
+            hideInlineUploadProgress(input.id);
+        }
     }
     if (input) input.value = '';
     if (!previewEl) return;
@@ -9598,10 +9609,21 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
 function persistSavedExerciseBlock(block, url, thumbUrl) {
     if (!block) return;
     const input = block.querySelector('.exer-file');
+    const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
+    const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
+
+    if (keepPendingUpload) {
+        return;
+    }
+
     if (input?.id) {
         _pendingUploads.delete(input.id);
-        setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
-        scheduleInlineUploadProgressHide(input.id);
+        if (url) {
+            setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+            scheduleInlineUploadProgressHide(input.id);
+        } else {
+            hideInlineUploadProgress(input.id);
+        }
     }
     if (input) input.value = '';
     block.removeAttribute('data-user-removed');

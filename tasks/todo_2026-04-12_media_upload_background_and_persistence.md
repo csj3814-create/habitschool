@@ -18,6 +18,7 @@
 - Exercise media now keeps stable `mediaId` values and merges against existing records instead of replacing the entire list blindly.
 - Existing media is preserved unless the user explicitly removes it.
 - Static image uploads now start only after the selected-date validation passes, so cancelling a mismatched file no longer kicks off a hidden upload first.
+- Background media jobs now survive the first save pass correctly. The save reconciliation step no longer clears unresolved pending uploads before the background patch writes the final Storage URL into Firestore.
 - Verification:
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
