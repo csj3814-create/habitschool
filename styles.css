@@ -11867,3 +11867,56 @@ body.dark-mode .streak-badge {
     }
 }
 
+.background-upload-status {
+  position: fixed;
+  right: 16px;
+  bottom: 88px;
+  z-index: 2300;
+  min-width: 220px;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 160, 51, 0.22);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  backdrop-filter: blur(12px);
+}
+
+.background-upload-status__title {
+  color: #8f4b00;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.background-upload-status__subtitle {
+  margin-top: 4px;
+  color: #8a6a46;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.background-upload-status.is-complete {
+  border-color: rgba(38, 166, 91, 0.24);
+}
+
+.background-upload-status.is-complete .background-upload-status__title {
+  color: #1f7a45;
+}
+
+.background-upload-status.is-error {
+  border-color: rgba(198, 40, 40, 0.24);
+}
+
+.background-upload-status.is-error .background-upload-status__title {
+  color: #b3261e;
+}
+
+@media (max-width: 640px) {
+  .background-upload-status {
+    right: 12px;
+    left: 12px;
+    bottom: 92px;
+    max-width: none;
+    min-width: 0;
+  }
+}

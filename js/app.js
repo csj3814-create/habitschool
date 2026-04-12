@@ -3711,6 +3711,7 @@ function addExerciseBlock(type, data = null) {
     if (hasAnalysis) {
         div.setAttribute('data-ai-analysis', JSON.stringify(data.aiAnalysis));
     }
+    ensureExerciseBlockMediaId(div, type, data);
     list.appendChild(div);
     updateRecordFlowGuides('exercise');
 
@@ -3736,6 +3737,13 @@ function addExerciseBlock(type, data = null) {
 window.removeExerciseBlock = function(block) {
     if (!block) return;
     const input = block.querySelector('.exer-file');
+    const type = getExerciseBlockType(block);
+    const mediaId = String(block.dataset.mediaId || '').trim();
+    const hasPersistedMedia = !!String(block.getAttribute('data-url') || '').trim();
+    const hasPendingMedia = !!(input?.files && input.files.length > 0);
+    if (mediaId && (hasPersistedMedia || hasPendingMedia)) {
+        _removedExerciseMediaIds[type].add(mediaId);
+    }
     if (input?.id) _pendingUploads.delete(input.id);
     block.remove();
     updateRecordFlowGuides('exercise');
@@ -3750,6 +3758,53 @@ function addStrengthBlock(data = null) {
 }
 window.addCardioBlock = addCardioBlock;
 window.addStrengthBlock = addStrengthBlock;
+
+let _removedExerciseMediaIds = {
+    cardio: new Set(),
+    strength: new Set()
+};
+
+function resetRemovedExerciseMediaIds() {
+    _removedExerciseMediaIds = {
+        cardio: new Set(),
+        strength: new Set()
+    };
+}
+
+function hashMediaKey(value = '') {
+    const normalized = String(value || '');
+    let hash = 0;
+    for (let i = 0; i < normalized.length; i++) {
+        hash = ((hash << 5) - hash) + normalized.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash).toString(36);
+}
+
+function createClientMediaId(prefix = 'media') {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getExerciseItemMediaId(type, item = null, index = 0) {
+    const explicitId = String(item?.mediaId || '').trim();
+    if (explicitId) return explicitId;
+    const mediaUrl = String(item?.imageUrl || item?.videoUrl || '').trim();
+    if (mediaUrl) return `legacy_${type}_${hashMediaKey(mediaUrl)}`;
+    return `${type}_${index}_${createClientMediaId(type)}`;
+}
+
+function getExerciseBlockType(block) {
+    return block?.classList?.contains('strength-block') ? 'strength' : 'cardio';
+}
+
+function ensureExerciseBlockMediaId(block, type = 'cardio', data = null) {
+    if (!block) return '';
+    const existing = String(block.dataset.mediaId || '').trim();
+    if (existing) return existing;
+    const mediaId = getExerciseItemMediaId(type, data);
+    block.dataset.mediaId = mediaId;
+    return mediaId;
+}
 
 function findReusableExerciseBlock(type) {
     const selector = type === 'cardio' ? '.cardio-block' : '.strength-block';
@@ -3828,6 +3883,12 @@ window.previewDynamicVid = function (input) {
     const uploadText = input.parentElement.querySelector('span');
     if (uploadText) uploadText.style.display = 'none';
     previewWrap.style.display = 'block';
+    const currentBlock = input.closest('.strength-block');
+    if (currentBlock) {
+        currentBlock.removeAttribute('data-user-removed');
+        ensureExerciseBlockMediaId(currentBlock, 'strength');
+        currentBlock.removeAttribute('data-thumb-url');
+    }
 
 
 
@@ -3837,7 +3898,7 @@ window.previewDynamicVid = function (input) {
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
         const localThumbSeed = String(
-            input.closest('.strength-block')?.getAttribute('data-local-thumb')
+            currentBlock?.getAttribute('data-local-thumb')
             || ''
         ).trim();
         const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
@@ -3868,7 +3929,6 @@ window.previewDynamicVid = function (input) {
             setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
         });
 
-    const currentBlock = input.closest('.strength-block');
     const strengthList = document.getElementById('strength-list');
     if (currentBlock && strengthList) {
         const firstBlock = strengthList.querySelector('.strength-block');
@@ -4082,8 +4142,11 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 // 운동 블록 기존 분석 초기화
                 const exerciseBlock = input.closest('.exercise-block');
                 if (exerciseBlock) {
+                    exerciseBlock.removeAttribute('data-user-removed');
+                    ensureExerciseBlockMediaId(exerciseBlock, exerciseBlock.classList.contains('strength-block') ? 'strength' : 'cardio');
                     exerciseBlock.removeAttribute('data-ai-analysis');
                     exerciseBlock.removeAttribute('data-url');
+                    exerciseBlock.removeAttribute('data-thumb-url');
                     // 이미지 업로드 성공 시 다른 빈 cardio 블록 제거
                     if (exerciseBlock.classList.contains('cardio-block')) {
                         document.querySelectorAll('#cardio-list .cardio-block').forEach(block => {
@@ -4229,8 +4292,14 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     if (previewEl) {
         const exerciseBlock = previewEl.closest('.exercise-block');
         if (exerciseBlock) {
+            exerciseBlock.setAttribute('data-user-removed', 'true');
+            const mediaId = String(exerciseBlock.dataset.mediaId || '').trim();
+            if (mediaId) {
+                _removedExerciseMediaIds[getExerciseBlockType(exerciseBlock)].add(mediaId);
+            }
             exerciseBlock.removeAttribute('data-ai-analysis');
             exerciseBlock.removeAttribute('data-url');
+            exerciseBlock.removeAttribute('data-thumb-url');
         }
     }
 
@@ -4534,6 +4603,7 @@ function clearInputs() {
 
     document.getElementById('cardio-list').innerHTML = '';
     document.getElementById('strength-list').innerHTML = '';
+    resetRemovedExerciseMediaIds();
 
     document.getElementById('quest-diet').className = 'quest-check'; document.getElementById('quest-diet').innerText = '미달성';
     document.getElementById('quest-exercise').className = 'quest-check'; document.getElementById('quest-exercise').innerText = '미달성';
@@ -9410,6 +9480,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     const input = block.querySelector('.exer-file');
     if (input?.id) _pendingUploads.delete(input.id);
     if (input) input.value = '';
+    block.removeAttribute('data-user-removed');
 
     if (url) block.setAttribute('data-url', url);
     else block.removeAttribute('data-url');
@@ -9422,6 +9493,315 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
         previewImg.src = thumbUrl;
         previewImg.setAttribute('data-saved-thumb-url', thumbUrl);
     }
+}
+
+function getPendingUploadSnapshot(inputId) {
+    if (!inputId) return null;
+    const entry = _pendingUploads.get(inputId);
+    if (!entry) return null;
+    return {
+        done: !!entry.done,
+        progress: Number(entry.progress || 0),
+        result: entry.done && entry.result?.url ? { ...entry.result } : null,
+        promise: entry.promise || null,
+        thumbPromise: entry.thumbPromise || null
+    };
+}
+
+let _backgroundUploadStatusTimer = null;
+
+function ensureBackgroundUploadStatusEl() {
+    let el = document.getElementById('background-upload-status');
+    if (el) return el;
+    el = document.createElement('div');
+    el.id = 'background-upload-status';
+    el.className = 'background-upload-status';
+    el.hidden = true;
+    el.innerHTML = `
+        <div class="background-upload-status__title"></div>
+        <div class="background-upload-status__subtitle"></div>
+    `;
+    document.body.appendChild(el);
+    return el;
+}
+
+function setBackgroundUploadStatus({ visible = false, complete = false, error = false, title = '', subtitle = '' } = {}) {
+    const el = ensureBackgroundUploadStatusEl();
+    const titleEl = el.querySelector('.background-upload-status__title');
+    const subtitleEl = el.querySelector('.background-upload-status__subtitle');
+    if (titleEl) titleEl.textContent = title;
+    if (subtitleEl) subtitleEl.textContent = subtitle;
+
+    el.classList.toggle('is-complete', !!complete);
+    el.classList.toggle('is-error', !!error);
+    el.hidden = !visible;
+
+    if (_backgroundUploadStatusTimer) {
+        clearTimeout(_backgroundUploadStatusTimer);
+        _backgroundUploadStatusTimer = null;
+    }
+
+    if (visible && (complete || error)) {
+        _backgroundUploadStatusTimer = setTimeout(() => {
+            el.hidden = true;
+            el.classList.remove('is-complete', 'is-error');
+        }, complete && !error ? 2500 : 5000);
+    }
+}
+
+function hasMediaUrl(value) {
+    return isPersistedStorageUrl(value);
+}
+
+function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null) {
+    const awardedSeed = previousAwarded || logData.awardedPoints || {};
+    const awarded = { ...awardedSeed };
+    const diet = logData.diet || {};
+    const exercise = logData.exercise || {};
+    const sleepAndMind = logData.sleepAndMind || {};
+    const stepsCount = Number(logData?.steps?.count || 0);
+
+    const dietPhotoCount = [
+        diet.breakfastUrl,
+        diet.lunchUrl,
+        diet.dinnerUrl,
+        diet.snackUrl
+    ].filter(hasMediaUrl).length;
+    const newDietPts = Math.min(dietPhotoCount * 10, 30);
+
+    const cardioCredits = (Array.isArray(exercise.cardioList) ? exercise.cardioList : [])
+        .filter(item => hasMediaUrl(item?.imageUrl)).length
+        + (stepsCount >= 8000 ? 1 : 0);
+    let newExerPts = 0;
+    if (cardioCredits >= 1) newExerPts += 10;
+    if (cardioCredits >= 2) newExerPts += 5;
+    const strengthCount = (Array.isArray(exercise.strengthList) ? exercise.strengthList : [])
+        .filter(item => hasMediaUrl(item?.videoUrl)).length;
+    if (strengthCount >= 1) newExerPts += 10;
+    if (strengthCount >= 2) newExerPts += 5;
+    newExerPts = Math.min(newExerPts, 30);
+
+    let newMindPts = 0;
+    if (hasMediaUrl(sleepAndMind.sleepImageUrl)) newMindPts += 10;
+    if (sleepAndMind.meditationDone || sanitizeText(sleepAndMind.gratitude || '', 500)) newMindPts += 10;
+    newMindPts = Math.min(newMindPts, 20);
+
+    const oldDietPts = Number(awardedSeed.dietPoints || 0);
+    const oldExerPts = Number(awardedSeed.exercisePoints || 0);
+    const oldMindPts = Number(awardedSeed.mindPoints || 0);
+
+    const pointsToGive = Math.max(0, newDietPts - oldDietPts)
+        + Math.max(0, newExerPts - oldExerPts)
+        + Math.max(0, newMindPts - oldMindPts);
+
+    awarded.dietPoints = newDietPts;
+    awarded.exercisePoints = newExerPts;
+    awarded.mindPoints = newMindPts;
+    awarded.diet = newDietPts > 0;
+    awarded.exercise = newExerPts > 0;
+    awarded.mind = newMindPts > 0;
+
+    return { awarded, pointsToGive };
+}
+
+function normalizeExerciseItem(type, item = null, index = 0) {
+    if (!item || typeof item !== 'object') return null;
+    const mediaId = getExerciseItemMediaId(type, item, index);
+    if (type === 'cardio') {
+        const imageUrl = hasMediaUrl(item.imageUrl) ? item.imageUrl : null;
+        if (!imageUrl) return null;
+        return {
+            mediaId,
+            imageUrl,
+            imageThumbUrl: hasMediaUrl(item.imageThumbUrl) ? item.imageThumbUrl : null,
+            aiAnalysis: item.aiAnalysis || null
+        };
+    }
+    const videoUrl = hasMediaUrl(item.videoUrl) ? item.videoUrl : null;
+    if (!videoUrl) return null;
+    return {
+        mediaId,
+        videoUrl,
+        videoThumbUrl: hasMediaUrl(item.videoThumbUrl) ? item.videoThumbUrl : null,
+        aiAnalysis: item.aiAnalysis || null
+    };
+}
+
+function mergeExerciseItems(type, previousItems = [], currentItems = [], removedIds = null) {
+    const removed = removedIds || _removedExerciseMediaIds[type] || new Set();
+    const merged = new Map();
+
+    (Array.isArray(previousItems) ? previousItems : []).forEach((item, index) => {
+        const normalized = normalizeExerciseItem(type, item, index);
+        if (!normalized || removed.has(normalized.mediaId)) return;
+        merged.set(normalized.mediaId, normalized);
+    });
+
+    (Array.isArray(currentItems) ? currentItems : []).forEach((item, index) => {
+        const normalized = normalizeExerciseItem(type, item, index);
+        if (!normalized || removed.has(normalized.mediaId)) return;
+        merged.set(normalized.mediaId, normalized);
+    });
+
+    return Array.from(merged.values());
+}
+
+function upsertExerciseItem(type, previousItems = [], nextItem = null) {
+    const normalized = normalizeExerciseItem(type, nextItem);
+    if (!normalized) return mergeExerciseItems(type, previousItems, [], new Set());
+    const merged = new Map();
+    (Array.isArray(previousItems) ? previousItems : []).forEach((item, index) => {
+        const current = normalizeExerciseItem(type, item, index);
+        if (current) merged.set(current.mediaId, current);
+    });
+    merged.set(normalized.mediaId, normalized);
+    return Array.from(merged.values());
+}
+
+function updateLocalDailyLogCaches(docId, nextData) {
+    if (!docId || !nextData) return;
+    updateDailyLogCache(docId, nextData);
+    upsertGalleryCacheItem(docId, nextData);
+    sortedFilteredDirty = true;
+}
+
+async function applyBackgroundMediaPatch({ userId, docId, job, result }) {
+    if (!userId || !docId || !job || !result?.url) return false;
+    const docRef = doc(db, 'daily_logs', docId);
+    const snap = await getDoc(docRef).catch(() => null);
+    const currentData = snap?.exists() ? (snap.data() || {}) : (getCachedDailyLog(docId) || {});
+    const nextData = cloneDailyLogData(currentData);
+
+    if (job.kind === 'diet') {
+        nextData.diet = {
+            ...(nextData.diet || {}),
+            [`${job.slot}Url`]: result.url,
+            [`${job.slot}ThumbUrl`]: result.thumbUrl || null
+        };
+    } else if (job.kind === 'sleep') {
+        nextData.sleepAndMind = {
+            ...(nextData.sleepAndMind || {}),
+            sleepImageUrl: result.url,
+            sleepImageThumbUrl: result.thumbUrl || null
+        };
+    } else if (job.kind === 'cardio') {
+        if (_removedExerciseMediaIds.cardio.has(job.mediaId)) return false;
+        const nextItem = {
+            mediaId: job.mediaId,
+            imageUrl: result.url,
+            imageThumbUrl: result.thumbUrl || null,
+            aiAnalysis: job.aiAnalysis || null
+        };
+        nextData.exercise = {
+            ...(nextData.exercise || {}),
+            cardioList: upsertExerciseItem('cardio', nextData?.exercise?.cardioList || [], nextItem)
+        };
+    } else if (job.kind === 'strength') {
+        if (_removedExerciseMediaIds.strength.has(job.mediaId)) return false;
+        const nextItem = {
+            mediaId: job.mediaId,
+            videoUrl: result.url,
+            videoThumbUrl: result.thumbUrl || null,
+            aiAnalysis: job.aiAnalysis || null
+        };
+        nextData.exercise = {
+            ...(nextData.exercise || {}),
+            strengthList: upsertExerciseItem('strength', nextData?.exercise?.strengthList || [], nextItem)
+        };
+    } else {
+        return false;
+    }
+
+    const { awarded } = calculateAwardedPointsFromLogData(nextData, nextData.awardedPoints || {});
+    nextData.awardedPoints = awarded;
+
+    const patch = {
+        timestamp: serverTimestamp(),
+        awardedPoints: awarded
+    };
+
+    if (job.kind === 'diet') {
+        patch.diet = nextData.diet;
+    } else if (job.kind === 'sleep') {
+        patch.sleepAndMind = nextData.sleepAndMind;
+    } else {
+        patch.exercise = nextData.exercise;
+    }
+
+    await setDoc(docRef, patch, { merge: true });
+    updateLocalDailyLogCaches(docId, {
+        ...nextData,
+        timestamp: new Date().toISOString()
+    });
+
+    if (job.kind === 'diet') {
+        persistSavedPreview(`diet-img-${job.slot}`, document.getElementById(`preview-${job.slot}`), result.url, result.thumbUrl || null);
+    } else if (job.kind === 'sleep') {
+        persistSavedPreview('sleep-img', document.getElementById('preview-sleep'), result.url, result.thumbUrl || null);
+    } else if (job.kind === 'cardio' || job.kind === 'strength') {
+        const block = document.getElementById(job.blockId);
+        if (block && String(block.dataset.mediaId || '') === job.mediaId) {
+            persistSavedExerciseBlock(block, result.url, result.thumbUrl || null);
+        }
+    }
+
+    _assetCache.ts = 0;
+    _dashboardCache.ts = 0;
+    return true;
+}
+
+function runBackgroundMediaSyncJobs({ userId, docId, jobs = [] }) {
+    if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
+
+    const total = jobs.length;
+    let completed = 0;
+    let failed = 0;
+    setBackgroundUploadStatus({
+        visible: true,
+        title: `업로드 ${completed}/${total}`,
+        subtitle: '다른 탭을 봐도 계속 저장 중이에요.'
+    });
+
+    (async () => {
+        for (const job of jobs) {
+            try {
+                const result = await resolvePendingUploadResult(job.inputId);
+                if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
+                await applyBackgroundMediaPatch({ userId, docId, job, result });
+            } catch (error) {
+                failed++;
+                console.error('백그라운드 미디어 저장 실패:', job, error);
+            } finally {
+                completed++;
+                setBackgroundUploadStatus({
+                    visible: true,
+                    error: failed > 0,
+                    title: `업로드 ${completed}/${total}`,
+                    subtitle: failed > 0
+                        ? `일부 업로드가 실패했어요. (${failed}건)`
+                        : '다른 탭을 봐도 계속 저장 중이에요.'
+                });
+            }
+        }
+
+        setBackgroundUploadStatus({
+            visible: true,
+            complete: failed === 0,
+            error: failed > 0,
+            title: failed === 0 ? '업로드 완료' : '일부 업로드 실패',
+            subtitle: failed === 0
+                ? '새로 올린 미디어 저장이 모두 끝났어요.'
+                : '실패한 파일은 다시 선택해 저장해 주세요.'
+        });
+
+        window.updateAssetDisplay?.(true).catch(() => { });
+
+        if (failed === 0) {
+            showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
+        } else {
+            showToast(`⚠️ 백그라운드 업로드 중 ${failed}건이 실패했습니다.`);
+        }
+    })();
 }
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
@@ -9440,7 +9820,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     if (!user) return;
     saveBtn.innerText = "저장 중..."; saveBtn.disabled = true;
     enablePendingUploadProgress();
-    showToast("백그라운드에서 저장 중입니다! 🚀");
+    showToast("저장 중입니다. 새 미디어는 필요하면 백그라운드에서 이어서 올릴게요.");
 
     (async () => {
         // Firestore 타임아웃 헬퍼 (서버 응답 대기 상한선)
@@ -9469,251 +9849,275 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             }
             oldData.awardedPoints = oldData.awardedPoints || {};
 
-            // === getUrl + 썸네일을 하나로 합친 헬퍼 (pre-upload 결과 우선 사용) ===
-            const getUrlWithThumb = async (id, folder, oldUrl, oldThumbUrl) => {
-                const el = document.getElementById(id);
-                const previewImg = el?.parentElement?.querySelector('.preview-img');
-                const hasVisiblePreview = !!previewImg && previewImg.style.display !== 'none';
-
-                const pendingResult = await resolvePendingUploadResult(id);
-                if (hasVisiblePreview && pendingResult?.url) {
-                    return pendingResult;
-                }
-
-                if (el && el.files[0] && hasVisiblePreview) {
-                    // fallback: 지금 업로드
-                    try {
-                        const result = await uploadWithThumb(el.files[0], folder, user.uid, {
-                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
-                        });
-                        if (result.url) return result;
-                        uploadFailures.push(id);
-                        return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
-                    } catch (err) {
-                        console.error(`${id} 업로드 실패:`, err);
-                        uploadFailures.push(id);
-                        return { url: oldUrl || null, thumbUrl: oldThumbUrl || null };
+            const backgroundJobs = [];
+            const queueBackgroundJob = (job) => {
+                if (!job?.inputId) return;
+                if (backgroundJobs.some(item => item.inputId === job.inputId)) return;
+                backgroundJobs.push(job);
+            };
+            const getStoredPreviewState = (previewEl, oldUrl, oldThumbUrl) => {
+                const savedUrl = (hasMediaUrl(oldUrl) ? oldUrl : null)
+                    || (hasMediaUrl(previewEl?.getAttribute('data-saved-url')) ? previewEl.getAttribute('data-saved-url') : null)
+                    || (hasMediaUrl(previewEl?.src) ? previewEl.src : null);
+                const savedThumb = (hasMediaUrl(oldThumbUrl) ? oldThumbUrl : null)
+                    || (hasMediaUrl(previewEl?.getAttribute('data-saved-thumb-url')) ? previewEl.getAttribute('data-saved-thumb-url') : null)
+                    || null;
+                return { url: savedUrl || null, thumbUrl: savedThumb };
+            };
+            const ensureDeferredImageUpload = (inputId, file, folder) => {
+                if (!inputId || !file || !folder || !auth?.currentUser) return;
+                const existing = _pendingUploads.get(inputId);
+                if (existing) return;
+                const promise = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                    onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
+                });
+                _pendingUploads.set(inputId, { promise, done: false, result: null, progress: 0, reportProgress: false });
+                promise.then((r) => {
+                    const entry = _pendingUploads.get(inputId);
+                    if (entry) {
+                        entry.done = true;
+                        entry.result = r;
                     }
-                }
-                if (el) {
-                    const previewImg = el.parentElement.querySelector('.preview-img');
-                    // 사용자가 명시적으로 삭제한 경우만 null 반환
-                    if (previewImg && previewImg.hasAttribute('data-user-removed')) {
-                        return { url: null, thumbUrl: null };
+                }).catch(() => _pendingUploads.delete(inputId));
+            };
+            const ensureDeferredVideoUpload = (inputId, file, localThumbSeed = '') => {
+                if (!inputId || !file || !auth?.currentUser) return;
+                const existing = _pendingUploads.get(inputId);
+                if (existing) return;
+                const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
+                    onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
+                });
+                _pendingUploads.set(inputId, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null, progress: 0, reportProgress: false });
+                pendingUpload.promise.then((r) => {
+                    const entry = _pendingUploads.get(inputId);
+                    if (entry) {
+                        entry.done = true;
+                        entry.result = r;
                     }
-                    // Firebase Storage URL인지 검증 (빈 img.src는 페이지 URL을 반환하므로 반드시 검증 필요)
-                    const isStoredUrl = u => isPersistedStorageUrl(u);
-                    // 기존 URL 보존: oldData → data-saved-url → previewImg.src 순서로 fallback
-                    // (display:none 여부 무관 — clearInputs로 숨겨져도 data-saved-url 유지)
-                    const savedUrl = (isStoredUrl(oldUrl) ? oldUrl : null)
-                        || (isStoredUrl(previewImg?.getAttribute('data-saved-url')) ? previewImg.getAttribute('data-saved-url') : null)
-                        || (isStoredUrl(previewImg?.src) ? previewImg.src : null);
-                    const savedThumb = (isStoredUrl(oldThumbUrl) ? oldThumbUrl : null)
-                        || (isStoredUrl(previewImg?.getAttribute('data-saved-thumb-url')) ? previewImg.getAttribute('data-saved-thumb-url') : null) || null;
-                    return { url: savedUrl || null, thumbUrl: savedThumb };
-                }
-                return { url: (isPersistedStorageUrl(oldUrl) ? oldUrl : null), thumbUrl: (isPersistedStorageUrl(oldThumbUrl) ? oldThumbUrl : null) };
+                }).catch(() => _pendingUploads.delete(inputId));
             };
 
-            // === 모든 업로드를 병렬로 실행 ===
-            console.log('📤 모든 이미지 병렬 업로드 시작');
-            const uploadStart = Date.now();
+            const getImmediateMediaResult = ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {
+                const inputEl = document.getElementById(inputId);
+                const hasVisiblePreview = !!previewEl && previewEl.style.display !== 'none';
+                const pendingSnapshot = getPendingUploadSnapshot(inputId);
 
-            // 1) 식단 4장 병렬
-            const dietPromise = Promise.all([
-                getUrlWithThumb('diet-img-breakfast', 'diet_images', oldData?.diet?.breakfastUrl, oldData?.diet?.breakfastThumbUrl),
-                getUrlWithThumb('diet-img-lunch', 'diet_images', oldData?.diet?.lunchUrl, oldData?.diet?.lunchThumbUrl),
-                getUrlWithThumb('diet-img-dinner', 'diet_images', oldData?.diet?.dinnerUrl, oldData?.diet?.dinnerThumbUrl),
-                getUrlWithThumb('diet-img-snack', 'diet_images', oldData?.diet?.snackUrl, oldData?.diet?.snackThumbUrl),
-            ]);
-
-            // 2) 운동 사진 병렬
-            const cardioBlocks = document.querySelectorAll('.cardio-block');
-            const cardioPromise = Promise.all([...cardioBlocks].map(async (block) => {
-                const fileInput = block.querySelector('.exer-file');
-                let url = block.getAttribute('data-url') || null;
-                let thumbUrl = block.getAttribute('data-thumb-url') || null;
-                let aiAnalysis = null;
-                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
-                const pending = await resolvePendingUploadResult(fileInput.id);
-                if (pending?.url) {
-                    url = pending.url;
-                    if (pending.thumbUrl) thumbUrl = pending.thumbUrl;
-                } else if (fileInput.files[0]) {
-                    try {
-                        const result = await uploadWithThumb(fileInput.files[0], 'exercise_images', user.uid, {
-                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
-                        });
-                        url = result.url;
-                        if (result.thumbUrl) thumbUrl = result.thumbUrl;
-                    } catch (err) {
-                        console.error('⚠️ 유산소 사진 업로드 실패:', err);
-                        url = null;
-                    }
+                if (previewEl?.hasAttribute('data-user-removed')) {
+                    return { url: null, thumbUrl: null };
                 }
-                return url ? { imageUrl: url, imageThumbUrl: thumbUrl, aiAnalysis } : null;
-            }));
+                if (hasVisiblePreview && pendingSnapshot?.result?.url) {
+                    return pendingSnapshot.result;
+                }
+                if (inputEl?.files?.[0] && hasVisiblePreview) {
+                    if (!pendingSnapshot) {
+                        ensureDeferredImageUpload(inputId, inputEl.files[0], folder);
+                    }
+                    queueBackgroundJob({ kind: backgroundKind, slot, inputId });
+                }
+                return getStoredPreviewState(previewEl, oldUrl, oldThumbUrl);
+            };
 
-            // 3) 근력 영상 병렬
-            const strengthBlocks = document.querySelectorAll('.strength-block');
-            const strengthPromise = Promise.all([...strengthBlocks].map(async (block) => {
+            const breakfastResult = getImmediateMediaResult({
+                inputId: 'diet-img-breakfast',
+                previewEl: document.getElementById('preview-breakfast'),
+                oldUrl: oldData?.diet?.breakfastUrl,
+                oldThumbUrl: oldData?.diet?.breakfastThumbUrl,
+                folder: 'diet_images',
+                backgroundKind: 'diet',
+                slot: 'breakfast'
+            });
+            const lunchResult = getImmediateMediaResult({
+                inputId: 'diet-img-lunch',
+                previewEl: document.getElementById('preview-lunch'),
+                oldUrl: oldData?.diet?.lunchUrl,
+                oldThumbUrl: oldData?.diet?.lunchThumbUrl,
+                folder: 'diet_images',
+                backgroundKind: 'diet',
+                slot: 'lunch'
+            });
+            const dinnerResult = getImmediateMediaResult({
+                inputId: 'diet-img-dinner',
+                previewEl: document.getElementById('preview-dinner'),
+                oldUrl: oldData?.diet?.dinnerUrl,
+                oldThumbUrl: oldData?.diet?.dinnerThumbUrl,
+                folder: 'diet_images',
+                backgroundKind: 'diet',
+                slot: 'dinner'
+            });
+            const snackResult = getImmediateMediaResult({
+                inputId: 'diet-img-snack',
+                previewEl: document.getElementById('preview-snack'),
+                oldUrl: oldData?.diet?.snackUrl,
+                oldThumbUrl: oldData?.diet?.snackThumbUrl,
+                folder: 'diet_images',
+                backgroundKind: 'diet',
+                slot: 'snack'
+            });
+
+            const cardioBlocks = [...document.querySelectorAll('.cardio-block')];
+            const cardioPersistResults = new Map();
+            const cardioCurrentItems = [];
+            cardioBlocks.forEach((block, index) => {
+                const fileInput = block.querySelector('.exer-file');
+                const mediaId = ensureExerciseBlockMediaId(block, 'cardio');
+                if (block.hasAttribute('data-user-removed')) {
+                    _removedExerciseMediaIds.cardio.add(mediaId);
+                    return;
+                }
+                let url = hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
+                let thumbUrl = hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
+                let aiAnalysis = null;
+                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                const pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
+                if (pendingSnapshot?.result?.url) {
+                    url = pendingSnapshot.result.url;
+                    thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                } else if (fileInput?.files?.[0]) {
+                    if (!pendingSnapshot) {
+                        ensureDeferredImageUpload(fileInput.id, fileInput.files[0], 'exercise_images');
+                    }
+                    queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                }
+                const item = normalizeExerciseItem('cardio', {
+                    mediaId,
+                    imageUrl: url,
+                    imageThumbUrl: thumbUrl,
+                    aiAnalysis
+                }, index);
+                if (item) {
+                    cardioCurrentItems.push(item);
+                    cardioPersistResults.set(block.id, item);
+                }
+            });
+
+            const strengthBlocks = [...document.querySelectorAll('.strength-block')];
+            const strengthPersistResults = new Map();
+            const strengthCurrentItems = [];
+            strengthBlocks.forEach((block, index) => {
                 const fileInput = block.querySelector('.exer-file');
                 const previewImg = block.querySelector('.preview-strength-img');
-                let url = block.getAttribute('data-url') || null;
-                let thumbUrl = block.getAttribute('data-thumb-url') || null;
-                let localThumb = String(
-                    block.getAttribute('data-local-thumb')
-                    || previewImg?.getAttribute('data-local-thumb')
-                    || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
-                    || ''
-                ).trim();
+                const mediaId = ensureExerciseBlockMediaId(block, 'strength');
+                if (block.hasAttribute('data-user-removed')) {
+                    _removedExerciseMediaIds.strength.add(mediaId);
+                    return;
+                }
+                let url = hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
+                let thumbUrl = hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
                 let aiAnalysis = null;
-                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch(_) {}
-                const pending = await resolvePendingUploadResult(fileInput.id);
-                if (pending?.url) {
-                    url = pending.url;
-                    if (pending.thumbUrl) thumbUrl = pending.thumbUrl;
-                } else if (fileInput.files[0]) {
-                    try {
-                        const pendingUpload = uploadVideoWithThumb(fileInput.files[0], 'exercise_videos', user.uid, '', {
-                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
-                        });
-                        const result = await pendingUpload.promise;
-                        if (result.url && !result.thumbUrl && pendingUpload.thumbPromise) {
-                            const pendingThumb = await Promise.race([
-                                pendingUpload.thumbPromise.catch(() => null),
-                                new Promise(resolve => setTimeout(() => resolve(null), 5000))
-                            ]);
-                            if (pendingThumb) result.thumbUrl = pendingThumb;
-                        }
-                        url = result.url;
-                        if (result.thumbUrl) thumbUrl = result.thumbUrl;
-                    } catch (err) {
-                        console.error('⚠️ 근력 영상 업로드 실패:', err);
-                        url = null;
+                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                const pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
+                if (pendingSnapshot?.result?.url) {
+                    url = pendingSnapshot.result.url;
+                    thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                } else if (fileInput?.files?.[0]) {
+                    const localThumbSeed = String(
+                        block.getAttribute('data-local-thumb')
+                        || previewImg?.getAttribute('data-local-thumb')
+                        || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
+                        || ''
+                    ).trim();
+                    if (!pendingSnapshot) {
+                        ensureDeferredVideoUpload(fileInput.id, fileInput.files[0], localThumbSeed);
                     }
+                    queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                 }
-                if (url && !thumbUrl && !localThumb.startsWith('data:image/') && fileInput.files[0]) {
-                    try {
-                        localThumb = await extractVideoThumbFromFile(fileInput.files[0]);
-                        if (localThumb.startsWith('data:image/')) {
-                            if (previewImg) {
-                                previewImg.src = localThumb;
-                                previewImg.setAttribute('data-local-thumb', localThumb);
-                            }
-                            block.setAttribute('data-local-thumb', localThumb);
-                        }
-                    } catch (_) {}
+                const item = normalizeExerciseItem('strength', {
+                    mediaId,
+                    videoUrl: url,
+                    videoThumbUrl: thumbUrl,
+                    aiAnalysis
+                }, index);
+                if (item) {
+                    strengthCurrentItems.push(item);
+                    strengthPersistResults.set(block.id, item);
                 }
-                if (url && !thumbUrl && localThumb.startsWith('data:image/')) {
-                    thumbUrl = await uploadDataUrlThumbnail(localThumb, 'exercise_videos', user.uid);
-                }
-                return url ? { videoUrl: url, videoThumbUrl: thumbUrl, aiAnalysis } : null;
-            }));
+            });
 
-            // 4) 수면 사진
+            const cardioList = mergeExerciseItems('cardio', oldData?.exercise?.cardioList || [], cardioCurrentItems, _removedExerciseMediaIds.cardio);
+            const strengthList = mergeExerciseItems('strength', oldData?.exercise?.strengthList || [], strengthCurrentItems, _removedExerciseMediaIds.strength);
+
+            const sleepPreview = document.getElementById('preview-sleep');
             const sleepFile = document.getElementById('sleep-img');
-            const sleepPromise = (async () => {
-                let sUrl = oldData?.sleepAndMind?.sleepImageUrl || null;
-                let sThumbUrl = oldData?.sleepAndMind?.sleepImageThumbUrl || null;
-                const sleepPending = await resolvePendingUploadResult('sleep-img');
-                if (sleepPending?.url && document.getElementById('preview-sleep').style.display !== 'none') {
-                    sUrl = sleepPending.url;
-                    if (sleepPending.thumbUrl) sThumbUrl = sleepPending.thumbUrl;
-                } else if (sleepFile.files[0] && document.getElementById('preview-sleep').style.display !== 'none') {
-                    try {
-                        const result = await uploadWithThumb(sleepFile.files[0], 'sleep_images', user.uid, {
-                            onProgress: (pct) => updateSaveButtonUploadProgress(pct)
-                        });
-                        sUrl = result.url;
-                        sThumbUrl = result.thumbUrl;
-                    } catch (err) {
-                        console.error('⚠️ 수면 사진 업로드 실패:', err);
-                        sUrl = null; sThumbUrl = null;
-                    }
-                } else if (document.getElementById('preview-sleep').style.display === 'none' && document.getElementById('preview-sleep').hasAttribute('data-user-removed')) {
-                    sUrl = null; sThumbUrl = null;
+            let sleepResult = getStoredPreviewState(sleepPreview, oldData?.sleepAndMind?.sleepImageUrl, oldData?.sleepAndMind?.sleepImageThumbUrl);
+            const sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img');
+            if (sleepPreview?.hasAttribute('data-user-removed')) {
+                sleepResult = { url: null, thumbUrl: null };
+            } else if (sleepPreview?.style.display !== 'none' && sleepPendingSnapshot?.result?.url) {
+                sleepResult = sleepPendingSnapshot.result;
+            } else if (sleepPreview?.style.display !== 'none' && sleepFile?.files?.[0]) {
+                if (!sleepPendingSnapshot) {
+                    ensureDeferredImageUpload('sleep-img', sleepFile.files[0], 'sleep_images');
                 }
-                return { url: sUrl, thumbUrl: sThumbUrl };
-            })();
+                queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+            }
 
-            // 모든 업로드 완료 대기
-            const [dietResults, cardioResults, strengthResults, sleepResult] = await Promise.all([
-                dietPromise, cardioPromise, strengthPromise, sleepPromise
-            ]);
+            const bUrl = breakfastResult.url, lUrl = lunchResult.url, dUrl = dinnerResult.url, sUrl = snackResult.url;
+            const bThumbUrl = breakfastResult.thumbUrl, lThumbUrl = lunchResult.thumbUrl, dThumbUrl = dinnerResult.thumbUrl, sThumbUrl = snackResult.thumbUrl;
+            const sleepUrl = sleepResult.url;
+            const sleepThumbUrl = sleepResult.thumbUrl;
 
-            console.log(`✅ 전체 업로드 완료 (${((Date.now() - uploadStart) / 1000).toFixed(1)}초)`);
-
-            const [bResult, lResult, dResult, sResult] = dietResults;
-            const bUrl = bResult.url, lUrl = lResult.url, dUrl = dResult.url, sUrl = sResult.url;
-            const bThumbUrl = bResult.thumbUrl, lThumbUrl = lResult.thumbUrl, dThumbUrl = dResult.thumbUrl, sThumbUrl = sResult.thumbUrl;
-
-
-            const cardioList = cardioResults.filter(Boolean);
-            const strengthList = strengthResults.filter(Boolean);
-
-            let sleepUrl = sleepResult.url;
-            let sleepThumbUrl = sleepResult.thumbUrl;
-
-            const hasDiet = !!(bUrl || lUrl || dUrl || sUrl);
-            const hasExer = cardioList.length > 0 || strengthList.length > 0 || (_stepData.count > 0);
             const meditationDone = document.getElementById('meditation-check').checked;
-            // 감사일기 텍스트 정제 (XSS 방지)
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
-            const hasMind = !!(sleepUrl || meditationDone || gratitudeText);
-
-            // === 신규 포인트 시스템 (최대 80P/일) ===
-            let awarded = oldData.awardedPoints || {};
-            const oldDietPts = awarded.dietPoints || 0;
-            const oldExerPts = awarded.exercisePoints || 0;
-            const oldMindPts = awarded.mindPoints || 0;
-
-            // 식단: 사진당 10P, 최대 30P (3장까지 인정)
-            const dietPhotoCount = [bUrl, lUrl, dUrl, sUrl].filter(u => !!u).length;
-            const newDietPts = Math.min(dietPhotoCount * 10, 30);
-
-            // 운동: 유산소·걸음수 첫 10P + 추가 5P, 근력 첫 10P + 추가 5P (최대 30P)
-            let newExerPts = 0;
-            const qualifiesForStepPoints = (_stepData.count || 0) >= 8000;
-            const cardioCredits = cardioList.length + (qualifiesForStepPoints ? 1 : 0);
-            if (cardioCredits >= 1) newExerPts += 10;
-            if (cardioCredits >= 2) newExerPts += 5;
-            if (strengthList.length >= 1) newExerPts += 10;
-            if (strengthList.length >= 2) newExerPts += 5;
-            newExerPts = Math.min(newExerPts, 30);
-
-            // 마음: 수면분석 10P + 마음챙김/감사일기 10P (최대 20P)
-            let newMindPts = 0;
-            if (sleepUrl) newMindPts += 10;
-            if (meditationDone || gratitudeText) newMindPts += 10;
-            newMindPts = Math.min(newMindPts, 20);
-
-            const pointsToGive = Math.max(0, newDietPts - oldDietPts) +
-                Math.max(0, newExerPts - oldExerPts) +
-                Math.max(0, newMindPts - oldMindPts);
-
-            awarded.dietPoints = newDietPts;
-            awarded.exercisePoints = newExerPts;
-            awarded.mindPoints = newMindPts;
-            awarded.diet = newDietPts > 0;
-            awarded.exercise = newExerPts > 0;
-            awarded.mind = newMindPts > 0;
-
             const currentDietAnalysis = collectCurrentDietAnalysisFromUi();
             const currentSleepAnalysis = getCurrentSleepAnalysisFromUi();
             const shareSettings = getCurrentShareSettings();
+
+            const provisionalLogData = {
+                ...oldData,
+                diet: {
+                    ...(oldData.diet || {}),
+                    breakfastUrl: bUrl,
+                    lunchUrl: lUrl,
+                    dinnerUrl: dUrl,
+                    snackUrl: sUrl,
+                    breakfastThumbUrl: bThumbUrl,
+                    lunchThumbUrl: lThumbUrl,
+                    dinnerThumbUrl: dThumbUrl,
+                    snackThumbUrl: sThumbUrl
+                },
+                exercise: {
+                    ...(oldData.exercise || {}),
+                    cardioList,
+                    strengthList
+                },
+                steps: _stepData.count > 0
+                    ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: _stepData.updatedAt || new Date().toISOString() }
+                    : (oldData.steps || null),
+                sleepAndMind: {
+                    ...(oldData.sleepAndMind || {}),
+                    sleepImageUrl: sleepUrl,
+                    sleepImageThumbUrl: sleepThumbUrl,
+                    sleepAnalysis: currentSleepAnalysis,
+                    meditationDone,
+                    gratitude: gratitudeText
+                }
+            };
+
+            const { awarded, pointsToGive } = calculateAwardedPointsFromLogData(provisionalLogData, oldData.awardedPoints || {});
 
             const saveData = sanitize({
                 userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
                 metrics: { weight: document.getElementById('weight').value, glucose: document.getElementById('glucose').value, bpSystolic: document.getElementById('bp-systolic').value, bpDiastolic: document.getElementById('bp-diastolic').value },
                 diet: {
+                    ...(oldData.diet || {}),
                     breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,
                     breakfastThumbUrl: bThumbUrl, lunchThumbUrl: lThumbUrl, dinnerThumbUrl: dThumbUrl, snackThumbUrl: sThumbUrl
                 },
                 dietAnalysis: currentDietAnalysis,
-                exercise: { cardioList: cardioList, strengthList: strengthList },
+                exercise: {
+                    ...(oldData.exercise || {}),
+                    cardioList: cardioList,
+                    strengthList: strengthList
+                },
                 steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: _stepData.updatedAt || new Date().toISOString() } : (oldData.steps || null),
-                sleepAndMind: { sleepImageUrl: sleepUrl, sleepImageThumbUrl: sleepThumbUrl, sleepAnalysis: currentSleepAnalysis, meditationDone: meditationDone, gratitude: gratitudeText },
+                sleepAndMind: {
+                    ...(oldData.sleepAndMind || {}),
+                    sleepImageUrl: sleepUrl,
+                    sleepImageThumbUrl: sleepThumbUrl,
+                    sleepAnalysis: currentSleepAnalysis,
+                    meditationDone: meditationDone,
+                    gratitude: gratitudeText
+                },
                 shareSettings: shareSettings
             });
 
@@ -9733,15 +10137,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 } else { throw e; }
             }
 
-            // coins 업데이트는 Cloud Function(awardPoints)이 서버에서 처리
             if (uploadFailures.length > 0) {
                 showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
             } else if (pointsToGive > 0) {
                 const currentDisplayed = parseInt(document.getElementById('point-balance').innerText) || 0;
                 document.getElementById('point-balance').innerText = currentDisplayed + pointsToGive;
                 renderSimpleProfilePanel({ coins: currentDisplayed + pointsToGive }).catch(() => {});
-                showToast(`🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
-            } else { showToast(`🎉 데이터가 업데이트되었습니다.`); }
+                showToast(backgroundJobs.length > 0
+                    ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
+                    : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
+            } else {
+                showToast(backgroundJobs.length > 0
+                    ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
+                    : `🎉 데이터가 업데이트되었습니다.`);
+            }
 
             const galleryHydrationData = {
                 ...oldData,
@@ -9772,17 +10181,20 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 }
             });
             persistSavedPreview('sleep-img', document.getElementById('preview-sleep'), sleepUrl, sleepThumbUrl);
-            cardioBlocks.forEach((block, idx) => {
-                const item = cardioResults[idx];
+            cardioBlocks.forEach((block) => {
+                const item = cardioPersistResults.get(block.id);
                 if (item?.imageUrl) persistSavedExerciseBlock(block, item.imageUrl, item.imageThumbUrl);
             });
-            strengthBlocks.forEach((block, idx) => {
-                const item = strengthResults[idx];
+            strengthBlocks.forEach((block) => {
+                const item = strengthPersistResults.get(block.id);
                 if (item?.videoUrl) persistSavedExerciseBlock(block, item.videoUrl, item.videoThumbUrl);
             });
             _latestPreparedShareMedia = [];
             _latestPreparedShareSignature = '';
             _latestShareRenderKey = '';
+            if (backgroundJobs.length > 0) {
+                runBackgroundMediaSyncJobs({ userId: user.uid, docId, jobs: backgroundJobs });
+            }
             // post-save ops: 백그라운드에서 실행 (버튼 복원과 무관)
             loadGalleryData().catch(() => {});
             setTimeout(() => {

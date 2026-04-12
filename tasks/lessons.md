@@ -949,6 +949,11 @@
 - Symptom: the HBT 거래 기록 UI stayed unchanged even after later prod deploys, because it still showed only challenge staking rows.
 - Root cause: the actual fix (`c35c990`) was server-only in `functions/index.js`, but subsequent deploys were `hosting` only. We mentally bundled the feature with the UI and overlooked that the live callable never changed.
 - Lesson: For mixed client/server features, explicitly record whether the fix is `hosting`, `functions`, or both. Before telling the user a live bug should be fixed, confirm that the changed surface was actually deployed to the right Firebase target.
+
+### 145. Daily media saves must preserve existing items and decouple document save from long-running uploads
+- Symptom: uploading a new photo or short video could take too long, and in some cases previously saved media for the same day disappeared after saving.
+- Root cause: the save flow awaited pending uploads end-to-end before writing the daily log, and exercise media lists were rewritten from the current DOM snapshot without a stable item identity or a preserve-unless-deleted merge.
+- Lesson: For media-heavy diary flows, treat upload and document save as separate stages. Save the log immediately with the latest known persisted media, continue unresolved uploads in the background, and merge media arrays by stable item ids so existing content stays until the user explicitly removes it.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
