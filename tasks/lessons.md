@@ -13,6 +13,11 @@
 - Root cause: the signed-in bootstrap treated any pending chatbot-connect token as a reason to force the `profile` tab, even though the actual connect confirmation can be handled with a modal from any tab.
 - Lesson: when an integration has pending state, surface it with a modal, banner, or lightweight prompt first. Do not let unrelated pending flow state replace the product's primary landing tab unless the user explicitly deep-linked there.
 
+### 71. Browser handoff flows need automatic recovery after the first transient failure, not just a passive pending banner
+- Symptom: the Haebit Coach `!연결` flow could still feel broken because a Kakao in-app to browser handoff failed once, showed a pending warning, and then stopped progressing unless the user tapped `다시 확인`.
+- Root cause: the pending token was preserved, but the recovery path only performed one automatic fetch and then entered a long cooldown on transient errors. That left the user in limbo during exactly the unstable few seconds after browser handoff.
+- Lesson: for token handoff flows, keep the pending token and add a few automatic follow-up retries after transient failures. A pending banner is useful, but it should be backup UI, not the only recovery mechanism.
+
 ### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
 - Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
 - Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.

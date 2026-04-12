@@ -161,6 +161,7 @@ const CHATBOT_CONNECT_FAILURE_KEY = 'pendingChatbotConnectFailure';
 const CHATBOT_CONNECT_RETRY_COOLDOWN_MS = 60 * 1000;
 const CHATBOT_CONNECT_FETCH_TIMEOUT_MS = 8000;
 const CHATBOT_CONNECT_FETCH_RETRY_DELAYS_MS = [1200, 3000];
+const CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS = [1500, 4000, 9000];
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
@@ -170,6 +171,9 @@ let _chatbotConnectModalToken = '';
 let _chatbotConnectCompleting = false;
 let _chatbotConnectLoginPromptShown = false;
 let _chatbotLinkStatusCache = {};
+let _chatbotConnectAutoRetryTimer = null;
+let _chatbotConnectAutoRetryToken = '';
+let _chatbotConnectAutoRetryIndex = 0;
 let _floatingBarLayoutFrame = 0;
 
 applyAppModeChrome();
@@ -2408,6 +2412,45 @@ function clearChatbotConnectTokenFromUrl() {
     const url = new URL(window.location.href);
     url.searchParams.delete('chatbotConnectToken');
     window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    clearChatbotConnectAutoRetry();
+}
+
+function clearChatbotConnectAutoRetry(resetSequence = true) {
+    if (_chatbotConnectAutoRetryTimer) {
+        clearTimeout(_chatbotConnectAutoRetryTimer);
+        _chatbotConnectAutoRetryTimer = null;
+    }
+    if (resetSequence) {
+        _chatbotConnectAutoRetryToken = '';
+        _chatbotConnectAutoRetryIndex = 0;
+    }
+}
+
+function scheduleChatbotConnectAutoRetry(token) {
+    const safeToken = String(token || '').trim();
+    if (!safeToken) {
+        clearChatbotConnectAutoRetry();
+        return;
+    }
+    if (_chatbotConnectModalToken === safeToken || _chatbotConnectCompleting) return;
+
+    if (_chatbotConnectAutoRetryToken !== safeToken) {
+        clearChatbotConnectAutoRetry();
+        _chatbotConnectAutoRetryToken = safeToken;
+    }
+    if (_chatbotConnectAutoRetryTimer) return;
+    if (_chatbotConnectAutoRetryIndex >= CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS.length) return;
+
+    const delay = CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS[_chatbotConnectAutoRetryIndex];
+    _chatbotConnectAutoRetryIndex += 1;
+    _chatbotConnectAutoRetryTimer = setTimeout(() => {
+        _chatbotConnectAutoRetryTimer = null;
+        if (getPendingChatbotConnectToken() !== safeToken) {
+            clearChatbotConnectAutoRetry();
+            return;
+        }
+        maybeHandleChatbotConnect({ force: true }).catch(() => {});
+    }, delay);
 }
 
 function normalizeChatbotConnectErrorCode(rawCode) {
@@ -2678,6 +2721,7 @@ async function confirmChatbotConnect() {
 
     try {
         const result = await completeChatbotConnectToken(token);
+        clearChatbotConnectAutoRetry();
         showToast(result?.alreadyCompleted
             ? '이미 연결된 카카오 계정이에요.'
             : `해빛코치 연결이 완료됐어요${result?.kakaoDisplayName ? ` · ${result.kakaoDisplayName}` : ''}`);
@@ -2715,7 +2759,10 @@ function handleLoggedOutChatbotConnect() {
 
 async function maybeHandleChatbotConnect({ interactive = false, force = false } = {}) {
     const token = getPendingChatbotConnectToken();
-    if (!token) return false;
+    if (!token) {
+        clearChatbotConnectAutoRetry();
+        return false;
+    }
 
     const lastFailure = readChatbotConnectFailure();
     if (!force
@@ -2724,6 +2771,7 @@ async function maybeHandleChatbotConnect({ interactive = false, force = false } 
         && isTransientChatbotConnectError(lastFailure.code)
         && (Date.now() - lastFailure.failedAt) < CHATBOT_CONNECT_RETRY_COOLDOWN_MS) {
         renderChatbotLinkStatus(_chatbotLinkStatusCache);
+        scheduleChatbotConnectAutoRetry(token);
         return false;
     }
 
@@ -2733,26 +2781,31 @@ async function maybeHandleChatbotConnect({ interactive = false, force = false } 
     }
 
     if (_chatbotConnectCompleting || _chatbotConnectModalToken === token) {
+        clearChatbotConnectAutoRetry();
         return true;
     }
 
     try {
         const info = await fetchChatbotConnectTokenInfo(token);
         clearChatbotConnectFailure();
+        clearChatbotConnectAutoRetry();
         openChatbotConnectModal(info);
         return true;
     } catch (error) {
         console.error('chatbot connect token error:', error);
         if (shouldClearChatbotConnectToken(error.code || error.message)) {
+            clearChatbotConnectAutoRetry();
             clearChatbotConnectTokenFromUrl();
             closeChatbotConnectModal();
         } else if (isTransientChatbotConnectError(error.code || error.message)) {
             rememberChatbotConnectFailure(token, error.code || error.message);
             renderChatbotLinkStatus(_chatbotLinkStatusCache);
+            scheduleChatbotConnectAutoRetry(token);
             if (interactive) {
                 showToast(getChatbotConnectErrorMessage(error.code || error.message));
             }
         } else {
+            clearChatbotConnectAutoRetry();
             showToast(getChatbotConnectErrorMessage(error.code || error.message));
         }
         return false;
@@ -3307,7 +3360,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=131';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=132';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
