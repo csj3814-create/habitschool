@@ -919,6 +919,11 @@
 - Symptom: Entering the app from the KakaoTalk Haebit Coach `!연결` button could land on a connect warning even though the URL token handoff itself was intact.
 - Root cause: the app already preserved the full URL during the in-app-browser -> external-browser transition, but the client made a one-shot request to the chatbot server. If the Render service was still waking up or the handoff network was briefly unstable, the UI looked like a lost-connection problem.
 - Lesson: For cross-browser handoff flows, distinguish “token lost” from “token lookup temporarily failed.” Keep the handoff token in the URL, add timeout/retry behavior around token lookup/completion calls, and only surface terminal errors when the server has actually rejected the token.
+
+### 144. When a fix lives only in `functions`, a hosting-only deploy does not change the live behavior
+- Symptom: the HBT 거래 기록 UI stayed unchanged even after later prod deploys, because it still showed only challenge staking rows.
+- Root cause: the actual fix (`c35c990`) was server-only in `functions/index.js`, but subsequent deploys were `hosting` only. We mentally bundled the feature with the UI and overlooked that the live callable never changed.
+- Lesson: For mixed client/server features, explicitly record whether the fix is `hosting`, `functions`, or both. Before telling the user a live bug should be fixed, confirm that the changed surface was actually deployed to the right Firebase target.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
