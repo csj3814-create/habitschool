@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 74. Integration success UI must not depend on an immediate fresh round-trip if the action itself already succeeded
+- Symptom: after a successful Haebit Coach `!연결`, the modal closed and success feedback appeared, but the profile card still said there was no recent connect history until a later reload caught up.
+- Root cause: the client wrote `chatbotConnectLastLinkedAt`, then immediately reloaded the user document and trusted that read as authoritative even when it lagged behind the just-completed write. The optimistic success state never got rendered first, so stale data could visually erase the success.
+- Lesson: when a user action already succeeded and the client has the new state locally, render that optimistic success immediately and treat the next read as reconciliation. If the follow-up read is older or missing the new timestamp, merge the fresher local state instead of overwriting it.
+
 ### 69. Slow onchain wallet history must never block the first render or reuse a false empty state
 - Symptom: the wallet `HBT 거래 기록` box could sit empty for ~20 seconds and then suddenly populate, which made users think the feature was broken even though the onchain data eventually arrived.
 - Root cause: the client waited for the slow `getHbtTransferHistory` callable before rendering any transaction history, and the static HTML placeholder said "아직 거래 기록이 없습니다" before JavaScript had a chance to reconcile cached or Firestore-backed history.

@@ -2472,11 +2472,47 @@ function normalizeChatbotConnectDisplayName(rawValue) {
     if (!value) return '';
 
     const lowered = value.toLowerCase();
-    if (lowered === '사용자' || lowered === '카카오 사용자' || lowered === 'kakao user') {
+    if (
+        lowered === '사용자'
+        || lowered === '카카오 사용자'
+        || lowered === 'kakao user'
+        || value === '?ъ슜??'
+    ) {
         return '';
     }
 
     return value;
+}
+
+function mergeChatbotLinkStatusData(nextData = {}, fallbackData = {}) {
+    const merged = {
+        ...(fallbackData || {}),
+        ...(nextData || {})
+    };
+
+    const nextConnectAt = toDateSafe(nextData?.chatbotConnectLastLinkedAt);
+    const fallbackConnectAt = toDateSafe(fallbackData?.chatbotConnectLastLinkedAt);
+    if (
+        (!nextConnectAt && fallbackConnectAt)
+        || (nextConnectAt && fallbackConnectAt && fallbackConnectAt.getTime() > nextConnectAt.getTime())
+    ) {
+        merged.chatbotConnectLastLinkedAt = fallbackData.chatbotConnectLastLinkedAt;
+        merged.chatbotConnectLastKakaoDisplayName =
+            fallbackData.chatbotConnectLastKakaoDisplayName
+            || nextData?.chatbotConnectLastKakaoDisplayName
+            || '';
+    }
+
+    const nextCodeLastUsedAt = toDateSafe(nextData?.chatbotLinkCodeLastUsedAt);
+    const fallbackCodeLastUsedAt = toDateSafe(fallbackData?.chatbotLinkCodeLastUsedAt);
+    if (
+        (!nextCodeLastUsedAt && fallbackCodeLastUsedAt)
+        || (nextCodeLastUsedAt && fallbackCodeLastUsedAt && fallbackCodeLastUsedAt.getTime() > nextCodeLastUsedAt.getTime())
+    ) {
+        merged.chatbotLinkCodeLastUsedAt = fallbackData.chatbotLinkCodeLastUsedAt;
+    }
+
+    return merged;
 }
 
 function readChatbotConnectFailure() {
@@ -2720,11 +2756,12 @@ function openChatbotConnectModal(info) {
     const currentUser = auth.currentUser;
     const appAccount = currentUser?.email || currentUser?.displayName || '현재 로그인 계정';
     const kakaoName = normalizeChatbotConnectDisplayName(info?.displayName);
+    const kakaoIdentityLabel = kakaoName || '현재 카카오 1:1 계정';
     titleEl.textContent = kakaoName
         ? `카카오 계정 "${kakaoName}"와 연결할까요?`
         : '현재 카카오 1:1 계정과 연결할까요?';
     copyEl.textContent = '현재 로그인한 해빛스쿨 계정과 연결됩니다. 확인하면 카카오 1:1 채팅과 바로 이어집니다.';
-    kakaoNameEl.textContent = kakaoName || '표시 이름 미확인';
+    kakaoNameEl.textContent = kakaoIdentityLabel;
     appAccountEl.textContent = appAccount;
     expiryEl.textContent = formatDateTimeForUi(info?.expiresAt);
     _chatbotConnectModalToken = info?.token || '';
@@ -2759,6 +2796,7 @@ async function confirmChatbotConnect() {
                     chatbotConnectLastLinkedAt: optimisticLinkedAt,
                     chatbotConnectLastKakaoDisplayName: normalizedKakaoName || ''
                 };
+                renderChatbotLinkStatus(_chatbotLinkStatusCache);
             }
         } catch (persistError) {
             console.warn('chatbot connect status persist error:', persistError);
@@ -2770,7 +2808,7 @@ async function confirmChatbotConnect() {
         clearChatbotConnectFailure();
         clearChatbotConnectTokenFromUrl();
         closeChatbotConnectModal();
-        await loadChatbotLinkStatus();
+        await loadChatbotLinkStatus({ preferServer: true, preserveOptimistic: true });
     } catch (error) {
         console.error('chatbot connect complete error:', error);
         if (isTransientChatbotConnectError(error.code || error.message)) {
@@ -2912,7 +2950,8 @@ function renderChatbotLinkStatus(userData = {}) {
     }
 }
 
-async function loadChatbotLinkStatus() {
+async function loadChatbotLinkStatus(options = {}) {
+    const { preferServer = false, preserveOptimistic = false } = options;
     const user = auth.currentUser;
     if (!user) {
         _chatbotLinkStatusCache = {};
@@ -2920,17 +2959,33 @@ async function loadChatbotLinkStatus() {
         return null;
     }
 
-    const snap = await getDoc(doc(db, 'users', user.uid));
+    const userRef = doc(db, 'users', user.uid);
+    let snap;
+    if (preferServer) {
+        try {
+            snap = await getDocFromServer(userRef);
+        } catch (error) {
+            console.warn('챗봇 연결 상태 서버 재조회 실패, 캐시 조회로 대체합니다:', error.message || error);
+            snap = await getDoc(userRef);
+        }
+    } else {
+        snap = await getDoc(userRef);
+    }
+
     if (!snap.exists()) {
-        _chatbotLinkStatusCache = {};
-        renderChatbotLinkStatus({});
-        return null;
+        const fallbackData = preserveOptimistic ? (_chatbotLinkStatusCache || {}) : {};
+        _chatbotLinkStatusCache = fallbackData;
+        renderChatbotLinkStatus(fallbackData);
+        return Object.keys(fallbackData).length ? fallbackData : null;
     }
 
     const userData = snap.data() || {};
-    _chatbotLinkStatusCache = userData;
-    renderChatbotLinkStatus(userData);
-    return userData;
+    const mergedUserData = preserveOptimistic
+        ? mergeChatbotLinkStatusData(userData, _chatbotLinkStatusCache)
+        : userData;
+    _chatbotLinkStatusCache = mergedUserData;
+    renderChatbotLinkStatus(mergedUserData);
+    return mergedUserData;
 }
 
 function renderProfileFriendRequests() {
