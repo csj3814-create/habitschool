@@ -9,7 +9,7 @@ import { escapeHtml } from './security.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=127';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=129';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';

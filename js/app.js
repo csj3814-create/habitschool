@@ -3272,7 +3272,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=127';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=129';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -5225,6 +5225,97 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
 // 자산 표시 캐시 (30초 TTL)
 let _assetCache = { uid: null, ts: 0 };
 const ASSET_CACHE_TTL = 30_000;
+const ASSET_LS_TTL = 24 * 60 * 60 * 1000;
+const ASSET_RETRY_BASE_DELAY_MS = 1200;
+const ASSET_MAX_RETRY_ATTEMPTS = 2;
+let _assetRetryTimer = null;
+const _assetRetryCounts = new Map();
+
+function getAssetStorageKey(uid) {
+    return `hs_wallet_${uid}`;
+}
+
+function formatWalletPointsHtml(value = 0) {
+    return `${parseInt(value || 0).toLocaleString()} <span class="wallet-asset-unit">P</span>`;
+}
+
+function formatWalletHbtHtml(value = 0) {
+    const numeric = Number(value || 0);
+    const safe = Number.isFinite(numeric) ? numeric : 0;
+    const text = safe % 1 === 0
+        ? safe.toLocaleString()
+        : safe.toLocaleString(undefined, { maximumFractionDigits: 1 });
+    return `${text} <span class="wallet-asset-unit">HBT</span>`;
+}
+
+function readAssetDisplayCache(uid) {
+    if (!uid) return null;
+    try {
+        return JSON.parse(localStorage.getItem(getAssetStorageKey(uid)) || 'null');
+    } catch (_) {
+        return null;
+    }
+}
+
+function writeAssetDisplayCache(uid, patch = {}) {
+    if (!uid) return null;
+    try {
+        const prev = readAssetDisplayCache(uid) || {};
+        const next = {
+            ...prev,
+            ...patch,
+            ts: Date.now()
+        };
+        localStorage.setItem(getAssetStorageKey(uid), JSON.stringify(next));
+        return next;
+    } catch (_) {
+        return null;
+    }
+}
+
+function applyCachedAssetDisplay(uid) {
+    const cached = readAssetDisplayCache(uid);
+    if (!cached) return null;
+    if ((Date.now() - Number(cached.ts || 0)) >= ASSET_LS_TTL) return null;
+
+    const pointsDisplay = document.getElementById('asset-points-display');
+    if (pointsDisplay && Number.isFinite(Number(cached.coins))) {
+        pointsDisplay.innerHTML = formatWalletPointsHtml(cached.coins);
+    }
+
+    const hbtDisplay = document.getElementById('asset-hbt-display');
+    if (hbtDisplay && Number.isFinite(Number(cached.hbtBalance))) {
+        hbtDisplay.innerHTML = formatWalletHbtHtml(cached.hbtBalance);
+    }
+
+    return cached;
+}
+
+function clearAssetRetry(uid) {
+    if (_assetRetryTimer) {
+        clearTimeout(_assetRetryTimer);
+        _assetRetryTimer = null;
+    }
+    if (uid) _assetRetryCounts.delete(uid);
+}
+
+function scheduleAssetRetry(uid, reason = 'unknown') {
+    if (!uid || auth.currentUser?.uid !== uid) return;
+
+    const count = _assetRetryCounts.get(uid) || 0;
+    if (count >= ASSET_MAX_RETRY_ATTEMPTS) return;
+
+    if (_assetRetryTimer) clearTimeout(_assetRetryTimer);
+    const nextCount = count + 1;
+    _assetRetryCounts.set(uid, nextCount);
+
+    const delay = ASSET_RETRY_BASE_DELAY_MS * nextCount;
+    console.warn(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
+    _assetRetryTimer = setTimeout(() => {
+        if (auth.currentUser?.uid !== uid) return;
+        window.updateAssetDisplay(true).catch(() => { });
+    }, delay);
+}
 
 // 자산 표시 업데이트 함수
 window.updateAssetDisplay = async function (forceRefresh = false) {
@@ -5246,17 +5337,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         return;
     }
 
-    // localStorage 캐시: 즉시 표시 후 Firestore 백그라운드 갱신 (stale-while-revalidate)
-    const _LS_WALLET_KEY = `hs_wallet_${user.uid}`;
-    const _LS_WALLET_TTL = 24 * 60 * 60 * 1000; // 24시간
-    try {
-        const _cached = JSON.parse(localStorage.getItem(_LS_WALLET_KEY) || 'null');
-        if (_cached && (now - _cached.ts) < _LS_WALLET_TTL) {
-            const _pd = document.getElementById('asset-points-display');
-            if (_pd) _pd.innerHTML = `${parseInt(_cached.coins || 0).toLocaleString()} <span class="wallet-asset-unit">P</span>`;
-            if (window.hideWalletSkeleton) window.hideWalletSkeleton();
-        }
-    } catch (_) {}
+    // localStorage 캐시: 마지막 정상값을 먼저 보여주고 백그라운드에서 재검증
+    if (applyCachedAssetDisplay(user.uid) && window.hideWalletSkeleton) {
+        window.hideWalletSkeleton();
+    }
 
     try {
         const userRef = doc(db, "users", user.uid);
@@ -5331,6 +5415,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         const userSnap = await _p_user;
 
         if (userSnap.exists()) {
+            clearAssetRetry(user.uid);
             const userData = userSnap.data();
 
             const {
@@ -5355,13 +5440,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
 
-            // localStorage에 저장 (다음 방문 시 즉시 표시용)
-            try {
-                localStorage.setItem(_LS_WALLET_KEY, JSON.stringify({
-                    coins: userData.coins || 0,
-                    ts: Date.now()
-                }));
-            } catch (_) {}
+            // localStorage에 저장 (다음 방문/재시도 시 즉시 표시용)
+            writeAssetDisplayCache(user.uid, {
+                coins: userData.coins || 0
+            });
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
@@ -5389,13 +5471,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const pointsDisplay = document.getElementById('asset-points-display');
             if (pointsDisplay) {
                 const ptsVal = parseInt(userData.coins || 0);
-                pointsDisplay.innerHTML = `${ptsVal.toLocaleString()} <span class="wallet-asset-unit">P</span>`;
+                pointsDisplay.innerHTML = formatWalletPointsHtml(ptsVal);
             }
 
             // HBT 표시 업데이트
             // HBT 표시: 온체인 잔액이 진실의 원천 (hbtBalance 사용 안 함)
             const hbtDisplay = document.getElementById('asset-hbt-display');
-            if (hbtDisplay) {
+            if (hbtDisplay && !String(hbtDisplay.textContent || '').includes('HBT')) {
                 hbtDisplay.innerHTML = `<span style="color:#aaa">조회 중...</span>`;
             }
 
@@ -5508,10 +5590,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (window.fetchOnchainBalance) {
                 window.fetchOnchainBalance().then(onchainData => {
                     const hbtEl = document.getElementById('asset-hbt-display');
-                    if (onchainData && onchainData.balanceFormatted) {
-                        const val = parseFloat(onchainData.balanceFormatted);
-                        const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, {maximumFractionDigits: 1});
-                        if (hbtEl) hbtEl.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
+                    const val = parseFloat(onchainData?.balanceFormatted);
+                    if (Number.isFinite(val)) {
+                        clearAssetRetry(user.uid);
+                        writeAssetDisplayCache(user.uid, {
+                            hbtBalance: val,
+                            hbtTs: Date.now()
+                        });
+                        if (hbtEl) hbtEl.innerHTML = formatWalletHbtHtml(val);
                         if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
                         const onchainBadge = document.getElementById('asset-hbt-onchain');
                         if (onchainBadge) {
@@ -5519,11 +5605,12 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                             if (onchainText) onchainText.textContent = `온체인 (${getActiveOnchainLabel(APP_ENV)})`;
                             onchainBadge.style.display = 'inline-flex';
                         }
+                    } else {
+                        scheduleAssetRetry(user.uid, 'onchain-empty');
                     }
-                    // 데이터 없으면 "조회 중..." 유지 (강제 0 표시 안 함)
                 }).catch(err => {
                     console.warn('온체인 잔액 조회 스킵:', err.message);
-                    // 에러 시에도 "조회 중..." 유지
+                    scheduleAssetRetry(user.uid, 'onchain-error');
                 });
             }
 
@@ -5988,12 +6075,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 }
             }
         } else {
-            // 사용자 문서가 없는 경우에도 스켈레톤 해제
+            // 사용자 문서 응답이 늦거나 비어도 마지막 정상값을 유지한 채 재시도
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+            scheduleAssetRetry(user.uid, 'user-doc-timeout');
         }
     } catch (error) {
         console.error('자산 표시 업데이트 오류:', error);
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        scheduleAssetRetry(user.uid, 'asset-display-error');
     }
 };
 
@@ -6285,14 +6374,17 @@ function openTab(tabName, pushState = true) {
                     await window.initializeUserWallet().catch(() => {});
                 }
                 if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
-                // updateAssetDisplay 시점에 blockchain 미로드였으면 HBT 잔액 보완
-                if (window.fetchOnchainBalance && !document.getElementById('asset-hbt-display')?.textContent.includes('HBT')) {
+                // blockchain 모듈 로드 직후에는 항상 한 번 더 온체인 잔액을 보강 조회
+                if (window.fetchOnchainBalance) {
                     window.fetchOnchainBalance().then(data => {
                         const el = document.getElementById('asset-hbt-display');
-                        if (!el || !data?.balanceFormatted) return; // 데이터 없으면 "조회 중..." 유지
-                        const val = parseFloat(data.balanceFormatted);
-                        const str = val % 1 === 0 ? val.toLocaleString() : val.toLocaleString(undefined, { maximumFractionDigits: 1 });
-                        el.innerHTML = `${str} <span class="wallet-asset-unit">HBT</span>`;
+                        const val = parseFloat(data?.balanceFormatted);
+                        if (!el || !Number.isFinite(val)) return;
+                        el.innerHTML = formatWalletHbtHtml(val);
+                        writeAssetDisplayCache(user.uid, {
+                            hbtBalance: val,
+                            hbtTs: Date.now()
+                        });
                         if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
                     }).catch(() => {});
                 }
@@ -7806,7 +7898,7 @@ function renderGroupChallengeFromData(s) {
                 </div>
             `).join('')}
         </div>
-        <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        <div class="mvp-reward-info">💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
         <div class="community-history-btn-wrap">
             <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
@@ -7973,7 +8065,7 @@ async function renderGroupChallenge() {
                 </div>
             `).join('')}
         </div>
-        <div class="mvp-reward-info">💰 매월 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        <div class="mvp-reward-info">💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
         <div class="community-history-btn-wrap">
             <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>

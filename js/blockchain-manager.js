@@ -1574,17 +1574,25 @@ export function getWalletAddress() {
  * @returns {object} { balance, balanceFormatted, walletAddress }
  */
 export async function fetchOnchainBalance() {
-    try {
-        await ensureFunctions();
-        const currentUser = auth.currentUser;
-        if (!currentUser || !getOnchainBalanceFunction) return null;
+    await ensureFunctions();
+    const currentUser = auth.currentUser;
+    if (!currentUser || !getOnchainBalanceFunction) return null;
 
-        const result = await getOnchainBalanceFunction();
-        return result.data;
-    } catch (error) {
-        console.error('⚠️ 온체인 잔액 조회 오류:', error);
-        return null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const result = await getOnchainBalanceFunction();
+            return result.data;
+        } catch (error) {
+            lastError = error;
+            if (attempt < 2) {
+                await new Promise(resolve => setTimeout(resolve, attempt * 400));
+            }
+        }
     }
+
+    console.error('⚠️ 온체인 잔액 조회 오류:', lastError);
+    return null;
 }
 
 /**
@@ -1693,7 +1701,7 @@ function refreshWalletUi(address = null) {
     }
     if (stakingLinkEl) {
         stakingLinkEl.href = `${ACTIVE_BSC_NETWORK.explorer}/token/${ACTIVE_HBT_ADDRESS}?a=${ACTIVE_STAKING_ADDRESS}`;
-        stakingLinkEl.textContent = '🏦 챌린지 예치 HBT 보기';
+        stakingLinkEl.textContent = '🏦 챌린지 예치 HBT';
     }
 
     const hasAddress = !!effectiveAddress;

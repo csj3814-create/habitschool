@@ -1159,6 +1159,7 @@ body.simple-mode .step-input-group {
 .wallet-halving-row > span:last-child {
     text-align: right;
     justify-self: end;
+    padding-right: 6px;
     font-variant-numeric: tabular-nums;
 }
 

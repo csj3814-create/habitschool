@@ -899,6 +899,11 @@
 ### 139. On BSC mainnet, wallet transfer history must not depend on the default dataseed RPC for `eth_getLogs`
 - Symptom: The HBT wallet history UI shipped a merge path for real onchain inflow/outflow, but prod still showed only challenge staking rows because `getHbtTransferHistory` kept failing with `method eth_getLogs in batch triggered rate limit` / `limit exceeded`.
 - Lesson: For BSC mainnet history features, prove the chosen RPC can serve `eth_getLogs` before shipping. Do not assume the default `bsc-dataseed.binance.org` endpoint is suitable for transfer-history scans. Use a history-safe fallback provider order, keep `eth_getLogs` sequential/non-batched, and verify with a real wallet address that recent transfers are returned before deploying.
+
+### 140. Wallet asset cards must preserve the last known balances and retry in the background instead of blanking on transient reads
+- Symptom: The points/HBT cards would occasionally show missing data until the user refreshed several times.
+- Root cause: `updateAssetDisplay()` treated a timed-out Firestore read like an empty user doc, replaced visible HBT with a loading placeholder, and gave up after a single failed onchain read.
+- Lesson: For balance surfaces, never clear good values just because one live read is slow or transiently fails. Cache the last known points/HBT values, render them immediately, and retry failed Firestore/onchain balance reads in the background before asking the user to refresh.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
