@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 69. Slow onchain wallet history must never block the first render or reuse a false empty state
+- Symptom: the wallet `HBT 거래 기록` box could sit empty for ~20 seconds and then suddenly populate, which made users think the feature was broken even though the onchain data eventually arrived.
+- Root cause: the client waited for the slow `getHbtTransferHistory` callable before rendering any transaction history, and the static HTML placeholder said "아직 거래 기록이 없습니다" before JavaScript had a chance to reconcile cached or Firestore-backed history.
+- Lesson: when a wallet screen combines fast local/app history with slow onchain reconciliation, render in stages. Show cached history immediately, render fast Firestore history first, label the panel as syncing while onchain rows load, and only show a true empty state after every source has completed.
+
 ### 68. Wallet HBT history must be designed from actual token movement, not only from app-authored Firestore events
 - Symptom: the wallet `HBT 거래 기록` box could show challenge stake and conversion rows but still miss direct HBT inflow/outflow that happened onchain, which made the history feel incomplete.
 - Root cause: the first pass treated `blockchain_transactions` as the full source of truth even though that collection only logs selected product events and not every ERC-20 transfer affecting the user's wallet.
