@@ -954,6 +954,11 @@
 - Symptom: uploading a new photo or short video could take too long, and in some cases previously saved media for the same day disappeared after saving.
 - Root cause: the save flow awaited pending uploads end-to-end before writing the daily log, and exercise media lists were rewritten from the current DOM snapshot without a stable item identity or a preserve-unless-deleted merge.
 - Lesson: For media-heavy diary flows, treat upload and document save as separate stages. Save the log immediately with the latest known persisted media, continue unresolved uploads in the background, and merge media arrays by stable item ids so existing content stays until the user explicitly removes it.
+
+### 146. Long-running media uploads must expose per-file progress instead of generic warnings or invisible background state
+- Symptom: asking users not to refresh or just telling them an upload is running still left too much uncertainty, especially for short videos that can take noticeably longer than photos.
+- Root cause: the app already tracked per-input upload progress internally, but that state only fed the save CTA and a generic background chip. The actual photo/video slot gave no immediate feedback about how far each file had progressed.
+- Lesson: When client-side uploads can take more than a moment, surface progress on the exact media slot the user just selected. Show percent + complete/error state per file, and start the upload only after validation passes so users never pay for an upload they cancelled.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

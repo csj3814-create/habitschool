@@ -2182,6 +2182,88 @@ textarea {
     padding-left: 3px;
 }
 
+.upload-progress-status {
+    max-width: 240px;
+    margin: 12px auto 0;
+    padding: 9px 10px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 160, 51, 0.24);
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
+}
+
+.upload-progress-status__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.upload-progress-status__label,
+.upload-progress-status__percent {
+    font-size: 12px;
+    font-weight: 800;
+    color: #8f4b00;
+    letter-spacing: -0.2px;
+}
+
+.upload-progress-status__percent {
+    font-variant-numeric: tabular-nums;
+}
+
+.upload-progress-status__bar {
+    margin-top: 7px;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 160, 51, 0.16);
+}
+
+.upload-progress-status__fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #FFB300 0%, #FF7A00 100%);
+    transition: width 0.18s ease;
+}
+
+.upload-progress-status.is-complete {
+    border-color: rgba(38, 166, 91, 0.24);
+}
+
+.upload-progress-status.is-complete .upload-progress-status__label,
+.upload-progress-status.is-complete .upload-progress-status__percent {
+    color: #1f7a45;
+}
+
+.upload-progress-status.is-complete .upload-progress-status__bar {
+    background: rgba(38, 166, 91, 0.16);
+}
+
+.upload-progress-status.is-complete .upload-progress-status__fill {
+    background: linear-gradient(90deg, #57d486 0%, #1f9d55 100%);
+}
+
+.upload-progress-status.is-error {
+    border-color: rgba(198, 40, 40, 0.24);
+}
+
+.upload-progress-status.is-error .upload-progress-status__label,
+.upload-progress-status.is-error .upload-progress-status__percent {
+    color: #b3261e;
+}
+
+.upload-progress-status.is-error .upload-progress-status__bar {
+    background: rgba(198, 40, 40, 0.14);
+}
+
+.upload-progress-status.is-error .upload-progress-status__fill {
+    background: linear-gradient(90deg, #ff8a80 0%, #d32f2f 100%);
+}
+
 .static-remove-btn { 
     display: none; 
     position: absolute; 
@@ -7950,6 +8032,30 @@ body.dark-mode .upload-area {
 body.dark-mode .upload-area:hover {
     border-color: var(--primary-color);
     background: #2E2518;
+}
+
+body.dark-mode .upload-progress-status {
+    background: rgba(36, 33, 40, 0.96);
+    border-color: rgba(255, 160, 51, 0.2);
+}
+
+body.dark-mode .upload-progress-status__label,
+body.dark-mode .upload-progress-status__percent {
+    color: #FFD18A;
+}
+
+body.dark-mode .upload-progress-status__bar {
+    background: rgba(255, 160, 51, 0.14);
+}
+
+body.dark-mode .upload-progress-status.is-complete .upload-progress-status__label,
+body.dark-mode .upload-progress-status.is-complete .upload-progress-status__percent {
+    color: #8BE0AE;
+}
+
+body.dark-mode .upload-progress-status.is-error .upload-progress-status__label,
+body.dark-mode .upload-progress-status.is-error .upload-progress-status__percent {
+    color: #FFB4AB;
 }
 
 /* 운동 블록 */

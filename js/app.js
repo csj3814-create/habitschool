@@ -3744,7 +3744,10 @@ window.removeExerciseBlock = function(block) {
     if (mediaId && (hasPersistedMedia || hasPendingMedia)) {
         _removedExerciseMediaIds[type].add(mediaId);
     }
-    if (input?.id) _pendingUploads.delete(input.id);
+    if (input?.id) {
+        _pendingUploads.delete(input.id);
+        hideInlineUploadProgress(input.id);
+    }
     block.remove();
     updateRecordFlowGuides('exercise');
 };
@@ -3904,11 +3907,7 @@ window.previewDynamicVid = function (input) {
         const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
             onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
         });
-        _pendingUploads.set(input.id, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null, progress: 0, reportProgress: false });
-        pendingUpload.promise.then(r => {
-            const entry = _pendingUploads.get(input.id);
-            if (entry) { entry.done = true; entry.result = r; }
-        }).catch(() => _pendingUploads.delete(input.id));
+        beginTrackedPendingUpload(input.id, pendingUpload);
     }
 
     // 로컬 파일에서 실제 프레임 썸네일 추출
@@ -4106,25 +4105,20 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         const file = input.files[0];
         if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
 
-        // 파일 선택 즉시 백그라운드 업로드 시작 (저장 버튼 클릭 시 이미 완료되어 있음)
-        if (auth?.currentUser && input.id) {
-            const folder = input.id.startsWith('diet-') ? 'diet_images'
-                         : input.id === 'sleep-img' ? 'sleep_images'
-                         : input.id.startsWith('file_c_') ? 'exercise_images' : null;
-            if (folder) {
-                _pendingUploads.delete(input.id);
-                const p = uploadWithThumb(file, folder, auth.currentUser.uid, {
-                    onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
-                });
-                _pendingUploads.set(input.id, { promise: p, done: false, result: null, progress: 0, reportProgress: false });
-                p.then(r => {
-                    const entry = _pendingUploads.get(input.id);
-                    if (entry) { entry.done = true; entry.result = r; }
-                }).catch(() => _pendingUploads.delete(input.id));
-            }
-        }
-
         const render = () => {
+            if (auth?.currentUser && input.id) {
+                const folder = input.id.startsWith('diet-') ? 'diet_images'
+                             : input.id === 'sleep-img' ? 'sleep_images'
+                             : input.id.startsWith('file_c_') ? 'exercise_images' : null;
+                if (folder) {
+                    _pendingUploads.delete(input.id);
+                    const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                        onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
+                    });
+                    beginTrackedPendingUpload(input.id, pendingUpload);
+                }
+            }
+
             const reader = new FileReader();
             reader.onload = e => {
                 preview.src = e.target.result;
@@ -4251,6 +4245,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
 window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     e.preventDefault(); e.stopPropagation();
     _pendingUploads.delete(inputId); // 진행 중인 pre-upload 폐기
+    hideInlineUploadProgress(inputId);
     document.getElementById(inputId).value = "";
     document.getElementById(previewId).src = "";
     document.getElementById(previewId).style.display = "none";
@@ -4332,6 +4327,7 @@ window.rotateImage = function (e, previewId, inputId) {
             const input = document.getElementById(inputId);
             if (!input) return;
             _pendingUploads.delete(inputId); // 회전 전 pre-upload 무효화
+            hideInlineUploadProgress(inputId);
             const file = new File([blob], 'rotated.jpg', { type: 'image/jpeg', lastModified: Date.now() });
             const dt = new DataTransfer();
             dt.items.add(file);
@@ -9312,12 +9308,132 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
 
 // === 파일 선택 즉시 업로드를 위한 상태 저장소 ===
 const _pendingUploads = new Map(); // inputId → { promise, done, result }
+const _inlineUploadProgressTimers = new Map();
+
+function clearInlineUploadProgressTimer(inputId) {
+    if (!inputId) return;
+    const timer = _inlineUploadProgressTimers.get(inputId);
+    if (timer) {
+        clearTimeout(timer);
+        _inlineUploadProgressTimers.delete(inputId);
+    }
+}
+
+function getInlineUploadProgressEls(inputId) {
+    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const uploadArea = input?.closest('.upload-area');
+    if (!input || !uploadArea) return null;
+
+    let statusEl = uploadArea.querySelector('.upload-progress-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.className = 'upload-progress-status';
+        statusEl.hidden = true;
+        statusEl.innerHTML = `
+            <div class="upload-progress-status__row">
+                <span class="upload-progress-status__label"></span>
+                <span class="upload-progress-status__percent"></span>
+            </div>
+            <div class="upload-progress-status__bar">
+                <span class="upload-progress-status__fill"></span>
+            </div>
+        `;
+        uploadArea.appendChild(statusEl);
+    }
+
+    return {
+        input,
+        uploadArea,
+        statusEl,
+        labelEl: statusEl.querySelector('.upload-progress-status__label'),
+        percentEl: statusEl.querySelector('.upload-progress-status__percent'),
+        fillEl: statusEl.querySelector('.upload-progress-status__fill')
+    };
+}
+
+function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '' } = {}) {
+    const els = getInlineUploadProgressEls(inputId);
+    if (!els) return;
+
+    clearInlineUploadProgressTimer(els.input.id);
+
+    const normalizedPct = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
+    const labelMap = {
+        uploading: normalizedPct > 0 ? '업로드 중' : '업로드 준비 중',
+        complete: '업로드 완료',
+        error: '업로드 실패'
+    };
+    const label = message || labelMap[state] || '업로드 중';
+
+    els.statusEl.hidden = false;
+    els.statusEl.classList.toggle('is-complete', state === 'complete');
+    els.statusEl.classList.toggle('is-error', state === 'error');
+    els.labelEl.textContent = label;
+    els.percentEl.textContent = state === 'error' ? '' : `${normalizedPct}%`;
+    els.fillEl.style.width = `${state === 'error' ? 100 : Math.max(normalizedPct, normalizedPct > 0 ? 6 : 0)}%`;
+}
+
+function hideInlineUploadProgress(inputId) {
+    const els = getInlineUploadProgressEls(inputId);
+    if (!els) return;
+    clearInlineUploadProgressTimer(els.input.id);
+    els.statusEl.hidden = true;
+    els.statusEl.classList.remove('is-complete', 'is-error');
+    els.labelEl.textContent = '';
+    els.percentEl.textContent = '';
+    els.fillEl.style.width = '0%';
+}
+
+function scheduleInlineUploadProgressHide(inputId, delay = 1400) {
+    const els = getInlineUploadProgressEls(inputId);
+    if (!els) return;
+    clearInlineUploadProgressTimer(els.input.id);
+    const timer = setTimeout(() => {
+        hideInlineUploadProgress(els.input.id);
+    }, delay);
+    _inlineUploadProgressTimers.set(els.input.id, timer);
+}
+
+function beginTrackedPendingUpload(inputId, uploadSource) {
+    if (!inputId || !uploadSource) return null;
+    const promise = uploadSource?.promise || uploadSource;
+    const thumbPromise = uploadSource?.thumbPromise || null;
+    if (!promise) return null;
+
+    setInlineUploadProgress(inputId, { state: 'uploading', pct: 0 });
+
+    const entry = {
+        promise,
+        thumbPromise,
+        done: false,
+        result: null,
+        progress: 0,
+        reportProgress: false
+    };
+    _pendingUploads.set(inputId, entry);
+
+    Promise.resolve(promise).then((result) => {
+        const current = _pendingUploads.get(inputId);
+        if (!current) return;
+        current.done = true;
+        current.result = result;
+        current.progress = 100;
+        setInlineUploadProgress(inputId, { state: 'complete', pct: 100 });
+        scheduleInlineUploadProgressHide(inputId);
+    }).catch(() => {
+        setInlineUploadProgress(inputId, { state: 'error', pct: 100 });
+        _pendingUploads.delete(inputId);
+    });
+
+    return entry;
+}
 
 function updatePendingUploadProgress(inputId, pct) {
     if (!inputId) return;
     const entry = _pendingUploads.get(inputId);
     if (!entry) return;
     entry.progress = Math.max(entry.progress || 0, Math.round(Number(pct) || 0));
+    setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress });
     if (entry.reportProgress && entry.progress > 0 && entry.progress < 100) {
         updateSaveButtonUploadProgress(entry.progress);
     }
@@ -9460,7 +9576,11 @@ async function resolvePendingUploadResult(inputId) {
 
 function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
-    if (input?.id) _pendingUploads.delete(input.id);
+    if (input?.id) {
+        _pendingUploads.delete(input.id);
+        setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+        scheduleInlineUploadProgressHide(input.id);
+    }
     if (input) input.value = '';
     if (!previewEl) return;
 
@@ -9478,7 +9598,11 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
 function persistSavedExerciseBlock(block, url, thumbUrl) {
     if (!block) return;
     const input = block.querySelector('.exer-file');
-    if (input?.id) _pendingUploads.delete(input.id);
+    if (input?.id) {
+        _pendingUploads.delete(input.id);
+        setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+        scheduleInlineUploadProgressHide(input.id);
+    }
     if (input) input.value = '';
     block.removeAttribute('data-user-removed');
 
@@ -9868,17 +9992,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (!inputId || !file || !folder || !auth?.currentUser) return;
                 const existing = _pendingUploads.get(inputId);
                 if (existing) return;
-                const promise = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {
                     onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
                 });
-                _pendingUploads.set(inputId, { promise, done: false, result: null, progress: 0, reportProgress: false });
-                promise.then((r) => {
-                    const entry = _pendingUploads.get(inputId);
-                    if (entry) {
-                        entry.done = true;
-                        entry.result = r;
-                    }
-                }).catch(() => _pendingUploads.delete(inputId));
+                beginTrackedPendingUpload(inputId, pendingUpload);
             };
             const ensureDeferredVideoUpload = (inputId, file, localThumbSeed = '') => {
                 if (!inputId || !file || !auth?.currentUser) return;
@@ -9887,14 +10004,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
                     onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
                 });
-                _pendingUploads.set(inputId, { promise: pendingUpload.promise, thumbPromise: pendingUpload.thumbPromise, done: false, result: null, progress: 0, reportProgress: false });
-                pendingUpload.promise.then((r) => {
-                    const entry = _pendingUploads.get(inputId);
-                    if (entry) {
-                        entry.done = true;
-                        entry.result = r;
-                    }
-                }).catch(() => _pendingUploads.delete(inputId));
+                beginTrackedPendingUpload(inputId, pendingUpload);
             };
 
             const getImmediateMediaResult = ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {
