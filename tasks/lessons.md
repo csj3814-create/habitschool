@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 82. Gallery caches must not replace a previously visible feed item with an incomplete background-upload draft
+- Symptom: after saving a new exercise video or sleep image, switching to the gallery could show gray placeholders or even an empty-state message because the app replaced the visible cached item with a document version that still lacked finalized media and thumbnails.
+- Root cause: the save flow eagerly upserted `galleryHydrationData` into `cachedGalleryLogs` and also triggered a forced `loadGalleryData(true)` even when media uploads were still finishing in background jobs. That let an incomplete Firestore document override the older, usable gallery state.
+- Lesson: when media uploads continue after the main form save, update the record-tab cache immediately but defer gallery-cache replacement until background media reconciliation finishes. Never force-refresh gallery data from Firestore while the current save still depends on unfinished upload/thumbnail patches.
+
 ### 76. Dashboard hero summaries should concentrate the main metric near the headline instead of repeating it in lower stat cards
 - Symptom: the `오늘의 루틴` card kept feeling busy even after the action rows were improved, because the daily score lived in a separate lower stat box while the top copy still lacked a clear headline-side progress summary.
 - Root cause: I treated the hero as "headline plus extra cards" instead of deciding which single metric belongs in the first eye path. That left the top area visually weak and the lower area redundant.

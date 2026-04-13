@@ -9864,14 +9864,23 @@ function upsertExerciseItem(type, previousItems = [], nextItem = null) {
     return Array.from(merged.values());
 }
 
-function updateLocalDailyLogCaches(docId, nextData) {
+function updateLocalDailyLogCaches(docId, nextData, { updateGallery = true } = {}) {
     if (!docId || !nextData) return;
     updateDailyLogCache(docId, nextData);
-    upsertGalleryCacheItem(docId, nextData);
-    sortedFilteredDirty = true;
+    if (updateGallery) {
+        upsertGalleryCacheItem(docId, nextData);
+        sortedFilteredDirty = true;
+    }
 }
 
-async function applyBackgroundMediaPatch({ userId, docId, job, result }) {
+function refreshGalleryFromCacheIfVisible() {
+    if (!document.getElementById('gallery')?.classList.contains('active')) return;
+    galleryDisplayCount = 0;
+    sortedFilteredDirty = true;
+    renderFeedOnly();
+}
+
+async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGallery = true }) {
     if (!userId || !docId || !job || !result?.url) return false;
     const docRef = doc(db, 'daily_logs', docId);
     const snap = await getDoc(docRef).catch(() => null);
@@ -9935,10 +9944,11 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result }) {
     }
 
     await setDoc(docRef, patch, { merge: true });
-    updateLocalDailyLogCaches(docId, {
+    const committedData = {
         ...nextData,
         timestamp: new Date().toISOString()
-    });
+    };
+    updateLocalDailyLogCaches(docId, committedData, { updateGallery });
 
     if (job.kind === 'diet') {
         persistSavedPreview(`diet-img-${job.slot}`, document.getElementById(`preview-${job.slot}`), result.url, result.thumbUrl || null);
@@ -9953,15 +9963,16 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result }) {
 
     _assetCache.ts = 0;
     _dashboardCache.ts = 0;
-    return true;
+    return committedData;
 }
 
-function runBackgroundMediaSyncJobs({ userId, docId, jobs = [] }) {
+function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false }) {
     if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
 
     const total = jobs.length;
     let completed = 0;
     let failed = 0;
+    let latestCommittedData = null;
     setBackgroundUploadStatus({
         visible: true,
         title: `업로드 ${completed}/${total}`,
@@ -9973,7 +9984,14 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [] }) {
             try {
                 const result = await resolvePendingUploadResult(job.inputId);
                 if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
-                await applyBackgroundMediaPatch({ userId, docId, job, result });
+                const committedData = await applyBackgroundMediaPatch({
+                    userId,
+                    docId,
+                    job,
+                    result,
+                    updateGallery: !deferGalleryUntilComplete
+                });
+                if (committedData) latestCommittedData = committedData;
             } catch (error) {
                 failed++;
                 console.error('백그라운드 미디어 저장 실패:', job, error);
@@ -9987,6 +10005,15 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [] }) {
                         ? `일부 업로드가 실패했어요. (${failed}건)`
                         : '다른 탭을 봐도 계속 저장 중이에요.'
                 });
+            }
+        }
+
+        if (deferGalleryUntilComplete && latestCommittedData) {
+            upsertGalleryCacheItem(docId, latestCommittedData);
+            refreshGalleryFromCacheIfVisible();
+            const currentUser = auth.currentUser;
+            if (currentUser?.uid === userId) {
+                buildShareCardAsync(userId, currentUser).catch(() => { });
             }
         }
 
@@ -10350,9 +10377,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 timestamp: new Date().toISOString()
             };
             updateDailyLogCache(docId, galleryHydrationData);
-            upsertGalleryCacheItem(docId, galleryHydrationData);
-            galleryDisplayCount = 0;
-            sortedFilteredDirty = true;
+            if (backgroundJobs.length === 0) {
+                upsertGalleryCacheItem(docId, galleryHydrationData);
+                galleryDisplayCount = 0;
+                sortedFilteredDirty = true;
+            } else {
+                refreshGalleryFromCacheIfVisible();
+            }
             _dashboardCache.ts = 0;
             _assetCache.ts = 0;
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
@@ -10385,15 +10416,22 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             _latestPreparedShareSignature = '';
             _latestShareRenderKey = '';
             if (backgroundJobs.length > 0) {
-                runBackgroundMediaSyncJobs({ userId: user.uid, docId, jobs: backgroundJobs });
+                runBackgroundMediaSyncJobs({
+                    userId: user.uid,
+                    docId,
+                    jobs: backgroundJobs,
+                    deferGalleryUntilComplete: true
+                });
             }
             // post-save ops: 백그라운드에서 실행 (버튼 복원과 무관)
             loadGalleryData().catch(() => {});
-            setTimeout(() => {
-                loadGalleryData(true).catch((refreshError) => {
-                    console.warn('저장 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
-                });
-            }, 300);
+            if (backgroundJobs.length === 0) {
+                setTimeout(() => {
+                    loadGalleryData(true).catch((refreshError) => {
+                        console.warn('저장 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
+                    });
+                }, 300);
+            }
             (async () => {
                 try {
                     await checkMilestones(user.uid);
