@@ -21,3 +21,7 @@
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
   - `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-main-check.js`
+
+## Final Pass
+- Moved the daily score summary (`0/80` + progress bar) into the headline row on the right.
+- Removed the lower four stat boxes to keep the routine panel focused on next action and daily progress.

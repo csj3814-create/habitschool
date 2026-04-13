@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 76. Dashboard hero summaries should concentrate the main metric near the headline instead of repeating it in lower stat cards
+- Symptom: the `오늘의 루틴` card kept feeling busy even after the action rows were improved, because the daily score lived in a separate lower stat box while the top copy still lacked a clear headline-side progress summary.
+- Root cause: I treated the hero as "headline plus extra cards" instead of deciding which single metric belongs in the first eye path. That left the top area visually weak and the lower area redundant.
+- Lesson: when a dashboard hero has one dominant daily metric like `0/80`, place it directly in the headline summary cluster and remove any duplicate stat boxes beneath it. For mobile product UI, the first scan should answer `what should I do next?` and `how far along am I?` without making the user inspect a second row of cards.
+
 ### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
 - Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
 - Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.

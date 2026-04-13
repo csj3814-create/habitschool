@@ -225,9 +225,21 @@
                                     <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
                                 </div>
                             </div>
-                            <h2 class="dashboard-hero-title" id="dashboard-focus-title">오늘 한 가지 기록 시작</h2>
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
-                                <p class="dashboard-hero-body" id="dashboard-focus-body">오늘 0/3 완료 · 남은 행동 3개</p>
+                                <div class="dashboard-hero-summary-row">
+                                    <div class="dashboard-hero-summary-copy">
+                                        <h2 class="dashboard-hero-title" id="dashboard-focus-title">오늘 한 가지 기록 시작</h2>
+                                        <p class="dashboard-hero-body" id="dashboard-focus-body">오늘 0/3 완료 · 남은 행동 3개</p>
+                                    </div>
+                                    <div class="dashboard-points-card" aria-label="오늘 포인트 진행">
+                                        <span class="dashboard-points-label">오늘 포인트</span>
+                                        <strong class="dashboard-points-value" id="dashboard-today-points">0/80</strong>
+                                        <span class="dashboard-stat-progress" aria-hidden="true">
+                                            <span class="dashboard-stat-progress-fill" id="dashboard-today-points-fill"></span>
+                                        </span>
+                                        <span class="dashboard-points-note" id="dashboard-today-points-note">식단 30 · 운동 30 · 마음 20</span>
+                                    </div>
+                                </div>
 
                                 <div class="dashboard-action-strip" aria-label="빠른 실행">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
@@ -280,28 +292,6 @@
                                     </button>
                                 </div>
 
-                                <div class="dashboard-hero-stats" aria-label="오늘과 이번 주 요약">
-                                    <div class="dashboard-stat-card">
-                                        <span class="dashboard-stat-label">연속 기록</span>
-                                        <strong class="dashboard-stat-value" id="dashboard-streak-count">0일</strong>
-                                    </div>
-                                    <div class="dashboard-stat-card">
-                                        <span class="dashboard-stat-label">오늘 완료</span>
-                                        <strong class="dashboard-stat-value" id="dashboard-completed-count">0/3</strong>
-                                    </div>
-                                    <div class="dashboard-stat-card">
-                                        <span class="dashboard-stat-label">이번 주 인증</span>
-                                        <strong class="dashboard-stat-value" id="dashboard-week-rate">0일</strong>
-                                    </div>
-                                    <div class="dashboard-stat-card accent">
-                                        <span class="dashboard-stat-label">오늘 포인트</span>
-                                        <strong class="dashboard-stat-value" id="dashboard-today-points">0/80</strong>
-                                        <span class="dashboard-stat-note" id="dashboard-today-points-note">식단 30 · 운동 30 · 마음 20</span>
-                                        <span class="dashboard-stat-progress" aria-hidden="true">
-                                            <span class="dashboard-stat-progress-fill" id="dashboard-today-points-fill"></span>
-                                        </span>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>

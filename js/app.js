@@ -7651,9 +7651,6 @@ function _renderDashboardHeroState({
     const heroPill = document.getElementById('dashboard-hero-pill');
     const focusTitle = document.getElementById('dashboard-focus-title');
     const focusBody = document.getElementById('dashboard-focus-body');
-    const streakEl = document.getElementById('dashboard-streak-count');
-    const completedEl = document.getElementById('dashboard-completed-count');
-    const weekRateEl = document.getElementById('dashboard-week-rate');
     const todayPointsEl = document.getElementById('dashboard-today-points');
     const todayPointsNoteEl = document.getElementById('dashboard-today-points-note');
     const todayPointsFillEl = document.getElementById('dashboard-today-points-fill');
@@ -7693,9 +7690,6 @@ function _renderDashboardHeroState({
         }
     }
 
-    if (streakEl) streakEl.textContent = `${streakCount}일`;
-    if (completedEl) completedEl.textContent = `${completedToday}/3`;
-    if (weekRateEl) weekRateEl.textContent = `${activeDays}일`;
     if (todayPointsEl) todayPointsEl.textContent = `${todayPointTotal}/80`;
     if (todayPointsNoteEl) todayPointsNoteEl.textContent = todayPointTotal > 0
         ? `식단 ${getDashboardActionPoints(todayAwarded, 'diet')} · 운동 ${getDashboardActionPoints(todayAwarded, 'exercise')} · 마음 ${getDashboardActionPoints(todayAwarded, 'mind')}`
