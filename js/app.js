@@ -7485,14 +7485,15 @@ function renderMissionFocusState({
     const tagsEl = document.getElementById('mission-focus-tags');
     if (!kickerEl || !titleEl || !buttonEl) return;
 
-    const doneToday = ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
-    const remainingToday = Math.max(0, 3 - doneToday);
-    const nextTab = getNextRecordTab(todayAwarded);
+    const dailyGoalMet = isDashboardDailyGoalMet(todayAwarded);
+    const doneToday = dailyGoalMet ? 3 : ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
+    const remainingToday = dailyGoalMet ? 0 : Math.max(0, 3 - doneToday);
+    const nextTab = dailyGoalMet ? 'gallery' : getNextRecordTab(todayAwarded);
     const nextLabel = nextTab === 'diet' ? '식단' : nextTab === 'exercise' ? '운동' : nextTab === 'sleep' ? '마음' : '공유';
 
     if (stripEl) stripEl.style.display = isWeekActive && totalMissions > 0 ? 'none' : 'flex';
 
-    let tags = [`오늘 ${doneToday}/3 완료`];
+    let tags = dailyGoalMet ? [`오늘 ${DASHBOARD_DAILY_POINT_GOAL}점 기준 달성`] : [`오늘 ${doneToday}/3 완료`];
 
     if (levelUpLockedToday) {
         kickerEl.textContent = '레벨업 완료';
@@ -7517,7 +7518,7 @@ function renderMissionFocusState({
         buttonEl.style.display = '';
     } else {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = '오늘 기록 끝';
+        titleEl.textContent = dailyGoalMet ? '오늘 루틴 완료' : '오늘 기록 끝';
         buttonEl.textContent = '갤러리 보기';
         _missionPrimaryActionState = { type: 'share', tab: 'gallery' };
         tags = [];
@@ -7581,6 +7582,8 @@ const DASHBOARD_ACTION_POINT_CAPS = {
     mind: 20
 };
 
+const DASHBOARD_DAILY_POINT_GOAL = 65;
+
 function getDashboardActionPoints(todayAwarded = {}, type = '') {
     const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
     const explicitPoints = Number(todayAwarded?.[`${type}Points`] || 0);
@@ -7599,6 +7602,10 @@ function getDashboardTodayPointTotal(todayAwarded = {}) {
         .reduce((sum, type) => sum + getDashboardActionPoints(todayAwarded, type), 0);
 }
 
+function isDashboardDailyGoalMet(todayAwarded = {}) {
+    return getDashboardTodayPointTotal(todayAwarded) >= DASHBOARD_DAILY_POINT_GOAL;
+}
+
 function _renderDashboardHeroState({
     todayAwarded = {},
     streakCount = 0,
@@ -7611,8 +7618,10 @@ function _renderDashboardHeroState({
 }) {
     const order = ['diet', 'exercise', 'mind'];
     const completedToday = order.filter(type => !!todayAwarded[type]).length;
-    const remainingToday = Math.max(0, order.length - completedToday);
-    const nextType = order.find(type => !todayAwarded[type]) || null;
+    const todayPointTotal = getDashboardTodayPointTotal(todayAwarded);
+    const dailyGoalMet = todayPointTotal >= DASHBOARD_DAILY_POINT_GOAL;
+    const remainingToday = dailyGoalMet ? 0 : Math.max(0, order.length - completedToday);
+    const nextType = dailyGoalMet ? null : (order.find(type => !todayAwarded[type]) || null);
     const focusMeta = nextType ? DASHBOARD_ACTION_META[nextType] : null;
     const weeklyDayRate = Math.round((activeDays / 7) * 100);
 
@@ -7625,17 +7634,17 @@ function _renderDashboardHeroState({
     const weekProgressTextEl = document.getElementById('dashboard-week-progress-text');
     const weekProgressFillEl = document.getElementById('dashboard-week-progress-fill');
     const weekSummaryEl = document.getElementById('dashboard-week-summary');
-    const todayPointTotal = getDashboardTodayPointTotal(todayAwarded);
-    const todayPointRate = Math.max(0, Math.min(100, Math.round((todayPointTotal / 80) * 100)));
+    const todayPointRate = Math.max(0, Math.min(100, Math.round((todayPointTotal / DASHBOARD_DAILY_POINT_GOAL) * 100)));
 
     if (heroPill) {
-        if (remainingToday === 0) heroPill.textContent = '오늘 완료';
+        if (dailyGoalMet) heroPill.textContent = '오늘 완료';
+        else if (remainingToday === 0) heroPill.textContent = '오늘 완료';
         else if (completedToday === 0) heroPill.textContent = '첫 기록 추천';
         else heroPill.textContent = `남은 행동 ${remainingToday}개`;
     }
 
     if (focusTitle) {
-        if (remainingToday === 0) {
+        if (dailyGoalMet || remainingToday === 0) {
             focusTitle.textContent = '오늘 루틴 완료';
         } else if (levelUpLockedToday) {
             focusTitle.textContent = '오늘은 레벨업 완료';
@@ -7647,7 +7656,11 @@ function _renderDashboardHeroState({
     }
 
     if (focusBody) {
-        if (remainingToday === 0) {
+        if (dailyGoalMet) {
+            focusBody.textContent = isWeekActive
+                ? `오늘 65점 달성 · 이번 주 ${overallRate}%`
+                : '오늘 65점 기준 달성';
+        } else if (remainingToday === 0) {
             focusBody.textContent = isWeekActive
                 ? `오늘 완료 · 이번 주 ${overallRate}%`
                 : '오늘 완료 · 기록 보기';
@@ -7658,7 +7671,7 @@ function _renderDashboardHeroState({
         }
     }
 
-    if (todayPointsEl) todayPointsEl.textContent = `${todayPointTotal}/80`;
+    if (todayPointsEl) todayPointsEl.textContent = `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
     if (todayPointsNoteEl) todayPointsNoteEl.textContent = todayPointTotal > 0
         ? `식단 ${getDashboardActionPoints(todayAwarded, 'diet')} · 운동 ${getDashboardActionPoints(todayAwarded, 'exercise')} · 마음 ${getDashboardActionPoints(todayAwarded, 'mind')}`
         : '식단 30 · 운동 30 · 마음 20';
@@ -7695,16 +7708,20 @@ function _renderDashboardHeroState({
         const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
         const isMaxed = maxPoints > 0 && earnedPoints >= maxPoints;
         const hasProgress = earnedPoints > 0;
-        const isFocus = !hasProgress && type === nextType;
+        const isVisuallyComplete = dailyGoalMet || isMaxed;
+        const isFocus = !dailyGoalMet && !hasProgress && type === nextType;
 
         if (!button || !label || !sub) return;
 
-        button.classList.toggle('is-complete', isMaxed);
-        button.classList.toggle('is-progress', hasProgress && !isMaxed);
+        button.classList.toggle('is-complete', isVisuallyComplete);
+        button.classList.toggle('is-progress', !dailyGoalMet && hasProgress && !isMaxed);
         button.classList.toggle('is-focus', isFocus);
         if (score) score.textContent = `${earnedPoints}/${maxPoints}`;
 
-        if (isMaxed) {
+        if (dailyGoalMet) {
+            label.textContent = meta.doneLabel;
+            sub.textContent = isMaxed ? meta.doneSub : `오늘 기준 달성 · ${earnedPoints}/${maxPoints}`;
+        } else if (isMaxed) {
             label.textContent = meta.doneLabel;
             sub.textContent = meta.doneSub;
         } else if (hasProgress) {

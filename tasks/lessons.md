@@ -13,6 +13,11 @@
 - Root cause: I improved the primary card but left the downstream summary card in place, so the page still repeated the same state in two different visual blocks.
 - Lesson: when a top-level dashboard card gains enough clarity to cover a status summary, audit the very next panel and remove it if it no longer introduces new information. Better hierarchy often comes from deleting the second explanation, not decorating it.
 
+### 78. Daily completion UI should use a realistic success threshold, not only the theoretical point maximum
+- Symptom: the dashboard still felt discouraging because the routine hero implied users must hit the full 80 points to look "done", even though the real behavior standard is that 65+ points already counts as a successful day.
+- Root cause: I tied the hero's visual completion state to the raw category maxima (`30 + 30 + 20`) instead of the product's practical success threshold.
+- Lesson: when a habit system has both a theoretical max score and a lower "good enough" completion line, the dashboard should use the practical line for green-complete state, progress percentage, and headline summaries. Keep the per-category raw points visible, but let the success threshold drive the emotional feedback.
+
 ### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
 - Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
 - Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.
