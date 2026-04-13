@@ -28,6 +28,11 @@
 - Root cause: I optimized the structure first but did not re-check whether the actual Korean copy still fit the tighter mobile headline slot.
 - Lesson: once a mobile summary row is compressed to a single headline plus one badge, re-evaluate the headline copy with a very short character budget. If the user asks for a tighter phrase, shorten the source label and the fallback/default text together so the UI stays consistent.
 
+### 81. On very small mobile widths, shrink badge chrome before letting a dashboard hero row wrap
+- Symptom: the top dashboard row still broke into two lines on mobile because the title, completion badge, and `접기` button competed for space.
+- Root cause: I had improved the content hierarchy but left the mobile badge/button padding and min-widths too generous, so the layout wrapped before the typography or chrome adapted.
+- Lesson: when a mobile summary row must keep title + status + toggle on one line, first tighten the badge/button padding, font size, and min-widths under small breakpoints. Treat wrapping as the last resort, not the default.
+
 ### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
 - Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
 - Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.
