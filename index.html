@@ -231,23 +231,38 @@
 
                                 <div class="dashboard-action-strip" aria-label="빠른 실행">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
-                                        <span class="dashboard-action-emoji">🥗</span>
+                                        <span class="dashboard-action-topline">
+                                            <span class="dashboard-action-title">
+                                                <span class="dashboard-action-emoji">🥗</span>
+                                                <strong id="dashboard-action-diet-label">식단 기록</strong>
+                                            </span>
+                                            <span class="dashboard-action-score" id="dashboard-action-diet-score">0/30</span>
+                                        </span>
                                         <span class="dashboard-action-copy">
-                                            <strong id="dashboard-action-diet-label">식단 기록</strong>
                                             <span id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
                                         </span>
                                     </button>
                                     <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
-                                        <span class="dashboard-action-emoji">🏃</span>
+                                        <span class="dashboard-action-topline">
+                                            <span class="dashboard-action-title">
+                                                <span class="dashboard-action-emoji">🏃</span>
+                                                <strong id="dashboard-action-exercise-label">운동 기록</strong>
+                                            </span>
+                                            <span class="dashboard-action-score" id="dashboard-action-exercise-score">0/30</span>
+                                        </span>
                                         <span class="dashboard-action-copy">
-                                            <strong id="dashboard-action-exercise-label">운동 기록</strong>
                                             <span id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
                                         </span>
                                     </button>
                                     <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
-                                        <span class="dashboard-action-emoji">🌙</span>
+                                        <span class="dashboard-action-topline">
+                                            <span class="dashboard-action-title">
+                                                <span class="dashboard-action-emoji">🌙</span>
+                                                <strong id="dashboard-action-mind-label">마음 기록</strong>
+                                            </span>
+                                            <span class="dashboard-action-score" id="dashboard-action-mind-score">0/20</span>
+                                        </span>
                                         <span class="dashboard-action-copy">
-                                            <strong id="dashboard-action-mind-label">마음 기록</strong>
                                             <span id="dashboard-action-mind-sub">수면·감사 한 번에</span>
                                         </span>
                                     </button>
@@ -267,8 +282,12 @@
                                         <strong class="dashboard-stat-value" id="dashboard-week-rate">0일</strong>
                                     </div>
                                     <div class="dashboard-stat-card accent">
-                                        <span class="dashboard-stat-label">다음 보상</span>
-                                        <strong class="dashboard-stat-value" id="dashboard-next-reward">+10P</strong>
+                                        <span class="dashboard-stat-label">오늘 포인트</span>
+                                        <strong class="dashboard-stat-value" id="dashboard-today-points">0/80</strong>
+                                        <span class="dashboard-stat-note" id="dashboard-today-points-note">식단 30 · 운동 30 · 마음 20</span>
+                                        <span class="dashboard-stat-progress" aria-hidden="true">
+                                            <span class="dashboard-stat-progress-fill" id="dashboard-today-points-fill"></span>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1627,13 +1646,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=133"></script>
-    <script type="module" src="js/main.js?v=133"></script>
+    <script type="module" src="js/app.js?v=134"></script>
+    <script type="module" src="js/main.js?v=134"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=132"></script>
+    <script src="js/pwa-install.js?v=134"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

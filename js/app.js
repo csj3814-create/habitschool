@@ -7567,39 +7567,69 @@ const DASHBOARD_ACTION_META = {
         buttonId: 'dashboard-action-diet',
         labelId: 'dashboard-action-diet-label',
         subId: 'dashboard-action-diet-sub',
+        scoreId: 'dashboard-action-diet-score',
         name: '식단',
         idleLabel: '식단 기록',
-        idleSub: '사진 한 장으로 시작',
+        idleSub: '사진 최대 3장 · 30점',
         focusLabel: '식단부터 기록해요',
-        focusSub: '사진 한 장이면 충분해요',
+        focusSub: '한 끼만 올려도 바로 시작돼요',
+        progressLabel: '식단 진행 중',
         doneLabel: '식단 완료',
-        doneSub: '오늘 식단 인증이 반영됐어요'
+        doneSub: '오늘 식단 점수를 다 채웠어요'
     },
     exercise: {
         buttonId: 'dashboard-action-exercise',
         labelId: 'dashboard-action-exercise-label',
         subId: 'dashboard-action-exercise-sub',
+        scoreId: 'dashboard-action-exercise-score',
         name: '운동',
         idleLabel: '운동 기록',
-        idleSub: '움직인 만큼 체크',
+        idleSub: '유산소 + 근력 · 30점',
         focusLabel: '운동부터 기록해요',
-        focusSub: '짧게라도 한 번 남겨보세요',
+        focusSub: '걷기나 운동 인증으로 바로 시작',
+        progressLabel: '운동 진행 중',
         doneLabel: '운동 완료',
-        doneSub: '오늘 운동 인증이 반영됐어요'
+        doneSub: '오늘 운동 점수를 다 채웠어요'
     },
     mind: {
         buttonId: 'dashboard-action-mind',
         labelId: 'dashboard-action-mind-label',
         subId: 'dashboard-action-mind-sub',
+        scoreId: 'dashboard-action-mind-score',
         name: '마음',
         idleLabel: '마음 기록',
-        idleSub: '수면·감사 한 번에',
+        idleSub: '수면 + 감사 · 20점',
         focusLabel: '마음 기록해요',
-        focusSub: '수면이나 감사 일기면 충분해요',
+        focusSub: '수면 사진이나 감사 일기부터',
+        progressLabel: '마음 진행 중',
         doneLabel: '마음 완료',
-        doneSub: '오늘 마음 인증이 반영됐어요'
+        doneSub: '오늘 마음 점수를 다 채웠어요'
     }
 };
+
+const DASHBOARD_ACTION_POINT_CAPS = {
+    diet: 30,
+    exercise: 30,
+    mind: 20
+};
+
+function getDashboardActionPoints(todayAwarded = {}, type = '') {
+    const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
+    const explicitPoints = Number(todayAwarded?.[`${type}Points`] || 0);
+    if (Number.isFinite(explicitPoints) && explicitPoints > 0) {
+        return Math.min(explicitPoints, maxPoints || explicitPoints);
+    }
+
+    if (type === 'diet' && todayAwarded?.diet) return 10;
+    if (type === 'exercise' && todayAwarded?.exercise) return 15;
+    if (type === 'mind' && todayAwarded?.mind) return 5;
+    return 0;
+}
+
+function getDashboardTodayPointTotal(todayAwarded = {}) {
+    return ['diet', 'exercise', 'mind']
+        .reduce((sum, type) => sum + getDashboardActionPoints(todayAwarded, type), 0);
+}
 
 function _renderDashboardHeroState({
     todayAwarded = {},
@@ -7624,10 +7654,14 @@ function _renderDashboardHeroState({
     const streakEl = document.getElementById('dashboard-streak-count');
     const completedEl = document.getElementById('dashboard-completed-count');
     const weekRateEl = document.getElementById('dashboard-week-rate');
-    const nextRewardEl = document.getElementById('dashboard-next-reward');
+    const todayPointsEl = document.getElementById('dashboard-today-points');
+    const todayPointsNoteEl = document.getElementById('dashboard-today-points-note');
+    const todayPointsFillEl = document.getElementById('dashboard-today-points-fill');
     const weekProgressTextEl = document.getElementById('dashboard-week-progress-text');
     const weekProgressFillEl = document.getElementById('dashboard-week-progress-fill');
     const weekSummaryEl = document.getElementById('dashboard-week-summary');
+    const todayPointTotal = getDashboardTodayPointTotal(todayAwarded);
+    const todayPointRate = Math.max(0, Math.min(100, Math.round((todayPointTotal / 80) * 100)));
 
     if (heroPill) {
         if (remainingToday === 0) heroPill.textContent = '오늘 완료';
@@ -7662,7 +7696,11 @@ function _renderDashboardHeroState({
     if (streakEl) streakEl.textContent = `${streakCount}일`;
     if (completedEl) completedEl.textContent = `${completedToday}/3`;
     if (weekRateEl) weekRateEl.textContent = `${activeDays}일`;
-    if (nextRewardEl) nextRewardEl.textContent = remainingToday === 0 ? '오늘 완료' : '+10P';
+    if (todayPointsEl) todayPointsEl.textContent = `${todayPointTotal}/80`;
+    if (todayPointsNoteEl) todayPointsNoteEl.textContent = todayPointTotal > 0
+        ? `식단 ${getDashboardActionPoints(todayAwarded, 'diet')} · 운동 ${getDashboardActionPoints(todayAwarded, 'exercise')} · 마음 ${getDashboardActionPoints(todayAwarded, 'mind')}`
+        : '식단 30 · 운동 30 · 마음 20';
+    if (todayPointsFillEl) todayPointsFillEl.style.width = `${todayPointRate}%`;
     if (weekProgressTextEl) weekProgressTextEl.textContent = `${weeklyDayRate}%`;
     if (weekProgressFillEl) weekProgressFillEl.style.width = `${weeklyDayRate}%`;
 
@@ -7690,17 +7728,26 @@ function _renderDashboardHeroState({
         const button = document.getElementById(meta.buttonId);
         const label = document.getElementById(meta.labelId);
         const sub = document.getElementById(meta.subId);
-        const done = !!todayAwarded[type];
-        const isFocus = !done && type === nextType;
+        const score = document.getElementById(meta.scoreId);
+        const earnedPoints = getDashboardActionPoints(todayAwarded, type);
+        const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
+        const isMaxed = maxPoints > 0 && earnedPoints >= maxPoints;
+        const hasProgress = earnedPoints > 0;
+        const isFocus = !hasProgress && type === nextType;
 
         if (!button || !label || !sub) return;
 
-        button.classList.toggle('is-complete', done);
+        button.classList.toggle('is-complete', isMaxed);
+        button.classList.toggle('is-progress', hasProgress && !isMaxed);
         button.classList.toggle('is-focus', isFocus);
+        if (score) score.textContent = `${earnedPoints}/${maxPoints}`;
 
-        if (done) {
+        if (isMaxed) {
             label.textContent = meta.doneLabel;
             sub.textContent = meta.doneSub;
+        } else if (hasProgress) {
+            label.textContent = meta.progressLabel;
+            sub.textContent = `현재 ${earnedPoints}/${maxPoints} · 이어서 채워보세요`;
         } else if (isFocus) {
             label.textContent = meta.focusLabel;
             sub.textContent = meta.focusSub;
