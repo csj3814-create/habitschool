@@ -25,3 +25,4 @@
 ## Final Pass
 - Moved the daily score summary (`0/80` + progress bar) into the headline row on the right.
 - Removed the lower four stat boxes to keep the routine panel focused on next action and daily progress.
+- Removed the separate `오늘의 인증 현황` card because it duplicated the new routine hero status.

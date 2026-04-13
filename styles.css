@@ -7116,97 +7116,6 @@ textarea {
 }
 
 /* 오늘의 인증 현황 카드 */
-.today-status-card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, #F6FBF6 100%);
-    border: 1px solid #DCEBDA;
-    border-radius: 20px;
-    padding: 16px;
-    margin-bottom: 0;
-    box-shadow: 0 8px 22px rgba(61, 106, 67, 0.06);
-}
-
-.today-status-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.today-status-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: #2E7D32;
-}
-
-.today-streak-badge {
-    font-size: 13px;
-    font-weight: 600;
-    color: #E65100;
-    background: rgba(255,255,255,0.8);
-    padding: 3px 10px;
-    border-radius: 20px;
-}
-
-.today-status-cheer {
-    font-size: 13px;
-    color: #5C6557;
-    text-align: center;
-    margin-top: 10px;
-    padding: 8px 10px;
-    background: #F2F8F2;
-    border-radius: 12px;
-    line-height: 1.4;
-}
-
-.today-status-items {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.today-status-item {
-    flex: 1;
-    border: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    background: white;
-    border: 1px solid #E5EEE2;
-    border-radius: 14px;
-    padding: 12px 6px;
-    cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.today-status-item.done {
-    background: linear-gradient(180deg, #F3FBF0 0%, #E8F7EA 100%);
-    border-color: #CDE7CF;
-}
-
-.today-status-item:hover {
-    border-color: #CFE0C8;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.05);
-}
-
-.today-status-item:active {
-    transform: scale(0.95);
-}
-
-.today-status-icon {
-    font-size: 24px;
-}
-
-.today-status-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: #555;
-}
-
-.today-status-item.done .today-status-label {
-    color: #2E7D32;
-}
-
 /* 마일스톤 뱃지 (컴팩트) */
 .milestone-section { 
     background: linear-gradient(135deg, #FFE082 0%, #FDD835 100%); 
@@ -8299,22 +8208,6 @@ body.dark-mode .guide-platform { background: #242128; border-color: #3A3540; }
 body.dark-mode .guide-tip { background: var(--info-light); border-color: var(--info-border); }
 
 /* 오늘의 인증 현황 - 다크모드 */
-body.dark-mode .today-status-card {
-    background: linear-gradient(180deg, #1F2622 0%, #1A231F 100%);
-    border-color: #314236;
-}
-body.dark-mode .today-status-title { color: #81C784; }
-body.dark-mode .today-streak-badge { color: #FFB74D; background: rgba(255,255,255,0.1); }
-body.dark-mode .today-status-cheer { color: #fff; background: rgba(255,255,255,0.08); }
-body.dark-mode .today-status-item {
-    background: rgba(255,255,255,0.03);
-    border-color: #38453B;
-}
-body.dark-mode .today-status-label { color: #B0B0B0; }
-body.dark-mode .today-status-item.done {
-    background: rgba(76, 175, 80, 0.12);
-    border-color: rgba(129, 199, 132, 0.4);
-}
 body.dark-mode .dashboard-panel-toggle {
     background: rgba(255,255,255,0.05);
     border-color: #43372f;

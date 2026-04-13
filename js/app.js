@@ -2173,38 +2173,6 @@ function toggleDashboardMoreTools(forceExpanded = null) {
     setDashboardMoreCollapsed(nextCollapsed, true);
 }
 
-function updateTodayStatusCard(todayAwarded = {}, streakCount = 0) {
-    const items = [
-        { key: 'diet', buttonId: 'today-status-diet', labelId: 'today-status-diet-label', defaultLabel: '식단 전', doneLabel: '식단 완료', tab: 'diet' },
-        { key: 'exercise', buttonId: 'today-status-exercise', labelId: 'today-status-exercise-label', defaultLabel: '운동 전', doneLabel: '운동 완료', tab: 'exercise' },
-        { key: 'mind', buttonId: 'today-status-mind', labelId: 'today-status-mind-label', defaultLabel: '마음 전', doneLabel: '마음 완료', tab: 'sleep' }
-    ];
-
-    let completedCount = 0;
-    items.forEach((item) => {
-        const isDone = !!todayAwarded[item.key];
-        const button = document.getElementById(item.buttonId);
-        const label = document.getElementById(item.labelId);
-        if (button) {
-            button.classList.toggle('done', isDone);
-            button.setAttribute('aria-label', isDone ? `${item.doneLabel}, 탭으로 이동` : `${item.defaultLabel}, 탭으로 이동`);
-            button.dataset.targetTab = item.tab;
-        }
-        if (label) label.textContent = isDone ? item.doneLabel : item.defaultLabel;
-        if (isDone) completedCount++;
-    });
-
-    const badge = document.getElementById('today-status-badge');
-    if (badge) badge.textContent = `${completedCount}/3 완료`;
-
-    const cheer = document.getElementById('today-status-cheer');
-    if (cheer) {
-        if (completedCount === 3) cheer.textContent = `오늘 루틴을 모두 채웠어요. 연속 기록 ${streakCount}일 흐름을 이어가고 있어요.`;
-        else if (completedCount === 0) cheer.textContent = '오늘 인증 3칸 중 하나부터 채워보세요.';
-        else cheer.textContent = `좋아요. 오늘 ${completedCount}/3 완료예요. 남은 칸도 이어서 채워보세요.`;
-    }
-}
-
 function toggleGalleryHeroGuide(forceExpanded = null) {
     const nextCollapsed = typeof forceExpanded === 'boolean'
         ? !forceExpanded
@@ -7928,8 +7896,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             if (awarded.diet || awarded.exercise || awarded.mind) streakCount++;
             else break;
         }
-        updateTodayStatusCard(todayAwarded, streakCount);
-
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
         graphArea.innerHTML = '';
