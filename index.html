@@ -215,32 +215,19 @@
                     <div id="admin-feedback-text" style="font-size: 14px; color: #333; line-height: 1.5;"></div>
                 </div>
 
-                <section class="dashboard-hero-shell" aria-label="오늘의 행동 요약">
+                <section class="dashboard-hero-shell" aria-label="오늘 해빛 요약">
                     <div class="dashboard-hero-panel" id="dashboard-hero-panel">
                         <div class="dashboard-hero-copy">
                             <div class="dashboard-hero-topline">
-                                <span class="dashboard-hero-kicker">오늘의 루틴</span>
+                                <div class="dashboard-hero-title-wrap">
+                                    <h2 class="dashboard-hero-title" id="dashboard-focus-title">식단부터 기록해요</h2>
+                                </div>
                                 <div class="dashboard-hero-topline-actions">
-                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill">시작 전</span>
+                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill">0/65</span>
                                     <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
                                 </div>
                             </div>
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
-                                <div class="dashboard-hero-summary-row">
-                                    <div class="dashboard-hero-summary-copy">
-                                        <h2 class="dashboard-hero-title" id="dashboard-focus-title">오늘 한 가지 기록 시작</h2>
-                                        <p class="dashboard-hero-body" id="dashboard-focus-body">오늘 0/3 완료 · 남은 행동 3개</p>
-                                    </div>
-                                    <div class="dashboard-points-card" aria-label="오늘 포인트 진행">
-                                        <span class="dashboard-points-label">오늘 포인트</span>
-                                        <strong class="dashboard-points-value" id="dashboard-today-points">0/65</strong>
-                                        <span class="dashboard-stat-progress" aria-hidden="true">
-                                            <span class="dashboard-stat-progress-fill" id="dashboard-today-points-fill"></span>
-                                        </span>
-                                        <span class="dashboard-points-note" id="dashboard-today-points-note">식단 30 · 운동 30 · 마음 20</span>
-                                    </div>
-                                </div>
-
                                 <div class="dashboard-action-strip" aria-label="빠른 실행">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
                                         <span class="dashboard-action-icon-shell">
@@ -301,7 +288,7 @@
                     <div class="card dashboard-week-card">
                         <div class="dashboard-week-header">
                             <div>
-                                <h3 style="margin-bottom:0;">이번 주 흐름</h3>
+                                <h3 style="margin-bottom:0;">이번 주 해빛</h3>
                                 <p class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
                             </div>
                             <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
@@ -309,7 +296,7 @@
                         <div class="dashboard-week-progress-bar">
                             <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
                         </div>
-                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 루틴을 시작해보세요.</div>
+                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 해빛을 시작해보세요.</div>
                         <div class="week-graph" id="week-graph"></div>
                     </div>
 

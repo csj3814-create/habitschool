@@ -18,6 +18,11 @@
 - Root cause: I tied the hero's visual completion state to the raw category maxima (`30 + 30 + 20`) instead of the product's practical success threshold.
 - Lesson: when a habit system has both a theoretical max score and a lower "good enough" completion line, the dashboard should use the practical line for green-complete state, progress percentage, and headline summaries. Keep the per-category raw points visible, but let the success threshold drive the emotional feedback.
 
+### 79. Collapsed dashboard heroes must keep the primary headline and daily score in the always-visible row
+- Symptom: even after simplifying the routine hero, the card still felt noisy because the main title lived in the expandable body while the top row showed a small kicker plus a status pill. When the card was collapsed, the most important context disappeared.
+- Root cause: I treated the collapsed row as metadata instead of the main summary surface, so the design duplicated information across a kicker, subtitle, points card, and lower copy.
+- Lesson: for mobile dashboard heroes with a collapse affordance, the always-visible row should contain the real headline and the single most important metric or status. Supporting copy that does not survive collapse should be removable first.
+
 ### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
 - Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
 - Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.

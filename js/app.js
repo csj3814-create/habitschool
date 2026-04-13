@@ -7627,55 +7627,26 @@ function _renderDashboardHeroState({
 
     const heroPill = document.getElementById('dashboard-hero-pill');
     const focusTitle = document.getElementById('dashboard-focus-title');
-    const focusBody = document.getElementById('dashboard-focus-body');
-    const todayPointsEl = document.getElementById('dashboard-today-points');
-    const todayPointsNoteEl = document.getElementById('dashboard-today-points-note');
-    const todayPointsFillEl = document.getElementById('dashboard-today-points-fill');
     const weekProgressTextEl = document.getElementById('dashboard-week-progress-text');
     const weekProgressFillEl = document.getElementById('dashboard-week-progress-fill');
     const weekSummaryEl = document.getElementById('dashboard-week-summary');
-    const todayPointRate = Math.max(0, Math.min(100, Math.round((todayPointTotal / DASHBOARD_DAILY_POINT_GOAL) * 100)));
 
     if (heroPill) {
-        if (dailyGoalMet) heroPill.textContent = '오늘 완료';
-        else if (remainingToday === 0) heroPill.textContent = '오늘 완료';
-        else if (completedToday === 0) heroPill.textContent = '첫 기록 추천';
-        else heroPill.textContent = `남은 행동 ${remainingToday}개`;
+        heroPill.classList.toggle('is-complete', dailyGoalMet);
+        heroPill.textContent = dailyGoalMet ? '오늘 완료' : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
     }
 
     if (focusTitle) {
-        if (dailyGoalMet || remainingToday === 0) {
-            focusTitle.textContent = '오늘 루틴 완료';
+        if (dailyGoalMet) {
+            focusTitle.textContent = '오늘 해빛 완료';
         } else if (levelUpLockedToday) {
             focusTitle.textContent = '오늘은 레벨업 완료';
         } else if (focusMeta) {
             focusTitle.textContent = focusMeta.focusLabel;
         } else {
-            focusTitle.textContent = '오늘 한 가지 시작해보세요';
+            focusTitle.textContent = '오늘 해빛 시작해요';
         }
     }
-
-    if (focusBody) {
-        if (dailyGoalMet) {
-            focusBody.textContent = isWeekActive
-                ? `오늘 65점 달성 · 이번 주 ${overallRate}%`
-                : '오늘 65점 기준 달성';
-        } else if (remainingToday === 0) {
-            focusBody.textContent = isWeekActive
-                ? `오늘 완료 · 이번 주 ${overallRate}%`
-                : '오늘 완료 · 기록 보기';
-        } else if (levelUpLockedToday) {
-            focusBody.textContent = '새 미션은 내일 고를 수 있어요.';
-        } else if (focusMeta) {
-            focusBody.textContent = `오늘 ${completedToday}/3 · 남은 ${remainingToday}개`;
-        }
-    }
-
-    if (todayPointsEl) todayPointsEl.textContent = `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
-    if (todayPointsNoteEl) todayPointsNoteEl.textContent = todayPointTotal > 0
-        ? `식단 ${getDashboardActionPoints(todayAwarded, 'diet')} · 운동 ${getDashboardActionPoints(todayAwarded, 'exercise')} · 마음 ${getDashboardActionPoints(todayAwarded, 'mind')}`
-        : '식단 30 · 운동 30 · 마음 20';
-    if (todayPointsFillEl) todayPointsFillEl.style.width = `${todayPointRate}%`;
     if (weekProgressTextEl) weekProgressTextEl.textContent = `${weeklyDayRate}%`;
     if (weekProgressFillEl) weekProgressFillEl.style.width = `${weeklyDayRate}%`;
 
