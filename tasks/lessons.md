@@ -23,6 +23,11 @@
 - Root cause: I treated the collapsed row as metadata instead of the main summary surface, so the design duplicated information across a kicker, subtitle, points card, and lower copy.
 - Lesson: for mobile dashboard heroes with a collapse affordance, the always-visible row should contain the real headline and the single most important metric or status. Supporting copy that does not survive collapse should be removable first.
 
+### 80. Mobile dashboard headlines should fit a strict character budget before visual polish
+- Symptom: even after the hero hierarchy improved, the starting headline `식단부터 기록해요` still felt a bit long and visually heavy for the compact top row.
+- Root cause: I optimized the structure first but did not re-check whether the actual Korean copy still fit the tighter mobile headline slot.
+- Lesson: once a mobile summary row is compressed to a single headline plus one badge, re-evaluate the headline copy with a very short character budget. If the user asks for a tighter phrase, shorten the source label and the fallback/default text together so the UI stays consistent.
+
 ### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
 - Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
 - Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.

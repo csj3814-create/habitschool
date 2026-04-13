@@ -7540,7 +7540,7 @@ const DASHBOARD_ACTION_META = {
         name: '식단',
         idleLabel: '식단 기록',
         idleSub: '사진 최대 3장 · 30점',
-        focusLabel: '식단부터 기록해요',
+        focusLabel: '하나씩 기록',
         focusSub: '한 끼만 올려도 바로 시작돼요',
         progressLabel: '식단 진행 중',
         doneLabel: '식단 완료',
