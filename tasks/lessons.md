@@ -3,6 +3,11 @@
 ---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
+### 75. Compact mobile action chips should be re-composed before adding more badges or metrics
+- Symptom: after adding score badges to the dashboard `오늘의 루틴` actions, the three-column mobile chips became cramped and one label wrapped vertically, which made the whole panel feel broken instead of improved.
+- Root cause: I preserved the old narrow 3-up chip layout and layered extra numbers onto it without first reconsidering how the content should scan on a phone-width card.
+- Lesson: when adding new information to a compact mobile dashboard control, step back and redesign the composition first. Prefer fewer, clearer rows with stable hierarchy over squeezing more badges into an already-tight 3-column strip.
+
 ### 74. Integration success UI must not depend on an immediate fresh round-trip if the action itself already succeeded
 - Symptom: after a successful Haebit Coach `!연결`, the modal closed and success feedback appeared, but the profile card still said there was no recent connect history until a later reload caught up.
 - Root cause: the client wrote `chatbotConnectLastLinkedAt`, then immediately reloaded the user document and trusted that read as authoritative even when it lagged behind the just-completed write. The optimistic success state never got rendered first, so stale data could visually erase the success.
