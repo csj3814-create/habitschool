@@ -4457,7 +4457,8 @@ textarea {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 28px;
+    min-width: 64px;
+    min-height: 32px;
     padding: 0 14px;
     border-radius: 999px;
     border: 1px solid rgba(241, 220, 192, 0.95);
@@ -5680,9 +5681,10 @@ textarea {
     }
 
     .gallery-guide-toggle {
-        min-height: 16px;
-        padding: 0 8px;
-        font-size: 6.5px;
+        min-width: 64px;
+        min-height: 28px;
+        padding: 0 14px;
+        font-size: 12px;
     }
 
     .gallery-hero.is-collapsed {

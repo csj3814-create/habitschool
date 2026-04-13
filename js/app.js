@@ -2079,7 +2079,7 @@ function setGalleryHeroCollapsed(collapsed, persist = true) {
     if (hero) hero.classList.toggle('is-collapsed', _galleryHeroCollapsed);
     if (body) body.hidden = _galleryHeroCollapsed;
     if (toggle) {
-        toggle.textContent = _galleryHeroCollapsed ? '가이드 펼치기' : '가이드 접기';
+        toggle.textContent = _galleryHeroCollapsed ? '펼치기' : '접기';
         toggle.setAttribute('aria-expanded', String(!_galleryHeroCollapsed));
     }
 }
@@ -4137,6 +4137,12 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
     if (input.files && input.files[0]) {
         const file = input.files[0];
         if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
+        const resetRejectedUpload = () => {
+            input.value = "";
+            preview.style.display = 'none';
+            if (rmBtn) rmBtn.style.display = 'none';
+            if (txtSpan) txtSpan.style.display = 'inline-block';
+        };
 
         const render = () => {
             if (auth?.currentUser && input.id) {
@@ -4230,47 +4236,31 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         };
 
         if (!skipExif) {
-            _ensureExif().then(() => EXIF.getData(file, function () {
-                const exifDate = EXIF.getTag(this, "DateTimeOriginal");
-                if (exifDate) {
-                    // EXIF 날짜가 있으면 EXIF로 검증
-                    const dateParts = exifDate.split(" ")[0].replace(/:/g, "-");
-                    if (dateParts !== dateInput.value) {
-                        if (!confirm(`⚠️ 촬영일(${dateParts})이 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
-                            input.value = ""; preview.style.display = 'none';
-                            if (rmBtn) rmBtn.style.display = 'none';
-                            if (txtSpan) txtSpan.style.display = 'inline-block';
+            resolvePhotoDateValidation(file, dateInput.value)
+                .then((validation) => {
+                    if (validation.source === 'exif' && !validation.matches) {
+                        alert(`⚠️ 촬영일(${validation.date})이 선택한 인증 날짜(${dateInput.value})와 달라 업로드할 수 없습니다.`);
+                        resetRejectedUpload();
+                        return;
+                    }
+                    if (validation.source !== 'exif' && !validation.matches) {
+                        if (!confirm(`⚠️ 파일 날짜(${validation.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
+                            resetRejectedUpload();
                             return;
                         }
                     }
-                } else {
-                    // EXIF 없으면 파일 수정일(lastModified)로 검증
-                    const fileDate = new Date(file.lastModified);
-                    const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-                    if (fileDateStr !== dateInput.value) {
-                        if (!confirm(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
-                            input.value = ""; preview.style.display = 'none';
-                            if (rmBtn) rmBtn.style.display = 'none';
-                            if (txtSpan) txtSpan.style.display = 'inline-block';
+                    render();
+                })
+                .catch(() => {
+                    const fallback = getDietFileFallbackDateTime(file);
+                    if (fallback.date !== dateInput.value) {
+                        if (!confirm(`⚠️ 파일 날짜(${fallback.date})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
+                            resetRejectedUpload();
                             return;
                         }
                     }
-                }
-                render();
-            })).catch(() => render());
-        } else if (!skipExif) {
-            // EXIF 라이브러리 없을 때도 lastModified로 검증
-            const fileDate = new Date(file.lastModified);
-            const fileDateStr = fileDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-            if (fileDateStr !== dateInput.value) {
-                if (!confirm(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${dateInput.value})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
-                    input.value = ""; preview.style.display = 'none';
-                    if (rmBtn) rmBtn.style.display = 'none';
-                    if (txtSpan) txtSpan.style.display = 'inline-block';
-                    return;
-                }
-            }
-            render();
+                    render();
+                });
         } else { render(); }
     }
 };
@@ -4462,24 +4452,52 @@ function readDietFileExifDateTime(file) {
     });
 }
 
-async function buildDietAutoUploadEntries(files, validDate) {
+async function resolvePhotoDateValidation(file, selectedDate) {
     const exifReady = await _ensureExif().then(() => typeof EXIF !== 'undefined').catch(() => false);
+    const exifInfo = exifReady ? await readDietFileExifDateTime(file) : null;
+    if (exifInfo?.date) {
+        return {
+            source: 'exif',
+            date: exifInfo.date,
+            time: exifInfo.time || '99:99:99',
+            matches: exifInfo.date === selectedDate
+        };
+    }
+
+    const fallbackInfo = getDietFileFallbackDateTime(file);
+    return {
+        source: 'fallback',
+        date: fallbackInfo.date,
+        time: fallbackInfo.time || '99:99:99',
+        matches: fallbackInfo.date === selectedDate
+    };
+}
+
+async function buildDietAutoUploadEntries(files, validDate) {
     const entries = [];
-    let skippedCount = 0;
+    const fallbackMismatchEntries = [];
+    let skippedExifCount = 0;
 
     for (const file of files) {
-        const captureInfo = (exifReady ? await readDietFileExifDateTime(file) : null) || getDietFileFallbackDateTime(file);
-        if (captureInfo.date !== validDate) {
-            skippedCount++;
+        const captureInfo = await resolvePhotoDateValidation(file, validDate);
+        if (captureInfo.matches) {
+            entries.push({
+                file,
+                time: captureInfo.time || '99:99:99'
+            });
             continue;
         }
-        entries.push({
+        if (captureInfo.source === 'exif') {
+            skippedExifCount++;
+            continue;
+        }
+        fallbackMismatchEntries.push({
             file,
             time: captureInfo.time || '99:99:99'
         });
     }
 
-    return { entries, skippedCount };
+    return { entries, skippedExifCount, fallbackMismatchEntries };
 }
 
 async function importDietFilesIntoEmptySlots(files) {
@@ -4507,9 +4525,17 @@ async function importDietFilesIntoEmptySlots(files) {
         return 0;
     }
 
-    const { entries, skippedCount } = await buildDietAutoUploadEntries(files, validDate);
-    if (skippedCount > 0) {
-        alert(`⚠️ 촬영일이 선택한 날짜(${validDate})와 다른 사진 ${skippedCount}장이 제외되었습니다.`);
+    const { entries, skippedExifCount, fallbackMismatchEntries } = await buildDietAutoUploadEntries(files, validDate);
+    if (skippedExifCount > 0) {
+        alert(`⚠️ 촬영일(EXIF)이 선택한 날짜(${validDate})와 다른 사진 ${skippedExifCount}장이 제외되었습니다.`);
+    }
+    if (fallbackMismatchEntries.length > 0) {
+        const shouldIncludeFallbackMismatch = confirm(
+            `⚠️ 촬영 메타데이터가 없거나 파일 날짜가 다른 사진 ${fallbackMismatchEntries.length}장이 있습니다.\n그래도 선택한 날짜(${validDate})에 추가하시겠습니까?`
+        );
+        if (shouldIncludeFallbackMismatch) {
+            entries.push(...fallbackMismatchEntries);
+        }
     }
     if (entries.length === 0) {
         return 0;
@@ -4840,8 +4866,12 @@ async function loadDataForSelectedDate(dateStr) {
         addExerciseBlock('cardio');
         addExerciseBlock('strength');
     } finally {
+        if (thisGeneration !== _loadDataGeneration) return;
         renderStepImportBanner();
         updateRecordFlowGuides(getVisibleTabName());
+        if (getVisibleTabName() === 'dashboard') {
+            await renderDashboard();
+        }
     }
 }
 
@@ -6497,10 +6527,57 @@ function _getRecordGuideStates() {
     };
 }
 
+function getRewardEligibilityForDate(dateStr = String(document.getElementById('selected-date')?.value || '').trim()) {
+    const { todayStr } = getDatesInfo();
+    const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;
+    const yesterdayStr = addDaysFromKstDateString(todayStr, -1);
+    const isRetroNoPoint = selectedDateStr < yesterdayStr;
+    return {
+        selectedDateStr,
+        todayStr,
+        yesterdayStr,
+        isRetroNoPoint,
+        canAwardPoints: !isRetroNoPoint && selectedDateStr <= todayStr
+    };
+}
+
+function getSaveButtonLabel(tabName = getVisibleTabName(), rewardPolicy = getRewardEligibilityForDate()) {
+    const retroSaveOnly = !!rewardPolicy?.isRetroNoPoint;
+    if (tabName === 'diet') return retroSaveOnly ? '식단 저장하기' : '식단 저장하고 포인트 받기 🅿️';
+    if (tabName === 'exercise') return retroSaveOnly ? '운동 저장하기' : '운동 저장하고 포인트 받기 🅿️';
+    if (tabName === 'sleep') return retroSaveOnly ? '마음 저장하기' : '마음 저장하고 포인트 받기 🅿️';
+    return retroSaveOnly ? '현재 진행상황 저장하기' : '현재 진행상황 저장 & 포인트 받기 🅿️';
+}
+
+function applySaveButtonLabel(saveBtn, tabName = getVisibleTabName(), rewardPolicy = getRewardEligibilityForDate()) {
+    if (!saveBtn) return;
+    const label = getSaveButtonLabel(tabName, rewardPolicy);
+    saveBtn.innerText = label;
+    saveBtn.setAttribute('aria-label', label.replace('🅿️', '').trim());
+}
+
+function getEffectiveAwardedPointResult(logData = {}, previousAwarded = null, dateStr = '') {
+    const { awarded: calculatedAwarded, pointsToGive: calculatedPointsToGive } = calculateAwardedPointsFromLogData(logData, previousAwarded);
+    const policy = getRewardEligibilityForDate(dateStr || logData?.date || '');
+    if (policy.isRetroNoPoint) {
+        return {
+            awarded: { ...(previousAwarded || logData.awardedPoints || {}) },
+            pointsToGive: 0,
+            policy
+        };
+    }
+    return {
+        awarded: calculatedAwarded,
+        pointsToGive: calculatedPointsToGive,
+        policy
+    };
+}
+
 function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = null) {
     const saveBtn = document.getElementById('saveDataBtn');
     const helperEl = document.getElementById('submit-bar-helper');
     if (!saveBtn || !helperEl) return;
+    const rewardPolicy = getRewardEligibilityForDate();
 
     if (tabName === 'dashboard') {
         const submitBar = document.getElementById('submit-bar');
@@ -6527,22 +6604,28 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
 
     if (tabName === 'diet') {
         helperEl.style.display = 'block';
-        helperEl.textContent = states.diet.helper;
-        if (!saveBtn.disabled) saveBtn.innerText = '식단 저장하고 포인트 받기 🅿️';
+        helperEl.textContent = rewardPolicy.isRetroNoPoint
+            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            : states.diet.helper;
+        if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'diet', rewardPolicy);
         return;
     }
 
     if (tabName === 'exercise') {
         helperEl.style.display = 'block';
-        helperEl.textContent = states.exercise.helper;
-        if (!saveBtn.disabled) saveBtn.innerText = '운동 저장하고 포인트 받기 🅿️';
+        helperEl.textContent = rewardPolicy.isRetroNoPoint
+            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            : states.exercise.helper;
+        if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'exercise', rewardPolicy);
         return;
     }
 
     if (tabName === 'sleep') {
         helperEl.style.display = 'block';
-        helperEl.textContent = states.sleep.helper;
-        if (!saveBtn.disabled) saveBtn.innerText = '마음 저장하고 포인트 받기 🅿️';
+        helperEl.textContent = rewardPolicy.isRetroNoPoint
+            ? '2일 이상 지난 날짜는 저장해도 포인트는 올라가지 않습니다.'
+            : states.sleep.helper;
+        if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, 'sleep', rewardPolicy);
         return;
     }
 
@@ -7125,6 +7208,29 @@ async function _fetchDashboardViaCloudFunction(uid, weekStart, weekEnd) {
     return result.data;
 }
 
+function getDashboardSelectedDateState(userId, fallbackAwarded = {}) {
+    const { todayStr: actualTodayStr } = getDatesInfo();
+    const rawSelectedDate = String(document.getElementById('selected-date')?.value || '').trim();
+    const selectedDateStr = /^\d{4}-\d{2}-\d{2}$/.test(rawSelectedDate) && rawSelectedDate <= actualTodayStr
+        ? rawSelectedDate
+        : actualTodayStr;
+    const selectedDocId = userId ? `${userId}_${selectedDateStr}` : null;
+    const cachedAwarded = selectedDocId ? (getCachedDailyLog(selectedDocId)?.awardedPoints || null) : null;
+    return {
+        selectedDateStr,
+        actualTodayStr,
+        isSelectedToday: selectedDateStr === actualTodayStr,
+        awarded: cachedAwarded || fallbackAwarded || {}
+    };
+}
+
+function formatDashboardShortDate(dateStr) {
+    if (!dateStr) return '';
+    const [, month, day] = String(dateStr).split('-');
+    if (!month || !day) return String(dateStr);
+    return `${month}/${day}`;
+}
+
 function goToGalleryRecordAction() {
     if (!auth.currentUser) {
         document.getElementById('login-modal').style.display = 'flex';
@@ -7607,6 +7713,7 @@ function isDashboardDailyGoalMet(todayAwarded = {}) {
 }
 
 function _renderDashboardHeroState({
+    userId = null,
     todayAwarded = {},
     streakCount = 0,
     activeDays = 0,
@@ -7617,13 +7724,19 @@ function _renderDashboardHeroState({
     levelUpLockedToday = false
 }) {
     const order = ['diet', 'exercise', 'mind'];
-    const completedToday = order.filter(type => !!todayAwarded[type]).length;
-    const todayPointTotal = getDashboardTodayPointTotal(todayAwarded);
+    const {
+        selectedDateStr,
+        isSelectedToday,
+        awarded: selectedDateAwarded
+    } = getDashboardSelectedDateState(userId, todayAwarded);
+    const completedToday = order.filter(type => !!selectedDateAwarded[type]).length;
+    const todayPointTotal = getDashboardTodayPointTotal(selectedDateAwarded);
     const dailyGoalMet = todayPointTotal >= DASHBOARD_DAILY_POINT_GOAL;
     const remainingToday = dailyGoalMet ? 0 : Math.max(0, order.length - completedToday);
-    const nextType = dailyGoalMet ? null : (order.find(type => !todayAwarded[type]) || null);
+    const nextType = dailyGoalMet ? null : (order.find(type => !selectedDateAwarded[type]) || null);
     const focusMeta = nextType ? DASHBOARD_ACTION_META[nextType] : null;
     const weeklyDayRate = Math.round((activeDays / 7) * 100);
+    const selectedDateLabel = formatDashboardShortDate(selectedDateStr);
 
     const heroPill = document.getElementById('dashboard-hero-pill');
     const focusTitle = document.getElementById('dashboard-focus-title');
@@ -7633,12 +7746,16 @@ function _renderDashboardHeroState({
 
     if (heroPill) {
         heroPill.classList.toggle('is-complete', dailyGoalMet);
-        heroPill.textContent = dailyGoalMet ? '오늘 완료' : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
+        heroPill.textContent = dailyGoalMet
+            ? (isSelectedToday ? '오늘 완료' : '완료')
+            : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
     }
 
     if (focusTitle) {
         if (dailyGoalMet) {
-            focusTitle.textContent = '오늘 해빛 완료';
+            focusTitle.textContent = isSelectedToday ? '오늘 해빛 완료' : `${selectedDateLabel} 해빛 완료`;
+        } else if (!isSelectedToday) {
+            focusTitle.textContent = `${selectedDateLabel} 기록`;
         } else if (levelUpLockedToday) {
             focusTitle.textContent = '오늘은 레벨업 완료';
         } else if (focusMeta) {
@@ -7661,7 +7778,7 @@ function _renderDashboardHeroState({
     }
 
     renderMissionFocusState({
-        todayAwarded,
+        todayAwarded: selectedDateAwarded,
         isWeekActive,
         overallRate,
         totalMissions,
@@ -7675,7 +7792,7 @@ function _renderDashboardHeroState({
         const label = document.getElementById(meta.labelId);
         const sub = document.getElementById(meta.subId);
         const score = document.getElementById(meta.scoreId);
-        const earnedPoints = getDashboardActionPoints(todayAwarded, type);
+        const earnedPoints = getDashboardActionPoints(selectedDateAwarded, type);
         const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
         const isMaxed = maxPoints > 0 && earnedPoints >= maxPoints;
         const hasProgress = earnedPoints > 0;
@@ -7691,10 +7808,12 @@ function _renderDashboardHeroState({
 
         if (dailyGoalMet) {
             label.textContent = meta.doneLabel;
-            sub.textContent = isMaxed ? meta.doneSub : `오늘 기준 달성 · ${earnedPoints}/${maxPoints}`;
+            sub.textContent = isMaxed
+                ? (isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`)
+                : `${isSelectedToday ? '오늘' : selectedDateLabel} 기준 달성 · ${earnedPoints}/${maxPoints}`;
         } else if (isMaxed) {
             label.textContent = meta.doneLabel;
-            sub.textContent = meta.doneSub;
+            sub.textContent = isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`;
         } else if (hasProgress) {
             label.textContent = meta.progressLabel;
             sub.textContent = `현재 ${earnedPoints}/${maxPoints} · 이어서 채워보세요`;
@@ -8070,6 +8189,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         }
 
         _renderDashboardHeroState({
+            userId: user.uid,
             todayAwarded,
             streakCount,
             activeDays,
@@ -9927,7 +10047,7 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
         return false;
     }
 
-    const { awarded } = calculateAwardedPointsFromLogData(nextData, nextData.awardedPoints || {});
+    const { awarded } = getEffectiveAwardedPointResult(nextData, nextData.awardedPoints || {}, nextData.date || '');
     nextData.awardedPoints = awarded;
 
     const patch = {
@@ -10063,11 +10183,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let uploadFailures = [];
         try {
             const selectedDateStr = document.getElementById('selected-date').value;
+            const rewardPolicy = getRewardEligibilityForDate(selectedDateStr);
             // 미래 날짜 저장 방지
             const { todayStr: saveToday } = getDatesInfo();
             if (selectedDateStr > saveToday) {
                 showToast('⚠️ 미래 날짜에는 저장할 수 없습니다.');
-                saveBtn.innerText = "저장"; saveBtn.disabled = false;
+                applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
                 return;
             }
             const docId = `${user.uid}_${selectedDateStr}`;
@@ -10312,7 +10433,11 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 }
             };
 
-            const { awarded, pointsToGive } = calculateAwardedPointsFromLogData(provisionalLogData, oldData.awardedPoints || {});
+            const { awarded, pointsToGive } = getEffectiveAwardedPointResult(
+                provisionalLogData,
+                oldData.awardedPoints || {},
+                selectedDateStr
+            );
 
             const saveData = sanitize({
                 userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
@@ -10365,6 +10490,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 showToast(backgroundJobs.length > 0
                     ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
                     : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
+            } else if (rewardPolicy.isRetroNoPoint) {
+                showToast(backgroundJobs.length > 0
+                    ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어가고, 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`
+                    : `🎉 저장 완료! 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`);
             } else {
                 showToast(backgroundJobs.length > 0
                     ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
@@ -10389,7 +10518,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
 
             // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
-            saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false;
+            applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
 
             // 퀘스트 체크 UI 직접 갱신 (loadDataForSelectedDate 재호출 없음 — 사진 UI 보호)
             if (awarded.diet) { document.getElementById('quest-diet').className = 'quest-check done'; document.getElementById('quest-diet').innerText = `+${awarded.dietPoints || 0}P`; }
@@ -10450,7 +10579,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             }
             showToast(`⚠️ ${errorMsg}`);
         }
-        finally { saveBtn.innerText = "현재 진행상황 저장 & 포인트 받기 🅿️"; saveBtn.disabled = false; }
+        finally { applySaveButtonLabel(saveBtn, getVisibleTabName()); saveBtn.disabled = false; }
     })();
 });
 

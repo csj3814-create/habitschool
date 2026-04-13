@@ -1,6 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-04-14 (Dashboard Selected Date Sync)
+
+### 83. Any dashboard summary next to a selected-date control must derive its state from the selected date, not a hidden `todayStr`
+- Symptom: the `하나씩 기록` / dashboard hero at the top of `내 기록` kept showing today's score and completion state even after the user changed the date picker to another day.
+- Root cause: `loadDataForSelectedDate()` updated the selected document and form state, but the dashboard hero still computed from `getDatesInfo().todayStr` and never re-rendered against the selected day's cached log.
+- Lesson: whenever a screen has a selected-date control, audit every adjacent headline and summary card to ensure it reads from the same selected date source. If the form and summary can diverge, re-render the summary after the selected-date load completes and use the selected document cache instead of silently falling back to `today`.
+
+---
 ## 2026-04-12 (Mainnet Cutover Regression)
 
 ### 82. Gallery caches must not replace a previously visible feed item with an incomplete background-upload draft
@@ -249,6 +257,20 @@
   `blob.size` ?占쎄렐 ??TypeError 諛쒖깮. Promise媛 resolve??reject?????占쎌뼱 ?占쎌껜 hang.
 - **援먰썕**: `canvas.toBlob()` 肄쒕갚?占쎌꽌 `blob`??null??寃쎌슦 ?占쎈낯 ?占쎌씪占?fallback.
   Promise ?占쏙옙??占쎌꽌??紐⑤뱺 寃쎈줈媛 resolve ?占쎈뒗 reject???占쎈떖?占쎈뒗吏 諛섎뱶???占쎌씤.
+
+### 84. 날짜 기반 보상 제한은 클라이언트 문구와 서버 지급을 함께 잠글 것
+- **증상**: 오래된 날짜에 대한 무포인트 정책을 UI helper만 바꾸면, 저장 데이터나 Cloud Function 지급 경로를 통해 여전히 포인트가 올라갈 수 있다.
+- **교훈**: 날짜 cutoff 규칙은
+  1. 저장 버튼 문구/CTA,
+  2. 클라이언트 저장 시 `awardedPoints` 증가분 차단,
+  3. 서버 `awardPoints` 지급 차단
+  를 같은 기준으로 함께 반영해야 한다.
+- **규칙**: “특정 날짜엔 보상 제외” 정책은 항상 client + backend 이중 적용으로 넣고, 이미 받은 과거 포인트는 유지하되 새 증가만 막는다.
+
+### 85. 미디어 날짜 검증은 메타데이터 신뢰도에 따라 다르게 다뤄야 한다
+- **증상**: 사진/영상 날짜 검증을 모두 같은 강도로 막으면, EXIF가 없는 캡처나 메신저/편집 앱을 거친 파일까지 정상 업로드가 막힐 수 있다.
+- **교훈**: 날짜 메타데이터가 있는 사진(EXIF)은 신뢰도가 높으므로 불일치 시 엄격하게 차단하고, EXIF가 없는 사진이나 영상처럼 파일 시각만 남는 경우는 경고 후 예외 허용이 더 현실적이다.
+- **규칙**: 사진 날짜 정책을 손볼 때는 `EXIF 있음 = 차단`, `EXIF 없음/영상 = 확인 후 허용` 순서로 설계하고, 수동 업로드와 여러 장 자동 가져오기 흐름을 같은 기준으로 맞춘다.
 
 ### 34. ?占쎌뾽 ?占쎈즺 ??諛섎뱶???占쎈윭 寃占???硫댐옙???遺꾩꽍 ??諛고룷
 - **利앹긽**: 湲곕뒫 援ы쁽 ???占쎌뒪???占쎌씠 "?占쎈즺"占?蹂닿퀬. Storage 洹쒖튃 ?占쎈씫, SDK 踰꾩쟾 遺덉씪占?

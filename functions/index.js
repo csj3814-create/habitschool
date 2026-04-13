@@ -1861,6 +1861,15 @@ exports.awardPoints = onDocumentWritten(
 
         const newAwarded = after.awardedPoints || {};
         const oldAwarded = before?.awardedPoints || {};
+        const logDate = String(after.date || "").trim();
+        const todayStr = getCurrentKstDateString();
+        const yesterdayStr = addDaysToKstDateString(todayStr, -1);
+        const isRewardEligibleDate = !!logDate && logDate >= yesterdayStr && logDate <= todayStr;
+
+        if (!isRewardEligibleDate) {
+            console.log(`awardPoints skip: ${userId} ${logDate || '(no-date)'} outside reward window`);
+            return;
+        }
 
         const newTotal = (newAwarded.dietPoints || 0) + (newAwarded.exercisePoints || 0) + (newAwarded.mindPoints || 0);
         const oldTotal = (oldAwarded.dietPoints || 0) + (oldAwarded.exercisePoints || 0) + (oldAwarded.mindPoints || 0);
@@ -1874,7 +1883,6 @@ exports.awardPoints = onDocumentWritten(
             console.log(`awardPoints: ${userId} +${diff}P (total: ${newTotal})`);
 
             // 스트릭 계산 및 저장
-            const logDate = after.date;
             if (logDate) {
                 const streak = await calculateStreak(userId, logDate);
                 await event.data.after.ref.set({ currentStreak: streak }, { merge: true });
@@ -3007,6 +3015,12 @@ const CHALLENGE_BONUS_META_DOC = "meta/challenge_bonus_policy";
 function getCurrentKstDateString(date = new Date()) {
     const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
     return kst.toISOString().slice(0, 10);
+}
+
+function addDaysToKstDateString(dateStr, diffDays) {
+    const base = new Date(`${dateStr}T12:00:00Z`);
+    base.setUTCDate(base.getUTCDate() + diffDays);
+    return base.toISOString().slice(0, 10);
 }
 
 function getRecentKstDateStrings(days = CHALLENGE_BONUS_WINDOW_DAYS, date = new Date()) {
