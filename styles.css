@@ -10334,14 +10334,6 @@ body.simple-mode #user-greeting img {
     padding: 4px 2px 0;
 }
 
-.simple-profile-hero h2 {
-    margin: 0 0 12px;
-    color: #5B3410;
-    font-size: 28px;
-    line-height: 1.3;
-    letter-spacing: -0.04em;
-}
-
 .simple-profile-guide {
     border-radius: 22px;
     padding: 16px 16px 14px;
@@ -10352,8 +10344,7 @@ body.simple-mode #user-greeting img {
     box-shadow: 0 12px 24px rgba(91, 52, 16, 0.06);
 }
 
-.simple-profile-guide-arrows,
-.simple-profile-guide-tabs {
+.simple-profile-guide-arrows {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     align-items: center;
@@ -10361,19 +10352,11 @@ body.simple-mode #user-greeting img {
 }
 
 .simple-profile-guide-arrows {
-    margin-bottom: 4px;
+    margin-bottom: 10px;
     color: #D97706;
     font-size: 23px;
     font-weight: 900;
     line-height: 1;
-}
-
-.simple-profile-guide-tabs {
-    margin-bottom: 10px;
-    color: #9A5B16;
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
 }
 
 .simple-profile-guide p {

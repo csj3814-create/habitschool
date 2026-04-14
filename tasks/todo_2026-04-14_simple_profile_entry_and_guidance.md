@@ -9,14 +9,14 @@
 
 ## Notes
 - Request: in simple mode, land on the profile tab first instead of diet.
-- Add guidance at the very top of the profile screen: `식단, 운동, 마음을 눌러 습관을 기록하세요`.
+- Add guidance at the very top of the profile screen: `습관을 기록하세요`.
 - Include arrows visually pointing toward the top tab row.
 
 ## Review
 - Changed:
   - Simple mode now treats `profile` as the default entry tab instead of `diet`.
   - The simple-mode skip link now targets the profile section so keyboard/assistive entry lands on the first visible screen.
-  - Added a profile-top guidance panel with upward arrows and `식단, 운동, 마음을 눌러 습관을 기록하세요` copy.
+  - Added a profile-top guidance panel with upward arrows and the shorter `습관을 기록하세요` copy.
 - Verification:
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`

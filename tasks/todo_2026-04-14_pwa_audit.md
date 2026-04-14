@@ -21,6 +21,7 @@
   - Unified the current PWA release version to `156` across `index.html`, `js/main.js`, `js/app.js`, `js/auth.js`, `js/pwa-install.js`, and `sw.js`.
   - Updated the service worker precache list to include the same versioned app-shell entry assets that `index.html` actually loads.
   - Restored the missing `installState.visible` gate in the simple-profile install CTA path so the install bottom bar only appears when the CTA is eligible.
+  - Simplified install CTA eligibility so non-standalone browsers keep showing the install action even on desktop, and unified the CTA label to `해빛스쿨 앱 설치`.
   - Switched background notification fallback icon/badge assets from SVG to PNG.
   - Added `tests/pwa-versioning.test.js` so version drift between HTML, JS entrypoints, and the service worker is caught in CI.
 - Verification:

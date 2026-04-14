@@ -1146,6 +1146,16 @@
 - Symptom: on first login in Samsung Internet, choosing a Google account could leave the user on the Google/Firebase auth surface or require a back action / second tap before the app felt signed in.
 - Root cause: `signInWithPopup()` behaves more like a separate tab on Samsung Internet, so even with opener-side shell bridging the login can feel incomplete or require manual return. The app also lacked a persistent pending-login recovery path for when auth completed while the browser was switching focus.
 - Lesson: For Samsung Internet, prefer `signInWithRedirect()` over popup auth. Pair it with redirect-result recovery and a short-lived pending-login marker so the app can resume the signed-in shell immediately when the browser returns.
+
+### 159. Simple-mode guidance copy should keep only the action, not scaffolding around it
+- Symptom: the first simple-profile guidance version still carried extra framing text like `여기서 시작하세요` and category labels, which made the top of the screen feel busier than the user wanted.
+- Root cause: I optimized for explicit explanation instead of preserving the minimum action cue that the user actually asked for.
+- Lesson: In simple-mode guidance, default to the shortest actionable phrase and use visual affordances like arrows for context. If the action already points at the target tabs, remove redundant heading and category labels.
+
+### 160. Persistent install CTAs should be gated by browser context, not by mobile-only assumptions
+- Symptom: after restoring the missing `installState.visible` gate, the `해빛스쿨 앱 설치` footer disappeared entirely on a normal desktop browser that was not installed.
+- Root cause: `shouldShowInstallCta()` still hard-blocked all non-mobile user agents and also depended on stored installed-state hints, which contradicted the user’s expectation of a persistent install CTA surface.
+- Lesson: For Habitschool’s bottom-bar install CTA, treat “browser vs installed standalone app” as the primary distinction. If the app is running in a normal browser and not localhost, keep the install CTA visible and let the action branch into native prompt or manual guidance as needed.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

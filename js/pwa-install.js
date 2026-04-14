@@ -120,9 +120,7 @@ async function refreshInstalledAppState() {
 
 function shouldShowInstallCta() {
     if (isLocalHost()) return false;
-    if (!isMobileInstallDevice()) return false;
     if (isStandaloneInstallMode()) return false;
-    if (cachedInstalledAppState) return false;
     return true;
 }
 
@@ -190,7 +188,7 @@ function getInstallCopy() {
     if (isIOSInstallDevice()) {
         return {
             visible: true,
-            buttonLabel: '설치 방법 보기',
+            buttonLabel: '해빛스쿨 앱 설치',
             helperText: isSafariBrowser()
                 ? '홈 화면에 추가하면 앱처럼 쓸 수 있어요.'
                 : 'Safari로 열면 설치할 수 있어요.'
@@ -200,14 +198,14 @@ function getInstallCopy() {
     if (isLikelyInstallWebView()) {
         return {
             visible: true,
-            buttonLabel: '설치 방법 보기',
+            buttonLabel: '해빛스쿨 앱 설치',
             helperText: '기본 브라우저로 열면 설치할 수 있어요.'
         };
     }
 
     return {
         visible: true,
-        buttonLabel: deferredInstallPrompt ? '해빛스쿨 앱 설치' : '설치 방법 보기',
+        buttonLabel: '해빛스쿨 앱 설치',
         helperText: '설치하면 앱처럼 바로 열 수 있어요.'
     };
 }
