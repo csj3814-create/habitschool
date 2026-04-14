@@ -2165,6 +2165,14 @@ textarea {
     display: block;
 }
 
+.preview-strength-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: #0d1117;
+}
+
 .preview-strength-play {
     position: absolute;
     top: 50%;
@@ -2208,7 +2216,8 @@ textarea {
 }
 
 .has-thumb-pending .preview-img,
-.preview-strength.has-thumb-pending .preview-strength-img {
+.preview-strength.has-thumb-pending .preview-strength-img,
+.preview-strength.has-thumb-pending .preview-strength-video {
     filter: blur(1.6px) saturate(0.9) brightness(0.9);
     transform: scale(1.015);
 }

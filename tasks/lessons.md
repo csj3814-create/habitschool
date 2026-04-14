@@ -1076,6 +1076,11 @@
 - Symptom: even after the overall upload flow was improved, the user still had to ask why a photo/video slot could look unfinished after upload because the UI did not clearly distinguish `original uploaded, thumbnail still preparing`.
 - Root cause: I focused on the floating/global upload status and backend timing, but the media slot itself did not explain the remaining step. For videos especially, a placeholder frame alone does not communicate whether the upload is still running or just the thumbnail is pending.
 - Lesson: Whenever media saving has a post-upload thumbnail/finalization phase, show that phase directly inside the affected slot with a clear label like `썸네일 제작중`. Do not rely only on a global progress card or generic placeholder imagery to explain that intermediate state.
+
+### 149. Do not rely on canvas extraction from persisted Firebase Storage videos for core preview UI
+- Symptom: a saved strength video could suddenly fall back to the generic placeholder, and the console showed CORS errors against `firebasestorage.googleapis.com`.
+- Root cause: I treated "saved video with no thumb URL yet" as something the client could always recover by drawing the remote video into a canvas. Firebase download URLs do not reliably allow that CORS path, so the fallback was not dependable.
+- Lesson: For persisted video preview UI, never make cross-origin canvas extraction the primary recovery path. Prefer a stored thumb URL, a local extracted frame, or an actual `<video>` element fallback that can show the frame without requiring canvas access.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

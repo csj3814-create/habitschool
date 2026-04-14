@@ -2,7 +2,7 @@
 
 ## Goal
 
-- Prevent the `썸네일 제작중` state from appearing during file selection / pre-upload before the media is actually saved into the daily record.
+- Prevent the `썸네일 제작중` state from appearing during file selection or pre-upload before the media is actually saved into the daily record.
 - Keep the intermediate thumbnail state visible only after the original media is committed.
 - Tone the UI down so it reads like a subtle processing state, not a primary alert badge.
 
@@ -31,8 +31,8 @@
   - Bumped asset/service-worker versions so staging reliably receives the latest JS/CSS instead of a previous cached copy.
 - Verification:
   - `npm test`
-  - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
-  - `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-main-check.js`
+  - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
+  - `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-main-check.js`
 
 ## Follow-up
 
@@ -41,3 +41,4 @@
 - A fourth follow-up fix moved that policy into `setThumbPendingState()` itself, so even if a photo path accidentally calls the helper later, non-strength hosts immediately clear the badge and refuse to render it.
 - A fifth follow-up fix hardened pending-upload preservation: when an existing saved media URL is temporarily reused while a replacement upload is still in flight, `persistSavedPreview()` and `persistSavedExerciseBlock()` now keep the pending entry instead of deleting it too early.
 - A sixth follow-up fix changed the video policy from "remote thumb URL missing" to "no usable thumb visible yet". If a local extracted poster frame is already on screen, `썸네일 제작중` now stays hidden even while the remote thumb upload finishes in background.
+- An eighth follow-up fix removed the saved-video canvas extraction fallback that was hitting Firebase Storage CORS. If a stored strength video still has no `videoThumbUrl`, the exercise card now shows the real `<video>` frame preview instead of dropping to the generic placeholder.

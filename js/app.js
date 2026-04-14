@@ -3713,10 +3713,11 @@ function addExerciseBlock(type, data = null) {
             </label>
         `;
     } else {
-        // 동영상 URL은 이미지 태그에 표시 불가 → 항상 플레이스홀더 사용
+        // 저장된 thumbUrl이 없을 수 있어 이미지 + 비디오 fallback 구조를 함께 준비한다.
         const statusHtml = `
             <div id="s_preview_${id}" class="preview-strength" style="${data && data.videoUrl ? 'display:block;' : 'display:none;'}">
                 <img id="s_img_${id}" class="preview-strength-img" alt="근력 영상 썸네일">
+                <video id="s_video_${id}" class="preview-strength-video" muted playsinline preload="metadata" hidden></video>
                 <span class="preview-strength-play">▶</span>
             </div>
         `;
@@ -3749,28 +3750,20 @@ function addExerciseBlock(type, data = null) {
     updateRecordFlowGuides('exercise');
 
     const fileInput = div.querySelector('.exer-file');
+
+    // 근력 영상 썸네일: 저장된 thumbUrl이 없으면 실제 비디오 프레임 미리보기로 대체한다.
+    if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
+        if (data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
+            showStrengthPreviewImage(div, data.videoThumbUrl, { savedThumbUrl: data.videoThumbUrl });
+        } else {
+            showStrengthPreviewImage(div, createVideoPlaceholderBase64());
+            showStrengthPreviewVideo(div, data.videoUrl);
+        }
+    }
+
     if (fileInput?.id) {
         const thumbPending = !isCardio && shouldShowVideoThumbPending(fileInput, data?.videoUrl, data?.videoThumbUrl);
         setThumbPendingState(fileInput.id, { visible: thumbPending });
-    }
-
-    // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
-    if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
-        const thumbImg = document.getElementById(`s_img_${id}`);
-        if (thumbImg && data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
-            thumbImg.src = data.videoThumbUrl;
-        } else {
-            if (thumbImg) thumbImg.src = createVideoPlaceholderBase64();
-            // Firebase Storage URL에서도 프레임 추출 시도 (CORS 지원)
-            extractVideoThumbFromUrl(data.videoUrl)
-                .then((thumbDataUrl) => {
-                    if (!thumbDataUrl) return;
-                    const ti = document.getElementById(`s_img_${id}`);
-                    if (ti) ti.src = thumbDataUrl;
-                    if (fileInput?.id) setThumbPendingState(fileInput.id, { visible: false });
-                })
-                .catch(() => { });
-        }
     }
 }
 
@@ -3856,6 +3849,92 @@ function findReusableExerciseBlock(type) {
     }) || null;
 }
 
+function getStrengthPreviewElements(target) {
+    const block = target?.closest?.('.exercise-block') || target;
+    if (!block?.querySelector) {
+        return { block: null, previewWrap: null, previewImg: null, previewVideo: null };
+    }
+    return {
+        block,
+        previewWrap: block.querySelector('.preview-strength'),
+        previewImg: block.querySelector('.preview-strength-img'),
+        previewVideo: block.querySelector('.preview-strength-video')
+    };
+}
+
+function clearStrengthPreviewVideo(previewVideo) {
+    if (!previewVideo) return;
+    try { previewVideo.pause(); } catch (_) {}
+    previewVideo.hidden = true;
+    previewVideo.removeAttribute('src');
+    previewVideo.removeAttribute('data-video-url');
+    previewVideo.onloadedmetadata = null;
+    previewVideo.onloadeddata = null;
+    previewVideo.onseeked = null;
+    previewVideo.onerror = null;
+    try { previewVideo.load(); } catch (_) {}
+}
+
+function showStrengthPreviewImage(target, src, { localThumb = '', savedThumbUrl = '' } = {}) {
+    const { previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
+    if (!previewWrap || !previewImg) return false;
+    previewWrap.style.display = 'block';
+    clearStrengthPreviewVideo(previewVideo);
+    previewImg.hidden = false;
+    previewImg.src = src || createVideoPlaceholderBase64();
+
+    if (localThumb) previewImg.setAttribute('data-local-thumb', localThumb);
+    else previewImg.removeAttribute('data-local-thumb');
+
+    if (savedThumbUrl) previewImg.setAttribute('data-saved-thumb-url', savedThumbUrl);
+    else previewImg.removeAttribute('data-saved-thumb-url');
+
+    return true;
+}
+
+function showStrengthPreviewVideo(target, videoUrl = '') {
+    const { previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
+    const normalizedUrl = String(videoUrl || '').trim();
+    if (!previewWrap || !previewVideo || !normalizedUrl) return false;
+
+    previewWrap.style.display = 'block';
+    previewVideo.hidden = false;
+    if (previewImg) previewImg.hidden = true;
+
+    const fallbackToImage = () => {
+        previewVideo.hidden = true;
+        if (previewImg) {
+            previewImg.hidden = false;
+            if (!String(previewImg.getAttribute('src') || '').trim()) {
+                previewImg.src = createVideoPlaceholderBase64();
+            }
+        }
+    };
+
+    if (previewVideo.getAttribute('data-video-url') === normalizedUrl && previewVideo.currentSrc) {
+        try { previewVideo.pause(); } catch (_) {}
+        return true;
+    }
+
+    previewVideo.onloadedmetadata = () => {
+        try {
+            const duration = Number.isFinite(previewVideo.duration) ? previewVideo.duration : 0;
+            previewVideo.currentTime = duration > 1 ? Math.min(0.8, Math.max(0.08, duration * 0.12)) : 0.01;
+        } catch (_) {}
+    };
+    previewVideo.onloadeddata = () => {
+        try { previewVideo.pause(); } catch (_) {}
+    };
+    previewVideo.onseeked = () => {
+        try { previewVideo.pause(); } catch (_) {}
+    };
+    previewVideo.onerror = fallbackToImage;
+    previewVideo.setAttribute('data-video-url', normalizedUrl);
+    previewVideo.src = normalizedUrl;
+    previewVideo.load();
+    return true;
+}
+
 function isExerciseBlockEmpty(block) {
     if (!block) return false;
     const input = block.querySelector('.exer-file');
@@ -3921,7 +4000,6 @@ window.previewDynamicVid = function (input) {
     }
 
     const previewWrap = input.parentElement.querySelector('.preview-strength');
-    const previewImg = input.parentElement.querySelector('.preview-strength-img');
     // 업로드 텍스트 숨기기
     const uploadText = input.parentElement.querySelector('span');
     if (uploadText) uploadText.style.display = 'none';
@@ -3936,7 +4014,7 @@ window.previewDynamicVid = function (input) {
 
 
     // 즉시 플레이스홈더 표시 (검은박스 방지)
-    previewImg.src = createVideoPlaceholderBase64();
+    showStrengthPreviewImage(currentBlock || input.parentElement, createVideoPlaceholderBase64());
 
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
@@ -3955,8 +4033,7 @@ window.previewDynamicVid = function (input) {
     extractVideoThumbFromFile(file)
         .then((thumbDataUrl) => {
             if (thumbDataUrl) {
-                previewImg.src = thumbDataUrl;
-                previewImg.setAttribute('data-local-thumb', thumbDataUrl);
+                showStrengthPreviewImage(currentBlock || input.parentElement, thumbDataUrl, { localThumb: thumbDataUrl });
                 const currentBlock = input.closest('.strength-block');
                 if (currentBlock) currentBlock.setAttribute('data-local-thumb', thumbDataUrl);
                 const pendingEntry = _pendingUploads.get(input.id);
@@ -9625,11 +9702,13 @@ function hasCommittedThumbPendingMedia(inputId) {
         const exerciseBlock = input?.closest('.exercise-block');
         const savedUrl = String(exerciseBlock?.getAttribute('data-url') || '').trim();
         const previewStrengthImg = previewStrength.querySelector('.preview-strength-img');
+        const previewStrengthVideo = previewStrength.querySelector('.preview-strength-video');
         const previewSrc = String(previewStrengthImg?.getAttribute('src') || '').trim();
+        const previewVideoSrc = String(previewStrengthVideo?.currentSrc || previewStrengthVideo?.getAttribute('src') || '').trim();
         const computed = window.getComputedStyle(previewStrength);
         const isVisible = computed.display !== 'none' && computed.visibility !== 'hidden';
         const hasRenderedBox = previewStrength.offsetWidth > 0 && previewStrength.offsetHeight > 0;
-        return !!(savedUrl && previewSrc && isVisible && hasRenderedBox);
+        return !!(savedUrl && (previewSrc || previewVideoSrc) && isVisible && hasRenderedBox);
     }
 
     const previewImg = uploadArea.querySelector('.preview-img');
@@ -9654,12 +9733,18 @@ function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
     if (!normalizedUrl || normalizedThumbUrl) return false;
 
     const previewImg = exerciseBlock.querySelector('.preview-strength-img');
+    const previewVideo = exerciseBlock.querySelector('.preview-strength-video');
     const localThumb = String(
         exerciseBlock.getAttribute('data-local-thumb')
         || previewImg?.getAttribute('data-local-thumb')
         || ''
     ).trim();
     if (localThumb) return false;
+
+    const visibleVideoSrc = String(previewVideo?.currentSrc || previewVideo?.getAttribute('src') || '').trim();
+    if (visibleVideoSrc && !previewVideo?.hidden) {
+        return false;
+    }
 
     const previewSrc = String(previewImg?.getAttribute('src') || '').trim();
     if (previewSrc && previewSrc !== createVideoPlaceholderBase64()) {
@@ -10003,9 +10088,6 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
         } else {
             hideInlineUploadProgress(input.id);
         }
-        setThumbPendingState(input.id, {
-            visible: shouldShowVideoThumbPending(input, url, thumbUrl)
-        });
     }
     if (input) input.value = '';
     block.removeAttribute('data-user-removed');
@@ -10018,8 +10100,23 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
 
     const previewImg = block.querySelector('.preview-strength-img');
     if (previewImg && thumbUrl && isPersistedStorageUrl(thumbUrl)) {
-        previewImg.src = thumbUrl;
-        previewImg.setAttribute('data-saved-thumb-url', thumbUrl);
+        showStrengthPreviewImage(block, thumbUrl, { savedThumbUrl: thumbUrl });
+    } else if (url) {
+        const localThumb = String(
+            block.getAttribute('data-local-thumb')
+            || previewImg?.getAttribute('data-local-thumb')
+            || ''
+        ).trim();
+        if (!localThumb) {
+            showStrengthPreviewImage(block, createVideoPlaceholderBase64());
+            showStrengthPreviewVideo(block, url);
+        }
+    }
+
+    if (input?.id) {
+        setThumbPendingState(input.id, {
+            visible: shouldShowVideoThumbPending(input, url, thumbUrl)
+        });
     }
 }
 
