@@ -28,6 +28,11 @@
 - Root cause: `persistSavedPreview()` / `persistSavedExerciseBlock()` used the presence of a fallback saved URL as a signal that it was safe to delete `_pendingUploads`. In replacement flows, that fallback URL could belong to the old media while the new upload still had not finished.
 - Lesson: when a screen temporarily preserves the old committed URL during replacement upload, only clear the pending entry after the in-flight upload has a matching resolved URL. If the pending upload is unfinished or its resolved URL differs from the currently persisted one, keep the pending entry alive.
 
+### 90. If a local video frame is already visible, treat it as a usable thumbnail and hide "thumbnail pending" UI
+- Symptom: the exercise video card could show a clear frame preview while still overlaying `썸네일 제작중`, which felt contradictory and noisy.
+- Root cause: the pending logic only looked for a remote `videoThumbUrl` and ignored locally extracted poster frames stored in `data-local-thumb` or already rendered in the preview image.
+- Lesson: for video uploads, base the pending UI on user-visible state, not only final remote metadata. If a meaningful local poster frame is already visible, suppress the pending badge and let the remote thumb upload finish silently.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.

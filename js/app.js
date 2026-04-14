@@ -9649,7 +9649,24 @@ function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
     const input = typeof inputOrId === 'string' ? document.getElementById(inputOrId) : inputOrId;
     const exerciseBlock = input?.closest('.exercise-block');
     if (!exerciseBlock?.classList.contains('strength-block')) return false;
-    return !!(String(url || '').trim() && !String(thumbUrl || '').trim());
+    const normalizedUrl = String(url || '').trim();
+    const normalizedThumbUrl = String(thumbUrl || '').trim();
+    if (!normalizedUrl || normalizedThumbUrl) return false;
+
+    const previewImg = exerciseBlock.querySelector('.preview-strength-img');
+    const localThumb = String(
+        exerciseBlock.getAttribute('data-local-thumb')
+        || previewImg?.getAttribute('data-local-thumb')
+        || ''
+    ).trim();
+    if (localThumb) return false;
+
+    const previewSrc = String(previewImg?.getAttribute('src') || '').trim();
+    if (previewSrc && previewSrc !== createVideoPlaceholderBase64()) {
+        return false;
+    }
+
+    return true;
 }
 
 function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
