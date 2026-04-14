@@ -10,7 +10,7 @@ import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePen
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=133';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=156';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';

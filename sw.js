@@ -51,8 +51,8 @@ if (!isLocalEnv) {
         const badgeCount = Number(d.badgeCount || '');
         const options = {
             body: d.body || '',
-            icon: d.icon || './icons/icon-192.svg',
-            badge: './icons/icon-192.svg',
+            icon: d.icon || './icons/icon-192.png',
+            badge: './icons/icon-192.png',
             tag: d.tag || 'habitschool',
             data: {
                 url: d.url || '/',
@@ -78,7 +78,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v155';
+const CACHE_NAME = 'habitschool-v156';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', self.location.origin).href;
@@ -153,24 +153,25 @@ async function handleDietShareTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css',
-    './js/main.js',
-    './js/app.js',
-    './js/auth.js',
+    './styles.css?v=156',
+    './js/main.js?v=156',
+    './js/app.js?v=156',
+    './js/auth.js?v=156',
     './js/firebase-config.js',
     './js/data-manager.js',
-    './js/diet-analysis.js',
-    './js/metabolic-score.js',
+    './js/diet-analysis.js?v=112',
+    './js/metabolic-score.js?v=112',
     './js/ui-helpers.js',
     './js/security.js',
     './js/blockchain-config.js',
-    './js/blockchain-manager.js',
-    './js/pwa-install.js',
-    './js/webview-detect.js',
+    './js/blockchain-manager.js?v=156',
+    './js/pwa-install.js?v=156',
+    './js/webview-detect.js?v=156',
     './manifest.json',
+    './icons/icon-192.png',
     './icons/icon-192.svg',
-    './icons/icon-512.svg',
     './icons/icon-512.png',
+    './icons/icon-512.svg',
     './icons/apple-touch-icon.svg'
 ];
 

@@ -23,7 +23,7 @@ export function getAllowedTabsForMode(mode = getAppModeFromPath()) {
 }
 
 export function getDefaultTabForMode(mode = getAppModeFromPath()) {
-    return mode === SIMPLE_MODE ? 'diet' : 'dashboard';
+    return mode === SIMPLE_MODE ? 'profile' : 'dashboard';
 }
 
 export function normalizeTabForMode(tabName, mode = getAppModeFromPath()) {
@@ -52,7 +52,7 @@ export function applyAppModeChrome(doc = document) {
 
     const skipLink = doc.querySelector('.skip-to-content');
     if (skipLink) {
-        skipLink.setAttribute('href', simpleMode ? '#diet' : '#dashboard');
+        skipLink.setAttribute('href', simpleMode ? '#profile' : '#dashboard');
     }
 
     const userGreeting = doc.getElementById('user-greeting');

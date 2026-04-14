@@ -9,6 +9,7 @@ describe('app-mode helpers', () => {
     });
 
     it('keeps the simple-mode tabs plus the profile shortcut tab', () => {
+        expect(getDefaultTabForMode('simple')).toBe('profile');
         expect(normalizeTabForMode('diet', 'simple')).toBe('diet');
         expect(normalizeTabForMode('exercise', 'simple')).toBe('exercise');
         expect(normalizeTabForMode('sleep', 'simple')).toBe('sleep');

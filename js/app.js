@@ -504,6 +504,13 @@ function applySimpleProfileInstallCta() {
     }
 
     const installState = getInstallCtaState();
+    if (!installState.visible) {
+        resetSubmitBarMode();
+        helperEl.style.display = 'none';
+        submitBar.style.display = 'none';
+        return false;
+    }
+
     resetSubmitBarMode();
     submitBar.style.display = 'block';
     submitBar.classList.add('install-mode');
@@ -3480,7 +3487,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=134';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=156';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;

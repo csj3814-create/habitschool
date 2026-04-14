@@ -10335,11 +10335,54 @@ body.simple-mode #user-greeting img {
 }
 
 .simple-profile-hero h2 {
-    margin: 0;
+    margin: 0 0 12px;
     color: #5B3410;
     font-size: 28px;
     line-height: 1.3;
     letter-spacing: -0.04em;
+}
+
+.simple-profile-guide {
+    border-radius: 22px;
+    padding: 16px 16px 14px;
+    border: 1px solid rgba(134, 93, 27, 0.16);
+    background:
+        radial-gradient(circle at top center, rgba(255, 255, 255, 0.85), transparent 58%),
+        linear-gradient(180deg, #FFF8EA 0%, #FFF3DB 100%);
+    box-shadow: 0 12px 24px rgba(91, 52, 16, 0.06);
+}
+
+.simple-profile-guide-arrows,
+.simple-profile-guide-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    text-align: center;
+}
+
+.simple-profile-guide-arrows {
+    margin-bottom: 4px;
+    color: #D97706;
+    font-size: 23px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.simple-profile-guide-tabs {
+    margin-bottom: 10px;
+    color: #9A5B16;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.simple-profile-guide p {
+    margin: 0;
+    color: #6B4A24;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
 }
 
 .simple-profile-card {

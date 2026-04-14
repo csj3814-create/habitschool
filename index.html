@@ -104,9 +104,9 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=120">
+    <link rel="stylesheet" href="styles.css?v=156">
 
-    <script src="js/webview-detect.js"></script>
+    <script src="js/webview-detect.js?v=156"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
@@ -370,7 +370,20 @@
             <div id="profile" class="content-section" role="region" aria-label="내 프로필">
                 <div class="simple-profile-shell" id="simple-profile-shell">
                     <div class="simple-profile-hero">
-                        <h2>내 포인트와 초대 정보</h2>
+                        <h2>여기서 시작하세요</h2>
+                        <div class="simple-profile-guide" role="note" aria-label="습관 기록 안내">
+                            <div class="simple-profile-guide-arrows" aria-hidden="true">
+                                <span>↑</span>
+                                <span>↑</span>
+                                <span>↑</span>
+                            </div>
+                            <div class="simple-profile-guide-tabs" aria-hidden="true">
+                                <span>식단</span>
+                                <span>운동</span>
+                                <span>마음</span>
+                            </div>
+                            <p>식단, 운동, 마음을 눌러 습관을 기록하세요</p>
+                        </div>
                     </div>
 
                     <div class="simple-profile-card simple-profile-points-card">
@@ -1613,13 +1626,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-<script type="module" src="js/app.js?v=154"></script>
-    <script type="module" src="js/main.js?v=136"></script>
+<script type="module" src="js/app.js?v=156"></script>
+    <script type="module" src="js/main.js?v=156"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=134"></script>
+    <script src="js/pwa-install.js?v=156"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
