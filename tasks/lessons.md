@@ -1096,6 +1096,11 @@
 - Symptom: a saved exercise video kept reopening without a thumbnail even after multiple UI fallback tweaks, because `videoThumbUrl` was never written back to Firestore.
 - Root cause: the save flow treated `_pendingUploads.result.url` as if the whole media pipeline was complete. When the original upload had finished but `thumbPromise` was still running, we skipped background patch scheduling and cleared the pending entry too early.
 - Lesson: In split upload pipelines, model “original done / thumbnail pending” as its own live state. Keep the pending entry, schedule the background patch, and only mark the media fully settled after the thumbnail promise has either produced a persisted thumb URL or definitively failed.
+
+### 153. When old data is already missing a thumbnail, the UI should degrade gracefully instead of advertising work it is not doing
+- Symptom: on refresh, an old exercise video with no persisted `videoThumbUrl` showed `썸네일 제작중`, then a live frame appeared seconds later, while the gallery share card rendered an ugly placeholder tile.
+- Root cause: I mixed “actively generating a new thumb” with “showing a live video fallback because a thumb is absent.” Those are not the same user state, especially for records already saved in broken form.
+- Lesson: If the app is merely falling back to a live video frame for an old thumb-less record, hide processing copy once the frame is visible and omit that media from thumbnail-first surfaces like share cards until a real preview asset exists.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

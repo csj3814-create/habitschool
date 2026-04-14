@@ -1241,16 +1241,20 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
                 const localThumb = findLocalExerciseVideoThumb(item.videoUrl);
-                addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', (localThumb || item.videoThumbUrl) ? 'image' : 'video');
+                if (localThumb || item.videoThumbUrl) {
+                    addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', 'image');
+                }
             });
         } else {
             const localThumb = findLocalExerciseVideoThumb(latest.exercise.strengthVideoUrl);
-            addMedia(
-                localThumb || latest.exercise.strengthVideoThumbUrl,
-                latest.exercise.strengthVideoUrl,
-                '운동',
-                (localThumb || latest.exercise.strengthVideoThumbUrl) ? 'image' : 'video'
-            );
+            if (localThumb || latest.exercise.strengthVideoThumbUrl) {
+                addMedia(
+                    localThumb || latest.exercise.strengthVideoThumbUrl,
+                    latest.exercise.strengthVideoUrl,
+                    '운동',
+                    'image'
+                );
+            }
         }
     }
 
@@ -3932,7 +3936,7 @@ function showStrengthPreviewImage(target, src, { localThumb = '', savedThumbUrl 
 }
 
 function showStrengthPreviewVideo(target, videoUrl = '') {
-    const { previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
+    const { block, previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
     const normalizedUrl = String(videoUrl || '').trim();
     if (!previewWrap || !previewVideo || !normalizedUrl) return false;
 
@@ -3963,9 +3967,13 @@ function showStrengthPreviewVideo(target, videoUrl = '') {
     };
     previewVideo.onloadeddata = () => {
         try { previewVideo.pause(); } catch (_) {}
+        const inputId = block?.querySelector('.exer-file')?.id;
+        if (inputId) setThumbPendingState(inputId, { visible: false });
     };
     previewVideo.onseeked = () => {
         try { previewVideo.pause(); } catch (_) {}
+        const inputId = block?.querySelector('.exer-file')?.id;
+        if (inputId) setThumbPendingState(inputId, { visible: false });
     };
     previewVideo.onerror = fallbackToImage;
     previewVideo.setAttribute('data-video-url', normalizedUrl);
@@ -9780,8 +9788,7 @@ function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
     ).trim();
     if (localThumb) return false;
 
-    const visibleVideoSrc = String(previewVideo?.currentSrc || previewVideo?.getAttribute('src') || '').trim();
-    if (visibleVideoSrc && !previewVideo?.hidden) {
+    if (previewVideo && !previewVideo.hidden) {
         return false;
     }
 
