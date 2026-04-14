@@ -5,7 +5,7 @@
  */
 
 // 인증 모듈 (initializeApp에서 직접 호출)
-import { initAuth, setupAuthListener } from './auth.js?v=133';
+import { initAuth, setupAuthListener } from './auth.js?v=134';
 import { APP_ENV } from './firebase-config.js';
 import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js';
 

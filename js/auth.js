@@ -1,11 +1,12 @@
 ﻿// ?몄쬆 愿由?紐⑤뱢
 import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { showToast } from './ui-helpers.js';
 import { getDatesInfo } from './ui-helpers.js';
 import { escapeHtml } from './security.js';
+import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
@@ -20,6 +21,7 @@ let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
 let _pushTokenValue = '';
 let _ensureReferralCodeCallable = null;
+let _googleLoginRecoveryBound = false;
 
 function getEnsureReferralCodeCallable() {
     if (!_ensureReferralCodeCallable) {
@@ -41,6 +43,29 @@ function rememberPendingSignupOnboarding(user) {
 function clearPendingSignupOnboarding() {
     try {
         sessionStorage.removeItem(PENDING_SIGNUP_ONBOARDING_KEY);
+    } catch (_) {}
+}
+
+function persistPendingGoogleLoginState(mode = 'popup') {
+    try {
+        sessionStorage.setItem(
+            GOOGLE_LOGIN_PENDING_STATE_KEY,
+            JSON.stringify(createPendingGoogleLoginState(mode))
+        );
+    } catch (_) {}
+}
+
+function readPendingGoogleLoginState() {
+    try {
+        return parsePendingGoogleLoginState(sessionStorage.getItem(GOOGLE_LOGIN_PENDING_STATE_KEY));
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearPendingGoogleLoginState() {
+    try {
+        sessionStorage.removeItem(GOOGLE_LOGIN_PENDING_STATE_KEY);
     } catch (_) {}
 }
 
@@ -444,6 +469,12 @@ export function initAuth() {
         return;
     }
 
+    bindPendingGoogleLoginRecovery();
+    if (readPendingGoogleLoginState()) {
+        loginBtn.disabled = true;
+    }
+    handleGoogleRedirectLoginResult(loginBtn).catch(() => {});
+
     loginBtn.addEventListener('click', () => {
         if (window._isPopupLogin) {
             return;
@@ -452,6 +483,26 @@ export function initAuth() {
         loginBtn.disabled = true;
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
+        const useRedirectLogin = shouldUseGoogleRedirectLogin(navigator.userAgent || navigator.vendor || '');
+        persistPendingGoogleLoginState(useRedirectLogin ? 'redirect' : 'popup');
+
+        if (useRedirectLogin) {
+            signInWithRedirect(auth, provider).catch(error => {
+                console.error('리디렉트 로그인 오류:', error.code, error.message, error);
+                clearPendingGoogleLoginState();
+                window._isPopupLogin = false;
+                loginBtn.disabled = false;
+
+                let errorMsg = '로그인에 실패했습니다.';
+                if (error.code === 'auth/network-request-failed') {
+                    errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+                }
+                showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
+            });
+            return;
+        }
 
         signInWithPopup(auth, provider).then((result) => {
             bridgePopupLoginSuccess(result?.user || null);
@@ -464,15 +515,18 @@ export function initAuth() {
             console.error('로그인 오류:', error.code, error.message, error);
 
             if (error.message && (error.message.includes('disallowed_useragent') || error.message.includes('web-storage-unsupported'))) {
+                clearPendingGoogleLoginState();
                 showWebViewWarning();
                 return;
             }
 
             if (error.code === 'auth/popup-closed-by-user') {
+                clearPendingGoogleLoginState();
                 window._isPopupLogin = false;
                 loginBtn.disabled = false;
                 return;
             }
+            clearPendingGoogleLoginState();
             window._isPopupLogin = false;
             loginBtn.disabled = false;
 
@@ -558,6 +612,64 @@ function bridgePopupLoginSuccess(user) {
     setTimeout(tick, 120);
 }
 
+function recoverPendingGoogleLoginUi() {
+    const pendingState = readPendingGoogleLoginState();
+    if (!pendingState || !auth.currentUser) return false;
+    bridgePopupLoginSuccess(auth.currentUser);
+    return true;
+}
+
+function bindPendingGoogleLoginRecovery() {
+    if (_googleLoginRecoveryBound) return;
+    _googleLoginRecoveryBound = true;
+
+    const recover = () => {
+        recoverPendingGoogleLoginUi();
+    };
+
+    window.addEventListener('pageshow', recover);
+    window.addEventListener('focus', recover);
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) recover();
+    });
+}
+
+async function handleGoogleRedirectLoginResult(loginBtn) {
+    const pendingState = readPendingGoogleLoginState();
+    try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+            bridgePopupLoginSuccess(result.user);
+            if (result?.additionalUserInfo?.isNewUser) {
+                rememberPendingSignupOnboarding(result.user);
+            } else {
+                clearPendingSignupOnboarding();
+            }
+        } else if (pendingState?.mode === 'redirect') {
+            clearPendingSignupOnboarding();
+        }
+    } catch (error) {
+        console.error('리디렉트 로그인 오류:', error.code, error.message, error);
+        if (pendingState?.mode === 'redirect') {
+            let errorMsg = '로그인에 실패했습니다.';
+            if (error.code === 'auth/network-request-failed') {
+                errorMsg = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.';
+            } else if (error.code === 'auth/unauthorized-domain') {
+                errorMsg = '이 도메인은 승인되지 않았습니다. 관리자에게 문의하세요.';
+            }
+            showToast(`오류: ${errorMsg} [${error.code || 'unknown'}]`);
+        }
+    } finally {
+        if (!auth.currentUser) {
+            window._isPopupLogin = false;
+            if (loginBtn) loginBtn.disabled = false;
+        }
+        if (pendingState) {
+            clearPendingGoogleLoginState();
+        }
+    }
+}
+
 // ?몄쬆 ?곹깭 蹂寃?由ъ뒪??
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
@@ -567,6 +679,7 @@ export function setupAuthListener(callbacks) {
             if (window._isPopupLogin) {
                 window._isPopupLogin = false;
             }
+            clearPendingGoogleLoginState();
             applySignedInShellUi(user);
 
             // 利됱떆 ??쒕낫???닿린 (renderDashboard媛 ?먯껜 ?곗씠??濡쒕뵫 ?섑뻾)

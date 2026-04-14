@@ -1141,6 +1141,11 @@
 - Symptom: the exercise tab and the gallery share-card preview could render a black video frame or placeholder even though the daily log still contained a valid legacy `strengthVideoThumbUrl`.
 - Root cause: newer UI paths preferred `exercise.strengthList` and ignored the older `exercise.strengthVideoThumbUrl`. When save flows wrote a list item without `videoThumbUrl` but preserved the legacy fields, the renderers threw away an already saved thumbnail.
 - Lesson: When a media schema evolves from single-item fields to list items, any list-first restore path must reconcile missing per-item thumbnails against matching legacy fields before falling back to live video rendering or placeholder assets.
+
+### 158. Samsung Internet should use redirect auth when Google popup login behaves like a stranded extra tab
+- Symptom: on first login in Samsung Internet, choosing a Google account could leave the user on the Google/Firebase auth surface or require a back action / second tap before the app felt signed in.
+- Root cause: `signInWithPopup()` behaves more like a separate tab on Samsung Internet, so even with opener-side shell bridging the login can feel incomplete or require manual return. The app also lacked a persistent pending-login recovery path for when auth completed while the browser was switching focus.
+- Lesson: For Samsung Internet, prefer `signInWithRedirect()` over popup auth. Pair it with redirect-result recovery and a short-lived pending-login marker so the app can resume the signed-in shell immediately when the browser returns.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
