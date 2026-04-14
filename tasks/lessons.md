@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 92. A video thumbnail cache that only lives for the current session is too weak for refresh and gallery recovery
+- Symptom: saved exercise videos could still show a placeholder for a few seconds after refresh, then suddenly show a live frame, even though the client had already extracted a usable thumbnail earlier.
+- Root cause: the local extracted thumbnail cache only used `sessionStorage`, so refresh and gallery paths could miss it and fall back to slower live-video frame loading whenever `videoThumbUrl` had not been patched yet.
+- Lesson: when a client-generated media preview must survive refreshes until the server-side thumb is ready, keep a bounded persistent cache keyed by the final media URL and make every consumer path consult that cache before using a live video fallback.
+
 ### 91. When a secondary processing UI keeps destabilizing the core media flow, remove it cleanly if the user prefers the pre-feature behavior
 - Symptom: `썸네일 제작중` kept causing repeated regressions across exercise preview, refresh, and gallery/share surfaces even after several condition tweaks.
 - Root cause: I continued tuning a non-essential intermediate state instead of recognizing that the safest path was to remove the feature once the user explicitly preferred the old behavior.

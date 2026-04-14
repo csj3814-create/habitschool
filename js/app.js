@@ -3872,6 +3872,61 @@ function getLocalExerciseVideoThumbSessionKey(videoUrl = '') {
     return `hs_local_video_thumb_${hashMediaKey(normalizedVideoUrl)}`;
 }
 
+const LOCAL_EXERCISE_VIDEO_THUMB_INDEX_KEY = 'hs_local_video_thumb_index_v1';
+const MAX_PERSISTED_LOCAL_VIDEO_THUMBS = 16;
+
+function readLocalExerciseVideoThumbIndex() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(LOCAL_EXERCISE_VIDEO_THUMB_INDEX_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function writeLocalExerciseVideoThumbIndex(entries = []) {
+    try {
+        localStorage.setItem(LOCAL_EXERCISE_VIDEO_THUMB_INDEX_KEY, JSON.stringify(entries));
+    } catch (_) {}
+}
+
+function prunePersistedLocalExerciseVideoThumbs(activeKey = '') {
+    const normalizedActiveKey = String(activeKey || '').trim();
+    const entries = readLocalExerciseVideoThumbIndex()
+        .map((entry) => ({
+            key: String(entry?.key || '').trim(),
+            updatedAt: Number(entry?.updatedAt || 0)
+        }))
+        .filter((entry) => entry.key);
+
+    const deduped = new Map();
+    entries.forEach((entry) => {
+        const previous = deduped.get(entry.key);
+        if (!previous || previous.updatedAt < entry.updatedAt) deduped.set(entry.key, entry);
+    });
+
+    const sorted = Array.from(deduped.values())
+        .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    const keepKeys = new Set();
+    if (normalizedActiveKey) keepKeys.add(normalizedActiveKey);
+    for (const entry of sorted) {
+        if (keepKeys.size >= MAX_PERSISTED_LOCAL_VIDEO_THUMBS) break;
+        keepKeys.add(entry.key);
+    }
+
+    sorted.forEach((entry) => {
+        if (keepKeys.has(entry.key)) return;
+        try { localStorage.removeItem(entry.key); } catch (_) {}
+    });
+
+    writeLocalExerciseVideoThumbIndex(
+        sorted
+            .filter((entry) => keepKeys.has(entry.key))
+            .slice(0, MAX_PERSISTED_LOCAL_VIDEO_THUMBS)
+    );
+}
+
 function cacheLocalExerciseVideoThumb(videoUrl = '', thumbDataUrl = '') {
     const key = getLocalExerciseVideoThumbSessionKey(videoUrl);
     const normalizedThumb = String(thumbDataUrl || '').trim();
@@ -3879,16 +3934,32 @@ function cacheLocalExerciseVideoThumb(videoUrl = '', thumbDataUrl = '') {
     try {
         sessionStorage.setItem(key, normalizedThumb);
     } catch (_) {}
+    try {
+        localStorage.setItem(key, normalizedThumb);
+        const now = Date.now();
+        const nextIndex = readLocalExerciseVideoThumbIndex()
+            .filter((entry) => String(entry?.key || '').trim() !== key);
+        nextIndex.push({ key, updatedAt: now });
+        writeLocalExerciseVideoThumbIndex(nextIndex);
+        prunePersistedLocalExerciseVideoThumbs(key);
+    } catch (_) {}
 }
 
 function readCachedLocalExerciseVideoThumb(videoUrl = '') {
     const key = getLocalExerciseVideoThumbSessionKey(videoUrl);
     if (!key) return '';
     try {
-        return String(sessionStorage.getItem(key) || '').trim();
-    } catch (_) {
-        return '';
-    }
+        const sessionThumb = String(sessionStorage.getItem(key) || '').trim();
+        if (sessionThumb.startsWith('data:image/')) return sessionThumb;
+    } catch (_) {}
+    try {
+        const persistedThumb = String(localStorage.getItem(key) || '').trim();
+        if (persistedThumb.startsWith('data:image/')) {
+            try { sessionStorage.setItem(key, persistedThumb); } catch (_) {}
+            return persistedThumb;
+        }
+    } catch (_) {}
+    return '';
 }
 
 function clearStrengthPreviewVideo(previewVideo) {
@@ -12955,8 +13026,10 @@ function collectGalleryMedia(data) {
         const addVid = (url, thumbUrl) => {
             if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
                 const safeUrl = escapeHtml(url);
-                if (thumbUrl && isValidStorageUrl(thumbUrl)) {
-                    const safeThumb = escapeHtml(thumbUrl);
+                const localThumb = findLocalExerciseVideoThumb(url);
+                const resolvedThumb = localThumb || ((thumbUrl && isValidStorageUrl(thumbUrl)) ? thumbUrl : '');
+                if (resolvedThumb) {
+                    const safeThumb = escapeHtml(resolvedThumb);
                     result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
                         <img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">
                         <div class="video-play-btn">&#9654;</div>
