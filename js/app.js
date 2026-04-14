@@ -9703,17 +9703,13 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         current.progress = 100;
         setInlineUploadProgress(inputId, { state: 'complete', pct: 100 });
         scheduleInlineUploadProgressHide(inputId);
+        // 썸네일 대기 표시는 문서에 저장된 원본 미디어에만 보여준다.
+        // 파일 선택 직후의 사전 업로드 단계에서는 보이지 않게 하고,
+        // 이후 저장/후속 패치 경로에서만 명시적으로 상태를 켠다.
         if (current.thumbPromise && !result?.thumbUrl) {
-            setThumbPendingState(inputId, { visible: true });
-            current.thumbPromise
-                .then(() => {})
-                .catch(() => {})
-                .finally(() => {
-                    setThumbPendingState(inputId, { visible: false });
-                });
-        } else {
-            setThumbPendingState(inputId, { visible: false });
+            current.thumbPromise.then(() => {}).catch(() => {});
         }
+        setThumbPendingState(inputId, { visible: false });
     }).catch(() => {
         setInlineUploadProgress(inputId, { state: 'error', pct: 100 });
         setThumbPendingState(inputId, { visible: false });

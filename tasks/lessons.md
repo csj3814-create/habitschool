@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
+- Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
+- Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.
+- Lesson: when adding an intermediate processing state, anchor it to the moment the user-facing artifact truly exists in the UI or database. For secondary states like thumbnail generation, prefer subtle blur/overlay treatment over loud badges so the main content remains the focal point.
+
 ### 83. Any dashboard summary next to a selected-date control must derive its state from the selected date, not a hidden `todayStr`
 - Symptom: the `하나씩 기록` / dashboard hero at the top of `내 기록` kept showing today's score and completion state even after the user changed the date picker to another day.
 - Root cause: `loadDataForSelectedDate()` updated the selected document and form state, but the dashboard hero still computed from `getDatesInfo().todayStr` and never re-rendered against the selected day's cached log.
