@@ -2153,6 +2153,7 @@ textarea {
     border: 1px solid var(--gray-200); 
     overflow: hidden;
     position: relative;
+    aspect-ratio: 16 / 9;
     max-width: 220px;
     margin-left: auto;
     margin-right: auto;
@@ -2160,17 +2161,23 @@ textarea {
 
 .preview-strength-img {
     width: 100%;
+    height: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     display: block;
+    position: absolute;
+    inset: 0;
 }
 
 .preview-strength-video {
     width: 100%;
+    height: 100%;
     aspect-ratio: 16 / 9;
     object-fit: cover;
     display: block;
     background: #0d1117;
+    position: absolute;
+    inset: 0;
 }
 
 .preview-strength-play {
@@ -2188,6 +2195,7 @@ textarea {
     align-items: center;
     justify-content: center;
     padding-left: 3px;
+    z-index: 2;
 }
 
 .thumb-pending-badge {

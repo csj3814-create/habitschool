@@ -1081,6 +1081,11 @@
 - Symptom: a saved strength video could suddenly fall back to the generic placeholder, and the console showed CORS errors against `firebasestorage.googleapis.com`.
 - Root cause: I treated "saved video with no thumb URL yet" as something the client could always recover by drawing the remote video into a canvas. Firebase download URLs do not reliably allow that CORS path, so the fallback was not dependable.
 - Lesson: For persisted video preview UI, never make cross-origin canvas extraction the primary recovery path. Prefer a stored thumb URL, a local extracted frame, or an actual `<video>` element fallback that can show the frame without requiring canvas access.
+
+### 150. Multi-mode media previews must be overlaid in one frame, not appended as separate blocks
+- Symptom: after adding a `<video>` fallback for saved exercise cards, the preview could render as two stacked surfaces instead of one media frame.
+- Root cause: I added both `<img>` and `<video>` elements into the preview shell but left them in normal document flow. When visibility toggles were not enough to guarantee exclusive layout, the elements could stack vertically.
+- Lesson: For previews that can switch between image and video renderers, define the shell as a fixed-ratio positioned frame and absolutely overlay each renderer inside it. Never rely on sequential block layout for mutually exclusive preview surfaces.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
