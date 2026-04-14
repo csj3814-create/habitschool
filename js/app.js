@@ -5680,7 +5680,7 @@ function scheduleAssetRetry(uid, reason = 'unknown') {
     _assetRetryCounts.set(uid, nextCount);
 
     const delay = ASSET_RETRY_BASE_DELAY_MS * nextCount;
-    console.warn(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
+    console.info(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
     _assetRetryTimer = setTimeout(() => {
         if (auth.currentUser?.uid !== uid) return;
         window.updateAssetDisplay(true).catch(() => { });
@@ -9617,9 +9617,33 @@ function getThumbPendingHost(inputId) {
     return uploadArea;
 }
 
+function hasCommittedThumbPendingMedia(inputId) {
+    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const uploadArea = input?.closest('.upload-area');
+    if (!uploadArea) return false;
+
+    const previewStrength = uploadArea.querySelector('.preview-strength');
+    if (previewStrength) {
+        const exerciseBlock = input?.closest('.exercise-block');
+        const savedUrl = String(exerciseBlock?.getAttribute('data-url') || '').trim();
+        const isVisible = previewStrength.style.display !== 'none';
+        return !!(savedUrl && isVisible);
+    }
+
+    const previewImg = uploadArea.querySelector('.preview-img');
+    if (previewImg) {
+        const savedUrl = String(previewImg.getAttribute('data-saved-url') || '').trim();
+        const isVisible = previewImg.style.display !== 'none';
+        return !!(savedUrl && isVisible);
+    }
+
+    return false;
+}
+
 function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
     const host = getThumbPendingHost(inputId);
     if (!host) return;
+    const shouldShow = !!visible && hasCommittedThumbPendingMedia(inputId);
 
     let badge = host.querySelector('.thumb-pending-badge');
     if (!badge) {
@@ -9630,8 +9654,8 @@ function setThumbPendingState(inputId, { visible = false, label = '썸네일 제
     }
 
     badge.textContent = label;
-    badge.hidden = !visible;
-    host.classList.toggle('has-thumb-pending', !!visible);
+    badge.hidden = !shouldShow;
+    host.classList.toggle('has-thumb-pending', shouldShow);
 }
 
 function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '' } = {}) {

@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 85. When a processing badge lives on a generic upload container, the setter must verify committed media before rendering it
+- Symptom: `썸네일 제작중` could still show inside a blank upload box even after the obvious pre-upload toggle was removed.
+- Root cause: the pending-state host for static images was the whole `.upload-area`, and `setThumbPendingState()` trusted the incoming `visible` flag without checking whether the slot actually had a committed media URL and visible preview.
+- Lesson: for any state mounted on a broad container instead of the media node itself, add a final render-time guard inside the setter. Refuse to show the processing state unless committed media is present and visibly rendered.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.
