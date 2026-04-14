@@ -133,6 +133,8 @@ let _shareSettingsExpanded = false;
 let _shareCardBuildToken = 0;
 let _latestPreparedShareMedia = [];
 let _latestPreparedShareSignature = '';
+let _shareCardRefreshTimer = null;
+let _shareCardRefreshNeedsForceMedia = false;
 let _shareTemplate = 'grid';
 let _latestShareRenderKey = '';
 let _latestSharePreviewDataUrl = '';
@@ -1441,6 +1443,36 @@ async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettin
     _latestPreparedShareMedia = prepared;
     _latestPreparedShareSignature = signature;
     return prepared;
+}
+
+function invalidatePreparedShareMediaCache() {
+    _latestPreparedShareMedia = [];
+    _latestPreparedShareSignature = '';
+    _latestShareRenderKey = '';
+}
+
+function scheduleShareCardRefresh({ forceMediaRefresh = false } = {}) {
+    if (forceMediaRefresh) {
+        _shareCardRefreshNeedsForceMedia = true;
+        invalidatePreparedShareMediaCache();
+    }
+
+    const currentUser = auth.currentUser;
+    const galleryTab = document.getElementById('gallery');
+    if (!currentUser || !galleryTab?.classList.contains('active')) return;
+
+    if (_shareCardRefreshTimer) clearTimeout(_shareCardRefreshTimer);
+    _shareCardRefreshTimer = setTimeout(() => {
+        _shareCardRefreshTimer = null;
+        const user = auth.currentUser;
+        if (!user) {
+            _shareCardRefreshNeedsForceMedia = false;
+            return;
+        }
+        const nextForceMedia = _shareCardRefreshNeedsForceMedia;
+        _shareCardRefreshNeedsForceMedia = false;
+        buildShareCardAsync(user.uid, user, null, { forceMediaRefresh: nextForceMedia }).catch(() => { });
+    }, 180);
 }
 
 function findLocalExerciseVideoThumb(videoUrl = '') {
@@ -3967,6 +3999,7 @@ function cacheResolvedExerciseVideoThumb(url = '', thumbDataUrl = '') {
     const normalizedThumb = String(thumbDataUrl || '').trim();
     if (!normalizedUrl || !normalizedThumb.startsWith('data:image/')) return false;
     cacheLocalExerciseVideoThumb(normalizedUrl, normalizedThumb);
+    scheduleShareCardRefresh({ forceMediaRefresh: true });
     return true;
 }
 
@@ -10579,6 +10612,9 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
 
     _assetCache.ts = 0;
     _dashboardCache.ts = 0;
+    if (job.kind === 'strength') {
+        scheduleShareCardRefresh({ forceMediaRefresh: true });
+    }
     return committedData;
 }
 
@@ -12776,11 +12812,12 @@ async function _loadGalleryDataInner(forceReload = false) {
 }
 
 // 공유 카드 비동기 로드 (갤러리 피드 렌더링 차단하지 않음)
-async function buildShareCardAsync(myId, user, overrideSettings = null) {
+async function buildShareCardAsync(myId, user, overrideSettings = null, options = {}) {
     try {
         const latest = user ? getCurrentShareLog(myId)?.data || null : null;
         const settings = normalizeShareSettings(overrideSettings || latest?.shareSettings || _shareSettingsDraft);
         const template = getCurrentShareTemplate();
+        const forceMediaRefresh = options?.forceMediaRefresh === true;
 
         if (!latest || !user) {
             _latestPreparedShareMedia = [];
@@ -12800,7 +12837,7 @@ async function buildShareCardAsync(myId, user, overrideSettings = null) {
 
         const buildToken = ++_shareCardBuildToken;
         renderShareCardState(user, latest, settings, { template });
-        const preparedMedia = await ensurePreparedShareMedia(latest, settings);
+        const preparedMedia = await ensurePreparedShareMedia(latest, settings, forceMediaRefresh);
         const renderKey = buildShareRenderKey(latest, settings, template, preparedMedia);
 
         if (renderKey === _latestShareRenderKey && latestShareBlob && _latestSharePreviewDataUrl) {

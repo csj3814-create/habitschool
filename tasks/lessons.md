@@ -1121,6 +1121,11 @@
 - Symptom: on refresh, an old exercise video with no persisted `videoThumbUrl` showed `썸네일 제작중`, then a live frame appeared seconds later, while the gallery share card rendered an ugly placeholder tile.
 - Root cause: I mixed “actively generating a new thumb” with “showing a live video fallback because a thumb is absent.” Those are not the same user state, especially for records already saved in broken form.
 - Lesson: If the app is merely falling back to a live video frame for an old thumb-less record, hide processing copy once the frame is visible and omit that media from thumbnail-first surfaces like share cards until a real preview asset exists.
+
+### 154. Share-card media caches must be invalidated when late thumbnails arrive
+- Symptom: the exercise tab or gallery feed could recover a strength-video thumbnail, but the gallery's “해빛 루틴” share card kept showing an older placeholder tile.
+- Root cause: the share card prepared its own media payload and cached that result separately from the normal gallery media render path. Later local-thumb binding or background thumb patching updated the preview surfaces, but never invalidated the share-card cache.
+- Lesson: When a late thumbnail changes the visual media set, invalidate every downstream cache that depends on it, not just the obvious on-screen preview. For Habitschool, that includes the prepared share-card media cache as well as the gallery feed item.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
