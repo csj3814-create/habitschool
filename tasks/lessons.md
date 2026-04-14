@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 93. Client-generated video thumbnails must be rebound to the final uploaded URL as soon as that URL resolves
+- Symptom: even with a persistent local thumbnail cache, saved exercise videos could still reopen with a delayed live-frame fallback when the user saved before local thumbnail extraction finished.
+- Root cause: the extracted thumbnail existed, but it was not immediately re-keyed to the final storage URL once the upload resolved. If save happened before `persistSavedExerciseBlock()` saw the local thumb, refresh paths still missed the cache.
+- Lesson: when media uploads and client-side thumbnail extraction race each other, store the thumbnail under the final uploaded URL at both rendezvous points: when the thumbnail finishes and when the upload URL finishes. That way either completion order still leaves a refresh-safe cache entry.
+
 ### 92. A video thumbnail cache that only lives for the current session is too weak for refresh and gallery recovery
 - Symptom: saved exercise videos could still show a placeholder for a few seconds after refresh, then suddenly show a live frame, even though the client had already extracted a usable thumbnail earlier.
 - Root cause: the local extracted thumbnail cache only used `sessionStorage`, so refresh and gallery paths could miss it and fall back to slower live-video frame loading whenever `videoThumbUrl` had not been patched yet.

@@ -3962,6 +3962,27 @@ function readCachedLocalExerciseVideoThumb(videoUrl = '') {
     return '';
 }
 
+function cacheResolvedExerciseVideoThumb(url = '', thumbDataUrl = '') {
+    const normalizedUrl = String(url || '').trim();
+    const normalizedThumb = String(thumbDataUrl || '').trim();
+    if (!normalizedUrl || !normalizedThumb.startsWith('data:image/')) return false;
+    cacheLocalExerciseVideoThumb(normalizedUrl, normalizedThumb);
+    return true;
+}
+
+function tryCachePendingExerciseVideoThumb(inputId, thumbDataUrl = '') {
+    const normalizedThumb = String(thumbDataUrl || '').trim();
+    if (!inputId || !normalizedThumb.startsWith('data:image/')) return false;
+    const pendingEntry = _pendingUploads.get(inputId);
+    const resolvedUrl = String(
+        pendingEntry?.result?.url
+        || pendingEntry?.resolvedUrl
+        || ''
+    ).trim();
+    if (!resolvedUrl) return false;
+    return cacheResolvedExerciseVideoThumb(resolvedUrl, normalizedThumb);
+}
+
 function clearStrengthPreviewVideo(previewVideo) {
     if (!previewVideo) return;
     try { previewVideo.pause(); } catch (_) {}
@@ -4149,6 +4170,7 @@ window.previewDynamicVid = function (input) {
                 if (currentBlock) currentBlock.setAttribute('data-local-thumb', thumbDataUrl);
                 const pendingEntry = _pendingUploads.get(input.id);
                 if (pendingEntry) pendingEntry.localThumbDataUrl = thumbDataUrl;
+                tryCachePendingExerciseVideoThumb(input.id, thumbDataUrl);
             }
         })
         .catch(() => { })
@@ -9964,7 +9986,20 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
     if (!file) return { promise: Promise.resolve({ url: null, thumbUrl: null }), thumbPromise: Promise.resolve(null) };
 
     const originalPromise = uploadFileAndGetUrl(file, folder, userId, options)
-        .then(url => url ? { url, thumbUrl: null } : { url: null, thumbUrl: null })
+        .then((url) => {
+            const normalizedUrl = String(url || '').trim();
+            if (normalizedUrl) {
+                for (const [, entry] of _pendingUploads) {
+                    if (entry.promise === originalPromise) {
+                        entry.resolvedUrl = normalizedUrl;
+                        if (entry.localThumbDataUrl) {
+                            cacheResolvedExerciseVideoThumb(normalizedUrl, entry.localThumbDataUrl);
+                        }
+                    }
+                }
+            }
+            return normalizedUrl ? { url: normalizedUrl, thumbUrl: null } : { url: null, thumbUrl: null };
+        })
         .catch(() => ({ url: null, thumbUrl: null }));
 
     const thumbPromise = (async () => {
@@ -9974,6 +10009,9 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
             let thumbDataUrl = String(localThumbDataUrl || '').trim();
             if (!thumbDataUrl.startsWith('data:image/')) {
                 thumbDataUrl = await extractVideoThumbFromFile(file).catch(() => '');
+            }
+            if (thumbDataUrl.startsWith('data:image/')) {
+                cacheResolvedExerciseVideoThumb(url, thumbDataUrl);
             }
 
             let thumbUrl = null;

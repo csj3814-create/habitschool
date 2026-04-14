@@ -44,3 +44,4 @@
 - Earlier follow-up fixes tightened render guards, limited the state to videos, preserved pending uploads during replacement saves, reused local video thumbnails, and kept background thumb backfills alive.
 - The rollback removed `썸네일 제작중` from the product surface entirely.
 - The latest follow-up extends local video-thumb recovery to persistent browser storage and gallery rendering, so old records without a server-side `videoThumbUrl` can still show the already extracted thumbnail immediately on the same device.
+- A further follow-up closes the race where users save before local thumbnail extraction finishes. The app now binds the extracted thumbnail to the final uploaded video URL as soon as either side resolves, so refresh and gallery paths can find it immediately even when save timing is tight.
