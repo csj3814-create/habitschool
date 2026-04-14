@@ -33,3 +33,7 @@
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
   - `npx esbuild js/main.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-main-check.js`
+
+## Follow-up
+
+- A second follow-up fix tightened the render guard again so thumbnail-pending now requires a real preview `src`, visible computed styles, and non-zero rendered dimensions. This specifically targets cases where the slot looked blank even though saved metadata existed.

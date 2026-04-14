@@ -9626,15 +9626,22 @@ function hasCommittedThumbPendingMedia(inputId) {
     if (previewStrength) {
         const exerciseBlock = input?.closest('.exercise-block');
         const savedUrl = String(exerciseBlock?.getAttribute('data-url') || '').trim();
-        const isVisible = previewStrength.style.display !== 'none';
-        return !!(savedUrl && isVisible);
+        const previewStrengthImg = previewStrength.querySelector('.preview-strength-img');
+        const previewSrc = String(previewStrengthImg?.getAttribute('src') || '').trim();
+        const computed = window.getComputedStyle(previewStrength);
+        const isVisible = computed.display !== 'none' && computed.visibility !== 'hidden';
+        const hasRenderedBox = previewStrength.offsetWidth > 0 && previewStrength.offsetHeight > 0;
+        return !!(savedUrl && previewSrc && isVisible && hasRenderedBox);
     }
 
     const previewImg = uploadArea.querySelector('.preview-img');
     if (previewImg) {
         const savedUrl = String(previewImg.getAttribute('data-saved-url') || '').trim();
-        const isVisible = previewImg.style.display !== 'none';
-        return !!(savedUrl && isVisible);
+        const previewSrc = String(previewImg.getAttribute('src') || '').trim();
+        const computed = window.getComputedStyle(previewImg);
+        const isVisible = computed.display !== 'none' && computed.visibility !== 'hidden';
+        const hasRenderedBox = previewImg.offsetWidth > 0 && previewImg.offsetHeight > 0;
+        return !!(savedUrl && previewSrc && isVisible && hasRenderedBox);
     }
 
     return false;

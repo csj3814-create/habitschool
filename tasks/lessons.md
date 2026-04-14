@@ -8,6 +8,11 @@
 - Root cause: the pending-state host for static images was the whole `.upload-area`, and `setThumbPendingState()` trusted the incoming `visible` flag without checking whether the slot actually had a committed media URL and visible preview.
 - Lesson: for any state mounted on a broad container instead of the media node itself, add a final render-time guard inside the setter. Refuse to show the processing state unless committed media is present and visibly rendered.
 
+### 86. For image-based pending overlays, "visible preview" must mean computed visibility plus actual rendered dimensions
+- Symptom: the thumbnail-pending badge could still appear on what looked like an empty slot because the image element technically existed and had saved metadata, but it had not rendered a visible box yet.
+- Root cause: checking only saved-url state and a simple `display !== 'none'` test was too weak. An image can still be visually absent while those conditions pass.
+- Lesson: when gating UI on whether an image preview is "showing", verify the rendered state with `getComputedStyle(...)`, `offsetWidth`, and `offsetHeight`, not only the presence of the DOM node or saved metadata.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.
