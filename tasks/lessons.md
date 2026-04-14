@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 94. Upload-speed improvements must not remove the short synchronous wait that makes saved video thumbnails feel immediate
+- Symptom: after the upload-speed refactor, exercise video saves finished faster overall but reopened records and gallery cards often lost their thumbnail for a few seconds.
+- Root cause: the new flow stopped waiting for `thumbPromise` during save and pushed thumbnail completion entirely into a later background patch. That improved save latency but regressed the "saved video already has a thumbnail" expectation that the previous flow provided.
+- Lesson: when optimizing media-save latency, identify which post-upload artifacts are part of the user's immediate success criteria. For exercise videos, keep a bounded wait for the thumbnail during save, then fall back to background patching only if that short wait still misses.
+
 ### 93. Client-generated video thumbnails must be rebound to the final uploaded URL as soon as that URL resolves
 - Symptom: even with a persistent local thumbnail cache, saved exercise videos could still reopen with a delayed live-frame fallback when the user saved before local thumbnail extraction finished.
 - Root cause: the extracted thumbnail existed, but it was not immediately re-keyed to the final storage URL once the upload resolved. If save happened before `persistSavedExerciseBlock()` saw the local thumb, refresh paths still missed the cache.

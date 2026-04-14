@@ -10875,23 +10875,25 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const strengthBlocks = [...document.querySelectorAll('.strength-block')];
             const strengthPersistResults = new Map();
             const strengthCurrentItems = [];
-            strengthBlocks.forEach((block, index) => {
+            for (const [index, block] of strengthBlocks.entries()) {
                 const fileInput = block.querySelector('.exer-file');
                 const previewImg = block.querySelector('.preview-strength-img');
                 const mediaId = ensureExerciseBlockMediaId(block, 'strength');
                 if (block.hasAttribute('data-user-removed')) {
                     _removedExerciseMediaIds.strength.add(mediaId);
-                    return;
+                    continue;
                 }
                 let url = hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
                 let thumbUrl = hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
                 let aiAnalysis = null;
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
-                const pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
+                let pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
                 if (pendingSnapshot?.result?.url) {
-                    url = pendingSnapshot.result.url;
-                    thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
-                    if (hasPendingThumbBackfill(pendingSnapshot)) {
+                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: 5000 });
+                    const effectiveResult = thumbAwareResult?.url ? thumbAwareResult : pendingSnapshot.result;
+                    url = effectiveResult.url;
+                    thumbUrl = effectiveResult.thumbUrl || thumbUrl;
+                    if (hasPendingThumbBackfill(pendingSnapshot) && !effectiveResult.thumbUrl) {
                         queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }
                 } else if (fileInput?.files?.[0]) {
@@ -10903,8 +10905,16 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     ).trim();
                     if (!pendingSnapshot) {
                         ensureDeferredVideoUpload(fileInput.id, fileInput.files[0], localThumbSeed);
+                        pendingSnapshot = getPendingUploadSnapshot(fileInput.id);
                     }
-                    queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: 5000 });
+                    if (thumbAwareResult?.url) {
+                        url = thumbAwareResult.url;
+                        thumbUrl = thumbAwareResult.thumbUrl || thumbUrl;
+                    }
+                    if (!thumbAwareResult?.thumbUrl) {
+                        queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    }
                 }
                 const item = normalizeExerciseItem('strength', {
                     mediaId,
@@ -10916,7 +10926,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     strengthCurrentItems.push(item);
                     strengthPersistResults.set(block.id, item);
                 }
-            });
+            }
 
             const cardioList = mergeExerciseItems('cardio', oldData?.exercise?.cardioList || [], cardioCurrentItems, _removedExerciseMediaIds.cardio);
             const strengthList = mergeExerciseItems('strength', oldData?.exercise?.strengthList || [], strengthCurrentItems, _removedExerciseMediaIds.strength);
