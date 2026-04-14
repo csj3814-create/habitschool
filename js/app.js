@@ -3433,7 +3433,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=133';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=134';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -3748,6 +3748,14 @@ function addExerciseBlock(type, data = null) {
     list.appendChild(div);
     updateRecordFlowGuides('exercise');
 
+    const fileInput = div.querySelector('.exer-file');
+    if (fileInput?.id) {
+        const thumbPending = isCardio
+            ? !!(data?.imageUrl && !data?.imageThumbUrl)
+            : !!(data?.videoUrl && !data?.videoThumbUrl);
+        setThumbPendingState(fileInput.id, { visible: thumbPending });
+    }
+
     // 근력 영상 썸네일: 플레이스홀더 표시 후 실제 프레임 추출 시도
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
         const thumbImg = document.getElementById(`s_img_${id}`);
@@ -3761,6 +3769,7 @@ function addExerciseBlock(type, data = null) {
                     if (!thumbDataUrl) return;
                     const ti = document.getElementById(`s_img_${id}`);
                     if (ti) ti.src = thumbDataUrl;
+                    if (fileInput?.id) setThumbPendingState(fileInput.id, { visible: false });
                 })
                 .catch(() => { });
         }
@@ -4269,6 +4278,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     e.preventDefault(); e.stopPropagation();
     _pendingUploads.delete(inputId); // 진행 중인 pre-upload 폐기
     hideInlineUploadProgress(inputId);
+    setThumbPendingState(inputId, { visible: false });
     document.getElementById(inputId).value = "";
     document.getElementById(previewId).src = "";
     document.getElementById(previewId).style.display = "none";
@@ -4624,6 +4634,7 @@ function clearInputs() {
         const rm = document.getElementById(`rm-${k}`);
         const tx = document.getElementById(`txt-${k}`);
         const box = document.getElementById(`diet-box-${k}`);
+        const inputId = k === 'sleep' ? 'sleep-img' : `diet-img-${k}`;
         
         if (pv) { pv.style.display = 'none'; pv.src = ''; pv.removeAttribute('data-user-removed'); pv.removeAttribute('data-saved-url'); pv.removeAttribute('data-saved-thumb-url'); }
         if (rm) rm.style.display = 'none';
@@ -4631,6 +4642,7 @@ function clearInputs() {
         if (box && k !== 'breakfast' && k !== 'sleep') { 
              box.style.display = 'none'; 
         }
+        setThumbPendingState(inputId, { visible: false });
         
         const aiContainer = document.getElementById(`diet-analysis-${k}`);
         const aiBtn = document.getElementById(`ai-btn-${k}`);
@@ -4761,6 +4773,7 @@ async function loadDataForSelectedDate(dateStr) {
                         // 저장 시 oldData 타임아웃 대비: URL을 DOM에 보존
                         previewEl.setAttribute('data-saved-url', data.diet[`${k}Url`]);
                         previewEl.setAttribute('data-saved-thumb-url', data.diet[`${k}ThumbUrl`] || '');
+                        setThumbPendingState(`diet-img-${k}`, { visible: !data.diet[`${k}ThumbUrl`] });
                         document.getElementById(`rm-${k}`).style.display = 'block';
                         document.getElementById(`txt-${k}`).style.display = 'none';
                     }
@@ -4802,6 +4815,7 @@ async function loadDataForSelectedDate(dateStr) {
                     document.getElementById('preview-sleep').style.display = 'block';
                     document.getElementById('preview-sleep').setAttribute('data-saved-url', data.sleepAndMind.sleepImageUrl);
                     document.getElementById('preview-sleep').setAttribute('data-saved-thumb-url', data.sleepAndMind.sleepImageThumbUrl || '');
+                    setThumbPendingState('sleep-img', { visible: !data.sleepAndMind.sleepImageThumbUrl });
                     document.getElementById('rm-sleep').style.display = 'block';
                     document.getElementById('txt-sleep').style.display = 'none';
                     // 수면 AI 분석 버튼 표시
@@ -5515,6 +5529,14 @@ function formatWalletHbtHtml(value = 0) {
     return `${text} <span class="wallet-asset-unit">HBT</span>`;
 }
 
+function parseDisplayedAssetNumber(elementId, { allowDecimal = false } = {}) {
+    const raw = String(document.getElementById(elementId)?.textContent || '').trim();
+    if (!raw) return null;
+    const normalized = raw.replace(/[^0-9.-]/g, '');
+    const value = allowDecimal ? Number(normalized) : parseInt(normalized, 10);
+    return Number.isFinite(value) ? value : null;
+}
+
 function readAssetDisplayCache(uid) {
     if (!uid) return null;
     try {
@@ -5557,6 +5579,59 @@ function applyCachedAssetDisplay(uid) {
 
     return cached;
 }
+
+window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived = 0 } = {}) {
+    const user = auth.currentUser;
+    if (!user) return null;
+
+    const parsedPointsUsed = Math.max(0, parseInt(pointsUsed || 0, 10) || 0);
+    const parsedHbtReceived = Math.max(0, Number(hbtReceived || 0) || 0);
+    if (parsedPointsUsed <= 0 && parsedHbtReceived <= 0) return null;
+
+    const cached = readAssetDisplayCache(user.uid) || {};
+    const currentPoints = Number.isFinite(Number(cached.coins))
+        ? Number(cached.coins)
+        : (parseDisplayedAssetNumber('asset-points-display') ?? parseDisplayedAssetNumber('point-balance') ?? 0);
+    const currentHbt = Number.isFinite(Number(cached.hbtBalance))
+        ? Number(cached.hbtBalance)
+        : (parseDisplayedAssetNumber('asset-hbt-display', { allowDecimal: true }) ?? 0);
+
+    const nextPoints = Math.max(0, currentPoints - parsedPointsUsed);
+    const nextHbt = Math.max(0, currentHbt + parsedHbtReceived);
+    const nextCache = writeAssetDisplayCache(user.uid, {
+        coins: nextPoints,
+        hbtBalance: nextHbt
+    });
+
+    const pointsDisplay = document.getElementById('asset-points-display');
+    if (pointsDisplay) {
+        pointsDisplay.innerHTML = formatWalletPointsHtml(nextPoints);
+    }
+
+    const pointBadge = document.getElementById('point-balance');
+    if (pointBadge) {
+        pointBadge.textContent = String(nextPoints);
+    }
+
+    const hbtDisplay = document.getElementById('asset-hbt-display');
+    if (hbtDisplay) {
+        hbtDisplay.innerHTML = formatWalletHbtHtml(nextHbt);
+    }
+
+    const onchainBadge = document.getElementById('asset-hbt-onchain');
+    if (onchainBadge) {
+        const onchainText = document.getElementById('asset-hbt-onchain-text');
+        if (onchainText) onchainText.textContent = `온체인 (${getActiveOnchainLabel(APP_ENV)})`;
+        onchainBadge.style.display = 'inline-flex';
+    }
+
+    if (window.updateChallengeSliderBounds) {
+        window.updateChallengeSliderBounds(nextHbt);
+    }
+
+    _assetCache.ts = 0;
+    return nextCache;
+};
 
 function applyCachedAssetHistory(uid) {
     const cached = readAssetDisplayCache(uid);
@@ -9531,6 +9606,34 @@ function getInlineUploadProgressEls(inputId) {
     };
 }
 
+function getThumbPendingHost(inputId) {
+    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const uploadArea = input?.closest('.upload-area');
+    if (!uploadArea) return null;
+    const previewStrength = uploadArea.querySelector('.preview-strength');
+    if (previewStrength) return previewStrength;
+    const previewImg = uploadArea.querySelector('.preview-img');
+    if (previewImg?.parentElement) return previewImg.parentElement;
+    return uploadArea;
+}
+
+function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
+    const host = getThumbPendingHost(inputId);
+    if (!host) return;
+
+    let badge = host.querySelector('.thumb-pending-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'thumb-pending-badge';
+        badge.hidden = true;
+        host.appendChild(badge);
+    }
+
+    badge.textContent = label;
+    badge.hidden = !visible;
+    host.classList.toggle('has-thumb-pending', !!visible);
+}
+
 function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '' } = {}) {
     const els = getInlineUploadProgressEls(inputId);
     if (!els) return;
@@ -9600,8 +9703,20 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         current.progress = 100;
         setInlineUploadProgress(inputId, { state: 'complete', pct: 100 });
         scheduleInlineUploadProgressHide(inputId);
+        if (current.thumbPromise && !result?.thumbUrl) {
+            setThumbPendingState(inputId, { visible: true });
+            current.thumbPromise
+                .then(() => {})
+                .catch(() => {})
+                .finally(() => {
+                    setThumbPendingState(inputId, { visible: false });
+                });
+        } else {
+            setThumbPendingState(inputId, { visible: false });
+        }
     }).catch(() => {
         setInlineUploadProgress(inputId, { state: 'error', pct: 100 });
+        setThumbPendingState(inputId, { visible: false });
         _pendingUploads.delete(inputId);
     });
 
@@ -9633,7 +9748,12 @@ function enablePendingUploadProgress() {
 // 전략: 원본 URL 획득 즉시 resolve → 썸네일은 백그라운드에서 계속 업로드
 // _pendingUploads 엔트리의 result.thumbUrl을 나중에 갱신함
 function uploadWithThumb(file, folder, userId, options = {}) {
-    if (!file) return Promise.resolve({ url: null, thumbUrl: null });
+    if (!file) {
+        return {
+            promise: Promise.resolve({ url: null, thumbUrl: null }),
+            thumbPromise: Promise.resolve(null)
+        };
+    }
 
     // 원본 업로드 Promise → 완료 즉시 resolve
     const originalPromise = uploadFileAndGetUrl(file, folder, userId, options)
@@ -9642,7 +9762,8 @@ function uploadWithThumb(file, folder, userId, options = {}) {
 
     // 썸네일은 원본과 병렬로 생성 + 업로드하되, 결과를 기다리지 않음
     // 원본 성공 시 thumbUrl을 비동기로 갱신
-    originalPromise.then(async ({ url }) => {
+    const thumbPromise = (async () => {
+        const { url } = await originalPromise;
         if (!url) return;
         try {
             const thumbBlob = await generateThumbnailBlob(file).catch(() => null);
@@ -9658,10 +9779,12 @@ function uploadWithThumb(file, folder, userId, options = {}) {
                     entry.result.thumbUrl = thumbUrl;
                 }
             }
+            return thumbUrl;
         } catch (e) { console.warn('썸네일 백그라운드 업로드 실패:', e.message); }
-    });
+        return null;
+    })();
 
-    return originalPromise;
+    return { promise: originalPromise, thumbPromise };
 }
 
 function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', options = {}) {
@@ -9731,7 +9854,7 @@ async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
     }
 }
 
-async function resolvePendingUploadResult(inputId) {
+async function resolvePendingUploadResult(inputId, { waitForThumbMs = 0 } = {}) {
     if (!inputId) return null;
     const entry = _pendingUploads.get(inputId);
     if (!entry) return null;
@@ -9741,10 +9864,10 @@ async function resolvePendingUploadResult(inputId) {
             entry.result = await entry.promise;
             entry.done = true;
         }
-        if (entry.result?.url && !entry.result.thumbUrl && entry.thumbPromise) {
+        if (waitForThumbMs > 0 && entry.result?.url && !entry.result.thumbUrl && entry.thumbPromise) {
             const pendingThumb = await Promise.race([
                 entry.thumbPromise.catch(() => null),
-                new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                new Promise(resolve => setTimeout(() => resolve(null), waitForThumbMs))
             ]);
             if (pendingThumb) entry.result.thumbUrl = pendingThumb;
         }
@@ -9757,6 +9880,7 @@ async function resolvePendingUploadResult(inputId) {
 function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
     const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
+    const hadPendingUpload = !!pendingEntry;
     const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
 
     if (keepPendingUpload) {
@@ -9765,12 +9889,13 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
 
     if (input?.id) {
         _pendingUploads.delete(input.id);
-        if (url) {
+        if (url && hadPendingUpload) {
             setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
             scheduleInlineUploadProgressHide(input.id);
         } else {
             hideInlineUploadProgress(input.id);
         }
+        setThumbPendingState(input.id, { visible: !!(url && !thumbUrl) });
     }
     if (input) input.value = '';
     if (!previewEl) return;
@@ -9790,6 +9915,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     if (!block) return;
     const input = block.querySelector('.exer-file');
     const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
+    const hadPendingUpload = !!pendingEntry;
     const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
 
     if (keepPendingUpload) {
@@ -9798,12 +9924,13 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
 
     if (input?.id) {
         _pendingUploads.delete(input.id);
-        if (url) {
+        if (url && hadPendingUpload) {
             setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
             scheduleInlineUploadProgressHide(input.id);
         } else {
             hideInlineUploadProgress(input.id);
         }
+        setThumbPendingState(input.id, { visible: !!(url && !thumbUrl) });
     }
     if (input) input.value = '';
     block.removeAttribute('data-user-removed');
@@ -9835,6 +9962,10 @@ function getPendingUploadSnapshot(inputId) {
 }
 
 let _backgroundUploadStatusTimer = null;
+let _backgroundUploadProgressPoller = null;
+let _backgroundUploadProgressTracker = null;
+const BACKGROUND_UPLOAD_TRANSFER_WEIGHT = 0.88;
+const BACKGROUND_UPLOAD_SYNC_WEIGHT = 0.12;
 
 function ensureBackgroundUploadStatusEl() {
     let el = document.getElementById('background-upload-status');
@@ -9844,19 +9975,27 @@ function ensureBackgroundUploadStatusEl() {
     el.className = 'background-upload-status';
     el.hidden = true;
     el.innerHTML = `
-        <div class="background-upload-status__title"></div>
-        <div class="background-upload-status__subtitle"></div>
+        <div class="background-upload-status__header">
+            <div class="background-upload-status__title"></div>
+            <div class="background-upload-status__percent"></div>
+        </div>
+        <div class="background-upload-status__bar">
+            <span class="background-upload-status__fill"></span>
+        </div>
     `;
     document.body.appendChild(el);
     return el;
 }
 
-function setBackgroundUploadStatus({ visible = false, complete = false, error = false, title = '', subtitle = '' } = {}) {
+function setBackgroundUploadStatus({ visible = false, complete = false, error = false, title = '', progress = 0 } = {}) {
     const el = ensureBackgroundUploadStatusEl();
     const titleEl = el.querySelector('.background-upload-status__title');
-    const subtitleEl = el.querySelector('.background-upload-status__subtitle');
+    const percentEl = el.querySelector('.background-upload-status__percent');
+    const fillEl = el.querySelector('.background-upload-status__fill');
+    const normalizedProgress = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)));
     if (titleEl) titleEl.textContent = title;
-    if (subtitleEl) subtitleEl.textContent = subtitle;
+    if (percentEl) percentEl.textContent = visible ? `${normalizedProgress}%` : '';
+    if (fillEl) fillEl.style.width = `${normalizedProgress}%`;
 
     el.classList.toggle('is-complete', !!complete);
     el.classList.toggle('is-error', !!error);
@@ -9867,12 +10006,105 @@ function setBackgroundUploadStatus({ visible = false, complete = false, error = 
         _backgroundUploadStatusTimer = null;
     }
 
+    if (!visible) {
+        if (percentEl) percentEl.textContent = '';
+        if (fillEl) fillEl.style.width = '0%';
+    }
+
     if (visible && (complete || error)) {
         _backgroundUploadStatusTimer = setTimeout(() => {
             el.hidden = true;
             el.classList.remove('is-complete', 'is-error');
+            if (percentEl) percentEl.textContent = '';
+            if (fillEl) fillEl.style.width = '0%';
         }, complete && !error ? 2500 : 5000);
     }
+}
+
+function stopBackgroundUploadProgressTracker({ keepStatus = true } = {}) {
+    if (_backgroundUploadProgressPoller) {
+        clearInterval(_backgroundUploadProgressPoller);
+        _backgroundUploadProgressPoller = null;
+    }
+    if (!keepStatus) {
+        _backgroundUploadProgressTracker = null;
+    }
+}
+
+function getBackgroundUploadJobProgress(jobState = null) {
+    if (!jobState) return 0;
+    if (jobState.finished || jobState.failed) return 100;
+    const pendingSnapshot = getPendingUploadSnapshot(jobState.inputId);
+    const transferPct = pendingSnapshot?.done
+        ? 100
+        : Math.max(
+            Number(jobState.transferPct || 0),
+            Number(pendingSnapshot?.progress || 0)
+        );
+    const syncPct = Math.max(0, Math.min(100, Number(jobState.syncPct || 0)));
+    return Math.max(0, Math.min(
+        100,
+        Math.round((transferPct * BACKGROUND_UPLOAD_TRANSFER_WEIGHT) + (syncPct * BACKGROUND_UPLOAD_SYNC_WEIGHT))
+    ));
+}
+
+function renderBackgroundUploadProgressTracker() {
+    const tracker = _backgroundUploadProgressTracker;
+    if (!tracker || !Array.isArray(tracker.jobs) || tracker.jobs.length === 0) {
+        setBackgroundUploadStatus({ visible: false });
+        return;
+    }
+
+    const failedCount = tracker.jobs.filter(job => job.failed).length;
+    const finishedCount = tracker.jobs.filter(job => job.finished || job.failed).length;
+    const aggregateProgress = Math.round(
+        tracker.jobs.reduce((sum, job) => sum + getBackgroundUploadJobProgress(job), 0) / tracker.jobs.length
+    );
+
+    setBackgroundUploadStatus({
+        visible: true,
+        complete: !!tracker.done && failedCount === 0,
+        error: !!tracker.done && failedCount > 0,
+        title: tracker.done
+            ? (failedCount === 0 ? '업로드 완료' : '일부 업로드 실패')
+            : `업로드 ${finishedCount}/${tracker.jobs.length}`,
+        progress: tracker.done ? 100 : aggregateProgress
+    });
+}
+
+function startBackgroundUploadProgressTracker(jobs = []) {
+    stopBackgroundUploadProgressTracker({ keepStatus: false });
+    if (!Array.isArray(jobs) || !jobs.length) return null;
+    _backgroundUploadProgressTracker = {
+        done: false,
+        jobs: jobs.map(job => ({
+            inputId: job.inputId,
+            transferPct: Number(getPendingUploadSnapshot(job.inputId)?.progress || 0),
+            syncPct: 0,
+            finished: false,
+            failed: false
+        }))
+    };
+    renderBackgroundUploadProgressTracker();
+    _backgroundUploadProgressPoller = setInterval(() => {
+        renderBackgroundUploadProgressTracker();
+    }, 180);
+    return _backgroundUploadProgressTracker;
+}
+
+function updateBackgroundUploadProgressTracker(inputId, updates = {}) {
+    if (!inputId || !_backgroundUploadProgressTracker?.jobs?.length) return;
+    const jobState = _backgroundUploadProgressTracker.jobs.find(job => job.inputId === inputId);
+    if (!jobState) return;
+    Object.assign(jobState, updates);
+    renderBackgroundUploadProgressTracker();
+}
+
+function completeBackgroundUploadProgressTracker() {
+    if (!_backgroundUploadProgressTracker) return;
+    _backgroundUploadProgressTracker.done = true;
+    stopBackgroundUploadProgressTracker({ keepStatus: true });
+    renderBackgroundUploadProgressTracker();
 }
 
 function hasMediaUrl(value) {
@@ -10000,12 +10232,10 @@ function refreshGalleryFromCacheIfVisible() {
     renderFeedOnly();
 }
 
-async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGallery = true }) {
+async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGallery = true, baseData = null }) {
     if (!userId || !docId || !job || !result?.url) return false;
     const docRef = doc(db, 'daily_logs', docId);
-    const snap = await getDoc(docRef).catch(() => null);
-    const currentData = snap?.exists() ? (snap.data() || {}) : (getCachedDailyLog(docId) || {});
-    const nextData = cloneDailyLogData(currentData);
+    const nextData = cloneDailyLogData(baseData || getCachedDailyLog(docId) || {});
 
     if (job.kind === 'diet') {
         nextData.diet = {
@@ -10086,44 +10316,55 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
     return committedData;
 }
 
-function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false }) {
+function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false, onSettled = null }) {
     if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
 
-    const total = jobs.length;
-    let completed = 0;
     let failed = 0;
-    let latestCommittedData = null;
-    setBackgroundUploadStatus({
-        visible: true,
-        title: `업로드 ${completed}/${total}`,
-        subtitle: '다른 탭을 봐도 계속 저장 중이에요.'
-    });
+    let latestCommittedData = cloneDailyLogData(getCachedDailyLog(docId) || {});
+    const deferredThumbPatches = [];
+    startBackgroundUploadProgressTracker(jobs);
 
     (async () => {
         for (const job of jobs) {
             try {
+                updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
+                const pendingSnapshot = getPendingUploadSnapshot(job.inputId);
                 const result = await resolvePendingUploadResult(job.inputId);
                 if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
+                updateBackgroundUploadProgressTracker(job.inputId, {
+                    transferPct: 100,
+                    syncPct: 42
+                });
                 const committedData = await applyBackgroundMediaPatch({
                     userId,
                     docId,
                     job,
                     result,
-                    updateGallery: !deferGalleryUntilComplete
+                    updateGallery: !deferGalleryUntilComplete,
+                    baseData: latestCommittedData
                 });
                 if (committedData) latestCommittedData = committedData;
+                updateBackgroundUploadProgressTracker(job.inputId, {
+                    transferPct: 100,
+                    syncPct: 100,
+                    finished: true,
+                    failed: false
+                });
+                if (!result.thumbUrl && pendingSnapshot?.thumbPromise) {
+                    deferredThumbPatches.push({
+                        job,
+                        result,
+                        thumbPromise: pendingSnapshot.thumbPromise
+                    });
+                }
             } catch (error) {
                 failed++;
                 console.error('백그라운드 미디어 저장 실패:', job, error);
-            } finally {
-                completed++;
-                setBackgroundUploadStatus({
-                    visible: true,
-                    error: failed > 0,
-                    title: `업로드 ${completed}/${total}`,
-                    subtitle: failed > 0
-                        ? `일부 업로드가 실패했어요. (${failed}건)`
-                        : '다른 탭을 봐도 계속 저장 중이에요.'
+                updateBackgroundUploadProgressTracker(job.inputId, {
+                    transferPct: 100,
+                    syncPct: 100,
+                    finished: false,
+                    failed: true
                 });
             }
         }
@@ -10137,15 +10378,7 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
             }
         }
 
-        setBackgroundUploadStatus({
-            visible: true,
-            complete: failed === 0,
-            error: failed > 0,
-            title: failed === 0 ? '업로드 완료' : '일부 업로드 실패',
-            subtitle: failed === 0
-                ? '새로 올린 미디어 저장이 모두 끝났어요.'
-                : '실패한 파일은 다시 선택해 저장해 주세요.'
-        });
+        completeBackgroundUploadProgressTracker();
 
         window.updateAssetDisplay?.(true).catch(() => { });
 
@@ -10153,6 +10386,43 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
             showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
         } else {
             showToast(`⚠️ 백그라운드 업로드 중 ${failed}건이 실패했습니다.`);
+        }
+
+        try {
+            await onSettled?.({ failed, latestCommittedData });
+        } catch (settledError) {
+            console.warn('업로드 후속 작업 실패:', settledError?.message || settledError);
+        }
+
+        if (deferredThumbPatches.length) {
+            (async () => {
+                for (const deferred of deferredThumbPatches) {
+                    try {
+                        const thumbUrl = await deferred.thumbPromise.catch(() => null);
+                        if (!thumbUrl || thumbUrl === deferred.result.thumbUrl) continue;
+                        const committedData = await applyBackgroundMediaPatch({
+                            userId,
+                            docId,
+                            job: deferred.job,
+                            result: {
+                                ...deferred.result,
+                                thumbUrl
+                            },
+                            updateGallery: true,
+                            baseData: latestCommittedData
+                        });
+                        if (committedData) {
+                            latestCommittedData = committedData;
+                            if (deferGalleryUntilComplete) {
+                                upsertGalleryCacheItem(docId, committedData);
+                                refreshGalleryFromCacheIfVisible();
+                            }
+                        }
+                    } catch (thumbError) {
+                        console.warn('백그라운드 썸네일 후속 패치 실패:', thumbError?.message || thumbError);
+                    }
+                }
+            })();
         }
     })();
 }
@@ -10517,6 +10787,27 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             _assetCache.ts = 0;
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
 
+            const runPostSaveFollowUps = async ({ forceGalleryRefresh = false } = {}) => {
+                if (forceGalleryRefresh) {
+                    await loadGalleryData(true).catch((refreshError) => {
+                        console.warn('업로드 완료 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
+                    });
+                } else {
+                    loadGalleryData().catch(() => {});
+                    setTimeout(() => {
+                        loadGalleryData(true).catch((refreshError) => {
+                            console.warn('저장 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
+                        });
+                    }, 300);
+                }
+
+                try {
+                    await checkMilestones(user.uid);
+                    await renderMilestones(user.uid);
+                    await updateChallengeProgress();
+                } catch (_) {}
+            };
+
             // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
             applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
 
@@ -10549,25 +10840,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     userId: user.uid,
                     docId,
                     jobs: backgroundJobs,
-                    deferGalleryUntilComplete: true
+                    deferGalleryUntilComplete: true,
+                    onSettled: () => runPostSaveFollowUps({ forceGalleryRefresh: true })
                 });
+            } else {
+                runPostSaveFollowUps().catch(() => {});
             }
-            // post-save ops: 백그라운드에서 실행 (버튼 복원과 무관)
-            loadGalleryData().catch(() => {});
-            if (backgroundJobs.length === 0) {
-                setTimeout(() => {
-                    loadGalleryData(true).catch((refreshError) => {
-                        console.warn('저장 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
-                    });
-                }, 300);
-            }
-            (async () => {
-                try {
-                    await checkMilestones(user.uid);
-                    await renderMilestones(user.uid);
-                    await updateChallengeProgress();
-                } catch (_) {}
-            })();
 
         } catch (e) {
             console.error('데이터 저장 오류:', e);

@@ -2182,6 +2182,37 @@ textarea {
     padding-left: 3px;
 }
 
+.thumb-pending-badge {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: rgba(17, 24, 39, 0.78);
+    color: #fff7e6;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+}
+
+.has-thumb-pending .preview-img,
+.preview-strength.has-thumb-pending .preview-strength-img {
+    filter: saturate(0.92) brightness(0.88);
+}
+
+.preview-strength.has-thumb-pending .preview-strength-play {
+    opacity: 0.68;
+}
+
 .upload-progress-status {
     max-width: 240px;
     margin: 12px auto 0;
@@ -12030,33 +12061,79 @@ body.dark-mode .streak-badge {
   backdrop-filter: blur(12px);
 }
 
+.background-upload-status__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .background-upload-status__title {
   color: #8f4b00;
   font-size: 14px;
   font-weight: 800;
 }
 
-.background-upload-status__subtitle {
-  margin-top: 4px;
-  color: #8a6a46;
+.background-upload-status__percent {
+  color: #b46b15;
   font-size: 12px;
-  line-height: 1.45;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.background-upload-status__bar {
+  margin-top: 10px;
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(255, 171, 72, 0.18);
+  overflow: hidden;
+}
+
+.background-upload-status__fill {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff9500 0%, #ffb347 100%);
+  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.28);
+  transition: width 180ms ease;
 }
 
 .background-upload-status.is-complete {
   border-color: rgba(38, 166, 91, 0.24);
 }
 
-.background-upload-status.is-complete .background-upload-status__title {
+.background-upload-status.is-complete .background-upload-status__title,
+.background-upload-status.is-complete .background-upload-status__percent {
   color: #1f7a45;
+}
+
+.background-upload-status.is-complete .background-upload-status__bar {
+  background: rgba(56, 142, 60, 0.14);
+}
+
+.background-upload-status.is-complete .background-upload-status__fill {
+  background: linear-gradient(90deg, #2e7d32 0%, #66bb6a 100%);
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.22);
 }
 
 .background-upload-status.is-error {
   border-color: rgba(198, 40, 40, 0.24);
 }
 
-.background-upload-status.is-error .background-upload-status__title {
+.background-upload-status.is-error .background-upload-status__title,
+.background-upload-status.is-error .background-upload-status__percent {
   color: #b3261e;
+}
+
+.background-upload-status.is-error .background-upload-status__bar {
+  background: rgba(211, 47, 47, 0.12);
+}
+
+.background-upload-status.is-error .background-upload-status__fill {
+  background: linear-gradient(90deg, #d32f2f 0%, #ef5350 100%);
+  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
 }
 
 @media (max-width: 640px) {

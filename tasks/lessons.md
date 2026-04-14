@@ -1036,6 +1036,11 @@
 - Symptom: a sleep photo could show `일부 업로드 실패`, then a second save would look successful, but the media still disappeared after refresh.
 - Root cause: the immediate post-save reconciliation path called `persistSavedPreview` / `persistSavedExerciseBlock` even when the Storage upload was still pending. Those helpers cleared `_pendingUploads` and the file input before `runBackgroundMediaSyncJobs()` could resolve the upload result and patch Firestore.
 - Lesson: When save and upload are decoupled, reconciliation helpers must preserve unresolved pending uploads. Only clear the pending entry and file input after a real Storage URL exists or the upload has conclusively failed.
+
+### 148. Background media pipelines need an explicit in-slot intermediate state once the original file exists but the final thumbnail does not
+- Symptom: even after the overall upload flow was improved, the user still had to ask why a photo/video slot could look unfinished after upload because the UI did not clearly distinguish `original uploaded, thumbnail still preparing`.
+- Root cause: I focused on the floating/global upload status and backend timing, but the media slot itself did not explain the remaining step. For videos especially, a placeholder frame alone does not communicate whether the upload is still running or just the thumbnail is pending.
+- Lesson: Whenever media saving has a post-upload thumbnail/finalization phase, show that phase directly inside the affected slot with a clear label like `썸네일 제작중`. Do not rely only on a global progress card or generic placeholder imagery to explain that intermediate state.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

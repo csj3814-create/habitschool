@@ -1012,15 +1012,35 @@ export async function convertPointsToHBT(pointAmount) {
 
         const result = await mintHBTFunction({ pointAmount });
         const data = result.data;
+        const scheduleAssetRefresh = () => {
+            if (!window.updateAssetDisplay) return;
+            setTimeout(() => {
+                window.updateAssetDisplay?.(true).catch(() => {});
+            }, 1500);
+            setTimeout(() => {
+                window.updateAssetDisplay?.(true).catch(() => {});
+            }, 5000);
+        };
+        const applyOptimisticConversion = () => {
+            if (!window.applyOptimisticConversionResult) return;
+            window.applyOptimisticConversionResult({
+                pointsUsed: data.pointsUsed,
+                hbtReceived: data.hbtReceived
+            });
+        };
 
         if (data.success) {
+            applyOptimisticConversion();
             showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
             if (data.txHash) {
                 console.log(`🔍 TX: ${data.explorerUrl}`);
             }
         }
 
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        if (window.updateAssetDisplay) {
+            await window.updateAssetDisplay(true);
+            scheduleAssetRefresh();
+        }
         return true;
     } catch (onchainError) {
         console.error('❌ 온체인 민팅 실패:', onchainError.code, onchainError.message);
