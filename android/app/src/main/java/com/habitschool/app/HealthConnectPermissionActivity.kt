@@ -176,24 +176,29 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
     }
 
     private fun openExercise(snapshot: HealthConnectSnapshot = snapshotStore.read()) {
-        startActivity(AppRoutes.twaIntent(this, resolveOpenUri(snapshot)))
+        startActivity(
+            AppRoutes.twaIntent(
+                this,
+                resolveOpenUri(snapshot),
+                skipAutoHealthSync = true
+            )
+        )
         finish()
     }
 
     private fun resolveOpenUri(snapshot: HealthConnectSnapshot): Uri {
         val explicitUri = getOpenAfterSyncUri()
-        val shouldOpenExercise = explicitUri == null || explicitUri.getQueryParameter("tab") == "exercise"
         val nativeSource = explicitUri?.getQueryParameter("native")
             ?.takeUnless { it.isNullOrBlank() }
             ?: getEntrySource()
 
         if (
-            shouldOpenExercise &&
             snapshot.permissionGranted &&
             snapshot.availabilityState == HealthConnectAvailabilityState.AVAILABLE &&
             snapshot.stepsCount != null
         ) {
-            return AppRoutes.exerciseImportUri(
+            return AppRoutes.withHealthConnectSteps(
+                baseUri = explicitUri ?: AppRoutes.exerciseUri(nativeSource),
                 nativeSource = nativeSource,
                 stepsCount = snapshot.stepsCount,
                 syncedAtEpochMillis = snapshot.syncedAtEpochMillis,

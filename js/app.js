@@ -935,6 +935,8 @@ function formatNativeStepSyncTime(epochMillis = 0) {
 
 function getNativeSurfaceLabel(nativeSource = '') {
     switch (String(nativeSource || '').trim()) {
+        case 'android-launch-sync':
+            return '앱 시작';
         case 'android-widget':
             return '홈 위젯';
         case 'android-tile':
@@ -1021,7 +1023,7 @@ function renderStepImportBanner() {
     renderExerciseNativeSyncCta();
 }
 
-function applyPendingNativeStepImport() {
+function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'exercise') } = {}) {
     if (!_pendingNativeStepImport) return false;
 
     const payload = _pendingNativeStepImport;
@@ -1067,21 +1069,26 @@ function applyPendingNativeStepImport() {
 
     updateStepRing(payload.stepCount);
     renderStepImportBanner();
-    showToast(`👟 ${payload.stepProviderLabel || 'Health Connect'}에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+    if (notifyUser) {
+        showToast(`👟 ${payload.stepProviderLabel || 'Health Connect'}에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+    }
     return true;
 }
 
-function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams()) {
+function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { initialTab = getVisibleTabName() } = {}) {
     const payload = parseNativeStepImportPayload(params);
     if (!payload) return false;
 
     _pendingNativeStepImport = payload;
-    if (getVisibleTabName() !== 'exercise') {
+    const targetTab = params.tab || initialTab || getVisibleTabName();
+    const shouldFocusExercise = targetTab === 'exercise' || getVisibleTabName() === 'exercise';
+    if (shouldFocusExercise && getVisibleTabName() !== 'exercise') {
         openTab('exercise', false);
     }
 
     const tryApply = () => {
-        if (!applyPendingNativeStepImport()) return;
+        if (!applyPendingNativeStepImport({ notifyUser: shouldFocusExercise })) return;
+        if (!shouldFocusExercise) return;
         const target = document.getElementById('step-card');
         requestAnimationFrame(() => focusElementWithHighlight(target));
         window.setTimeout(() => focusElementWithHighlight(target), 180);
@@ -1112,9 +1119,9 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         return true;
     }
 
-    if (params.focus === 'health-connect-steps' && (params.tab === 'exercise' || initialTab === 'exercise')) {
-        handleNativeStepImportDeepLink(params);
-        clearAppEntryDeepLinkParams('exercise');
+    if (params.focus === 'health-connect-steps') {
+        handleNativeStepImportDeepLink(params, { initialTab });
+        clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || getDefaultTabForMode());
         return true;
     }
 
@@ -5218,10 +5225,13 @@ async function loadDataForSelectedDate(dateStr) {
             addExerciseBlock('cardio'); addExerciseBlock('strength');
         }
 
-        if (applyPendingNativeStepImport()) {
-            const stepCard = document.getElementById('step-card');
-            requestAnimationFrame(() => focusElementWithHighlight(stepCard));
-            window.setTimeout(() => focusElementWithHighlight(stepCard), 180);
+        const shouldFocusStepCard = getVisibleTabName() === 'exercise';
+        if (applyPendingNativeStepImport({ notifyUser: shouldFocusStepCard })) {
+            if (shouldFocusStepCard) {
+                const stepCard = document.getElementById('step-card');
+                requestAnimationFrame(() => focusElementWithHighlight(stepCard));
+                window.setTimeout(() => focusElementWithHighlight(stepCard), 180);
+            }
         }
     } catch (error) {
         // race condition으로 취소된 경우 에러 무시
