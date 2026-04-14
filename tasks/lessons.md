@@ -1091,6 +1091,11 @@
 - Symptom: after removing the cross-origin canvas fallback, a saved exercise video could still lose its visible thumbnail and fall back to a black or generic preview even though the client had already extracted a usable local frame earlier in the session.
 - Root cause: I treated `data-local-thumb` as purely DOM-local state. Once the card was rebuilt from saved data, that state was gone unless a remote `videoThumbUrl` had already arrived.
 - Lesson: When an upload flow extracts a valuable local thumbnail before the remote thumb is finalized, cache it client-side against the eventual persisted media URL and consult that cache during later rehydration. Do not throw away user-visible preview assets just because the DOM was recreated.
+
+### 152. “Original URL exists” is not the same as “media upload is fully settled”
+- Symptom: a saved exercise video kept reopening without a thumbnail even after multiple UI fallback tweaks, because `videoThumbUrl` was never written back to Firestore.
+- Root cause: the save flow treated `_pendingUploads.result.url` as if the whole media pipeline was complete. When the original upload had finished but `thumbPromise` was still running, we skipped background patch scheduling and cleared the pending entry too early.
+- Lesson: In split upload pipelines, model “original done / thumbnail pending” as its own live state. Keep the pending entry, schedule the background patch, and only mark the media fully settled after the thumbnail promise has either produced a persisted thumb URL or definitively failed.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

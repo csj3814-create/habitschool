@@ -10062,33 +10062,55 @@ async function resolvePendingUploadResult(inputId, { waitForThumbMs = 0 } = {}) 
     }
 }
 
-function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
-    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
-    const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
-    const hadPendingUpload = !!pendingEntry;
+function hasPendingThumbBackfill(pendingLike = null) {
+    if (!pendingLike) return false;
+    return !!(pendingLike.thumbPromise && pendingLike.result?.url && !pendingLike.result?.thumbUrl);
+}
+
+function shouldPreservePendingOriginal(pendingEntry = null, normalizedUrl = '') {
+    if (!pendingEntry) return false;
     const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
-    const normalizedUrl = String(url || '').trim();
-    const keepPendingUpload = !!pendingEntry && (
+    return (
         !pendingEntry.done
         || !pendingResultUrl
         || (normalizedUrl && pendingResultUrl !== normalizedUrl)
     );
+}
 
-    if (keepPendingUpload) {
+function shouldPreservePendingThumb(pendingEntry = null, normalizedUrl = '', normalizedThumbUrl = '') {
+    if (!pendingEntry || normalizedThumbUrl) return false;
+    const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
+    return !!(pendingEntry.thumbPromise && pendingResultUrl && normalizedUrl && pendingResultUrl === normalizedUrl && !pendingEntry.result?.thumbUrl);
+}
+
+function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
+    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
+    const hadPendingUpload = !!pendingEntry;
+    const normalizedUrl = String(url || '').trim();
+    const normalizedThumbUrl = String(thumbUrl || '').trim();
+    const keepPendingOriginal = shouldPreservePendingOriginal(pendingEntry, normalizedUrl);
+    const keepPendingThumb = shouldPreservePendingThumb(pendingEntry, normalizedUrl, normalizedThumbUrl);
+
+    if (keepPendingOriginal) {
         return;
     }
 
     if (input?.id) {
-        _pendingUploads.delete(input.id);
-        if (url && hadPendingUpload) {
-            setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
-            scheduleInlineUploadProgressHide(input.id);
-        } else {
+        if (keepPendingThumb) {
             hideInlineUploadProgress(input.id);
+        } else {
+            _pendingUploads.delete(input.id);
+            if (url && hadPendingUpload) {
+                setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+                scheduleInlineUploadProgressHide(input.id);
+            } else {
+                hideInlineUploadProgress(input.id);
+            }
+            if (input) input.value = '';
         }
         setThumbPendingState(input.id, { visible: false });
     }
-    if (input) input.value = '';
     if (!previewEl) return;
 
     if (url) {
@@ -10107,28 +10129,29 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     const input = block.querySelector('.exer-file');
     const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
     const hadPendingUpload = !!pendingEntry;
-    const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
     const normalizedUrl = String(url || '').trim();
-    const keepPendingUpload = !!pendingEntry && (
-        !pendingEntry.done
-        || !pendingResultUrl
-        || (normalizedUrl && pendingResultUrl !== normalizedUrl)
-    );
+    const normalizedThumbUrl = String(thumbUrl || '').trim();
+    const keepPendingOriginal = shouldPreservePendingOriginal(pendingEntry, normalizedUrl);
+    const keepPendingThumb = shouldPreservePendingThumb(pendingEntry, normalizedUrl, normalizedThumbUrl);
 
-    if (keepPendingUpload) {
+    if (keepPendingOriginal) {
         return;
     }
 
     if (input?.id) {
-        _pendingUploads.delete(input.id);
-        if (url && hadPendingUpload) {
-            setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
-            scheduleInlineUploadProgressHide(input.id);
-        } else {
+        if (keepPendingThumb) {
             hideInlineUploadProgress(input.id);
+        } else {
+            _pendingUploads.delete(input.id);
+            if (url && hadPendingUpload) {
+                setInlineUploadProgress(input.id, { state: 'complete', pct: 100 });
+                scheduleInlineUploadProgressHide(input.id);
+            } else {
+                hideInlineUploadProgress(input.id);
+            }
+            if (input) input.value = '';
         }
     }
-    if (input) input.value = '';
     block.removeAttribute('data-user-removed');
 
     if (url) block.setAttribute('data-url', url);
@@ -10735,6 +10758,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     return { url: null, thumbUrl: null };
                 }
                 if (hasVisiblePreview && pendingSnapshot?.result?.url) {
+                    if (hasPendingThumbBackfill(pendingSnapshot)) {
+                        queueBackgroundJob({ kind: backgroundKind, slot, inputId });
+                    }
                     return pendingSnapshot.result;
                 }
                 if (inputEl?.files?.[0] && hasVisiblePreview) {
@@ -10801,6 +10827,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (pendingSnapshot?.result?.url) {
                     url = pendingSnapshot.result.url;
                     thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                    if (hasPendingThumbBackfill(pendingSnapshot)) {
+                        queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    }
                 } else if (fileInput?.files?.[0]) {
                     if (!pendingSnapshot) {
                         ensureDeferredImageUpload(fileInput.id, fileInput.files[0], 'exercise_images');
@@ -10838,6 +10867,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (pendingSnapshot?.result?.url) {
                     url = pendingSnapshot.result.url;
                     thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                    if (hasPendingThumbBackfill(pendingSnapshot)) {
+                        queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    }
                 } else if (fileInput?.files?.[0]) {
                     const localThumbSeed = String(
                         block.getAttribute('data-local-thumb')
@@ -10873,6 +10905,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 sleepResult = { url: null, thumbUrl: null };
             } else if (sleepPreview?.style.display !== 'none' && sleepPendingSnapshot?.result?.url) {
                 sleepResult = sleepPendingSnapshot.result;
+                if (hasPendingThumbBackfill(sleepPendingSnapshot)) {
+                    queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+                }
             } else if (sleepPreview?.style.display !== 'none' && sleepFile?.files?.[0]) {
                 if (!sleepPendingSnapshot) {
                     ensureDeferredImageUpload('sleep-img', sleepFile.files[0], 'sleep_images');
