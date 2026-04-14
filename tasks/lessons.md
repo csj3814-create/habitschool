@@ -13,6 +13,11 @@
 - Root cause: checking only saved-url state and a simple `display !== 'none'` test was too weak. An image can still be visually absent while those conditions pass.
 - Lesson: when gating UI on whether an image preview is "showing", verify the rendered state with `getComputedStyle(...)`, `offsetWidth`, and `offsetHeight`, not only the presence of the DOM node or saved metadata.
 
+### 87. Do not generalize intermediate media-processing UI across photos and videos when the product need is video-specific
+- Symptom: `썸네일 제작중` kept leaking into diet and sleep photo slots even though users already see the original image immediately and only the video path actually benefits from an intermediate poster-generation state.
+- Root cause: I treated thumbnail-pending as a generic media concern instead of checking whether the product actually needed that state for each media type.
+- Lesson: if the UX problem exists only for video poster generation, scope the state to strength-video uploads only. For photos, show the original image directly and skip extra processing UI altogether.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.

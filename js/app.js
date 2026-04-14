@@ -3750,9 +3750,7 @@ function addExerciseBlock(type, data = null) {
 
     const fileInput = div.querySelector('.exer-file');
     if (fileInput?.id) {
-        const thumbPending = isCardio
-            ? !!(data?.imageUrl && !data?.imageThumbUrl)
-            : !!(data?.videoUrl && !data?.videoThumbUrl);
+        const thumbPending = !isCardio && shouldShowVideoThumbPending(fileInput, data?.videoUrl, data?.videoThumbUrl);
         setThumbPendingState(fileInput.id, { visible: thumbPending });
     }
 
@@ -4773,7 +4771,7 @@ async function loadDataForSelectedDate(dateStr) {
                         // 저장 시 oldData 타임아웃 대비: URL을 DOM에 보존
                         previewEl.setAttribute('data-saved-url', data.diet[`${k}Url`]);
                         previewEl.setAttribute('data-saved-thumb-url', data.diet[`${k}ThumbUrl`] || '');
-                        setThumbPendingState(`diet-img-${k}`, { visible: !data.diet[`${k}ThumbUrl`] });
+                        setThumbPendingState(`diet-img-${k}`, { visible: false });
                         document.getElementById(`rm-${k}`).style.display = 'block';
                         document.getElementById(`txt-${k}`).style.display = 'none';
                     }
@@ -4815,7 +4813,7 @@ async function loadDataForSelectedDate(dateStr) {
                     document.getElementById('preview-sleep').style.display = 'block';
                     document.getElementById('preview-sleep').setAttribute('data-saved-url', data.sleepAndMind.sleepImageUrl);
                     document.getElementById('preview-sleep').setAttribute('data-saved-thumb-url', data.sleepAndMind.sleepImageThumbUrl || '');
-                    setThumbPendingState('sleep-img', { visible: !data.sleepAndMind.sleepImageThumbUrl });
+                    setThumbPendingState('sleep-img', { visible: false });
                     document.getElementById('rm-sleep').style.display = 'block';
                     document.getElementById('txt-sleep').style.display = 'none';
                     // 수면 AI 분석 버튼 표시
@@ -9647,6 +9645,13 @@ function hasCommittedThumbPendingMedia(inputId) {
     return false;
 }
 
+function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
+    const input = typeof inputOrId === 'string' ? document.getElementById(inputOrId) : inputOrId;
+    const exerciseBlock = input?.closest('.exercise-block');
+    if (!exerciseBlock?.classList.contains('strength-block')) return false;
+    return !!(String(url || '').trim() && !String(thumbUrl || '').trim());
+}
+
 function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
     const host = getThumbPendingHost(inputId);
     if (!host) return;
@@ -9922,7 +9927,7 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
         } else {
             hideInlineUploadProgress(input.id);
         }
-        setThumbPendingState(input.id, { visible: !!(url && !thumbUrl) });
+        setThumbPendingState(input.id, { visible: false });
     }
     if (input) input.value = '';
     if (!previewEl) return;
@@ -9957,7 +9962,9 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
         } else {
             hideInlineUploadProgress(input.id);
         }
-        setThumbPendingState(input.id, { visible: !!(url && !thumbUrl) });
+        setThumbPendingState(input.id, {
+            visible: shouldShowVideoThumbPending(input, url, thumbUrl)
+        });
     }
     if (input) input.value = '';
     block.removeAttribute('data-user-removed');
