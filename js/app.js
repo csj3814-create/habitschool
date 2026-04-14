@@ -3492,13 +3492,11 @@ let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
 let fetchTokenStats = async () => null;
-let fetchHbtTransferHistory = async () => [];
 import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     updateChallengeProgress = mod.updateChallengeProgress;
     getConversionRate = mod.getConversionRate;
     getCurrentEra = mod.getCurrentEra;
     fetchTokenStats = mod.fetchTokenStats;
-    fetchHbtTransferHistory = mod.fetchHbtTransferHistory;
     console.log('✅ app.js: 블록체인 모듈 로드');
     if (auth.currentUser && typeof window.updateAssetDisplay === 'function') {
         Promise.resolve().then(() => window.updateAssetDisplay(true)).catch(() => { });
@@ -5602,6 +5600,44 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
     }
 }
 
+function updateConvertRateBadge(currentPhase, per100Hbt, chainLabel = getActiveOnchainLabel(APP_ENV)) {
+    const rateBadge = document.getElementById('convert-rate-badge');
+    if (!rateBadge) return;
+    rateBadge.textContent = `현재 ${chainLabel} ${eraToLabel(currentPhase)}구간 · 100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
+}
+
+function applyAssetWalletSnapshot(userData = {}) {
+    const chainLabel = getActiveOnchainLabel(APP_ENV);
+    const externalAddress = typeof userData.externalWalletAddress === 'string'
+        ? userData.externalWalletAddress.trim()
+        : '';
+    const appAddress = typeof userData.walletAddress === 'string'
+        ? userData.walletAddress.trim()
+        : '';
+    const effectiveAddress = externalAddress || appAddress;
+
+    const walletDisplay = document.getElementById('wallet-address-display');
+    if (walletDisplay) {
+        if (effectiveAddress) {
+            walletDisplay.textContent = `${effectiveAddress.substring(0, 8)}...${effectiveAddress.substring(effectiveAddress.length - 6)}`;
+            walletDisplay.style.color = '#333';
+        } else {
+            walletDisplay.textContent = '지갑 미연결';
+            walletDisplay.style.color = '';
+        }
+    }
+
+    const statusEl = document.getElementById('wallet-connection-status');
+    const subEl = document.getElementById('wallet-connection-sub');
+    if (externalAddress) {
+        if (statusEl) statusEl.textContent = '외부 지갑 주소 저장됨';
+        if (subEl) subEl.textContent = `${chainLabel} 외부 지갑 주소를 불러왔어요. 다시 연결하면 같은 주소로 이어서 사용할 수 있어요.`;
+    } else if (appAddress) {
+        if (statusEl) statusEl.textContent = '앱 지갑 사용 중';
+        if (subEl) subEl.textContent = `로그인만 하면 ${chainLabel}에서 HBT 변환과 챌린지를 바로 진행할 수 있어요.`;
+    }
+}
+
 const ASSET_HISTORY_PAGE_SIZE = 5;
 const ASSET_HISTORY_CACHE_LIMIT = 15;
 const _assetHistoryState = {
@@ -5609,8 +5645,7 @@ const _assetHistoryState = {
     pointItems: [],
     hbtPage: 0,
     pointPage: 0,
-    isLoading: false,
-    hbtSyncing: false
+    isLoading: false
 };
 
 function formatAssetHistoryDate(value, fallback = '-') {
@@ -5639,97 +5674,6 @@ function doesTransactionMatchActiveChain(tx = {}) {
     return ACTIVE_WALLET_CHAIN_KEY === 'mainnet'
         ? txDate >= MAINNET_CHALLENGE_CUTOVER_DATE
         : txDate < MAINNET_CHALLENGE_CUTOVER_DATE;
-}
-
-function normalizeAssetHistoryTxHash(value) {
-    const raw = String(value || '').trim();
-    return /^0x[a-fA-F0-9]{64}$/.test(raw) ? raw.toLowerCase() : '';
-}
-
-function collectAssetHistoryTxHashes(tx = {}) {
-    return ['txHash', 'stakeTxHash', 'resolveTxHash', 'bonusTxHash']
-        .map(key => normalizeAssetHistoryTxHash(tx[key]))
-        .filter(Boolean);
-}
-
-function formatAssetHistoryAddress(address, fallback = '외부 지갑') {
-    const raw = String(address || '').trim();
-    if (!/^0x[a-fA-F0-9]{40}$/.test(raw)) return fallback;
-    return `${raw.slice(0, 6)}...${raw.slice(-4)}`;
-}
-
-function buildOnchainHbtHistoryItem(transfer = {}) {
-    const direction = String(transfer.direction || '').trim();
-    const kind = String(transfer.kind || '').trim();
-    const amount = transfer.amount || 0;
-    const timestampMs = Number(transfer.timestampMs || 0);
-    const date = formatAssetHistoryDate(
-        timestampMs > 0 ? new Date(timestampMs) : null,
-        transfer.date || '-'
-    );
-    const sortKey = timestampMs > 0
-        ? new Date(timestampMs).toISOString()
-        : `${transfer.date || ''}T12:00:00`;
-
-    let label = 'HBT 이동';
-    let icon = '💸';
-    let iconClass = 'convert';
-    let amountText = formatAssetHistoryAmount(amount, 'HBT');
-    let amountClass = '';
-
-    if (direction === 'in') {
-        label = kind === 'mint'
-            ? '온체인 민팅'
-            : kind === 'staking'
-                ? '챌린지 반환'
-                : 'HBT 입금';
-        icon = kind === 'mint' ? '✨' : '📥';
-        iconClass = 'settle';
-        amountText = `+${formatAssetHistoryAmount(amount, 'HBT')}`;
-        amountClass = 'positive';
-    } else if (direction === 'out') {
-        label = kind === 'burn'
-            ? 'HBT 소각'
-            : kind === 'staking'
-                ? '챌린지 컨트랙트 이동'
-                : 'HBT 출금';
-        icon = kind === 'burn' ? '🔥' : '📤';
-        iconClass = 'withdraw';
-        amountText = `-${formatAssetHistoryAmount(amount, 'HBT')}`;
-        amountClass = 'negative';
-    } else if (direction === 'self') {
-        label = 'HBT 자체 이동';
-        icon = '🔁';
-        iconClass = 'convert';
-        amountText = formatAssetHistoryAmount(amount, 'HBT');
-    }
-
-    const counterpartyText = kind === 'mint'
-        ? '토큰 컨트랙트'
-        : kind === 'burn'
-            ? '소각'
-            : kind === 'staking'
-                ? '챌린지 컨트랙트'
-                : direction === 'self'
-                    ? '내 지갑'
-                    : formatAssetHistoryAddress(transfer.counterparty, '외부 지갑');
-
-    const statusText = direction === 'in'
-        ? `입금 · ${counterpartyText}`
-        : direction === 'out'
-            ? `출금 · ${counterpartyText}`
-            : `이동 · ${counterpartyText}`;
-
-    return {
-        sortKey,
-        icon,
-        iconClass,
-        label,
-        date,
-        amountText,
-        amountClass,
-        statusText
-    };
 }
 
 function renderAssetHistoryItem({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) {
@@ -5798,7 +5742,7 @@ function renderAssetHistory() {
             <div class="wallet-tx-empty-cta">
                 <div class="wallet-tx-empty-icon">${isLoading ? '⏳' : '💎'}</div>
                 <div class="wallet-tx-empty-text">${isLoading ? '거래 기록을 확인하는 중입니다' : '아직 거래 기록이 없습니다'}</div>
-                <div class="wallet-tx-empty-sub">${isLoading ? '앱 기록은 먼저 보여드리고, 온체인 HBT는 확인되는 대로 이어서 붙여드릴게요.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
+                <div class="wallet-tx-empty-sub">${isLoading ? '최근 HBT 거래와 포인트 기록을 불러오는 중이에요.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
                 ${isLoading
                     ? '<div class="wallet-tx-subempty">잠시만 기다려주세요...</div>'
                     : '<button class="wallet-tx-empty-btn" onclick="document.getElementById(\'convert-point-input\')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>'
@@ -5811,11 +5755,8 @@ function renderAssetHistory() {
     const chainCaptionBase = ACTIVE_WALLET_CHAIN_KEY === 'mainnet'
         ? '메인넷 HBT 최근 5개씩'
         : '테스트넷 HBT 최근 5개씩';
-    const chainCaption = _assetHistoryState.hbtSyncing
-        ? `${chainCaptionBase} · 온체인 확인 중`
-        : chainCaptionBase;
     txContainer.innerHTML = `
-        ${renderAssetHistorySection('hbt', 'HBT 거래 기록', chainCaption, hbtItems, _assetHistoryState.hbtPage)}
+        ${renderAssetHistorySection('hbt', 'HBT 거래 기록', chainCaptionBase, hbtItems, _assetHistoryState.hbtPage)}
         ${renderAssetHistorySection('point', '포인트 기록', '포인트 최근 5개씩', pointItems, _assetHistoryState.pointPage)}
     `;
 }
@@ -6001,7 +5942,6 @@ function applyCachedAssetHistory(uid) {
     _assetHistoryState.hbtPage = 0;
     _assetHistoryState.pointPage = 0;
     _assetHistoryState.isLoading = false;
-    _assetHistoryState.hbtSyncing = false;
     renderAssetHistory();
     return true;
 }
@@ -6048,10 +5988,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
     const cachedRate = Number(window._currentConversionRate);
     if (cachedRate > 0) {
+        const cachedPhase = Number(window._currentConversionPhase) || 1;
+        const cachedPer100 = (cachedRate / 1e8) * 100;
         updateWalletRateCopy(
-            Number(window._currentConversionPhase) || 1,
-            (cachedRate / 1e8) * 100
+            cachedPhase,
+            cachedPer100
         );
+        updateConvertRateBadge(cachedPhase, cachedPer100);
     }
 
     // 캐시 히트: 30초 이내 같은 유저 → 스킵 (스켈레톤만 해제)
@@ -6068,7 +6011,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     const hadCachedHistory = applyCachedAssetHistory(user.uid);
     if (hadCachedHistory) {
         _assetHistoryState.isLoading = false;
-        _assetHistoryState.hbtSyncing = true;
         renderAssetHistory();
     } else {
         _assetHistoryState.hbtItems = [];
@@ -6076,7 +6018,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         _assetHistoryState.hbtPage = 0;
         _assetHistoryState.pointPage = 0;
         _assetHistoryState.isLoading = true;
-        _assetHistoryState.hbtSyncing = false;
         renderAssetHistory();
     }
 
@@ -6126,7 +6067,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("timestamp", "desc"),
             limit(100)
         )).catch(() => null);
-        const _p_onchainHbtTransfers = fetchHbtTransferHistory(50).catch(() => []);
         const _p_pointHistory = getDocs(query(
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
@@ -6182,6 +6122,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             writeAssetDisplayCache(user.uid, {
                 coins: userData.coins || 0
             });
+            applyAssetWalletSnapshot(userData);
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
@@ -6365,6 +6306,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 const RATE_SCALE = 1e8;
                 const ratePerPoint = (stats.currentRate || RATE_SCALE) / RATE_SCALE;
                 const per100 = ratePerPoint * 100; // 100P 기준
+                window._currentConversionRate = Number(stats.currentRate) || null;
+                window._currentConversionPhase = phase;
 
                 const halvingEraEl = document.getElementById('halving-era');
                 if (halvingEraEl) halvingEraEl.textContent = eraToLabel(phase);
@@ -6377,12 +6320,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 // 반감기 스케줄 테이블 활성 구간 + 동적 비율 표시
                 updateHalvingScheduleUI(phase, per100);
                 updateWalletRateCopy(phase, per100, statsChainLabel);
-
-                // 변환 비율 배지 업데이트 (전체 기준)
-                const rateBadge = document.getElementById('convert-rate-badge');
-                if (rateBadge) {
-                    rateBadge.textContent = `현재 ${statsChainLabel} ${eraToLabel(phase)}구간 · 100P = ${formatPer100HbtDisplay(per100)} HBT`;
-                }
+                updateConvertRateBadge(phase, per100, statsChainLabel);
 
                 // v2 Phase 경계 기반 진행률 계산
                 const phaseBounds = [0, 35_000_000, 52_500_000, 61_250_000, 70_000_000];
@@ -6585,13 +6523,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     ]);
                     const hbtItems = [];
                     const pointItems = [];
-                    const knownHbtTxHashes = new Set();
 
                     if (txSnap && !txSnap.empty) {
                         txSnap.forEach(txDoc => {
                             const tx = txDoc.data();
                             if (!doesTransactionMatchActiveChain(tx)) return;
-                            collectAssetHistoryTxHashes(tx).forEach(hash => knownHbtTxHashes.add(hash));
 
                             const txDateObj = tx.timestamp?.toDate?.();
                             const txDate = formatAssetHistoryDate(txDateObj, tx.date || '-');
@@ -6791,30 +6727,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     _assetHistoryState.hbtPage = 0;
                     _assetHistoryState.pointPage = 0;
                     _assetHistoryState.isLoading = hbtItems.length === 0 && pointItems.length === 0;
-                    _assetHistoryState.hbtSyncing = true;
-                    renderAssetHistory();
-                    writeAssetHistoryCache(user.uid, { hbtItems, pointItems });
-
-                    const onchainHbtTransfers = await _p_onchainHbtTransfers;
-                    if (Array.isArray(onchainHbtTransfers) && onchainHbtTransfers.length > 0) {
-                        onchainHbtTransfers.forEach((transfer) => {
-                            const networkTag = String(transfer.network || '').trim();
-                            if (networkTag && networkTag !== ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG) return;
-
-                            const transferHash = normalizeAssetHistoryTxHash(transfer.txHash);
-                            if (transferHash && knownHbtTxHashes.has(transferHash)) return;
-
-                            hbtItems.push(buildOnchainHbtHistoryItem(transfer));
-                        });
-                    }
-
-                    hbtItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
-                    _assetHistoryState.hbtItems = hbtItems;
-                    _assetHistoryState.pointItems = pointItems;
-                    _assetHistoryState.hbtPage = 0;
-                    _assetHistoryState.pointPage = 0;
-                    _assetHistoryState.isLoading = false;
-                    _assetHistoryState.hbtSyncing = false;
                     renderAssetHistory();
                     writeAssetHistoryCache(user.uid, { hbtItems, pointItems });
                 } catch (txErr) {
@@ -6823,7 +6735,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         console.info('💡 Firebase Console에서 복합 인덱스를 생성해주세요. 위 에러 메시지의 링크를 클릭하면 자동 생성됩니다.');
                     }
                     _assetHistoryState.isLoading = false;
-                    _assetHistoryState.hbtSyncing = false;
                     renderAssetHistory();
                     if (txContainer && _assetHistoryState.hbtItems.length === 0 && _assetHistoryState.pointItems.length === 0) {
                         txContainer.innerHTML = '<p class="wallet-tx-empty">거래 기록을 잠시 후 다시 불러올게요.</p>';

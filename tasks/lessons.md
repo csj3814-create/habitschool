@@ -1161,6 +1161,11 @@
 - Symptom: after shortening the simple-profile guidance to a single phrase, the message still felt too quiet because it kept the same small left-aligned treatment as a longer paragraph.
 - Root cause: I simplified the copy but left the visual hierarchy tuned for multi-line explanatory text.
 - Lesson: If a simple-mode guide is only one short action line, increase the type size and center it so the message feels intentional rather than leftover body copy.
+
+### 162. Optional onchain enrichment on a core asset screen should be removable when it becomes the unstable part
+- Symptom: the asset tab mixed a stable Firestore-backed HBT history with a slow/failing onchain callable, which produced 504/CORS-looking console noise and made the screen feel like basic information was missing.
+- Root cause: I kept treating the onchain transfer lookup as mandatory enrichment even after the user decided the extra scan was not worth the instability. That left a secondary feature in the critical rendering path.
+- Lesson: When a screen already has a stable primary data source, keep optional onchain enrichment behind a clean boundary. If that enrichment becomes the unstable piece and the user prefers stability, remove it cleanly instead of continuing to tune around it.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
