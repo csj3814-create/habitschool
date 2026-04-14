@@ -1086,6 +1086,11 @@
 - Symptom: after adding a `<video>` fallback for saved exercise cards, the preview could render as two stacked surfaces instead of one media frame.
 - Root cause: I added both `<img>` and `<video>` elements into the preview shell but left them in normal document flow. When visibility toggles were not enough to guarantee exclusive layout, the elements could stack vertically.
 - Lesson: For previews that can switch between image and video renderers, define the shell as a fixed-ratio positioned frame and absolutely overlay each renderer inside it. Never rely on sequential block layout for mutually exclusive preview surfaces.
+
+### 151. If a just-extracted media thumbnail matters after save, persist a client cache keyed by the final media URL
+- Symptom: after removing the cross-origin canvas fallback, a saved exercise video could still lose its visible thumbnail and fall back to a black or generic preview even though the client had already extracted a usable local frame earlier in the session.
+- Root cause: I treated `data-local-thumb` as purely DOM-local state. Once the card was rebuilt from saved data, that state was gone unless a remote `videoThumbUrl` had already arrived.
+- Lesson: When an upload flow extracts a valuable local thumbnail before the remote thumb is finalized, cache it client-side against the eventual persisted media URL and consult that cache during later rehydration. Do not throw away user-visible preview assets just because the DOM was recreated.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

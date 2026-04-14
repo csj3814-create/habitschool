@@ -1461,6 +1461,8 @@ function findLocalExerciseVideoThumb(videoUrl = '') {
             if (isPersistedStorageUrl(savedThumb)) return savedThumb;
         }
     }
+    const cachedLocalThumb = readCachedLocalExerciseVideoThumb(normalizedVideoUrl);
+    if (cachedLocalThumb.startsWith('data:image/')) return cachedLocalThumb;
     return '';
 }
 
@@ -3756,8 +3758,13 @@ function addExerciseBlock(type, data = null) {
         if (data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
             showStrengthPreviewImage(div, data.videoThumbUrl, { savedThumbUrl: data.videoThumbUrl });
         } else {
-            showStrengthPreviewImage(div, createVideoPlaceholderBase64());
-            showStrengthPreviewVideo(div, data.videoUrl);
+            const cachedLocalThumb = findLocalExerciseVideoThumb(data.videoUrl);
+            if (cachedLocalThumb.startsWith('data:image/')) {
+                showStrengthPreviewImage(div, cachedLocalThumb, { localThumb: cachedLocalThumb });
+            } else {
+                showStrengthPreviewImage(div, createVideoPlaceholderBase64());
+                showStrengthPreviewVideo(div, data.videoUrl);
+            }
         }
     }
 
@@ -3862,6 +3869,31 @@ function getStrengthPreviewElements(target) {
     };
 }
 
+function getLocalExerciseVideoThumbSessionKey(videoUrl = '') {
+    const normalizedVideoUrl = String(videoUrl || '').trim();
+    if (!normalizedVideoUrl) return '';
+    return `hs_local_video_thumb_${hashMediaKey(normalizedVideoUrl)}`;
+}
+
+function cacheLocalExerciseVideoThumb(videoUrl = '', thumbDataUrl = '') {
+    const key = getLocalExerciseVideoThumbSessionKey(videoUrl);
+    const normalizedThumb = String(thumbDataUrl || '').trim();
+    if (!key || !normalizedThumb.startsWith('data:image/')) return;
+    try {
+        sessionStorage.setItem(key, normalizedThumb);
+    } catch (_) {}
+}
+
+function readCachedLocalExerciseVideoThumb(videoUrl = '') {
+    const key = getLocalExerciseVideoThumbSessionKey(videoUrl);
+    if (!key) return '';
+    try {
+        return String(sessionStorage.getItem(key) || '').trim();
+    } catch (_) {
+        return '';
+    }
+}
+
 function clearStrengthPreviewVideo(previewVideo) {
     if (!previewVideo) return;
     try { previewVideo.pause(); } catch (_) {}
@@ -3876,15 +3908,22 @@ function clearStrengthPreviewVideo(previewVideo) {
 }
 
 function showStrengthPreviewImage(target, src, { localThumb = '', savedThumbUrl = '' } = {}) {
-    const { previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
+    const { block, previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
     if (!previewWrap || !previewImg) return false;
     previewWrap.style.display = 'block';
     clearStrengthPreviewVideo(previewVideo);
     previewImg.hidden = false;
     previewImg.src = src || createVideoPlaceholderBase64();
 
-    if (localThumb) previewImg.setAttribute('data-local-thumb', localThumb);
-    else previewImg.removeAttribute('data-local-thumb');
+    if (localThumb) {
+        previewImg.setAttribute('data-local-thumb', localThumb);
+        block?.setAttribute('data-local-thumb', localThumb);
+        const blockUrl = String(block?.getAttribute('data-url') || '').trim();
+        if (blockUrl) cacheLocalExerciseVideoThumb(blockUrl, localThumb);
+    } else {
+        previewImg.removeAttribute('data-local-thumb');
+        block?.removeAttribute('data-local-thumb');
+    }
 
     if (savedThumbUrl) previewImg.setAttribute('data-saved-thumb-url', savedThumbUrl);
     else previewImg.removeAttribute('data-saved-thumb-url');
@@ -10107,9 +10146,17 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
             || previewImg?.getAttribute('data-local-thumb')
             || ''
         ).trim();
-        if (!localThumb) {
-            showStrengthPreviewImage(block, createVideoPlaceholderBase64());
-            showStrengthPreviewVideo(block, url);
+        if (localThumb.startsWith('data:image/')) {
+            cacheLocalExerciseVideoThumb(url, localThumb);
+            showStrengthPreviewImage(block, localThumb, { localThumb });
+        } else {
+            const cachedLocalThumb = readCachedLocalExerciseVideoThumb(url);
+            if (cachedLocalThumb.startsWith('data:image/')) {
+                showStrengthPreviewImage(block, cachedLocalThumb, { localThumb: cachedLocalThumb });
+            } else {
+                showStrengthPreviewImage(block, createVideoPlaceholderBase64());
+                showStrengthPreviewVideo(block, url);
+            }
         }
     }
 
