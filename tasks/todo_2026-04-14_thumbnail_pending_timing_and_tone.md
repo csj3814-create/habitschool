@@ -16,6 +16,7 @@
 - [x] Roll back the `썸네일 제작중` UI entirely at the user's request
 - [x] Persist local exercise video thumbnails beyond the current session and reuse them in gallery
 - [x] Refresh the gallery share-card media cache when a strength-video thumbnail becomes available
+- [x] Let the gallery share-card include strength videos even before a sync thumb source is already in memory
 
 ## Notes
 
@@ -25,6 +26,7 @@
 - The remaining delay after refresh came from paths that still fell back to live video frames when `videoThumbUrl` was missing and the extracted local thumbnail had only been cached in `sessionStorage`.
 - A separate regression versus the April 13 baseline came from save-path timing: the upload-speed refactor stopped waiting briefly for exercise video `thumbPromise`, so records could be saved before `videoThumbUrl` was attached.
 - The gallery "해빛 루틴" share card keeps a separate prepared-media cache, so a later-arriving strength-video thumbnail can be missed unless that cache is invalidated and rebuilt.
+- The share-card collector was also stricter than the gallery feed: it could exclude strength videos unless a sync thumb source already existed at collection time, which prevented the later async cache lookup from even trying.
 
 ## Review
 
@@ -50,3 +52,4 @@
 - Another follow-up restores a bounded thumbnail wait during strength-video save, matching the older behavior more closely. If the thumb resolves within that short window, the saved record and gallery cache keep the thumbnail immediately; otherwise the existing background patch path still finishes it later.
 - A further follow-up closes the race where users save before local thumbnail extraction finishes. The app now binds the extracted thumbnail to the final uploaded video URL as soon as either side resolves, so refresh and gallery paths can find it immediately even when save timing is tight.
 - The latest follow-up also refreshes the gallery share-card media cache when a strength-video thumbnail resolves locally or through a background patch, so the shared "해빛 루틴" card can pick up the real thumbnail instead of keeping an older placeholder.
+- Another follow-up lets the share-card collector keep strength-video entries based on the video URL itself, then resolves their thumbnail asynchronously from the persistent local cache during media preparation.

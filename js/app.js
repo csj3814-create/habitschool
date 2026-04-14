@@ -1243,20 +1243,16 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
                 const localThumb = findLocalExerciseVideoThumb(item.videoUrl);
-                if (localThumb || item.videoThumbUrl) {
-                    addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', 'image');
-                }
+                addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', 'image');
             });
         } else {
             const localThumb = findLocalExerciseVideoThumb(latest.exercise.strengthVideoUrl);
-            if (localThumb || latest.exercise.strengthVideoThumbUrl) {
-                addMedia(
-                    localThumb || latest.exercise.strengthVideoThumbUrl,
-                    latest.exercise.strengthVideoUrl,
-                    '운동',
-                    'image'
-                );
-            }
+            addMedia(
+                localThumb || latest.exercise.strengthVideoThumbUrl,
+                latest.exercise.strengthVideoUrl,
+                '운동',
+                'image'
+            );
         }
     }
 
@@ -1396,7 +1392,7 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
     }));
     if (!items.length) return [];
 
-    const directItems = items.map(item => {
+    const directItems = await Promise.all(items.map(async (item) => {
         const candidates = [
             ...(Array.isArray(item.candidateUrls) ? item.candidateUrls : []),
             item.previewUrl,
@@ -1406,10 +1402,20 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
             .map(value => String(value || '').trim())
             .filter(Boolean);
         const directDataUrl = candidates.find(candidate => candidate.startsWith('data:'));
-        return directDataUrl
-            ? { ...item, src: directDataUrl, prepared: true }
-            : null;
-    });
+        if (directDataUrl) {
+            return { ...item, src: directDataUrl, prepared: true };
+        }
+
+        const sourceVideoUrl = candidates.find(candidate => isVideoUrl(candidate));
+        if (sourceVideoUrl) {
+            const cachedThumbDataUrl = await readAnyCachedLocalExerciseVideoThumb(sourceVideoUrl);
+            if (cachedThumbDataUrl.startsWith('data:image/')) {
+                return { ...item, src: cachedThumbDataUrl, prepared: true };
+            }
+        }
+
+        return null;
+    }));
 
     const remoteItems = await requestPreparedShareMediaAssets(items);
 
@@ -3797,7 +3803,17 @@ function addExerciseBlock(type, data = null) {
                 showStrengthPreviewImage(div, cachedLocalThumb, { localThumb: cachedLocalThumb });
             } else {
                 showStrengthPreviewImage(div, createVideoPlaceholderBase64());
-                showStrengthPreviewVideo(div, data.videoUrl);
+                readAnyCachedLocalExerciseVideoThumb(data.videoUrl)
+                    .then((persistedThumb) => {
+                        if (persistedThumb.startsWith('data:image/')) {
+                            showStrengthPreviewImage(div, persistedThumb, { localThumb: persistedThumb });
+                            return;
+                        }
+                        showStrengthPreviewVideo(div, data.videoUrl);
+                    })
+                    .catch(() => {
+                        showStrengthPreviewVideo(div, data.videoUrl);
+                    });
             }
         }
     }
@@ -3905,7 +3921,76 @@ function getLocalExerciseVideoThumbSessionKey(videoUrl = '') {
 }
 
 const LOCAL_EXERCISE_VIDEO_THUMB_INDEX_KEY = 'hs_local_video_thumb_index_v1';
+const LOCAL_EXERCISE_VIDEO_THUMB_CACHE_NAME = 'habitschool-local-video-thumbs-v1';
 const MAX_PERSISTED_LOCAL_VIDEO_THUMBS = 16;
+
+function buildPersistedExerciseVideoThumbCacheUrl(storageKey = '') {
+    const normalizedKey = String(storageKey || '').trim();
+    if (!normalizedKey || typeof window === 'undefined') return '';
+    return new URL(`/__local_video_thumb__/${encodeURIComponent(normalizedKey)}.jpg`, window.location.origin).href;
+}
+
+async function dataUrlToBlob(dataUrl = '') {
+    const normalized = String(dataUrl || '').trim();
+    if (!normalized.startsWith('data:')) return null;
+    try {
+        const response = await fetch(normalized);
+        if (!response.ok) return null;
+        return await response.blob();
+    } catch (_) {
+        return null;
+    }
+}
+
+async function blobToDataUrl(blob) {
+    if (!blob) return '';
+    return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function persistExerciseVideoThumbCacheEntry(storageKey = '', thumbDataUrl = '') {
+    const cacheUrl = buildPersistedExerciseVideoThumbCacheUrl(storageKey);
+    const normalizedThumb = String(thumbDataUrl || '').trim();
+    if (!cacheUrl || !normalizedThumb.startsWith('data:image/') || typeof caches === 'undefined') return;
+    try {
+        const blob = await dataUrlToBlob(normalizedThumb);
+        if (!blob) return;
+        const cache = await caches.open(LOCAL_EXERCISE_VIDEO_THUMB_CACHE_NAME);
+        await cache.put(cacheUrl, new Response(blob, {
+            headers: {
+                'Content-Type': blob.type || 'image/jpeg',
+                'Cache-Control': 'public, max-age=31536000, immutable'
+            }
+        }));
+    } catch (_) {}
+}
+
+async function readPersistedExerciseVideoThumbCacheEntry(storageKey = '') {
+    const cacheUrl = buildPersistedExerciseVideoThumbCacheUrl(storageKey);
+    if (!cacheUrl || typeof caches === 'undefined') return '';
+    try {
+        const cache = await caches.open(LOCAL_EXERCISE_VIDEO_THUMB_CACHE_NAME);
+        const response = await cache.match(cacheUrl);
+        if (!response) return '';
+        const blob = await response.blob();
+        return await blobToDataUrl(blob);
+    } catch (_) {
+        return '';
+    }
+}
+
+async function deletePersistedExerciseVideoThumbCacheEntry(storageKey = '') {
+    const cacheUrl = buildPersistedExerciseVideoThumbCacheUrl(storageKey);
+    if (!cacheUrl || typeof caches === 'undefined') return;
+    try {
+        const cache = await caches.open(LOCAL_EXERCISE_VIDEO_THUMB_CACHE_NAME);
+        await cache.delete(cacheUrl);
+    } catch (_) {}
+}
 
 function readLocalExerciseVideoThumbIndex() {
     try {
@@ -3950,6 +4035,7 @@ function prunePersistedLocalExerciseVideoThumbs(activeKey = '') {
     sorted.forEach((entry) => {
         if (keepKeys.has(entry.key)) return;
         try { localStorage.removeItem(entry.key); } catch (_) {}
+        deletePersistedExerciseVideoThumbCacheEntry(entry.key).catch(() => {});
     });
 
     writeLocalExerciseVideoThumbIndex(
@@ -3975,6 +4061,7 @@ function cacheLocalExerciseVideoThumb(videoUrl = '', thumbDataUrl = '') {
         writeLocalExerciseVideoThumbIndex(nextIndex);
         prunePersistedLocalExerciseVideoThumbs(key);
     } catch (_) {}
+    persistExerciseVideoThumbCacheEntry(key, normalizedThumb).catch(() => {});
 }
 
 function readCachedLocalExerciseVideoThumb(videoUrl = '') {
@@ -3991,6 +4078,20 @@ function readCachedLocalExerciseVideoThumb(videoUrl = '') {
             return persistedThumb;
         }
     } catch (_) {}
+    return '';
+}
+
+async function readAnyCachedLocalExerciseVideoThumb(videoUrl = '') {
+    const syncThumb = readCachedLocalExerciseVideoThumb(videoUrl);
+    if (syncThumb.startsWith('data:image/')) return syncThumb;
+    const key = getLocalExerciseVideoThumbSessionKey(videoUrl);
+    if (!key) return '';
+    const persistedThumb = await readPersistedExerciseVideoThumbCacheEntry(key);
+    if (persistedThumb.startsWith('data:image/')) {
+        try { sessionStorage.setItem(key, persistedThumb); } catch (_) {}
+        try { localStorage.setItem(key, persistedThumb); } catch (_) {}
+        return persistedThumb;
+    }
     return '';
 }
 
@@ -10237,7 +10338,17 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
                 showStrengthPreviewImage(block, cachedLocalThumb, { localThumb: cachedLocalThumb });
             } else {
                 showStrengthPreviewImage(block, createVideoPlaceholderBase64());
-                showStrengthPreviewVideo(block, url);
+                readAnyCachedLocalExerciseVideoThumb(url)
+                    .then((persistedThumb) => {
+                        if (persistedThumb.startsWith('data:image/')) {
+                            showStrengthPreviewImage(block, persistedThumb, { localThumb: persistedThumb });
+                            return;
+                        }
+                        showStrengthPreviewVideo(block, url);
+                    })
+                    .catch(() => {
+                        showStrengthPreviewVideo(block, url);
+                    });
             }
         }
     }

@@ -1126,6 +1126,11 @@
 - Symptom: the exercise tab or gallery feed could recover a strength-video thumbnail, but the gallery's “해빛 루틴” share card kept showing an older placeholder tile.
 - Root cause: the share card prepared its own media payload and cached that result separately from the normal gallery media render path. Later local-thumb binding or background thumb patching updated the preview surfaces, but never invalidated the share-card cache.
 - Lesson: When a late thumbnail changes the visual media set, invalidate every downstream cache that depends on it, not just the obvious on-screen preview. For Habitschool, that includes the prepared share-card media cache as well as the gallery feed item.
+
+### 155. Share-card collectors must not drop videos before async thumbnail recovery gets a chance
+- Symptom: the gallery feed could still show or recover a strength-video preview, but the “해빛 루틴” share card omitted or placeholdered the same video because it never attempted the later local-thumb recovery path.
+- Root cause: `collectShareCardMedia()` only added strength videos when a synchronous thumb source (`localThumb` or `videoThumbUrl`) already existed. If the thumb lived only in slower persistent client cache, the share-card preparation stage never saw the video item at all.
+- Lesson: For media that can recover thumbnails asynchronously, collect the media item from its stable original URL first, then resolve the preview asset in the async preparation phase. Do not require a synchronous preview source at collection time.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
