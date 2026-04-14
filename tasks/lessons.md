@@ -1131,6 +1131,11 @@
 - Symptom: the gallery feed could still show or recover a strength-video preview, but the “해빛 루틴” share card omitted or placeholdered the same video because it never attempted the later local-thumb recovery path.
 - Root cause: `collectShareCardMedia()` only added strength videos when a synchronous thumb source (`localThumb` or `videoThumbUrl`) already existed. If the thumb lived only in slower persistent client cache, the share-card preparation stage never saw the video item at all.
 - Lesson: For media that can recover thumbnails asynchronously, collect the media item from its stable original URL first, then resolve the preview asset in the async preparation phase. Do not require a synchronous preview source at collection time.
+
+### 156. Browser-local thumbnail caches do not solve cross-device share-card previews
+- Symptom: a strength-video tile could still show a placeholder in the desktop gallery share card even after we cached local thumbnails successfully on the uploading device.
+- Root cause: the local thumbnail cache lived only in that specific browser profile. When the user uploaded on mobile and later inspected the share card on desktop, there was no local cached frame to reuse, and missing `videoThumbUrl` left the server callable with nothing image-like to return.
+- Lesson: For share surfaces that must work across devices, client-only thumbnail caches are just an optimization. Always provide a server-visible fallback, either by persisting `videoThumbUrl` reliably or by generating a thumbnail from the stored video object when the share asset is requested.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

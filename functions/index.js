@@ -23,9 +23,14 @@ const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const crypto = require("crypto");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+const { spawn } = require("child_process");
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 const { ethers } = require("ethers");
+const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 
 // Firebase
@@ -715,13 +720,93 @@ function normalizeShareMediaRequestItem(rawItem = {}, index = 0) {
     };
 }
 
+async function removeTempDir(tempDir = "") {
+    if (!tempDir) return;
+    try {
+        await fs.promises.rm(tempDir, { recursive: true, force: true });
+    } catch (_) {}
+}
+
+async function runFfmpeg(args = []) {
+    if (!ffmpegPath) {
+        throw new Error("ffmpeg binary is unavailable");
+    }
+
+    await new Promise((resolve, reject) => {
+        const child = spawn(ffmpegPath, args, {
+            stdio: ["ignore", "ignore", "pipe"],
+        });
+        let stderr = "";
+
+        child.stderr.on("data", (chunk) => {
+            stderr += String(chunk || "");
+        });
+        child.on("error", reject);
+        child.on("close", (code) => {
+            if (code === 0) {
+                resolve();
+                return;
+            }
+            reject(new Error(stderr.trim() || `ffmpeg exited with code ${code}`));
+        });
+    });
+}
+
+async function generateShareVideoThumbDataUrl(storagePath = "") {
+    const normalizedPath = String(storagePath || "").trim();
+    if (!normalizedPath || !ffmpegPath) return "";
+
+    const bucket = admin.storage().bucket();
+    const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "share-video-thumb-"));
+    const inputPath = path.join(tempDir, "input-video");
+    const outputPath = path.join(tempDir, "thumb.jpg");
+
+    try {
+        await bucket.file(normalizedPath).download({ destination: inputPath });
+        const captureOffsets = ["0.8", "1.8", "0.1"];
+
+        for (const offset of captureOffsets) {
+            try {
+                await runFfmpeg([
+                    "-y",
+                    "-ss",
+                    offset,
+                    "-i",
+                    inputPath,
+                    "-frames:v",
+                    "1",
+                    "-vf",
+                    "scale=300:300:force_original_aspect_ratio=increase,crop=300:300",
+                    "-q:v",
+                    "2",
+                    outputPath,
+                ]);
+                const buffer = await fs.promises.readFile(outputPath);
+                if (buffer?.length) {
+                    return `data:image/jpeg;base64,${buffer.toString("base64")}`;
+                }
+            } catch (_) {}
+        }
+    } catch (error) {
+        console.warn("[prepareShareMediaAssets] video thumb generation failed:", normalizedPath, error?.message || error);
+    } finally {
+        await removeTempDir(tempDir);
+    }
+
+    return "";
+}
+
 async function loadShareMediaDataUrl(candidateUrls = []) {
     const bucket = admin.storage().bucket();
+    let videoStoragePath = "";
 
     for (const rawUrl of candidateUrls) {
         const storagePath = extractStoragePathFromUrl(rawUrl);
         if (!storagePath) continue;
-        if (/\.(mp4|mov|webm|m4v)$/i.test(storagePath)) continue;
+        if (/\.(mp4|mov|webm|m4v)$/i.test(storagePath)) {
+            if (!videoStoragePath) videoStoragePath = storagePath;
+            continue;
+        }
 
         try {
             const file = bucket.file(storagePath);
@@ -741,6 +826,11 @@ async function loadShareMediaDataUrl(candidateUrls = []) {
         } catch (error) {
             console.warn("[prepareShareMediaAssets] media load failed:", storagePath, error?.message || error);
         }
+    }
+
+    if (videoStoragePath) {
+        const generatedVideoThumb = await generateShareVideoThumbDataUrl(videoStoragePath);
+        if (generatedVideoThumb) return generatedVideoThumb;
     }
 
     return "";
