@@ -18,6 +18,7 @@
 - [x] Refresh the gallery share-card media cache when a strength-video thumbnail becomes available
 - [x] Let the gallery share-card include strength videos even before a sync thumb source is already in memory
 - [x] Add a server-side share-card thumbnail fallback for strength videos that arrive from another device/browser
+- [x] Reconcile `strengthList` items with matching legacy `strengthVideoThumbUrl` data so the exercise tab and share card do not drop an existing saved thumbnail
 
 ## Notes
 
@@ -29,6 +30,7 @@
 - The gallery "해빛 루틴" share card keeps a separate prepared-media cache, so a later-arriving strength-video thumbnail can be missed unless that cache is invalidated and rebuilt.
 - The share-card collector was also stricter than the gallery feed: it could exclude strength videos unless a sync thumb source already existed at collection time, which prevented the later async cache lookup from even trying.
 - Browser-local thumbnail caches only help on the same device/browser that extracted the video frame. When the user uploads on mobile and later opens the gallery share card on desktop, only a persisted `videoThumbUrl` or a server-generated fallback can fill that tile.
+- A later regression showed that some docs still carry a valid legacy `strengthVideoThumbUrl` while the newer `strengthList` entry for the same video has no `videoThumbUrl` yet. Any list-first restore path must merge those two shapes before falling back to a live `<video>` frame.
 
 ## Review
 
@@ -56,3 +58,4 @@
 - The latest follow-up also refreshes the gallery share-card media cache when a strength-video thumbnail resolves locally or through a background patch, so the shared "해빛 루틴" card can pick up the real thumbnail instead of keeping an older placeholder.
 - Another follow-up lets the share-card collector keep strength-video entries based on the video URL itself, then resolves their thumbnail asynchronously from the persistent local cache during media preparation.
 - The latest follow-up adds a server-side fallback inside `prepareShareMediaAssets`, so if a strength-video item still has no persisted thumb URL and no same-browser cache, the share-card callable can derive a thumbnail directly from the stored video object.
+- The latest follow-up also reconciles list-based strength-video items with matching legacy `strengthVideoThumbUrl` fields, which prevents the exercise tab and the share-card collector from discarding an already saved thumbnail during schema transition.

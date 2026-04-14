@@ -1136,6 +1136,11 @@
 - Symptom: a strength-video tile could still show a placeholder in the desktop gallery share card even after we cached local thumbnails successfully on the uploading device.
 - Root cause: the local thumbnail cache lived only in that specific browser profile. When the user uploaded on mobile and later inspected the share card on desktop, there was no local cached frame to reuse, and missing `videoThumbUrl` left the server callable with nothing image-like to return.
 - Lesson: For share surfaces that must work across devices, client-only thumbnail caches are just an optimization. Always provide a server-visible fallback, either by persisting `videoThumbUrl` reliably or by generating a thumbnail from the stored video object when the share asset is requested.
+
+### 157. List-first exercise restore paths must inherit matching legacy thumbnail fields during schema transition
+- Symptom: the exercise tab and the gallery share-card preview could render a black video frame or placeholder even though the daily log still contained a valid legacy `strengthVideoThumbUrl`.
+- Root cause: newer UI paths preferred `exercise.strengthList` and ignored the older `exercise.strengthVideoThumbUrl`. When save flows wrote a list item without `videoThumbUrl` but preserved the legacy fields, the renderers threw away an already saved thumbnail.
+- Lesson: When a media schema evolves from single-item fields to list items, any list-first restore path must reconcile missing per-item thumbnails against matching legacy fields before falling back to live video rendering or placeholder assets.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

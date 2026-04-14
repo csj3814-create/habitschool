@@ -17,6 +17,7 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
+import { buildStrengthExerciseSeed, resolveStrengthVideoThumbUrl } from './exercise-media.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
@@ -1242,8 +1243,10 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
 
         if (latest.exercise.strengthList?.length) {
             latest.exercise.strengthList.forEach(item => {
-                const localThumb = findLocalExerciseVideoThumb(item.videoUrl);
-                addMedia(localThumb || item.videoThumbUrl, item.videoUrl, '운동', 'image');
+                const resolvedItem = buildStrengthExerciseSeed(latest.exercise, item);
+                if (!resolvedItem?.videoUrl) return;
+                const localThumb = findLocalExerciseVideoThumb(resolvedItem.videoUrl);
+                addMedia(localThumb || resolveStrengthVideoThumbUrl(latest.exercise, resolvedItem), resolvedItem.videoUrl, '운동', 'image');
             });
         } else {
             const localThumb = findLocalExerciseVideoThumb(latest.exercise.strengthVideoUrl);
@@ -5138,9 +5141,11 @@ async function loadDataForSelectedDate(dateStr) {
 
                 // 근력: strengthList가 최우선 (legacy 필드 무시)
                 if (data.exercise.strengthList && data.exercise.strengthList.length > 0) {
-                    data.exercise.strengthList.forEach(item => addExerciseBlock('strength', item));
+                    data.exercise.strengthList.forEach(item => {
+                        addExerciseBlock('strength', buildStrengthExerciseSeed(data.exercise, item) || item);
+                    });
                 } else if (data.exercise.strengthVideoUrl) {
-                    addExerciseBlock('strength', { videoUrl: data.exercise.strengthVideoUrl });
+                    addExerciseBlock('strength', buildStrengthExerciseSeed(data.exercise) || { videoUrl: data.exercise.strengthVideoUrl });
                 } else {
                     addExerciseBlock('strength');
                 }
