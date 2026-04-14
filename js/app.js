@@ -9925,7 +9925,13 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
     const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
     const hadPendingUpload = !!pendingEntry;
-    const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
+    const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
+    const normalizedUrl = String(url || '').trim();
+    const keepPendingUpload = !!pendingEntry && (
+        !pendingEntry.done
+        || !pendingResultUrl
+        || (normalizedUrl && pendingResultUrl !== normalizedUrl)
+    );
 
     if (keepPendingUpload) {
         return;
@@ -9960,7 +9966,13 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     const input = block.querySelector('.exer-file');
     const pendingEntry = input?.id ? _pendingUploads.get(input.id) : null;
     const hadPendingUpload = !!pendingEntry;
-    const keepPendingUpload = !url && pendingEntry && !pendingEntry.done;
+    const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
+    const normalizedUrl = String(url || '').trim();
+    const keepPendingUpload = !!pendingEntry && (
+        !pendingEntry.done
+        || !pendingResultUrl
+        || (normalizedUrl && pendingResultUrl !== normalizedUrl)
+    );
 
     if (keepPendingUpload) {
         return;

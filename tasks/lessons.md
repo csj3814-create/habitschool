@@ -23,6 +23,11 @@
 - Root cause: the shared helper still allowed any host type, so a missed caller path or stale state could reintroduce the badge outside the intended video-only scope.
 - Lesson: when the rule is absolute, put the guard in the shared helper itself. In this case, `setThumbPendingState()` must refuse every non-strength host and clear any leftover badge before returning.
 
+### 89. Replacement uploads must not clear an in-flight pending entry just because the UI is still carrying the previous saved URL
+- Symptom: replacing an existing media item and saving while the new upload was still in flight could end with `일부 업로드 실패`, even though the UI preview looked fine.
+- Root cause: `persistSavedPreview()` / `persistSavedExerciseBlock()` used the presence of a fallback saved URL as a signal that it was safe to delete `_pendingUploads`. In replacement flows, that fallback URL could belong to the old media while the new upload still had not finished.
+- Lesson: when a screen temporarily preserves the old committed URL during replacement upload, only clear the pending entry after the in-flight upload has a matching resolved URL. If the pending upload is unfinished or its resolved URL differs from the currently persisted one, keep the pending entry alive.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.
