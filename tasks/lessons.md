@@ -3,6 +3,11 @@
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
+### 91. When a secondary processing UI keeps destabilizing the core media flow, remove it cleanly if the user prefers the pre-feature behavior
+- Symptom: `썸네일 제작중` kept causing repeated regressions across exercise preview, refresh, and gallery/share surfaces even after several condition tweaks.
+- Root cause: I continued tuning a non-essential intermediate state instead of recognizing that the safest path was to remove the feature once the user explicitly preferred the old behavior.
+- Lesson: when an optional status UI introduces cascading regressions in a core flow and the user asks for rollback, stop layering more guards. Remove the feature end to end, preserve only the underlying persistence fixes that still matter, and return the product to a known-good baseline first.
+
 ### 85. When a processing badge lives on a generic upload container, the setter must verify committed media before rendering it
 - Symptom: `썸네일 제작중` could still show inside a blank upload box even after the obvious pre-upload toggle was removed.
 - Root cause: the pending-state host for static images was the whole `.upload-area`, and `setThumbPendingState()` trusted the incoming `visible` flag without checking whether the slot actually had a committed media URL and visible preview.

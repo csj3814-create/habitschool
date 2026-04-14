@@ -3755,8 +3755,6 @@ function addExerciseBlock(type, data = null) {
     list.appendChild(div);
     updateRecordFlowGuides('exercise');
 
-    const fileInput = div.querySelector('.exer-file');
-
     // 근력 영상 썸네일: 저장된 thumbUrl이 없으면 실제 비디오 프레임 미리보기로 대체한다.
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
         if (data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
@@ -3770,11 +3768,6 @@ function addExerciseBlock(type, data = null) {
                 showStrengthPreviewVideo(div, data.videoUrl);
             }
         }
-    }
-
-    if (fileInput?.id) {
-        const thumbPending = !isCardio && shouldShowVideoThumbPending(fileInput, data?.videoUrl, data?.videoThumbUrl);
-        setThumbPendingState(fileInput.id, { visible: thumbPending });
     }
 }
 
@@ -9739,95 +9732,12 @@ function getThumbPendingHost(inputId) {
     return uploadArea;
 }
 
-function hasCommittedThumbPendingMedia(inputId) {
-    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
-    const uploadArea = input?.closest('.upload-area');
-    if (!uploadArea) return false;
-
-    const previewStrength = uploadArea.querySelector('.preview-strength');
-    if (previewStrength) {
-        const exerciseBlock = input?.closest('.exercise-block');
-        const savedUrl = String(exerciseBlock?.getAttribute('data-url') || '').trim();
-        const previewStrengthImg = previewStrength.querySelector('.preview-strength-img');
-        const previewStrengthVideo = previewStrength.querySelector('.preview-strength-video');
-        const previewSrc = String(previewStrengthImg?.getAttribute('src') || '').trim();
-        const previewVideoSrc = String(previewStrengthVideo?.currentSrc || previewStrengthVideo?.getAttribute('src') || '').trim();
-        const computed = window.getComputedStyle(previewStrength);
-        const isVisible = computed.display !== 'none' && computed.visibility !== 'hidden';
-        const hasRenderedBox = previewStrength.offsetWidth > 0 && previewStrength.offsetHeight > 0;
-        return !!(savedUrl && (previewSrc || previewVideoSrc) && isVisible && hasRenderedBox);
-    }
-
-    const previewImg = uploadArea.querySelector('.preview-img');
-    if (previewImg) {
-        const savedUrl = String(previewImg.getAttribute('data-saved-url') || '').trim();
-        const previewSrc = String(previewImg.getAttribute('src') || '').trim();
-        const computed = window.getComputedStyle(previewImg);
-        const isVisible = computed.display !== 'none' && computed.visibility !== 'hidden';
-        const hasRenderedBox = previewImg.offsetWidth > 0 && previewImg.offsetHeight > 0;
-        return !!(savedUrl && previewSrc && isVisible && hasRenderedBox);
-    }
-
-    return false;
-}
-
-function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
-    const input = typeof inputOrId === 'string' ? document.getElementById(inputOrId) : inputOrId;
-    const exerciseBlock = input?.closest('.exercise-block');
-    if (!exerciseBlock?.classList.contains('strength-block')) return false;
-    const normalizedUrl = String(url || '').trim();
-    const normalizedThumbUrl = String(thumbUrl || '').trim();
-    if (!normalizedUrl || normalizedThumbUrl) return false;
-
-    const previewImg = exerciseBlock.querySelector('.preview-strength-img');
-    const previewVideo = exerciseBlock.querySelector('.preview-strength-video');
-    const localThumb = String(
-        exerciseBlock.getAttribute('data-local-thumb')
-        || previewImg?.getAttribute('data-local-thumb')
-        || ''
-    ).trim();
-    if (localThumb) return false;
-
-    if (previewVideo && !previewVideo.hidden) {
-        return false;
-    }
-
-    const previewSrc = String(previewImg?.getAttribute('src') || '').trim();
-    if (previewSrc && previewSrc !== createVideoPlaceholderBase64()) {
-        return false;
-    }
-
-    return true;
-}
-
 function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
-    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
-    const host = getThumbPendingHost(input);
+    const host = getThumbPendingHost(inputId);
     if (!host) return;
-    const strengthBlock = input?.closest('.exercise-block.strength-block');
-
-    // 썸네일 대기 UI는 근력 영상에만 허용한다.
-    // 사진(식단/수면/유산소) 경로에서는 호출이 남아 있어도 즉시 정리하고 종료한다.
-    if (!strengthBlock) {
-        const existingBadge = host.querySelector('.thumb-pending-badge');
-        if (existingBadge) existingBadge.hidden = true;
-        host.classList.remove('has-thumb-pending');
-        return;
-    }
-
-    const shouldShow = !!visible && hasCommittedThumbPendingMedia(inputId);
-
     let badge = host.querySelector('.thumb-pending-badge');
-    if (!badge) {
-        badge = document.createElement('div');
-        badge.className = 'thumb-pending-badge';
-        badge.hidden = true;
-        host.appendChild(badge);
-    }
-
-    badge.textContent = label;
-    badge.hidden = !shouldShow;
-    host.classList.toggle('has-thumb-pending', shouldShow);
+    if (badge) badge.remove();
+    host.classList.remove('has-thumb-pending');
 }
 
 function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '' } = {}) {
@@ -10191,9 +10101,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     }
 
     if (input?.id) {
-        setThumbPendingState(input.id, {
-            visible: shouldShowVideoThumbPending(input, url, thumbUrl)
-        });
+        setThumbPendingState(input.id, { visible: false });
     }
 }
 
