@@ -9653,8 +9653,20 @@ function shouldShowVideoThumbPending(inputOrId, url = '', thumbUrl = '') {
 }
 
 function setThumbPendingState(inputId, { visible = false, label = '썸네일 제작중' } = {}) {
-    const host = getThumbPendingHost(inputId);
+    const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
+    const host = getThumbPendingHost(input);
     if (!host) return;
+    const strengthBlock = input?.closest('.exercise-block.strength-block');
+
+    // 썸네일 대기 UI는 근력 영상에만 허용한다.
+    // 사진(식단/수면/유산소) 경로에서는 호출이 남아 있어도 즉시 정리하고 종료한다.
+    if (!strengthBlock) {
+        const existingBadge = host.querySelector('.thumb-pending-badge');
+        if (existingBadge) existingBadge.hidden = true;
+        host.classList.remove('has-thumb-pending');
+        return;
+    }
+
     const shouldShow = !!visible && hasCommittedThumbPendingMedia(inputId);
 
     let badge = host.querySelector('.thumb-pending-badge');

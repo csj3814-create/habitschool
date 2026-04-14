@@ -18,6 +18,11 @@
 - Root cause: I treated thumbnail-pending as a generic media concern instead of checking whether the product actually needed that state for each media type.
 - Lesson: if the UX problem exists only for video poster generation, scope the state to strength-video uploads only. For photos, show the original image directly and skip extra processing UI altogether.
 
+### 88. When a UI policy is strict, enforce it inside the shared helper instead of relying only on call sites
+- Symptom: photo slots could still show the shared thumbnail-pending badge even after several caller-side fixes removed the obvious `visible: true` paths.
+- Root cause: the shared helper still allowed any host type, so a missed caller path or stale state could reintroduce the badge outside the intended video-only scope.
+- Lesson: when the rule is absolute, put the guard in the shared helper itself. In this case, `setThumbPendingState()` must refuse every non-strength host and clear any leftover badge before returning.
+
 ### 84. Secondary processing states should appear only after the user-facing item actually exists, and their styling should stay subordinate
 - Symptom: the new `썸네일 제작중` indicator could appear too early, during the pre-upload phase before the saved media was visibly committed, and the badge styling pulled too much attention for what is only an intermediate processing step.
 - Root cause: I tied the indicator to the file-transfer lifecycle instead of the committed media lifecycle, and I styled the text like a primary status chip rather than a soft, in-context overlay.

@@ -38,3 +38,4 @@
 
 - A second follow-up fix tightened the render guard again so thumbnail-pending now requires a real preview `src`, visible computed styles, and non-zero rendered dimensions. This specifically targets cases where the slot looked blank even though saved metadata existed.
 - A third follow-up fix removed thumbnail-pending from photo flows entirely. Diet, sleep, and cardio images now just show the original image; only strength-video uploads may surface `썸네일 제작중` while their poster image is being prepared.
+- A fourth follow-up fix moved that policy into `setThumbPendingState()` itself, so even if a photo path accidentally calls the helper later, non-strength hosts immediately clear the badge and refuse to render it.
