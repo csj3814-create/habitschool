@@ -17,6 +17,7 @@
   - Simple mode now treats `profile` as the default entry tab instead of `diet`.
   - The simple-mode skip link now targets the profile section so keyboard/assistive entry lands on the first visible screen.
   - Added a profile-top guidance panel with upward arrows and the shorter `습관을 기록하세요` copy.
+  - Increased the guidance copy size and centered it so the single action line reads more clearly.
 - Verification:
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`

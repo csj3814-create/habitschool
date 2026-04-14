@@ -1156,6 +1156,11 @@
 - Symptom: after restoring the missing `installState.visible` gate, the `해빛스쿨 앱 설치` footer disappeared entirely on a normal desktop browser that was not installed.
 - Root cause: `shouldShowInstallCta()` still hard-blocked all non-mobile user agents and also depended on stored installed-state hints, which contradicted the user’s expectation of a persistent install CTA surface.
 - Lesson: For Habitschool’s bottom-bar install CTA, treat “browser vs installed standalone app” as the primary distinction. If the app is running in a normal browser and not localhost, keep the install CTA visible and let the action branch into native prompt or manual guidance as needed.
+
+### 161. When a simple-mode guide is reduced to one line, emphasize it with size and centering
+- Symptom: after shortening the simple-profile guidance to a single phrase, the message still felt too quiet because it kept the same small left-aligned treatment as a longer paragraph.
+- Root cause: I simplified the copy but left the visual hierarchy tuned for multi-line explanatory text.
+- Lesson: If a simple-mode guide is only one short action line, increase the type size and center it so the message feels intentional rather than leftover body copy.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
