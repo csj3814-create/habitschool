@@ -136,6 +136,10 @@
             </intent-filter>
         </service>
 
+        <activity
+            android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"
+            android:exported="false" />
+
         <receiver
             android:name=".widget.HabitschoolWidgetProvider"
             android:exported="false">

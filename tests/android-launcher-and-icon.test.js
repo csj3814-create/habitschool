@@ -16,18 +16,25 @@ describe('android launcher bootstrap and icon resources', () => {
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
+        expect(launcherSource).toContain('return TwaLauncher.WEBVIEW_FALLBACK_STRATEGY');
     });
 
-    it('uses a clean vector adaptive icon instead of the oversized bitmap foreground', () => {
+    it('keeps the original bitmap-based launcher icon wiring', () => {
         const launcherIcon = readRepoFile('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
         const launcherRoundIcon = readRepoFile('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml');
-        const launcherForeground = readRepoFile('android/app/src/main/res/drawable/ic_launcher_foreground.xml');
+        const launcherInset = readRepoFile('android/app/src/main/res/drawable/ic_launcher_foreground_inset.xml');
         const colors = readRepoFile('android/app/src/main/res/values/colors.xml');
 
-        expect(launcherIcon).toContain('@drawable/ic_launcher_foreground');
-        expect(launcherRoundIcon).toContain('@drawable/ic_launcher_foreground');
-        expect(launcherIcon).not.toContain('ic_launcher_foreground_inset');
-        expect(launcherForeground).toContain('M41,63C45,69 63,69 67,63');
-        expect(colors).toContain('<color name="launcher_background">#FFF4DE</color>');
+        expect(launcherIcon).toContain('@drawable/ic_launcher_foreground_inset');
+        expect(launcherRoundIcon).toContain('@drawable/ic_launcher_foreground_inset');
+        expect(launcherInset).toContain('@mipmap/ic_launcher_foreground_actual');
+        expect(colors).toContain('<color name="launcher_background">#FF9800</color>');
+    });
+
+    it('declares the WebView fallback activity needed when no TWA browser is available', () => {
+        const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
+
+        expect(manifest).toContain('android:name="com.google.androidbrowserhelper.trusted.WebViewFallbackActivity"');
+        expect(manifest).toContain('android:exported="false"');
     });
 });

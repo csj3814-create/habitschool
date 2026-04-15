@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import com.google.androidbrowserhelper.trusted.LauncherActivity
+import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectManager
 import com.habitschool.app.health.HealthConnectSnapshotDecider
@@ -35,6 +36,10 @@ class HabitschoolLauncherActivity : LauncherActivity() {
 
     override fun getLaunchingUrl(): Uri {
         return launchUrlOverride ?: resolveLaunchingUrl()
+    }
+
+    override fun getFallbackStrategy(): TwaLauncher.FallbackStrategy {
+        return TwaLauncher.WEBVIEW_FALLBACK_STRATEGY
     }
 
     private fun resolveLaunchingUrl(): Uri {

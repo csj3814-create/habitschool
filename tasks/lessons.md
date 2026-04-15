@@ -3,6 +3,16 @@
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
+### 169. Android Browser Helper WebView fallback is not safe unless the fallback activity is declared and exercised
+- Symptom: the hybrid app could launch fine when Chrome handled the TWA path, but still died on devices where no compatible TWA browser was available.
+- Root cause: I enabled `WEBVIEW_FALLBACK_STRATEGY` in the launcher but did not declare `com.google.androidbrowserhelper.trusted.WebViewFallbackActivity` in `AndroidManifest.xml`. That meant the fallback path itself threw `ActivityNotFoundException` at runtime.
+- Lesson: whenever I rely on Android Browser Helper's WebView fallback, I must add the fallback activity to the manifest and verify the path explicitly by disabling the browser/TWA provider during emulator or device QA.
+
+### 168. If the user asks to keep the original app icon, scale or wire the existing asset instead of redesigning it
+- Symptom: I responded to an icon sizing complaint by introducing a brand-new launcher illustration, which created a second mismatch: the app no longer looked like Habitschool to the user.
+- Root cause: I optimized for visual cleanup instead of respecting the product constraint that the existing icon artwork itself was not up for redesign.
+- Lesson: when the request is about icon size, padding, or crop, preserve the original asset and only adjust the adaptive-icon wiring or insets. Do not introduce new launcher art unless the user explicitly asks for a rebrand.
+
 ### 167. Never ship an Android install link without launching the built shell at least once on an emulator or device
 - Symptom: I published an APK link that installed successfully, but tapping the app immediately failed because the launcher activity crashed before Chrome/TWA could open.
 - Root cause: I verified the APK build artifact and signing/assetlinks assumptions, but I did not execute the actual Android launch path. A `LauncherActivity` subclass was calling browser-helper metadata too early and crashed only at runtime.
