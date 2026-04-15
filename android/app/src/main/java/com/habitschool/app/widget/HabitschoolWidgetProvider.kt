@@ -9,8 +9,8 @@ import android.widget.RemoteViews
 import com.habitschool.app.AppRoutes
 import com.habitschool.app.HealthConnectPermissionActivity
 import com.habitschool.app.R
-import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectSnapshot
+import com.habitschool.app.health.HealthConnectSnapshotDecider
 import com.habitschool.app.health.HealthConnectSnapshotStore
 import com.habitschool.app.health.HealthConnectUiText
 
@@ -63,20 +63,18 @@ class HabitschoolWidgetProvider : AppWidgetProvider() {
             return views
         }
 
-        private fun buildExerciseUri(snapshot: HealthConnectSnapshot) =
-            if (
-                snapshot.permissionGranted &&
-                snapshot.availabilityState == HealthConnectAvailabilityState.AVAILABLE &&
-                snapshot.stepsCount != null
-            ) {
+        private fun buildExerciseUri(snapshot: HealthConnectSnapshot): android.net.Uri {
+            val stepsCount = snapshot.stepsCount
+            return if (stepsCount != null && HealthConnectSnapshotDecider.canPrefillForToday(snapshot)) {
                 AppRoutes.exerciseImportUri(
                     nativeSource = "android-widget",
-                    stepsCount = snapshot.stepsCount,
+                    stepsCount = stepsCount,
                     syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
                     stepProviderLabel = snapshot.dataOriginLabel
                 )
             } else {
                 AppRoutes.exerciseUri("android-widget")
             }
+        }
     }
 }

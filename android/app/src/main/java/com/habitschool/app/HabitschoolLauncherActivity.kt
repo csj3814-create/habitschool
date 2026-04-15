@@ -6,12 +6,18 @@ import android.os.Bundle
 import com.google.androidbrowserhelper.trusted.LauncherActivity
 import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectManager
+import com.habitschool.app.health.HealthConnectSnapshotDecider
+import com.habitschool.app.health.HealthConnectSnapshotStore
 import kotlinx.coroutines.runBlocking
 
 class HabitschoolLauncherActivity : LauncherActivity() {
+    private val snapshotStore by lazy { HealthConnectSnapshotStore(this) }
+    private var launchUrlOverride: Uri? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val launchingUrl = resolveLaunchingUrl()
-        if (shouldAutoSyncHealthConnect(launchingUrl)) {
+        launchUrlOverride = resolveFreshHealthConnectLaunchUrl(launchingUrl)
+        if (launchUrlOverride == null && shouldAutoSyncHealthConnect(launchingUrl)) {
             startActivity(
                 HealthConnectPermissionActivity.createSyncIntent(
                     context = this,
@@ -28,7 +34,7 @@ class HabitschoolLauncherActivity : LauncherActivity() {
     }
 
     override fun getLaunchingUrl(): Uri {
-        return resolveLaunchingUrl()
+        return launchUrlOverride ?: resolveLaunchingUrl()
     }
 
     private fun resolveLaunchingUrl(): Uri {
@@ -92,5 +98,42 @@ class HabitschoolLauncherActivity : LauncherActivity() {
         return runBlocking {
             healthConnectManager.hasRequiredPermissions()
         }
+    }
+
+    private fun resolveFreshHealthConnectLaunchUrl(launchingUrl: Uri): Uri? {
+        val action = intent?.action
+        if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
+            return null
+        }
+        if (launchingUrl.scheme != "https" || launchingUrl.host != Uri.parse(AppRoutes.WEB_ORIGIN).host) {
+            return null
+        }
+        if (launchingUrl.encodedPath == "/share-target") {
+            return null
+        }
+        if (launchingUrl.getQueryParameter("focus") == "shared-upload") {
+            return null
+        }
+        if (launchingUrl.getQueryParameter("focus") == "health-connect-steps") {
+            return null
+        }
+
+        val snapshot = snapshotStore.read()
+        if (!HealthConnectSnapshotDecider.canReuseForAppLaunch(snapshot)) {
+            return null
+        }
+
+        val stepsCount = snapshot.stepsCount ?: return null
+        val nativeSource = launchingUrl.getQueryParameter("native")
+            ?.takeUnless { it.isBlank() }
+            ?: "android-shell"
+
+        return AppRoutes.withHealthConnectSteps(
+            baseUri = launchingUrl,
+            nativeSource = nativeSource,
+            stepsCount = stepsCount,
+            syncedAtEpochMillis = snapshot.syncedAtEpochMillis,
+            stepProviderLabel = snapshot.dataOriginLabel
+        )
     }
 }

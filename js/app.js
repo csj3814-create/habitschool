@@ -18,6 +18,7 @@ import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MI
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
 import { buildStrengthExerciseSeed, resolveStrengthVideoThumbUrl } from './exercise-media.js';
+import { buildHealthConnectStepData, buildPersistableStepData, createEmptyStepData, restoreHealthConnectImportState } from './health-connect-utils.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
@@ -1455,17 +1456,17 @@ function renderStepImportBanner() {
         return;
     }
 
-    const surfaceLabel = getNativeSurfaceLabel(_activeNativeStepImport?.nativeSource);
-    const savedSyncedAt = Date.parse(_stepData?.updatedAt || '');
+    const surfaceLabel = getNativeSurfaceLabel(_activeNativeStepImport?.nativeSource || _stepData?.nativeSource);
     const syncedAtEpochMillis = Number.isFinite(_activeNativeStepImport?.syncedAtEpochMillis)
         ? _activeNativeStepImport.syncedAtEpochMillis
-        : (Number.isFinite(savedSyncedAt) ? savedSyncedAt : 0);
+        : (Number.isFinite(_stepData?.syncedAtEpochMillis) ? _stepData.syncedAtEpochMillis : Date.parse(_stepData?.updatedAt || '') || 0);
     const syncTimeLabel = formatNativeStepSyncTime(syncedAtEpochMillis);
+    const providerLabel = _activeNativeStepImport?.stepProviderLabel || _stepData?.providerLabel || 'Health Connect';
 
     banner.innerHTML = `
         <div class="step-import-banner-icon" aria-hidden="true">📲</div>
         <div class="step-import-banner-copy">
-            <div class="step-import-banner-title">${_activeNativeStepImport?.stepProviderLabel || 'Health Connect'} ${stepCount.toLocaleString()}보 반영됨</div>
+            <div class="step-import-banner-title">${providerLabel} ${stepCount.toLocaleString()}보 반영됨</div>
             <div class="step-import-banner-body">${surfaceLabel}에서 동기화한 걸음수입니다${syncTimeLabel ? ` · ${syncTimeLabel} 기준` : ''}.</div>
         </div>
     `;
@@ -1481,21 +1482,7 @@ function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'e
     _pendingNativeStepImport = null;
     _activeNativeStepImport = payload;
 
-    const updatedAt = payload.syncedAtEpochMillis > 0
-        ? new Date(payload.syncedAtEpochMillis).toISOString()
-        : new Date().toISOString();
-
-    _stepData = {
-        count: payload.stepCount,
-        source: payload.stepSource,
-        screenshotUrl: null,
-        screenshotThumbUrl: null,
-        imageHash: null,
-        distance_km: null,
-        calories: null,
-        active_minutes: null,
-        updatedAt
-    };
+    _stepData = buildHealthConnectStepData(payload);
 
     const preview = document.getElementById('preview-step-screenshot');
     if (preview) {
@@ -11982,9 +11969,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     cardioList,
                     strengthList
                 },
-                steps: _stepData.count > 0
-                    ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: _stepData.updatedAt || new Date().toISOString() }
-                    : (oldData.steps || null),
+                steps: buildPersistableStepData(_stepData, { now: new Date() }) || (oldData.steps || null),
                 sleepAndMind: {
                     ...(oldData.sleepAndMind || {}),
                     sleepImageUrl: sleepUrl,
@@ -12015,7 +12000,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     cardioList: cardioList,
                     strengthList: strengthList
                 },
-                steps: _stepData.count > 0 ? { count: _stepData.count, source: _stepData.source || 'manual', screenshotUrl: _stepData.screenshotUrl || null, screenshotThumbUrl: _stepData.screenshotThumbUrl || null, imageHash: _stepData.imageHash || null, distance_km: _stepData.distance_km || null, calories: _stepData.calories || null, active_minutes: _stepData.active_minutes || null, updatedAt: _stepData.updatedAt || new Date().toISOString() } : (oldData.steps || null),
+                steps: buildPersistableStepData(_stepData, { now: new Date() }) || (oldData.steps || null),
                 sleepAndMind: {
                     ...(oldData.sleepAndMind || {}),
                     sleepImageUrl: sleepUrl,
@@ -15054,7 +15039,7 @@ function shareApp(platform) {
 // 걸음수 (Step Counter) 기능
 // ==========================================
 
-let _stepData = { count: 0, source: null, screenshotUrl: null, screenshotThumbUrl: null, imageHash: null, distance_km: null, calories: null, active_minutes: null };
+let _stepData = createEmptyStepData();
 let _stepScreenshotFile = null;
 
 function updateStepRing(count, goal = 8000) {
@@ -15077,11 +15062,11 @@ function setManualSteps() {
     if (!val || val <= 0) { showToast('⚠️ 올바른 걸음수를 입력하세요.'); return; }
     if (val > 200000) { showToast('⚠️ 걸음수가 너무 큽니다.'); return; }
 
-    _stepData.count = val;
-    _stepData.source = 'manual';
-    _stepData.imageHash = null;
-    _stepData.screenshotUrl = null;
-    _stepData.screenshotThumbUrl = null;
+    _stepData = {
+        ...createEmptyStepData(),
+        count: val,
+        source: 'manual'
+    };
     _activeNativeStepImport = null;
     updateStepRing(val);
     renderStepImportBanner();
@@ -15146,6 +15131,7 @@ async function handleStepScreenshot(fileInput) {
 
         // 4. 걸음수 데이터 업데이트
         _stepData = {
+            ...createEmptyStepData(),
             count: analysis.steps || 0,
             source: 'samsung_screenshot',
             screenshotUrl: downloadUrl,
@@ -15200,18 +15186,11 @@ async function analyzeStepScreenshot() {
 // 걸음수 데이터 로드 (날짜 변경 시)
 function loadStepData(logData) {
     if (logData?.steps) {
-        _stepData = { ...logData.steps };
-        if (String(_stepData.source || '').trim() === 'health_connect') {
-            const savedSyncedAt = Date.parse(_stepData.updatedAt || '');
-            _activeNativeStepImport = {
-                stepCount: Number.parseInt(_stepData.count, 10) || 0,
-                stepSource: 'health_connect',
-                nativeSource: '',
-                syncedAtEpochMillis: Number.isFinite(savedSyncedAt) ? savedSyncedAt : 0
-            };
-        } else {
-            _activeNativeStepImport = null;
-        }
+        _stepData = {
+            ...createEmptyStepData(),
+            ...logData.steps
+        };
+        _activeNativeStepImport = restoreHealthConnectImportState(_stepData);
         updateStepRing(_stepData.count || 0);
 
         if (_stepData.screenshotUrl) {
@@ -15235,7 +15214,7 @@ function loadStepData(logData) {
         if (manualInput && _stepData.count > 0) manualInput.value = _stepData.count;
     } else {
         _activeNativeStepImport = null;
-        _stepData = { count: 0, source: null, screenshotUrl: null, screenshotThumbUrl: null, imageHash: null, distance_km: null, calories: null, active_minutes: null };
+        _stepData = createEmptyStepData();
         updateStepRing(0);
         const preview = document.getElementById('preview-step-screenshot');
         if (preview) { preview.src = ''; preview.style.display = 'none'; }
