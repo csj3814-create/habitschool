@@ -8,6 +8,11 @@
 - Root cause: I confirmed the data plumbing and modal implementation, then overgeneralized that into "the feature is visible" without checking the exact surface the user expected: direct visibility from the list itself rather than only inside a detail modal.
 - Lesson: For admin tooling, verify the exact entry point the user named. If the request says "from the members tab," confirm whether the information is visible in the list, in a modal, or behind another click, and describe it precisely before saying the feature is available.
 
+### 164. Sparse audit data should not render empty placeholder cards for every row in an admin list
+- Symptom: once inactivity email history was surfaced directly in the member list, every user row showed bulky 3-day / 7-day empty cards even when no email had ever been sent.
+- Root cause: I optimized for consistency of structure instead of density of useful information, so absent data got the same visual weight as real audit events.
+- Lesson: In admin tables, sparse operational data should default to silence. Show compact summaries only when an event actually exists, and avoid repeating "not sent" placeholders across every row unless the user explicitly needs absence-state auditing.
+
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 

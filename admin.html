@@ -126,18 +126,17 @@
         .email-history-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; }
         .email-history-item strong { color: #333; }
         .email-audit-empty { font-size: 12px; color: #999; padding: 12px; text-align: center; background: white; border: 1px dashed #ddd; border-radius: 8px; }
-        .member-email-cell { min-width: 280px; }
-        .member-email-stack { display: flex; flex-direction: column; gap: 8px; }
-        .member-email-item { background: #faf7ff; border: 1px solid #eadcf7; border-radius: 10px; padding: 10px; }
-        .member-email-item.is-empty { background: #fafafa; border-style: dashed; border-color: #ddd; color: #888; }
-        .member-email-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-        .member-email-day { font-size: 12px; font-weight: 700; color: #4A148C; }
-        .member-email-meta { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #666; }
-        .member-email-subject { margin-top: 6px; font-size: 12px; font-weight: 600; color: #333; }
-        .member-email-summary { margin-top: 4px; font-size: 11px; color: #666; }
-        .member-email-details { margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
+        .member-email-cell { min-width: 220px; }
+        .member-email-stack { display: flex; flex-direction: column; gap: 6px; }
+        .member-email-item { background: #faf7ff; border: 1px solid #eadcf7; border-radius: 8px; padding: 8px 10px; }
+        .member-email-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .member-email-day { font-size: 11px; font-weight: 700; color: #4A148C; }
+        .member-email-date { font-size: 11px; color: #777; }
+        .member-email-meta { font-size: 11px; color: #666; line-height: 1.4; }
+        .member-email-details { margin-top: 6px; }
         .member-email-details summary { cursor: pointer; font-size: 11px; font-weight: 600; color: #4A148C; }
-        .member-email-preview { max-height: 180px; overflow: auto; margin-top: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: white; font-size: 12px; }
+        .member-email-summary { margin-top: 6px; font-size: 11px; color: #666; line-height: 1.4; }
+        .member-email-preview { max-height: 160px; overflow: auto; margin-top: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: white; font-size: 12px; }
         .member-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; flex-wrap: wrap; }
         .member-pagination-meta { color: #666; }
         .member-pagination-controls { display: flex; align-items: center; gap: 10px; }
@@ -518,21 +517,19 @@
         return normalizeAdminEmailLog(emailLog || {}, { email });
     }
 
-    function renderMemberEmailItem(entry, days, fallbackEmail = '') {
-        if (!entry) {
-            return `
-                <div class="member-email-item is-empty">
-                    <div class="member-email-head">
-                        <div class="member-email-day">${days}일</div>
-                        <span class="badge badge-gray">미발송</span>
-                    </div>
-                    <div class="member-email-summary">아직 발송 기록이 없습니다.</div>
-                </div>
-            `;
-        }
+    function getMemberEmailEntries(emailLog, { email = '' } = {}) {
+        const normalizedLog = getNormalizedEmailLog(emailLog, { email });
+        const sentEntries = [
+            normalizedLog.byDays.day3,
+            normalizedLog.byDays.day7,
+        ].filter(Boolean);
 
-        const subject = escapeHtml(entry.subject || `${days}일 미활동 이메일`);
-        const summary = escapeHtml(entry.summary || '저장된 요약이 없습니다.');
+        return { normalizedLog, sentEntries };
+    }
+
+    function renderMemberEmailItem(entry, fallbackEmail = '') {
+        const subject = escapeHtml(entry.subject || `${entry.days}일 미활동 이메일`);
+        const summary = escapeHtml(entry.summary || '');
         const recipientEmail = escapeHtml(entry.recipientEmail || fallbackEmail || '-');
         const methodLabel = escapeHtml(getReEngagementMethodLabel(entry.method));
         const previewHtml = entry.html
@@ -542,18 +539,13 @@
         return `
             <div class="member-email-item">
                 <div class="member-email-head">
-                    <div class="member-email-day">${days}일</div>
-                    <span class="badge ${entry.legacy ? 'badge-gray' : 'badge-green'}">${entry.legacy ? '레거시' : '발송됨'}</span>
+                    <div class="member-email-day">${entry.days}일</div>
+                    <div class="member-email-date">${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
                 </div>
-                <div class="member-email-meta">
-                    <div>${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
-                    <div>${methodLabel}</div>
-                    <div>${recipientEmail}</div>
-                </div>
-                <div class="member-email-subject">${subject}</div>
-                <div class="member-email-summary">${summary}</div>
+                <div class="member-email-meta">${recipientEmail} · ${methodLabel}</div>
                 <details class="member-email-details">
-                    <summary>본문 보기</summary>
+                    <summary>${subject}</summary>
+                    ${summary ? `<div class="member-email-summary">${summary}</div>` : ''}
                     ${previewHtml}
                 </details>
             </div>
@@ -561,11 +553,11 @@
     }
 
     function renderMemberEmailCell(emailLog, { email = '' } = {}) {
-        const normalizedLog = getNormalizedEmailLog(emailLog, { email });
+        const { sentEntries } = getMemberEmailEntries(emailLog, { email });
+        if (!sentEntries.length) return '';
         return `
             <div class="member-email-stack">
-                ${renderMemberEmailItem(normalizedLog.byDays.day3, 3, email)}
-                ${renderMemberEmailItem(normalizedLog.byDays.day7, 7, email)}
+                ${sentEntries.map((entry) => renderMemberEmailItem(entry, email)).join('')}
             </div>
         `;
     }
