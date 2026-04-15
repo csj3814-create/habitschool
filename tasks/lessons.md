@@ -3,6 +3,11 @@
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
+### 167. Never ship an Android install link without launching the built shell at least once on an emulator or device
+- Symptom: I published an APK link that installed successfully, but tapping the app immediately failed because the launcher activity crashed before Chrome/TWA could open.
+- Root cause: I verified the APK build artifact and signing/assetlinks assumptions, but I did not execute the actual Android launch path. A `LauncherActivity` subclass was calling browser-helper metadata too early and crashed only at runtime.
+- Lesson: any time I share an installable Android build, I must complete one real launch on an emulator or device and verify the top activity stays alive. Build success and signature checks are not enough for install-link validation.
+
 ### 166. Native surface work must be verified on both footprint and round-trip behavior, not just successful builds
 - Symptom: the Android widget shipped with a wider-than-expected footprint, and the in-app `Health Connect에서 가져오기` flow could return without importing steps in the user's actual shell flow.
 - Root cause: I treated Android build success and code-path review as sufficient proof, but native UX depends on resource sizing and full deep-link round trips across web -> native -> web.

@@ -38,7 +38,7 @@ class HabitschoolLauncherActivity : LauncherActivity() {
     }
 
     private fun resolveLaunchingUrl(): Uri {
-        val launchingUrl = super.getLaunchingUrl()
+        val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")
         val action = intent?.action
         if (action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE) {
             if (launchingUrl.scheme == "https"

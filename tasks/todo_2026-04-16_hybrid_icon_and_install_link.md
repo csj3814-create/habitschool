@@ -12,6 +12,10 @@
 - Keep unrelated Android release-doc changes out of this work unless they are directly required.
 
 ### Progress
-- Adaptive launcher foreground was shrunk by increasing the inset padding in `android/app/src/main/res/drawable/ic_launcher_foreground_inset.xml`.
+- Adaptive launcher art was replaced with a clean vector foreground in `android/app/src/main/res/drawable/ic_launcher_foreground.xml` and the launcher background was softened for a cleaner Samsung-style icon silhouette.
 - Added a stable hosting redirect at `/install/android-debug.apk` that points to the built debug APK path.
 - Verified with `npm test`, `npx esbuild ...`, and `cd android && .\gradlew.bat :app:assembleDebug`.
+
+### Follow-up
+- Root cause of the broken install build was not the APK signature but a launcher crash in `HabitschoolLauncherActivity`: it called `super.getLaunchingUrl()` before `LauncherActivity` had initialized its metadata.
+- Replaced the bitmap-style launcher art with a clean vector adaptive icon and added a user-facing install alias at `/install/android.apk`.

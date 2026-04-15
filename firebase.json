@@ -57,6 +57,11 @@
           "source": "/install/android-debug.apk",
           "destination": "/android/app/build/outputs/apk/debug/app-debug.apk",
           "type": 302
+        },
+        {
+          "source": "/install/android.apk",
+          "destination": "/android/app/build/outputs/apk/debug/app-debug.apk",
+          "type": 302
         }
       ],
       "rewrites": [
