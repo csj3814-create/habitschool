@@ -288,6 +288,24 @@ function getInstallCtaState() {
 
 const SIMPLE_PROFILE_CHAT_QR_SIZE = 180;
 
+function buildSimpleModeReferralQrUrl(inviteUrl = '', code = '') {
+    const normalizedCode = String(code || '').trim();
+    const normalizedInviteUrl = String(inviteUrl || '').trim();
+
+    try {
+        const parsedUrl = new URL(normalizedInviteUrl || APP_ORIGIN, APP_ORIGIN);
+        const searchParams = new URLSearchParams(parsedUrl.search);
+        if (normalizedCode && !searchParams.has('ref')) {
+            searchParams.set('ref', normalizedCode);
+        }
+        if (!searchParams.has('ref')) return '';
+        return buildAppModeUrl('simple', '', searchParams);
+    } catch (_) {
+        if (!normalizedCode) return '';
+        return buildAppModeUrl('simple', '', { ref: normalizedCode });
+    }
+}
+
 function readSimpleProfilePointFallback() {
     const pointText = String(document.getElementById('point-balance')?.textContent || '').trim();
     const parsedPoint = Number.parseInt(pointText.replace(/[^\d-]/g, ''), 10);
@@ -334,11 +352,12 @@ function updateSimpleProfileInviteUi({ code = '', link = '' } = {}) {
     const inviteLinkEl = document.getElementById('simple-profile-invite-link');
     const inviteStatusEl = document.getElementById('simple-profile-invite-status');
     if (!inviteCodeEl || !inviteLinkEl || !inviteStatusEl) return;
+    const qrLink = buildSimpleModeReferralQrUrl(link, code);
 
     inviteCodeEl.textContent = code || '-';
-    inviteLinkEl.value = link || '';
-    inviteStatusEl.textContent = link ? '카메라로 비추세요' : '초대 QR을 준비 중이에요.';
-    renderSimpleProfileQr(document.getElementById('simple-profile-invite-qr'), link);
+    inviteLinkEl.value = qrLink || '';
+    inviteStatusEl.textContent = qrLink ? '카메라로 비추세요' : '초대 QR을 준비 중이에요.';
+    renderSimpleProfileQr(document.getElementById('simple-profile-invite-qr'), qrLink);
 }
 
 function renderSimpleProfileQr(container, text, size = SIMPLE_PROFILE_CHAT_QR_SIZE) {
@@ -14911,6 +14930,7 @@ window.openQRModal = function() {
     const code = document.getElementById('referral-invite-code')?.textContent
               || document.getElementById('profile-invite-code')?.textContent
               || '';
+    const qrInviteUrl = buildSimpleModeReferralQrUrl(inviteUrl, code);
 
     if (code && code !== '-') {
         document.getElementById('qr-invite-label').textContent = `초대 코드: ${code}`;
@@ -14926,7 +14946,7 @@ window.openQRModal = function() {
 
     const inviteContainer = document.getElementById('qr-invite-container');
     inviteContainer.innerHTML = '';
-    if (inviteUrl) new window.QRCode(inviteContainer, { ...qrOpts, text: inviteUrl });
+    if (qrInviteUrl) new window.QRCode(inviteContainer, { ...qrOpts, text: qrInviteUrl });
 
     const chatContainer = document.getElementById('qr-chat-container');
     chatContainer.innerHTML = '';

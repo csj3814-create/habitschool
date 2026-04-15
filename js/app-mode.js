@@ -31,11 +31,39 @@ export function normalizeTabForMode(tabName, mode = getAppModeFromPath()) {
     return getAllowedTabsForMode(mode).includes(tabName) ? tabName : fallback;
 }
 
-export function buildAppModeUrl(mode = getAppModeFromPath(), tabName = '') {
+function applySearchParamsToUrl(url, searchParams) {
+    if (!searchParams) return;
+
+    const nextSearchParams = searchParams instanceof URLSearchParams
+        ? new URLSearchParams(searchParams)
+        : new URLSearchParams();
+
+    if (!(searchParams instanceof URLSearchParams)) {
+        Object.entries(searchParams).forEach(([key, value]) => {
+            if (value == null || value === '') return;
+
+            if (Array.isArray(value)) {
+                value.forEach((item) => {
+                    if (item == null || item === '') return;
+                    nextSearchParams.append(key, String(item));
+                });
+                return;
+            }
+
+            nextSearchParams.set(key, String(value));
+        });
+    }
+
+    const serialized = nextSearchParams.toString();
+    url.search = serialized ? `?${serialized}` : '';
+}
+
+export function buildAppModeUrl(mode = getAppModeFromPath(), tabName = '', searchParams = null) {
     const nextMode = mode === SIMPLE_MODE ? SIMPLE_MODE : DEFAULT_MODE;
     const url = new URL(window.location.origin + (nextMode === SIMPLE_MODE ? SIMPLE_MODE_PATH : '/'));
     const defaultTab = getDefaultTabForMode(nextMode);
     const normalizedTab = normalizeTabForMode(tabName || defaultTab, nextMode);
+    applySearchParamsToUrl(url, searchParams);
     if (normalizedTab !== defaultTab) {
         url.hash = `#${normalizedTab}`;
     }

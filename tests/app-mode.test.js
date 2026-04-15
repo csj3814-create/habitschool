@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getAppModeFromPath, getDefaultTabForMode, normalizeAppPath, normalizeTabForMode } from '../js/app-mode.js';
+import { buildAppModeUrl, getAppModeFromPath, getDefaultTabForMode, normalizeAppPath, normalizeTabForMode } from '../js/app-mode.js';
 
 describe('app-mode helpers', () => {
     it('treats /simple as the simple app mode path', () => {
@@ -22,5 +22,17 @@ describe('app-mode helpers', () => {
         expect(normalizeAppPath('/simple/')).toBe('/simple');
         expect(normalizeAppPath('/')).toBe('/');
         expect(normalizeAppPath('')).toBe('/');
+    });
+
+    it('builds a simple-mode url without forcing a hash for the default tab', () => {
+        const originalWindow = global.window;
+        global.window = { location: { origin: 'https://habitschool.web.app' } };
+
+        try {
+            expect(buildAppModeUrl('simple')).toBe('https://habitschool.web.app/simple');
+            expect(buildAppModeUrl('simple', '', { ref: 'ABC123' })).toBe('https://habitschool.web.app/simple?ref=ABC123');
+        } finally {
+            global.window = originalWindow;
+        }
     });
 });
