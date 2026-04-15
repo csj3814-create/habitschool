@@ -3494,7 +3494,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=156';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=157';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;

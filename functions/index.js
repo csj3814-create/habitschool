@@ -97,6 +97,7 @@ const HBT_DECIMALS = 8;
 const HBT_TRANSFER_INTERFACE = new ethers.Interface([
     "event Transfer(address indexed from, address indexed to, uint256 value)"
 ]);
+const HABIT_CONTRACT_INTERFACE = new ethers.Interface(contractAbi.HaBit || []);
 const HBT_TRANSFER_TOPIC = ethers.id("Transfer(address,address,uint256)");
 const DEFAULT_HBT_TRANSFER_HISTORY_LIMIT = 50;
 const MAX_HBT_TRANSFER_HISTORY_LIMIT = 100;
@@ -877,6 +878,73 @@ function getHabitContract(signerOrProvider) {
     return new ethers.Contract(HABIT_ADDRESS, contractAbi.HaBit, signerOrProvider);
 }
 
+function normalizeMintAttemptId(rawAttemptId) {
+    const normalized = String(rawAttemptId || "").trim();
+    return /^[A-Za-z0-9_-]{8,120}$/.test(normalized) ? normalized : "";
+}
+
+function extractContractErrorData(error) {
+    const candidates = [
+        error?.data,
+        error?.error?.data,
+        error?.info?.error?.data,
+        error?.info?.payload?.params?.[0]?.data,
+        error?.receipt?.revertReason
+    ];
+    const found = candidates.find((value) => typeof value === "string" && value.startsWith("0x"));
+    return found || "";
+}
+
+function serializeDecodedErrorArg(value) {
+    if (typeof value === "bigint") return value.toString();
+    if (Array.isArray(value)) return value.map(serializeDecodedErrorArg);
+    if (value && typeof value === "object") {
+        try {
+            return JSON.parse(JSON.stringify(value));
+        } catch (_) {
+            return String(value);
+        }
+    }
+    return value;
+}
+
+function decodeContractError(contractInterface, error) {
+    const errorData = extractContractErrorData(error);
+    if (!errorData) return null;
+
+    const decoded = {
+        selector: errorData.slice(0, 10),
+        data: errorData
+    };
+
+    try {
+        const parsed = contractInterface.parseError(errorData);
+        if (parsed) {
+            decoded.name = parsed.name || null;
+            decoded.signature = parsed.signature || null;
+            decoded.args = Array.from(parsed.args || []).map(serializeDecodedErrorArg);
+        }
+    } catch (_) {
+        // Keep selector/data only when ABI decode is unavailable.
+    }
+
+    return decoded;
+}
+
+function buildMintFailureLogContext(error) {
+    const decoded = decodeContractError(HABIT_CONTRACT_INTERFACE, error);
+    return {
+        errorCode: error?.code || null,
+        shortMessage: error?.shortMessage || null,
+        message: error?.message || String(error || ""),
+        errorName: error?.errorName || decoded?.name || null,
+        errorSignature: error?.errorSignature || decoded?.signature || null,
+        errorSelector: decoded?.selector || null,
+        errorArgs: decoded?.args || [],
+        errorData: decoded?.data || extractContractErrorData(error) || null
+    };
+}
+
 function getStakingContract(signerOrProvider) {
     if (!isConfiguredAddress(STAKING_ADDRESS) || !contractAbi.HaBitStaking) {
         return null;
@@ -1160,6 +1228,8 @@ exports.mintHBT = onCall(
 
         const uid = request.auth.uid;
         const { pointAmount } = request.data;
+        const attemptId = normalizeMintAttemptId(request.data?.attemptId)
+            || `mint_${uid.slice(0, 8)}_${Date.now().toString(36)}`;
 
         if (!pointAmount || typeof pointAmount !== "number" || pointAmount < MIN_POINTS) {
             throw new HttpsError("invalid-argument", `최소 ${MIN_POINTS}P 이상 필요합니다.`);
@@ -1182,7 +1252,8 @@ exports.mintHBT = onCall(
             }
             await lockRef.set({
                 timestamp: FieldValue.serverTimestamp(),
-                pointAmount: pointAmount
+                pointAmount: pointAmount,
+                attemptId
             });
 
             // 1. Firestore에서 사용자 데이터 확인
@@ -1222,7 +1293,7 @@ exports.mintHBT = onCall(
             });
 
             // 2. 온체인에서 변환 비율 확인
-            const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+            const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
             // v2: currentRate는 RATE_SCALE(10^8) 단위, 1P = currentRate/10^8 HBT
@@ -1254,21 +1325,43 @@ exports.mintHBT = onCall(
 
             // 4. 온체인 민팅 (habitMine 호출)
             let txHash = null;
-            let onchainSuccess = false;
 
             try {
                 const tx = await habitContract.mint(walletAddress, pointAmount);
                 const receipt = await tx.wait();
                 txHash = receipt.hash;
-                onchainSuccess = true;
             } catch (chainError) {
                 // 온체인 실패 시 포인트 복원
-                console.error("온체인 민팅 실패, 포인트 복원:", chainError.message);
+                const failureContext = buildMintFailureLogContext(chainError);
+                console.error("[mintHBT] onchain mint failed; restoring points", {
+                    uid,
+                    attemptId,
+                    pointAmount,
+                    walletAddress,
+                    hbtAmount,
+                    conversionRate: rateNumber,
+                    phase: phaseNumber,
+                    chainKey: ACTIVE_CHAIN.key,
+                    network: ACTIVE_CHAIN.networkTag,
+                    ...failureContext
+                });
                 await userRef.update({
                     coins: FieldValue.increment(pointAmount)
                 });
                 await lockRef.delete();
-                throw new HttpsError("internal", "온체인 민팅에 실패했습니다. 잠시 후 다시 시도해주세요.");
+                throw new HttpsError(
+                    "internal",
+                    "온체인 민팅에 실패했습니다. 잠시 후 다시 시도해주세요.",
+                    {
+                        kind: "onchain_mint_failed",
+                        attemptId,
+                        errorName: failureContext.errorName,
+                        errorSignature: failureContext.errorSignature,
+                        errorSelector: failureContext.errorSelector,
+                        network: ACTIVE_CHAIN.networkTag,
+                        phase: phaseNumber
+                    }
+                );
             }
 
             // 5. Firestore 업데이트 (온체인 민팅 기록만, hbtBalance는 온체인이 진실의 원천)
@@ -1280,26 +1373,44 @@ exports.mintHBT = onCall(
             await lockRef.delete();
 
             // 7. 거래 기록 저장
-            await db.collection("blockchain_transactions").add({
+            const txRecordRef = db.collection("blockchain_transactions").doc();
+            await txRecordRef.set({
                 userId: uid,
                 type: "conversion",
                 pointsUsed: pointAmount,
                 hbtReceived: hbtAmount,
                 conversionRate: rateNumber,
                 phase: phaseNumber,
-                txHash: txHash,
-                walletAddress: walletAddress,
+                txHash,
+                attemptId,
+                walletAddress,
                 date: today,
                 timestamp: FieldValue.serverTimestamp(),
                 status: "success",
                 network: ACTIVE_CHAIN.networkTag
             });
 
+            console.log("[mintHBT] success", {
+                uid,
+                attemptId,
+                transactionId: txRecordRef.id,
+                pointAmount,
+                hbtReceived: hbtAmount,
+                txHash,
+                walletAddress,
+                conversionRate: rateNumber,
+                phase: phaseNumber,
+                chainKey: ACTIVE_CHAIN.key,
+                network: ACTIVE_CHAIN.networkTag
+            });
+
             return {
                 success: true,
+                attemptId,
+                transactionId: txRecordRef.id,
                 pointsUsed: pointAmount,
                 hbtReceived: hbtAmount,
-                txHash: txHash,
+                txHash,
                 explorerUrl: `${EXPLORER_URL}/tx/${txHash}`,
                 conversionRate: rateNumber,
                 phase: phaseNumber
@@ -1309,8 +1420,14 @@ exports.mintHBT = onCall(
             // 에러 시 락 해제
             try { await db.collection("mint_locks").doc(uid).delete(); } catch (_) {}
             if (error instanceof HttpsError) throw error;
-            console.error("mintHBT 오류:", error);
-            throw new HttpsError("internal", "변환 처리 중 오류가 발생했습니다.");
+            console.error("[mintHBT] unexpected error", {
+                uid,
+                attemptId,
+                errorCode: error?.code || null,
+                message: error?.message || String(error || ""),
+                stack: error?.stack || null
+            });
+            throw new HttpsError("internal", "변환 처리 중 오류가 발생했습니다.", { attemptId });
         }
     }
 );

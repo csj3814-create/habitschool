@@ -44,7 +44,7 @@ const CHALLENGE_ID_MAP = {
 };
 
 import { auth, db, functions, FIREBASE_REGION, APP_ENV } from './firebase-config.js';
-import { doc, updateDoc, setDoc, getDoc, getDocFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js';
 import { getKstDateString } from './ui-helpers.js';
@@ -967,6 +967,64 @@ export function getCurrentEra(totalMinted = 0) {
     return phase;
 }
 
+function buildMintAttemptId(uid = '') {
+    const normalizedUid = String(uid || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 8) || 'guest';
+    const timePart = Date.now().toString(36);
+    const randomPart = Math.random().toString(36).slice(2, 8);
+    return `mint_${normalizedUid}_${timePart}_${randomPart}`;
+}
+
+function normalizeCallableErrorCode(code) {
+    return String(code || '').replace(/^functions\//, '').trim().toLowerCase();
+}
+
+function isRecoverableMintCallableError(error) {
+    const code = normalizeCallableErrorCode(error?.code);
+    return ['internal', 'unknown', 'unavailable', 'deadline-exceeded', 'cancelled'].includes(code);
+}
+
+async function confirmRecentConversionAttempt(uid, {
+    attemptId = '',
+    txHash = '',
+    pointAmount = 0,
+    maxAttempts = 4,
+    delayMs = 1200
+} = {}) {
+    if (!uid || !attemptId) return null;
+
+    const normalizedTxHash = String(txHash || '').trim().toLowerCase();
+    const expectedPoints = Number(pointAmount || 0);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        try {
+            const snapshot = await getDocsFromServer(query(
+                collection(db, 'blockchain_transactions'),
+                where('userId', '==', uid),
+                orderBy('timestamp', 'desc'),
+                limit(10)
+            ));
+            const match = snapshot.docs
+                .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+                .find((record) => {
+                    if (record.type !== 'conversion' || record.status !== 'success') return false;
+                    const attemptMatches = record.attemptId === attemptId;
+                    const txMatches = normalizedTxHash && String(record.txHash || '').trim().toLowerCase() === normalizedTxHash;
+                    const pointsMatch = expectedPoints > 0 ? Number(record.pointsUsed || 0) === expectedPoints : true;
+                    return pointsMatch && (attemptMatches || txMatches);
+                });
+            if (match) return match;
+        } catch (error) {
+            console.warn('[mintHBT] recent conversion confirmation query failed:', error?.message || error);
+        }
+
+        if (attempt < maxAttempts - 1) {
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+    }
+
+    return null;
+}
+
 /**
  * 포인트를 HBT 토큰으로 변환 (Cloud Function 경유 온체인 민팅)
  * A구간 기준: 100P → 100 HBT (주간 난이도 조절에 따라 변동)
@@ -1000,6 +1058,41 @@ export async function convertPointsToHBT(pointAmount) {
     }
 
     // Cloud Function 경유 온체인 민팅
+    const attemptId = buildMintAttemptId(currentUser.uid);
+    const scheduleAssetRefresh = () => {
+        if (!window.updateAssetDisplay) return;
+        setTimeout(() => {
+            window.updateAssetDisplay?.(true).catch(() => { });
+        }, 1500);
+        setTimeout(() => {
+            window.updateAssetDisplay?.(true).catch(() => { });
+        }, 5000);
+    };
+    const applyConfirmedConversion = async (record, source = 'callable') => {
+        const pointsUsed = Number(record?.pointsUsed || pointAmount || 0);
+        const hbtReceived = Number(record?.hbtReceived || 0);
+
+        if (window.applyOptimisticConversionResult) {
+            window.applyOptimisticConversionResult({
+                pointsUsed,
+                hbtReceived
+            });
+        }
+
+        showToast(`✅ ${pointsUsed}P → ${hbtReceived} HBT 변환 완료!`);
+
+        const explorerUrl = record?.explorerUrl
+            || (record?.txHash ? `${ACTIVE_BSC_NETWORK.explorer}/tx/${record.txHash}` : '');
+        if (explorerUrl) {
+            console.log(`🔍 TX (${source}): ${explorerUrl}`);
+        }
+
+        if (window.updateAssetDisplay) {
+            await window.updateAssetDisplay(true);
+            scheduleAssetRefresh();
+        }
+    };
+
     try {
         await ensureFunctions();
         if (!mintHBTFunction) {
@@ -1010,42 +1103,55 @@ export async function convertPointsToHBT(pointAmount) {
 
         showToast('⏳ HBT 변환 중입니다...');
 
-        const result = await mintHBTFunction({ pointAmount });
+        const result = await mintHBTFunction({ pointAmount, attemptId });
         const data = result.data;
-        const scheduleAssetRefresh = () => {
-            if (!window.updateAssetDisplay) return;
-            setTimeout(() => {
-                window.updateAssetDisplay?.(true).catch(() => {});
-            }, 1500);
-            setTimeout(() => {
-                window.updateAssetDisplay?.(true).catch(() => {});
-            }, 5000);
-        };
-        const applyOptimisticConversion = () => {
-            if (!window.applyOptimisticConversionResult) return;
-            window.applyOptimisticConversionResult({
-                pointsUsed: data.pointsUsed,
-                hbtReceived: data.hbtReceived
+        if (data?.success) {
+            await applyConfirmedConversion(data, 'callable');
+            return true;
+        }
+
+        const confirmedRecord = await confirmRecentConversionAttempt(currentUser.uid, {
+            attemptId: data?.attemptId || attemptId,
+            txHash: data?.txHash || '',
+            pointAmount
+        });
+        if (confirmedRecord) {
+            console.warn('[mintHBT] callable response was incomplete, but Firestore confirmed success:', {
+                attemptId: confirmedRecord.attemptId || attemptId,
+                txHash: confirmedRecord.txHash || '',
+                pointAmount
             });
-        };
-
-        if (data.success) {
-            applyOptimisticConversion();
-            showToast(`✅ ${data.pointsUsed}P → ${data.hbtReceived} HBT 변환 완료!`);
-            if (data.txHash) {
-                console.log(`🔍 TX: ${data.explorerUrl}`);
-            }
+            await applyConfirmedConversion(confirmedRecord, 'server-confirmed');
+            return true;
         }
 
-        if (window.updateAssetDisplay) {
-            await window.updateAssetDisplay(true);
-            scheduleAssetRefresh();
-        }
-        return true;
+        showToast('❌ HBT 변환 결과를 확인하지 못했습니다. 잠시 후 자산 탭에서 다시 확인해주세요.');
+        return false;
     } catch (onchainError) {
-        console.error('❌ 온체인 민팅 실패:', onchainError.code, onchainError.message);
+        const confirmedRecord = isRecoverableMintCallableError(onchainError)
+            ? await confirmRecentConversionAttempt(currentUser.uid, {
+                attemptId: onchainError?.details?.attemptId || attemptId,
+                pointAmount
+            })
+            : null;
+
+        if (confirmedRecord) {
+            console.warn('[mintHBT] recovered success after callable error', {
+                attemptId: confirmedRecord.attemptId || attemptId,
+                txHash: confirmedRecord.txHash || '',
+                callableCode: onchainError?.code || null,
+                callableDetails: onchainError?.details || null
+            });
+            await applyConfirmedConversion(confirmedRecord, 'server-confirmed');
+            return true;
+        }
+
+        console.error('❌ 온체인 민팅 실패:', onchainError.code, onchainError.message, onchainError?.details || null);
         const msg = onchainError.message || '';
-        if (msg.includes('포인트가 부족')) {
+        const code = normalizeCallableErrorCode(onchainError?.code);
+        if (code === 'already-exists' || msg.includes('이전 변환이 처리 중')) {
+            showToast('⏳ 이전 변환이 아직 처리 중입니다. 잠시 후 다시 확인해주세요.');
+        } else if (msg.includes('포인트가 부족')) {
             showToast('❌ 포인트가 부족합니다.');
         } else if (msg.includes('일일 변환 한도')) {
             showToast('❌ 일일 변환 한도를 초과했습니다.');
