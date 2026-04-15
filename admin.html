@@ -114,6 +114,33 @@
         .ab-cheer { background: #E3F2FD; color: #1565C0; border: 1px solid #2196F3; }
         .fb-textarea { width: 100%; min-height: 70px; padding: 9px; border-radius: 8px; border: 1px solid #ccc; resize: none; font-family: inherit; font-size: 13px; }
         .fb-submit { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; }
+        .email-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 768px) { .email-audit-grid { grid-template-columns: 1fr; } }
+        .email-audit-card { background: white; border: 1px solid #eee; border-radius: 10px; padding: 12px; }
+        .email-audit-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .email-audit-title { font-weight: 700; color: #4A148C; font-size: 13px; }
+        .email-audit-meta { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #666; }
+        .email-audit-preview { margin-top: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; background: #fff; }
+        .email-audit-preview > div { max-height: 260px; overflow: auto; padding: 12px; background: #fff; }
+        .email-history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .email-history-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; }
+        .email-history-item strong { color: #333; }
+        .email-audit-empty { font-size: 12px; color: #999; padding: 12px; text-align: center; background: white; border: 1px dashed #ddd; border-radius: 8px; }
+        .member-email-cell { min-width: 280px; }
+        .member-email-stack { display: flex; flex-direction: column; gap: 8px; }
+        .member-email-item { background: #faf7ff; border: 1px solid #eadcf7; border-radius: 10px; padding: 10px; }
+        .member-email-item.is-empty { background: #fafafa; border-style: dashed; border-color: #ddd; color: #888; }
+        .member-email-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .member-email-day { font-size: 12px; font-weight: 700; color: #4A148C; }
+        .member-email-meta { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #666; }
+        .member-email-subject { margin-top: 6px; font-size: 12px; font-weight: 600; color: #333; }
+        .member-email-summary { margin-top: 4px; font-size: 11px; color: #666; }
+        .member-email-details { margin-top: 8px; border-top: 1px solid #eee; padding-top: 8px; }
+        .member-email-details summary { cursor: pointer; font-size: 11px; font-weight: 600; color: #4A148C; }
+        .member-email-preview { max-height: 180px; overflow: auto; margin-top: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: white; font-size: 12px; }
+        .member-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; flex-wrap: wrap; }
+        .member-pagination-meta { color: #666; }
+        .member-pagination-controls { display: flex; align-items: center; gap: 10px; }
 
         .history-wrap { height: 100%; overflow-y: auto; background: white; border-radius: 8px; border: 1px solid #eee; padding: 10px; }
         .hc { border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
@@ -212,7 +239,7 @@
         <div class="box">
             <h3>📋 회원 리스트</h3>
             <div class="filter-bar">
-                <input type="text" class="search-inp" id="member-search" placeholder="🔍 이름 검색..." oninput="renderMembers()">
+                <input type="text" class="search-inp" id="member-search" placeholder="🔍 이름 검색..." oninput="resetMemberPageAndRender()">
                 <button class="chip active" data-f="all" onclick="setFilter('all')">전체</button>
                 <button class="chip" data-f="today" onclick="setFilter('today')">오늘 인증</button>
                 <button class="chip" data-f="alert" onclick="setFilter('alert')">건강 경보</button>
@@ -232,10 +259,19 @@
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
+                    <th>미활동 이메일</th>
                     <th>상세</th>
                 </tr></thead>
-                <tbody id="member-tbody"><tr><td colspan="11">데이터를 불러오는 중...</td></tr></tbody>
+                <tbody id="member-tbody"><tr><td colspan="12">데이터를 불러오는 중...</td></tr></tbody>
             </table>
+            <div class="member-pagination">
+                <div id="member-page-meta" class="member-pagination-meta">총 0명</div>
+                <div class="member-pagination-controls">
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="memberPage(-1)" id="member-prev">이전</button>
+                    <span id="member-page-label">1 / 1</span>
+                    <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="memberPage(1)" id="member-next">다음</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -427,6 +463,13 @@
                         <button class="btn btn-primary" onclick="adjustCoins()">적용</button>
                     </div>
                 </div>
+                <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
+                    <h3 class="sec-title">📧 3일 / 7일 미활동 이메일 이력</h3>
+                    <div id="email-audit-grid" class="email-audit-grid">
+                        <div class="email-audit-empty">발송 이력을 불러오는 중...</div>
+                    </div>
+                    <div id="email-history-list" class="email-history-list"></div>
+                </div>
             </div>
             <div style="display:flex;flex-direction:column;overflow:hidden;">
                 <h3 class="sec-title" style="margin:0 0 10px;">📋 최근 30일 상세 기록</h3>
@@ -441,15 +484,175 @@
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
+    import { formatAdminDateTime, normalizeAdminEmailLog, getReEngagementMethodLabel } from './js/admin-utils.js';
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
 
     let trendChart = null, activityChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
-    let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc';
+    let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
+    const PAGE_SIZE_MEMBERS = 20;
     const tabLoaded = {};
 
     function today() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); }
     const todayStr = today();
+
+    function toJsDate(value) {
+        if (!value) return null;
+        if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+        if (typeof value?.toDate === 'function') {
+            const parsed = value.toDate();
+            return Number.isNaN(parsed?.getTime?.()) ? null : parsed;
+        }
+        if (typeof value?.seconds === 'number') {
+            const parsed = new Date((value.seconds * 1000) + Math.floor((value.nanoseconds || 0) / 1e6));
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        }
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function getNormalizedEmailLog(emailLog, { email = '' } = {}) {
+        if (emailLog?.byDays && Array.isArray(emailLog?.history)) {
+            return normalizeAdminEmailLog(emailLog, { email });
+        }
+        return normalizeAdminEmailLog(emailLog || {}, { email });
+    }
+
+    function renderMemberEmailItem(entry, days, fallbackEmail = '') {
+        if (!entry) {
+            return `
+                <div class="member-email-item is-empty">
+                    <div class="member-email-head">
+                        <div class="member-email-day">${days}일</div>
+                        <span class="badge badge-gray">미발송</span>
+                    </div>
+                    <div class="member-email-summary">아직 발송 기록이 없습니다.</div>
+                </div>
+            `;
+        }
+
+        const subject = escapeHtml(entry.subject || `${days}일 미활동 이메일`);
+        const summary = escapeHtml(entry.summary || '저장된 요약이 없습니다.');
+        const recipientEmail = escapeHtml(entry.recipientEmail || fallbackEmail || '-');
+        const methodLabel = escapeHtml(getReEngagementMethodLabel(entry.method));
+        const previewHtml = entry.html
+            ? `<div class="member-email-preview">${entry.html}</div>`
+            : `<div class="member-email-preview">저장된 본문이 없습니다.</div>`;
+
+        return `
+            <div class="member-email-item">
+                <div class="member-email-head">
+                    <div class="member-email-day">${days}일</div>
+                    <span class="badge ${entry.legacy ? 'badge-gray' : 'badge-green'}">${entry.legacy ? '레거시' : '발송됨'}</span>
+                </div>
+                <div class="member-email-meta">
+                    <div>${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
+                    <div>${methodLabel}</div>
+                    <div>${recipientEmail}</div>
+                </div>
+                <div class="member-email-subject">${subject}</div>
+                <div class="member-email-summary">${summary}</div>
+                <details class="member-email-details">
+                    <summary>본문 보기</summary>
+                    ${previewHtml}
+                </details>
+            </div>
+        `;
+    }
+
+    function renderMemberEmailCell(emailLog, { email = '' } = {}) {
+        const normalizedLog = getNormalizedEmailLog(emailLog, { email });
+        return `
+            <div class="member-email-stack">
+                ${renderMemberEmailItem(normalizedLog.byDays.day3, 3, email)}
+                ${renderMemberEmailItem(normalizedLog.byDays.day7, 7, email)}
+            </div>
+        `;
+    }
+
+    function renderMemberPagination(totalRows) {
+        const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE_MEMBERS));
+        const safePage = Math.min(memberCurrentPage, totalPages - 1);
+        memberCurrentPage = Math.max(0, safePage);
+
+        const meta = document.getElementById('member-page-meta');
+        const label = document.getElementById('member-page-label');
+        const prev = document.getElementById('member-prev');
+        const next = document.getElementById('member-next');
+        if (!meta || !label || !prev || !next) return;
+
+        meta.textContent = `총 ${totalRows}명 · 페이지당 ${PAGE_SIZE_MEMBERS}명`;
+        label.textContent = `${memberCurrentPage + 1} / ${totalPages}`;
+        prev.disabled = memberCurrentPage === 0 || totalRows === 0;
+        next.disabled = memberCurrentPage >= totalPages - 1 || totalRows === 0;
+    }
+
+    function renderEmailAuditCard(entry, days, fallbackEmail = '') {
+        if (!entry) {
+            return `
+                <div class="email-audit-card">
+                    <div class="email-audit-head">
+                        <div class="email-audit-title">${days}일 미활동</div>
+                        <span class="badge badge-gray">미발송</span>
+                    </div>
+                    <div class="email-audit-empty">아직 발송 기록이 없습니다.</div>
+                </div>
+            `;
+        }
+
+        const subject = escapeHtml(entry.subject || `${days}일 미활동 이메일`);
+        const summary = escapeHtml(entry.summary || '저장된 요약이 없습니다.');
+        const recipientEmail = escapeHtml(entry.recipientEmail || fallbackEmail || '-');
+        const methodLabel = escapeHtml(getReEngagementMethodLabel(entry.method));
+        const previewHtml = entry.html
+            ? `<div>${entry.html}</div>`
+            : `<div class="email-audit-empty">저장된 본문이 없습니다.</div>`;
+
+        return `
+            <div class="email-audit-card">
+                <div class="email-audit-head">
+                    <div class="email-audit-title">${days}일 미활동</div>
+                    <span class="badge ${entry.legacy ? 'badge-gray' : 'badge-green'}">${entry.legacy ? '레거시' : '발송됨'}</span>
+                </div>
+                <div class="email-audit-meta">
+                    <div><strong>발송 시각</strong>: ${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
+                    <div><strong>발송 방식</strong>: ${methodLabel}</div>
+                    <div><strong>수신 이메일</strong>: ${recipientEmail}</div>
+                    <div><strong>제목</strong>: ${subject}</div>
+                    <div><strong>요약</strong>: ${summary}</div>
+                </div>
+                <details class="email-audit-preview">
+                    <summary style="padding:10px 12px;cursor:pointer;font-weight:600;">본문 보기</summary>
+                    ${previewHtml}
+                </details>
+            </div>
+        `;
+    }
+
+    function renderEmailAuditSection(emailLog, { email = '' } = {}) {
+        const normalizedLog = getNormalizedEmailLog(emailLog, { email });
+        const auditGrid = document.getElementById('email-audit-grid');
+        const historyList = document.getElementById('email-history-list');
+        if (!auditGrid || !historyList) return;
+
+        auditGrid.innerHTML = [
+            renderEmailAuditCard(normalizedLog.byDays.day3, 3, email),
+            renderEmailAuditCard(normalizedLog.byDays.day7, 7, email),
+        ].join('');
+
+        if (!normalizedLog.history.length) {
+            historyList.innerHTML = '<div class="email-audit-empty">최근 발송 이력이 없습니다.</div>';
+            return;
+        }
+
+        historyList.innerHTML = normalizedLog.history.map((entry) => `
+            <div class="email-history-item">
+                <div><strong>${entry.days}일 미활동</strong> · ${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
+                <div>${escapeHtml(getReEngagementMethodLabel(entry.method))} · ${escapeHtml(entry.recipientEmail || email || '-')}</div>
+                <div style="margin-top:4px;">${escapeHtml(entry.subject || '-')}</div>
+            </div>
+        `).join('');
+    }
 
     // ── Auth ──────────────────────────────────────────────────
     const ADMIN_EMAILS = ['csj3814@gmail.com'];
@@ -527,6 +730,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + name).style.display = 'block';
         document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+        if (name === 'system') {
+            tabLoaded[name] = true;
+            loadTab(name);
+            return;
+        }
         if (!tabLoaded[name]) { tabLoaded[name] = true; loadTab(name); }
     };
 
@@ -737,18 +945,46 @@
 
                 // 이메일 발송 배지
                 let emailBadge = '';
-                const eLog = emailLogs[uid];
-                if (eLog?.lastSentAt) {
-                    const sentAt = eLog.lastSentAt.toDate ? eLog.lastSentAt.toDate() : new Date(eLog.lastSentAt.seconds * 1000);
+                const emailLog = getNormalizedEmailLog(emailLogs[uid] || {}, { email: m.email || '' });
+                const eLog = emailLog;
+                const sentAt = toJsDate(eLog?.lastSentAt);
+                if (sentAt) {
                     const daysAgo = Math.floor((new Date() - sentAt) / 86400000);
                     const color = daysAgo <= 7 ? '#ff9800' : '#bbb';
                     emailBadge = `<span style="font-size:10px;color:${color};margin-left:4px;">📧${daysAgo}일전</span>`;
                 }
 
-                memberRows.push({ uid, date: r.date||'-', name, email: m.email||'-', level: m.missionLevel||1, streak: m.currentStreak||0, coins: m.coins||0, hbt: m.hbtBalance||m.totalHbtEarned||0, glucose: glu, sys, dia, msgBadge, emailBadge, alert: glu>=126||sys>=140 });
+                const displayEmail =
+                    m.email
+                    || emailLog.history[0]?.recipientEmail
+                    || emailLog.byDays.day3?.recipientEmail
+                    || emailLog.byDays.day7?.recipientEmail
+                    || '-';
+
+                memberRows.push({
+                    uid,
+                    date: r.date || '-',
+                    name,
+                    email: displayEmail,
+                    level: m.missionLevel || 1,
+                    streak: m.currentStreak || 0,
+                    coins: m.coins || 0,
+                    hbt: m.hbtBalance || m.totalHbtEarned || 0,
+                    glucose: glu,
+                    sys,
+                    dia,
+                    msgBadge,
+                    emailBadge,
+                    emailLog,
+                    alert: glu >= 126 || sys >= 140,
+                });
             });
+            memberCurrentPage = 0;
             renderMembers();
-        } catch(e) { document.getElementById('member-tbody').innerHTML = `<tr><td colspan="9" style="color:red;">${escapeHtml(e.message)}</td></tr>`; }
+        } catch(e) {
+            document.getElementById('member-tbody').innerHTML = `<tr><td colspan="12" style="color:red;">${escapeHtml(e.message)}</td></tr>`;
+            renderMemberPagination(0);
+        }
     }
 
     window.renderMembers = function() {
@@ -766,8 +1002,20 @@
             return sortDir==='asc' ? (av||0)-(bv||0) : (bv||0)-(av||0);
         });
         const tbody = document.getElementById('member-tbody');
-        if (!rows.length) { tbody.innerHTML='<tr><td colspan="11" style="color:#999;">조건에 맞는 회원 없음</td></tr>'; return; }
-        tbody.innerHTML = rows.map(r => `<tr class="${r.alert?'alert-row':''}">
+        if (!rows.length) {
+            tbody.innerHTML='<tr><td colspan="12" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
+            memberCurrentPage = 0;
+            renderMemberPagination(0);
+            return;
+        }
+
+        const totalRows = rows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE_MEMBERS));
+        if (memberCurrentPage >= totalPages) memberCurrentPage = totalPages - 1;
+        const start = memberCurrentPage * PAGE_SIZE_MEMBERS;
+        const pageRows = rows.slice(start, start + PAGE_SIZE_MEMBERS);
+
+        tbody.innerHTML = pageRows.map(r => `<tr class="${r.alert?'alert-row':''}">
             <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}${r.emailBadge||''}</td>
             <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
             <td>Lv.${r.level}</td>
@@ -775,18 +1023,34 @@
             <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
             <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
             <td>${r.msgBadge}</td>
+            <td class="member-email-cell">${renderMemberEmailCell(r.emailLog, { email: r.email })}</td>
             <td><button class="btn-view" onclick="openDetail('${r.uid}')">🔍 상세</button></td>
         </tr>`).join('');
+        renderMemberPagination(totalRows);
+    };
+
+    window.resetMemberPageAndRender = function() {
+        memberCurrentPage = 0;
+        renderMembers();
     };
 
     window.setFilter = function(f) {
         memberFilter = f;
         document.querySelectorAll('.chip[data-f]').forEach(c => c.classList.toggle('active', c.dataset.f===f));
+        memberCurrentPage = 0;
         renderMembers();
     };
     window.sortBy = function(col) {
         sortDir = sortCol===col && sortDir==='desc' ? 'asc' : 'desc';
         sortCol = col;
+        memberCurrentPage = 0;
+        renderMembers();
+    };
+
+    window.memberPage = function(dir) {
+        const nextPage = memberCurrentPage + dir;
+        if (nextPage < 0) return;
+        memberCurrentPage = nextPage;
         renderMembers();
     };
 
@@ -1300,7 +1564,7 @@
 
     // ── Tab 5: System ─────────────────────────────────────────
     async function loadSystem() {
-        await Promise.all([loadReferrals(), loadAdmins()]);
+        await Promise.all([loadReferralsV2(), loadAdmins()]);
     }
 
     async function loadReferrals() {
@@ -1341,6 +1605,47 @@
         } catch(_) { tbody.innerHTML='<tr><td colspan="5" style="color:#999;">조회 불가</td></tr>'; }
     }
 
+    async function loadReferralsV2() {
+        const tbody = document.getElementById('referral-tbody');
+        try {
+            const fn = httpsCallable(fns, 'getInviteLeaderboard');
+            const result = await fn({});
+            const rows = Array.isArray(result?.data?.rows) ? result.data.rows : [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color:#999;">초대 성공 이력이 없습니다.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            rows.forEach((row, index) => {
+                const members = Array.isArray(row.members) ? row.members : [];
+                const rowId = `ref-expand-v2-${index}`;
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${escapeHtml(row.name || '-')}</td>
+                    <td style="font-family:monospace;font-weight:bold;">${escapeHtml(row.code || '-')}</td>
+                    <td>총 ${Number(row.successfulInvites || 0)}명</td>
+                    <td><button class="btn-view" onclick="toggleReferralMembers('${rowId}')">상세 보기</button></td>
+                </tr>
+                <tr id="${rowId}" style="display:none;"><td colspan="5" style="padding:0;">
+                    <div style="background:#F3E5F5;padding:10px 16px;font-size:12px;">
+                        ${members.length ? members.map((member) => `
+                            <div style="display:inline-flex;align-items:center;gap:6px;margin:3px 6px;background:white;padding:6px 10px;border-radius:8px;border:1px solid #CE93D8;">
+                                <strong>${escapeHtml(member.name || '-')}</strong>
+                                <span style="font-size:11px;color:#7B1FA2;">${escapeHtml(member.typeLabel || '-')}</span>
+                                <span style="font-size:11px;color:#666;">🔥${Number(member.streak || 0)}</span>
+                                <span style="font-size:11px;color:#888;">${escapeHtml(formatAdminDateTime(member.connectedAt))}</span>
+                            </div>
+                        `).join('') : '<span style="color:#999;">초대된 회원이 없습니다.</span>'}
+                    </div>
+                </td></tr>`;
+            });
+            tbody.innerHTML = html;
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="5" style="color:#999;">조회 실패: ${escapeHtml(e.message || '알 수 없는 오류')}</td></tr>`;
+        }
+    }
+
     window.toggleReferralMembers = function(rowId) {
         const row = document.getElementById(rowId);
         if (row) row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
@@ -1372,6 +1677,8 @@
 
     window.openDetail = async function(uid) {
         document.getElementById('detail-modal').style.display = 'flex';
+        document.getElementById('email-audit-grid').innerHTML = '<div class="email-audit-empty">발송 이력을 불러오는 중...</div>';
+        document.getElementById('email-history-list').innerHTML = '';
         document.getElementById('history-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:#888;">로딩 중...</div>';
         document.getElementById('modal-uid').value = uid;
         try {
@@ -1388,6 +1695,9 @@
             document.getElementById('p-coins').textContent = `${(m.coins||0).toLocaleString()}P`;
             let medsHtml=''; (hp.meds||[]).forEach(x=>{ medsHtml+=`<li>${escapeHtml(x)}</li>`; }); if(hp.medOther) medsHtml+=`<li>${escapeHtml(hp.medOther)}</li>`;
             document.getElementById('p-meds').innerHTML = medsHtml||'<li>없음</li>';
+
+            const row = memberRows.find((member) => member.uid === uid);
+            renderEmailAuditSection(row?.emailLog, { email: row?.email || m.email || '' });
 
             const ago30 = new Date(todayStr); ago30.setDate(ago30.getDate()-29);
             const cut = ago30.toISOString().split('T')[0];
@@ -1417,7 +1727,7 @@
         btn.disabled = true;
         btn.textContent = '⏳ 조회 중...';
         try {
-            const fn = httpsCallable(fns, 'sendReEngagementEmails');
+            const fn = httpsCallable(fns, 'sendReEngagementEmailsV2');
             const preview = await fn({ days, preview: true });
             const { count, targets } = preview.data;
             btn.disabled = false;
@@ -1430,6 +1740,8 @@
             btn.textContent = '📤 발송 중...';
             const result = await fn({ days, preview: false });
             const { sentCount, errors } = result.data;
+            cache = null;
+            await loadMembers();
             alert(`✅ ${sentCount}명에게 이메일을 발송했습니다.${errors?.length ? `\n\n실패 ${errors.length}건` : ''}`);
         } catch(e) {
             alert('오류: ' + e.message);

@@ -1,6 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-04-16 (Admin Email Audit Visibility)
+
+### 163. Do not claim an admin UI is visible until the exact surface and entry point are verified in code or the running app
+- Symptom: I reported that inactivity email audit details were available, but the user still could not find them from the member-management list.
+- Root cause: I confirmed the data plumbing and modal implementation, then overgeneralized that into "the feature is visible" without checking the exact surface the user expected: direct visibility from the list itself rather than only inside a detail modal.
+- Lesson: For admin tooling, verify the exact entry point the user named. If the request says "from the members tab," confirm whether the information is visible in the list, in a modal, or behind another click, and describe it precisely before saying the feature is available.
+
+---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 
 ### 94. Upload-speed improvements must not remove the short synchronous wait that makes saved video thumbnails feel immediate

@@ -32,6 +32,8 @@ const { FieldValue } = require("firebase-admin/firestore");
 const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
+const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
+const { buildReEngagementEmailTemplate } = require("./reengagement-email");
 
 // Firebase
 admin.initializeApp();
@@ -288,6 +290,16 @@ async function upsertAdminDoc(uid, email, extra = {}) {
     }, { merge: true });
 }
 
+async function assertAdminRequest(request) {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
+    const adminSnap = await db.collection("admins").doc(uid).get();
+    if (!adminSnap.exists) {
+        throw new HttpsError("permission-denied", "관리자 권한이 필요합니다.");
+    }
+    return uid;
+}
+
 function buildFriendshipId(uidA, uidB) {
     return [uidA, uidB].sort().join("__");
 }
@@ -361,13 +373,15 @@ function upsertActiveFriendship(tx, {
     source,
     requesterUid = uidA,
     requestedAt = FieldValue.serverTimestamp(),
+    inviterUid = "",
+    inviteeUid = "",
 }) {
     const friendshipId = buildFriendshipId(uidA, uidB);
     const friendshipRef = db.doc(`friendships/${friendshipId}`);
     const now = FieldValue.serverTimestamp();
     const requesterName = requesterUid === uidA ? nameA : nameB;
 
-    tx.set(friendshipRef, {
+    const payload = {
         users: buildFriendshipUsers(uidA, uidB),
         userNames: {
             [uidA]: nameA,
@@ -383,7 +397,11 @@ function upsertActiveFriendship(tx, {
         updatedAt: now,
         expiresAt: null,
         source,
-    }, { merge: true });
+    };
+    if (inviterUid) payload.inviterUid = inviterUid;
+    if (inviteeUid) payload.inviteeUid = inviteeUid;
+
+    tx.set(friendshipRef, payload, { merge: true });
 
     applyFriendCacheUpdate(tx, uidA, uidB, true);
     return { friendshipId, friendshipRef };
@@ -2486,6 +2504,8 @@ exports.processReferralSignup = onCall(
                 source: "invite_link_signup",
                 requesterUid: friendshipData?.requesterUid || referrerUid,
                 requestedAt: existingRequestedAt,
+                inviterUid: referrerUid,
+                inviteeUid: uid,
             });
 
             if (friendshipData?.status !== "active") {
@@ -2782,6 +2802,8 @@ exports.acceptInviteLinkFriendship = onCall(
                 source: "invite_link_existing",
                 requesterUid: friendshipData?.requesterUid || inviterUid,
                 requestedAt,
+                inviterUid,
+                inviteeUid: uid,
             });
 
             createFriendConnectedNotifications(tx, {
@@ -2817,6 +2839,26 @@ exports.acceptInviteLinkFriendship = onCall(
 /**
  * 앱에서 친구 요청 생성
  */
+exports.getInviteLeaderboard = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        await assertAdminRequest(request);
+
+        const [usersSnap, friendshipsSnap] = await Promise.all([
+            db.collection("users").get(),
+            db.collection("friendships").where("status", "==", "active").get(),
+        ]);
+
+        return {
+            rows: buildInviteLeaderboard({
+                users: usersSnap.docs,
+                friendships: friendshipsSnap.docs,
+            }).slice(0, 10),
+            generatedAt: new Date().toISOString(),
+        };
+    }
+);
+
 exports.requestFriend = onCall(
     { region: "asia-northeast3" },
     async (request) => {
@@ -5293,6 +5335,151 @@ async function sendMulticast(targets, payload) {
 /**
  * 매일 저녁 8시 KST (UTC 11:00) — 오늘 기록 없는 유저에게 알림
  */
+exports.sendReEngagementEmailsV2 = onCall(
+    {
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        region: "asia-northeast3",
+        maxInstances: 1,
+        timeoutSeconds: 300,
+        invoker: "public"
+    },
+    async (request) => {
+        await assertAdminRequest(request);
+
+        const { days, preview } = request.data || {};
+        if (![3, 7].includes(days)) {
+            throw new HttpsError("invalid-argument", "days는 3 또는 7이어야 합니다.");
+        }
+
+        const now = new Date();
+        const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+        const cutoffDate = new Date(kst);
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+        const cutoffStr = cutoffDate.toISOString().slice(0, 10);
+
+        const usersSnap = await db.collection("users").get();
+        const allUids = usersSnap.docs.map((docSnap) => docSnap.id);
+
+        const inactiveUids = [];
+        await Promise.all(allUids.map(async (uid) => {
+            const logSnap = await db.collection("daily_logs")
+                .where("userId", "==", uid)
+                .orderBy("date", "desc")
+                .limit(1)
+                .get();
+
+            const lastDate = logSnap.empty ? null : logSnap.docs[0].data().date;
+            if (!lastDate || lastDate < cutoffStr) {
+                inactiveUids.push(uid);
+            }
+        }));
+
+        const userDocMap = new Map(usersSnap.docs.map((docSnap) => [docSnap.id, docSnap.data() || {}]));
+        const targets = [];
+        await Promise.all(inactiveUids.map(async (uid) => {
+            try {
+                const userData = userDocMap.get(uid) || {};
+                const name = userData.customDisplayName || userData.displayName || "회원";
+                let email = String(userData.email || "").trim();
+                if (!email) {
+                    try {
+                        const authUser = await admin.auth().getUser(uid);
+                        email = String(authUser.email || "").trim();
+                    } catch (_) {}
+                }
+
+                if (email) {
+                    targets.push({ uid, name, email });
+                }
+            } catch (_) {}
+        }));
+
+        if (preview) {
+            return {
+                count: targets.length,
+                targets: targets.map((target) => ({ name: target.name, email: target.email })),
+            };
+        }
+
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: GMAIL_USER.value(),
+                pass: GMAIL_APP_PASSWORD.value(),
+            }
+        });
+
+        const sendResults = await Promise.allSettled(targets.map(async (target) => {
+            const template = buildReEngagementEmailTemplate({
+                days,
+                name: target.name,
+                appBaseUrl: APP_BASE_URL,
+                appIconUrl: APP_ICON_URL,
+            });
+            const sentAtIso = new Date().toISOString();
+            const emailLogRef = db.collection("emailLogs").doc(target.uid);
+            const emailLogSnap = await emailLogRef.get();
+            const existingLog = emailLogSnap.exists ? (emailLogSnap.data() || {}) : {};
+            const existingHistory = Array.isArray(existingLog.reEngagementHistory)
+                ? existingLog.reEngagementHistory
+                : [];
+            const historyEntry = {
+                days,
+                sentAt: sentAtIso,
+                recipientEmail: target.email,
+                method: template.method,
+                subject: template.subject,
+                summary: template.summary,
+                html: template.html,
+            };
+
+            await transporter.sendMail({
+                from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
+                to: target.email,
+                subject: template.subject,
+                html: template.html,
+            });
+
+            await emailLogRef.set({
+                lastSentAt: FieldValue.serverTimestamp(),
+                lastSentDays: days,
+                sentCount: FieldValue.increment(1),
+                lastSentRecipient: target.email,
+                lastSentMethod: template.method,
+                lastSentSubject: template.subject,
+                lastSentSummary: template.summary,
+                lastSentHtml: template.html,
+                reEngagementByDays: {
+                    [`day${days}`]: historyEntry,
+                },
+                reEngagementHistory: [historyEntry, ...existingHistory].slice(0, 12),
+            }, { merge: true });
+
+            console.log(`[sendReEngagementEmailsV2] ${target.email} (${target.name}) days=${days}`);
+        }));
+
+        const sentCount = sendResults.filter((result) => result.status === "fulfilled").length;
+        const errors = sendResults
+            .map((result, index) => result.status === "rejected"
+                ? { email: targets[index].email, error: result.reason?.message }
+                : null)
+            .filter(Boolean);
+
+        sendResults.forEach((result, index) => {
+            if (result.status === "rejected") {
+                console.error(`[sendReEngagementEmailsV2] failed: ${targets[index].email}`, result.reason?.message);
+            }
+        });
+
+        return {
+            sentCount,
+            totalTargets: targets.length,
+            errors,
+        };
+    }
+);
+
 exports.sendDailyReminder = onSchedule(
     { schedule: "0 11 * * *", region: "asia-northeast3", timeZone: "UTC" },
     async () => {
