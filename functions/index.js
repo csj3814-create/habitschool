@@ -110,6 +110,7 @@ const HBT_TRANSFER_MAX_CHUNKS = ACTIVE_CHAIN_KEY === "mainnet" ? 20 : 20;
 // 일일 변환 한도
 const MAX_DAILY_HBT = 12000;
 const MIN_POINTS = 100;
+const RECENT_MINT_TX_LOOKBACK_LIMIT = 100;
 const CHATBOT_LINK_CODE_LENGTH = 8;
 const CHATBOT_LINK_CODE_TTL_MINUTES = 10;
 const FRIEND_REQUEST_TTL_DAYS = 3;
@@ -125,6 +126,61 @@ function normalizeReferralCode(rawCode) {
     const normalized = String(rawCode || "").trim().toUpperCase();
     const pattern = new RegExp(`^[A-Z0-9]{${REFERRAL_CODE_LENGTH}}$`);
     return pattern.test(normalized) ? normalized : "";
+}
+
+function getMintResetWindowInfo(now = new Date()) {
+    const cycleStart = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+    ));
+    return {
+        cycleStart,
+        cycleEnd: new Date(cycleStart.getTime() + 24 * 60 * 60 * 1000),
+        resetCopy: "매일 오전 9시 reset"
+    };
+}
+
+function normalizeFirestoreTimestampLike(value) {
+    if (value?.toDate instanceof Function) {
+        const date = value.toDate();
+        return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return value;
+    }
+    return null;
+}
+
+function sumSuccessfulConversionHbtInWindow(entries = [], {
+    networkTag = "",
+    cycleStart,
+    cycleEnd
+} = {}) {
+    if (!(cycleStart instanceof Date) || !(cycleEnd instanceof Date)) {
+        return 0;
+    }
+    return entries.reduce((total, entry) => {
+        const data = typeof entry?.data === "function" ? entry.data() : (entry || {});
+        if (!data || data.type !== "conversion" || data.status !== "success") {
+            return total;
+        }
+        if (networkTag && String(data.network || "").trim() !== networkTag) {
+            return total;
+        }
+        const timestamp = normalizeFirestoreTimestampLike(data.timestamp);
+        if (!timestamp || timestamp < cycleStart || timestamp >= cycleEnd) {
+            return total;
+        }
+        return total + Number(data.hbtReceived || 0);
+    }, 0);
+}
+
+function buildMintDailyLimitMessage(usedHbt = 0, limitHbt = MAX_DAILY_HBT) {
+    const safeUsed = Math.max(0, Number(usedHbt || 0));
+    const safeLimit = Math.max(0, Number(limitHbt || 0));
+    return `일일 변환 한도 초과. 현재 ${safeUsed.toLocaleString("ko-KR")} / ${safeLimit.toLocaleString("ko-KR")} HBT 사용 중이며 매일 오전 9시 reset 후 다시 시도해주세요.`;
 }
 
 function generateReferralCodeCandidate() {
@@ -1295,19 +1351,17 @@ exports.mintHBT = onCall(
                 throw new HttpsError("failed-precondition", `포인트가 부족합니다. 필요: ${pointAmount}P, 보유: ${currentCoins}P`);
             }
 
-            // 일일 변환 한도 확인 (KST 기준 — 프론트엔드와 일치)
-            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
-            const dailyQuery = await db.collection("blockchain_transactions")
+            // 일일 변환 한도 확인 (온체인과 동일한 UTC day = KST 오전 9시 reset 기준)
+            const mintResetWindow = getMintResetWindowInfo();
+            const recentTxSnap = await db.collection("blockchain_transactions")
                 .where("userId", "==", uid)
-                .where("type", "==", "conversion")
-                .where("status", "==", "success")
-                .where("network", "==", ACTIVE_CHAIN.networkTag)
-                .where("date", "==", today)
+                .orderBy("timestamp", "desc")
+                .limit(RECENT_MINT_TX_LOOKBACK_LIMIT)
                 .get();
-
-            let todayMinted = 0;
-            dailyQuery.forEach(doc => {
-                todayMinted += doc.data().hbtReceived || 0;
+            const todayMinted = sumSuccessfulConversionHbtInWindow(recentTxSnap.docs, {
+                networkTag: ACTIVE_CHAIN.networkTag,
+                cycleStart: mintResetWindow.cycleStart,
+                cycleEnd: mintResetWindow.cycleEnd
             });
 
             // 2. 온체인에서 변환 비율 확인
@@ -1326,7 +1380,13 @@ exports.mintHBT = onCall(
 
             if (todayMinted + hbtAmount > MAX_DAILY_HBT) {
                 throw new HttpsError("resource-exhausted",
-                    `일일 변환 한도 초과. 오늘 사용: ${todayMinted} HBT, 한도: ${MAX_DAILY_HBT} HBT`);
+                    buildMintDailyLimitMessage(todayMinted, MAX_DAILY_HBT),
+                    {
+                        kind: "daily_limit_exceeded",
+                        usedHbt: todayMinted,
+                        limitHbt: MAX_DAILY_HBT,
+                        resetCopy: mintResetWindow.resetCopy
+                    });
             }
 
             // 3. Firestore 포인트 차감 (트랜잭션)
@@ -1367,6 +1427,23 @@ exports.mintHBT = onCall(
                     coins: FieldValue.increment(pointAmount)
                 });
                 await lockRef.delete();
+                if (failureContext.errorName === "ExceedsUserDailyCap") {
+                    throw new HttpsError(
+                        "resource-exhausted",
+                        buildMintDailyLimitMessage(MAX_DAILY_HBT, MAX_DAILY_HBT),
+                        {
+                            kind: "daily_limit_exceeded",
+                            attemptId,
+                            errorName: failureContext.errorName,
+                            errorSignature: failureContext.errorSignature,
+                            errorSelector: failureContext.errorSelector,
+                            limitHbt: MAX_DAILY_HBT,
+                            resetCopy: mintResetWindow.resetCopy,
+                            network: ACTIVE_CHAIN.networkTag,
+                            phase: phaseNumber
+                        }
+                    );
+                }
                 throw new HttpsError(
                     "internal",
                     "온체인 민팅에 실패했습니다. 잠시 후 다시 시도해주세요.",
@@ -1391,6 +1468,7 @@ exports.mintHBT = onCall(
             await lockRef.delete();
 
             // 7. 거래 기록 저장
+            const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
             const txRecordRef = db.collection("blockchain_transactions").doc();
             await txRecordRef.set({
                 userId: uid,

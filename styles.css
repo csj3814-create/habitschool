@@ -1494,6 +1494,13 @@ body.simple-mode .step-input-group {
     margin: 8px 0 12px;
 }
 
+.wallet-convert-limit-reset {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--gray-400);
+}
+
 /* 변환 확인 모달 */
 .wallet-modal-overlay {
     position: fixed;

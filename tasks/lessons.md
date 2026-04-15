@@ -13,6 +13,11 @@
 - Root cause: I optimized for consistency of structure instead of density of useful information, so absent data got the same visual weight as real audit events.
 - Lesson: In admin tables, sparse operational data should default to silence. Show compact summaries only when an event actually exists, and avoid repeating "not sent" placeholders across every row unless the user explicitly needs absence-state auditing.
 
+### 165. Contract-based daily limits must be keyed to the contract's reset window, not the app's local calendar day
+- Symptom: before 오전 9시 KST, the assets screen could show the full HBT conversion quota as available, but the onchain mint reverted with `ExceedsUserDailyCap`.
+- Root cause: the UI and server pre-check summed successful conversions by KST `date` string, while the contract enforces daily caps by UTC day (`block.timestamp / 86400`), which resets at 오전 9시 KST.
+- Lesson: whenever the product surfaces an onchain quota, derive usage from the same timestamp window the contract uses. For UTC-day limits, aggregate by timestamp range, not a local date label, and explicitly show the reset time in the UI.
+
 ---
 ## 2026-04-14 (Dashboard Selected Date Sync)
 

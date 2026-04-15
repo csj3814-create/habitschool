@@ -5985,6 +5985,65 @@ const ACTIVE_WALLET_CHAIN_KEY = getActiveChainKey(APP_ENV);
 const ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG = ACTIVE_WALLET_CHAIN_KEY === 'mainnet' ? 'bsc' : 'bscTestnet';
 const MAINNET_CHALLENGE_CUTOVER_DATE = '2026-04-12';
 
+function getMintResetWindowInfo(now = new Date()) {
+    const cycleStart = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+    ));
+    return {
+        cycleStart,
+        cycleEnd: new Date(cycleStart.getTime() + 24 * 60 * 60 * 1000),
+        resetCopy: '매일 오전 9시 reset'
+    };
+}
+
+function normalizeFirestoreTimestampLike(value) {
+    if (value?.toDate instanceof Function) {
+        const date = value.toDate();
+        return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
+    }
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return value;
+    }
+    return null;
+}
+
+function summarizeMintWindowUsage(transactions = [], { networkTag = '', now = new Date(), dailyMax = 12000 } = {}) {
+    const windowInfo = getMintResetWindowInfo(now);
+    let convertedHbt = 0;
+    let totalEarnedHbt = 0;
+
+    transactions.forEach((tx) => {
+        if (!tx || tx.status !== 'success') return;
+
+        const txNetwork = String(tx.network || '').trim();
+        if (networkTag && txNetwork && txNetwork !== networkTag) return;
+
+        const timestamp = normalizeFirestoreTimestampLike(tx.timestamp);
+        if (!timestamp || timestamp < windowInfo.cycleStart || timestamp >= windowInfo.cycleEnd) return;
+
+        if (tx.type === 'conversion') {
+            const amount = Number(tx.hbtReceived || 0);
+            convertedHbt += amount;
+            totalEarnedHbt += amount;
+            return;
+        }
+
+        if (tx.type === 'challenge_settlement') {
+            totalEarnedHbt += Number(tx.amount || 0);
+        }
+    });
+
+    return {
+        convertedHbt,
+        totalEarnedHbt,
+        remainingHbt: Math.max(Number(dailyMax || 0) - convertedHbt, 0),
+        resetCopy: windowInfo.resetCopy
+    };
+}
+
 function normalizeChallengeChainKey(challenge = null) {
     const explicitChainKey = String(challenge?.chainKey || '').trim().toLowerCase();
     if (explicitChainKey === 'mainnet' || explicitChainKey === 'testnet') {
@@ -6721,9 +6780,15 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 변환 비율은 fetchTokenStats()에서 전체 기준으로 업데이트
             const dailyLimitEl = document.getElementById('convert-daily-limit');
             if (dailyLimitEl) {
+                const txHistorySnap = await _p_txHistory;
+                const recentTransactions = txHistorySnap
+                    ? txHistorySnap.docs.map((docSnap) => docSnap.data() || {})
+                    : [];
+                const mintWindowUsage = summarizeMintWindowUsage(recentTransactions, {
+                    networkTag: ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG
+                });
                 const dailyMax = 12000;
-                const remaining = Math.max(dailyMax - todayHbt, 0);
-                dailyLimitEl.innerHTML = `오늘 변환 한도: <strong>${remaining.toLocaleString()} / ${dailyMax.toLocaleString()} HBT</strong>`;
+                dailyLimitEl.innerHTML = `오늘 변환 한도: <strong>${mintWindowUsage.remainingHbt.toLocaleString()} / ${dailyMax.toLocaleString()} HBT</strong><span class="wallet-convert-limit-reset">${mintWindowUsage.resetCopy}</span>`;
             }
 
             // 스켈레톤 해제

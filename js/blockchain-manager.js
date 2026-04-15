@@ -1154,7 +1154,7 @@ export async function convertPointsToHBT(pointAmount) {
         } else if (msg.includes('포인트가 부족')) {
             showToast('❌ 포인트가 부족합니다.');
         } else if (msg.includes('일일 변환 한도')) {
-            showToast('❌ 일일 변환 한도를 초과했습니다.');
+            showToast('❌ 일일 변환 한도를 초과했습니다.\n매일 오전 9시 reset 후 다시 시도해주세요.');
         } else if (msg.includes('지갑이 생성되지')) {
             showToast('❌ 지갑이 아직 생성되지 않았습니다. 페이지를 새로고침해주세요.');
         } else {
