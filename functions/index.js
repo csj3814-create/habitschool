@@ -1781,6 +1781,143 @@ exports.analyzeDiet = onCall(
     }
 );
 
+async function buildInlineImagePartFromUrl(imageUrl = "") {
+    const normalizedUrl = String(imageUrl || "").trim();
+    if (!normalizedUrl) {
+        throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+    }
+
+    if (!normalizedUrl.startsWith("https://firebasestorage.googleapis.com/") && !normalizedUrl.startsWith("data:")) {
+        throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
+    }
+
+    if (normalizedUrl.startsWith("data:")) {
+        const matches = normalizedUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (!matches) {
+            throw new HttpsError("invalid-argument", "잘못된 data URL 형식입니다.");
+        }
+        const allowedMimes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+        if (!allowedMimes.includes(matches[1])) {
+            throw new HttpsError("invalid-argument", "허용되지 않은 이미지 형식입니다.");
+        }
+        if (matches[2].length > 5 * 1024 * 1024 * 1.37) {
+            throw new HttpsError("invalid-argument", "이미지 크기가 너무 큽니다 (최대 5MB).");
+        }
+        return {
+            inlineData: {
+                data: matches[2],
+                mimeType: matches[1]
+            }
+        };
+    }
+
+    const imgResponse = await fetch(normalizedUrl);
+    if (!imgResponse.ok) {
+        throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+    }
+
+    const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+    return {
+        inlineData: {
+            data: imgBuffer.toString("base64"),
+            mimeType: contentType
+        }
+    };
+}
+
+const SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT = `당신은 해빛스쿨 PWA의 공유 이미지 분류기입니다.
+
+사용자가 다른 앱에서 이미지를 공유하면, 이 이미지가 아래 중 어디에 들어가야 하는지 빠르게 판별하세요.
+- diet: 식단 사진, 음식 사진, 식사 트레이, 음료, 영양 화면
+- exercise: 운동 인증 사진, 운동 장면, 걷기/러닝/헬스 캡처, 피트니스 앱 스크린샷
+- sleep: 수면 앱 캡처, 수면 그래프, 취침/기상 기록, 수면 품질 화면
+- unknown: 확신이 부족하거나 세 카테고리와 맞지 않음
+
+추가 규칙:
+- exercise 카테고리일 때만 exerciseMode를 채우세요.
+- exerciseMode는 아래 둘 중 하나입니다.
+  - step_screenshot: 삼성헬스/건강앱 같은 걸음수, 거리, 칼로리, 활동시간이 보이는 앱 캡처
+  - cardio_image: 일반 운동 사진 또는 기타 운동 이미지
+- 확신이 낮으면 category를 unknown으로 두거나 confidence를 낮게 주세요.
+- 반드시 보수적으로 판단하세요. 자동 라우팅이 걸리므로 과한 추측을 하면 안 됩니다.
+
+반드시 아래 JSON만 출력하세요.
+{
+  "category": "diet|exercise|sleep|unknown",
+  "confidence": 0.0,
+  "reason": "짧은 근거",
+  "exerciseMode": "step_screenshot|cardio_image|null"
+}`;
+
+exports.classifySharedHealthImage = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 20,
+        timeoutSeconds: 20
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { imageUrl, fileName, fileCount } = request.data || {};
+        if (!imageUrl || typeof imageUrl !== "string") {
+            throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+        }
+
+        try {
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+
+            const result = await model.generateContent([
+                SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT,
+                `파일 이름: ${String(fileName || "").trim() || "-"}`,
+                `공유된 이미지 수: ${Number(fileCount || 0) || 1}`,
+                await buildInlineImagePartFromUrl(imageUrl)
+            ]);
+
+            const responseText = result.response.text();
+            let jsonStr = responseText;
+            const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+            }
+
+            const parsed = JSON.parse(jsonStr);
+            const category = ["diet", "exercise", "sleep", "unknown"].includes(String(parsed?.category || "").trim())
+                ? String(parsed.category).trim()
+                : "unknown";
+            const confidence = Math.max(0, Math.min(1, Number(parsed?.confidence || 0) || 0));
+            const exerciseMode = category === "exercise" && String(parsed?.exerciseMode || "").trim() === "step_screenshot"
+                ? "step_screenshot"
+                : (category === "exercise" ? "cardio_image" : null);
+
+            return {
+                success: true,
+                classification: {
+                    category,
+                    confidence,
+                    reason: String(parsed?.reason || "").trim(),
+                    exerciseMode
+                },
+                timestamp: new Date().toISOString()
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("classifySharedHealthImage 오류:", error);
+            throw new HttpsError("internal", "공유 이미지 분류 중 오류가 발생했습니다.");
+        }
+    }
+);
+
 // ========================================
 // 5. AI 수면/마음 분석 (Gemini Vision API)
 // ========================================

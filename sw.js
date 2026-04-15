@@ -78,21 +78,27 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v157';
+const CACHE_NAME = 'habitschool-v158';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
-const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', self.location.origin).href;
+const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
+const LEGACY_SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', self.location.origin).href;
 
 function buildShareTargetFileUrl(index) {
-    return new URL(`/__share_target__/diet/${index}`, self.location.origin).href;
+    return new URL(`/__share_target__/shared/${index}`, self.location.origin).href;
 }
 
-async function clearPendingDietShareTarget(cache, manifestData = null) {
+async function clearPendingSharedTarget(cache, manifestData = null) {
     const targetCache = cache || await caches.open(SHARE_TARGET_CACHE_NAME);
     let manifest = manifestData;
     if (!manifest) {
-        const manifestResponse = await targetCache.match(SHARE_TARGET_MANIFEST_URL);
-        manifest = manifestResponse ? await manifestResponse.json().catch(() => null) : null;
+        const sharedManifestResponse = await targetCache.match(SHARE_TARGET_MANIFEST_URL);
+        if (sharedManifestResponse) {
+            manifest = await sharedManifestResponse.json().catch(() => null);
+        } else {
+            const legacyManifestResponse = await targetCache.match(LEGACY_SHARE_TARGET_MANIFEST_URL);
+            manifest = legacyManifestResponse ? await legacyManifestResponse.json().catch(() => null) : null;
+        }
     }
 
     const itemUrls = Array.isArray(manifest?.items)
@@ -101,13 +107,14 @@ async function clearPendingDietShareTarget(cache, manifestData = null) {
 
     await Promise.all([
         targetCache.delete(SHARE_TARGET_MANIFEST_URL),
+        targetCache.delete(LEGACY_SHARE_TARGET_MANIFEST_URL),
         ...itemUrls.map((url) => targetCache.delete(url))
     ]);
 }
 
-async function storePendingDietShareTarget(files) {
+async function storePendingSharedTarget(files) {
     const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
-    await clearPendingDietShareTarget(cache);
+    await clearPendingSharedTarget(cache);
 
     const createdAt = Date.now();
     const items = [];
@@ -115,7 +122,7 @@ async function storePendingDietShareTarget(files) {
         const file = files[index];
         const url = buildShareTargetFileUrl(index);
         const type = String(file?.type || 'image/jpeg').trim() || 'image/jpeg';
-        const name = String(file?.name || `shared-diet-${index + 1}.jpg`).trim() || `shared-diet-${index + 1}.jpg`;
+        const name = String(file?.name || `shared-image-${index + 1}.jpg`).trim() || `shared-image-${index + 1}.jpg`;
         const lastModified = Number(file?.lastModified || createdAt) || createdAt;
 
         items.push({ url, type, name, lastModified });
@@ -136,15 +143,16 @@ async function storePendingDietShareTarget(files) {
     }));
 }
 
-async function handleDietShareTarget(request) {
+async function handleSharedTarget(request) {
     const formData = await request.formData();
-    const sharedFiles = formData.getAll('dietPhotos')
+    const sharedFiles = ['sharedImages', 'dietPhotos']
+        .flatMap((fieldName) => formData.getAll(fieldName))
         .filter((value) => value instanceof File)
         .filter((file) => file.size > 0)
         .filter((file) => String(file.type || '').startsWith('image/'));
 
     if (sharedFiles.length > 0) {
-        await storePendingDietShareTarget(sharedFiles);
+        await storePendingSharedTarget(sharedFiles);
     }
 
     const redirectUrl = new URL('/?tab=diet&focus=shared-upload#diet', self.location.origin);
@@ -153,10 +161,10 @@ async function handleDietShareTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=157',
-    './js/main.js?v=157',
-    './js/app.js?v=157',
-    './js/auth.js?v=157',
+    './styles.css?v=158',
+    './js/main.js?v=158',
+    './js/app.js?v=158',
+    './js/auth.js?v=158',
     './js/firebase-config.js',
     './js/data-manager.js',
     './js/diet-analysis.js?v=112',
@@ -164,15 +172,18 @@ const STATIC_ASSETS = [
     './js/ui-helpers.js',
     './js/security.js',
     './js/blockchain-config.js',
-    './js/blockchain-manager.js?v=157',
-    './js/pwa-install.js?v=157',
-    './js/webview-detect.js?v=157',
+    './js/blockchain-manager.js?v=158',
+    './js/pwa-install.js?v=158',
+    './js/webview-detect.js?v=158',
     './manifest.json',
     './icons/icon-192.png',
     './icons/icon-192.svg',
     './icons/icon-512.png',
     './icons/icon-512.svg',
-    './icons/apple-touch-icon.svg'
+    './icons/apple-touch-icon.svg',
+    './icons/feature-graphic.png',
+    './icons/feature-graphic-minimal.png',
+    './icons/og-image.png'
 ];
 
 const INDEX_URL = new URL('./', self.location).href;
@@ -209,7 +220,7 @@ self.addEventListener('fetch', (event) => {
 
     if (request.method === 'POST' && requestUrl.pathname === SHARE_TARGET_ACTION_PATH) {
         event.respondWith(
-            handleDietShareTarget(request).catch((error) => {
+            handleSharedTarget(request).catch((error) => {
                 console.warn('[SW] share target handling failed:', error?.message || error);
                 const fallbackUrl = new URL('/?tab=diet&focus=upload#diet', self.location.origin);
                 return Response.redirect(fallbackUrl.href, 303);

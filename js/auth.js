@@ -10,7 +10,7 @@ import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePen
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=157';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=158';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -706,6 +706,13 @@ export function setupAuthListener(callbacks) {
                 setTimeout(() => {
                     window.refreshPwaActionableBadgeFromServer(user).catch(() => {});
                 }, 180);
+            }
+            if (window.flushOfflineOutbox) {
+                initialDailyLoadPromise.finally(() => {
+                    setTimeout(() => {
+                        window.flushOfflineOutbox({ quiet: true }).catch(() => {});
+                    }, 220);
+                });
             }
             if (!pendingChatbotToken && window.handleAppEntryDeepLink) {
                 const runAppEntryDeepLink = () => {

@@ -22,7 +22,7 @@ import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis } from './diet-analysis.js';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -31,6 +31,7 @@ window.updateMetabolicScoreUI = updateMetabolicScoreUI;
 window.setManualSteps = setManualSteps;
 window.handleStepScreenshot = handleStepScreenshot;
 window.analyzeStepScreenshot = analyzeStepScreenshot;
+window.chooseSharedImportTarget = chooseSharedImportTarget;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -121,7 +122,19 @@ const RECORD_GUIDE_STORAGE_KEYS = {
     sleep: 'habitschool_record_guide_sleep_collapsed'
 };
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
-const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', window.location.origin).href;
+const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', window.location.origin).href;
+const LEGACY_SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/diet/manifest.json', window.location.origin).href;
+const SHARE_TARGET_MANIFEST_URLS = [SHARE_TARGET_MANIFEST_URL, LEGACY_SHARE_TARGET_MANIFEST_URL];
+const SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE = 0.85;
+const SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS = 1800;
+const SHARED_IMPORT_CATEGORY_LABELS = {
+    diet: '식단',
+    exercise: '운동',
+    sleep: '수면'
+};
+const OFFLINE_OUTBOX_STORAGE_KEY = 'habitschool-offline-outbox-v1';
+const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
+const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
@@ -155,8 +168,10 @@ let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
 let _friendshipsLoadingStartedAt = 0;
 let _pendingFriendRequestId = null;
-let _pendingSharedDietImportPromise = null;
+let _pendingSharedImportPromise = null;
+let _sharedImportSession = null;
 let _lastDietAutoImportResult = null;
+let _offlineOutboxFlushPromise = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
@@ -645,34 +660,44 @@ function focusElementWithHighlight(target) {
     window.setTimeout(() => target.classList.remove('is-highlighted'), 1500);
 }
 
-async function getPendingDietShareManifest() {
+async function getPendingSharedManifest() {
     if (!('caches' in window)) return null;
     try {
         const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
-        const response = await cache.match(SHARE_TARGET_MANIFEST_URL);
-        if (!response) return null;
-        return await response.json();
-    } catch (_) {
-        return null;
-    }
+        for (const manifestUrl of SHARE_TARGET_MANIFEST_URLS) {
+            const response = await cache.match(manifestUrl);
+            if (!response) continue;
+            const manifest = await response.json().catch(() => null);
+            if (!manifest) continue;
+            return {
+                ...manifest,
+                _manifestUrl: manifestUrl
+            };
+        }
+    } catch (_) {}
+    return null;
 }
 
-async function clearPendingDietShareTarget(manifest = null) {
+async function clearPendingSharedTarget(manifest = null) {
     if (!('caches' in window)) return;
     const cache = await caches.open(SHARE_TARGET_CACHE_NAME);
-    const currentManifest = manifest || await getPendingDietShareManifest();
+    const currentManifest = manifest || await getPendingSharedManifest();
     const itemUrls = Array.isArray(currentManifest?.items)
         ? currentManifest.items.map(item => String(item?.url || '')).filter(Boolean)
         : [];
+    const manifestUrls = Array.from(new Set([
+        ...SHARE_TARGET_MANIFEST_URLS,
+        String(currentManifest?._manifestUrl || '').trim()
+    ].filter(Boolean)));
     await Promise.all([
-        cache.delete(SHARE_TARGET_MANIFEST_URL),
+        ...manifestUrls.map((url) => cache.delete(url)),
         ...itemUrls.map((url) => cache.delete(url))
     ]);
 }
 
-async function readPendingDietShareFiles(manifest = null) {
+async function readPendingSharedFiles(manifest = null) {
     if (!('caches' in window)) return { manifest: null, files: [] };
-    const currentManifest = manifest || await getPendingDietShareManifest();
+    const currentManifest = manifest || await getPendingSharedManifest();
     if (!currentManifest || !Array.isArray(currentManifest.items) || currentManifest.items.length === 0) {
         return { manifest: currentManifest, files: [] };
     }
@@ -690,7 +715,7 @@ async function readPendingDietShareFiles(manifest = null) {
         const type = String(item?.type || blob.type || 'image/jpeg').trim() || 'image/jpeg';
         if (!type.startsWith('image/')) continue;
 
-        const name = String(item?.name || `shared-diet-${index + 1}.jpg`).trim() || `shared-diet-${index + 1}.jpg`;
+        const name = String(item?.name || `shared-image-${index + 1}.jpg`).trim() || `shared-image-${index + 1}.jpg`;
         const lastModified = Number(item?.lastModified || currentManifest.createdAt || Date.now()) || Date.now();
         files.push(new File([blob], name, { type, lastModified }));
     }
@@ -698,34 +723,389 @@ async function readPendingDietShareFiles(manifest = null) {
     return { manifest: currentManifest, files };
 }
 
-async function importPendingDietShareTarget() {
-    if (_pendingSharedDietImportPromise) {
-        return _pendingSharedDietImportPromise;
-    }
+function getSharedImportModalElements() {
+    return {
+        modal: document.getElementById('shared-import-modal'),
+        title: document.getElementById('shared-import-title'),
+        subtitle: document.getElementById('shared-import-subtitle'),
+        status: document.getElementById('shared-import-status'),
+        preview: document.getElementById('shared-import-preview'),
+        countBadge: document.getElementById('shared-import-count'),
+        optionButtons: Array.from(document.querySelectorAll('.shared-import-option[data-target]'))
+    };
+}
 
-    _pendingSharedDietImportPromise = (async () => {
-        const { manifest, files } = await readPendingDietShareFiles();
-        if (!manifest || files.length === 0) {
-            if (manifest) {
-                await clearPendingDietShareTarget(manifest);
-            }
-            return 0;
+function updateSharedImportStatus(message = '', tone = 'info') {
+    const { status } = getSharedImportModalElements();
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.tone = tone;
+}
+
+function syncSharedImportOptionSuggestion(classification = null) {
+    const { optionButtons, subtitle } = getSharedImportModalElements();
+    optionButtons.forEach((button) => {
+        const isSuggested = classification?.category && classification.category === button.dataset.target;
+        button.classList.toggle('is-suggested', !!isSuggested);
+        if (isSuggested && classification?.confidence >= SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE) {
+            button.setAttribute('data-auto-ready', 'true');
+        } else {
+            button.removeAttribute('data-auto-ready');
         }
-
-        openTab('diet', false);
-        const selectedDate = document.getElementById('selected-date')?.value;
-        if (selectedDate && typeof loadDataForSelectedDate === 'function') {
-            await loadDataForSelectedDate(selectedDate);
-        }
-
-        const importedCount = await importDietFilesIntoEmptySlots(files);
-        await clearPendingDietShareTarget(manifest);
-        return importedCount;
-    })().finally(() => {
-        _pendingSharedDietImportPromise = null;
     });
 
-    return _pendingSharedDietImportPromise;
+    if (!subtitle) return;
+    if (!classification || classification.category === 'unknown') {
+        subtitle.textContent = 'AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.';
+        return;
+    }
+    subtitle.textContent = `AI가 ${SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category}로 보고 있어요. 바로 눌러도 됩니다.`;
+}
+
+function releaseSharedImportPreviewUrls(session = _sharedImportSession) {
+    if (!session?.previewUrl) return;
+    try {
+        URL.revokeObjectURL(session.previewUrl);
+    } catch (_) {}
+    session.previewUrl = '';
+}
+
+function closeSharedImportSheet(session = _sharedImportSession) {
+    const { modal, preview, countBadge, optionButtons } = getSharedImportModalElements();
+    if (modal) modal.style.display = 'none';
+    if (preview) {
+        preview.removeAttribute('src');
+        preview.style.display = 'none';
+    }
+    if (countBadge) {
+        countBadge.hidden = true;
+        countBadge.textContent = '';
+    }
+    optionButtons.forEach((button) => {
+        button.disabled = false;
+        button.classList.remove('is-suggested');
+        button.removeAttribute('data-auto-ready');
+    });
+    releaseSharedImportPreviewUrls(session);
+    if (_sharedImportSession === session) {
+        _sharedImportSession = null;
+    }
+}
+
+function renderSharedImportSheet(session = _sharedImportSession) {
+    if (!session) return;
+    const { modal, preview, countBadge } = getSharedImportModalElements();
+    if (!modal || !preview) return;
+
+    if (!session.previewUrl && session.files?.[0]) {
+        session.previewUrl = URL.createObjectURL(session.files[0]);
+    }
+
+    preview.src = session.previewUrl || '';
+    preview.style.display = session.previewUrl ? 'block' : 'none';
+    modal.style.display = 'flex';
+
+    if (countBadge) {
+        const extraCount = Math.max(0, Number(session.files?.length || 0) - 1);
+        countBadge.hidden = extraCount <= 0;
+        countBadge.textContent = extraCount > 0 ? `+${extraCount}` : '';
+    }
+
+    syncSharedImportOptionSuggestion(session.classification);
+}
+
+function setInputFiles(input, files = []) {
+    if (!input) return false;
+    try {
+        const dataTransfer = new DataTransfer();
+        files.forEach((file) => file && dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+        return input.files.length > 0;
+    } catch (error) {
+        console.warn('파일 입력 주입 실패:', error?.message || error);
+        return false;
+    }
+}
+
+function waitForStaticImagePreviewResult(inputId, previewId, timeoutMs = 1200) {
+    return new Promise((resolve) => {
+        const startedAt = Date.now();
+        const check = () => {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const hasPreview = !!preview?.src && preview.style.display !== 'none';
+            if (hasPreview) {
+                resolve(true);
+                return;
+            }
+            if (Date.now() - startedAt >= timeoutMs) {
+                resolve(false);
+                return;
+            }
+            if (input && input.files && input.files.length === 0 && Date.now() - startedAt > 140) {
+                resolve(false);
+                return;
+            }
+            requestAnimationFrame(check);
+        };
+        check();
+    });
+}
+
+async function applySharedImageToStaticInput(inputId, previewId, removeId, files, skipExif = false) {
+    const input = document.getElementById(inputId);
+    if (!input || !files?.length) return false;
+    if (!setInputFiles(input, [files[0]])) return false;
+    window.previewStaticImage(input, previewId, removeId, skipExif);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    return await waitForStaticImagePreviewResult(inputId, previewId);
+}
+
+function getSharedExerciseFocusTarget() {
+    const highlightedBlock = Array.from(document.querySelectorAll('.cardio-block'))
+        .find((block) => !isExerciseBlockEmpty(block));
+    return highlightedBlock || document.getElementById('step-card') || document.querySelector('#exercise .card');
+}
+
+function focusSleepImportResult() {
+    const sleepPreview = document.getElementById('preview-sleep');
+    const target = sleepPreview?.style.display !== 'none'
+        ? sleepPreview.closest('.card')
+        : document.querySelector('#sleep .card');
+    focusElementWithHighlight(target);
+}
+
+async function importSharedFilesToDiet(files) {
+    openTab('diet', false);
+    const importedCount = await importDietFilesIntoEmptySlots(files);
+    requestAnimationFrame(focusDietImportResult);
+    window.setTimeout(focusDietImportResult, 180);
+    return importedCount;
+}
+
+async function importSharedFilesToCardio(files) {
+    openTab('exercise', false);
+    let importedCount = 0;
+
+    for (const file of files) {
+        if (!(file instanceof File)) continue;
+        const targetBlock = findReusableExerciseBlock('cardio') || (() => {
+            addCardioBlock();
+            const blocks = document.querySelectorAll('.cardio-block');
+            return blocks[blocks.length - 1] || null;
+        })();
+        const input = targetBlock?.querySelector('.exer-file');
+        const preview = targetBlock?.querySelector('.preview-img');
+        const removeBtn = targetBlock?.querySelector('.static-remove-btn');
+        if (!input || !preview || !removeBtn) continue;
+        if (!setInputFiles(input, [file])) continue;
+        window.previewStaticImage(input, preview.id, removeBtn.id, false);
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        if (await waitForStaticImagePreviewResult(input.id, preview.id)) {
+            importedCount += 1;
+        }
+    }
+
+    const focusTarget = () => focusElementWithHighlight(getSharedExerciseFocusTarget());
+    requestAnimationFrame(focusTarget);
+    window.setTimeout(focusTarget, 180);
+    return importedCount;
+}
+
+function inferSharedExerciseImportMode(files = [], classification = null) {
+    if (!Array.isArray(files) || files.length !== 1) return 'cardio_image';
+    if (classification?.exerciseMode === 'step_screenshot') return 'step_screenshot';
+    const fileName = String(files[0]?.name || '').toLowerCase();
+    if (/(screenshot|screen|step|steps|health|samsung|shealth|걸음|헬스)/.test(fileName)) {
+        return 'step_screenshot';
+    }
+    return 'cardio_image';
+}
+
+async function importSharedFilesToExercise(files, classification = null) {
+    openTab('exercise', false);
+    const importMode = inferSharedExerciseImportMode(files, classification);
+
+    if (importMode === 'step_screenshot' && files.length === 1) {
+        if (navigator.onLine === false) {
+            showToast('오프라인이라 걸음수 인식 대신 운동 이미지로 임시 보관할게요.');
+            return await importSharedFilesToCardio(files);
+        }
+
+        const previousScreenshotUrl = String(_stepData?.screenshotUrl || '').trim();
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        if (!setInputFiles(tempInput, [files[0]])) return 0;
+        await handleStepScreenshot(tempInput);
+        const nextScreenshotUrl = String(_stepData?.screenshotUrl || '').trim();
+        const recognized = (!!nextScreenshotUrl && nextScreenshotUrl !== previousScreenshotUrl)
+            || (String(_stepData?.source || '').trim() === 'samsung_screenshot' && Number(_stepData?.count || 0) > 0);
+        if (!recognized) return 0;
+        const focusTarget = () => focusElementWithHighlight(document.getElementById('step-card'));
+        requestAnimationFrame(focusTarget);
+        window.setTimeout(focusTarget, 180);
+        return 1;
+    }
+
+    return await importSharedFilesToCardio(files);
+}
+
+async function importSharedFilesToSleep(files) {
+    openTab('sleep', false);
+    if (files.length > 1) {
+        showToast('수면 기록은 첫 번째 사진만 연결할게요.');
+    }
+    const imported = await applySharedImageToStaticInput('sleep-img', 'preview-sleep', 'rm-sleep', files, false);
+    const focusTarget = () => focusSleepImportResult();
+    requestAnimationFrame(focusTarget);
+    window.setTimeout(focusTarget, 180);
+    return imported ? 1 : 0;
+}
+
+function normalizeSharedImportClassification(raw = null) {
+    if (!raw || typeof raw !== 'object') return null;
+    const category = ['diet', 'exercise', 'sleep'].includes(String(raw.category || '').trim())
+        ? String(raw.category || '').trim()
+        : 'unknown';
+    const confidence = Math.max(0, Math.min(1, Number(raw.confidence || 0) || 0));
+    return {
+        category,
+        confidence,
+        reason: String(raw.reason || '').trim(),
+        exerciseMode: String(raw.exerciseMode || '').trim() === 'step_screenshot' ? 'step_screenshot' : 'cardio_image'
+    };
+}
+
+async function classifySharedImportFiles(files = []) {
+    const targetFile = Array.isArray(files) ? files.find((file) => file instanceof File && String(file.type || '').startsWith('image/')) : null;
+    if (!targetFile) return null;
+
+    try {
+        const compressed = await compressImage(targetFile, 1280, 1280, 0.82);
+        const dataUrl = await blobToDataUrl(compressed);
+        if (!dataUrl.startsWith('data:image/')) return null;
+        const classification = await requestSharedTargetClassification(dataUrl, {
+            fileName: targetFile.name,
+            fileCount: files.length
+        });
+        return normalizeSharedImportClassification(classification);
+    } catch (error) {
+        console.warn('[classifySharedImportFiles] shared import classification failed:', error?.message || error);
+        return null;
+    }
+}
+
+async function resolveSharedImportTarget(target, { auto = false, classification = null } = {}) {
+    const session = _sharedImportSession;
+    if (!session || session.resolving || !['diet', 'exercise', 'sleep'].includes(target)) return 0;
+    session.resolving = true;
+    if (!auto) session.manuallyPicked = true;
+
+    const { optionButtons } = getSharedImportModalElements();
+    optionButtons.forEach((button) => { button.disabled = true; });
+    updateSharedImportStatus(
+        auto
+            ? `${SHARED_IMPORT_CATEGORY_LABELS[target]}으로 바로 가져오는 중이에요.`
+            : `${SHARED_IMPORT_CATEGORY_LABELS[target]}에 넣는 중이에요.`,
+        'working'
+    );
+
+    let importedCount = 0;
+    try {
+        if (target === 'diet') {
+            importedCount = await importSharedFilesToDiet(session.files);
+        } else if (target === 'exercise') {
+            importedCount = await importSharedFilesToExercise(session.files, classification || session.classification);
+        } else {
+            importedCount = await importSharedFilesToSleep(session.files);
+        }
+    } catch (error) {
+        console.warn('[resolveSharedImportTarget] shared import apply failed:', error?.message || error);
+    }
+
+    if (importedCount <= 0) {
+        session.resolving = false;
+        optionButtons.forEach((button) => { button.disabled = false; });
+        updateSharedImportStatus(
+            auto
+                ? 'AI 추천으로는 자동 배치하지 못했어요. 아래에서 직접 선택해 주세요.'
+                : '가져오지 못했어요. 다른 분류를 눌러 보세요.',
+            'error'
+        );
+        return 0;
+    }
+
+    await clearPendingSharedTarget(session.manifest);
+    if (typeof session.resolve === 'function') {
+        session.resolve(importedCount);
+    }
+    closeSharedImportSheet(session);
+
+    if (target === 'diet') {
+        showToast(`📥 공유한 사진 ${importedCount}장을 식단에 불러왔어요.`);
+    } else if (target === 'exercise') {
+        showToast(`🏃 공유한 사진을 운동 기록으로 가져왔어요.`);
+    } else {
+        showToast('💤 공유한 사진을 수면 기록에 올려놨어요.');
+    }
+    return importedCount;
+}
+
+function chooseSharedImportTarget(target) {
+    resolveSharedImportTarget(target, {
+        auto: false,
+        classification: _sharedImportSession?.classification || null
+    }).catch(() => {});
+}
+
+async function openSharedImportSheetFlow({ manifest, files }) {
+    if (_sharedImportSession) {
+        closeSharedImportSheet(_sharedImportSession);
+    }
+
+    return await new Promise((resolve) => {
+        _sharedImportSession = {
+            manifest,
+            files,
+            classification: null,
+            previewUrl: '',
+            openedAt: Date.now(),
+            manuallyPicked: false,
+            resolving: false,
+            resolve
+        };
+
+        renderSharedImportSheet(_sharedImportSession);
+        updateSharedImportStatus('AI가 식단, 운동, 수면 중 어디에 넣을지 보고 있어요.', 'info');
+
+        classifySharedImportFiles(files).then((classification) => {
+            const session = _sharedImportSession;
+            if (!session || session.resolving || session.manuallyPicked) return;
+            session.classification = classification;
+            renderSharedImportSheet(session);
+
+            if (!classification || classification.category === 'unknown') {
+                updateSharedImportStatus('AI 확신이 낮아서 직접 고를 수 있게 남겨둘게요.', 'info');
+                return;
+            }
+
+            const categoryLabel = SHARED_IMPORT_CATEGORY_LABELS[classification.category] || classification.category;
+            if (classification.confidence >= SHARED_IMPORT_AUTO_ROUTE_CONFIDENCE
+                && (Date.now() - session.openedAt) <= SHARED_IMPORT_AUTO_ROUTE_WINDOW_MS) {
+                updateSharedImportStatus(`AI가 ${categoryLabel}로 확신해서 바로 가져올게요.`, 'success');
+                resolveSharedImportTarget(classification.category, {
+                    auto: true,
+                    classification
+                }).catch(() => {});
+                return;
+            }
+
+            const detail = classification.reason ? ` ${classification.reason}` : '';
+            updateSharedImportStatus(`AI는 ${categoryLabel}로 보고 있어요.${detail}`, 'success');
+        }).catch(() => {
+            updateSharedImportStatus('AI 분류에 시간이 걸려서 직접 고를 수 있게 둘게요.', 'info');
+        });
+    });
 }
 
 let _pendingNativeStepImport = null;
@@ -788,6 +1168,52 @@ function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     url.hash = `#${nextTab}`;
     history.replaceState({ tab: nextTab }, '', `${url.pathname}${url.search}${url.hash}`);
 }
+
+function applyPwaLaunchTargetUrl(targetUrl = '') {
+    const normalizedTargetUrl = String(targetUrl || '').trim();
+    if (!normalizedTargetUrl) return false;
+
+    try {
+        const nextUrl = new URL(normalizedTargetUrl, window.location.origin);
+        const nextHash = String(nextUrl.hash || '').trim();
+        history.replaceState(
+            { tab: nextHash.replace('#', '') || getVisibleTabName() || getDefaultTabForMode() },
+            '',
+            `${nextUrl.pathname}${nextUrl.search}${nextHash}`
+        );
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function registerPwaLaunchHandler() {
+    if (!window.launchQueue || typeof window.launchQueue.setConsumer !== 'function') return;
+    window.launchQueue.setConsumer((launchParams = {}) => {
+        const targetUrl = launchParams?.targetURL ? String(launchParams.targetURL) : window.location.href;
+        if (!applyPwaLaunchTargetUrl(targetUrl)) return;
+
+        const params = getAppEntryDeepLinkParams();
+        const nextTab = normalizeTabForMode(
+            params.tab
+            || String(new URL(window.location.href).hash || '').replace('#', '')
+            || getVisibleTabName()
+            || getDefaultTabForMode()
+        );
+
+        if (nextTab && getVisibleTabName() !== nextTab) {
+            openTab(nextTab, false);
+        }
+
+        const runAppEntry = () => {
+            window.handleAppEntryDeepLink?.({ initialTab: nextTab }).catch(() => {});
+        };
+        requestAnimationFrame(runAppEntry);
+        window.setTimeout(runAppEntry, 120);
+    });
+}
+
+registerPwaLaunchHandler();
 
 async function handleProfileFriendsDeepLink({ friendshipId = '', panel = 'friends' } = {}) {
     await loadMyFriendships();
@@ -898,30 +1324,36 @@ function focusDietImportResult() {
     focusElementWithHighlight(target);
 }
 
-async function handleSharedDietUploadDeepLink() {
-    const importedCount = await importPendingDietShareTarget().catch((error) => {
-        console.warn('[handleSharedDietUploadDeepLink] shared diet import failed:', error?.message || error);
-        return 0;
-    });
-
-    const focusSharedImport = () => {
-        if ((_lastDietAutoImportResult?.assignedCount || 0) > 0) {
-            focusDietImportResult();
-            return;
-        }
-        handleDietUploadDeepLink();
-    };
-
-    requestAnimationFrame(focusSharedImport);
-    window.setTimeout(focusSharedImport, 180);
-
-    if (importedCount > 0) {
-        showToast(`📥 공유한 식단 사진 ${importedCount}장을 불러왔어요.`);
-    } else {
-        showToast('공유한 사진은 자동 저장되지 않아요. 원하는 칸에 직접 올려 주세요.');
+async function handleSharedUploadDeepLink() {
+    if (_pendingSharedImportPromise) {
+        return _pendingSharedImportPromise;
     }
 
-    return importedCount;
+    _pendingSharedImportPromise = (async () => {
+        const selectedDate = document.getElementById('selected-date')?.value;
+        if (selectedDate && typeof loadDataForSelectedDate === 'function') {
+            await loadDataForSelectedDate(selectedDate);
+        }
+
+        const { manifest, files } = await readPendingSharedFiles();
+        if (!manifest || files.length === 0) {
+            if (manifest) {
+                await clearPendingSharedTarget(manifest);
+            }
+            showToast('공유한 사진을 찾지 못했어요. 다시 공유해 주세요.');
+            return 0;
+        }
+
+        return await openSharedImportSheetFlow({ manifest, files });
+    })().catch((error) => {
+        console.warn('[handleSharedUploadDeepLink] shared import failed:', error?.message || error);
+        showToast('⚠️ 공유한 사진을 준비하지 못했습니다.');
+        return 0;
+    }).finally(() => {
+        _pendingSharedImportPromise = null;
+    });
+
+    return _pendingSharedImportPromise;
 }
 
 function parseNativeStepImportPayload(params = getAppEntryDeepLinkParams()) {
@@ -1144,9 +1576,9 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         return true;
     }
 
-    if (params.focus === 'shared-upload' && (params.tab === 'diet' || initialTab === 'diet')) {
-        await handleSharedDietUploadDeepLink();
-        clearAppEntryDeepLinkParams('diet');
+    if (params.focus === 'shared-upload') {
+        await handleSharedUploadDeepLink();
+        clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || 'diet');
         return true;
     }
 
@@ -3513,7 +3945,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=157';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=158';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -5121,6 +5553,7 @@ async function loadDataForSelectedDate(dateStr) {
             getDoc(doc(db, "daily_logs", docId)).catch(() => _empty),
             new Promise(resolve => setTimeout(() => resolve(_empty), 3000))
         ]);
+        const pendingOutboxEntry = findOfflineOutboxEntry(user.uid, docId);
 
         // race condition 방지: 날짜가 빠르게 변경된 경우 이전 요청 무시
         if (thisGeneration !== _loadDataGeneration) return;
@@ -5128,8 +5561,10 @@ async function loadDataForSelectedDate(dateStr) {
         // 데이터 도착 후에 UI 초기화 (깜빡임 방지)
         clearInputs();
 
-        if (myLogDoc.exists()) {
-            const data = myLogDoc.data();
+        if (myLogDoc.exists() || pendingOutboxEntry) {
+            const data = pendingOutboxEntry
+                ? mergeOfflineOutboxData(myLogDoc.exists() ? myLogDoc.data() : { awardedPoints: {} }, pendingOutboxEntry)
+                : myLogDoc.data();
             updateDailyLogCache(docId, data);
             const awarded = data.awardedPoints || {};
             applyShareSettingsToControls(data.shareSettings);
@@ -10792,6 +11227,405 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
     })();
 }
 
+function readOfflineOutboxEntries() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(OFFLINE_OUTBOX_STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function writeOfflineOutboxEntries(entries = []) {
+    const normalized = Array.isArray(entries)
+        ? entries
+            .filter((entry) => entry && typeof entry === 'object' && entry.id)
+            .sort((a, b) => Number(a.updatedAt || 0) - Number(b.updatedAt || 0))
+            .slice(-OFFLINE_OUTBOX_MAX_ENTRIES)
+        : [];
+    try {
+        localStorage.setItem(OFFLINE_OUTBOX_STORAGE_KEY, JSON.stringify(normalized));
+    } catch (_) {}
+    return normalized;
+}
+
+function findOfflineOutboxEntry(userId = '', docId = '') {
+    const normalizedUserId = String(userId || '').trim();
+    const normalizedDocId = String(docId || '').trim();
+    if (!normalizedUserId || !normalizedDocId) return null;
+    return readOfflineOutboxEntries().find((entry) => {
+        return String(entry?.userId || '').trim() === normalizedUserId
+            && String(entry?.docId || '').trim() === normalizedDocId;
+    }) || null;
+}
+
+function buildOfflineOutboxBlobUrl(entryId = '', blobId = '') {
+    const normalizedEntryId = String(entryId || '').trim();
+    const normalizedBlobId = String(blobId || '').trim();
+    if (!normalizedEntryId || !normalizedBlobId || typeof window === 'undefined') return '';
+    return new URL(`/__offline_outbox__/${encodeURIComponent(normalizedEntryId)}/${encodeURIComponent(normalizedBlobId)}`, window.location.origin).href;
+}
+
+async function cacheOfflineOutboxFile(entryId = '', mediaItem = {}, file = null) {
+    if (!entryId || !file || typeof caches === 'undefined') return null;
+    const blobId = String(mediaItem?.blobId || createClientMediaId('blob')).trim();
+    const cacheUrl = buildOfflineOutboxBlobUrl(entryId, blobId);
+    if (!cacheUrl) return null;
+    const cache = await caches.open(OFFLINE_OUTBOX_CACHE_NAME);
+    await cache.put(cacheUrl, new Response(file, {
+        headers: {
+            'content-type': String(file.type || 'application/octet-stream').trim() || 'application/octet-stream'
+        }
+    }));
+    return {
+        ...mediaItem,
+        blobId,
+        cacheUrl,
+        name: String(file.name || mediaItem?.name || `${mediaItem?.kind || 'media'}-${blobId}`).trim() || `${mediaItem?.kind || 'media'}-${blobId}`,
+        type: String(file.type || mediaItem?.type || 'application/octet-stream').trim() || 'application/octet-stream',
+        lastModified: Number(file.lastModified || mediaItem?.lastModified || Date.now()) || Date.now(),
+        size: Number(file.size || 0) || 0
+    };
+}
+
+async function readOfflineOutboxFile(entryId = '', mediaItem = null) {
+    const cacheUrl = String(mediaItem?.cacheUrl || buildOfflineOutboxBlobUrl(entryId, mediaItem?.blobId)).trim();
+    if (!cacheUrl || typeof caches === 'undefined') return null;
+    try {
+        const cache = await caches.open(OFFLINE_OUTBOX_CACHE_NAME);
+        const response = await cache.match(cacheUrl);
+        if (!response) return null;
+        const blob = await response.blob();
+        return new File([blob], String(mediaItem?.name || `${mediaItem?.kind || 'media'}.bin`).trim() || `${mediaItem?.kind || 'media'}.bin`, {
+            type: String(mediaItem?.type || blob.type || 'application/octet-stream').trim() || 'application/octet-stream',
+            lastModified: Number(mediaItem?.lastModified || Date.now()) || Date.now()
+        });
+    } catch (_) {
+        return null;
+    }
+}
+
+async function clearOfflineOutboxFiles(entry = null) {
+    if (!entry || typeof caches === 'undefined') return;
+    const cache = await caches.open(OFFLINE_OUTBOX_CACHE_NAME);
+    const mediaItems = Array.isArray(entry?.mediaItems) ? entry.mediaItems : [];
+    await Promise.all(mediaItems.map((mediaItem) => {
+        const cacheUrl = String(mediaItem?.cacheUrl || buildOfflineOutboxBlobUrl(entry.id, mediaItem?.blobId)).trim();
+        return cacheUrl ? cache.delete(cacheUrl) : Promise.resolve(false);
+    }));
+}
+
+function buildPersistableSaveData(saveData = {}) {
+    try {
+        return JSON.parse(JSON.stringify({
+            ...saveData,
+            timestamp: new Date().toISOString()
+        }));
+    } catch (_) {
+        return {
+            ...saveData,
+            timestamp: new Date().toISOString()
+        };
+    }
+}
+
+function mergeOfflineOutboxData(baseData = {}, entry = null) {
+    if (!entry?.saveData || typeof entry.saveData !== 'object') return baseData;
+    return {
+        ...baseData,
+        ...entry.saveData,
+        metrics: {
+            ...(baseData.metrics || {}),
+            ...(entry.saveData.metrics || {})
+        },
+        diet: {
+            ...(baseData.diet || {}),
+            ...(entry.saveData.diet || {})
+        },
+        exercise: {
+            ...(baseData.exercise || {}),
+            ...(entry.saveData.exercise || {})
+        },
+        sleepAndMind: {
+            ...(baseData.sleepAndMind || {}),
+            ...(entry.saveData.sleepAndMind || {})
+        },
+        shareSettings: entry.saveData.shareSettings || baseData.shareSettings,
+        _offlinePending: true
+    };
+}
+
+function isOfflineSaveCandidateError(error = null) {
+    const code = String(error?.code || '').trim().toLowerCase();
+    const message = String(error?.message || '').trim().toLowerCase();
+    if (navigator.onLine === false) return true;
+    return ['unavailable', 'failed-precondition', 'deadline-exceeded'].includes(code)
+        || code.includes('network')
+        || message.includes('network')
+        || message.includes('offline')
+        || message.includes('failed to fetch');
+}
+
+function collectOfflineOutboxMediaItems(saveData = {}) {
+    const items = [];
+    const diet = saveData?.diet || {};
+    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
+        const input = document.getElementById(`diet-img-${slot}`);
+        const preview = document.getElementById(`preview-${slot}`);
+        const file = input?.files?.[0];
+        if (!file || preview?.hasAttribute('data-user-removed') || hasMediaUrl(diet[`${slot}Url`])) return;
+        items.push({
+            kind: 'diet',
+            slot,
+            folder: 'diet_images',
+            file
+        });
+    });
+
+    const cardioItems = new Map(
+        Array.isArray(saveData?.exercise?.cardioList)
+            ? saveData.exercise.cardioList.map((item) => [String(item?.mediaId || '').trim(), item])
+            : []
+    );
+    document.querySelectorAll('.cardio-block').forEach((block) => {
+        if (block.hasAttribute('data-user-removed')) return;
+        const mediaId = String(block.dataset.mediaId || '').trim();
+        const input = block.querySelector('.exer-file');
+        const file = input?.files?.[0];
+        if (!mediaId || !file || hasMediaUrl(cardioItems.get(mediaId)?.imageUrl)) return;
+        items.push({
+            kind: 'cardio',
+            mediaId,
+            folder: 'exercise_images',
+            file
+        });
+    });
+
+    const strengthItems = new Map(
+        Array.isArray(saveData?.exercise?.strengthList)
+            ? saveData.exercise.strengthList.map((item) => [String(item?.mediaId || '').trim(), item])
+            : []
+    );
+    document.querySelectorAll('.strength-block').forEach((block) => {
+        if (block.hasAttribute('data-user-removed')) return;
+        const mediaId = String(block.dataset.mediaId || '').trim();
+        const input = block.querySelector('.exer-file');
+        const file = input?.files?.[0];
+        if (!mediaId || !file || hasMediaUrl(strengthItems.get(mediaId)?.videoUrl)) return;
+        const previewImg = block.querySelector('.preview-strength-img');
+        items.push({
+            kind: 'strength',
+            mediaId,
+            folder: 'exercise_videos',
+            localThumbSeed: String(
+                block.getAttribute('data-local-thumb')
+                || previewImg?.getAttribute('data-local-thumb')
+                || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
+                || ''
+            ).trim(),
+            file
+        });
+    });
+
+    const sleepInput = document.getElementById('sleep-img');
+    const sleepPreview = document.getElementById('preview-sleep');
+    const sleepFile = sleepInput?.files?.[0];
+    if (sleepFile && !sleepPreview?.hasAttribute('data-user-removed') && !hasMediaUrl(saveData?.sleepAndMind?.sleepImageUrl)) {
+        items.push({
+            kind: 'sleep',
+            folder: 'sleep_images',
+            file: sleepFile
+        });
+    }
+
+    return items;
+}
+
+async function queueOfflineOutboxEntry({ userId = '', docId = '', date = '', saveData = {}, mediaItems = [] } = {}) {
+    const normalizedUserId = String(userId || '').trim();
+    const normalizedDocId = String(docId || '').trim();
+    if (!normalizedUserId || !normalizedDocId) return null;
+
+    const existingEntry = findOfflineOutboxEntry(normalizedUserId, normalizedDocId);
+    const entryId = String(existingEntry?.id || createClientMediaId('outbox')).trim();
+    if (existingEntry) {
+        await clearOfflineOutboxFiles(existingEntry).catch(() => {});
+    }
+
+    const persistedMediaItems = [];
+    for (const mediaItem of Array.isArray(mediaItems) ? mediaItems : []) {
+        const file = mediaItem?.file;
+        if (!(file instanceof File)) continue;
+        const cachedItem = await cacheOfflineOutboxFile(entryId, {
+            kind: String(mediaItem.kind || '').trim(),
+            slot: String(mediaItem.slot || '').trim(),
+            mediaId: String(mediaItem.mediaId || '').trim(),
+            folder: String(mediaItem.folder || '').trim(),
+            localThumbSeed: String(mediaItem.localThumbSeed || '').trim()
+        }, file).catch(() => null);
+        if (!cachedItem) continue;
+        persistedMediaItems.push(cachedItem);
+    }
+
+    const nextEntry = {
+        id: entryId,
+        userId: normalizedUserId,
+        docId: normalizedDocId,
+        date: String(date || '').trim(),
+        createdAt: Number(existingEntry?.createdAt || Date.now()) || Date.now(),
+        updatedAt: Date.now(),
+        mediaItems: persistedMediaItems,
+        saveData: buildPersistableSaveData(saveData)
+    };
+
+    const nextEntries = readOfflineOutboxEntries().filter((entry) => entry.id !== entryId);
+    nextEntries.push(nextEntry);
+    writeOfflineOutboxEntries(nextEntries);
+    return nextEntry;
+}
+
+async function removeOfflineOutboxEntry(userId = '', docId = '') {
+    const existingEntry = findOfflineOutboxEntry(userId, docId);
+    if (!existingEntry) return false;
+    await clearOfflineOutboxFiles(existingEntry).catch(() => {});
+    const nextEntries = readOfflineOutboxEntries().filter((entry) => entry.id !== existingEntry.id);
+    writeOfflineOutboxEntries(nextEntries);
+    return true;
+}
+
+function patchOfflineOutboxSaveData(saveData = {}, mediaItem = null, uploadResult = {}) {
+    if (!saveData || !mediaItem || !uploadResult?.url) return saveData;
+    if (mediaItem.kind === 'diet' && mediaItem.slot) {
+        saveData.diet = saveData.diet || {};
+        saveData.diet[`${mediaItem.slot}Url`] = uploadResult.url;
+        saveData.diet[`${mediaItem.slot}ThumbUrl`] = uploadResult.thumbUrl || null;
+        return saveData;
+    }
+    if (mediaItem.kind === 'sleep') {
+        saveData.sleepAndMind = saveData.sleepAndMind || {};
+        saveData.sleepAndMind.sleepImageUrl = uploadResult.url;
+        saveData.sleepAndMind.sleepImageThumbUrl = uploadResult.thumbUrl || null;
+        return saveData;
+    }
+    if (mediaItem.kind === 'cardio') {
+        const target = Array.isArray(saveData?.exercise?.cardioList)
+            ? saveData.exercise.cardioList.find((item) => String(item?.mediaId || '').trim() === String(mediaItem.mediaId || '').trim())
+            : null;
+        if (target) {
+            target.imageUrl = uploadResult.url;
+            target.imageThumbUrl = uploadResult.thumbUrl || null;
+        }
+        return saveData;
+    }
+    if (mediaItem.kind === 'strength') {
+        const target = Array.isArray(saveData?.exercise?.strengthList)
+            ? saveData.exercise.strengthList.find((item) => String(item?.mediaId || '').trim() === String(mediaItem.mediaId || '').trim())
+            : null;
+        if (target) {
+            target.videoUrl = uploadResult.url;
+            target.videoThumbUrl = uploadResult.thumbUrl || null;
+        }
+    }
+    return saveData;
+}
+
+async function flushOfflineOutbox({ quiet = false } = {}) {
+    if (_offlineOutboxFlushPromise) {
+        return _offlineOutboxFlushPromise;
+    }
+
+    _offlineOutboxFlushPromise = (async () => {
+        if (navigator.onLine === false) return 0;
+        const user = auth.currentUser;
+        if (!user?.uid) return 0;
+
+        let entries = readOfflineOutboxEntries();
+        const pendingEntries = entries
+            .filter((entry) => String(entry?.userId || '').trim() === user.uid)
+            .sort((a, b) => Number(a.updatedAt || 0) - Number(b.updatedAt || 0));
+
+        if (pendingEntries.length === 0) return 0;
+
+        let flushedCount = 0;
+        for (const entry of pendingEntries) {
+            try {
+                const saveData = buildPersistableSaveData(entry.saveData || {});
+                saveData.timestamp = serverTimestamp();
+
+                for (const mediaItem of Array.isArray(entry.mediaItems) ? entry.mediaItems : []) {
+                    const file = await readOfflineOutboxFile(entry.id, mediaItem);
+                    if (!file) {
+                        throw new Error(`missing cached media:${mediaItem.kind || 'media'}`);
+                    }
+
+                    let uploadResult = null;
+                    if (mediaItem.kind === 'strength') {
+                        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', user.uid, String(mediaItem.localThumbSeed || '').trim());
+                        const result = await pendingUpload.promise;
+                        const thumbUrl = await pendingUpload.thumbPromise.catch(() => null);
+                        uploadResult = result?.url ? { ...result, thumbUrl: thumbUrl || result.thumbUrl || null } : null;
+                    } else {
+                        const pendingUpload = uploadWithThumb(file, String(mediaItem.folder || '').trim(), user.uid);
+                        const result = await pendingUpload.promise;
+                        const thumbUrl = await pendingUpload.thumbPromise.catch(() => null);
+                        uploadResult = result?.url ? { ...result, thumbUrl: thumbUrl || result.thumbUrl || null } : null;
+                    }
+
+                    if (!uploadResult?.url) {
+                        throw new Error(`offline media upload failed:${mediaItem.kind || 'media'}`);
+                    }
+                    patchOfflineOutboxSaveData(saveData, mediaItem, uploadResult);
+                }
+
+                await setDoc(doc(db, 'daily_logs', entry.docId), saveData, { merge: true });
+
+                const hydratedData = mergeOfflineOutboxData(getCachedDailyLog(entry.docId) || {}, {
+                    saveData: {
+                        ...entry.saveData,
+                        ...saveData,
+                        timestamp: new Date().toISOString()
+                    }
+                });
+                delete hydratedData._offlinePending;
+                updateDailyLogCache(entry.docId, hydratedData);
+                upsertGalleryCacheItem(entry.docId, hydratedData);
+                refreshGalleryFromCacheIfVisible();
+                _dashboardCache.ts = 0;
+                _assetCache.ts = 0;
+
+                await clearOfflineOutboxFiles(entry).catch(() => {});
+                entries = entries.filter((item) => item.id !== entry.id);
+                writeOfflineOutboxEntries(entries);
+                flushedCount += 1;
+            } catch (error) {
+                console.warn('[flushOfflineOutbox] replay failed:', entry?.docId, error?.message || error);
+            }
+        }
+
+        if (flushedCount > 0 && !quiet) {
+            showToast(`📡 오프라인으로 임시 저장한 기록 ${flushedCount}건을 전송했어요.`);
+        }
+        return flushedCount;
+    })().finally(() => {
+        _offlineOutboxFlushPromise = null;
+    });
+
+    return _offlineOutboxFlushPromise;
+}
+
+window.flushOfflineOutbox = flushOfflineOutbox;
+window.addEventListener('online', () => {
+    flushOfflineOutbox({ quiet: true }).catch(() => {});
+});
+window.addEventListener('focus', () => {
+    if (navigator.onLine === false) return;
+    flushOfflineOutbox({ quiet: true }).catch(() => {});
+});
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden || navigator.onLine === false) return;
+    flushOfflineOutbox({ quiet: true }).catch(() => {});
+});
+
 document.getElementById('saveDataBtn').addEventListener('click', () => {
     const saveBtn = document.getElementById('saveDataBtn');
     const mode = saveBtn?.dataset.mode || 'save';
@@ -10816,8 +11650,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
 
         let uploadFailures = [];
+        let selectedDateStr = '';
+        let docId = '';
+        let latestSaveData = null;
+        let latestOldData = { awardedPoints: {} };
+        let offlineOutboxMediaItems = [];
         try {
-            const selectedDateStr = document.getElementById('selected-date').value;
+            selectedDateStr = document.getElementById('selected-date').value;
             const rewardPolicy = getRewardEligibilityForDate(selectedDateStr);
             // 미래 날짜 저장 방지
             const { todayStr: saveToday } = getDatesInfo();
@@ -10826,7 +11665,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 applySaveButtonLabel(saveBtn, getVisibleTabName(), rewardPolicy); saveBtn.disabled = false;
                 return;
             }
-            const docId = `${user.uid}_${selectedDateStr}`;
+            docId = `${user.uid}_${selectedDateStr}`;
             // 현재 날짜 로그는 메모리 캐시를 우선 사용해 저장 전 문서 읽기를 최소화
             let oldData = getCachedDailyLog(docId) || { awardedPoints: {} };
             if (!oldData || Object.keys(oldData).length === 0 || !oldData.awardedPoints) {
@@ -10837,6 +11676,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 } catch (_) {}
             }
             oldData.awardedPoints = oldData.awardedPoints || {};
+            latestOldData = oldData;
 
             const backgroundJobs = [];
             const queueBackgroundJob = (job) => {
@@ -11121,6 +11961,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 },
                 shareSettings: shareSettings
             });
+            latestSaveData = saveData;
+            offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData);
 
             // Firestore 저장: 서버 ACK 최대 5초 대기, unavailable 에러 시 1회 자동 재시도
             const doSetDoc = () => withTimeout(
@@ -11137,6 +11979,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     await doSetDoc();
                 } else { throw e; }
             }
+            await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
 
             if (uploadFailures.length > 0) {
                 showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
@@ -11236,6 +12079,23 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
         } catch (e) {
             console.error('데이터 저장 오류:', e);
+            if (latestSaveData && docId && isOfflineSaveCandidateError(e)) {
+                const queuedEntry = await queueOfflineOutboxEntry({
+                    userId: user.uid,
+                    docId,
+                    date: selectedDateStr,
+                    saveData: latestSaveData,
+                    mediaItems: offlineOutboxMediaItems
+                }).catch(() => null);
+                if (queuedEntry) {
+                    const pendingData = mergeOfflineOutboxData(latestOldData, queuedEntry);
+                    updateDailyLogCache(docId, pendingData);
+                    upsertGalleryCacheItem(docId, pendingData);
+                    refreshGalleryFromCacheIfVisible();
+                    showToast('📦 오프라인 보관함에 임시 저장했어요. 연결되면 자동으로 전송할게요.');
+                    return;
+                }
+            }
             let errorMsg = '저장 중 오류가 발생했습니다. 다시 시도해주세요.';
             if (e.code === 'permission-denied') {
                 errorMsg = '저장 권한이 없습니다. 로그인을 확인해주세요.';

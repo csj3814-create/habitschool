@@ -13,6 +13,25 @@ const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
 const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');
+const classifySharedHealthImageFn = httpsCallable(functions, 'classifySharedHealthImage');
+
+export async function requestSharedTargetClassification(imageUrl, context = {}) {
+    if (!auth.currentUser || !imageUrl) {
+        return null;
+    }
+
+    try {
+        const result = await classifySharedHealthImageFn({
+            imageUrl,
+            fileName: String(context?.fileName || '').trim(),
+            fileCount: Number(context?.fileCount || 0) || 0
+        });
+        return result.data?.classification || null;
+    } catch (error) {
+        console.warn('공유 타깃 분류 실패:', error?.message || error);
+        return null;
+    }
+}
 
 /**
  * 수면/마음 AI 분석 요청
@@ -322,6 +341,7 @@ window.renderDietDaySummary = renderDietDaySummary;
 window.renderExerciseAnalysisResult = renderExerciseAnalysisResult;
 window.requestSleepMindAnalysis = requestSleepMindAnalysis;
 window.renderSleepMindAnalysisResult = renderSleepMindAnalysisResult;
+window.requestSharedTargetClassification = requestSharedTargetClassification;
 
 // ========================================
 // 혈액검사 결과지 AI 분석

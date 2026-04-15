@@ -30,13 +30,19 @@
     "params": {
       "files": [
         {
-          "name": "dietPhotos",
+          "name": "sharedImages",
           "accept": [
             "image/*"
           ]
         }
       ]
     }
+  },
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
   },
   "icons": [
     {
@@ -64,7 +70,22 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [],
+  "screenshots": [
+    {
+      "src": "icons/feature-graphic.png",
+      "sizes": "1024x500",
+      "type": "image/png",
+      "label": "오늘 기록과 미션을 한 번에 보는 해빛스쿨 메인 화면",
+      "form_factor": "wide"
+    },
+    {
+      "src": "icons/feature-graphic-minimal.png",
+      "sizes": "1024x500",
+      "type": "image/png",
+      "label": "간편하게 식단, 운동, 수면을 기록하는 해빛스쿨 PWA",
+      "form_factor": "wide"
+    }
+  ],
   "shortcuts": [
     {
       "name": "식단 촬영",

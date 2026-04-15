@@ -104,9 +104,9 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=157">
+    <link rel="stylesheet" href="styles.css?v=158">
 
-    <script src="js/webview-detect.js?v=157"></script>
+    <script src="js/webview-detect.js?v=158"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
@@ -1387,6 +1387,38 @@
         </div>
     </div>
 
+    <div id="shared-import-modal" class="shared-import-modal" role="dialog" aria-modal="true" aria-labelledby="shared-import-title">
+        <div class="shared-import-sheet" onclick="event.stopPropagation()">
+            <div class="share-modal-handle" aria-hidden="true"></div>
+            <div class="shared-import-header">
+                <div>
+                    <div class="shared-import-kicker">공유 가져오기</div>
+                    <h3 id="shared-import-title">이 사진을 어디에 넣을까요?</h3>
+                    <p id="shared-import-subtitle">AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.</p>
+                </div>
+            </div>
+            <div class="shared-import-preview-wrap">
+                <img id="shared-import-preview" class="shared-import-preview" alt="공유된 사진 미리보기">
+                <span id="shared-import-count" class="shared-import-count" hidden></span>
+            </div>
+            <div id="shared-import-status" class="shared-import-status" data-tone="info">AI가 식단, 운동, 수면 중 어디에 넣을지 보고 있어요.</div>
+            <div class="shared-import-options">
+                <button type="button" class="shared-import-option" data-target="diet" onclick="chooseSharedImportTarget('diet')">
+                    <strong>식단</strong>
+                    <span>빈 식사 칸에 바로 배치</span>
+                </button>
+                <button type="button" class="shared-import-option" data-target="exercise" onclick="chooseSharedImportTarget('exercise')">
+                    <strong>운동</strong>
+                    <span>걸음 캡처 또는 운동 이미지</span>
+                </button>
+                <button type="button" class="shared-import-option" data-target="sleep" onclick="chooseSharedImportTarget('sleep')">
+                    <strong>수면</strong>
+                    <span>수면 캡처로 바로 연결</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="level-modal">
         <div class="modal-content">
             <button class="close-btn" onclick="document.getElementById('level-modal').style.display='none'">×</button>
@@ -1620,13 +1652,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-<script type="module" src="js/app.js?v=157"></script>
-    <script type="module" src="js/main.js?v=157"></script>
+<script type="module" src="js/app.js?v=158"></script>
+    <script type="module" src="js/main.js?v=158"></script>
     <script type="module" src="js/diet-analysis.js?v=112"></script>
     <script type="module" src="js/metabolic-score.js?v=112"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=157"></script>
+    <script src="js/pwa-install.js?v=158"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
