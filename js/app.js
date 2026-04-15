@@ -15,7 +15,7 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 
 // 프로젝트 모듈 임포트
 import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
 import { buildStrengthExerciseSeed, resolveStrengthVideoThumbUrl } from './exercise-media.js';
 import { buildHealthConnectStepData, buildPersistableStepData, createEmptyStepData, restoreHealthConnectImportState } from './health-connect-utils.js';
@@ -1421,6 +1421,23 @@ function renderExerciseNativeSyncCta() {
         : 'Health Connect에서 가져오기';
 }
 
+function buildManualHealthConnectReturnUrl() {
+    try {
+        const currentUrl = new URL(window.location.href);
+        const searchParams = new URLSearchParams(currentUrl.search);
+        ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach((key) => {
+            searchParams.delete(key);
+        });
+        return buildAppModeUrl(
+            getAppModeFromPath(currentUrl.pathname),
+            'exercise',
+            searchParams
+        );
+    } catch (_) {
+        return buildAppModeUrl(getAppModeFromPath(window.location.pathname), 'exercise');
+    }
+}
+
 function startNativeHealthConnectSync() {
     const nativeSource = getRememberedNativeAppSource();
     if (!nativeSource) {
@@ -1430,6 +1447,7 @@ function startNativeHealthConnectSync() {
 
     const syncUrl = new URL('habitschool://health-connect/sync');
     syncUrl.searchParams.set('source', 'android-web-sync');
+    syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl());
     window.location.href = syncUrl.toString();
 }
 

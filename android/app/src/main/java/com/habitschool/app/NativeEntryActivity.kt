@@ -11,6 +11,14 @@ class NativeEntryActivity : Activity() {
         val source = data?.getQueryParameter("source")
             ?.takeUnless { it.isNullOrBlank() }
             ?: "android-web-sync"
+        val returnToUri = data?.getQueryParameter("returnTo")
+            ?.takeUnless { it.isBlank() }
+            ?.let { raw ->
+                runCatching { android.net.Uri.parse(raw) }.getOrNull()
+            }
+            ?.takeIf { uri ->
+                uri.scheme == "https" && uri.host == android.net.Uri.parse(AppRoutes.WEB_ORIGIN).host
+            }
 
         when {
             data?.scheme == "habitschool" &&
@@ -20,7 +28,7 @@ class NativeEntryActivity : Activity() {
                     HealthConnectPermissionActivity.createSyncIntent(
                         context = this,
                         source = source,
-                        openAfterSync = AppRoutes.exerciseUri(source),
+                        openAfterSync = returnToUri ?: AppRoutes.exerciseUri(source),
                         autoStart = true
                     )
                 )

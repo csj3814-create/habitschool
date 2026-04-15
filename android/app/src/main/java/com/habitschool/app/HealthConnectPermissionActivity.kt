@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -91,15 +92,14 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
 
     private suspend fun performSync() {
         setLoading(true)
+        val previousSnapshot = snapshotStore.read()
         val snapshot = try {
             healthConnectManager.syncTodaySteps()
-        } catch (_: Exception) {
-            HealthConnectSnapshot(
-                stepsCount = snapshotStore.read().stepsCount,
-                syncedAtEpochMillis = snapshotStore.read().syncedAtEpochMillis,
-                availabilityState = healthConnectManager.getAvailability(),
-                permissionGranted = healthConnectManager.hasRequiredPermissions()
-            )
+        } catch (error: Exception) {
+            Log.e("HealthConnectSync", "manual sync failed", error)
+            setLoading(false)
+            renderSyncFailure(previousSnapshot)
+            return
         }
 
         snapshotStore.write(snapshot)
@@ -113,6 +113,16 @@ class HealthConnectPermissionActivity : AppCompatActivity() {
             snapshot.permissionGranted &&
             snapshot.availabilityState == HealthConnectAvailabilityState.AVAILABLE
         ) {
+            openExercise(snapshot)
+        }
+    }
+
+    private fun renderSyncFailure(snapshot: HealthConnectSnapshot) {
+        titleView.text = "Health Connect 동기화에 실패했어요"
+        bodyView.text = "지금은 걸음수를 가져오지 못했습니다. 잠시 후 다시 시도하거나 Health Connect 앱 상태를 확인해 주세요."
+        primaryButton.text = getString(R.string.native_health_sync_again)
+        secondaryButton.text = getString(R.string.native_health_open_exercise)
+        secondaryButton.setOnClickListener {
             openExercise(snapshot)
         }
     }

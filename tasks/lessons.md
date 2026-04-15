@@ -3,6 +3,11 @@
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
+### 166. Native surface work must be verified on both footprint and round-trip behavior, not just successful builds
+- Symptom: the Android widget shipped with a wider-than-expected footprint, and the in-app `Health Connect에서 가져오기` flow could return without importing steps in the user's actual shell flow.
+- Root cause: I treated Android build success and code-path review as sufficient proof, but native UX depends on resource sizing and full deep-link round trips across web -> native -> web.
+- Lesson: for Android shell features, verify two separate contracts before calling the work done: the rendered footprint on the launcher/widget grid, and the end-to-end return path from web CTA to native activity back into the web app with the expected payload intact.
+
 ### 163. Do not claim an admin UI is visible until the exact surface and entry point are verified in code or the running app
 - Symptom: I reported that inactivity email audit details were available, but the user still could not find them from the member-management list.
 - Root cause: I confirmed the data plumbing and modal implementation, then overgeneralized that into "the feature is visible" without checking the exact surface the user expected: direct visibility from the list itself rather than only inside a detail modal.

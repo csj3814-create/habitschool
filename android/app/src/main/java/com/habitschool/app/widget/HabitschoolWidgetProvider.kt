@@ -58,7 +58,6 @@ class HabitschoolWidgetProvider : AppWidgetProvider() {
             )
 
             views.setOnClickPendingIntent(R.id.widget_root, openIntent)
-            views.setOnClickPendingIntent(R.id.widget_open_button, openIntent)
             views.setOnClickPendingIntent(R.id.widget_sync_button, syncIntent)
             return views
         }
