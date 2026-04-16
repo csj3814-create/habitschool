@@ -19,7 +19,6 @@ import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeF
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
 import {
     buildStrengthExerciseSeed,
-    getStrengthThumbSaveWaitMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
 } from './exercise-media.js';
@@ -4634,22 +4633,6 @@ function syncPendingStrengthLocalThumb(inputId, thumbDataUrl = '') {
     }
 
     return normalizedThumb;
-}
-
-async function resolvePendingExerciseLocalThumb(inputId, { waitMs = 0 } = {}) {
-    if (!inputId) return '';
-    const entry = _pendingUploads.get(inputId);
-    if (!entry) return '';
-
-    const seededThumb = resolveUsableStrengthLocalThumb(entry.localThumbDataUrl);
-    if (seededThumb) return seededThumb;
-    if (!entry.localThumbPromise || waitMs <= 0) return '';
-
-    const resolvedThumb = await Promise.race([
-        Promise.resolve(entry.localThumbPromise).catch(() => ''),
-        new Promise((resolve) => setTimeout(() => resolve(''), waitMs))
-    ]);
-    return syncPendingStrengthLocalThumb(inputId, resolvedThumb);
 }
 
 function clearStrengthPreviewVideo(previewVideo) {
@@ -11304,17 +11287,24 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     baseData: latestCommittedData
                 });
                 if (committedData) latestCommittedData = committedData;
-                updateBackgroundUploadProgressTracker(job.inputId, {
-                    transferPct: 100,
-                    syncPct: 100,
-                    finished: true,
-                    failed: false
-                });
                 if (!result.thumbUrl && pendingSnapshot?.thumbPromise) {
                     deferredThumbPatches.push({
                         job,
                         result,
                         thumbPromise: pendingSnapshot.thumbPromise
+                    });
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 72,
+                        finished: false,
+                        failed: false
+                    });
+                } else {
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        finished: true,
+                        failed: false
                     });
                 }
             } catch (error) {
@@ -11338,28 +11328,17 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
             }
         }
 
-        completeBackgroundUploadProgressTracker();
-
-        window.updateAssetDisplay?.(true).catch(() => { });
-
-        if (failed === 0) {
-            showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
-        } else {
-            showToast(`⚠️ 백그라운드 업로드 중 ${failed}건이 실패했습니다.`);
-        }
-
-        try {
-            await onSettled?.({ failed, latestCommittedData });
-        } catch (settledError) {
-            console.warn('업로드 후속 작업 실패:', settledError?.message || settledError);
-        }
-
         if (deferredThumbPatches.length) {
-            (async () => {
-                for (const deferred of deferredThumbPatches) {
-                    try {
-                        const thumbUrl = await deferred.thumbPromise.catch(() => null);
-                        if (!thumbUrl || thumbUrl === deferred.result.thumbUrl) continue;
+            for (const deferred of deferredThumbPatches) {
+                try {
+                    updateBackgroundUploadProgressTracker(deferred.job.inputId, {
+                        transferPct: 100,
+                        syncPct: 84,
+                        finished: false,
+                        failed: false
+                    });
+                    const thumbUrl = await deferred.thumbPromise.catch(() => null);
+                    if (thumbUrl && thumbUrl !== deferred.result.thumbUrl) {
                         const committedData = await applyBackgroundMediaPatch({
                             userId,
                             docId,
@@ -11378,11 +11357,34 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                                 refreshGalleryFromCacheIfVisible();
                             }
                         }
-                    } catch (thumbError) {
-                        console.warn('백그라운드 썸네일 후속 패치 실패:', thumbError?.message || thumbError);
                     }
+                } catch (thumbError) {
+                    console.warn('백그라운드 썸네일 후속 패치 실패:', thumbError?.message || thumbError);
+                } finally {
+                    updateBackgroundUploadProgressTracker(deferred.job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        finished: true,
+                        failed: false
+                    });
                 }
-            })();
+            }
+        }
+
+        completeBackgroundUploadProgressTracker();
+
+        window.updateAssetDisplay?.(true).catch(() => { });
+
+        if (failed === 0) {
+            showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
+        } else {
+            showToast(`⚠️ 백그라운드 업로드 중 ${failed}건이 실패했습니다.`);
+        }
+
+        try {
+            await onSettled?.({ failed, latestCommittedData });
+        } catch (settledError) {
+            console.warn('업로드 후속 작업 실패:', settledError?.message || settledError);
         }
     })();
 }
@@ -11990,32 +11992,17 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     previewImg?.getAttribute('data-local-thumb'),
                     pendingSnapshot?.localThumbDataUrl
                 );
-                if (!localThumbSeed && fileInput?.id) {
-                    localThumbSeed = await resolvePendingExerciseLocalThumb(fileInput.id, { waitMs: 900 });
-                }
-                const thumbWaitMs = getStrengthThumbSaveWaitMs(localThumbSeed);
                 if (pendingSnapshot?.result?.url) {
-                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: thumbWaitMs });
-                    const effectiveResult = thumbAwareResult?.url ? thumbAwareResult : pendingSnapshot.result;
-                    url = effectiveResult.url;
-                    thumbUrl = effectiveResult.thumbUrl || thumbUrl;
-                    pendingSnapshot = getPendingUploadSnapshot(fileInput?.id) || pendingSnapshot;
-                    if (hasPendingThumbBackfill(pendingSnapshot) && !effectiveResult.thumbUrl) {
+                    url = pendingSnapshot.result.url;
+                    thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                    if (hasPendingThumbBackfill(pendingSnapshot)) {
                         queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }
                 } else if (fileInput?.files?.[0]) {
                     if (!pendingSnapshot) {
                         ensureDeferredVideoUpload(fileInput.id, fileInput.files[0], localThumbSeed);
-                        pendingSnapshot = getPendingUploadSnapshot(fileInput.id);
                     }
-                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: thumbWaitMs });
-                    if (thumbAwareResult?.url) {
-                        url = thumbAwareResult.url;
-                        thumbUrl = thumbAwareResult.thumbUrl || thumbUrl;
-                    }
-                    if (!thumbAwareResult?.thumbUrl) {
-                        queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
-                    }
+                    queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                 }
                 const item = normalizeExerciseItem('strength', {
                     mediaId,

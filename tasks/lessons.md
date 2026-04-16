@@ -1204,6 +1204,16 @@
 - Symptom: the asset tab mixed a stable Firestore-backed HBT history with a slow/failing onchain callable, which produced 504/CORS-looking console noise and made the screen feel like basic information was missing.
 - Root cause: I kept treating the onchain transfer lookup as mandatory enrichment even after the user decided the extra scan was not worth the instability. That left a secondary feature in the critical rendering path.
 - Lesson: When a screen already has a stable primary data source, keep optional onchain enrichment behind a clean boundary. If that enrichment becomes the unstable piece and the user prefers stability, remove it cleanly instead of continuing to tune around it.
+
+### 163. Deferred-upload tabs must not consume the transfer before the floating tracker starts
+- Symptom: the strength-video bottom upload bar appeared only near the end, even though the actual upload had been running for a while.
+- Root cause: I still awaited the original video upload URL in the save path before I queued the “background” job, so by the time the floating tracker started there was almost no transfer left to show.
+- Lesson: If a tab is meant to behave like the app’s deferred-upload flows, do not block the save path on the original media URL first. Queue the background job while the transfer is still in flight so the tracker reflects real upload progress from the start.
+
+### 164. Video upload completion should include deferred thumbnail patching
+- Symptom: the UI could say the background upload was complete while a strength-video thumbnail was still missing or still being patched.
+- Root cause: I ended the floating tracker after the primary media patch and treated late thumbnail persistence as an invisible afterthought.
+- Lesson: For video media, keep the completion state and progress tracker open until deferred thumbnail patching settles. Otherwise the app declares success before the preview surface is actually done.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
