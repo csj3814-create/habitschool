@@ -17,7 +17,12 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
-import { buildStrengthExerciseSeed, resolveStrengthVideoThumbUrl } from './exercise-media.js';
+import {
+    buildStrengthExerciseSeed,
+    getStrengthThumbSaveWaitMs,
+    resolveStrengthLocalThumbSeed,
+    resolveStrengthVideoThumbUrl
+} from './exercise-media.js';
 import { buildHealthConnectStepData, buildPersistableStepData, createEmptyStepData, restoreHealthConnectImportState } from './health-connect-utils.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
@@ -4588,6 +4593,65 @@ function tryCachePendingExerciseVideoThumb(inputId, thumbDataUrl = '') {
     return cacheResolvedExerciseVideoThumb(resolvedUrl, normalizedThumb);
 }
 
+let _videoPlaceholderDataUrl = '';
+
+function getVideoPlaceholderDataUrl() {
+    if (!_videoPlaceholderDataUrl) {
+        _videoPlaceholderDataUrl = createVideoPlaceholderBase64();
+    }
+    return _videoPlaceholderDataUrl;
+}
+
+function resolveUsableStrengthLocalThumb(...candidates) {
+    const placeholderDataUrl = getVideoPlaceholderDataUrl();
+    for (const candidate of candidates) {
+        const normalizedCandidate = resolveStrengthLocalThumbSeed(candidate);
+        if (normalizedCandidate && normalizedCandidate !== placeholderDataUrl) {
+            return normalizedCandidate;
+        }
+    }
+    return '';
+}
+
+function syncPendingStrengthLocalThumb(inputId, thumbDataUrl = '') {
+    const normalizedThumb = resolveUsableStrengthLocalThumb(thumbDataUrl);
+    if (!inputId || !normalizedThumb) return '';
+
+    const pendingEntry = _pendingUploads.get(inputId);
+    if (pendingEntry) pendingEntry.localThumbDataUrl = normalizedThumb;
+    tryCachePendingExerciseVideoThumb(inputId, normalizedThumb);
+
+    const input = document.getElementById(inputId);
+    const block = input?.closest('.strength-block');
+    const previewImg = block?.querySelector('.preview-strength-img');
+    const savedThumbUrl = String(
+        block?.getAttribute('data-thumb-url')
+        || previewImg?.getAttribute('data-saved-thumb-url')
+        || ''
+    ).trim();
+    if (!savedThumbUrl && block) {
+        showStrengthPreviewImage(block, normalizedThumb, { localThumb: normalizedThumb });
+    }
+
+    return normalizedThumb;
+}
+
+async function resolvePendingExerciseLocalThumb(inputId, { waitMs = 0 } = {}) {
+    if (!inputId) return '';
+    const entry = _pendingUploads.get(inputId);
+    if (!entry) return '';
+
+    const seededThumb = resolveUsableStrengthLocalThumb(entry.localThumbDataUrl);
+    if (seededThumb) return seededThumb;
+    if (!entry.localThumbPromise || waitMs <= 0) return '';
+
+    const resolvedThumb = await Promise.race([
+        Promise.resolve(entry.localThumbPromise).catch(() => ''),
+        new Promise((resolve) => setTimeout(() => resolve(''), waitMs))
+    ]);
+    return syncPendingStrengthLocalThumb(inputId, resolvedThumb);
+}
+
 function clearStrengthPreviewVideo(previewVideo) {
     if (!previewVideo) return;
     try { previewVideo.pause(); } catch (_) {}
@@ -4750,38 +4814,31 @@ window.previewDynamicVid = function (input) {
 
 
 
-    // 즉시 플레이스홈더 표시 (검은박스 방지)
-    showStrengthPreviewImage(currentBlock || input.parentElement, createVideoPlaceholderBase64());
+    // 즉시 플레이스홀더 표시 (검은 박스 방지)
+    showStrengthPreviewImage(currentBlock || input.parentElement, getVideoPlaceholderDataUrl());
+
+    const localThumbPromise = extractVideoThumbFromFile(file).catch(() => '');
 
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
-        const localThumbSeed = String(
+        const localThumbSeed = resolveUsableStrengthLocalThumb(
             currentBlock?.getAttribute('data-local-thumb')
-            || ''
-        ).trim();
+        );
         const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
-            onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
+            onProgress: (pct) => updatePendingUploadProgress(input.id, pct),
+            thumbDataUrlPromise: localThumbPromise
         });
         beginTrackedPendingUpload(input.id, pendingUpload);
     }
 
-    // 로컬 파일에서 실제 프레임 썸네일 추출
-    const objectUrl = URL.createObjectURL(file);
-    extractVideoThumbFromFile(file)
+    localThumbPromise
         .then((thumbDataUrl) => {
-            if (thumbDataUrl) {
-                showStrengthPreviewImage(currentBlock || input.parentElement, thumbDataUrl, { localThumb: thumbDataUrl });
-                const currentBlock = input.closest('.strength-block');
-                if (currentBlock) currentBlock.setAttribute('data-local-thumb', thumbDataUrl);
-                const pendingEntry = _pendingUploads.get(input.id);
-                if (pendingEntry) pendingEntry.localThumbDataUrl = thumbDataUrl;
-                tryCachePendingExerciseVideoThumb(input.id, thumbDataUrl);
+            const normalizedThumb = syncPendingStrengthLocalThumb(input.id, thumbDataUrl);
+            if (normalizedThumb) {
+                showStrengthPreviewImage(currentBlock || input.parentElement, normalizedThumb, { localThumb: normalizedThumb });
             }
         })
-        .catch(() => { })
-        .finally(() => {
-            setTimeout(() => URL.revokeObjectURL(objectUrl), 8000);
-        });
+        .catch(() => { });
 
     const strengthList = document.getElementById('strength-list');
     if (currentBlock && strengthList) {
@@ -10471,6 +10528,8 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
     if (!inputId || !uploadSource) return null;
     const promise = uploadSource?.promise || uploadSource;
     const thumbPromise = uploadSource?.thumbPromise || null;
+    const localThumbPromise = uploadSource?.localThumbPromise || null;
+    const localThumbDataUrl = resolveUsableStrengthLocalThumb(uploadSource?.localThumbDataUrl);
     if (!promise) return null;
 
     setInlineUploadProgress(inputId, { state: 'uploading', pct: 0 });
@@ -10478,6 +10537,8 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
     const entry = {
         promise,
         thumbPromise,
+        localThumbPromise,
+        localThumbDataUrl,
         done: false,
         result: null,
         progress: 0,
@@ -10505,6 +10566,17 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         setThumbPendingState(inputId, { visible: false });
         _pendingUploads.delete(inputId);
     });
+
+    if (localThumbDataUrl) {
+        syncPendingStrengthLocalThumb(inputId, localThumbDataUrl);
+    }
+    if (localThumbPromise) {
+        Promise.resolve(localThumbPromise)
+            .then((thumbDataUrl) => {
+                syncPendingStrengthLocalThumb(inputId, thumbDataUrl);
+            })
+            .catch(() => {});
+    }
 
     return entry;
 }
@@ -10575,6 +10647,13 @@ function uploadWithThumb(file, folder, userId, options = {}) {
 
 function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', options = {}) {
     if (!file) return { promise: Promise.resolve({ url: null, thumbUrl: null }), thumbPromise: Promise.resolve(null) };
+    const localThumbSeed = resolveUsableStrengthLocalThumb(localThumbDataUrl);
+    const localThumbPromise = options?.thumbDataUrlPromise
+        ? Promise.resolve(options.thumbDataUrlPromise)
+            .then((thumbValue) => resolveUsableStrengthLocalThumb(thumbValue))
+            .catch(() => '')
+        : null;
+    const hasSharedLocalThumbPromise = !!localThumbPromise;
 
     const originalPromise = uploadFileAndGetUrl(file, folder, userId, options)
         .then((url) => {
@@ -10583,7 +10662,7 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
                 for (const [, entry] of _pendingUploads) {
                     if (entry.promise === originalPromise) {
                         entry.resolvedUrl = normalizedUrl;
-                        if (entry.localThumbDataUrl) {
+                        if (resolveUsableStrengthLocalThumb(entry.localThumbDataUrl)) {
                             cacheResolvedExerciseVideoThumb(normalizedUrl, entry.localThumbDataUrl);
                         }
                     }
@@ -10597,16 +10676,20 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
         const { url } = await originalPromise;
         if (!url) return null;
         try {
-            let thumbDataUrl = String(localThumbDataUrl || '').trim();
-            if (!thumbDataUrl.startsWith('data:image/')) {
+            let thumbDataUrl = localThumbSeed;
+            if (!thumbDataUrl && localThumbPromise) {
+                thumbDataUrl = await localThumbPromise;
+            }
+            if (!thumbDataUrl && !hasSharedLocalThumbPromise) {
                 thumbDataUrl = await extractVideoThumbFromFile(file).catch(() => '');
             }
-            if (thumbDataUrl.startsWith('data:image/')) {
+            thumbDataUrl = resolveUsableStrengthLocalThumb(thumbDataUrl);
+            if (thumbDataUrl) {
                 cacheResolvedExerciseVideoThumb(url, thumbDataUrl);
             }
 
             let thumbUrl = null;
-            if (thumbDataUrl.startsWith('data:image/')) {
+            if (thumbDataUrl) {
                 thumbUrl = await uploadDataUrlThumbnail(thumbDataUrl, folder, userId);
             }
 
@@ -10635,7 +10718,12 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
         }
     })();
 
-    return { promise: originalPromise, thumbPromise };
+    return {
+        promise: originalPromise,
+        thumbPromise,
+        localThumbPromise,
+        localThumbDataUrl: localThumbSeed
+    };
 }
 
 async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
@@ -10781,12 +10869,12 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     if (previewImg && thumbUrl && isPersistedStorageUrl(thumbUrl)) {
         showStrengthPreviewImage(block, thumbUrl, { savedThumbUrl: thumbUrl });
     } else if (url) {
-        const localThumb = String(
-            block.getAttribute('data-local-thumb')
-            || previewImg?.getAttribute('data-local-thumb')
-            || ''
-        ).trim();
-        if (localThumb.startsWith('data:image/')) {
+        const localThumb = resolveUsableStrengthLocalThumb(
+            block.getAttribute('data-local-thumb'),
+            previewImg?.getAttribute('data-local-thumb'),
+            pendingEntry?.localThumbDataUrl
+        );
+        if (localThumb) {
             cacheLocalExerciseVideoThumb(url, localThumb);
             showStrengthPreviewImage(block, localThumb, { localThumb });
         } else {
@@ -10794,7 +10882,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
             if (cachedLocalThumb.startsWith('data:image/')) {
                 showStrengthPreviewImage(block, cachedLocalThumb, { localThumb: cachedLocalThumb });
             } else {
-                showStrengthPreviewImage(block, createVideoPlaceholderBase64());
+                showStrengthPreviewImage(block, getVideoPlaceholderDataUrl());
                 readAnyCachedLocalExerciseVideoThumb(url)
                     .then((persistedThumb) => {
                         if (persistedThumb.startsWith('data:image/')) {
@@ -10824,7 +10912,9 @@ function getPendingUploadSnapshot(inputId) {
         progress: Number(entry.progress || 0),
         result: entry.done && entry.result?.url ? { ...entry.result } : null,
         promise: entry.promise || null,
-        thumbPromise: entry.thumbPromise || null
+        thumbPromise: entry.thumbPromise || null,
+        localThumbPromise: entry.localThumbPromise || null,
+        localThumbDataUrl: resolveUsableStrengthLocalThumb(entry.localThumbDataUrl)
     };
 }
 
@@ -11487,12 +11577,10 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
             kind: 'strength',
             mediaId,
             folder: 'exercise_videos',
-            localThumbSeed: String(
+            localThumbSeed: resolveUsableStrengthLocalThumb(
                 block.getAttribute('data-local-thumb')
                 || previewImg?.getAttribute('data-local-thumb')
-                || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
-                || ''
-            ).trim(),
+            ),
             file
         });
     });
@@ -11776,7 +11864,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (!inputId || !file || !auth?.currentUser) return;
                 const existing = _pendingUploads.get(inputId);
                 if (existing) return;
-                const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
+                const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, resolveUsableStrengthLocalThumb(localThumbSeed), {
                     onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
                 });
                 beginTrackedPendingUpload(inputId, pendingUpload);
@@ -11897,26 +11985,30 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 let aiAnalysis = null;
                 try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
                 let pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
+                let localThumbSeed = resolveUsableStrengthLocalThumb(
+                    block.getAttribute('data-local-thumb'),
+                    previewImg?.getAttribute('data-local-thumb'),
+                    pendingSnapshot?.localThumbDataUrl
+                );
+                if (!localThumbSeed && fileInput?.id) {
+                    localThumbSeed = await resolvePendingExerciseLocalThumb(fileInput.id, { waitMs: 900 });
+                }
+                const thumbWaitMs = getStrengthThumbSaveWaitMs(localThumbSeed);
                 if (pendingSnapshot?.result?.url) {
-                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: 5000 });
+                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: thumbWaitMs });
                     const effectiveResult = thumbAwareResult?.url ? thumbAwareResult : pendingSnapshot.result;
                     url = effectiveResult.url;
                     thumbUrl = effectiveResult.thumbUrl || thumbUrl;
+                    pendingSnapshot = getPendingUploadSnapshot(fileInput?.id) || pendingSnapshot;
                     if (hasPendingThumbBackfill(pendingSnapshot) && !effectiveResult.thumbUrl) {
                         queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }
                 } else if (fileInput?.files?.[0]) {
-                    const localThumbSeed = String(
-                        block.getAttribute('data-local-thumb')
-                        || previewImg?.getAttribute('data-local-thumb')
-                        || (previewImg?.src?.startsWith('data:image/') ? previewImg.src : '')
-                        || ''
-                    ).trim();
                     if (!pendingSnapshot) {
                         ensureDeferredVideoUpload(fileInput.id, fileInput.files[0], localThumbSeed);
                         pendingSnapshot = getPendingUploadSnapshot(fileInput.id);
                     }
-                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: 5000 });
+                    const thumbAwareResult = await resolvePendingUploadResult(fileInput.id, { waitForThumbMs: thumbWaitMs });
                     if (thumbAwareResult?.url) {
                         url = thumbAwareResult.url;
                         thumbUrl = thumbAwareResult.thumbUrl || thumbUrl;

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
     buildStrengthExerciseSeed,
+    getStrengthThumbSaveWaitMs,
+    isLocalExerciseVideoThumb,
     resolveLegacyStrengthVideoThumbUrl,
+    resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
 } from '../js/exercise-media.js';
 
@@ -79,5 +82,26 @@ describe('buildStrengthExerciseSeed', () => {
             videoUrl: 'https://example.com/video.mp4',
             videoThumbUrl: 'https://example.com/video-thumb.jpg'
         });
+    });
+});
+
+describe('strength local thumb helpers', () => {
+    it('recognizes local data-url thumbs only', () => {
+        expect(isLocalExerciseVideoThumb('data:image/jpeg;base64,abc')).toBe(true);
+        expect(isLocalExerciseVideoThumb('https://example.com/thumb.jpg')).toBe(false);
+    });
+
+    it('picks the first valid local thumb seed', () => {
+        expect(resolveStrengthLocalThumbSeed(
+            '',
+            'https://example.com/thumb.jpg',
+            'data:image/png;base64,seed-a',
+            'data:image/png;base64,seed-b'
+        )).toBe('data:image/png;base64,seed-a');
+    });
+
+    it('skips the remote thumb wait when a local thumb already exists', () => {
+        expect(getStrengthThumbSaveWaitMs('data:image/jpeg;base64,thumb')).toBe(0);
+        expect(getStrengthThumbSaveWaitMs('')).toBe(1200);
     });
 });

@@ -12308,41 +12308,43 @@ body.dark-mode .streak-badge {
   bottom: 88px;
   z-index: 2300;
   min-width: 220px;
-  max-width: min(320px, calc(100vw - 32px));
-  padding: 12px 14px;
-  border-radius: 16px;
+  max-width: min(240px, calc(100vw - 32px));
+  padding: 9px 10px 8px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(255, 160, 51, 0.22);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
-  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 160, 51, 0.24);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
 }
 
 .background-upload-status__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
 
 .background-upload-status__title {
   color: #8f4b00;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: -0.2px;
 }
 
 .background-upload-status__percent {
-  color: #b46b15;
+  color: #8f4b00;
   font-size: 12px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .background-upload-status__bar {
-  margin-top: 10px;
+  margin-top: 7px;
   width: 100%;
-  height: 9px;
+  height: 6px;
   border-radius: 999px;
-  background: rgba(255, 171, 72, 0.18);
+  background: rgba(255, 160, 51, 0.16);
   overflow: hidden;
 }
 
@@ -12351,8 +12353,7 @@ body.dark-mode .streak-badge {
   width: 0%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #ff9500 0%, #ffb347 100%);
-  box-shadow: 0 2px 8px rgba(255, 149, 0, 0.28);
+  background: linear-gradient(90deg, #FFB300 0%, #FF7A00 100%);
   transition: width 180ms ease;
 }
 
@@ -12366,12 +12367,11 @@ body.dark-mode .streak-badge {
 }
 
 .background-upload-status.is-complete .background-upload-status__bar {
-  background: rgba(56, 142, 60, 0.14);
+  background: rgba(38, 166, 91, 0.16);
 }
 
 .background-upload-status.is-complete .background-upload-status__fill {
-  background: linear-gradient(90deg, #2e7d32 0%, #66bb6a 100%);
-  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.22);
+  background: linear-gradient(90deg, #57d486 0%, #1f9d55 100%);
 }
 
 .background-upload-status.is-error {
@@ -12384,12 +12384,35 @@ body.dark-mode .streak-badge {
 }
 
 .background-upload-status.is-error .background-upload-status__bar {
-  background: rgba(211, 47, 47, 0.12);
+  background: rgba(198, 40, 40, 0.14);
 }
 
 .background-upload-status.is-error .background-upload-status__fill {
-  background: linear-gradient(90deg, #d32f2f 0%, #ef5350 100%);
-  box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+  background: linear-gradient(90deg, #ff8a80 0%, #d32f2f 100%);
+}
+
+body.dark-mode .background-upload-status {
+  background: rgba(36, 33, 40, 0.96);
+  border-color: rgba(255, 160, 51, 0.2);
+}
+
+body.dark-mode .background-upload-status__title,
+body.dark-mode .background-upload-status__percent {
+  color: #FFD18A;
+}
+
+body.dark-mode .background-upload-status__bar {
+  background: rgba(255, 160, 51, 0.14);
+}
+
+body.dark-mode .background-upload-status.is-complete .background-upload-status__title,
+body.dark-mode .background-upload-status.is-complete .background-upload-status__percent {
+  color: #8BE0AE;
+}
+
+body.dark-mode .background-upload-status.is-error .background-upload-status__title,
+body.dark-mode .background-upload-status.is-error .background-upload-status__percent {
+  color: #FFB4AB;
 }
 
 @media (max-width: 640px) {

@@ -2,6 +2,22 @@ export function normalizeExerciseMediaUrl(value = '') {
     return String(value || '').trim();
 }
 
+export function isLocalExerciseVideoThumb(value = '') {
+    return normalizeExerciseMediaUrl(value).startsWith('data:image/');
+}
+
+export function resolveStrengthLocalThumbSeed(...candidates) {
+    for (const candidate of candidates) {
+        const normalizedCandidate = normalizeExerciseMediaUrl(candidate);
+        if (isLocalExerciseVideoThumb(normalizedCandidate)) return normalizedCandidate;
+    }
+    return '';
+}
+
+export function getStrengthThumbSaveWaitMs(localThumbSeed = '') {
+    return isLocalExerciseVideoThumb(localThumbSeed) ? 0 : 1200;
+}
+
 export function resolveLegacyStrengthVideoThumbUrl(exercise = {}, videoUrl = '') {
     const normalizedVideoUrl = normalizeExerciseMediaUrl(videoUrl);
     const legacyVideoUrl = normalizeExerciseMediaUrl(exercise?.strengthVideoUrl);
