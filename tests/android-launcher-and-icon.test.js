@@ -11,16 +11,15 @@ function readRepoFile(relativePath) {
 }
 
 describe('android launcher bootstrap and icon resources', () => {
-    it('opens the primary launcher entry in a real browser and keeps TWA for trusted special-entry flows', () => {
+    it('uses TWA for the primary launcher entry while keeping external-browser fallback available', () => {
         const launcherSource = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
         const launcherLayout = readRepoFile('android/app/src/main/res/layout/activity_launcher_loading.xml');
         const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
-        expect(launcherSource).toContain('private fun isPrimaryLauncherEntry(): Boolean {');
         expect(launcherSource).toContain('if (isPrimaryLauncherEntry()) {');
-        expect(launcherSource).toContain('openBrowserSurface(targetUrl, "main-launcher-browser")');
+        expect(launcherSource).toContain('showLauncherTimeoutFallbackUi()');
         expect(launcherSource).toContain('if (shouldLaunchTrustedSurface(targetUrl)) {');
         expect(launcherSource).toContain('private fun shouldLaunchTrustedSurface(targetUrl: Uri): Boolean {');
         expect(launcherSource).toContain('scheduleLaunchTimeout()');
@@ -31,7 +30,9 @@ describe('android launcher bootstrap and icon resources', () => {
         expect(launcherSource).toContain('private fun resolveExternalBrowserPackage(targetUrl: Uri): String? {');
         expect(launcherSource).toContain('filter { it.isNotBlank() && it != packageName }');
         expect(launcherSource).toContain('PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)');
-        expect(launcherLayout).toContain('앱을 여는 중입니다. 잠시만 기다려 주세요.');
+        expect(launcherSource).not.toContain('main-launcher-browser');
+        expect(launcherLayout).toContain('launcher_timeout_hint');
+        expect(launcherLayout).toContain('launcher_open_browser_button');
         expect(manifest).toContain('android:theme="@style/Theme.Habitschool"');
     });
 

@@ -8,6 +8,9 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsClient
 import androidx.browser.customtabs.CustomTabsServiceConnection
@@ -23,6 +26,8 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private var launchUrlOverride: Uri? = null
+    private var manualBrowserFallbackHint: TextView? = null
+    private var manualBrowserFallbackButton: Button? = null
     private var twaLauncher: TwaLauncher? = null
     private var customTabsWarmupConnection: CustomTabsServiceConnection? = null
     private var launchRequested = false
@@ -30,6 +35,11 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     private val launchTimeoutRunnable = Runnable {
         if (!launchRequested || browserFallbackOpened || isFinishing || isDestroyed) return@Runnable
+        if (isPrimaryLauncherEntry()) {
+            Log.w(TAG, "TWA launch timed out for launcher entry, keeping native loading UI")
+            showLauncherTimeoutFallbackUi()
+            return@Runnable
+        }
         Log.w(TAG, "TWA launch timed out, opening browser surface")
         openBrowserSurface(requireLaunchingUrl(), "launch-timeout")
     }
@@ -37,16 +47,18 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_launcher_loading)
+        manualBrowserFallbackHint = findViewById(R.id.launcher_timeout_hint)
+        manualBrowserFallbackButton = findViewById<Button?>(R.id.launcher_open_browser_button).also { button ->
+            button?.setOnClickListener {
+                openBrowserSurface(requireLaunchingUrl(), "manual-launcher-timeout")
+            }
+        }
 
         val launchingUrl = resolveLaunchingUrl()
         launchUrlOverride = resolveFreshHealthConnectLaunchUrl(launchingUrl)
 
         window.decorView.post {
             val targetUrl = requireLaunchingUrl()
-            if (isPrimaryLauncherEntry()) {
-                openBrowserSurface(targetUrl, "main-launcher-browser")
-                return@post
-            }
             if (launchUrlOverride == null && shouldAutoSyncHealthConnect(launchingUrl)) {
                 startActivity(
                     HealthConnectPermissionActivity.createSyncIntent(
@@ -95,7 +107,6 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             return
         }
 
-        scheduleLaunchTimeout()
         warmupTrustedSurface(preferredPackage, targetUrl)
     }
 
@@ -137,6 +148,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             Log.d(TAG, "Launching TWA with provider=$preferredPackage url=$targetUrl")
             twaLauncher = TwaLauncher(this, preferredPackage)
             twaLauncher?.launch(targetUrl)
+            scheduleLaunchTimeout()
         } catch (error: Exception) {
             Log.e(TAG, "TWA launch failed, opening browser surface", error)
             openBrowserSurface(targetUrl, "twa-exception")
@@ -334,9 +346,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         )
     }
 
+    private fun showLauncherTimeoutFallbackUi() {
+        manualBrowserFallbackHint?.visibility = View.VISIBLE
+        manualBrowserFallbackButton?.visibility = View.VISIBLE
+    }
+
     companion object {
         private const val TAG = "HabitschoolLauncher"
-        private const val TWA_LAUNCH_TIMEOUT_MS = 10000L
+        private const val TWA_LAUNCH_TIMEOUT_MS = 20000L
         private val PREFERRED_TWA_PACKAGES = listOf(
             "com.android.chrome",
             "com.chrome.beta",

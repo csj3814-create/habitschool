@@ -1254,6 +1254,11 @@
 - Symptom: the shared `/install/android.apk` URL could suddenly return `page not found` after a web-only staging deploy, even though the link itself had not changed.
 - Root cause: Firebase Hosting redirected the install URL straight to `android/app/build/outputs/apk/debug/app-debug.apk`, but temp worktree deploys did not always contain that untracked build artifact.
 - Lesson: Serve APK downloads from a stable hosted path such as `install/android.apk`, and make deploy-time automation prepare that file before Hosting uploads. Do not expose raw local build-output paths as public install URLs.
+
+### 174. Do not “fix” TWA launcher issues by routing the primary app entry into a normal browser tab
+- Symptom: the installed Android app finally opened, but the top chrome became thick and the address bar was visible, which broke the expected app-like shell.
+- Root cause: I treated the white-screen launcher problem as a reason to send `ACTION_MAIN + CATEGORY_LAUNCHER` straight into a normal browser surface. That changed the product surface from TWA to regular Chrome. On top of that, the timeout budget started before warmup and could still auto-open browser fallback too early.
+- Lesson: For Habitschool’s launcher, keep the primary entry on the TWA path. If cold-start timing is slow, adjust the timeout budget and make launcher fallback manual inside the native loading UI instead of automatically replacing the shell with a normal browser tab.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

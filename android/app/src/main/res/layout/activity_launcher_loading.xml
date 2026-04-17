@@ -37,4 +37,23 @@
         android:layout_marginTop="18dp"
         android:indeterminate="true" />
 
+    <TextView
+        android:id="@+id/launcher_timeout_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="앱 실행이 조금 늦어지고 있습니다. 조금 더 기다리거나 브라우저로 열 수 있어요."
+        android:textColor="@color/habitschool_text_muted"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/launcher_open_browser_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="브라우저로 열기"
+        android:visibility="gone" />
+
 </LinearLayout>
