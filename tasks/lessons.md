@@ -1214,6 +1214,16 @@
 - Symptom: the UI could say the background upload was complete while a strength-video thumbnail was still missing or still being patched.
 - Root cause: I ended the floating tracker after the primary media patch and treated late thumbnail persistence as an invisible afterthought.
 - Lesson: For video media, keep the completion state and progress tracker open until deferred thumbnail patching settles. Otherwise the app declares success before the preview surface is actually done.
+
+### 165. Exercise-tab media restore must reuse the same thumbnail recovery path as post-save patches
+- Symptom: the gallery could show a usable strength-video thumbnail, but the exercise tab still rendered a blank/placeholder preview for the same saved record.
+- Root cause: I let the exercise-tab initial restore keep a separate lighter-weight preview branch, while the stronger thumbnail recovery logic lived in `persistSavedExerciseBlock(...)`. The two surfaces drifted apart.
+- Lesson: When a media surface already has a battle-tested post-save restore function, reuse it for initial data hydration too. Do not maintain a second, simpler restore path for the same media type.
+
+### 166. Live video fallbacks should not hide the placeholder before the first frame is ready
+- Symptom: a saved strength-video without a persisted thumbnail could appear blank in the exercise tab even though the fallback video source was valid.
+- Root cause: `showStrengthPreviewVideo(...)` hid the placeholder image immediately and only then waited for video events, so any delay or browser-specific frame behavior produced an empty preview.
+- Lesson: For video-preview fallbacks, keep the placeholder or prior image visible until the first renderable video frame is confirmed. Only swap surfaces after `loadeddata`/equivalent readiness proves the frame exists.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

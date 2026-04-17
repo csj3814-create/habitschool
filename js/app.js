@@ -4268,29 +4268,9 @@ function addExerciseBlock(type, data = null) {
     list.appendChild(div);
     updateRecordFlowGuides('exercise');
 
-    // 근력 영상 썸네일: 저장된 thumbUrl이 없으면 실제 비디오 프레임 미리보기로 대체한다.
+    // 근력 영상 복원은 저장 후 패치 경로와 동일한 함수를 사용해 갤러리/운동 탭 분기를 줄인다.
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
-        if (data.videoThumbUrl && isValidStorageUrl(data.videoThumbUrl)) {
-            showStrengthPreviewImage(div, data.videoThumbUrl, { savedThumbUrl: data.videoThumbUrl });
-        } else {
-            const cachedLocalThumb = findLocalExerciseVideoThumb(data.videoUrl);
-            if (cachedLocalThumb.startsWith('data:image/')) {
-                showStrengthPreviewImage(div, cachedLocalThumb, { localThumb: cachedLocalThumb });
-            } else {
-                showStrengthPreviewImage(div, createVideoPlaceholderBase64());
-                readAnyCachedLocalExerciseVideoThumb(data.videoUrl)
-                    .then((persistedThumb) => {
-                        if (persistedThumb.startsWith('data:image/')) {
-                            showStrengthPreviewImage(div, persistedThumb, { localThumb: persistedThumb });
-                            return;
-                        }
-                        showStrengthPreviewVideo(div, data.videoUrl);
-                    })
-                    .catch(() => {
-                        showStrengthPreviewVideo(div, data.videoUrl);
-                    });
-            }
-        }
+        persistSavedExerciseBlock(div, data.videoUrl, data.videoThumbUrl || null);
     }
 }
 
@@ -4676,17 +4656,23 @@ function showStrengthPreviewVideo(target, videoUrl = '') {
     const { block, previewWrap, previewImg, previewVideo } = getStrengthPreviewElements(target);
     const normalizedUrl = String(videoUrl || '').trim();
     if (!previewWrap || !previewVideo || !normalizedUrl) return false;
+    const previewSrc = `${normalizedUrl}#t=0.1`;
 
     previewWrap.style.display = 'block';
-    previewVideo.hidden = false;
-    if (previewImg) previewImg.hidden = true;
+    previewVideo.hidden = true;
+    if (previewImg) {
+        previewImg.hidden = false;
+        if (!String(previewImg.getAttribute('src') || '').trim()) {
+            previewImg.src = getVideoPlaceholderDataUrl();
+        }
+    }
 
     const fallbackToImage = () => {
         previewVideo.hidden = true;
         if (previewImg) {
             previewImg.hidden = false;
             if (!String(previewImg.getAttribute('src') || '').trim()) {
-                previewImg.src = createVideoPlaceholderBase64();
+                previewImg.src = getVideoPlaceholderDataUrl();
             }
         }
     };
@@ -4696,25 +4682,23 @@ function showStrengthPreviewVideo(target, videoUrl = '') {
         return true;
     }
 
+    const activateVideoPreview = () => {
+        try { previewVideo.pause(); } catch (_) {}
+        previewVideo.hidden = false;
+        if (previewImg) previewImg.hidden = true;
+        const inputId = block?.querySelector('.exer-file')?.id;
+        if (inputId) setThumbPendingState(inputId, { visible: false });
+    };
     previewVideo.onloadedmetadata = () => {
         try {
-            const duration = Number.isFinite(previewVideo.duration) ? previewVideo.duration : 0;
-            previewVideo.currentTime = duration > 1 ? Math.min(0.8, Math.max(0.08, duration * 0.12)) : 0.01;
+            if (previewVideo.readyState >= 2) activateVideoPreview();
         } catch (_) {}
     };
-    previewVideo.onloadeddata = () => {
-        try { previewVideo.pause(); } catch (_) {}
-        const inputId = block?.querySelector('.exer-file')?.id;
-        if (inputId) setThumbPendingState(inputId, { visible: false });
-    };
-    previewVideo.onseeked = () => {
-        try { previewVideo.pause(); } catch (_) {}
-        const inputId = block?.querySelector('.exer-file')?.id;
-        if (inputId) setThumbPendingState(inputId, { visible: false });
-    };
+    previewVideo.onloadeddata = activateVideoPreview;
+    previewVideo.onseeked = activateVideoPreview;
     previewVideo.onerror = fallbackToImage;
     previewVideo.setAttribute('data-video-url', normalizedUrl);
-    previewVideo.src = normalizedUrl;
+    previewVideo.src = previewSrc;
     previewVideo.load();
     return true;
 }

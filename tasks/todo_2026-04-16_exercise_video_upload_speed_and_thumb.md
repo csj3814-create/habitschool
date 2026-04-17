@@ -22,3 +22,9 @@
 - The first fix also completed the background tracker before deferred video-thumbnail patches finished, which made “업로드 완료” race ahead of the actual thumbnail bind.
 - Follow-up fix: strength videos now save like the other deferred media paths, queue the background job immediately when the file exists, and keep the floating tracker alive until the deferred thumbnail patch settles.
 - Follow-up verification: `npm test` passed with `169` tests and `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js` completed successfully again.
+
+### Exercise Tab Follow-up
+- Symptom: the gallery tab could still show a usable strength-video thumbnail while the exercise tab preview stayed blank or never switched off the placeholder.
+- Root cause: the exercise-tab restore path duplicated its own preview logic instead of reusing the stronger post-save restore function, and its live-video fallback hid the placeholder image before the first video frame was actually ready.
+- Fix: the exercise-tab strength restore path now reuses `persistSavedExerciseBlock(...)`, and `showStrengthPreviewVideo(...)` keeps the placeholder image visible until a real video frame is ready before swapping.
+- Verification: `npm test` passed with `169` tests and `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js` completed successfully after the exercise-tab follow-up.
