@@ -11,15 +11,19 @@ function readRepoFile(relativePath) {
 }
 
 describe('android launcher bootstrap and icon resources', () => {
-    it('boots through a visible launcher shell and prefers TWA for Habitschool launches before browser fallback', () => {
+    it('opens the primary launcher entry in a real browser and keeps TWA for trusted special-entry flows', () => {
         const launcherSource = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
         const launcherLayout = readRepoFile('android/app/src/main/res/layout/activity_launcher_loading.xml');
         const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
+        expect(launcherSource).toContain('private fun isPrimaryLauncherEntry(): Boolean {');
+        expect(launcherSource).toContain('if (isPrimaryLauncherEntry()) {');
+        expect(launcherSource).toContain('openBrowserSurface(targetUrl, "main-launcher-browser")');
         expect(launcherSource).toContain('if (shouldLaunchTrustedSurface(targetUrl)) {');
         expect(launcherSource).toContain('private fun shouldLaunchTrustedSurface(targetUrl: Uri): Boolean {');
+        expect(launcherSource).toContain('scheduleLaunchTimeout()');
         expect(launcherSource).toContain('CustomTabsClient.bindCustomTabsService(');
         expect(launcherSource).toContain('client.warmup(0L)');
         expect(launcherSource).toContain('client.newSession(null)?.mayLaunchUrl(targetUrl, null, null)');

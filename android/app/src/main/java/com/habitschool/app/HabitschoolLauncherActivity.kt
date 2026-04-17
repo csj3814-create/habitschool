@@ -41,21 +41,24 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         val launchingUrl = resolveLaunchingUrl()
         launchUrlOverride = resolveFreshHealthConnectLaunchUrl(launchingUrl)
 
-        if (launchUrlOverride == null && shouldAutoSyncHealthConnect(launchingUrl)) {
-            startActivity(
-                HealthConnectPermissionActivity.createSyncIntent(
-                    context = this,
-                    source = "android-launch-sync",
-                    openAfterSync = launchingUrl,
-                    autoStart = true
-                )
-            )
-            finish()
-            return
-        }
-
         window.decorView.post {
             val targetUrl = requireLaunchingUrl()
+            if (isPrimaryLauncherEntry()) {
+                openBrowserSurface(targetUrl, "main-launcher-browser")
+                return@post
+            }
+            if (launchUrlOverride == null && shouldAutoSyncHealthConnect(launchingUrl)) {
+                startActivity(
+                    HealthConnectPermissionActivity.createSyncIntent(
+                        context = this,
+                        source = "android-launch-sync",
+                        openAfterSync = launchingUrl,
+                        autoStart = true
+                    )
+                )
+                finish()
+                return@post
+            }
             if (shouldLaunchTrustedSurface(targetUrl)) {
                 launchTrustedSurface()
             } else {
@@ -92,12 +95,11 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             return
         }
 
+        scheduleLaunchTimeout()
         warmupTrustedSurface(preferredPackage, targetUrl)
     }
 
     private fun warmupTrustedSurface(preferredPackage: String, targetUrl: Uri) {
-        scheduleLaunchTimeout()
-
         if (!CustomTabsClient.bindCustomTabsService(
                 this,
                 preferredPackage,
@@ -190,6 +192,11 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         return PREFERRED_TWA_PACKAGES.firstOrNull(::isEnabledPackageInstalled)
     }
 
+    private fun isPrimaryLauncherEntry(): Boolean {
+        val categories = intent?.categories ?: emptySet()
+        return intent?.action == Intent.ACTION_MAIN && categories.contains(Intent.CATEGORY_LAUNCHER)
+    }
+
     private fun resolveExternalBrowserPackage(targetUrl: Uri): String? {
         val browserIntent = Intent(Intent.ACTION_VIEW, targetUrl).apply {
             addCategory(Intent.CATEGORY_BROWSABLE)
@@ -199,7 +206,11 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             .filter { it.isNotBlank() && it != packageName }
             .distinct()
 
-        return PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)
+        val preferredProvider = resolvePreferredTwaProviderPackage()
+            ?.takeIf(candidatePackages::contains)
+
+        return preferredProvider
+            ?: PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)
             ?: candidatePackages.firstOrNull()
     }
 
@@ -325,7 +336,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "HabitschoolLauncher"
-        private const val TWA_LAUNCH_TIMEOUT_MS = 7000L
+        private const val TWA_LAUNCH_TIMEOUT_MS = 10000L
         private val PREFERRED_TWA_PACKAGES = listOf(
             "com.android.chrome",
             "com.chrome.beta",

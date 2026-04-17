@@ -20,6 +20,8 @@
 - Browser fallback is now truly a last resort. The launcher explicitly resolves a real external browser package and excludes `com.habitschool.app`, which prevents the timeout path from reopening the app's own verified-link activity in a loop.
 - The installed shell still exits cleanly after handoff, so force-stop and uninstall remain healthy even after a cold-start launch attempt.
 - Emulator verification showed the key UX improvement: at the 10-second mark the user now sees the Habitschool loading screen rather than a blank Chrome/custom-tab page, and by the 30-second mark the login screen is visible.
+- The user’s follow-up showed that keeping the app-icon launcher on the same TWA path was still too fragile. `ACTION_MAIN` / `CATEGORY_LAUNCHER` now goes straight to a real external browser package so the installed shell behaves like a reliable shortcut, while TWA stays reserved for share and other trusted-special-entry flows.
+- The TWA timeout again starts before warmup binding begins, so the share/deep-link path still has a guaranteed escape hatch if Custom Tabs never connects on a real device.
 
 ## Verification
 
