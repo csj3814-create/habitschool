@@ -1249,6 +1249,11 @@
 - Symptom: even after adding a visible loading shell, the installed Android app could still appear frozen on white because the timeout fallback reopened `com.habitschool.app/.HabitschoolLauncherActivity` instead of a real browser.
 - Root cause: I fired a plain `ACTION_VIEW` intent for `https://habitschool.web.app/...` while the app itself had a verified-link intent filter for the same host. Android resolved the fallback back into the app, creating a self-loop.
 - Lesson: If an Android shell claims the same web origin via app links, any “open in browser” fallback must explicitly resolve an external browser package and exclude the app package. Never assume a bare `ACTION_VIEW` on your own domain will escape the app.
+
+### 173. Hosted APK links must never depend on ephemeral build-output paths
+- Symptom: the shared `/install/android.apk` URL could suddenly return `page not found` after a web-only staging deploy, even though the link itself had not changed.
+- Root cause: Firebase Hosting redirected the install URL straight to `android/app/build/outputs/apk/debug/app-debug.apk`, but temp worktree deploys did not always contain that untracked build artifact.
+- Lesson: Serve APK downloads from a stable hosted path such as `install/android.apk`, and make deploy-time automation prepare that file before Hosting uploads. Do not expose raw local build-output paths as public install URLs.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
