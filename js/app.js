@@ -22,7 +22,13 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
 } from './exercise-media.js';
-import { buildHealthConnectStepData, buildPersistableStepData, createEmptyStepData, restoreHealthConnectImportState } from './health-connect-utils.js';
+import {
+    buildHealthConnectStepData,
+    buildPersistableStepData,
+    choosePreferredHealthConnectImport,
+    createEmptyStepData,
+    restoreHealthConnectImportState
+} from './health-connect-utils.js';
 import { reconcileMilestoneState } from './milestone-helpers.js';
 import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
 import { sanitize, compressImage } from './data-manager.js';
@@ -1497,14 +1503,23 @@ function renderStepImportBanner() {
     renderExerciseNativeSyncCta();
 }
 
-function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'exercise') } = {}) {
-    if (!_pendingNativeStepImport) return false;
+function applyHealthConnectStepImport(payload, {
+    notifyUser = false,
+    consumePending = false
+} = {}) {
+    if (!payload) return false;
+    if (consumePending) {
+        _pendingNativeStepImport = null;
+    }
+    _activeNativeStepImport = {
+        stepCount: Math.max(0, Number.parseInt(payload.stepCount, 10) || 0),
+        stepSource: String(payload.stepSource || 'health_connect').trim() || 'health_connect',
+        stepProviderLabel: String(payload.stepProviderLabel || '').trim() || 'Health Connect',
+        nativeSource: String(payload.nativeSource || '').trim(),
+        syncedAtEpochMillis: Math.max(0, Number.parseInt(payload.syncedAtEpochMillis, 10) || 0)
+    };
 
-    const payload = _pendingNativeStepImport;
-    _pendingNativeStepImport = null;
-    _activeNativeStepImport = payload;
-
-    _stepData = buildHealthConnectStepData(payload);
+    _stepData = buildHealthConnectStepData(_activeNativeStepImport);
 
     const preview = document.getElementById('preview-step-screenshot');
     if (preview) {
@@ -1525,14 +1540,22 @@ function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'e
     }
 
     const manualInput = document.getElementById('step-manual-input');
-    if (manualInput) manualInput.value = String(payload.stepCount);
+    if (manualInput) manualInput.value = String(_activeNativeStepImport.stepCount);
 
-    updateStepRing(payload.stepCount);
+    updateStepRing(_activeNativeStepImport.stepCount);
     renderStepImportBanner();
     if (notifyUser) {
-        showToast(`👟 ${payload.stepProviderLabel || 'Health Connect'}에서 ${payload.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
+        showToast(`👟 ${_activeNativeStepImport.stepProviderLabel || 'Health Connect'}에서 ${_activeNativeStepImport.stepCount.toLocaleString()}보를 가져왔어요. 저장 버튼을 누르면 기록에 반영됩니다.`);
     }
     return true;
+}
+
+function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'exercise') } = {}) {
+    if (!_pendingNativeStepImport) return false;
+    return applyHealthConnectStepImport(_pendingNativeStepImport, {
+        notifyUser,
+        consumePending: true
+    });
 }
 
 function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { initialTab = getVisibleTabName() } = {}) {
@@ -15266,6 +15289,16 @@ async function analyzeStepScreenshot() {
 
 // 걸음수 데이터 로드 (날짜 변경 시)
 function loadStepData(logData) {
+    const { todayStr } = getDatesInfo();
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    const preferredNativeImport = choosePreferredHealthConnectImport({
+        pendingImport: _pendingNativeStepImport,
+        activeImport: _activeNativeStepImport,
+        savedStepData: logData?.steps || null,
+        selectedDateStr,
+        todayStr
+    });
+
     if (logData?.steps) {
         _stepData = {
             ...createEmptyStepData(),
@@ -15307,6 +15340,13 @@ function loadStepData(logData) {
         if (resultBox) { resultBox.style.display = 'none'; resultBox.innerHTML = ''; }
         const manualInput = document.getElementById('step-manual-input');
         if (manualInput) manualInput.value = '';
+    }
+
+    if (preferredNativeImport) {
+        applyHealthConnectStepImport(preferredNativeImport, {
+            notifyUser: false,
+            consumePending: false
+        });
     }
     renderStepImportBanner();
 }

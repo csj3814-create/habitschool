@@ -13,6 +13,11 @@
 - Root cause: the normal `ACTION_MAIN` / `CATEGORY_LAUNCHER` path was still routed through the same Chrome TWA/custom-tab bootstrap used for trusted share flows, so any browser-side stall in that stack made the whole installed app look broken.
 - Lesson: treat the app icon as the simplest and most reliable entry point. Open it through a plain external browser surface, and reserve TWA/custom-tabs for the flows that truly need them, such as share-target handling or trusted deep-link behavior.
 
+### 172. A native-import success toast is not proof that the visible exercise UI kept the imported step count
+- Symptom: Health Connect could say `Samsung Health에서 8,765보를 가져왔어요` while the exercise input and ring still showed the older saved value like `6,244`.
+- Root cause: the deep-link handler applied the imported steps and showed the toast, but a later `loadStepData()` restore wrote stale Firestore `steps` back into the visible UI during the same session.
+- Lesson: for native-to-web handoffs, verify the full render order, not just the event handler that shows success feedback. If saved state can reload after an import, the code needs an explicit precedence rule so the newest in-memory import survives the restore pass.
+
 ### 169. Android Browser Helper WebView fallback is not safe unless the fallback activity is declared and exercised
 - Symptom: the hybrid app could launch fine when Chrome handled the TWA path, but still died on devices where no compatible TWA browser was available.
 - Root cause: I enabled `WEBVIEW_FALLBACK_STRATEGY` in the launcher but did not declare `com.google.androidbrowserhelper.trusted.WebViewFallbackActivity` in `AndroidManifest.xml`. That meant the fallback path itself threw `ActivityNotFoundException` at runtime.

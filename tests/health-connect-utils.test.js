@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
+    choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
 } from '../js/health-connect-utils.js';
@@ -65,5 +66,46 @@ describe('health connect step helpers', () => {
             syncedAtEpochMillis: Date.parse('2026-04-16T01:23:45.000Z')
         });
         expect(restoreHealthConnectImportState({ count: 1, source: 'manual' })).toBeNull();
+    });
+
+    it('prefers the current-session native import over stale saved steps for today', () => {
+        const preferred = choosePreferredHealthConnectImport({
+            activeImport: {
+                stepCount: 8765,
+                stepProviderLabel: 'Samsung Health',
+                nativeSource: 'android-web-sync',
+                syncedAtEpochMillis: 1760400000000
+            },
+            savedStepData: {
+                count: 6244,
+                source: 'health_connect',
+                providerLabel: 'Samsung Health',
+                nativeSource: 'android-launch-sync',
+                syncedAtEpochMillis: 1760390000000
+            },
+            selectedDateStr: '2026-04-17',
+            todayStr: '2026-04-17'
+        });
+
+        expect(preferred).toEqual({
+            stepCount: 8765,
+            stepSource: 'health_connect',
+            stepProviderLabel: 'Samsung Health',
+            nativeSource: 'android-web-sync',
+            syncedAtEpochMillis: 1760400000000
+        });
+    });
+
+    it('ignores in-memory native imports when the selected date is not today', () => {
+        expect(choosePreferredHealthConnectImport({
+            pendingImport: {
+                stepCount: 8765,
+                stepProviderLabel: 'Samsung Health',
+                nativeSource: 'android-web-sync',
+                syncedAtEpochMillis: 1760400000000
+            },
+            selectedDateStr: '2026-04-16',
+            todayStr: '2026-04-17'
+        })).toBeNull();
     });
 });

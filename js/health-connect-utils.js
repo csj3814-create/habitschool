@@ -101,3 +101,56 @@ export function restoreHealthConnectImportState(stepData = {}) {
         )
     };
 }
+
+function normalizeNativeHealthConnectImport(rawImport = null) {
+    const stepCount = Math.max(0, Number.parseInt(rawImport?.stepCount, 10) || 0);
+    if (stepCount <= 0) return null;
+
+    return {
+        stepCount,
+        stepSource: String(rawImport?.stepSource || HEALTH_CONNECT_SOURCE).trim() || HEALTH_CONNECT_SOURCE,
+        stepProviderLabel: String(rawImport?.stepProviderLabel || '').trim() || DEFAULT_HEALTH_CONNECT_PROVIDER_LABEL,
+        nativeSource: String(rawImport?.nativeSource || '').trim(),
+        syncedAtEpochMillis: normalizeHealthConnectSyncEpoch(rawImport?.syncedAtEpochMillis)
+    };
+}
+
+export function choosePreferredHealthConnectImport({
+    pendingImport = null,
+    activeImport = null,
+    savedStepData = null,
+    selectedDateStr = '',
+    todayStr = ''
+} = {}) {
+    const normalizedSelectedDate = String(selectedDateStr || '').trim();
+    const normalizedTodayStr = String(todayStr || '').trim();
+    if (!normalizedSelectedDate || !normalizedTodayStr || normalizedSelectedDate !== normalizedTodayStr) {
+        return null;
+    }
+
+    const candidateImport = normalizeNativeHealthConnectImport(pendingImport)
+        || normalizeNativeHealthConnectImport(activeImport);
+    if (!candidateImport) return null;
+
+    const savedImport = restoreHealthConnectImportState(savedStepData || {});
+    if (!savedImport) {
+        return candidateImport;
+    }
+
+    const candidateSyncedAt = normalizeHealthConnectSyncEpoch(candidateImport.syncedAtEpochMillis);
+    const savedSyncedAt = normalizeHealthConnectSyncEpoch(
+        savedImport.syncedAtEpochMillis,
+        savedStepData?.updatedAt
+    );
+
+    if (candidateSyncedAt > 0 && savedSyncedAt > 0) {
+        if (candidateSyncedAt > savedSyncedAt) return candidateImport;
+        if (candidateSyncedAt < savedSyncedAt) return null;
+    } else if (candidateSyncedAt > 0 && savedSyncedAt <= 0) {
+        return candidateImport;
+    }
+
+    return candidateImport.stepCount !== savedImport.stepCount
+        ? candidateImport
+        : null;
+}
