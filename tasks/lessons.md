@@ -1234,6 +1234,11 @@
 - Symptom: after fixing the hard launch failure, tapping the installed APK could still feel broken because Chrome/TWA cold start spent several seconds on a blank white surface before the web app appeared.
 - Root cause: I treated “browser launch requested” as equivalent to “the user now sees meaningful app UI.” In reality, Chrome first-run prompts and slow custom-tab startup can leave a long white gap after the native handoff.
 - Lesson: For Habitschool’s Android shell, never hand users directly from the launcher into an unstyled browser cold-start gap. Keep a visible branded loading screen until the trusted surface is ready enough to take over, and pre-warm the custom-tab provider before launching.
+
+### 172. Browser fallbacks must exclude the app's own verified-link package or they can loop back into the launcher
+- Symptom: even after adding a visible loading shell, the installed Android app could still appear frozen on white because the timeout fallback reopened `com.habitschool.app/.HabitschoolLauncherActivity` instead of a real browser.
+- Root cause: I fired a plain `ACTION_VIEW` intent for `https://habitschool.web.app/...` while the app itself had a verified-link intent filter for the same host. Android resolved the fallback back into the app, creating a self-loop.
+- Lesson: If an Android shell claims the same web origin via app links, any “open in browser” fallback must explicitly resolve an external browser package and exclude the app package. Never assume a bare `ACTION_VIEW` on your own domain will escape the app.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

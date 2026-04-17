@@ -24,7 +24,9 @@ describe('android launcher bootstrap and icon resources', () => {
         expect(launcherSource).toContain('client.warmup(0L)');
         expect(launcherSource).toContain('client.newSession(null)?.mayLaunchUrl(targetUrl, null, null)');
         expect(launcherSource).toContain('twaLauncher = TwaLauncher(this, preferredPackage)');
-        expect(launcherSource).not.toContain('`package` = preferredPackage');
+        expect(launcherSource).toContain('private fun resolveExternalBrowserPackage(targetUrl: Uri): String? {');
+        expect(launcherSource).toContain('filter { it.isNotBlank() && it != packageName }');
+        expect(launcherSource).toContain('PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)');
         expect(launcherLayout).toContain('앱을 여는 중입니다. 잠시만 기다려 주세요.');
         expect(manifest).toContain('android:theme="@style/Theme.Habitschool"');
     });

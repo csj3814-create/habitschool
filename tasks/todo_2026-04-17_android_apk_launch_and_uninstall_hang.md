@@ -17,7 +17,7 @@
 ## Review
 
 - The launcher still preserves the Health Connect pre-sync checks, but normal app opens now pre-warm Custom Tabs before launching the Habitschool trusted surface. When Chrome is slow, the app keeps the branded loading screen visible instead of dropping the user onto a blank white browser surface.
-- Browser fallback is now truly a last resort. It no longer forces the same Chrome package that may be stuck in first-run prompts, and the shell only hands off after the trusted-surface attempt times out.
+- Browser fallback is now truly a last resort. The launcher explicitly resolves a real external browser package and excludes `com.habitschool.app`, which prevents the timeout path from reopening the app's own verified-link activity in a loop.
 - The installed shell still exits cleanly after handoff, so force-stop and uninstall remain healthy even after a cold-start launch attempt.
 - Emulator verification showed the key UX improvement: at the 10-second mark the user now sees the Habitschool loading screen rather than a blank Chrome/custom-tab page, and by the 30-second mark the login screen is visible.
 

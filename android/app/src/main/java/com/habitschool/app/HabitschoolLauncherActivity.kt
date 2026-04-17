@@ -148,9 +148,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         twaLauncher?.destroy()
         twaLauncher = null
 
+        val browserPackage = resolveExternalBrowserPackage(targetUrl)
         runCatching {
             startActivity(
                 Intent(Intent.ACTION_VIEW, targetUrl).apply {
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                    if (!browserPackage.isNullOrBlank()) {
+                        `package` = browserPackage
+                    }
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             )
@@ -158,7 +163,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             Log.e(TAG, "Browser fallback launch failed", error)
         }
 
-        Log.w(TAG, "Opened browser surface reason=$reason url=$targetUrl")
+        Log.w(TAG, "Opened browser surface reason=$reason package=$browserPackage url=$targetUrl")
         finish()
     }
 
@@ -183,6 +188,19 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     private fun resolvePreferredTwaProviderPackage(): String? {
         return PREFERRED_TWA_PACKAGES.firstOrNull(::isEnabledPackageInstalled)
+    }
+
+    private fun resolveExternalBrowserPackage(targetUrl: Uri): String? {
+        val browserIntent = Intent(Intent.ACTION_VIEW, targetUrl).apply {
+            addCategory(Intent.CATEGORY_BROWSABLE)
+        }
+        val candidatePackages = packageManager.queryIntentActivities(browserIntent, 0)
+            .mapNotNull { it.activityInfo?.packageName }
+            .filter { it.isNotBlank() && it != packageName }
+            .distinct()
+
+        return PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)
+            ?: candidatePackages.firstOrNull()
     }
 
     private fun isShareIntent(): Boolean {
@@ -313,6 +331,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             "com.chrome.beta",
             "com.chrome.dev",
             "com.chrome.canary"
+        )
+        private val PREFERRED_BROWSER_PACKAGES = listOf(
+            "com.sec.android.app.sbrowser",
+            "com.android.chrome",
+            "com.chrome.beta",
+            "com.chrome.dev",
+            "com.chrome.canary",
+            "org.mozilla.firefox"
         )
     }
 }
