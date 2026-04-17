@@ -1259,6 +1259,21 @@
 - Symptom: the installed Android app finally opened, but the top chrome became thick and the address bar was visible, which broke the expected app-like shell.
 - Root cause: I treated the white-screen launcher problem as a reason to send `ACTION_MAIN + CATEGORY_LAUNCHER` straight into a normal browser surface. That changed the product surface from TWA to regular Chrome. On top of that, the timeout budget started before warmup and could still auto-open browser fallback too early.
 - Lesson: For Habitschool’s launcher, keep the primary entry on the TWA path. If cold-start timing is slow, adjust the timeout budget and make launcher fallback manual inside the native loading UI instead of automatically replacing the shell with a normal browser tab.
+
+### 175. Android TWA verification must include post-launch ANR/timeout observation, not just the first resumed activity
+- Symptom: I reported the launcher fix as good after seeing `CustomTabActivity` become top resumed, but the user still hit `Chrome isn't responding` shortly afterward.
+- Root cause: my verification window ended too early. A TWA flow can look correct for the first few seconds and still fail later when timeout policy or Chrome process state kicks in.
+- Lesson: For Habitschool’s Android shell, do not stop at “TWA opened.” Force-stop app + Chrome, cold-start the launcher, then watch at least 25-30 seconds and inspect logcat for `TWA launch timed out`, `Opened browser surface`, `ANR`, or `Input dispatching timed out` before declaring the launcher stable.
+
+### 176. Primary Android launcher startup must not block on Health Connect IPC
+- Symptom: the installed Android app could stay on the branded loading screen and even hit an ANR before any web surface appeared.
+- Root cause: `HabitschoolLauncherActivity` synchronously called `HealthConnectManager.hasRequiredPermissions()` via `runBlocking` on the main thread during cold start, putting Health Connect binder latency directly on the launcher critical path.
+- Lesson: On cold start, the primary launcher may reuse only cheap cached Health Connect snapshot data. Do not synchronously query Health Connect permissions or records before handing off to the web surface.
+
+### 177. If TWA handoff stalls, the launcher must auto-open an in-app fallback instead of waiting on the loading screen
+- Symptom: even after removing some browser-loop issues, the Android launcher could still leave the user parked on the branded loading UI when trusted-surface handoff did not complete promptly.
+- Root cause: the launcher depended on manual escape hatches or external browser fallback instead of opening a guaranteed in-app surface.
+- Lesson: For Habitschool’s primary Android launcher, if trusted-surface launch stalls or throws, automatically open an in-app WebView fallback. Do not leave the user trapped on the native loading screen waiting for manual recovery.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults

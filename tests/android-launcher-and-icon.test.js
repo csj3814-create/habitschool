@@ -11,25 +11,27 @@ function readRepoFile(relativePath) {
 }
 
 describe('android launcher bootstrap and icon resources', () => {
-    it('uses TWA for the primary launcher entry while keeping external-browser fallback available', () => {
+    it('uses TWA for the primary launcher entry while falling back to in-app WebView instead of blocking launcher startup', () => {
         const launcherSource = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
         const launcherLayout = readRepoFile('android/app/src/main/res/layout/activity_launcher_loading.xml');
         const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
+        expect(launcherSource).toContain('private val launcherMetadata by lazy { LauncherActivityMetadata.parse(this) }');
         expect(launcherSource).toContain('if (isPrimaryLauncherEntry()) {');
+        expect(launcherSource).toContain('openWebViewFallback(requireLaunchingUrl(), "launcher-timeout-webview")');
+        expect(launcherSource).toContain('private fun openWebViewFallback(targetUrl: Uri, reason: String) {');
+        expect(launcherSource).toContain('WebViewFallbackActivity.createLaunchIntent(this, targetUrl, launcherMetadata)');
+        expect(launcherSource).toContain('TrustedWebActivityIntentBuilder(targetUrl)');
+        expect(launcherSource).toContain('TwaLauncher.WEBVIEW_FALLBACK_STRATEGY');
         expect(launcherSource).toContain('showLauncherTimeoutFallbackUi()');
-        expect(launcherSource).toContain('if (shouldLaunchTrustedSurface(targetUrl)) {');
-        expect(launcherSource).toContain('private fun shouldLaunchTrustedSurface(targetUrl: Uri): Boolean {');
-        expect(launcherSource).toContain('scheduleLaunchTimeout()');
-        expect(launcherSource).toContain('CustomTabsClient.bindCustomTabsService(');
-        expect(launcherSource).toContain('client.warmup(0L)');
-        expect(launcherSource).toContain('client.newSession(null)?.mayLaunchUrl(targetUrl, null, null)');
-        expect(launcherSource).toContain('twaLauncher = TwaLauncher(this, preferredPackage)');
         expect(launcherSource).toContain('private fun resolveExternalBrowserPackage(targetUrl: Uri): String? {');
         expect(launcherSource).toContain('filter { it.isNotBlank() && it != packageName }');
         expect(launcherSource).toContain('PREFERRED_BROWSER_PACKAGES.firstOrNull(candidatePackages::contains)');
+        expect(launcherSource).not.toContain('CustomTabsClient.bindCustomTabsService(');
+        expect(launcherSource).not.toContain('runBlocking');
+        expect(launcherSource).not.toContain('shouldAutoSyncHealthConnect(');
         expect(launcherSource).not.toContain('main-launcher-browser');
         expect(launcherLayout).toContain('launcher_timeout_hint');
         expect(launcherLayout).toContain('launcher_open_browser_button');
