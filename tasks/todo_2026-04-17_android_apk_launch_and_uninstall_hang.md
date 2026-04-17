@@ -16,9 +16,10 @@
 
 ## Review
 
-- The launcher no longer depends on a transparent `LauncherActivity` handoff for normal app opens. It now shows a visible loading screen, preserves the Health Connect pre-sync checks, and sends regular app launches straight to a Chrome browser tab instead of a custom-tab/TWA surface.
-- Share intents still keep the Android Browser Helper TWA path so the existing share-target bridge remains available where it matters.
-- The main launcher task now finishes cleanly after handing control to Chrome, which removes the lingering shell state that previously made the app feel unresponsive and hard to uninstall on device.
+- The launcher still preserves the Health Connect pre-sync checks, but normal app opens now pre-warm Custom Tabs before launching the Habitschool trusted surface. When Chrome is slow, the app keeps the branded loading screen visible instead of dropping the user onto a blank white browser surface.
+- Browser fallback is now truly a last resort. It no longer forces the same Chrome package that may be stuck in first-run prompts, and the shell only hands off after the trusted-surface attempt times out.
+- The installed shell still exits cleanly after handoff, so force-stop and uninstall remain healthy even after a cold-start launch attempt.
+- Emulator verification showed the key UX improvement: at the 10-second mark the user now sees the Habitschool loading screen rather than a blank Chrome/custom-tab page, and by the 30-second mark the login screen is visible.
 
 ## Verification
 
@@ -27,6 +28,8 @@
 - `cd android && .\gradlew.bat :app:assembleDebug`
 - `cd android && .\gradlew.bat :app:installDebug`
 - `adb -s emulator-5554 shell am start -S -n com.habitschool.app/.HabitschoolLauncherActivity`
+- `adb -s emulator-5554 shell screencap -p /sdcard/habitschool-open-warm.png`
+- `adb -s emulator-5554 shell screencap -p /sdcard/habitschool-open-warm-30s.png`
 - `adb -s emulator-5554 shell dumpsys activity activities`
 - `adb -s emulator-5554 shell am force-stop com.habitschool.app`
 - `adb -s emulator-5554 shell pm uninstall com.habitschool.app`

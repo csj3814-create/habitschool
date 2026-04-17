@@ -1,6 +1,7 @@
 package com.habitschool.app
 
 import android.content.Intent
+import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.os.Bundle
@@ -8,6 +9,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsClient
+import androidx.browser.customtabs.CustomTabsServiceConnection
 import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.habitschool.app.health.HealthConnectAvailabilityState
 import com.habitschool.app.health.HealthConnectManager
@@ -21,6 +24,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     private var launchUrlOverride: Uri? = null
     private var twaLauncher: TwaLauncher? = null
+    private var customTabsWarmupConnection: CustomTabsServiceConnection? = null
     private var launchRequested = false
     private var browserFallbackOpened = false
 
@@ -51,10 +55,11 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         }
 
         window.decorView.post {
-            if (isShareIntent()) {
+            val targetUrl = requireLaunchingUrl()
+            if (shouldLaunchTrustedSurface(targetUrl)) {
                 launchTrustedSurface()
             } else {
-                openBrowserSurface(requireLaunchingUrl(), "direct-browser-launch")
+                openBrowserSurface(targetUrl, "direct-browser-launch")
             }
         }
     }
@@ -69,6 +74,7 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         cancelLaunchTimeout()
+        unbindCustomTabsWarmupConnection()
         twaLauncher?.destroy()
         twaLauncher = null
         super.onDestroy()
@@ -76,7 +82,6 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
 
     private fun launchTrustedSurface() {
         if (launchRequested || isFinishing || isDestroyed) return
-        launchRequested = true
 
         val targetUrl = requireLaunchingUrl()
         val preferredPackage = resolvePreferredTwaProviderPackage()
@@ -87,7 +92,44 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
             return
         }
 
+        warmupTrustedSurface(preferredPackage, targetUrl)
+    }
+
+    private fun warmupTrustedSurface(preferredPackage: String, targetUrl: Uri) {
         scheduleLaunchTimeout()
+
+        if (!CustomTabsClient.bindCustomTabsService(
+                this,
+                preferredPackage,
+                object : CustomTabsServiceConnection() {
+                    override fun onCustomTabsServiceConnected(name: ComponentName, client: CustomTabsClient) {
+                        if (isFinishing || isDestroyed || browserFallbackOpened) {
+                            unbindCustomTabsWarmupConnection()
+                            return
+                        }
+
+                        client.warmup(0L)
+                        client.newSession(null)?.mayLaunchUrl(targetUrl, null, null)
+                        launchTrustedSurfaceAfterWarmup(preferredPackage, targetUrl)
+                    }
+
+                    override fun onServiceDisconnected(name: ComponentName) {
+                        customTabsWarmupConnection = null
+                    }
+                }.also { connection ->
+                    customTabsWarmupConnection = connection
+                }
+            )
+        ) {
+            Log.w(TAG, "Unable to bind Custom Tabs warmup service, launching TWA directly")
+            launchTrustedSurfaceAfterWarmup(preferredPackage, targetUrl)
+        }
+    }
+
+    private fun launchTrustedSurfaceAfterWarmup(preferredPackage: String, targetUrl: Uri) {
+        if (launchRequested || isFinishing || isDestroyed) return
+        launchRequested = true
+        unbindCustomTabsWarmupConnection()
 
         try {
             Log.d(TAG, "Launching TWA with provider=$preferredPackage url=$targetUrl")
@@ -106,22 +148,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         twaLauncher?.destroy()
         twaLauncher = null
 
-        val preferredPackage = resolvePreferredTwaProviderPackage()
         runCatching {
             startActivity(
                 Intent(Intent.ACTION_VIEW, targetUrl).apply {
-                    if (!preferredPackage.isNullOrBlank()) {
-                        `package` = preferredPackage
-                    }
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             )
-        }.recoverCatching {
-            startActivity(
-                Intent(Intent.ACTION_VIEW, targetUrl).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-            )
+        }.onFailure { error ->
+            Log.e(TAG, "Browser fallback launch failed", error)
         }
 
         Log.w(TAG, "Opened browser surface reason=$reason url=$targetUrl")
@@ -137,6 +171,12 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
         mainHandler.removeCallbacks(launchTimeoutRunnable)
     }
 
+    private fun unbindCustomTabsWarmupConnection() {
+        val connection = customTabsWarmupConnection ?: return
+        runCatching { unbindService(connection) }
+        customTabsWarmupConnection = null
+    }
+
     private fun requireLaunchingUrl(): Uri {
         return launchUrlOverride ?: resolveLaunchingUrl()
     }
@@ -148,6 +188,14 @@ class HabitschoolLauncherActivity : AppCompatActivity() {
     private fun isShareIntent(): Boolean {
         val action = intent?.action
         return action == Intent.ACTION_SEND || action == Intent.ACTION_SEND_MULTIPLE
+    }
+
+    private fun shouldLaunchTrustedSurface(targetUrl: Uri): Boolean {
+        if (isShareIntent()) {
+            return true
+        }
+        val appOrigin = Uri.parse(AppRoutes.WEB_ORIGIN)
+        return targetUrl.scheme == "https" && targetUrl.host == appOrigin.host
     }
 
     private fun isEnabledPackageInstalled(packageName: String): Boolean {

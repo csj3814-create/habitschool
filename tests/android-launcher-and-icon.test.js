@@ -11,16 +11,20 @@ function readRepoFile(relativePath) {
 }
 
 describe('android launcher bootstrap and icon resources', () => {
-    it('boots through a visible launcher shell and only uses TWA for share handoff paths', () => {
+    it('boots through a visible launcher shell and prefers TWA for Habitschool launches before browser fallback', () => {
         const launcherSource = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
         const launcherLayout = readRepoFile('android/app/src/main/res/layout/activity_launcher_loading.xml');
         const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
-        expect(launcherSource).toContain('if (isShareIntent()) {');
-        expect(launcherSource).toContain('openBrowserSurface(requireLaunchingUrl(), "direct-browser-launch")');
+        expect(launcherSource).toContain('if (shouldLaunchTrustedSurface(targetUrl)) {');
+        expect(launcherSource).toContain('private fun shouldLaunchTrustedSurface(targetUrl: Uri): Boolean {');
+        expect(launcherSource).toContain('CustomTabsClient.bindCustomTabsService(');
+        expect(launcherSource).toContain('client.warmup(0L)');
+        expect(launcherSource).toContain('client.newSession(null)?.mayLaunchUrl(targetUrl, null, null)');
         expect(launcherSource).toContain('twaLauncher = TwaLauncher(this, preferredPackage)');
+        expect(launcherSource).not.toContain('`package` = preferredPackage');
         expect(launcherLayout).toContain('앱을 여는 중입니다. 잠시만 기다려 주세요.');
         expect(manifest).toContain('android:theme="@style/Theme.Habitschool"');
     });

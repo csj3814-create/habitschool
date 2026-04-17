@@ -1229,6 +1229,11 @@
 - Symptom: a saved strength-video without a persisted thumbnail could appear blank in the exercise tab even though the fallback video source was valid.
 - Root cause: `showStrengthPreviewVideo(...)` hid the placeholder image immediately and only then waited for video events, so any delay or browser-specific frame behavior produced an empty preview.
 - Lesson: For video-preview fallbacks, keep the placeholder or prior image visible until the first renderable video frame is confirmed. Only swap surfaces after `loadeddata`/equivalent readiness proves the frame exists.
+
+### 171. Android installed-app cold starts must keep a branded loading state until the browser shell is actually visible
+- Symptom: after fixing the hard launch failure, tapping the installed APK could still feel broken because Chrome/TWA cold start spent several seconds on a blank white surface before the web app appeared.
+- Root cause: I treated “browser launch requested” as equivalent to “the user now sees meaningful app UI.” In reality, Chrome first-run prompts and slow custom-tab startup can leave a long white gap after the native handoff.
+- Lesson: For Habitschool’s Android shell, never hand users directly from the launcher into an unstyled browser cold-start gap. Keep a visible branded loading screen until the trusted surface is ready enough to take over, and pre-warm the custom-tab provider before launching.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
