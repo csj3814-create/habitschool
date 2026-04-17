@@ -3,6 +3,11 @@
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
+### 170. Cold-start Android shells must not rely on a transparent Custom Tab/TWA handoff as the only visible launch path
+- Symptom: the installable APK could appear to do nothing when tapped, and on some devices it became awkward to uninstall until the user closed stuck processes.
+- Root cause: the launcher stayed visually transparent while it waited for Chrome/TWA handoff, and cold-start browser surfaces could stall or ANR before any visible app UI appeared. That made the shell feel dead even when the process was technically working.
+- Lesson: for installable Android shells, give the launcher an immediate visible surface and choose the most reliable browser handoff for the entry point. If share-target or other advanced flows still need TWA, scope TWA to those paths instead of making every cold start depend on a fragile custom-tab bootstrap.
+
 ### 169. Android Browser Helper WebView fallback is not safe unless the fallback activity is declared and exercised
 - Symptom: the hybrid app could launch fine when Chrome handled the TWA path, but still died on devices where no compatible TWA browser was available.
 - Root cause: I enabled `WEBVIEW_FALLBACK_STRATEGY` in the launcher but did not declare `com.google.androidbrowserhelper.trusted.WebViewFallbackActivity` in `AndroidManifest.xml`. That meant the fallback path itself threw `ActivityNotFoundException` at runtime.

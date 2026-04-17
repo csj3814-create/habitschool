@@ -23,7 +23,7 @@
         <activity
             android:name=".HabitschoolLauncherActivity"
             android:exported="true"
-            android:theme="@style/Theme.Habitschool.TransparentLauncher">
+            android:theme="@style/Theme.Habitschool">
 
             <meta-data
                 android:name="android.support.customtabs.trusted.DEFAULT_URL"

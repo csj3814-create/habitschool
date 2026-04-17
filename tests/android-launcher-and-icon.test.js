@@ -11,12 +11,18 @@ function readRepoFile(relativePath) {
 }
 
 describe('android launcher bootstrap and icon resources', () => {
-    it('does not call LauncherActivity metadata before the parent onCreate initializes it', () => {
+    it('boots through a visible launcher shell and only uses TWA for share handoff paths', () => {
         const launcherSource = readRepoFile('android/app/src/main/java/com/habitschool/app/HabitschoolLauncherActivity.kt');
+        const launcherLayout = readRepoFile('android/app/src/main/res/layout/activity_launcher_loading.xml');
+        const manifest = readRepoFile('android/app/src/main/AndroidManifest.xml');
 
         expect(launcherSource).not.toContain('val launchingUrl = super.getLaunchingUrl()');
         expect(launcherSource).toContain('val launchingUrl = intent?.data ?: Uri.parse("${AppRoutes.WEB_ORIGIN}/")');
-        expect(launcherSource).toContain('return TwaLauncher.WEBVIEW_FALLBACK_STRATEGY');
+        expect(launcherSource).toContain('if (isShareIntent()) {');
+        expect(launcherSource).toContain('openBrowserSurface(requireLaunchingUrl(), "direct-browser-launch")');
+        expect(launcherSource).toContain('twaLauncher = TwaLauncher(this, preferredPackage)');
+        expect(launcherLayout).toContain('앱을 여는 중입니다. 잠시만 기다려 주세요.');
+        expect(manifest).toContain('android:theme="@style/Theme.Habitschool"');
     });
 
     it('keeps the original bitmap-based launcher icon wiring', () => {
