@@ -18,6 +18,11 @@
 - Root cause: the deep-link handler applied the imported steps and showed the toast, but a later `loadStepData()` restore wrote stale Firestore `steps` back into the visible UI during the same session.
 - Lesson: for native-to-web handoffs, verify the full render order, not just the event handler that shows success feedback. If saved state can reload after an import, the code needs an explicit precedence rule so the newest in-memory import survives the restore pass.
 
+### 173. Firestore backend timeouts should trigger a shared reconnect backoff, not just a wall of offline warnings
+- Symptom: when Cloud Firestore briefly failed to reach the backend, the console filled with follow-on warnings from friendships, onboarding, assets, and token checks, but the app itself had no proactive reconnect behavior beyond the SDK's passive fallback.
+- Root cause: retryable connectivity failures were caught piecemeal in feature code and only logged. There was no shared app-level scheduler to retry after short delays or when the tab became visible/online again.
+- Lesson: when multiple features can fail from the same Firestore connectivity hiccup, centralize recovery. Add a shared reconnect helper with short backoff steps (for this app, `1s` and `3s`), hook it into the main offline/error catch paths, and keep the feature catches lightweight.
+
 ### 169. Android Browser Helper WebView fallback is not safe unless the fallback activity is declared and exercised
 - Symptom: the hybrid app could launch fine when Chrome handled the TWA path, but still died on devices where no compatible TWA browser was available.
 - Root cause: I enabled `WEBVIEW_FALLBACK_STRATEGY` in the launcher but did not declare `com.google.androidbrowserhelper.trusted.WebViewFallbackActivity` in `AndroidManifest.xml`. That meant the fallback path itself threw `ActivityNotFoundException` at runtime.

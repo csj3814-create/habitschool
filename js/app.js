@@ -14,27 +14,27 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js?v=159';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=159';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=159';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=160';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=160';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=160';
 import {
     buildStrengthExerciseSeed,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=159';
+} from './exercise-media.js?v=160';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=159';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=159';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=159';
-import { sanitize, compressImage } from './data-manager.js?v=159';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=159';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=159';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=159';
+} from './health-connect-utils.js?v=160';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=160';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=160';
+import { sanitize, compressImage } from './data-manager.js?v=160';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=160';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=160';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=160';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3622,6 +3622,7 @@ async function loadMyFriendships(forceReload = false) {
                 updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
             }
         } catch (error) {
+            noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed');
             console.warn('[loadMyFriendships] user cache seed skipped:', error.message);
         }
 
@@ -3979,7 +3980,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=159';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=160';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -14995,6 +14996,7 @@ async function updateMetabolicScoreUI() {
         // UI 렌더링
         renderMetabolicScoreCard(container, scoreData);
     } catch (e) {
+        noteFirestoreConnectivityFailure(e, 'loadMetabolicScore');
         console.warn('대사건강 점수 로드 스킵:', e.message);
     }
 };
@@ -15029,6 +15031,7 @@ async function checkOnboarding() {
             modal.style.display = 'flex';
         }
     } catch (e) {
+        noteFirestoreConnectivityFailure(e, 'checkOnboarding');
         console.warn('온보딩 체크 스킵:', e.message);
     }
 };

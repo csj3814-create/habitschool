@@ -1,7 +1,7 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { connectFirestoreEmulator, getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -53,6 +53,15 @@ export const APP_ORIGIN = getCanonicalOrigin(APP_ENV);
 export const APP_OG_IMAGE_URL = `${APP_ORIGIN}/icons/og-image.png`;
 export const FCM_PUBLIC_VAPID_KEY = IS_PROD_ENV ? PROD_VAPID_KEY : STAGING_VAPID_KEY;
 
+const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];
+const FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS = 5000;
+
+let _firestoreReconnectTimers = [];
+let _firestoreReconnectSequence = 0;
+let _firestoreReconnectProbePromise = null;
+let _firestoreReconnectHooksBound = false;
+let _pendingFirestoreReconnectReason = '';
+
 const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
 
 // Firebase 초기화
@@ -66,6 +75,124 @@ if (IS_LOCAL_ENV) {
     connectFirestoreEmulator(db, '127.0.0.1', 8080);
     connectFunctionsEmulator(functions, '127.0.0.1', 5001);
     connectStorageEmulator(storage, '127.0.0.1', 9199);
+}
+
+function clearFirestoreReconnectTimers() {
+    _firestoreReconnectTimers.forEach(timerId => clearTimeout(timerId));
+    _firestoreReconnectTimers = [];
+}
+
+function normalizeFirestoreReconnectErrorMessage(error = null) {
+    if (!error) return '';
+    if (typeof error === 'string') return error.trim();
+    if (typeof error?.message === 'string') return error.message.trim();
+    return String(error).trim();
+}
+
+function isRetryableFirestoreConnectivityError(error = null) {
+    const code = String(error?.code || '').trim().toLowerCase();
+    const message = normalizeFirestoreReconnectErrorMessage(error).toLowerCase();
+    return code === 'unavailable'
+        || code === 'deadline-exceeded'
+        || code === 'failed-precondition'
+        || message.includes('client is offline')
+        || message.includes('cloud firestore backend')
+        || message.includes('backend didn\'t respond')
+        || message.includes('failed to get document because the client is offline');
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function runFirestoreReconnectProbe(reason = '') {
+    if (IS_LOCAL_ENV || typeof window === 'undefined') return false;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+    if (_firestoreReconnectProbePromise) return _firestoreReconnectProbePromise;
+
+    _firestoreReconnectProbePromise = (async () => {
+        try {
+            await enableNetwork(db).catch(() => {});
+
+            const currentUid = auth.currentUser?.uid;
+            if (currentUid) {
+                await Promise.race([
+                    getDocFromServer(doc(db, 'users', currentUid)),
+                    delay(FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS).then(() => {
+                        throw new Error('Firestore reconnect probe timed out');
+                    })
+                ]);
+            }
+
+            _pendingFirestoreReconnectReason = '';
+            clearFirestoreReconnectTimers();
+            console.info('[Firestore] reconnect probe succeeded:', reason || 'unspecified');
+            return true;
+        } catch (error) {
+            console.warn('[Firestore] reconnect probe failed:', reason || 'unspecified', normalizeFirestoreReconnectErrorMessage(error));
+            return false;
+        } finally {
+            _firestoreReconnectProbePromise = null;
+        }
+    })();
+
+    return _firestoreReconnectProbePromise;
+}
+
+function bindFirestoreReconnectHooks() {
+    if (_firestoreReconnectHooksBound || typeof window === 'undefined') return;
+    _firestoreReconnectHooksBound = true;
+
+    window.addEventListener('online', () => {
+        scheduleFirestoreReconnect('browser-online', { includeImmediate: true });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        if (!_pendingFirestoreReconnectReason) return;
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+        scheduleFirestoreReconnect('visibility-resume', { includeImmediate: true });
+    });
+}
+
+export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { includeImmediate = false } = {}) {
+    if (IS_LOCAL_ENV || typeof window === 'undefined') return;
+
+    bindFirestoreReconnectHooks();
+
+    const normalizedReason = String(reason || 'firestore-connectivity').trim();
+    const scheduleToken = ++_firestoreReconnectSequence;
+    const delays = includeImmediate
+        ? [0, ...FIRESTORE_RECONNECT_RETRY_DELAYS_MS]
+        : FIRESTORE_RECONNECT_RETRY_DELAYS_MS;
+
+    _pendingFirestoreReconnectReason = normalizedReason;
+    clearFirestoreReconnectTimers();
+
+    delays.forEach(delayMs => {
+        const timerId = window.setTimeout(async () => {
+            if (scheduleToken !== _firestoreReconnectSequence) return;
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+            await runFirestoreReconnectProbe(`${normalizedReason}:${delayMs}ms`);
+        }, delayMs);
+        _firestoreReconnectTimers.push(timerId);
+    });
+}
+
+export function noteFirestoreConnectivityFailure(error = null, context = '') {
+    if (!isRetryableFirestoreConnectivityError(error)) return false;
+    const normalizedContext = String(context || '').trim();
+    const normalizedError = normalizeFirestoreReconnectErrorMessage(error);
+    const reason = normalizedContext
+        ? `${normalizedContext}${normalizedError ? ` - ${normalizedError}` : ''}`
+        : (normalizedError || 'firestore-connectivity');
+
+    scheduleFirestoreReconnect(reason);
+    return true;
+}
+
+if (!IS_LOCAL_ENV) {
+    bindFirestoreReconnectHooks();
 }
 
 // 상수
