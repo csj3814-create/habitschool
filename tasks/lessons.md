@@ -1291,3 +1291,5 @@
 - Root cause: default UI placeholders and docs were written for an earlier rollout stage and were not tied back to the active chain config or live onchain stats.
 - Lesson: during chain cutover work, make wallet copy, explorer links, network badges, and tokenomics notes derive from the active chain config and current onchain rate where possible. Avoid hardcoding launch-era or testnet-era values into wallet defaults.
 
+- 2026-04-18: 일부 사용자만 "화면은 보이는데 버튼/알림 탭이 전부 무반응"이면 브라우저 탓부터 하지 말고 자산 버전 정합성을 먼저 확인한다. 엔트리 스크립트만 `?v=`를 붙이고 내부 로컬 module import는 queryless로 두면, 배포가 누적될수록 특정 사용자 브라우저가 오래된 helper와 최신 entrypoint를 섞어 받아 `app.js` 전체가 import 단계에서 죽을 수 있다.
+- 2026-04-18: PWA/service worker 앱에서 알림 클릭은 `navigate().focus()`만 믿지 않는다. 브라우저별 실패나 reject가 있어도 `clients.openWindow(destination)` fallback이 반드시 있어야 "알림 눌렀는데 아무 반응 없음"을 막을 수 있다.

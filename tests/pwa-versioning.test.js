@@ -16,20 +16,36 @@ function captureVersion(source, pattern, label) {
     return match[1];
 }
 
+function expectVersionedLocalImports(source, releaseVersion, label) {
+    const importMatches = [...source.matchAll(/from '\.\/([^']+\.js(?:\?v=\d+)?)'/g)];
+    expect(importMatches.length, `${label} should keep local imports explicit`).toBeGreaterThan(0);
+
+    for (const [, specifier] of importMatches) {
+        expect(specifier.endsWith(`?v=${releaseVersion}`), `${label} import "${specifier}" should use ?v=${releaseVersion}`).toBe(true);
+    }
+}
+
 describe('PWA asset versioning', () => {
     it('keeps entrypoint and service worker versions aligned', () => {
         const indexSource = readRepoFile('index.html');
         const mainSource = readRepoFile('js/main.js');
         const appSource = readRepoFile('js/app.js');
         const authSource = readRepoFile('js/auth.js');
+        const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
+        const dataManagerSource = readRepoFile('js/data-manager.js');
+        const dietAnalysisSource = readRepoFile('js/diet-analysis.js');
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
+        const uiHelpersSource = readRepoFile('js/ui-helpers.js');
         const swSource = readRepoFile('sw.js');
+        const firebaseConfig = JSON.parse(readRepoFile('firebase.json'));
 
         const releaseVersion = captureVersion(indexSource, /js\/app\.js\?v=(\d+)/, 'index app.js');
 
         expect(captureVersion(indexSource, /styles\.css\?v=(\d+)/, 'index styles.css')).toBe(releaseVersion);
         expect(captureVersion(indexSource, /js\/webview-detect\.js\?v=(\d+)/, 'index webview-detect.js')).toBe(releaseVersion);
         expect(captureVersion(indexSource, /js\/main\.js\?v=(\d+)/, 'index main.js')).toBe(releaseVersion);
+        expect(captureVersion(indexSource, /js\/diet-analysis\.js\?v=(\d+)/, 'index diet-analysis.js')).toBe(releaseVersion);
+        expect(captureVersion(indexSource, /js\/metabolic-score\.js\?v=(\d+)/, 'index metabolic-score.js')).toBe(releaseVersion);
         expect(captureVersion(indexSource, /js\/pwa-install\.js\?v=(\d+)/, 'index pwa-install.js')).toBe(releaseVersion);
 
         expect(captureVersion(mainSource, /\.\/auth\.js\?v=(\d+)/, 'main auth import')).toBe(releaseVersion);
@@ -39,12 +55,39 @@ describe('PWA asset versioning', () => {
         expect(captureVersion(pwaInstallSource, /sw\.js\?v=(\d+)/, 'pwa-install service worker register')).toBe(releaseVersion);
         expect(captureVersion(swSource, /habitschool-v(\d+)/, 'service worker cache')).toBe(releaseVersion);
 
+        expectVersionedLocalImports(appSource, releaseVersion, 'app.js');
+        expectVersionedLocalImports(authSource, releaseVersion, 'auth.js');
+        expectVersionedLocalImports(blockchainManagerSource, releaseVersion, 'blockchain-manager.js');
+        expectVersionedLocalImports(dataManagerSource, releaseVersion, 'data-manager.js');
+        expectVersionedLocalImports(dietAnalysisSource, releaseVersion, 'diet-analysis.js');
+        expectVersionedLocalImports(mainSource, releaseVersion, 'main.js');
+        expectVersionedLocalImports(uiHelpersSource, releaseVersion, 'ui-helpers.js');
+
         expect(swSource).toContain(`'./styles.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/main.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/app-mode.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/auth.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/auth-login-helpers.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/blockchain-config.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/blockchain-manager.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/data-manager.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/diet-analysis.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/exercise-media.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/firebase-config.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/health-connect-utils.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/metabolic-score.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/milestone-helpers.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/pwa-install.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/security.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/ui-helpers.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/webview-detect.js?v=${releaseVersion}'`);
+
+        const headerSources = firebaseConfig.hosting[0].headers.map((item) => item.source);
+        expect(headerSources).toContain('/');
+        expect(headerSources).toContain('**/*.html');
+        expect(headerSources).toContain('/manifest.json');
+        expect(headerSources).toContain('/styles.css');
+        expect(headerSources).toContain('/js/**');
     });
 });

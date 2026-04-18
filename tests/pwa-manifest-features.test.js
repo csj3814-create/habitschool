@@ -31,4 +31,12 @@ describe('PWA manifest features', () => {
         expect(swSource).toContain('./icons/feature-graphic.png');
         expect(swSource).toContain('./icons/feature-graphic-minimal.png');
     });
+
+    it('falls back to openWindow when notification navigation fails', () => {
+        const swSource = readRepoFile('sw.js');
+
+        expect(swSource).toContain("notification navigate/focus failed");
+        expect(swSource).toContain('await self.clients.openWindow(destination)');
+        expect(swSource).toContain("notification openWindow failed");
+    });
 });

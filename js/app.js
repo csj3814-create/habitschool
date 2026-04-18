@@ -14,27 +14,27 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId } from './firebase-config.js?v=159';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=159';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=159';
 import {
     buildStrengthExerciseSeed,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js';
+} from './exercise-media.js?v=159';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js';
-import { reconcileMilestoneState } from './milestone-helpers.js';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js';
-import { sanitize, compressImage } from './data-manager.js';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js';
+} from './health-connect-utils.js?v=159';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=159';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=159';
+import { sanitize, compressImage } from './data-manager.js?v=159';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=159';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=159';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=159';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3979,7 +3979,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=158';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=159';
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
