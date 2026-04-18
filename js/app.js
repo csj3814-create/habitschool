@@ -184,6 +184,8 @@ let _sharedImportSession = null;
 let _lastDietAutoImportResult = null;
 let _offlineOutboxFlushPromise = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
+const GALLERY_LOAD_TIMEOUT_MS = 6000;
+const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_KAKAO_CHAT_URL = 'https://pf.kakao.com/_QDZZX/chat';
@@ -13679,22 +13681,55 @@ function cleanupGalleryResources() {
     sortedFilteredDirty = true;
     galleryDisplayCount = 0;
     isLoadingMore = false;
+    _galleryLoadingPromise = null;
+    _galleryLoadingStartedAt = 0;
+    _galleryLoadGeneration += 1;
 }
 window.cleanupGalleryResources = cleanupGalleryResources;
 
 let _galleryLoadingPromise = null; // 중복 로드 방지 + 완료 대기용
+let _galleryLoadingStartedAt = 0;
+let _galleryLoadGeneration = 0;
+
+function isGalleryTabActive() {
+    return !!document.getElementById('gallery')?.classList.contains('active');
+}
+
+function rerenderGalleryFeedIfVisible() {
+    if (!isGalleryTabActive()) return;
+    galleryDisplayCount = 0;
+    sortedFilteredDirty = true;
+    renderFeedOnly();
+}
 
 async function loadGalleryData(forceReload = false) {
     if (_galleryLoadingPromise) {
-        // 백그라운드 로드 완료 대기 후 캐시에서 즉시 렌더링
-        await _galleryLoadingPromise;
-        return _loadGalleryDataInner(forceReload); // 캐시 있으면 fetch 스킵, forceReload면 fresh fetch
+        const isStaleLoad = _galleryLoadingStartedAt
+            && (Date.now() - _galleryLoadingStartedAt) > GALLERY_LOADING_STALE_RESET_MS;
+        if (isStaleLoad) {
+            console.warn('[loadGalleryData] stale gallery load discarded');
+            _galleryLoadingPromise = null;
+            _galleryLoadingStartedAt = 0;
+            _galleryLoadGeneration += 1;
+        } else {
+            // 백그라운드 로드 완료 대기 후 캐시에서 즉시 렌더링
+            await _galleryLoadingPromise.catch(() => {});
+            return _loadGalleryDataInner(forceReload, _galleryLoadGeneration); // 캐시 있으면 fetch 스킵, forceReload면 fresh fetch
+        }
     }
 
-    _galleryLoadingPromise = _loadGalleryDataInner(forceReload).finally(() => {
-        _galleryLoadingPromise = null;
-    });
-    return _galleryLoadingPromise;
+    const loadGeneration = ++_galleryLoadGeneration;
+    _galleryLoadingStartedAt = Date.now();
+    const galleryLoadPromise = _loadGalleryDataInner(forceReload, loadGeneration);
+    _galleryLoadingPromise = galleryLoadPromise;
+    try {
+        return await galleryLoadPromise;
+    } finally {
+        if (_galleryLoadingPromise === galleryLoadPromise) {
+            _galleryLoadingPromise = null;
+            _galleryLoadingStartedAt = 0;
+        }
+    }
 }
 
 // Firestore REST API로 갤러리 데이터 직접 조회 (비로그인 cold start 대응)
@@ -13753,101 +13788,120 @@ function _convertFirestoreValue(val) {
     return null;
 }
 
-async function _loadGalleryDataInner(forceReload = false) {
+async function _loadGalleryDataInner(forceReload = false, loadGeneration = _galleryLoadGeneration) {
     const container = document.getElementById('gallery-container');
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
+    const isCurrentLoad = () => loadGeneration === _galleryLoadGeneration;
+    const abortIfSuperseded = () => !isCurrentLoad();
+
+    if (!container) return;
 
     try {
-    // 게스트 모드: 공유 카드/활동 요약 숨김, CTA 배너 표시
-    const shareContainer = document.getElementById('my-share-container');
-    const activitySummary = document.getElementById('gallery-activity-summary');
-    if (!user) {
-        if (shareContainer) shareContainer.style.display = 'none';
-        setShareSettingsExpanded(false);
-        if (activitySummary) activitySummary.style.display = 'none';
-    }
-
-    const hadCachedLogs = cachedGalleryLogs.length > 0;
-    const shouldFetchFresh = forceReload || !hadCachedLogs;
-
-    if (shouldFetchFresh) {
-        // 캐시가 없을 때만 스켈레톤을 보여주고, 기존 목록이 있으면 그대로 유지한다.
-        if (!hadCachedLogs) {
-            container.innerHTML = createSkeletonHtml(4);
+        // 게스트 모드: 공유 카드/활동 요약 숨김, CTA 배너 표시
+        const shareContainer = document.getElementById('my-share-container');
+        const activitySummary = document.getElementById('gallery-activity-summary');
+        if (!user) {
+            if (shareContainer) shareContainer.style.display = 'none';
+            setShareSettingsExpanded(false);
+            if (activitySummary) activitySummary.style.display = 'none';
         }
 
-        // 친구 관계 원장 fetch를 백그라운드에서 시작 (갤러리 fetch와 병렬)
-        const friendsPromise = user
-            ? loadMyFriendships()
-                .catch(e => console.warn('친구 관계 조회 실패 (무시):', e.message))
-            : Promise.resolve();
+        const hadCachedLogs = cachedGalleryLogs.length > 0;
+        const shouldFetchFresh = forceReload || !hadCachedLogs;
 
-        let retries = 0;
-
-        // 비로그인: Firestore SDK가 cold start에서 서버 연결 실패 → REST API로 직접 조회
-        if (!user) {
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - 30);
-            const cutoffStr = cutoffDate.toISOString().split('T')[0];
-            while (retries < 3) {
-                try {
-                    const logsArray = await _fetchGalleryViaRest(cutoffStr, MAX_CACHE_SIZE);
-                    cachedGalleryLogs = logsArray;
-                    sortedFilteredDirty = true;
-                    break;
-                } catch (e) {
-                    retries++;
-                    console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
-                    if (retries < 3) {
-                        await new Promise(r => setTimeout(r, 200 * retries));
-                    } else if (!hadCachedLogs) {
-                        container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
-                        return;
-                    } else {
-                        console.warn('REST 갤러리 새로고침 실패 - 기존 캐시 유지');
-                    }
-                }
+        if (shouldFetchFresh) {
+            // 캐시가 없을 때만 스켈레톤을 보여주고, 기존 목록이 있으면 그대로 유지한다.
+            if (!hadCachedLogs) {
+                container.innerHTML = createSkeletonHtml(4);
             }
-        } else {
-        // 로그인: SDK 사용 (캐시 활용 가능)
-        while (retries < 3) {
-            try {
+
+            // 친구 관계는 첫 갤러리 렌더를 막지 않고 뒤에서 로드한다.
+            if (user) {
+                loadMyFriendships()
+                    .then(() => {
+                        sortedFilteredDirty = true;
+                        if (cachedGalleryLogs.length > 0) {
+                            rerenderGalleryFeedIfVisible();
+                        }
+                    })
+                    .catch(e => console.warn('친구 관계 조회 실패 (무시):', e.message));
+            }
+
+            let retries = 0;
+
+            // 비로그인: Firestore SDK가 cold start에서 서버 연결 실패 → REST API로 직접 조회
+            if (!user) {
                 const cutoffDate = new Date();
                 cutoffDate.setDate(cutoffDate.getDate() - 30);
                 const cutoffStr = cutoffDate.toISOString().split('T')[0];
-                const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(FIRESTORE_PAGE_SIZE));
-                const snapshot = await getDocs(q);
+                while (retries < 3) {
+                    try {
+                        const logsArray = await withAsyncTimeout(
+                            _fetchGalleryViaRest(cutoffStr, MAX_CACHE_SIZE),
+                            GALLERY_LOAD_TIMEOUT_MS,
+                            '갤러리 REST 조회 시간이 초과되었어요.'
+                        );
+                        if (abortIfSuperseded()) return;
+                        cachedGalleryLogs = logsArray;
+                        sortedFilteredDirty = true;
+                        break;
+                    } catch (e) {
+                        retries++;
+                        console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
+                        if (retries < 3) {
+                            await new Promise(r => setTimeout(r, 200 * retries));
+                        } else if (!hadCachedLogs) {
+                            container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
+                            return;
+                        } else {
+                            console.warn('REST 갤러리 새로고침 실패 - 기존 캐시 유지');
+                        }
+                    }
+                }
+            } else {
+                // 로그인: SDK 사용 (캐시 활용 가능)
+                while (retries < 3) {
+                    try {
+                        const cutoffDate = new Date();
+                        cutoffDate.setDate(cutoffDate.getDate() - 30);
+                        const cutoffStr = cutoffDate.toISOString().split('T')[0];
+                        const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(FIRESTORE_PAGE_SIZE));
+                        const snapshot = await withAsyncTimeout(
+                            getDocs(q),
+                            GALLERY_LOAD_TIMEOUT_MS,
+                            '갤러리 Firestore 조회 시간이 초과되었어요.'
+                        );
+                        if (abortIfSuperseded()) return;
 
-                let logsArray = [];
-                snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
-                cachedGalleryLogs = logsArray;
-                galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
-                galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
-                sortedFilteredDirty = true;
-                break;
-            } catch (e) {
-                retries++;
-                console.warn(`갤러리 데이터 로드 재시도 (${retries}/3):`, e.message);
-                if (retries < 3) {
-                    await new Promise(r => setTimeout(r, 200 * retries));
-                } else if (!hadCachedLogs) {
-                    console.error('갤러리 데이터 로드 실패:', e);
-                    container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">🔄 다시 시도</button></div>';
-                    return;
-                } else {
-                    console.warn('Firestore 갤러리 새로고침 실패 - 기존 캐시 유지');
+                        let logsArray = [];
+                        snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
+                        cachedGalleryLogs = logsArray;
+                        galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+                        galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
+                        sortedFilteredDirty = true;
+                        break;
+                    } catch (e) {
+                        retries++;
+                        console.warn(`갤러리 데이터 로드 재시도 (${retries}/3):`, e.message);
+                        if (retries < 3) {
+                            await new Promise(r => setTimeout(r, 200 * retries));
+                        } else if (!hadCachedLogs) {
+                            console.error('갤러리 데이터 로드 실패:', e);
+                            container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">🔄 다시 시도</button></div>';
+                            return;
+                        } else {
+                            console.warn('Firestore 갤러리 새로고침 실패 - 기존 캐시 유지');
+                        }
+                    }
                 }
             }
-        }
+
+            // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
+            buildShareCardAsync(myId, user);
         }
 
-        // 친구 목록 완료 대기 (보통 이미 완료됨)
-        await friendsPromise;
-
-        // 공유 카드는 비동기로 뒤에서 로드 (갤러리 피드 먼저 표시)
-        buildShareCardAsync(myId, user);
-    }
+    if (abortIfSuperseded()) return;
 
     // 피드 즉시 렌더링
     galleryDisplayCount = 0;

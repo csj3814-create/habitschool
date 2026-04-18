@@ -1274,6 +1274,11 @@
 - Symptom: even after removing some browser-loop issues, the Android launcher could still leave the user parked on the branded loading UI when trusted-surface handoff did not complete promptly.
 - Root cause: the launcher depended on manual escape hatches or external browser fallback instead of opening a guaranteed in-app surface.
 - Lesson: For Habitschool’s primary Android launcher, if trusted-surface launch stalls or throws, automatically open an in-app WebView fallback. Do not leave the user trapped on the native loading screen waiting for manual recovery.
+
+### 178. Gallery first paint must never wait on secondary social data
+- Symptom: after first login or immediately after an upload, the gallery tab could show hero UI plus endless skeleton cards until the user refreshed, and sometimes the next retry still waited behind the same stuck state.
+- Root cause: `_loadGalleryDataInner()` started friendship loading in parallel but still awaited it before the first feed render. At the same time, the gallery loader had no stale in-flight reset, so a wedged `_galleryLoadingPromise` could block later reload attempts too.
+- Lesson: For gallery/feed surfaces, treat friendship and similar social enrichments as optional follow-up data. Render the feed from cached/fetched logs first, rerender when enrichment arrives, and give the load gate its own stale-timeout recovery so one hung request cannot poison the next reload.
 # 2026-04-11 (Mainnet Migration Economics)
 
 ### 60. Mainnet migration must preserve the live source-chain economics instead of resetting to constructor defaults
