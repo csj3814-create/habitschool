@@ -1,6 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-04-20 (Diet Method Reminder Consent)
+
+### 177. When a user asks for a simple yes/no consent flow, keep both the copy and the state transition just as direct
+- Symptom: the diet-method consent modal kept longer explanatory button labels and delayed the actual `remindersEnabled` save until after browser-level push permission succeeded, which felt indirect and did not match the requested `네 / 아니오` behavior.
+- Root cause: I treated notification transport setup and product preference saving as the same state change, and I also left explanatory UI text too verbose for a binary decision step.
+- Lesson: for preference consent modals, separate the app preference from device permission wiring. If the user says "yes", save the app-side setting immediately, then continue with device/browser setup as a follow-up step. Keep the modal copy and buttons as short as the decision itself.
+
+---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
 ### 170. Cold-start Android shells must not rely on a transparent Custom Tab/TWA handoff as the only visible launch path
@@ -1318,3 +1326,4 @@
 - 2026-04-20: 사용자가 옵션 이름/순서/동의 조건을 구체적으로 교정한 기획은 구현 전에 설정값으로 먼저 굳힌다. 특히 선택형 기능은 카탈로그 순서, 내부 `methodId`, 알림 기본값, 예외 동작을 코드 상수와 테스트에 함께 박아 두어야 뒤늦은 재해석을 막을 수 있다.
 - 2026-04-20: 전역 `let` 상태를 참조하는 UI refresh 훅은 해당 상태 선언보다 앞에서 실행되면 TDZ 런타임 크래시가 난다. 초기화 순서가 있는 전역 상태(`_stepData` 같은 값)는 파일 상단 공용 영역에 먼저 선언하고, `window.* = async function` 형태로 바인딩되는 함수는 같은 파일 안에서도 직접 이름으로 호출하지 말고 `window.fn?.()`로만 호출해 초기화 순서 회귀를 막는다.
 - 2026-04-20: 거대한 브라우저 모듈에서는 일부 전역 상태를 앞당기는 것만으로 초기화 순서 회귀가 끝나지 않을 수 있다. 특히 `auth.js` 같은 외부 모듈이 평가 도중 `openTab()`이나 `window.applyDietProgramUserData()`를 먼저 호출할 수 있으면, 늦게 선언된 다른 `let/const` 상태(`_dashboardCache`, `galleryUserFilter` 등)가 연쇄 TDZ를 낸다. 이런 경우에는 부팅 큐(`_appBootReady`)를 두고 조기 호출을 모듈 평가 완료 후로 미뤄야 한다.
+- 2026-04-20: 사용자가 "인라인 렌더링하기에 너무 큽니다"를 실제 문제로 보정하면 단순히 무시 가능한 뷰어 제한으로 넘기지 않는다. 진입 파일(`styles.css`, `js/app.js`, `functions/index.js`)은 얇게 유지하고, 코어 구현을 분리했다면 service worker 캐시와 소스 검사 테스트도 새 위임 구조를 따라가게 함께 고친다.

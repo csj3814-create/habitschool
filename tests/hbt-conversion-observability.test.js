@@ -1,18 +1,9 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readFunctionsSource, readRepoFile } from './source-helpers.js';
 
 describe('HBT conversion observability', () => {
     it('records attempt ids and richer mint logs on the server', () => {
-        const source = readRepoFile('functions/index.js');
+        const source = readFunctionsSource();
 
         expect(source).toContain('function normalizeMintAttemptId');
         expect(source).toContain('function buildMintFailureLogContext');

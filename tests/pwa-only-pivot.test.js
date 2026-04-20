@@ -1,19 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('PWA-only pivot guardrails', () => {
     it('keeps Health Connect step import dormant in the web UI while retaining the code path', () => {
         const indexSource = readRepoFile('index.html');
-        const appSource = readRepoFile('js/app.js');
+        const appSource = readAppSource();
 
         expect(indexSource).not.toContain('exercise-health-connect-btn');
         expect(appSource).toContain('const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;');
@@ -21,7 +12,7 @@ describe('PWA-only pivot guardrails', () => {
     });
 
     it('uses PWA-first install copy instead of native app wording', () => {
-        const appSource = readRepoFile('js/app.js');
+        const appSource = readAppSource();
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
 
         expect(pwaInstallSource).toContain("buttonLabel: '홈 화면에 추가'");

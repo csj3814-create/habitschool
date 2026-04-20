@@ -1,14 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readRepoFile } from './source-helpers.js';
 
 function captureVersion(source, pattern, label) {
     const match = source.match(pattern);
@@ -17,7 +8,7 @@ function captureVersion(source, pattern, label) {
 }
 
 function expectVersionedLocalImports(source, releaseVersion, label) {
-    const importMatches = [...source.matchAll(/from '\.\/([^']+\.js(?:\?v=\d+)?)'/g)];
+    const importMatches = [...source.matchAll(/(?:from|import) '\.\/([^']+\.js(?:\?v=\d+)?)'/g)];
     expect(importMatches.length, `${label} should keep local imports explicit`).toBeGreaterThan(0);
 
     for (const [, specifier] of importMatches) {
@@ -29,13 +20,15 @@ describe('PWA asset versioning', () => {
     it('keeps entrypoint and service worker versions aligned', () => {
         const indexSource = readRepoFile('index.html');
         const mainSource = readRepoFile('js/main.js');
-        const appSource = readRepoFile('js/app.js');
+        const appEntrySource = readRepoFile('js/app.js');
+        const appCoreSource = readRepoFile('js/app-core.js');
         const authSource = readRepoFile('js/auth.js');
         const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
         const dataManagerSource = readRepoFile('js/data-manager.js');
         const dietAnalysisSource = readRepoFile('js/diet-analysis.js');
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
         const uiHelpersSource = readRepoFile('js/ui-helpers.js');
+        const stylesEntrySource = readRepoFile('styles.css');
         const swSource = readRepoFile('sw.js');
         const firebaseConfig = JSON.parse(readRepoFile('firebase.json'));
 
@@ -50,12 +43,19 @@ describe('PWA asset versioning', () => {
 
         expect(captureVersion(mainSource, /\.\/auth\.js\?v=(\d+)/, 'main auth import')).toBe(releaseVersion);
         expect(captureVersion(mainSource, /blockchain-manager\.js\?v=(\d+)/, 'main blockchain import')).toBe(releaseVersion);
-        expect(captureVersion(appSource, /blockchain-manager\.js\?v=(\d+)/, 'app blockchain import')).toBe(releaseVersion);
+        expect(captureVersion(appEntrySource, /app-core\.js\?v=(\d+)/, 'app entry core import')).toBe(releaseVersion);
+        expect(captureVersion(appCoreSource, /blockchain-manager\.js\?v=(\d+)/, 'app core blockchain import')).toBe(releaseVersion);
         expect(captureVersion(authSource, /blockchain-manager\.js\?v=(\d+)/, 'auth blockchain import')).toBe(releaseVersion);
         expect(captureVersion(pwaInstallSource, /sw\.js\?v=(\d+)/, 'pwa-install service worker register')).toBe(releaseVersion);
         expect(captureVersion(swSource, /habitschool-v(\d+)/, 'service worker cache')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-base\.css\?v=(\d+)/, 'styles base import')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-features\.css\?v=(\d+)/, 'styles features import')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-dashboard\.css\?v=(\d+)/, 'styles dashboard import')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-dark-mode\.css\?v=(\d+)/, 'styles dark mode import')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-reports\.css\?v=(\d+)/, 'styles reports import')).toBe(releaseVersion);
 
-        expectVersionedLocalImports(appSource, releaseVersion, 'app.js');
+        expectVersionedLocalImports(appEntrySource, releaseVersion, 'app.js');
+        expectVersionedLocalImports(appCoreSource, releaseVersion, 'app-core.js');
         expectVersionedLocalImports(authSource, releaseVersion, 'auth.js');
         expectVersionedLocalImports(blockchainManagerSource, releaseVersion, 'blockchain-manager.js');
         expectVersionedLocalImports(dataManagerSource, releaseVersion, 'data-manager.js');
@@ -64,8 +64,14 @@ describe('PWA asset versioning', () => {
         expectVersionedLocalImports(uiHelpersSource, releaseVersion, 'ui-helpers.js');
 
         expect(swSource).toContain(`'./styles.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-base.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-features.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-dashboard.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-dark-mode.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-reports.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/main.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/app-core.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app-mode.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/auth.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/auth-login-helpers.js?v=${releaseVersion}'`);

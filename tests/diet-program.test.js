@@ -1,7 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readAppSource } from './source-helpers.js';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -13,9 +11,7 @@ import {
     normalizeDietProgramPreferences
 } from '../js/diet-program.js';
 
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-const APP_SOURCE = readFileSync(resolve(ROOT_DIR, 'js/app.js'), 'utf8');
+const APP_SOURCE = readAppSource({ includeEntrypoint: true });
 
 describe('diet program helpers', () => {
     it('keeps the agreed method order for selection cards', () => {

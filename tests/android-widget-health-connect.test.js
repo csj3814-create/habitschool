@@ -1,14 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('android widget and manual health connect wiring', () => {
     it('keeps the widget compact at 2x2 and removes the wide dual-button layout', () => {
@@ -24,7 +15,7 @@ describe('android widget and manual health connect wiring', () => {
     });
 
     it('preserves the current web return URL for manual health connect sync', () => {
-        const appSource = readRepoFile('js/app.js');
+        const appSource = readAppSource();
         const nativeEntrySource = readRepoFile('android/app/src/main/java/com/habitschool/app/NativeEntryActivity.kt');
 
         expect(appSource).toContain("function buildManualHealthConnectReturnUrl()");

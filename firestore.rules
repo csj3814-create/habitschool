@@ -68,7 +68,6 @@ service cloud.firestore {
 
     function isValidProgramPreferences(programPreferences) {
       return programPreferences is map
-          && programPreferences.keys().hasOnly(['diet'])
           && (!('diet' in programPreferences) || isValidDietProgramPreference(programPreferences.diet));
     }
 

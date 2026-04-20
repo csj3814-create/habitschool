@@ -1,19 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('Firestore reconnect backoff', () => {
     it('keeps the shared reconnect scheduler and main offline warning hooks wired', () => {
         const firebaseConfigSource = readRepoFile('js/firebase-config.js');
-        const appSource = readRepoFile('js/app.js');
+        const appSource = readAppSource();
         const authSource = readRepoFile('js/auth.js');
         const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
 

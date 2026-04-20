@@ -22,7 +22,11 @@
 - Added profile method selector, consent modal, reminder toggle, and dashboard method summary
 - Personalized diet guide copy and appended static diet-method tips under AI diet analysis results
 - Added backend schedulers that only notify users with `remindersEnabled=true` and a still-empty relevant meal slot
+- Follow-up: shortened the selector/profile copy and reduced selector cards to a single main line plus caution text
+- Follow-up: hardened diet-method persistence so Firestore save and local UI sync fail independently, and relaxed `programPreferences` rule validation to avoid rejecting sibling preference keys
+- Follow-up: changed the consent modal to a short `네 / 아니오` choice and made `네` save `remindersEnabled=true` immediately before continuing the device-level notification setup flow
 - Verification completed:
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
   - `node --check functions/index.js`
+  - `node --check functions/runtime.js`

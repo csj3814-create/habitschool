@@ -1,14 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const TEST_DIR = dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = resolve(TEST_DIR, '..');
-
-function readRepoFile(relativePath) {
-    return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
-}
+import { readAppSource, readFunctionsSource, readRepoFile } from './source-helpers.js';
 
 function extractFunction(source, name) {
     const signature = `function ${name}`;
@@ -24,7 +15,11 @@ function extractFunction(source, name) {
 }
 
 function loadFunctions(relativePath, names) {
-    const source = readRepoFile(relativePath);
+    const source = relativePath === 'js/app.js'
+        ? readAppSource()
+        : relativePath === 'functions/index.js'
+            ? readFunctionsSource()
+            : readRepoFile(relativePath);
     const snippets = names.map((name) => extractFunction(source, name));
     const factory = new Function(`${snippets.join('\n\n')}\nreturn { ${names.join(', ')} };`);
     return {
