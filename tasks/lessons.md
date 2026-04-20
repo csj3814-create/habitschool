@@ -8,6 +8,16 @@
 - Root cause: I treated notification transport setup and product preference saving as the same state change, and I also left explanatory UI text too verbose for a binary decision step.
 - Lesson: for preference consent modals, separate the app preference from device permission wiring. If the user says "yes", save the app-side setting immediately, then continue with device/browser setup as a follow-up step. Keep the modal copy and buttons as short as the decision itself.
 
+### 178. Never ship `index.html` changes without an explicit integrity check for UTF-8 Korean copy and critical tags
+- Symptom: staging deployed as a blank white page because `index.html` had been saved with broken Korean text and malformed tag fragments, even though the JavaScript bundle itself was fine.
+- Root cause: I focused on module/test/build verification and missed that a shell-based edit had corrupted the HTML document encoding and markup before deploy.
+- Lesson: if `index.html` changes, add and run a regression check that looks for a few exact Korean strings plus critical modal button markup, and do a quick fetch of the deployed HTML after hosting deploy. HTML integrity is a separate deploy gate, not something build success can prove.
+
+### 179. In this repo, a user saying `스테이징` means deploy to the staging server, not just git staging
+- Symptom: I treated `스테이징` as a request to stage files with Git, while the user expected an actual deploy to the Firebase staging environment.
+- Root cause: I followed the English Git meaning instead of the project-specific shorthand the user was using repeatedly.
+- Lesson: in this workspace, interpret `스테이징` as `commit if needed, push, and deploy to the staging server` unless the user explicitly says `git add` or `stage files`.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

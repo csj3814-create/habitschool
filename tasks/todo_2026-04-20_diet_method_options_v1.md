@@ -25,6 +25,7 @@
 - Follow-up: shortened the selector/profile copy and reduced selector cards to a single main line plus caution text
 - Follow-up: hardened diet-method persistence so Firestore save and local UI sync fail independently, and relaxed `programPreferences` rule validation to avoid rejecting sibling preference keys
 - Follow-up: changed the consent modal to a short `네 / 아니오` choice and made `네` save `remindersEnabled=true` immediately before continuing the device-level notification setup flow
+- Follow-up: added an `index.html` integrity regression test so broken Korean encoding or malformed consent-modal markup is caught before deploy
 - Verification completed:
   - `npm test`
   - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
