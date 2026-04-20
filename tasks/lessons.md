@@ -28,6 +28,16 @@
 - Root cause: I optimized for completeness instead of the phone-sized reading path, so the copy repeated context the surrounding UI already provided.
 - Lesson: for compact mobile helper areas, reduce copy to the one changed behavior and one reassurance. Prefer phrases like `바뀌어요`, `그대로예요`, `골라보세요` over full explanatory sentences when the UI already names the feature.
 
+### 182. If a dashboard CTA detours through profile for configuration, the save action should return to the originating surface
+- Symptom: tapping `프로필에서 바꾸기` from the dashboard opened the profile selector flow, but after choosing a diet method the user stayed in profile instead of returning to the dashboard context they started from.
+- Root cause: I treated the selector as a standalone profile action and did not preserve the entry context for completion.
+- Lesson: when a dashboard action opens a settings flow in another tab, carry a lightweight return target through the modal flow and route the user back after a successful save. Only keep the user in the settings tab when they opened the selector there directly.
+
+### 183. For mobile method cards, never concatenate two advisory sentences when one short line can carry the point
+- Symptom: diet-method surfaces such as `고단백 식단` still rendered as bulky two-line explanations even after earlier shortening, and narrow badges like `식전 알림 11:30, 17:30` pushed cards into awkward wraps.
+- Root cause: I shortened individual sentences but still combined multiple guidance sources and left verbose badge labels in a space-constrained mobile layout.
+- Lesson: for mobile selection cards and guide panels, use one short meal cue, one short support line, and a compact badge label like `11:30·17:30`. Avoid stacking multiple advisory sentences unless the user explicitly asks for more detail.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

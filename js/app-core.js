@@ -494,6 +494,7 @@ let _dietProgramUserData = {};
 let _dietProgramPendingSelection = null;
 let _dietProgramSelectionBusy = false;
 let _dietProgramToggleInternalUpdate = false;
+let _dietProgramSelectorReturnTab = '';
 
 function getDietProgramUserData() {
     return _dietProgramUserData && typeof _dietProgramUserData === 'object'
@@ -573,7 +574,7 @@ function renderDietProgramDashboardSummary() {
     ctaEl.onclick = () => {
         if (window.openTab) window.openTab('profile');
         setTimeout(() => {
-            window.openDietProgramSelector?.();
+            window.openDietProgramSelector?.({ returnTab: 'dashboard' });
         }, 120);
     };
 }
@@ -597,10 +598,10 @@ function renderDietProgramProfileCard() {
         : '식단 방법을 골라보세요.';
     summaryEl.textContent = hasMethod
         ? meta.summary
-        : '방법에 따라 식단 가이드가 달라져요.';
+        : '가이드가 바뀌어요.';
     supportEl.textContent = hasMethod
         ? `${meta.dashboardTip}${meta.cautionText ? ` ${meta.cautionText}` : ''}`
-        : '알림은 나중에 따로 켤 수 있어요.';
+        : '알림은 따로 켤 수 있어요.';
     if (hasMethod) {
         supportEl.textContent = meta.dashboardTip;
     }
@@ -682,7 +683,10 @@ function setDietProgramConsentBusy(isBusy = false) {
     }
 }
 
-window.openDietProgramSelector = function () {
+window.openDietProgramSelector = function (options = {}) {
+    _dietProgramSelectorReturnTab = typeof options?.returnTab === 'string'
+        ? options.returnTab.trim()
+        : '';
     renderDietProgramSelectorList();
     const modal = document.getElementById('diet-program-selector-modal');
     if (modal) modal.style.display = 'flex';
@@ -691,7 +695,18 @@ window.openDietProgramSelector = function () {
 window.closeDietProgramSelector = function () {
     const modal = document.getElementById('diet-program-selector-modal');
     if (modal) modal.style.display = 'none';
+    _dietProgramSelectorReturnTab = '';
 };
+
+function finishDietProgramSelectorFlow() {
+    const returnTab = _dietProgramSelectorReturnTab;
+    const modal = document.getElementById('diet-program-selector-modal');
+    if (modal) modal.style.display = 'none';
+    _dietProgramSelectorReturnTab = '';
+    if (returnTab && typeof window.openTab === 'function') {
+        window.openTab(returnTab);
+    }
+}
 
 window.closeDietProgramConsentModal = function () {
     _dietProgramPendingSelection = null;
@@ -762,7 +777,7 @@ window.selectDietProgramMethod = async function (methodId = DIET_PROGRAM_METHOD_
     const nextMethodId = getDietProgramMethodMeta(methodId).id;
 
     if (nextMethodId === currentPreferences.methodId) {
-        window.closeDietProgramSelector();
+        finishDietProgramSelectorFlow();
         return;
     }
 
@@ -770,7 +785,7 @@ window.selectDietProgramMethod = async function (methodId = DIET_PROGRAM_METHOD_
         try {
             await persistDietProgramSelection(nextMethodId, false);
             showToast('기본 기록 모드로 돌아갔어요.');
-            window.closeDietProgramSelector();
+            finishDietProgramSelectorFlow();
         } catch (error) {
             console.warn('식단 방법 해제 실패:', error.message);
             showToast('식단 방법 저장 중 문제가 생겼어요.');
@@ -790,7 +805,7 @@ window.selectDietProgramMethod = async function (methodId = DIET_PROGRAM_METHOD_
     try {
         await persistDietProgramSelection(nextMethodId, true);
         showToast(`${getDietProgramMethodMeta(nextMethodId).name}으로 저장했어요.`);
-        window.closeDietProgramSelector();
+        finishDietProgramSelectorFlow();
     } catch (error) {
         console.warn('식단 방법 저장 실패:', error.message);
         showToast('식단 방법 저장 중 문제가 생겼어요.');
@@ -809,7 +824,7 @@ window.confirmDietProgramSelectionWithoutNotifications = async function () {
         showToast('방법만 저장했어요.');
         const consentModal = document.getElementById('diet-program-consent-modal');
         if (consentModal) consentModal.style.display = 'none';
-        window.closeDietProgramSelector();
+        finishDietProgramSelectorFlow();
     } catch (error) {
         console.warn('식단 방법 저장 실패:', error.message);
         showToast('식단 방법 저장 중 문제가 생겼어요.');
@@ -834,7 +849,7 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
 
         const consentModal = document.getElementById('diet-program-consent-modal');
         if (consentModal) consentModal.style.display = 'none';
-        window.closeDietProgramSelector();
+        finishDietProgramSelectorFlow();
 
         const result = await window.requestAppNotificationPermission?.();
         const connected = result?.connected === true;
