@@ -13,7 +13,7 @@
             document.documentElement.classList.add('simple-mode');
         }
     })();
-    // ?쒕퉬???뚯빱 媛뺤젣 ?낅뜲?댄듃 (援щ쾭??SW ?몄쬆 寃쎈줈 李⑤떒 臾몄젣 ?닿껐)
+    // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {
             regs.forEach(reg => reg.update());
@@ -21,13 +21,13 @@
     }
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>?대튆?ㅼ엥 - 利먭쾪寃?醫뗭? ?듦? 留뚮뱾湲?/title>
-    <meta name="description" content="留ㅼ씪 ?앸떒, ?대룞, ?섎㈃??湲곕줉?섍퀬 ?ъ씤?몃? 紐⑥쑝??嫄닿컯 ?듦? ?? ?ъ쭊 ?몄쬆?쇰줈 ?듦???留뚮뱾怨?HBT ?좏겙???띾뱷?섏꽭??">
-    <meta name="keywords" content="嫄닿컯 ?듦?, ?앸떒 湲곕줉, ?대룞 湲곕줉, ?ㅼ씠?댄듃, ?듦? ?몃옒而? 嫄닿컯 愿由??? Move-to-Earn, HBT, ?대튆?ㅼ엥">
-    <meta name="author" content="?대튆?ㅼ엥">
+    <title>해빛스쿨 - 즐겁게 좋은 습관 만들기</title>
+    <meta name="description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
+    <meta name="keywords" content="건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, 건강 관리 앱, Move-to-Earn, HBT, 해빛스쿨">
+    <meta name="author" content="해빛스쿨">
     <link rel="canonical" href="https://habitschool.web.app/">
 
-    <!-- 紐⑤컮??濡쒕뵫 ?띾룄: Firebase SDK + Firestore ?곌껐??誘몃━ ?쒖옉 -->
+    <!-- 모바일 로딩 속도: Firebase SDK + Firestore 연결을 미리 시작 -->
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin>
@@ -44,45 +44,45 @@
     gtag('config', 'G-ZS22SSRLY6');
     </script>
 
-    <!-- Open Graph (移댁뭅?ㅽ넚, ?섏씠?ㅻ턿, ?몄뒪?洹몃옩 怨듭쑀 ???쒖떆) -->
+    <!-- Open Graph (카카오톡, 페이스북, 인스타그램 공유 시 표시) -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="?대튆?ㅼ엥 - 利먭쾪寃?醫뗭? ?듦? 留뚮뱾湲?>
-    <meta property="og:description" content="留ㅼ씪 ?앸떒, ?대룞, ?섎㈃??湲곕줉?섍퀬 ?ъ씤?몃? 紐⑥쑝??嫄닿컯 ?듦? ?? ?ъ쭊 ?몄쬆?쇰줈 ?듦???留뚮뱾怨?HBT ?좏겙???띾뱷?섏꽭??">
+    <meta property="og:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
+    <meta property="og:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!">
     <meta property="og:image" content="https://habitschool.web.app/icons/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="https://habitschool.web.app/">
-    <meta property="og:site_name" content="?대튆?ㅼ엥">
+    <meta property="og:site_name" content="해빛스쿨">
     <meta property="og:locale" content="ko_KR">
 
-    <!-- Twitter Card (X/?몄쐞??怨듭쑀 ???쒖떆) -->
+    <!-- Twitter Card (X/트위터 공유 시 표시) -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="?대튆?ㅼ엥 - 利먭쾪寃?醫뗭? ?듦? 留뚮뱾湲?>
-    <meta name="twitter:description" content="留ㅼ씪 ?앸떒, ?대룞, ?섎㈃??湲곕줉?섍퀬 ?ъ씤?몃? 紐⑥쑝??嫄닿컯 ?듦? ??>
+    <meta name="twitter:title" content="해빛스쿨 - 즐겁게 좋은 습관 만들기">
+    <meta name="twitter:description" content="매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱">
     <meta name="twitter:image" content="https://habitschool.web.app/icons/og-image.png">
 
     <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>?뙙</text></svg>">
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌞</text></svg>">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#FF9800" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#17151A" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="?대튆?ㅼ엥">
+    <meta name="apple-mobile-web-app-title" content="해빛스쿨">
     <meta name="naver-site-verification" content="1a68411ce68b625dc6c131aa71fc5a06acc7ae68" />
-    <!-- Google Search Console (HTML ?뚯씪 ?몄쬆 ?꾨즺, 硫뷀??쒓렇 諛깆뾽) -->
+    <!-- Google Search Console (HTML 파일 인증 완료, 메타태그 백업) -->
     <meta name="google-site-verification" content="f3171fd1f953cdf0" />
     <link rel="apple-touch-icon" href="icons/icon-192.png">
 
-    <!-- 援ъ“???곗씠??(Google 由ъ튂 寃곌낵) -->
+    <!-- 구조화 데이터 (Google 리치 결과) -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "?대튆?ㅼ엥",
+        "name": "해빛스쿨",
         "alternateName": "HabitSchool",
-        "description": "留ㅼ씪 ?앸떒, ?대룞, ?섎㈃??湲곕줉?섍퀬 ?ъ씤?몃? 紐⑥쑝??嫄닿컯 ?듦? ?? ?ъ쭊 ?몄쬆?쇰줈 ?듦???留뚮뱾怨?HBT ?좏겙???띾뱷?섏꽭??",
+        "description": "매일 식단, 운동, 수면을 기록하고 포인트를 모으는 건강 습관 앱. 사진 인증으로 습관을 만들고 HBT 토큰을 획득하세요!",
         "url": "https://habitschool.web.app/",
         "applicationCategory": "HealthApplication",
         "operatingSystem": "Web",
@@ -96,31 +96,31 @@
         "inLanguage": "ko",
         "author": {
             "@type": "Organization",
-            "name": "?대튆?ㅼ엥",
+            "name": "해빛스쿨",
             "url": "https://habitschool.web.app/"
         },
-        "keywords": "嫄닿컯 ?듦?, ?앸떒 湲곕줉, ?대룞 湲곕줉, ?ㅼ씠?댄듃, ?듦? ?몃옒而? Move-to-Earn, HBT"
+        "keywords": "건강 습관, 식단 기록, 운동 기록, 다이어트, 습관 트래커, Move-to-Earn, HBT"
     }
     </script>
 
-    <!-- ?몃? CSS ?뚯씪 -->
+    <!-- 외부 CSS 파일 -->
     <link rel="stylesheet" href="styles.css?v=165">
 
     <script src="js/webview-detect.js?v=165"></script>
-    <!-- exif-js, html2canvas, ethers.js, kakao SDK: ?ъ슜 ?쒖젏???숈쟻 濡쒕뱶 (珥덇린 濡쒕뵫 李⑤떒 諛⑹?) -->
+    <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
 <body>
 
     <div class="app-container">
-        <a href="#dashboard" class="skip-to-content">硫붿씤 肄섑뀗痢좊줈 ?대룞</a>
-        <div id="login-modal" role="dialog" aria-label="濡쒓렇??>
-            <img src="icons/icon-192.svg" alt="?대튆?ㅼ엥 濡쒓퀬" style="width: 80px; height: 80px; margin-bottom: 10px;">
-            <h1 class="login-title">?대튆?ㅼ엥</h1>
+        <a href="#dashboard" class="skip-to-content">메인 콘텐츠로 이동</a>
+        <div id="login-modal" role="dialog" aria-label="로그인">
+            <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
+            <h1 class="login-title">해빛스쿨</h1>
             <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
-                蹂묒썝怨??섏궗?????꾧린留?留됱쓣 肉?<br>嫄닿컯 ?좎????섏옄 蹂몄씤??紐レ엯?덈떎.<br><strong>利먭쾪寃?醫뗭? ?듦???留뚮뱶??諛⑸쾿!</strong>
+                병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
             </p>
-            <button class="google-btn" id="loginBtn" aria-label="援ш? 怨꾩젙?쇰줈 濡쒓렇??>
+            <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
                     <path fill="#FFC107"
                         d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -131,157 +131,158 @@
                     <path fill="#1976D2"
                         d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
                 </svg>
-                援ш?濡??쒖옉?섍린
+                구글로 시작하기
             </button>
-            <!-- WebView(?몄빋 釉뚮씪?곗?) 媛먯? ???쒖떆?섎뒗 ?덈궡 -->
+            <!-- WebView(인앱 브라우저) 감지 시 표시되는 안내 -->
             <div id="webview-warning" style="display:none;">
                 <div class="webview-warning-box">
-                    <div style="font-size: 28px; margin-bottom: 8px;">?뵏</div>
-                    <p style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #333;">?몄빋 釉뚮씪?곗??먯꽌??援ш? 濡쒓렇?몄씠
-                        ?쒗븳?⑸땲??/p>
-                    <p style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 16px;">移댁뭅?ㅽ넚, ?ㅼ씠踰??깆쓽 ????
-                        釉뚮씪?곗??먯꽌??援ш? 蹂댁븞 ?뺤콉?쇰줈 濡쒓렇?몄씠 遺덇??⑸땲??<br><strong>Chrome ?먮뒗 Safari</strong>?먯꽌 ?댁뼱二쇱꽭??</p>
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔒</div>
+                    <p style="font-weight: 600; font-size: 15px; margin-bottom: 8px; color: #333;">인앱 브라우저에서는 구글 로그인이
+                        제한됩니다</p>
+                    <p style="font-size: 13px; color: #666; line-height: 1.5; margin-bottom: 16px;">카카오톡, 네이버 등의 앱 내
+                        브라우저에서는 구글 보안 정책으로 로그인이 불가합니다.<br><strong>Chrome 또는 Safari</strong>에서 열어주세요.</p>
                     <button class="google-btn" id="openExternalBrowser" style="margin-bottom: 8px;">
-                        ?뙋 ?몃? 釉뚮씪?곗?濡??닿린
+                        🌐 외부 브라우저로 열기
                     </button>
                     <button class="guest-btn" id="copyLinkBtn" style="font-size: 13px;">
-                        ?뱥 留곹겕 蹂듭궗?섍린
+                        📋 링크 복사하기
                     </button>
                 </div>
             </div>
             <button class="guest-btn"
                 onclick="document.getElementById('guest-welcome-modal').style.display='flex';"
-                aria-label="寃뚯뒪?몃줈 媛ㅻ윭由??섎윭蹂닿린">?? 濡쒓렇???놁씠 媛ㅻ윭由??섎윭蹂닿린</button>
+                aria-label="게스트로 갤러리 둘러보기">👀 로그인 없이 갤러리 둘러보기</button>
             <a href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
-                ?뮠 移댁뭅?ㅽ넚 梨꾨꼸 臾몄쓽
+                💬 카카오톡 채널 문의
             </a>
             <div style="margin-top:12px;">
-                <a href="/terms.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">?뱶 ?댁슜?쎄?</a>
+                <a href="/terms.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">📜 이용약관</a>
                 <span style="font-size:11px; color:#ddd;"> | </span>
-                <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">?뵏 媛쒖씤?뺣낫泥섎━諛⑹묠</a>
+                <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
             </div>
-            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">濡쒓렇????<a href="/terms.html" target="_blank" style="color:#bbb;">?댁슜?쎄?</a> 諛?<a href="/privacy.html" target="_blank" style="color:#bbb;">媛쒖씤?뺣낫泥섎━諛⑹묠</a>???숈쓽?섎뒗 寃껋쑝濡?媛꾩＜?⑸땲??</p>
+            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">로그인 시 <a href="/terms.html" target="_blank" style="color:#bbb;">이용약관</a> 및 <a href="/privacy.html" target="_blank" style="color:#bbb;">개인정보처리방침</a>에 동의하는 것으로 간주합니다.</p>
         </div>
 
-        <!-- 寃뚯뒪???섏쁺 紐⑤떖 -->
+        <!-- 게스트 환영 모달 -->
         <div id="guest-welcome-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
             <div style="background:#fff; border-radius:20px; padding:32px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.2); animation:modalFadeIn 0.25s ease;">
-                <div style="font-size:48px; margin-bottom:12px;">?뙮</div>
-                <h2 style="font-size:20px; font-weight:800; color:#4E342E; margin-bottom:8px;">?대튆?ㅼ엥???ㅼ떊 嫄??섏쁺?⑸땲??</h2>
-                <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:20px;">?앸떒쨌?대룞쨌泥댁쨷??湲곕줉?섍퀬<br>?ㅻⅨ ?뚯썝?ㅺ낵 ?④퍡 嫄닿컯???듦???留뚮뱾?댁슂 ?뮞</p>
+                <div style="font-size:48px; margin-bottom:12px;">🌱</div>
+                <h2 style="font-size:20px; font-weight:800; color:#4E342E; margin-bottom:8px;">해빛스쿨에 오신 걸 환영합니다!</h2>
+                <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:20px;">식단·운동·체중을 기록하고<br>다른 회원들과 함께 건강한 습관을 만들어요 💪</p>
                 <div style="background:#FFF8E1; border-radius:12px; padding:14px 16px; margin-bottom:20px; text-align:left;">
-                    <p style="font-size:13px; color:#5D4037; line-height:1.6; margin:0;">??媛ㅻ윭由ъ뿉???ㅻⅨ ?뚯썝 湲곕줉 援ш꼍<br>??濡쒓렇?명븯硫??섎쭔??湲곕줉 ?쒖옉<br>??留ㅼ씪 ?몄쬆?섎㈃ ?ъ씤???곷┰</p>
+                    <p style="font-size:13px; color:#5D4037; line-height:1.6; margin:0;">✅ 갤러리에서 다른 회원 기록 구경<br>✅ 로그인하면 나만의 기록 시작<br>✅ 매일 인증하면 포인트 적립</p>
                 </div>
-                <button onclick="document.getElementById('guest-welcome-modal').style.display='none'; document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);" style="width:100%; padding:14px; background:linear-gradient(135deg, #FF8C00, #FF6D00); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;">?? 媛ㅻ윭由??섎윭蹂닿린</button>
-                <button onclick="document.getElementById('guest-welcome-modal').style.display='none';" style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:12px; font-size:14px; color:#888; cursor:pointer;">?뚯븘媛湲?/button>
+                <button onclick="document.getElementById('guest-welcome-modal').style.display='none'; document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);" style="width:100%; padding:14px; background:linear-gradient(135deg, #FF8C00, #FF6D00); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;">👀 갤러리 둘러보기</button>
+                <button onclick="document.getElementById('guest-welcome-modal').style.display='none';" style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:12px; font-size:14px; color:#888; cursor:pointer;">돌아가기</button>
             </div>
         </div>
 
         <div id="main-app">
             <div class="header" role="banner">
                 <div class="header-top">
-                    <h1 id="user-greeting" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="?꾨줈???닿린" style="cursor:pointer;"><img src="icons/icon-192.svg" alt=""
-                            style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">?대튆?ㅼ엥</h1>
+                    <h1 id="user-greeting" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/icon-192.svg" alt=""
+                            style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨</h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
-                        <input type="date" id="selected-date" class="date-input" aria-label="?좎쭨 ?좏깮">
+                        <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택">
                     </div>
                     <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
-                        aria-label="?대튆 ?ъ씤???뺣낫" onclick="if(window.openTab) openTab('assets')">?끏截?<span
+                        aria-label="해빛 포인트 정보" onclick="if(window.openTab) openTab('assets')">🅿️ <span
                             id="point-balance">0</span>P</div>
-                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="?ㅽ겕紐⑤뱶 ?꾪솚" onclick="toggleDarkMode()">?뙔</button>
-                    <button type="button" id="simple-mode-default-btn" class="simple-mode-default-btn" onclick="switchToDefaultMode()">湲곕낯??/button>
+                    <button id="dark-mode-toggle" class="dark-mode-toggle" aria-label="다크모드 전환" onclick="toggleDarkMode()">🌙</button>
+                    <button type="button" id="simple-mode-default-btn" class="simple-mode-default-btn" onclick="switchToDefaultMode()">기본형</button>
                 </div>
             </div>
 
-            <nav class="tab-menu" role="navigation" aria-label="二쇱슂 硫붾돱">
-                <button class="tab-btn" onclick="openTab('diet')" aria-label="?앸떒 ??>?쪞 ?앸떒</button>
-                <button class="tab-btn" onclick="openTab('exercise')" aria-label="?대룞 ??>?룂 ?대룞</button>
-                <button class="tab-btn" onclick="openTab('sleep')" aria-label="留덉쓬 ??>?뙔 留덉쓬</button>
-                <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="??湲곕줉 ?? aria-current="page">?뱤
-                    ??湲곕줉</button>
-                <button class="tab-btn" onclick="openTab('assets')" aria-label="?먯궛 ??>?뮥 ?먯궛</button>
-                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="媛ㅻ윭由???>??                    媛ㅻ윭由?/button>
+            <nav class="tab-menu" role="navigation" aria-label="주요 메뉴">
+                <button class="tab-btn" onclick="openTab('diet')" aria-label="식단 탭">🥗 식단</button>
+                <button class="tab-btn" onclick="openTab('exercise')" aria-label="운동 탭">🏃 운동</button>
+                <button class="tab-btn" onclick="openTab('sleep')" aria-label="마음 탭">🌙 마음</button>
+                <button class="tab-btn active" onclick="openTab('dashboard')" aria-label="내 기록 탭" aria-current="page">📊
+                    내 기록</button>
+                <button class="tab-btn" onclick="openTab('assets')" aria-label="자산 탭">💰 자산</button>
+                <button class="tab-btn" id="btn-tab-gallery" onclick="openTab('gallery')" aria-label="갤러리 탭">✨
+                    갤러리</button>
             </nav>
 
             <div id="dashboard" class="content-section active" role="main">
                 <div id="admin-feedback-box" role="alert" aria-live="polite">
                     <button
                         style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:16px; color:#888; cursor:pointer;"
-                        onclick="hideFeedback()" aria-label="?쇰뱶諛??リ린">X</button>
-                    <div style="font-weight: bold; color: #4A148C; margin-bottom: 5px; font-size: 15px;">?뫅?띯슃截?理쒖꽍???좎깮?섏쓽
-                        ?대튆 硫붿떆吏</div>
+                        onclick="hideFeedback()" aria-label="피드백 닫기">X</button>
+                    <div style="font-weight: bold; color: #4A148C; margin-bottom: 5px; font-size: 15px;">👨‍⚕️ 최석재 선생님의
+                        해빛 메시지</div>
                     <div id="admin-feedback-text" style="font-size: 14px; color: #333; line-height: 1.5;"></div>
                 </div>
 
-                <section class="dashboard-hero-shell" aria-label="?ㅻ뒛 ?대튆 ?붿빟">
+                <section class="dashboard-hero-shell" aria-label="오늘 해빛 요약">
                     <div class="dashboard-hero-panel" id="dashboard-hero-panel">
                         <div class="dashboard-hero-copy">
                             <div class="dashboard-hero-topline">
                                 <div class="dashboard-hero-title-wrap">
-                                    <h2 class="dashboard-hero-title" id="dashboard-focus-title">?섎굹??湲곕줉</h2>
+                                    <h2 class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
                                 </div>
                                 <div class="dashboard-hero-topline-actions">
                                     <span class="dashboard-hero-pill" id="dashboard-hero-pill">0/65</span>
-                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">?묎린</button>
+                                    <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
                                 </div>
                             </div>
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
                                 <div class="dashboard-diet-program-summary" id="dashboard-diet-program-summary" hidden>
                                     <div class="dashboard-diet-program-topline">
-                                        <span class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">?앸떒 諛⑸쾿 誘몄꽑??/span>
-                                        <span class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">?뚮┝ ?놁쓬</span>
+                                        <span class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">식단 방법 미선택</span>
+                                        <span class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">알림 없음</span>
                                     </div>
-                                    <p class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">?앸떒 諛⑸쾿??怨좊Ⅴ硫??ㅻ뒛???앹궗 媛?대뱶媛 留욎떠?몄슂.</p>
-                                    <p class="dashboard-diet-program-support" id="dashboard-diet-program-support">?꾨줈?꾩뿉???섏뿉寃?留욌뒗 諛⑹떇??怨⑤씪蹂댁꽭??</p>
-                                    <button type="button" class="dashboard-diet-program-cta" id="dashboard-diet-program-cta">?앸떒 諛⑸쾿 怨좊Ⅴ湲?/button>
+                                    <p class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식단 방법을 고르면 오늘의 식사 가이드가 맞춰져요.</p>
+                                    <p class="dashboard-diet-program-support" id="dashboard-diet-program-support">프로필에서 나에게 맞는 방식을 골라보세요.</p>
+                                    <button type="button" class="dashboard-diet-program-cta" id="dashboard-diet-program-cta">식단 방법 고르기</button>
                                 </div>
-                                <div class="dashboard-action-strip" aria-label="鍮좊Ⅸ ?ㅽ뻾">
+                                <div class="dashboard-action-strip" aria-label="빠른 실행">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
                                         <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">?쪞</span>
+                                            <span class="dashboard-action-emoji">🥗</span>
                                         </span>
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-diet-label">?앸떒 湲곕줉</strong>
+                                                    <strong id="dashboard-action-diet-label">식단 기록</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-diet-score">0/30</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-diet-sub">?ъ쭊 ???μ쑝濡??쒖옉</span>
+                                                <span id="dashboard-action-diet-sub">사진 한 장으로 시작</span>
                                             </span>
                                         </span>
                                     </button>
                                     <button class="dashboard-action-chip" id="dashboard-action-exercise" type="button" onclick="openTab('exercise')">
                                         <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">?룂</span>
+                                            <span class="dashboard-action-emoji">🏃</span>
                                         </span>
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-exercise-label">?대룞 湲곕줉</strong>
+                                                    <strong id="dashboard-action-exercise-label">운동 기록</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-exercise-score">0/30</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-exercise-sub">?吏곸씤 留뚰겮 泥댄겕</span>
+                                                <span id="dashboard-action-exercise-sub">움직인 만큼 체크</span>
                                             </span>
                                         </span>
                                     </button>
                                     <button class="dashboard-action-chip" id="dashboard-action-mind" type="button" onclick="openTab('sleep')">
                                         <span class="dashboard-action-icon-shell">
-                                            <span class="dashboard-action-emoji">?뙔</span>
+                                            <span class="dashboard-action-emoji">🌙</span>
                                         </span>
                                         <span class="dashboard-action-content">
                                             <span class="dashboard-action-topline">
                                                 <span class="dashboard-action-title">
-                                                    <strong id="dashboard-action-mind-label">留덉쓬 湲곕줉</strong>
+                                                    <strong id="dashboard-action-mind-label">마음 기록</strong>
                                                 </span>
                                                 <span class="dashboard-action-score" id="dashboard-action-mind-score">0/20</span>
                                             </span>
                                             <span class="dashboard-action-copy">
-                                                <span id="dashboard-action-mind-sub">?섎㈃쨌媛먯궗 ??踰덉뿉</span>
+                                                <span id="dashboard-action-mind-sub">수면·감사 한 번에</span>
                                             </span>
                                         </span>
                                     </button>
@@ -296,45 +297,45 @@
                     <div class="card dashboard-week-card">
                         <div class="dashboard-week-header">
                             <div>
-                                <h3 style="margin-bottom:0;">?대쾲 二??대튆</h3>
-                                <p class="dashboard-week-caption">?좎쭨瑜??꾨Ⅴ硫??대떦 湲곕줉?쇰줈 ?대룞?⑸땲??</p>
+                                <h3 style="margin-bottom:0;">이번 주 해빛</h3>
+                                <p class="dashboard-week-caption">날짜를 누르면 해당 기록으로 이동합니다.</p>
                             </div>
                             <div class="dashboard-week-rate-pill" id="dashboard-week-progress-text">0%</div>
                         </div>
                         <div class="dashboard-week-progress-bar">
                             <div class="dashboard-week-progress-fill" id="dashboard-week-progress-fill"></div>
                         </div>
-                        <div class="dashboard-week-summary" id="dashboard-week-summary">?대쾲 二??대튆???쒖옉?대낫?몄슂.</div>
+                        <div class="dashboard-week-summary" id="dashboard-week-summary">이번 주 해빛을 시작해보세요.</div>
                         <div class="week-graph" id="week-graph"></div>
                     </div>
 
                     <div class="card metrics-card mission-card-enhanced">
-                        <h3>?렞 ?섏쓽 二쇨컙 誘몄뀡 <span class="mission-level" id="user-level-badge"
-                                onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 ?쒖옉 ?뱄툘</span>
+                        <h3>🎯 나의 주간 미션 <span class="mission-level" id="user-level-badge"
+                                onclick="document.getElementById('level-modal').style.display='flex'">Lv. 1 시작 ℹ️</span>
                         </h3>
                         <div class="mission-focus-strip" id="mission-focus-strip">
                             <div class="mission-focus-copy">
-                                <div class="mission-focus-kicker" id="mission-focus-kicker">?대쾲 二?誘몄뀡</div>
-                                <div class="mission-focus-title" id="mission-focus-title">?대쾲 二?誘몄뀡 1~3媛?怨좊Ⅴ湲?/div>
+                                <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 미션</div>
+                                <div class="mission-focus-title" id="mission-focus-title">이번 주 미션 1~3개 고르기</div>
                             </div>
-                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">?대쾲 二?誘몄뀡 ?뺥븯湲?/button>
+                            <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
                         </div>
                         <div id="mission-selection-area"></div>
                         <button class="submit-btn" id="btn-save-missions"
                             style="margin-top: 12px; padding: 11px; font-size: 14px; background-color: #2196F3;"
-                            onclick="saveWeeklyMissions()">?렞 ?대쾲 二??쒖옉</button>
+                            onclick="saveWeeklyMissions()">🎯 이번 주 시작</button>
                         <div class="mission-progress-container" id="mission-progress-container" style="display:none;"></div>
                     </div>
 
                     <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
                         <div class="social-challenge-dashboard-head">
-                            <h3>?쩃 移쒓뎄 梨뚮┛吏</h3>
-                            <button type="button" class="social-challenge-head-btn" onclick="openCreateChallengeModal()">梨뚮┛吏 ?쒖옉</button>
+                            <h3>🤝 친구 챌린지</h3>
+                            <button type="button" class="social-challenge-head-btn" onclick="openCreateChallengeModal()">챌린지 시작</button>
                         </div>
                         <div id="social-challenge-list">
                             <div class="community-empty-state">
-                                <strong>移쒓뎄 梨뚮┛吏瑜?以鍮꾪븯怨??덉뼱??/strong>
-                                <span>移쒓뎄 ?곹깭? ?대┛ 梨뚮┛吏瑜?遺덈윭?ㅻ뒗 以묒엯?덈떎.</span>
+                                <strong>친구 챌린지를 준비하고 있어요</strong>
+                                <span>친구 상태와 열린 챌린지를 불러오는 중입니다.</span>
                             </div>
                         </div>
                     </div>
@@ -342,17 +343,17 @@
                     <div class="card dashboard-referral-shortcut" id="referral-section" style="display:none;">
                         <button type="button" class="dashboard-referral-shortcut-bar" onclick="openFriendInviteFlow()">
                             <span class="dashboard-referral-shortcut-copy">
-                                <strong>?럞 移쒓뎄 珥덈? 諛붾줈媛湲?/strong>
-                                <span>?꾨줈????移쒓뎄 珥덈? 移대뱶濡??대룞</span>
+                                <strong>🎁 친구 초대 바로가기</strong>
+                                <span>프로필 탭 친구 초대 카드로 이동</span>
                             </span>
-                            <span class="dashboard-referral-shortcut-arrow" aria-hidden="true">??/span>
+                            <span class="dashboard-referral-shortcut-arrow" aria-hidden="true">→</span>
                         </button>
                     </div>
 
                     <div class="dashboard-more-tools" id="dashboard-more-tools">
                         <div class="dashboard-more-tools-head">
-                            <div class="mission-badges-title">?룆 誘몄뀡 諛곗?</div>
-                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" onclick="toggleDashboardMoreTools()">?꾩껜 ?묎린</button>
+                            <div class="mission-badges-title">🏅 미션 배지</div>
+                            <button type="button" id="dashboard-more-tools-toggle" class="dashboard-panel-toggle dashboard-more-tools-toggle" aria-expanded="true" aria-controls="dashboard-more-tools-body" onclick="toggleDashboardMoreTools()">전체 접기</button>
                         </div>
                         <div class="dashboard-more-tools-body" id="dashboard-more-tools-body">
                             <div class="mission-badges-section" id="mission-badges-section" style="display:none;">
@@ -360,47 +361,47 @@
                             </div>
 
                             <div class="card metrics-card community-dashboard-card" id="group-challenge-section" style="display:none;">
-                                <h3 style="margin-bottom:10px;">?룇 ?대쾲 ??而ㅻ??덊떚 ?꾪솴</h3>
+                                <h3 style="margin-bottom:10px;">🏆 이번 달 커뮤니티 현황</h3>
                                 <div id="group-challenge-content"></div>
                             </div>
 
                             <div class="milestone-section" id="milestone-section" style="display:none;">
-                                <div class="milestone-title">?룇 ?섏쓽 留덉씪?ㅽ넠 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">?쇱튂湲???/span></div>
+                                <div class="milestone-title">🏆 나의 마일스톤 <span class="ms-expand-btn" id="ms-expand-btn" onclick="toggleClaimedMilestones()" style="display:none;">펼치기 ▼</span></div>
                                 <div class="badges-grid" id="badges-grid"></div>
                             </div>
                         </div>
                     </div>
 
-                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">?뱞 30??醫낇빀 寃곌낵吏</button>
+                    <button class="pdf-btn pdf-btn-compact" onclick="generate30DayReport()">📄 30일 종합 결과지</button>
                 </div>
             </div>
 
-            <div id="profile" class="content-section" role="region" aria-label="???꾨줈??>
+            <div id="profile" class="content-section" role="region" aria-label="내 프로필">
                 <div class="simple-profile-shell" id="simple-profile-shell">
                     <div class="simple-profile-hero">
-                        <div class="simple-profile-guide" role="note" aria-label="?듦? 湲곕줉 ?덈궡">
+                        <div class="simple-profile-guide" role="note" aria-label="습관 기록 안내">
                             <div class="simple-profile-guide-arrows" aria-hidden="true">
-                                <span>??/span>
-                                <span>??/span>
-                                <span>??/span>
+                                <span>↑</span>
+                                <span>↑</span>
+                                <span>↑</span>
                             </div>
-                            <p>?듦???湲곕줉?섏꽭??/p>
+                            <p>습관을 기록하세요</p>
                         </div>
                     </div>
 
                     <div class="simple-profile-card simple-profile-points-card">
-                        <span class="simple-profile-card-label">?꾩옱 ?ъ씤??/span>
+                        <span class="simple-profile-card-label">현재 포인트</span>
                         <strong id="simple-profile-points">0P</strong>
                     </div>
 
                     <div class="simple-profile-card">
                         <div class="simple-profile-card-head">
-                            <h3>移쒓뎄 珥덈?</h3>
+                            <h3>친구 초대</h3>
                             <span class="simple-profile-chip">QR</span>
                         </div>
-                        <p id="simple-profile-invite-status" class="simple-profile-copy">移대찓?쇰줈 鍮꾩텛?몄슂</p>
+                        <p id="simple-profile-invite-status" class="simple-profile-copy">카메라로 비추세요</p>
                         <div class="simple-profile-qr-wrap">
-                            <div id="simple-profile-invite-qr" class="simple-profile-qr" aria-label="??珥덈? QR 肄붾뱶"></div>
+                            <div id="simple-profile-invite-qr" class="simple-profile-qr" aria-label="내 초대 QR 코드"></div>
                         </div>
                         <input type="hidden" id="simple-profile-invite-link">
                         <span id="simple-profile-invite-code" hidden>-</span>
@@ -408,263 +409,263 @@
 
                     <div class="simple-profile-card">
                         <div class="simple-profile-card-head">
-                            <h3>?대튆?ㅼ엥 ?⑦넚諛?/h3>
+                            <h3>해빛스쿨 단톡방</h3>
                             <span class="simple-profile-chip tone-chat">QR</span>
                         </div>
-                        <p class="simple-profile-copy">移대찓?쇰줈 鍮꾩텛?몄슂</p>
+                        <p class="simple-profile-copy">카메라로 비추세요</p>
                         <div class="simple-profile-qr-wrap">
-                            <div id="simple-profile-chat-qr" class="simple-profile-qr" aria-label="?대튆?ㅼ엥 ?⑦넚諛?QR 肄붾뱶"></div>
+                            <div id="simple-profile-chat-qr" class="simple-profile-qr" aria-label="해빛스쿨 단톡방 QR 코드"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ?㎚ ??ш굔媛??먯닔 移대뱶 -->
+                <!-- 🧬 대사건강 점수 카드 -->
                 <div id="metabolic-score-container" style="display:none;"></div>
 
-                <!-- 1. ?섏쓽 湲곗큹 ????꾨줈??(?몃컮?? -->
+                <!-- 1. 나의 기초 대사 프로필 (인바디) -->
                 <div class="card metrics-card">
-                    <h3>?㎚ ?섏쓽 湲곗큹 ????꾨줈??(?몃컮??
+                    <h3>🧬 나의 기초 대사 프로필 (인바디)
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">泥댁꽦遺?蹂?붾? 異붿쟻?⑸땲?? ?몃컮??痢≪젙 ???섏떆濡??낅뜲?댄듃?섏꽭??</p>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">체성분 변화를 추적합니다. 인바디 측정 후 수시로 업데이트하세요!</p>
                     <div class="input-grid" style="gap:8px;">
                         <div class="inbody-field">
-                            <label for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">?뮞 怨④꺽洹쇰웾 (kg)</label>
-                            <input type="number" id="prof-smm" placeholder="?? 28.5" step="0.1" min="0" max="80">
+                            <label for="prof-smm" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">💪 골격근량 (kg)</label>
+                            <input type="number" id="prof-smm" placeholder="예: 28.5" step="0.1" min="0" max="80">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-fat" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">?뵦 泥댁?諛⑸웾 (kg)</label>
-                            <input type="number" id="prof-fat" placeholder="?? 15.2" step="0.1" min="0" max="100">
+                            <label for="prof-fat" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🔥 체지방량 (kg)</label>
+                            <input type="number" id="prof-fat" placeholder="예: 15.2" step="0.1" min="0" max="100">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-visceral" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">?렞 ?댁옣吏諛??덈꺼</label>
+                            <label for="prof-visceral" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">🎯 내장지방 레벨</label>
                             <input type="number" id="prof-visceral" placeholder="1~20" step="1" min="1" max="20">
                         </div>
                         <div class="inbody-field">
-                            <label for="prof-bmr" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">??湲곗큹??щ웾 (kcal)</label>
-                            <input type="number" id="prof-bmr" placeholder="?? 1450" step="1" min="500" max="3000">
+                            <label for="prof-bmr" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">⚡ 기초대사량 (kcal)</label>
+                            <input type="number" id="prof-bmr" placeholder="예: 1450" step="1" min="500" max="3000">
                         </div>
                     </div>
-                    <!-- ?몃컮??蹂??異붿씠 -->
+                    <!-- 인바디 변화 추이 -->
                     <div id="inbody-history-container" style="display:none; margin-top:14px;"></div>
                 </div>
 
-                <!-- 2. ?몃컮?????곕룞 ?덈궡 -->
+                <!-- 2. 인바디 앱 연동 안내 -->
                 <div class="card" style="border:1px dashed var(--info-color); background:var(--info-light);">
-                    <h3 style="font-size:15px;">?벒 ?몃컮???깆뿉???곗씠??媛?몄삤湲?/h3>
+                    <h3 style="font-size:15px;">📲 인바디 앱에서 데이터 가져오기</h3>
                     <div style="font-size:13px; color:#555; line-height:1.6;">
-                        <p style="margin:0 0 8px;">InBody ?깆쓽 痢≪젙 寃곌낵瑜??쎄쾶 ?낅젰?????덉뼱??</p>
+                        <p style="margin:0 0 8px;">InBody 앱의 측정 결과를 쉽게 입력할 수 있어요:</p>
                         <ol style="margin:0; padding-left:20px;">
-                            <li>InBody ???ㅽ뻾 ??<strong>泥댁꽦遺?寃곌낵</strong> ?붾㈃</li>
-                            <li><strong>怨④꺽洹쇰웾, 泥댁?諛⑸웾, ?댁옣吏諛??덈꺼</strong> ?뺤씤</li>
-                            <li>???낅젰移몄뿉 ?レ옄留??낅젰 ??<strong>???/strong></li>
+                            <li>InBody 앱 실행 → <strong>체성분 결과</strong> 화면</li>
+                            <li><strong>골격근량, 체지방량, 내장지방 레벨</strong> 확인</li>
+                            <li>위 입력칸에 숫자만 입력 후 <strong>저장</strong></li>
                         </ol>
                         <div class="tip-box" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.7); border-radius:8px; font-size:12px; color:#777;">
-                            ?뮕 <strong>??</strong> ?몃컮?붾뒗 2~4二?媛꾧꺽?쇰줈 痢≪젙?섎㈃ 蹂?붾? ?뺥솗??異붿쟻?????덉뼱??
-                            媛숈? ?쒓컙(?꾩묠 怨듬났)??痢≪젙?섎㈃ ???뺥솗?⑸땲??
+                            💡 <strong>팁:</strong> 인바디는 2~4주 간격으로 측정하면 변화를 정확히 추적할 수 있어요.
+                            같은 시간(아침 공복)에 측정하면 더 정확합니다!
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. ?꾩옱 蹂듭슜 以묒씤 ?쎈Ъ -->
+                <!-- 3. 현재 복용 중인 약물 -->
                 <div class="card">
-                    <h3>?뭻 ?꾩옱 蹂듭슜 以묒씤 ?쎈Ъ</h3>
+                    <h3>💊 현재 복용 중인 약물</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
-                        <label><input type="checkbox" name="med-chk" value="怨좏삁?뺤빟"> 怨좏삁?뺤빟</label>
-                        <label><input type="checkbox" name="med-chk" value="?밸눊??> ?밸눊??/label>
-                        <label><input type="checkbox" name="med-chk" value="怨좎??덉쬆??> 怨좎??덉쬆??/label>
-                        <label><input type="checkbox" name="med-chk" value="鍮꾨쭔移섎즺??> 鍮꾨쭔移섎즺??/label>
+                        <label><input type="checkbox" name="med-chk" value="고혈압약"> 고혈압약</label>
+                        <label><input type="checkbox" name="med-chk" value="당뇨약"> 당뇨약</label>
+                        <label><input type="checkbox" name="med-chk" value="고지혈증약"> 고지혈증약</label>
+                        <label><input type="checkbox" name="med-chk" value="비만치료제"> 비만치료제</label>
                     </div>
-                    <input type="text" id="prof-med-other" placeholder="湲고? 吏곸젒 ?낅젰 (?? 媛묒긽?좎빟)">
+                    <input type="text" id="prof-med-other" placeholder="기타 직접 입력 (예: 갑상선약)">
                     <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
-                        onclick="saveHealthProfile()">?㎚ ?꾨줈?????諛???ш굔媛??먯닔 ?낅뜲?댄듃</button>
+                        onclick="saveHealthProfile()">🧬 프로필 저장 및 대사건강 점수 업데이트</button>
                 </div>
 
-                <!-- 4. ?덉븸寃??寃곌낵吏 ?낅줈??-->
+                <!-- 4. 혈액검사 결과지 업로드 -->
                 <div class="card card-blood-test" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
-                    <h3 style="color:#C62828;">?㈇ ?덉븸寃??寃곌낵吏 遺꾩꽍
+                    <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
                         <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
-                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">嫄닿컯寃吏??먮뒗 ?덉븸寃??寃곌낵吏瑜??ъ쭊 李띿뼱 ?щ━硫?AI媛 ?섏튂瑜??먮룞 異붿텧?⑸땲??</p>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">건강검진 또는 혈액검사 결과지를 사진 찍어 올리면 AI가 수치를 자동 추출합니다.</p>
                     
                     <div style="display:flex; gap:10px; margin-bottom:12px; justify-content:center;">
                         <label class="submit-btn" style="flex:1; text-align:center; background:linear-gradient(135deg, #E53935 0%, #C62828 100%); cursor:pointer; font-size:14px; margin:0;">
-                            ?벜 寃곌낵吏 珥ъ쁺/?좏깮
+                            📷 결과지 촬영/선택
                             <input type="file" id="blood-test-input" accept="image/*" capture="environment" 
                                 style="display:none;" onchange="uploadBloodTestPhoto(this)">
                         </label>
                     </div>
 
-                    <!-- 遺꾩꽍 寃곌낵 而⑦뀒?대꼫 -->
+                    <!-- 분석 결과 컨테이너 -->
                     <div id="blood-test-result" style="display:none;"></div>
 
-                    <!-- ?댁쟾 寃??寃곌낵 -->
+                    <!-- 이전 검사 결과 -->
                     <div id="blood-test-history" style="display:none;"></div>
 
                     <div class="tip-box" style="margin-top:10px; padding:8px 12px; background:rgba(255,255,255,0.8); border-radius:8px; font-size:12px; color:#777; line-height:1.5;">
-                        ?뮕 <strong>??</strong> 寃곌낵吏???섏튂 遺遺꾩씠 ?좊챸?섍쾶 蹂댁씠?꾨줉 李띿뼱二쇱꽭?? ?щ윭 ?μ씠硫????μ뵫 李띿뼱???낅줈?쒗븷 ???덉뒿?덈떎.<br>
-                        ?룯 嫄닿컯寃吏?寃곌낵?듬낫?? 蹂묒썝 ?덉븸寃??寃곌낵吏 紐⑤몢 吏?먮맗?덈떎.
+                        💡 <strong>팁:</strong> 결과지의 수치 부분이 선명하게 보이도록 찍어주세요. 여러 장이면 한 장씩 찍어서 업로드할 수 있습니다.<br>
+                        🏥 건강검진 결과통보서, 병원 혈액검사 결과지 모두 지원됩니다.
                     </div>
                 </div>
 
-                <!-- 5. ?대튆肄붿튂 怨꾩젙 ?곌껐 -->
+                <!-- 5. 해빛코치 계정 연결 -->
                 <div class="card chatbot-link-card">
                     <div class="chatbot-link-head">
                         <div>
-                            <h3>?쨼 ?대튆肄붿튂 怨꾩젙 ?곌껐</h3>
-                            <p>移댁뭅?ㅽ넚 ?대튆肄붿튂 1:1 梨꾪똿?먯꽌 <strong>!?곌껐</strong>留??낅젰?섎㈃ 諛붾줈 ?댁뼱吏묐땲??</p>
+                            <h3>🤖 해빛코치 계정 연결</h3>
+                            <p>카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 이어집니다.</p>
                         </div>
                     </div>
                     <div class="chatbot-link-steps">
                         <button type="button" class="chatbot-link-step chatbot-link-step--kakao" onclick="openChatbotKakaoChat()">
                             <span class="chatbot-link-step-no">1</span>
                             <div class="chatbot-link-step-copy">
-                                <strong>移댁뭅?ㅽ넚 1:1 梨꾪똿</strong>
-                                <small>??븯硫??대튆肄붿튂 1:1 梨꾪똿??諛붾줈 ?대젮??/small>
+                                <strong>카카오톡 1:1 채팅</strong>
+                                <small>탭하면 해빛코치 1:1 채팅이 바로 열려요</small>
                             </div>
-                            <span class="chatbot-link-step-cta">?닿린</span>
+                            <span class="chatbot-link-step-cta">열기</span>
                         </button>
                         <div class="chatbot-link-step">
                             <span class="chatbot-link-step-no">2</span>
                             <div>
-                                <strong>?깆뿉???곌껐 ?꾨즺</strong>
-                                <small>?꾩옱 濡쒓렇??怨꾩젙?쇰줈 諛붾줈 ?곌껐</small>
+                                <strong>앱에서 연결 완료</strong>
+                                <small>현재 로그인 계정으로 바로 연결</small>
                             </div>
                         </div>
                     </div>
-                    <div id="chatbot-link-status" class="chatbot-link-status"><strong>!?곌껐</strong>??湲곕낯 ?곌껐?댁뿉?? 踰꾪듉 ?곌껐???대젮???뚮쭔 ?꾨옒 ?깅줉 肄붾뱶瑜??⑥슂.</div>
-                    <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">?깅줉 肄붾뱶濡??곌껐?섍린</button>
+                    <div id="chatbot-link-status" class="chatbot-link-status"><strong>!연결</strong>이 기본 연결이에요. 버튼 연결이 어려울 때만 아래 등록 코드를 써요.</div>
+                    <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">등록 코드로 연결하기</button>
                     <div id="chatbot-link-fallback-panel" class="chatbot-link-fallback-panel" style="display:none;">
-                        <div class="chatbot-link-fallback-copy">踰꾪듉 ?곌껐???대젮???뚮쭔 蹂댁“ ?깅줉 肄붾뱶瑜?留뚮뱾???ъ슜?섏꽭??</div>
+                        <div class="chatbot-link-fallback-copy">버튼 연결이 어려울 때만 보조 등록 코드를 만들어 사용하세요.</div>
                         <div id="chatbot-link-code-box" class="chatbot-link-code-box" style="display:none;">
                             <div class="chatbot-link-code-row">
-                                <span class="chatbot-link-code-label">移댁뭅???깅줉 肄붾뱶</span>
+                                <span class="chatbot-link-code-label">카카오 등록 코드</span>
                                 <strong id="chatbot-link-code" class="chatbot-link-code-value">-</strong>
                             </div>
-                            <div class="chatbot-link-meta" id="chatbot-link-expiry">留뚮즺 ?쒓컙: -</div>
+                            <div class="chatbot-link-meta" id="chatbot-link-expiry">만료 시간: -</div>
                         </div>
                         <div class="chatbot-link-actions">
-                            <button class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">?깅줉 肄붾뱶 留뚮뱾湲?/button>
-                            <button class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">肄붾뱶 蹂듭궗</button>
+                            <button class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">등록 코드 만들기</button>
+                            <button class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">코드 복사</button>
                         </div>
                     </div>
-                    <div class="chatbot-link-foot" id="chatbot-link-last-used">理쒓렐 !?곌껐 / ?깅줉 肄붾뱶 ?대젰? ?꾩쭅 ?놁뼱??</div>
+                    <div class="chatbot-link-foot" id="chatbot-link-last-used">최근 !연결 / 등록 코드 이력은 아직 없어요.</div>
                 </div>
 
-                <!-- 6. 移쒓뎄 ?붿껌 -->
+                <!-- 6. 친구 요청 -->
                 <div class="card friend-request-card" id="profile-friend-requests-card" style="display:none;">
                     <div class="friend-request-head">
                         <div>
-                            <h3>?뫁 移쒓뎄 ?붿껌</h3>
-                            <p>梨쀫큸?대굹 ?깆뿉????移쒓뎄 ?붿껌???ш린???섎씫?섍굅??嫄곗젅?????덉뼱??</p>
+                            <h3>👥 친구 요청</h3>
+                            <p>챗봇이나 앱에서 온 친구 요청을 여기서 수락하거나 거절할 수 있어요.</p>
                         </div>
                     </div>
                     <div id="profile-friend-requests-list" class="friend-request-list"></div>
                     <div class="friend-request-code-shell">
-                        <div class="friend-request-code-title">?뵊 移쒓뎄 肄붾뱶濡??좎껌</div>
-                        <div class="friend-request-code-copy">?곷?媛 ???뚯썝?대㈃ 珥덈? 肄붾뱶 6?먮━留??낅젰?대룄 諛붾줈 ?붿껌?????덉뼱??</div>
+                        <div class="friend-request-code-title">🔎 친구 코드로 신청</div>
+                        <div class="friend-request-code-copy">상대가 앱 회원이면 초대 코드 6자리만 입력해도 바로 요청할 수 있어요.</div>
                         <div class="friend-request-code-row">
                             <input
                                 type="text"
                                 id="profile-friend-code-input"
                                 class="friend-request-code-input"
-                                placeholder="移쒓뎄 肄붾뱶 ?낅젰"
+                                placeholder="친구 코드 입력"
                                 maxlength="6"
                                 autocomplete="off"
                                 autocapitalize="characters"
                                 oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6)">
-                            <button type="button" class="friend-request-btn accept" onclick="submitProfileFriendCode()">移쒓뎄 ?좎껌</button>
+                            <button type="button" class="friend-request-btn accept" onclick="submitProfileFriendCode()">친구 신청</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 7. 移쒓뎄 珥덈? 怨듭쑀 -->
+                <!-- 7. 친구 초대 공유 -->
                 <div class="card card-invite friend-invite-shared" id="profile-friend-invite-card" style="background:linear-gradient(135deg, #FFF8E1, #FFECB3); border:2px solid #FFB300;">
-                    <h3 style="color:#E65100; margin-bottom:10px;">?럦 移쒓뎄 珥덈??섍린</h3>
-                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">移쒓뎄?먭쾶 珥덈? 留곹겕瑜?蹂대궡?몄슂. ?꾩쭅 媛???꾩씠硫?蹂대꼫?ㅺ? 吏湲됰릺怨? ?대? 媛?낇븳 移쒓뎄??留곹겕瑜??댁뼱 諛붾줈 ?곌껐?????덉뼱??</p>
-                    <!-- 蹂댁긽 ?덈궡 -->
+                    <h3 style="color:#E65100; margin-bottom:10px;">🎉 친구 초대하기</h3>
+                    <p style="font-size:12px; color:#7a5a00; margin:-4px 0 12px; line-height:1.5;">친구에게 초대 링크를 보내세요. 아직 가입 전이면 보너스가 지급되고, 이미 가입한 친구도 링크를 열어 바로 연결할 수 있어요.</p>
+                    <!-- 보상 안내 -->
                     <div class="referral-rewards" style="margin-bottom:14px;">
-                        <div class="referral-reward-item"><span class="rr-emoji">?럦</span><span class="rr-text">移쒓뎄 媛??利됱떆 <strong>+200P</strong></span></div>
-                        <div class="referral-reward-item"><span class="rr-emoji">?뵦</span><span class="rr-text">移쒓뎄 3???ъ꽦 ???섏뿉寃?<strong>+500P</strong></span></div>
-                        <div class="referral-reward-item"><span class="rr-emoji">狩?/span><span class="rr-text">移쒓뎄 7???ъ꽦 ??移쒓뎄?먭쾶 <strong>+300P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">🎉</span><span class="rr-text">친구 가입 즉시 <strong>+200P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">🔥</span><span class="rr-text">친구 3일 달성 시 나에게 <strong>+500P</strong></span></div>
+                        <div class="referral-reward-item"><span class="rr-emoji">⭐</span><span class="rr-text">친구 7일 달성 시 친구에게 <strong>+300P</strong></span></div>
                     </div>
-                    <!-- 珥덈? 肄붾뱶 + 留곹겕 (吏媛??앹꽦 ???쒖떆) -->
+                    <!-- 초대 코드 + 링크 (지갑 생성 후 표시) -->
                     <div id="profile-invite-link-box" style="display:none; margin-bottom:12px;">
-                        <div style="font-size:12px; color:#888; margin-bottom:5px;">??珥덈? 肄붾뱶: <strong id="profile-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
+                        <div style="font-size:12px; color:#888; margin-bottom:5px;">내 초대 코드: <strong id="profile-invite-code" style="color:#E65100; letter-spacing:2px;">-</strong></div>
                         <div style="display:flex; gap:6px; align-items:center;">
                             <input type="text" id="profile-invite-link" class="referral-link-input" readonly onclick="this.select()">
-                            <button class="referral-copy-btn" onclick="copyReferralLink('profile-invite-link')">蹂듭궗</button>
+                            <button class="referral-copy-btn" onclick="copyReferralLink('profile-invite-link')">복사</button>
                         </div>
                     </div>
-                    <!-- 怨듭쑀 踰꾪듉 -->
+                    <!-- 공유 버튼 -->
                     <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#FEE500; color:#191919; border-radius:12px;"
-                            onclick="shareReferralLink('kakao')">?뮠 移댁뭅?ㅽ넚</button>
+                            onclick="shareReferralLink('kakao')">💬 카카오톡</button>
                         <button class="submit-btn" style="flex:none; padding:10px 16px; font-size:13px; background:#E65100; color:white; border-radius:12px;"
-                            onclick="openQRModal()">?벑 QR 肄붾뱶</button>
+                            onclick="openQRModal()">📱 QR 코드</button>
                     </div>
                 </div>
 
-                <!-- 8. ?낅뜲?댄듃 ?명듃 -->
+                <!-- 8. 업데이트 노트 -->
                 <div class="card profile-update-card">
                     <div class="profile-update-head">
                         <div>
-                            <h3>?뱥 ?낅뜲?댄듃 ?명듃</h3>
-                            <p>理쒓렐 蹂寃쎄낵 硫붿씤???꾪솚 吏꾪뻾? changelog?먯꽌 ?좎쭨蹂꾨줈 蹂????덉뼱??</p>
+                            <h3>📋 업데이트 노트</h3>
+                            <p>최근 변경과 메인넷 전환 진행은 changelog에서 날짜별로 볼 수 있어요.</p>
                         </div>
-                        <a href="/changelog.html" class="profile-update-link">?명듃 蹂닿린</a>
+                        <a href="/changelog.html" class="profile-update-link">노트 보기</a>
                     </div>
                 </div>
 
-                <!-- 9. 怨꾩젙 ?ㅼ젙 (?대쫫 蹂寃?+ 濡쒓렇?꾩썐) -->
+                <!-- 9. 계정 설정 (이름 변경 + 로그아웃) -->
                 <div style="background:white; border-radius:16px; padding:20px; margin:16px 0 10px; box-shadow:0 1px 4px rgba(0,0,0,0.06); border:1px solid #f0f0f0;">
-                    <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">?숋툘 怨꾩젙 ?ㅼ젙</div>
+                    <div style="font-size:14px; font-weight:700; color:#333; margin-bottom:14px;">⚙️ 계정 설정</div>
                     <div style="margin-bottom:16px;">
-                        <label style="font-size:12px; color:#888; display:block; margin-bottom:6px;">?됰꽕??/label>
+                        <label style="font-size:12px; color:#888; display:block; margin-bottom:6px;">닉네임</label>
                         <div style="display:flex; gap:8px; align-items:center;">
-                            <input type="text" id="profile-nickname" placeholder="?됰꽕?꾩쓣 ?낅젰?섏꽭?? maxlength="20"
+                            <input type="text" id="profile-nickname" placeholder="닉네임을 입력하세요" maxlength="20"
                                 style="flex:1; padding:10px 12px; border:1px solid #e0e0e0; border-radius:10px; font-size:14px; outline:none; transition:border-color 0.2s;"
                                 onfocus="this.style.borderColor='#FF8C00'" onblur="this.style.borderColor='#e0e0e0'">
                             <button onclick="changeDisplayName()"
                                 style="flex:none; padding:10px 16px; background:linear-gradient(135deg,#FF8C00,#FFa040); color:white; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:opacity 0.2s;"
-                                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">蹂寃?/button>
+                                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">변경</button>
                         </div>
                     </div>
                     <div class="profile-notification-card">
                         <div class="profile-notification-head">
                             <div>
-                                <div class="profile-notification-title">?뵒 ???뚮┝</div>
-                                <div id="notification-permission-status" class="profile-notification-status">?뚮┝ ?곹깭瑜??뺤씤 以묒씠?먯슂.</div>
+                                <div class="profile-notification-title">🔔 앱 알림</div>
+                                <div id="notification-permission-status" class="profile-notification-status">알림 상태를 확인 중이에요.</div>
                             </div>
                             <button type="button" id="notification-permission-btn" class="profile-notification-btn" onclick="requestAppNotificationPermission()">
-                                ?뚮┝ 耳쒓린
+                                알림 켜기
                             </button>
                         </div>
                         <p id="notification-permission-helper" class="profile-notification-helper">
-                            移쒓뎄 ?붿껌, 梨뚮┛吏 珥덈?, 由щ쭏?몃뜑瑜????뚮┝?쇰줈 諛쏆쓣 ???덉뼱??
+                            친구 요청, 챌린지 초대, 리마인더를 앱 알림으로 받을 수 있어요.
                         </p>
                     </div>
                     <div class="profile-diet-program-card">
                         <div class="profile-diet-program-head">
                             <div>
-                                <div class="profile-diet-program-title">?쪞 ?앸떒 諛⑸쾿</div>
-                                <div id="diet-program-current-name" class="profile-diet-program-name">?앸떒 諛⑸쾿??怨⑤씪蹂댁꽭??</div>
+                                <div class="profile-diet-program-title">🥗 식단 방법</div>
+                                <div id="diet-program-current-name" class="profile-diet-program-name">식단 방법을 골라보세요.</div>
                             </div>
                             <button type="button" id="diet-program-select-btn" class="profile-notification-btn is-secondary">
-                                諛⑸쾿 ?좏깮
+                                방법 선택
                             </button>
                         </div>
                         <p id="diet-program-current-summary" class="profile-diet-program-summary">
-                            諛⑸쾿???곕씪 ?앸떒 媛?대뱶媛 ?щ씪?몄슂.
+                            선택한 방법에 맞춰 식단 가이드와 대시보드 요약이 달라져요.
                         </p>
                         <p id="diet-program-current-support" class="profile-diet-program-support">
-                            ?뚮┝? ?섏쨷???곕줈 耳????덉뼱??
+                            먼저 방법을 고른 뒤, 필요하면 방법 알림만 따로 켤 수 있어요.
                         </p>
                         <label class="profile-diet-program-toggle-row" for="diet-program-reminders-toggle">
                             <span class="profile-diet-program-toggle-copy">
-                                <strong>諛⑸쾿 ?뚮┝ 諛쏄린</strong>
-                                <span id="diet-program-reminders-helper">?앸떒 諛⑸쾿??癒쇱? ?좏깮?섎㈃ 諛⑸쾿 ?뚮┝??耳????덉뼱??</span>
+                                <strong>방법 알림 받기</strong>
+                                <span id="diet-program-reminders-helper">식단 방법을 먼저 선택하면 방법 알림을 켤 수 있어요.</span>
                             </span>
                             <span class="profile-diet-program-toggle-shell">
                                 <input type="checkbox" id="diet-program-reminders-toggle">
@@ -674,89 +675,89 @@
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
-                            onclick="logoutAndReset()">?슞 濡쒓렇?꾩썐</button>
+                            onclick="logoutAndReset()">🚪 로그아웃</button>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-top:14px; text-align:center;">
                         <button id="delete-account-btn" style="color:#E53935; font-size:12px; background:none; border:1px solid #FFCDD2; border-radius:10px; padding:8px 20px; width:100%; cursor:pointer;"
-                            onclick="deleteAccountAndData()">?뿊截?怨꾩젙 ??젣</button>
-                        <p style="font-size:11px; color:#bbb; margin-top:6px;">紐⑤뱺 ?곗씠?곌? ?곴뎄 ??젣?섎ŉ 蹂듦뎄?????놁뒿?덈떎.</p>
+                            onclick="deleteAccountAndData()">🗑️ 계정 삭제</button>
+                        <p style="font-size:11px; color:#bbb; margin-top:6px;">모든 데이터가 영구 삭제되며 복구할 수 없습니다.</p>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:12px; margin-top:14px; text-align:center;">
-                        <a href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">?뱶 ?댁슜?쎄?</a>
+                        <a href="/terms.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">📜 이용약관</a>
                         <span style="font-size:12px; color:#ddd;"> | </span>
-                        <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">?뵏 媛쒖씤?뺣낫泥섎━諛⑹묠</a>
+                        <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:12px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
                     </div>
                 </div>
             </div>
 
-            <!-- ?첌 ?먯궛 愿由???(M2E ?쒖뒪?? -->
-            <div id="assets" class="content-section" role="region" aria-label="?섏쓽 ?먯궛">
-                <!-- ?ㅼ펷?덊넠 濡쒕뵫 -->
+            <!-- 🪙 자산 관리 탭 (M2E 시스템) -->
+            <div id="assets" class="content-section" role="region" aria-label="나의 자산">
+                <!-- 스켈레톤 로딩 -->
                 <div id="wallet-skeleton" class="wallet-skeleton">
                     <div class="skeleton-card skeleton-asset"></div>
                     <div class="skeleton-card skeleton-info"></div>
                     <div class="skeleton-card skeleton-convert"></div>
                 </div>
 
-                <!-- ?ъ씤??& HBT ?붿빟 -->
+                <!-- 포인트 & HBT 요약 -->
                 <div class="card wallet-asset-card" id="wallet-asset-section">
-                    <h3>?뮥 ???먯궛</h3>
+                    <h3>💰 내 자산</h3>
                     <div class="wallet-asset-grid">
                         <div class="wallet-asset-item">
-                            <div class="wallet-asset-label">?끏截??꾩옱 ?ъ씤??/div>
+                            <div class="wallet-asset-label">🅿️ 현재 포인트</div>
                             <div class="wallet-asset-value" id="asset-points-display">0P</div>
                             <div class="wallet-asset-delta" id="asset-points-delta"></div>
                         </div>
                         <div class="wallet-asset-item">
-                            <div class="wallet-asset-label">?뭿 ?꾩옱 HBT</div>
+                            <div class="wallet-asset-label">💎 현재 HBT</div>
                             <div class="wallet-asset-value" id="asset-hbt-display">0 HBT</div>
                             <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
                         </div>
                     </div>
-                    <p class="hbt-disclaimer wallet-asset-note">?좑툘 HBT??????蹂댁긽?⑹씠硫?媛移??곸듅??蹂댁옣?섏? ?딆뒿?덈떎.</p>
-                    <!-- 7??HBT ?띾뱷 誘몃땲李⑦듃 -->
+                    <p class="hbt-disclaimer wallet-asset-note">⚠️ HBT는 앱 내 보상용이며 가치 상승을 보장하지 않습니다.</p>
+                    <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
-                        <div class="wallet-minichart-label">理쒓렐 7???띾뱷 HBT</div>
+                        <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
                         <div class="wallet-minichart-bars" id="minichart-bars"></div>
                     </div>
                 </div>
 
-                <!-- 嫄닿컯 ?듦? 梨뚮┛吏 ?뱀뀡 -->
+                <!-- 건강 습관 챌린지 섹션 -->
                 <div class="card wallet-challenge-card">
-                    <h3 class="wallet-challenge-title">?룇 嫄닿컯 ?듦? 梨뚮┛吏</h3>
-                    <p class="wallet-challenge-desc">3??誘몃땲???앸떒쨌?대룞쨌留덉쓬??紐⑤몢 湲곕줉?섎㈃, ?꾪겢由?룸쭏?ㅽ꽣???섎（ 65???댁긽?대㈃ 1???몄젙?쇱슂.</p>
+                    <h3 class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
+                    <p class="wallet-challenge-desc">3일 미니는 식단·운동·마음을 모두 기록하면, 위클리·마스터는 하루 65점 이상이면 1일 인정돼요.</p>
 
-                    <!-- 吏꾪뻾 以묒씤 梨뚮┛吏 (留?李⑦듃) -->
+                    <!-- 진행 중인 챌린지 (링 차트) -->
                     <div id="active-challenge-container" class="wallet-challenge-active" style="display: none;">
                         <div id="active-challenge-info"></div>
                     </div>
 
-                    <!-- 梨뚮┛吏 ?쒖옉 -->
+                    <!-- 챌린지 시작 -->
                     <div id="challenge-selection" style="display: none;">
                         <button class="challenge-toggle-btn" id="challenge-toggle-btn" onclick="toggleChallengeSelection()" style="display: none;">
-                            <span id="challenge-toggle-text">?뱥 ??梨뚮┛吏 ?쒖옉?섍린</span>
-                            <span class="challenge-toggle-arrow" id="challenge-toggle-arrow">??/span>
+                            <span id="challenge-toggle-text">📋 새 챌린지 시작하기</span>
+                            <span class="challenge-toggle-arrow" id="challenge-toggle-arrow">▼</span>
                         </button>
                         <div id="challenge-tier-wrap" class="challenge-tier-list">
                             <div class="challenge-tier-card tier-mini" id="tier-card-mini"
                                 onclick="startChallenge30D('challenge-3d')">
-                                <div class="tier-icon">??/div>
+                                <div class="tier-icon">⚡</div>
                                 <div class="tier-info">
-                                    <div class="tier-name">3??誘몃땲 梨뚮┛吏</div>
-                                    <div class="tier-desc">臾대즺 李멸? 쨌 3???꾨? ?ъ꽦 ??30P</div>
+                                    <div class="tier-name">3일 미니 챌린지</div>
+                                    <div class="tier-desc">무료 참가 · 3일 전부 달성 시 30P</div>
                                 </div>
                             </div>
                             <div class="challenge-tier-card tier-weekly" id="tier-card-weekly">
                                 <div class="tier-card-header" onclick="startChallenge30D('challenge-7d')">
-                                    <div class="tier-icon">?뵦</div>
+                                    <div class="tier-icon">🔥</div>
                                     <div class="tier-info">
-                                        <div class="tier-name">7???꾪겢由?梨뚮┛吏</div>
-                                        <div class="tier-desc">?섎（ 65???댁긽 쨌 80%+ ?섍툒 쨌 100P</div>
+                                        <div class="tier-name">7일 위클리 챌린지</div>
+                                        <div class="tier-desc">하루 65점 이상 · 80%+ 환급 · 100P</div>
                                     </div>
                                 </div>
                                 <div class="tier-stake-slider-wrap">
                                     <input type="hidden" id="stake-weekly" value="50">
-                                    <label class="wallet-stake-label">?덉튂 HBT</label>
+                                    <label class="wallet-stake-label">예치 HBT</label>
                                     <input type="range" class="wallet-stake-slider" id="stake-slider-weekly"
                                         min="50" max="5000" value="50" step="10" oninput="updateStakeSlider('weekly')">
                                     <div class="wallet-stake-range-labels">
@@ -764,20 +765,20 @@
                                         <span id="stake-max-label-weekly">5,000</span>
                                     </div>
                                     <div class="wallet-stake-value" id="stake-value-weekly">50 HBT</div>
-                                    <div class="wallet-stake-reward" id="stake-reward-weekly">?꾩옱 ?뺤콉 湲곗? 蹂대꼫??怨꾩궛 以?/div>
+                                    <div class="wallet-stake-reward" id="stake-reward-weekly">현재 정책 기준 보너스 계산 중</div>
                                 </div>
                             </div>
                             <div class="challenge-tier-card tier-master" id="tier-card-master">
                                 <div class="tier-card-header" onclick="startChallenge30D('challenge-30d')">
-                                    <div class="tier-icon">?룇</div>
+                                    <div class="tier-icon">🏆</div>
                                     <div class="tier-info">
-                                        <div class="tier-name">30??留덉뒪??梨뚮┛吏</div>
-                                        <div class="tier-desc">?섎（ 65???댁긽 쨌 80%+ ?섍툒 쨌 500P</div>
+                                        <div class="tier-name">30일 마스터 챌린지</div>
+                                        <div class="tier-desc">하루 65점 이상 · 80%+ 환급 · 500P</div>
                                     </div>
                                 </div>
                                 <div class="tier-stake-slider-wrap">
                                     <input type="hidden" id="stake-master" value="100">
-                                    <label class="wallet-stake-label">?덉튂 HBT</label>
+                                    <label class="wallet-stake-label">예치 HBT</label>
                                     <input type="range" class="wallet-stake-slider" id="stake-slider-master"
                                         min="100" max="10000" value="100" step="10" oninput="updateStakeSlider('master')">
                                     <div class="wallet-stake-range-labels">
@@ -785,22 +786,22 @@
                                         <span id="stake-max-label-master">10,000</span>
                                     </div>
                                     <div class="wallet-stake-value" id="stake-value-master">100 HBT</div>
-                                    <div class="wallet-stake-reward" id="stake-reward-master">?꾩옱 ?뺤콉 湲곗? 蹂대꼫??怨꾩궛 以?/div>
+                                    <div class="wallet-stake-reward" id="stake-reward-master">현재 정책 기준 보너스 계산 중</div>
                                 </div>
                             </div>
                         </div>
                         <div class="challenge-rules-note">
-                            ?뱦 ?섎（ 65???댁긽?대㈃ 1???몄젙?쇱슂. 80% ?댁긽 ?ъ꽦?섎㈃ ?덉튂湲덇낵 ?ъ씤?몃? ?뚮젮諛쏄퀬, 100% ?ъ꽦?섎㈃ HBT 蹂대꼫?ㅺ퉴吏 諛쏆븘?? 80% 誘몃쭔?대㈃ ?덉튂湲덉? ?덈컲留??뚯븘???
+                            📌 하루 65점 이상이면 1일 인정돼요. 80% 이상 달성하면 예치금과 포인트를 돌려받고, 100% 달성하면 HBT 보너스까지 받아요. 80% 미만이면 예치금은 절반만 돌아와요.
                         </div>
                     </div>
                 </div>
 
-                <!-- ?ъ씤????HBT 蹂???뱀뀡 -->
+                <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
-                    <h3>?봽 ?ъ씤????HBT 蹂??/h3>
-                    <p class="wallet-convert-desc" id="wallet-convert-desc">100P ?⑥쐞濡?HBT濡?諛붽씀硫? ?꾩옱 ?⑥껜??鍮꾩쑉??遺덈윭?ㅺ퀬 ?덉뼱??</p>
+                    <h3>🔄 포인트 → HBT 변환</h3>
+                    <p class="wallet-convert-desc" id="wallet-convert-desc">100P 단위로 HBT로 바꾸며, 현재 온체인 비율을 불러오고 있어요.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
-                        ?꾩옱 鍮꾩쑉 遺덈윭?ㅻ뒗 以?..
+                        현재 비율 불러오는 중...
                     </div>
                     <div class="wallet-convert-presets">
                         <button class="wallet-preset-btn" onclick="setConvertAmount(100)">100P</button>
@@ -810,49 +811,49 @@
                     </div>
                     <input type="hidden" id="convert-point-input" value="">
                     <div class="wallet-convert-result-row">
-                        <span class="wallet-convert-arrow">??/span>
+                        <span class="wallet-convert-arrow">→</span>
                         <span class="wallet-convert-result" id="convert-result-preview">0 HBT</span>
                     </div>
-                    <div class="wallet-convert-limit" id="convert-daily-limit">?ㅻ뒛 蹂???쒕룄: <strong>12,000 / 12,000 HBT</strong><span class="wallet-convert-limit-reset">留ㅼ씪 ?ㅼ쟾 9??reset</span></div>
+                    <div class="wallet-convert-limit" id="convert-daily-limit">오늘 변환 한도: <strong>12,000 / 12,000 HBT</strong><span class="wallet-convert-limit-reset">매일 오전 9시 reset</span></div>
                     <button class="wallet-convert-submit" id="convert-submit-btn" onclick="executeConversion()" disabled>
-                        ?뮯 蹂?섑븯湲?
+                        💸 변환하기
                     </button>
                 </div>
 
-                <!-- 蹂???뺤씤 紐⑤떖 -->
+                <!-- 변환 확인 모달 -->
                 <div class="wallet-modal-overlay" id="convert-confirm-modal" style="display:none;">
                     <div class="wallet-modal">
-                        <div class="wallet-modal-title">?봽 HBT 蹂???뺤씤</div>
+                        <div class="wallet-modal-title">🔄 HBT 변환 확인</div>
                         <div class="wallet-modal-body">
                             <div class="wallet-modal-summary">
                                 <div class="wallet-modal-row">
-                                    <span>蹂???ъ씤??/span>
+                                    <span>변환 포인트</span>
                                     <span id="modal-convert-points">0P</span>
                                 </div>
                                 <div class="wallet-modal-row">
-                                    <span>諛쏆쓣 HBT</span>
+                                    <span>받을 HBT</span>
                                     <span id="modal-convert-hbt" class="highlight">0 HBT</span>
                                 </div>
                                 <div class="wallet-modal-row">
-                                    <span>?곸슜 鍮꾩쑉</span>
-                                    <span id="modal-convert-rate">遺덈윭?ㅻ뒗 以?..</span>
+                                    <span>적용 비율</span>
+                                    <span id="modal-convert-rate">불러오는 중...</span>
                                 </div>
                             </div>
-                            <p class="wallet-modal-warn">?좑툘 蹂????痍⑥냼?????놁뒿?덈떎.</p>
+                            <p class="wallet-modal-warn">⚠️ 변환 후 취소할 수 없습니다.</p>
                         </div>
                         <div class="wallet-modal-actions">
-                            <button class="wallet-modal-btn cancel" onclick="closeConvertModal()">痍⑥냼</button>
-                            <button class="wallet-modal-btn confirm" id="modal-confirm-btn" onclick="confirmConversion()">?뺤씤</button>
+                            <button class="wallet-modal-btn cancel" onclick="closeConvertModal()">취소</button>
+                            <button class="wallet-modal-btn confirm" id="modal-confirm-btn" onclick="confirmConversion()">확인</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 梨꾧뎬 諛섍컧湲??꾪솴 -->
+                <!-- 채굴 반감기 현황 -->
                 <div class="card wallet-halving-card">
-                    <h3>?륅툘 梨꾧뎬 諛섍컧湲??꾪솴</h3>
+                    <h3>⛏️ 채굴 반감기 현황</h3>
                     <div class="wallet-halving-progress">
                         <div class="wallet-halving-progress-header">
-                            <span id="halving-progress-source-label">援ш컙 吏꾪뻾??/span>
+                            <span id="halving-progress-source-label">구간 진행도</span>
                             <span id="halving-progress-text">0 / 35,000,000 HBT</span>
                         </div>
                         <div class="wallet-halving-bar-bg">
@@ -861,231 +862,231 @@
                     </div>
                     <div class="wallet-halving-schedule">
                         <div class="wallet-halving-schedule-header">
-                            <span>援ш컙</span><span>?꾪솚 鍮꾩쑉</span><span>梨꾧뎬 ?</span>
+                            <span>구간</span><span>전환 비율</span><span>채굴 풀</span>
                         </div>
                         <div id="halving-schedule">
                             <div class="wallet-halving-row active">
-                                <span>A ?몚</span><span>二쇨컙 議곗젅 50~400 HBT</span><span>3,500留?/span>
+                                <span>A 👈</span><span>주간 조절 50~400 HBT</span><span>3,500만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>B</span><span>二쇨컙 議곗젅 25~200 HBT</span><span>1,750留?/span>
+                                <span>B</span><span>주간 조절 25~200 HBT</span><span>1,750만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>C</span><span>二쇨컙 議곗젅 12.5~100 HBT</span><span>875留?/span>
+                                <span>C</span><span>주간 조절 12.5~100 HBT</span><span>875만</span>
                             </div>
                             <div class="wallet-halving-row future">
-                                <span>D</span><span>?댁쟾 援ш컙???덈컲??/span><span>875留?/span>
+                                <span>D</span><span>이전 구간의 절반씩</span><span>875만</span>
                             </div>
                         </div>
                     </div>
                     <p class="wallet-halving-tip" id="wallet-halving-tip">
-                        ???꾩옱 ?⑥껜??鍮꾩쑉??遺덈윭?ㅺ퀬 ?덉뼱??
+                        ⚡ 현재 온체인 비율을 불러오고 있어요.
                     </p>
                 </div>
 
-                <!-- 吏媛??뺣낫 -->
+                <!-- 지갑 정보 -->
                 <div class="card wallet-info-card">
                     <div class="wallet-info-header">
-                        <h3>?뵍 釉붾줉泥댁씤 吏媛?/h3>
-                        <span class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> ?쒖꽦 泥댁씤 ?뺤씤 以?/span>
+                        <h3>🔐 블록체인 지갑</h3>
+                        <span class="wallet-network-badge" id="wallet-network-badge"><span class="dot"></span> 활성 체인 확인 중</span>
                     </div>
                     <div class="wallet-connection-copy">
-                        <div class="wallet-connection-status" id="wallet-connection-status">??吏媛??ъ슜 以?/div>
-                        <div class="wallet-connection-sub" id="wallet-connection-sub">濡쒓렇?몃쭔 ?섎㈃ HBT 蹂?섍낵 梨뚮┛吏瑜?諛붾줈 吏꾪뻾?????덉뼱??</div>
+                        <div class="wallet-connection-status" id="wallet-connection-status">앱 지갑 사용 중</div>
+                        <div class="wallet-connection-sub" id="wallet-connection-sub">로그인만 하면 HBT 변환과 챌린지를 바로 진행할 수 있어요.</div>
                     </div>
                     <div class="wallet-address-box">
-                        <span class="wallet-address-text" id="wallet-address-display">吏媛?誘몄뿰寃?/span>
+                        <span class="wallet-address-text" id="wallet-address-display">지갑 미연결</span>
                         <div class="wallet-addr-actions">
-                            <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="二쇱냼 蹂듭궗">?뱥</button>
-                            <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="?먯깋湲곗뿉??蹂닿린">?뵕</button>
+                            <button class="wallet-addr-btn" onclick="copyWalletAddress()" title="주소 복사">📋</button>
+                            <button class="wallet-addr-btn" onclick="openWalletExplorer()" title="탐색기에서 보기">🔗</button>
                         </div>
                     </div>
                     <div class="wallet-policy-note" id="wallet-policy-note">
-                        湲곕낯 ?ъ슜 諛⑹떇? ??吏媛묒엯?덈떎. ?꾩옱 ?쒖꽦 泥댁씤?먯꽌 HBT 蹂?섍낵 ?덉튂瑜?諛붾줈 吏꾪뻾?????덉뼱??
+                        기본 사용 방식은 앱 지갑입니다. 현재 활성 체인에서 HBT 변환과 예치를 바로 진행할 수 있어요.
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="wallet-disconnect-row" style="display:none;">
-                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">?몃? 吏媛??곌껐 ?댁젣</button>
+                        <button type="button" class="wallet-link-btn" id="wallet-disconnect-btn" onclick="disconnectWallet()">외부 지갑 연결 해제</button>
                     </div>
                     <div class="wallet-links wallet-links-secondary" id="legacy-wallet-export-row" style="display:none;">
-                        <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">?뵍 湲곗〈 ??吏媛??대낫?닿린</button>
+                        <button type="button" class="wallet-link-btn" id="wallet-export-legacy-btn" onclick="openLegacyWalletExportModal()">🔐 기존 앱 지갑 내보내기</button>
                     </div>
                     <div class="wallet-export-note" id="wallet-export-note" style="display:none;">
-                        ?몃? 吏媛묒쑝濡???만 ?뚮쭔 媛쒖씤?ㅻ? 1???뺤씤?섎㈃ ?쇱슂. ?대낫???ㅼ뿉??媛숈? 二쇱냼瑜?吏곸젒 愿由ы븷 ???덉뼱??
+                        외부 지갑으로 옮길 때만 개인키를 1회 확인하면 돼요. 내보낸 뒤에는 같은 주소를 직접 관리할 수 있어요.
                     </div>
                     <div class="wallet-links wallet-links-secondary">
-                        <a href="#" class="wallet-link-btn" id="wallet-token-link" target="_blank" rel="noopener">?뵕 HBT 而⑦듃?숉듃 蹂닿린</a>
-                        <a href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">?룱 梨뚮┛吏 而⑦듃?숉듃 蹂닿린</a>
+                        <a href="#" class="wallet-link-btn" id="wallet-token-link" target="_blank" rel="noopener">🔗 HBT 컨트랙트 보기</a>
+                        <a href="#" class="wallet-link-btn" id="wallet-staking-link" target="_blank" rel="noopener">🏦 챌린지 컨트랙트 보기</a>
                     </div>
                     <div class="wallet-links">
-                        <a href="tokenomics.html" class="wallet-link-btn primary">?뱥 HBT ?좏겕?몃???/a>
+                        <a href="tokenomics.html" class="wallet-link-btn primary">📋 HBT 토크노믹스</a>
                     </div>
                 </div>
 
-                <!-- 嫄곕옒 湲곕줉 -->
+                <!-- 거래 기록 -->
                 <div class="card wallet-tx-card">
-                    <h3>?뱶 嫄곕옒 湲곕줉</h3>
+                    <h3>📜 거래 기록</h3>
                     <div id="transaction-history" class="wallet-tx-list">
                         <div class="wallet-tx-empty-cta">
-                            <div class="wallet-tx-empty-icon">??/div>
-                            <div class="wallet-tx-empty-text">嫄곕옒 湲곕줉???뺤씤?섎뒗 以묒엯?덈떎</div>
-                            <div class="wallet-tx-empty-sub">??湲곕줉??癒쇱? 蹂댁뿬二쇨퀬, ?⑥껜??湲곕줉? ?댁뼱??遺덈윭???/div>
+                            <div class="wallet-tx-empty-icon">⏳</div>
+                            <div class="wallet-tx-empty-text">거래 기록을 확인하는 중입니다</div>
+                            <div class="wallet-tx-empty-sub">앱 기록을 먼저 보여주고, 온체인 기록은 이어서 불러와요</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="diet" class="content-section" role="region" aria-label="?앸떒 湲곕줉">
-                <div class="record-flow-card" data-record-guide="diet" aria-label="?앸떒 湲곕줉 媛?대뱶">
+            <div id="diet" class="content-section" role="region" aria-label="식단 기록">
+                <div class="record-flow-card" data-record-guide="diet" aria-label="식단 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">媛?대뱶</div>
-                        <button type="button" id="diet-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="diet-guide-body" onclick="toggleRecordFlowCard('diet')">?묎린</button>
+                        <div class="record-flow-kicker">가이드</div>
+                        <button type="button" id="diet-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="diet-guide-body" onclick="toggleRecordFlowCard('diet')">접기</button>
                     </div>
                     <div class="record-flow-body" id="diet-guide-body">
-                        <div class="simple-mode-record-title">?ㅻ뒛 ?앸떒 湲곕줉?섏꽭??/div>
+                        <div class="simple-mode-record-title">오늘 식단 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>?ъ쭊 1?λ???諛붾줈 ??ν븷 ???덉뼱??/h3>
-                                <p id="diet-guide-status">泥??앹궗 ?ъ쭊???щ━硫??ㅻ뒛 ?앸떒 ???以鍮꾧? ?⑸땲??</p>
+                                <h3>사진 1장부터 바로 저장할 수 있어요</h3>
+                                <p id="diet-guide-status">첫 식사 사진을 올리면 오늘 식단 저장 준비가 됩니다.</p>
                             </div>
                             <div class="record-flow-head-side">
                                 <span class="record-flow-badge" id="diet-guide-badge">0/4</span>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')">移대찓?쇰줈 珥ъ쁺</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">?ъ쭊 諛붾줈 異붽?</button>
-                            <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">怨듬났 吏???낅젰</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">사진 바로 추가</button>
+                            <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">공복 지표 입력</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>?쪞 ?앸떒 ?ъ쭊 ?щ━湲?<strong>(?ъ쭊??+10P, 理쒕? 30P)</strong></span><span
-                            class="quest-check" id="quest-diet">誘몃떖??/span></div>
+                    <div class="quest-item"><span>🥗 식단 사진 올리기 <strong>(사진당 +10P, 최대 30P)</strong></span><span
+                            class="quest-check" id="quest-diet">미달성</span></div>
                 </div>
-                <!-- ?낅줈??CTA -->
+                <!-- 업로드 CTA -->
                 <div class="upload-cta upload-cta-split">
-                    <div class="upload-cta-icon">?벝</div>
+                    <div class="upload-cta-icon">📸</div>
                     <div class="upload-cta-text">
-                        <strong>?앸떒 ?ъ쭊???щ젮蹂댁꽭??</strong>
-                        <span>AI媛 珥덇?怨듭떇?덉쓣 ?먮퀎?섍퀬 ?곸뼇?뚮? 遺꾩꽍?대뱶?ㅼ슂</span>
+                        <strong>식단 사진을 올려보세요!</strong>
+                        <span>AI가 초가공식품을 판별하고 영양소를 분석해드려요</span>
                     </div>
                     <div class="upload-cta-actions">
-                        <button class="upload-cta-btn primary" type="button" onclick="clickNextEmptyDietSlot('camera')">移대찓?쇰줈 珥ъ쁺</button>
-                        <button class="upload-cta-btn" type="button" onclick="clickNextEmptyDietSlot('library')">蹂닿??⑥뿉???좏깮</button>
+                        <button class="upload-cta-btn primary" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
+                        <button class="upload-cta-btn" type="button" onclick="clickNextEmptyDietSlot('library')">보관함에서 선택</button>
                     </div>
                 </div>
                 <div id="diet-share-import-banner" class="diet-share-import-banner" style="display:none;"></div>
-                <!-- ?ㅻ뒛???앸떒 珥앺룊 -->
+                <!-- 오늘의 식단 총평 -->
                 <div id="diet-day-summary-container" style="display:none;"></div>
                 <div class="card">
-                    <h3>?벝 ?앸떒 ?ъ쭊</h3>
+                    <h3>📸 식단 사진</h3>
                     <div id="diet-boxes-container" style="display: flex; flex-direction: column; gap: 15px;">
                         <div class="diet-box" id="diet-box-breakfast">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">??泥?踰덉㎏ ?앹궗</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;">① 첫 번째 식사</span>
                                 <input type="file" id="diet-img-breakfast" accept="image/*"
                                     onchange="previewStaticImage(this, 'preview-breakfast', 'rm-breakfast')">
                                 <span id="txt-breakfast"
-                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">???щ━湲?/span>
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-breakfast" class="preview-img" alt="泥?踰덉㎏ ?앹궗 ?ъ쭊 誘몃━蹂닿린">
+                                    <img id="preview-breakfast" class="preview-img" alt="첫 번째 식사 사진 미리보기">
                                     <button id="rot-breakfast" class="static-rotate-btn"
                                         onclick="rotateImage(event, 'preview-breakfast', 'diet-img-breakfast')"
-                                        aria-label="?ъ쭊 ?뚯쟾">?봽</button>
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-breakfast" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-breakfast', 'preview-breakfast', 'rm-breakfast', 'txt-breakfast')"
-                                        aria-label="?ъ쭊 ??젣">X ??젣</button>
+                                        aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
                             <button class="diet-ai-btn" id="ai-btn-breakfast" data-meal="breakfast" onclick="analyzeMealPhoto('breakfast')"
-                                style="display:none;">?쨼 AI 遺꾩꽍</button>
+                                style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-breakfast" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-lunch" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">????踰덉㎏ ?앹궗</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;">② 두 번째 식사</span>
                                 <input type="file" id="diet-img-lunch" accept="image/*"
                                     onchange="previewStaticImage(this, 'preview-lunch', 'rm-lunch')">
                                 <span id="txt-lunch"
-                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">???щ━湲?/span>
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-lunch" class="preview-img" alt="??踰덉㎏ ?앹궗 ?ъ쭊 誘몃━蹂닿린">
+                                    <img id="preview-lunch" class="preview-img" alt="두 번째 식사 사진 미리보기">
                                     <button id="rot-lunch" class="static-rotate-btn"
                                         onclick="rotateImage(event, 'preview-lunch', 'diet-img-lunch')"
-                                        aria-label="?ъ쭊 ?뚯쟾">?봽</button>
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-lunch" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-lunch', 'preview-lunch', 'rm-lunch', 'txt-lunch')"
-                                        aria-label="?ъ쭊 ??젣">X ??젣</button>
+                                        aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
                             <button class="diet-ai-btn" id="ai-btn-lunch" data-meal="lunch" onclick="analyzeMealPhoto('lunch')"
-                                style="display:none;">?쨼 AI 遺꾩꽍</button>
+                                style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-lunch" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-dinner" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">????踰덉㎏ ?앹궗</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;">③ 세 번째 식사</span>
                                 <input type="file" id="diet-img-dinner" accept="image/*"
                                     onchange="previewStaticImage(this, 'preview-dinner', 'rm-dinner')">
                                 <span id="txt-dinner"
-                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">???щ━湲?/span>
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-dinner" class="preview-img" alt="??踰덉㎏ ?앹궗 ?ъ쭊 誘몃━蹂닿린">
+                                    <img id="preview-dinner" class="preview-img" alt="세 번째 식사 사진 미리보기">
                                     <button id="rot-dinner" class="static-rotate-btn"
                                         onclick="rotateImage(event, 'preview-dinner', 'diet-img-dinner')"
-                                        aria-label="?ъ쭊 ?뚯쟾">?봽</button>
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-dinner" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-dinner', 'preview-dinner', 'rm-dinner', 'txt-dinner')"
-                                        aria-label="?ъ쭊 ??젣">X ??젣</button>
+                                        aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
                             <button class="diet-ai-btn" id="ai-btn-dinner" data-meal="dinner" onclick="analyzeMealPhoto('dinner')"
-                                style="display:none;">?쨼 AI 遺꾩꽍</button>
+                                style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-dinner" class="diet-analysis-result" style="display:none;"></div>
                         </div>
 
                         <div class="diet-box" id="diet-box-snack" style="display:none;">
                             <label class="upload-area">
-                                <span style="font-size: 13px; font-weight: bold; display: block;">????踰덉㎏ ?앹궗</span>
+                                <span style="font-size: 13px; font-weight: bold; display: block;">④ 네 번째 식사</span>
                                 <input type="file" id="diet-img-snack" accept="image/*"
                                     onchange="previewStaticImage(this, 'preview-snack', 'rm-snack')">
                                 <span id="txt-snack"
-                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">???щ━湲?/span>
+                                    style="color: #666; font-size: 12px; margin-top:5px; display:inline-block;">➕ 올리기</span>
                                 <div style="position:relative;">
-                                    <img id="preview-snack" class="preview-img" alt="??踰덉㎏ ?앹궗 ?ъ쭊 誘몃━蹂닿린">
+                                    <img id="preview-snack" class="preview-img" alt="네 번째 식사 사진 미리보기">
                                     <button id="rot-snack" class="static-rotate-btn"
                                         onclick="rotateImage(event, 'preview-snack', 'diet-img-snack')"
-                                        aria-label="?ъ쭊 ?뚯쟾">?봽</button>
+                                        aria-label="사진 회전">🔄</button>
                                     <button id="rm-snack" class="static-remove-btn"
                                         onclick="removeStaticImage(event, 'diet-img-snack', 'preview-snack', 'rm-snack', 'txt-snack')"
-                                        aria-label="?ъ쭊 ??젣">X ??젣</button>
+                                        aria-label="사진 삭제">X 삭제</button>
                                 </div>
                             </label>
                             <button class="diet-ai-btn" id="ai-btn-snack" data-meal="snack" onclick="analyzeMealPhoto('snack')"
-                                style="display:none;">?쨼 AI 遺꾩꽍</button>
+                                style="display:none;">🤖 AI 분석</button>
                             <div id="diet-analysis-snack" class="diet-analysis-result" style="display:none;"></div>
                         </div>
                     </div>
                 </div>
                 <div class="card card-fasting"
                     style="border: 2px solid #E3F2FD; background-color: #F8BBD0; background: linear-gradient(to right, #ffffff, #f0f8ff);">
-                    <h3>?뽳툘 ?꾩묠 怨듬났 吏??湲곕줉</h3>
+                    <h3>⚖️ 아침 공복 지표 기록</h3>
                     <div class="input-grid">
-                        <input type="number" id="weight" placeholder="泥댁쨷 (kg)">
-                        <input type="number" id="glucose" placeholder="怨듬났 ?덈떦 (mg/dL)">
-                        <input type="number" id="bp-systolic" placeholder="?섏텞湲??덉븬">
-                        <input type="number" id="bp-diastolic" placeholder="?댁셿湲??덉븬">
+                        <input type="number" id="weight" placeholder="체중 (kg)">
+                        <input type="number" id="glucose" placeholder="공복 혈당 (mg/dL)">
+                        <input type="number" id="bp-systolic" placeholder="수축기 혈압">
+                        <input type="number" id="bp-diastolic" placeholder="이완기 혈압">
                     </div>
                 </div>
-                <!-- 怨듬났 吏??異붿씠 洹몃옒??-->
+                <!-- 공복 지표 추이 그래프 -->
                 <div class="card" id="fasting-graph-card" style="display:none;">
-                    <h3>?뱤 怨듬났 吏??異붿씠 (理쒓렐 30??</h3>
+                    <h3>📊 공복 지표 추이 (최근 30일)</h3>
                     <div style="display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap;">
-                        <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">?뽳툘 泥댁쨷</button>
-                        <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">?㈇ ?덈떦</button>
-                        <button class="filter-chip" onclick="switchFastingGraph('bp', this)">?뮄 ?덉븬</button>
+                        <button class="filter-chip active" onclick="switchFastingGraph('weight', this)">⚖️ 체중</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('glucose', this)">🩸 혈당</button>
+                        <button class="filter-chip" onclick="switchFastingGraph('bp', this)">💓 혈압</button>
                     </div>
                     <canvas id="fasting-chart" width="340" height="180"
                         style="width:100%; height:auto; border-radius:8px;"></canvas>
@@ -1095,36 +1096,36 @@
             </div>
 
             <div id="exercise" class="content-section">
-                <div class="record-flow-card" data-record-guide="exercise" aria-label="?대룞 湲곕줉 媛?대뱶">
+                <div class="record-flow-card" data-record-guide="exercise" aria-label="운동 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">媛?대뱶</div>
-                        <button type="button" id="exercise-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="exercise-guide-body" onclick="toggleRecordFlowCard('exercise')">?묎린</button>
+                        <div class="record-flow-kicker">가이드</div>
+                        <button type="button" id="exercise-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="exercise-guide-body" onclick="toggleRecordFlowCard('exercise')">접기</button>
                     </div>
                     <div class="record-flow-body" id="exercise-guide-body">
-                        <div class="simple-mode-record-title">?ㅻ뒛 ?대룞 湲곕줉?섏꽭??/div>
+                        <div class="simple-mode-record-title">오늘 운동 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>嫄몄쓬?섎쭔 ?낅젰?대룄 ??ν븷 ???덉뼱??/h3>
-                                <p id="exercise-guide-status">嫄몄쓬?? ?대룞 ?대?吏, ?대룞 ?곸긽 以??섎굹留?以鍮꾪빐???ㅻ뒛 ?대룞 湲곕줉????ν븷 ???덉뒿?덈떎.</p>
+                                <h3>걸음수만 입력해도 저장할 수 있어요</h3>
+                                <p id="exercise-guide-status">걸음수, 운동 이미지, 운동 영상 중 하나만 준비해도 오늘 운동 기록을 저장할 수 있습니다.</p>
                             </div>
                             <div class="record-flow-head-side">
-                                <span class="record-flow-badge" id="exercise-guide-badge">以鍮?0媛?/span>
+                                <span class="record-flow-badge" id="exercise-guide-badge">준비 0개</span>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()">嫄몄쓬???낅젰</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile()">?대룞 ?대?吏</button>
-                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">?대룞 ?곸긽</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile()">운동 이미지</button>
+                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">운동 영상</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>?룂 <strong>?좎궛?뙿룰구?뚯닔 10+5P, 洹쇰젰 ?대룞 10+5P</strong></span><span
-                            class="quest-check" id="quest-exercise">誘몃떖??/span></div>
+                    <div class="quest-item"><span>🏃 <strong>유산소·걸음수 10+5P, 근력 운동 10+5P</strong></span><span
+                            class="quest-check" id="quest-exercise">미달성</span></div>
                 </div>
-                <!-- 嫄몄쓬??移대뱶 -->
+                <!-- 걸음수 카드 -->
                 <div class="card step-card" id="step-card">
-                    <h3>?몷 ?ㅻ뒛??嫄몄쓬??<span style="font-size:12px; color:#888; font-weight:normal;">(?좎궛???몄쬆 1嫄?</span></h3>
+                    <h3>👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(유산소 인증 1건)</span></h3>
                     <div class="step-display">
                         <div class="step-ring-container">
                             <svg class="step-ring" viewBox="0 0 120 120">
@@ -1140,194 +1141,194 @@
                         <div class="step-right-panel">
                             <div class="step-input-group">
                                 <input type="number" id="step-manual-input" class="step-number-input"
-                                    placeholder="吏곸젒 ?낅젰" min="0" max="200000" inputmode="numeric">
-                                <button class="step-input-btn" onclick="setManualSteps()">?낅젰</button>
+                                    placeholder="직접 입력" min="0" max="200000" inputmode="numeric">
+                                <button class="step-input-btn" onclick="setManualSteps()">입력</button>
                             </div>
                         </div>
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
                 </div>
-                <!-- ?낅줈??CTA -->
+                <!-- 업로드 CTA -->
                 <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
                     <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile()">
-                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">?벝</div>
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
                         <div class="upload-cta-text">
-                            <strong style="font-size:13px;">?대룞 ?대?吏 ?깅줉</strong>
+                            <strong style="font-size:13px;">운동 이미지 등록</strong>
                         </div>
-                        <div class="upload-cta-arrow">??/div>
+                        <div class="upload-cta-arrow">›</div>
                     </div>
                     <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile()">
-                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">?벞</div>
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
                         <div class="upload-cta-text">
-                            <strong style="font-size:13px;">?대룞 ?곸긽 ?깅줉</strong>
+                            <strong style="font-size:13px;">운동 영상 등록</strong>
                         </div>
-                        <div class="upload-cta-arrow">??/div>
+                        <div class="upload-cta-arrow">›</div>
                     </div>
                 </div>
                 <div class="card">
-                    <h3>?벝 ?대룞 ?대?吏</h3>
-                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">?벝 ?ъ쭊? 珥ъ쁺 ?뱀씪?먮쭔 ?깅줉 媛?ν빀?덈떎.</p>
+                    <h3>📸 운동 이미지</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
                     <div id="cardio-list"></div>
                 </div>
                 <div class="card">
-                    <h3>?벞 ?대룞 ?곸긽</h3>
-                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">?벞 ?곸긽? 珥ъ쁺 ?뱀씪?먮쭔 ?깅줉 媛?ν빀?덈떎.</p>
-                    <button class="guide-btn" onclick="document.getElementById('guide-modal').style.display='flex'">?벝 10珥??섏씠?쇰옪???쎄쾶 李띾뒗 踰?/button>
+                    <h3>📹 운동 영상</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📹 영상은 촬영 당일에만 등록 가능합니다.</p>
+                    <button class="guide-btn" onclick="document.getElementById('guide-modal').style.display='flex'">📸 10초 하이퍼랩스 쉽게 찍는 법</button>
                     <div id="strength-list"></div>
                 </div>
             </div>
 
             <div id="sleep" class="content-section">
-                <div class="record-flow-card" data-record-guide="sleep" aria-label="留덉쓬怨??섎㈃ 湲곕줉 媛?대뱶">
+                <div class="record-flow-card" data-record-guide="sleep" aria-label="마음과 수면 기록 가이드">
                     <div class="record-flow-topline">
-                        <div class="record-flow-kicker">媛?대뱶</div>
-                        <button type="button" id="sleep-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="sleep-guide-body" onclick="toggleRecordFlowCard('sleep')">?묎린</button>
+                        <div class="record-flow-kicker">가이드</div>
+                        <button type="button" id="sleep-guide-toggle" class="record-flow-toggle" aria-expanded="true" aria-controls="sleep-guide-body" onclick="toggleRecordFlowCard('sleep')">접기</button>
                     </div>
                     <div class="record-flow-body" id="sleep-guide-body">
-                        <div class="simple-mode-record-title">?ㅻ뒛 留덉쓬 湲곕줉?섏꽭??/div>
+                        <div class="simple-mode-record-title">오늘 마음 기록하세요</div>
                         <div class="record-flow-head">
                             <div>
-                                <h3>?섎㈃ 罹≪쿂??媛먯궗 ?쇨린硫?異⑸텇?댁슂</h3>
-                                <p id="mind-guide-status">?섎㈃ 罹≪쿂, 10遺?紐낆긽, 媛먯궗 ?쇨린瑜??④꺼蹂댁꽭??</p>
+                                <h3>수면 캡처나 감사 일기면 충분해요</h3>
+                                <p id="mind-guide-status">수면 캡처, 10분 명상, 감사 일기를 남겨보세요.</p>
                             </div>
                             <div class="record-flow-head-side">
-                                <span class="record-flow-badge" id="mind-guide-badge">以鍮?0媛?/span>
+                                <span class="record-flow-badge" id="mind-guide-badge">준비 0개</span>
                             </div>
                         </div>
                         <div class="record-flow-actions">
-                            <button class="record-flow-btn tone-success" type="button" onclick="triggerSleepUpload()">?섎㈃ 罹≪쿂</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="toggleMeditationQuickMark()">紐낆긽 泥댄겕</button>
-                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">媛먯궗 ?쇨린</button>
+                            <button class="record-flow-btn tone-success" type="button" onclick="triggerSleepUpload()">수면 캡처</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="toggleMeditationQuickMark()">명상 체크</button>
+                            <button class="record-flow-btn" type="button" onclick="focusGratitudeJournal()">감사 일기</button>
                         </div>
                     </div>
                 </div>
                 <div class="quest-board">
-                    <div class="quest-item"><span>?쭣 留덉쓬/?섎㈃ 湲곕줉 <strong>(媛?10P, 理쒕? 20P)</strong></span><span
-                            class="quest-check" id="quest-mind">誘몃떖??/span></div>
+                    <div class="quest-item"><span>🧘 마음/수면 기록 <strong>(각 10P, 최대 20P)</strong></span><span
+                            class="quest-check" id="quest-mind">미달성</span></div>
                 </div>
-                <!-- ?낅줈??CTA -->
+                <!-- 업로드 CTA -->
                 <div class="upload-cta" onclick="document.getElementById('sleep-img').click()">
-                    <div class="upload-cta-icon">?뮘</div>
+                    <div class="upload-cta-icon">💤</div>
                     <div class="upload-cta-text">
-                        <strong>?섎㈃ 罹≪쿂瑜??щ젮蹂댁꽭??</strong>
-                        <span>AI媛 ?섎㈃ ?⑦꽩??遺꾩꽍?섍퀬 媛쒖꽑?먯쓣 ?뚮젮?쒕젮??/span>
+                        <strong>수면 캡처를 올려보세요!</strong>
+                        <span>AI가 수면 패턴을 분석하고 개선점을 알려드려요</span>
                     </div>
-                    <div class="upload-cta-arrow">??/div>
+                    <div class="upload-cta-arrow">›</div>
                 </div>
                 <div class="card">
-                    <h3>?뮘 ?섎㈃ 遺꾩꽍</h3>
-                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">?벝 ?ъ쭊? 珥ъ쁺 ?뱀씪?먮쭔 ?깅줉
-                        媛?ν빀?덈떎.</p>
+                    <h3>💤 수면 분석</h3>
+                    <p style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록
+                        가능합니다.</p>
                     <label class="upload-area">
                         <input type="file" id="sleep-img" accept="image/*"
                             onchange="previewStaticImage(this, 'preview-sleep', 'rm-sleep', false)">
-                        <span id="txt-sleep" style="color: #666; font-size: 14px;">??罹≪쿂 ?щ━湲?/span>
+                        <span id="txt-sleep" style="color: #666; font-size: 14px;">➕ 캡처 올리기</span>
                         <div style="position:relative;">
-                            <img id="preview-sleep" class="preview-img" alt="?섎㈃ 湲곕줉 罹섏쿂 誘몃━蹂닿린">
+                            <img id="preview-sleep" class="preview-img" alt="수면 기록 캘처 미리보기">
                             <button id="rm-sleep" class="static-remove-btn"
                                 onclick="removeStaticImage(event, 'sleep-img', 'preview-sleep', 'rm-sleep', 'txt-sleep')"
-                                aria-label="?섎㈃ 湲곕줉 ?ъ쭊 ??젣">X ??젣</button>
+                                aria-label="수면 기록 사진 삭제">X 삭제</button>
                         </div>
                     </label>
-                    <button class="diet-ai-btn" id="ai-btn-sleep" onclick="analyzeSleepData()" style="display:none;">?쨼 AI 遺꾩꽍</button>
+                    <button class="diet-ai-btn" id="ai-btn-sleep" onclick="analyzeSleepData()" style="display:none;">🤖 AI 분석</button>
                     <div id="sleep-analysis-result" class="diet-analysis-result" style="display:none;"></div>
                 </div>
                 <div class="card">
-                    <h3>?쭣 留덉쓬 梨숆? 諛?媛먯궗 ?쇨린</h3>
+                    <h3>🧘 마음 챙김 및 감사 일기</h3>
                     <label style="font-size: 14px; display: block; margin-bottom: 10px;"><input type="checkbox"
-                            id="meditation-check"> ???ㅻ뒛 10遺?紐낆긽 ?꾨즺</label>
-                    <textarea id="gratitude-journal" placeholder="?ㅻ뒛 ?섎（ 媛먯궗?덈뜕 ??湲곕줉?섍린"></textarea>
+                            id="meditation-check"> ✅ 오늘 10분 명상 완료</label>
+                    <textarea id="gratitude-journal" placeholder="오늘 하루 감사했던 일 기록하기"></textarea>
 
                 </div>
             </div>
 
-            <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="紐⑤몢??媛ㅻ윭由?>
+            <div id="gallery" class="content-section" style="padding-bottom:80px;" role="region" aria-label="모두의 갤러리">
                 <div class="gallery-stage">
                     <section class="gallery-hero" id="gallery-hero">
                         <div class="gallery-hero-copy">
                             <div class="gallery-hero-header">
                                 <div class="gallery-hero-kicker">HABIT FEED</div>
-                                <button type="button" id="gallery-hero-toggle" class="gallery-guide-toggle" aria-expanded="true" aria-controls="gallery-hero-guide-body" onclick="toggleGalleryHeroGuide()">?묎린</button>
+                                <button type="button" id="gallery-hero-toggle" class="gallery-guide-toggle" aria-expanded="true" aria-controls="gallery-hero-guide-body" onclick="toggleGalleryHeroGuide()">접기</button>
                             </div>
                             <div class="gallery-hero-guide-body" id="gallery-hero-guide-body">
-                            <h2 class="gallery-hero-title">湲곕줉?섍퀬, 怨듭쑀?섍퀬, ?쒕줈 ?묒썝?섍린</h2>
-                            <p class="gallery-hero-desc">怨듭쑀??湲곕줉留?蹂닿퀬, ?щ━怨??띠쓣 ?뚮쭔 ?щ━?몄슂.</p>
-                            <div class="gallery-hero-actions" role="group" aria-label="媛ㅻ윭由?鍮좊Ⅸ ?됰룞">
+                            <h2 class="gallery-hero-title">기록하고, 공유하고, 서로 응원하기</h2>
+                            <p class="gallery-hero-desc">공유한 기록만 보고, 올리고 싶을 때만 올리세요.</p>
+                            <div class="gallery-hero-actions" role="group" aria-label="갤러리 빠른 행동">
                                 <button class="gallery-hero-action primary" onclick="goToGalleryRecordAction()">
                                     <span class="gallery-hero-action-step">1</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>湲곕줉 ???/strong>
-                                        <span>?ㅻ뒛 ??쑝濡??대룞</span>
+                                        <strong>기록 저장</strong>
+                                        <span>오늘 탭으로 이동</span>
                                     </span>
                                 </button>
                                 <button class="gallery-hero-action" onclick="triggerGalleryShareAction()">
                                     <span class="gallery-hero-action-step">2</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>?몄쬆 怨듭쑀</strong>
-                                        <span>??移대뱶 諛붾줈 ?닿린</span>
+                                        <strong>인증 공유</strong>
+                                        <span>내 카드 바로 열기</span>
                                     </span>
                                 </button>
                                 <button class="gallery-hero-action" onclick="focusGalleryFeed()">
                                     <span class="gallery-hero-action-step">3</span>
                                     <span class="gallery-hero-action-text">
-                                        <strong>移쒓뎄 ?묒썝</strong>
-                                        <span>理쒓렐 ?쇰뱶 蹂닿린</span>
+                                        <strong>친구 응원</strong>
+                                        <span>최근 피드 보기</span>
                                     </span>
                                 </button>
                             </div>
                             <div class="gallery-share-settings-stack">
-                                <div class="gallery-privacy-note" role="note" aria-label="怨듦컻 踰붿쐞 ?덈궡">
-                                    <span class="gallery-privacy-badge">湲곕낯 怨듭쑀</span>
-                                    <span class="gallery-privacy-text">湲곕낯 怨듭쑀?덉슂. ?대쫫쨌?좎쭨쨌?앸떒쨌?대룞쨌留덉쓬쨌?ъ씤?몃뒗 ?④만 ???덉뼱??/span>
+                                <div class="gallery-privacy-note" role="note" aria-label="공개 범위 안내">
+                                    <span class="gallery-privacy-badge">기본 공유</span>
+                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·운동·마음·포인트는 숨길 수 있어요</span>
                                 </div>
-                                <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="triggerGalleryShareAction()">怨듭쑀 ?ㅼ젙 ?닿린</button>
+                                <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="triggerGalleryShareAction()">공유 설정 열기</button>
                                 <div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>
-                                    <div class="share-privacy-panel share-privacy-panel-inline" role="group" aria-label="怨듦컻 ?ㅼ젙">
+                                    <div class="share-privacy-panel share-privacy-panel-inline" role="group" aria-label="공개 설정">
                                         <div class="share-privacy-header">
-                                            <strong>怨듦컻 ?ㅼ젙</strong>
-                                            <span id="share-settings-summary">湲곕낯 怨듭쑀 以?쨌 ?④만 ??ぉ ?좏깮</span>
+                                            <strong>공개 설정</strong>
+                                            <span id="share-settings-summary">기본 공유 중 · 숨길 항목 선택</span>
                                         </div>
                                         <div class="share-privacy-grid">
                                             <label class="share-privacy-toggle" for="share-hide-identity">
                                                 <input type="checkbox" id="share-hide-identity">
-                                                <span>?대쫫</span>
+                                                <span>이름</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-date">
                                                 <input type="checkbox" id="share-hide-date">
-                                                <span>?좎쭨</span>
+                                                <span>날짜</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-diet">
                                                 <input type="checkbox" id="share-hide-diet">
-                                                <span>?앸떒</span>
+                                                <span>식단</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-exercise">
                                                 <input type="checkbox" id="share-hide-exercise">
-                                                <span>?대룞</span>
+                                                <span>운동</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-points">
                                                 <input type="checkbox" id="share-hide-points">
-                                                <span>?ъ씤??/span>
+                                                <span>포인트</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-mind">
                                                 <input type="checkbox" id="share-hide-mind">
-                                                <span>留덉쓬</span>
+                                                <span>마음</span>
                                             </label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="gallery-hero-stats" aria-label="媛ㅻ윭由??붿빟">
+                            <div class="gallery-hero-stats" aria-label="갤러리 요약">
                             <div class="gallery-hero-stat">
                                 <strong id="gallery-total-posts">0</strong>
-                                <span>理쒓렐 ?몄쬆</span>
+                                <span>최근 인증</span>
                             </div>
                             <div class="gallery-hero-stat">
                                 <strong id="gallery-total-members">0</strong>
-                                <span>李몄뿬 ?숈깮</span>
+                                <span>참여 학생</span>
                             </div>
                             <div class="gallery-hero-stat">
-                                <strong id="gallery-my-streak">0??/strong>
-                                <span>??理쒖옣 ?먮쫫</span>
+                                <strong id="gallery-my-streak">0일</strong>
+                                <span>내 최장 흐름</span>
                             </div>
                         </div>
                             </div>
@@ -1335,65 +1336,65 @@
                     </section>
 
                 <div id="my-share-container" class="share-card-shell" style="display:none;">
-                    <div class="share-template-panel share-template-panel-visible" role="group" aria-label="怨듭쑀 ?쒗뵆由??좏깮">
+                    <div class="share-template-panel share-template-panel-visible" role="group" aria-label="공유 템플릿 선택">
                         <div class="share-template-picker">
-                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">?뺣룉??/button>
-                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">寃뱀묠??/button>
-                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">?ъ빱?ㅽ삎</button>
+                            <button type="button" class="share-template-btn is-active" data-share-template="grid" aria-pressed="true">정돈형</button>
+                            <button type="button" class="share-template-btn" data-share-template="overlap" aria-pressed="false">겹침형</button>
+                            <button type="button" class="share-template-btn" data-share-template="spotlight" aria-pressed="false">포커스형</button>
                         </div>
                     </div>
                     <div class="share-card-container">
                         <div id="capture-area" class="share-card-capture">
-                            <img id="share-render-preview" class="share-render-preview" alt="怨듭쑀 ?대?吏 誘몃━蹂닿린" hidden onerror="if (window.handleShareRenderPreviewError) { window.handleShareRenderPreviewError(this); } else { this.hidden = true; this.style.display = 'none'; this.removeAttribute('src'); }" />
+                            <img id="share-render-preview" class="share-render-preview" alt="공유 이미지 미리보기" hidden onerror="if (window.handleShareRenderPreviewError) { window.handleShareRenderPreviewError(this); } else { this.hidden = true; this.style.display = 'none'; this.removeAttribute('src'); }" />
                             <div id="share-render-empty" class="share-render-empty">
                                 <span class="share-empty-kicker">SHARE READY</span>
-                                <strong class="share-empty-title">?ㅻ뒛 湲곕줉????ν븯硫??뺤궗媛곹삎 怨듭쑀 移대뱶媛 諛붾줈 以鍮꾨뤌??</strong>
-                                <span class="share-empty-desc">?앸떒, ?대룞, 留덉쓬 ?몃꽕?쇱쓣 ?????대?吏濡??뺣━?댁꽌 ?몄뒪?? 移댄넚??諛붾줈 蹂대궪 ???덉뼱??</span>
+                                <strong class="share-empty-title">오늘 기록을 저장하면 정사각형 공유 카드가 바로 준비돼요.</strong>
+                                <span class="share-empty-desc">식단, 운동, 마음 썸네일을 한 장 이미지로 정리해서 인스타와 카톡에 바로 보낼 수 있어요.</span>
                             </div>
                         </div>
                         <button class="btn-share-action" onclick="shareMyCard()">
-                            怨듭쑀?섍린
+                            공유하기
                         </button>
                     </div>
                 </div>
 
                 <div class="gallery-top-grid">
-                <!-- ?몄뒪?洹몃옩 ?ㅽ???諛섏쓳 ?붿빟 諛곕꼫 -->
+                <!-- 인스타그램 스타일 반응 요약 배너 -->
                 <div id="gallery-activity-summary" class="activity-summary" style="display:none;" role="status"
-                    aria-label="??寃뚯떆臾?諛섏쓳 ?붿빟"></div>
+                    aria-label="내 게시물 반응 요약"></div>
 
-                <!-- 二쇨컙 踰좎뒪??-->
+                <!-- 주간 베스트 -->
                 <div id="weekly-best-container" style="display:none;"></div>
                 </div>
 
                 <section class="gallery-feed-shell">
-                <!-- ?좎? ?꾪꽣 諛곕꼫 (?꾨컮?/?대쫫 ?대┃ ???쒖떆) -->
+                <!-- 유저 필터 배너 (아바타/이름 클릭 시 표시) -->
                 <div id="gallery-user-filter-bar" class="gallery-user-filter-bar" style="display:none;">
-                    <span class="gallery-user-filter-kicker">媛쒖씤 ?꾪꽣</span>
+                    <span class="gallery-user-filter-kicker">개인 필터</span>
                     <span id="gallery-user-filter-label"></span>
-                    <button class="gallery-user-filter-clear" onclick="clearGalleryUserFilter()" aria-label="?좎? ?꾪꽣 ?댁젣">?꾩껜 蹂닿린</button>
+                    <button class="gallery-user-filter-clear" onclick="clearGalleryUserFilter()" aria-label="유저 필터 해제">전체 보기</button>
                 </div>
 
                 <div class="gallery-feed-toolbar">
                     <div class="gallery-feed-heading">
                         <div class="gallery-feed-kicker" id="gallery-feed-kicker">RECENT FEED</div>
-                        <h3 id="gallery-feed-title">紐⑤몢??理쒓렐 ?몄쬆</h3>
+                        <h3 id="gallery-feed-title">모두의 최근 인증</h3>
                         <p id="gallery-feed-desc"></p>
                     </div>
 
-                    <div class="gallery-filters" role="group" aria-label="媛ㅻ윭由??꾪꽣">
+                    <div class="gallery-filters" role="group" aria-label="갤러리 필터">
                         <button class="filter-chip active" onclick="setGalleryFilter('all', this)"
-                            aria-pressed="true">?꾩껜蹂닿린</button>
+                            aria-pressed="true">전체보기</button>
                         <button class="filter-chip" onclick="setGalleryFilter('diet', this)" aria-pressed="false"
-                            aria-label="?앸떒 ?꾪꽣">?쪞 ?앸떒</button>
+                            aria-label="식단 필터">🥗 식단</button>
                         <button class="filter-chip" onclick="setGalleryFilter('exercise', this)" aria-pressed="false"
-                            aria-label="?대룞 ?꾪꽣">?룂 ?대룞</button>
+                            aria-label="운동 필터">🏃 운동</button>
                         <button class="filter-chip" onclick="setGalleryFilter('mind', this)" aria-pressed="false"
-                            aria-label="留덉쓬 ?꾪꽣">?쭣 留덉쓬</button>
+                            aria-label="마음 필터">🧘 마음</button>
                     </div>
                 </div>
 
-                <div id="gallery-container" role="feed" aria-label="?대튆 媛ㅻ윭由??쇰뱶"></div>
+                <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
                 <div id="gallery-sentinel" style="height: 20px; text-align: center; padding: 20px; display: none;"
                     aria-hidden="true">
                     <div class="loading-spinner">
@@ -1408,14 +1409,14 @@
 
             <div class="chat-banner-fixed" id="chat-banner"
                 onclick="window.open('https://open.kakao.com/o/gv23urgi', '_blank')">
-                ?뮠 ?대튆?ㅼ엥 ?⑦넚諛?李몄뿬?섍린
+                💬 해빛스쿨 단톡방 참여하기
             </div>
 
             <div class="bottom-bar" id="submit-bar" style="display: none;" role="complementary">
                 <div class="submit-bar-inner">
-                    <div class="submit-bar-helper" id="submit-bar-helper">?ъ쭊 1?λ???諛붾줈 ??ν븷 ???덉뼱??</div>
-                    <button class="submit-btn" id="saveDataBtn" aria-label="?꾩옱 吏꾪뻾?곹솴 ???諛??ъ씤??諛쏄린">?꾩옱 吏꾪뻾?곹솴 ???& ?ъ씤??諛쏄린
-                        ?끏截?/button>
+                    <div class="submit-bar-helper" id="submit-bar-helper">사진 1장부터 바로 저장할 수 있어요.</div>
+                    <button class="submit-btn" id="saveDataBtn" aria-label="현재 진행상황 저장 및 포인트 받기">현재 진행상황 저장 & 포인트 받기
+                        🅿️</button>
                 </div>
             </div>
         </div>
@@ -1426,28 +1427,28 @@
             <div class="share-modal-handle" aria-hidden="true"></div>
             <div class="shared-import-header">
                 <div>
-                    <div class="shared-import-kicker">怨듭쑀 媛?몄삤湲?/div>
-                    <h3 id="shared-import-title">???ъ쭊???대뵒???ｌ쓣源뚯슂?</h3>
-                    <p id="shared-import-subtitle">AI媛 遺꾨쪟 以묒씠嫄곕굹 ?뺤떊????븘?? 諛붾줈 ?뚮윭???⑸땲??</p>
+                    <div class="shared-import-kicker">공유 가져오기</div>
+                    <h3 id="shared-import-title">이 사진을 어디에 넣을까요?</h3>
+                    <p id="shared-import-subtitle">AI가 분류 중이거나 확신이 낮아요. 바로 눌러도 됩니다.</p>
                 </div>
             </div>
             <div class="shared-import-preview-wrap">
-                <img id="shared-import-preview" class="shared-import-preview" alt="怨듭쑀???ъ쭊 誘몃━蹂닿린">
+                <img id="shared-import-preview" class="shared-import-preview" alt="공유된 사진 미리보기">
                 <span id="shared-import-count" class="shared-import-count" hidden></span>
             </div>
-            <div id="shared-import-status" class="shared-import-status" data-tone="info">AI媛 ?앸떒, ?대룞, ?섎㈃ 以??대뵒???ｌ쓣吏 蹂닿퀬 ?덉뼱??</div>
+            <div id="shared-import-status" class="shared-import-status" data-tone="info">AI가 식단, 운동, 수면 중 어디에 넣을지 보고 있어요.</div>
             <div class="shared-import-options">
                 <button type="button" class="shared-import-option" data-target="diet" onclick="chooseSharedImportTarget('diet')">
-                    <strong>?앸떒</strong>
-                    <span>鍮??앹궗 移몄뿉 諛붾줈 諛곗튂</span>
+                    <strong>식단</strong>
+                    <span>빈 식사 칸에 바로 배치</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="exercise" onclick="chooseSharedImportTarget('exercise')">
-                    <strong>?대룞</strong>
-                    <span>嫄몄쓬 罹≪쿂 ?먮뒗 ?대룞 ?대?吏</span>
+                    <strong>운동</strong>
+                    <span>걸음 캡처 또는 운동 이미지</span>
                 </button>
                 <button type="button" class="shared-import-option" data-target="sleep" onclick="chooseSharedImportTarget('sleep')">
-                    <strong>?섎㈃</strong>
-                    <span>?섎㈃ 罹≪쿂濡?諛붾줈 ?곌껐</span>
+                    <strong>수면</strong>
+                    <span>수면 캡처로 바로 연결</span>
                 </button>
             </div>
         </div>
@@ -1455,72 +1456,72 @@
 
     <div class="modal-overlay" id="level-modal">
         <div class="modal-content">
-            <button class="close-btn" onclick="document.getElementById('level-modal').style.display='none'">횞</button>
-            <h3 style="margin-top: 0; color: var(--primary-color);">?룇 ?대튆?ㅼ엥 誘몄뀡 ?덈꺼</h3>
-            <p style="font-size:12px; color:#888; margin-bottom:10px;">媛??덈꺼?먯꽌 ?ъ?/蹂댄넻/?꾩쟾 ?쒖씠?꾨? ?좏깮?????덉뼱??</p>
+            <button class="close-btn" onclick="document.getElementById('level-modal').style.display='none'">×</button>
+            <h3 style="margin-top: 0; color: var(--primary-color);">🏆 해빛스쿨 미션 레벨</h3>
+            <p style="font-size:12px; color:#888; margin-bottom:10px;">각 레벨에서 쉬움/보통/도전 난이도를 선택할 수 있어요!</p>
             <ul style="font-size: 14px; line-height: 1.8; color: #444; padding-left: 20px;">
-                <li><strong>Lv 1 (?쒖옉):</strong> ?앸떒 2~5??/ ?대룞 2~5??/ 留덉쓬 1~4??/li>
-                <li><strong>Lv 2 (?곸쓳):</strong> ?앸떒 3~7??/ ?대룞 3~6??/ 留덉쓬 2~5??/li>
-                <li><strong>Lv 3 (?꾩쟾):</strong> ?앸떒 4~7??/ ?대룞 4~7??/ 留덉쓬 3~6??/li>
-                <li><strong>Lv 4 (?깆옣):</strong> ?앸떒 5~7??/ ?대룞 5~7??/ 留덉쓬 4~7??/li>
-                <li><strong>Lv 5 (留덉뒪??:</strong> ?앸떒 6~7??/ ?대룞 6~7??/ 留덉쓬 5~7??/li>
+                <li><strong>Lv 1 (시작):</strong> 식단 2~5일 / 운동 2~5일 / 마음 1~4일</li>
+                <li><strong>Lv 2 (적응):</strong> 식단 3~7일 / 운동 3~6일 / 마음 2~5일</li>
+                <li><strong>Lv 3 (도전):</strong> 식단 4~7일 / 운동 4~7일 / 마음 3~6일</li>
+                <li><strong>Lv 4 (성장):</strong> 식단 5~7일 / 운동 5~7일 / 마음 4~7일</li>
+                <li><strong>Lv 5 (마스터):</strong> 식단 6~7일 / 운동 6~7일 / 마음 5~7일</li>
             </ul>
-            <p style="font-size:12px; color:#666; margin-top:8px;">?뮕 ?섎쭔??而ㅼ뒪? 誘몄뀡??異붽??????덉뒿?덈떎!</p>
+            <p style="font-size:12px; color:#666; margin-top:8px;">💡 나만의 커스텀 미션도 추가할 수 있습니다!</p>
             <button class="submit-btn" style="margin-top: 10px; padding: 12px;"
-                onclick="document.getElementById('level-modal').style.display='none'">?뺤씤</button>
+                onclick="document.getElementById('level-modal').style.display='none'">확인</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="chatbot-connect-modal" onclick="if(event.target===this)cancelChatbotConnect()">
         <div class="modal-content chatbot-connect-modal-content">
-            <button class="close-btn" onclick="cancelChatbotConnect()" aria-label="?リ린">횞</button>
-            <div class="chatbot-connect-modal-badge">?대튆肄붿튂 ?곌껐</div>
-            <h3 id="chatbot-connect-modal-title" class="chatbot-connect-modal-title">移댁뭅??怨꾩젙怨??곌껐?좉퉴??</h3>
-            <p id="chatbot-connect-modal-copy" class="chatbot-connect-modal-copy">?꾩옱 濡쒓렇?명븳 ?대튆?ㅼ엥 怨꾩젙怨??곌껐?⑸땲??</p>
+            <button class="close-btn" onclick="cancelChatbotConnect()" aria-label="닫기">×</button>
+            <div class="chatbot-connect-modal-badge">해빛코치 연결</div>
+            <h3 id="chatbot-connect-modal-title" class="chatbot-connect-modal-title">카카오 계정과 연결할까요?</h3>
+            <p id="chatbot-connect-modal-copy" class="chatbot-connect-modal-copy">현재 로그인한 해빛스쿨 계정과 연결됩니다.</p>
             <div class="chatbot-connect-modal-summary">
                 <div class="chatbot-connect-summary-row">
-                    <span>移댁뭅??怨꾩젙</span>
+                    <span>카카오 계정</span>
                     <strong id="chatbot-connect-kakao-name">-</strong>
                 </div>
                 <div class="chatbot-connect-summary-row">
-                    <span>?대튆?ㅼ엥 怨꾩젙</span>
+                    <span>해빛스쿨 계정</span>
                     <strong id="chatbot-connect-app-account">-</strong>
                 </div>
                 <div class="chatbot-connect-summary-row">
-                    <span>?좏슚 ?쒓컙</span>
+                    <span>유효 시간</span>
                     <strong id="chatbot-connect-expiry">-</strong>
                 </div>
             </div>
             <div class="chatbot-connect-modal-actions">
-                <button type="button" class="wallet-modal-btn cancel" onclick="cancelChatbotConnect()">痍⑥냼</button>
-                <button type="button" id="chatbot-connect-confirm-btn" class="wallet-modal-btn confirm" onclick="confirmChatbotConnect()">?곌껐?섍린</button>
+                <button type="button" class="wallet-modal-btn cancel" onclick="cancelChatbotConnect()">취소</button>
+                <button type="button" id="chatbot-connect-confirm-btn" class="wallet-modal-btn confirm" onclick="confirmChatbotConnect()">연결하기</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content guide-modal-content" onclick="event.stopPropagation()">
-            <button class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">횞</button>
-            <h3 style="margin-top:0; color: var(--point-color);">?벞 10珥??섏씠?쇰옪???쎄쾶 李띾뒗 踰?/h3>
+            <button class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">×</button>
+            <h3 style="margin-top:0; color: var(--point-color);">📹 10초 하이퍼랩스 쉽게 찍는 법</h3>
             <div class="guide-platform">
-                <h4>?뜋 iPhone (iPhone 13~16 / iOS 17~18)</h4>
+                <h4>🍎 iPhone (iPhone 13~16 / iOS 17~18)</h4>
                 <ol>
-                    <li>移대찓?????닿린 ???섎떒 紐⑤뱶?먯꽌 <strong>??꾨옪??/strong> ?좏깮</li>
-                    <li>?대??곗쓣 媛???믪씠濡?怨좎젙?섍퀬 ?대룞 ?숈꽑 癒쇱? ?뺤씤</li>
-                    <li>珥ъ쁺 踰꾪듉 ?꾨Ⅴ怨??대룞 ?숈옉 20~40珥?珥ъ쁺</li>
-                    <li>醫낅즺 ??誘몃━蹂닿린 ?뺤씤 ????λ맂 ?곸긽 ?낅줈??/li>
+                    <li>카메라 앱 열기 → 하단 모드에서 <strong>타임랩스</strong> 선택</li>
+                    <li>휴대폰을 가슴 높이로 고정하고 이동 동선 먼저 확인</li>
+                    <li>촬영 버튼 누르고 운동 동작 20~40초 촬영</li>
+                    <li>종료 후 미리보기 확인 → 저장된 영상 업로드</li>
                 </ol>
             </div>
             <div class="guide-platform">
-                <h4>?쨼 Android (Galaxy S23~S25 / Pixel 8~9)</h4>
+                <h4>🤖 Android (Galaxy S23~S25 / Pixel 8~9)</h4>
                 <ol>
-                    <li>移대찓??????<strong>?붾낫湲?/strong> ?먮뒗 <strong>紐⑤뱶</strong> ??<strong>?섏씠?쇰옪????꾨옪??/strong></li>
-                    <li>諛곗냽? 湲곕낯(?먮룞) ?먮뒗 10x 沅뚯옣</li>
-                    <li>?몃뱶???붾뱾由?以꾩씠怨??대룞 20~40珥?珥ъ쁺</li>
-                    <li>媛ㅻ윭由ъ뿉???ъ깮 ?뺤씤 ???낅줈??/li>
+                    <li>카메라 앱 → <strong>더보기</strong> 또는 <strong>모드</strong> → <strong>하이퍼랩스/타임랩스</strong></li>
+                    <li>배속은 기본(자동) 또는 10x 권장</li>
+                    <li>핸드폰 흔들림 줄이고 운동 20~40초 촬영</li>
+                    <li>갤러리에서 재생 확인 후 업로드</li>
                 </ol>
             </div>
-            <p class="guide-tip">?뮕 ?? ?덈Т 吏㏐쾶(3~5珥? 李띿쑝硫??몃꽕???덉쭏???⑥뼱吏????덉뼱?? 理쒖냼 15珥??댁긽 珥ъ쁺??沅뚯옣?⑸땲??</p>
+            <p class="guide-tip">💡 팁: 너무 짧게(3~5초) 찍으면 썸네일 품질이 떨어질 수 있어요. 최소 15초 이상 촬영을 권장합니다.</p>
         </div>
     </div>
 
@@ -1570,7 +1571,7 @@
         <img id="lightbox-img" src="" crossorigin="anonymous" onclick="event.stopPropagation()" alt="확대된 이미지">
         <video id="lightbox-video" controls playsinline onclick="event.stopPropagation()" aria-label="확대된 동영상"></video>
         <button id="lightbox-next" class="lightbox-nav lightbox-next" aria-label="다음 이미지">›</button>
-        <button class="lightbox-close" onclick="this.parentElement.style.display='none'" aria-label="?リ린">??/button>
+        <button class="lightbox-close" onclick="this.parentElement.style.display='none'" aria-label="닫기">✕</button>
     </div>
     <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
@@ -1578,23 +1579,23 @@
         <div class="share-platform-card" onclick="event.stopPropagation()">
             <div class="share-modal-handle"></div>
             <div class="share-modal-header">
-                <span class="share-modal-title">怨듭쑀?섍린 ??/span>
-                <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="?リ린">&times;</button>
+                <span class="share-modal-title">공유하기 ✨</span>
+                <button class="share-modal-close-x" onclick="closeSharePlatformModal()" aria-label="닫기">&times;</button>
             </div>
             <div class="share-preview-row">
                 <div class="share-preview-img-wrap">
-                    <img id="share-preview-thumb" src="" alt="怨듭쑀 誘몃━蹂닿린" />
+                    <img id="share-preview-thumb" src="" alt="공유 미리보기" />
                 </div>
                 <div class="share-preview-info">
-                    <div class="share-preview-title">?ㅻ뒛???대튆 ?몄쬆 ?뙙</div>
-                    <div class="share-preview-text">移쒓뎄?ㅼ뿉寃??섏쓽 嫄닿컯 ?듦???br>?먮옉?대낫?몄슂!</div>
+                    <div class="share-preview-title">오늘의 해빛 인증 🌞</div>
+                    <div class="share-preview-text">친구들에게 나의 건강 습관을<br>자랑해보세요!</div>
                 </div>
             </div>
             <div class="share-modal-tip">
-                <strong>紐⑤컮??/strong> ?쒖뒪??怨듭쑀媛 媛???ъ썙??
-                <span>PC?먯꽌???대?吏 ??κ낵 罹≪뀡 蹂듭궗 ???뚮옯??李쎌뿉 ?щ━硫??⑸땲??</span>
+                <strong>모바일</strong> 시스템 공유가 가장 쉬워요.
+                <span>PC에서는 이미지 저장과 캡션 복사 후 플랫폼 창에 올리면 됩니다.</span>
             </div>
-            <div class="share-section-label">?뚮옯??諛붾줈 ?닿린</div>
+            <div class="share-section-label">플랫폼 바로 열기</div>
             <div class="share-platform-grid">
                 <button class="share-grid-btn" onclick="shareToPlatform('kakao')">
                     <span class="share-icon kakao-icon"><svg width="24" height="24" viewBox="0 0 24 24">
@@ -1602,7 +1603,7 @@
                                 d="M12 3C6.48 3 2 6.58 2 10.9c0 2.78 1.86 5.22 4.65 6.6l-.96 3.56c-.08.3.26.54.52.36l4.2-2.78c.52.06 1.04.1 1.59.1 5.52 0 10-3.58 10-7.84C22 6.58 17.52 3 12 3z"
                                 fill="#3E2723" />
                         </svg></span>
-                    <span class="share-label">移댁뭅?ㅽ넚</span>
+                    <span class="share-label">카카오톡</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('instagram')">
                     <span class="share-icon insta-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
@@ -1611,14 +1612,14 @@
                             <circle cx="12" cy="12" r="5" fill="none" stroke="white" stroke-width="2" />
                             <circle cx="18" cy="6" r="1.5" fill="white" />
                         </svg></span>
-                    <span class="share-label">?몄뒪?洹몃옩</span>
+                    <span class="share-label">인스타그램</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('facebook')">
                     <span class="share-icon fb-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="white">
                             <path
                                 d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 5 3.66 9.13 8.44 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99C18.34 21.13 22 17 22 12z" />
                         </svg></span>
-                    <span class="share-label">?섏씠?ㅻ턿</span>
+                    <span class="share-label">페이스북</span>
                 </button>
                 <button class="share-grid-btn" onclick="shareToPlatform('x')">
                     <span class="share-icon x-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="white">
@@ -1634,173 +1635,173 @@
                             <path d="M8 7.5h4.7c2.07 0 3.3 1.13 3.3 2.95 0 1.12-.56 1.94-1.5 2.36 1.18.38 1.92 1.33 1.92 2.74 0 2.03-1.48 3.45-3.78 3.45H8V7.5zm4.22 4.57c.87 0 1.38-.42 1.38-1.14 0-.71-.5-1.11-1.38-1.11h-1.86v2.25h1.86zm.25 4.6c1 0 1.6-.47 1.6-1.29 0-.82-.6-1.28-1.6-1.28h-2.11v2.57h2.11z" fill="#21C531"/>
                         </svg>
                     </span>
-                    <span class="share-label">釉붾줈洹?/span>
+                    <span class="share-label">블로그</span>
                 </button>
             </div>
-            <div class="share-section-label">鍮좊Ⅸ 以鍮?/div>
+            <div class="share-section-label">빠른 준비</div>
             <div class="share-action-row">
                 <button class="share-action-pill" onclick="shareViaSystem()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" />
                     </svg>
-                    ?쒖뒪??怨듭쑀
+                    시스템 공유
                 </button>
                 <button class="share-action-pill" onclick="copyShareCaption()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M4 4h16v2H4V4zm0 7h16v2H4v-2zm0 7h10v2H4v-2z"/>
                     </svg>
-                    罹≪뀡 蹂듭궗
+                    캡션 복사
                 </button>
                 <button class="share-action-pill" onclick="copyShareLink()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path
                             d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
                     </svg>
-                    留곹겕 蹂듭궗
+                    링크 복사
                 </button>
                 <button class="share-action-pill" onclick="downloadShareImage()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                     </svg>
-                    ?대?吏 ???
+                    이미지 저장
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ?⑤낫??紐⑤떖 (泥?濡쒓렇???? -->
+    <!-- 온보딩 모달 (첫 로그인 시) -->
     <div id="onboarding-modal" class="modal-overlay" style="display:none;">
         <div class="modal-content onboarding-modal-content">
             <div id="ob-step-1" class="onboarding-step">
-                <div style="font-size:48px; margin-bottom:16px;">?뙙</div>
-                <h3 style="color:var(--primary-color); margin:0 0 12px; font-size:20px;">?대튆?ㅼ엥???ㅼ떊 嫄??섏쁺?⑸땲??</h3>
-                <p style="font-size:14px; color:#666; margin-bottom:20px; line-height:1.6;">留ㅼ씪 ?앸떒쨌?대룞쨌?섎㈃???ъ쭊?쇰줈 湲곕줉?섎ŉ<br>嫄닿컯???듦???留뚮뱾?닿????듦??숆탳?낅땲??</p>
+                <div style="font-size:48px; margin-bottom:16px;">🌞</div>
+                <h3 style="color:var(--primary-color); margin:0 0 12px; font-size:20px;">해빛스쿨에 오신 걸 환영합니다!</h3>
+                <p style="font-size:14px; color:#666; margin-bottom:20px; line-height:1.6;">매일 식단·운동·수면을 사진으로 기록하며<br>건강한 습관을 만들어가는 습관학교입니다.</p>
                 <div class="ob-start-tips">
-                    <div class="ob-tip">?쪞 ?앸떒 ?ъ쭊???щ━硫?<strong>AI媛 移쇰줈由?룹쁺?묒냼</strong>瑜?遺꾩꽍?댁슂</div>
-                    <div class="ob-tip">?룂 ?대룞怨??섎㈃???ъ쭊?쇰줈 媛꾪렪?섍쾶 湲곕줉?댁슂</div>
-                    <div class="ob-tip">??媛ㅻ윭由ъ뿉???ㅻⅨ ?ъ슜?먮뱾怨??④퍡 ?묒썝?댁슂</div>
+                    <div class="ob-tip">🥗 식단 사진을 올리면 <strong>AI가 칼로리·영양소</strong>를 분석해요</div>
+                    <div class="ob-tip">🏃 운동과 수면도 사진으로 간편하게 기록해요</div>
+                    <div class="ob-tip">✨ 갤러리에서 다른 사용자들과 함께 응원해요</div>
                 </div>
                 <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd);border:1.5px solid #ffc107;border-radius:12px;padding:14px 16px;margin-top:16px;text-align:center;">
-                    <div style="font-size:22px;margin-bottom:4px;">?럞</div>
-                    <div style="font-size:15px;font-weight:700;color:#e65100;">媛??異뺥븯 ?ъ씤??200P 吏湲?</div>
-                    <div style="font-size:13px;color:#795548;margin-top:4px;">嫄닿컯??泥?嫄몄쓬???묒썝?⑸땲???뙮</div>
+                    <div style="font-size:22px;margin-bottom:4px;">🎁</div>
+                    <div style="font-size:15px;font-weight:700;color:#e65100;">가입 축하 포인트 200P 지급!</div>
+                    <div style="font-size:13px;color:#795548;margin-top:4px;">건강한 첫 걸음을 응원합니다 🌱</div>
                 </div>
-                <button class="submit-btn" style="margin-top:16px; font-size:16px; width:100%;" onclick="completeOnboarding()">?뙙 ?쒖옉?섍린!</button>
+                <button class="submit-btn" style="margin-top:16px; font-size:16px; width:100%;" onclick="completeOnboarding()">🌞 시작하기!</button>
             </div>
         </div>
     </div>
 
-    <!-- 30??醫낇빀 寃곌낵吏 紐⑤떖 -->
+    <!-- 30일 종합 결과지 모달 -->
     <div id="report-modal" class="report-modal" style="display:none;">
         <div class="report-container" id="report-container">
             <div class="report-header">
-                <h2>?截??대튆?ㅼ엥 30??醫낇빀 寃곌낵吏</h2>
+                <h2>☀️ 해빛스쿨 30일 종합 결과지</h2>
                 <div class="report-meta">
-                    <span id="report-user-name"></span> 쨌
+                    <span id="report-user-name"></span> ·
                     <span id="report-period"></span>
                 </div>
             </div>
             <div class="report-body" id="report-body">
-                <p style="text-align:center; padding:40px; color:#999;">遺꾩꽍 以?..</p>
+                <p style="text-align:center; padding:40px; color:#999;">분석 중...</p>
             </div>
             <div class="report-actions">
-                <button class="report-btn report-btn-print" onclick="window.print()">?뼥截??몄뇙</button>
+                <button class="report-btn report-btn-print" onclick="window.print()">🖨️ 인쇄</button>
                 <button class="report-btn report-btn-close"
-                    onclick="document.getElementById('report-modal').style.display='none'">?リ린</button>
+                    onclick="document.getElementById('report-modal').style.display='none'">닫기</button>
             </div>
         </div>
     </div>
 
-    <!-- 紐⑤뱢?붾맂 JavaScript 濡쒕뱶 -->
+    <!-- 모듈화된 JavaScript 로드 -->
     <script type="module" src="js/app.js?v=165"></script>
     <script type="module" src="js/main.js?v=165"></script>
     <script type="module" src="js/diet-analysis.js?v=165"></script>
     <script type="module" src="js/metabolic-score.js?v=165"></script>
 
-    <!-- Service Worker ?깅줉 & PWA ?ㅼ튂 ?꾨＼?꾪듃 -->
+    <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
     <script src="js/pwa-install.js?v=165"></script>
 
-    <!-- QR 肄붾뱶 ?쇱씠釉뚮윭由?(qrcodejs ??釉뚮씪?곗? ?꾩슜, 寃利앸맂 踰꾩쟾) -->
+    <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
-    <!-- QR 珥덈? 紐⑤떖 -->
+    <!-- QR 초대 모달 -->
     <div id="qr-invite-modal" onclick="if(event.target===this)closeQRModal()"
          style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:9999; align-items:center; justify-content:center; padding:20px;">
         <div style="background:white; border-radius:24px; padding:28px 20px 20px; width:100%; max-width:320px; position:relative; text-align:center; max-height:90vh; overflow-y:auto;">
             <button onclick="closeQRModal()"
-                    style="position:absolute; top:12px; right:14px; background:none; border:none; font-size:24px; line-height:1; cursor:pointer; color:#bbb; padding:4px;">??/button>
-            <h3 style="margin:0 0 20px; font-size:15px; color:#333; font-weight:700;">?벑 QR 肄붾뱶濡?珥덈??섍린</h3>
+                    style="position:absolute; top:12px; right:14px; background:none; border:none; font-size:24px; line-height:1; cursor:pointer; color:#bbb; padding:4px;">✕</button>
+            <h3 style="margin:0 0 20px; font-size:15px; color:#333; font-weight:700;">📱 QR 코드로 초대하기</h3>
 
-            <!-- ??珥덈? QR -->
+            <!-- 내 초대 QR -->
             <div style="margin-bottom:20px;">
-                <div style="font-size:12px; font-weight:700; color:#E65100; margin-bottom:10px; letter-spacing:0.3px;">??珥덈? 留곹겕</div>
+                <div style="font-size:12px; font-weight:700; color:#E65100; margin-bottom:10px; letter-spacing:0.3px;">내 초대 링크</div>
                 <div id="qr-invite-container" style="width:200px; height:200px; border-radius:12px; overflow:hidden; display:inline-block; background:#f5f5f5;"></div>
                 <div id="qr-invite-label" style="font-size:11px; color:#999; margin-top:7px; letter-spacing:1px;"></div>
             </div>
 
             <div style="border-top:1px solid #f0f0f0; margin:0 0 20px;"></div>
 
-            <!-- ?⑦넚諛?QR -->
+            <!-- 단톡방 QR -->
             <div style="margin-bottom:20px;">
-                <div style="font-size:12px; font-weight:700; color:#3B1F8C; margin-bottom:10px;">?뮠 ?대튆?ㅼ엥 ?⑦넚諛?/div>
+                <div style="font-size:12px; font-weight:700; color:#3B1F8C; margin-bottom:10px;">💬 해빛스쿨 단톡방</div>
                 <div id="qr-chat-container" style="width:200px; height:200px; border-radius:12px; overflow:hidden; display:inline-block; background:#f5f5f5;"></div>
-                <div style="font-size:11px; color:#999; margin-top:7px;">?ㅼ틪?섎㈃ ?⑦넚諛?諛붾줈 ?낆옣</div>
+                <div style="font-size:11px; color:#999; margin-top:7px;">스캔하면 단톡방 바로 입장</div>
             </div>
 
         </div>
     </div>
 
-    <!-- ===== ?뚯뀥 梨뚮┛吏 ?앹꽦 紐⑤떖 ===== -->
+    <!-- ===== 소셜 챌린지 생성 모달 ===== -->
     <div id="create-challenge-modal" onclick="if(event.target===this)closeCreateChallengeModal()"
          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:340px;max-height:90vh;overflow-y:auto;position:relative;">
-            <button onclick="closeCreateChallengeModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">??/button>
-            <h3 style="margin:0 0 18px;font-size:16px;font-weight:700;">?룇 ???뚯뀥 梨뚮┛吏</h3>
+            <button onclick="closeCreateChallengeModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">✕</button>
+            <h3 style="margin:0 0 18px;font-size:16px;font-weight:700;">🏆 새 소셜 챌린지</h3>
 
-            <!-- 梨뚮┛吏 ?좏삎 -->
+            <!-- 챌린지 유형 -->
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">梨뚮┛吏 ?좏삎</div>
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">챌린지 유형</div>
                 <div style="display:flex;gap:8px;">
                     <button id="type-group" onclick="selectChallengeType('group_goal')"
                         style="flex:1;padding:10px 8px;border-radius:12px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
-                        ?뫁 ?⑥껜 紐⑺몴
+                        👥 단체 목표
                     </button>
                     <button id="type-competition" onclick="selectChallengeType('competition')"
                         style="flex:1;padding:10px 8px;border-radius:12px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;font-weight:600;cursor:pointer;">
-                        ?뷂툘 1:1 寃쎌웳
+                        ⚔️ 1:1 경쟁
                     </button>
                 </div>
                 <div id="type-desc" style="font-size:11px;color:#F57C00;font-weight:600;margin-top:6px;padding:0 2px;">
-                    ?꾩썝 70% ?댁긽 ?ъ꽦 ???듦? ?ъ씤??+20% 蹂대꼫??
+                    전원 70% 이상 달성 시 습관 포인트 +20% 보너스
                 </div>
             </div>
 
-            <!-- 移쒓뎄 ?좏깮 -->
+            <!-- 친구 선택 -->
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">移쒓뎄 ?좏깮 <span id="friend-select-hint" style="font-weight:400;color:#aaa;">(理쒕? 2紐?</span></div>
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">친구 선택 <span id="friend-select-hint" style="font-weight:400;color:#aaa;">(최대 2명)</span></div>
                 <div id="challenge-friend-list" style="display:flex;flex-direction:column;gap:6px;">
-                    <div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">移쒓뎄 紐⑸줉 濡쒕뵫 以?..</div>
+                    <div style="font-size:12px;color:#aaa;text-align:center;padding:8px;">친구 목록 로딩 중...</div>
                 </div>
             </div>
 
-            <!-- 湲곌컙 ?좏깮 -->
+            <!-- 기간 선택 -->
             <div style="margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">湲곌컙</div>
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">기간</div>
                 <div style="display:flex;gap:8px;">
                     <button onclick="selectDuration(3)" id="dur-3"
-                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">3??/button>
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">3일</button>
                     <button onclick="selectDuration(7)" id="dur-7"
-                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">7??/button>
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">7일</button>
                     <button onclick="selectDuration(14)" id="dur-14"
-                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">14??/button>
+                        style="flex:1;padding:8px;border-radius:10px;border:2px solid #e8e8e8;background:transparent;color:#666;font-size:13px;cursor:pointer;">14일</button>
                 </div>
-                <div id="duration-hint" style="font-size:11px;color:#888;margin-top:5px;padding:0 2px;">3??以?3???댁긽 湲곕줉 ???깃났</div>
+                <div id="duration-hint" style="font-size:11px;color:#888;margin-top:5px;padding:0 2px;">3일 중 3일 이상 기록 시 성공</div>
             </div>
 
-            <!-- ?ㅽ뀒?댄겕 (寃쎌웳 紐⑤뱶留? -->
+            <!-- 스테이크 (경쟁 모드만) -->
             <div id="stake-section" style="display:none;margin-bottom:16px;">
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">?ㅽ뀒?댄겕</div>
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">스테이크</div>
                 <div style="display:flex;gap:8px;">
                     <button onclick="selectStake(50)" id="stake-50"
                         style="flex:1;padding:9px 6px;border-radius:10px;border:2px solid #7C4DFF;background:#7C4DFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">50P</button>
@@ -1814,75 +1815,75 @@
 
             <button onclick="submitCreateChallenge()" id="create-challenge-btn"
                 style="width:100%;padding:14px;border-radius:14px;border:none;background:#7C4DFF;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;">
-                梨뚮┛吏 ?쒖옉?섍린 ??
+                챌린지 시작하기 🚀
             </button>
         </div>
     </div>
 
-    <!-- ===== 梨뚮┛吏 珥덈? ?묐떟 紐⑤떖 ===== -->
+    <!-- ===== 챌린지 초대 응답 모달 ===== -->
     <div id="challenge-invite-modal" onclick="if(event.target===this)closeChallengeInviteModal()"
          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:320px;position:relative;">
-            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">?룇 梨뚮┛吏 珥덈?</h3>
+            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">🏆 챌린지 초대</h3>
             <div id="challenge-invite-info" style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;"></div>
             <div style="display:flex;gap:10px;">
-                <button onclick="respondChallenge(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">嫄곗젅</button>
-                <button onclick="respondChallenge(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#7C4DFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">?섎씫 ??/button>
+                <button onclick="respondChallenge(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
+                <button onclick="respondChallenge(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#7C4DFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== 移쒓뎄 ?붿껌 ?묐떟 紐⑤떖 ===== -->
+    <!-- ===== 친구 요청 응답 모달 ===== -->
     <div id="friend-request-modal" onclick="if(event.target===this)closeFriendRequestModal()"
          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:320px;position:relative;">
-            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">?뫁 移쒓뎄 ?붿껌</h3>
+            <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;">👥 친구 요청</h3>
             <div id="friend-request-info" style="font-size:13px;color:#555;margin-bottom:20px;line-height:1.6;"></div>
             <div style="display:flex;gap:10px;">
-                <button onclick="respondPendingFriendRequest(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">嫄곗젅</button>
-                <button onclick="respondPendingFriendRequest(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#FF8C00;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">?섎씫 ??/button>
+                <button onclick="respondPendingFriendRequest(false)" style="flex:1;padding:12px;border-radius:12px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:14px;cursor:pointer;">거절</button>
+                <button onclick="respondPendingFriendRequest(true)" style="flex:1;padding:12px;border-radius:12px;border:none;background:#FF8C00;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">수락 ✓</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== 湲곗〈 ??吏媛??대낫?닿린 紐⑤떖 ===== -->
+    <!-- ===== 기존 앱 지갑 내보내기 모달 ===== -->
     <div id="legacy-wallet-export-modal" class="wallet-modal-overlay" style="display:none;" onclick="if(event.target===this)closeLegacyWalletExportModal()">
         <div class="wallet-modal legacy-wallet-modal">
-            <div class="wallet-modal-title">?뵍 湲곗〈 ??吏媛??대낫?닿린</div>
+            <div class="wallet-modal-title">🔐 기존 앱 지갑 내보내기</div>
             <div class="wallet-modal-body">
                 <div class="wallet-modal-summary">
                     <div class="wallet-modal-row">
-                        <span>?⑸룄</span>
-                        <span class="highlight">?몃? 吏媛??댁쟾</span>
+                        <span>용도</span>
+                        <span class="highlight">외부 지갑 이전</span>
                     </div>
                     <div class="wallet-modal-row">
-                        <span>吏??吏媛?/span>
+                        <span>지원 지갑</span>
                         <span>MetaMask / Trust Wallet</span>
                     </div>
                 </div>
                 <div class="legacy-wallet-warning">
-                    <strong>二쇱쓽</strong>
-                    <p>媛쒖씤?ㅻ? 媛吏??щ엺? 吏媛묒쓣 ?꾩쟾??媛?멸컝 ???덉뼱?? ?쇱옄 ?덈뒗 怨녹뿉?쒕쭔 ?뺤씤?섍퀬, 硫붾え??梨꾪똿???④린吏 留덉꽭??</p>
+                    <strong>주의</strong>
+                    <p>개인키를 가진 사람은 지갑을 완전히 가져갈 수 있어요. 혼자 있는 곳에서만 확인하고, 메모나 채팅에 남기지 마세요.</p>
                 </div>
                 <div class="legacy-wallet-secret-box">
-                    <label for="legacy-wallet-private-key">媛쒖씤??/label>
-                    <textarea id="legacy-wallet-private-key" class="legacy-wallet-secret-value" readonly spellcheck="false" placeholder="?꾩쭅 ?쒖떆?섏? ?딆븯?듬땲??"></textarea>
+                    <label for="legacy-wallet-private-key">개인키</label>
+                    <textarea id="legacy-wallet-private-key" class="legacy-wallet-secret-value" readonly spellcheck="false" placeholder="아직 표시되지 않았습니다."></textarea>
                 </div>
                 <div class="legacy-wallet-secret-actions">
-                    <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" onclick="revealLegacyWalletPrivateKey()">1??蹂닿린</button>
-                    <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>蹂듭궗</button>
+                    <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" onclick="revealLegacyWalletPrivateKey()">1회 보기</button>
+                    <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>복사</button>
                 </div>
                 <div class="legacy-wallet-import-guide">
-                    <strong>媛?몄삤湲??쒖꽌</strong>
+                    <strong>가져오기 순서</strong>
                     <ol>
-                        <li>MetaMask ?먮뒗 Trust Wallet?먯꽌 湲곗〈 吏媛?媛?몄삤湲곕? ?쎈땲??</li>
-                        <li>媛쒖씤???낅젰???좏깮?섍퀬, ?ш린??蹂듭궗???ㅻ? 遺숈뿬?ｌ뒿?덈떎.</li>
-                        <li>媛?몄삤湲곌? ?앸굹硫??몃? 吏媛묒뿉??媛숈? 二쇱냼瑜?蹂닿??⑹쑝濡??ъ슜?????덉뼱??</li>
+                        <li>MetaMask 또는 Trust Wallet에서 기존 지갑 가져오기를 엽니다.</li>
+                        <li>개인키 입력을 선택하고, 여기서 복사한 키를 붙여넣습니다.</li>
+                        <li>가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</li>
                     </ol>
                 </div>
             </div>
             <div class="wallet-modal-actions">
-                <button type="button" class="wallet-modal-btn cancel" onclick="closeLegacyWalletExportModal()">?リ린</button>
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeLegacyWalletExportModal()">닫기</button>
             </div>
         </div>
     </div>
@@ -1890,4 +1891,3 @@
 </body>
 
 </html>
-
