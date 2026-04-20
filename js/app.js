@@ -14,27 +14,27 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=160';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=160';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=160';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=161';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=161';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=161';
 import {
     buildStrengthExerciseSeed,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=160';
+} from './exercise-media.js?v=161';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=160';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=160';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=160';
-import { sanitize, compressImage } from './data-manager.js?v=160';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=160';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=160';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=160';
+} from './health-connect-utils.js?v=161';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=161';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=161';
+import { sanitize, compressImage } from './data-manager.js?v=161';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=161';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=161';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=161';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -532,7 +532,7 @@ function applyDashboardInstallCta() {
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '해빛스쿨 앱 설치';
+    saveBtn.innerText = installState.buttonLabel || '홈 화면에 추가';
     return true;
 }
 
@@ -565,7 +565,7 @@ function applySimpleProfileInstallCta() {
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '해빛스쿨 앱 설치';
+    saveBtn.innerText = installState.buttonLabel || '홈 화면에 추가';
     return true;
 }
 
@@ -1421,6 +1421,11 @@ function renderExerciseNativeSyncCta() {
     const button = document.getElementById('exercise-health-connect-btn');
     if (!button) return;
 
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+        button.style.display = 'none';
+        return;
+    }
+
     const nativeSource = getRememberedNativeAppSource();
     if (!nativeSource) {
         button.style.display = 'none';
@@ -1451,6 +1456,11 @@ function buildManualHealthConnectReturnUrl() {
 }
 
 function startNativeHealthConnectSync() {
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+        showToast('Health Connect 연동은 현재 웹/PWA 전용 운영으로 잠시 비활성화되어 있어요.');
+        return;
+    }
+
     const nativeSource = getRememberedNativeAppSource();
     if (!nativeSource) {
         showToast('Android 앱 셸에서만 Health Connect 동기화를 시작할 수 있어요.');
@@ -1468,6 +1478,14 @@ window.startNativeHealthConnectSync = startNativeHealthConnectSync;
 function renderStepImportBanner() {
     const banner = document.getElementById('step-import-banner');
     if (!banner) return;
+
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+        banner.style.display = 'none';
+        banner.classList.remove('is-visible');
+        banner.innerHTML = '';
+        renderExerciseNativeSyncCta();
+        return;
+    }
 
     if (String(_stepData?.source || '').trim() !== 'health_connect') {
         banner.style.display = 'none';
@@ -1561,6 +1579,11 @@ function applyPendingNativeStepImport({ notifyUser = (getVisibleTabName() === 'e
 }
 
 function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { initialTab = getVisibleTabName() } = {}) {
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+        _pendingNativeStepImport = null;
+        return false;
+    }
+
     const payload = parseNativeStepImportPayload(params);
     if (!payload) return false;
 
@@ -1605,7 +1628,9 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
     }
 
     if (params.focus === 'health-connect-steps') {
-        handleNativeStepImportDeepLink(params, { initialTab });
+        if (ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
+            handleNativeStepImportDeepLink(params, { initialTab });
+        }
         clearAppEntryDeepLinkParams(params.tab || initialTab || getVisibleTabName() || getDefaultTabForMode());
         return true;
     }
@@ -3980,7 +4005,8 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=160';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=161';
+const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
@@ -15348,20 +15374,24 @@ async function analyzeStepScreenshot() {
 function loadStepData(logData) {
     const { todayStr } = getDatesInfo();
     const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
-    const preferredNativeImport = choosePreferredHealthConnectImport({
-        pendingImport: _pendingNativeStepImport,
-        activeImport: _activeNativeStepImport,
-        savedStepData: logData?.steps || null,
-        selectedDateStr,
-        todayStr
-    });
+    const preferredNativeImport = ENABLE_HEALTH_CONNECT_STEP_IMPORT
+        ? choosePreferredHealthConnectImport({
+            pendingImport: _pendingNativeStepImport,
+            activeImport: _activeNativeStepImport,
+            savedStepData: logData?.steps || null,
+            selectedDateStr,
+            todayStr
+        })
+        : null;
 
     if (logData?.steps) {
         _stepData = {
             ...createEmptyStepData(),
             ...logData.steps
         };
-        _activeNativeStepImport = restoreHealthConnectImportState(_stepData);
+        _activeNativeStepImport = ENABLE_HEALTH_CONNECT_STEP_IMPORT
+            ? restoreHealthConnectImportState(_stepData)
+            : null;
         updateStepRing(_stepData.count || 0);
 
         if (_stepData.screenshotUrl) {

@@ -180,7 +180,7 @@ function getInstallCopy() {
     if (deferredInstallPrompt) {
         return {
             visible: true,
-            buttonLabel: '해빛스쿨 앱 설치',
+            buttonLabel: '홈 화면에 추가',
             helperText: '설치하면 앱처럼 바로 열 수 있어요.'
         };
     }
@@ -188,7 +188,7 @@ function getInstallCopy() {
     if (isIOSInstallDevice()) {
         return {
             visible: true,
-            buttonLabel: '해빛스쿨 앱 설치',
+            buttonLabel: '홈 화면에 추가',
             helperText: isSafariBrowser()
                 ? '홈 화면에 추가하면 앱처럼 쓸 수 있어요.'
                 : 'Safari로 열면 설치할 수 있어요.'
@@ -198,14 +198,14 @@ function getInstallCopy() {
     if (isLikelyInstallWebView()) {
         return {
             visible: true,
-            buttonLabel: '해빛스쿨 앱 설치',
+            buttonLabel: '홈 화면에 추가',
             helperText: '기본 브라우저로 열면 설치할 수 있어요.'
         };
     }
 
     return {
         visible: true,
-        buttonLabel: '해빛스쿨 앱 설치',
+        buttonLabel: '홈 화면에 추가',
         helperText: '설치하면 앱처럼 바로 열 수 있어요.'
     };
 }
@@ -256,7 +256,7 @@ window.addEventListener('load', async () => {
                 console.warn('localhost service worker cleanup failed:', error);
             }
         } else {
-            navigator.serviceWorker.register('./sw.js?v=160')
+            navigator.serviceWorker.register('./sw.js?v=161')
                 .then((reg) => {
                     console.log('PWA service worker registered:', reg.scope);
                     reg.update();
