@@ -1,16 +1,16 @@
 // ?몄쬆 愿由?紐⑤뱢
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=163';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=164';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=163';
-import { getDatesInfo } from './ui-helpers.js?v=163';
-import { escapeHtml } from './security.js?v=163';
-import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js?v=163';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=163';
+import { showToast } from './ui-helpers.js?v=164';
+import { getDatesInfo } from './ui-helpers.js?v=164';
+import { escapeHtml } from './security.js?v=164';
+import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js?v=164';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=164';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=163';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=164';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -201,6 +201,7 @@ async function applySignedInUserUi(user, userData = {}) {
     if (nicknameInput) nicknameInput.value = nextDisplayName;
 
     window._blockedUsers = Array.isArray(userData.blockedUsers) ? userData.blockedUsers : [];
+    window.applyDietProgramUserData?.(userData);
 
     const pointBalanceEl = document.getElementById('point-balance');
     if (pointBalanceEl && userData.coins != null) {
@@ -857,6 +858,7 @@ export function setupAuthListener(callbacks) {
             document.getElementById('user-greeting').innerHTML = '';
             window._userDisplayName = null;
             window._blockedUsers = [];
+            window.applyDietProgramUserData?.(null);
 
             // 媛ㅻ윭由?由ъ냼???뺣━
             if (window.cleanupGalleryResources) {
@@ -1437,6 +1439,15 @@ function getPushPermissionUiState(user = auth.currentUser) {
     };
 }
 
+window.getAppPushPermissionState = function (user = auth.currentUser) {
+    const state = getPushPermissionUiState(user);
+    return {
+        ...state,
+        permission: typeof Notification !== 'undefined' ? Notification.permission : 'default',
+        connected: isAppPushConnected()
+    };
+};
+
 function updateNotificationPermissionCard(user = auth.currentUser) {
     const statusEl = document.getElementById('notification-permission-status');
     const helperEl = document.getElementById('notification-permission-helper');
@@ -1451,6 +1462,7 @@ function updateNotificationPermissionCard(user = auth.currentUser) {
     buttonEl.dataset.action = state.action || '';
     buttonEl.classList.toggle('is-secondary', state.buttonMode === 'secondary');
     buttonEl.classList.toggle('is-muted', state.buttonMode === 'muted');
+    window.applyDietProgramUserData?.(window._dietProgramUserDataSnapshot || null);
 }
 
 async function ensureFirebaseMessaging() {
@@ -1570,27 +1582,32 @@ async function syncCurrentPushState(user = auth.currentUser) {
 window.requestAppNotificationPermission = async function () {
     const user = auth.currentUser;
     const state = getPushPermissionUiState(user);
+    const buildResult = ({ status = '', connected = isAppPushConnected(), action = state.action || '' } = {}) => ({
+        status,
+        connected: !!connected,
+        action
+    });
     if (!user) {
         showToast('먼저 로그인해 주세요.');
-        return;
+        return buildResult({ status: 'signed-out', connected: false, action: 'login' });
     }
 
     if (state.action === 'unsupported') {
         showToast('이 브라우저에서는 푸시 알림을 지원하지 않아요.');
         updateNotificationPermissionCard(user);
-        return;
+        return buildResult({ status: 'unsupported', connected: false, action: 'unsupported' });
     }
 
     if (state.action === 'install') {
         window.handleInstallCtaAction?.();
         updateNotificationPermissionCard(user);
-        return;
+        return buildResult({ status: 'install-required', connected: false, action: 'install' });
     }
 
     if (state.action === 'guide') {
         openNotificationPermissionGuide();
         updateNotificationPermissionCard(user);
-        return;
+        return buildResult({ status: 'permission-denied', connected: false, action: 'guide' });
     }
 
     const buttonEl = document.getElementById('notification-permission-btn');
@@ -1608,7 +1625,7 @@ window.requestAppNotificationPermission = async function () {
                 showToast('알림 끄기 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요.');
             }
             updateNotificationPermissionCard(user);
-            return;
+            return buildResult({ status: result.status || 'error', connected: false, action: 'disable' });
         }
 
         if (Notification.permission !== 'granted') {
@@ -1616,21 +1633,28 @@ window.requestAppNotificationPermission = async function () {
             if (permission !== 'granted') {
                 showToast(permission === 'denied' ? '알림 권한이 차단되었어요.' : '알림 권한 요청이 취소되었어요.');
                 updateNotificationPermissionCard(user);
-                return;
+                return buildResult({
+                    status: permission === 'denied' ? 'permission-denied' : 'permission-dismissed',
+                    connected: false,
+                    action: 'enable'
+                });
             }
         }
 
         const result = await registerFCMToken(user);
         if (result.status === 'granted') {
             showToast('이 기기의 푸시 알림이 연결되었어요.');
+            return buildResult({ status: 'granted', connected: true, action: 'enable' });
         } else if (result.status === 'token-missing') {
             showToast('알림 토큰을 아직 만들지 못했어요. 잠시 후 다시 시도해 주세요.');
         } else if (result.status === 'error') {
             showToast('알림 연결 중 오류가 있었어요. 잠시 후 다시 시도해 주세요.');
         }
+        return buildResult({ status: result.status || 'error', connected: false, action: 'enable' });
     } catch (error) {
         console.warn('[FCM] 권한 요청 실패:', error.message);
         showToast('알림 권한 확인 중 문제가 생겼어요.');
+        return buildResult({ status: 'error', connected: false, action: state.action || 'enable' });
     } finally {
         updateNotificationPermissionCard(user);
     }

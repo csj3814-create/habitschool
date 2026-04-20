@@ -45,6 +45,37 @@ service cloud.firestore {
           && (!('sleepAndMind' in data) || data.sleepAndMind is map)
           && (!('shareSettings' in data) || isValidShareSettings(data.shareSettings));
     }
+
+    function isValidDietProgramPreference(dietPreference) {
+      return dietPreference is map
+          && dietPreference.keys().hasOnly(['methodId', 'remindersEnabled', 'activatedAt', 'fastingPreset'])
+          && (!('methodId' in dietPreference) || (
+                dietPreference.methodId is string &&
+                (
+                  dietPreference.methodId == 'none' ||
+                  dietPreference.methodId == 'brown_rice_green_veggies' ||
+                  dietPreference.methodId == 'high_protein' ||
+                  dietPreference.methodId == 'mediterranean' ||
+                  dietPreference.methodId == 'low_carb' ||
+                  dietPreference.methodId == 'intermittent_fasting' ||
+                  dietPreference.methodId == 'switch_on'
+                )
+              ))
+          && (!('remindersEnabled' in dietPreference) || dietPreference.remindersEnabled is bool)
+          && (!('activatedAt' in dietPreference) || dietPreference.activatedAt is string)
+          && (!('fastingPreset' in dietPreference) || dietPreference.fastingPreset == null || dietPreference.fastingPreset is string);
+    }
+
+    function isValidProgramPreferences(programPreferences) {
+      return programPreferences is map
+          && programPreferences.keys().hasOnly(['diet'])
+          && (!('diet' in programPreferences) || isValidDietProgramPreference(programPreferences.diet));
+    }
+
+    function isValidUserProgramPreferences() {
+      return !('programPreferences' in request.resource.data)
+          || isValidProgramPreferences(request.resource.data.programPreferences);
+    }
     
     // 헬퍼 함수: 사용자 필드 화이트리스트
     function isAllowedUserField() {
@@ -59,6 +90,7 @@ service cloud.firestore {
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
                     'missionBadges', 'selectedMissions', 'missionLevelUpDate',
                     'currentStreak', 'onboardingComplete', 'friends',
+                    'programPreferences',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
                     'chatbotConnectLastKakaoDisplayName']);
@@ -72,7 +104,8 @@ service cloud.firestore {
       allow update: if isOwner(userId)
         && (!request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['hbtBalance', 'totalHbtEarned', 'coins']))
-        && isAllowedUserField();
+        && isAllowedUserField()
+        && isValidUserProgramPreferences();
       allow delete: if isOwner(userId) || isAdmin();
       // ===== InBody History Subcollection =====
       match /inbodyHistory/{recordId} {

@@ -5349,6 +5349,109 @@ async function getTodayLoggedUserIds(todayKST) {
     return new Set(snap.docs.map(d => d.data().userId).filter(Boolean));
 }
 
+const DIET_PROGRAM_METHOD_IDS = Object.freeze({
+    NONE: "none",
+    INTERMITTENT_FASTING: "intermittent_fasting"
+});
+
+function normalizeDietProgramPreference(userData = {}) {
+    const rawDietPreference = userData?.programPreferences?.diet || {};
+    const methodId = typeof rawDietPreference.methodId === "string"
+        ? rawDietPreference.methodId.trim()
+        : "";
+    const normalizedMethodId = methodId || DIET_PROGRAM_METHOD_IDS.NONE;
+    return {
+        methodId: normalizedMethodId,
+        remindersEnabled: rawDietPreference.remindersEnabled === true
+    };
+}
+
+function isLoggedDietSlot(dailyLog = {}, slot = "") {
+    const url = dailyLog?.diet?.[`${slot}Url`];
+    return typeof url === "string" && url.trim().length > 0;
+}
+
+async function getDailyLogMapForUsers(userIds = [], dateStr = "") {
+    const uniqueUserIds = [...new Set((userIds || []).filter(Boolean))];
+    if (uniqueUserIds.length === 0 || !dateStr) return new Map();
+
+    const refs = uniqueUserIds.map((uid) => db.doc(`daily_logs/${uid}_${dateStr}`));
+    const snaps = await db.getAll(...refs);
+    const logMap = new Map();
+    snaps.forEach((snap, index) => {
+        logMap.set(uniqueUserIds[index], snap.exists ? (snap.data() || {}) : {});
+    });
+    return logMap;
+}
+
+async function getDietReminderEligibleUsers({ intermittentFasting = false } = {}) {
+    const usersSnap = await db.collection("users")
+        .where("programPreferences.diet.remindersEnabled", "==", true)
+        .select("programPreferences")
+        .get();
+
+    return usersSnap.docs
+        .map((snap) => ({
+            uid: snap.id,
+            preference: normalizeDietProgramPreference(snap.data() || {})
+        }))
+        .filter(({ preference }) => {
+            if (!preference.remindersEnabled) return false;
+            if (intermittentFasting) {
+                return preference.methodId === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING;
+            }
+            return preference.methodId !== DIET_PROGRAM_METHOD_IDS.NONE
+                && preference.methodId !== DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING;
+        });
+}
+
+async function sendDietProgramReminder({
+    intermittentFasting = false,
+    slot = "",
+    title = "",
+    body = "",
+    tag = "diet-program",
+    focus = "upload"
+} = {}) {
+    const todayKST = getTodayKST();
+    const eligibleUsers = await getDietReminderEligibleUsers({ intermittentFasting });
+    if (eligibleUsers.length === 0) {
+        console.log(`${tag}: no eligible users`);
+        return 0;
+    }
+
+    const eligibleUserIds = eligibleUsers.map((entry) => entry.uid);
+    const logMap = await getDailyLogMapForUsers(eligibleUserIds, todayKST);
+    const targetUserIds = eligibleUserIds.filter((uid) => {
+        if (!slot) return true;
+        return !isLoggedDietSlot(logMap.get(uid), slot);
+    });
+
+    if (targetUserIds.length === 0) {
+        console.log(`${tag}: no remaining users after slot filter`);
+        return 0;
+    }
+
+    const targets = await collectPushTargetsForUsers(targetUserIds);
+    if (targets.length === 0) {
+        console.log(`${tag}: no push targets`);
+        return 0;
+    }
+
+    const reminderUrl = buildAppPath("diet", { focus });
+    await sendMulticast(targets, {
+        title,
+        body,
+        tag,
+        url: reminderUrl,
+        actions: buildNotificationActions([
+            { action: "record-now", title: "지금 기록", url: reminderUrl }
+        ])
+    });
+    console.log(`${tag}: ${targets.length} targets`);
+    return targets.length;
+}
+
 /**
  * FCM 일괄 발송 (500개 청크 분할)
  * 유효하지 않은 토큰은 Firestore에서 자동 삭제
@@ -5626,6 +5729,50 @@ exports.sendStreakAlert = onSchedule(
             "streak-alert"
         ); */
     }
+);
+
+exports.sendDietProgramLunchReminder = onSchedule(
+    { schedule: "30 2 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => sendDietProgramReminder({
+        slot: "lunch",
+        title: "점심 전에 식단 방법을 떠올려볼까요?",
+        body: "선택한 식단 방법에 맞춰 이번 식사를 준비해보세요.",
+        tag: "diet-program-pre-lunch",
+        focus: "lunch"
+    })
+);
+
+exports.sendDietProgramDinnerReminder = onSchedule(
+    { schedule: "30 8 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => sendDietProgramReminder({
+        slot: "dinner",
+        title: "저녁 전에 식단 방법을 한번 더 체크해볼까요?",
+        body: "오늘 저녁도 선택한 식단 방법 흐름에 맞춰 준비해보세요.",
+        tag: "diet-program-pre-dinner",
+        focus: "dinner"
+    })
+);
+
+exports.sendDietProgramFastingStartReminder = onSchedule(
+    { schedule: "0 3 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => sendDietProgramReminder({
+        intermittentFasting: true,
+        title: "간헐적 단식 식사 시간이 열렸어요",
+        body: "12:00부터 20:00까지 식사할 수 있어요. 첫 식사는 단백질과 채소부터 시작해보세요.",
+        tag: "diet-program-fasting-start",
+        focus: "lunch"
+    })
+);
+
+exports.sendDietProgramFastingClosingReminder = onSchedule(
+    { schedule: "30 10 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => sendDietProgramReminder({
+        intermittentFasting: true,
+        title: "오늘 식사 창 마감이 가까워졌어요",
+        body: "지금은 19:30이에요. 20:00 전에 식사를 마무리해보세요.",
+        tag: "diet-program-fasting-close",
+        focus: "dinner"
+    })
 );
 
 /**
