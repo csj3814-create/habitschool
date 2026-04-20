@@ -23,8 +23,8 @@ const METHOD_CATALOG = Object.freeze([
         difficultyLabel: '기본',
         summary: '현재처럼 자유 기록 중심으로 사용해요.',
         mealGuide: '',
-        dashboardTip: '식단 방법을 고르면 오늘의 식사 가이드와 알림이 맞춰져요.',
-        exerciseSupportTip: '운동, 명상, 수면은 지금처럼 자유롭게 기록할 수 있어요.',
+        dashboardTip: '오늘 식사 가이드와 알림이 바뀌어요.',
+        exerciseSupportTip: '운동·명상·수면 기록은 그대로예요.',
         mindSleepSupportTip: '방법을 고르기 전에도 마음 기록과 수면 기록은 그대로 유지돼요.',
         reminderPlan: '방법 알림 없음',
         cautionText: ''

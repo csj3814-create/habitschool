@@ -18,6 +18,16 @@
 - Root cause: I followed the English Git meaning instead of the project-specific shorthand the user was using repeatedly.
 - Lesson: in this workspace, interpret `스테이징` as `commit if needed, push, and deploy to the staging server` unless the user explicitly says `git add` or `stage files`.
 
+### 180. When third-party admin scripts only create CSP source-map noise, prefer a pinned local asset over widening production policy
+- Symptom: `/admin.html` showed red CSP errors in DevTools because a CDN-hosted `Chart.js` file triggered a blocked `.map` fetch, even though the chart itself was loading and rendering.
+- Root cause: the page depended on an external script whose debugging sidecar request did not match the app's intentionally narrow `connect-src`, and the tempting fix was to broaden CSP just to silence DevTools.
+- Lesson: for admin-only libraries that do not need a live CDN dependency, self-host a pinned vendor file and strip the `sourceMappingURL` trailer if needed. Keep CSP focused on real runtime requirements, not DevTools convenience fetches.
+
+### 181. Mobile helper copy should say only the changed behavior, not re-explain the whole feature
+- Symptom: the diet-method helper text still felt long on mobile because it explained both the mechanism and the reassurance in full sentences.
+- Root cause: I optimized for completeness instead of the phone-sized reading path, so the copy repeated context the surrounding UI already provided.
+- Lesson: for compact mobile helper areas, reduce copy to the one changed behavior and one reassurance. Prefer phrases like `바뀌어요`, `그대로예요`, `골라보세요` over full explanatory sentences when the UI already names the feature.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
