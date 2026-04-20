@@ -1,4 +1,5 @@
 import org.gradle.api.GradleException
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -29,6 +30,11 @@ fun loadReleaseSigningProperties(): Map<String, String?> {
     )
 }
 
+fun resolveSigningStoreFile(path: String): File {
+    val candidate = File(path)
+    return if (candidate.isAbsolute) candidate else rootProject.file(path)
+}
+
 val releaseSigning = loadReleaseSigningProperties()
 val hasReleaseSigning =
     releaseSigning.values.all { !it.isNullOrBlank() }
@@ -41,14 +47,14 @@ android {
         applicationId = "com.habitschool.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
     }
 
     signingConfigs {
         if (hasReleaseSigning) {
             create("release") {
-                storeFile = file(releaseSigning.getValue("storeFile")!!)
+                storeFile = resolveSigningStoreFile(releaseSigning.getValue("storeFile")!!)
                 storePassword = releaseSigning.getValue("storePassword")
                 keyAlias = releaseSigning.getValue("keyAlias")
                 keyPassword = releaseSigning.getValue("keyPassword")

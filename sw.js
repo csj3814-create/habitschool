@@ -78,7 +78,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v162';
+const CACHE_NAME = 'habitschool-v163';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
@@ -161,26 +161,26 @@ async function handleSharedTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=162',
-    './js/main.js?v=162',
-    './js/app.js?v=162',
-    './js/auth.js?v=162',
-    './js/app-mode.js?v=162',
-    './js/auth-login-helpers.js?v=162',
-    './js/blockchain-config.js?v=162',
-    './js/blockchain-manager.js?v=162',
-    './js/data-manager.js?v=162',
-    './js/diet-analysis.js?v=162',
-    './js/exercise-media.js?v=162',
-    './js/firebase-config.js?v=162',
-    './js/health-connect-utils.js?v=162',
-    './js/metabolic-score.js?v=162',
-    './js/milestone-helpers.js?v=162',
-    './js/pwa-install.js?v=162',
-    './js/security.js?v=162',
-    './js/ui-helpers.js?v=162',
-    './js/upload-performance.js?v=162',
-    './js/webview-detect.js?v=162',
+    './styles.css?v=163',
+    './js/main.js?v=163',
+    './js/app.js?v=163',
+    './js/auth.js?v=163',
+    './js/app-mode.js?v=163',
+    './js/auth-login-helpers.js?v=163',
+    './js/blockchain-config.js?v=163',
+    './js/blockchain-manager.js?v=163',
+    './js/data-manager.js?v=163',
+    './js/diet-analysis.js?v=163',
+    './js/exercise-media.js?v=163',
+    './js/firebase-config.js?v=163',
+    './js/health-connect-utils.js?v=163',
+    './js/metabolic-score.js?v=163',
+    './js/milestone-helpers.js?v=163',
+    './js/pwa-install.js?v=163',
+    './js/security.js?v=163',
+    './js/ui-helpers.js?v=163',
+    './js/upload-performance.js?v=163',
+    './js/webview-detect.js?v=163',
     './manifest.json',
     './icons/icon-192.png',
     './icons/icon-192.svg',

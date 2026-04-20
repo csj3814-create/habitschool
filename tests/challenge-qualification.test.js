@@ -4,7 +4,10 @@ import {
     doesAwardedPointsMeetChallengeRule,
     formatChallengeQualificationLabel,
     getAwardedPointsTotal,
+    getChallengeCompletedDays,
+    getChallengeTimelineState,
     getDefaultChallengeQualificationPolicy,
+    normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy
 } from '../js/blockchain-config.js';
 
@@ -83,5 +86,38 @@ describe('challenge qualification policy', () => {
             exercise: true,
             mind: false
         }, legacyPolicy)).toBe(false);
+    });
+
+    it('normalizes completed day counts from stored completedDates', () => {
+        const normalized = normalizeChallengeCompletion({
+            completedDays: 5,
+            completedDates: ['2026-04-12', '2026-04-13', '2026-04-13', '2026-04-14', '2026-04-15', '2026-04-16']
+        });
+
+        expect(normalized.completedDates).toEqual([
+            '2026-04-12',
+            '2026-04-13',
+            '2026-04-14',
+            '2026-04-15',
+            '2026-04-16'
+        ]);
+        expect(getChallengeCompletedDays(normalized)).toBe(5);
+
+        expect(getChallengeCompletedDays({
+            completedDays: 5,
+            completedDates: ['2026-04-12', '2026-04-13', '2026-04-14', '2026-04-15', '2026-04-16', '2026-04-17']
+        })).toBe(6);
+    });
+
+    it('treats endDate as the final countable day and the day after as past end', () => {
+        expect(getChallengeTimelineState({ endDate: '2026-04-19' }, '2026-04-19')).toEqual({
+            isFinalDay: true,
+            isPastEnd: false
+        });
+
+        expect(getChallengeTimelineState({ endDate: '2026-04-19' }, '2026-04-20')).toEqual({
+            isFinalDay: false,
+            isPastEnd: true
+        });
     });
 });

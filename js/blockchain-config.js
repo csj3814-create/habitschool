@@ -192,6 +192,32 @@ export function formatChallengeQualificationLabel(policyOrTier = 'mini') {
     return '식단·운동·마음을 모두 기록하면 1일 인정';
 }
 
+export function getChallengeCompletedDays(challenge = {}) {
+    const completedDates = Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(Boolean))]
+        : [];
+    return Math.max(Number(challenge?.completedDays) || 0, completedDates.length);
+}
+
+export function normalizeChallengeCompletion(challenge = {}) {
+    const completedDates = Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(Boolean))]
+        : [];
+    return {
+        ...challenge,
+        completedDates,
+        completedDays: Math.max(Number(challenge?.completedDays) || 0, completedDates.length)
+    };
+}
+
+export function getChallengeTimelineState(challenge = {}, todayStr = '') {
+    const endDate = String(challenge?.endDate || '').trim();
+    return {
+        isFinalDay: !!endDate && todayStr === endDate,
+        isPastEnd: !!endDate && todayStr > endDate
+    };
+}
+
 export const CHALLENGES = {
     'challenge-3d': {
         id: 'challenge-3d',

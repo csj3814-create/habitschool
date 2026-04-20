@@ -18,14 +18,17 @@ import {
     formatChallengeQualificationLabel,
     getDefaultChallengeQualificationPolicy,
     getAwardedPointsTotal,
+    getChallengeCompletedDays,
+    getChallengeTimelineState,
     doesAwardedPointsMeetChallengeRule,
+    normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy,
     getActiveBscNetwork,
     getActiveGasTokenLabel,
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=162';
+} from './blockchain-config.js?v=163';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -43,12 +46,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=162';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=163';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=162';
-import { getKstDateString } from './ui-helpers.js?v=162';
-import { checkRateLimit } from './security.js?v=162';
+import { showToast } from './ui-helpers.js?v=163';
+import { getKstDateString } from './ui-helpers.js?v=163';
+import { checkRateLimit } from './security.js?v=163';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -1382,15 +1385,56 @@ export async function updateChallengeProgress() {
             if (hadLegacy) updateData.activeChallenge = null;
 
             for (const tier of tiers) {
-                const challenge = activeChallenges[tier];
+                const originalChallenge = activeChallenges[tier];
+                const challenge = normalizeChallengeCompletion(originalChallenge);
                 const totalDays = challenge.totalDays || 30;
-                const completedDates = challenge.completedDates || [];
+                const completedDates = [...(challenge.completedDates || [])];
                 const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
                 const challengeDef = CHALLENGES[resolvedChallengeId] || {};
+                const { isFinalDay, isPastEnd } = getChallengeTimelineState(challenge, today);
+                const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
+                    ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
+                    : [];
+                const originalCompletedDays = Number(originalChallenge?.completedDays) || 0;
+
+                if (
+                    challenge.completedDays !== originalCompletedDays ||
+                    completedDates.length !== originalCompletedDates.length ||
+                    completedDates.some((date, index) => date !== originalCompletedDates[index])
+                ) {
+                    updateData[`activeChallenges.${tier}`] = challenge;
+                }
 
                 // 챌린지 종료일 확인 (endDate 당일 포함 — today >= endDate)
-                if (today >= challenge.endDate) {
-                    const successRate = challenge.completedDays / totalDays;
+                if (!isPastEnd && !completedDates.includes(today)) {
+                    const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
+                    if (dailyLogData) {
+                        if (!dailyQualification.qualified) {
+                            console.log(`?뱄툘 梨뚮┛吏: ?ㅻ뒛 ?몄젙 誘몃떖 (${dailyQualification.totalPoints}P, 湲곗?: ${describeChallengeQualification(dailyQualification.policy)})`);
+                        } else {
+                            completedDates.push(today);
+                            challenge.completedDates = [...new Set(completedDates)];
+                            challenge.completedDays = getChallengeCompletedDays(challenge);
+                            updateData[`activeChallenges.${tier}`] = challenge;
+
+                            if (!isFinalDay) {
+                                const remain = totalDays - challenge.completedDays;
+                                toastMessages.push(`??${challengeDef.emoji || '?룇'} ${challenge.completedDays}/${totalDays}??(${remain}???⑥쓬)`);
+                            }
+                        }
+                    } else {
+                        console.log(`?뱄툘 梨뚮┛吏: ?ㅻ뒛 湲곕줉 ?놁쓬`);
+                    }
+                } else if (completedDates.includes(today)) {
+                    console.log(`?뱄툘 ${tier} 梨뚮┛吏: ?ㅻ뒛 ?대? ?몄쬆 ?꾨즺`);
+                }
+
+                if (!isFinalDay && !isPastEnd) {
+                    continue;
+                }
+
+                if (isFinalDay || isPastEnd) {
+                    const successRate = getChallengeCompletedDays(challenge) / totalDays;
 
                     if (successRate >= 0.8) {
                         challenge.status = 'claimable';
@@ -1401,9 +1445,10 @@ export async function updateChallengeProgress() {
                         const stakedOnChain = challenge.stakedOnChain || false;
 
                         if (stakedOnChain && staked > 0) {
+                            challenge.status = 'expired';
+                            updateData[`activeChallenges.${tier}`] = challenge;
                             // 온체인 정산은 settleExpiredChallenges에서 CF를 통해 처리
                             // 여기서는 상태만 'expired'로 마킹하여 settleExpiredChallenges가 처리하도록 함
-                            challenge.status = 'expired';
                             updateData[`activeChallenges.${tier}`] = challenge;
                             toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%). 소각 정산 처리 중...`);
                         } else {
@@ -1418,7 +1463,7 @@ export async function updateChallengeProgress() {
                             staked: staked,
                             burned: stakedOnChain ? staked / 2 : 0,
                             successRate: successRate,
-                            completedDays: challenge.completedDays,
+                            completedDays: getChallengeCompletedDays(challenge),
                             timestamp: serverTimestamp(),
                             status: 'failed'
                         });
@@ -1460,6 +1505,7 @@ export async function updateChallengeProgress() {
 
         // 트랜잭션 완료 후 토스트 표시 & 정산 로그 저장
         toastMessages.forEach(msg => showToast(msg));
+        toastMessages.forEach(msg => showToast(msg));
         for (const log of settlementLogs) {
             try {
                 await addDoc(collection(db, "blockchain_transactions"), log);
@@ -1499,20 +1545,36 @@ export async function settleExpiredChallenges() {
         if (tiers.length === 0) return;
 
         // 'expired'는 이미 기한 만료 확정, 'ongoing'은 endDate로 판단
-        const expiredTiers = tiers.filter(t => 
-            activeChallenges[t].status === 'expired' || today >= activeChallenges[t].endDate
-        );
+        const expiredTiers = tiers.filter((tier) => {
+            const challenge = normalizeChallengeCompletion(activeChallenges[tier]);
+            return challenge.status === 'expired' || today > challenge.endDate;
+        });
         if (expiredTiers.length === 0) return;
 
         const updateData = {};
         for (const tier of expiredTiers) {
-            const challenge = activeChallenges[tier];
+            const originalChallenge = activeChallenges[tier];
+            const challenge = normalizeChallengeCompletion(originalChallenge);
             const totalDays = challenge.totalDays || 30;
-            const successRate = (challenge.completedDays || 0) / totalDays;
+            const normalizedCompletedDays = getChallengeCompletedDays(challenge);
+            const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
+                ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
+                : [];
+
+            if (
+                normalizedCompletedDays !== (Number(originalChallenge?.completedDays) || 0) ||
+                (challenge.completedDates || []).length !== originalCompletedDates.length ||
+                (challenge.completedDates || []).some((date, index) => date !== originalCompletedDates[index])
+            ) {
+                updateData[`activeChallenges.${tier}`] = challenge;
+            }
+
+            const successRate = normalizedCompletedDays / totalDays;
 
             if (successRate >= 0.8) {
                 // 성공 → claimable 상태로 전환 (사용자가 수령)
-                updateData[`activeChallenges.${tier}.status`] = 'claimable';
+                challenge.status = 'claimable';
+                updateData[`activeChallenges.${tier}`] = challenge;
             } else {
                 // 실패 → 온체인 resolveChallenge(user, false) 호출 (50% 소각)
                 const staked = challenge.hbtStaked || 0;
@@ -1544,7 +1606,7 @@ export async function settleExpiredChallenges() {
                         challengeId: challenge.challengeId,
                         staked: staked,
                         successRate: successRate,
-                        completedDays: challenge.completedDays || 0,
+                        completedDays: normalizedCompletedDays,
                         timestamp: serverTimestamp(),
                         status: 'failed'
                     });

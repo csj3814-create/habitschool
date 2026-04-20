@@ -124,19 +124,24 @@ if (-not $canCheckAssetLinks) {
 }
 
 Write-Host ''
-Write-Host '[3/3] Release artifact'
+Write-Host '[3/3] Release artifacts'
 if ($BuildRelease) {
     if (-not $hasReleaseSigning) {
         throw 'Cannot build release without release signing. Configure android/release-signing.properties first.'
     }
 
-    $buildResult = Invoke-NativeCommand -FilePath $gradleWrapper -Arguments @(':app:assembleRelease')
+    $buildResult = Invoke-NativeCommand -FilePath $gradleWrapper -Arguments @(':app:bundleRelease', ':app:assembleRelease')
     $buildResult.Output | ForEach-Object { Write-Host $_ }
     if ($buildResult.ExitCode -ne 0) {
-        throw 'Release build failed.'
+        throw 'Release artifact build failed.'
     }
+
+    $bundlePath = Join-Path $AndroidDir 'app\build\outputs\bundle\release\app-release.aab'
+    $apkPath = Join-Path $AndroidDir 'app\build\outputs\apk\release\app-release.apk'
+    Write-Host "Play bundle: $bundlePath"
+    Write-Host "Device APK : $apkPath"
 } else {
-    Write-Host 'Release build skipped. Re-run with -BuildRelease to assemble the signed artifact.'
+    Write-Host 'Release build skipped. Re-run with -BuildRelease to build the signed Play bundle and device APK.'
 }
 
 Write-Host ''
@@ -159,10 +164,11 @@ if (-not $assetLinksOk) {
 }
 
 if (-not $BuildRelease) {
-    Write-Host '1. Re-run Check-TwaReleaseReadiness.ps1 -BuildRelease when you are ready to build the signed release.'
-    Write-Host '2. Install the release APK on device and confirm fullscreen TWA.'
+    Write-Host '1. Re-run Check-TwaReleaseReadiness.ps1 -BuildRelease when you are ready to build the signed Play bundle and device APK.'
+    Write-Host '2. Upload the resulting AAB to Play Console and install the APK on device for fullscreen TWA verification.'
     exit 0
 }
 
-Write-Host '1. Install android\app\build\outputs\apk\release\app-release.apk on device.'
-Write-Host '2. Open the app and confirm the verified fullscreen TWA without the browser chrome.'
+Write-Host '1. Upload android\app\build\outputs\bundle\release\app-release.aab to Play Console.'
+Write-Host '2. Install android\app\build\outputs\apk\release\app-release.apk on device.'
+Write-Host '3. Open the app and confirm the verified fullscreen TWA without the browser chrome.'

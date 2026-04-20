@@ -1,16 +1,16 @@
-﻿// ?몄쬆 愿由?紐⑤뱢
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=162';
+// ?몄쬆 愿由?紐⑤뱢
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=163';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=162';
-import { getDatesInfo } from './ui-helpers.js?v=162';
-import { escapeHtml } from './security.js?v=162';
-import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js?v=162';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=162';
+import { showToast } from './ui-helpers.js?v=163';
+import { getDatesInfo } from './ui-helpers.js?v=163';
+import { escapeHtml } from './security.js?v=163';
+import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js?v=163';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=163';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=162';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=163';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';

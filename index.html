@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -104,9 +104,9 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=162">
+    <link rel="stylesheet" href="styles.css?v=163">
 
-    <script src="js/webview-detect.js?v=162"></script>
+    <script src="js/webview-detect.js?v=163"></script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
@@ -228,6 +228,15 @@
                                 </div>
                             </div>
                             <div class="dashboard-hero-body-shell" id="dashboard-hero-body-shell">
+                                <div class="dashboard-diet-program-summary" id="dashboard-diet-program-summary" hidden>
+                                    <div class="dashboard-diet-program-topline">
+                                        <span class="dashboard-diet-program-chip" id="dashboard-diet-program-chip">식단 방법 미선택</span>
+                                        <span class="dashboard-diet-program-reminder" id="dashboard-diet-program-reminder">알림 없음</span>
+                                    </div>
+                                    <p class="dashboard-diet-program-copy" id="dashboard-diet-program-copy">식단 방법을 고르면 오늘의 식사 가이드가 맞춰져요.</p>
+                                    <p class="dashboard-diet-program-support" id="dashboard-diet-program-support">프로필에서 나에게 맞는 방식을 골라보세요.</p>
+                                    <button type="button" class="dashboard-diet-program-cta" id="dashboard-diet-program-cta">식단 방법 고르기</button>
+                                </div>
                                 <div class="dashboard-action-strip" aria-label="빠른 실행">
                                     <button class="dashboard-action-chip is-focus" id="dashboard-action-diet" type="button" onclick="openTab('diet')">
                                         <span class="dashboard-action-icon-shell">
@@ -636,6 +645,33 @@
                         <p id="notification-permission-helper" class="profile-notification-helper">
                             친구 요청, 챌린지 초대, 리마인더를 앱 알림으로 받을 수 있어요.
                         </p>
+                    </div>
+                    <div class="profile-diet-program-card">
+                        <div class="profile-diet-program-head">
+                            <div>
+                                <div class="profile-diet-program-title">🥗 식단 방법</div>
+                                <div id="diet-program-current-name" class="profile-diet-program-name">식단 방법을 골라보세요.</div>
+                            </div>
+                            <button type="button" id="diet-program-select-btn" class="profile-notification-btn is-secondary">
+                                방법 선택
+                            </button>
+                        </div>
+                        <p id="diet-program-current-summary" class="profile-diet-program-summary">
+                            선택한 방법에 맞춰 식단 가이드와 대시보드 요약이 달라져요.
+                        </p>
+                        <p id="diet-program-current-support" class="profile-diet-program-support">
+                            먼저 방법을 고른 뒤, 필요하면 방법 알림만 따로 켤 수 있어요.
+                        </p>
+                        <label class="profile-diet-program-toggle-row" for="diet-program-reminders-toggle">
+                            <span class="profile-diet-program-toggle-copy">
+                                <strong>방법 알림 받기</strong>
+                                <span id="diet-program-reminders-helper">식단 방법을 먼저 선택하면 방법 알림을 켤 수 있어요.</span>
+                            </span>
+                            <span class="profile-diet-program-toggle-shell">
+                                <input type="checkbox" id="diet-program-reminders-toggle">
+                                <span class="profile-diet-program-toggle-ui" aria-hidden="true"></span>
+                            </span>
+                        </label>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
@@ -1503,6 +1539,33 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="diet-program-selector-modal" onclick="if(event.target===this)closeDietProgramSelector()">
+        <div class="modal-content diet-program-modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeDietProgramSelector()">×</button>
+            <div class="diet-program-modal-badge">식단 방법 선택</div>
+            <h3 class="diet-program-modal-title">나에게 맞는 식단 흐름을 골라보세요</h3>
+            <p class="diet-program-modal-copy">선택한 방법에 맞춰 식단 가이드, 저장 헬퍼, 대시보드 요약, 방법 알림이 달라져요.</p>
+            <div id="diet-program-selector-list" class="diet-program-selector-list"></div>
+            <div class="diet-program-selector-footer">
+                <button type="button" class="wallet-modal-btn cancel" onclick="selectDietProgramMethod('none')">기본 기록만 사용할래요</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="diet-program-consent-modal" onclick="if(event.target===this)closeDietProgramConsentModal()">
+        <div class="modal-content diet-program-consent-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeDietProgramConsentModal()">×</button>
+            <div class="diet-program-modal-badge">방법 알림 안내</div>
+            <h3 id="diet-program-consent-title" class="diet-program-modal-title">식단 방법 알림을 함께 켤까요?</h3>
+            <p id="diet-program-consent-copy" class="diet-program-modal-copy">이 식단 방법은 식전/공복 알림과 함께 쓰면 더 잘 지킬 수 있어요. 지금 알림을 켤까요?</p>
+            <div id="diet-program-consent-note" class="diet-program-consent-note">동의하지 않아도 식단 방법 선택은 그대로 진행돼요.</div>
+            <div class="diet-program-consent-actions">
+                <button type="button" id="diet-program-consent-secondary" class="wallet-modal-btn cancel" onclick="confirmDietProgramSelectionWithoutNotifications()">나중에 계속</button>
+                <button type="button" id="diet-program-consent-primary" class="wallet-modal-btn confirm" onclick="confirmDietProgramSelectionWithNotifications()">알림 켜고 계속</button>
+            </div>
+        </div>
+    </div>
+
     <div id="lightbox-modal" role="dialog" aria-label="이미지 확대 보기" tabindex="-1" onclick="this.style.display='none'">
         <button id="lightbox-prev" class="lightbox-nav lightbox-prev" aria-label="이전 이미지">‹</button>
         <img id="lightbox-img" src="" crossorigin="anonymous" onclick="event.stopPropagation()" alt="확대된 이미지">
@@ -1651,13 +1714,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=162"></script>
-    <script type="module" src="js/main.js?v=162"></script>
-    <script type="module" src="js/diet-analysis.js?v=162"></script>
-    <script type="module" src="js/metabolic-score.js?v=162"></script>
+    <script type="module" src="js/app.js?v=163"></script>
+    <script type="module" src="js/main.js?v=163"></script>
+    <script type="module" src="js/diet-analysis.js?v=163"></script>
+    <script type="module" src="js/metabolic-score.js?v=163"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=162"></script>
+    <script src="js/pwa-install.js?v=163"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

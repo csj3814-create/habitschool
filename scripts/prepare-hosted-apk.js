@@ -6,7 +6,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const androidDir = path.join(repoRoot, "android");
 const installDir = path.join(repoRoot, "install");
 const localPropertiesPath = path.join(androidDir, "local.properties");
-const sourceApkPath = path.join(
+const debugApkPath = path.join(
   repoRoot,
   "android",
   "app",
@@ -16,6 +16,18 @@ const sourceApkPath = path.join(
   "debug",
   "app-debug.apk"
 );
+const releaseApkPath = path.join(
+  repoRoot,
+  "android",
+  "app",
+  "build",
+  "outputs",
+  "apk",
+  "release",
+  "app-release.apk"
+);
+const releaseSigningPropertiesPath = path.join(androidDir, "release-signing.properties");
+const releaseSigningLocalPropertiesPath = path.join(androidDir, "release-signing.local.properties");
 
 function log(message) {
   process.stdout.write(`[prepare-hosted-apk] ${message}\n`);
@@ -24,6 +36,15 @@ function log(message) {
 function fail(message) {
   process.stderr.write(`[prepare-hosted-apk] ${message}\n`);
   process.exit(1);
+}
+
+function hasAnyReleaseSigningHints() {
+  return fs.existsSync(releaseSigningPropertiesPath)
+    || fs.existsSync(releaseSigningLocalPropertiesPath)
+    || Boolean(process.env.HABITSCHOOL_ANDROID_STORE_FILE)
+    || Boolean(process.env.HABITSCHOOL_ANDROID_STORE_PASSWORD)
+    || Boolean(process.env.HABITSCHOOL_ANDROID_KEY_ALIAS)
+    || Boolean(process.env.HABITSCHOOL_ANDROID_KEY_PASSWORD);
 }
 
 function runGradleDebugBuild() {
@@ -55,18 +76,37 @@ function runGradleDebugBuild() {
 }
 
 function ensureSourceApk() {
-  if (fs.existsSync(sourceApkPath)) {
-    return;
+  const hasReleaseSigning = hasAnyReleaseSigningHints();
+
+  if (hasReleaseSigning && fs.existsSync(releaseApkPath)) {
+    log("release APK를 사용합니다.");
+    return releaseApkPath;
+  }
+
+  if (!hasReleaseSigning && fs.existsSync(releaseApkPath)) {
+    log("release APK가 있지만 현재 signing 힌트가 없어 stale artifact로 보고 무시합니다.");
+  }
+
+  if (hasReleaseSigning) {
+    log("release signing 힌트는 있지만 release APK가 없어 debug APK로 계속 진행합니다.");
+  }
+
+  if (fs.existsSync(debugApkPath)) {
+    log("debug APK를 사용합니다.");
+    return debugApkPath;
   }
 
   runGradleDebugBuild();
 
-  if (!fs.existsSync(sourceApkPath)) {
-    fail(`빌드 후에도 APK를 찾지 못했습니다: ${sourceApkPath}`);
+  if (!fs.existsSync(debugApkPath)) {
+    fail(`빌드 후에도 APK를 찾지 못했습니다: ${debugApkPath}`);
   }
+
+  return debugApkPath;
 }
 
 function copyToHostedInstallPath() {
+  const sourceApkPath = ensureSourceApk();
   fs.mkdirSync(installDir, { recursive: true });
 
   const targets = [
@@ -85,8 +125,14 @@ function copyToHostedInstallPath() {
 }
 
 function main() {
-  ensureSourceApk();
   copyToHostedInstallPath();
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  ensureSourceApk,
+  hasAnyReleaseSigningHints,
+};

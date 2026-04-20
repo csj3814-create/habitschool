@@ -1,4 +1,4 @@
-﻿/**
+/**
  * app.js
  * 메인 애플리케이션 로직 모듈
  * index.html의 인라인 스크립트에서 추출
@@ -14,28 +14,41 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=162';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=162';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=162';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=163';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=163';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=163';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=162';
+} from './exercise-media.js?v=163';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=162';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=162';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=162';
-import { sanitize, compressImage } from './data-manager.js?v=162';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=162';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=162';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=162';
+} from './health-connect-utils.js?v=163';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=163';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=163';
+import { sanitize, compressImage } from './data-manager.js?v=163';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=163';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=163';
+import {
+    DIET_PROGRAM_FASTING_PRESET,
+    DIET_PROGRAM_METHOD_IDS,
+    buildDietProgramDashboardSummary,
+    buildDietProgramGuideState,
+    getDietProgramAnalysisTip,
+    getDietProgramMethodMeta,
+    getDietProgramReminderToggleCopy,
+    isDietProgramMethodActive,
+    listDietProgramMethods,
+    normalizeDietProgramEnvelope,
+    normalizeDietProgramPreferences
+} from './diet-program.js?v=163';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=163';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -469,6 +482,407 @@ async function renderSimpleProfilePanel(sourceUserData = null) {
 }
 
 window.refreshSimpleProfilePanel = renderSimpleProfilePanel;
+
+let _dietProgramUserData = {};
+let _dietProgramPendingSelection = null;
+let _dietProgramSelectionBusy = false;
+let _dietProgramToggleInternalUpdate = false;
+
+function getDietProgramUserData() {
+    return _dietProgramUserData && typeof _dietProgramUserData === 'object'
+        ? _dietProgramUserData
+        : {};
+}
+
+function getCurrentDietProgramPreferences() {
+    return normalizeDietProgramEnvelope(getDietProgramUserData().programPreferences).diet;
+}
+
+function getSelectedDietProgramDailyLog(user = auth.currentUser) {
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    if (!user?.uid || !selectedDateStr) return {};
+    return getCachedDailyLog(`${user.uid}_${selectedDateStr}`) || {};
+}
+
+function setDietProgramToggleChecked(toggleEl, checked, disabled = false) {
+    if (!toggleEl) return;
+    _dietProgramToggleInternalUpdate = true;
+    toggleEl.checked = !!checked;
+    toggleEl.disabled = !!disabled;
+    _dietProgramToggleInternalUpdate = false;
+}
+
+function renderDietProgramAnalysisTip(resultContainer) {
+    if (!resultContainer) return;
+    resultContainer.querySelector('.diet-program-analysis-tip')?.remove();
+    if (!resultContainer._analysisData) return;
+
+    const tipText = getDietProgramAnalysisTip(getCurrentDietProgramPreferences());
+    if (!tipText) return;
+
+    const tipEl = document.createElement('div');
+    tipEl.className = 'diet-program-analysis-tip';
+    tipEl.textContent = tipText;
+    resultContainer.appendChild(tipEl);
+}
+
+function refreshDietProgramAnalysisTips() {
+    ['breakfast', 'lunch', 'dinner', 'snack'].forEach((meal) => {
+        const resultContainer = document.getElementById(`diet-analysis-${meal}`);
+        if (resultContainer) renderDietProgramAnalysisTip(resultContainer);
+    });
+}
+
+function renderDietProgramDashboardSummary() {
+    const shell = document.getElementById('dashboard-diet-program-summary');
+    const chipEl = document.getElementById('dashboard-diet-program-chip');
+    const reminderEl = document.getElementById('dashboard-diet-program-reminder');
+    const copyEl = document.getElementById('dashboard-diet-program-copy');
+    const supportEl = document.getElementById('dashboard-diet-program-support');
+    const ctaEl = document.getElementById('dashboard-diet-program-cta');
+    if (!shell || !chipEl || !reminderEl || !copyEl || !supportEl || !ctaEl) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+        shell.hidden = true;
+        return;
+    }
+
+    const { todayStr } = getDatesInfo();
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || todayStr).trim() || todayStr;
+    const summary = buildDietProgramDashboardSummary(getCurrentDietProgramPreferences(), {
+        dailyLog: getSelectedDietProgramDailyLog(user),
+        dateStr: selectedDateStr,
+        todayStr,
+        nowMs: Date.now()
+    });
+
+    shell.hidden = false;
+    chipEl.textContent = summary.chipLabel;
+    reminderEl.textContent = summary.active ? summary.reminderLine : '프로필에서 설정';
+    copyEl.textContent = summary.summaryLine;
+    supportEl.textContent = summary.supportTip;
+    ctaEl.textContent = summary.active ? '프로필에서 바꾸기' : '식단 방법 고르기';
+    ctaEl.onclick = () => {
+        if (window.openTab) window.openTab('profile');
+        setTimeout(() => {
+            window.openDietProgramSelector?.();
+        }, 120);
+    };
+}
+
+function renderDietProgramProfileCard() {
+    const nameEl = document.getElementById('diet-program-current-name');
+    const summaryEl = document.getElementById('diet-program-current-summary');
+    const supportEl = document.getElementById('diet-program-current-support');
+    const helperEl = document.getElementById('diet-program-reminders-helper');
+    const toggleEl = document.getElementById('diet-program-reminders-toggle');
+    const selectBtn = document.getElementById('diet-program-select-btn');
+    if (!nameEl || !summaryEl || !supportEl || !helperEl || !toggleEl || !selectBtn) return;
+
+    const dietPreferences = getCurrentDietProgramPreferences();
+    const meta = getDietProgramMethodMeta(dietPreferences.methodId);
+    const pushState = window.getAppPushPermissionState?.() || { connected: false };
+    const hasMethod = isDietProgramMethodActive(dietPreferences);
+
+    nameEl.textContent = hasMethod
+        ? `${meta.name} · ${meta.difficultyLabel}`
+        : '식단 방법을 골라보세요.';
+    summaryEl.textContent = hasMethod
+        ? meta.summary
+        : '선택한 방법에 맞춰 식단 가이드와 대시보드 요약이 달라져요.';
+    supportEl.textContent = hasMethod
+        ? `${meta.dashboardTip}${meta.cautionText ? ` ${meta.cautionText}` : ''}`
+        : '먼저 방법을 고른 뒤, 필요하면 방법 알림만 따로 켤 수 있어요.';
+    helperEl.textContent = getDietProgramReminderToggleCopy(dietPreferences, pushState);
+    selectBtn.textContent = hasMethod ? '방법 바꾸기' : '방법 선택';
+    setDietProgramToggleChecked(toggleEl, hasMethod && dietPreferences.remindersEnabled, !hasMethod);
+}
+
+function renderDietProgramSelectorList() {
+    const listEl = document.getElementById('diet-program-selector-list');
+    if (!listEl) return;
+
+    const currentMethodId = getCurrentDietProgramPreferences().methodId;
+    listEl.innerHTML = listDietProgramMethods().map((method) => {
+        const isSelected = currentMethodId === method.id;
+        return `
+            <button type="button" class="diet-program-option${isSelected ? ' is-selected' : ''}" data-method-id="${method.id}">
+                <div class="diet-program-option-topline">
+                    <div class="diet-program-option-name">${escapeHtml(method.name)}</div>
+                    <div class="diet-program-option-badges">
+                        <span class="diet-program-option-badge is-difficulty">${escapeHtml(method.difficultyLabel)}</span>
+                        <span class="diet-program-option-badge is-reminder">${escapeHtml(method.reminderPlan)}</span>
+                    </div>
+                </div>
+                <p class="diet-program-option-summary">${escapeHtml(method.summary)}</p>
+                <p class="diet-program-option-guide">${escapeHtml(method.mealGuide)}</p>
+                <p class="diet-program-option-support">${escapeHtml(method.exerciseSupportTip)} ${escapeHtml(method.mindSleepSupportTip)}</p>
+                ${method.cautionText ? `<p class="diet-program-option-caution">${escapeHtml(method.cautionText)}</p>` : ''}
+            </button>
+        `;
+    }).join('');
+}
+
+function getDietProgramConsentPrimaryLabel(pushState = {}) {
+    if (pushState.action === 'guide') return '설정 안내 보기';
+    if (pushState.action === 'install') return '홈 화면에 추가 후 켜기';
+    if (pushState.action === 'unsupported') return '이 브라우저에서는 알림 미지원';
+    return '알림 켜고 계속';
+}
+
+function renderDietProgramConsentModal() {
+    const titleEl = document.getElementById('diet-program-consent-title');
+    const copyEl = document.getElementById('diet-program-consent-copy');
+    const noteEl = document.getElementById('diet-program-consent-note');
+    const primaryBtn = document.getElementById('diet-program-consent-primary');
+    if (!titleEl || !copyEl || !noteEl || !primaryBtn) return;
+
+    const pendingMethodId = _dietProgramPendingSelection?.methodId || DIET_PROGRAM_METHOD_IDS.NONE;
+    const meta = getDietProgramMethodMeta(pendingMethodId);
+    const pushState = window.getAppPushPermissionState?.() || { connected: false, action: 'enable' };
+
+    titleEl.textContent = `${meta.name} 알림을 함께 켤까요?`;
+    copyEl.textContent = '이 식단 방법은 식전/공복 알림과 함께 쓰면 더 잘 지킬 수 있어요. 지금 알림을 켤까요?';
+    noteEl.textContent = pushState.status
+        ? `${pushState.status} ${pushState.helper || ''}`.trim()
+        : '동의하지 않아도 식단 방법 선택은 그대로 진행돼요.';
+    primaryBtn.textContent = getDietProgramConsentPrimaryLabel(pushState);
+    primaryBtn.disabled = _dietProgramSelectionBusy || pushState.action === 'unsupported';
+}
+
+function setDietProgramConsentBusy(isBusy = false) {
+    _dietProgramSelectionBusy = !!isBusy;
+    const primaryBtn = document.getElementById('diet-program-consent-primary');
+    const secondaryBtn = document.getElementById('diet-program-consent-secondary');
+    if (primaryBtn) {
+        primaryBtn.disabled = isBusy || primaryBtn.dataset.disabled === 'true';
+        if (isBusy) primaryBtn.textContent = '확인 중...';
+    }
+    if (secondaryBtn) secondaryBtn.disabled = isBusy;
+}
+
+window.openDietProgramSelector = function () {
+    renderDietProgramSelectorList();
+    const modal = document.getElementById('diet-program-selector-modal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.closeDietProgramSelector = function () {
+    const modal = document.getElementById('diet-program-selector-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.closeDietProgramConsentModal = function () {
+    _dietProgramPendingSelection = null;
+    const modal = document.getElementById('diet-program-consent-modal');
+    if (modal) modal.style.display = 'none';
+    setDietProgramConsentBusy(false);
+};
+
+async function persistDietProgramSelection(methodId, remindersEnabled) {
+    const user = auth.currentUser;
+    if (!user?.uid) {
+        showToast('로그인이 필요해요.');
+        return false;
+    }
+
+    const currentUserData = getDietProgramUserData();
+    const nextDietPreferences = normalizeDietProgramPreferences({
+        methodId,
+        remindersEnabled: methodId === DIET_PROGRAM_METHOD_IDS.NONE ? false : remindersEnabled,
+        activatedAt: new Date().toISOString(),
+        fastingPreset: DIET_PROGRAM_FASTING_PRESET
+    });
+
+    await setDoc(doc(db, 'users', user.uid), {
+        programPreferences: {
+            diet: nextDietPreferences
+        }
+    }, { merge: true });
+
+    const nextUserData = {
+        ...currentUserData,
+        programPreferences: {
+            ...(currentUserData.programPreferences || {}),
+            diet: nextDietPreferences
+        }
+    };
+
+    _patchDashboardUserData(user.uid, (ud) => {
+        ud.programPreferences = {
+            ...(ud.programPreferences || {}),
+            diet: nextDietPreferences
+        };
+    });
+
+    window.applyDietProgramUserData?.(nextUserData);
+    window.refreshSimpleProfilePanel?.(nextUserData).catch(() => {});
+    return true;
+}
+
+window.selectDietProgramMethod = async function (methodId = DIET_PROGRAM_METHOD_IDS.NONE) {
+    const currentPreferences = getCurrentDietProgramPreferences();
+    const nextMethodId = getDietProgramMethodMeta(methodId).id;
+
+    if (nextMethodId === currentPreferences.methodId) {
+        window.closeDietProgramSelector();
+        return;
+    }
+
+    if (nextMethodId === DIET_PROGRAM_METHOD_IDS.NONE) {
+        try {
+            await persistDietProgramSelection(nextMethodId, false);
+            showToast('기본 기록 모드로 돌아갔어요.');
+            window.closeDietProgramSelector();
+        } catch (error) {
+            console.warn('식단 방법 해제 실패:', error.message);
+            showToast('식단 방법 저장 중 문제가 생겼어요.');
+        }
+        return;
+    }
+
+    const pushState = window.getAppPushPermissionState?.() || { connected: false };
+    if (!pushState.connected) {
+        _dietProgramPendingSelection = { methodId: nextMethodId };
+        renderDietProgramConsentModal();
+        const modal = document.getElementById('diet-program-consent-modal');
+        if (modal) modal.style.display = 'flex';
+        return;
+    }
+
+    try {
+        await persistDietProgramSelection(nextMethodId, true);
+        showToast(`${getDietProgramMethodMeta(nextMethodId).name}으로 저장했어요.`);
+        window.closeDietProgramSelector();
+    } catch (error) {
+        console.warn('식단 방법 저장 실패:', error.message);
+        showToast('식단 방법 저장 중 문제가 생겼어요.');
+    }
+};
+
+window.confirmDietProgramSelectionWithoutNotifications = async function () {
+    const pending = _dietProgramPendingSelection;
+    if (!pending?.methodId) {
+        window.closeDietProgramConsentModal();
+        return;
+    }
+
+    try {
+        await persistDietProgramSelection(pending.methodId, false);
+        showToast('방법 선택은 저장했고, 알림은 나중에 프로필에서 켤 수 있어요.');
+        const consentModal = document.getElementById('diet-program-consent-modal');
+        if (consentModal) consentModal.style.display = 'none';
+        window.closeDietProgramSelector();
+    } catch (error) {
+        console.warn('식단 방법 저장 실패:', error.message);
+        showToast('식단 방법 저장 중 문제가 생겼어요.');
+    } finally {
+        _dietProgramPendingSelection = null;
+        setDietProgramConsentBusy(false);
+    }
+};
+
+window.confirmDietProgramSelectionWithNotifications = async function () {
+    const pending = _dietProgramPendingSelection;
+    if (!pending?.methodId) {
+        window.closeDietProgramConsentModal();
+        return;
+    }
+
+    try {
+        setDietProgramConsentBusy(true);
+        const result = await window.requestAppNotificationPermission?.();
+        const connected = result?.connected === true;
+        await persistDietProgramSelection(pending.methodId, connected);
+        if (connected) {
+            showToast(`${getDietProgramMethodMeta(pending.methodId).name} 알림까지 함께 켰어요.`);
+        } else {
+            showToast('방법 선택은 저장했고, 알림은 나중에 프로필에서 켤 수 있어요.');
+        }
+        const consentModal = document.getElementById('diet-program-consent-modal');
+        if (consentModal) consentModal.style.display = 'none';
+        window.closeDietProgramSelector();
+    } catch (error) {
+        console.warn('식단 방법 저장 실패:', error.message);
+        showToast('식단 방법 저장 중 문제가 생겼어요.');
+    } finally {
+        _dietProgramPendingSelection = null;
+        setDietProgramConsentBusy(false);
+    }
+};
+
+window.handleDietProgramReminderToggle = async function (checked) {
+    if (_dietProgramToggleInternalUpdate) return;
+
+    const currentPreferences = getCurrentDietProgramPreferences();
+    if (!isDietProgramMethodActive(currentPreferences)) {
+        showToast('먼저 식단 방법을 선택해 주세요.');
+        renderDietProgramProfileCard();
+        return;
+    }
+
+    if (!checked) {
+        try {
+            await persistDietProgramSelection(currentPreferences.methodId, false);
+            showToast('방법 알림을 껐어요.');
+        } catch (error) {
+            console.warn('방법 알림 끄기 실패:', error.message);
+            showToast('방법 알림 저장 중 문제가 생겼어요.');
+        }
+        return;
+    }
+
+    try {
+        const pushState = window.getAppPushPermissionState?.() || { connected: false };
+        let connected = pushState.connected === true;
+        if (!connected) {
+            const permissionResult = await window.requestAppNotificationPermission?.();
+            connected = permissionResult?.connected === true;
+        }
+
+        await persistDietProgramSelection(currentPreferences.methodId, connected);
+        showToast(connected
+            ? '방법 알림을 켰어요.'
+            : '알림이 아직 연결되지 않아 방법 알림은 꺼둔 상태로 저장했어요.');
+    } catch (error) {
+        console.warn('방법 알림 켜기 실패:', error.message);
+        showToast('방법 알림 저장 중 문제가 생겼어요.');
+    }
+};
+
+window.applyDietProgramUserData = function (userData = null) {
+    _dietProgramUserData = userData && typeof userData === 'object'
+        ? { ...userData }
+        : {};
+    renderDietProgramProfileCard();
+    renderDietProgramDashboardSummary();
+    refreshDietProgramAnalysisTips();
+    if (typeof updateRecordFlowGuides === 'function') {
+        updateRecordFlowGuides(getVisibleTabName());
+    }
+};
+
+const dietProgramSelectBtn = document.getElementById('diet-program-select-btn');
+if (dietProgramSelectBtn) {
+    dietProgramSelectBtn.addEventListener('click', () => window.openDietProgramSelector?.());
+}
+
+const dietProgramToggleEl = document.getElementById('diet-program-reminders-toggle');
+if (dietProgramToggleEl) {
+    dietProgramToggleEl.addEventListener('change', (event) => {
+        window.handleDietProgramReminderToggle?.(!!event.target.checked);
+    });
+}
+
+const dietProgramSelectorListEl = document.getElementById('diet-program-selector-list');
+if (dietProgramSelectorListEl) {
+    dietProgramSelectorListEl.addEventListener('click', (event) => {
+        const button = event.target.closest('.diet-program-option[data-method-id]');
+        if (!button) return;
+        window.selectDietProgramMethod?.(button.dataset.methodId || '');
+    });
+}
 
 function readPendingSignupOnboardingState() {
     try {
@@ -4006,7 +4420,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=162';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=163';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7038,7 +7452,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 for (const tier of activeTiers) {
                     const ch = activeChallenges[tier];
                     const totalDays = parseInt(ch.totalDays) || 30;
-                    const completed = parseInt(ch.completedDays) || 0;
+                    const completed = getChallengeCompletedDays(ch);
                     const progressPct = Math.round((completed / totalDays) * 100);
                     const remain = totalDays - completed;
                     const color = tierColors[tier];

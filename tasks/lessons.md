@@ -23,6 +23,21 @@
 - Root cause: retryable connectivity failures were caught piecemeal in feature code and only logged. There was no shared app-level scheduler to retry after short delays or when the tab became visible/online again.
 - Lesson: when multiple features can fail from the same Firestore connectivity hiccup, centralize recovery. Add a shared reconnect helper with short backoff steps (for this app, `1s` and `3s`), hook it into the main offline/error catch paths, and keep the feature catches lightweight.
 
+### 174. Asset links readiness checks should treat extra fingerprints as non-blocking unless an exact match is explicitly requested
+- Symptom: the Android release-readiness flow reported `assetlinks.json` as failed even though the expected debug fingerprint was present, because the file also contained another valid fingerprint for the same package.
+- Root cause: the check treated any additional fingerprint as a blocking mismatch instead of distinguishing between "expected fingerprint missing" and "expected fingerprint present plus extras".
+- Lesson: for multi-cert/internal-testing Android setups, readiness checks should require the expected fingerprint set to be present by default and only fail on extra fingerprints in an explicit exact-match mode.
+
+### 175. Hosted APK automation must not silently prefer a stale release artifact without current signing context
+- Symptom: the repo could contain an old `app-release.apk` from an earlier environment, which made it possible for hosting prep to serve that artifact even when the current machine had no active release-signing configuration.
+- Root cause: artifact selection looked only at file presence, not whether the current environment still had release-signing hints that made the release output trustworthy for this run.
+- Lesson: when release and debug artifacts can coexist, prefer the release APK only if current signing hints are present. Otherwise treat stray release files as stale and fall back to the actively reproducible debug artifact.
+
+### 176. Android release-signing docs and Gradle path resolution must agree on the same base directory
+- Symptom: release signing looked configured and the keystore file existed under `android/signing/`, but `:app:bundleRelease` still failed with `Keystore file ... android\\app\\signing\\... not found`.
+- Root cause: the sample docs and properties used `storeFile=signing/...` as if paths were relative to the Android root, while `android/app/build.gradle.kts` resolved that relative path from the `app` module directory.
+- Lesson: if signing examples tell operators to place the keystore under `android/signing/`, the Gradle script must resolve relative `storeFile` values with `rootProject.file(...)`. Do not rely on module-local `file(...)` unless the docs and examples also point to module-local paths.
+
 ### 169. Android Browser Helper WebView fallback is not safe unless the fallback activity is declared and exercised
 - Symptom: the hybrid app could launch fine when Chrome handled the TWA path, but still died on devices where no compatible TWA browser was available.
 - Root cause: I enabled `WEBVIEW_FALLBACK_STRATEGY` in the launcher but did not declare `com.google.androidbrowserhelper.trusted.WebViewFallbackActivity` in `AndroidManifest.xml`. That meant the fallback path itself threw `ActivityNotFoundException` at runtime.
@@ -1298,3 +1313,5 @@
 
 - 2026-04-18: 일부 사용자만 "화면은 보이는데 버튼/알림 탭이 전부 무반응"이면 브라우저 탓부터 하지 말고 자산 버전 정합성을 먼저 확인한다. 엔트리 스크립트만 `?v=`를 붙이고 내부 로컬 module import는 queryless로 두면, 배포가 누적될수록 특정 사용자 브라우저가 오래된 helper와 최신 entrypoint를 섞어 받아 `app.js` 전체가 import 단계에서 죽을 수 있다.
 - 2026-04-18: PWA/service worker 앱에서 알림 클릭은 `navigate().focus()`만 믿지 않는다. 브라우저별 실패나 reject가 있어도 `clients.openWindow(destination)` fallback이 반드시 있어야 "알림 눌렀는데 아무 반응 없음"을 막을 수 있다.
+- 2026-04-20: 사용자가 배포 전략만 접으려는 경우에는 관련 기능 코드를 바로 삭제하지 않는다. 특히 Play/APK/Health Connect처럼 정책이나 채널 때문에 잠시 비활성화하는 기능은 `feature flag`나 호스팅 차단으로 사용자 노출만 접고, 전략이 바뀌면 되살릴 수 있게 dormant 상태로 남긴다.
+- 2026-04-20: 챌린지 정산은 `completedDays` 숫자만 믿고 끝내면 안 된다. 실패/성공 판정 직전에는 항상 `completedDates`를 dedupe해서 `completedDays`와 reconcile하고, `today === endDate`인 마지막 날은 오늘 기록을 먼저 반영한 뒤 정산해야 "화면상 100%인데 실패 정산" 같은 엇갈림을 막을 수 있다.

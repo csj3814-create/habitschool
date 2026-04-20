@@ -74,11 +74,19 @@ That updates [assetlinks.json](/C:/SJ/antigravity/habitschool/.well-known/assetl
 firebase deploy --only "hosting"
 ```
 
-## 6. Build the signed release artifact
+## 6. Build the signed Play release artifacts
 
 ```powershell
 cd C:\SJ\antigravity\habitschool\android
-.\gradlew.bat :app:assembleRelease
+.\gradlew.bat :app:bundleRelease :app:assembleRelease
 ```
+
+Primary Play upload artifact:
+
+- `android\app\build\outputs\bundle\release\app-release.aab`
+
+Optional device-install artifact for manual verification:
+
+- `android\app\build\outputs\apk\release\app-release.apk`
 
 If release signing is missing, the build now fails fast with a clear message instead of silently producing the wrong artifact.

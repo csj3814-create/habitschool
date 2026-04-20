@@ -3842,7 +3842,7 @@ exports.startChallenge = onCall(
         const kstDate = new Date(now.getTime() + kstOffset);
         const startDate = kstDate.toISOString().split('T')[0];
         const endDateObj = new Date(startDate + 'T12:00:00Z');
-        endDateObj.setUTCDate(endDateObj.getUTCDate() + def.duration);
+        endDateObj.setUTCDate(endDateObj.getUTCDate() + Math.max(0, def.duration - 1));
         const endDate = endDateObj.toISOString().split('T')[0];
 
         const qualificationPolicy = buildDefaultChallengeQualificationPolicy(def.tier);
@@ -3867,6 +3867,7 @@ exports.startChallenge = onCall(
             challengeId: resolvedId,
             startDate,
             endDate,
+            scheduleVersion: 2,
             completedDays: initialCompletedDays,
             completedDates: initialCompletedDates,
             totalDays: def.duration,

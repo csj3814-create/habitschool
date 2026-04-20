@@ -4,7 +4,8 @@ param(
     [string]$AndroidDir = (Split-Path -Parent $PSScriptRoot),
     [string]$PackageName = 'com.habitschool.app',
     [string]$AssetLinksPath = '',
-    [switch]$IncludeDebugFingerprint
+    [switch]$IncludeDebugFingerprint,
+    [switch]$ExactMatch
 )
 
 Set-StrictMode -Version Latest
@@ -226,9 +227,16 @@ if ($currentFingerprints.Count -gt 0) {
 
 $missing = @($expectedFingerprints | Where-Object { $_ -notin $currentFingerprints })
 $unexpected = @($currentFingerprints | Where-Object { $_ -notin $expectedFingerprints })
+$hasUnexpected = $unexpected.Count -gt 0
+$hasBlockingMismatch = $missing.Count -gt 0 -or ($ExactMatch -and $hasUnexpected)
 
-if ($missing.Count -eq 0 -and $unexpected.Count -eq 0) {
-    Write-Host 'assetlinks.json matches the expected signing fingerprint set.'
+if (-not $hasBlockingMismatch) {
+    if ($hasUnexpected) {
+        Write-Warning ("assetlinks.json includes additional fingerprints beyond the expected set: " + ($unexpected -join ', '))
+        Write-Host 'Expected fingerprints are present, so the current assetlinks entry is usable.'
+    } else {
+        Write-Host 'assetlinks.json matches the expected signing fingerprint set.'
+    }
     $payloadJson
     exit 0
 }
@@ -237,8 +245,11 @@ Write-Warning 'assetlinks.json does not match the expected signing fingerprint s
 if ($missing.Count -gt 0) {
     Write-Warning ("Missing fingerprints: " + ($missing -join ', '))
 }
-if ($unexpected.Count -gt 0) {
+if ($hasUnexpected) {
     Write-Warning ("Unexpected fingerprints: " + ($unexpected -join ', '))
+    if (-not $ExactMatch) {
+        Write-Host 'Note: additional fingerprints are allowed in non-exact mode, but this check is still failing because at least one expected fingerprint is missing.'
+    }
 }
 
 $payloadJson
