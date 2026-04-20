@@ -14,27 +14,27 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=164';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=164';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=164';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=165';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=165';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=165';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=164';
+} from './exercise-media.js?v=165';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=164';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=164';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=164';
-import { sanitize, compressImage } from './data-manager.js?v=164';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=164';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=164';
+} from './health-connect-utils.js?v=165';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=165';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=165';
+import { sanitize, compressImage } from './data-manager.js?v=165';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=165';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=165';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -47,8 +47,8 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=164';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=164';
+} from './diet-program.js?v=165';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=165';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -60,6 +60,10 @@ window.chooseSharedImportTarget = chooseSharedImportTarget;
 
 let _stepData = createEmptyStepData();
 let _stepScreenshotFile = null;
+let _appBootReady = false;
+let _pendingBootTabRequest = null;
+let _pendingDietProgramUserData = null;
+let _hasPendingDietProgramUserData = false;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -857,7 +861,7 @@ window.handleDietProgramReminderToggle = async function (checked) {
     }
 };
 
-window.applyDietProgramUserData = function (userData = null) {
+function _applyDietProgramUserDataInternal(userData = null) {
     _dietProgramUserData = userData && typeof userData === 'object'
         ? { ...userData }
         : {};
@@ -868,6 +872,16 @@ window.applyDietProgramUserData = function (userData = null) {
     if (typeof updateRecordFlowGuides === 'function') {
         updateRecordFlowGuides(getVisibleTabName());
     }
+}
+
+window.applyDietProgramUserData = function (userData = null) {
+    if (!_appBootReady) {
+        _pendingDietProgramUserData = userData;
+        _hasPendingDietProgramUserData = true;
+        return;
+    }
+
+    _applyDietProgramUserDataInternal(userData);
 };
 
 const dietProgramSelectBtn = document.getElementById('diet-program-select-btn');
@@ -891,7 +905,6 @@ if (dietProgramSelectorListEl) {
     });
 }
 
-window.applyDietProgramUserData?.();
 window.addEventListener('pageshow', () => {
     renderDietProgramProfileCard();
     renderDietProgramDashboardSummary();
@@ -3117,7 +3130,10 @@ function setRecordFlowCardCollapsed(tabName, collapsed, persist = true) {
 }
 
 function syncGuidePanels(tabName = null) {
-    ensureGuideCollapseState(_dashboardCache.uid === auth.currentUser?.uid ? _dashboardCache.data?.ud : null);
+    const dashboardUserData = _appBootReady && _dashboardCache.uid === auth.currentUser?.uid
+        ? _dashboardCache.data?.ud
+        : null;
+    ensureGuideCollapseState(dashboardUserData);
     setGalleryHeroCollapsed(_galleryHeroCollapsed, false);
     ['diet', 'exercise', 'sleep'].forEach(name => {
         if (!tabName || tabName === name || document.querySelector(`.record-flow-card[data-record-guide="${name}"]`)) {
@@ -4447,7 +4463,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=164';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=165';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8117,6 +8133,10 @@ window.toggleMeditationQuickMark = function() {
 
 function openTab(tabName, pushState = true) {
     const resolvedTabName = normalizeTabForMode(tabName);
+    if (!_appBootReady) {
+        _pendingBootTabRequest = { tabName: resolvedTabName, pushState };
+        return;
+    }
     const user = auth.currentUser;
     if (!user && resolvedTabName !== 'gallery') {
         document.getElementById('login-modal').style.display = 'flex'; return;
@@ -16976,5 +16996,22 @@ async function checkChallengeNotifications(uid) {
     } catch (e) {
         console.warn('[checkChallengeNotifications]', e.message);
     }
+}
+
+_appBootReady = true;
+
+if (_hasPendingDietProgramUserData) {
+    const pendingDietProgramUserData = _pendingDietProgramUserData;
+    _pendingDietProgramUserData = null;
+    _hasPendingDietProgramUserData = false;
+    window.applyDietProgramUserData?.(pendingDietProgramUserData);
+} else {
+    _applyDietProgramUserDataInternal(_dietProgramUserData);
+}
+
+if (_pendingBootTabRequest) {
+    const pendingBootTabRequest = _pendingBootTabRequest;
+    _pendingBootTabRequest = null;
+    openTab(pendingBootTabRequest.tabName, pendingBootTabRequest.pushState);
 }
 

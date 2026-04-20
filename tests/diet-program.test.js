@@ -94,11 +94,17 @@ describe('diet program helpers', () => {
         })).toBeTruthy();
     });
 
-    it('declares step state before diet program refresh hooks and uses safe asset refresh calls', () => {
+    it('keeps diet-program boot hooks queued until app boot is ready', () => {
         expect(APP_SOURCE.indexOf('let _stepData = createEmptyStepData();')).toBeGreaterThan(-1);
-        expect(APP_SOURCE.indexOf('window.applyDietProgramUserData = function')).toBeGreaterThan(-1);
-        expect(APP_SOURCE.indexOf('let _stepData = createEmptyStepData();'))
-            .toBeLessThan(APP_SOURCE.indexOf('window.applyDietProgramUserData = function'));
+        expect(APP_SOURCE).toContain('let _appBootReady = false;');
+        expect(APP_SOURCE).toContain('let _pendingBootTabRequest = null;');
+        expect(APP_SOURCE).toContain('let _pendingDietProgramUserData = null;');
+        expect(APP_SOURCE).toContain('if (!_appBootReady) {');
+        expect(APP_SOURCE).toContain('_pendingBootTabRequest = { tabName: resolvedTabName, pushState };');
+        expect(APP_SOURCE).toContain('_pendingDietProgramUserData = userData;');
+        expect(APP_SOURCE).toContain('_appBootReady = true;');
+        expect(APP_SOURCE).toContain('openTab(pendingBootTabRequest.tabName, pendingBootTabRequest.pushState);');
+        expect(APP_SOURCE).not.toContain('window.applyDietProgramUserData?.();');
         expect(APP_SOURCE).toContain('window.updateAssetDisplay?.();');
         expect(APP_SOURCE).not.toContain("if (resolvedTabName === 'assets' && user) {\r\n            updateAssetDisplay();");
         expect(APP_SOURCE).not.toContain("if (resolvedTabName === 'assets' && user) {\n            updateAssetDisplay();");
