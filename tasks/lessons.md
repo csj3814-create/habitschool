@@ -38,6 +38,11 @@
 - Root cause: I shortened individual sentences but still combined multiple guidance sources and left verbose badge labels in a space-constrained mobile layout.
 - Lesson: for mobile selection cards and guide panels, use one short meal cue, one short support line, and a compact badge label like `11:30·17:30`. Avoid stacking multiple advisory sentences unless the user explicitly asks for more detail.
 
+### 184. Compact diet summaries should show the method name only once and spend the second line on the actual cue
+- Symptom: the compact diet summary rendered as `스위치온 다이어트` on the chip and then repeated `스위치온 다이어트 · 초기 저탄수, 이후 균형` on the next line, which wasted space and pushed the meaningful cue down.
+- Root cause: I kept the generic `method name + guide` pattern in the status line even after the method label had already moved into the top chip.
+- Lesson: when a compact card already has a visible method label, the next line should contain only the actionable cue. If difficulty still matters, fold it into the chip label rather than repeating the method name in the body.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

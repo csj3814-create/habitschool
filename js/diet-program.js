@@ -230,7 +230,7 @@ function buildSelectedMethodGuideState(meta, {
         };
     }
 
-    let status = `${meta.name} · ${meta.mealGuide}`;
+    let status = meta.mealGuide;
     let helper = meta.dashboardTip;
 
     if (dietPhotoCount > 0) {
@@ -331,7 +331,7 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
     return {
         active: true,
         methodId: meta.id,
-        chipLabel: meta.name,
+        chipLabel: `${meta.name} · ${meta.difficultyLabel}`,
         summaryLine: guideState.status,
         supportTip: meta.exerciseSupportTip || meta.mindSleepSupportTip,
         reminderLine: normalized.remindersEnabled ? meta.reminderPlan : '방법 알림은 현재 꺼져 있어요.'
@@ -343,7 +343,7 @@ export function getDietProgramAnalysisTip(dietPreferences = null) {
     if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) return '';
 
     const meta = getDietProgramMethodMeta(normalized.methodId);
-    return `${meta.name} · ${meta.mealGuide}`;
+    return `식단 팁 · ${meta.mealGuide}`;
 }
 
 export function getDietProgramReminderToggleCopy(dietPreferences = null, pushState = {}) {

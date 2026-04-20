@@ -82,12 +82,14 @@ describe('diet program helpers', () => {
 
         expect(summary.active).toBe(true);
         expect(summary.methodId).toBe(DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN);
-        expect(summary.chipLabel).toBeTruthy();
+        expect(summary.chipLabel).toContain('고단백 식단');
+        expect(summary.chipLabel).toContain('쉬움');
         expect(summary.summaryLine).toBeTruthy();
+        expect(summary.summaryLine).not.toContain('고단백 식단');
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
             methodId: DIET_PROGRAM_METHOD_IDS.SWITCH_ON
-        })).toBeTruthy();
+        })).toContain('식단 팁');
     });
 
     it('keeps diet-program boot hooks queued until app boot is ready', () => {
