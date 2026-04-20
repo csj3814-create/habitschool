@@ -256,7 +256,7 @@ window.addEventListener('load', async () => {
                 console.warn('localhost service worker cleanup failed:', error);
             }
         } else {
-            navigator.serviceWorker.register('./sw.js?v=161')
+        navigator.serviceWorker.register('./sw.js?v=162')
                 .then((reg) => {
                     console.log('PWA service worker registered:', reg.scope);
                     reg.update();

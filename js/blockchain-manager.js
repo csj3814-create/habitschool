@@ -25,7 +25,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=161';
+} from './blockchain-config.js?v=162';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -43,12 +43,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=161';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=162';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=161';
-import { getKstDateString } from './ui-helpers.js?v=161';
-import { checkRateLimit } from './security.js?v=161';
+import { showToast } from './ui-helpers.js?v=162';
+import { getKstDateString } from './ui-helpers.js?v=162';
+import { checkRateLimit } from './security.js?v=162';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;

@@ -18,6 +18,14 @@ export function getStrengthThumbSaveWaitMs(localThumbSeed = '') {
     return isLocalExerciseVideoThumb(localThumbSeed) ? 0 : 1200;
 }
 
+export function getDeferredStrengthThumbDelayMs(fileSize = 0) {
+    const normalizedSize = Math.max(0, Number(fileSize || 0));
+    if (normalizedSize === 0) return 0;
+    if (normalizedSize <= 6 * 1024 * 1024) return 650;
+    if (normalizedSize <= 20 * 1024 * 1024) return 350;
+    return 0;
+}
+
 export function resolveLegacyStrengthVideoThumbUrl(exercise = {}, videoUrl = '') {
     const normalizedVideoUrl = normalizeExerciseMediaUrl(videoUrl);
     const legacyVideoUrl = normalizeExerciseMediaUrl(exercise?.strengthVideoUrl);

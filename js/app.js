@@ -14,27 +14,28 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=161';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=161';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=161';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=162';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=162';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=162';
 import {
     buildStrengthExerciseSeed,
+    getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=161';
+} from './exercise-media.js?v=162';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=161';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=161';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=161';
-import { sanitize, compressImage } from './data-manager.js?v=161';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=161';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=161';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=161';
+} from './health-connect-utils.js?v=162';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=162';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=162';
+import { sanitize, compressImage } from './data-manager.js?v=162';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=162';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=162';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=162';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4005,7 +4006,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=161';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=162';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -4836,7 +4837,7 @@ window.previewDynamicVid = function (input) {
     // 즉시 플레이스홀더 표시 (검은 박스 방지)
     showStrengthPreviewImage(currentBlock || input.parentElement, getVideoPlaceholderDataUrl());
 
-    const localThumbPromise = extractVideoThumbFromFile(file).catch(() => '');
+    const localThumbPromise = scheduleStrengthLocalThumbExtraction(file);
 
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
@@ -4869,6 +4870,31 @@ window.previewDynamicVid = function (input) {
 
     updateRecordFlowGuides('exercise');
 };
+
+function scheduleStrengthLocalThumbExtraction(file) {
+    const delayMs = getDeferredStrengthThumbDelayMs(file?.size || 0);
+    if (!delayMs) {
+        return extractVideoThumbFromFile(file).catch(() => '');
+    }
+
+    return new Promise((resolve) => {
+        const runExtraction = () => {
+            extractVideoThumbFromFile(file)
+                .then((thumbDataUrl) => resolve(thumbDataUrl || ''))
+                .catch(() => resolve(''));
+        };
+
+        window.setTimeout(() => {
+            if (typeof window.requestIdleCallback === 'function') {
+                window.requestIdleCallback(() => {
+                    runExtraction();
+                }, { timeout: delayMs + 1200 });
+                return;
+            }
+            runExtraction();
+        }, delayMs);
+    });
+}
 
 // AI 분석용 이미지 압축 (base64 data URL → 최대 480px 리사이즈, 품질 0.5)
 function compressImageForAI(dataUrl) {

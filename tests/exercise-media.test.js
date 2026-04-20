@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     buildStrengthExerciseSeed,
+    getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
     isLocalExerciseVideoThumb,
     resolveLegacyStrengthVideoThumbUrl,
@@ -103,5 +104,11 @@ describe('strength local thumb helpers', () => {
     it('skips the remote thumb wait when a local thumb already exists', () => {
         expect(getStrengthThumbSaveWaitMs('data:image/jpeg;base64,thumb')).toBe(0);
         expect(getStrengthThumbSaveWaitMs('')).toBe(1200);
+    });
+
+    it('delays local thumb extraction briefly for smaller uploads', () => {
+        expect(getDeferredStrengthThumbDelayMs(4 * 1024 * 1024)).toBe(650);
+        expect(getDeferredStrengthThumbDelayMs(12 * 1024 * 1024)).toBe(350);
+        expect(getDeferredStrengthThumbDelayMs(24 * 1024 * 1024)).toBe(0);
     });
 });

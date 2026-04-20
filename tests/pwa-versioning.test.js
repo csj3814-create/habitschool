@@ -81,6 +81,7 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/pwa-install.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/security.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/ui-helpers.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/upload-performance.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/webview-detect.js?v=${releaseVersion}'`);
 
         const headerSources = firebaseConfig.hosting[0].headers.map((item) => item.source);
