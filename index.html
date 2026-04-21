@@ -122,6 +122,19 @@
             gap: 12px;
         }
 
+        .meditation-practice-copy {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .meditation-practice-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
         .meditation-practice-kicker {
             font-size: 11px;
             font-weight: 800;
@@ -154,6 +167,25 @@
             font-size: 12px;
             font-weight: 800;
             text-align: center;
+        }
+
+        .meditation-sound-toggle {
+            border: 1px solid rgba(229, 164, 88, 0.28);
+            background: rgba(255, 255, 255, 0.9);
+            color: #7C5A23;
+            border-radius: 999px;
+            min-height: 34px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .meditation-sound-toggle.is-on {
+            background: linear-gradient(135deg, #F4FFF6 0%, #EFF9FF 100%);
+            border-color: rgba(73, 153, 91, 0.25);
+            color: #2C7C45;
         }
 
         .meditation-method-chip-list {
@@ -206,6 +238,31 @@
             font-weight: 700;
             line-height: 1.45;
             color: #2F2518;
+        }
+
+        .meditation-phase-steps {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .meditation-phase-step {
+            min-width: 0;
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: rgba(244, 236, 222, 0.82);
+            color: #9B886D;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1;
+            transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+        }
+
+        .meditation-phase-step.is-active {
+            background: linear-gradient(135deg, #FFF1D9 0%, #FFE4B7 100%);
+            color: #A05A00;
+            transform: translateY(-1px);
         }
 
         .meditation-practice-timer {
@@ -293,7 +350,8 @@
         }
 
         body.dark-mode .meditation-practice-duration,
-        body.dark-mode .meditation-method-chip {
+        body.dark-mode .meditation-method-chip,
+        body.dark-mode .meditation-sound-toggle {
             background: rgba(255, 255, 255, 0.06);
             border-color: rgba(255, 255, 255, 0.1);
             color: #E9D7BF;
@@ -302,6 +360,18 @@
         body.dark-mode .meditation-method-chip.is-selected {
             background: linear-gradient(135deg, rgba(42, 84, 50, 0.92) 0%, rgba(30, 73, 82, 0.92) 100%);
             color: #DFF4E4;
+        }
+
+        body.dark-mode .meditation-sound-toggle.is-on,
+        body.dark-mode .meditation-phase-step.is-active {
+            background: linear-gradient(135deg, rgba(42, 84, 50, 0.92) 0%, rgba(30, 73, 82, 0.92) 100%);
+            border-color: rgba(122, 224, 146, 0.18);
+            color: #DFF4E4;
+        }
+
+        body.dark-mode .meditation-phase-step {
+            background: rgba(255, 255, 255, 0.06);
+            color: #B8AEA2;
         }
 
         body.dark-mode .meditation-progress-track {
@@ -319,13 +389,9 @@
                 padding: 12px;
             }
 
-            .meditation-practice-head {
-                flex-direction: column;
-            }
-
             .meditation-practice-duration {
                 min-width: 0;
-                align-self: flex-start;
+                align-self: flex-end;
             }
 
             .meditation-practice-panel {
@@ -340,6 +406,15 @@
                 flex: 1 1 calc(50% - 4px);
                 min-width: 0;
                 justify-content: center;
+            }
+
+            .meditation-phase-steps {
+                gap: 6px;
+            }
+
+            .meditation-phase-step {
+                flex: 1 1 calc(50% - 3px);
+                text-align: center;
             }
         }
     </style>
@@ -1473,16 +1548,20 @@
                     <h3>🧘 오늘의 명상</h3>
                     <div class="meditation-practice-card" id="meditation-practice-card">
                         <div class="meditation-practice-head">
-                            <div>
+                            <div class="meditation-practice-copy">
                                 <div class="meditation-practice-kicker">호흡 가이드</div>
                                 <strong id="meditation-method-name">복식호흡</strong>
                                 <p id="meditation-method-guide">배를 부풀리며 4초 들숨, 6초 날숨</p>
                             </div>
-                            <span class="meditation-practice-duration" id="meditation-method-duration">3분</span>
+                            <div class="meditation-practice-meta">
+                                <span class="meditation-practice-duration" id="meditation-method-duration">3분</span>
+                                <button type="button" class="meditation-sound-toggle" id="meditation-sound-toggle" aria-pressed="false" onclick="toggleMeditationSound()">소리 끔</button>
+                            </div>
                         </div>
                         <div class="meditation-method-chip-list" id="meditation-method-chip-list" role="tablist" aria-label="명상 방법 선택"></div>
                         <div class="meditation-practice-panel">
                             <div class="meditation-practice-line" id="meditation-phase-line">배를 부풀리며 천천히 들이마셔요.</div>
+                            <div class="meditation-phase-steps" id="meditation-phase-steps" hidden></div>
                             <div class="meditation-practice-timer" id="meditation-remaining-time">03:00</div>
                             <div class="meditation-progress-track" aria-hidden="true">
                                 <div class="meditation-progress-bar" id="meditation-progress-bar"></div>

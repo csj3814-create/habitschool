@@ -13,6 +13,7 @@ const METHOD_LIST = Object.freeze([
         name: '복식호흡',
         guide: '배를 부풀리며 4초 들숨, 6초 날숨',
         durationSec: 180,
+        phaseLabels: ['들이숨', '내쉼'],
         phases: [
             { seconds: 4, line: '배를 부풀리며 천천히 들이마셔요.' },
             { seconds: 6, line: '배를 가라앉히며 길게 내쉬어요.' }
@@ -23,7 +24,8 @@ const METHOD_LIST = Object.freeze([
         id: MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT,
         name: '4-7-8 호흡',
         guide: '4초 들숨, 7초 멈춤, 8초 날숨',
-        durationSec: 120,
+        durationSec: 180,
+        phaseLabels: ['들이숨', '멈춤', '내쉼'],
         phases: [
             { seconds: 4, line: '4초 동안 코로 들이마셔요.' },
             { seconds: 7, line: '숨을 멈추고 가슴을 편하게 둬요.' },
@@ -36,9 +38,10 @@ const METHOD_LIST = Object.freeze([
         name: '박스호흡',
         guide: '4초 들숨, 4초 멈춤, 4초 날숨, 4초 멈춤',
         durationSec: 180,
+        phaseLabels: ['들이숨', '멈춤', '내쉼', '멈춤'],
         phases: [
             { seconds: 4, line: '4초 동안 들이마셔요.' },
-            { seconds: 4, line: '숨을 멈추고 어깨 힘을 풀어요.' },
+            { seconds: 4, line: '숨을 멈추고 어깨 힘을 빼요.' },
             { seconds: 4, line: '4초 동안 천천히 내쉬어요.' },
             { seconds: 4, line: '빈 호흡으로 잠시 머물러요.' }
         ],
@@ -50,10 +53,10 @@ const METHOD_LIST = Object.freeze([
         guide: '호흡과 몸감각에 집중하고 떠오른 생각은 흘려보내기',
         durationSec: 300,
         segments: [
-            { untilRatio: 0.25, line: '호흡이 드나드는 감각을 느껴보세요.' },
-            { untilRatio: 0.5, line: '어깨와 턱의 힘을 천천히 풀어요.' },
+            { untilRatio: 0.25, line: '호흡에서 시작되는 감각을 살펴보세요.' },
+            { untilRatio: 0.5, line: '어깨와 턱의 힘을 천천히 빼요.' },
             { untilRatio: 0.75, line: '떠오른 생각은 흘려보내고 다시 호흡으로 돌아와요.' },
-            { untilRatio: 1, line: '마지막 세 호흡을 길게 마무리해요.' }
+            { untilRatio: 1, line: '마지막 세 호흡은 길게 마무리해요.' }
         ],
         completionLine: '마음챙김으로 몸과 생각을 다시 고르게 했어요.'
     }
@@ -146,4 +149,47 @@ export function getMeditationPhaseLine(methodId = '', {
     }
 
     return method.guide;
+}
+
+export function getMeditationPhaseUiState(methodId = '', {
+    elapsedSec = 0,
+    remainingSec = 0,
+    totalSec = 0
+} = {}) {
+    const method = getMeditationMethodMeta(methodId);
+    if (!Array.isArray(method.phaseLabels) || method.phaseLabels.length === 0) {
+        return null;
+    }
+
+    const labels = [...method.phaseLabels];
+    if (remainingSec <= 0) {
+        return {
+            labels,
+            activeIndex: labels.length - 1
+        };
+    }
+
+    if (Array.isArray(method.phases) && method.phases.length > 0) {
+        const cycleSec = method.phases.reduce((sum, phase) => sum + Math.max(1, Number(phase.seconds || 0)), 0) || 1;
+        const cycleIndex = Math.max(0, Math.floor(Math.max(0, Math.floor(elapsedSec)) / cycleSec));
+        let offset = ((Math.max(0, Math.floor(elapsedSec)) % cycleSec) + cycleSec) % cycleSec;
+        for (let index = 0; index < method.phases.length; index += 1) {
+            const phaseSec = Math.max(1, Number(method.phases[index].seconds || 0));
+            if (offset < phaseSec) {
+                return {
+                    labels,
+                    activeIndex: Math.min(index, labels.length - 1),
+                    cycleIndex
+                };
+            }
+            offset -= phaseSec;
+        }
+    }
+
+    const safeTotal = Math.max(1, Number(totalSec || method.durationSec || 1));
+    const ratio = Math.min(1, Math.max(0, Number(elapsedSec || 0) / safeTotal));
+    return {
+        labels,
+        activeIndex: Math.min(labels.length - 1, Math.floor(ratio * labels.length))
+    };
 }

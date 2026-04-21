@@ -7,6 +7,7 @@ import {
     formatMeditationDurationLabel,
     getMeditationMethodMeta,
     getMeditationPhaseLine,
+    getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
 } from '../js/meditation-guide.js';
@@ -23,6 +24,8 @@ describe('meditation guide helpers', () => {
             MEDITATION_METHOD_IDS.MINDFULNESS
         ]);
         expect(getMeditationMethodMeta(DEFAULT_MEDITATION_METHOD_ID).durationSec).toBe(180);
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).durationSec).toBe(180);
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.MINDFULNESS).durationSec).toBe(300);
         expect(formatMeditationDurationLabel(300)).toBe('5분');
     });
 
@@ -50,7 +53,7 @@ describe('meditation guide helpers', () => {
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT, {
             elapsedSec: 5,
             remainingSec: 60,
-            totalSec: 120
+            totalSec: 180
         })).toBe('숨을 멈추고 가슴을 편하게 둬요.');
 
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.MINDFULNESS, {
@@ -58,20 +61,35 @@ describe('meditation guide helpers', () => {
             remainingSec: 80,
             totalSec: 300
         })).toBe('떠오른 생각은 흘려보내고 다시 호흡으로 돌아와요.');
+
+        expect(getMeditationPhaseUiState(MEDITATION_METHOD_IDS.BOX, {
+            elapsedSec: 5,
+            remainingSec: 175,
+            totalSec: 180
+        })).toEqual({
+            labels: ['들이숨', '멈춤', '내쉼', '멈춤'],
+            activeIndex: 1,
+            cycleIndex: 0
+        });
     });
 
-    it('replaces the checkbox flow with guided meditation UI and metadata saves', () => {
+    it('replaces the checkbox flow with guided meditation UI, phase steps, and sound controls', () => {
         expect(APP_SOURCE).toContain('meditationMethodId');
         expect(APP_SOURCE).toContain('meditationDurationSec');
         expect(APP_SOURCE).toContain('meditationCompletedAt');
+        expect(APP_SOURCE).toContain("const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';");
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
+        expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
+        expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
         expect(APP_SOURCE).not.toContain('meditation-check');
 
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
+        expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
+        expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
         expect(INDEX_SOURCE).toContain('id="meditation-start-btn"');
         expect(INDEX_SOURCE).toContain('id="meditation-completion-line"');
     });

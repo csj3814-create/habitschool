@@ -1,0 +1,19 @@
+# 명상 가이드 개선 v1.1
+
+## 체크리스트
+- [x] 호흡법 3종 3분, 마음챙김 5분으로 기본 시간 조정
+- [x] 명상 카드 헤더를 방법명 좌측 / 시간 pill 우측 구조로 유지하며 소리 토글 추가
+- [x] 복식호흡/4-7-8/박스호흡 단계 표시 UI 추가
+- [x] 단계 전환/완료 비프음과 로컬 설정 저장 추가
+- [x] 테스트와 번들 검증 통과
+
+## 메모
+- Firestore 구조는 유지하고 사운드 설정은 localStorage만 사용
+- 단계 표시 대상은 호흡법 3종만 포함
+- 마음챙김은 기존 세그먼트 안내 유지
+
+## 리뷰
+- `js/meditation-guide.js`에 단계 라벨과 단계 표시용 helper를 추가하고 `4-7-8`을 포함한 호흡법 3종 기본 시간을 3분으로 통일
+- `index.html` 명상 카드 헤더에 우측 시간 pill과 `소리` 토글을 추가하고, 단계 segmented row를 삽입
+- `js/app-core.js`에서 단계 표시 렌더링, 비프음 안내, 로컬 사운드 설정 저장, 단계 전환 cue 동기화를 연결
+- 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
