@@ -53,6 +53,16 @@ import {
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
 } from './diet-program.js?v=167';
+import {
+    DEFAULT_MEDITATION_METHOD_ID,
+    MEDITATION_COMMON_NOTE,
+    buildMeditationCompletionLabel,
+    formatMeditationDurationLabel,
+    getMeditationMethodMeta,
+    getMeditationPhaseLine,
+    listMeditationMethods,
+    normalizeMeditationLog
+} from './meditation-guide.js?v=167';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=167';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
@@ -69,6 +79,11 @@ let _appBootReady = false;
 let _pendingBootTabRequest = null;
 let _pendingDietProgramUserData = null;
 let _hasPendingDietProgramUserData = false;
+const MEDITATION_TIMER_STORAGE_KEY = 'habitschool-meditation-timer-v1';
+const MEDITATION_DRAFT_STORAGE_KEY = 'habitschool-meditation-draft-v1';
+let _meditationTimerTickHandle = 0;
+let _meditationUiState = null;
+let _meditationRestorableState = null;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -6166,7 +6181,6 @@ window.smartUpload = async function (input) {
 
 function clearInputs() {
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('meditation-check').checked = false;
     loadStepData(null);
     _lastDietAutoImportResult = null;
     renderDietShareImportBanner();
@@ -6221,6 +6235,7 @@ function clearInputs() {
     document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
     applyShareSettingsToControls(getDefaultShareSettings());
     setShareSettingsExpanded(false);
+    applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
     updateRecordFlowGuides(getVisibleTabName());
 }
 
@@ -6383,14 +6398,16 @@ async function loadDataForSelectedDate(dateStr) {
                         }
                     }
                 }
-                if (data.sleepAndMind.meditationDone) document.getElementById('meditation-check').checked = true;
                 document.getElementById('gratitude-journal').value = data.sleepAndMind.gratitude || '';
+                applyMeditationLogToUi(data.sleepAndMind, { selectedDateStr });
 
                 if (awarded.mind) {
                     const mp = awarded.mindPoints || 5;
                     document.getElementById('quest-mind').className = 'quest-check done';
                     document.getElementById('quest-mind').innerText = `+${mp}P`;
                 }
+            } else {
+                applyMeditationLogToUi(null, { selectedDateStr });
             }
 
             // 중성지방 복원
@@ -6411,6 +6428,7 @@ async function loadDataForSelectedDate(dateStr) {
         } else {
             updateDailyLogCache(docId, { awardedPoints: {} });
             addExerciseBlock('cardio'); addExerciseBlock('strength');
+            applyMeditationLogToUi(null, { selectedDateStr });
         }
 
         const shouldFocusStepCard = getVisibleTabName() === 'exercise';
@@ -6559,6 +6577,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bindShareSettingListeners();
     bindShareTemplateListeners();
     scheduleFloatingBarLayoutUpdate();
+    applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
     const modal = document.getElementById('lightbox-modal');
     if (!modal) return;
 
@@ -8062,6 +8081,370 @@ function _getExerciseGuideCounts() {
     };
 }
 
+function getSelectedRecordDateStr() {
+    const { todayStr } = getDatesInfo();
+    return String(document.getElementById('selected-date')?.value || todayStr).trim() || todayStr;
+}
+
+function createMeditationUiState(overrides = {}) {
+    const hasOwn = (key) => Object.prototype.hasOwnProperty.call(overrides, key);
+    const explicitMethodId = hasOwn('meditationMethodId')
+        ? String(overrides.meditationMethodId || '').trim()
+        : '';
+    const explicitCompletionMethodId = hasOwn('completionMethodId')
+        ? String(overrides.completionMethodId || '').trim()
+        : (
+            hasOwn('meditationMethodId')
+                ? explicitMethodId
+                : String((overrides.done || overrides.meditationDone) ? (overrides.methodId || '') : '').trim()
+        );
+    const methodMeta = getMeditationMethodMeta(
+        overrides.methodId
+        || explicitMethodId
+        || DEFAULT_MEDITATION_METHOD_ID
+    );
+    const rawDuration = Number(
+        overrides.durationSec
+        ?? (Number(overrides.meditationDurationSec || 0) || methodMeta.durationSec)
+        ?? methodMeta.durationSec
+    );
+    const durationSec = Number.isFinite(rawDuration) && rawDuration > 0
+        ? Math.round(rawDuration)
+        : methodMeta.durationSec;
+    const done = !!(overrides.done ?? overrides.meditationDone);
+    const status = String(
+        overrides.status
+        || (done ? 'completed' : 'idle')
+    ).trim() || 'idle';
+    const rawRemaining = Number(overrides.remainingSec ?? (done ? 0 : durationSec));
+    const rawCompletionDuration = Number(
+        hasOwn('completionDurationSec')
+            ? overrides.completionDurationSec
+            : (
+                hasOwn('meditationDurationSec')
+                    ? overrides.meditationDurationSec
+                    : (done ? durationSec : 0)
+            )
+    );
+    return {
+        dateStr: String(overrides.dateStr || getSelectedRecordDateStr()).trim() || getSelectedRecordDateStr(),
+        methodId: methodMeta.id,
+        durationSec,
+        done,
+        status,
+        remainingSec: Number.isFinite(rawRemaining)
+            ? Math.max(0, Math.round(rawRemaining))
+            : (done ? 0 : durationSec),
+        endAtMs: Number.isFinite(Number(overrides.endAtMs)) ? Math.round(Number(overrides.endAtMs)) : 0,
+        completionMethodId: done && explicitCompletionMethodId ? explicitCompletionMethodId : '',
+        completionDurationSec: done && Number.isFinite(rawCompletionDuration) && rawCompletionDuration > 0
+            ? Math.round(rawCompletionDuration)
+            : 0,
+        completedAt: typeof overrides.completedAt === 'string'
+            ? overrides.completedAt
+            : (typeof overrides.meditationCompletedAt === 'string' ? overrides.meditationCompletedAt : '')
+    };
+}
+
+function readMeditationJson(storageKey) {
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function writeMeditationJson(storageKey, payload) {
+    try {
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+    } catch (_) {}
+}
+
+function clearMeditationJson(storageKey) {
+    try {
+        localStorage.removeItem(storageKey);
+    } catch (_) {}
+}
+
+function readMeditationTimerState(dateStr = '') {
+    const parsed = readMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+    if (!parsed) return null;
+    const normalized = createMeditationUiState({
+        ...parsed,
+        status: parsed.status === 'paused' ? 'paused' : 'running'
+    });
+    if (!normalized.endAtMs && normalized.status === 'running') return null;
+    if (dateStr && normalized.dateStr !== dateStr) return null;
+    return normalized;
+}
+
+function writeMeditationTimerState(state = _meditationUiState) {
+    if (!state || !state.methodId) {
+        clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+        return;
+    }
+    writeMeditationJson(MEDITATION_TIMER_STORAGE_KEY, {
+        dateStr: state.dateStr,
+        methodId: state.methodId,
+        durationSec: state.durationSec,
+        remainingSec: state.remainingSec,
+        endAtMs: state.endAtMs,
+        status: state.status
+    });
+}
+
+function readMeditationDraftState(dateStr = '') {
+    const parsed = readMeditationJson(MEDITATION_DRAFT_STORAGE_KEY);
+    if (!parsed || !parsed.meditationDone) return null;
+    const normalized = createMeditationUiState({
+        ...parsed,
+        done: true,
+        status: 'completed',
+        remainingSec: 0
+    });
+    if (dateStr && normalized.dateStr !== dateStr) return null;
+    return normalized;
+}
+
+function writeMeditationDraftState(state = _meditationUiState) {
+    if (!state?.done) {
+        clearMeditationJson(MEDITATION_DRAFT_STORAGE_KEY);
+        return;
+    }
+    writeMeditationJson(MEDITATION_DRAFT_STORAGE_KEY, {
+        dateStr: state.dateStr,
+        methodId: state.completionMethodId || '',
+        durationSec: state.completionDurationSec || 0,
+        meditationDone: true,
+        meditationCompletedAt: state.completedAt || new Date().toISOString()
+    });
+}
+
+function clearMeditationDraftState(dateStr = '') {
+    if (!dateStr) {
+        clearMeditationJson(MEDITATION_DRAFT_STORAGE_KEY);
+        return;
+    }
+    const current = readMeditationDraftState();
+    if (current?.dateStr === dateStr) {
+        clearMeditationJson(MEDITATION_DRAFT_STORAGE_KEY);
+    }
+}
+
+function stopMeditationTimerTick() {
+    if (_meditationTimerTickHandle) {
+        window.clearInterval(_meditationTimerTickHandle);
+        _meditationTimerTickHandle = 0;
+    }
+}
+
+function formatMeditationClock(totalSec = 0) {
+    const safe = Math.max(0, Number(totalSec) || 0);
+    const minutes = Math.floor(safe / 60);
+    const seconds = safe % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function getMeditationCountdownSeconds(state = _meditationUiState) {
+    if (!state) return 0;
+    if (state.status === 'running' && state.endAtMs > 0) {
+        return Math.max(0, Math.ceil((state.endAtMs - Date.now()) / 1000));
+    }
+    return Math.max(0, Number(state.remainingSec || 0));
+}
+
+function buildMeditationSavePayload(dateStr = getSelectedRecordDateStr()) {
+    const current = (_meditationUiState && _meditationUiState.dateStr === dateStr)
+        ? _meditationUiState
+        : createMeditationUiState({ dateStr });
+    const methodMeta = getMeditationMethodMeta(current.methodId);
+    return {
+        meditationDone: !!current.done,
+        meditationMethodId: current.done
+            ? (current.completionMethodId || '')
+            : (current.methodId || methodMeta.id),
+        meditationDurationSec: current.done
+            ? (current.completionDurationSec || 0)
+            : (current.durationSec || methodMeta.durationSec),
+        meditationCompletedAt: current.done ? (current.completedAt || new Date().toISOString()) : ''
+    };
+}
+
+function renderMeditationMethodChips() {
+    const chipList = document.getElementById('meditation-method-chip-list');
+    if (!chipList) return;
+    const state = _meditationUiState || createMeditationUiState();
+    const isLocked = state.status === 'running' || state.status === 'paused';
+    chipList.innerHTML = listMeditationMethods().map((method) => `
+        <button
+            type="button"
+            class="meditation-method-chip${method.id === state.methodId ? ' is-selected' : ''}"
+            onclick="selectMeditationMethod('${method.id}')"
+            ${isLocked ? 'disabled' : ''}
+            aria-pressed="${method.id === state.methodId ? 'true' : 'false'}"
+        >${escapeHtml(method.name)}</button>
+    `).join('');
+}
+
+function renderMeditationUi({ skipGuideUpdate = false } = {}) {
+    const state = _meditationUiState || createMeditationUiState();
+    const methodMeta = getMeditationMethodMeta(state.methodId);
+    const totalSec = Math.max(1, Number(state.durationSec || methodMeta.durationSec || 1));
+    const remainingSec = state.done ? 0 : getMeditationCountdownSeconds(state);
+    const elapsedSec = Math.max(0, totalSec - remainingSec);
+    const isActive = state.status === 'running' || state.status === 'paused';
+
+    const nameEl = document.getElementById('meditation-method-name');
+    const guideEl = document.getElementById('meditation-method-guide');
+    const durationEl = document.getElementById('meditation-method-duration');
+    const phaseEl = document.getElementById('meditation-phase-line');
+    const timerEl = document.getElementById('meditation-remaining-time');
+    const progressEl = document.getElementById('meditation-progress-bar');
+    const completionEl = document.getElementById('meditation-completion-line');
+    const noteEl = document.querySelector('.meditation-common-note');
+    const startBtn = document.getElementById('meditation-start-btn');
+    const pauseBtn = document.getElementById('meditation-pause-btn');
+    const resumeBtn = document.getElementById('meditation-resume-btn');
+    const stopBtn = document.getElementById('meditation-stop-btn');
+
+    if (nameEl) nameEl.textContent = methodMeta.name;
+    if (guideEl) guideEl.textContent = methodMeta.guide;
+    if (durationEl) durationEl.textContent = formatMeditationDurationLabel(totalSec);
+    if (phaseEl) {
+        phaseEl.textContent = state.done
+            ? methodMeta.completionLine
+            : getMeditationPhaseLine(state.methodId, { elapsedSec, remainingSec, totalSec });
+    }
+    if (timerEl) timerEl.textContent = formatMeditationClock(state.done ? totalSec : remainingSec);
+    if (progressEl) {
+        const progress = state.done ? 1 : Math.min(1, Math.max(0, elapsedSec / totalSec));
+        progressEl.style.width = `${Math.round(progress * 100)}%`;
+    }
+    if (completionEl) {
+        const completionLine = state.done
+            ? buildMeditationCompletionLabel({
+                done: true,
+                meditationDone: true,
+                completionMethodId: state.completionMethodId,
+                completionDurationSec: state.completionDurationSec,
+                meditationCompletedAt: state.completedAt
+            })
+            : '';
+        completionEl.textContent = completionLine;
+        completionEl.hidden = !completionLine;
+    }
+    if (noteEl) noteEl.textContent = MEDITATION_COMMON_NOTE;
+    if (startBtn) {
+        startBtn.hidden = isActive;
+        startBtn.textContent = state.done ? '다시 하기' : '시작';
+    }
+    if (pauseBtn) pauseBtn.hidden = state.status !== 'running';
+    if (resumeBtn) resumeBtn.hidden = state.status !== 'paused';
+    if (stopBtn) stopBtn.hidden = !isActive;
+
+    renderMeditationMethodChips();
+    if (!skipGuideUpdate) updateRecordFlowGuides('sleep');
+}
+
+function completeMeditationSession({ shouldNotify = true } = {}) {
+    const currentDateStr = _meditationUiState?.dateStr || getSelectedRecordDateStr();
+    stopMeditationTimerTick();
+    clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+    _meditationUiState = createMeditationUiState({
+        ..._meditationUiState,
+        dateStr: currentDateStr,
+        done: true,
+        status: 'completed',
+        remainingSec: 0,
+        completedAt: new Date().toISOString()
+    });
+    _meditationRestorableState = createMeditationUiState(_meditationUiState);
+    writeMeditationDraftState(_meditationUiState);
+    renderMeditationUi();
+    if (shouldNotify) {
+        showToast('🧘 명상을 마쳤어요. 저장하면 오늘 기록에 반영돼요.');
+    }
+}
+
+function startMeditationTimerTick() {
+    stopMeditationTimerTick();
+    _meditationTimerTickHandle = window.setInterval(() => {
+        if (!_meditationUiState || _meditationUiState.status !== 'running') {
+            stopMeditationTimerTick();
+            return;
+        }
+        if (getMeditationCountdownSeconds(_meditationUiState) <= 0) {
+            completeMeditationSession({ shouldNotify: true });
+            return;
+        }
+        renderMeditationUi({ skipGuideUpdate: false });
+    }, 1000);
+}
+
+function applyMeditationLogToUi(sleepAndMind = null, { selectedDateStr = getSelectedRecordDateStr() } = {}) {
+    stopMeditationTimerTick();
+
+    const saved = normalizeMeditationLog(sleepAndMind || {});
+    let nextState = createMeditationUiState({
+        dateStr: selectedDateStr,
+        methodId: saved.meditationMethodId,
+        durationSec: saved.meditationDurationSec,
+        done: saved.meditationDone,
+        completedAt: saved.meditationCompletedAt,
+        status: saved.meditationDone ? 'completed' : 'idle',
+        remainingSec: saved.meditationDone ? 0 : saved.meditationDurationSec
+    });
+
+    const draftState = readMeditationDraftState(selectedDateStr);
+    if (draftState) {
+        nextState = createMeditationUiState({
+            ...nextState,
+            ...draftState,
+            dateStr: selectedDateStr,
+            done: true,
+            status: 'completed',
+            remainingSec: 0
+        });
+    }
+
+    const timerState = readMeditationTimerState(selectedDateStr);
+    if (timerState) {
+        if (timerState.status === 'running' && getMeditationCountdownSeconds(timerState) <= 0) {
+            nextState = createMeditationUiState({
+                ...timerState,
+                dateStr: selectedDateStr,
+                done: true,
+                status: 'completed',
+                remainingSec: 0,
+                completedAt: new Date().toISOString()
+            });
+            clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+            writeMeditationDraftState(nextState);
+        } else {
+            nextState = createMeditationUiState({
+                ...nextState,
+                ...timerState,
+                dateStr: selectedDateStr,
+                done: false,
+                status: timerState.status,
+                remainingSec: timerState.status === 'paused'
+                    ? timerState.remainingSec
+                    : getMeditationCountdownSeconds(timerState)
+            });
+        }
+    }
+
+    _meditationUiState = nextState;
+    _meditationRestorableState = createMeditationUiState(nextState);
+    renderMeditationUi();
+    if (_meditationUiState.status === 'running') {
+        startMeditationTimerTick();
+    }
+}
+
 function _getRecordGuideStates() {
     const dietPhotos = ['breakfast', 'lunch', 'dinner', 'snack'].filter(slot => _hasPreviewImage(`preview-${slot}`)).length;
     const fastingMetricsCount = ['weight', 'glucose', 'bp-systolic', 'bp-diastolic']
@@ -8092,19 +8475,45 @@ function _getRecordGuideStates() {
     }
 
     const sleepReady = _hasPreviewImage('preview-sleep');
-    const meditationReady = !!document.getElementById('meditation-check')?.checked;
+    const meditationState = (_meditationUiState && _meditationUiState.dateStr === selectedDateStr)
+        ? _meditationUiState
+        : createMeditationUiState({ dateStr: selectedDateStr });
+    const meditationMeta = getMeditationMethodMeta(meditationState.methodId);
+    const meditationReady = !!meditationState.done;
+    const meditationActive = meditationState.status === 'running' || meditationState.status === 'paused';
+    const meditationRemainingSec = meditationReady ? 0 : getMeditationCountdownSeconds(meditationState);
     const gratitudeReady = !!document.getElementById('gratitude-journal')?.value?.trim();
     const mindReadyCount = [sleepReady, meditationReady, gratitudeReady].filter(Boolean).length;
-    let mindStatus = '수면 캡처, 10분 명상, 감사 일기를 남겨보세요.';
-    let mindHelper = '수면 캡처나 감사 일기면 충분해요.';
-    if (mindReadyCount > 0) {
-        const pieces = [
+    let mindBadge = `준비 ${mindReadyCount}개`;
+    let mindStatus = '수면 캡처, 명상, 감사 일기를 남겨보세요.';
+    let mindHelper = '명상은 타이머를 끝까지 마치면 완료돼요.';
+    if (meditationActive) {
+        mindBadge = '진행 중';
+        mindStatus = `명상 진행 중 · ${meditationMeta.name} · ${formatMeditationClock(meditationRemainingSec)} 남음`;
+        mindHelper = '끝까지 마치면 자동으로 완료돼요.';
+    } else if (meditationReady) {
+        mindBadge = '완료';
+        mindStatus = buildMeditationCompletionLabel({
+            done: true,
+            meditationDone: true,
+            completionMethodId: meditationState.completionMethodId,
+            completionDurationSec: meditationState.completionDurationSec,
+            meditationCompletedAt: meditationState.completedAt
+        });
+        const extraPieces = [
             sleepReady ? '수면 캡처' : null,
-            meditationReady ? '명상 체크' : null,
             gratitudeReady ? '감사 일기' : null
         ].filter(Boolean);
-        mindStatus = `${pieces.join(', ')}가 준비됐어요. 저장하면 오늘 마음 기록 포인트가 반영됩니다.`;
-        mindHelper = `마음 기록 ${mindReadyCount}개 준비됨 · 지금 저장할 수 있어요.`;
+        mindHelper = extraPieces.length > 0
+            ? `${extraPieces.join(' · ')}도 함께 저장할 수 있어요.`
+            : '저장하면 오늘 마음 기록 포인트가 반영됩니다.';
+    } else if (mindReadyCount > 0) {
+        const pieces = [
+            sleepReady ? '수면 캡처' : null,
+            gratitudeReady ? '감사 일기' : null
+        ].filter(Boolean);
+        mindStatus = `${pieces.join(' · ')}가 준비됐어요.`;
+        mindHelper = `${meditationMeta.name} ${formatMeditationDurationLabel(meditationMeta.durationSec)}로 바로 시작할 수 있어요.`;
     }
 
     return {
@@ -8119,7 +8528,7 @@ function _getRecordGuideStates() {
             helper: exerciseHelper
         },
         sleep: {
-            badge: `준비 ${mindReadyCount}개`,
+            badge: mindBadge,
             status: mindStatus,
             helper: mindHelper
         }
@@ -8237,8 +8646,7 @@ function bindRecordFlowGuideListeners() {
         ['glucose', 'input', 'diet'],
         ['bp-systolic', 'input', 'diet'],
         ['bp-diastolic', 'input', 'diet'],
-        ['gratitude-journal', 'input', 'sleep'],
-        ['meditation-check', 'change', 'sleep']
+        ['gratitude-journal', 'input', 'sleep']
     ];
 
     bindings.forEach(([id, eventName, tabName]) => {
@@ -8284,7 +8692,10 @@ window.focusStepManualInput = function() {
 window.focusGratitudeJournal = function() {
     openTab('sleep');
     const journal = document.getElementById('gratitude-journal');
-    if (journal) journal.focus();
+    if (journal) {
+        journal.focus();
+        journal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 };
 
 window.triggerSleepUpload = function() {
@@ -8292,13 +8703,118 @@ window.triggerSleepUpload = function() {
     document.getElementById('sleep-img')?.click();
 };
 
-window.toggleMeditationQuickMark = function() {
+window.openMeditationGuideCard = function() {
     openTab('sleep');
-    const checkbox = document.getElementById('meditation-check');
-    if (!checkbox) return;
-    checkbox.checked = !checkbox.checked;
-    updateRecordFlowGuides('sleep');
-    showToast(checkbox.checked ? '🧘 명상 체크를 표시했어요.' : '🧘 명상 체크를 해제했어요.');
+    const card = document.getElementById('meditation-practice-card');
+    if (card) {
+        requestAnimationFrame(() => {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+};
+
+window.toggleMeditationQuickMark = window.openMeditationGuideCard;
+
+window.selectMeditationMethod = function(methodId = DEFAULT_MEDITATION_METHOD_ID) {
+    const currentDateStr = getSelectedRecordDateStr();
+    if (_meditationUiState?.status === 'running' || _meditationUiState?.status === 'paused') return;
+    const methodMeta = getMeditationMethodMeta(methodId);
+    clearMeditationDraftState(currentDateStr);
+    _meditationUiState = createMeditationUiState({
+        dateStr: currentDateStr,
+        methodId: methodMeta.id,
+        durationSec: methodMeta.durationSec,
+        done: false,
+        completedAt: '',
+        status: 'idle',
+        remainingSec: methodMeta.durationSec
+    });
+    _meditationRestorableState = createMeditationUiState(_meditationUiState);
+    renderMeditationUi();
+};
+
+window.startMeditationSession = function() {
+    const currentDateStr = getSelectedRecordDateStr();
+    const methodMeta = getMeditationMethodMeta(_meditationUiState?.methodId || DEFAULT_MEDITATION_METHOD_ID);
+    stopMeditationTimerTick();
+    clearMeditationDraftState(currentDateStr);
+    _meditationRestorableState = _meditationUiState
+        ? createMeditationUiState(_meditationUiState)
+        : createMeditationUiState({ dateStr: currentDateStr, methodId: methodMeta.id });
+    _meditationUiState = createMeditationUiState({
+        dateStr: currentDateStr,
+        methodId: methodMeta.id,
+        durationSec: methodMeta.durationSec,
+        done: false,
+        completedAt: '',
+        status: 'running',
+        remainingSec: methodMeta.durationSec,
+        endAtMs: Date.now() + (methodMeta.durationSec * 1000)
+    });
+    writeMeditationTimerState(_meditationUiState);
+    renderMeditationUi();
+    startMeditationTimerTick();
+};
+
+window.pauseMeditationSession = function() {
+    if (!_meditationUiState || _meditationUiState.status !== 'running') return;
+    const remainingSec = getMeditationCountdownSeconds(_meditationUiState);
+    stopMeditationTimerTick();
+    _meditationUiState = createMeditationUiState({
+        ..._meditationUiState,
+        status: 'paused',
+        remainingSec,
+        endAtMs: 0
+    });
+    _meditationRestorableState = _meditationRestorableState || createMeditationUiState(_meditationUiState);
+    writeMeditationTimerState(_meditationUiState);
+    renderMeditationUi();
+};
+
+window.resumeMeditationSession = function() {
+    if (!_meditationUiState || _meditationUiState.status !== 'paused') return;
+    const remainingSec = Math.max(1, Number(_meditationUiState.remainingSec || 0));
+    _meditationUiState = createMeditationUiState({
+        ..._meditationUiState,
+        status: 'running',
+        remainingSec,
+        endAtMs: Date.now() + (remainingSec * 1000)
+    });
+    _meditationRestorableState = _meditationRestorableState || createMeditationUiState(_meditationUiState);
+    writeMeditationTimerState(_meditationUiState);
+    renderMeditationUi();
+    startMeditationTimerTick();
+};
+
+window.cancelMeditationSession = function() {
+    if (!_meditationUiState) return;
+    stopMeditationTimerTick();
+    clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+    const fallbackState = (_meditationRestorableState && _meditationRestorableState.dateStr === getSelectedRecordDateStr())
+        ? _meditationRestorableState
+        : null;
+    if (fallbackState) {
+        _meditationUiState = createMeditationUiState(fallbackState);
+    } else {
+        const methodMeta = getMeditationMethodMeta(_meditationUiState.methodId);
+        _meditationUiState = createMeditationUiState({
+            dateStr: getSelectedRecordDateStr(),
+            methodId: methodMeta.id,
+            durationSec: methodMeta.durationSec,
+            done: false,
+            completedAt: '',
+            status: 'idle',
+            remainingSec: methodMeta.durationSec
+        });
+    }
+    _meditationRestorableState = createMeditationUiState(_meditationUiState);
+    if (_meditationUiState.done) {
+        writeMeditationDraftState(_meditationUiState);
+    } else {
+        clearMeditationDraftState(_meditationUiState.dateStr);
+    }
+    renderMeditationUi();
+    showToast('🧘 명상 타이머를 중단했어요.');
 };
 
 function openTab(tabName, pushState = true) {
@@ -9276,9 +9792,9 @@ const DASHBOARD_ACTION_META = {
         scoreId: 'dashboard-action-mind-score',
         name: '마음',
         idleLabel: '마음 기록',
-        idleSub: '수면 + 감사 · 20점',
+        idleSub: '수면 + 명상/감사 · 20점',
         focusLabel: '마음 기록해요',
-        focusSub: '수면 사진이나 감사 일기부터',
+        focusSub: '수면 캡처나 명상부터',
         progressLabel: '마음 진행 중',
         doneLabel: '마음 완료',
         doneSub: '오늘 마음 점수를 다 채웠어요'
@@ -12732,7 +13248,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const sleepUrl = sleepResult.url;
             const sleepThumbUrl = sleepResult.thumbUrl;
 
-            const meditationDone = document.getElementById('meditation-check').checked;
+            const meditationPayload = buildMeditationSavePayload(selectedDateStr);
+            const meditationDone = meditationPayload.meditationDone;
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
             const currentDietAnalysis = collectCurrentDietAnalysisFromUi();
             const currentSleepAnalysis = getCurrentSleepAnalysisFromUi();
@@ -12762,7 +13279,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepImageUrl: sleepUrl,
                     sleepImageThumbUrl: sleepThumbUrl,
                     sleepAnalysis: currentSleepAnalysis,
-                    meditationDone,
+                    ...meditationPayload,
                     gratitude: gratitudeText
                 }
             };
@@ -12793,7 +13310,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepImageUrl: sleepUrl,
                     sleepImageThumbUrl: sleepThumbUrl,
                     sleepAnalysis: currentSleepAnalysis,
-                    meditationDone: meditationDone,
+                    ...meditationPayload,
                     gratitude: gratitudeText
                 },
                 shareSettings: shareSettings
@@ -12808,7 +13325,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 null
             );
             try {
-                await doSetDoc();
+            await doSetDoc();
             } catch (e) {
                 if (e.code === 'unavailable' || e.code === 'failed-precondition') {
                     // 연결 안정화 대기 후 1회 재시도
@@ -12817,6 +13334,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 } else { throw e; }
             }
             await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
+            clearMeditationDraftState(selectedDateStr);
 
             if (uploadFailures.length > 0) {
                 showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
@@ -14004,7 +14522,7 @@ function getEmptyStateHtml(filter) {
         all: { emoji: '📷', title: '아직 기록이 없어요', desc: '식단, 운동, 마음 기록을 시작해보세요!<br>기록 탭에서 오늘의 건강 습관을 인증할 수 있어요.' },
         diet: { emoji: '🥗', title: '식단 기록이 없어요', desc: '오늘 먹은 식사를 사진으로 기록해보세요!<br>AI가 영양 분석도 해드려요.' },
         exercise: { emoji: '🏃', title: '운동 기록이 없어요', desc: '운동 이미지나 영상을 올려보세요!<br>함께 운동하면 더 즐거워요.' },
-        mind: { emoji: '🧘', title: '마음 기록이 없어요', desc: '오늘의 감사 일기나 수면 기록을 남겨보세요!<br>작은 기록이 큰 변화를 만들어요.' }
+        mind: { emoji: '🧘', title: '마음 기록이 없어요', desc: '오늘의 명상이나 감사 일기를 남겨보세요!<br>작은 기록이 큰 변화를 만들어요.' }
     };
     const m = messages[filter] || messages.all;
     return `<div class="gallery-empty-state">

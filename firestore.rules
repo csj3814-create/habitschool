@@ -30,6 +30,40 @@ service cloud.firestore {
           && (!('hideMindText' in settings) || settings.hideMindText is bool);
     }
     
+    function isValidSleepAndMindData(sleepAndMind) {
+      return sleepAndMind is map
+          && sleepAndMind.keys().hasOnly([
+            'sleepImageUrl',
+            'sleepImageThumbUrl',
+            'sleepAnalysis',
+            'meditationDone',
+            'meditationMethodId',
+            'meditationDurationSec',
+            'meditationCompletedAt',
+            'gratitude'
+          ])
+          && (!('sleepImageUrl' in sleepAndMind) || sleepAndMind.sleepImageUrl == null || sleepAndMind.sleepImageUrl is string)
+          && (!('sleepImageThumbUrl' in sleepAndMind) || sleepAndMind.sleepImageThumbUrl == null || sleepAndMind.sleepImageThumbUrl is string)
+          && (!('sleepAnalysis' in sleepAndMind) || sleepAndMind.sleepAnalysis == null || sleepAndMind.sleepAnalysis is map)
+          && (!('meditationDone' in sleepAndMind) || sleepAndMind.meditationDone is bool)
+          && (!('meditationMethodId' in sleepAndMind) || (
+                sleepAndMind.meditationMethodId == null ||
+                (
+                  sleepAndMind.meditationMethodId is string &&
+                  (
+                    sleepAndMind.meditationMethodId == '' ||
+                    sleepAndMind.meditationMethodId == 'abdominal_breathing' ||
+                    sleepAndMind.meditationMethodId == 'four_seven_eight' ||
+                    sleepAndMind.meditationMethodId == 'box_breathing' ||
+                    sleepAndMind.meditationMethodId == 'short_mindfulness'
+                  )
+                )
+              ))
+          && (!('meditationDurationSec' in sleepAndMind) || sleepAndMind.meditationDurationSec == null || sleepAndMind.meditationDurationSec is number)
+          && (!('meditationCompletedAt' in sleepAndMind) || sleepAndMind.meditationCompletedAt == null || sleepAndMind.meditationCompletedAt is string)
+          && (!('gratitude' in sleepAndMind) || sleepAndMind.gratitude == null || sleepAndMind.gratitude is string);
+    }
+
     // 헬퍼 함수: 데이터 검증
     function isValidDailyLog() {
       let data = request.resource.data;
@@ -42,7 +76,7 @@ service cloud.firestore {
           && (!('metrics' in data) || data.metrics is map)
           && (!('diet' in data) || data.diet is map)
           && (!('exercise' in data) || data.exercise is map)
-          && (!('sleepAndMind' in data) || data.sleepAndMind is map)
+          && (!('sleepAndMind' in data) || isValidSleepAndMindData(data.sleepAndMind))
           && (!('shareSettings' in data) || isValidShareSettings(data.shareSettings));
     }
 
