@@ -134,7 +134,10 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('transition: transform 0.92s linear');
         expect(INDEX_SOURCE).toContain('animation: meditation-water-ripple 1.6s ease-in-out infinite');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');
-        expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt&index=1&rel=0&playsinline=1');
+        expect(APP_SOURCE).toContain("videoId: 'Zr_nvOU8dd0'");
+        expect(APP_SOURCE).toContain("videoId: 'VNu15Qqomt8'");
+        expect(APP_SOURCE).toContain("videoId: '0ZAH8NUMNDQ'");
+        expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/Zr_nvOU8dd0?rel=0&playsinline=1');
         expect(FIREBASE_JSON).toContain('https://www.youtube-nocookie.com');
     });
 });

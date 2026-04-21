@@ -89,20 +89,17 @@ const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
         id: 'calm-ocean-1',
         label: '잔잔한 파도',
-        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
-        index: 1
+        videoId: 'Zr_nvOU8dd0'
     },
     {
         id: 'calm-ocean-2',
         label: '느린 물결',
-        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
-        index: 2
+        videoId: 'VNu15Qqomt8'
     },
     {
         id: 'calm-ocean-3',
         label: '고요한 밤',
-        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
-        index: 3
+        videoId: '0ZAH8NUMNDQ'
     }
 ]);
 let _meditationTimerTickHandle = 0;
@@ -8246,23 +8243,21 @@ function persistMeditationVideoId(videoId = '') {
 
 function buildMindfulnessVideoEmbedUrl(videoId = '', { autoplay = false } = {}) {
     const option = getMeditationVideoOption(videoId);
-    if (!option) return '';
+    if (!option?.videoId) return '';
     const params = new URLSearchParams({
-        list: option.playlistId,
-        index: String(option.index),
         rel: '0',
         playsinline: '1'
     });
     if (autoplay) {
         params.set('autoplay', '1');
     }
-    return `https://www.youtube-nocookie.com/embed/videoseries?${params.toString()}`;
+    return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(option.videoId)}?${params.toString()}`;
 }
 
 function buildMindfulnessVideoWatchUrl(videoId = '') {
     const option = getMeditationVideoOption(videoId);
     if (!option) return 'https://www.youtube.com/';
-    return `https://www.youtube.com/playlist?list=${encodeURIComponent(option.playlistId)}&playnext=1&index=${encodeURIComponent(option.index)}`;
+    return `https://www.youtube.com/watch?v=${encodeURIComponent(option.videoId)}`;
 }
 
 function ensureMeditationAudioContext() {
