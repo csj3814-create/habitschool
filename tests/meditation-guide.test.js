@@ -64,6 +64,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('meditationMethodId');
         expect(APP_SOURCE).toContain('meditationDurationSec');
         expect(APP_SOURCE).toContain('meditationCompletedAt');
+        expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');

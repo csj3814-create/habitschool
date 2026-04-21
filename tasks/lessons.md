@@ -88,6 +88,11 @@
 - Root cause: the remaining failures were no longer caused by UI repaint timing alone. On some Samsung Internet browser sessions, the forced redirect path never restored a Firebase user via `getRedirectResult()`, so the app kept re-entering the same dead-end recovery flow.
 - Lesson: do not keep reinforcing the same redirect path after repeated real-device failures. For Samsung Internet, use popup login in normal browser tabs and reserve redirect only for narrower contexts that truly need it, such as standalone mode. If redirect ever times out or errors, persist a popup override so the next attempt cannot repeat the same loop.
 
+### 194. In large date-loading functions, normalize the effective selected date once at the top before passing it through new UI helpers
+- Symptom: the meditation guide rollout made the sleep/mind tab show `데이터를 불러오는 중 오류가 발생했습니다.` because `loadDataForSelectedDate(...)` called `applyMeditationLogToUi(..., { selectedDateStr })` even though `selectedDateStr` was never declared in that function.
+- Root cause: I threaded a new helper call into an existing loader and reused a variable name that existed elsewhere in the file, but I did not create a local normalized date alias inside the function itself.
+- Lesson: when a loader receives `dateStr` and multiple downstream calls want a normalized selected date, define `const selectedDateStr = ...` once near the top and use that consistently for doc ids, UI restores, and save helpers. In large shared modules, never assume a similarly named variable already exists in local scope.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

@@ -6291,11 +6291,12 @@ async function loadDataForSelectedDate(dateStr) {
     const { todayStr } = getDatesInfo(); // 로컬 확보
     const user = auth.currentUser;
     if (!user) return;
+    const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;
 
     const thisGeneration = ++_loadDataGeneration;
 
     try {
-        const docId = `${user.uid}_${dateStr}`;
+        const docId = `${user.uid}_${selectedDateStr}`;
         // 캐시 있으면 즉시, 없으면 최대 3초 대기 후 빈 결과로 진행
         const _empty = { exists: () => false, data: () => ({}) };
         const myLogDoc = await Promise.race([
