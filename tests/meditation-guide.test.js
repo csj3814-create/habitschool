@@ -65,6 +65,10 @@ describe('meditation guide helpers', () => {
             totalSec: 180
         })).toBe('숨을 멈추고 가슴을 편하게 둬요.');
 
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).phaseSteps[1]).toEqual(
+            expect.objectContaining({ label: '멈춤', seconds: 7, visual: 'hold-full' })
+        );
+
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.MINDFULNESS, {
             elapsedSec: 220,
             remainingSec: 80,
@@ -95,6 +99,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('meditationDurationSec');
         expect(APP_SOURCE).toContain('meditationCompletedAt');
         expect(APP_SOURCE).toContain("const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';");
+        expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';");
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
         expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
@@ -102,6 +107,10 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
+        expect(APP_SOURCE).toContain('window.selectMeditationVideo = function(videoId = \'\')');
+        expect(APP_SOURCE).toContain('async function openMindfulnessFullscreenExperience()');
+        expect(APP_SOURCE).toContain('function closeMindfulnessFullscreenExperience()');
+        expect(APP_SOURCE).toContain('function renderMindfulnessVideoChips(');
         expect(APP_SOURCE).toContain('function renderMeditationPhaseSteps(');
         expect(APP_SOURCE).toContain('phaseStepsEl.dataset.signature !== signature');
         expect(APP_SOURCE).toContain("node.style.setProperty('--phase-fill'");
@@ -114,14 +123,18 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-video"');
+        expect(INDEX_SOURCE).toContain('id="meditation-video-chip-list"');
+        expect(INDEX_SOURCE).toContain('id="meditation-video-open-link"');
+        expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-iframe"');
         expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
+        expect(INDEX_SOURCE).toContain('.meditation-video-chip');
         expect(INDEX_SOURCE).toContain('.meditation-phase-visual');
         expect(INDEX_SOURCE).toContain('.meditation-phase-time');
         expect(INDEX_SOURCE).toContain('transform: scaleY(var(--phase-fill, 0))');
         expect(INDEX_SOURCE).toContain('transition: transform 0.92s linear');
         expect(INDEX_SOURCE).toContain('animation: meditation-water-ripple 1.6s ease-in-out infinite');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');
-        expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt');
+        expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt&index=1&rel=0&playsinline=1');
         expect(FIREBASE_JSON).toContain('https://www.youtube-nocookie.com');
     });
 });

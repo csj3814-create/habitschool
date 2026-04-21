@@ -84,12 +84,35 @@ let _hasPendingDietProgramUserData = false;
 const MEDITATION_TIMER_STORAGE_KEY = 'habitschool-meditation-timer-v1';
 const MEDITATION_DRAFT_STORAGE_KEY = 'habitschool-meditation-draft-v1';
 const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
+const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
+const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
+    {
+        id: 'calm-ocean-1',
+        label: '잔잔한 파도',
+        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
+        index: 1
+    },
+    {
+        id: 'calm-ocean-2',
+        label: '느린 물결',
+        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
+        index: 2
+    },
+    {
+        id: 'calm-ocean-3',
+        label: '고요한 밤',
+        playlistId: 'PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt',
+        index: 3
+    }
+]);
 let _meditationTimerTickHandle = 0;
 let _meditationUiState = null;
 let _meditationRestorableState = null;
 let _meditationAudioContext = null;
 let _meditationLastCueToken = '';
 let _meditationSoundEnabled = null;
+let _meditationVideoId = null;
+let _meditationOwnedFullscreen = false;
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -8195,6 +8218,53 @@ function persistMeditationSoundEnabled(enabled) {
     } catch (_) {}
 }
 
+function getSelectedMeditationVideoId() {
+    if (_meditationVideoId) return _meditationVideoId;
+    try {
+        const stored = String(localStorage.getItem(MEDITATION_VIDEO_STORAGE_KEY) || '').trim();
+        if (stored && MINDFULNESS_VIDEO_OPTIONS.some((option) => option.id === stored)) {
+            _meditationVideoId = stored;
+            return stored;
+        }
+    } catch (_) {}
+    _meditationVideoId = MINDFULNESS_VIDEO_OPTIONS[0]?.id || '';
+    return _meditationVideoId;
+}
+
+function getMeditationVideoOption(videoId = '') {
+    const selectedId = String(videoId || '').trim();
+    return MINDFULNESS_VIDEO_OPTIONS.find((option) => option.id === selectedId) || MINDFULNESS_VIDEO_OPTIONS[0];
+}
+
+function persistMeditationVideoId(videoId = '') {
+    const option = getMeditationVideoOption(videoId);
+    _meditationVideoId = option?.id || '';
+    try {
+        localStorage.setItem(MEDITATION_VIDEO_STORAGE_KEY, _meditationVideoId);
+    } catch (_) {}
+}
+
+function buildMindfulnessVideoEmbedUrl(videoId = '', { autoplay = false } = {}) {
+    const option = getMeditationVideoOption(videoId);
+    if (!option) return '';
+    const params = new URLSearchParams({
+        list: option.playlistId,
+        index: String(option.index),
+        rel: '0',
+        playsinline: '1'
+    });
+    if (autoplay) {
+        params.set('autoplay', '1');
+    }
+    return `https://www.youtube-nocookie.com/embed/videoseries?${params.toString()}`;
+}
+
+function buildMindfulnessVideoWatchUrl(videoId = '') {
+    const option = getMeditationVideoOption(videoId);
+    if (!option) return 'https://www.youtube.com/';
+    return `https://www.youtube.com/playlist?list=${encodeURIComponent(option.playlistId)}&playnext=1&index=${encodeURIComponent(option.index)}`;
+}
+
 function ensureMeditationAudioContext() {
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextCtor) return null;
@@ -8418,6 +8488,58 @@ function renderMeditationMethodChips() {
     `).join('');
 }
 
+function renderMindfulnessVideoChips({ disabled = false } = {}) {
+    const chipList = document.getElementById('meditation-video-chip-list');
+    if (!chipList) return;
+    const selectedId = getSelectedMeditationVideoId();
+    chipList.innerHTML = MINDFULNESS_VIDEO_OPTIONS.map((option) => `
+        <button
+            type="button"
+            class="meditation-video-chip${option.id === selectedId ? ' is-selected' : ''}"
+            onclick="selectMeditationVideo('${option.id}')"
+            ${disabled ? 'disabled' : ''}
+            aria-pressed="${option.id === selectedId ? 'true' : 'false'}"
+        >${escapeHtml(option.label)}</button>
+    `).join('');
+}
+
+function syncMindfulnessVideoFrame({ autoplay = false } = {}) {
+    const iframe = document.getElementById('meditation-mindfulness-iframe');
+    const openLink = document.getElementById('meditation-video-open-link');
+    if (!iframe) return;
+    const selectedId = getSelectedMeditationVideoId();
+    const nextSrc = buildMindfulnessVideoEmbedUrl(selectedId, { autoplay });
+    if (iframe.dataset.currentSrc !== nextSrc) {
+        iframe.src = nextSrc;
+        iframe.dataset.currentSrc = nextSrc;
+    }
+    if (openLink) {
+        openLink.href = buildMindfulnessVideoWatchUrl(selectedId);
+    }
+}
+
+async function openMindfulnessFullscreenExperience() {
+    const frameEl = document.querySelector('.meditation-mindfulness-video-frame');
+    if (!frameEl) return;
+    syncMindfulnessVideoFrame({ autoplay: true });
+    try {
+        if (document.fullscreenElement !== frameEl && typeof frameEl.requestFullscreen === 'function') {
+            await frameEl.requestFullscreen();
+            _meditationOwnedFullscreen = true;
+        }
+    } catch (_) {}
+}
+
+function closeMindfulnessFullscreenExperience() {
+    syncMindfulnessVideoFrame({ autoplay: false });
+    try {
+        if (_meditationOwnedFullscreen && document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+            document.exitFullscreen();
+        }
+    } catch (_) {}
+    _meditationOwnedFullscreen = false;
+}
+
 function getMeditationPhaseStartFill(visual = '') {
     if (visual === 'exhale' || visual === 'hold-full') return 1;
     if (visual === 'hold-empty') return 0.08;
@@ -8535,7 +8657,12 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
         progressEl.style.width = `${Math.round(progress * 100)}%`;
     }
     if (mindfulnessVideoEl) {
-        mindfulnessVideoEl.hidden = state.methodId !== MEDITATION_METHOD_IDS.MINDFULNESS;
+        const isMindfulness = state.methodId === MEDITATION_METHOD_IDS.MINDFULNESS;
+        mindfulnessVideoEl.hidden = !isMindfulness;
+        renderMindfulnessVideoChips({ disabled: isActive });
+        syncMindfulnessVideoFrame({ autoplay: isMindfulness && state.status === 'running' });
+    } else {
+        closeMindfulnessFullscreenExperience();
     }
     if (completionEl) {
         const completionLine = state.done
@@ -8573,6 +8700,7 @@ function completeMeditationSession({ shouldNotify = true } = {}) {
     const currentDateStr = _meditationUiState?.dateStr || getSelectedRecordDateStr();
     stopMeditationTimerTick();
     clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+    closeMindfulnessFullscreenExperience();
     _meditationUiState = createMeditationUiState({
         ..._meditationUiState,
         dateStr: currentDateStr,
@@ -8943,6 +9071,9 @@ window.selectMeditationMethod = function(methodId = DEFAULT_MEDITATION_METHOD_ID
     const currentDateStr = getSelectedRecordDateStr();
     if (_meditationUiState?.status === 'running' || _meditationUiState?.status === 'paused') return;
     const methodMeta = getMeditationMethodMeta(methodId);
+    if (methodMeta.id !== MEDITATION_METHOD_IDS.MINDFULNESS) {
+        closeMindfulnessFullscreenExperience();
+    }
     clearMeditationDraftState(currentDateStr);
     _meditationUiState = createMeditationUiState({
         dateStr: currentDateStr,
@@ -8956,6 +9087,12 @@ window.selectMeditationMethod = function(methodId = DEFAULT_MEDITATION_METHOD_ID
     _meditationRestorableState = createMeditationUiState(_meditationUiState);
     setMeditationCueTokenFromState(null);
     renderMeditationUi();
+};
+
+window.selectMeditationVideo = function(videoId = '') {
+    if (_meditationUiState?.status === 'running' || _meditationUiState?.status === 'paused') return;
+    persistMeditationVideoId(videoId);
+    renderMeditationUi({ skipGuideUpdate: true });
 };
 
 window.startMeditationSession = function() {
@@ -8980,6 +9117,9 @@ window.startMeditationSession = function() {
     writeMeditationTimerState(_meditationUiState);
     _meditationLastCueToken = '';
     renderMeditationUi();
+    if (_meditationUiState.methodId === MEDITATION_METHOD_IDS.MINDFULNESS) {
+        void openMindfulnessFullscreenExperience();
+    }
     if (_meditationUiState.methodId === MEDITATION_METHOD_IDS.MINDFULNESS) {
         playMeditationCue('mindfulness_start');
     } else {
@@ -9024,6 +9164,7 @@ window.cancelMeditationSession = function() {
     if (!_meditationUiState) return;
     stopMeditationTimerTick();
     clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
+    closeMindfulnessFullscreenExperience();
     const fallbackState = (_meditationRestorableState && _meditationRestorableState.dateStr === getSelectedRecordDateStr())
         ? _meditationRestorableState
         : null;
@@ -9065,6 +9206,12 @@ window.toggleMeditationSound = function() {
     }
     renderMeditationUi({ skipGuideUpdate: true });
 };
+
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+        _meditationOwnedFullscreen = false;
+    }
+});
 
 function openTab(tabName, pushState = true) {
     const resolvedTabName = normalizeTabForMode(tabName);

@@ -390,6 +390,37 @@
             white-space: nowrap;
         }
 
+        .meditation-video-chip-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0 12px;
+        }
+
+        .meditation-video-chip {
+            border: 1px solid rgba(152, 195, 158, 0.28);
+            background: rgba(255, 255, 255, 0.9);
+            color: #53704A;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        .meditation-video-chip.is-selected {
+            background: linear-gradient(135deg, #F4FFF6 0%, #EFF9FF 100%);
+            border-color: rgba(87, 164, 224, 0.28);
+            color: #2F7E45;
+        }
+
+        .meditation-video-chip:disabled {
+            opacity: 0.6;
+            cursor: default;
+            transform: none;
+        }
+
         .meditation-mindfulness-video-frame {
             position: relative;
             border-radius: 14px;
@@ -554,6 +585,18 @@
 
         body.dark-mode .meditation-mindfulness-video-head a {
             color: #A6E0B3;
+        }
+
+        body.dark-mode .meditation-video-chip {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #C8B9A5;
+        }
+
+        body.dark-mode .meditation-video-chip.is-selected {
+            background: linear-gradient(135deg, rgba(42, 84, 50, 0.92) 0%, rgba(30, 73, 82, 0.92) 100%);
+            color: #DFF4E4;
+            border-color: rgba(122, 224, 146, 0.18);
         }
 
         body.dark-mode .meditation-progress-track {
@@ -1757,11 +1800,13 @@
                             <div class="meditation-mindfulness-video" id="meditation-mindfulness-video" hidden>
                                 <div class="meditation-mindfulness-video-head">
                                     <strong>편안한 분위기 영상</strong>
-                                    <a href="https://www.youtube.com/playlist?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt" target="_blank" rel="noopener noreferrer">유튜브 열기</a>
+                                    <a href="https://www.youtube.com/playlist?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt" id="meditation-video-open-link" target="_blank" rel="noopener noreferrer">유튜브 열기</a>
                                 </div>
-                                <div class="meditation-mindfulness-video-frame">
+                                <div class="meditation-video-chip-list" id="meditation-video-chip-list"></div>
+                                <div class="meditation-mindfulness-video-frame" id="meditation-mindfulness-video-frame">
                                     <iframe
-                                        src="https://www.youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt&rel=0"
+                                        id="meditation-mindfulness-iframe"
+                                        src="https://www.youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt&index=1&rel=0&playsinline=1"
                                         title="마음챙김용 편안한 영상"
                                         loading="lazy"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
