@@ -162,21 +162,23 @@ export function getMeditationPhaseUiState(methodId = '', {
     if (remainingSec <= 0) {
         return {
             steps,
-            activeIndex: steps.length - 1
+            activeIndex: steps.length - 1,
+            activeProgress: 1
         };
     }
 
     const cycleSec = steps.reduce((sum, phase) => sum + Math.max(1, Number(phase.seconds || 0)), 0) || 1;
-    const wholeElapsedSec = Math.max(0, Math.floor(elapsedSec));
-    const cycleIndex = Math.max(0, Math.floor(wholeElapsedSec / cycleSec));
-    let offset = ((wholeElapsedSec % cycleSec) + cycleSec) % cycleSec;
+    const safeElapsedSec = Math.max(0, Number(elapsedSec) || 0);
+    const cycleIndex = Math.max(0, Math.floor(safeElapsedSec / cycleSec));
+    let offset = ((safeElapsedSec % cycleSec) + cycleSec) % cycleSec;
     for (let index = 0; index < steps.length; index += 1) {
         const phaseSec = Math.max(1, Number(steps[index].seconds || 0));
         if (offset < phaseSec) {
             return {
                 steps,
                 activeIndex: Math.min(index, steps.length - 1),
-                cycleIndex
+                cycleIndex,
+                activeProgress: Math.min(1, Math.max(0, offset / phaseSec))
             };
         }
         offset -= phaseSec;
@@ -186,6 +188,7 @@ export function getMeditationPhaseUiState(methodId = '', {
     const ratio = Math.min(1, Math.max(0, Number(elapsedSec || 0) / safeTotal));
     return {
         steps,
-        activeIndex: Math.min(steps.length - 1, Math.floor(ratio * steps.length))
+        activeIndex: Math.min(steps.length - 1, Math.floor(ratio * steps.length)),
+        activeProgress: ratio
     };
 }

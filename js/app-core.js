@@ -8447,8 +8447,24 @@ function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
         phaseStepsEl.dataset.signature = signature;
     }
 
+    const activeProgress = Math.min(1, Math.max(0, Number(phaseUiState?.activeProgress || 0)));
     Array.from(phaseStepsEl.children).forEach((node, index) => {
-        node.classList.toggle('is-active', index === phaseUiState.activeIndex);
+        const isActive = index === phaseUiState.activeIndex;
+        node.classList.toggle('is-active', isActive);
+
+        const visual = String(node.getAttribute('data-visual') || '').trim();
+        let fillRatio = 0;
+        if (isActive) {
+            if (visual === 'exhale') {
+                fillRatio = 1 - activeProgress;
+            } else if (visual === 'hold') {
+                fillRatio = 0.62;
+            } else {
+                fillRatio = activeProgress;
+            }
+        }
+
+        node.style.setProperty('--phase-fill', `${Math.min(1, Math.max(0, fillRatio))}`);
     });
     phaseStepsEl.hidden = false;
 }

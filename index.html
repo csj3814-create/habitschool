@@ -278,10 +278,13 @@
             left: 0;
             right: 0;
             bottom: 0;
-            height: 38%;
+            height: 100%;
             border-radius: 55% 55% 12px 12px;
             background: linear-gradient(180deg, rgba(107, 194, 255, 0.96) 0%, rgba(65, 165, 232, 0.96) 100%);
             transform-origin: center bottom;
+            transform: scaleY(var(--phase-fill, 0));
+            transition: transform 0.92s linear, opacity 0.25s ease;
+            opacity: 0.92;
         }
 
         .meditation-phase-wave::before {
@@ -331,69 +334,26 @@
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(232, 246, 255, 0.92) 100%);
         }
 
-        .meditation-phase-step[data-visual="inhale"] .meditation-phase-wave {
-            height: 46%;
-        }
-
-        .meditation-phase-step.is-active[data-visual="inhale"] .meditation-phase-wave {
-            animation: meditation-water-rise var(--phase-seconds, 3s) ease-in-out forwards;
-        }
-
-        .meditation-phase-step[data-visual="exhale"] .meditation-phase-wave {
-            height: 28%;
-        }
-
-        .meditation-phase-step.is-active[data-visual="exhale"] .meditation-phase-wave {
-            animation: meditation-water-drain var(--phase-seconds, 3s) ease-in-out forwards;
-        }
-
         .meditation-phase-step[data-visual="hold"] .meditation-phase-wave {
             left: -4%;
             right: -4%;
-            bottom: 26%;
-            height: 42%;
+            bottom: 0;
             border-radius: 999px;
         }
 
         .meditation-phase-step.is-active[data-visual="hold"] .meditation-phase-wave {
-            animation: meditation-water-ripple var(--phase-seconds, 3s) ease-in-out forwards;
-        }
-
-        @keyframes meditation-water-rise {
-            0%,
-            100% {
-                height: 32%;
-                transform: translateY(16%) scaleX(0.96);
-            }
-
-            50% {
-                height: 74%;
-                transform: translateY(0) scaleX(1.02);
-            }
-        }
-
-        @keyframes meditation-water-drain {
-            0%,
-            100% {
-                height: 74%;
-                transform: translateY(0) scaleX(1.02);
-            }
-
-            50% {
-                height: 22%;
-                transform: translateY(20%) scaleX(0.95);
-            }
+            animation: meditation-water-ripple 1.6s ease-in-out infinite;
         }
 
         @keyframes meditation-water-ripple {
             0%,
             100% {
-                transform: translateY(0) scaleX(0.96);
+                transform: scaleY(var(--phase-fill, 0.62)) translateY(0) scaleX(0.97);
                 opacity: 0.9;
             }
 
             50% {
-                transform: translateY(-3px) scaleX(1.04);
+                transform: scaleY(var(--phase-fill, 0.62)) translateY(-2px) scaleX(1.03);
                 opacity: 1;
             }
         }
