@@ -83,6 +83,11 @@
 - Root cause: the service worker picked the first same-origin window, which could be a non-app page like `admin.html`, and the app-side deeplink handler only had a special case for `focus=upload` while reminder notifications were emitting values like `lunch` and `dinner`.
 - Lesson: for PWA notifications, prefer an existing app-shell window over arbitrary same-origin clients and pass the destination URL into the running app explicitly. Also keep the app-side deeplink parser in lockstep with every `focus` value emitted by backend notifications.
 
+### 193. When Samsung Internet keeps failing on redirect auth in real use, pivot normal browser tabs back to popup instead of extending the same recovery path again
+- Symptom: even after adding persistent pending markers and longer redirect recovery windows, some Galaxy users still looped between Google account selection and the first login screen while `로그인 확인 중...` briefly appeared.
+- Root cause: the remaining failures were no longer caused by UI repaint timing alone. On some Samsung Internet browser sessions, the forced redirect path never restored a Firebase user via `getRedirectResult()`, so the app kept re-entering the same dead-end recovery flow.
+- Lesson: do not keep reinforcing the same redirect path after repeated real-device failures. For Samsung Internet, use popup login in normal browser tabs and reserve redirect only for narrower contexts that truly need it, such as standalone mode. If redirect ever times out or errors, persist a popup override so the next attempt cannot repeat the same loop.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

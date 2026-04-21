@@ -7,15 +7,17 @@ import { showToast } from './ui-helpers.js?v=167';
 import { getDatesInfo } from './ui-helpers.js?v=167';
 import { escapeHtml } from './security.js?v=167';
 import {
+    GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
     GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY,
     createPendingGoogleLoginState,
     createPendingSignupOnboardingState,
     getPendingGoogleRedirectRecoveryRemainingMs,
     isNewUserCredential,
+    normalizeGoogleLoginMode,
+    resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
-    shouldKeepPendingGoogleRedirectRecovery,
-    shouldUseGoogleRedirectLogin
+    shouldKeepPendingGoogleRedirectRecovery
 } from './auth-login-helpers.js?v=167';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=167';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
@@ -34,6 +36,37 @@ let _ensureReferralCodeCallable = null;
 let _googleLoginRecoveryBound = false;
 let _pendingGoogleLoginResetTimer = null;
 const GOOGLE_LOGIN_RECOVERY_POLL_MS = 1500;
+
+function readGoogleLoginModeOverride() {
+    try {
+        return normalizeGoogleLoginMode(localStorage.getItem(GOOGLE_LOGIN_MODE_OVERRIDE_KEY));
+    } catch (_) {
+        return '';
+    }
+}
+
+function persistGoogleLoginModeOverride(mode = '') {
+    const normalizedMode = normalizeGoogleLoginMode(mode);
+    try {
+        if (normalizedMode) {
+            localStorage.setItem(GOOGLE_LOGIN_MODE_OVERRIDE_KEY, normalizedMode);
+        } else {
+            localStorage.removeItem(GOOGLE_LOGIN_MODE_OVERRIDE_KEY);
+        }
+    } catch (_) {}
+}
+
+function rememberPopupLoginFallback() {
+    persistGoogleLoginModeOverride('popup');
+}
+
+function getPreferredGoogleLoginMode() {
+    return resolveGoogleLoginMode({
+        userAgent: navigator.userAgent || navigator.vendor || '',
+        isStandalone: isStandalonePushMode(),
+        overrideMode: readGoogleLoginModeOverride()
+    });
+}
 
 function getEnsureReferralCodeCallable() {
     if (!_ensureReferralCodeCallable) {
@@ -138,6 +171,9 @@ function schedulePendingGoogleLoginReset(loginBtn, delayMs = GOOGLE_LOGIN_RECOVE
     const pendingState = readPendingGoogleLoginState();
     const remainingMs = getPendingGoogleRedirectRecoveryRemainingMs(pendingState);
     if (auth.currentUser || remainingMs <= 0) {
+        if (!auth.currentUser && pendingState?.mode === 'redirect') {
+            rememberPopupLoginFallback();
+        }
         clearPendingGoogleLoginState();
         window._isPopupLogin = false;
         setGoogleLoginPendingUi(loginBtn, false);
@@ -159,6 +195,9 @@ function schedulePendingGoogleLoginReset(loginBtn, delayMs = GOOGLE_LOGIN_RECOVE
             return;
         }
 
+        if (latestPendingState?.mode === 'redirect') {
+            rememberPopupLoginFallback();
+        }
         clearPendingGoogleLoginState();
         window._isPopupLogin = false;
         setGoogleLoginPendingUi(loginBtn, false);
@@ -581,8 +620,9 @@ export function initAuth() {
         setGoogleLoginPendingUi(loginBtn, true);
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        const useRedirectLogin = shouldUseGoogleRedirectLogin(navigator.userAgent || navigator.vendor || '');
-        persistPendingGoogleLoginState(useRedirectLogin ? 'redirect' : 'popup');
+        const loginMode = getPreferredGoogleLoginMode();
+        const useRedirectLogin = loginMode === 'redirect';
+        persistPendingGoogleLoginState(loginMode);
 
         if (useRedirectLogin) {
             signInWithRedirect(auth, provider).catch(error => {
@@ -761,6 +801,7 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
         console.error('리디렉트 로그인 오류:', error.code, error.message, error);
         if (pendingState?.mode === 'redirect') {
             clearPendingGoogleLoginResetTimer();
+            rememberPopupLoginFallback();
             clearPendingGoogleLoginState();
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/network-request-failed') {
@@ -778,6 +819,9 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
             setGoogleLoginPendingUi(loginBtn, false);
         }
         if (pendingState && (!shouldKeepPendingGoogleRedirectRecovery(pendingState) || auth.currentUser)) {
+            if (!auth.currentUser && pendingState.mode === 'redirect') {
+                rememberPopupLoginFallback();
+            }
             clearPendingGoogleLoginState();
         }
     }

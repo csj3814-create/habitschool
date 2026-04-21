@@ -1,13 +1,29 @@
 export const GOOGLE_LOGIN_PENDING_STATE_KEY = 'habitschoolPendingGoogleLogin';
 export const GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY = 'habitschoolPendingGoogleLoginPersistent';
+export const GOOGLE_LOGIN_MODE_OVERRIDE_KEY = 'habitschoolGoogleLoginModeOverride';
 const GOOGLE_LOGIN_PENDING_MAX_AGE_MS = 10 * 60 * 1000;
 export const GOOGLE_REDIRECT_RECOVERY_GRACE_MS = 20 * 1000;
 export const PENDING_SIGNUP_ONBOARDING_MAX_AGE_MS = 30 * 60 * 1000;
 export const WELCOME_BONUS_FEATURE_START_MS = Date.parse('2026-03-28T00:00:00+09:00');
 
-export function shouldUseGoogleRedirectLogin(userAgent = '') {
+export function normalizeGoogleLoginMode(mode = '') {
+    return mode === 'redirect' || mode === 'popup' ? mode : '';
+}
+
+export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {
+    const normalizedOverride = normalizeGoogleLoginMode(overrideMode);
+    if (normalizedOverride) return normalizedOverride;
+
     const ua = String(userAgent || '').trim();
-    return /SamsungBrowser/i.test(ua);
+    if (/SamsungBrowser/i.test(ua) && isStandalone === true) {
+        return 'redirect';
+    }
+
+    return 'popup';
+}
+
+export function shouldUseGoogleRedirectLogin(options = {}) {
+    return resolveGoogleLoginMode(options) === 'redirect';
 }
 
 export function createPendingGoogleLoginState(mode = 'popup', now = Date.now()) {

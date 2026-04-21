@@ -5,8 +5,10 @@ import {
     createPendingSignupOnboardingState,
     getPendingGoogleRedirectRecoveryRemainingMs,
     isNewUserCredential,
+    normalizeGoogleLoginMode,
     parsePendingGoogleLoginState,
     parsePendingSignupOnboardingState,
+    resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldAutoGrantWelcomeBonus,
     shouldKeepPendingGoogleRedirectRecovery,
@@ -15,14 +17,35 @@ import {
 } from '../js/auth-login-helpers.js';
 
 describe('shouldUseGoogleRedirectLogin', () => {
-    it('uses redirect for Samsung Internet', () => {
+    it('keeps popup flow for Samsung Internet in normal browser tabs', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin(samsungUa)).toBe(true);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(false);
+    });
+
+    it('uses redirect for Samsung Internet standalone mode only', () => {
+        const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
+        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
 
     it('keeps popup flow for Chrome', () => {
         const chromeUa = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin(chromeUa)).toBe(false);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: chromeUa, isStandalone: false })).toBe(false);
+    });
+});
+
+describe('resolveGoogleLoginMode', () => {
+    it('honors a popup override after a failed redirect recovery', () => {
+        const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
+        expect(resolveGoogleLoginMode({
+            userAgent: samsungUa,
+            isStandalone: true,
+            overrideMode: 'popup'
+        })).toBe('popup');
+    });
+
+    it('normalizes invalid mode overrides away', () => {
+        expect(normalizeGoogleLoginMode('weird')).toBe('');
+        expect(normalizeGoogleLoginMode('popup')).toBe('popup');
     });
 });
 
