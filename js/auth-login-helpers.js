@@ -1,5 +1,6 @@
 export const GOOGLE_LOGIN_PENDING_STATE_KEY = 'habitschoolPendingGoogleLogin';
 const GOOGLE_LOGIN_PENDING_MAX_AGE_MS = 10 * 60 * 1000;
+export const GOOGLE_REDIRECT_RECOVERY_GRACE_MS = 8 * 1000;
 export const PENDING_SIGNUP_ONBOARDING_MAX_AGE_MS = 30 * 60 * 1000;
 export const WELCOME_BONUS_FEATURE_START_MS = Date.parse('2026-03-28T00:00:00+09:00');
 
@@ -27,6 +28,13 @@ export function parsePendingGoogleLoginState(rawValue, now = Date.now()) {
     } catch (_) {
         return null;
     }
+}
+
+export function shouldKeepPendingGoogleRedirectRecovery(pendingState = null, now = Date.now()) {
+    if (!pendingState || pendingState.mode !== 'redirect') return false;
+    const createdAt = Number(pendingState.createdAt || 0);
+    if (!createdAt) return false;
+    return ((Number(now) || Date.now()) - createdAt) <= GOOGLE_REDIRECT_RECOVERY_GRACE_MS;
 }
 
 export function createPendingSignupOnboardingState(uid = '', now = Date.now()) {

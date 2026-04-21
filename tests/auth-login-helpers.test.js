@@ -7,6 +7,7 @@ import {
     parsePendingGoogleLoginState,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
+    shouldKeepPendingGoogleRedirectRecovery,
     shouldShowSignupOnboarding,
     shouldUseGoogleRedirectLogin
 } from '../js/auth-login-helpers.js';
@@ -35,6 +36,15 @@ describe('pending google login state helpers', () => {
     it('drops stale pending states', () => {
         const created = createPendingGoogleLoginState('popup', 1000);
         expect(parsePendingGoogleLoginState(JSON.stringify(created), 1000 + (10 * 60 * 1000) + 1)).toBeNull();
+    });
+
+    it('keeps recent redirect recovery windows only for redirect mode', () => {
+        const redirectState = createPendingGoogleLoginState('redirect', 5000);
+        const popupState = createPendingGoogleLoginState('popup', 5000);
+
+        expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 3000)).toBe(true);
+        expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 9000)).toBe(false);
+        expect(shouldKeepPendingGoogleRedirectRecovery(popupState, 5000 + 3000)).toBe(false);
     });
 });
 

@@ -48,6 +48,11 @@
 - Root cause: the diet-program feature started writing `users/{uid}.programPreferences.diet`, but production Firestore rules were still on the `2026-04-07` release that did not allow `programPreferences`. Staging had the newer `2026-04-20` rules, so the bug only survived on production.
 - Lesson: when a change depends on a new Firestore field or a rules whitelist update, treat `firestore:rules` as part of the production release contract. After deploy, verify the live Firestore rules release timestamp or contents instead of assuming hosting/function deploys are enough.
 
+### 187. Redirect-based mobile Google login must survive the auth-restore gap without repainting the logged-out shell
+- Symptom: Galaxy users could complete Google account selection and then land back on the first login screen as if sign-in had failed.
+- Root cause: the Samsung Internet redirect flow cleared its pending-login marker too early, and the logged-out `onAuthStateChanged` branch was allowed to redraw the login modal before redirect auth restoration had fully settled.
+- Lesson: for mobile redirect auth, keep a short recovery grace window after return from the provider, suppress the logged-out shell during that window, and only clear the pending-login marker after either auth is restored or the grace window expires.
+
 ### 184. Compact diet summaries should show the method name only once and spend the second line on the actual cue
 - Symptom: the compact diet summary rendered as `스위치온 다이어트` on the chip and then repeated `스위치온 다이어트 · 초기 저탄수, 이후 균형` on the next line, which wasted space and pushed the meaningful cue down.
 - Root cause: I kept the generic `method name + guide` pattern in the status line even after the method label had already moved into the top chip.
