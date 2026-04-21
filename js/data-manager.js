@@ -3,9 +3,9 @@
  * 데이터 처리 및 파일 업로드 유틸리티 모듈
  */
 
-import { storage } from './firebase-config.js?v=166';
+import { storage } from './firebase-config.js?v=167';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { shouldFastPathImageCompression } from './upload-performance.js?v=166';
+import { shouldFastPathImageCompression } from './upload-performance.js?v=167';
 
 /**
  * 객체를 깔끔하게 정리 (undefined 를 null 로 변환)

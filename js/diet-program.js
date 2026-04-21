@@ -43,21 +43,8 @@ const METHOD_CATALOG = Object.freeze([
         cautionText: ''
     },
     {
-        id: DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN,
-        displayOrder: 2,
-        name: '고단백 식단',
-        difficultyLabel: '쉬움',
-        summary: '단백질로 근육과 포만감 유지',
-        mealGuide: '단백질로 근육과 포만감 유지',
-        dashboardTip: '단백질로 근육과 포만감 유지',
-        exerciseSupportTip: '가벼운 근력 운동과 잘 맞아요.',
-        mindSleepSupportTip: '늦은 폭식을 줄이는 데 도움돼요.',
-        reminderPlan: '11:30·17:30',
-        cautionText: ''
-    },
-    {
         id: DIET_PROGRAM_METHOD_IDS.MEDITERRANEAN,
-        displayOrder: 3,
+        displayOrder: 2,
         name: '지중해식 식단',
         difficultyLabel: '보통',
         summary: '올리브유와 생선 중심의 심혈관 건강식',
@@ -70,7 +57,7 @@ const METHOD_CATALOG = Object.freeze([
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
-        displayOrder: 4,
+        displayOrder: 3,
         name: '저탄수 고단백 식단',
         difficultyLabel: '보통',
         summary: '당질은 줄이고 단백질로 근육과 포만감',
@@ -83,7 +70,7 @@ const METHOD_CATALOG = Object.freeze([
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING,
-        displayOrder: 5,
+        displayOrder: 4,
         name: '16:8 간헐적 단식',
         difficultyLabel: '도전',
         summary: '공복 시간 확보로 체지방 감량 도모',
@@ -96,7 +83,7 @@ const METHOD_CATALOG = Object.freeze([
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.SWITCH_ON,
-        displayOrder: 6,
+        displayOrder: 5,
         name: '스위치온 다이어트',
         difficultyLabel: '도전',
         summary: '3주간 대사 회복 및 체질 개선',
@@ -110,6 +97,13 @@ const METHOD_CATALOG = Object.freeze([
 ]);
 
 const METHOD_MAP = new Map(METHOD_CATALOG.map((method) => [method.id, method]));
+
+function resolveDietProgramMethodId(methodId = '') {
+    if (methodId === DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN) {
+        return DIET_PROGRAM_METHOD_IDS.LOW_CARB;
+    }
+    return METHOD_MAP.has(methodId) ? methodId : DIET_PROGRAM_METHOD_IDS.NONE;
+}
 
 function cloneMethod(method) {
     return { ...(method || METHOD_MAP.get(DIET_PROGRAM_METHOD_IDS.NONE)) };
@@ -236,16 +230,14 @@ export function listDietProgramMethods() {
 }
 
 export function getDietProgramMethodMeta(methodId = DIET_PROGRAM_METHOD_IDS.NONE) {
-    return cloneMethod(METHOD_MAP.get(methodId) || METHOD_MAP.get(DIET_PROGRAM_METHOD_IDS.NONE));
+    return cloneMethod(METHOD_MAP.get(resolveDietProgramMethodId(methodId)) || METHOD_MAP.get(DIET_PROGRAM_METHOD_IDS.NONE));
 }
 
 export function normalizeDietProgramPreferences(rawDietPreferences = null) {
     const source = rawDietPreferences && typeof rawDietPreferences === 'object'
         ? rawDietPreferences
         : {};
-    const methodId = METHOD_MAP.has(source.methodId)
-        ? source.methodId
-        : DIET_PROGRAM_METHOD_IDS.NONE;
+    const methodId = resolveDietProgramMethodId(source.methodId);
 
     return {
         methodId,
@@ -291,7 +283,7 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
             methodId: meta.id,
             chipLabel: '식단 방법 미선택',
             summaryLine: meta.dashboardTip,
-            supportTip: meta.exerciseSupportTip,
+            supportTip: '',
             reminderLine: ''
         };
     }
@@ -309,7 +301,7 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
         methodId: meta.id,
         chipLabel: `${meta.name} · ${meta.difficultyLabel}`,
         summaryLine: guideState.status,
-        supportTip: meta.exerciseSupportTip || meta.mindSleepSupportTip,
+        supportTip: '',
         reminderLine: normalized.remindersEnabled ? meta.reminderPlan : '방법 알림은 현재 꺼져 있어요.'
     };
 }

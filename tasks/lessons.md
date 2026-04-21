@@ -68,6 +68,11 @@
 - Root cause: the earlier fix added a grace concept, but the recovery timer still cleared pending login state after 4 seconds whenever `auth.currentUser` was still null. On mobile redirect flows, that condition is normal during restoration, so the timer was tearing down the protection too early. The marker was also stored only in `sessionStorage`, which is fragile across Samsung/mobile redirect round-trips.
 - Lesson: for mobile redirect auth, keep the pending marker in a storage tier that survives browser/app handoff, and only clear it when auth is restored or the full recovery window actually expires. Never treat `auth.currentUser` still being null during the grace window as proof that recovery failed.
 
+### 190. If the user asks to simplify a compact method card, delete the secondary line and promote the whole card as the action
+- Symptom: the selected diet-method card still used a second support line such as `가볍게 걷기부터 이어가요.` and a separate `프로필에서 바꾸기` button, which made the small mobile box feel busy.
+- Root cause: I kept layering extra reassurance copy and a nested CTA inside a surface whose job had already narrowed to "show the chosen method and let the user change it."
+- Lesson: for compact mobile selector summaries, keep one main line of meaning and let the whole card open the selector. If an option is removed from the catalog, map legacy saved values to the nearest surviving option instead of silently dropping users back to `미선택`.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

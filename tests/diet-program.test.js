@@ -17,7 +17,6 @@ describe('diet program helpers', () => {
     it('keeps the agreed method order for selection cards', () => {
         expect(listDietProgramMethods().map((method) => method.id)).toEqual([
             DIET_PROGRAM_METHOD_IDS.BROWN_RICE_GREEN_VEGGIES,
-            DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN,
             DIET_PROGRAM_METHOD_IDS.MEDITERRANEAN,
             DIET_PROGRAM_METHOD_IDS.LOW_CARB,
             DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING,
@@ -30,11 +29,23 @@ describe('diet program helpers', () => {
 
         expect(methods[0].name).toBe('현미밥 채소 식단');
         expect(methods[0].mealGuide).toBe('통곡물과 채소 중심의 기초 건강식');
-        expect(methods[3].name).toBe('저탄수 고단백 식단');
-        expect(methods[3].mealGuide).toBe('당질은 줄이고 단백질로 근육과 포만감');
-        expect(methods[4].name).toBe('16:8 간헐적 단식');
-        expect(methods[4].mealGuide).toBe('공복 시간 확보로 체지방 감량 도모');
-        expect(methods[5].mealGuide).toBe('3주간 대사 회복 및 체질 개선');
+        expect(methods[2].name).toBe('저탄수 고단백 식단');
+        expect(methods[2].mealGuide).toBe('당질은 줄이고 단백질로 근육과 포만감');
+        expect(methods[3].name).toBe('16:8 간헐적 단식');
+        expect(methods[3].mealGuide).toBe('공복 시간 확보로 체지방 감량 도모');
+        expect(methods[4].mealGuide).toBe('3주간 대사 회복 및 체질 개선');
+    });
+
+    it('maps removed high-protein selections onto low-carb high-protein copy', () => {
+        expect(normalizeDietProgramPreferences({
+            methodId: DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN,
+            remindersEnabled: true
+        })).toEqual({
+            methodId: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
+            remindersEnabled: true,
+            activatedAt: '',
+            fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        });
     });
 
     it('normalizes invalid preferences back to none', () => {
@@ -93,10 +104,11 @@ describe('diet program helpers', () => {
         });
 
         expect(summary.active).toBe(true);
-        expect(summary.methodId).toBe(DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN);
-        expect(summary.chipLabel).toContain('고단백 식단');
-        expect(summary.chipLabel).toContain('쉬움');
-        expect(summary.summaryLine).toBe('단백질로 근육과 포만감 유지');
+        expect(summary.methodId).toBe(DIET_PROGRAM_METHOD_IDS.LOW_CARB);
+        expect(summary.chipLabel).toContain('저탄수 고단백 식단');
+        expect(summary.chipLabel).toContain('보통');
+        expect(summary.summaryLine).toBe('당질은 줄이고 단백질로 근육과 포만감');
+        expect(summary.supportTip).toBe('');
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
             methodId: DIET_PROGRAM_METHOD_IDS.SWITCH_ON
@@ -139,6 +151,7 @@ describe('diet program helpers', () => {
         expect(APP_SOURCE).toContain('openTab(pendingBootTabRequest.tabName, pendingBootTabRequest.pushState);');
         expect(APP_SOURCE).not.toContain('window.applyDietProgramUserData?.();');
         expect(APP_SOURCE).toContain('window.updateAssetDisplay?.();');
+        expect(APP_SOURCE).not.toContain('프로필에서 바꾸기');
         expect(APP_SOURCE).not.toContain("if (resolvedTabName === 'assets' && user) {\r\n            updateAssetDisplay();");
         expect(APP_SOURCE).not.toContain("if (resolvedTabName === 'assets' && user) {\n            updateAssetDisplay();");
     });
