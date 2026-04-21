@@ -334,6 +334,14 @@
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(232, 246, 255, 0.92) 100%);
         }
 
+        .meditation-phase-step[data-visual="hold-full"] .meditation-phase-wave,
+        .meditation-phase-step[data-visual="hold-empty"] .meditation-phase-wave {
+            left: -4%;
+            right: -4%;
+            bottom: 0;
+            border-radius: 999px;
+        }
+
         .meditation-phase-step[data-visual="hold"] .meditation-phase-wave {
             left: -4%;
             right: -4%;
@@ -341,8 +349,61 @@
             border-radius: 999px;
         }
 
+        .meditation-phase-step.is-active[data-visual="hold"],
+        .meditation-phase-step.is-active[data-visual="hold-full"],
+        .meditation-phase-step.is-active[data-visual="hold-empty"] {
+            background: linear-gradient(135deg, #FFF4E7 0%, #FFE6C7 100%);
+        }
+
+        .meditation-phase-step.is-active[data-visual="hold-full"] .meditation-phase-wave,
+        .meditation-phase-step.is-active[data-visual="hold-empty"] .meditation-phase-wave,
         .meditation-phase-step.is-active[data-visual="hold"] .meditation-phase-wave {
             animation: meditation-water-ripple 1.6s ease-in-out infinite;
+        }
+
+        .meditation-mindfulness-video {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(227, 215, 196, 0.92);
+            background: linear-gradient(135deg, rgba(255, 249, 239, 0.98) 0%, rgba(242, 249, 255, 0.96) 100%);
+        }
+
+        .meditation-mindfulness-video-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .meditation-mindfulness-video-head strong {
+            font-size: 13px;
+            color: #5F4521;
+        }
+
+        .meditation-mindfulness-video-head a {
+            color: #2E7A4A;
+            font-size: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .meditation-mindfulness-video-frame {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #111;
+            padding-top: 56.25%;
+        }
+
+        .meditation-mindfulness-video-frame iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
         }
 
         @keyframes meditation-water-ripple {
@@ -480,6 +541,19 @@
         body.dark-mode .meditation-phase-visual {
             border-color: rgba(255, 255, 255, 0.1);
             background: linear-gradient(180deg, rgba(24, 31, 39, 0.94) 0%, rgba(31, 43, 56, 0.9) 100%);
+        }
+
+        body.dark-mode .meditation-mindfulness-video {
+            border-color: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(36, 31, 24, 0.94) 0%, rgba(19, 33, 46, 0.9) 100%);
+        }
+
+        body.dark-mode .meditation-mindfulness-video-head strong {
+            color: #F2ECE4;
+        }
+
+        body.dark-mode .meditation-mindfulness-video-head a {
+            color: #A6E0B3;
         }
 
         body.dark-mode .meditation-progress-track {
@@ -1680,6 +1754,21 @@
                         <div class="meditation-practice-panel">
                             <div class="meditation-practice-line" id="meditation-phase-line">배를 부풀리며 천천히 들이마셔요.</div>
                             <div class="meditation-phase-steps" id="meditation-phase-steps" hidden></div>
+                            <div class="meditation-mindfulness-video" id="meditation-mindfulness-video" hidden>
+                                <div class="meditation-mindfulness-video-head">
+                                    <strong>편안한 분위기 영상</strong>
+                                    <a href="https://www.youtube.com/playlist?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt" target="_blank" rel="noopener noreferrer">유튜브 열기</a>
+                                </div>
+                                <div class="meditation-mindfulness-video-frame">
+                                    <iframe
+                                        src="https://www.youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt&rel=0"
+                                        title="마음챙김용 편안한 영상"
+                                        loading="lazy"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        referrerpolicy="strict-origin-when-cross-origin"
+                                        allowfullscreen></iframe>
+                                </div>
+                            </div>
                             <div class="meditation-practice-timer" id="meditation-remaining-time">03:00</div>
                             <div class="meditation-progress-track" aria-hidden="true">
                                 <div class="meditation-progress-bar" id="meditation-progress-bar"></div>

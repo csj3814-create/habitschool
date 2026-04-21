@@ -8356,7 +8356,7 @@ function getMeditationRunningCueInfo(state = _meditationUiState) {
     if (phaseUiState?.steps?.length) {
         const step = phaseUiState.steps[phaseUiState.activeIndex] || {};
         const visual = String(step.visual || '').trim();
-        const kind = visual === 'hold'
+        const kind = visual.startsWith('hold')
             ? 'hold'
             : (visual === 'exhale' ? 'exhale' : 'inhale');
         return {
@@ -8418,6 +8418,23 @@ function renderMeditationMethodChips() {
     `).join('');
 }
 
+function getMeditationPhaseStartFill(visual = '') {
+    if (visual === 'exhale' || visual === 'hold-full') return 1;
+    if (visual === 'hold-empty') return 0.08;
+    return 0;
+}
+
+function getMeditationPhaseTargetFill(visual = '', elapsedSec = 0, stepSeconds = 1) {
+    const safeStepSeconds = Math.max(1, Math.round(Number(stepSeconds) || 1));
+    const steppedUnits = Math.min(safeStepSeconds, Math.floor(Math.max(0, Number(elapsedSec) || 0)) + 1);
+    if (visual === 'exhale') {
+        return Math.max(0, (safeStepSeconds - steppedUnits) / safeStepSeconds);
+    }
+    if (visual === 'hold-full') return 1;
+    if (visual === 'hold-empty') return 0.08;
+    return Math.min(1, steppedUnits / safeStepSeconds);
+}
+
 function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
     if (!phaseStepsEl) return;
     const steps = Array.isArray(phaseUiState?.steps) ? phaseUiState.steps : [];
@@ -8447,25 +8464,34 @@ function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
         phaseStepsEl.dataset.signature = signature;
     }
 
-    const activeProgress = Math.min(1, Math.max(0, Number(phaseUiState?.activeProgress || 0)));
+    const activeIndex = Number.isInteger(phaseUiState?.activeIndex) ? phaseUiState.activeIndex : -1;
+    const activeToken = activeIndex >= 0
+        ? `${signature}:${phaseUiState?.cycleIndex || 0}:${activeIndex}`
+        : '';
+    const tokenChanged = phaseStepsEl.dataset.activeToken !== activeToken;
+    const activeElapsedSec = Math.max(0, Number(phaseUiState?.activeElapsedSec || 0));
+
     Array.from(phaseStepsEl.children).forEach((node, index) => {
         const isActive = index === phaseUiState.activeIndex;
         node.classList.toggle('is-active', isActive);
 
         const visual = String(node.getAttribute('data-visual') || '').trim();
-        let fillRatio = 0;
-        if (isActive) {
-            if (visual === 'exhale') {
-                fillRatio = 1 - activeProgress;
-            } else if (visual === 'hold') {
-                fillRatio = 0.62;
-            } else {
-                fillRatio = activeProgress;
-            }
-        }
+        const step = steps[index] || {};
+        const targetFill = isActive
+            ? getMeditationPhaseTargetFill(visual, activeElapsedSec, step.seconds)
+            : 0;
 
-        node.style.setProperty('--phase-fill', `${Math.min(1, Math.max(0, fillRatio))}`);
+        if (isActive && tokenChanged) {
+            node.style.setProperty('--phase-fill', `${getMeditationPhaseStartFill(visual)}`);
+            void node.offsetHeight;
+            window.requestAnimationFrame(() => {
+                node.style.setProperty('--phase-fill', `${targetFill}`);
+            });
+        } else {
+            node.style.setProperty('--phase-fill', `${targetFill}`);
+        }
     });
+    phaseStepsEl.dataset.activeToken = activeToken;
     phaseStepsEl.hidden = false;
 }
 
@@ -8487,6 +8513,7 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     const progressEl = document.getElementById('meditation-progress-bar');
     const completionEl = document.getElementById('meditation-completion-line');
     const noteEl = document.querySelector('.meditation-common-note');
+    const mindfulnessVideoEl = document.getElementById('meditation-mindfulness-video');
     const soundToggleBtn = document.getElementById('meditation-sound-toggle');
     const startBtn = document.getElementById('meditation-start-btn');
     const pauseBtn = document.getElementById('meditation-pause-btn');
@@ -8506,6 +8533,9 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     if (progressEl) {
         const progress = state.done ? 1 : Math.min(1, Math.max(0, elapsedSec / totalSec));
         progressEl.style.width = `${Math.round(progress * 100)}%`;
+    }
+    if (mindfulnessVideoEl) {
+        mindfulnessVideoEl.hidden = state.methodId !== MEDITATION_METHOD_IDS.MINDFULNESS;
     }
     if (completionEl) {
         const completionLine = state.done

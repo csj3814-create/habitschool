@@ -19,4 +19,5 @@
 - 후속 요청으로 단계 라벨을 `들이쉼/내쉼`으로 정리하고, 각 단계 버튼에 초 표시와 물 차오름/빠짐/잔물결 시각 표현을 추가
 - 후속 보정으로 단계 버튼 DOM을 매초 다시 만들지 않게 바꾸고, 애니메이션 길이를 각 단계 초(`4초/6초/7초/8초`)에 직접 맞춤
 - 추가 보정으로 키프레임 모양 대신 단계 진행률 기반 `fill` 값을 계산해, `들이쉼`은 채워지고 `내쉼`은 비워지는 변화가 실제 초 단위 진행과 맞게 동작하도록 수정
+- 추가 요청으로 `hold-full / hold-empty`를 분리하고, 마음챙김에는 편안한 YouTube 영상 iframe을 함께 보여주도록 확장
 - 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`

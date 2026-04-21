@@ -14,6 +14,7 @@ import {
 
 const APP_SOURCE = readAppSource({ includeEntrypoint: true });
 const INDEX_SOURCE = readRepoFile('index.html');
+const FIREBASE_JSON = readRepoFile('firebase.json');
 
 describe('meditation guide helpers', () => {
     it('keeps the agreed four meditation methods in order and duration', () => {
@@ -77,13 +78,15 @@ describe('meditation guide helpers', () => {
         })).toEqual({
             steps: [
                 expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale' }),
-                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold' }),
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-full' }),
                 expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale' }),
-                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold' })
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-empty' })
             ],
             activeIndex: 1,
             cycleIndex: 0,
-            activeProgress: 0.25
+            activeProgress: 0.25,
+            activeElapsedSec: 1,
+            activeStepSeconds: 4
         });
     });
 
@@ -102,6 +105,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('function renderMeditationPhaseSteps(');
         expect(APP_SOURCE).toContain('phaseStepsEl.dataset.signature !== signature');
         expect(APP_SOURCE).toContain("node.style.setProperty('--phase-fill'");
+        expect(APP_SOURCE).toContain('function getMeditationPhaseTargetFill(');
         expect(APP_SOURCE).toContain('style="--phase-seconds:${Math.max(1, Number(step.seconds || 0))}s;"');
         expect(APP_SOURCE).toContain('class="meditation-phase-time"');
         expect(APP_SOURCE).not.toContain('meditation-check');
@@ -109,6 +113,7 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
+        expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-video"');
         expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
         expect(INDEX_SOURCE).toContain('.meditation-phase-visual');
         expect(INDEX_SOURCE).toContain('.meditation-phase-time');
@@ -116,5 +121,7 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('transition: transform 0.92s linear');
         expect(INDEX_SOURCE).toContain('animation: meditation-water-ripple 1.6s ease-in-out infinite');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');
+        expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/videoseries?list=PLXu0flDqdNTVez3zzfOK2czl7vEGfV8Zt');
+        expect(FIREBASE_JSON).toContain('https://www.youtube-nocookie.com');
     });
 });
