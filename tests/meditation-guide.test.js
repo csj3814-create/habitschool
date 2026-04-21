@@ -100,6 +100,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('meditationCompletedAt');
         expect(APP_SOURCE).toContain("const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';");
+        expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;");
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
         expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
@@ -108,9 +109,14 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
         expect(APP_SOURCE).toContain('window.selectMeditationVideo = function(videoId = \'\')');
+        expect(APP_SOURCE).toContain('function getGratitudeSpeechRecognitionCtor()');
+        expect(APP_SOURCE).toContain('window.toggleGratitudeVoiceInput = function()');
+        expect(APP_SOURCE).toContain("return window.SpeechRecognition || window.webkitSpeechRecognition || null;");
+        expect(APP_SOURCE).toContain("const GRATITUDE_VOICE_MAX_LENGTH = 500;");
         expect(APP_SOURCE).toContain('async function openMindfulnessFullscreenExperience()');
         expect(APP_SOURCE).toContain('function closeMindfulnessFullscreenExperience()');
         expect(APP_SOURCE).toContain('function renderMindfulnessVideoChips(');
+        expect(APP_SOURCE).toContain('function getMindfulnessVideoStartSec(');
         expect(APP_SOURCE).toContain('function renderMeditationPhaseSteps(');
         expect(APP_SOURCE).toContain('phaseStepsEl.dataset.signature !== signature');
         expect(APP_SOURCE).toContain("node.style.setProperty('--phase-fill'");
@@ -123,6 +129,11 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
+        expect(INDEX_SOURCE).toContain('명상하며 느낀 3줄 감사 일기');
+        expect(INDEX_SOURCE).toContain('id="gratitude-voice-btn"');
+        expect(INDEX_SOURCE).toContain('id="gratitude-voice-status"');
+        expect(INDEX_SOURCE).toContain('.meditation-journal-voice-btn');
+        expect(INDEX_SOURCE).toContain('.meditation-journal-status');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-video"');
         expect(INDEX_SOURCE).toContain('id="meditation-video-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-iframe"');
@@ -141,5 +152,6 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain("videoId: 'sebYYzRiHqE'");
         expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/Zr_nvOU8dd0?rel=0&playsinline=1');
         expect(FIREBASE_JSON).toContain('https://www.youtube-nocookie.com');
+        expect(FIREBASE_JSON).toContain('https://*.ytimg.com');
     });
 });

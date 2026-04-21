@@ -486,12 +486,65 @@
             margin-top: 14px;
         }
 
+        .meditation-journal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
         .meditation-journal-label {
             display: block;
-            margin-bottom: 8px;
             font-size: 13px;
             font-weight: 700;
             color: #6E5B46;
+        }
+
+        .meditation-journal-voice-btn {
+            flex-shrink: 0;
+            min-width: 84px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(228, 176, 97, 0.42);
+            background: linear-gradient(180deg, #FFF8ED 0%, #FFF0D7 100%);
+            color: #A8641D;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .meditation-journal-voice-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            box-shadow: none;
+        }
+
+        .meditation-journal-voice-btn.is-listening {
+            border-color: rgba(228, 111, 97, 0.52);
+            background: linear-gradient(180deg, #FFF0ED 0%, #FFD9D0 100%);
+            color: #B54B2F;
+            box-shadow: 0 8px 18px rgba(229, 107, 73, 0.16);
+        }
+
+        .meditation-journal-status {
+            margin: 0 0 8px;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #7A6B57;
+        }
+
+        .meditation-journal-status[data-tone="active"] {
+            color: #2E8A55;
+        }
+
+        .meditation-journal-status[data-tone="error"] {
+            color: #C45A3C;
+        }
+
+        .meditation-journal-status[data-tone="muted"] {
+            color: #8A7A67;
         }
 
         body.dark-mode .meditation-practice-card {
@@ -513,6 +566,30 @@
         body.dark-mode .meditation-common-note,
         body.dark-mode .meditation-journal-label {
             color: #B8AEA2;
+        }
+
+        body.dark-mode .meditation-journal-voice-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #F0D9B7;
+        }
+
+        body.dark-mode .meditation-journal-voice-btn.is-listening {
+            background: linear-gradient(135deg, rgba(111, 44, 34, 0.94) 0%, rgba(137, 58, 35, 0.94) 100%);
+            border-color: rgba(255, 176, 140, 0.22);
+            color: #FFE5D7;
+        }
+
+        body.dark-mode .meditation-journal-status {
+            color: #B8AEA2;
+        }
+
+        body.dark-mode .meditation-journal-status[data-tone="active"] {
+            color: #8EE0A4;
+        }
+
+        body.dark-mode .meditation-journal-status[data-tone="error"] {
+            color: #FFB09A;
         }
 
         body.dark-mode .meditation-practice-duration,
@@ -1793,8 +1870,12 @@
                         </div>
                     </div>
                     <div class="meditation-journal-block">
-                        <label class="meditation-journal-label" for="gratitude-journal">감사 일기</label>
-                        <textarea id="gratitude-journal" placeholder="오늘 하루 감사했던 일을 짧게 남겨보세요"></textarea>
+                        <div class="meditation-journal-head">
+                            <label class="meditation-journal-label" for="gratitude-journal">명상하며 느낀 3줄 감사 일기</label>
+                            <button type="button" class="meditation-journal-voice-btn" id="gratitude-voice-btn" onclick="toggleGratitudeVoiceInput()" aria-pressed="false">음성 입력</button>
+                        </div>
+                        <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
+                        <textarea id="gratitude-journal" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
                     </div>
                 </div>
             </div>

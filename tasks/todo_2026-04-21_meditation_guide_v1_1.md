@@ -22,4 +22,5 @@
 - 추가 요청으로 `hold-full / hold-empty`를 분리하고, 마음챙김에는 편안한 YouTube 영상 iframe을 함께 보여주도록 확장
 - 추가 후속으로 마음챙김 영상 선택칩을 넣고, 시작 시 선택 영상이 자동 전체화면으로 열렸다가 완료/중단 시 종료되도록 연결
 - 추가 보정으로 새 호흡 단계가 시작될 때 transition을 잠시 끄고 시작 fill을 먼저 놓은 뒤 다시 0.92초 보간을 적용해, `내쉼`이 먼저 차오르거나 `들이쉼`이 먼저 꽉 차 보이는 역방향 튐을 제거
+- 추가 보정으로 마음챙김 영상은 세션 시작 때마다 랜덤 `start` 시점을 붙여 같은 영상 안에서도 다른 5분 구간을 보게 하고, `i.ytimg.com` 썸네일이 CSP에 막히지 않도록 `img-src` 허용 도메인을 추가
 - 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`

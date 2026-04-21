@@ -85,26 +85,32 @@ const MEDITATION_TIMER_STORAGE_KEY = 'habitschool-meditation-timer-v1';
 const MEDITATION_DRAFT_STORAGE_KEY = 'habitschool-meditation-draft-v1';
 const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
 const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
+const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
+const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
         id: 'calm-ocean-1',
         label: '고요한 바다',
-        videoId: 'Zr_nvOU8dd0'
+        videoId: 'Zr_nvOU8dd0',
+        randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-2',
         label: '상쾌한 숲속',
-        videoId: 'VNu15Qqomt8'
+        videoId: 'VNu15Qqomt8',
+        randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-3',
         label: '새하얀 설경',
-        videoId: '0ZAH8NUMNDQ'
+        videoId: '0ZAH8NUMNDQ',
+        randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-4',
         label: '푸른 산호 바다',
-        videoId: 'sebYYzRiHqE'
+        videoId: 'sebYYzRiHqE',
+        randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     }
 ]);
 let _meditationTimerTickHandle = 0;
@@ -115,6 +121,17 @@ let _meditationLastCueToken = '';
 let _meditationSoundEnabled = null;
 let _meditationVideoId = null;
 let _meditationOwnedFullscreen = false;
+let _meditationVideoStartState = { videoId: '', startSec: 0 };
+let _gratitudeSpeechRecognition = null;
+let _gratitudeSpeechSupported = null;
+let _gratitudeSpeechListening = false;
+let _gratitudeSpeechStarting = false;
+let _gratitudeSpeechEndReason = '';
+let _gratitudeSpeechSuppressEndStatus = false;
+let _gratitudeSpeechBaseText = '';
+let _gratitudeSpeechFinalText = '';
+let _gratitudeSpeechStatusText = '';
+let _gratitudeSpeechStatusTone = 'muted';
 
 // CDN 라이브러리 동적 로드 (초기 JS 파싱 차단 제거)
 // integrity: SRI 해시(sha256-/sha384-/sha512- 접두사 포함), crossOrigin: 기본 'anonymous'
@@ -6211,6 +6228,7 @@ window.smartUpload = async function (input) {
 };
 
 function clearInputs() {
+    stopGratitudeVoiceInput({ preserveStatus: false });
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
     loadStepData(null);
     _lastDietAutoImportResult = null;
@@ -6430,7 +6448,7 @@ async function loadDataForSelectedDate(dateStr) {
                         }
                     }
                 }
-                document.getElementById('gratitude-journal').value = data.sleepAndMind.gratitude || '';
+                setGratitudeJournalValue(data.sleepAndMind.gratitude || '', { emitInput: false });
                 applyMeditationLogToUi(data.sleepAndMind, { selectedDateStr });
 
                 if (awarded.mind) {
@@ -6610,6 +6628,7 @@ document.addEventListener('DOMContentLoaded', function () {
     bindShareTemplateListeners();
     scheduleFloatingBarLayoutUpdate();
     applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
+    initGratitudeVoiceInput();
     const modal = document.getElementById('lightbox-modal');
     if (!modal) return;
 
@@ -8118,6 +8137,229 @@ function getSelectedRecordDateStr() {
     return String(document.getElementById('selected-date')?.value || todayStr).trim() || todayStr;
 }
 
+function getGratitudeSpeechRecognitionCtor() {
+    return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
+function trimGratitudeVoiceValue(value = '') {
+    return String(value || '').replace(/\r\n/g, '\n').slice(0, GRATITUDE_VOICE_MAX_LENGTH);
+}
+
+function normalizeGratitudeVoiceSegment(text = '') {
+    return sanitizeText(String(text || ''))
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function appendGratitudeSpeechSegment(baseText = '', nextSegment = '') {
+    const safeBase = normalizeGratitudeVoiceSegment(baseText);
+    const safeNext = normalizeGratitudeVoiceSegment(nextSegment);
+    if (!safeNext) return safeBase;
+    return `${safeBase}${safeBase ? ' ' : ''}${safeNext}`.trim();
+}
+
+function buildGratitudeJournalDraft(baseText = '', spokenText = '') {
+    const safeBase = trimGratitudeVoiceValue(String(baseText || '').trimEnd());
+    const safeSpoken = normalizeGratitudeVoiceSegment(spokenText);
+    if (!safeSpoken) return safeBase;
+    const separator = safeBase ? (safeBase.endsWith('\n') ? '' : '\n') : '';
+    return trimGratitudeVoiceValue(`${safeBase}${separator}${safeSpoken}`);
+}
+
+function setGratitudeJournalValue(nextValue = '', { emitInput = true } = {}) {
+    const journal = document.getElementById('gratitude-journal');
+    if (!journal) return;
+    const safeValue = trimGratitudeVoiceValue(nextValue);
+    if (journal.value === safeValue) return;
+    journal.value = safeValue;
+    if (emitInput) {
+        journal.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+function renderGratitudeVoiceUi() {
+    const button = document.getElementById('gratitude-voice-btn');
+    const status = document.getElementById('gratitude-voice-status');
+    if (!button) return;
+
+    if (_gratitudeSpeechSupported === null) {
+        _gratitudeSpeechSupported = !!getGratitudeSpeechRecognitionCtor();
+    }
+
+    if (!_gratitudeSpeechSupported) {
+        button.textContent = '음성 미지원';
+        button.disabled = true;
+        button.classList.remove('is-listening');
+        button.setAttribute('aria-pressed', 'false');
+        if (status) {
+            status.hidden = false;
+            status.dataset.tone = 'muted';
+            status.textContent = '지원 브라우저에서만 음성 입력을 쓸 수 있어요.';
+        }
+        return;
+    }
+
+    button.disabled = false;
+    button.classList.toggle('is-listening', _gratitudeSpeechListening);
+    button.setAttribute('aria-pressed', _gratitudeSpeechListening ? 'true' : 'false');
+    if (_gratitudeSpeechStarting) {
+        button.textContent = '켜는 중...';
+    } else if (_gratitudeSpeechListening) {
+        button.textContent = '듣는 중...';
+    } else {
+        button.textContent = '음성 입력';
+    }
+
+    if (status) {
+        const message = String(_gratitudeSpeechStatusText || '').trim();
+        status.hidden = !message;
+        status.dataset.tone = _gratitudeSpeechStatusTone || 'muted';
+        status.textContent = message;
+    }
+}
+
+function setGratitudeVoiceStatus(message = '', tone = 'muted') {
+    _gratitudeSpeechStatusText = String(message || '').trim();
+    _gratitudeSpeechStatusTone = tone;
+    renderGratitudeVoiceUi();
+}
+
+function stopGratitudeVoiceInput({ preserveStatus = true } = {}) {
+    _gratitudeSpeechStarting = false;
+    _gratitudeSpeechSuppressEndStatus = !preserveStatus;
+    if (_gratitudeSpeechRecognition && (_gratitudeSpeechListening || _gratitudeSpeechEndReason !== 'manual')) {
+        _gratitudeSpeechEndReason = 'manual';
+        try {
+            _gratitudeSpeechRecognition.stop();
+        } catch (_) {}
+    }
+    _gratitudeSpeechListening = false;
+    if (!preserveStatus) {
+        _gratitudeSpeechStatusText = '';
+        _gratitudeSpeechStatusTone = 'muted';
+    }
+    renderGratitudeVoiceUi();
+}
+
+function initGratitudeVoiceInput() {
+    const RecognitionCtor = getGratitudeSpeechRecognitionCtor();
+    _gratitudeSpeechSupported = !!RecognitionCtor;
+    if (!RecognitionCtor) {
+        renderGratitudeVoiceUi();
+        return;
+    }
+    if (_gratitudeSpeechRecognition) {
+        renderGratitudeVoiceUi();
+        return;
+    }
+
+    const recognition = new RecognitionCtor();
+    recognition.lang = 'ko-KR';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+        _gratitudeSpeechStarting = false;
+        _gratitudeSpeechSuppressEndStatus = false;
+        _gratitudeSpeechListening = true;
+        setGratitudeVoiceStatus('말씀하시면 감사일기에 적을게요.', 'active');
+    };
+
+    recognition.onresult = (event) => {
+        let nextFinalText = _gratitudeSpeechFinalText;
+        let interimText = '';
+        for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const piece = String(event.results[index]?.[0]?.transcript || '').trim();
+            if (!piece) continue;
+            if (event.results[index].isFinal) {
+                nextFinalText = appendGratitudeSpeechSegment(nextFinalText, piece);
+            } else {
+                interimText = appendGratitudeSpeechSegment(interimText, piece);
+            }
+        }
+        _gratitudeSpeechFinalText = nextFinalText;
+        const spokenDraft = appendGratitudeSpeechSegment(_gratitudeSpeechFinalText, interimText);
+        setGratitudeJournalValue(buildGratitudeJournalDraft(_gratitudeSpeechBaseText, spokenDraft));
+        setGratitudeVoiceStatus('말하는 내용이 적히고 있어요.', 'active');
+    };
+
+    recognition.onerror = (event) => {
+        _gratitudeSpeechStarting = false;
+        _gratitudeSpeechListening = false;
+        _gratitudeSpeechEndReason = 'error';
+        const errorCode = String(event?.error || '').trim();
+        let message = '음성 입력을 다시 시도해 주세요.';
+        if (errorCode === 'not-allowed' || errorCode === 'service-not-allowed') {
+            message = '마이크 권한을 허용하면 음성 입력을 쓸 수 있어요.';
+        } else if (errorCode === 'no-speech') {
+            message = '음성이 들리지 않았어요. 다시 말씀해 주세요.';
+        } else if (errorCode === 'audio-capture') {
+            message = '마이크를 찾지 못했어요.';
+        } else if (errorCode === 'network') {
+            message = '네트워크 상태를 확인해 주세요.';
+        }
+        setGratitudeVoiceStatus(message, 'error');
+    };
+
+    recognition.onend = () => {
+        const endReason = _gratitudeSpeechEndReason;
+        const hadSpeech = !!_gratitudeSpeechFinalText;
+        _gratitudeSpeechStarting = false;
+        _gratitudeSpeechListening = false;
+        _gratitudeSpeechEndReason = '';
+        if (hadSpeech) {
+            setGratitudeJournalValue(buildGratitudeJournalDraft(_gratitudeSpeechBaseText, _gratitudeSpeechFinalText));
+        }
+        if (_gratitudeSpeechSuppressEndStatus) {
+            _gratitudeSpeechSuppressEndStatus = false;
+            _gratitudeSpeechStatusText = '';
+            _gratitudeSpeechStatusTone = 'muted';
+            renderGratitudeVoiceUi();
+            return;
+        }
+        if (endReason === 'error') {
+            renderGratitudeVoiceUi();
+            return;
+        }
+        setGratitudeVoiceStatus(
+            hadSpeech ? '음성 입력을 마쳤어요.' : '음성이 들리지 않았어요. 다시 시도해 주세요.',
+            hadSpeech ? 'muted' : 'error'
+        );
+    };
+
+    _gratitudeSpeechRecognition = recognition;
+    renderGratitudeVoiceUi();
+}
+
+window.toggleGratitudeVoiceInput = function() {
+    initGratitudeVoiceInput();
+    if (!_gratitudeSpeechSupported || !_gratitudeSpeechRecognition) {
+        showToast('이 브라우저에서는 음성 입력을 지원하지 않아요.');
+        return;
+    }
+
+    if (_gratitudeSpeechListening || _gratitudeSpeechStarting) {
+        stopGratitudeVoiceInput({ preserveStatus: true });
+        return;
+    }
+
+    const journal = document.getElementById('gratitude-journal');
+    _gratitudeSpeechBaseText = trimGratitudeVoiceValue(journal?.value || '');
+    _gratitudeSpeechFinalText = '';
+    _gratitudeSpeechEndReason = '';
+    _gratitudeSpeechStarting = true;
+    _gratitudeSpeechListening = false;
+    setGratitudeVoiceStatus('마이크를 켜는 중이에요.', 'muted');
+    try {
+        _gratitudeSpeechRecognition.start();
+    } catch (error) {
+        _gratitudeSpeechStarting = false;
+        _gratitudeSpeechListening = false;
+        setGratitudeVoiceStatus('음성 입력을 다시 시도해 주세요.', 'error');
+    }
+};
+
 function createMeditationUiState(overrides = {}) {
     const hasOwn = (key) => Object.prototype.hasOwnProperty.call(overrides, key);
     const explicitMethodId = hasOwn('meditationMethodId')
@@ -8246,12 +8488,29 @@ function persistMeditationVideoId(videoId = '') {
     } catch (_) {}
 }
 
-function buildMindfulnessVideoEmbedUrl(videoId = '', { autoplay = false } = {}) {
+function getMindfulnessVideoStartSec(videoId = '', { forceNew = false } = {}) {
+    const option = getMeditationVideoOption(videoId);
+    if (!option?.id) return 0;
+    const maxStartSec = Math.max(0, Number(option.randomStartMaxSec || MEDITATION_VIDEO_RANDOM_START_MAX_SEC) || 0);
+    if (forceNew || _meditationVideoStartState.videoId !== option.id || !Number.isFinite(_meditationVideoStartState.startSec)) {
+        _meditationVideoStartState = {
+            videoId: option.id,
+            startSec: maxStartSec > 0
+                ? Math.floor(Math.random() * (maxStartSec + 1))
+                : 0
+        };
+    }
+    return _meditationVideoStartState.startSec;
+}
+
+function buildMindfulnessVideoEmbedUrl(videoId = '', { autoplay = false, forceRandomStart = false } = {}) {
     const option = getMeditationVideoOption(videoId);
     if (!option?.videoId) return '';
+    const startSec = getMindfulnessVideoStartSec(option.id, { forceNew: forceRandomStart });
     const params = new URLSearchParams({
         rel: '0',
-        playsinline: '1'
+        playsinline: '1',
+        start: String(Math.max(0, Math.round(startSec || 0)))
     });
     if (autoplay) {
         params.set('autoplay', '1');
@@ -8497,11 +8756,11 @@ function renderMindfulnessVideoChips({ disabled = false } = {}) {
     `).join('');
 }
 
-function syncMindfulnessVideoFrame({ autoplay = false } = {}) {
+function syncMindfulnessVideoFrame({ autoplay = false, forceRandomStart = false } = {}) {
     const iframe = document.getElementById('meditation-mindfulness-iframe');
     if (!iframe) return;
     const selectedId = getSelectedMeditationVideoId();
-    const nextSrc = buildMindfulnessVideoEmbedUrl(selectedId, { autoplay });
+    const nextSrc = buildMindfulnessVideoEmbedUrl(selectedId, { autoplay, forceRandomStart });
     if (iframe.dataset.currentSrc !== nextSrc) {
         iframe.src = nextSrc;
         iframe.dataset.currentSrc = nextSrc;
@@ -8511,7 +8770,7 @@ function syncMindfulnessVideoFrame({ autoplay = false } = {}) {
 async function openMindfulnessFullscreenExperience() {
     const frameEl = document.querySelector('.meditation-mindfulness-video-frame');
     if (!frameEl) return;
-    syncMindfulnessVideoFrame({ autoplay: true });
+    syncMindfulnessVideoFrame({ autoplay: true, forceRandomStart: true });
     try {
         if (document.fullscreenElement !== frameEl && typeof frameEl.requestFullscreen === 'function') {
             await frameEl.requestFullscreen();
