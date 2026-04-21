@@ -88,17 +88,17 @@ const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
         id: 'calm-ocean-1',
-        label: '잔잔한 파도',
+        label: '고요한 바다',
         videoId: 'Zr_nvOU8dd0'
     },
     {
         id: 'calm-ocean-2',
-        label: '느린 물결',
+        label: '상쾌한 숲속',
         videoId: 'VNu15Qqomt8'
     },
     {
         id: 'calm-ocean-3',
-        label: '고요한 밤',
+        label: '새하얀 설경',
         videoId: '0ZAH8NUMNDQ'
     }
 ]);
