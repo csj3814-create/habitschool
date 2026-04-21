@@ -336,7 +336,7 @@
         }
 
         .meditation-phase-step.is-active[data-visual="inhale"] .meditation-phase-wave {
-            animation: meditation-water-rise 2.8s ease-in-out infinite;
+            animation: meditation-water-rise var(--phase-seconds, 3s) ease-in-out forwards;
         }
 
         .meditation-phase-step[data-visual="exhale"] .meditation-phase-wave {
@@ -344,7 +344,7 @@
         }
 
         .meditation-phase-step.is-active[data-visual="exhale"] .meditation-phase-wave {
-            animation: meditation-water-drain 2.8s ease-in-out infinite;
+            animation: meditation-water-drain var(--phase-seconds, 3s) ease-in-out forwards;
         }
 
         .meditation-phase-step[data-visual="hold"] .meditation-phase-wave {
@@ -356,7 +356,7 @@
         }
 
         .meditation-phase-step.is-active[data-visual="hold"] .meditation-phase-wave {
-            animation: meditation-water-ripple 1.8s ease-in-out infinite;
+            animation: meditation-water-ripple var(--phase-seconds, 3s) ease-in-out forwards;
         }
 
         @keyframes meditation-water-rise {

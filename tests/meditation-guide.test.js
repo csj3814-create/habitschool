@@ -98,8 +98,9 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
-        expect(APP_SOURCE).toContain('class="meditation-phase-step${index === phaseUiState.activeIndex ? \' is-active\' : \'\'}"');
-        expect(APP_SOURCE).toContain('data-visual="${escapeHtml(step.visual || \'\')}"');
+        expect(APP_SOURCE).toContain('function renderMeditationPhaseSteps(');
+        expect(APP_SOURCE).toContain('phaseStepsEl.dataset.signature !== signature');
+        expect(APP_SOURCE).toContain('style="--phase-seconds:${Math.max(1, Number(step.seconds || 0))}s;"');
         expect(APP_SOURCE).toContain('class="meditation-phase-time"');
         expect(APP_SOURCE).not.toContain('meditation-check');
 
@@ -109,6 +110,9 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
         expect(INDEX_SOURCE).toContain('.meditation-phase-visual');
         expect(INDEX_SOURCE).toContain('.meditation-phase-time');
+        expect(INDEX_SOURCE).toContain('animation: meditation-water-rise var(--phase-seconds, 3s)');
+        expect(INDEX_SOURCE).toContain('animation: meditation-water-drain var(--phase-seconds, 3s)');
+        expect(INDEX_SOURCE).toContain('animation: meditation-water-ripple var(--phase-seconds, 3s)');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-rise');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-drain');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');

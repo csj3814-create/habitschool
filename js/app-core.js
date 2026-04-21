@@ -8418,6 +8418,41 @@ function renderMeditationMethodChips() {
     `).join('');
 }
 
+function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
+    if (!phaseStepsEl) return;
+    const steps = Array.isArray(phaseUiState?.steps) ? phaseUiState.steps : [];
+    if (!steps.length) {
+        phaseStepsEl.innerHTML = '';
+        phaseStepsEl.hidden = true;
+        phaseStepsEl.dataset.signature = '';
+        return;
+    }
+
+    const signature = steps
+        .map((step) => `${step.label || ''}:${step.seconds || 0}:${step.visual || ''}`)
+        .join('|');
+
+    if (phaseStepsEl.dataset.signature !== signature) {
+        phaseStepsEl.innerHTML = steps.map((step) => `
+            <span class="meditation-phase-step" data-visual="${escapeHtml(step.visual || '')}" style="--phase-seconds:${Math.max(1, Number(step.seconds || 0))}s;">
+                <span class="meditation-phase-visual" aria-hidden="true">
+                    <span class="meditation-phase-wave"></span>
+                </span>
+                <span class="meditation-phase-copy">
+                    <strong class="meditation-phase-label">${escapeHtml(step.label || '')}</strong>
+                    <span class="meditation-phase-time">${escapeHtml(String(step.seconds || ''))}초</span>
+                </span>
+            </span>
+        `).join('');
+        phaseStepsEl.dataset.signature = signature;
+    }
+
+    Array.from(phaseStepsEl.children).forEach((node, index) => {
+        node.classList.toggle('is-active', index === phaseUiState.activeIndex);
+    });
+    phaseStepsEl.hidden = false;
+}
+
 function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     const state = _meditationUiState || createMeditationUiState();
     const methodMeta = getMeditationMethodMeta(state.methodId);
@@ -8445,25 +8480,7 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     if (nameEl) nameEl.textContent = methodMeta.name;
     if (guideEl) guideEl.textContent = methodMeta.guide;
     if (durationEl) durationEl.textContent = formatMeditationDurationLabel(totalSec);
-    if (phaseStepsEl) {
-        if (phaseUiState?.steps?.length) {
-            phaseStepsEl.innerHTML = phaseUiState.steps.map((step, index) => `
-                <span class="meditation-phase-step${index === phaseUiState.activeIndex ? ' is-active' : ''}" data-visual="${escapeHtml(step.visual || '')}">
-                    <span class="meditation-phase-visual" aria-hidden="true">
-                        <span class="meditation-phase-wave"></span>
-                    </span>
-                    <span class="meditation-phase-copy">
-                        <strong class="meditation-phase-label">${escapeHtml(step.label || '')}</strong>
-                        <span class="meditation-phase-time">${escapeHtml(String(step.seconds || ''))}초</span>
-                    </span>
-                </span>
-            `).join('');
-            phaseStepsEl.hidden = false;
-        } else {
-            phaseStepsEl.innerHTML = '';
-            phaseStepsEl.hidden = true;
-        }
-    }
+    renderMeditationPhaseSteps(phaseStepsEl, phaseUiState);
     if (phaseEl) {
         phaseEl.textContent = state.done
             ? methodMeta.completionLine

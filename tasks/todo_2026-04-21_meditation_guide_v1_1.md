@@ -17,4 +17,5 @@
 - `index.html` 명상 카드 헤더에 우측 시간 pill과 `소리` 토글을 추가하고, 단계 segmented row를 삽입
 - `js/app-core.js`에서 단계 표시 렌더링, 비프음 안내, 로컬 사운드 설정 저장, 단계 전환 cue 동기화를 연결
 - 후속 요청으로 단계 라벨을 `들이쉼/내쉼`으로 정리하고, 각 단계 버튼에 초 표시와 물 차오름/빠짐/잔물결 시각 표현을 추가
+- 후속 보정으로 단계 버튼 DOM을 매초 다시 만들지 않게 바꾸고, 애니메이션 길이를 각 단계 초(`4초/6초/7초/8초`)에 직접 맞춤
 - 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
