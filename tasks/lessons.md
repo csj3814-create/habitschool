@@ -1413,3 +1413,4 @@
 - 2026-04-20: 거대한 브라우저 모듈에서는 일부 전역 상태를 앞당기는 것만으로 초기화 순서 회귀가 끝나지 않을 수 있다. 특히 `auth.js` 같은 외부 모듈이 평가 도중 `openTab()`이나 `window.applyDietProgramUserData()`를 먼저 호출할 수 있으면, 늦게 선언된 다른 `let/const` 상태(`_dashboardCache`, `galleryUserFilter` 등)가 연쇄 TDZ를 낸다. 이런 경우에는 부팅 큐(`_appBootReady`)를 두고 조기 호출을 모듈 평가 완료 후로 미뤄야 한다.
 - 2026-04-20: 사용자가 "인라인 렌더링하기에 너무 큽니다"를 실제 문제로 보정하면 단순히 무시 가능한 뷰어 제한으로 넘기지 않는다. 진입 파일(`styles.css`, `js/app.js`, `functions/index.js`)은 얇게 유지하고, 코어 구현을 분리했다면 service worker 캐시와 소스 검사 테스트도 새 위임 구조를 따라가게 함께 고친다.
 - 2026-04-21: 신규가입 일회성 보상은 `sessionStorage` 임시 플래그나 `result.additionalUserInfo` 같은 취약한 클라이언트 힌트 하나에만 기대지 않는다. 가입 판정은 Firestore의 최초 사용자 문서 생성 여부 같은 영속 상태로도 보강하고, 이미 `onboardingComplete`만 찍히고 보상이 비어 있는 최근 가입자는 다음 로그인 때 자동 복구 경로를 둬야 대량 누락을 막을 수 있다.
+- 2026-04-21: 호흡/명상 UI의 단계 표현은 렌더 시 문자열 추론으로 맞추지 않는다. `들이쉼/멈춤/내쉼`, 단계 초, 시각 상태(`inhale/hold/exhale`) 같은 표시는 `js/meditation-guide.js` 메타데이터에 함께 정의하고, UI와 사운드는 그 구조를 그대로 읽게 해야 후속 카피 수정과 애니메이션 변경이 함께 맞물린다.

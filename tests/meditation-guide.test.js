@@ -16,16 +16,23 @@ const APP_SOURCE = readAppSource({ includeEntrypoint: true });
 const INDEX_SOURCE = readRepoFile('index.html');
 
 describe('meditation guide helpers', () => {
-    it('keeps the agreed four meditation methods in order', () => {
+    it('keeps the agreed four meditation methods in order and duration', () => {
         expect(listMeditationMethods().map((method) => method.id)).toEqual([
             MEDITATION_METHOD_IDS.ABDOMINAL,
             MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT,
             MEDITATION_METHOD_IDS.BOX,
             MEDITATION_METHOD_IDS.MINDFULNESS
         ]);
+
         expect(getMeditationMethodMeta(DEFAULT_MEDITATION_METHOD_ID).durationSec).toBe(180);
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).durationSec).toBe(180);
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.BOX).durationSec).toBe(180);
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.MINDFULNESS).durationSec).toBe(300);
+
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).guide).toBe('배를 부풀리며 4초 들이쉼, 6초 내쉼');
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).phaseSteps[0]).toEqual(
+            expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale' })
+        );
         expect(formatMeditationDurationLabel(300)).toBe('5분');
     });
 
@@ -38,12 +45,13 @@ describe('meditation guide helpers', () => {
             meditationDurationSec: 0,
             meditationCompletedAt: ''
         });
+
         expect(buildMeditationCompletionLabel({
             meditationDone: true
         })).toBe('오늘 명상 완료');
     });
 
-    it('builds explicit completion labels and phase prompts for guided sessions', () => {
+    it('builds explicit completion labels and breathing phase prompts', () => {
         expect(buildMeditationCompletionLabel({
             meditationDone: true,
             meditationMethodId: MEDITATION_METHOD_IDS.ABDOMINAL,
@@ -67,13 +75,18 @@ describe('meditation guide helpers', () => {
             remainingSec: 175,
             totalSec: 180
         })).toEqual({
-            labels: ['들이숨', '멈춤', '내쉼', '멈춤'],
+            steps: [
+                expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale' }),
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold' }),
+                expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale' }),
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold' })
+            ],
             activeIndex: 1,
             cycleIndex: 0
         });
     });
 
-    it('replaces the checkbox flow with guided meditation UI, phase steps, and sound controls', () => {
+    it('renders guided meditation UI with sound controls, timed steps, and breathing visuals', () => {
         expect(APP_SOURCE).toContain('meditationMethodId');
         expect(APP_SOURCE).toContain('meditationDurationSec');
         expect(APP_SOURCE).toContain('meditationCompletedAt');
@@ -85,12 +98,19 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
+        expect(APP_SOURCE).toContain('class="meditation-phase-step${index === phaseUiState.activeIndex ? \' is-active\' : \'\'}"');
+        expect(APP_SOURCE).toContain('data-visual="${escapeHtml(step.visual || \'\')}"');
+        expect(APP_SOURCE).toContain('class="meditation-phase-time"');
         expect(APP_SOURCE).not.toContain('meditation-check');
 
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
-        expect(INDEX_SOURCE).toContain('id="meditation-start-btn"');
-        expect(INDEX_SOURCE).toContain('id="meditation-completion-line"');
+        expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
+        expect(INDEX_SOURCE).toContain('.meditation-phase-visual');
+        expect(INDEX_SOURCE).toContain('.meditation-phase-time');
+        expect(INDEX_SOURCE).toContain('@keyframes meditation-water-rise');
+        expect(INDEX_SOURCE).toContain('@keyframes meditation-water-drain');
+        expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');
     });
 });

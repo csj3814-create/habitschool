@@ -16,4 +16,5 @@
 - `js/meditation-guide.js`에 단계 라벨과 단계 표시용 helper를 추가하고 `4-7-8`을 포함한 호흡법 3종 기본 시간을 3분으로 통일
 - `index.html` 명상 카드 헤더에 우측 시간 pill과 `소리` 토글을 추가하고, 단계 segmented row를 삽입
 - `js/app-core.js`에서 단계 표시 렌더링, 비프음 안내, 로컬 사운드 설정 저장, 단계 전환 cue 동기화를 연결
+- 후속 요청으로 단계 라벨을 `들이쉼/내쉼`으로 정리하고, 각 단계 버튼에 초 표시와 물 차오름/빠짐/잔물결 시각 표현을 추가
 - 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`

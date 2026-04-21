@@ -8353,11 +8353,12 @@ function getMeditationRunningCueInfo(state = _meditationUiState) {
     const remainingSec = getMeditationCountdownSeconds(state);
     const elapsedSec = Math.max(0, totalSec - remainingSec);
     const phaseUiState = getMeditationPhaseUiState(state.methodId, { elapsedSec, remainingSec, totalSec });
-    if (phaseUiState?.labels?.length) {
-        const label = String(phaseUiState.labels[phaseUiState.activeIndex] || '').trim();
-        const kind = label.includes('멈춤')
+    if (phaseUiState?.steps?.length) {
+        const step = phaseUiState.steps[phaseUiState.activeIndex] || {};
+        const visual = String(step.visual || '').trim();
+        const kind = visual === 'hold'
             ? 'hold'
-            : (label.includes('내') ? 'exhale' : 'inhale');
+            : (visual === 'exhale' ? 'exhale' : 'inhale');
         return {
             token: `${state.dateStr}:${state.methodId}:${phaseUiState.cycleIndex || 0}:${phaseUiState.activeIndex}`,
             kind
@@ -8445,10 +8446,16 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     if (guideEl) guideEl.textContent = methodMeta.guide;
     if (durationEl) durationEl.textContent = formatMeditationDurationLabel(totalSec);
     if (phaseStepsEl) {
-        if (phaseUiState?.labels?.length) {
-            phaseStepsEl.innerHTML = phaseUiState.labels.map((label, index) => `
-                <span class="meditation-phase-step${index === phaseUiState.activeIndex ? ' is-active' : ''}">
-                    ${escapeHtml(label)}
+        if (phaseUiState?.steps?.length) {
+            phaseStepsEl.innerHTML = phaseUiState.steps.map((step, index) => `
+                <span class="meditation-phase-step${index === phaseUiState.activeIndex ? ' is-active' : ''}" data-visual="${escapeHtml(step.visual || '')}">
+                    <span class="meditation-phase-visual" aria-hidden="true">
+                        <span class="meditation-phase-wave"></span>
+                    </span>
+                    <span class="meditation-phase-copy">
+                        <strong class="meditation-phase-label">${escapeHtml(step.label || '')}</strong>
+                        <span class="meditation-phase-time">${escapeHtml(String(step.seconds || ''))}초</span>
+                    </span>
                 </span>
             `).join('');
             phaseStepsEl.hidden = false;

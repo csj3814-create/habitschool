@@ -11,39 +11,36 @@ const METHOD_LIST = Object.freeze([
     {
         id: MEDITATION_METHOD_IDS.ABDOMINAL,
         name: '복식호흡',
-        guide: '배를 부풀리며 4초 들숨, 6초 날숨',
+        guide: '배를 부풀리며 4초 들이쉼, 6초 내쉼',
         durationSec: 180,
-        phaseLabels: ['들이숨', '내쉼'],
-        phases: [
-            { seconds: 4, line: '배를 부풀리며 천천히 들이마셔요.' },
-            { seconds: 6, line: '배를 가라앉히며 길게 내쉬어요.' }
+        phaseSteps: [
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '배를 부풀리며 천천히 들이마셔요.' },
+            { label: '내쉼', seconds: 6, visual: 'exhale', line: '배를 가라앉히며 길게 내쉬어요.' }
         ],
         completionLine: '복식호흡으로 몸의 긴장을 풀었어요.'
     },
     {
         id: MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT,
         name: '4-7-8 호흡',
-        guide: '4초 들숨, 7초 멈춤, 8초 날숨',
+        guide: '4초 들이쉼, 7초 멈춤, 8초 내쉼',
         durationSec: 180,
-        phaseLabels: ['들이숨', '멈춤', '내쉼'],
-        phases: [
-            { seconds: 4, line: '4초 동안 코로 들이마셔요.' },
-            { seconds: 7, line: '숨을 멈추고 가슴을 편하게 둬요.' },
-            { seconds: 8, line: '8초 동안 길게 내쉬어요.' }
+        phaseSteps: [
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 코로 들이마셔요.' },
+            { label: '멈춤', seconds: 7, visual: 'hold', line: '숨을 멈추고 가슴을 편하게 둬요.' },
+            { label: '내쉼', seconds: 8, visual: 'exhale', line: '8초 동안 길게 내쉬어요.' }
         ],
         completionLine: '4-7-8 호흡으로 호흡 리듬을 정리했어요.'
     },
     {
         id: MEDITATION_METHOD_IDS.BOX,
         name: '박스호흡',
-        guide: '4초 들숨, 4초 멈춤, 4초 날숨, 4초 멈춤',
+        guide: '4초 들이쉼, 4초 멈춤, 4초 내쉼, 4초 멈춤',
         durationSec: 180,
-        phaseLabels: ['들이숨', '멈춤', '내쉼', '멈춤'],
-        phases: [
-            { seconds: 4, line: '4초 동안 들이마셔요.' },
-            { seconds: 4, line: '숨을 멈추고 어깨 힘을 빼요.' },
-            { seconds: 4, line: '4초 동안 천천히 내쉬어요.' },
-            { seconds: 4, line: '빈 호흡으로 잠시 머물러요.' }
+        phaseSteps: [
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 들이마셔요.' },
+            { label: '멈춤', seconds: 4, visual: 'hold', line: '숨을 멈추고 어깨 힘을 빼요.' },
+            { label: '내쉼', seconds: 4, visual: 'exhale', line: '4초 동안 천천히 내쉬어요.' },
+            { label: '멈춤', seconds: 4, visual: 'hold', line: '빈 호흡으로 잠시 머물러요.' }
         ],
         completionLine: '박스호흡으로 긴장을 차분히 가라앉혔어요.'
     },
@@ -129,15 +126,15 @@ export function getMeditationPhaseLine(methodId = '', {
     }
 
     const method = getMeditationMethodMeta(methodId);
-    if (Array.isArray(method.phases) && method.phases.length > 0) {
-        const cycleSec = method.phases.reduce((sum, phase) => sum + Number(phase.seconds || 0), 0) || 1;
+    if (Array.isArray(method.phaseSteps) && method.phaseSteps.length > 0) {
+        const cycleSec = method.phaseSteps.reduce((sum, phase) => sum + Number(phase.seconds || 0), 0) || 1;
         let offset = ((Math.max(0, Math.floor(elapsedSec)) % cycleSec) + cycleSec) % cycleSec;
-        for (const phase of method.phases) {
+        for (const phase of method.phaseSteps) {
             const phaseSec = Math.max(1, Number(phase.seconds || 0));
             if (offset < phaseSec) return phase.line;
             offset -= phaseSec;
         }
-        return method.phases[0].line;
+        return method.phaseSteps[0].line;
     }
 
     if (Array.isArray(method.segments) && method.segments.length > 0) {
@@ -157,39 +154,38 @@ export function getMeditationPhaseUiState(methodId = '', {
     totalSec = 0
 } = {}) {
     const method = getMeditationMethodMeta(methodId);
-    if (!Array.isArray(method.phaseLabels) || method.phaseLabels.length === 0) {
+    if (!Array.isArray(method.phaseSteps) || method.phaseSteps.length === 0) {
         return null;
     }
 
-    const labels = [...method.phaseLabels];
+    const steps = method.phaseSteps.map((step) => ({ ...step }));
     if (remainingSec <= 0) {
         return {
-            labels,
-            activeIndex: labels.length - 1
+            steps,
+            activeIndex: steps.length - 1
         };
     }
 
-    if (Array.isArray(method.phases) && method.phases.length > 0) {
-        const cycleSec = method.phases.reduce((sum, phase) => sum + Math.max(1, Number(phase.seconds || 0)), 0) || 1;
-        const cycleIndex = Math.max(0, Math.floor(Math.max(0, Math.floor(elapsedSec)) / cycleSec));
-        let offset = ((Math.max(0, Math.floor(elapsedSec)) % cycleSec) + cycleSec) % cycleSec;
-        for (let index = 0; index < method.phases.length; index += 1) {
-            const phaseSec = Math.max(1, Number(method.phases[index].seconds || 0));
-            if (offset < phaseSec) {
-                return {
-                    labels,
-                    activeIndex: Math.min(index, labels.length - 1),
-                    cycleIndex
-                };
-            }
-            offset -= phaseSec;
+    const cycleSec = steps.reduce((sum, phase) => sum + Math.max(1, Number(phase.seconds || 0)), 0) || 1;
+    const wholeElapsedSec = Math.max(0, Math.floor(elapsedSec));
+    const cycleIndex = Math.max(0, Math.floor(wholeElapsedSec / cycleSec));
+    let offset = ((wholeElapsedSec % cycleSec) + cycleSec) % cycleSec;
+    for (let index = 0; index < steps.length; index += 1) {
+        const phaseSec = Math.max(1, Number(steps[index].seconds || 0));
+        if (offset < phaseSec) {
+            return {
+                steps,
+                activeIndex: Math.min(index, steps.length - 1),
+                cycleIndex
+            };
         }
+        offset -= phaseSec;
     }
 
     const safeTotal = Math.max(1, Number(totalSec || method.durationSec || 1));
     const ratio = Math.min(1, Math.max(0, Number(elapsedSec || 0) / safeTotal));
     return {
-        labels,
-        activeIndex: Math.min(labels.length - 1, Math.floor(ratio * labels.length))
+        steps,
+        activeIndex: Math.min(steps.length - 1, Math.floor(ratio * steps.length))
     };
 }

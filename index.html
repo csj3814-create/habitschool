@@ -242,27 +242,160 @@
 
         .meditation-phase-steps {
             display: flex;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 10px;
+            margin-top: 12px;
             flex-wrap: wrap;
         }
 
         .meditation-phase-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 140px;
             min-width: 0;
-            padding: 7px 10px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(227, 215, 196, 0.92);
+            background: rgba(250, 245, 237, 0.92);
+            color: #8B7861;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
+            transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .meditation-phase-visual {
+            position: relative;
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            border-radius: 12px;
+            border: 1px solid rgba(224, 193, 145, 0.42);
+            background: linear-gradient(180deg, rgba(255, 250, 241, 0.96) 0%, rgba(255, 237, 205, 0.92) 100%);
+            overflow: hidden;
+        }
+
+        .meditation-phase-wave {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 38%;
+            border-radius: 55% 55% 12px 12px;
+            background: linear-gradient(180deg, rgba(107, 194, 255, 0.96) 0%, rgba(65, 165, 232, 0.96) 100%);
+            transform-origin: center bottom;
+        }
+
+        .meditation-phase-wave::before {
+            content: '';
+            position: absolute;
+            left: -12%;
+            right: -12%;
+            top: -4px;
+            height: 8px;
             border-radius: 999px;
-            background: rgba(244, 236, 222, 0.82);
-            color: #9B886D;
-            font-size: 12px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .meditation-phase-copy {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .meditation-phase-label {
+            font-size: 13px;
+            line-height: 1.15;
+        }
+
+        .meditation-phase-time {
+            font-size: 11px;
             font-weight: 800;
-            line-height: 1;
-            transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+            letter-spacing: 0.02em;
+            color: #A89578;
         }
 
         .meditation-phase-step.is-active {
             background: linear-gradient(135deg, #FFF1D9 0%, #FFE4B7 100%);
+            border-color: rgba(228, 162, 79, 0.32);
             color: #A05A00;
             transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(215, 160, 79, 0.16);
+        }
+
+        .meditation-phase-step.is-active .meditation-phase-time {
+            color: #A05A00;
+        }
+
+        .meditation-phase-step.is-active .meditation-phase-visual {
+            border-color: rgba(87, 164, 224, 0.38);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(232, 246, 255, 0.92) 100%);
+        }
+
+        .meditation-phase-step[data-visual="inhale"] .meditation-phase-wave {
+            height: 46%;
+        }
+
+        .meditation-phase-step.is-active[data-visual="inhale"] .meditation-phase-wave {
+            animation: meditation-water-rise 2.8s ease-in-out infinite;
+        }
+
+        .meditation-phase-step[data-visual="exhale"] .meditation-phase-wave {
+            height: 28%;
+        }
+
+        .meditation-phase-step.is-active[data-visual="exhale"] .meditation-phase-wave {
+            animation: meditation-water-drain 2.8s ease-in-out infinite;
+        }
+
+        .meditation-phase-step[data-visual="hold"] .meditation-phase-wave {
+            left: -4%;
+            right: -4%;
+            bottom: 26%;
+            height: 42%;
+            border-radius: 999px;
+        }
+
+        .meditation-phase-step.is-active[data-visual="hold"] .meditation-phase-wave {
+            animation: meditation-water-ripple 1.8s ease-in-out infinite;
+        }
+
+        @keyframes meditation-water-rise {
+            0%,
+            100% {
+                height: 32%;
+                transform: translateY(16%) scaleX(0.96);
+            }
+
+            50% {
+                height: 74%;
+                transform: translateY(0) scaleX(1.02);
+            }
+        }
+
+        @keyframes meditation-water-drain {
+            0%,
+            100% {
+                height: 74%;
+                transform: translateY(0) scaleX(1.02);
+            }
+
+            50% {
+                height: 22%;
+                transform: translateY(20%) scaleX(0.95);
+            }
+        }
+
+        @keyframes meditation-water-ripple {
+            0%,
+            100% {
+                transform: translateY(0) scaleX(0.96);
+                opacity: 0.9;
+            }
+
+            50% {
+                transform: translateY(-3px) scaleX(1.04);
+                opacity: 1;
+            }
         }
 
         .meditation-practice-timer {
@@ -371,7 +504,22 @@
 
         body.dark-mode .meditation-phase-step {
             background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
             color: #B8AEA2;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        }
+
+        body.dark-mode .meditation-phase-time {
+            color: #958877;
+        }
+
+        body.dark-mode .meditation-phase-step.is-active .meditation-phase-time {
+            color: #DFF4E4;
+        }
+
+        body.dark-mode .meditation-phase-visual {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: linear-gradient(180deg, rgba(24, 31, 39, 0.94) 0%, rgba(31, 43, 56, 0.9) 100%);
         }
 
         body.dark-mode .meditation-progress-track {
@@ -413,8 +561,18 @@
             }
 
             .meditation-phase-step {
-                flex: 1 1 calc(50% - 3px);
-                text-align: center;
+                flex: 1 1 calc(50% - 5px);
+                padding: 10px;
+            }
+
+            .meditation-phase-visual {
+                width: 30px;
+                height: 30px;
+                flex-basis: 30px;
+            }
+
+            .meditation-phase-label {
+                font-size: 12px;
             }
         }
     </style>
@@ -1551,7 +1709,7 @@
                             <div class="meditation-practice-copy">
                                 <div class="meditation-practice-kicker">호흡 가이드</div>
                                 <strong id="meditation-method-name">복식호흡</strong>
-                                <p id="meditation-method-guide">배를 부풀리며 4초 들숨, 6초 날숨</p>
+                                <p id="meditation-method-guide">배를 부풀리며 4초 들이쉼, 6초 내쉼</p>
                             </div>
                             <div class="meditation-practice-meta">
                                 <span class="meditation-practice-duration" id="meditation-method-duration">3분</span>
