@@ -38,6 +38,16 @@
 - Root cause: I shortened individual sentences but still combined multiple guidance sources and left verbose badge labels in a space-constrained mobile layout.
 - Lesson: for mobile selection cards and guide panels, use one short meal cue, one short support line, and a compact badge label like `11:30·17:30`. Avoid stacking multiple advisory sentences unless the user explicitly asks for more detail.
 
+### 185. After splitting a large stylesheet, inspect the first and last lines before shipping
+- Symptom: the assets tab lost its orange summary card styling and showed the default white `.card` surface instead.
+- Root cause: the stylesheet split left `styles-features.css` with a broken opening comment, which made the first wallet asset rules at the top of the file parse unreliably in the browser.
+- Lesson: after moving CSS into a new file, explicitly inspect the first and last lines for broken comment markers or truncated blocks. A one-line parse issue at the file boundary can create a visual regression that looks unrelated to the refactor.
+
+### 186. When a feature adds a new Firestore field, production deploy must include `firestore:rules`, not just hosting/functions
+- Symptom: on `2026-04-21`, production users saw `식단 방법 저장 중 문제가 생겼어요.` when selecting a diet method, even though the code and staging environment were already correct.
+- Root cause: the diet-program feature started writing `users/{uid}.programPreferences.diet`, but production Firestore rules were still on the `2026-04-07` release that did not allow `programPreferences`. Staging had the newer `2026-04-20` rules, so the bug only survived on production.
+- Lesson: when a change depends on a new Firestore field or a rules whitelist update, treat `firestore:rules` as part of the production release contract. After deploy, verify the live Firestore rules release timestamp or contents instead of assuming hosting/function deploys are enough.
+
 ### 184. Compact diet summaries should show the method name only once and spend the second line on the actual cue
 - Symptom: the compact diet summary rendered as `스위치온 다이어트` on the chip and then repeated `스위치온 다이어트 · 초기 저탄수, 이후 균형` on the next line, which wasted space and pushed the meaningful cue down.
 - Root cause: I kept the generic `method name + guide` pattern in the status line even after the method label had already moved into the top chip.
