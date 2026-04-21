@@ -13723,6 +13723,7 @@ window.shareToPlatform = async function (platform) {
 };
 
 let cachedGalleryLogs = [];
+let galleryCacheAudience = 'unknown'; // 'guest' | 'auth' | 'unknown'
 
 // 무한 스크롤 관련 변수
 let galleryDisplayCount = 0;
@@ -13746,6 +13747,7 @@ function upsertGalleryCacheItem(docId, data) {
         { id: docId, data: cloneDailyLogData(data) },
         ...cachedGalleryLogs.filter(item => item.id !== docId)
     ].slice(0, MAX_CACHE_SIZE);
+    galleryCacheAudience = auth.currentUser ? 'auth' : galleryCacheAudience;
     sortedFilteredDirty = true;
 }
 
@@ -14240,6 +14242,7 @@ function cleanupGalleryResources() {
 
     // 갤러리 캠시 초기화 (로그아웃 시 재로드 보장)
     cachedGalleryLogs = [];
+    galleryCacheAudience = 'unknown';
     galleryLastDoc = null; galleryHasMore = false;
     sortedFilteredCache = [];
     sortedFilteredDirty = true;
@@ -14356,6 +14359,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
     const container = document.getElementById('gallery-container');
     const user = auth.currentUser;
     const myId = user ? user.uid : "";
+    const expectedGalleryAudience = user ? 'auth' : 'guest';
     const isCurrentLoad = () => loadGeneration === _galleryLoadGeneration;
     const abortIfSuperseded = () => !isCurrentLoad();
 
@@ -14372,7 +14376,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
         }
 
         const hadCachedLogs = cachedGalleryLogs.length > 0;
-        const shouldFetchFresh = forceReload || !hadCachedLogs;
+        const shouldFetchFresh = forceReload || !hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience;
 
         if (shouldFetchFresh) {
             // 캐시가 없을 때만 스켈레톤을 보여주고, 기존 목록이 있으면 그대로 유지한다.
@@ -14408,6 +14412,9 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         );
                         if (abortIfSuperseded()) return;
                         cachedGalleryLogs = logsArray;
+                        galleryCacheAudience = 'guest';
+                        galleryLastDoc = null;
+                        galleryHasMore = false;
                         sortedFilteredDirty = true;
                         break;
                     } catch (e) {
@@ -14441,6 +14448,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         let logsArray = [];
                         snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
                         cachedGalleryLogs = logsArray;
+                        galleryCacheAudience = 'auth';
                         galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
                         galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
                         sortedFilteredDirty = true;

@@ -23,4 +23,13 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('갤러리 REST 조회 시간이 초과되었어요.');
         expect(appSource).toContain('갤러리 Firestore 조회 시간이 초과되었어요.');
     });
+    it('forces a fresh reload when guest gallery cache survives into an authenticated session', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("let galleryCacheAudience = 'unknown';");
+        expect(appSource).toContain("const expectedGalleryAudience = user ? 'auth' : 'guest';");
+        expect(appSource).toContain('const shouldFetchFresh = forceReload || !hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience;');
+        expect(appSource).toContain("galleryCacheAudience = 'guest';");
+        expect(appSource).toContain("galleryCacheAudience = 'auth';");
+    });
 });
