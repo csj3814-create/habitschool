@@ -32,10 +32,12 @@ describe('PWA manifest features', () => {
         expect(swSource).toContain('./icons/feature-graphic-minimal.png');
     });
 
-    it('falls back to openWindow when notification navigation fails', () => {
+    it('routes notifications to app windows first and still keeps openWindow fallback', () => {
         const swSource = readRepoFile('sw.js');
 
-        expect(swSource).toContain("notification navigate/focus failed");
+        expect(swSource).toContain("type: 'habitschool-notification-open'");
+        expect(swSource).toContain("url.pathname === '/' || url.pathname === '/index.html'");
+        expect(swSource).toContain("notification focus/postMessage failed");
         expect(swSource).toContain('await self.clients.openWindow(destination)');
         expect(swSource).toContain("notification openWindow failed");
     });

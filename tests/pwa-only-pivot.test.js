@@ -29,4 +29,14 @@ describe('PWA-only pivot guardrails', () => {
         expect(hostingConfig.ignore).toContain('install/**');
         expect(hostingConfig.ignore).toContain('scripts/**');
     });
+
+    it('waits briefly for the native install prompt before falling back to manual instructions', () => {
+        const pwaInstallSource = readRepoFile('js/pwa-install.js');
+
+        expect(pwaInstallSource).toContain('let installPromptWaiters = [];');
+        expect(pwaInstallSource).toContain('function canWaitForNativeInstallPrompt() {');
+        expect(pwaInstallSource).toContain('async function waitForDeferredInstallPrompt(timeoutMs = 1800) {');
+        expect(pwaInstallSource).toContain('const promptEvent = deferredInstallPrompt || await waitForDeferredInstallPrompt();');
+        expect(pwaInstallSource).toContain('flushInstallPromptWaiters(event);');
+    });
 });

@@ -279,21 +279,36 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
         self.clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(async (clientList) => {
-                for (const client of clientList) {
-                    if (!client.url.startsWith(self.location.origin)) {
-                        continue;
-                    }
-
+                const isHabitschoolAppWindowClient = (client) => {
                     try {
-                        if ('navigate' in client) {
-                            await client.navigate(destination);
+                        const url = new URL(client.url);
+                        return url.origin === self.location.origin
+                            && (url.pathname === '/' || url.pathname === '/index.html');
+                    } catch (_) {
+                        return false;
+                    }
+                };
+
+                const appClients = clientList.filter(isHabitschoolAppWindowClient);
+                const rankedClients = [
+                    ...appClients.filter((client) => client.visibilityState === 'visible'),
+                    ...appClients.filter((client) => client.focused === true),
+                    ...appClients
+                ];
+                const targetClient = rankedClients[0];
+
+                if (targetClient) {
+                    try {
+                        if ('focus' in targetClient) {
+                            await targetClient.focus();
                         }
-                        if ('focus' in client) {
-                            return client.focus();
-                        }
-                        return client;
+                        targetClient.postMessage({
+                            type: 'habitschool-notification-open',
+                            targetUrl: destination
+                        });
+                        return targetClient;
                     } catch (error) {
-                        console.warn('[SW] notification navigate/focus failed:', error?.message || error);
+                        console.warn('[SW] notification focus/postMessage failed:', error?.message || error);
                     }
                 }
 

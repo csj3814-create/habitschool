@@ -618,12 +618,8 @@ function renderDietProgramProfileCard() {
     summaryEl.textContent = hasMethod
         ? meta.summary
         : '가이드가 바뀌어요.';
-    supportEl.textContent = hasMethod
-        ? `${meta.dashboardTip}${meta.cautionText ? ` ${meta.cautionText}` : ''}`
-        : '알림은 따로 켤 수 있어요.';
-    if (hasMethod) {
-        supportEl.textContent = meta.dashboardTip;
-    }
+    supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';
+    supportEl.hidden = hasMethod || !supportEl.textContent;
     helperEl.textContent = getDietProgramReminderToggleCopy(dietPreferences, pushState);
     selectBtn.textContent = hasMethod ? '방법 바꾸기' : '방법 선택';
     setDietProgramToggleChecked(toggleEl, hasMethod && dietPreferences.remindersEnabled, !hasMethod);
@@ -1722,33 +1718,63 @@ function applyPwaLaunchTargetUrl(targetUrl = '') {
     }
 }
 
+function resolveAppEntryTargetTabFromLocation() {
+    const params = getAppEntryDeepLinkParams();
+    const appMode = getAppModeFromPath(window.location.pathname);
+    const validTabs = getAllowedTabsForMode(appMode);
+    const hashTab = String(new URL(window.location.href).hash || '').replace('#', '');
+    const requestedTab = (params.tab && validTabs.includes(params.tab))
+        ? params.tab
+        : (hashTab && validTabs.includes(hashTab))
+            ? hashTab
+            : getVisibleTabName()
+                || getDefaultTabForMode(appMode);
+    return normalizeTabForMode(requestedTab, appMode);
+}
+
+function scheduleAppEntryDeepLink(initialTab = getVisibleTabName()) {
+    const runAppEntry = () => {
+        window.handleAppEntryDeepLink?.({ initialTab }).catch(() => {});
+    };
+    requestAnimationFrame(runAppEntry);
+    window.setTimeout(runAppEntry, 120);
+}
+
+function handleIncomingAppTargetUrl(targetUrl = '') {
+    if (!applyPwaLaunchTargetUrl(targetUrl)) return false;
+
+    const nextTab = resolveAppEntryTargetTabFromLocation();
+    if (!_appBootReady || !auth.currentUser) {
+        return true;
+    }
+
+    if (nextTab && getVisibleTabName() !== nextTab) {
+        openTab(nextTab, false);
+    }
+    scheduleAppEntryDeepLink(nextTab);
+    return true;
+}
+
 function registerPwaLaunchHandler() {
     if (!window.launchQueue || typeof window.launchQueue.setConsumer !== 'function') return;
     window.launchQueue.setConsumer((launchParams = {}) => {
         const targetUrl = launchParams?.targetURL ? String(launchParams.targetURL) : window.location.href;
-        if (!applyPwaLaunchTargetUrl(targetUrl)) return;
-
-        const params = getAppEntryDeepLinkParams();
-        const nextTab = normalizeTabForMode(
-            params.tab
-            || String(new URL(window.location.href).hash || '').replace('#', '')
-            || getVisibleTabName()
-            || getDefaultTabForMode()
-        );
-
-        if (nextTab && getVisibleTabName() !== nextTab) {
-            openTab(nextTab, false);
-        }
-
-        const runAppEntry = () => {
-            window.handleAppEntryDeepLink?.({ initialTab: nextTab }).catch(() => {});
-        };
-        requestAnimationFrame(runAppEntry);
-        window.setTimeout(runAppEntry, 120);
+        handleIncomingAppTargetUrl(targetUrl);
     });
 }
 
 registerPwaLaunchHandler();
+
+function registerServiceWorkerNotificationTargetHandler() {
+    if (!navigator.serviceWorker || typeof navigator.serviceWorker.addEventListener !== 'function') return;
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        const data = event?.data || {};
+        if (data.type !== 'habitschool-notification-open') return;
+        handleIncomingAppTargetUrl(String(data.targetUrl || ''));
+    });
+}
+
+registerServiceWorkerNotificationTargetHandler();
 
 async function handleProfileFriendsDeepLink({ friendshipId = '', panel = 'friends' } = {}) {
     await loadMyFriendships();
@@ -1804,6 +1830,76 @@ function handleDietUploadDeepLink() {
     const target = document.querySelector('#diet .upload-cta-split')
         || document.querySelector('#diet .record-flow-card');
     focusElementWithHighlight(target);
+}
+
+const DIET_DEEP_LINK_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+function resolveDietDeepLinkTarget(focus = '') {
+    const normalizedFocus = String(focus || '').trim();
+    if (!normalizedFocus || normalizedFocus === 'upload') {
+        return { mode: 'upload', slot: '' };
+    }
+    if (DIET_DEEP_LINK_SLOTS.includes(normalizedFocus)) {
+        return { mode: 'slot', slot: normalizedFocus };
+    }
+    return null;
+}
+
+async function ensureTodayDietDateSelected() {
+    const dateInput = document.getElementById('selected-date');
+    const { todayStr } = getDatesInfo();
+    if (!dateInput) return todayStr;
+    const currentDate = String(dateInput.value || '').trim();
+    if (currentDate === todayStr) return todayStr;
+    dateInput.value = todayStr;
+    if (typeof loadDataForSelectedDate === 'function') {
+        await loadDataForSelectedDate(todayStr);
+    }
+    return todayStr;
+}
+
+function focusDietDeepLinkSlot(slot = '') {
+    const targetIndex = DIET_DEEP_LINK_SLOTS.indexOf(slot);
+    if (targetIndex === -1) {
+        handleDietUploadDeepLink();
+        return;
+    }
+
+    for (let index = 0; index <= targetIndex; index += 1) {
+        const box = document.getElementById(`diet-box-${DIET_DEEP_LINK_SLOTS[index]}`);
+        if (box) box.style.display = 'block';
+    }
+
+    const target = document.getElementById(`diet-box-${slot}`)
+        || document.getElementById(`preview-${slot}`)
+        || document.querySelector('#diet .record-flow-card');
+    focusElementWithHighlight(target);
+}
+
+function handleDietRecordDeepLink(focus = 'upload') {
+    const target = resolveDietDeepLinkTarget(focus);
+    if (!target) return false;
+
+    const run = async () => {
+        await ensureTodayDietDateSelected();
+        if (target.mode === 'slot') {
+            focusDietDeepLinkSlot(target.slot);
+            return;
+        }
+        handleDietUploadDeepLink();
+    };
+
+    Promise.resolve(run()).catch((error) => {
+        console.warn('[handleDietRecordDeepLink] failed:', error?.message || error);
+    });
+    window.setTimeout(() => {
+        if (target.mode === 'slot') {
+            focusDietDeepLinkSlot(target.slot);
+            return;
+        }
+        handleDietUploadDeepLink();
+    }, 240);
+    return true;
 }
 
 function renderDietShareImportBanner() {
@@ -2163,7 +2259,14 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         return true;
     }
 
-    if (params.focus === 'upload' && (params.tab === 'diet' || initialTab === 'diet')) {
+    if ((params.tab === 'diet' || initialTab === 'diet') && params.focus) {
+        if (handleDietRecordDeepLink(params.focus)) {
+            clearAppEntryDeepLinkParams('diet');
+            return true;
+        }
+    }
+
+    if (!params.focus && (params.tab === 'diet' || initialTab === 'diet')) {
         requestAnimationFrame(handleDietUploadDeepLink);
         window.setTimeout(handleDietUploadDeepLink, 180);
         clearAppEntryDeepLinkParams('diet');

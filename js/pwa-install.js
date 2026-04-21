@@ -3,6 +3,7 @@ let deferredInstallPrompt = null;
 const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
 const APP_SERVICE_WORKER_PATH = '/sw.js';
 let cachedInstalledAppState = readStoredInstallState();
+let installPromptWaiters = [];
 
 function readStoredInstallState() {
     try {
@@ -215,11 +216,50 @@ function notifyInstallCtaStateChanged() {
     window.dispatchEvent(new CustomEvent('install-cta-state-changed'));
 }
 
+function flushInstallPromptWaiters(promptEvent = null) {
+    if (!installPromptWaiters.length) return;
+    const waiters = installPromptWaiters;
+    installPromptWaiters = [];
+    waiters.forEach((resolve) => resolve(promptEvent));
+}
+
+function canWaitForNativeInstallPrompt() {
+    return /Android/i.test(getInstallUA()) && !isIOSInstallDevice() && !isLikelyInstallWebView();
+}
+
+async function waitForDeferredInstallPrompt(timeoutMs = 1800) {
+    if (deferredInstallPrompt) return deferredInstallPrompt;
+    if (!canWaitForNativeInstallPrompt()) return null;
+
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (promptEvent) => {
+            if (settled) return;
+            settled = true;
+            resolve(promptEvent || null);
+        };
+
+        const waiterResolve = (promptEvent) => {
+            clearTimeout(timer);
+            finish(promptEvent);
+        };
+
+        const timer = setTimeout(() => {
+            installPromptWaiters = installPromptWaiters.filter((waiter) => waiter !== waiterResolve);
+            finish(null);
+        }, timeoutMs);
+
+        installPromptWaiters.push(waiterResolve);
+    });
+}
+
 async function handleInstallCtaAction() {
-    if (deferredInstallPrompt) {
+    const promptEvent = deferredInstallPrompt || await waitForDeferredInstallPrompt();
+    if (promptEvent) {
         try {
-            deferredInstallPrompt.prompt();
-            const choice = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = promptEvent;
+            promptEvent.prompt();
+            const choice = await promptEvent.userChoice;
             if (choice?.outcome !== 'accepted') {
                 deferredInstallPrompt = null;
             }
@@ -333,6 +373,7 @@ window.addEventListener('load', async () => {
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
+    flushInstallPromptWaiters(event);
     refreshInstalledAppState().catch(() => notifyInstallCtaStateChanged());
 });
 

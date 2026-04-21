@@ -73,6 +73,16 @@
 - Root cause: I kept layering extra reassurance copy and a nested CTA inside a surface whose job had already narrowed to "show the chosen method and let the user change it."
 - Lesson: for compact mobile selector summaries, keep one main line of meaning and let the whole card open the selector. If an option is removed from the catalog, map legacy saved values to the nearest surviving option instead of silently dropping users back to `미선택`.
 
+### 191. When a mobile install CTA used to be one-tap, do not fall back to manual instructions until after a short native-prompt wait
+- Symptom: tapping `홈 화면에 추가` on mobile sometimes opened install instructions instead of the native PWA install prompt, even on browsers where one-tap install had previously worked.
+- Root cause: the CTA checked only whether `beforeinstallprompt` had already been captured at click time. On some Android flows the event arrives slightly later, so the code fell through to manual instructions too aggressively.
+- Lesson: for supported Android install surfaces, bridge a short wait for `beforeinstallprompt` before showing manual guidance. Manual instructions are the fallback after native prompt capture has had a fair chance, not the first response to a missing prompt object.
+
+### 192. Push notification routing must target the app shell and the app must understand every focus value it emits
+- Symptom: tapping `지금 기록` from meal-time push notifications could appear to do nothing, even though the notification itself arrived correctly.
+- Root cause: the service worker picked the first same-origin window, which could be a non-app page like `admin.html`, and the app-side deeplink handler only had a special case for `focus=upload` while reminder notifications were emitting values like `lunch` and `dinner`.
+- Lesson: for PWA notifications, prefer an existing app-shell window over arbitrary same-origin clients and pass the destination URL into the running app explicitly. Also keep the app-side deeplink parser in lockstep with every `focus` value emitted by backend notifications.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

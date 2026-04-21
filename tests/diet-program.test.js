@@ -139,6 +139,12 @@ describe('diet program helpers', () => {
         expect(guide.helper).not.toContain('준비됨');
     });
 
+    it('keeps the compact profile card to one method line instead of repeating the same copy', () => {
+        expect(APP_SOURCE).toContain("supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';");
+        expect(APP_SOURCE).toContain('supportEl.hidden = hasMethod || !supportEl.textContent;');
+        expect(APP_SOURCE).not.toContain('supportEl.textContent = meta.dashboardTip;');
+    });
+
     it('keeps diet-program boot hooks queued until app boot is ready', () => {
         expect(APP_SOURCE.indexOf('let _stepData = createEmptyStepData();')).toBeGreaterThan(-1);
         expect(APP_SOURCE).toContain('let _appBootReady = false;');
