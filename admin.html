@@ -89,6 +89,12 @@
 
         /* Chart */
         .chart-wrap { position: relative; height: 200px; width: 100%; }
+        .admin-chart-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .admin-chart-panel { min-width: 0; }
+        .admin-chart-panel h4 { margin: 0 0 10px; font-size: 13px; color: #666; }
+        @media (max-width: 768px) {
+            .admin-chart-pair { grid-template-columns: 1fr; }
+        }
 
         /* Modal */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
@@ -208,7 +214,16 @@
         <div class="two-col">
             <div class="box">
                 <h3>📈 7일 일별 활성 유저</h3>
-                <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+                <div class="admin-chart-pair">
+                    <div class="admin-chart-panel">
+                        <h4>활성 유저</h4>
+                        <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+                    </div>
+                    <div class="admin-chart-panel">
+                        <h4>지급 포인트</h4>
+                        <div class="chart-wrap"><canvas id="dailyPointsChart"></canvas></div>
+                    </div>
+                </div>
             </div>
             <div class="box">
                 <h3>🥇 현재 포인트+HBT TOP 5</h3>
@@ -486,7 +501,7 @@
     import { formatAdminDateTime, normalizeAdminEmailLog, getReEngagementMethodLabel } from './js/admin-utils.js';
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
 
-    let trendChart = null, activityChart = null, miningChart = null, recordTypeChart = null;
+    let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
     const PAGE_SIZE_MEMBERS = 20;
@@ -766,7 +781,16 @@
         ago7.setDate(ago7.getDate() - 6);
         const ago7str = toDateKey(ago7);
 
-        const [weekSnap, reportsSnap, tokenStats, todayBonusPoints] = await Promise.all([
+        const dayMap = {};
+        const dailyPointsMap = {};
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(todayStr); d.setDate(d.getDate() - i);
+            const key = toDateKey(d);
+            dayMap[key] = new Set();
+            dailyPointsMap[key] = 0;
+        }
+
+        const [weekSnap, reportsSnap, tokenStats, bonusPointsMap] = await Promise.all([
             getDocs(query(
                 collection(db, 'daily_logs'),
                 where('date', '>=', ago7str),
@@ -774,24 +798,28 @@
             )),
             getDocs(collection(db, 'reports')),
             loadAdminTokenStats(),
-            loadTodayBonusPoints(usersQ)
+            loadBonusPointsMap(usersQ, Object.keys(dailyPointsMap))
         ]);
 
-        const dayMap = {};
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(todayStr); d.setDate(d.getDate() - i);
-            dayMap[toDateKey(d)] = new Set();
-        }
-
-        let todaySet = new Set(), weekSet = new Set(), alerts = 0, todayLogPoints = 0;
+        let todaySet = new Set(), weekSet = new Set(), alerts = 0;
         weekSnap.forEach(d => {
             const r = d.data();
             if (r.date === todayStr) {
                 todaySet.add(r.userId);
-                todayLogPoints += getAwardedPointsTotal(r.awardedPoints || {});
                 if ((r.metrics?.glucose||0) >= 126 || (r.metrics?.bpSystolic||0) >= 140) alerts++;
             }
-            if (r.date >= ago7str) { weekSet.add(r.userId); if (dayMap[r.date]) dayMap[r.date].add(r.userId); }
+            if (r.date >= ago7str) {
+                weekSet.add(r.userId);
+                if (dayMap[r.date]) {
+                    dayMap[r.date].add(r.userId);
+                    dailyPointsMap[r.date] += getAwardedPointsTotal(r.awardedPoints || {});
+                }
+            }
+        });
+
+        Object.entries(bonusPointsMap).forEach(([dateKey, points]) => {
+            if (!(dateKey in dailyPointsMap)) return;
+            dailyPointsMap[dateKey] += Number(points) || 0;
         });
 
         let totalHbt = '-', rate = '-';
@@ -807,15 +835,20 @@
         document.getElementById('s-reports').textContent = reportsSnap.size;
         document.getElementById('s-health').textContent = alerts;
         document.getElementById('s-hbt').textContent = totalHbt;
-        document.getElementById('s-points').textContent = (todayLogPoints + todayBonusPoints).toLocaleString();
+        document.getElementById('s-points').textContent = (dailyPointsMap[todayStr] || 0).toLocaleString();
         document.getElementById('s-rate').textContent = rate;
 
         // Activity chart
         const labels = Object.keys(dayMap).map(d => d.slice(5));
         const vals = Object.values(dayMap).map(s => s.size);
+        const pointVals = Object.keys(dailyPointsMap).map(d => dailyPointsMap[d]);
         const ctx = document.getElementById('activityChart').getContext('2d');
         if (activityChart) activityChart.destroy();
         activityChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label: '활성 유저', data: vals, backgroundColor: 'rgba(156,39,176,0.6)', borderColor: '#9C27B0', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+
+        const pointsCtx = document.getElementById('dailyPointsChart').getContext('2d');
+        if (dailyPointsChart) dailyPointsChart.destroy();
+        dailyPointsChart = new Chart(pointsCtx, { type: 'bar', data: { labels, datasets: [{ label: '지급 포인트', data: pointVals, backgroundColor: 'rgba(255,152,0,0.55)', borderColor: '#FB8C00', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
         // Top 5
         const arr = [];
@@ -1175,7 +1208,66 @@
         return null;
     }
 
+    async function loadBonusPointsMap(usersQ, dateKeys = null) {
+        const totals = {};
+        const dateFilter = Array.isArray(dateKeys) && dateKeys.length ? new Set(dateKeys) : null;
+        const addPoints = (dateKey, points) => {
+            const safePoints = Number(points) || 0;
+            if (!dateKey || safePoints <= 0) return;
+            if (dateFilter && !dateFilter.has(dateKey)) return;
+            totals[dateKey] = (totals[dateKey] || 0) + safePoints;
+        };
+
+        try {
+            const [challengeSnap, monthlyRewardsSnap] = await Promise.all([
+                getDocs(query(
+                    collection(db, 'blockchain_transactions'),
+                    where('type', '==', 'challenge_settlement'),
+                    limit(200)
+                )),
+                getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(24)))
+            ]);
+
+            challengeSnap.forEach(d => {
+                const tx = d.data();
+                if (tx.status !== 'success') return;
+                const dateKey = tx.date || dateKeyFromValue(tx.updatedAt) || dateKeyFromValue(tx.timestamp);
+                addPoints(dateKey, tx.rewardPoints);
+            });
+
+            monthlyRewardsSnap.forEach(d => {
+                const reward = d.data();
+                const dateKey = dateKeyFromValue(reward.distributedAt);
+                (reward.winners || []).forEach(winner => addPoints(dateKey, winner.reward));
+            });
+        } catch (e) {
+            console.warn('?ㅻ뒛 異붽? ?ъ씤??吏묎퀎 ?ㅻ쪟:', e);
+        }
+
+        usersQ.forEach(u => {
+            const data = u.data();
+            const createdDate = dateKeyFromValue(data.createdAt);
+            if (data.welcomeBonusGiven) addPoints(createdDate, 200);
+            if (data.referredBy) addPoints(createdDate, 200);
+
+            const referralDay3Date =
+                dateKeyFromValue(data.referralDay3BonusAt) ||
+                dateKeyFromValue(data.referralDay3BonusDate);
+            if (data.referralDay3BonusGiven) addPoints(referralDay3Date, 500);
+
+            const referralDay7Date =
+                dateKeyFromValue(data.referralDay7BonusAt) ||
+                dateKeyFromValue(data.referralDay7BonusDate);
+            if (data.referralDay7BonusGiven) addPoints(referralDay7Date, 300);
+        });
+
+        return totals;
+    }
+
     async function loadTodayBonusPoints(usersQ) {
+        const totals = await loadBonusPointsMap(usersQ, [todayStr]);
+        return totals[todayStr] || 0;
+
         let total = 0;
 
         try {

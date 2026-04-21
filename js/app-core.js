@@ -16,6 +16,11 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://
 // 프로젝트 모듈 임포트
 import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=165';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=165';
+import {
+    parsePendingSignupOnboardingState,
+    shouldAutoGrantWelcomeBonus,
+    shouldShowSignupOnboarding
+} from './auth-login-helpers.js?v=165';
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=165';
 import {
     buildStrengthExerciseSeed,
@@ -982,14 +987,7 @@ document.addEventListener('visibilitychange', () => {
 
 function readPendingSignupOnboardingState() {
     try {
-        const raw = sessionStorage.getItem(PENDING_SIGNUP_ONBOARDING_KEY);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed !== 'object') return null;
-        const uid = String(parsed.uid || '').trim();
-        const createdAt = Number(parsed.createdAt || 0);
-        if (!uid || !Number.isFinite(createdAt) || createdAt <= 0) return null;
-        return { uid, createdAt };
+        return parsePendingSignupOnboardingState(sessionStorage.getItem(PENDING_SIGNUP_ONBOARDING_KEY));
     } catch (_) {
         return null;
     }
@@ -1003,8 +1001,7 @@ function clearPendingSignupOnboardingState() {
 
 function hasPendingSignupOnboarding(user) {
     const pending = readPendingSignupOnboardingState();
-    if (!user?.uid || !pending || pending.uid !== user.uid) return false;
-    return (Date.now() - pending.createdAt) <= 30 * 60 * 1000;
+    return !!(user?.uid && pending?.uid === user.uid);
 }
 
 function resetSubmitBarMode() {
@@ -15534,6 +15531,21 @@ async function completeOnboarding() {
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 
+async function maybeRecoverMissedWelcomeBonus(user, userData = {}) {
+    if (!user?.uid || !shouldAutoGrantWelcomeBonus(userData)) return false;
+    try {
+        const fn = httpsCallable(functions, 'awardWelcomeBonus');
+        const res = await fn({});
+        if (res.data?.success) {
+            showToast('🎁 가입 축하 포인트 200P가 지급되었습니다!');
+            return true;
+        }
+    } catch (e) {
+        console.warn('가입 축하 보너스 복구 스킵:', e.message);
+    }
+    return false;
+}
+
 // 대사건강 점수 UI 업데이트
 async function updateMetabolicScoreUI() {
     const user = auth.currentUser;
@@ -15577,26 +15589,45 @@ async function checkOnboarding() {
     try {
         const userSnap = await getDoc(doc(db, "users", user.uid));
         const userData = userSnap.exists() ? userSnap.data() : {};
-        const isPendingSignup = hasPendingSignupOnboarding(user);
+        const pendingSignupState = readPendingSignupOnboardingState();
+        const isPendingSignup = shouldShowSignupOnboarding({
+            userId: user.uid,
+            userData,
+            pendingState: pendingSignupState
+        });
         const modal = document.getElementById('onboarding-modal');
 
-        if (userData.onboardingComplete || userData.welcomeBonusGiven) {
+        if (userData.welcomeBonusGiven) {
             clearPendingSignupOnboardingState();
             if (modal) modal.style.display = 'none';
             return;
         }
 
-        if (!isPendingSignup) {
+        if (isPendingSignup) {
+            if (modal) modal.style.display = 'flex';
+            return;
+        }
+
+        if (await maybeRecoverMissedWelcomeBonus(user, userData)) {
+            clearPendingSignupOnboardingState();
+            if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        if (userData.onboardingComplete) {
+            clearPendingSignupOnboardingState();
+            if (modal) modal.style.display = 'none';
+            return;
+        }
+
+        if (modal) modal.style.display = 'none';
+        if (!hasPendingSignupOnboarding(user)) {
             if (modal) modal.style.display = 'none';
             await setDoc(doc(db, "users", user.uid), {
                 onboardingComplete: true
             }, { merge: true }).catch(() => {});
             clearPendingSignupOnboardingState();
             return;
-        }
-
-        if (modal) {
-            modal.style.display = 'flex';
         }
     } catch (e) {
         noteFirestoreConnectivityFailure(e, 'checkOnboarding');

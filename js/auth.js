@@ -6,7 +6,14 @@ import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { showToast } from './ui-helpers.js?v=165';
 import { getDatesInfo } from './ui-helpers.js?v=165';
 import { escapeHtml } from './security.js?v=165';
-import { GOOGLE_LOGIN_PENDING_STATE_KEY, createPendingGoogleLoginState, parsePendingGoogleLoginState, shouldUseGoogleRedirectLogin } from './auth-login-helpers.js?v=165';
+import {
+    GOOGLE_LOGIN_PENDING_STATE_KEY,
+    createPendingGoogleLoginState,
+    createPendingSignupOnboardingState,
+    isNewUserCredential,
+    parsePendingGoogleLoginState,
+    shouldUseGoogleRedirectLogin
+} from './auth-login-helpers.js?v=165';
 import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=165';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
@@ -32,11 +39,9 @@ function getEnsureReferralCodeCallable() {
 
 function rememberPendingSignupOnboarding(user) {
     try {
-        if (!user?.uid) return;
-        sessionStorage.setItem(PENDING_SIGNUP_ONBOARDING_KEY, JSON.stringify({
-            uid: user.uid,
-            createdAt: Date.now()
-        }));
+        const pendingState = createPendingSignupOnboardingState(user?.uid);
+        if (!pendingState) return;
+        sessionStorage.setItem(PENDING_SIGNUP_ONBOARDING_KEY, JSON.stringify(pendingState));
     } catch (_) {}
 }
 
@@ -508,7 +513,7 @@ export function initAuth() {
 
         signInWithPopup(auth, provider).then((result) => {
             bridgePopupLoginSuccess(result?.user || null);
-            if (result?.additionalUserInfo?.isNewUser) {
+            if (isNewUserCredential(result)) {
                 rememberPendingSignupOnboarding(result.user);
             } else {
                 clearPendingSignupOnboarding();
@@ -642,7 +647,7 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
         const result = await getRedirectResult(auth);
         if (result?.user) {
             bridgePopupLoginSuccess(result.user);
-            if (result?.additionalUserInfo?.isNewUser) {
+            if (isNewUserCredential(result)) {
                 rememberPendingSignupOnboarding(result.user);
             } else {
                 clearPendingSignupOnboarding();
@@ -755,6 +760,9 @@ export function setupAuthListener(callbacks) {
                     ...resolvedUserData,
                     ...updateData
                 };
+                if (isNewUser) {
+                    rememberPendingSignupOnboarding(user);
+                }
                 const ensuredReferralCode = await ensureSignedInUserReferralCode(ud);
                 if (ensuredReferralCode) {
                     ud.referralCode = ensuredReferralCode;
