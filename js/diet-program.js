@@ -21,23 +21,23 @@ const METHOD_CATALOG = Object.freeze([
         displayOrder: 0,
         name: '선택 안 함',
         difficultyLabel: '기본',
-        summary: '현재처럼 자유 기록 중심으로 사용해요.',
+        summary: '현재처럼 자유 기록 모드로 사용할 수 있어요.',
         mealGuide: '',
         dashboardTip: '가이드와 알림이 바뀌어요.',
-        exerciseSupportTip: '기록은 그대로예요.',
-        mindSleepSupportTip: '방법을 고르기 전에도 마음 기록과 수면 기록은 그대로 유지돼요.',
+        exerciseSupportTip: '운동·명상·수면 기록은 그대로예요.',
+        mindSleepSupportTip: '운동·명상·수면 기록은 그대로예요.',
         reminderPlan: '알림 없음',
         cautionText: ''
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.BROWN_RICE_GREEN_VEGGIES,
         displayOrder: 1,
-        name: '현미밥 초록채소 식단',
+        name: '현미밥 채소 식단',
         difficultyLabel: '쉬움',
-        summary: '일상에서 편한 기본형이에요.',
-        mealGuide: '현미밥 적게, 초록채소 듬뿍',
-        dashboardTip: '밥은 적게, 채소는 넉넉하게.',
-        exerciseSupportTip: '식후 가볍게 걸어보세요.',
+        summary: '통곡물과 채소 중심의 기초 건강식',
+        mealGuide: '통곡물과 채소 중심의 기초 건강식',
+        dashboardTip: '통곡물과 채소 중심의 기초 건강식',
+        exerciseSupportTip: '가볍게 걷기부터 이어가요.',
         mindSleepSupportTip: '늦은 야식만 줄여도 좋아요.',
         reminderPlan: '11:30·17:30',
         cautionText: ''
@@ -47,11 +47,11 @@ const METHOD_CATALOG = Object.freeze([
         displayOrder: 2,
         name: '고단백 식단',
         difficultyLabel: '쉬움',
-        summary: '단백질 먼저 챙기는 방식이에요.',
-        mealGuide: '단백질 먼저',
-        dashboardTip: '이번 식사는 단백질부터.',
+        summary: '단백질로 근육과 포만감 유지',
+        mealGuide: '단백질로 근육과 포만감 유지',
+        dashboardTip: '단백질로 근육과 포만감 유지',
         exerciseSupportTip: '가벼운 근력 운동과 잘 맞아요.',
-        mindSleepSupportTip: '늦은 폭식 줄이기에 도움돼요.',
+        mindSleepSupportTip: '늦은 폭식을 줄이는 데 도움돼요.',
         reminderPlan: '11:30·17:30',
         cautionText: ''
     },
@@ -60,37 +60,37 @@ const METHOD_CATALOG = Object.freeze([
         displayOrder: 3,
         name: '지중해식 식단',
         difficultyLabel: '보통',
-        summary: '채소·생선·올리브유 중심이에요.',
-        mealGuide: '채소·생선·올리브유',
-        dashboardTip: '채소와 생선을 먼저 골라보세요.',
-        exerciseSupportTip: '짧은 산책과 잘 맞아요.',
-        mindSleepSupportTip: '리듬 유지에 좋아요.',
+        summary: '올리브유와 생선 중심의 심혈관 건강식',
+        mealGuide: '올리브유와 생선 중심의 심혈관 건강식',
+        dashboardTip: '올리브유와 생선 중심의 심혈관 건강식',
+        exerciseSupportTip: '짧은 걷기와 잘 어울려요.',
+        mindSleepSupportTip: '규칙적인 수면과 잘 맞아요.',
         reminderPlan: '11:30·17:30',
         cautionText: ''
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
         displayOrder: 4,
-        name: '저탄수화물 식단',
+        name: '저탄수 고단백 식단',
         difficultyLabel: '보통',
-        summary: '탄수화물을 줄이는 방식이에요.',
-        mealGuide: '탄수 줄이고 채소 먼저',
-        dashboardTip: '밥·면은 줄이고 채소를 먼저.',
-        exerciseSupportTip: '적응기엔 가볍게 움직이세요.',
-        mindSleepSupportTip: '무리한 제한은 피하세요.',
+        summary: '당질은 줄이고 단백질로 근육과 포만감',
+        mealGuide: '당질은 줄이고 단백질로 근육과 포만감',
+        dashboardTip: '당질은 줄이고 단백질로 근육과 포만감',
+        exerciseSupportTip: '적응기엔 가볍게 움직여요.',
+        mindSleepSupportTip: '무리한 제한은 피하는 편이 좋아요.',
         reminderPlan: '11:30·17:30',
         cautionText: ''
     },
     {
         id: DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING,
         displayOrder: 5,
-        name: '간헐적 단식',
+        name: '16:8 간헐적 단식',
         difficultyLabel: '도전',
-        summary: '16:8 공복 리듬이에요.',
-        mealGuide: '12:00~20:00 식사',
-        dashboardTip: '식사는 12:00~20:00에만.',
-        exerciseSupportTip: '공복엔 가볍게 움직이세요.',
-        mindSleepSupportTip: '수면 시간을 일정하게.',
+        summary: '공복 시간 확보로 체지방 감량 도모',
+        mealGuide: '공복 시간 확보로 체지방 감량 도모',
+        dashboardTip: '공복 시간 확보로 체지방 감량 도모',
+        exerciseSupportTip: '공복 시간엔 가볍게 움직여요.',
+        mindSleepSupportTip: '수면 시간을 일정하게 잡아보세요.',
         reminderPlan: '12:00·19:30',
         cautionText: ''
     },
@@ -99,9 +99,9 @@ const METHOD_CATALOG = Object.freeze([
         displayOrder: 6,
         name: '스위치온 다이어트',
         difficultyLabel: '도전',
-        summary: '저탄수에서 균형으로 가요.',
-        mealGuide: '초기 저탄수, 이후 균형',
-        dashboardTip: '처음엔 저탄수, 이후엔 균형.',
+        summary: '3주간 대사 회복 및 체질 개선',
+        mealGuide: '3주간 대사 회복 및 체질 개선',
+        dashboardTip: '3주간 대사 회복 및 체질 개선',
         exerciseSupportTip: '초기엔 가볍게 시작하세요.',
         mindSleepSupportTip: '생활 리듬부터 지켜보세요.',
         reminderPlan: '11:30·17:30',
@@ -175,7 +175,7 @@ function getIntermittentFastingPhase(nowMs = Date.now()) {
         return {
             key: 'eating',
             label: '식사 중',
-            status: '지금 식사할 수 있어요.',
+            status: '지금은 식사 시간이에요.',
             helper: '20:00 전에 마무리해보세요.'
         };
     }
@@ -183,8 +183,8 @@ function getIntermittentFastingPhase(nowMs = Date.now()) {
     if (totalMinutes < DIET_PROGRAM_EATING_WINDOW.endMinutes) {
         return {
             key: 'closing',
-            label: '마감',
-            status: '식사 마감이 가까워요.',
+            label: '마감 임박',
+            status: '식사 마감이 가까워졌어요.',
             helper: '20:00 전에 마무리해보세요.'
         };
     }
@@ -192,22 +192,17 @@ function getIntermittentFastingPhase(nowMs = Date.now()) {
     return {
         key: 'fasting',
         label: '공복',
-        status: '오늘 식사 창이 끝났어요.',
+        status: '오늘 식사 시간은 끝났어요.',
         helper: '기록은 계속 남길 수 있어요.'
     };
 }
 
 function buildSelectedMethodGuideState(meta, {
-    dietPhotoCount = 0,
     fastingMetricsCount = 0,
-    dailyLog = {},
     dateStr = '',
     todayStr = '',
     nowMs = Date.now()
 } = {}) {
-    const mealProgress = getMealProgressLabel(dailyLog);
-    const baseBadge = dietPhotoCount > 0 ? `사진 ${dietPhotoCount}/4` : meta.difficultyLabel;
-
     if (meta.id === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING) {
         const isToday = !!dateStr && !!todayStr && dateStr === todayStr;
         const phase = isToday
@@ -219,37 +214,17 @@ function buildSelectedMethodGuideState(meta, {
                 helper: '기록은 자유롭게 남길 수 있어요.'
             };
 
-        const helper = dietPhotoCount > 0
-            ? `사진 ${dietPhotoCount}장 준비됨 · 지금 저장 가능`
-            : phase.helper;
-
         return {
             badge: phase.label,
-            status: phase.status,
-            helper
+            status: meta.mealGuide,
+            helper: phase.helper
         };
     }
 
-    let status = meta.mealGuide;
-    let helper = meta.dashboardTip;
-
-    if (dietPhotoCount > 0) {
-        status = `사진 ${dietPhotoCount}장 준비됨 · ${meta.mealGuide}`;
-        helper = meta.dashboardTip;
-    }
-
-    if (mealProgress >= 2 && dietPhotoCount > 0) {
-        helper = '지금 저장해도 좋아요.';
-    }
-
-    if (dietPhotoCount === 0 && fastingMetricsCount > 0) {
-        helper = '공복 지표만 먼저 저장할 수 있어요.';
-    }
-
     return {
-        badge: baseBadge,
-        status,
-        helper
+        badge: meta.difficultyLabel,
+        status: meta.mealGuide,
+        helper: fastingMetricsCount > 0 ? '공복 지표만 먼저 저장할 수 있어요.' : meta.dashboardTip
     };
 }
 
@@ -296,6 +271,7 @@ export function buildDietProgramGuideState(dietPreferences = null, options = {})
     if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) {
         return getDefaultGuideState(options);
     }
+
     const meta = getDietProgramMethodMeta(normalized.methodId);
     return buildSelectedMethodGuideState(meta, options);
 }
@@ -353,7 +329,7 @@ export function getDietProgramReminderToggleCopy(dietPreferences = null, pushSta
     }
 
     if (normalized.remindersEnabled && !pushState.connected) {
-        return '방법 알림은 켜져 있지만, 이 기기의 앱 알림이 비활성 상태예요.';
+        return '방법 알림은 켜져 있지만 이 기기 알림은 꺼져 있어요.';
     }
 
     if (normalized.remindersEnabled) {

@@ -1,6 +1,7 @@
 export const GOOGLE_LOGIN_PENDING_STATE_KEY = 'habitschoolPendingGoogleLogin';
+export const GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY = 'habitschoolPendingGoogleLoginPersistent';
 const GOOGLE_LOGIN_PENDING_MAX_AGE_MS = 10 * 60 * 1000;
-export const GOOGLE_REDIRECT_RECOVERY_GRACE_MS = 8 * 1000;
+export const GOOGLE_REDIRECT_RECOVERY_GRACE_MS = 20 * 1000;
 export const PENDING_SIGNUP_ONBOARDING_MAX_AGE_MS = 30 * 60 * 1000;
 export const WELCOME_BONUS_FEATURE_START_MS = Date.parse('2026-03-28T00:00:00+09:00');
 
@@ -31,10 +32,29 @@ export function parsePendingGoogleLoginState(rawValue, now = Date.now()) {
 }
 
 export function shouldKeepPendingGoogleRedirectRecovery(pendingState = null, now = Date.now()) {
-    if (!pendingState || pendingState.mode !== 'redirect') return false;
+    return getPendingGoogleRedirectRecoveryRemainingMs(pendingState, now) > 0;
+}
+
+export function getPendingGoogleRedirectRecoveryRemainingMs(pendingState = null, now = Date.now()) {
+    if (!pendingState || pendingState.mode !== 'redirect') return 0;
     const createdAt = Number(pendingState.createdAt || 0);
-    if (!createdAt) return false;
-    return ((Number(now) || Date.now()) - createdAt) <= GOOGLE_REDIRECT_RECOVERY_GRACE_MS;
+    if (!createdAt) return 0;
+    const elapsedMs = (Number(now) || Date.now()) - createdAt;
+    return Math.max(0, GOOGLE_REDIRECT_RECOVERY_GRACE_MS - Math.max(elapsedMs, 0));
+}
+
+export function resolvePendingGoogleLoginState({ sessionValue = null, persistentValue = null, now = Date.now() } = {}) {
+    const sessionState = parsePendingGoogleLoginState(sessionValue, now);
+    if (sessionState) {
+        return { state: sessionState, source: 'session' };
+    }
+
+    const persistentState = parsePendingGoogleLoginState(persistentValue, now);
+    if (persistentState) {
+        return { state: persistentState, source: 'persistent' };
+    }
+
+    return { state: null, source: '' };
 }
 
 export function createPendingSignupOnboardingState(uid = '', now = Date.now()) {

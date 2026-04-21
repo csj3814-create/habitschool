@@ -8,10 +8,12 @@ import { getDatesInfo } from './ui-helpers.js?v=166';
 import { escapeHtml } from './security.js?v=166';
 import {
     GOOGLE_LOGIN_PENDING_STATE_KEY,
+    GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY,
     createPendingGoogleLoginState,
     createPendingSignupOnboardingState,
+    getPendingGoogleRedirectRecoveryRemainingMs,
     isNewUserCredential,
-    parsePendingGoogleLoginState,
+    resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldUseGoogleRedirectLogin
 } from './auth-login-helpers.js?v=166';
@@ -31,6 +33,7 @@ let _pushTokenValue = '';
 let _ensureReferralCodeCallable = null;
 let _googleLoginRecoveryBound = false;
 let _pendingGoogleLoginResetTimer = null;
+const GOOGLE_LOGIN_RECOVERY_POLL_MS = 1500;
 
 function getEnsureReferralCodeCallable() {
     if (!_ensureReferralCodeCallable) {
@@ -54,25 +57,52 @@ function clearPendingSignupOnboarding() {
 }
 
 function persistPendingGoogleLoginState(mode = 'popup') {
+    const serializedState = JSON.stringify(createPendingGoogleLoginState(mode));
     try {
-        sessionStorage.setItem(
-            GOOGLE_LOGIN_PENDING_STATE_KEY,
-            JSON.stringify(createPendingGoogleLoginState(mode))
-        );
+        sessionStorage.setItem(GOOGLE_LOGIN_PENDING_STATE_KEY, serializedState);
+    } catch (_) {}
+    try {
+        if (mode === 'redirect') {
+            localStorage.setItem(GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY, serializedState);
+        } else {
+            localStorage.removeItem(GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY);
+        }
     } catch (_) {}
 }
 
-function readPendingGoogleLoginState() {
+function readPendingGoogleLoginStateWithSource() {
+    let sessionValue = null;
+    let persistentValue = null;
     try {
-        return parsePendingGoogleLoginState(sessionStorage.getItem(GOOGLE_LOGIN_PENDING_STATE_KEY));
+        sessionValue = sessionStorage.getItem(GOOGLE_LOGIN_PENDING_STATE_KEY);
     } catch (_) {
-        return null;
+        sessionValue = null;
     }
+    try {
+        persistentValue = localStorage.getItem(GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY);
+    } catch (_) {
+        persistentValue = null;
+    }
+
+    const resolved = resolvePendingGoogleLoginState({ sessionValue, persistentValue });
+    if (resolved.state && resolved.source === 'persistent') {
+        try {
+            sessionStorage.setItem(GOOGLE_LOGIN_PENDING_STATE_KEY, JSON.stringify(resolved.state));
+        } catch (_) {}
+    }
+    return resolved;
+}
+
+function readPendingGoogleLoginState() {
+    return readPendingGoogleLoginStateWithSource().state;
 }
 
 function clearPendingGoogleLoginState() {
     try {
         sessionStorage.removeItem(GOOGLE_LOGIN_PENDING_STATE_KEY);
+    } catch (_) {}
+    try {
+        localStorage.removeItem(GOOGLE_LOGIN_PENDING_PERSISTENT_STATE_KEY);
     } catch (_) {}
 }
 
@@ -103,17 +133,36 @@ function clearPendingGoogleLoginResetTimer() {
     }
 }
 
-function schedulePendingGoogleLoginReset(loginBtn, delayMs = 4000) {
+function schedulePendingGoogleLoginReset(loginBtn, delayMs = GOOGLE_LOGIN_RECOVERY_POLL_MS) {
     clearPendingGoogleLoginResetTimer();
-    _pendingGoogleLoginResetTimer = setTimeout(() => {
-        const pendingState = readPendingGoogleLoginState();
-        if (!auth.currentUser || !shouldKeepPendingGoogleRedirectRecovery(pendingState, Date.now() + delayMs)) {
-            clearPendingGoogleLoginState();
-        }
+    const pendingState = readPendingGoogleLoginState();
+    const remainingMs = getPendingGoogleRedirectRecoveryRemainingMs(pendingState);
+    if (auth.currentUser || remainingMs <= 0) {
+        clearPendingGoogleLoginState();
         window._isPopupLogin = false;
         setGoogleLoginPendingUi(loginBtn, false);
+        return;
+    }
+
+    _pendingGoogleLoginResetTimer = setTimeout(() => {
         _pendingGoogleLoginResetTimer = null;
-    }, delayMs);
+        if (auth.currentUser) {
+            clearPendingGoogleLoginState();
+            window._isPopupLogin = false;
+            setGoogleLoginPendingUi(loginBtn, false);
+            return;
+        }
+
+        const latestPendingState = readPendingGoogleLoginState();
+        if (shouldKeepPendingGoogleRedirectRecovery(latestPendingState)) {
+            schedulePendingGoogleLoginReset(loginBtn, delayMs);
+            return;
+        }
+
+        clearPendingGoogleLoginState();
+        window._isPopupLogin = false;
+        setGoogleLoginPendingUi(loginBtn, false);
+    }, Math.max(250, Math.min(delayMs, remainingMs)));
 }
 
 function generatePushDeviceId() {

@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
     createPendingGoogleLoginState,
     createPendingSignupOnboardingState,
+    getPendingGoogleRedirectRecoveryRemainingMs,
     isNewUserCredential,
     parsePendingGoogleLoginState,
     parsePendingSignupOnboardingState,
+    resolvePendingGoogleLoginState,
     shouldAutoGrantWelcomeBonus,
     shouldKeepPendingGoogleRedirectRecovery,
     shouldShowSignupOnboarding,
@@ -43,8 +45,27 @@ describe('pending google login state helpers', () => {
         const popupState = createPendingGoogleLoginState('popup', 5000);
 
         expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 3000)).toBe(true);
-        expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 9000)).toBe(false);
+        expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 10000)).toBe(true);
+        expect(shouldKeepPendingGoogleRedirectRecovery(redirectState, 5000 + 21000)).toBe(false);
         expect(shouldKeepPendingGoogleRedirectRecovery(popupState, 5000 + 3000)).toBe(false);
+    });
+
+    it('prefers a valid persistent redirect marker when session storage is lost', () => {
+        const persistentState = JSON.stringify(createPendingGoogleLoginState('redirect', 5000));
+        expect(resolvePendingGoogleLoginState({
+            sessionValue: null,
+            persistentValue: persistentState,
+            now: 5000 + 1000
+        })).toEqual({
+            state: { mode: 'redirect', createdAt: 5000 },
+            source: 'persistent'
+        });
+    });
+
+    it('reports remaining redirect recovery time', () => {
+        const redirectState = createPendingGoogleLoginState('redirect', 5000);
+        expect(getPendingGoogleRedirectRecoveryRemainingMs(redirectState, 5000 + 3000)).toBe(17000);
+        expect(getPendingGoogleRedirectRecoveryRemainingMs(redirectState, 5000 + 22000)).toBe(0);
     });
 });
 

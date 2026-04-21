@@ -25,6 +25,18 @@ describe('diet program helpers', () => {
         ]);
     });
 
+    it('uses the refreshed short Korean copy for the record-flow methods', () => {
+        const methods = listDietProgramMethods();
+
+        expect(methods[0].name).toBe('현미밥 채소 식단');
+        expect(methods[0].mealGuide).toBe('통곡물과 채소 중심의 기초 건강식');
+        expect(methods[3].name).toBe('저탄수 고단백 식단');
+        expect(methods[3].mealGuide).toBe('당질은 줄이고 단백질로 근육과 포만감');
+        expect(methods[4].name).toBe('16:8 간헐적 단식');
+        expect(methods[4].mealGuide).toBe('공복 시간 확보로 체지방 감량 도모');
+        expect(methods[5].mealGuide).toBe('3주간 대사 회복 및 체질 개선');
+    });
+
     it('normalizes invalid preferences back to none', () => {
         expect(normalizeDietProgramPreferences({
             methodId: 'unknown',
@@ -48,7 +60,7 @@ describe('diet program helpers', () => {
         expect(guide.helper).toContain('2');
     });
 
-    it('calculates intermittent fasting phases in KST and avoids live copy on past dates', () => {
+    it('calculates intermittent fasting phases in KST and uses the new static guide copy on past dates', () => {
         expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 2, 30)).key).toBe('fasting');
         expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 3, 0)).key).toBe('eating');
         expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 10, 35)).key).toBe('closing');
@@ -63,7 +75,7 @@ describe('diet program helpers', () => {
         });
 
         expect(staticGuide.badge).toBe('16:8');
-        expect(staticGuide.status).toContain('12:00~20:00');
+        expect(staticGuide.status).toBe('공복 시간 확보로 체지방 감량 도모');
     });
 
     it('builds dashboard and analysis copy for selected methods', () => {
@@ -84,12 +96,35 @@ describe('diet program helpers', () => {
         expect(summary.methodId).toBe(DIET_PROGRAM_METHOD_IDS.HIGH_PROTEIN);
         expect(summary.chipLabel).toContain('고단백 식단');
         expect(summary.chipLabel).toContain('쉬움');
-        expect(summary.summaryLine).toBeTruthy();
-        expect(summary.summaryLine).not.toContain('고단백 식단');
+        expect(summary.summaryLine).toBe('단백질로 근육과 포만감 유지');
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
             methodId: DIET_PROGRAM_METHOD_IDS.SWITCH_ON
-        })).toContain('식단 팁');
+        })).toBe('식단 팁 · 3주간 대사 회복 및 체질 개선');
+    });
+
+    it('removes dynamic photo-prepared copy from the selected diet guide box', () => {
+        const guide = buildDietProgramGuideState({
+            methodId: DIET_PROGRAM_METHOD_IDS.BROWN_RICE_GREEN_VEGGIES,
+            remindersEnabled: true
+        }, {
+            dietPhotoCount: 2,
+            fastingMetricsCount: 0,
+            dailyLog: {
+                diet: {
+                    breakfastUrl: 'https://example.com/a.jpg',
+                    lunchUrl: 'https://example.com/b.jpg'
+                }
+            },
+            dateStr: '2026-04-21',
+            todayStr: '2026-04-21'
+        });
+
+        expect(guide.badge).toBe('쉬움');
+        expect(guide.status).toBe('통곡물과 채소 중심의 기초 건강식');
+        expect(guide.helper).toBe('통곡물과 채소 중심의 기초 건강식');
+        expect(guide.status).not.toContain('준비됨');
+        expect(guide.helper).not.toContain('준비됨');
     });
 
     it('keeps diet-program boot hooks queued until app boot is ready', () => {

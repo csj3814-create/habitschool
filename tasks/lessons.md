@@ -53,10 +53,20 @@
 - Root cause: the Samsung Internet redirect flow cleared its pending-login marker too early, and the logged-out `onAuthStateChanged` branch was allowed to redraw the login modal before redirect auth restoration had fully settled.
 - Lesson: for mobile redirect auth, keep a short recovery grace window after return from the provider, suppress the logged-out shell during that window, and only clear the pending-login marker after either auth is restored or the grace window expires.
 
+### 188. When a user gives exact replacement copy for a compact guide slot, remove adaptive progress wording from that slot instead of blending both
+- Symptom: the diet method guide in `내 기록` kept adding phrases like `사진 2장 준비됨` even after the user explicitly wanted fixed one-line method descriptions.
+- Root cause: I treated the method copy and save-progress feedback as compatible layers inside the same small UI slot, which made the result noisy and ignored the user's requested wording.
+- Lesson: if a compact guide area gets exact user-provided copy, keep that slot stable and move any dynamic progress feedback to badges or other supporting UI. Do not prepend `준비됨`, counts, or other adaptive phrases onto the requested sentence.
+
 ### 184. Compact diet summaries should show the method name only once and spend the second line on the actual cue
 - Symptom: the compact diet summary rendered as `스위치온 다이어트` on the chip and then repeated `스위치온 다이어트 · 초기 저탄수, 이후 균형` on the next line, which wasted space and pushed the meaningful cue down.
 - Root cause: I kept the generic `method name + guide` pattern in the status line even after the method label had already moved into the top chip.
 - Lesson: when a compact card already has a visible method label, the next line should contain only the actionable cue. If difficulty still matters, fold it into the chip label rather than repeating the method name in the body.
+
+### 189. Redirect-login grace timers must not clear the pending marker just because auth is still restoring
+- Symptom: Galaxy users could tap Google login, see the button switch to `로그인 확인 중...`, and still get dropped back to the first screen before sign-in finished.
+- Root cause: the earlier fix added a grace concept, but the recovery timer still cleared pending login state after 4 seconds whenever `auth.currentUser` was still null. On mobile redirect flows, that condition is normal during restoration, so the timer was tearing down the protection too early. The marker was also stored only in `sessionStorage`, which is fragile across Samsung/mobile redirect round-trips.
+- Lesson: for mobile redirect auth, keep the pending marker in a storage tier that survives browser/app handoff, and only clear it when auth is restored or the full recovery window actually expires. Never treat `auth.currentUser` still being null during the grace window as proof that recovery failed.
 
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
