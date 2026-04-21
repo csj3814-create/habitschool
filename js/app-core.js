@@ -8594,12 +8594,15 @@ function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
             : 0;
 
         if (isActive && tokenChanged) {
+            node.style.setProperty('--phase-transition-duration', '0s');
             node.style.setProperty('--phase-fill', `${getMeditationPhaseStartFill(visual)}`);
             void node.offsetHeight;
             window.requestAnimationFrame(() => {
+                node.style.setProperty('--phase-transition-duration', '0.92s');
                 node.style.setProperty('--phase-fill', `${targetFill}`);
             });
         } else {
+            node.style.setProperty('--phase-transition-duration', '0.92s');
             node.style.setProperty('--phase-fill', `${targetFill}`);
         }
     });

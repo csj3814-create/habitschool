@@ -283,7 +283,7 @@
             background: linear-gradient(180deg, rgba(107, 194, 255, 0.96) 0%, rgba(65, 165, 232, 0.96) 100%);
             transform-origin: center bottom;
             transform: scaleY(var(--phase-fill, 0));
-            transition: transform 0.92s linear, opacity 0.25s ease;
+            transition: transform var(--phase-transition-duration, 0.92s) linear, opacity 0.25s ease;
             opacity: 0.92;
         }
 
@@ -365,6 +365,10 @@
             margin-top: 12px;
             display: grid;
             gap: 10px;
+        }
+
+        .meditation-mindfulness-video[hidden] {
+            display: none !important;
         }
 
         .meditation-video-chip-list {

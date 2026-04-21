@@ -114,6 +114,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('function renderMeditationPhaseSteps(');
         expect(APP_SOURCE).toContain('phaseStepsEl.dataset.signature !== signature');
         expect(APP_SOURCE).toContain("node.style.setProperty('--phase-fill'");
+        expect(APP_SOURCE).toContain("node.style.setProperty('--phase-transition-duration'");
         expect(APP_SOURCE).toContain('function getMeditationPhaseTargetFill(');
         expect(APP_SOURCE).toContain('style="--phase-seconds:${Math.max(1, Number(step.seconds || 0))}s;"');
         expect(APP_SOURCE).toContain('class="meditation-phase-time"');
@@ -125,12 +126,13 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-video"');
         expect(INDEX_SOURCE).toContain('id="meditation-video-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-iframe"');
+        expect(INDEX_SOURCE).toContain('.meditation-mindfulness-video[hidden]');
         expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
         expect(INDEX_SOURCE).toContain('.meditation-video-chip');
         expect(INDEX_SOURCE).toContain('.meditation-phase-visual');
         expect(INDEX_SOURCE).toContain('.meditation-phase-time');
         expect(INDEX_SOURCE).toContain('transform: scaleY(var(--phase-fill, 0))');
-        expect(INDEX_SOURCE).toContain('transition: transform 0.92s linear');
+        expect(INDEX_SOURCE).toContain('transition: transform var(--phase-transition-duration, 0.92s) linear');
         expect(INDEX_SOURCE).toContain('animation: meditation-water-ripple 1.6s ease-in-out infinite');
         expect(INDEX_SOURCE).toContain('@keyframes meditation-water-ripple');
         expect(APP_SOURCE).toContain("videoId: 'Zr_nvOU8dd0'");

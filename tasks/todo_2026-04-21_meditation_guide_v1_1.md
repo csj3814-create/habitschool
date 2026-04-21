@@ -21,4 +21,5 @@
 - 추가 보정으로 키프레임 모양 대신 단계 진행률 기반 `fill` 값을 계산해, `들이쉼`은 채워지고 `내쉼`은 비워지는 변화가 실제 초 단위 진행과 맞게 동작하도록 수정
 - 추가 요청으로 `hold-full / hold-empty`를 분리하고, 마음챙김에는 편안한 YouTube 영상 iframe을 함께 보여주도록 확장
 - 추가 후속으로 마음챙김 영상 선택칩을 넣고, 시작 시 선택 영상이 자동 전체화면으로 열렸다가 완료/중단 시 종료되도록 연결
+- 추가 보정으로 새 호흡 단계가 시작될 때 transition을 잠시 끄고 시작 fill을 먼저 놓은 뒤 다시 0.92초 보간을 적용해, `내쉼`이 먼저 차오르거나 `들이쉼`이 먼저 꽉 차 보이는 역방향 튐을 제거
 - 검증: `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\\habitschool-app-check.js`
