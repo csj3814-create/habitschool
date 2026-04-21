@@ -46,7 +46,7 @@ describe('PWA asset versioning', () => {
         expect(captureVersion(appEntrySource, /app-core\.js\?v=(\d+)/, 'app entry core import')).toBe(releaseVersion);
         expect(captureVersion(appCoreSource, /blockchain-manager\.js\?v=(\d+)/, 'app core blockchain import')).toBe(releaseVersion);
         expect(captureVersion(authSource, /blockchain-manager\.js\?v=(\d+)/, 'auth blockchain import')).toBe(releaseVersion);
-        expect(captureVersion(pwaInstallSource, /sw\.js\?v=(\d+)/, 'pwa-install service worker register')).toBe(releaseVersion);
+        expect(pwaInstallSource).toContain("const APP_SERVICE_WORKER_PATH = '/sw.js';");
         expect(captureVersion(swSource, /habitschool-v(\d+)/, 'service worker cache')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-base\.css\?v=(\d+)/, 'styles base import')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-features\.css\?v=(\d+)/, 'styles features import')).toBe(releaseVersion);

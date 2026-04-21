@@ -1,6 +1,7 @@
 // Service Worker registration & fixed install CTA orchestration
 let deferredInstallPrompt = null;
 const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
+const APP_SERVICE_WORKER_PATH = '/sw.js';
 let cachedInstalledAppState = readStoredInstallState();
 
 function readStoredInstallState() {
@@ -235,6 +236,59 @@ async function handleInstallCtaAction() {
     notifyInstallCtaStateChanged();
 }
 
+function getCanonicalServiceWorkerScopeUrl() {
+    try {
+        return new URL('/', location.origin).href;
+    } catch (_) {
+        return `${location.origin}/`;
+    }
+}
+
+function getRegistrationScriptUrl(registration) {
+    return registration?.active?.scriptURL
+        || registration?.waiting?.scriptURL
+        || registration?.installing?.scriptURL
+        || '';
+}
+
+function isCanonicalHabitschoolServiceWorker(registration) {
+    const scriptUrl = getRegistrationScriptUrl(registration);
+    if (!scriptUrl) return false;
+
+    try {
+        const parsed = new URL(scriptUrl);
+        return parsed.origin === location.origin
+            && parsed.pathname === APP_SERVICE_WORKER_PATH
+            && registration.scope === getCanonicalServiceWorkerScopeUrl();
+    } catch (_) {
+        return false;
+    }
+}
+
+async function cleanupStaleServiceWorkerRegistrations() {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    const staleRegistrations = registrations.filter((registration) => {
+        const scriptUrl = getRegistrationScriptUrl(registration);
+        if (!scriptUrl) return false;
+
+        try {
+            return new URL(scriptUrl).origin === location.origin
+                && !isCanonicalHabitschoolServiceWorker(registration);
+        } catch (_) {
+            return false;
+        }
+    });
+
+    await Promise.all(staleRegistrations.map(async (registration) => {
+        try {
+            await registration.unregister();
+            console.log('Removed stale service worker registration:', getRegistrationScriptUrl(registration));
+        } catch (error) {
+            console.warn('Stale service worker cleanup failed:', error?.message || error);
+        }
+    }));
+}
+
 window.addEventListener('load', async () => {
     if ('serviceWorker' in navigator) {
         if (isLocalHost()) {
@@ -256,10 +310,18 @@ window.addEventListener('load', async () => {
                 console.warn('localhost service worker cleanup failed:', error);
             }
         } else {
-        navigator.serviceWorker.register('./sw.js?v=165')
-                .then((reg) => {
-                    console.log('PWA service worker registered:', reg.scope);
-                    reg.update();
+            cleanupStaleServiceWorkerRegistrations()
+                .catch((error) => console.warn('Stale service worker scan failed:', error?.message || error))
+                .then(() => navigator.serviceWorker.getRegistration('/'))
+                .then((existingRegistration) => {
+                    if (existingRegistration && isCanonicalHabitschoolServiceWorker(existingRegistration)) {
+                        return existingRegistration;
+                    }
+
+                    return navigator.serviceWorker.register(APP_SERVICE_WORKER_PATH, { scope: '/' });
+                })
+                .then((registration) => {
+                    console.log('PWA service worker ready:', registration.scope);
                 })
                 .catch((error) => console.warn('PWA service worker registration failed:', error));
         }
