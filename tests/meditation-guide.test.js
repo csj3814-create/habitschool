@@ -124,7 +124,6 @@ describe('meditation guide helpers', () => {
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-video"');
         expect(INDEX_SOURCE).toContain('id="meditation-video-chip-list"');
-        expect(INDEX_SOURCE).toContain('id="meditation-video-open-link"');
         expect(INDEX_SOURCE).toContain('id="meditation-mindfulness-iframe"');
         expect(INDEX_SOURCE).toContain('배를 부풀리며 4초 들이쉼, 6초 내쉼');
         expect(INDEX_SOURCE).toContain('.meditation-video-chip');
@@ -137,6 +136,7 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain("videoId: 'Zr_nvOU8dd0'");
         expect(APP_SOURCE).toContain("videoId: 'VNu15Qqomt8'");
         expect(APP_SOURCE).toContain("videoId: '0ZAH8NUMNDQ'");
+        expect(APP_SOURCE).toContain("videoId: 'sebYYzRiHqE'");
         expect(INDEX_SOURCE).toContain('youtube-nocookie.com/embed/Zr_nvOU8dd0?rel=0&playsinline=1');
         expect(FIREBASE_JSON).toContain('https://www.youtube-nocookie.com');
     });

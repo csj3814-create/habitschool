@@ -100,6 +100,11 @@ const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
         id: 'calm-ocean-3',
         label: '새하얀 설경',
         videoId: '0ZAH8NUMNDQ'
+    },
+    {
+        id: 'calm-ocean-4',
+        label: '푸른 산호 바다',
+        videoId: 'sebYYzRiHqE'
     }
 ]);
 let _meditationTimerTickHandle = 0;
@@ -8254,12 +8259,6 @@ function buildMindfulnessVideoEmbedUrl(videoId = '', { autoplay = false } = {}) 
     return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(option.videoId)}?${params.toString()}`;
 }
 
-function buildMindfulnessVideoWatchUrl(videoId = '') {
-    const option = getMeditationVideoOption(videoId);
-    if (!option) return 'https://www.youtube.com/';
-    return `https://www.youtube.com/watch?v=${encodeURIComponent(option.videoId)}`;
-}
-
 function ensureMeditationAudioContext() {
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextCtor) return null;
@@ -8500,16 +8499,12 @@ function renderMindfulnessVideoChips({ disabled = false } = {}) {
 
 function syncMindfulnessVideoFrame({ autoplay = false } = {}) {
     const iframe = document.getElementById('meditation-mindfulness-iframe');
-    const openLink = document.getElementById('meditation-video-open-link');
     if (!iframe) return;
     const selectedId = getSelectedMeditationVideoId();
     const nextSrc = buildMindfulnessVideoEmbedUrl(selectedId, { autoplay });
     if (iframe.dataset.currentSrc !== nextSrc) {
         iframe.src = nextSrc;
         iframe.dataset.currentSrc = nextSrc;
-    }
-    if (openLink) {
-        openLink.href = buildMindfulnessVideoWatchUrl(selectedId);
     }
 }
 
