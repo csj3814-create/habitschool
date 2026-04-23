@@ -66,6 +66,7 @@ import {
     normalizeMeditationLog
 } from './meditation-guide.js?v=167';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=167';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=167';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7451,6 +7452,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 coins: userData.coins || 0
             });
             applyAssetWalletSnapshot(userData);
+            loadRewardMarketSnapshot(forceRefresh).catch((error) => {
+                console.warn('reward market load skipped:', error?.message || error);
+            });
 
             // 초대 링크 표시 (지갑 탭 + 프로필 탭 동시 업데이트)
             if (userData.referralCode) {
@@ -7873,7 +7877,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 challenge_settlement: '🏆',
                                 challenge_failure: '🧯',
                                 withdrawal: '📤',
-                                hbt_migration: '🪄'
+                                hbt_migration: '🪄',
+                                reward_redemption: '🎟️'
                             };
                             const txLabels = {
                                 conversion: 'P→HBT 변환',
@@ -7881,7 +7886,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 challenge_settlement: '챌린지 정산',
                                 challenge_failure: '챌린지 실패 정산',
                                 withdrawal: '출금',
-                                hbt_migration: 'HBT 마이그레이션'
+                                hbt_migration: 'HBT 마이그레이션',
+                                reward_redemption: '해빛 마켓 교환'
                             };
                             const txIconClass = {
                                 conversion: 'convert',
@@ -7889,10 +7895,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 challenge_settlement: 'settle',
                                 challenge_failure: 'withdraw',
                                 withdrawal: 'withdraw',
-                                hbt_migration: 'settle'
+                                hbt_migration: 'settle',
+                                reward_redemption: 'withdraw'
                             };
                             const icon = txIcons[tx.type] || '📋';
-                            const label = txLabels[tx.type] || escapeHtml(String(tx.type));
+                            const rewardName = String(tx.rewardName || '').trim();
+                            const label = tx.type === 'reward_redemption' && rewardName
+                                ? escapeHtml(rewardName)
+                                : (txLabels[tx.type] || escapeHtml(String(tx.type)));
                             const iconClass = txIconClass[tx.type] || 'convert';
                             const statusText = tx.status === 'success' ? '완료' : tx.status === 'failed' ? '실패' : '대기';
 
@@ -7913,6 +7923,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 const returned = Number(tx.returned || 0);
                                 amountText = `반환 ${formatAssetHistoryAmount(returned, 'HBT')} · 소각 ${formatAssetHistoryAmount(burned, 'HBT')}`;
                                 amountClass = burned > 0 ? 'negative' : '';
+                            } else if (tx.type === 'reward_redemption') {
+                                amountText = `-${formatAssetHistoryAmount(tx.amount || tx.hbtCost, 'HBT')}`;
+                                amountClass = 'negative';
                             } else if (tx.type === 'hbt_migration') {
                                 amountText = `${formatAssetHistoryAmount(tx.offChainHbt, 'HBT')} 정리`;
                             } else {

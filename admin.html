@@ -158,6 +158,17 @@
         /* Economy tab inputs */
         .row-inp { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
         .inp { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+        .reward-admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .reward-admin-kv { display: flex; flex-direction: column; gap: 8px; }
+        .reward-admin-row { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid #eee; border-radius: 10px; background: #fafafa; font-size: 13px; }
+        .reward-admin-row strong { color: #4A148C; }
+        .reward-admin-muted { color: #777; font-size: 12px; }
+        .reward-admin-code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; color: #5f4a36; }
+        .reward-admin-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+        .reward-admin-link { color: #6A1B9A; font-weight: 700; text-decoration: none; }
+        .reward-admin-link:hover { text-decoration: underline; }
+        .reward-admin-warning { color: #C62828; font-weight: 700; }
+        @media (max-width: 768px) { .reward-admin-grid { grid-template-columns: 1fr; } }
 
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
         @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(244,67,54,0.4); } 70% { box-shadow: 0 0 0 5px rgba(244,67,54,0); } }
@@ -195,6 +206,7 @@
         <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 대시보드</button>
         <button class="tab-btn" data-tab="members" onclick="switchTab('members')">👥 회원 관리</button>
         <button class="tab-btn" data-tab="economy" onclick="switchTab('economy')">🏆 자산 &amp; HBT</button>
+        <button class="tab-btn" data-tab="reward-market" onclick="switchTab('reward-market')">🎟 보상 마켓</button>
         <button class="tab-btn" data-tab="moderation" onclick="switchTab('moderation')">🚨 신고 관리</button>
         <button class="tab-btn" data-tab="system" onclick="switchTab('system')">⚙️ 초대 &amp; 시스템</button>
     </div>
@@ -374,6 +386,63 @@
     </div>
 
     <!-- Tab 4: 신고 관리 -->
+    <div id="tab-reward-market" class="tab-panel">
+        <div class="cards">
+            <div class="card"><div class="lbl">가격 모드</div><div class="val" id="rm-pricing-mode">-</div></div>
+            <div class="card"><div class="lbl">현재 기준가</div><div class="val" id="rm-price-value">-</div></div>
+            <div class="card danger"><div class="lbl">발급 대기</div><div class="val" id="rm-pending-count">-</div></div>
+            <div class="card danger"><div class="lbl">수동 확인</div><div class="val" id="rm-manual-count">-</div></div>
+            <div class="card green"><div class="lbl">누적 발급</div><div class="val" id="rm-issued-count">-</div></div>
+            <div class="card"><div class="lbl">비즈머니</div><div class="val" id="rm-bizmoney-balance">-</div></div>
+            <div class="card"><div class="lbl">가스 예산</div><div class="val" id="rm-gas-budget">-</div></div>
+            <div class="card"><div class="lbl">운영 예산</div><div class="val" id="rm-ops-budget">-</div></div>
+        </div>
+
+        <div class="two-col">
+            <div class="box">
+                <h3>운영 기준</h3>
+                <div id="reward-market-policy" class="reward-admin-kv">
+                    <div class="reward-admin-row"><span>로딩 중...</span><strong>-</strong></div>
+                </div>
+                <div class="row-inp">
+                    <button class="btn btn-primary" onclick="refreshRewardMarketOpsNow()">운영 상태 갱신</button>
+                    <span id="reward-market-ops-result" class="reward-admin-muted"></span>
+                </div>
+            </div>
+            <div class="box">
+                <h3>준비금 및 피드</h3>
+                <div id="reward-market-reserve" class="reward-admin-kv">
+                    <div class="reward-admin-row"><span>로딩 중...</span><strong>-</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="box">
+            <h3>쿠폰 발급 관제</h3>
+            <div class="filter-bar">
+                <input type="text" class="search-inp" id="reward-market-search" placeholder="회원명, 브랜드, 상품명, PIN 검색" oninput="renderRewardMarketAdminRows()">
+                <button class="chip active" data-rm-filter="all" onclick="setRewardMarketFilter('all')">전체</button>
+                <button class="chip" data-rm-filter="pending_issue" onclick="setRewardMarketFilter('pending_issue')">발급 대기</button>
+                <button class="chip" data-rm-filter="failed_manual_review" onclick="setRewardMarketFilter('failed_manual_review')">수동 확인</button>
+                <button class="chip" data-rm-filter="issued" onclick="setRewardMarketFilter('issued')">발급 완료</button>
+            </div>
+            <table style="font-size:12px;">
+                <thead>
+                    <tr>
+                        <th>시각</th>
+                        <th>상태</th>
+                        <th>회원</th>
+                        <th>상품</th>
+                        <th>교환가</th>
+                        <th>쿠폰/PIN</th>
+                        <th>운영</th>
+                    </tr>
+                </thead>
+                <tbody id="reward-market-admin-tbody"><tr><td colspan="7">로딩 중..</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
     <div id="tab-moderation" class="tab-panel">
         <div class="box">
             <h3 style="color:#C62828;">🚨 신고 목록</h3>
@@ -494,7 +563,7 @@
 </div>
 
 <script type="module">
-    import { collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, getDocs, getCountFromServer, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
@@ -506,6 +575,9 @@
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
     const PAGE_SIZE_MEMBERS = 20;
     const tabLoaded = {};
+    let rewardMarketRows = [];
+    let rewardMarketFilter = 'all';
+    let rewardMarketUserNames = {};
 
     function today() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); }
     const todayStr = today();
@@ -664,6 +736,8 @@
     // ── Auth ──────────────────────────────────────────────────
     const ADMIN_EMAILS = ['csj3814@gmail.com'];
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
+    const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
+    const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
     function normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
     }
@@ -750,6 +824,7 @@
             if (name === 'dashboard') await loadDashboard();
             else if (name === 'members') await loadMembers();
             else if (name === 'economy') await loadEconomy();
+            else if (name === 'reward-market') await loadRewardMarketAdmin();
             else if (name === 'moderation') await loadModeration();
             else if (name === 'system') await loadSystem();
         } catch(e) { console.error('탭 로드 오류:', name, e); }
@@ -1594,6 +1669,281 @@
     };
 
     // ── Tab 4: Moderation ─────────────────────────────────────
+    function rewardMarketStatusBadge(status = '') {
+        if (status === 'issued') return '<span class="badge badge-green">발급 완료</span>';
+        if (status === 'pending_issue') return '<span class="badge badge-gray">발급 대기</span>';
+        if (status === 'failed_manual_review') return '<span class="badge badge-red">수동 확인</span>';
+        if (status === 'cancelled') return '<span class="badge badge-gray">취소됨</span>';
+        return `<span class="badge badge-gray">${escapeHtml(status || '-')}</span>`;
+    }
+
+    function rewardMarketModeLabel(pricingMode = '') {
+        return pricingMode === 'phase2_hybrid_band' ? '시세 완충형' : '내부 기준가';
+    }
+
+    function formatRewardMoney(value, maxFractionDigits = 0) {
+        const numeric = Number(value || 0);
+        if (!Number.isFinite(numeric) || numeric <= 0) return '-';
+        return `${numeric.toLocaleString('ko-KR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maxFractionDigits
+        })}원`;
+    }
+
+    function normalizeRewardMarketAdminRow(docSnap) {
+        const data = docSnap.data() || {};
+        const createdAt = toJsDate(data.createdAt) || toJsDate(data.updatedAt) || toJsDate(data.issuedAt);
+        const issuedAt = toJsDate(data.issuedAt);
+        const userId = data.userId || '';
+        const userName = data.userLabel || rewardMarketUserNames[userId] || userId.slice(0, 8) || '-';
+
+        return {
+            id: docSnap.id,
+            userId,
+            userName,
+            createdAt,
+            createdLabel: createdAt ? formatAdminDateTime(createdAt) : '-',
+            issuedLabel: issuedAt ? formatAdminDateTime(issuedAt) : '',
+            status: data.status || '',
+            brandName: data.brandName || '-',
+            displayName: data.displayName || data.sku || '-',
+            hbtCost: Number(data.hbtCost || 0) || 0,
+            faceValueKrw: Number(data.faceValueKrw || 0) || 0,
+            pricingMode: data.pricingMode || '',
+            quoteVersion: data.quoteVersion || '',
+            providerOrderId: data.providerOrderId || '',
+            providerTrId: data.providerTrId || '',
+            pinCode: data.pinCode || '',
+            couponImgUrl: data.couponImgUrl || data.barcodeUrl || '',
+            burnExplorerUrl: data.burnExplorerUrl || '',
+            manualReviewReason: data.manualReviewReason || data.errorMessage || '',
+            manualResendCount: Number(data.manualResendCount || 0) || 0,
+            recipientPhone: data.recipientPhone || '',
+        };
+    }
+
+    function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, feed = {}, counts = {} }) {
+        document.getElementById('rm-pricing-mode').textContent = rewardMarketModeLabel(pricing.pricingMode || '');
+        document.getElementById('rm-price-value').textContent = pricing.finalKrwPerHbt
+            ? `1 HBT = ${formatAdminNumber(pricing.finalKrwPerHbt, 4)}원`
+            : '-';
+        document.getElementById('rm-pending-count').textContent = (counts.pending || 0).toLocaleString('ko-KR');
+        document.getElementById('rm-manual-count').textContent = (counts.manual || 0).toLocaleString('ko-KR');
+        document.getElementById('rm-issued-count').textContent = (counts.issued || 0).toLocaleString('ko-KR');
+        document.getElementById('rm-bizmoney-balance').textContent = formatRewardMoney(reserve.lastBizmoneyBalanceKrw || 0);
+        document.getElementById('rm-gas-budget').textContent = formatRewardMoney(reserve.gasBudgetKrw || 0);
+        document.getElementById('rm-ops-budget').textContent = formatRewardMoney(reserve.operationsBudgetKrw || 0);
+
+        document.getElementById('reward-market-policy').innerHTML = [
+            ['가격 모드', rewardMarketModeLabel(pricing.pricingMode || '')],
+            ['현재 기준가', pricing.finalKrwPerHbt ? `1 HBT = ${formatAdminNumber(pricing.finalKrwPerHbt, 4)}원` : '-'],
+            ['Quote 상태', pricing.quoteState || '-'],
+            ['Quote 버전', pricing.quoteVersion || '-'],
+            ['기준 시각', pricing.quotedAt ? formatAdminDateTime(pricing.quotedAt) : '-'],
+            ['다음 갱신', pricing.nextRefreshAt ? formatAdminDateTime(pricing.nextRefreshAt) : '-'],
+            ['교환 정책', '앱 보관함 노출 + 관리자 수동 재확인'],
+        ].map(([label, value]) => `
+            <div class="reward-admin-row">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(String(value || '-'))}</strong>
+            </div>
+        `).join('');
+
+        document.getElementById('reward-market-reserve').innerHTML = [
+            ['누적 마진', formatRewardMoney(reserve.totalMarginKrw || 0)],
+            ['비즈머니 상태', reserve.bizmoneyStatus || '-'],
+            ['비즈머니 확인', reserve.bizmoneyCheckedAt ? formatAdminDateTime(reserve.bizmoneyCheckedAt) : '-'],
+            ['HBT/USDT 7일 TWAP', pricing.hbtUsdtTwap7d ? formatAdminNumber(pricing.hbtUsdtTwap7d, 8) : '-'],
+            ['USDT/KRW', pricing.usdtKrw ? formatAdminNumber(pricing.usdtKrw, 2) : '-'],
+            ['피드 소스', pricing.feedSource || feed.source || '-'],
+            ['풀 주소', feed.poolAddress || '-'],
+        ].map(([label, value]) => `
+            <div class="reward-admin-row">
+                <span>${escapeHtml(label)}</span>
+                <strong class="${label === '비즈머니 상태' && value === 'error' ? 'reward-admin-warning' : ''}">${escapeHtml(String(value || '-'))}</strong>
+            </div>
+        `).join('');
+    }
+
+    function buildRewardMarketAdminActions(row) {
+        const encodedId = encodeURIComponent(row.id || '');
+        const couponLink = row.couponImgUrl
+            ? `<a class="btn-view" href="${escapeHtml(row.couponImgUrl)}" target="_blank" rel="noopener">쿠폰</a>`
+            : '';
+        const txLink = row.burnExplorerUrl
+            ? `<a class="btn-view" href="${escapeHtml(row.burnExplorerUrl)}" target="_blank" rel="noopener">Tx</a>`
+            : '';
+        return `
+            <div class="reward-admin-actions">
+                <button class="btn-view" onclick="adminRewardManualResend('${encodedId}')">보관함 재확인</button>
+                ${couponLink}
+                ${txLink}
+            </div>
+        `;
+    }
+
+    window.renderRewardMarketAdminRows = function() {
+        const tbody = document.getElementById('reward-market-admin-tbody');
+        if (!tbody) return;
+
+        const term = (document.getElementById('reward-market-search')?.value || '').trim().toLowerCase();
+        const rows = rewardMarketRows.filter((row) => {
+            if (rewardMarketFilter !== 'all' && row.status !== rewardMarketFilter) return false;
+            if (!term) return true;
+            return [
+                row.userName,
+                row.userId,
+                row.brandName,
+                row.displayName,
+                row.pinCode,
+                row.providerOrderId,
+                row.providerTrId,
+            ].some((value) => String(value || '').toLowerCase().includes(term));
+        });
+
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="color:#999;">조건에 맞는 발급 이력이 없습니다.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map((row) => `
+            <tr>
+                <td>
+                    <div>${escapeHtml(row.createdLabel)}</div>
+                    ${row.issuedLabel ? `<div class="reward-admin-muted">발급 ${escapeHtml(row.issuedLabel)}</div>` : ''}
+                </td>
+                <td>
+                    ${rewardMarketStatusBadge(row.status)}
+                    ${row.manualReviewReason ? `<div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(row.manualReviewReason)}</div>` : ''}
+                </td>
+                <td>
+                    <div style="font-weight:700;">${escapeHtml(row.userName)}</div>
+                    <div class="reward-admin-code">${escapeHtml(row.userId || '-')}</div>
+                </td>
+                <td>
+                    <div style="font-weight:700;">${escapeHtml(row.brandName)} · ${escapeHtml(row.displayName)}</div>
+                    <div class="reward-admin-muted">${escapeHtml(rewardMarketModeLabel(row.pricingMode))}</div>
+                    <div class="reward-admin-code">${escapeHtml(row.quoteVersion || '-')}</div>
+                </td>
+                <td>
+                    <div>${formatAdminNumber(row.hbtCost || 0)} HBT</div>
+                    <div class="reward-admin-muted">${formatRewardMoney(row.faceValueKrw || 0)}</div>
+                </td>
+                <td>
+                    ${row.pinCode ? `<div class="reward-admin-code">PIN ${escapeHtml(row.pinCode)}</div>` : '<div class="reward-admin-muted">PIN 없음</div>'}
+                    ${row.couponImgUrl ? '<div class="reward-admin-muted">이미지 있음</div>' : '<div class="reward-admin-muted">이미지 없음</div>'}
+                    ${row.manualResendCount ? `<div class="reward-admin-muted">재확인 ${row.manualResendCount}회</div>` : ''}
+                </td>
+                <td>${buildRewardMarketAdminActions(row)}</td>
+            </tr>
+        `).join('');
+    };
+
+    window.setRewardMarketFilter = function(filter) {
+        rewardMarketFilter = filter;
+        document.querySelectorAll('.chip[data-rm-filter]').forEach((chip) => {
+            chip.classList.toggle('active', chip.dataset.rmFilter === filter);
+        });
+        renderRewardMarketAdminRows();
+    };
+
+    async function loadRewardMarketAdmin() {
+        const tbody = document.getElementById('reward-market-admin-tbody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="7">로딩 중..</td></tr>';
+        }
+
+        try {
+            const { usersQ } = await getData();
+            rewardMarketUserNames = {};
+            usersQ.forEach((u) => {
+                const data = u.data();
+                rewardMarketUserNames[u.id] = data.customDisplayName || data.displayName || u.id.slice(0, 8);
+            });
+
+            const rewardRef = collection(db, 'reward_redemptions');
+            const [
+                redemptionSnap,
+                reserveSnap,
+                pricingSnap,
+                feedSnap,
+                pendingCountSnap,
+                manualCountSnap,
+                issuedCountSnap,
+            ] = await Promise.all([
+                getDocs(query(rewardRef, orderBy('createdAt', 'desc'), limit(120))),
+                getDoc(doc(db, 'reward_reserve_metrics', 'main')),
+                getDoc(doc(db, 'reward_market_pricing', 'main')),
+                getDoc(doc(db, 'reward_market_feeds', 'main')),
+                getCountFromServer(query(rewardRef, where('status', '==', 'pending_issue'))),
+                getCountFromServer(query(rewardRef, where('status', '==', 'failed_manual_review'))),
+                getCountFromServer(query(rewardRef, where('status', '==', 'issued'))),
+            ]);
+
+            rewardMarketRows = redemptionSnap.docs
+                .map((docSnap) => normalizeRewardMarketAdminRow(docSnap))
+                .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
+
+            renderRewardMarketAdminSummary({
+                pricing: pricingSnap.exists() ? pricingSnap.data() || {} : {},
+                reserve: reserveSnap.exists() ? reserveSnap.data() || {} : {},
+                feed: feedSnap.exists() ? feedSnap.data() || {} : {},
+                counts: {
+                    pending: pendingCountSnap.data().count || 0,
+                    manual: manualCountSnap.data().count || 0,
+                    issued: issuedCountSnap.data().count || 0,
+                }
+            });
+            renderRewardMarketAdminRows();
+        } catch (e) {
+            console.error('reward market admin load failed:', e);
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="7" style="color:red;">${escapeHtml(e.message || '보상 마켓 관제 로딩 실패')}</td></tr>`;
+            }
+        }
+    }
+
+    window.refreshRewardMarketOpsNow = async function() {
+        const resultEl = document.getElementById('reward-market-ops-result');
+        if (resultEl) resultEl.textContent = '운영 상태를 갱신하는 중...';
+        try {
+            const result = await refreshRewardMarketOpsNowCallable({});
+            const data = result?.data || {};
+            if (resultEl) {
+                resultEl.textContent = `완료 · ${data.quoteState || '-'} · ${data.bizmoneyStatus || '-'} · ${formatRewardMoney(data.bizmoneyBalanceKrw || 0)}`;
+            }
+            tabLoaded['reward-market'] = false;
+            await loadRewardMarketAdmin();
+        } catch (e) {
+            if (resultEl) resultEl.textContent = `오류: ${e.message || '운영 상태 갱신 실패'}`;
+            alert(`보상 마켓 운영 상태 갱신 실패: ${e.message || '알 수 없는 오류'}`);
+        }
+    };
+
+    window.adminRewardManualResend = async function(encodedId) {
+        const redemptionId = decodeURIComponent(String(encodedId || ''));
+        const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
+        if (!row) {
+            alert('대상 쿠폰을 찾지 못했습니다.');
+            return;
+        }
+
+        const reason = window.prompt('보관함 재확인 사유를 입력해 주세요.', row.manualReviewReason || '관제탑 수동 재확인');
+        if (reason === null) return;
+
+        try {
+            await adminResendRewardCouponCallable({
+                redemptionId,
+                reason,
+            });
+            alert('쿠폰 상태를 다시 확인했습니다.');
+            tabLoaded['reward-market'] = false;
+            await loadRewardMarketAdmin();
+        } catch (e) {
+            alert(`쿠폰 재확인 실패: ${e.message || '알 수 없는 오류'}`);
+        }
+    };
+
     async function loadModeration() {
         await Promise.all([loadReports(), loadBlockStats()]);
     }

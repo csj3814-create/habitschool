@@ -1439,6 +1439,39 @@
                     </div>
                 </div>
 
+                <div class="card reward-market-card">
+                    <div class="reward-market-header">
+                        <div>
+                            <h3>🛍️ 해빛 마켓</h3>
+                            <p class="reward-market-caption">2,000 HBT 이상부터 건강 지향 리워드를 교환할 수 있어요.</p>
+                        </div>
+                        <button type="button" class="wallet-link-btn" onclick="refreshRewardMarketSnapshot()">새로고침</button>
+                    </div>
+                    <div class="reward-market-status tone-muted" id="reward-market-status">해빛 마켓을 불러오는 중입니다.</div>
+                    <div class="reward-market-meta" id="reward-market-meta"></div>
+                    <div class="reward-market-grid" id="reward-market-grid">
+                        <div class="reward-market-empty">
+                            <div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>
+                            <div class="reward-market-empty-copy">기프티쇼 연동 또는 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card reward-coupon-card">
+                    <div class="reward-coupon-header">
+                        <div>
+                            <h3>🎟️ 쿠폰 보관함</h3>
+                            <p class="reward-market-caption">발급된 바코드와 PIN, 유효기간, BscScan 링크를 한곳에서 확인하세요.</p>
+                        </div>
+                    </div>
+                    <div class="reward-coupon-list" id="reward-coupon-list">
+                        <div class="reward-coupon-empty">
+                            <div class="reward-coupon-empty-title">쿠폰 보관함을 불러오는 중입니다.</div>
+                            <div class="reward-coupon-empty-copy">첫 교환이 완료되면 여기에 쿠폰이 쌓입니다.</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 채굴 반감기 현황 -->
                 <div class="card wallet-halving-card">
                     <h3>⛏️ 채굴 반감기 현황</h3>

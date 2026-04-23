@@ -93,6 +93,11 @@
 - Root cause: I threaded a new helper call into an existing loader and reused a variable name that existed elsewhere in the file, but I did not create a local normalized date alias inside the function itself.
 - Lesson: when a loader receives `dateStr` and multiple downstream calls want a normalized selected date, define `const selectedDateStr = ...` once near the top and use that consistently for doc ids, UI restores, and save helpers. In large shared modules, never assume a similarly named variable already exists in local scope.
 
+### 195. Admin-only reward operations should live in the control tower, not inside member-facing asset flows
+- Symptom: the reward-market rollout initially left admin-only recovery actions mixed into the user asset tab and user snapshot payload, even though operators already had a dedicated admin surface.
+- Root cause: I optimized for shipping the redeem flow quickly and let operational affordances stay close to the user UI instead of drawing a hard boundary between member actions and operator controls.
+- Lesson: when a feature introduces manual review, retries, or ops refresh controls, default those actions to `admin.html` (the control tower) and keep user-facing tabs focused on end-user tasks like redeeming and viewing coupons. If a snapshot or stylesheet exists only to support admin actions, strip it back out of the member flow once the control surface is available.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

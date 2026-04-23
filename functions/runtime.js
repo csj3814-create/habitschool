@@ -34,6 +34,13 @@ const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { buildReEngagementEmailTemplate } = require("./reengagement-email");
+const {
+    buildRewardMarketConfig,
+    buildRewardMarketSnapshot,
+    redeemRewardCoupon: redeemRewardCouponFlow,
+    adminResendRewardCoupon: adminResendRewardCouponFlow,
+    syncRewardMarketOps,
+} = require("./reward-market");
 
 // Firebase
 admin.initializeApp();
@@ -952,6 +959,81 @@ function getHabitContract(signerOrProvider) {
     return new ethers.Contract(HABIT_ADDRESS, contractAbi.HaBit, signerOrProvider);
 }
 
+async function verifyRewardBurnTx({ burnTxHash = "", userData = {}, expectedHbtCost = 0, sku = "" }) {
+    const normalizedHash = String(burnTxHash || "").trim();
+    if (!normalizedHash) {
+        throw new HttpsError("failed-precondition", "소각 트랜잭션 해시가 필요합니다.");
+    }
+
+    const walletAddress = getEffectiveWalletAddress(userData);
+    if (!walletAddress) {
+        throw new HttpsError("failed-precondition", "연결된 지갑 주소를 먼저 확인해 주세요.");
+    }
+
+    const normalizedWallet = ethers.getAddress(walletAddress);
+    const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
+    const receipt = await provider.getTransactionReceipt(normalizedHash);
+    if (!receipt || receipt.status !== 1) {
+        throw new HttpsError("failed-precondition", "소각 트랜잭션을 확인하지 못했어요.");
+    }
+
+    const tx = await provider.getTransaction(normalizedHash);
+    if (!tx || !tx.from) {
+        throw new HttpsError("failed-precondition", "소각 트랜잭션 발신자를 확인하지 못했어요.");
+    }
+
+    if (ethers.getAddress(tx.from) !== normalizedWallet) {
+        throw new HttpsError("permission-denied", "현재 사용자 지갑과 일치하지 않는 소각 트랜잭션입니다.");
+    }
+
+    const receiptTo = receipt.to ? ethers.getAddress(receipt.to) : "";
+    const habitAddress = ethers.getAddress(HABIT_ADDRESS);
+    if (receiptTo && receiptTo !== habitAddress) {
+        throw new HttpsError("failed-precondition", "HBT 컨트랙트에서 발생한 소각 트랜잭션이 아니에요.");
+    }
+
+    const habitContract = getHabitContract(provider);
+    const decimals = await habitContract.decimals();
+    const expectedRawAmount = ethers.parseUnits(String(expectedHbtCost || 0), decimals);
+    let burnedRawAmount = 0n;
+
+    for (const log of receipt.logs || []) {
+        if (!log?.topics?.length) continue;
+        if (!log.address || ethers.getAddress(log.address) !== habitAddress) continue;
+
+        let parsed = null;
+        try {
+            parsed = habitContract.interface.parseLog({
+                topics: log.topics,
+                data: log.data,
+            });
+        } catch (_) {
+            parsed = null;
+        }
+        if (!parsed || parsed.name !== "Transfer") continue;
+
+        const fromAddress = parsed.args?.from ? ethers.getAddress(parsed.args.from) : "";
+        const toAddress = parsed.args?.to ? ethers.getAddress(parsed.args.to) : "";
+        if (fromAddress !== normalizedWallet || toAddress !== ZERO_ADDRESS) continue;
+
+        const value = BigInt(parsed.args?.value || 0n);
+        burnedRawAmount += value;
+    }
+
+    if (burnedRawAmount < expectedRawAmount) {
+        throw new HttpsError(
+            "failed-precondition",
+            `${sku || "reward"} 교환에 필요한 HBT 소각량이 확인되지 않았어요.`
+        );
+    }
+
+    return {
+        walletAddress: normalizedWallet,
+        burnedRawAmount: burnedRawAmount.toString(),
+        expectedRawAmount: expectedRawAmount.toString(),
+    };
+}
+
 function normalizeMintAttemptId(rawAttemptId) {
     const normalized = String(rawAttemptId || "").trim();
     return /^[A-Za-z0-9_-]{8,120}$/.test(normalized) ? normalized : "";
@@ -1571,6 +1653,186 @@ exports.getOnchainBalance = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("getOnchainBalance 오류:", error);
             throw new HttpsError("internal", "잔액 조회 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.getRewardMarketSnapshot = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 20,
+        timeoutSeconds: 30
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const uid = request.auth.uid;
+        try {
+            const userSnap = await db.collection("users").doc(uid).get();
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            }
+
+            const config = buildRewardMarketConfig(process.env);
+            const snapshot = await buildRewardMarketSnapshot({
+                db,
+                uid,
+                config
+            });
+
+            return {
+                success: true,
+                ...snapshot
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("getRewardMarketSnapshot error:", error);
+            throw new HttpsError("internal", "보상 마켓 정보를 불러오는 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.redeemRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const uid = request.auth.uid;
+        try {
+            const userSnap = await db.collection("users").doc(uid).get();
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            }
+
+            const config = buildRewardMarketConfig(process.env);
+            const result = await redeemRewardCouponFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                uid,
+                userData: userSnap.data() || {},
+                config,
+                sku: request.data?.sku,
+                recipientPhone: request.data?.recipientPhone,
+                burnTxHash: request.data?.burnTxHash,
+                explorerUrl: EXPLORER_URL,
+                networkTag: ACTIVE_CHAIN.networkTag,
+                quoteVersion: request.data?.quoteVersion,
+                quoteSource: request.data?.quoteSource,
+                quotedHbtCost: request.data?.quotedHbtCost,
+                verifyBurnTx: ({ burnTxHash, userData, expectedHbtCost, sku }) =>
+                    verifyRewardBurnTx({ burnTxHash, userData, expectedHbtCost, sku })
+            });
+
+            return {
+                success: true,
+                ...result
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("redeemRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 교환 처리 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.adminResendRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 5,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        try {
+            const config = buildRewardMarketConfig(process.env);
+            const result = await adminResendRewardCouponFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                adminUid,
+                config,
+                redemptionId: request.data?.redemptionId,
+                reason: request.data?.reason,
+                forceSms: request.data?.forceSms === true
+            });
+
+            return {
+                success: true,
+                ...result
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("adminResendRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 재확인 처리 중 문제가 발생했어요.");
+        }
+    }
+);
+
+exports.refreshRewardMarketOps = onSchedule(
+    {
+        region: "asia-northeast3",
+        schedule: "every 60 minutes",
+        timeZone: "Asia/Seoul",
+        timeoutSeconds: 120,
+        memory: "256MiB"
+    },
+    async () => {
+        const config = buildRewardMarketConfig(process.env);
+        try {
+            const result = await syncRewardMarketOps({
+                db,
+                config,
+                now: new Date()
+            });
+            console.log("reward market ops refreshed", {
+                pricingMode: result?.pricing?.pricingMode,
+                quoteState: result?.pricing?.quoteState,
+                bizmoneyStatus: result?.bizmoney?.status
+            });
+        } catch (error) {
+            console.error("refreshRewardMarketOps error:", error);
+            throw error;
+        }
+    }
+);
+
+exports.refreshRewardMarketOpsNow = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 3,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        await assertAdminRequest(request);
+        const config = buildRewardMarketConfig(process.env);
+        try {
+            const result = await syncRewardMarketOps({
+                db,
+                config,
+                now: new Date()
+            });
+
+            return {
+                success: true,
+                pricingMode: result?.pricing?.pricingMode || "",
+                quoteState: result?.pricing?.quoteState || "",
+                quotedAt: result?.pricing?.quotedAt || "",
+                bizmoneyStatus: result?.bizmoney?.status || "",
+                bizmoneyBalanceKrw: result?.bizmoney?.balanceKrw || 0
+            };
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("refreshRewardMarketOpsNow error:", error);
+            throw new HttpsError("internal", "보상 마켓 운영 상태를 갱신하지 못했어요.");
         }
     }
 );

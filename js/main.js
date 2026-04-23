@@ -82,6 +82,7 @@ window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니�
 window.startChallenge30D = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.'); };
 window.fetchOnchainBalance = async () => null;
 window.fetchTokenStats = async () => null;
+window.redeemRewardCouponOnchain = async () => ({ success: false });
 window.disconnectWallet = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.openLegacyWalletExportModal = () => { alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해 주세요.'); };
 window.closeLegacyWalletExportModal = () => {};
@@ -119,6 +120,7 @@ window._loadBlockchainModule = function() {
         window.initializeUserWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
         window.fetchOnchainBalance = mod.fetchOnchainBalance;
         window.fetchTokenStats = mod.fetchTokenStats;
+        window.redeemRewardCouponOnchain = mod.redeemRewardCouponOnchain;
         window.getWalletAddress = mod.getWalletAddressForUI || mod.getWalletAddress;
         window.settleExpiredChallenges = mod.settleExpiredChallenges;
         window.forfeitChallenge = mod.forfeitChallenge;

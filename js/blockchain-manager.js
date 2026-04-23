@@ -62,6 +62,7 @@ let claimChallengeFunction = null;
 let startChallengeFunction = null;
 let prefundWalletFunction = null;
 let ensureReferralCodeFunction = null;
+let redeemRewardCouponFunction = null;
 let _functionsInitialized = false;
 
 async function ensureFunctions() {
@@ -74,6 +75,7 @@ async function ensureFunctions() {
         startChallengeFunction = httpsCallable(functions, 'startChallenge');
         prefundWalletFunction = httpsCallable(functions, 'prefundWallet');
         ensureReferralCodeFunction = httpsCallable(functions, 'ensureReferralCode');
+        redeemRewardCouponFunction = httpsCallable(functions, 'redeemRewardCoupon');
         _functionsInitialized = true;
         console.log(`✅ Cloud Functions 초기화 완료 (${FIREBASE_REGION})`);
     } catch (e) {
@@ -114,9 +116,14 @@ const ACTIVE_CHAIN_PARAMS = {
 };
 
 const PENDING_CHALLENGE_START_KEY_PREFIX = 'habitschool:pending-challenge-start';
+const PENDING_REWARD_REDEMPTION_KEY_PREFIX = 'habitschool:pending-reward-redemption';
 
 function getPendingChallengeStartStorageKey(uid) {
     return `${PENDING_CHALLENGE_START_KEY_PREFIX}:${ACTIVE_CHAIN_KEY}:${uid}`;
+}
+
+function getPendingRewardRedemptionStorageKey(uid) {
+    return `${PENDING_REWARD_REDEMPTION_KEY_PREFIX}:${ACTIVE_CHAIN_KEY}:${uid}`;
 }
 
 function readPendingChallengeStart(uid) {
@@ -154,6 +161,44 @@ function clearPendingChallengeStart(uid) {
         localStorage.removeItem(getPendingChallengeStartStorageKey(uid));
     } catch (error) {
         console.warn('⚠️ pending challenge start 삭제 실패:', error?.message || error);
+    }
+}
+
+function readPendingRewardRedemption(uid) {
+    if (!uid) return null;
+    try {
+        const raw = localStorage.getItem(getPendingRewardRedemptionStorageKey(uid));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (error) {
+        console.warn('⚠️ pending reward redemption 읽기 실패:', error?.message || error);
+        return null;
+    }
+}
+
+function writePendingRewardRedemption(uid, payload) {
+    if (!uid || !payload?.burnTxHash) return;
+    try {
+        localStorage.setItem(
+            getPendingRewardRedemptionStorageKey(uid),
+            JSON.stringify({
+                ...payload,
+                chainKey: ACTIVE_CHAIN_KEY,
+                savedAt: new Date().toISOString()
+            })
+        );
+    } catch (error) {
+        console.warn('⚠️ pending reward redemption 저장 실패:', error?.message || error);
+    }
+}
+
+function clearPendingRewardRedemption(uid) {
+    if (!uid) return;
+    try {
+        localStorage.removeItem(getPendingRewardRedemptionStorageKey(uid));
+    } catch (error) {
+        console.warn('⚠️ pending reward redemption 삭제 실패:', error?.message || error);
     }
 }
 
@@ -295,7 +340,8 @@ const ERC20_ABI = [
     'function approve(address spender, uint256 amount) external returns (bool)',
     'function allowance(address owner, address spender) view returns (uint256)',
     'function balanceOf(address owner) view returns (uint256)',
-    'function decimals() view returns (uint8)'
+    'function decimals() view returns (uint8)',
+    'function burn(uint256 amount) external'
 ];
 
 const LEGACY_HBT_STAKE_ABI = [
@@ -1761,6 +1807,149 @@ export function getWalletAddress() {
  * 온체인 HBT 잔액 조회 (Cloud Function 경유)
  * @returns {object} { balance, balanceFormatted, walletAddress }
  */
+export async function redeemRewardCouponOnchain({
+    sku = '',
+    hbtCost = 0,
+    recipientPhone = '',
+    quoteVersion = '',
+    quoteSource = '',
+    quotedHbtCost = 0,
+    deliveryMode = 'app_vault',
+    fallbackPolicy = 'manual_resend'
+} = {}) {
+    if (!checkRateLimit('redeemRewardCouponOnchain', 5000)) {
+        showToast('⏳ 쿠폰 교환을 처리 중입니다. 잠시 후 다시 시도해 주세요.');
+        return { success: false };
+    }
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        showToast('❌ 로그인이 필요합니다.');
+        return { success: false };
+    }
+
+    const normalizedSku = String(sku || '').trim();
+    const rewardCost = Number(hbtCost || 0);
+    const quotedCost = Number(quotedHbtCost || rewardCost || 0);
+    if (!normalizedSku) {
+        showToast('❌ 교환할 상품 정보를 찾지 못했어요.');
+        return { success: false };
+    }
+    if (!(rewardCost >= 2000)) {
+        showToast('❌ 2,000 HBT 이상 상품부터 교환할 수 있어요.');
+        return { success: false };
+    }
+
+    await ensureFunctions();
+    if (!redeemRewardCouponFunction) {
+        showToast('❌ 쿠폰 교환 모듈을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        return { success: false };
+    }
+
+    const retryPendingRedemption = async (pending) => {
+        if (!pending?.burnTxHash || pending.sku !== normalizedSku || Number(pending.hbtCost || 0) !== rewardCost) {
+            return null;
+        }
+        showToast('🎟️ 이전 소각 기록으로 쿠폰 발급을 다시 확인하고 있어요...');
+        const result = await redeemRewardCouponFunction({
+            sku: normalizedSku,
+            recipientPhone,
+            burnTxHash: pending.burnTxHash,
+            quoteVersion: pending.quoteVersion || quoteVersion,
+            quoteSource: pending.quoteSource || quoteSource,
+            quotedHbtCost: Number(pending.quotedHbtCost || quotedCost || rewardCost)
+        });
+        const data = result?.data || {};
+        if (data?.success !== false) {
+            clearPendingRewardRedemption(currentUser.uid);
+            await Promise.allSettled([
+                window.updateAssetDisplay?.(true),
+                window.loadRewardMarketSnapshot?.(true)
+            ]);
+        }
+        return data;
+    };
+
+    const pendingRedemption = readPendingRewardRedemption(currentUser.uid);
+    if (pendingRedemption) {
+        try {
+            const retryResult = await retryPendingRedemption(pendingRedemption);
+            if (retryResult) return retryResult;
+        } catch (retryError) {
+            console.warn('pending reward redemption retry failed:', retryError?.message || retryError);
+        }
+    }
+
+    const connectedWallet = await getConnectedWallet();
+    if (!connectedWallet) {
+        showToast('❌ 지갑이 아직 준비되지 않았어요. 새로고침 후 다시 시도해 주세요.');
+        return { success: false };
+    }
+
+    const erc20Contract = getErc20Contract(connectedWallet.signer);
+    const rawAmount = ethers.utils.parseUnits(String(rewardCost), HBT_TOKEN.decimals);
+    const onchainBalance = await erc20Contract.balanceOf(connectedWallet.address);
+    if (onchainBalance.lt(rawAmount)) {
+        const displayBalance = parseFloat(ethers.utils.formatUnits(onchainBalance, HBT_TOKEN.decimals));
+        showToast(`❌ 온체인 HBT가 부족합니다.\n보유 ${displayBalance} HBT / 필요 ${rewardCost} HBT`);
+        return { success: false };
+    }
+
+    const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
+    const minGas = ethers.utils.parseEther('0.001');
+    if (ethBalance.lt(minGas) && prefundWalletFunction) {
+        showToast(`⚡ 가스(${ACTIVE_GAS_TOKEN})가 부족해 자동 충전을 시도할게요...`);
+        try {
+            await prefundWalletFunction();
+            await new Promise((resolve) => setTimeout(resolve, 4000));
+        } catch (error) {
+            console.warn('reward redemption prefund failed:', error?.message || error);
+        }
+    }
+
+    try {
+        showToast(`🔥 ${rewardCost} HBT 소각 중...`);
+        const burnTx = await erc20Contract.burn(rawAmount);
+        const burnReceipt = await burnTx.wait();
+        const burnTxHash = burnReceipt?.transactionHash || burnReceipt?.hash || '';
+
+        writePendingRewardRedemption(currentUser.uid, {
+            sku: normalizedSku,
+            hbtCost: rewardCost,
+            burnTxHash,
+            quoteVersion,
+            quoteSource,
+            quotedHbtCost: quotedCost,
+            deliveryMode,
+            fallbackPolicy
+        });
+
+        showToast('🎟️ 쿠폰 발급 요청 중...');
+        const result = await redeemRewardCouponFunction({
+            sku: normalizedSku,
+            recipientPhone,
+            burnTxHash,
+            quoteVersion,
+            quoteSource,
+            quotedHbtCost: quotedCost
+        });
+        const data = result?.data || {};
+
+        clearPendingRewardRedemption(currentUser.uid);
+        await Promise.allSettled([
+            window.updateAssetDisplay?.(true),
+            window.loadRewardMarketSnapshot?.(true)
+        ]);
+
+        showToast('✅ HBT 소각과 쿠폰 발급 요청이 완료됐어요.');
+        return data;
+    } catch (error) {
+        console.error('reward coupon onchain redemption failed:', error?.code, error?.message, error);
+        showToast(error?.message || '❌ 쿠폰 교환 중 문제가 생겼어요.');
+        return { success: false, message: error?.message || 'reward_coupon_onchain_failed' };
+    }
+}
+
 export async function fetchOnchainBalance() {
     await ensureFunctions();
     const currentUser = auth.currentUser;

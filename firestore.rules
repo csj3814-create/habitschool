@@ -256,6 +256,39 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // ===== Reward Market Catalog =====
+    match /reward_catalog/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ===== Reward Market Redemptions =====
+    match /reward_redemptions/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ===== Reward Reserve Ledger =====
+    match /reward_reserve_ledger/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reward_reserve_metrics/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reward_market_pricing/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /reward_market_feeds/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // ===== Mining Rate History Collection =====
     match /mining_rate_history/{docId} {
       allow read: if isAdmin();
