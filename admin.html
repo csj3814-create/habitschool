@@ -388,8 +388,8 @@
     <!-- Tab 4: 신고 관리 -->
     <div id="tab-reward-market" class="tab-panel">
         <div class="cards">
-            <div class="card"><div class="lbl">가격 모드</div><div class="val" id="rm-pricing-mode">-</div></div>
-            <div class="card"><div class="lbl">현재 기준가</div><div class="val" id="rm-price-value">-</div></div>
+            <div class="card"><div class="lbl">교환 정책</div><div class="val" id="rm-pricing-mode">-</div></div>
+            <div class="card"><div class="lbl">현재 교환가</div><div class="val" id="rm-price-value">-</div></div>
             <div class="card danger"><div class="lbl">발급 대기</div><div class="val" id="rm-pending-count">-</div></div>
             <div class="card danger"><div class="lbl">수동 확인</div><div class="val" id="rm-manual-count">-</div></div>
             <div class="card green"><div class="lbl">누적 발급</div><div class="val" id="rm-issued-count">-</div></div>
@@ -433,7 +433,7 @@
                         <th>상태</th>
                         <th>회원</th>
                         <th>상품</th>
-                        <th>교환가</th>
+                        <th>차감 포인트</th>
                         <th>쿠폰/PIN</th>
                         <th>운영</th>
                     </tr>
@@ -1696,6 +1696,8 @@
         const issuedAt = toJsDate(data.issuedAt);
         const userId = data.userId || '';
         const userName = data.userLabel || rewardMarketUserNames[userId] || userId.slice(0, 8) || '-';
+        const settlementAsset = String(data.settlementAsset || (data.burnExplorerUrl ? 'hbt' : 'points')).trim().toLowerCase() === 'hbt' ? 'hbt' : 'points';
+        const pointCost = Number(data.pointCost || data.hbtCost || 0) || 0;
 
         return {
             id: docSnap.id,
@@ -1707,7 +1709,9 @@
             status: data.status || '',
             brandName: data.brandName || '-',
             displayName: data.displayName || data.sku || '-',
-            hbtCost: Number(data.hbtCost || 0) || 0,
+            settlementAsset,
+            pointCost,
+            hbtCost: Number(data.hbtCost || pointCost) || 0,
             faceValueKrw: Number(data.faceValueKrw || 0) || 0,
             pricingMode: data.pricingMode || '',
             quoteVersion: data.quoteVersion || '',
@@ -1723,10 +1727,8 @@
     }
 
     function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, feed = {}, counts = {} }) {
-        document.getElementById('rm-pricing-mode').textContent = rewardMarketModeLabel(pricing.pricingMode || '');
-        document.getElementById('rm-price-value').textContent = pricing.finalKrwPerHbt
-            ? `1 HBT = ${formatAdminNumber(pricing.finalKrwPerHbt, 4)}원`
-            : '-';
+        document.getElementById('rm-pricing-mode').textContent = '포인트 정액가';
+        document.getElementById('rm-price-value').textContent = '1P = 1원';
         document.getElementById('rm-pending-count').textContent = (counts.pending || 0).toLocaleString('ko-KR');
         document.getElementById('rm-manual-count').textContent = (counts.manual || 0).toLocaleString('ko-KR');
         document.getElementById('rm-issued-count').textContent = (counts.issued || 0).toLocaleString('ko-KR');
@@ -1735,13 +1737,12 @@
         document.getElementById('rm-ops-budget').textContent = formatRewardMoney(reserve.operationsBudgetKrw || 0);
 
         document.getElementById('reward-market-policy').innerHTML = [
-            ['가격 모드', rewardMarketModeLabel(pricing.pricingMode || '')],
-            ['현재 기준가', pricing.finalKrwPerHbt ? `1 HBT = ${formatAdminNumber(pricing.finalKrwPerHbt, 4)}원` : '-'],
-            ['Quote 상태', pricing.quoteState || '-'],
-            ['Quote 버전', pricing.quoteVersion || '-'],
-            ['기준 시각', pricing.quotedAt ? formatAdminDateTime(pricing.quotedAt) : '-'],
-            ['다음 갱신', pricing.nextRefreshAt ? formatAdminDateTime(pricing.nextRefreshAt) : '-'],
-            ['교환 정책', '앱 보관함 노출 + 관리자 수동 재확인'],
+            ['교환 정책', '포인트 정액가'],
+            ['현재 교환가', '1P = 1원'],
+            ['쿠폰 전달', '앱 보관함 우선 노출'],
+            ['장애 대응', '관제탑 수동 재확인'],
+            ['HBT 시스템', '자산 탭에서 별도 유지'],
+            ['비즈머니 최소 기준', formatRewardMoney(reserve.minBizmoneyKrw || pricing.minBizmoneyKrw || 0)],
         ].map(([label, value]) => `
             <div class="reward-admin-row">
                 <span>${escapeHtml(label)}</span>
@@ -1753,10 +1754,10 @@
             ['누적 마진', formatRewardMoney(reserve.totalMarginKrw || 0)],
             ['비즈머니 상태', reserve.bizmoneyStatus || '-'],
             ['비즈머니 확인', reserve.bizmoneyCheckedAt ? formatAdminDateTime(reserve.bizmoneyCheckedAt) : '-'],
-            ['HBT/USDT 7일 TWAP', pricing.hbtUsdtTwap7d ? formatAdminNumber(pricing.hbtUsdtTwap7d, 8) : '-'],
-            ['USDT/KRW', pricing.usdtKrw ? formatAdminNumber(pricing.usdtKrw, 2) : '-'],
-            ['피드 소스', pricing.feedSource || feed.source || '-'],
-            ['풀 주소', feed.poolAddress || '-'],
+            ['정산 자산', '포인트'],
+            ['쿠폰 전달', '앱 보관함 / PIN'],
+            ['피드 소스', pricing.feedSource || feed.source || 'point_fixed_internal'],
+            ['HBT 시장 연동', '현재 비활성'],
         ].map(([label, value]) => `
             <div class="reward-admin-row">
                 <span>${escapeHtml(label)}</span>
@@ -1770,7 +1771,7 @@
         const couponLink = row.couponImgUrl
             ? `<a class="btn-view" href="${escapeHtml(row.couponImgUrl)}" target="_blank" rel="noopener">쿠폰</a>`
             : '';
-        const txLink = row.burnExplorerUrl
+        const txLink = row.settlementAsset === 'hbt' && row.burnExplorerUrl
             ? `<a class="btn-view" href="${escapeHtml(row.burnExplorerUrl)}" target="_blank" rel="noopener">Tx</a>`
             : '';
         return `
@@ -1806,7 +1807,9 @@
             return;
         }
 
-        tbody.innerHTML = rows.map((row) => `
+        tbody.innerHTML = rows.map((row) => {
+            const policyLabel = row.settlementAsset === 'hbt' ? rewardMarketModeLabel(row.pricingMode) : '포인트 정액가';
+            return `
             <tr>
                 <td>
                     <div>${escapeHtml(row.createdLabel)}</div>
@@ -1822,11 +1825,11 @@
                 </td>
                 <td>
                     <div style="font-weight:700;">${escapeHtml(row.brandName)} · ${escapeHtml(row.displayName)}</div>
-                    <div class="reward-admin-muted">${escapeHtml(rewardMarketModeLabel(row.pricingMode))}</div>
+                    <div class="reward-admin-muted">${escapeHtml(policyLabel)}</div>
                     <div class="reward-admin-code">${escapeHtml(row.quoteVersion || '-')}</div>
                 </td>
                 <td>
-                    <div>${formatAdminNumber(row.hbtCost || 0)} HBT</div>
+                    <div>${formatAdminNumber(row.pointCost || 0)}P</div>
                     <div class="reward-admin-muted">${formatRewardMoney(row.faceValueKrw || 0)}</div>
                 </td>
                 <td>
@@ -1836,7 +1839,8 @@
                 </td>
                 <td>${buildRewardMarketAdminActions(row)}</td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
     };
 
     window.setRewardMarketFilter = function(filter) {

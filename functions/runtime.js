@@ -1679,7 +1679,8 @@ exports.getRewardMarketSnapshot = onCall(
             const snapshot = await buildRewardMarketSnapshot({
                 db,
                 uid,
-                config
+                config,
+                userData: userSnap.data() || {},
             });
 
             return {
@@ -1722,14 +1723,11 @@ exports.redeemRewardCoupon = onCall(
                 config,
                 sku: request.data?.sku,
                 recipientPhone: request.data?.recipientPhone,
-                burnTxHash: request.data?.burnTxHash,
-                explorerUrl: EXPLORER_URL,
-                networkTag: ACTIVE_CHAIN.networkTag,
                 quoteVersion: request.data?.quoteVersion,
                 quoteSource: request.data?.quoteSource,
-                quotedHbtCost: request.data?.quotedHbtCost,
-                verifyBurnTx: ({ burnTxHash, userData, expectedHbtCost, sku }) =>
-                    verifyRewardBurnTx({ burnTxHash, userData, expectedHbtCost, sku })
+                quotedPointCost: request.data?.quotedPointCost,
+                clientRequestId: request.data?.clientRequestId,
+                authPhoneNumber: request.auth.token?.phone_number,
             });
 
             return {

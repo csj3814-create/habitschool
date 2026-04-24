@@ -60,6 +60,86 @@
     margin-bottom: 14px;
 }
 
+.reward-market-phone-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 14px;
+    border-radius: 14px;
+    border: 1px solid #f2dec6;
+    background: #fffdf8;
+}
+
+.reward-market-phone-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #5d3b14;
+}
+
+.reward-market-phone-copy {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #6c5436;
+}
+
+.reward-market-phone-form {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.reward-market-phone-input {
+    flex: 1 1 180px;
+    min-width: 0;
+    border-radius: 12px;
+    border: 1px solid #dfc39d;
+    background: #ffffff;
+    padding: 11px 12px;
+    font-size: 14px;
+    color: #4a3118;
+}
+
+.reward-market-phone-input:focus {
+    outline: none;
+    border-color: #ff9a33;
+    box-shadow: 0 0 0 3px rgba(255, 154, 51, 0.16);
+}
+
+.reward-market-phone-save {
+    border: none;
+    border-radius: 12px;
+    padding: 11px 16px;
+    background: linear-gradient(135deg, #ffb347 0%, #ff8a00 100%);
+    color: #4a2b07;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.reward-market-phone-save:disabled {
+    background: #e8ddd1;
+    color: #9e8d7a;
+    cursor: default;
+}
+
+.reward-market-phone-status {
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.reward-market-phone-status.muted {
+    color: #856e57;
+}
+
+.reward-market-phone-status.ok {
+    color: #2f6a3f;
+}
+
+.reward-market-phone-status.warning {
+    color: #b04f40;
+}
+
 .reward-market-chip {
     display: inline-flex;
     align-items: center;
@@ -303,5 +383,13 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 4px;
+    }
+
+    .reward-market-phone-form {
+        flex-direction: column;
+    }
+
+    .reward-market-phone-save {
+        width: 100%;
     }
 }

@@ -109,6 +109,14 @@ service cloud.firestore {
       return !('programPreferences' in request.resource.data)
           || isValidProgramPreferences(request.resource.data.programPreferences);
     }
+
+    function isValidRewardRecipientPhone() {
+      return !('rewardRecipientPhone' in request.resource.data)
+          || (
+            request.resource.data.rewardRecipientPhone is string
+            && request.resource.data.rewardRecipientPhone.matches('^$|^0[0-9]{9,10}$')
+          );
+    }
     
     // 헬퍼 함수: 사용자 필드 화이트리스트
     function isAllowedUserField() {
@@ -123,7 +131,7 @@ service cloud.firestore {
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
                     'missionBadges', 'selectedMissions', 'missionLevelUpDate',
                     'currentStreak', 'onboardingComplete', 'friends',
-                    'programPreferences',
+                    'programPreferences', 'rewardRecipientPhone',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
                     'chatbotConnectLastKakaoDisplayName']);
@@ -138,7 +146,8 @@ service cloud.firestore {
         && (!request.resource.data.diff(resource.data).affectedKeys()
             .hasAny(['hbtBalance', 'totalHbtEarned', 'coins']))
         && isAllowedUserField()
-        && isValidUserProgramPreferences();
+        && isValidUserProgramPreferences()
+        && isValidRewardRecipientPhone();
       allow delete: if isOwner(userId) || isAdmin();
       // ===== InBody History Subcollection =====
       match /inbodyHistory/{recordId} {

@@ -4,6 +4,38 @@ import rewardMarketModule from '../functions/reward-market.js';
 const { __test } = rewardMarketModule;
 
 describe('reward market pricing helpers', () => {
+    it('builds Giftishow live defaults and flags missing live config', () => {
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://biz.example.com',
+        });
+
+        expect(config.mode).toBe('live');
+        expect(config.providerReady).toBe(false);
+        expect(config.missingProviderConfig).toEqual(expect.arrayContaining([
+            'GIFTISHOW_CUSTOM_AUTH_CODE',
+            'GIFTISHOW_CUSTOM_AUTH_TOKEN',
+            'GIFTISHOW_CALLBACK_NO',
+            'GIFTISHOW_USER_ID',
+        ]));
+        expect(config.orderBodyTemplate.api_code).toBe('0204');
+        expect(config.bizmoneyBodyTemplate.api_code).toBe('0301');
+    });
+
+    it('resolves reward recipient phone from request, user profile, and auth fallback', () => {
+        expect(__test.resolveRewardRecipientPhone({
+            requestedPhone: '010-2222-3333',
+            userData: { rewardRecipientPhone: '01099998888' },
+            authPhoneNumber: '+821055556666',
+        })).toBe('01022223333');
+
+        expect(__test.resolveRewardRecipientPhone({
+            requestedPhone: '',
+            userData: { rewardRecipientPhone: '' },
+            authPhoneNumber: '+821055556666',
+        })).toBe('01055556666');
+    });
+
     it('defaults to phase1 pricing mode unless phase2 is explicit', () => {
         expect(__test.normalizePricingMode('')).toBe('phase1_fixed_internal');
         expect(__test.normalizePricingMode('phase2_hybrid_band')).toBe('phase2_hybrid_band');
@@ -35,14 +67,14 @@ describe('reward market pricing helpers', () => {
         expect(pricing.quoteState).toBe('ready');
     });
 
-    it('quotes phase1 items at the internal fixed price', () => {
+    it('quotes phase1 items at the internal fixed point price', () => {
         const quoted = __test.quoteCatalogItem(
             {
                 sku: 'baemin-2000',
                 faceValueKrw: 2000,
                 purchasePriceKrw: 1900,
                 brandName: '배민',
-                displayName: '배민 2,000원',
+                displayName: '배민 2,000원권',
                 available: true,
             },
             {
@@ -57,7 +89,8 @@ describe('reward market pricing helpers', () => {
                 weeklyBandPct: 25,
             },
             {
-                minRedeemHbt: 2000,
+                settlementAsset: 'points',
+                minRedeemPoints: 2000,
                 pricingMode: 'phase1_fixed_internal',
                 deliveryMode: 'app_vault',
                 fallbackPolicy: 'manual_resend',
@@ -66,44 +99,64 @@ describe('reward market pricing helpers', () => {
             }
         );
 
+        expect(quoted.settlementAsset).toBe('points');
+        expect(quoted.pointCost).toBe(2000);
         expect(quoted.hbtCost).toBe(2000);
         expect(quoted.deliveryMode).toBe('app_vault');
         expect(quoted.fallbackPolicy).toBe('manual_resend');
     });
 
-    it('disables issuance when pricing is unavailable or bizmoney is below the floor', () => {
+    it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {
         const limits = __test.buildLimitSummary(
             {
-                dailyLimitHbt: 20000,
-                weeklyLimitHbt: 100000,
-                monthlyLimitHbt: 300000,
+                dailyLimitPoints: 20000,
+                weeklyLimitPoints: 100000,
+                monthlyLimitPoints: 300000,
             },
             {
-                dailyHbt: 0,
-                weeklyHbt: 0,
-                monthlyHbt: 0,
+                dailyPoints: 0,
+                weeklyPoints: 0,
+                monthlyPoints: 0,
                 dailyCount: 0,
                 weeklyCount: 0,
                 monthlyCount: 0,
             }
         );
 
-        const unavailablePricing = __test.buildIssuancePolicy({
+        const pointSettlement = __test.buildIssuancePolicy({
             config: {
                 mode: 'live',
                 minBizmoneyKrw: 30000,
+                settlementAsset: 'points',
+                providerReady: true,
             },
             pricing: { quoteState: 'unavailable' },
             reserve: {},
             limitSummary: limits,
             bizmoney: { balanceKrw: 50000 },
         });
-        expect(unavailablePricing.issuanceEnabled).toBe(false);
+        expect(pointSettlement.issuanceEnabled).toBe(true);
+
+        const hbtSettlement = __test.buildIssuancePolicy({
+            config: {
+                mode: 'live',
+                minBizmoneyKrw: 30000,
+                settlementAsset: 'hbt',
+                providerReady: true,
+            },
+            pricing: { quoteState: 'unavailable' },
+            reserve: {},
+            limitSummary: limits,
+            bizmoney: { balanceKrw: 50000 },
+        });
+        expect(hbtSettlement.issuanceEnabled).toBe(false);
 
         const lowBizmoney = __test.buildIssuancePolicy({
             config: {
                 mode: 'live',
                 minBizmoneyKrw: 30000,
+                settlementAsset: 'points',
+                providerReady: true,
             },
             pricing: { quoteState: 'ready' },
             reserve: {},

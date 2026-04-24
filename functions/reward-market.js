@@ -1,11 +1,13 @@
 const crypto = require("crypto");
 
-const REWARD_MARKET_MIN_REDEMPTION_HBT = 2000;
+const REWARD_MARKET_MIN_REDEMPTION_POINTS = 2000;
+const REWARD_MARKET_MIN_REDEMPTION_HBT = REWARD_MARKET_MIN_REDEMPTION_POINTS;
 const REWARD_RESERVE_DOC_ID = "main";
 const REWARD_PRICING_DOC_ID = "main";
 const REWARD_MARKET_FEED_DOC_ID = "main";
 
 const DEFAULT_REWARD_MARKET_MODE = "mock";
+const DEFAULT_SETTLEMENT_ASSET = "points";
 const DEFAULT_PRICING_MODE = "phase1_fixed_internal";
 const DEFAULT_DELIVERY_MODE = "app_vault";
 const DEFAULT_FALLBACK_POLICY = "manual_resend";
@@ -13,12 +15,25 @@ const DEFAULT_QUOTE_REFRESH_HOURS = 24;
 const DEFAULT_DAILY_BAND_PCT = 10;
 const DEFAULT_WEEKLY_BAND_PCT = 25;
 const DEFAULT_FIXED_INTERNAL_KRW_PER_HBT = 1;
-const DEFAULT_DAILY_LIMIT_HBT = 20000;
-const DEFAULT_WEEKLY_LIMIT_HBT = 100000;
-const DEFAULT_MONTHLY_LIMIT_HBT = 300000;
+const DEFAULT_DAILY_LIMIT_POINTS = 20000;
+const DEFAULT_WEEKLY_LIMIT_POINTS = 100000;
+const DEFAULT_MONTHLY_LIMIT_POINTS = 300000;
+const DEFAULT_DAILY_LIMIT_HBT = DEFAULT_DAILY_LIMIT_POINTS;
+const DEFAULT_WEEKLY_LIMIT_HBT = DEFAULT_WEEKLY_LIMIT_POINTS;
+const DEFAULT_MONTHLY_LIMIT_HBT = DEFAULT_MONTHLY_LIMIT_POINTS;
 const DEFAULT_MIN_BIZMONEY_KRW = 30000;
 const DEFAULT_GIFTISHOW_TIMEOUT_MS = 15000;
 const DEFAULT_PHASE1_ENDS_AT = "2026-05-23T00:00:00+09:00";
+const DEFAULT_GIFTISHOW_DEV_YN = "N";
+const DEFAULT_GIFTISHOW_CATALOG_START = 1;
+const DEFAULT_GIFTISHOW_CATALOG_SIZE = 50;
+const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
+    ["baseUrl", "GIFTISHOW_API_BASE_URL"],
+    ["customAuthCode", "GIFTISHOW_CUSTOM_AUTH_CODE"],
+    ["customAuthToken", "GIFTISHOW_CUSTOM_AUTH_TOKEN"],
+    ["callbackNo", "GIFTISHOW_CALLBACK_NO"],
+    ["providerUserId", "GIFTISHOW_USER_ID"],
+]);
 
 const DEFAULT_REWARD_CATALOG = Object.freeze([
     {
@@ -126,6 +141,17 @@ function normalizeRecipientPhone(rawPhone = "") {
     return digits;
 }
 
+function isValidRecipientPhone(rawPhone = "") {
+    return /^0\d{9,10}$/.test(normalizeRecipientPhone(rawPhone));
+}
+
+function maskRecipientPhone(rawPhone = "") {
+    const normalized = normalizeRecipientPhone(rawPhone);
+    if (!normalized) return "";
+    if (normalized.length <= 7) return normalized;
+    return `${normalized.slice(0, 3)}-${"*".repeat(Math.max(normalized.length - 7, 3))}-${normalized.slice(-4)}`;
+}
+
 function safeParseJsonObject(raw = "") {
     if (!String(raw || "").trim()) return {};
     try {
@@ -136,10 +162,126 @@ function safeParseJsonObject(raw = "") {
     }
 }
 
+function resolveTemplateObject(rawTemplate = "", fallbackTemplate = {}) {
+    const parsed = safeParseJsonObject(rawTemplate);
+    return parsed && Object.keys(parsed).length > 0
+        ? parsed
+        : { ...fallbackTemplate };
+}
+
+function resolveGiftishowDeliveryCode(deliveryMethod = "") {
+    const normalized = String(deliveryMethod || "").trim().toLowerCase();
+    if (["image", "barcode", "img"].includes(normalized)) return "I";
+    if (["mms", "sms", "message"].includes(normalized)) return "N";
+    return "Y";
+}
+
+function buildGiftishowGoodsTemplate() {
+    return {
+        api_code: "0101",
+        custom_auth_code: "{{giftishowCustomAuthCode}}",
+        custom_auth_token: "{{giftishowCustomAuthToken}}",
+        dev_yn: "{{giftishowDevYn}}",
+        start: "{{catalogStart}}",
+        size: "{{catalogSize}}",
+    };
+}
+
+function buildGiftishowOrderTemplate() {
+    return {
+        api_code: "0204",
+        custom_auth_code: "{{giftishowCustomAuthCode}}",
+        custom_auth_token: "{{giftishowCustomAuthToken}}",
+        dev_yn: "{{giftishowDevYn}}",
+        goods_code: "{{goodsCode}}",
+        mms_msg: "{{giftishowMmsMsg}}",
+        mms_title: "{{giftishowMmsTitle}}",
+        callback_no: "{{giftishowCallbackNo}}",
+        phone_no: "{{recipientPhone}}",
+        tr_id: "{{trId}}",
+        user_id: "{{giftishowUserId}}",
+        gubun: "{{giftishowDeliveryCode}}",
+        template_id: "{{giftishowTemplateId}}",
+        banner_id: "{{giftishowBannerId}}",
+    };
+}
+
+function buildGiftishowCouponStatusTemplate() {
+    return {
+        api_code: "0201",
+        custom_auth_code: "{{giftishowCustomAuthCode}}",
+        custom_auth_token: "{{giftishowCustomAuthToken}}",
+        dev_yn: "{{giftishowDevYn}}",
+        tr_id: "{{trId}}",
+    };
+}
+
+function buildGiftishowResendTemplate() {
+    return {
+        api_code: "0203",
+        custom_auth_code: "{{giftishowCustomAuthCode}}",
+        custom_auth_token: "{{giftishowCustomAuthToken}}",
+        dev_yn: "{{giftishowDevYn}}",
+        tr_id: "{{trId}}",
+        sms_flag: "{{giftishowSmsFlag}}",
+    };
+}
+
+function buildGiftishowBizmoneyTemplate() {
+    return {
+        api_code: "0301",
+        custom_auth_code: "{{giftishowCustomAuthCode}}",
+        custom_auth_token: "{{giftishowCustomAuthToken}}",
+        dev_yn: "{{giftishowDevYn}}",
+    };
+}
+
+function resolveRewardRecipientPhone({
+    requestedPhone = "",
+    userData = {},
+    authPhoneNumber = "",
+}) {
+    const candidates = [
+        requestedPhone,
+        userData.rewardRecipientPhone,
+        userData.phoneNumber,
+        userData.phone,
+        authPhoneNumber,
+    ];
+    for (const candidate of candidates) {
+        const normalized = normalizeRecipientPhone(candidate);
+        if (isValidRecipientPhone(normalized)) {
+            return normalized;
+        }
+    }
+    return "";
+}
+
 function normalizePricingMode(value = "") {
     return String(value || DEFAULT_PRICING_MODE).trim().toLowerCase() === "phase2_hybrid_band"
         ? "phase2_hybrid_band"
         : "phase1_fixed_internal";
+}
+
+function resolveSettlementAsset(value = "") {
+    return String(value || DEFAULT_SETTLEMENT_ASSET).trim().toLowerCase() === "hbt"
+        ? "hbt"
+        : "points";
+}
+
+function normalizeClientRequestId(value = "") {
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80);
+}
+
+function buildRedemptionRequestDocId(uid = "", clientRequestId = "") {
+    const normalizedUid = String(uid || "").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "-");
+    const normalizedRequestId = normalizeClientRequestId(clientRequestId);
+    return `req_${normalizedUid}_${normalizedRequestId}`.slice(0, 140);
 }
 
 function getKstDateParts(date = new Date()) {
@@ -230,6 +372,26 @@ function clampNumber(value, min, max) {
 function roundUpHbt(value) {
     const numeric = Math.ceil(parseNumber(value, 0));
     return Math.max(numeric, REWARD_MARKET_MIN_REDEMPTION_HBT);
+}
+
+function resolveRewardMarketPointCost(item = {}, publishedPricing = {}, config = {}) {
+    if ((config.settlementAsset || DEFAULT_SETTLEMENT_ASSET) === "hbt") {
+        const krwPerHbt = Math.max(parseNumber(publishedPricing.finalKrwPerHbt, 0), 0);
+        if (publishedPricing.quoteState === "ready" && krwPerHbt > 0) {
+            return roundUpHbt(item.faceValueKrw / krwPerHbt);
+        }
+    }
+    return Math.max(
+        parseNumber(item.faceValueKrw, 0),
+        config.minRedeemPoints || REWARD_MARKET_MIN_REDEMPTION_POINTS
+    );
+}
+
+function getStoredRewardPointCost(data = {}) {
+    return Math.max(
+        parseNumber(data.pointCost, 0),
+        parseNumber(data.hbtCost, 0)
+    );
 }
 
 function computeReserveBreakdown(product = {}) {
@@ -384,14 +546,30 @@ function getRewardMarketConfig(env = process.env) {
     const configuredMode = String(env.REWARD_MARKET_MODE || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase();
     const mode = configuredMode === "live" ? "live" : "mock";
     const pricingMode = normalizePricingMode(env.REWARD_MARKET_PRICING_MODE || env.REWARD_MARKET_PHASE_MODE);
+    const settlementAsset = resolveSettlementAsset(env.REWARD_MARKET_SETTLEMENT_ASSET);
+    const minRedeemPoints = Math.max(
+        parseNumber(env.REWARD_MARKET_MIN_REDEEM_POINTS, env.REWARD_MARKET_MIN_REDEEM_HBT),
+        REWARD_MARKET_MIN_REDEMPTION_POINTS
+    );
+    const dailyLimitPoints = Math.max(
+        parseNumber(env.REWARD_MARKET_DAILY_LIMIT_POINTS, env.REWARD_MARKET_DAILY_LIMIT_HBT),
+        REWARD_MARKET_MIN_REDEMPTION_POINTS
+    );
+    const weeklyLimitPoints = Math.max(
+        parseNumber(env.REWARD_MARKET_WEEKLY_LIMIT_POINTS, env.REWARD_MARKET_WEEKLY_LIMIT_HBT),
+        REWARD_MARKET_MIN_REDEMPTION_POINTS
+    );
+    const monthlyLimitPoints = Math.max(
+        parseNumber(env.REWARD_MARKET_MONTHLY_LIMIT_POINTS, env.REWARD_MARKET_MONTHLY_LIMIT_HBT),
+        REWARD_MARKET_MIN_REDEMPTION_POINTS
+    );
 
-    return {
+    const config = {
         mode,
+        settlementAsset,
         pricingMode,
-        minRedeemHbt: Math.max(
-            parseNumber(env.REWARD_MARKET_MIN_REDEEM_HBT, REWARD_MARKET_MIN_REDEMPTION_HBT),
-            REWARD_MARKET_MIN_REDEMPTION_HBT
-        ),
+        minRedeemPoints,
+        minRedeemHbt: minRedeemPoints,
         reserveDocId: String(env.REWARD_MARKET_RESERVE_DOC_ID || REWARD_RESERVE_DOC_ID).trim() || REWARD_RESERVE_DOC_ID,
         pricingDocId: String(env.REWARD_MARKET_PRICING_DOC_ID || REWARD_PRICING_DOC_ID).trim() || REWARD_PRICING_DOC_ID,
         feedDocId: String(env.REWARD_MARKET_FEED_DOC_ID || REWARD_MARKET_FEED_DOC_ID).trim() || REWARD_MARKET_FEED_DOC_ID,
@@ -404,28 +582,58 @@ function getRewardMarketConfig(env = process.env) {
             0.000001
         ),
         quoteRefreshHours: Math.max(parseNumber(env.REWARD_MARKET_QUOTE_REFRESH_HOURS, DEFAULT_QUOTE_REFRESH_HOURS), 1),
-        dailyLimitHbt: Math.max(parseNumber(env.REWARD_MARKET_DAILY_LIMIT_HBT, DEFAULT_DAILY_LIMIT_HBT), REWARD_MARKET_MIN_REDEMPTION_HBT),
-        weeklyLimitHbt: Math.max(parseNumber(env.REWARD_MARKET_WEEKLY_LIMIT_HBT, DEFAULT_WEEKLY_LIMIT_HBT), REWARD_MARKET_MIN_REDEMPTION_HBT),
-        monthlyLimitHbt: Math.max(parseNumber(env.REWARD_MARKET_MONTHLY_LIMIT_HBT, DEFAULT_MONTHLY_LIMIT_HBT), REWARD_MARKET_MIN_REDEMPTION_HBT),
+        dailyLimitPoints,
+        weeklyLimitPoints,
+        monthlyLimitPoints,
+        dailyLimitHbt: dailyLimitPoints,
+        weeklyLimitHbt: weeklyLimitPoints,
+        monthlyLimitHbt: monthlyLimitPoints,
         minBizmoneyKrw: Math.max(parseNumber(env.REWARD_MARKET_MIN_BIZMONEY_KRW, DEFAULT_MIN_BIZMONEY_KRW), 0),
         phase1EndsAt: String(env.REWARD_MARKET_PHASE1_ENDS_AT || DEFAULT_PHASE1_ENDS_AT).trim() || DEFAULT_PHASE1_ENDS_AT,
 
         baseUrl: String(env.GIFTISHOW_API_BASE_URL || "").trim().replace(/\/+$/, ""),
+        customAuthCode: String(env.GIFTISHOW_CUSTOM_AUTH_CODE || "").trim(),
+        customAuthToken: String(env.GIFTISHOW_CUSTOM_AUTH_TOKEN || "").trim(),
+        devYn: String(env.GIFTISHOW_DEV_YN || DEFAULT_GIFTISHOW_DEV_YN).trim().toUpperCase() || DEFAULT_GIFTISHOW_DEV_YN,
+        callbackNo: String(env.GIFTISHOW_CALLBACK_NO || "").trim(),
+        providerUserId: String(env.GIFTISHOW_USER_ID || env.GIFTISHOW_USER || "").trim(),
+        templateId: String(env.GIFTISHOW_TEMPLATE_ID || env.GIFTISHOW_CARD_ID || "").trim(),
+        bannerId: String(env.GIFTISHOW_BANNER_ID || "").trim(),
+        defaultMmsTitle: String(env.GIFTISHOW_SEND_TITLE || "해빛 마켓 쿠폰").trim() || "해빛 마켓 쿠폰",
+        defaultMmsMessage: String(env.GIFTISHOW_SEND_MESSAGE || "해빛 마켓에서 발급된 쿠폰입니다. 앱 보관함에서 확인해 주세요.").trim()
+            || "해빛 마켓에서 발급된 쿠폰입니다. 앱 보관함에서 확인해 주세요.",
+        catalogStart: Math.max(parseNumber(env.GIFTISHOW_CATALOG_START, DEFAULT_GIFTISHOW_CATALOG_START), 1),
+        catalogSize: Math.max(parseNumber(env.GIFTISHOW_CATALOG_SIZE, DEFAULT_GIFTISHOW_CATALOG_SIZE), 1),
         goodsPath: String(env.GIFTISHOW_GOODS_PATH || "/goods").trim() || "/goods",
         goodsMethod: String(env.GIFTISHOW_GOODS_METHOD || "GET").trim().toUpperCase() || "GET",
-        goodsBodyTemplate: safeParseJsonObject(env.GIFTISHOW_GOODS_BODY_JSON || ""),
+        goodsBodyTemplate: resolveTemplateObject(
+            env.GIFTISHOW_GOODS_BODY_JSON || "",
+            buildGiftishowGoodsTemplate()
+        ),
         orderPath: String(env.GIFTISHOW_ORDER_PATH || "/order").trim() || "/order",
         orderMethod: String(env.GIFTISHOW_ORDER_METHOD || "POST").trim().toUpperCase() || "POST",
-        orderBodyTemplate: safeParseJsonObject(env.GIFTISHOW_ORDER_BODY_JSON || ""),
+        orderBodyTemplate: resolveTemplateObject(
+            env.GIFTISHOW_ORDER_BODY_JSON || "",
+            buildGiftishowOrderTemplate()
+        ),
         couponStatusPath: String(env.GIFTISHOW_COUPON_STATUS_PATH || "/coupons").trim() || "/coupons",
         couponStatusMethod: String(env.GIFTISHOW_COUPON_STATUS_METHOD || "POST").trim().toUpperCase() || "POST",
-        couponStatusBodyTemplate: safeParseJsonObject(env.GIFTISHOW_COUPON_STATUS_BODY_JSON || ""),
+        couponStatusBodyTemplate: resolveTemplateObject(
+            env.GIFTISHOW_COUPON_STATUS_BODY_JSON || "",
+            buildGiftishowCouponStatusTemplate()
+        ),
         resendPath: String(env.GIFTISHOW_RESEND_PATH || "/resend").trim() || "/resend",
         resendMethod: String(env.GIFTISHOW_RESEND_METHOD || "POST").trim().toUpperCase() || "POST",
-        resendBodyTemplate: safeParseJsonObject(env.GIFTISHOW_RESEND_BODY_JSON || ""),
+        resendBodyTemplate: resolveTemplateObject(
+            env.GIFTISHOW_RESEND_BODY_JSON || "",
+            buildGiftishowResendTemplate()
+        ),
         bizmoneyPath: String(env.GIFTISHOW_BIZMONEY_PATH || "/bizmoney").trim() || "/bizmoney",
         bizmoneyMethod: String(env.GIFTISHOW_BIZMONEY_METHOD || "POST").trim().toUpperCase() || "POST",
-        bizmoneyBodyTemplate: safeParseJsonObject(env.GIFTISHOW_BIZMONEY_BODY_JSON || ""),
+        bizmoneyBodyTemplate: resolveTemplateObject(
+            env.GIFTISHOW_BIZMONEY_BODY_JSON || "",
+            buildGiftishowBizmoneyTemplate()
+        ),
         headers: safeParseJsonObject(env.GIFTISHOW_API_HEADERS_JSON || ""),
         catalogLiveEnabled: String(env.GIFTISHOW_CATALOG_LIVE || "true").trim().toLowerCase() !== "false",
         timeoutMs: Math.max(parseNumber(env.GIFTISHOW_API_TIMEOUT_MS, DEFAULT_GIFTISHOW_TIMEOUT_MS), 1000),
@@ -435,6 +643,22 @@ function getRewardMarketConfig(env = process.env) {
         hbtUsdtTwap7d: parseNumber(env.REWARD_MARKET_HBT_USDT_TWAP_7D, 0),
         usdtKrw: parseNumber(env.REWARD_MARKET_USDT_KRW, 0),
         feedSource: String(env.REWARD_MARKET_FEED_SOURCE || "firestore").trim() || "firestore",
+    };
+
+    const missingProviderConfig = GIFTISHOW_REQUIRED_ENV_KEYS
+        .filter(([configKey]) => !String(config[configKey] || "").trim())
+        .map(([, envKey]) => envKey);
+    const providerReady = config.mode !== "live" || missingProviderConfig.length === 0;
+
+    return {
+        ...config,
+        providerReady,
+        requiresRecipientPhone: config.mode === "live",
+        manualResendAvailable: config.fallbackPolicy === "manual_resend",
+        missingProviderConfig,
+        providerReadyMessage: providerReady
+            ? ""
+            : `Giftishow 연동 설정이 비어 있어요: ${missingProviderConfig.join(", ")}`,
     };
 }
 
@@ -454,7 +678,14 @@ function buildRewardReserveSummary(data = {}) {
 }
 
 async function callGiftishowApi(config, endpointPath, options = {}) {
-    const url = `${config.baseUrl}${endpointPath}`;
+    const method = String(options.method || "GET").trim().toUpperCase() || "GET";
+    const query = options.query && typeof options.query === "object" ? options.query : {};
+    const urlObject = new URL(endpointPath, `${config.baseUrl}/`);
+    Object.entries(query).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        urlObject.searchParams.set(key, String(value));
+    });
+    const url = urlObject.toString();
     const headers = {
         "Content-Type": "application/json",
         ...config.headers,
@@ -465,9 +696,11 @@ async function callGiftishowApi(config, endpointPath, options = {}) {
 
     try {
         const response = await fetch(url, {
-            method: options.method || "GET",
+            method,
             headers,
-            body: options.body ? JSON.stringify(options.body) : undefined,
+            body: ["GET", "HEAD"].includes(method) || !options.body
+                ? undefined
+                : JSON.stringify(options.body),
             signal: controller.signal,
         });
 
@@ -503,11 +736,17 @@ async function callGiftishowApi(config, endpointPath, options = {}) {
 async function loadGiftishowCatalog(config) {
     if (config.mode !== "live" || !config.baseUrl || !config.catalogLiveEnabled) return [];
 
+    const requestPayload = buildRequestPayload(config.goodsBodyTemplate, {}, {
+        giftishowCustomAuthCode: config.customAuthCode,
+        giftishowCustomAuthToken: config.customAuthToken,
+        giftishowDevYn: config.devYn,
+        catalogStart: config.catalogStart,
+        catalogSize: config.catalogSize,
+    });
     const payload = await callGiftishowApi(config, config.goodsPath, {
         method: config.goodsMethod,
-        body: config.goodsMethod === "GET"
-            ? undefined
-            : buildRequestPayload(config.goodsBodyTemplate, {}, {}),
+        query: config.goodsMethod === "GET" ? requestPayload : undefined,
+        body: config.goodsMethod === "GET" ? undefined : requestPayload,
     });
 
     return resolveCollectionItems(payload)
@@ -744,13 +983,13 @@ async function ensurePublishedPricing({ db, config, now = new Date() }) {
 
 function quoteCatalogItem(item = {}, publishedPricing = {}, config = {}) {
     const krwPerHbt = Math.max(parseNumber(publishedPricing.finalKrwPerHbt, 0), 0);
-    const quotedHbtCost = publishedPricing.quoteState === "ready" && krwPerHbt > 0
-        ? roundUpHbt(item.faceValueKrw / krwPerHbt)
-        : Math.max(item.faceValueKrw, config.minRedeemHbt || REWARD_MARKET_MIN_REDEMPTION_HBT);
+    const pointCost = resolveRewardMarketPointCost(item, publishedPricing, config);
 
     return {
         ...item,
-        hbtCost: quotedHbtCost,
+        settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+        pointCost,
+        hbtCost: pointCost,
         pricingMode: publishedPricing.pricingMode || config.pricingMode,
         quoteVersion: publishedPricing.quoteVersion || "",
         quoteSource: publishedPricing.quoteSource || "",
@@ -774,6 +1013,11 @@ async function loadRewardReserveSummary({ db, config }) {
 
 function serializeRedemptionDoc(docSnap) {
     const data = docSnap.data() || {};
+    const pointCost = getStoredRewardPointCost(data);
+    const settlementAsset = String(
+        data.settlementAsset
+        || (String(data.burnTxHash || "").trim() ? "hbt" : DEFAULT_SETTLEMENT_ASSET)
+    ).trim() || DEFAULT_SETTLEMENT_ASSET;
     return {
         id: docSnap.id,
         sku: String(data.sku || "").trim(),
@@ -782,7 +1026,9 @@ function serializeRedemptionDoc(docSnap) {
         category: String(data.category || "").trim(),
         provider: String(data.provider || "").trim(),
         providerGoodsId: String(data.providerGoodsId || "").trim(),
-        hbtCost: parseNumber(data.hbtCost, 0),
+        settlementAsset,
+        pointCost,
+        hbtCost: parseNumber(data.hbtCost, pointCost),
         faceValueKrw: parseNumber(data.faceValueKrw, 0),
         purchasePriceKrw: parseNumber(data.purchasePriceKrw, 0),
         marginKrw: parseNumber(data.marginKrw, 0),
@@ -808,6 +1054,7 @@ function serializeRedemptionDoc(docSnap) {
         issuedAt: toPlainDate(data.issuedAt, ""),
         updatedAt: toPlainDate(data.updatedAt, ""),
         recipientPhone: String(data.recipientPhone || "").trim(),
+        clientRequestId: String(data.clientRequestId || "").trim(),
         providerOrderId: String(data.providerOrderId || "").trim(),
         providerTrId: String(data.providerTrId || "").trim(),
         providerResponseCode: String(data.providerResponseCode || "").trim(),
@@ -846,19 +1093,19 @@ async function fetchBizmoneyBalance({ config, context = {} }) {
         return null;
     }
 
-    const body = config.bizmoneyMethod === "GET"
-        ? undefined
-        : buildRequestPayload(config.bizmoneyBodyTemplate, {}, context);
+    const requestPayload = buildRequestPayload(config.bizmoneyBodyTemplate, {}, context);
     const payload = await callGiftishowApi(config, config.bizmoneyPath, {
         method: config.bizmoneyMethod,
-        body,
+        query: config.bizmoneyMethod === "GET" ? requestPayload : undefined,
+        body: config.bizmoneyMethod === "GET" ? undefined : requestPayload,
     });
     const unwrapped = unwrapNestedResult(payload);
     const balance = Math.max(
         parseNumber(payload?.balance, 0),
         parseNumber(payload?.data?.balance, 0),
         parseNumber(unwrapped?.balance, 0),
-        parseNumber(unwrapped?.bizmoneyBalance, 0)
+        parseNumber(unwrapped?.bizmoneyBalance, 0),
+        parseNumber(unwrapped?.balanceAmt, 0)
     );
 
     return {
@@ -879,6 +1126,21 @@ async function syncBizmoneyMetrics({ db, config, now = new Date(), context = {} 
     const metricsRef = db.collection("reward_reserve_metrics").doc(config.reserveDocId);
     const metricsSnap = await metricsRef.get().catch(() => null);
     const existingMetrics = metricsSnap?.exists ? buildRewardReserveSummary(metricsSnap.data() || {}) : buildRewardReserveSummary();
+    if (!config.providerReady) {
+        await metricsRef.set({
+            bizmoneyCheckedAt: now,
+            bizmoneyStatus: "config_missing",
+            bizmoneyMissingConfig: config.missingProviderConfig,
+            updatedAt: now,
+        }, { merge: true });
+
+        return {
+            balanceKrw: existingMetrics.lastBizmoneyBalanceKrw,
+            checkedAt: now.toISOString(),
+            status: "config_missing",
+            missingConfig: [...config.missingProviderConfig],
+        };
+    }
     const checkedAtMs = toTimestampMillis(existingMetrics.bizmoneyCheckedAt);
     if (checkedAtMs && (now.getTime() - checkedAtMs) < (15 * 60 * 1000)) {
         return {
@@ -931,6 +1193,9 @@ async function loadIssuanceUsage({ db, now = new Date() }) {
 
     const activeStatuses = new Set(["issued", "pending_issue", "failed_manual_review", "failed"]);
     const usage = {
+        dailyPoints: 0,
+        weeklyPoints: 0,
+        monthlyPoints: 0,
         dailyHbt: 0,
         weeklyHbt: 0,
         monthlyHbt: 0,
@@ -947,17 +1212,20 @@ async function loadIssuanceUsage({ db, now = new Date() }) {
         const createdAtMs = toTimestampMillis(data.createdAt);
         if (!createdAtMs) return;
 
-        const hbtCost = Math.max(parseNumber(data.hbtCost, 0), 0);
+        const pointCost = getStoredRewardPointCost(data);
         if (createdAtMs >= monthStart.getTime()) {
-            usage.monthlyHbt += hbtCost;
+            usage.monthlyPoints += pointCost;
+            usage.monthlyHbt += pointCost;
             usage.monthlyCount += 1;
         }
         if (createdAtMs >= weekStart.getTime()) {
-            usage.weeklyHbt += hbtCost;
+            usage.weeklyPoints += pointCost;
+            usage.weeklyHbt += pointCost;
             usage.weeklyCount += 1;
         }
         if (createdAtMs >= dayStart.getTime()) {
-            usage.dailyHbt += hbtCost;
+            usage.dailyPoints += pointCost;
+            usage.dailyHbt += pointCost;
             usage.dailyCount += 1;
         }
     });
@@ -966,27 +1234,36 @@ async function loadIssuanceUsage({ db, now = new Date() }) {
 }
 
 function buildLimitSummary(config = {}, usage = {}) {
-    const dailyRemainingHbt = Math.max(config.dailyLimitHbt - usage.dailyHbt, 0);
-    const weeklyRemainingHbt = Math.max(config.weeklyLimitHbt - usage.weeklyHbt, 0);
-    const monthlyRemainingHbt = Math.max(config.monthlyLimitHbt - usage.monthlyHbt, 0);
+    const dailyRemainingPoints = Math.max(config.dailyLimitPoints - usage.dailyPoints, 0);
+    const weeklyRemainingPoints = Math.max(config.weeklyLimitPoints - usage.weeklyPoints, 0);
+    const monthlyRemainingPoints = Math.max(config.monthlyLimitPoints - usage.monthlyPoints, 0);
 
     return {
         daily: {
-            limitHbt: config.dailyLimitHbt,
-            usedHbt: usage.dailyHbt,
-            remainingHbt: dailyRemainingHbt,
+            limitPoints: config.dailyLimitPoints,
+            usedPoints: usage.dailyPoints,
+            remainingPoints: dailyRemainingPoints,
+            limitHbt: config.dailyLimitPoints,
+            usedHbt: usage.dailyPoints,
+            remainingHbt: dailyRemainingPoints,
             count: usage.dailyCount,
         },
         weekly: {
-            limitHbt: config.weeklyLimitHbt,
-            usedHbt: usage.weeklyHbt,
-            remainingHbt: weeklyRemainingHbt,
+            limitPoints: config.weeklyLimitPoints,
+            usedPoints: usage.weeklyPoints,
+            remainingPoints: weeklyRemainingPoints,
+            limitHbt: config.weeklyLimitPoints,
+            usedHbt: usage.weeklyPoints,
+            remainingHbt: weeklyRemainingPoints,
             count: usage.weeklyCount,
         },
         monthly: {
-            limitHbt: config.monthlyLimitHbt,
-            usedHbt: usage.monthlyHbt,
-            remainingHbt: monthlyRemainingHbt,
+            limitPoints: config.monthlyLimitPoints,
+            usedPoints: usage.monthlyPoints,
+            remainingPoints: monthlyRemainingPoints,
+            limitHbt: config.monthlyLimitPoints,
+            usedHbt: usage.monthlyPoints,
+            remainingHbt: monthlyRemainingPoints,
             count: usage.monthlyCount,
         },
     };
@@ -1002,9 +1279,14 @@ function buildIssuancePolicy({
     let issuanceEnabled = true;
     let blockedReason = "";
 
-    if (pricing.quoteState !== "ready") {
+    if ((config.settlementAsset || DEFAULT_SETTLEMENT_ASSET) === "hbt" && pricing.quoteState !== "ready") {
         issuanceEnabled = false;
-        blockedReason = "가격 기준이 아직 준비되지 않았어요. 잠시 뒤 다시 시도해 주세요.";
+        blockedReason = "가격 기준이 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.";
+    }
+
+    if (issuanceEnabled && config.mode === "live" && !config.providerReady) {
+        issuanceEnabled = false;
+        blockedReason = config.providerReadyMessage || "Giftishow 연동 설정이 비어 있어요.";
     }
 
     const lastBizmoneyBalanceKrw = Math.max(
@@ -1012,9 +1294,19 @@ function buildIssuancePolicy({
         parseNumber(reserve.lastBizmoneyBalanceKrw, 0)
     );
 
+    if (
+        issuanceEnabled
+        && config.mode === "live"
+        && String(bizmoney.status || "").trim() === "error"
+        && !(lastBizmoneyBalanceKrw > 0)
+    ) {
+        issuanceEnabled = false;
+        blockedReason = "비즈머니 확인이 불안정해 쿠폰 발급을 잠시 멈췄어요.";
+    }
+
     if (issuanceEnabled && config.mode === "live" && lastBizmoneyBalanceKrw > 0 && lastBizmoneyBalanceKrw < config.minBizmoneyKrw) {
         issuanceEnabled = false;
-        blockedReason = "비즈머니 잔액이 최소 운영 기준 아래예요. 관리자 확인이 필요해요.";
+        blockedReason = "비즈머니 잔액이 최소 운영 기준 아래예요. 관제탑 확인이 필요해요.";
     }
 
     return {
@@ -1029,6 +1321,7 @@ function buildIssuancePolicy({
 function buildCatalogAvailability(item = {}, policy = {}) {
     const blockedReasons = [];
     const limits = policy.limits || {};
+    const itemCost = Math.max(parseNumber(item.pointCost, 0), parseNumber(item.hbtCost, 0));
 
     if (item.available === false) {
         blockedReasons.push("현재 재고 확인이 필요해요.");
@@ -1036,17 +1329,17 @@ function buildCatalogAvailability(item = {}, policy = {}) {
     if (policy.issuanceEnabled === false) {
         blockedReasons.push(policy.blockedReason);
     }
-    if ((limits.daily?.remainingHbt || 0) < item.hbtCost) {
+    if ((limits.daily?.remainingPoints ?? limits.daily?.remainingHbt ?? 0) < itemCost) {
         blockedReasons.push("오늘 교환 한도를 모두 사용했어요.");
     }
-    if ((limits.weekly?.remainingHbt || 0) < item.hbtCost) {
+    if ((limits.weekly?.remainingPoints ?? limits.weekly?.remainingHbt ?? 0) < itemCost) {
         blockedReasons.push("이번 주 교환 한도를 모두 사용했어요.");
     }
-    if ((limits.monthly?.remainingHbt || 0) < item.hbtCost) {
+    if ((limits.monthly?.remainingPoints ?? limits.monthly?.remainingHbt ?? 0) < itemCost) {
         blockedReasons.push("이번 달 교환 한도를 모두 사용했어요.");
     }
     if (policy.lastBizmoneyBalanceKrw > 0 && (policy.lastBizmoneyBalanceKrw - item.purchasePriceKrw) < policy.minBizmoneyKrw) {
-        blockedReasons.push("비즈머니 운영 기준을 먼저 맞춰야 해요.");
+        blockedReasons.push("비즈머니 운영 기준에 먼저 맞춰야 해요.");
     }
 
     return {
@@ -1056,7 +1349,7 @@ function buildCatalogAvailability(item = {}, policy = {}) {
     };
 }
 
-function buildRewardMarketSettings({ config, pricing, reserve, bizmoney, usage }) {
+function buildRewardMarketSettings({ config, pricing, reserve, bizmoney, usage, userData = {} }) {
     const limitSummary = buildLimitSummary(config, usage);
     const policy = buildIssuancePolicy({
         config,
@@ -1065,13 +1358,21 @@ function buildRewardMarketSettings({ config, pricing, reserve, bizmoney, usage }
         limitSummary,
         bizmoney,
     });
+    const savedRecipientPhone = resolveRewardRecipientPhone({
+        requestedPhone: "",
+        userData,
+        authPhoneNumber: "",
+    });
 
     return {
         policy,
         settings: {
             mode: config.mode,
+            settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+            settlementLabel: (config.settlementAsset || DEFAULT_SETTLEMENT_ASSET) === "hbt" ? "HBT" : "포인트",
+            minRedeemPoints: config.minRedeemPoints,
             minRedeemHbt: config.minRedeemHbt,
-            requiresBurnTx: config.mode === "live",
+            requiresBurnTx: config.mode === "live" && (config.settlementAsset || DEFAULT_SETTLEMENT_ASSET) === "hbt",
             pricingMode: pricing.pricingMode || config.pricingMode,
             quotedAt: pricing.quotedAt || "",
             nextRefreshAt: pricing.nextRefreshAt || "",
@@ -1085,11 +1386,18 @@ function buildRewardMarketSettings({ config, pricing, reserve, bizmoney, usage }
             limits: limitSummary,
             minBizmoneyKrw: config.minBizmoneyKrw,
             lastBizmoneyBalanceKrw: policy.lastBizmoneyBalanceKrw,
+            providerReady: config.providerReady,
+            providerReadyMessage: config.providerReadyMessage,
+            missingProviderConfig: [...config.missingProviderConfig],
+            requiresRecipientPhone: config.requiresRecipientPhone,
+            savedRecipientPhone,
+            maskedRecipientPhone: maskRecipientPhone(savedRecipientPhone),
+            manualResendAvailable: config.manualResendAvailable,
         },
     };
 }
 
-async function buildRewardMarketSnapshot({ db, uid, config }) {
+async function buildRewardMarketSnapshot({ db, uid, config, userData = {} }) {
     const now = new Date();
     const pricing = await ensurePublishedPricing({ db, config, now });
     const [catalog, redemptions, reserve, bizmoney, usage] = await Promise.all([
@@ -1111,6 +1419,7 @@ async function buildRewardMarketSnapshot({ db, uid, config }) {
         reserve,
         bizmoney,
         usage,
+        userData,
     });
 
     const quotedCatalog = catalog
@@ -1124,6 +1433,7 @@ async function buildRewardMarketSnapshot({ db, uid, config }) {
         nextRefreshAt: settings.nextRefreshAt,
         dailyBandPct: settings.dailyBandPct,
         deliveryMode: settings.deliveryMode,
+        manualResendAvailable: settings.manualResendAvailable,
         issuanceEnabled: settings.issuanceEnabled,
         issuanceBlockedReason: settings.issuanceBlockedReason,
         limits: settings.limits,
@@ -1217,6 +1527,19 @@ function buildProviderContext({
         orderNo: providerOrderId,
         providerOrderId,
         fallbackPolicy: config.fallbackPolicy,
+        giftishowCustomAuthCode: config.customAuthCode,
+        giftishowCustomAuthToken: config.customAuthToken,
+        giftishowDevYn: config.devYn,
+        giftishowCallbackNo: config.callbackNo,
+        giftishowUserId: config.providerUserId,
+        giftishowTemplateId: config.templateId,
+        giftishowBannerId: config.bannerId,
+        giftishowMmsTitle: config.defaultMmsTitle,
+        giftishowMmsMsg: config.defaultMmsMessage,
+        giftishowDeliveryCode: resolveGiftishowDeliveryCode(product.deliveryMethod),
+        giftishowSmsFlag: "Y",
+        catalogStart: config.catalogStart,
+        catalogSize: config.catalogSize,
     };
 }
 
@@ -1228,8 +1551,14 @@ async function issueCouponWithProvider({
     recipientPhone,
     providerTrId,
 }) {
-    if (config.mode !== "live" || !config.baseUrl) {
+    if (config.mode !== "live") {
         return buildMockIssuedCoupon(product, recipientPhone);
+    }
+    if (!config.providerReady) {
+        const error = new Error(config.providerReadyMessage || "giftishow_provider_not_ready");
+        error.code = "giftishow_provider_not_ready";
+        error.missingConfig = [...config.missingProviderConfig];
+        throw error;
     }
 
     const context = buildProviderContext({
@@ -1254,7 +1583,8 @@ async function issueCouponWithProvider({
 
     const payload = await callGiftishowApi(config, config.orderPath, {
         method: config.orderMethod,
-        body,
+        query: config.orderMethod === "GET" ? body : undefined,
+        body: config.orderMethod === "GET" ? undefined : body,
     });
 
     return mapGiftishowOrderPayload(payload, product, recipientPhone);
@@ -1269,8 +1599,14 @@ async function queryCouponStatusWithProvider({
     providerTrId,
     providerOrderId = "",
 }) {
-    if (config.mode !== "live" || !config.baseUrl || !config.couponStatusPath) {
+    if (config.mode !== "live" || !config.couponStatusPath) {
         return null;
+    }
+    if (!config.providerReady) {
+        const error = new Error(config.providerReadyMessage || "giftishow_provider_not_ready");
+        error.code = "giftishow_provider_not_ready";
+        error.missingConfig = [...config.missingProviderConfig];
+        throw error;
     }
 
     const context = buildProviderContext({
@@ -1291,7 +1627,8 @@ async function queryCouponStatusWithProvider({
 
     const payload = await callGiftishowApi(config, config.couponStatusPath, {
         method: config.couponStatusMethod,
-        body,
+        query: config.couponStatusMethod === "GET" ? body : undefined,
+        body: config.couponStatusMethod === "GET" ? undefined : body,
     });
 
     return mapGiftishowOrderPayload(payload, product, recipientPhone);
@@ -1304,11 +1641,17 @@ async function resendCouponWithProvider({
     reason = "",
     forceSms = false,
 }) {
-    if (config.mode !== "live" || !config.baseUrl) {
+    if (config.mode !== "live") {
         return {
             providerResponseCode: "0000",
             providerResponseMessage: `mock_manual_resend:${reason || "manual_resend"}`,
         };
+    }
+    if (!config.providerReady) {
+        const error = new Error(config.providerReadyMessage || "giftishow_provider_not_ready");
+        error.code = "giftishow_provider_not_ready";
+        error.missingConfig = [...config.missingProviderConfig];
+        throw error;
     }
 
     if (!forceSms) {
@@ -1348,7 +1691,8 @@ async function resendCouponWithProvider({
 
     const payload = await callGiftishowApi(config, config.resendPath, {
         method: config.resendMethod,
-        body,
+        query: config.resendMethod === "GET" ? body : undefined,
+        body: config.resendMethod === "GET" ? undefined : body,
     });
 
     return mapGiftishowOrderPayload(payload, redemption, redemption.recipientPhone);
@@ -1365,16 +1709,14 @@ function buildManualReviewDoc({
     config,
     reserve,
     normalizedPhone,
-    burnHash,
-    burnExplorerUrl,
-    networkTag,
     providerTrId,
     reason,
     errorMessage,
     quoteVersion,
     quoteSource,
     quotedAt,
-    hbtCost,
+    pointCost,
+    clientRequestId,
 }) {
     return {
         userId: uid,
@@ -1388,6 +1730,8 @@ function buildManualReviewDoc({
         status: "failed_manual_review",
         mode: config.mode,
         pricingMode: product.pricingMode || config.pricingMode,
+        settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+        clientRequestId,
         quoteVersion,
         quoteSource,
         quotedAt,
@@ -1396,15 +1740,13 @@ function buildManualReviewDoc({
         marginKrw: reserve.marginKrw,
         gasBudgetKrw: reserve.gasBudgetKrw,
         operationsBudgetKrw: reserve.operationsBudgetKrw,
-        hbtCost,
+        pointCost,
+        hbtCost: pointCost,
         deliveryMethod: product.deliveryMethod,
         deliveryMode: config.deliveryMode,
         fallbackPolicy: config.fallbackPolicy,
         healthGuide: product.healthGuide,
         recipientPhone: normalizedPhone,
-        burnTxHash: burnHash,
-        burnExplorerUrl,
-        network: networkTag,
         errorMessage: errorMessage || reason || "reward_issue_manual_review",
         manualReviewReason: reason || "reward_issue_manual_review",
         updatedAt: new Date(),
@@ -1425,7 +1767,7 @@ function buildProviderTrId() {
     return `hs_${datePart}_${randomPart}`.slice(0, 25);
 }
 
-async function redeemRewardCoupon({
+async function redeemRewardCouponLegacy({
     db,
     FieldValue,
     HttpsError,
@@ -1441,6 +1783,7 @@ async function redeemRewardCoupon({
     quoteSource = "",
     quotedHbtCost = 0,
     verifyBurnTx = null,
+    authPhoneNumber = "",
 }) {
     const normalizedSku = normalizeSku(sku);
     if (!normalizedSku) {
@@ -1473,7 +1816,11 @@ async function redeemRewardCoupon({
         throw new HttpsError("failed-precondition", `${config.minRedeemHbt.toLocaleString("ko-KR")} HBT 이상 상품만 교환할 수 있어요.`);
     }
 
-    const normalizedPhone = normalizeRecipientPhone(recipientPhone);
+    const normalizedPhone = resolveRewardRecipientPhone({
+        requestedPhone: recipientPhone,
+        userData,
+        authPhoneNumber,
+    });
     const reserve = computeReserveBreakdown(product);
     const rewardName = `${product.brandName} ${product.displayName}`.trim();
     const burnHash = String(burnTxHash || "").trim();
@@ -1493,6 +1840,9 @@ async function redeemRewardCoupon({
     if (config.mode === "live" && !burnHash) {
         throw new HttpsError("failed-precondition", "실발급 교환은 온체인 소각 내역이 필요해요.");
     }
+    if (config.mode === "live" && !normalizedPhone) {
+        throw new HttpsError("failed-precondition", "실발급에는 쿠폰 수령 연락처가 필요해요.");
+    }
 
     const existingRedemptionDoc = burnHash
         ? await findRedemptionByBurnTxHash(db, burnHash)
@@ -1510,6 +1860,12 @@ async function redeemRewardCoupon({
     const reserveLedgerRef = db.collection("reward_reserve_ledger").doc();
     const txRecordRef = db.collection("blockchain_transactions").doc();
     const providerTrId = buildProviderTrId();
+
+    if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(userData.rewardRecipientPhone)) {
+        await db.collection("users").doc(uid).set({
+            rewardRecipientPhone: normalizedPhone,
+        }, { merge: true });
+    }
 
     if (config.mode === "live" && typeof verifyBurnTx === "function") {
         await verifyBurnTx({
@@ -1768,6 +2124,353 @@ async function redeemRewardCoupon({
     return buildRewardMarketResult(finalSnap);
 }
 
+async function redeemRewardCoupon({
+    db,
+    FieldValue,
+    HttpsError,
+    uid,
+    userData = {},
+    config,
+    sku,
+    recipientPhone = "",
+    quoteVersion = "",
+    quoteSource = "",
+    quotedPointCost = 0,
+    clientRequestId = "",
+    authPhoneNumber = "",
+}) {
+    const normalizedSku = normalizeSku(sku);
+    if (!normalizedSku) {
+        throw new HttpsError("invalid-argument", "교환할 상품을 선택해 주세요.");
+    }
+
+    const normalizedRequestId = normalizeClientRequestId(clientRequestId);
+    if (!normalizedRequestId) {
+        throw new HttpsError("invalid-argument", "교환 요청을 다시 시작해 주세요.");
+    }
+
+    const now = new Date();
+    const pricing = await ensurePublishedPricing({ db, config, now });
+    const reserveSummary = await loadRewardReserveSummary({ db, config });
+    const bizmoney = await syncBizmoneyMetrics({ db, config, now, context: { userId: uid } });
+    const usage = await loadIssuanceUsage({ db, now });
+    const policy = buildIssuancePolicy({
+        config,
+        pricing,
+        reserve: reserveSummary,
+        limitSummary: buildLimitSummary(config, usage),
+        bizmoney,
+    });
+
+    const catalog = await loadRewardCatalog({ db, config });
+    const quotedCatalog = catalog
+        .map((item) => quoteCatalogItem(item, pricing, config))
+        .map((item) => buildCatalogAvailability(item, policy));
+    const product = quotedCatalog.find((item) => item.sku === normalizedSku);
+
+    if (!product) {
+        throw new HttpsError("not-found", "선택한 보상 상품을 찾을 수 없어요.");
+    }
+    if (product.pointCost < config.minRedeemPoints) {
+        throw new HttpsError(
+            "failed-precondition",
+            `${config.minRedeemPoints.toLocaleString("ko-KR")}P 이상 상품만 교환할 수 있어요.`
+        );
+    }
+
+    const normalizedPhone = resolveRewardRecipientPhone({
+        requestedPhone: recipientPhone,
+        userData,
+        authPhoneNumber,
+    });
+    const reserve = computeReserveBreakdown(product);
+    const rewardName = `${product.brandName} ${product.displayName}`.trim();
+    const quoteMatchesCurrent = !quoteVersion || String(quoteVersion).trim() === String(product.quoteVersion || "").trim();
+    const requestedQuotedPointCost = quoteMatchesCurrent
+        ? Math.max(parseNumber(quotedPointCost, product.pointCost), config.minRedeemPoints)
+        : product.pointCost;
+    const effectiveQuoteVersion = quoteMatchesCurrent
+        ? String(quoteVersion || product.quoteVersion || "").trim()
+        : String(product.quoteVersion || "").trim();
+    const effectiveQuoteSource = quoteMatchesCurrent
+        ? String(quoteSource || product.quoteSource || "").trim()
+        : String(product.quoteSource || "").trim();
+    const effectiveQuotedAt = product.quotedAt || pricing.quotedAt || "";
+
+    if (config.mode === "live" && !normalizedPhone) {
+        throw new HttpsError("failed-precondition", "실발급에는 쿠폰 수령 연락처가 필요해요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(buildRedemptionRequestDocId(uid, normalizedRequestId));
+    const existingRedemptionSnap = await redemptionRef.get();
+    if (existingRedemptionSnap.exists) {
+        return {
+            ...buildRewardMarketResult(existingRedemptionSnap),
+            existing: true,
+        };
+    }
+
+    if (!product.redeemable) {
+        await redemptionRef.set(buildManualReviewDoc({
+            uid,
+            userData,
+            product,
+            config,
+            reserve,
+            normalizedPhone,
+            providerTrId: buildProviderTrId(),
+            reason: product.blockedReason || policy.blockedReason || "reward_redemption_blocked",
+            errorMessage: product.blockedReason || policy.blockedReason || "reward_redemption_blocked",
+            quoteVersion: effectiveQuoteVersion,
+            quoteSource: effectiveQuoteSource,
+            quotedAt: effectiveQuotedAt,
+            pointCost: requestedQuotedPointCost,
+            clientRequestId: normalizedRequestId,
+        }), { merge: true });
+
+        throw new HttpsError("failed-precondition", product.blockedReason || "현재는 이 쿠폰을 발급할 수 없어요.");
+    }
+
+    if (policy.lastBizmoneyBalanceKrw > 0 && (policy.lastBizmoneyBalanceKrw - reserve.purchasePriceKrw) < config.minBizmoneyKrw) {
+        await redemptionRef.set(buildManualReviewDoc({
+            uid,
+            userData,
+            product,
+            config,
+            reserve,
+            normalizedPhone,
+            providerTrId: buildProviderTrId(),
+            reason: "bizmoney_below_operational_floor",
+            errorMessage: "bizmoney_below_operational_floor",
+            quoteVersion: effectiveQuoteVersion,
+            quoteSource: effectiveQuoteSource,
+            quotedAt: effectiveQuotedAt,
+            pointCost: requestedQuotedPointCost,
+            clientRequestId: normalizedRequestId,
+        }), { merge: true });
+
+        throw new HttpsError("failed-precondition", "비즈머니 운영 기준이 부족해 관제탑 확인이 필요해요.");
+    }
+
+    const providerTrId = buildProviderTrId();
+    const userRef = db.collection("users").doc(uid);
+    let existingResult = null;
+    await db.runTransaction(async (transaction) => {
+        const [freshRedemptionSnap, freshUserSnap] = await Promise.all([
+            transaction.get(redemptionRef),
+            transaction.get(userRef),
+        ]);
+        if (freshRedemptionSnap.exists) {
+            existingResult = buildRewardMarketResult(freshRedemptionSnap);
+            return;
+        }
+
+        const freshUserData = freshUserSnap.data() || {};
+        const currentPoints = Math.max(parseNumber(freshUserData.coins, 0), 0);
+        if (currentPoints < requestedQuotedPointCost) {
+            throw new HttpsError(
+                "failed-precondition",
+                `포인트가 부족해요. 현재 ${currentPoints.toLocaleString("ko-KR")}P예요.`
+            );
+        }
+
+        transaction.set(redemptionRef, {
+            userId: uid,
+            sku: product.sku,
+            brandName: product.brandName,
+            displayName: product.displayName,
+            category: product.category,
+            provider: product.provider,
+            providerGoodsId: product.providerGoodsId,
+            providerTrId,
+            status: "pending_issue",
+            mode: config.mode,
+            pricingMode: product.pricingMode || config.pricingMode,
+            settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+            clientRequestId: normalizedRequestId,
+            quoteVersion: effectiveQuoteVersion,
+            quoteSource: effectiveQuoteSource,
+            quotedAt: effectiveQuotedAt || null,
+            faceValueKrw: product.faceValueKrw,
+            purchasePriceKrw: reserve.purchasePriceKrw,
+            marginKrw: reserve.marginKrw,
+            gasBudgetKrw: reserve.gasBudgetKrw,
+            operationsBudgetKrw: reserve.operationsBudgetKrw,
+            pointCost: requestedQuotedPointCost,
+            hbtCost: requestedQuotedPointCost,
+            deliveryMethod: product.deliveryMethod,
+            deliveryMode: config.deliveryMode,
+            fallbackPolicy: config.fallbackPolicy,
+            healthGuide: product.healthGuide,
+            recipientPhone: normalizedPhone,
+            pointsCharged: true,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
+        }, { merge: true });
+
+        const userUpdate = {
+            coins: FieldValue.increment(-requestedQuotedPointCost),
+        };
+        if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(freshUserData.rewardRecipientPhone)) {
+            userUpdate.rewardRecipientPhone = normalizedPhone;
+        }
+        transaction.set(userRef, userUpdate, { merge: true });
+    });
+
+    if (existingResult) {
+        return {
+            ...existingResult,
+            existing: true,
+        };
+    }
+
+    let issuedCoupon = null;
+    try {
+        issuedCoupon = await issueCouponWithProvider({
+            config,
+            uid,
+            product: { ...product, pointCost: requestedQuotedPointCost, hbtCost: requestedQuotedPointCost },
+            rewardName,
+            recipientPhone: normalizedPhone,
+            providerTrId,
+        });
+    } catch (error) {
+        const recoveredCoupon = await queryCouponStatusWithProvider({
+            config,
+            uid,
+            product: { ...product, pointCost: requestedQuotedPointCost, hbtCost: requestedQuotedPointCost },
+            rewardName,
+            recipientPhone: normalizedPhone,
+            providerTrId,
+        }).catch(() => null);
+
+        if (isUsableCouponPayload(recoveredCoupon)) {
+            issuedCoupon = recoveredCoupon;
+        } else {
+            await redemptionRef.set(buildManualReviewDoc({
+                uid,
+                userData,
+                product,
+                config,
+                reserve,
+                normalizedPhone,
+                providerTrId,
+                reason: error?.code === "giftishow_timeout"
+                    ? "giftishow_timeout_manual_review"
+                    : "giftishow_issue_failed_manual_review",
+                errorMessage: error?.message || "reward_issue_failed",
+                quoteVersion: effectiveQuoteVersion,
+                quoteSource: effectiveQuoteSource,
+                quotedAt: effectiveQuotedAt,
+                pointCost: requestedQuotedPointCost,
+                clientRequestId: normalizedRequestId,
+            }), { merge: true });
+            throw new HttpsError("internal", "쿠폰 발급 응답이 불안정해 수동 확인 대상으로 넘겼어요.");
+        }
+    }
+
+    if (!isUsableCouponPayload(issuedCoupon)) {
+        await redemptionRef.set(buildManualReviewDoc({
+            uid,
+            userData,
+            product,
+            config,
+            reserve,
+            normalizedPhone,
+            providerTrId,
+            reason: "provider_coupon_payload_missing",
+            errorMessage: "provider_coupon_payload_missing",
+            quoteVersion: effectiveQuoteVersion,
+            quoteSource: effectiveQuoteSource,
+            quotedAt: effectiveQuotedAt,
+            pointCost: requestedQuotedPointCost,
+            clientRequestId: normalizedRequestId,
+        }), { merge: true });
+        throw new HttpsError("internal", "쿠폰 이미지나 PIN 정보를 확인하지 못해 수동 확인이 필요해요.");
+    }
+
+    const expiresAtDate = issuedCoupon?.expiresAt ? new Date(issuedCoupon.expiresAt) : null;
+    const serializedExpiresAt = expiresAtDate && !Number.isNaN(expiresAtDate.getTime()) ? expiresAtDate : null;
+
+    const batch = db.batch();
+    batch.set(redemptionRef, {
+        userId: uid,
+        sku: product.sku,
+        brandName: product.brandName,
+        displayName: product.displayName,
+        category: product.category,
+        provider: product.provider,
+        providerGoodsId: product.providerGoodsId,
+        providerTrId,
+        providerOrderId: issuedCoupon.providerOrderId,
+        providerResponseCode: issuedCoupon.providerResponseCode || "",
+        providerResponseMessage: issuedCoupon.providerResponseMessage || "",
+        status: "issued",
+        mode: config.mode,
+        pricingMode: product.pricingMode || config.pricingMode,
+        settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+        clientRequestId: normalizedRequestId,
+        quoteVersion: effectiveQuoteVersion,
+        quoteSource: effectiveQuoteSource,
+        quotedAt: effectiveQuotedAt || null,
+        faceValueKrw: product.faceValueKrw,
+        purchasePriceKrw: reserve.purchasePriceKrw,
+        marginKrw: reserve.marginKrw,
+        gasBudgetKrw: reserve.gasBudgetKrw,
+        operationsBudgetKrw: reserve.operationsBudgetKrw,
+        pointCost: requestedQuotedPointCost,
+        hbtCost: requestedQuotedPointCost,
+        deliveryMethod: issuedCoupon.deliveryMethod || product.deliveryMethod,
+        deliveryMode: config.deliveryMode,
+        fallbackPolicy: config.fallbackPolicy,
+        pinCode: issuedCoupon.pinCode,
+        couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
+        barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
+        healthGuide: product.healthGuide,
+        recipientPhone: issuedCoupon.recipientPhone || normalizedPhone,
+        issuedAt: FieldValue.serverTimestamp(),
+        expiresAt: serializedExpiresAt,
+        updatedAt: FieldValue.serverTimestamp(),
+        userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
+    }, { merge: true });
+    batch.set(reserveLedgerRef, {
+        userId: uid,
+        redemptionId: redemptionRef.id,
+        sku: product.sku,
+        rewardName,
+        eventType: "issued",
+        mode: config.mode,
+        pricingMode: product.pricingMode || config.pricingMode,
+        settlementAsset: config.settlementAsset || DEFAULT_SETTLEMENT_ASSET,
+        quoteVersion: effectiveQuoteVersion,
+        marginKrw: reserve.marginKrw,
+        gasBudgetKrw: reserve.gasBudgetKrw,
+        operationsBudgetKrw: reserve.operationsBudgetKrw,
+        purchasePriceKrw: reserve.purchasePriceKrw,
+        faceValueKrw: product.faceValueKrw,
+        pointCost: requestedQuotedPointCost,
+        hbtCost: requestedQuotedPointCost,
+        chargedPoints: requestedQuotedPointCost,
+        createdAt: FieldValue.serverTimestamp(),
+    });
+    batch.set(
+        db.collection("reward_reserve_metrics").doc(config.reserveDocId),
+        {
+            totalMarginKrw: FieldValue.increment(reserve.marginKrw),
+            gasBudgetKrw: FieldValue.increment(reserve.gasBudgetKrw),
+            operationsBudgetKrw: FieldValue.increment(reserve.operationsBudgetKrw),
+            issuedCount: FieldValue.increment(1),
+            updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+    );
+    await batch.commit();
+
+    const finalSnap = await redemptionRef.get();
+    return buildRewardMarketResult(finalSnap);
+}
+
 async function adminResendRewardCoupon({
     db,
     FieldValue,
@@ -1859,6 +2562,8 @@ async function syncRewardMarketOps({ db, config, now = new Date() }) {
     return {
         pricing,
         bizmoney,
+        providerReady: config.providerReady,
+        missingProviderConfig: [...config.missingProviderConfig],
     };
 }
 
@@ -1870,7 +2575,11 @@ module.exports = {
     adminResendRewardCoupon,
     syncRewardMarketOps,
     __test: {
+        buildRewardMarketConfig,
         normalizePricingMode,
+        normalizeRecipientPhone,
+        isValidRecipientPhone,
+        resolveRewardRecipientPhone,
         buildPublishedPricing,
         buildLimitSummary,
         buildIssuancePolicy,
