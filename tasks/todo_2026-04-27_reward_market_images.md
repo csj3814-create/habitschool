@@ -13,12 +13,12 @@
 - Added `productImageUrl` and `brandLogoUrl` support to the reward catalog, Giftishow/live catalog merge path, and redemption serialization so the member UI can keep showing product visuals consistently.
 - Updated the reward-market cards to show a hero product image and a small brand mark in the header.
 - Updated coupon vault items to show the brand mark in the header and to fall back to the product image whenever a provider coupon image is not available yet.
-- Retired the generated/local placeholder artwork in favor of the real Giftishow product JPEGs and official brand logo URLs:
+- Retired the generated/local placeholder artwork in favor of the real Giftishow product JPEGs and the user-selected official logo PNG assets:
   - `https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg`
   - `https://bizimg.giftishow.com/Resource/goods/2024/G00002871294/G00002871294.jpg`
-  - `https://img.79plus.co.kr/megahp/common/img/new_logo_b.png`
-  - `https://paikdabang.com/wp-content/themes/paikdabang/assets/images/logo.png`
-- Updated `firebase.json` CSP `img-src` to allow the Giftishow and official brand-image domains.
+  - `assets/reward-market/mega-mgc-logo.png`
+  - `assets/reward-market/paikdabang-logo.png`
+- Updated `firebase.json` CSP `img-src` to allow the Giftishow product-image domain while keeping logos self-hosted.
 - Verification:
   - `node -c functions/reward-market.js`
   - `npm test`
