@@ -98,6 +98,16 @@
 - Root cause: I optimized for shipping the redeem flow quickly and let operational affordances stay close to the user UI instead of drawing a hard boundary between member actions and operator controls.
 - Lesson: when a feature introduces manual review, retries, or ops refresh controls, default those actions to `admin.html` (the control tower) and keep user-facing tabs focused on end-user tasks like redeeming and viewing coupons. If a snapshot or stylesheet exists only to support admin actions, strip it back out of the member flow once the control surface is available.
 
+### 196. Once a UI moves to a new renderer, every event handler must move with it or user input can resurrect the old screen
+- Symptom: typing into `쿠폰 수령 연락처` made the reward-market cards lose their product imagery and revert to the earlier plain-card layout.
+- Root cause: the main snapshot path had already moved to `renderRewardMarketSnapshot()` / `renderRewardMarketCatalogView()`, but the phone input and save handlers were still calling the older `renderRewardRecipientPhonePanel()` and `renderRewardMarketCatalog()` pair.
+- Lesson: after introducing a replacement renderer, grep every interaction handler that mutates the same state and migrate them in the same change. Do not leave mixed old/new render paths wired to the same UI surface.
+
+### 197. Mock reward flows must not consume real balances or live issuance quotas
+- Symptom: the reward-market point flow was subtracting points and reducing exchange limits even in `mock` mode, which makes staging coupon tests look like real economic events.
+- Root cause: the point-settlement transaction precharged points unconditionally before provider issuance, and the issuance-usage rollup counted every active redemption status regardless of mode or whether the charge was later refunded.
+- Lesson: for reward systems with `mock` and `live` modes, charge balances only in `live`, refund any precharge that falls into manual review, and count issuance quotas only from live charged redemptions.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

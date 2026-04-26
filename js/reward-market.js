@@ -446,22 +446,12 @@ function renderRewardMarketMetaView() {
     if (!metaEl) return;
 
     const settings = rewardMarketState.settings || {};
-    const modeLabel = settings.mode === 'live' ? '실발급' : '테스트 발급';
-    const pricingLabel = settings.settlementAsset === 'hbt'
-        ? formatPhaseLabel(settings.pricingMode)
-        : '포인트 정액가';
-    const supportLabel = settings.deliveryMode === 'app_vault'
-        ? '앱 보관함'
-        : (settings.deliveryMode || '수령 방식 확인');
     const chips = [
-        `<div class="reward-market-chip accent">${escapeHtml(modeLabel)}</div>`,
-        `<div class="reward-market-chip">${escapeHtml(pricingLabel)}</div>`,
-        `<div class="reward-market-chip">${escapeHtml(supportLabel)}</div>`,
         buildCompactLimitChip(settings),
     ];
 
     if (!settings.providerReady) {
-        chips.push('<div class="reward-market-chip warning">운영 설정 필요</div>');
+        chips.push('<div class="reward-market-chip warning">\uC6B4\uC601 \uC124\uC815 \uD544\uC694</div>');
     }
 
     metaEl.innerHTML = chips.filter(Boolean).join('');
@@ -486,13 +476,13 @@ function renderRewardRecipientPhonePanelView() {
     }
 
     copyEl.textContent = settings.mode === 'live'
-        ? '실발급에 사용할 연락처를 저장해 주세요. 쿠폰은 앱 보관함에서 확인합니다.'
-        : '지금 저장해 두면 실발급 전환 때 바로 사용할 수 있어요.';
+        ? '\uC2E4\uBC1C\uAE09\uC5D0 \uC4F8 \uBC88\uD638\uB97C \uC800\uC7A5\uD574 \uC8FC\uC138\uC694.'
+        : '\uC2E4\uBC1C\uAE09 \uC804\uD658 \uB54C \uBC14\uB85C \uC4F8 \uBC88\uD638\uC608\uC694.';
 
     saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
 
     if (draftPhone && !isValidRecipientPhone(draftPhone)) {
-        statusEl.textContent = '전화번호를 01012345678 형식으로 입력해 주세요.';
+        statusEl.textContent = '\uC804\uD654\uBC88\uD638\uB97C 01012345678 \uD615\uC2DD\uC73C\uB85C \uC785\uB825\uD574 \uC8FC\uC138\uC694.';
         statusEl.className = 'reward-market-phone-status warning';
         return;
     }
@@ -502,15 +492,15 @@ function renderRewardRecipientPhonePanelView() {
         const maskedPhone = useDraftPhone
             ? maskRecipientPhone(draftPhone)
             : (settings.maskedRecipientPhone || maskRecipientPhone(resolvedPhone));
-        const sourceLabel = useDraftPhone ? '입력한' : '저장된';
-        statusEl.textContent = `${sourceLabel} 연락처 ${maskedPhone}`;
+        const sourceLabel = useDraftPhone ? '\uC785\uB825\uD55C' : '\uC800\uC7A5\uD55C';
+        statusEl.textContent = `${sourceLabel} \uC5F0\uB77D\uCC98 ${maskedPhone}`;
         statusEl.className = 'reward-market-phone-status ok';
         return;
     }
 
     statusEl.textContent = settings.mode === 'live'
-        ? '실발급 전에 연락처를 저장해 주세요.'
-        : '연락처를 미리 저장해 두면 전환이 쉬워요.';
+        ? '\uC2E4\uBC1C\uAE09 \uC804\uC5D0 \uC5F0\uB77D\uCC98\uB97C \uC800\uC7A5\uD574 \uC8FC\uC138\uC694.'
+        : '';
     statusEl.className = 'reward-market-phone-status muted';
 }
 
@@ -651,8 +641,8 @@ function renderRewardMarketCatalogView() {
 
 function getRewardMarketReadyStatusText(settings = {}) {
     return settings.mode === 'live'
-        ? '포인트로 교환하면 앱 보관함에 저장돼요.'
-        : '테스트 발급으로 흐름을 확인해 보세요.';
+        ? '\uD3EC\uC778\uD2B8\uB85C \uAD50\uD658\uD558\uBA74 \uC571 \uBCF4\uAD00\uD568\uC5D0 \uBC14\uB85C \uB2F4\uACA8\uC694.'
+        : '\uAD50\uD658 \uD750\uB984\uC744 \uD655\uC778\uD574 \uBCF4\uC138\uC694.';
 }
 
 function buildCouponStatusLabel(status = '') {
@@ -843,8 +833,7 @@ async function persistRewardRecipientPhone(phone, { silent = false } = {}) {
         inputEl.value = normalizedPhone;
     }
 
-    renderRewardRecipientPhonePanel();
-    renderRewardMarketCatalog();
+    renderRewardMarketSnapshot();
     if (!silent) {
         showToast('쿠폰 수령 연락처를 저장했어요.');
     }
@@ -942,8 +931,7 @@ window.refreshRewardMarketSnapshot = function () {
 };
 
 window.handleRewardRecipientPhoneInput = function () {
-    renderRewardRecipientPhonePanel();
-    renderRewardMarketCatalog();
+    renderRewardMarketSnapshot();
 };
 
 window.saveRewardRecipientPhone = async function () {

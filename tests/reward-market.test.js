@@ -41,6 +41,35 @@ describe('reward market pricing helpers', () => {
         expect(__test.normalizePricingMode('phase2_hybrid_band')).toBe('phase2_hybrid_band');
     });
 
+    it('charges points immediately only in live mode', () => {
+        expect(__test.shouldChargePointsImmediately({ mode: 'live' })).toBe(true);
+        expect(__test.shouldChargePointsImmediately({ mode: 'mock' })).toBe(false);
+        expect(__test.shouldChargePointsImmediately({})).toBe(false);
+    });
+
+    it('counts only live charged redemptions toward issuance usage', () => {
+        expect(__test.shouldCountTowardIssuanceUsage({
+            mode: 'live',
+            status: 'issued',
+            pointsCharged: true,
+        })).toBe(true);
+        expect(__test.shouldCountTowardIssuanceUsage({
+            mode: 'live',
+            status: 'pending_issue',
+            pointsCharged: true,
+        })).toBe(true);
+        expect(__test.shouldCountTowardIssuanceUsage({
+            mode: 'mock',
+            status: 'issued',
+            pointsCharged: false,
+        })).toBe(false);
+        expect(__test.shouldCountTowardIssuanceUsage({
+            mode: 'live',
+            status: 'failed_manual_review',
+            pointsCharged: false,
+        })).toBe(false);
+    });
+
     it('keeps launch exchange limits independent from the 500P minimum', () => {
         const config = __test.buildRewardMarketConfig({
             REWARD_MARKET_MIN_REDEEM_POINTS: '500',

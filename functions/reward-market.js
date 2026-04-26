@@ -1264,7 +1264,6 @@ async function loadIssuanceUsage({ db, now = new Date() }) {
         .where("createdAt", ">=", monthStart)
         .get();
 
-    const activeStatuses = new Set(["issued", "pending_issue", "failed_manual_review", "failed"]);
     const usage = {
         dailyPoints: 0,
         weeklyPoints: 0,
@@ -1279,8 +1278,7 @@ async function loadIssuanceUsage({ db, now = new Date() }) {
 
     snapshot.docs.forEach((docSnap) => {
         const data = docSnap.data() || {};
-        const status = String(data.status || "").trim();
-        if (!activeStatuses.has(status)) return;
+        if (!shouldCountTowardIssuanceUsage(data)) return;
 
         const createdAtMs = toTimestampMillis(data.createdAt);
         if (!createdAtMs) return;
@@ -1842,6 +1840,63 @@ function buildProviderTrId() {
     return `hs_${datePart}_${randomPart}`.slice(0, 25);
 }
 
+function shouldChargePointsImmediately(config = {}) {
+    return String(config.mode || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase() === "live";
+}
+
+function shouldCountTowardIssuanceUsage(data = {}) {
+    const mode = String(data.mode || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase();
+    const status = String(data.status || "").trim();
+    return mode === "live"
+        && data.pointsCharged === true
+        && ["issued", "pending_issue"].includes(status);
+}
+
+async function refundChargedRewardPoints({
+    db,
+    FieldValue,
+    userRef,
+    redemptionRef,
+    pointCost = 0,
+    normalizedPhone = "",
+    reason = "reward_issue_reverted",
+}) {
+    if (!(parseNumber(pointCost, 0) > 0)) return false;
+
+    let refunded = false;
+    await db.runTransaction(async (transaction) => {
+        const [freshUserSnap, freshRedemptionSnap] = await Promise.all([
+            transaction.get(userRef),
+            transaction.get(redemptionRef),
+        ]);
+        if (!freshRedemptionSnap.exists) return;
+
+        const redemptionData = freshRedemptionSnap.data() || {};
+        if (redemptionData.pointsCharged !== true || redemptionData.pointsRefundedAt) {
+            return;
+        }
+
+        const userUpdate = {
+            coins: FieldValue.increment(parseNumber(pointCost, 0)),
+        };
+        const freshUserData = freshUserSnap.data() || {};
+        if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(freshUserData.rewardRecipientPhone)) {
+            userUpdate.rewardRecipientPhone = normalizedPhone;
+        }
+
+        transaction.set(userRef, userUpdate, { merge: true });
+        transaction.set(redemptionRef, {
+            pointsCharged: false,
+            pointsRefundedAt: FieldValue.serverTimestamp(),
+            pointRefundReason: String(reason || "reward_issue_reverted").trim(),
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+        refunded = true;
+    });
+
+    return refunded;
+}
+
 async function redeemRewardCouponLegacy({
     db,
     FieldValue,
@@ -2333,6 +2388,7 @@ async function redeemRewardCoupon({
 
     const providerTrId = buildProviderTrId();
     const userRef = db.collection("users").doc(uid);
+    const shouldChargePointsNow = shouldChargePointsImmediately(config);
     let existingResult = null;
     await db.runTransaction(async (transaction) => {
         const [freshRedemptionSnap, freshUserSnap] = await Promise.all([
@@ -2384,19 +2440,22 @@ async function redeemRewardCoupon({
             productImageUrl: product.productImageUrl || "",
             brandLogoUrl: product.brandLogoUrl || "",
             recipientPhone: normalizedPhone,
-            pointsCharged: true,
+            pointsCharged: shouldChargePointsNow,
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
             userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
         }, { merge: true });
 
-        const userUpdate = {
-            coins: FieldValue.increment(-requestedQuotedPointCost),
-        };
+        const userUpdate = {};
+        if (shouldChargePointsNow) {
+            userUpdate.coins = FieldValue.increment(-requestedQuotedPointCost);
+        }
         if (normalizedPhone && normalizedPhone !== normalizeRecipientPhone(freshUserData.rewardRecipientPhone)) {
             userUpdate.rewardRecipientPhone = normalizedPhone;
         }
-        transaction.set(userRef, userUpdate, { merge: true });
+        if (Object.keys(userUpdate).length > 0) {
+            transaction.set(userRef, userUpdate, { merge: true });
+        }
     });
 
     if (existingResult) {
@@ -2512,6 +2571,7 @@ async function redeemRewardCoupon({
         productImageUrl: product.productImageUrl || "",
         brandLogoUrl: product.brandLogoUrl || "",
         recipientPhone: issuedCoupon.recipientPhone || normalizedPhone,
+        pointsCharged: shouldChargePointsNow,
         issuedAt: FieldValue.serverTimestamp(),
         expiresAt: serializedExpiresAt,
         updatedAt: FieldValue.serverTimestamp(),
@@ -2534,7 +2594,7 @@ async function redeemRewardCoupon({
         faceValueKrw: product.faceValueKrw,
         pointCost: requestedQuotedPointCost,
         hbtCost: requestedQuotedPointCost,
-        chargedPoints: requestedQuotedPointCost,
+        chargedPoints: shouldChargePointsNow ? requestedQuotedPointCost : 0,
         createdAt: FieldValue.serverTimestamp(),
     });
     batch.set(
@@ -2668,6 +2728,8 @@ module.exports = {
         buildIssuancePolicy,
         quoteCatalogItem,
         buildCatalogAvailability,
+        shouldChargePointsImmediately,
+        shouldCountTowardIssuanceUsage,
         normalizeFeedData,
         computeRawKrwPerHbt,
         getKstDayKey,
