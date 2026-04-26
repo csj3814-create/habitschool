@@ -181,6 +181,25 @@
     box-shadow: 0 8px 18px rgba(103, 77, 34, 0.05);
 }
 
+.reward-market-hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 140px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fffaf4 0%, #fff2e0 100%);
+    border: 1px solid #f1dfca;
+    padding: 10px;
+}
+
+.reward-market-hero-image {
+    display: block;
+    width: 100%;
+    max-width: 148px;
+    max-height: 140px;
+    object-fit: contain;
+}
+
 .reward-market-item-topline,
 .reward-coupon-topline,
 .reward-coupon-footer {
@@ -196,6 +215,33 @@
     font-size: 12px;
     font-weight: 700;
     color: #9a6a28;
+}
+
+.reward-brand-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.reward-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid #f1dfca;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.reward-brand-mark img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .reward-market-stock,
@@ -373,12 +419,17 @@
     padding: 12px;
 }
 
+.reward-coupon-visual.is-product {
+    background: linear-gradient(180deg, #fffaf4 0%, #fff2e0 100%);
+}
+
 .reward-coupon-image {
     display: block;
     width: 100%;
     max-width: 320px;
     margin: 0 auto;
     border-radius: 10px;
+    object-fit: contain;
 }
 
 .reward-coupon-code {

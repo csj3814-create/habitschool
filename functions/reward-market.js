@@ -15,9 +15,9 @@ const DEFAULT_QUOTE_REFRESH_HOURS = 24;
 const DEFAULT_DAILY_BAND_PCT = 10;
 const DEFAULT_WEEKLY_BAND_PCT = 25;
 const DEFAULT_FIXED_INTERNAL_KRW_PER_HBT = 1;
-const DEFAULT_DAILY_LIMIT_POINTS = 20000;
-const DEFAULT_WEEKLY_LIMIT_POINTS = 100000;
-const DEFAULT_MONTHLY_LIMIT_POINTS = 300000;
+const DEFAULT_DAILY_LIMIT_POINTS = 2000;
+const DEFAULT_WEEKLY_LIMIT_POINTS = 5000;
+const DEFAULT_MONTHLY_LIMIT_POINTS = 10000;
 const DEFAULT_DAILY_LIMIT_HBT = DEFAULT_DAILY_LIMIT_POINTS;
 const DEFAULT_WEEKLY_LIMIT_HBT = DEFAULT_WEEKLY_LIMIT_POINTS;
 const DEFAULT_MONTHLY_LIMIT_HBT = DEFAULT_MONTHLY_LIMIT_POINTS;
@@ -47,6 +47,8 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         provider: "giftishow",
         providerGoodsId: "G00002321189",
         healthGuide: "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
+        productImageUrl: "/assets/reward-market/mega-ice-americano.svg",
+        brandLogoUrl: "/assets/reward-market/mega-mgc-logo.svg",
         available: true,
         stockLabel: "60일 발급",
         deliveryMethod: "pin",
@@ -63,6 +65,8 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         provider: "giftishow",
         providerGoodsId: "G00001810964",
         healthGuide: "부담 없이 교환해 보며 건강 습관 보상을 체감하기 좋은 소액 음료 상품입니다.",
+        productImageUrl: "/assets/reward-market/paik-iced-americano.svg",
+        brandLogoUrl: "/assets/reward-market/paikdabang-logo.svg",
         available: true,
         stockLabel: "60일 발급",
         deliveryMethod: "pin",
@@ -401,6 +405,14 @@ function computeReserveBreakdown(product = {}) {
     };
 }
 
+function resolveRewardAssetUrl(...candidates) {
+    for (const candidate of candidates) {
+        const value = String(candidate || "").trim();
+        if (value) return value;
+    }
+    return "";
+}
+
 function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
     const sku = normalizeSku(item.sku || item.providerGoodsId || fallbackSku || crypto.randomUUID());
     const reserve = computeReserveBreakdown(item);
@@ -425,6 +437,17 @@ function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
             || item.healthCopy
             || "건강한 선택으로 보상을 생활 속 루틴과 연결해 보세요."
         ).trim(),
+        productImageUrl: resolveRewardAssetUrl(
+            item.productImageUrl,
+            item.imageUrl,
+            item.goodsImageUrl,
+            item.thumbnailUrl
+        ),
+        brandLogoUrl: resolveRewardAssetUrl(
+            item.brandLogoUrl,
+            item.logoUrl,
+            item.brandImageUrl
+        ),
         available: item.available !== false,
         stockLabel: String(item.stockLabel || "재고 확인").trim(),
         deliveryMethod: String(item.deliveryMethod || "pin").trim(),
@@ -435,6 +458,30 @@ function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
 function buildFallbackCatalog() {
     return DEFAULT_REWARD_CATALOG.map((item, index) =>
         normalizeRewardCatalogItem(item, item.sku || `reward-${index + 1}`));
+}
+
+function buildSeededRewardVisualLookup(items = []) {
+    const bySku = new Map();
+    const byProviderGoodsId = new Map();
+
+    for (const item of items) {
+        if (item?.sku) bySku.set(item.sku, item);
+        if (item?.providerGoodsId) byProviderGoodsId.set(item.providerGoodsId, item);
+    }
+
+    return { bySku, byProviderGoodsId };
+}
+
+function applySeededRewardVisuals(item = {}, lookup = {}) {
+    const seeded = lookup.bySku?.get(item.sku) || lookup.byProviderGoodsId?.get(item.providerGoodsId);
+    if (!seeded) return item;
+
+    return {
+        ...item,
+        healthGuide: item.healthGuide || seeded.healthGuide || "",
+        productImageUrl: item.productImageUrl || seeded.productImageUrl || "",
+        brandLogoUrl: item.brandLogoUrl || seeded.brandLogoUrl || "",
+    };
 }
 
 function resolveCollectionItems(payload = null) {
@@ -485,6 +532,21 @@ function mapGiftishowGoodsItem(raw = {}, index = 0) {
         provider: "giftishow",
         providerGoodsId,
         healthGuide: String(raw.healthGuide || "").trim(),
+        productImageUrl: resolveRewardAssetUrl(
+            raw.productImageUrl,
+            raw.imageUrl,
+            raw.goodsImgB,
+            raw.goodsImgM,
+            raw.goodsImgS,
+            raw.goodsImageUrl,
+            raw.thumbnailUrl
+        ),
+        brandLogoUrl: resolveRewardAssetUrl(
+            raw.brandLogoUrl,
+            raw.logoUrl,
+            raw.brandImgUrl,
+            raw.brandImageUrl
+        ),
         available,
         stockLabel: stockQuantity > 0 ? `재고 ${stockQuantity}` : "재고 확인 필요",
         deliveryMethod: String(raw.deliveryMethod || raw.issueMethod || "pin").trim(),
@@ -546,16 +608,25 @@ function getRewardMarketConfig(env = process.env) {
         REWARD_MARKET_MIN_REDEMPTION_POINTS
     );
     const dailyLimitPoints = Math.max(
-        parseNumber(env.REWARD_MARKET_DAILY_LIMIT_POINTS, env.REWARD_MARKET_DAILY_LIMIT_HBT),
-        REWARD_MARKET_MIN_REDEMPTION_POINTS
+        parseNumber(
+            env.REWARD_MARKET_DAILY_LIMIT_POINTS,
+            env.REWARD_MARKET_DAILY_LIMIT_HBT || DEFAULT_DAILY_LIMIT_POINTS
+        ),
+        minRedeemPoints
     );
     const weeklyLimitPoints = Math.max(
-        parseNumber(env.REWARD_MARKET_WEEKLY_LIMIT_POINTS, env.REWARD_MARKET_WEEKLY_LIMIT_HBT),
-        REWARD_MARKET_MIN_REDEMPTION_POINTS
+        parseNumber(
+            env.REWARD_MARKET_WEEKLY_LIMIT_POINTS,
+            env.REWARD_MARKET_WEEKLY_LIMIT_HBT || DEFAULT_WEEKLY_LIMIT_POINTS
+        ),
+        minRedeemPoints
     );
     const monthlyLimitPoints = Math.max(
-        parseNumber(env.REWARD_MARKET_MONTHLY_LIMIT_POINTS, env.REWARD_MARKET_MONTHLY_LIMIT_HBT),
-        REWARD_MARKET_MIN_REDEMPTION_POINTS
+        parseNumber(
+            env.REWARD_MARKET_MONTHLY_LIMIT_POINTS,
+            env.REWARD_MARKET_MONTHLY_LIMIT_HBT || DEFAULT_MONTHLY_LIMIT_POINTS
+        ),
+        minRedeemPoints
     );
 
     const config = {
@@ -750,16 +821,12 @@ async function loadGiftishowCatalog(config) {
 
 async function loadRewardCatalog({ db, config }) {
     const seededItems = buildFallbackCatalog();
-    const seededBySku = new Map(seededItems.map((item) => [item.sku, item]));
+    const seededLookup = buildSeededRewardVisualLookup(seededItems);
 
     const liveItems = await loadGiftishowCatalog(config).catch(() => []);
     if (liveItems.length > 0) {
         return liveItems
-            .map((item) => ({
-                ...item,
-                healthGuide: item.healthGuide || seededBySku.get(item.sku)?.healthGuide
-                    || "건강한 선택으로 보상을 생활 속 루틴과 연결해 보세요.",
-            }))
+            .map((item) => applySeededRewardVisuals(item, seededLookup))
             .sort((a, b) => a.sortOrder - b.sortOrder);
     }
 
@@ -770,6 +837,7 @@ async function loadRewardCatalog({ db, config }) {
 
     return catalogSnapshot.docs
         .map((docSnap) => normalizeRewardCatalogItem(docSnap.data() || {}, docSnap.id))
+        .map((item) => applySeededRewardVisuals(item, seededLookup))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
@@ -1035,6 +1103,17 @@ function serializeRedemptionDoc(docSnap) {
         quoteSource: String(data.quoteSource || "").trim(),
         quotedAt: toPlainDate(data.quotedAt, ""),
         healthGuide: String(data.healthGuide || "").trim(),
+        productImageUrl: resolveRewardAssetUrl(
+            data.productImageUrl,
+            data.imageUrl,
+            data.goodsImageUrl,
+            data.thumbnailUrl
+        ),
+        brandLogoUrl: resolveRewardAssetUrl(
+            data.brandLogoUrl,
+            data.logoUrl,
+            data.brandImageUrl
+        ),
         deliveryMethod: String(data.deliveryMethod || "pin").trim(),
         deliveryMode: String(data.deliveryMode || DEFAULT_DELIVERY_MODE).trim(),
         fallbackPolicy: String(data.fallbackPolicy || DEFAULT_FALLBACK_POLICY).trim(),
@@ -1740,6 +1819,8 @@ function buildManualReviewDoc({
         deliveryMode: config.deliveryMode,
         fallbackPolicy: config.fallbackPolicy,
         healthGuide: product.healthGuide,
+        productImageUrl: product.productImageUrl || "",
+        brandLogoUrl: product.brandLogoUrl || "",
         recipientPhone: normalizedPhone,
         errorMessage: errorMessage || reason || "reward_issue_manual_review",
         manualReviewReason: reason || "reward_issue_manual_review",
@@ -1942,6 +2023,8 @@ async function redeemRewardCouponLegacy({
             deliveryMode: config.deliveryMode,
             fallbackPolicy: config.fallbackPolicy,
             healthGuide: product.healthGuide,
+            productImageUrl: product.productImageUrl || "",
+            brandLogoUrl: product.brandLogoUrl || "",
             recipientPhone: normalizedPhone,
             burnTxHash: burnHash,
             burnExplorerUrl,
@@ -2057,6 +2140,8 @@ async function redeemRewardCouponLegacy({
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
         healthGuide: product.healthGuide,
+        productImageUrl: product.productImageUrl || "",
+        brandLogoUrl: product.brandLogoUrl || "",
         recipientPhone: issuedCoupon.recipientPhone || normalizedPhone,
         burnTxHash: burnHash,
         burnExplorerUrl,
@@ -2296,6 +2381,8 @@ async function redeemRewardCoupon({
             deliveryMode: config.deliveryMode,
             fallbackPolicy: config.fallbackPolicy,
             healthGuide: product.healthGuide,
+            productImageUrl: product.productImageUrl || "",
+            brandLogoUrl: product.brandLogoUrl || "",
             recipientPhone: normalizedPhone,
             pointsCharged: true,
             createdAt: FieldValue.serverTimestamp(),
@@ -2422,6 +2509,8 @@ async function redeemRewardCoupon({
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
         healthGuide: product.healthGuide,
+        productImageUrl: product.productImageUrl || "",
+        brandLogoUrl: product.brandLogoUrl || "",
         recipientPhone: issuedCoupon.recipientPhone || normalizedPhone,
         issuedAt: FieldValue.serverTimestamp(),
         expiresAt: serializedExpiresAt,

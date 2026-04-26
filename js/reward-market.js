@@ -557,6 +557,51 @@ function buildRewardMarketActionView(item = {}) {
     );
 }
 
+function getRewardProductImageUrl(item = {}) {
+    return String(
+        item.productImageUrl
+        || item.imageUrl
+        || item.goodsImageUrl
+        || item.thumbnailUrl
+        || ''
+    ).trim();
+}
+
+function getRewardBrandLogoUrl(item = {}) {
+    return String(
+        item.brandLogoUrl
+        || item.logoUrl
+        || item.brandImageUrl
+        || ''
+    ).trim();
+}
+
+function buildRewardBrandIdentity(item = {}, brandClassName = 'reward-market-brand') {
+    const logoUrl = getRewardBrandLogoUrl(item);
+    const brandLabel = escapeHtml(item.brandName || '리워드 상품');
+    const logoMarkup = logoUrl
+        ? '<span class="reward-brand-mark"><img src="' + escapeHtml(logoUrl) + '" alt="' + brandLabel + ' 로고" loading="lazy"></span>'
+        : '';
+
+    return (
+        '<span class="reward-brand-wrap">' +
+            logoMarkup +
+            '<span class="' + brandClassName + '">' + brandLabel + '</span>' +
+        '</span>'
+    );
+}
+
+function buildRewardProductHero(item = {}) {
+    const imageUrl = getRewardProductImageUrl(item);
+    if (!imageUrl) return '';
+
+    return (
+        '<div class="reward-market-hero">' +
+            '<img class="reward-market-hero-image" src="' + escapeHtml(imageUrl) + '" alt="' + escapeHtml(item.displayName || item.brandName || 'reward product') + '" loading="lazy">' +
+        '</div>'
+    );
+}
+
 function renderRewardMarketCatalogView() {
     const gridEl = document.getElementById('reward-market-grid');
     if (!gridEl) return;
@@ -581,8 +626,9 @@ function renderRewardMarketCatalogView() {
 
         return (
             '<article class="reward-market-item">' +
+                buildRewardProductHero(item) +
                 '<div class="reward-market-item-topline">' +
-                    '<span class="reward-market-brand">' + escapeHtml(item.brandName || '리워드 상품') + '</span>' +
+                    buildRewardBrandIdentity(item) +
                     '<span class="reward-market-stock">' + escapeHtml(item.stockLabel || '교환 가능') + '</span>' +
                 '</div>' +
                 '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품명 준비 중') + '</div>' +
@@ -626,10 +672,13 @@ function buildCouponStatusLabel(status = '') {
 
 function buildCouponVisual(item = {}) {
     const couponImgUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
-    if (couponImgUrl) {
+    const productImageUrl = getRewardProductImageUrl(item);
+    const visualUrl = couponImgUrl || productImageUrl;
+    if (visualUrl) {
+        const visualClassName = couponImgUrl ? 'reward-coupon-visual' : 'reward-coupon-visual is-product';
         return `
-            <div class="reward-coupon-visual">
-                <img class="reward-coupon-image" src="${escapeHtml(couponImgUrl)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
+            <div class="${visualClassName}">
+                <img class="reward-coupon-image" src="${escapeHtml(visualUrl)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
             </div>
         `;
     }
@@ -674,7 +723,7 @@ function renderRewardCouponVault() {
         return (
             '<article class="reward-coupon-item">' +
                 '<div class="reward-coupon-topline">' +
-                    '<span class="reward-coupon-brand">' + escapeHtml(item.brandName || '리워드 상품') + '</span>' +
+                    buildRewardBrandIdentity(item, 'reward-coupon-brand') +
                     '<span class="reward-coupon-status">' + escapeHtml(statusLabel) + '</span>' +
                 '</div>' +
                 '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || '쿠폰 정보 준비 중') + '</div>' +

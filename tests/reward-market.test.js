@@ -41,6 +41,17 @@ describe('reward market pricing helpers', () => {
         expect(__test.normalizePricingMode('phase2_hybrid_band')).toBe('phase2_hybrid_band');
     });
 
+    it('keeps launch exchange limits independent from the 500P minimum', () => {
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MIN_REDEEM_POINTS: '500',
+        });
+
+        expect(config.minRedeemPoints).toBe(500);
+        expect(config.dailyLimitPoints).toBe(2000);
+        expect(config.weeklyLimitPoints).toBe(5000);
+        expect(config.monthlyLimitPoints).toBe(10000);
+    });
+
     it('clamps phase2 market price using the daily and weekly bands', () => {
         const pricing = __test.buildPublishedPricing({
             config: {
@@ -74,6 +85,8 @@ describe('reward market pricing helpers', () => {
                 faceValueKrw: 2000,
                 purchasePriceKrw: 1940,
                 pointCost: 2000,
+                productImageUrl: '/assets/reward-market/mega-ice-americano.svg',
+                brandLogoUrl: '/assets/reward-market/mega-mgc-logo.svg',
                 brandName: '메가MGC커피',
                 displayName: '(ICE)아메리카노 모바일쿠폰',
                 available: true,
@@ -105,6 +118,8 @@ describe('reward market pricing helpers', () => {
         expect(quoted.hbtCost).toBe(2000);
         expect(quoted.deliveryMode).toBe('app_vault');
         expect(quoted.fallbackPolicy).toBe('manual_resend');
+        expect(quoted.productImageUrl).toBe('/assets/reward-market/mega-ice-americano.svg');
+        expect(quoted.brandLogoUrl).toBe('/assets/reward-market/mega-mgc-logo.svg');
     });
 
     it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {

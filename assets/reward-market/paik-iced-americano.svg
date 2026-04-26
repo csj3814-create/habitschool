@@ -1,0 +1,20 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="320" height="320" rx="32" fill="#FFF8EB"/>
+  <ellipse cx="160" cy="270" rx="78" ry="16" fill="#E8D8BE"/>
+  <path d="M105 86H215L195 250C193.2 265.6 180 277 164.3 277H155.7C140 277 126.8 265.6 125 250L105 86Z" fill="url(#paint0_linear)"/>
+  <path d="M112 86H208L198 58C195.9 51.9 190.1 48 183.6 48H136.4C129.9 48 124.1 51.9 122 58L112 86Z" fill="#EFF6FF"/>
+  <path d="M128 104H192L181 239C180 249.1 171.5 256.8 161.4 256.8H158.6C148.5 256.8 140 249.1 139 239L128 104Z" fill="#4D2A20"/>
+  <path d="M137 105H183L176 214C175.3 223.8 167.2 231.4 157.4 231.4C147.6 231.4 139.5 223.8 138.8 214L137 105Z" fill="#7A4027" fill-opacity="0.78"/>
+  <path d="M130 128L146 112L160 126L175 111L191 127L176 143L160 129L145 144L130 128Z" fill="#EAF8FF" fill-opacity="0.88"/>
+  <path d="M148 156L160 144L173 157L160 170L148 156Z" fill="#D7F1FF" fill-opacity="0.85"/>
+  <rect x="130" y="152" width="60" height="70" rx="12" fill="#0D2C6C"/>
+  <rect x="136" y="158" width="48" height="58" rx="10" fill="#F4C100"/>
+  <path d="M145 170H165C171.8 170 176 173.4 176 179.4C176 185.6 171.8 189 165 189H154V205H145V170ZM163.8 182.3C166.9 182.3 168.5 181.2 168.5 179.1C168.5 177 166.9 175.9 163.8 175.9H154V182.3H163.8Z" fill="#101F52"/>
+  <defs>
+    <linearGradient id="paint0_linear" x1="160" y1="86" x2="160" y2="277" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8A563B"/>
+      <stop offset="0.5" stop-color="#5D2F1D"/>
+      <stop offset="1" stop-color="#33160E"/>
+    </linearGradient>
+  </defs>
+</svg>
