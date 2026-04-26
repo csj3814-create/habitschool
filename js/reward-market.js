@@ -50,6 +50,7 @@ const rewardMarketState = {
     },
     error: '',
     expandedCouponVisualId: '',
+    phoneEditorOpen: true,
 };
 
 function escapeHtml(value = '') {
@@ -176,6 +177,14 @@ function getRewardPhoneInputEl() {
 
 function getRewardPhoneCopyEl() {
     return document.getElementById('reward-market-phone-copy');
+}
+
+function getRewardPhoneSummaryEl() {
+    return document.getElementById('reward-market-phone-summary');
+}
+
+function getRewardPhoneSummaryValueEl() {
+    return document.getElementById('reward-market-phone-summary-value');
 }
 
 function getRewardPhoneStatusEl() {
@@ -426,24 +435,40 @@ function renderRewardMarketMetaView() {
 function renderRewardRecipientPhonePanelView() {
     const settings = rewardMarketState.settings || {};
     const copyEl = getRewardPhoneCopyEl();
+    const summaryEl = getRewardPhoneSummaryEl();
+    const summaryValueEl = getRewardPhoneSummaryValueEl();
     const statusEl = getRewardPhoneStatusEl();
     const inputEl = getRewardPhoneInputEl();
     const saveButtonEl = getRewardPhoneSaveButtonEl();
+    const formEl = inputEl?.closest('.reward-market-phone-form') || null;
 
-    if (!copyEl || !statusEl || !inputEl || !saveButtonEl) return;
+    if (!copyEl || !summaryEl || !summaryValueEl || !statusEl || !inputEl || !saveButtonEl || !formEl) return;
 
     const draftPhone = getDraftRecipientPhone();
     const savedPhone = normalizeRecipientPhone(settings.savedRecipientPhone || '');
     const resolvedPhone = resolveRecipientPhoneForRedemption();
     const hasFocus = document.activeElement === inputEl;
+    const hasSavedPhone = isValidRecipientPhone(savedPhone);
+    const shouldShowEditor = rewardMarketState.phoneEditorOpen || !hasSavedPhone;
 
-    if (!hasFocus || !draftPhone) {
+    summaryEl.hidden = shouldShowEditor;
+    formEl.hidden = !shouldShowEditor;
+
+    if ((!hasFocus || !draftPhone) && shouldShowEditor) {
         inputEl.value = draftPhone || savedPhone || '';
     }
 
     copyEl.textContent = settings.mode === 'live'
         ? '\uC2E4\uBC1C\uAE09 \uC804\uC5D0 \uC4F8 \uBC88\uD638\uC608\uC694.'
         : '\uC2E4\uBC1C\uAE09 \uC804\uD658 \uB54C \uBC14\uB85C \uC4F8 \uBC88\uD638\uC608\uC694.';
+
+    if (!shouldShowEditor && hasSavedPhone) {
+        copyEl.textContent = '실발급 전에 쓸 번호예요.';
+        summaryValueEl.textContent = `저장한 연락처 ${settings.maskedRecipientPhone || maskRecipientPhone(savedPhone)}`;
+        statusEl.textContent = '';
+        statusEl.className = 'reward-market-phone-status muted';
+        return;
+    }
 
     saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
 
@@ -668,6 +693,7 @@ function showRewardCouponLightbox(item = {}) {
     imageEl.alt = item.displayName || item.brandName || 'coupon barcode';
     imageEl.classList.toggle('is-barcode', visual.kind === 'barcode');
     frameEl?.classList.toggle('is-barcode', visual.kind === 'barcode');
+    lightboxEl.classList.toggle('is-barcode-open', visual.kind === 'barcode');
     rewardMarketState.expandedCouponVisualId = String(item.id || '');
     lightboxEl.classList.add('is-open');
     lightboxEl.setAttribute('aria-hidden', 'false');
@@ -678,6 +704,7 @@ function closeRewardCouponLightbox() {
     if (!lightboxEl) return;
     rewardMarketState.expandedCouponVisualId = '';
     lightboxEl.classList.remove('is-open');
+    lightboxEl.classList.remove('is-barcode-open');
     lightboxEl.setAttribute('aria-hidden', 'true');
 }
 
@@ -919,6 +946,7 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
         rewardMarketState.reserve = data.reserve || null;
         rewardMarketState.pricing = data.pricing || null;
         rewardMarketState.settings = normalizeRewardMarketSettings(data.settings || {});
+        rewardMarketState.phoneEditorOpen = !isValidRecipientPhone(rewardMarketState.settings.savedRecipientPhone || '');
         rewardMarketState.error = '';
         rewardMarketState.ts = Date.now();
     } catch (error) {
@@ -948,6 +976,7 @@ async function persistRewardRecipientPhone(phone, { silent = false } = {}) {
 
     rewardMarketState.settings.savedRecipientPhone = normalizedPhone;
     rewardMarketState.settings.maskedRecipientPhone = maskRecipientPhone(normalizedPhone);
+    rewardMarketState.phoneEditorOpen = false;
 
     const inputEl = getRewardPhoneInputEl();
     if (inputEl) {
@@ -1053,6 +1082,12 @@ window.refreshRewardMarketSnapshot = function () {
 
 window.handleRewardRecipientPhoneInput = function () {
     renderRewardMarketSnapshot();
+};
+
+window.editRewardRecipientPhone = function () {
+    rewardMarketState.phoneEditorOpen = true;
+    renderRewardMarketSnapshot();
+    getRewardPhoneInputEl()?.focus();
 };
 
 window.saveRewardRecipientPhone = async function () {

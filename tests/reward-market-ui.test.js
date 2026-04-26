@@ -34,4 +34,14 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('사용 완료');
         expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
+    it('supports collapsed reward phone view with an explicit edit action', () => {
+        expect(rewardMarketSource).toContain('phoneEditorOpen');
+        expect(rewardMarketSource).toContain('reward-market-phone-summary');
+        expect(rewardMarketSource).toContain('window.editRewardRecipientPhone = function');
+    });
+
+    it('marks barcode lightbox state explicitly for wide fullscreen rendering', () => {
+        expect(rewardMarketSource).toContain("lightboxEl.classList.toggle('is-barcode-open'");
+        expect(rewardMarketSource).toContain("lightboxEl.classList.remove('is-barcode-open')");
+    });
 });
