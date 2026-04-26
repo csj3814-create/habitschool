@@ -4,7 +4,7 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { showToast } from './ui-helpers.js?v=167';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
-const DEFAULT_MIN_REDEEM_POINTS = 2000;
+const DEFAULT_MIN_REDEEM_POINTS = 500;
 const DEFAULT_SETTLEMENT_ASSET = 'points';
 const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-point-redemption';
 
@@ -428,6 +428,187 @@ function renderRewardMarketCatalog() {
 }
 
 
+function buildCompactLimitChip(settings = {}) {
+    const candidates = [
+        ['오늘', settings.limits?.daily],
+        ['이번 주', settings.limits?.weekly],
+        ['이번 달', settings.limits?.monthly],
+    ];
+    const selected = candidates.find(([, bucket]) => bucket);
+    if (!selected) return '';
+    const [label, bucket] = selected;
+    const remainingPoints = Number(bucket.remainingPoints ?? bucket.remainingHbt ?? 0) || 0;
+    return `<div class="reward-market-chip">${escapeHtml(label)} 남은 교환 ${formatNumber(remainingPoints)}P</div>`;
+}
+
+function renderRewardMarketMetaView() {
+    const metaEl = document.getElementById('reward-market-meta');
+    if (!metaEl) return;
+
+    const settings = rewardMarketState.settings || {};
+    const modeLabel = settings.mode === 'live' ? '실발급' : '테스트 발급';
+    const pricingLabel = settings.settlementAsset === 'hbt'
+        ? formatPhaseLabel(settings.pricingMode)
+        : '포인트 정액가';
+    const supportLabel = settings.deliveryMode === 'app_vault'
+        ? '앱 보관함'
+        : (settings.deliveryMode || '수령 방식 확인');
+    const chips = [
+        `<div class="reward-market-chip accent">${escapeHtml(modeLabel)}</div>`,
+        `<div class="reward-market-chip">${escapeHtml(pricingLabel)}</div>`,
+        `<div class="reward-market-chip">${escapeHtml(supportLabel)}</div>`,
+        buildCompactLimitChip(settings),
+    ];
+
+    if (!settings.providerReady) {
+        chips.push('<div class="reward-market-chip warning">운영 설정 필요</div>');
+    }
+
+    metaEl.innerHTML = chips.filter(Boolean).join('');
+}
+
+function renderRewardRecipientPhonePanelView() {
+    const settings = rewardMarketState.settings || {};
+    const copyEl = getRewardPhoneCopyEl();
+    const statusEl = getRewardPhoneStatusEl();
+    const inputEl = getRewardPhoneInputEl();
+    const saveButtonEl = getRewardPhoneSaveButtonEl();
+
+    if (!copyEl || !statusEl || !inputEl || !saveButtonEl) return;
+
+    const draftPhone = getDraftRecipientPhone();
+    const savedPhone = normalizeRecipientPhone(settings.savedRecipientPhone || '');
+    const resolvedPhone = resolveRecipientPhoneForRedemption();
+    const hasFocus = document.activeElement === inputEl;
+
+    if (!hasFocus || !draftPhone) {
+        inputEl.value = draftPhone || savedPhone || '';
+    }
+
+    copyEl.textContent = settings.mode === 'live'
+        ? '실발급에 사용할 연락처를 저장해 주세요. 쿠폰은 앱 보관함에서 확인합니다.'
+        : '지금 저장해 두면 실발급 전환 때 바로 사용할 수 있어요.';
+
+    saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
+
+    if (draftPhone && !isValidRecipientPhone(draftPhone)) {
+        statusEl.textContent = '전화번호를 01012345678 형식으로 입력해 주세요.';
+        statusEl.className = 'reward-market-phone-status warning';
+        return;
+    }
+
+    if (resolvedPhone) {
+        const useDraftPhone = draftPhone && draftPhone !== savedPhone;
+        const maskedPhone = useDraftPhone
+            ? maskRecipientPhone(draftPhone)
+            : (settings.maskedRecipientPhone || maskRecipientPhone(resolvedPhone));
+        const sourceLabel = useDraftPhone ? '입력한' : '저장된';
+        statusEl.textContent = `${sourceLabel} 연락처 ${maskedPhone}`;
+        statusEl.className = 'reward-market-phone-status ok';
+        return;
+    }
+
+    statusEl.textContent = settings.mode === 'live'
+        ? '실발급 전에 연락처를 저장해 주세요.'
+        : '연락처를 미리 저장해 두면 전환이 쉬워요.';
+    statusEl.className = 'reward-market-phone-status muted';
+}
+
+function buildRewardMarketActionView(item = {}) {
+    const settings = rewardMarketState.settings || {};
+    const pointBalance = getDisplayedPointsBalance();
+    const requiredCost = getRewardCostValue(item, settings);
+    const costUnit = getRewardCostUnitLabel(item, settings);
+    const canAfford = pointBalance >= requiredCost;
+    const isLive = settings.mode === 'live';
+
+    let label = isLive ? `${formatNumber(requiredCost)}${costUnit}로 교환` : '테스트 발급';
+    let disabled = false;
+    let helper = '';
+
+    if (item.available === false) {
+        label = '준비 중';
+        disabled = true;
+    } else if (!settings.issuanceEnabled) {
+        label = '발급 일시중지';
+        disabled = true;
+        helper = settings.issuanceBlockedReason || '';
+    } else if (!item.redeemable) {
+        label = '교환 불가';
+        disabled = true;
+        helper = item.blockedReason || '';
+    } else if (!canAfford) {
+        label = `${formatNumber(requiredCost)}${costUnit} 필요`;
+        disabled = true;
+    } else if (isLive && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
+        label = '연락처 필요';
+        disabled = true;
+        helper = '실발급 전에 연락처를 저장해 주세요.';
+    }
+
+    const encodedSku = encodeURIComponent(String(item.sku || ''));
+    return (
+        '<div class="reward-market-action-wrap">' +
+            '<button type="button" class="reward-market-action" onclick="requestRewardMarketRedemption(\'' + encodedSku + '\')"' + (disabled ? ' disabled' : '') + '>' +
+                escapeHtml(label) +
+            '</button>' +
+            (helper ? '<div class="reward-market-helper">' + escapeHtml(helper) + '</div>' : '') +
+        '</div>'
+    );
+}
+
+function renderRewardMarketCatalogView() {
+    const gridEl = document.getElementById('reward-market-grid');
+    if (!gridEl) return;
+
+    if (rewardMarketState.catalog.length === 0) {
+        gridEl.innerHTML = (
+            '<div class="reward-market-empty">' +
+                '<div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>' +
+                '<div class="reward-market-empty-copy">기프티쇼 연동이나 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>' +
+            '</div>'
+        );
+        return;
+    }
+
+    const supportLabel = rewardMarketState.settings.deliveryMode === 'app_vault'
+        ? '앱 보관함에서 확인'
+        : '쿠폰 수령 방식 확인';
+
+    gridEl.innerHTML = rewardMarketState.catalog.map((item) => {
+        const costValue = getRewardCostValue(item);
+        const costUnit = getRewardCostUnitLabel(item);
+
+        return (
+            '<article class="reward-market-item">' +
+                '<div class="reward-market-item-topline">' +
+                    '<span class="reward-market-brand">' + escapeHtml(item.brandName || '리워드 상품') + '</span>' +
+                    '<span class="reward-market-stock">' + escapeHtml(item.stockLabel || '교환 가능') + '</span>' +
+                '</div>' +
+                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품명 준비 중') + '</div>' +
+                '<div class="reward-market-item-meta">' + escapeHtml(supportLabel) + '</div>' +
+                '<div class="reward-market-values">' +
+                    '<div class="reward-market-price-block">' +
+                        '<span class="reward-market-price-label">교환 포인트</span>' +
+                        '<div class="reward-market-hbt">' + formatNumber(costValue) + escapeHtml(costUnit) + '</div>' +
+                    '</div>' +
+                    '<div class="reward-market-price-block align-end">' +
+                        '<span class="reward-market-price-label">쿠폰 금액</span>' +
+                        '<div class="reward-market-krw-strong">' + formatKrw(item.faceValueKrw || 0) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                buildRewardMarketActionView(item) +
+            '</article>'
+        );
+    }).join('');
+}
+
+function getRewardMarketReadyStatusText(settings = {}) {
+    return settings.mode === 'live'
+        ? '포인트로 교환하면 앱 보관함에 저장돼요.'
+        : '테스트 발급으로 흐름을 확인해 보세요.';
+}
+
 function buildCouponStatusLabel(status = '') {
     switch (String(status || '').trim()) {
         case 'issued':
@@ -515,9 +696,9 @@ function renderRewardCouponVault() {
 
 
 function renderRewardMarketSnapshot() {
-    renderRewardMarketMeta();
-    renderRewardRecipientPhonePanel();
-    renderRewardMarketCatalog();
+    renderRewardMarketMetaView();
+    renderRewardRecipientPhonePanelView();
+    renderRewardMarketCatalogView();
     renderRewardCouponVault();
 
     if (rewardMarketState.isLoading) {
@@ -537,14 +718,11 @@ function renderRewardMarketSnapshot() {
     }
 
     if (settings.mode === 'live' && settings.requiresRecipientPhone && !resolveRecipientPhoneForRedemption()) {
-        renderRewardMarketStatus('실발급 전에 수령 연락처를 먼저 저장해 주세요.', 'warning');
+        renderRewardMarketStatus('실발급 전에 연락처를 저장해 주세요.', 'warning');
         return;
     }
 
-    const statusText = settings.mode === 'live'
-        ? '포인트 교환이 가능합니다. 쿠폰은 앱 보관함에서 바코드와 PIN으로 확인할 수 있어요.'
-        : '테스트 교환이 가능합니다. 운영 전환 전까지 동일한 흐름으로 점검해 보세요.';
-    renderRewardMarketStatus(statusText, 'ok');
+    renderRewardMarketStatus(getRewardMarketReadyStatusText(settings), 'ok');
 }
 
 

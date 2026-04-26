@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const REWARD_MARKET_MIN_REDEMPTION_POINTS = 2000;
+const REWARD_MARKET_MIN_REDEMPTION_POINTS = 500;
 const REWARD_MARKET_MIN_REDEMPTION_HBT = REWARD_MARKET_MIN_REDEMPTION_POINTS;
 const REWARD_RESERVE_DOC_ID = "main";
 const REWARD_PRICING_DOC_ID = "main";
@@ -37,49 +37,36 @@ const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
 
 const DEFAULT_REWARD_CATALOG = Object.freeze([
     {
-        sku: "baemin-2000-salad",
-        brandName: "배달의민족",
-        displayName: "배민 상품권 2,000원",
-        category: "meal",
+        sku: "mega-ice-americano-60d",
+        brandName: "메가MGC커피",
+        displayName: "(ICE)아메리카노 모바일쿠폰",
+        category: "drink",
         faceValueKrw: 2000,
-        purchasePriceKrw: 1900,
+        purchasePriceKrw: 1940,
+        pointCost: 2000,
         provider: "giftishow",
-        providerGoodsId: "BAEMIN_2000",
-        healthGuide: "배민 상품권으로 샐러드 맛집이나 건강식을 찾아보세요.",
+        providerGoodsId: "G00002321189",
+        healthGuide: "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
         available: true,
-        stockLabel: "테스트 등록",
+        stockLabel: "60일 발급",
         deliveryMethod: "pin",
         sortOrder: 10,
     },
     {
-        sku: "marketkurly-5000-fresh",
-        brandName: "마켓컬리",
-        displayName: "마켓컬리 5,000원",
-        category: "grocery",
-        faceValueKrw: 5000,
-        purchasePriceKrw: 4800,
-        provider: "giftishow",
-        providerGoodsId: "KURLY_5000",
-        healthGuide: "마켓컬리에서 샐러드나 단백질 간식을 골라보세요.",
-        available: true,
-        stockLabel: "테스트 등록",
-        deliveryMethod: "pin",
-        sortOrder: 20,
-    },
-    {
-        sku: "mega-2000-decaf",
-        brandName: "메가커피",
-        displayName: "메가커피 2,000원",
+        sku: "paikdabang-iced-americano-60d",
+        brandName: "빽다방",
+        displayName: "아메리카노(ICED) 모바일쿠폰",
         category: "drink",
         faceValueKrw: 2000,
-        purchasePriceKrw: 1900,
+        purchasePriceKrw: 1940,
+        pointCost: 2000,
         provider: "giftishow",
-        providerGoodsId: "MEGA_2000",
-        healthGuide: "메가커피에서 디카페인이나 당을 줄인 옵션을 골라보세요.",
+        providerGoodsId: "G00001810964",
+        healthGuide: "부담 없이 교환해 보며 건강 습관 보상을 체감하기 좋은 소액 음료 상품입니다.",
         available: true,
-        stockLabel: "테스트 등록",
+        stockLabel: "60일 발급",
         deliveryMethod: "pin",
-        sortOrder: 30,
+        sortOrder: 20,
     },
 ]);
 
@@ -381,8 +368,9 @@ function resolveRewardMarketPointCost(item = {}, publishedPricing = {}, config =
             return roundUpHbt(item.faceValueKrw / krwPerHbt);
         }
     }
+    const configuredPointCost = Math.max(parseNumber(item.pointCost, 0), parseNumber(item.hbtCost, 0));
     return Math.max(
-        parseNumber(item.faceValueKrw, 0),
+        configuredPointCost || parseNumber(item.faceValueKrw, 0),
         config.minRedeemPoints || REWARD_MARKET_MIN_REDEMPTION_POINTS
     );
 }
@@ -416,6 +404,10 @@ function computeReserveBreakdown(product = {}) {
 function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
     const sku = normalizeSku(item.sku || item.providerGoodsId || fallbackSku || crypto.randomUUID());
     const reserve = computeReserveBreakdown(item);
+    const pointCost = Math.max(
+        parseNumber(item.pointCost, 0),
+        parseNumber(item.hbtCost, 0)
+    );
 
     return {
         sku,
@@ -424,6 +416,8 @@ function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
         category: String(item.category || "general").trim(),
         faceValueKrw: reserve.faceValueKrw || REWARD_MARKET_MIN_REDEMPTION_HBT,
         purchasePriceKrw: reserve.purchasePriceKrw,
+        pointCost,
+        hbtCost: pointCost,
         provider: String(item.provider || "giftishow").trim(),
         providerGoodsId: String(item.providerGoodsId || item.goodsId || item.id || sku).trim(),
         healthGuide: String(
@@ -2187,7 +2181,7 @@ async function redeemRewardCoupon({
     const rewardName = `${product.brandName} ${product.displayName}`.trim();
     const quoteMatchesCurrent = !quoteVersion || String(quoteVersion).trim() === String(product.quoteVersion || "").trim();
     const requestedQuotedPointCost = quoteMatchesCurrent
-        ? Math.max(parseNumber(quotedPointCost, product.pointCost), config.minRedeemPoints)
+        ? Math.max(parseNumber(quotedPointCost, product.pointCost), product.pointCost, config.minRedeemPoints)
         : product.pointCost;
     const effectiveQuoteVersion = quoteMatchesCurrent
         ? String(quoteVersion || product.quoteVersion || "").trim()

@@ -67,14 +67,15 @@ describe('reward market pricing helpers', () => {
         expect(pricing.quoteState).toBe('ready');
     });
 
-    it('quotes phase1 items at the internal fixed point price', () => {
+    it('quotes phase1 items at the catalog-defined fixed point price', () => {
         const quoted = __test.quoteCatalogItem(
             {
-                sku: 'baemin-2000',
+                sku: 'mega-ice-americano-60d',
                 faceValueKrw: 2000,
-                purchasePriceKrw: 1900,
-                brandName: '배민',
-                displayName: '배민 2,000원권',
+                purchasePriceKrw: 1940,
+                pointCost: 2000,
+                brandName: '메가MGC커피',
+                displayName: '(ICE)아메리카노 모바일쿠폰',
                 available: true,
             },
             {
@@ -90,7 +91,7 @@ describe('reward market pricing helpers', () => {
             },
             {
                 settlementAsset: 'points',
-                minRedeemPoints: 2000,
+                minRedeemPoints: 500,
                 pricingMode: 'phase1_fixed_internal',
                 deliveryMode: 'app_vault',
                 fallbackPolicy: 'manual_resend',
