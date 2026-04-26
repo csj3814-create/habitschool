@@ -435,6 +435,31 @@
     justify-content: flex-end;
 }
 
+.reward-coupon-media {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reward-coupon-product-thumb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 132px;
+    border-radius: 12px;
+    border: 1px solid #f1dfca;
+    background: linear-gradient(180deg, #fffaf4 0%, #fff2e0 100%);
+    padding: 10px;
+}
+
+.reward-coupon-product-thumb-image {
+    display: block;
+    width: 100%;
+    max-width: 136px;
+    max-height: 124px;
+    object-fit: contain;
+}
+
 .reward-coupon-visual {
     border-radius: 12px;
     background: #fff7ee;
@@ -467,13 +492,6 @@
     margin: 0 auto;
     border-radius: 10px;
     object-fit: contain;
-}
-
-.reward-coupon-visual-hint {
-    display: inline-block;
-    margin-top: 6px;
-    font-size: 11px;
-    color: #8b6f52;
 }
 
 .reward-coupon-code {
@@ -533,7 +551,7 @@
     justify-content: center;
     padding: 18px;
     border: none;
-    background: rgba(34, 22, 12, 0.82);
+    background: rgba(255, 251, 245, 0.97);
     cursor: pointer;
 }
 
@@ -545,23 +563,39 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    max-width: min(92vw, 520px);
+    justify-content: center;
+    gap: 12px;
+    max-width: min(94vw, 460px);
     width: 100%;
+    min-height: min(88vh, 760px);
+    padding: 22px 18px 24px;
+    border-radius: 24px;
+    background: #ffffff;
+    box-shadow: 0 16px 44px rgba(117, 78, 28, 0.18);
+    border: 1px solid #f1dfca;
+}
+
+.reward-coupon-lightbox-frame.is-barcode {
+    max-width: min(94vw, 420px);
 }
 
 .reward-coupon-lightbox-image {
     width: 100%;
-    max-height: 80vh;
+    max-height: 74vh;
     object-fit: contain;
     border-radius: 16px;
-    background: #fffdfa;
+    background: #ffffff;
+}
+
+.reward-coupon-lightbox-image.is-barcode {
+    max-height: 68vh;
+    padding: 10px 6px;
 }
 
 .reward-coupon-lightbox-hint {
     font-size: 12px;
     font-weight: 700;
-    color: #fff4e8;
+    color: #7f6548;
 }
 
 @media (max-width: 640px) {

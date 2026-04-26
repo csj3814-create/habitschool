@@ -31,5 +31,7 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('window.toggleRewardCouponVisual = function');
         expect(rewardMarketSource).toContain('window.dismissRewardCouponItem = async function');
         expect(rewardMarketSource).toContain('reward-coupon-remove');
+        expect(rewardMarketSource).toContain('사용 완료');
+        expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
 });

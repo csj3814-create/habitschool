@@ -1890,6 +1890,7 @@ function shouldCountTowardIssuanceUsage(data = {}) {
 function canDismissRewardRedemption(data = {}) {
     const status = String(data.status || "").trim();
     const mode = String(data.mode || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase();
+    if (status === "issued" && mode !== "live") return true;
     if (["failed_manual_review", "cancelled"].includes(status)) return true;
     return status === "pending_issue" && mode !== "live";
 }

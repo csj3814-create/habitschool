@@ -390,44 +390,7 @@ function buildRewardMarketAction(item = {}) {
 
 
 function renderRewardMarketCatalog() {
-    const gridEl = document.getElementById('reward-market-grid');
-    if (!gridEl) return;
-
-    if (rewardMarketState.catalog.length === 0) {
-        gridEl.innerHTML = (
-            '<div class="reward-market-empty">' +
-                '<div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>' +
-                '<div class="reward-market-empty-copy">기프티쇼 연동 또는 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>' +
-            '</div>'
-        );
-        return;
-    }
-
-    gridEl.innerHTML = rewardMarketState.catalog.map((item) => {
-        const costValue = getRewardCostValue(item);
-        const costUnit = getRewardCostUnitLabel(item);
-        const phaseLabel = item.settlementAsset === 'hbt'
-            ? formatPhaseLabel(item.pricingMode || rewardMarketState.settings.pricingMode)
-            : '포인트 정액가';
-        return (
-            '<article class="reward-market-item">' +
-                '<div class="reward-market-item-topline">' +
-                    '<span class="reward-market-brand">' + escapeHtml(item.brandName || '리워드 상품') + '</span>' +
-                    '<span class="reward-market-stock">' + escapeHtml(item.stockLabel || '교환 가능') + '</span>' +
-                '</div>' +
-                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품명 준비 중') + '</div>' +
-                '<div class="reward-market-values">' +
-                    '<div class="reward-market-hbt">' + formatNumber(costValue) + escapeHtml(costUnit) + '</div>' +
-                    '<div class="reward-market-krw">' + formatKrw(item.faceValueKrw || 0) + '</div>' +
-                '</div>' +
-                '<div class="reward-market-guide">' + escapeHtml(item.healthGuide || '건강한 선택으로 이어질 수 있는 리워드를 준비했어요.') + '</div>' +
-                '<div class="reward-market-quote-meta">' +
-                    escapeHtml(phaseLabel) + ' · ' + escapeHtml(item.quoteVersion || 'quote pending') +
-                '</div>' +
-                buildRewardMarketAction(item) +
-            '</article>'
-        );
-    }).join('');
+    return renderRewardMarketCatalogView();
 }
 
 
@@ -595,9 +558,10 @@ function buildRewardProductHero(item = {}) {
     );
 }
 
-function buildMockBarcodeDataUrl(value = '') {
+function buildMockBarcodeDataUrl(value = '', options = {}) {
     const normalized = String(value || '').replace(/[^0-9A-Z]/gi, '').toUpperCase();
     if (!normalized) return '';
+    const isTest = options?.isTest === true;
 
     const bitStream = ['101011'];
     for (const character of normalized) {
@@ -607,21 +571,30 @@ function buildMockBarcodeDataUrl(value = '') {
     bitStream.push('110101');
 
     const unit = 2;
+    const barTop = isTest ? 38 : 12;
     const barHeight = 84;
+    const labelHeight = isTest ? 26 : 0;
+    const textY = barTop + barHeight + 22;
+    const totalHeight = textY + 16;
     const width = Math.max(bitStream.join('').length * unit, 180);
     let x = 0;
     const bars = [];
     for (const bit of bitStream.join('')) {
         if (bit === '1') {
-            bars.push(`<rect x="${x}" y="0" width="${unit}" height="${barHeight}" rx="0.8" fill="#231815" />`);
+            bars.push(`<rect x="${x}" y="${barTop}" width="${unit}" height="${barHeight}" rx="0.8" fill="#111111" />`);
         }
         x += unit;
     }
+    const testBadge = isTest ? `
+        <rect x="12" y="10" width="64" height="${labelHeight}" rx="13" fill="#ff8a00" />
+        <text x="44" y="28" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#ffffff">테스트</text>
+    ` : '';
     const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="120" viewBox="0 0 ${width} 120" role="img" aria-label="barcode">
-            <rect width="${width}" height="120" fill="#fffdfa" />
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" role="img" aria-label="barcode">
+            <rect width="${width}" height="${totalHeight}" fill="#ffffff" />
+            ${testBadge}
             ${bars.join('')}
-            <text x="${width / 2}" y="106" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#4a3118">${normalized}</text>
+            <text x="${width / 2}" y="${textY}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#111111">${normalized}</text>
         </svg>
     `;
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -634,15 +607,18 @@ function getRewardCouponVisualSource(item = {}) {
             url: couponImageUrl,
             className: 'reward-coupon-visual',
             expandable: true,
+            kind: 'coupon',
         };
     }
 
     const pinCode = String(item.pinCode || '').trim();
     if (pinCode) {
+        const isTest = String(item.mode || '').trim().toLowerCase() !== 'live';
         return {
-            url: buildMockBarcodeDataUrl(pinCode),
+            url: buildMockBarcodeDataUrl(pinCode, { isTest }),
             className: 'reward-coupon-visual is-barcode',
             expandable: true,
+            kind: 'barcode',
         };
     }
 
@@ -652,6 +628,7 @@ function getRewardCouponVisualSource(item = {}) {
             url: productImageUrl,
             className: 'reward-coupon-visual is-product',
             expandable: false,
+            kind: 'product',
         };
     }
 
@@ -685,9 +662,12 @@ function showRewardCouponLightbox(item = {}) {
     if (!visual?.url) return;
     const lightboxEl = ensureRewardCouponLightbox();
     const imageEl = lightboxEl.querySelector('.reward-coupon-lightbox-image');
+    const frameEl = lightboxEl.querySelector('.reward-coupon-lightbox-frame');
     if (!imageEl) return;
     imageEl.src = visual.url;
     imageEl.alt = item.displayName || item.brandName || 'coupon barcode';
+    imageEl.classList.toggle('is-barcode', visual.kind === 'barcode');
+    frameEl?.classList.toggle('is-barcode', visual.kind === 'barcode');
     rewardMarketState.expandedCouponVisualId = String(item.id || '');
     lightboxEl.classList.add('is-open');
     lightboxEl.setAttribute('aria-hidden', 'false');
@@ -782,9 +762,27 @@ function buildCouponVisual(item = {}) {
     return `
         <button type="button" class="reward-coupon-visual-button" onclick="toggleRewardCouponVisual('${encodeURIComponent(String(item.id || ''))}')">
             ${visualMarkup}
-            <span class="reward-coupon-visual-hint">눌러서 크게 보기</span>
         </button>
     `;
+}
+
+function buildCouponProductThumb(item = {}) {
+    const productImageUrl = getRewardProductImageUrl(item);
+    if (!productImageUrl) return '';
+    return `
+        <div class="reward-coupon-product-thumb">
+            <img class="reward-coupon-product-thumb-image" src="${escapeHtml(productImageUrl)}" alt="${escapeHtml(item.displayName || item.brandName || 'coupon product')}" loading="lazy">
+        </div>
+    `;
+}
+
+function buildCouponMedia(item = {}) {
+    const productThumb = buildCouponProductThumb(item);
+    const visualMarkup = buildCouponVisual(item);
+    if (productThumb && visualMarkup) {
+        return `<div class="reward-coupon-media">${productThumb}${visualMarkup}</div>`;
+    }
+    return productThumb || visualMarkup;
 }
 
 function buildCouponCodeBlock(item = {}) {
@@ -796,8 +794,16 @@ function buildCouponCodeBlock(item = {}) {
 function canDismissRewardCouponItem(item = {}) {
     const status = String(item.status || '').trim();
     const mode = String(item.mode || '').trim().toLowerCase();
+    if (status === 'issued' && mode !== 'live') return true;
     if (['failed_manual_review', 'cancelled'].includes(status)) return true;
     return status === 'pending_issue' && mode !== 'live';
+}
+
+function getRewardCouponDismissLabel(item = {}) {
+    const status = String(item.status || '').trim();
+    const mode = String(item.mode || '').trim().toLowerCase();
+    if (status === 'issued' && mode !== 'live') return '사용 완료';
+    return '지우기';
 }
 
 function renderRewardCouponVault() {
@@ -822,7 +828,7 @@ function renderRewardCouponVault() {
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
         const dismissButton = canDismissRewardCouponItem(item)
-            ? '<button type="button" class="reward-coupon-remove" onclick="dismissRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">지우기</button>'
+            ? '<button type="button" class="reward-coupon-remove" onclick="dismissRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + escapeHtml(getRewardCouponDismissLabel(item)) + '</button>'
             : '';
         return (
             '<article class="reward-coupon-item">' +
@@ -835,7 +841,7 @@ function renderRewardCouponVault() {
                 '</div>' +
                 '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || '쿠폰 정보 준비 중') + '</div>' +
                 '<div class="reward-coupon-meta">' + formatNumber(getRewardCostValue(item)) + escapeHtml(getRewardCostUnitLabel(item)) + ' · ' + formatKrw(item.faceValueKrw || 0) + '</div>' +
-                buildCouponVisual(item) +
+                buildCouponMedia(item) +
                 buildCouponCodeBlock(item) +
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +

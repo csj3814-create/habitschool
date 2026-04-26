@@ -336,9 +336,10 @@ describe('reward market pricing helpers', () => {
     it('allows dismiss only for failed or non-live pending reward redemptions', () => {
         expect(__test.canDismissRewardRedemption({ status: 'failed_manual_review', mode: 'live' })).toBe(true);
         expect(__test.canDismissRewardRedemption({ status: 'cancelled', mode: 'live' })).toBe(true);
+        expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'mock' })).toBe(true);
         expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'mock' })).toBe(true);
         expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'live' })).toBe(false);
-        expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'mock' })).toBe(false);
+        expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'live' })).toBe(false);
     });
 
     it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {
