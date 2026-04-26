@@ -108,6 +108,11 @@
 - Root cause: the point-settlement transaction precharged points unconditionally before provider issuance, and the issuance-usage rollup counted every active redemption status regardless of mode or whether the charge was later refunded.
 - Lesson: for reward systems with `mock` and `live` modes, charge balances only in `live`, refund any precharge that falls into manual review, and count issuance quotas only from live charged redemptions.
 
+### 198. When duplicate issuance paths share the same ledger write, create the doc ref through one helper instead of re-declaring it ad hoc
+- Symptom: tapping `테스트 발급` on staging immediately failed with `쿠폰 교환 처리 중 오류가 발생했습니다.` because the callable crashed on `ReferenceError: reserveLedgerRef is not defined`.
+- Root cause: the legacy HBT redemption path still declared `reserveLedgerRef`, but the newer point-settlement path reused the batch write without recreating that ref after a refactor.
+- Lesson: when a ledger/doc reference is written in more than one redemption path, create it through a shared helper and add a smoke test for the cheaper path (`mock` in this case). Shared batch writes are easy to break when one branch keeps a local variable and the other silently loses it.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 

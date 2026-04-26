@@ -1840,6 +1840,10 @@ function buildProviderTrId() {
     return `hs_${datePart}_${randomPart}`.slice(0, 25);
 }
 
+function createReserveLedgerRef(db) {
+    return db.collection("reward_reserve_ledger").doc();
+}
+
 function shouldChargePointsImmediately(config = {}) {
     return String(config.mode || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase() === "live";
 }
@@ -1987,7 +1991,7 @@ async function redeemRewardCouponLegacy({
     const redemptionRef = config.mode === "live" && burnHash
         ? db.collection("reward_redemptions").doc(`burn_${burnHash.toLowerCase()}`)
         : db.collection("reward_redemptions").doc();
-    const reserveLedgerRef = db.collection("reward_reserve_ledger").doc();
+    const reserveLedgerRef = createReserveLedgerRef(db);
     const txRecordRef = db.collection("blockchain_transactions").doc();
     const providerTrId = buildProviderTrId();
 
@@ -2388,6 +2392,7 @@ async function redeemRewardCoupon({
 
     const providerTrId = buildProviderTrId();
     const userRef = db.collection("users").doc(uid);
+    const reserveLedgerRef = createReserveLedgerRef(db);
     const shouldChargePointsNow = shouldChargePointsImmediately(config);
     let existingResult = null;
     await db.runTransaction(async (transaction) => {

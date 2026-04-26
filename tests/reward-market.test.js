@@ -3,6 +3,177 @@ import rewardMarketModule from '../functions/reward-market.js';
 
 const { __test } = rewardMarketModule;
 
+function createFakeFirestore(initialDocs = {}) {
+    const store = new Map(Object.entries(initialDocs).map(([path, value]) => [path, structuredClone(value)]));
+
+    function cloneValue(value) {
+        return value && typeof value === 'object' ? structuredClone(value) : value;
+    }
+
+    function normalizePath(path) {
+        return String(path || '').replace(/^\/+|\/+$/g, '');
+    }
+
+    function mergeData(existing = {}, update = {}) {
+        const next = { ...existing };
+        Object.entries(update).forEach(([key, value]) => {
+            if (value && typeof value === 'object' && value.__op === 'increment') {
+                next[key] = (Number(next[key]) || 0) + Number(value.value || 0);
+                return;
+            }
+            next[key] = cloneValue(value);
+        });
+        return next;
+    }
+
+    function writeDoc(path, value, options = {}) {
+        const normalizedPath = normalizePath(path);
+        const existing = store.get(normalizedPath) || {};
+        const next = options.merge ? mergeData(existing, value || {}) : mergeData({}, value || {});
+        store.set(normalizedPath, next);
+    }
+
+    function readDoc(path) {
+        const normalizedPath = normalizePath(path);
+        const data = store.get(normalizedPath);
+        return {
+            id: normalizedPath.split('/').pop(),
+            exists: store.has(normalizedPath),
+            data: () => cloneValue(data || {}),
+            ref: doc(normalizedPath),
+        };
+    }
+
+    function listCollection(path) {
+        const prefix = `${normalizePath(path)}/`;
+        return Array.from(store.entries())
+            .filter(([docPath]) => docPath.startsWith(prefix) && !docPath.slice(prefix.length).includes('/'))
+            .map(([docPath]) => readDoc(docPath));
+    }
+
+    function createQuery(collectionPath, clauses = [], max = null) {
+        return {
+            where(field, op, value) {
+                return createQuery(collectionPath, [...clauses, { field, op, value }], max);
+            },
+            limit(limitValue) {
+                return createQuery(collectionPath, clauses, limitValue);
+            },
+            async get() {
+                let docs = listCollection(collectionPath);
+                clauses.forEach(({ field, op, value }) => {
+                    docs = docs.filter((docSnap) => {
+                        const data = docSnap.data() || {};
+                        const current = data[field];
+                        if (op === '==') return current === value;
+                        if (op === '>=') {
+                            const currentMs = current instanceof Date ? current.getTime() : new Date(current).getTime();
+                            const valueMs = value instanceof Date ? value.getTime() : new Date(value).getTime();
+                            return currentMs >= valueMs;
+                        }
+                        throw new Error(`Unsupported query operator: ${op}`);
+                    });
+                });
+                if (Number.isFinite(max)) {
+                    docs = docs.slice(0, max);
+                }
+                return {
+                    empty: docs.length === 0,
+                    docs,
+                };
+            },
+        };
+    }
+
+    function collection(path) {
+        const normalizedPath = normalizePath(path);
+        return {
+            doc(id = `auto_${Math.random().toString(36).slice(2, 10)}`) {
+                return doc(`${normalizedPath}/${id}`);
+            },
+            where(field, op, value) {
+                return createQuery(normalizedPath, [{ field, op, value }], null);
+            },
+            limit(limitValue) {
+                return createQuery(normalizedPath, [], limitValue);
+            },
+            async get() {
+                const docs = listCollection(normalizedPath);
+                return {
+                    empty: docs.length === 0,
+                    docs,
+                };
+            },
+        };
+    }
+
+    function doc(path) {
+        const normalizedPath = normalizePath(path);
+        return {
+            id: normalizedPath.split('/').pop(),
+            path: normalizedPath,
+            async get() {
+                return readDoc(normalizedPath);
+            },
+            async set(value, options = {}) {
+                writeDoc(normalizedPath, value, options);
+            },
+        };
+    }
+
+    return {
+        collection,
+        doc,
+        batch() {
+            const operations = [];
+            return {
+                set(ref, value, options = {}) {
+                    operations.push({ type: 'set', ref, value, options });
+                },
+                async commit() {
+                    operations.forEach((operation) => {
+                        if (operation.type === 'set') {
+                            writeDoc(operation.ref.path, operation.value, operation.options);
+                        }
+                    });
+                },
+            };
+        },
+        async runTransaction(handler) {
+            const transaction = {
+                async get(ref) {
+                    return readDoc(ref.path);
+                },
+                set(ref, value, options = {}) {
+                    writeDoc(ref.path, value, options);
+                },
+            };
+            return handler(transaction);
+        },
+        __get(path) {
+            return cloneValue(store.get(normalizePath(path)));
+        },
+    };
+}
+
+function createFakeFieldValue() {
+    return {
+        increment(value) {
+            return { __op: 'increment', value };
+        },
+        serverTimestamp() {
+            return new Date('2026-04-27T00:00:00.000Z');
+        },
+    };
+}
+
+class FakeHttpsError extends Error {
+    constructor(code, message) {
+        super(message);
+        this.code = code;
+    }
+}
+
 describe('reward market pricing helpers', () => {
     it('builds Giftishow live defaults and flags missing live config', () => {
         const config = __test.buildRewardMarketConfig({
@@ -209,5 +380,48 @@ describe('reward market pricing helpers', () => {
             bizmoney: { balanceKrw: 10000 },
         });
         expect(lowBizmoney.issuanceEnabled).toBe(false);
+    });
+
+    it('completes mock redemptions without charging points or crashing on reserve ledger writes', async () => {
+        const db = createFakeFirestore({
+            'users/test-user': {
+                displayName: '최석재',
+                coins: 3264,
+            },
+        });
+        const FieldValue = createFakeFieldValue();
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'mock',
+            REWARD_MARKET_SETTLEMENT_ASSET: 'points',
+            REWARD_MARKET_MIN_REDEEM_POINTS: '500',
+            REWARD_MARKET_DAILY_LIMIT_POINTS: '2000',
+            REWARD_MARKET_WEEKLY_LIMIT_POINTS: '5000',
+            REWARD_MARKET_MONTHLY_LIMIT_POINTS: '10000',
+        });
+
+        const result = await rewardMarketModule.redeemRewardCoupon({
+            db,
+            FieldValue,
+            HttpsError: FakeHttpsError,
+            uid: 'test-user',
+            userData: {
+                displayName: '최석재',
+                coins: 3264,
+            },
+            config,
+            sku: 'mega-ice-americano-60d',
+            recipientPhone: '',
+            quoteVersion: 'phase1_fixed_internal:2026-04-27:fixed',
+            quoteSource: 'fixed_internal_face_value',
+            quotedPointCost: 2000,
+            clientRequestId: 'mock-smoke-test',
+            authPhoneNumber: '',
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.status).toBe('issued');
+        expect(db.__get('users/test-user').coins).toBe(3264);
+        expect(db.__get('reward_redemptions/req_test-user_mock-smoke-test').pointsCharged).toBe(false);
+        expect(db.__get('reward_reserve_metrics/main').issuedCount).toBe(1);
     });
 });
