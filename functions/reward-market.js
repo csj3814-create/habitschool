@@ -52,6 +52,7 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         available: true,
         stockLabel: "60일 발급",
         deliveryMethod: "pin",
+        validityDays: 60,
         sortOrder: 10,
     },
     {
@@ -70,6 +71,7 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         available: true,
         stockLabel: "60일 발급",
         deliveryMethod: "pin",
+        validityDays: 60,
         sortOrder: 20,
     },
 ]);
@@ -413,6 +415,31 @@ function resolveRewardAssetUrl(...candidates) {
     return "";
 }
 
+function resolveRewardValidityDays(item = {}, fallbackDays = 30) {
+    const directValue = Math.max(
+        parseNumber(item.validityDays, 0),
+        parseNumber(item.validityPeriodDays, 0),
+        parseNumber(item.expireDays, 0)
+    );
+    if (directValue > 0) return directValue;
+
+    const labels = [
+        item.stockLabel,
+        item.validityLabel,
+        item.validityPeriod,
+        item.displayName,
+    ];
+    for (const label of labels) {
+        const match = String(label || "").match(/(\d+)\s*일/);
+        if (match) {
+            const parsedDays = parseNumber(match[1], 0);
+            if (parsedDays > 0) return parsedDays;
+        }
+    }
+
+    return Math.max(parseNumber(fallbackDays, 30), 1);
+}
+
 function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
     const sku = normalizeSku(item.sku || item.providerGoodsId || fallbackSku || crypto.randomUUID());
     const reserve = computeReserveBreakdown(item);
@@ -443,6 +470,7 @@ function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
             item.goodsImageUrl,
             item.thumbnailUrl
         ),
+        validityDays: resolveRewardValidityDays(item),
         brandLogoUrl: resolveRewardAssetUrl(
             item.brandLogoUrl,
             item.logoUrl,
@@ -480,6 +508,7 @@ function applySeededRewardVisuals(item = {}, lookup = {}) {
         ...item,
         healthGuide: item.healthGuide || seeded.healthGuide || "",
         productImageUrl: item.productImageUrl || seeded.productImageUrl || "",
+        validityDays: parseNumber(item.validityDays, 0) || parseNumber(seeded.validityDays, 0) || 30,
         brandLogoUrl: item.brandLogoUrl || seeded.brandLogoUrl || "",
     };
 }
@@ -1147,6 +1176,7 @@ async function loadUserRedemptions({ db, uid, limit = 12 }) {
         .get();
 
     return snapshot.docs
+        .filter((docSnap) => !docSnap.data()?.hiddenByUserAt)
         .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt))
         .map((docSnap) => serializeRedemptionDoc(docSnap));
 }
@@ -1526,7 +1556,8 @@ function buildMockCouponCode() {
 }
 
 function buildMockIssuedCoupon(product = {}, recipientPhone = "") {
-    const expiresAt = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString();
+    const validityDays = resolveRewardValidityDays(product);
+    const expiresAt = new Date(Date.now() + (validityDays * 24 * 60 * 60 * 1000)).toISOString();
     return {
         providerOrderId: `mock_${Date.now().toString(36)}`,
         deliveryMethod: product.deliveryMethod || "pin",
@@ -1559,7 +1590,7 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         barcodeUrl: String(merged.barcodeUrl || merged.couponImgUrl || merged.barcodeURL || merged.imageUrl || merged.imgUrl || "").trim(),
         expiresAt: toPlainDate(
             merged.expiresAt || merged.expiredAt || merged.expireDate || merged.validUntil || merged.validPrdEndDt,
-            new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString()
+            new Date(Date.now() + (resolveRewardValidityDays(product) * 24 * 60 * 60 * 1000)).toISOString()
         ),
         recipientPhone: normalizeRecipientPhone(
             merged.recipientPhone || merged.phone || merged.phoneNumber || merged.recverTelNo || recipientPhone
@@ -1856,6 +1887,13 @@ function shouldCountTowardIssuanceUsage(data = {}) {
         && ["issued", "pending_issue"].includes(status);
 }
 
+function canDismissRewardRedemption(data = {}) {
+    const status = String(data.status || "").trim();
+    const mode = String(data.mode || DEFAULT_REWARD_MARKET_MODE).trim().toLowerCase();
+    if (["failed_manual_review", "cancelled"].includes(status)) return true;
+    return status === "pending_issue" && mode !== "live";
+}
+
 async function refundChargedRewardPoints({
     db,
     FieldValue,
@@ -1899,6 +1937,50 @@ async function refundChargedRewardPoints({
     });
 
     return refunded;
+}
+
+async function dismissRewardCoupon({
+    db,
+    FieldValue,
+    HttpsError,
+    uid,
+    redemptionId = "",
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "지울 쿠폰을 다시 선택해 주세요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const redemptionSnap = await redemptionRef.get();
+    if (!redemptionSnap.exists) {
+        throw new HttpsError("not-found", "쿠폰 기록을 찾을 수 없어요.");
+    }
+
+    const redemption = redemptionSnap.data() || {};
+    if (String(redemption.userId || "").trim() !== String(uid || "").trim()) {
+        throw new HttpsError("permission-denied", "다른 사용자의 쿠폰 기록은 지울 수 없어요.");
+    }
+
+    if (redemption.hiddenByUserAt) {
+        return { success: true, dismissed: true, alreadyHidden: true, redemptionId: normalizedId };
+    }
+
+    if (!canDismissRewardRedemption(redemption)) {
+        throw new HttpsError("failed-precondition", "발급 완료된 쿠폰은 보관함에서 지울 수 없어요.");
+    }
+
+    await redemptionRef.set({
+        hiddenByUserAt: FieldValue.serverTimestamp(),
+        hiddenByUserUid: uid,
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return {
+        success: true,
+        dismissed: true,
+        redemptionId: normalizedId,
+    };
 }
 
 async function redeemRewardCouponLegacy({
@@ -2720,6 +2802,7 @@ module.exports = {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon,
+    dismissRewardCoupon,
     adminResendRewardCoupon,
     syncRewardMarketOps,
     __test: {
@@ -2733,8 +2816,11 @@ module.exports = {
         buildIssuancePolicy,
         quoteCatalogItem,
         buildCatalogAvailability,
+        resolveRewardValidityDays,
+        buildMockIssuedCoupon,
         shouldChargePointsImmediately,
         shouldCountTowardIssuanceUsage,
+        canDismissRewardRedemption,
         normalizeFeedData,
         computeRawKrwPerHbt,
         getKstDayKey,

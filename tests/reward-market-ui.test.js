@@ -22,4 +22,14 @@ describe('reward market UI render wiring', () => {
             /async function persistRewardRecipientPhone[\s\S]*renderRewardMarketSnapshot\(\);[\s\S]*showToast\('쿠폰 수령 연락처를 저장했어요\.'\);/s
         );
     });
+    it('renders reward-market values on a single inline row', () => {
+        expect(rewardMarketSource).toContain('reward-market-price-chip');
+        expect(rewardMarketSource).toContain('reward-market-price-separator');
+    });
+
+    it('wires coupon visual expand and dismiss handlers for the vault', () => {
+        expect(rewardMarketSource).toContain('window.toggleRewardCouponVisual = function');
+        expect(rewardMarketSource).toContain('window.dismissRewardCouponItem = async function');
+        expect(rewardMarketSource).toContain('reward-coupon-remove');
+    });
 });

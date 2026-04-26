@@ -38,6 +38,7 @@ const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
+    dismissRewardCoupon: dismissRewardCouponFlow,
     adminResendRewardCoupon: adminResendRewardCouponFlow,
     syncRewardMarketOps,
 } = require("./reward-market");
@@ -1738,6 +1739,33 @@ exports.redeemRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("redeemRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 교환 처리 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.dismissRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        try {
+            return await dismissRewardCouponFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                uid: request.auth.uid,
+                redemptionId: request.data?.redemptionId,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("dismissRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 목록을 정리하는 중 오류가 발생했습니다.");
         }
     }
 );

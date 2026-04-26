@@ -23,11 +23,20 @@
     color: #5a3413;
 }
 
+.reward-market-header > div,
+.reward-coupon-header > div {
+    min-width: 0;
+    flex: 1;
+}
+
 .reward-market-caption {
     margin: 4px 0 0;
     font-size: 13px;
-    line-height: 1.4;
+    line-height: 1.35;
     color: #7a634b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .reward-market-refresh-btn {
@@ -76,10 +85,10 @@
 .reward-market-phone-panel {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 14px;
-    padding: 12px;
-    border-radius: 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
     border: 1px solid #f2dec6;
     background: #fffdf8;
 }
@@ -91,8 +100,8 @@
 }
 
 .reward-market-phone-copy {
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 11.5px;
+    line-height: 1.35;
     color: #6c5436;
 }
 
@@ -108,7 +117,7 @@
     border-radius: 12px;
     border: 1px solid #dfc39d;
     background: #ffffff;
-    padding: 10px 12px;
+    padding: 8px 11px;
     font-size: 14px;
     color: #4a3118;
 }
@@ -122,8 +131,8 @@
 .reward-market-phone-save {
     border: none;
     border-radius: 12px;
-    min-width: 68px;
-    padding: 10px 14px;
+    min-width: 64px;
+    padding: 8px 12px;
     background: linear-gradient(135deg, #ffb347 0%, #ff8a00 100%);
     color: #4a2b07;
     font-size: 13px;
@@ -289,50 +298,41 @@
 
 .reward-market-values {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 12px;
-    border-radius: 14px;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 12px;
     background: #fff8f0;
     border: 1px solid #f3dfc8;
+    flex-wrap: nowrap;
 }
 
-.reward-market-price-block {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.reward-market-price-block.align-end {
-    text-align: right;
-    align-items: flex-end;
-}
-
-.reward-market-price-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: #8d7250;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.reward-market-hbt {
-    font-size: 22px;
-    font-weight: 800;
-    color: #e06700;
-}
-
-.reward-market-krw,
 .reward-coupon-meta {
     font-size: 13px;
     color: #7b6249;
 }
 
-.reward-market-krw-strong {
-    font-size: 16px;
+.reward-market-price-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 13px;
+    color: #7b6249;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.reward-market-price-chip strong {
+    font-size: 19px;
+    font-weight: 800;
+    color: #e06700;
+}
+
+.reward-market-price-separator {
+    font-size: 14px;
     font-weight: 700;
-    color: #4a331b;
+    color: #c59b6c;
 }
 
 .reward-market-guide,
@@ -427,6 +427,14 @@
     background: #ffffff;
 }
 
+.reward-coupon-top-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
 .reward-coupon-visual {
     border-radius: 12px;
     background: #fff7ee;
@@ -434,8 +442,22 @@
     padding: 12px;
 }
 
+.reward-coupon-visual-button {
+    display: block;
+    width: 100%;
+    border: none;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
 .reward-coupon-visual.is-product {
     background: linear-gradient(180deg, #fffaf4 0%, #fff2e0 100%);
+}
+
+.reward-coupon-visual.is-barcode {
+    background: #fffdfa;
 }
 
 .reward-coupon-image {
@@ -445,6 +467,13 @@
     margin: 0 auto;
     border-radius: 10px;
     object-fit: contain;
+}
+
+.reward-coupon-visual-hint {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #8b6f52;
 }
 
 .reward-coupon-code {
@@ -475,6 +504,17 @@
     text-decoration: underline;
 }
 
+.reward-coupon-remove {
+    border: 1px solid #efd1c6;
+    background: #fff7f4;
+    color: #b35a4b;
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .reward-coupon-warning {
     border-radius: 12px;
     background: #fff4f2;
@@ -482,6 +522,46 @@
     padding: 10px 12px;
     font-size: 12px;
     line-height: 1.5;
+}
+
+.reward-coupon-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    border: none;
+    background: rgba(34, 22, 12, 0.82);
+    cursor: pointer;
+}
+
+.reward-coupon-lightbox.is-open {
+    display: flex;
+}
+
+.reward-coupon-lightbox-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-width: min(92vw, 520px);
+    width: 100%;
+}
+
+.reward-coupon-lightbox-image {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 16px;
+    background: #fffdfa;
+}
+
+.reward-coupon-lightbox-hint {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff4e8;
 }
 
 @media (max-width: 640px) {
@@ -499,7 +579,7 @@
     }
 
     .reward-market-caption {
-        font-size: 12px;
+        font-size: 11px;
     }
 
     .reward-market-refresh-btn {
@@ -512,13 +592,12 @@
     }
 
     .reward-market-values {
-        flex-direction: column;
-        align-items: flex-start;
+        justify-content: flex-start;
         gap: 4px;
     }
 
     .reward-market-phone-panel {
-        padding: 11px;
+        padding: 9px 10px;
     }
 
     .reward-market-phone-form {
@@ -526,12 +605,20 @@
     }
 
     .reward-market-phone-input {
-        padding: 9px 11px;
+        padding: 8px 10px;
         font-size: 13px;
     }
 
     .reward-market-phone-save {
-        min-width: 62px;
-        padding: 9px 12px;
+        min-width: 58px;
+        padding: 8px 10px;
+    }
+
+    .reward-market-price-chip {
+        font-size: 11px;
+    }
+
+    .reward-market-price-chip strong {
+        font-size: 15px;
     }
 }

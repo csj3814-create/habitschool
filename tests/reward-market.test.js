@@ -322,6 +322,25 @@ describe('reward market pricing helpers', () => {
         expect(quoted.brandLogoUrl).toBe('/assets/reward-market/mega-mgc-logo.png');
     });
 
+    it('uses the catalog validity days when building mock coupon expiry', () => {
+        expect(__test.resolveRewardValidityDays({ validityDays: 60 })).toBe(60);
+        expect(__test.resolveRewardValidityDays({ stockLabel: '60일 발급' })).toBe(60);
+
+        const issued = __test.buildMockIssuedCoupon({ validityDays: 60 }, '');
+        const expiresAt = new Date(issued.expiresAt);
+        const diffDays = Math.round((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+        expect(diffDays).toBeGreaterThanOrEqual(59);
+        expect(diffDays).toBeLessThanOrEqual(60);
+    });
+
+    it('allows dismiss only for failed or non-live pending reward redemptions', () => {
+        expect(__test.canDismissRewardRedemption({ status: 'failed_manual_review', mode: 'live' })).toBe(true);
+        expect(__test.canDismissRewardRedemption({ status: 'cancelled', mode: 'live' })).toBe(true);
+        expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'mock' })).toBe(true);
+        expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'live' })).toBe(false);
+        expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'mock' })).toBe(false);
+    });
+
     it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {
         const limits = __test.buildLimitSummary(
             {

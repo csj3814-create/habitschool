@@ -1,4 +1,4 @@
-import { auth, db, functions } from './firebase-config.js?v=167';
+﻿import { auth, db, functions } from './firebase-config.js?v=167';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { showToast } from './ui-helpers.js?v=167';
@@ -10,6 +10,7 @@ const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-poin
 
 let getRewardMarketSnapshotFn = null;
 let redeemRewardCouponFn = null;
+let dismissRewardCouponFn = null;
 let rewardMarketFunctionsReady = false;
 
 const rewardMarketState = {
@@ -48,6 +49,7 @@ const rewardMarketState = {
         manualResendAvailable: true,
     },
     error: '',
+    expandedCouponVisualId: '',
 };
 
 function escapeHtml(value = '') {
@@ -246,6 +248,7 @@ async function ensureRewardMarketFunctions() {
     if (rewardMarketFunctionsReady) return;
     getRewardMarketSnapshotFn = httpsCallable(functions, 'getRewardMarketSnapshot');
     redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon');
+    dismissRewardCouponFn = httpsCallable(functions, 'dismissRewardCoupon');
     rewardMarketFunctionsReady = true;
 }
 
@@ -476,7 +479,7 @@ function renderRewardRecipientPhonePanelView() {
     }
 
     copyEl.textContent = settings.mode === 'live'
-        ? '\uC2E4\uBC1C\uAE09\uC5D0 \uC4F8 \uBC88\uD638\uB97C \uC800\uC7A5\uD574 \uC8FC\uC138\uC694.'
+        ? '\uC2E4\uBC1C\uAE09 \uC804\uC5D0 \uC4F8 \uBC88\uD638\uC608\uC694.'
         : '\uC2E4\uBC1C\uAE09 \uC804\uD658 \uB54C \uBC14\uB85C \uC4F8 \uBC88\uD638\uC608\uC694.';
 
     saveButtonEl.disabled = !isValidRecipientPhone(draftPhone) || draftPhone === savedPhone;
@@ -592,6 +595,112 @@ function buildRewardProductHero(item = {}) {
     );
 }
 
+function buildMockBarcodeDataUrl(value = '') {
+    const normalized = String(value || '').replace(/[^0-9A-Z]/gi, '').toUpperCase();
+    if (!normalized) return '';
+
+    const bitStream = ['101011'];
+    for (const character of normalized) {
+        const bits = character.charCodeAt(0).toString(2).padStart(8, '0');
+        bitStream.push(bits, '0');
+    }
+    bitStream.push('110101');
+
+    const unit = 2;
+    const barHeight = 84;
+    const width = Math.max(bitStream.join('').length * unit, 180);
+    let x = 0;
+    const bars = [];
+    for (const bit of bitStream.join('')) {
+        if (bit === '1') {
+            bars.push(`<rect x="${x}" y="0" width="${unit}" height="${barHeight}" rx="0.8" fill="#231815" />`);
+        }
+        x += unit;
+    }
+    const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="120" viewBox="0 0 ${width} 120" role="img" aria-label="barcode">
+            <rect width="${width}" height="120" fill="#fffdfa" />
+            ${bars.join('')}
+            <text x="${width / 2}" y="106" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#4a3118">${normalized}</text>
+        </svg>
+    `;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function getRewardCouponVisualSource(item = {}) {
+    const couponImageUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
+    if (couponImageUrl) {
+        return {
+            url: couponImageUrl,
+            className: 'reward-coupon-visual',
+            expandable: true,
+        };
+    }
+
+    const pinCode = String(item.pinCode || '').trim();
+    if (pinCode) {
+        return {
+            url: buildMockBarcodeDataUrl(pinCode),
+            className: 'reward-coupon-visual is-barcode',
+            expandable: true,
+        };
+    }
+
+    const productImageUrl = getRewardProductImageUrl(item);
+    if (productImageUrl) {
+        return {
+            url: productImageUrl,
+            className: 'reward-coupon-visual is-product',
+            expandable: false,
+        };
+    }
+
+    return null;
+}
+
+function ensureRewardCouponLightbox() {
+    let lightboxEl = document.getElementById('reward-coupon-lightbox');
+    if (lightboxEl) return lightboxEl;
+
+    lightboxEl = document.createElement('button');
+    lightboxEl.type = 'button';
+    lightboxEl.id = 'reward-coupon-lightbox';
+    lightboxEl.className = 'reward-coupon-lightbox';
+    lightboxEl.setAttribute('aria-hidden', 'true');
+    lightboxEl.innerHTML = `
+        <span class="reward-coupon-lightbox-frame">
+            <img class="reward-coupon-lightbox-image" src="" alt="">
+            <span class="reward-coupon-lightbox-hint">한 번 더 누르면 닫혀요.</span>
+        </span>
+    `;
+    lightboxEl.addEventListener('click', () => {
+        closeRewardCouponLightbox();
+    });
+    document.body.appendChild(lightboxEl);
+    return lightboxEl;
+}
+
+function showRewardCouponLightbox(item = {}) {
+    const visual = getRewardCouponVisualSource(item);
+    if (!visual?.url) return;
+    const lightboxEl = ensureRewardCouponLightbox();
+    const imageEl = lightboxEl.querySelector('.reward-coupon-lightbox-image');
+    if (!imageEl) return;
+    imageEl.src = visual.url;
+    imageEl.alt = item.displayName || item.brandName || 'coupon barcode';
+    rewardMarketState.expandedCouponVisualId = String(item.id || '');
+    lightboxEl.classList.add('is-open');
+    lightboxEl.setAttribute('aria-hidden', 'false');
+}
+
+function closeRewardCouponLightbox() {
+    const lightboxEl = document.getElementById('reward-coupon-lightbox');
+    if (!lightboxEl) return;
+    rewardMarketState.expandedCouponVisualId = '';
+    lightboxEl.classList.remove('is-open');
+    lightboxEl.setAttribute('aria-hidden', 'true');
+}
+
 function renderRewardMarketCatalogView() {
     const gridEl = document.getElementById('reward-market-grid');
     if (!gridEl) return;
@@ -600,15 +709,11 @@ function renderRewardMarketCatalogView() {
         gridEl.innerHTML = (
             '<div class="reward-market-empty">' +
                 '<div class="reward-market-empty-title">상품 목록을 준비하고 있습니다.</div>' +
-                '<div class="reward-market-empty-copy">기프티쇼 연동이나 테스트 카탈로그를 확인한 뒤 이곳에 표시됩니다.</div>' +
+                '<div class="reward-market-empty-copy">기프티쇼 연동이나 테스트 카탈로그를 확인한 뒤 다시 보여드릴게요.</div>' +
             '</div>'
         );
         return;
     }
-
-    const supportLabel = rewardMarketState.settings.deliveryMode === 'app_vault'
-        ? '앱 보관함에서 확인'
-        : '쿠폰 수령 방식 확인';
 
     gridEl.innerHTML = rewardMarketState.catalog.map((item) => {
         const costValue = getRewardCostValue(item);
@@ -621,17 +726,11 @@ function renderRewardMarketCatalogView() {
                     buildRewardBrandIdentity(item) +
                     '<span class="reward-market-stock">' + escapeHtml(item.stockLabel || '교환 가능') + '</span>' +
                 '</div>' +
-                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품명 준비 중') + '</div>' +
-                '<div class="reward-market-item-meta">' + escapeHtml(supportLabel) + '</div>' +
+                '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품 정보 준비 중') + '</div>' +
                 '<div class="reward-market-values">' +
-                    '<div class="reward-market-price-block">' +
-                        '<span class="reward-market-price-label">교환 포인트</span>' +
-                        '<div class="reward-market-hbt">' + formatNumber(costValue) + escapeHtml(costUnit) + '</div>' +
-                    '</div>' +
-                    '<div class="reward-market-price-block align-end">' +
-                        '<span class="reward-market-price-label">쿠폰 금액</span>' +
-                        '<div class="reward-market-krw-strong">' + formatKrw(item.faceValueKrw || 0) + '</div>' +
-                    '</div>' +
+                    '<span class="reward-market-price-chip">교환 포인트 <strong>' + formatNumber(costValue) + escapeHtml(costUnit) + '</strong></span>' +
+                    '<span class="reward-market-price-separator">·</span>' +
+                    '<span class="reward-market-price-chip">쿠폰 금액 <strong>' + formatKrw(item.faceValueKrw || 0) + '</strong></span>' +
                 '</div>' +
                 buildRewardMarketActionView(item) +
             '</article>'
@@ -641,8 +740,8 @@ function renderRewardMarketCatalogView() {
 
 function getRewardMarketReadyStatusText(settings = {}) {
     return settings.mode === 'live'
-        ? '\uD3EC\uC778\uD2B8\uB85C \uAD50\uD658\uD558\uBA74 \uC571 \uBCF4\uAD00\uD568\uC5D0 \uBC14\uB85C \uB2F4\uACA8\uC694.'
-        : '\uAD50\uD658 \uD750\uB984\uC744 \uD655\uC778\uD574 \uBCF4\uC138\uC694.';
+        ? '\uBC14\uB85C \uAD50\uD658\uD560 \uC218 \uC788\uC5B4\uC694.'
+        : '\uD14C\uC2A4\uD2B8 \uBC1C\uAE09 \uAC00\uB2A5';
 }
 
 function buildCouponStatusLabel(status = '') {
@@ -661,22 +760,30 @@ function buildCouponStatusLabel(status = '') {
 }
 
 function buildCouponVisual(item = {}) {
-    const couponImgUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
-    const productImageUrl = getRewardProductImageUrl(item);
-    const visualUrl = couponImgUrl || productImageUrl;
-    if (visualUrl) {
-        const visualClassName = couponImgUrl ? 'reward-coupon-visual' : 'reward-coupon-visual is-product';
+    const visual = getRewardCouponVisualSource(item);
+    if (!visual?.url) {
         return `
-            <div class="${visualClassName}">
-                <img class="reward-coupon-image" src="${escapeHtml(visualUrl)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
+            <div class="reward-coupon-code is-muted">
+                바코드 정보가 아직 없으면 PIN으로 먼저 확인해 주세요.
             </div>
         `;
     }
 
-    return `
-        <div class="reward-coupon-code is-muted">
-            공급사 이미지가 아직 없으면 PIN과 텍스트 정보로 먼저 보여드려요.
+    const visualMarkup = `
+        <div class="${visual.className}">
+            <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
         </div>
+    `;
+
+    if (!visual.expandable || !item.id) {
+        return visualMarkup;
+    }
+
+    return `
+        <button type="button" class="reward-coupon-visual-button" onclick="toggleRewardCouponVisual('${encodeURIComponent(String(item.id || ''))}')">
+            ${visualMarkup}
+            <span class="reward-coupon-visual-hint">눌러서 크게 보기</span>
+        </button>
     `;
 }
 
@@ -686,9 +793,18 @@ function buildCouponCodeBlock(item = {}) {
     return `<div class="reward-coupon-code">PIN ${escapeHtml(pinCode)}</div>`;
 }
 
+function canDismissRewardCouponItem(item = {}) {
+    const status = String(item.status || '').trim();
+    const mode = String(item.mode || '').trim().toLowerCase();
+    if (['failed_manual_review', 'cancelled'].includes(status)) return true;
+    return status === 'pending_issue' && mode !== 'live';
+}
+
 function renderRewardCouponVault() {
     const listEl = document.getElementById('reward-coupon-list');
     if (!listEl) return;
+
+    ensureRewardCouponLightbox();
 
     if (rewardMarketState.redemptions.length === 0) {
         listEl.innerHTML = (
@@ -705,23 +821,22 @@ function renderRewardCouponVault() {
         const explorerLink = item.settlementAsset === 'hbt' && item.burnExplorerUrl
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
-        const quoteLabel = item.settlementAsset === 'hbt'
-            ? (item.quoteVersion
-                ? escapeHtml(formatPhaseLabel(item.pricingMode || '')) + ' · ' + escapeHtml(item.quoteVersion)
-                : escapeHtml(formatPhaseLabel(item.pricingMode || '')))
-            : '포인트 정액가 · 앱 보관함 지급';
+        const dismissButton = canDismissRewardCouponItem(item)
+            ? '<button type="button" class="reward-coupon-remove" onclick="dismissRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">지우기</button>'
+            : '';
         return (
             '<article class="reward-coupon-item">' +
                 '<div class="reward-coupon-topline">' +
                     buildRewardBrandIdentity(item, 'reward-coupon-brand') +
-                    '<span class="reward-coupon-status">' + escapeHtml(statusLabel) + '</span>' +
+                    '<div class="reward-coupon-top-actions">' +
+                        '<span class="reward-coupon-status">' + escapeHtml(statusLabel) + '</span>' +
+                        dismissButton +
+                    '</div>' +
                 '</div>' +
                 '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || '쿠폰 정보 준비 중') + '</div>' +
                 '<div class="reward-coupon-meta">' + formatNumber(getRewardCostValue(item)) + escapeHtml(getRewardCostUnitLabel(item)) + ' · ' + formatKrw(item.faceValueKrw || 0) + '</div>' +
-                '<div class="reward-coupon-quote">' + quoteLabel + '</div>' +
                 buildCouponVisual(item) +
                 buildCouponCodeBlock(item) +
-                (item.healthGuide ? '<div class="reward-coupon-guide">' + escapeHtml(item.healthGuide) + '</div>' : '') +
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +
                     '<span>유효기간 ' + escapeHtml(formatDateLabel(item.expiresAt)) + '</span>' +
@@ -944,6 +1059,52 @@ window.saveRewardRecipientPhone = async function () {
     }
 };
 
+window.toggleRewardCouponVisual = function (encodedRedemptionId = '') {
+    const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
+    if (!redemptionId) return false;
+
+    const isOpen = rewardMarketState.expandedCouponVisualId === redemptionId
+        && document.getElementById('reward-coupon-lightbox')?.classList.contains('is-open');
+    if (isOpen) {
+        closeRewardCouponLightbox();
+        return true;
+    }
+
+    const item = rewardMarketState.redemptions.find((entry) => String(entry.id || '') === redemptionId);
+    if (!item) return false;
+
+    showRewardCouponLightbox(item);
+    return true;
+};
+
+window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {
+    const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
+    if (!redemptionId) {
+        showToast('지울 쿠폰을 다시 선택해 주세요.');
+        return false;
+    }
+
+    try {
+        await ensureRewardMarketFunctions();
+        await dismissRewardCouponFn({
+            redemptionId,
+        });
+        rewardMarketState.redemptions = rewardMarketState.redemptions.filter(
+            (entry) => String(entry.id || '') !== redemptionId
+        );
+        if (rewardMarketState.expandedCouponVisualId === redemptionId) {
+            closeRewardCouponLightbox();
+        }
+        renderRewardMarketSnapshot();
+        showToast('목록에서 지웠어요.');
+        return true;
+    } catch (error) {
+        console.error('dismiss reward coupon failed:', error);
+        showToast(error?.message || '쿠폰 목록을 정리하지 못했어요.');
+        return false;
+    }
+};
+
 window.requestRewardMarketRedemption = async function (encodedSku = '') {
     const user = auth.currentUser;
     if (!user) {
@@ -1008,3 +1169,4 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
 
 
 window.loadRewardMarketSnapshot = loadRewardMarketSnapshot;
+
