@@ -85,8 +85,8 @@ describe('reward market pricing helpers', () => {
                 faceValueKrw: 2000,
                 purchasePriceKrw: 1940,
                 pointCost: 2000,
-                productImageUrl: '/assets/reward-market/mega-ice-americano.svg',
-                brandLogoUrl: '/assets/reward-market/mega-mgc-logo.svg',
+                productImageUrl: 'https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg',
+                brandLogoUrl: 'https://img.79plus.co.kr/megahp/common/img/new_logo_b.png',
                 brandName: '메가MGC커피',
                 displayName: '(ICE)아메리카노 모바일쿠폰',
                 available: true,
@@ -118,8 +118,8 @@ describe('reward market pricing helpers', () => {
         expect(quoted.hbtCost).toBe(2000);
         expect(quoted.deliveryMode).toBe('app_vault');
         expect(quoted.fallbackPolicy).toBe('manual_resend');
-        expect(quoted.productImageUrl).toBe('/assets/reward-market/mega-ice-americano.svg');
-        expect(quoted.brandLogoUrl).toBe('/assets/reward-market/mega-mgc-logo.svg');
+        expect(quoted.productImageUrl).toBe('https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg');
+        expect(quoted.brandLogoUrl).toBe('https://img.79plus.co.kr/megahp/common/img/new_logo_b.png');
     });
 
     it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {

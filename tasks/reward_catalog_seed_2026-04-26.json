@@ -1,0 +1,65 @@
+{
+  "liveItems": [
+    {
+      "docId": "mega-ice-americano-60d",
+      "data": {
+        "sku": "mega-ice-americano-60d",
+        "brandName": "메가MGC커피",
+        "displayName": "(ICE)아메리카노 모바일쿠폰",
+        "category": "drink",
+        "faceValueKrw": 2000,
+        "purchasePriceKrw": 1940,
+        "pointCost": 2000,
+        "provider": "giftishow",
+        "providerGoodsId": "G00002321189",
+        "healthGuide": "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
+        "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg",
+        "brandLogoUrl": "https://img.79plus.co.kr/megahp/common/img/new_logo_b.png",
+        "available": true,
+        "stockLabel": "60일 발급",
+        "deliveryMethod": "pin",
+        "sortOrder": 10
+      }
+    },
+    {
+      "docId": "paikdabang-iced-americano-60d",
+      "data": {
+        "sku": "paikdabang-iced-americano-60d",
+        "brandName": "빽다방",
+        "displayName": "아메리카노(ICED) 모바일쿠폰",
+        "category": "drink",
+        "faceValueKrw": 2000,
+        "purchasePriceKrw": 1940,
+        "pointCost": 2000,
+        "provider": "giftishow",
+        "providerGoodsId": "G00001810964",
+        "healthGuide": "부담 없이 교환해 보며 건강 습관 보상을 체감하기 좋은 소액 음료 상품입니다.",
+        "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2024/G00002871294/G00002871294.jpg",
+        "brandLogoUrl": "https://paikdabang.com/wp-content/themes/paikdabang/assets/images/logo.png",
+        "available": true,
+        "stockLabel": "60일 발급",
+        "deliveryMethod": "pin",
+        "sortOrder": 20
+      }
+    }
+  ],
+  "futureCandidate": {
+    "docId": "compose-hot-americano-60d",
+    "data": {
+      "sku": "compose-hot-americano-60d",
+      "brandName": "컴포즈커피",
+      "displayName": "아메리카노(Hot)(TAKE-OUT) 모바일쿠폰",
+      "category": "drink",
+      "faceValueKrw": 1500,
+      "purchasePriceKrw": 1450,
+      "pointCost": 1500,
+      "provider": "giftishow",
+      "providerGoodsId": "G00003421443",
+      "healthGuide": "부담 없는 보상으로 루틴을 이어가기 좋은 준비 중 상품입니다.",
+      "available": false,
+      "stockLabel": "준비 중",
+      "deliveryMethod": "pin",
+      "sortOrder": 30
+    }
+  }
+}
