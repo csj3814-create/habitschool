@@ -1,11 +1,11 @@
 // ?몄쬆 愿由?紐⑤뱢
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=167';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=168';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=167';
-import { getDatesInfo } from './ui-helpers.js?v=167';
-import { escapeHtml } from './security.js?v=167';
+import { showToast } from './ui-helpers.js?v=168';
+import { getDatesInfo } from './ui-helpers.js?v=168';
+import { escapeHtml } from './security.js?v=168';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -18,11 +18,11 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=167';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=167';
+} from './auth-login-helpers.js?v=168';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=168';
 // blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=167';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=168';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -815,6 +815,14 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
         }
 
         if (pendingState?.mode === 'redirect') {
+            if (getPreferredGoogleLoginMode() !== 'redirect') {
+                rememberPopupLoginFallback();
+                clearPendingGoogleLoginState();
+                clearPendingGoogleLoginResetTimer();
+                window._isPopupLogin = false;
+                setGoogleLoginPendingUi(loginBtn, false);
+                return;
+            }
             schedulePendingGoogleLoginReset(loginBtn);
             return;
         }
@@ -1061,7 +1069,10 @@ export function setupAuthListener(callbacks) {
             // 濡쒓렇?꾩썐 ??紐⑤뱺 由ъ냼???뺣━ (硫붾え由??꾩닔 諛⑹?)
             const loginBtn = document.getElementById('loginBtn');
             const pendingGoogleLoginState = readPendingGoogleLoginState();
-            if (shouldKeepPendingGoogleRedirectRecovery(pendingGoogleLoginState)) {
+            if (getPreferredGoogleLoginMode() !== 'redirect' && pendingGoogleLoginState?.mode === 'redirect') {
+                rememberPopupLoginFallback();
+                clearPendingGoogleLoginState();
+            } else if (shouldKeepPendingGoogleRedirectRecovery(pendingGoogleLoginState)) {
                 window._isPopupLogin = true;
                 setGoogleLoginPendingUi(loginBtn, true);
                 schedulePendingGoogleLoginReset(loginBtn);

@@ -170,7 +170,7 @@ function getManualInstallInstructions() {
         return [
             '삼성 인터넷 설치 안내',
             '',
-            '삼성 인터넷은 사이트 버튼으로 설치 확인창을 직접 열 수 없어요.',
+            '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.',
             `브라우저 메뉴에서 "${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
             '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도할 수 있어요.'
         ].join('\n');
@@ -373,7 +373,7 @@ function showSamsungInstallFallback() {
     });
 
     const body = document.createElement('p');
-    body.textContent = '삼성 인터넷은 사이트 버튼으로 설치 확인창을 직접 열 수 없어요.';
+    body.textContent = '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.';
     setInlineStyles(body, {
         margin: '0 0 14px',
         fontSize: '16px',
@@ -390,7 +390,7 @@ function showSamsungInstallFallback() {
 
     [
         '브라우저 메뉴를 열어주세요.',
-        `"${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+        `주소창 설치 아이콘이 없으면 "${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
         '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도해주세요.'
     ].forEach((text) => {
         const item = document.createElement('li');

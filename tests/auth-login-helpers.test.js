@@ -17,12 +17,12 @@ import {
 } from '../js/auth-login-helpers.js';
 
 describe('shouldUseGoogleRedirectLogin', () => {
-    it('uses redirect for Samsung Internet in normal browser tabs', () => {
+    it('keeps popup for Samsung Internet in normal browser tabs', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(true);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(false);
     });
 
-    it('uses redirect for Samsung Internet standalone mode', () => {
+    it('uses redirect for Samsung Internet only in standalone mode', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
@@ -34,7 +34,16 @@ describe('shouldUseGoogleRedirectLogin', () => {
 });
 
 describe('resolveGoogleLoginMode', () => {
-    it('ignores popup overrides for Samsung Internet', () => {
+    it('honors popup overrides for Samsung Internet normal tabs', () => {
+        const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
+        expect(resolveGoogleLoginMode({
+            userAgent: samsungUa,
+            isStandalone: false,
+            overrideMode: 'popup'
+        })).toBe('popup');
+    });
+
+    it('ignores popup overrides only for Samsung Internet standalone mode', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(resolveGoogleLoginMode({
             userAgent: samsungUa,

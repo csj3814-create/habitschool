@@ -113,6 +113,11 @@
 - Root cause: the legacy HBT redemption path still declared `reserveLedgerRef`, but the newer point-settlement path reused the batch write without recreating that ref after a refactor.
 - Lesson: when a ledger/doc reference is written in more than one redemption path, create it through a shared helper and add a smoke test for the cheaper path (`mock` in this case). Shared batch writes are easy to break when one branch keeps a local variable and the other silently loses it.
 
+### 199. Do not re-force Samsung Internet Google login back to redirect after real-device redirect failures
+- Symptom: after switching Samsung Internet back to redirect login, Google account selection returned to the first login screen with no signed-in state.
+- Root cause: I let the earlier "popup opens a separate tab" symptom override the later stronger evidence that Samsung redirect restoration can fail completely in normal browser tabs.
+- Lesson: for Samsung Internet, keep normal browser tabs on popup login and reserve redirect only for installed/standalone contexts that truly require it. Also clear any stale redirect pending marker when the current browser context now resolves to popup, so an old failed redirect cannot keep the login shell stuck.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
