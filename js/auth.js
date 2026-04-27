@@ -827,6 +827,38 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
     }
 }
 
+function getVisibleAuthTabName() {
+    const appMode = getAppModeFromPath(window.location.pathname);
+    const validTabs = getAllowedTabsForMode(appMode);
+    return validTabs.find(tabName => {
+        const el = document.getElementById(tabName);
+        return el && (el.style.display === 'block' || el.classList.contains('active'));
+    }) || getDefaultTabForMode(appMode);
+}
+
+function scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise = Promise.resolve()) {
+    const schedule = (delayMs, task) => {
+        Promise.resolve(initialDailyLoadPromise).finally(() => {
+            setTimeout(() => {
+                if (auth.currentUser?.uid !== user.uid) return;
+                task();
+            }, delayMs);
+        });
+    };
+
+    schedule(1200, () => {
+        if (getVisibleAuthTabName() === 'gallery') {
+            window.loadGalleryData?.();
+        }
+    });
+
+    schedule(1800, () => {
+        if (getVisibleAuthTabName() === 'assets') {
+            window.updateAssetDisplay?.();
+        }
+    });
+}
+
 // ?몄쬆 ?곹깭 蹂寃?由ъ뒪??
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
@@ -891,10 +923,7 @@ export function setupAuthListener(callbacks) {
             }
 
             // 媛ㅻ윭由?+ 吏媛??곗씠??諛깃렇?쇱슫??pre-fetch (???대┃ ?꾩뿉 誘몃━ 濡쒕뱶)
-            setTimeout(() => {
-                if (window.loadGalleryData) window.loadGalleryData();
-                if (window.updateAssetDisplay) window.updateAssetDisplay();
-            }, 800);
+            scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise);
 
             // 諛깃렇?쇱슫?? ?ъ슜??臾몄꽌 濡쒕뱶 (?됰꽕??肄붿씤/?꾨줈???낅뜲?댄듃??
             const userRef = doc(db, "users", user.uid);

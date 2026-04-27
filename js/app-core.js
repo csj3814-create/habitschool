@@ -268,12 +268,20 @@ let cachedMyFriendships = new Map();
 let _friendshipsLoadedForUid = '';
 let _friendshipsLoadingPromise = null;
 let _friendshipsLoadingStartedAt = 0;
+let _friendshipsLastLoadedAt = 0;
+let _friendshipsRetryTimer = null;
+let _friendshipsRetryCounts = new Map();
 let _pendingFriendRequestId = null;
 let _pendingSharedImportPromise = null;
 let _sharedImportSession = null;
 let _lastDietAutoImportResult = null;
 let _offlineOutboxFlushPromise = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
+const FRIENDSHIP_USER_CACHE_TIMEOUT_MS = 1500;
+const FRIENDSHIP_LIVE_QUERY_TIMEOUT_MS = 2500;
+const FRIENDSHIP_CACHE_TTL_MS = 30_000;
+const FRIENDSHIP_RETRY_DELAY_MS = 3000;
+const FRIENDSHIP_MAX_RETRY_ATTEMPTS = 2;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
@@ -4287,6 +4295,52 @@ function renderProfileFriendRequests() {
     list.innerHTML = `${summaryHtml}${incomingRows}${outgoingRows}`;
 }
 
+function clearFriendshipRetry(uid = '') {
+    if (_friendshipsRetryTimer) {
+        clearTimeout(_friendshipsRetryTimer);
+        _friendshipsRetryTimer = null;
+    }
+    if (uid) _friendshipsRetryCounts.delete(uid);
+}
+
+function refreshFriendshipUiAfterRetry(user) {
+    if (!user || auth.currentUser?.uid !== user.uid) return;
+    sortedFilteredDirty = true;
+    renderProfileFriendRequests();
+    if (getVisibleTabName() === 'gallery') {
+        rerenderGalleryFeedIfVisible();
+        return;
+    }
+    if (getVisibleTabName() === 'dashboard') {
+        const { todayStr } = getDatesInfo();
+        renderFriendActivityCard(user, todayStr).catch(() => {});
+        renderSocialChallenges(user).catch(() => {});
+        refreshCommunityFocusSummary(user, todayStr).catch(() => {});
+    }
+}
+
+function scheduleFriendshipRetry(uid, reason = 'unknown') {
+    if (!uid || auth.currentUser?.uid !== uid) return;
+
+    const count = _friendshipsRetryCounts.get(uid) || 0;
+    if (count >= FRIENDSHIP_MAX_RETRY_ATTEMPTS || _friendshipsRetryTimer) return;
+
+    const nextCount = count + 1;
+    _friendshipsRetryCounts.set(uid, nextCount);
+    console.info(`[friendships] retry scheduled (${reason}) in ${FRIENDSHIP_RETRY_DELAY_MS}ms`);
+
+    _friendshipsRetryTimer = setTimeout(() => {
+        _friendshipsRetryTimer = null;
+        const user = auth.currentUser;
+        if (!user || user.uid !== uid) return;
+        loadMyFriendships(true)
+            .then(() => refreshFriendshipUiAfterRetry(user))
+            .catch(error => {
+                console.warn('[friendships] retry failed:', error?.message || error);
+            });
+    }, FRIENDSHIP_RETRY_DELAY_MS);
+}
+
 async function loadMyFriendships(forceReload = false) {
     const user = auth.currentUser;
     if (!user) {
@@ -4294,13 +4348,18 @@ async function loadMyFriendships(forceReload = false) {
         cachedMyFriends = [];
         _friendshipsLoadedForUid = '';
         _friendshipsLoadingStartedAt = 0;
+        _friendshipsLastLoadedAt = 0;
+        clearFriendshipRetry();
         sortedFilteredDirty = true;
         renderProfileFriendRequests();
         updatePwaActionableBadge({ friendRequests: 0 });
         return cachedMyFriendships;
     }
 
-    if (!forceReload && _friendshipsLoadedForUid === user.uid && cachedMyFriendships.size > 0) {
+    const now = Date.now();
+    if (!forceReload
+        && _friendshipsLoadedForUid === user.uid
+        && (now - _friendshipsLastLoadedAt) < FRIENDSHIP_CACHE_TTL_MS) {
         renderProfileFriendRequests();
         updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
         return cachedMyFriendships;
@@ -4314,16 +4373,34 @@ async function loadMyFriendships(forceReload = false) {
             _friendshipsLoadingPromise = null;
             _friendshipsLoadingStartedAt = 0;
         } else {
-            await _friendshipsLoadingPromise;
+            const pendingLoad = _friendshipsLoadingPromise;
+            try {
+                await withAsyncTimeout(
+                    pendingLoad,
+                    FRIENDSHIP_LOAD_TIMEOUT_MS,
+                    'friendships_pending_timeout'
+                );
+            } catch (error) {
+                if (error?.message === 'friendships_pending_timeout') {
+                    console.warn('[loadMyFriendships] pending load timeout, using current cache');
+                    return cachedMyFriendships;
+                }
+                throw error;
+            }
             return cachedMyFriendships;
         }
     }
 
     _friendshipsLoadingStartedAt = Date.now();
-    _friendshipsLoadingPromise = (async () => {
+    const friendshipLoadPromise = (async () => {
         const nextMap = new Map();
+        let liveQueryFailed = false;
         try {
-            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            const userSnap = await withAsyncTimeout(
+                getDoc(doc(db, 'users', user.uid)),
+                FRIENDSHIP_USER_CACHE_TIMEOUT_MS,
+                'friendship_user_cache_timeout'
+            );
             const fallbackFriendIds = Array.isArray(userSnap.data()?.friends)
                 ? [...new Set(userSnap.data().friends.map(value => String(value || '').trim()).filter(friendUid => friendUid && friendUid !== user.uid))]
                 : [];
@@ -4349,9 +4426,14 @@ async function loadMyFriendships(forceReload = false) {
         );
 
         try {
-            const snap = forceReload
-                ? await getDocsFromServer(friendshipQuery).catch(() => getDocs(friendshipQuery))
-                : await getDocs(friendshipQuery);
+            const liveQueryTask = forceReload
+                ? getDocsFromServer(friendshipQuery).catch(() => getDocs(friendshipQuery))
+                : getDocs(friendshipQuery);
+            const snap = await withAsyncTimeout(
+                liveQueryTask,
+                FRIENDSHIP_LIVE_QUERY_TIMEOUT_MS,
+                'friendship_live_query_timeout'
+            );
             snap.forEach(docSnap => {
                 const friendship = { id: docSnap.id, ...docSnap.data() };
                 const otherUid = getFriendshipOtherUid(friendship, user.uid);
@@ -4359,23 +4441,36 @@ async function loadMyFriendships(forceReload = false) {
                 nextMap.set(otherUid, friendship);
             });
         } catch (error) {
-            if (nextMap.size === 0) throw error;
-            console.warn('[loadMyFriendships] live query failed, using user cache:', error.message);
+            liveQueryFailed = true;
+            if (nextMap.size === 0) {
+                console.warn('[loadMyFriendships] live query failed, using empty cache:', error.message);
+            } else {
+                console.warn('[loadMyFriendships] live query failed, using user cache:', error.message);
+            }
         }
 
         cachedMyFriendships = nextMap;
         cachedMyFriends = getActiveFriendIds();
         _friendshipsLoadedForUid = user.uid;
+        _friendshipsLastLoadedAt = Date.now();
         sortedFilteredDirty = true;
         renderProfileFriendRequests();
         updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
+        if (liveQueryFailed) {
+            scheduleFriendshipRetry(user.uid, 'live-query');
+        } else {
+            clearFriendshipRetry(user.uid);
+        }
     })();
+    _friendshipsLoadingPromise = friendshipLoadPromise;
 
     try {
-        await _friendshipsLoadingPromise;
+        await friendshipLoadPromise;
     } finally {
-        _friendshipsLoadingPromise = null;
-        _friendshipsLoadingStartedAt = 0;
+        if (_friendshipsLoadingPromise === friendshipLoadPromise) {
+            _friendshipsLoadingPromise = null;
+            _friendshipsLoadingStartedAt = 0;
+        }
     }
 
     return cachedMyFriendships;
@@ -4393,8 +4488,6 @@ async function waitForFriendshipsForUi({ forceReload = false, timeoutMs = FRIEND
     } catch (error) {
         if (error?.message === 'friendships_timeout') {
             console.warn('[friendships] timeout, using current cache');
-            _friendshipsLoadingPromise = null;
-            _friendshipsLoadingStartedAt = 0;
             return { timedOut: true, activeFriendIds: getActiveFriendIds() };
         }
 
@@ -4412,7 +4505,10 @@ async function refreshFriendshipDependentUi(reloadGallery = false) {
     if (!user) return;
 
     try {
-        await loadMyFriendships(true);
+        await waitForFriendshipsForUi({
+            forceReload: true,
+            timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS
+        });
     } catch (error) {
         console.warn('friendship refresh skipped:', error.message);
     }
@@ -4427,7 +4523,9 @@ async function refreshFriendshipDependentUi(reloadGallery = false) {
     }
 
     if (reloadGallery || getVisibleTabName() === 'gallery') {
-        await loadGalleryData(true);
+        loadGalleryData(true).catch(error => {
+            console.warn('gallery refresh after friendship update skipped:', error.message);
+        });
     }
 }
 
@@ -4710,7 +4808,12 @@ import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     fetchTokenStats = mod.fetchTokenStats;
     console.log('✅ app.js: 블록체인 모듈 로드');
     if (auth.currentUser && typeof window.updateAssetDisplay === 'function') {
-        Promise.resolve().then(() => window.updateAssetDisplay(true)).catch(() => { });
+        Promise.resolve().then(() => {
+            if (getVisibleTabName() === 'assets') {
+                return window.updateAssetDisplay(true);
+            }
+            return null;
+        }).catch(() => { });
     }
 }).catch(e => console.warn('⚠️ app.js: 블록체인 모듈 로드 실패:', e.message));
 
@@ -7131,6 +7234,9 @@ function updateHalvingScheduleUI(currentPhase, per100Hbt) {
 let _assetCache = { uid: null, ts: 0 };
 const ASSET_CACHE_TTL = 30_000;
 const ASSET_LS_TTL = 24 * 60 * 60 * 1000;
+const ASSET_QUERY_TIMEOUT_MS = 3500;
+const ASSET_HISTORY_TIMEOUT_MS = 4500;
+const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
 const ASSET_RETRY_BASE_DELAY_MS = 1200;
 const ASSET_MAX_RETRY_ATTEMPTS = 2;
 let _assetRetryTimer = null;
@@ -7311,6 +7417,13 @@ function scheduleAssetRetry(uid, reason = 'unknown') {
 }
 
 // 자산 표시 업데이트 함수
+function withAssetQueryTimeout(task, label = 'asset-query', timeoutMs = ASSET_QUERY_TIMEOUT_MS) {
+    return withAsyncTimeout(task, timeoutMs, `asset_${label}_timeout`).catch(error => {
+        console.warn(`[asset-display] ${label} skipped:`, error?.message || error);
+        return null;
+    });
+}
+
 window.updateAssetDisplay = async function (forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return;
@@ -7361,63 +7474,64 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         const _startDateStr = _sevenDaysAgo.toISOString().split('T')[0];
 
         // getDoc 타임아웃 헬퍼: 캐시 있으면 즉시, 없으면 최대 3초 후 빈 snap 반환
+        const _emptyAssetSnap = { exists: () => false, data: () => ({}) };
         const _assetTimeout = ms => new Promise(resolve =>
-            setTimeout(() => resolve({ exists: () => false, data: () => ({}) }), ms));
-        const _p_user = Promise.race([getDoc(userRef), _assetTimeout(3000)]);
+            setTimeout(() => resolve(_emptyAssetSnap), ms));
+        const _p_user = Promise.race([getDoc(userRef).catch(() => _emptyAssetSnap), _assetTimeout(3000)]);
         const _p_todayLog = Promise.race([
             getDoc(doc(db, 'daily_logs', _todayLogId)),
             _assetTimeout(3000)
         ]).catch(() => null);
-        const _p_hbtTx = getDocs(query(
+        const _p_hbtTx = withAssetQueryTimeout(getDocs(query(
             collection(db, 'blockchain_transactions'),
             where('userId', '==', user.uid),
             where('type', '==', 'conversion'),
             where('status', '==', 'success'),
             where('date', '==', _todayStr)
-        )).catch(() => null);
+        )), 'hbt-today');
         // 챌린지 정산 HBT 오늘 집계 (challenge_settlement 타입)
-        const _p_settleTx = getDocs(query(
+        const _p_settleTx = withAssetQueryTimeout(getDocs(query(
             collection(db, 'blockchain_transactions'),
             where('userId', '==', user.uid),
             where('type', '==', 'challenge_settlement'),
             where('status', '==', 'success'),
             where('date', '==', _todayStr)
-        )).catch(() => null);
-        const _p_minichart = getDocs(query(
+        )), 'settlement-today');
+        const _p_minichart = withAssetQueryTimeout(getDocs(query(
             collection(db, 'blockchain_transactions'),
             where('userId', '==', user.uid),
             where('type', '==', 'conversion'),
             where('status', '==', 'success'),
             where('date', '>=', _startDateStr)
-        )).catch(() => null);
-        const _p_txHistory = getDocs(query(
+        )), 'mini-chart');
+        const _p_txHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "blockchain_transactions"),
             where("userId", "==", user.uid),
             orderBy("timestamp", "desc"),
             limit(100)
-        )).catch(() => null);
-        const _p_pointHistory = getDocs(query(
+        )), 'hbt-history', ASSET_HISTORY_TIMEOUT_MS);
+        const _p_pointHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
             orderBy("date", "desc"),
             limit(100)
-        )).catch(() => null);
-        const _p_reactionAwardHistory = getDocs(query(
+        )), 'point-history', ASSET_HISTORY_TIMEOUT_MS);
+        const _p_reactionAwardHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "daily_logs"),
             where("reactionPointAwardedUserIds", "array-contains", user.uid),
             limit(100)
-        )).catch(() => null);
-        const _p_notificationHistory = getDocs(query(
+        )), 'reaction-awards', ASSET_HISTORY_TIMEOUT_MS);
+        const _p_notificationHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "notifications"),
             where("postOwnerId", "==", user.uid),
             limit(100)
-        )).catch(() => null);
+        )), 'notification-history', ASSET_HISTORY_TIMEOUT_MS);
         // 오늘 전체 로그 (리액션 포인트 집계용)
-        const _p_todayAllLogs = getDocs(query(
+        const _p_todayAllLogs = withAssetQueryTimeout(getDocs(query(
             collection(db, 'daily_logs'),
             where('date', '==', _todayStr),
             limit(200)
-        )).catch(() => null);
+        )), 'today-all-logs');
 
         const userSnap = await _p_user;
 
@@ -7605,7 +7719,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // 온체인 잔액으로 메인 HBT 표시 업데이트
             if (window.fetchOnchainBalance) {
-                window.fetchOnchainBalance().then(onchainData => {
+                withAsyncTimeout(
+                    window.fetchOnchainBalance(),
+                    ASSET_ONCHAIN_TIMEOUT_MS,
+                    'asset_onchain_balance_timeout'
+                ).then(onchainData => {
                     const hbtEl = document.getElementById('asset-hbt-display');
                     const val = parseFloat(onchainData?.balanceFormatted);
                     if (Number.isFinite(val)) {
@@ -7632,7 +7750,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             }
 
             // ========== 반감기 상태 UI 업데이트 (온체인 전체 채굴량 기준, v2) ==========
-            fetchTokenStats().then(stats => {
+            withAsyncTimeout(
+                fetchTokenStats(),
+                ASSET_ONCHAIN_TIMEOUT_MS,
+                'asset_token_stats_timeout'
+            ).then(stats => {
                 if (!stats) {
                     console.warn('토큰 통계 조회 실패, 개인 데이터로 펴백');
                     return;
@@ -9531,12 +9653,20 @@ function openTab(tabName, pushState = true) {
             const load = window._loadBlockchainModule || (() => Promise.resolve());
             load().then(async () => {
                 if (window.initializeUserWallet) {
-                    await window.initializeUserWallet().catch(() => {});
+                    await withAsyncTimeout(
+                        window.initializeUserWallet(),
+                        ASSET_ONCHAIN_TIMEOUT_MS,
+                        'asset_wallet_init_timeout'
+                    ).catch(() => {});
                 }
                 if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
                 // blockchain 모듈 로드 직후에는 항상 한 번 더 온체인 잔액을 보강 조회
                 if (window.fetchOnchainBalance) {
-                    window.fetchOnchainBalance().then(data => {
+                    withAsyncTimeout(
+                        window.fetchOnchainBalance(),
+                        ASSET_ONCHAIN_TIMEOUT_MS,
+                        'asset_tab_onchain_balance_timeout'
+                    ).then(data => {
                         const el = document.getElementById('asset-hbt-display');
                         const val = parseFloat(data?.balanceFormatted);
                         if (!el || !Number.isFinite(val)) return;
@@ -9939,6 +10069,7 @@ async function loadBloodTestHistory() {
 let _dashboardCache = { uid: null, data: null, ts: 0 };
 const _archivedWeekIds = new Set(); // 이미 archive 요청된 weekId 추적 (중복 방지)
 const DASHBOARD_CACHE_TTL = 30_000;
+const DASHBOARD_LOAD_TIMEOUT_MS = 6000;
 const LS_DASHBOARD_KEY = 'dashboardData_v1';
 
 function _saveDashboardToLS(uid, data) {
@@ -10300,8 +10431,10 @@ async function refreshCommunityFocusSummary(user, todayStr, communityStats = nul
     _communityFocusState.pendingChallengeId = '';
 
     try {
-        await loadMyFriendships();
-        const activeFriendIds = getActiveFriendIds();
+        const friendshipState = await waitForFriendshipsForUi({
+            timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS
+        });
+        const activeFriendIds = friendshipState.activeFriendIds;
         _communityFocusState.friendCount = activeFriendIds.length;
 
         if (activeFriendIds.length === 0) {
@@ -10313,14 +10446,17 @@ async function refreshCommunityFocusSummary(user, todayStr, communityStats = nul
             return;
         }
 
-        const friendStatusRows = await Promise.all(activeFriendIds.map(async fid => {
+        const friendStatusRows = await withAsyncTimeout(Promise.all(activeFriendIds.map(async fid => {
             const logSnap = await getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`));
             if (!logSnap.exists()) return { active: false, complete: false };
             const awarded = logSnap.data()?.awardedPoints || {};
             const active = !!(awarded.diet || awarded.exercise || awarded.mind);
             const complete = !!(awarded.diet && awarded.exercise && awarded.mind);
             return { active, complete };
-        }));
+        })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'community_friend_status_timeout').catch(error => {
+            console.warn('[refreshCommunityFocusSummary] friend status timeout:', error.message);
+            return [];
+        });
 
         _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
         _communityFocusState.completeFriends = friendStatusRows.filter(row => row.complete).length;
@@ -10664,7 +10800,11 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
             dashData = await Promise.race([cfPromise, timeout]);
         } catch (cfErr) {
             console.warn('CF 실패/타임아웃, Firestore 직접 쿼리:', cfErr.message);
-            dashData = await _directFirestore();
+            dashData = await withAsyncTimeout(
+                _directFirestore(),
+                DASHBOARD_LOAD_TIMEOUT_MS,
+                'dashboard_firestore_timeout'
+            );
         }
         console.timeEnd('⏱️ 대시보드 데이터 로드');
 
@@ -11137,14 +11277,16 @@ async function renderFriendActivityCard(user, todayStr) {
     if (!card || !list) return;
 
     try {
-        await loadMyFriendships();
-        const friendIds = getActiveFriendIds();
+        const friendshipState = await waitForFriendshipsForUi({
+            timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS
+        });
+        const friendIds = friendshipState.activeFriendIds;
         if (friendIds.length === 0) {
             card.style.display = 'none';
             return;
         }
 
-        const results = await Promise.all(friendIds.map(async fid => {
+        const results = await withAsyncTimeout(Promise.all(friendIds.map(async fid => {
             const [logSnap, userSnap] = await Promise.all([
                 getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`)),
                 getDoc(doc(db, 'users', fid))
@@ -11161,7 +11303,10 @@ async function renderFriendActivityCard(user, todayStr) {
                 exercise: (ap.exercisePoints || 0) > 0,
                 mind: (ap.mindPoints || 0) > 0
             };
-        }));
+        })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'friend_activity_timeout').catch(error => {
+            console.warn('[renderFriendActivityCard] friend activity timeout:', error.message);
+            return [];
+        });
 
         const activeResults = results.filter(r => r.diet || r.exercise || r.mind);
         const completeFriends = activeResults.filter(r => r.diet && r.exercise && r.mind).length;
@@ -17509,8 +17654,20 @@ async function loadSocialChallengeFriendReadiness(user, { forceReload = false } 
 
     const weekSet = new Set(weekStrs);
     const thirtyDaysAgo = addDaysFromKstDateString(todayStr, -30);
+    const fallbackItems = activeFriendIds.map(friendId => {
+        const friendship = cachedMyFriendships.get(friendId);
+        return {
+            uid: friendId,
+            name: getFriendshipName(friendship, user.uid) || friendId.slice(0, 8),
+            todayCompleted: 0,
+            weekDays: 0,
+            recentDays: 0,
+            eligible: false,
+            shortfall: 5
+        };
+    });
 
-    const items = await Promise.all(activeFriendIds.map(async friendId => {
+    const items = await withAsyncTimeout(Promise.all(activeFriendIds.map(async friendId => {
         const friendship = cachedMyFriendships.get(friendId);
         const name = getFriendshipName(friendship, user.uid) || '친구';
         const logsSnap = await getDocs(query(
@@ -17545,7 +17702,13 @@ async function loadSocialChallengeFriendReadiness(user, { forceReload = false } 
             eligible,
             shortfall
         };
-    }));
+    })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'social_challenge_readiness_timeout').catch(error => {
+        console.warn('[loadSocialChallengeFriendReadiness] timeout, using fallback:', error.message);
+        return _socialChallengeFriendReadinessCache.uid === user.uid
+            && _socialChallengeFriendReadinessCache.todayStr === todayStr
+            ? _socialChallengeFriendReadinessCache.items
+            : fallbackItems;
+    });
 
     items.sort((a, b) => {
         if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;

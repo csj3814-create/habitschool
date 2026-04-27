@@ -4,6 +4,7 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { showToast } from './ui-helpers.js?v=167';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
+const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
 const DEFAULT_MIN_REDEEM_POINTS = 500;
 const DEFAULT_SETTLEMENT_ASSET = 'points';
 const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-point-redemption';
@@ -12,6 +13,20 @@ let getRewardMarketSnapshotFn = null;
 let redeemRewardCouponFn = null;
 let dismissRewardCouponFn = null;
 let rewardMarketFunctionsReady = false;
+
+async function withRewardMarketTimeout(task, timeoutMs, errorMessage = 'reward_market_timeout') {
+    let timeoutId = null;
+    try {
+        return await Promise.race([
+            Promise.resolve(task),
+            new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+            })
+        ]);
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+}
 
 const rewardMarketState = {
     uid: '',
@@ -955,7 +970,11 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
 
     try {
         await ensureRewardMarketFunctions();
-        const result = await getRewardMarketSnapshotFn({});
+        const result = await withRewardMarketTimeout(
+            getRewardMarketSnapshotFn({}),
+            REWARD_MARKET_SNAPSHOT_TIMEOUT_MS,
+            'reward_market_snapshot_timeout'
+        );
         const data = result?.data || {};
 
         rewardMarketState.catalog = Array.isArray(data.catalog) ? data.catalog : [];
