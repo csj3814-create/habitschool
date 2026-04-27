@@ -19,10 +19,12 @@ import {
     getDefaultChallengeQualificationPolicy,
     getAwardedPointsTotal,
     getChallengeCompletedDays,
+    getChallengeDateRange,
     getChallengeTimelineState,
     doesAwardedPointsMeetChallengeRule,
     normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy,
+    reconcileChallengeCompletionWithDailyLogs,
     getActiveBscNetwork,
     getActiveGasTokenLabel,
     getActiveHbtTokenAddress,
@@ -333,6 +335,41 @@ function doesDailyLogQualifyForChallenge(dailyLogData, challenge = null, tier = 
         totalPoints: getAwardedPointsTotal(awarded),
         qualified: doesAwardedPointsMeetChallengeRule(awarded, policy)
     };
+}
+
+async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
+    const dates = getChallengeDateRange(challenge);
+    if (!uid || dates.length === 0) return {};
+
+    const entries = await Promise.all(dates.map(async (date) => {
+        const logRef = doc(db, 'daily_logs', `${uid}_${date}`);
+        try {
+            const serverSnap = await getDocFromServer(logRef);
+            return [date, serverSnap.exists() ? serverSnap.data() : null];
+        } catch (_) {
+            const cachedSnap = await getDoc(logRef).catch(() => null);
+            return [date, cachedSnap?.exists?.() ? cachedSnap.data() : null];
+        }
+    }));
+
+    return entries.reduce((acc, [date, log]) => {
+        if (log) acc[date] = log;
+        return acc;
+    }, {});
+}
+
+function hasChallengeCompletionChanged(original = {}, reconciled = {}) {
+    const originalDates = Array.isArray(original?.completedDates)
+        ? [...new Set(original.completedDates.filter(Boolean))]
+        : [];
+    const reconciledDates = Array.isArray(reconciled?.completedDates)
+        ? [...new Set(reconciled.completedDates.filter(Boolean))]
+        : [];
+
+    return getChallengeCompletedDays(reconciled) !== (Number(original?.completedDays) || 0) ||
+        reconciledDates.length !== originalDates.length ||
+        reconciledDates.some((date, index) => date !== originalDates[index]) ||
+        JSON.stringify(reconciled.qualificationPolicy || null) !== JSON.stringify(original?.qualificationPolicy || null);
 }
 
 // HBT 토큰 컨트랙트 ABI (stakeForChallenge용 최소 ABI)
@@ -1600,18 +1637,13 @@ export async function settleExpiredChallenges() {
         const updateData = {};
         for (const tier of expiredTiers) {
             const originalChallenge = activeChallenges[tier];
-            const challenge = normalizeChallengeCompletion(originalChallenge);
+            const storedChallenge = normalizeChallengeCompletion(originalChallenge);
+            const dailyLogsByDate = await fetchChallengeDailyLogsByDate(currentUser.uid, storedChallenge);
+            const challenge = reconcileChallengeCompletionWithDailyLogs(storedChallenge, dailyLogsByDate, tier);
             const totalDays = challenge.totalDays || 30;
             const normalizedCompletedDays = getChallengeCompletedDays(challenge);
-            const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
-                ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
-                : [];
 
-            if (
-                normalizedCompletedDays !== (Number(originalChallenge?.completedDays) || 0) ||
-                (challenge.completedDates || []).length !== originalCompletedDates.length ||
-                (challenge.completedDates || []).some((date, index) => date !== originalCompletedDates[index])
-            ) {
+            if (hasChallengeCompletionChanged(originalChallenge, challenge)) {
                 updateData[`activeChallenges.${tier}`] = challenge;
             }
 
@@ -1631,33 +1663,46 @@ export async function settleExpiredChallenges() {
                         await ensureFunctions();
                         const settleFn = httpsCallable(functions, 'settleChallengeFailure');
                         const settleResult = await settleFn({ tier });
+                        if (settleResult.data?.skippedFailure || settleResult.data?.claimable) {
+                            const serverCompletedDays = Number(settleResult.data?.completedDays || normalizedCompletedDays);
+                            updateData[`activeChallenges.${tier}`] = {
+                                ...challenge,
+                                status: 'claimable',
+                                completedDays: serverCompletedDays
+                            };
+                            showToast(`🎉 ${totalDays}일 챌린지가 성공으로 복구됐어요. 내 지갑에서 보상을 수령하세요. (${serverCompletedDays}/${totalDays}일)`);
+                            continue;
+                        }
                         const refund = settleResult.data?.returned || 0;
                         const burned = settleResult.data?.burned || 0;
+                        delete updateData[`activeChallenges.${tier}`];
                         showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).\n${refund} HBT 반환, ${burned} HBT 소각 (온체인)`);
                     } catch (settleErr) {
                         console.error('⚠️ 온체인 실패 정산 오류:', settleErr);
-                        // CF 실패 시 클라이언트에서 제거
-                        updateData[`activeChallenges.${tier}`] = deleteField();
-                        showToast(`😢 ${totalDays}일 챌린지 미달성. 소각 처리 중 오류가 발생했습니다.`);
+                        showToast(`⚠️ ${totalDays}일 챌린지 정산을 보류했어요. 기록을 다시 확인한 뒤 처리할게요.`);
+                        continue;
                     }
                 } else {
                     updateData[`activeChallenges.${tier}`] = deleteField();
                     showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
-                }
 
-                try {
-                    await addDoc(collection(db, "blockchain_transactions"), {
-                        userId: currentUser.uid,
-                        type: 'challenge_settlement',
-                        challengeId: challenge.challengeId,
-                        staked: staked,
-                        successRate: successRate,
-                        completedDays: normalizedCompletedDays,
-                        timestamp: serverTimestamp(),
-                        status: 'failed'
-                    });
-                } catch (logErr) {
-                    console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
+                    try {
+                        await addDoc(collection(db, "blockchain_transactions"), {
+                            userId: currentUser.uid,
+                            type: 'challenge_settlement',
+                            challengeId: challenge.challengeId,
+                            staked: staked,
+                            successRate: successRate,
+                            completedDays: normalizedCompletedDays,
+                            completedDates: challenge.completedDates || [],
+                            startDate: challenge.startDate || null,
+                            endDate: challenge.endDate || null,
+                            timestamp: serverTimestamp(),
+                            status: 'failed'
+                        });
+                    } catch (logErr) {
+                        console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
+                    }
                 }
             }
         }

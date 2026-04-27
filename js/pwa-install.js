@@ -2,6 +2,10 @@
 let deferredInstallPrompt = null;
 const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
 const APP_SERVICE_WORKER_PATH = '/sw.js';
+const INSTALL_BUTTON_LABEL = '홈 화면에 앱 설치';
+const INSTALL_READY_HELPER_TEXT = '설치하면 앱처럼 바로 열 수 있어요.';
+const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
+const SAMSUNG_INSTALL_PROMPT_WAIT_MS = 3500;
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
 
@@ -52,6 +56,10 @@ function isIOSInstallDevice() {
 function isSafariBrowser() {
     const ua = getInstallUA();
     return /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS|YaBrowser|DuckDuckGo/i.test(ua);
+}
+
+function isSamsungInternetBrowser() {
+    return /SamsungBrowser/i.test(getInstallUA());
 }
 
 function isLikelyInstallWebView() {
@@ -134,7 +142,7 @@ function getManualInstallInstructions() {
                 '',
                 '1. 현재 페이지를 Safari로 열어주세요.',
                 '2. Safari 하단의 공유 버튼을 누르세요.',
-                '3. "홈 화면에 추가"를 선택하면 해빛스쿨을 앱처럼 사용할 수 있어요.'
+                `3. "${INSTALL_BUTTON_LABEL}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`
             ].join('\n');
         }
 
@@ -142,7 +150,7 @@ function getManualInstallInstructions() {
             '설치 방법',
             '',
             '1. Safari 하단의 공유 버튼을 누르세요.',
-            '2. "홈 화면에 추가"를 선택하세요.',
+            `2. "${INSTALL_BUTTON_LABEL}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`,
             '3. 추가가 끝나면 홈 화면의 해빛스쿨 아이콘으로 바로 열 수 있어요.'
         ].join('\n');
     }
@@ -153,7 +161,7 @@ function getManualInstallInstructions() {
             '',
             '1. 현재 인앱 브라우저 메뉴를 여세요.',
             '2. "기본 브라우저로 열기" 또는 "외부 브라우저에서 열기"를 누르세요.',
-            '3. Chrome이나 Safari에서 열린 뒤 브라우저 메뉴의 "앱 설치" 또는 "홈 화면에 추가"를 선택하세요.'
+            `3. 기본 브라우저에서 열린 뒤 메뉴의 "${INSTALL_BUTTON_LABEL}" 또는 "앱 설치"를 선택하세요.`
         ].join('\n');
     }
 
@@ -161,16 +169,16 @@ function getManualInstallInstructions() {
         return [
             '설치 방법',
             '',
-            '1. 주소창 오른쪽 설치 아이콘이 보이면 바로 눌러주세요.',
-            '2. 아이콘이 없으면 브라우저 메뉴를 열어 "앱 설치" 또는 "홈 화면에 추가"를 선택하세요.',
-            '3. 일부 브라우저는 잠시 더 사용한 뒤 설치 메뉴가 나타날 수 있어요.'
+            '1. 잠시 후 브라우저 설치 창이 뜨면 "설치"를 눌러주세요.',
+            `2. 창이 안 뜨면 주소창 오른쪽 설치 아이콘 또는 메뉴의 "${INSTALL_BUTTON_LABEL}"를 선택하세요.`,
+            '3. 메뉴 이름이 짧게 "앱 설치"로 보일 수도 있어요.'
         ].join('\n');
     }
 
     return [
         '설치 방법',
         '',
-        '브라우저 메뉴에서 "앱 설치" 또는 "홈 화면에 추가"를 찾아 실행해주세요.'
+        `브라우저 메뉴에서 "${INSTALL_BUTTON_LABEL}" 또는 "앱 설치"를 찾아 실행해주세요.`
     ].join('\n');
 }
 
@@ -182,17 +190,17 @@ function getInstallCopy() {
     if (deferredInstallPrompt) {
         return {
             visible: true,
-            buttonLabel: '홈 화면에 추가',
-            helperText: '설치하면 앱처럼 바로 열 수 있어요.'
+            buttonLabel: INSTALL_BUTTON_LABEL,
+            helperText: INSTALL_READY_HELPER_TEXT
         };
     }
 
     if (isIOSInstallDevice()) {
         return {
             visible: true,
-            buttonLabel: '홈 화면에 추가',
+            buttonLabel: INSTALL_BUTTON_LABEL,
             helperText: isSafariBrowser()
-                ? '홈 화면에 추가하면 앱처럼 쓸 수 있어요.'
+                ? '홈 화면 앱으로 설치하면 바로 열 수 있어요.'
                 : 'Safari로 열면 설치할 수 있어요.'
         };
     }
@@ -200,15 +208,15 @@ function getInstallCopy() {
     if (isLikelyInstallWebView()) {
         return {
             visible: true,
-            buttonLabel: '홈 화면에 추가',
+            buttonLabel: INSTALL_BUTTON_LABEL,
             helperText: '기본 브라우저로 열면 설치할 수 있어요.'
         };
     }
 
     return {
         visible: true,
-        buttonLabel: '홈 화면에 추가',
-        helperText: '설치하면 앱처럼 바로 열 수 있어요.'
+        buttonLabel: INSTALL_BUTTON_LABEL,
+        helperText: INSTALL_READY_HELPER_TEXT
     };
 }
 
@@ -227,7 +235,11 @@ function canWaitForNativeInstallPrompt() {
     return /Android/i.test(getInstallUA()) && !isIOSInstallDevice() && !isLikelyInstallWebView();
 }
 
-async function waitForDeferredInstallPrompt(timeoutMs = 1800) {
+function getNativeInstallPromptWaitMs() {
+    return isSamsungInternetBrowser() ? SAMSUNG_INSTALL_PROMPT_WAIT_MS : ANDROID_INSTALL_PROMPT_WAIT_MS;
+}
+
+async function waitForDeferredInstallPrompt(timeoutMs = getNativeInstallPromptWaitMs()) {
     if (deferredInstallPrompt) return deferredInstallPrompt;
     if (!canWaitForNativeInstallPrompt()) return null;
 

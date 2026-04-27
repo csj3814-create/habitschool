@@ -722,7 +722,7 @@ function renderDietProgramSelectorList() {
 
 function getDietProgramConsentPrimaryLabel(pushState = {}) {
     if (pushState.action === 'guide') return '설정 안내 보기';
-    if (pushState.action === 'install') return '홈 화면에 추가 후 켜기';
+    if (pushState.action === 'install') return '홈 화면 앱 설치 후 켜기';
     if (pushState.action === 'unsupported') return '이 브라우저에서는 알림 미지원';
     return '알림 켜고 계속';
 }
@@ -945,7 +945,7 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
         } else if (result?.action === 'guide') {
             showToast('방법 알림은 켰어요. 브라우저 설정에서 기기 알림을 허용해 주세요.');
         } else if (result?.action === 'install') {
-            showToast('방법 알림은 켰어요. 홈 화면에 추가한 뒤 기기 알림을 연결해 주세요.');
+            showToast('방법 알림은 켰어요. 홈 화면 앱으로 설치한 뒤 기기 알림을 연결해 주세요.');
         } else if (result?.action === 'unsupported') {
             showToast('방법 알림은 켰어요. 이 브라우저에서는 기기 알림 연결이 어려울 수 있어요.');
         } else {
@@ -1118,11 +1118,11 @@ function applyDashboardInstallCta() {
     submitBar.style.display = 'block';
     submitBar.classList.add('install-mode');
     helperEl.style.display = 'block';
-    helperEl.textContent = installState.helperText || '홈 화면에 추가하면 더 빠르게 다시 열 수 있어요.';
+    helperEl.textContent = installState.helperText || '홈 화면 앱으로 설치하면 더 빠르게 다시 열 수 있어요.';
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '홈 화면에 추가';
+    saveBtn.innerText = installState.buttonLabel || '홈 화면에 앱 설치';
     return true;
 }
 
@@ -1155,7 +1155,7 @@ function applySimpleProfileInstallCta() {
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '홈 화면에 추가';
+    saveBtn.innerText = installState.buttonLabel || '홈 화면에 앱 설치';
     return true;
 }
 

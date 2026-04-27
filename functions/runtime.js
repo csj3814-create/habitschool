@@ -3898,6 +3898,97 @@ function formatChallengeQualificationLabel(policyOrTier = "mini") {
     return "식단·운동·마음을 모두 기록하면 1일 인정";
 }
 
+function isValidDateString(dateStr = "") {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || "").trim());
+}
+
+function getChallengeCompletedDays(challenge = {}) {
+    const completedDates = Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(Boolean))]
+        : [];
+    return Math.max(Number(challenge?.completedDays) || 0, completedDates.length);
+}
+
+function normalizeChallengeCompletion(challenge = {}) {
+    const completedDates = Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(Boolean))]
+        : [];
+    return {
+        ...challenge,
+        completedDates,
+        completedDays: Math.max(Number(challenge?.completedDays) || 0, completedDates.length)
+    };
+}
+
+function getChallengeDateRange(challenge = {}) {
+    const startDate = String(challenge?.startDate || "").trim();
+    const totalDays = Math.max(0, Number(challenge?.totalDays || 0));
+    if (isValidDateString(startDate) && totalDays > 0) {
+        return Array.from({ length: totalDays }, (_, index) => addDaysToKstDateString(startDate, index));
+    }
+
+    const endDate = String(challenge?.endDate || "").trim();
+    if (isValidDateString(startDate) && isValidDateString(endDate) && endDate >= startDate) {
+        const range = [];
+        let cursor = startDate;
+        while (cursor && cursor <= endDate && range.length < 370) {
+            range.push(cursor);
+            cursor = addDaysToKstDateString(cursor, 1);
+        }
+        return range;
+    }
+
+    return Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(isValidDateString))].sort()
+        : [];
+}
+
+function reconcileChallengeCompletionWithDailyLogs(challenge = {}, dailyLogsByDate = {}, tier = "mini") {
+    const range = getChallengeDateRange(challenge);
+    const rangeSet = new Set(range);
+    const hasRange = rangeSet.size > 0;
+    const completedSet = new Set(
+        (Array.isArray(challenge?.completedDates) ? challenge.completedDates : [])
+            .filter(isValidDateString)
+            .filter((date) => !hasRange || rangeSet.has(date))
+    );
+    const policy = challenge?.qualificationPolicy
+        ? normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier)
+        : normalizeChallengeQualificationPolicy(null, tier);
+
+    range.forEach((date) => {
+        const log = dailyLogsByDate[date] || null;
+        if (log && doesAwardedPointsMeetChallengeRule(log.awardedPoints || {}, policy)) {
+            completedSet.add(date);
+        }
+    });
+
+    const completedDates = hasRange
+        ? range.filter((date) => completedSet.has(date))
+        : [...completedSet].sort();
+    const maxDays = Math.max(0, Number(challenge?.totalDays || range.length || 0));
+    const reconciledDays = Math.max(Number(challenge?.completedDays) || 0, completedDates.length);
+
+    return {
+        ...challenge,
+        completedDates,
+        completedDays: maxDays > 0 ? Math.min(maxDays, reconciledDays) : reconciledDays,
+        qualificationPolicy: policy
+    };
+}
+
+async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
+    const dates = getChallengeDateRange(challenge);
+    if (!uid || dates.length === 0) return {};
+
+    const refs = dates.map((date) => db.doc(`daily_logs/${uid}_${date}`));
+    const snaps = refs.length ? await db.getAll(...refs) : [];
+    return snaps.reduce((acc, snap, index) => {
+        if (snap.exists) acc[dates[index]] = snap.data() || {};
+        return acc;
+    }, {});
+}
+
 function buildChallengeBonusPolicy({ phase = 1, mse30 = 0 } = {}) {
     const safePhase = Math.max(1, Number(phase) || 1);
     const safeMse30 = Math.max(0, Number(mse30) || 0);
@@ -4241,14 +4332,15 @@ exports.claimChallengeReward = onCall(
         let userData = userSnap.data();
         userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         const activeChallenges = userData.activeChallenges || {};
-        const challenge = activeChallenges[tier];
+        const challenge = normalizeChallengeCompletion(activeChallenges[tier]);
 
         if (!challenge || challenge.status !== 'claimable') {
             throw new HttpsError("failed-precondition", "수령할 보상이 없습니다.");
         }
 
         const totalDays = challenge.totalDays || 30;
-        const successRate = (challenge.completedDays || 0) / totalDays;
+        const completedDays = getChallengeCompletedDays(challenge);
+        const successRate = completedDays / totalDays;
         const staked = challenge.hbtStaked || 0;
         const stakedOnChain = challenge.stakedOnChain || false;
         const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
@@ -4358,7 +4450,10 @@ exports.claimChallengeReward = onCall(
             date: _kstDateStr,
             staked: staked,
             successRate: successRate,
-            completedDays: challenge.completedDays || 0,
+            completedDays,
+            completedDates: challenge.completedDates || [],
+            startDate: challenge.startDate || null,
+            endDate: challenge.endDate || null,
             tier,
             bonusRateBps,
             bonusRateLabel,
@@ -4418,16 +4513,40 @@ exports.settleChallengeFailure = onCall(
         let userData = userSnap.data();
         userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         const activeChallenges = userData.activeChallenges || {};
-        const challenge = activeChallenges[tier];
+        const originalChallenge = activeChallenges[tier];
 
-        if (!challenge) {
+        if (!originalChallenge) {
             throw new HttpsError("failed-precondition", "해당 티어의 챌린지를 찾을 수 없습니다.");
+        }
+
+        let challenge = normalizeChallengeCompletion(originalChallenge);
+        const dailyLogsByDate = await fetchChallengeDailyLogsByDate(uid, challenge);
+        challenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);
+        const totalDays = challenge.totalDays || 30;
+        const completedDays = getChallengeCompletedDays(challenge);
+        const successRate = completedDays / totalDays;
+
+        if (successRate >= 0.8 || challenge.status === "claimable") {
+            const claimableChallenge = {
+                ...challenge,
+                status: "claimable"
+            };
+            await userRef.update({
+                [`activeChallenges.${tier}`]: claimableChallenge
+            });
+            return {
+                success: true,
+                skippedFailure: true,
+                claimable: true,
+                tier,
+                completedDays,
+                totalDays,
+                successRate: Math.round(successRate * 100)
+            };
         }
 
         const staked = challenge.hbtStaked || 0;
         const stakedOnChain = challenge.stakedOnChain || false;
-        const totalDays = challenge.totalDays || 30;
-        const successRate = (challenge.completedDays || 0) / totalDays;
         let resolveTxHash = null;
         const preferredStakeContract = challenge.stakeContract || "legacy";
 
@@ -4471,7 +4590,11 @@ exports.settleChallengeFailure = onCall(
             burned: stakedOnChain ? staked / 2 : 0,
             returned: stakedOnChain ? staked / 2 : 0,
             successRate: successRate,
-            completedDays: challenge.completedDays || 0,
+            completedDays,
+            completedDates: challenge.completedDates || [],
+            startDate: challenge.startDate || null,
+            endDate: challenge.endDate || null,
+            tier,
             onChain: stakedOnChain,
             network: ACTIVE_CHAIN.networkTag,
             resolveTxHash,

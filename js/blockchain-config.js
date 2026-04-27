@@ -210,6 +210,81 @@ export function normalizeChallengeCompletion(challenge = {}) {
     };
 }
 
+function isValidDateString(dateStr = '') {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(dateStr || '').trim());
+}
+
+export function addDaysToDateString(dateStr = '', diffDays = 0) {
+    if (!isValidDateString(dateStr)) return '';
+    const base = new Date(`${dateStr}T12:00:00Z`);
+    if (Number.isNaN(base.getTime())) return '';
+    base.setUTCDate(base.getUTCDate() + Number(diffDays || 0));
+    return base.toISOString().slice(0, 10);
+}
+
+export function getChallengeDateRange(challenge = {}) {
+    const startDate = String(challenge?.startDate || '').trim();
+    const totalDays = Math.max(0, Number(challenge?.totalDays || 0));
+    if (isValidDateString(startDate) && totalDays > 0) {
+        return Array.from({ length: totalDays }, (_, index) => addDaysToDateString(startDate, index));
+    }
+
+    const endDate = String(challenge?.endDate || '').trim();
+    if (isValidDateString(startDate) && isValidDateString(endDate) && endDate >= startDate) {
+        const range = [];
+        let cursor = startDate;
+        while (cursor && cursor <= endDate && range.length < 370) {
+            range.push(cursor);
+            cursor = addDaysToDateString(cursor, 1);
+        }
+        return range;
+    }
+
+    return Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(isValidDateString))].sort()
+        : [];
+}
+
+export function reconcileChallengeCompletionWithDailyLogs(challenge = {}, dailyLogsByDate = {}, tier = 'mini') {
+    const range = getChallengeDateRange(challenge);
+    const rangeSet = new Set(range);
+    const hasRange = rangeSet.size > 0;
+    const completedSet = new Set(
+        (Array.isArray(challenge?.completedDates) ? challenge.completedDates : [])
+            .filter(isValidDateString)
+            .filter((date) => !hasRange || rangeSet.has(date))
+    );
+    const policy = challenge?.qualificationPolicy
+        ? normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier)
+        : normalizeChallengeQualificationPolicy(null, tier);
+
+    const readLog = (date) => {
+        if (!dailyLogsByDate) return null;
+        if (dailyLogsByDate instanceof Map) return dailyLogsByDate.get(date) || null;
+        return dailyLogsByDate[date] || null;
+    };
+
+    range.forEach((date) => {
+        const log = readLog(date);
+        if (log && doesAwardedPointsMeetChallengeRule(log.awardedPoints || {}, policy)) {
+            completedSet.add(date);
+        }
+    });
+
+    const completedDates = hasRange
+        ? range.filter((date) => completedSet.has(date))
+        : [...completedSet].sort();
+    const maxDays = Math.max(0, Number(challenge?.totalDays || range.length || 0));
+    const reconciledDays = Math.max(Number(challenge?.completedDays) || 0, completedDates.length);
+
+    return {
+        ...challenge,
+        completedDates,
+        completedDays: maxDays > 0 ? Math.min(maxDays, reconciledDays) : reconciledDays,
+        qualificationPolicy: policy
+    };
+}
+
 export function getChallengeTimelineState(challenge = {}, todayStr = '') {
     const endDate = String(challenge?.endDate || '').trim();
     return {

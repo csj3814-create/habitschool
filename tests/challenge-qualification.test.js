@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     CHALLENGE_DAILY_MIN_POINTS,
+    getChallengeDateRange,
     doesAwardedPointsMeetChallengeRule,
     formatChallengeQualificationLabel,
     getAwardedPointsTotal,
@@ -8,7 +9,8 @@ import {
     getChallengeTimelineState,
     getDefaultChallengeQualificationPolicy,
     normalizeChallengeCompletion,
-    normalizeChallengeQualificationPolicy
+    normalizeChallengeQualificationPolicy,
+    reconcileChallengeCompletionWithDailyLogs
 } from '../js/blockchain-config.js';
 
 describe('challenge qualification policy', () => {
@@ -119,5 +121,58 @@ describe('challenge qualification policy', () => {
             isFinalDay: false,
             isPastEnd: true
         });
+    });
+
+    it('rebuilds expired weekly progress from authoritative daily logs before failure settlement', () => {
+        const challenge = {
+            challengeId: 'challenge-7d',
+            tier: 'weekly',
+            startDate: '2026-04-20',
+            endDate: '2026-04-26',
+            totalDays: 7,
+            completedDays: 5,
+            completedDates: ['2026-04-20', '2026-04-21', '2026-04-22', '2026-04-23', '2026-04-24'],
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('weekly')
+        };
+        const dailyLogsByDate = Object.fromEntries(getChallengeDateRange(challenge).map((date) => [
+            date,
+            { awardedPoints: { dietPoints: 30, exercisePoints: 30, mindPoints: 15 } }
+        ]));
+
+        const reconciled = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, 'weekly');
+
+        expect(reconciled.completedDates).toEqual([
+            '2026-04-20',
+            '2026-04-21',
+            '2026-04-22',
+            '2026-04-23',
+            '2026-04-24',
+            '2026-04-25',
+            '2026-04-26'
+        ]);
+        expect(reconciled.completedDays).toBe(7);
+        expect(getChallengeCompletedDays(reconciled) / reconciled.totalDays).toBe(1);
+    });
+
+    it('does not count records outside the challenge date range during reconciliation', () => {
+        const challenge = {
+            challengeId: 'challenge-7d',
+            tier: 'weekly',
+            startDate: '2026-04-20',
+            endDate: '2026-04-26',
+            totalDays: 7,
+            completedDays: 0,
+            completedDates: ['2026-04-19', '2026-04-20', '2026-04-27'],
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('weekly')
+        };
+
+        const reconciled = reconcileChallengeCompletionWithDailyLogs(challenge, {
+            '2026-04-19': { awardedPoints: { dietPoints: 80 } },
+            '2026-04-20': { awardedPoints: { dietPoints: 80 } },
+            '2026-04-27': { awardedPoints: { dietPoints: 80 } }
+        }, 'weekly');
+
+        expect(reconciled.completedDates).toEqual(['2026-04-20']);
+        expect(reconciled.completedDays).toBe(1);
     });
 });

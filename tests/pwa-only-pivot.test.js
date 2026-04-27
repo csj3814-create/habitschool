@@ -15,8 +15,9 @@ describe('PWA-only pivot guardrails', () => {
         const appSource = readAppSource();
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
 
-        expect(pwaInstallSource).toContain("buttonLabel: '홈 화면에 추가'");
-        expect(appSource).toContain("installState.buttonLabel || '홈 화면에 추가'");
+        expect(pwaInstallSource).toContain("const INSTALL_BUTTON_LABEL = '홈 화면에 앱 설치';");
+        expect(pwaInstallSource).toContain('buttonLabel: INSTALL_BUTTON_LABEL');
+        expect(appSource).toContain("installState.buttonLabel || '홈 화면에 앱 설치'");
         expect(pwaInstallSource).not.toContain("buttonLabel: '해빛스쿨 앱 설치'");
     });
 
@@ -35,7 +36,9 @@ describe('PWA-only pivot guardrails', () => {
 
         expect(pwaInstallSource).toContain('let installPromptWaiters = [];');
         expect(pwaInstallSource).toContain('function canWaitForNativeInstallPrompt() {');
-        expect(pwaInstallSource).toContain('async function waitForDeferredInstallPrompt(timeoutMs = 1800) {');
+        expect(pwaInstallSource).toContain('const SAMSUNG_INSTALL_PROMPT_WAIT_MS = 3500;');
+        expect(pwaInstallSource).toContain('function isSamsungInternetBrowser() {');
+        expect(pwaInstallSource).toContain('async function waitForDeferredInstallPrompt(timeoutMs = getNativeInstallPromptWaitMs()) {');
         expect(pwaInstallSource).toContain('const promptEvent = deferredInstallPrompt || await waitForDeferredInstallPrompt();');
         expect(pwaInstallSource).toContain('flushInstallPromptWaiters(event);');
     });
