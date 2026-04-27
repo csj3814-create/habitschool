@@ -30,6 +30,7 @@ describe('PWA manifest features', () => {
         expect(swSource).toContain("['sharedImages', 'dietPhotos']");
         expect(swSource).toContain('./icons/feature-graphic.png');
         expect(swSource).toContain('./icons/feature-graphic-minimal.png');
+        expect(swSource).toContain('./firebase-messaging-sw.js');
     });
 
     it('routes notifications to app windows first and still keeps openWindow fallback', () => {

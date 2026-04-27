@@ -78,7 +78,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v169';
+const CACHE_NAME = 'habitschool-v170';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
@@ -161,33 +161,33 @@ async function handleSharedTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=169',
-    './styles-base.css?v=169',
-    './styles-features.css?v=169',
-    './styles-dashboard.css?v=169',
-    './styles-dark-mode.css?v=169',
-    './styles-reports.css?v=169',
-    './js/main.js?v=169',
-    './js/app.js?v=169',
-    './js/app-core.js?v=169',
-    './js/auth.js?v=169',
-    './js/app-mode.js?v=169',
-    './js/auth-login-helpers.js?v=169',
-    './js/blockchain-config.js?v=169',
-    './js/blockchain-manager.js?v=169',
-    './js/data-manager.js?v=169',
-    './js/diet-program.js?v=169',
-    './js/diet-analysis.js?v=169',
-    './js/exercise-media.js?v=169',
-    './js/firebase-config.js?v=169',
-    './js/health-connect-utils.js?v=169',
-    './js/metabolic-score.js?v=169',
-    './js/milestone-helpers.js?v=169',
-    './js/pwa-install.js?v=169',
-    './js/security.js?v=169',
-    './js/ui-helpers.js?v=169',
-    './js/upload-performance.js?v=169',
-    './js/webview-detect.js?v=169',
+    './styles.css?v=170',
+    './styles-base.css?v=170',
+    './styles-features.css?v=170',
+    './styles-dashboard.css?v=170',
+    './styles-dark-mode.css?v=170',
+    './styles-reports.css?v=170',
+    './js/main.js?v=170',
+    './js/app.js?v=170',
+    './js/app-core.js?v=170',
+    './js/auth.js?v=170',
+    './js/app-mode.js?v=170',
+    './js/auth-login-helpers.js?v=170',
+    './js/blockchain-config.js?v=170',
+    './js/blockchain-manager.js?v=170',
+    './js/data-manager.js?v=170',
+    './js/diet-program.js?v=170',
+    './js/diet-analysis.js?v=170',
+    './js/exercise-media.js?v=170',
+    './js/firebase-config.js?v=170',
+    './js/health-connect-utils.js?v=170',
+    './js/metabolic-score.js?v=170',
+    './js/milestone-helpers.js?v=170',
+    './js/pwa-install.js?v=170',
+    './js/security.js?v=170',
+    './js/ui-helpers.js?v=170',
+    './js/upload-performance.js?v=170',
+    './js/webview-detect.js?v=170',
     './manifest.json',
     './icons/icon-192.png',
     './icons/icon-192.svg',
@@ -196,6 +196,7 @@ const STATIC_ASSETS = [
     './icons/apple-touch-icon.svg',
     './icons/feature-graphic.png',
     './icons/feature-graphic-minimal.png',
+    './firebase-messaging-sw.js',
     './icons/og-image.png'
 ];
 

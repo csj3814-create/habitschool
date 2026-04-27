@@ -30,6 +30,7 @@ describe('PWA asset versioning', () => {
         const uiHelpersSource = readRepoFile('js/ui-helpers.js');
         const stylesEntrySource = readRepoFile('styles.css');
         const swSource = readRepoFile('sw.js');
+        const firebaseMessagingSwSource = readRepoFile('firebase-messaging-sw.js');
         const firebaseConfig = JSON.parse(readRepoFile('firebase.json'));
 
         const releaseVersion = captureVersion(indexSource, /js\/app\.js\?v=(\d+)/, 'index app.js');
@@ -47,6 +48,7 @@ describe('PWA asset versioning', () => {
         expect(captureVersion(appCoreSource, /blockchain-manager\.js\?v=(\d+)/, 'app core blockchain import')).toBe(releaseVersion);
         expect(captureVersion(authSource, /blockchain-manager\.js\?v=(\d+)/, 'auth blockchain import')).toBe(releaseVersion);
         expect(pwaInstallSource).toContain("const APP_SERVICE_WORKER_PATH = '/sw.js';");
+        expect(firebaseMessagingSwSource).toContain("importScripts('/sw.js');");
         expect(captureVersion(swSource, /habitschool-v(\d+)/, 'service worker cache')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-base\.css\?v=(\d+)/, 'styles base import')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-features\.css\?v=(\d+)/, 'styles features import')).toBe(releaseVersion);
@@ -89,6 +91,7 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/ui-helpers.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/upload-performance.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/webview-detect.js?v=${releaseVersion}'`);
+        expect(swSource).toContain("'./firebase-messaging-sw.js'");
 
         const headerSources = firebaseConfig.hosting[0].headers.map((item) => item.source);
         expect(headerSources).toContain('/');
@@ -96,5 +99,7 @@ describe('PWA asset versioning', () => {
         expect(headerSources).toContain('/manifest.json');
         expect(headerSources).toContain('/styles.css');
         expect(headerSources).toContain('/js/**');
+        expect(headerSources).toContain('/sw.js');
+        expect(headerSources).toContain('/firebase-messaging-sw.js');
     });
 });

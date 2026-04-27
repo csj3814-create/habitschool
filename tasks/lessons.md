@@ -1469,3 +1469,5 @@
 - 2026-04-27: Firestore 연결 불안정 상황에서 선택적 백그라운드 쿼리 timeout을 모두 `console.warn`으로 찍으면 실제 장애보다 콘솔이 더 심각해 보인다. 핵심 UI를 캐시/fallback으로 유지하는 의도된 timeout은 rate-limit된 `console.info`로 낮추고, Firestore WebChannel timeout은 long-polling 설정으로 먼저 완화한다.
 - 2026-04-27: Firestore 재연결 중 SDK 내부 WebChannel 로그가 DevTools를 빨갛게 채우면 앱 로그 레벨만 낮추는 것으로 끝내지 않는다. production/staging에서는 Firestore SDK `setLogLevel('silent')`까지 적용하고, 선택적 지연 로그는 `info`로 내려 실제 기능 에러와 구분되게 한다.
 - 2026-04-27: PC 2열 쿠폰 카드처럼 폭이 좁은 반복 카드에는 `교환 포인트`, `쿠폰 금액` 라벨을 값마다 다시 쓰지 않는다. 라벨은 접근성용 `aria-label`에 남기고 시각 UI는 `2,000P · 2,000원`처럼 짧게 표시해야 겹침을 막을 수 있다.
+- 2026-04-27: FCM 푸시를 `/sw.js`로 명시 등록하더라도 Firebase Messaging 기본 경로인 `/firebase-messaging-sw.js` 404가 사용자 브라우저나 오래된 캐시에서 다시 보일 수 있다. 기본 경로 호환 wrapper를 배포하고 no-cache 헤더와 테스트에 포함해 DevTools script 404를 예방한다.
+- 2026-04-27: 영상 업로드 실패를 사진 업로드 기준의 전체 시간 제한으로 판단하지 않는다. Firebase Storage resumable upload는 모바일 업링크에서 오래 걸릴 수 있으므로, 영상은 파일 크기 기반 hard timeout과 progress 기반 idle timeout을 분리하고, `{ url: null }` 결과를 완료 UI로 표시하지 않게 테스트로 막는다.

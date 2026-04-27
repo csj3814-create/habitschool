@@ -14,32 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=169';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=169';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=170';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=170';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=169';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=169';
+} from './auth-login-helpers.js?v=170';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=170';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=169';
+} from './exercise-media.js?v=170';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=169';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=169';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=169';
-import { sanitize, compressImage } from './data-manager.js?v=169';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=169';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=169';
+} from './health-connect-utils.js?v=170';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=170';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=170';
+import { sanitize, compressImage } from './data-manager.js?v=170';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=170';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=170';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=170';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -52,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=169';
+} from './diet-program.js?v=170';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -64,9 +65,9 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=169';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=169';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=169';
+} from './meditation-guide.js?v=170';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=170';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=170';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4800,7 +4801,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=169';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=170';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -12369,6 +12370,79 @@ function updateSaveButtonUploadProgress(pct) {
     saveBtn.innerText = `저장 중... ${normalized}%`;
 }
 
+function runResumableUploadWithTimeout(storageRef, file, {
+    onProgress = null,
+    hardTimeoutMs = 60 * 1000,
+    idleTimeoutMs = 30 * 1000
+} = {}) {
+    const uploadTask = uploadBytesResumable(storageRef, file);
+    const hardLimit = Math.max(1000, Number(hardTimeoutMs) || 0);
+    const idleLimit = Math.max(1000, Number(idleTimeoutMs) || 0);
+
+    return new Promise((resolve, reject) => {
+        let settled = false;
+        let hardTimer = null;
+        let idleTimer = null;
+        let lastBytesTransferred = 0;
+
+        const cleanup = () => {
+            if (hardTimer) clearTimeout(hardTimer);
+            if (idleTimer) clearTimeout(idleTimer);
+            hardTimer = null;
+            idleTimer = null;
+        };
+
+        const settle = (handler, value) => {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            handler(value);
+        };
+
+        const cancelWithMessage = (message) => {
+            const error = new Error(message);
+            error.code = 'upload/timeout';
+            settle(reject, error);
+            try {
+                uploadTask.cancel();
+            } catch (_) {}
+        };
+
+        const resetIdleTimer = () => {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                cancelWithMessage('업로드 연결이 멈췄어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
+            }, idleLimit);
+        };
+
+        hardTimer = setTimeout(() => {
+            cancelWithMessage('업로드가 너무 오래 걸려 중단됐어요. Wi-Fi 환경에서 다시 시도해주세요.');
+        }, hardLimit);
+        resetIdleTimer();
+
+        uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+                const bytesTransferred = Math.max(0, Number(snapshot.bytesTransferred || 0));
+                const totalBytes = Math.max(1, Number(snapshot.totalBytes || file?.size || 0));
+                if (bytesTransferred > lastBytesTransferred) {
+                    lastBytesTransferred = bytesTransferred;
+                    resetIdleTimer();
+                }
+                const pct = Math.max(0, Math.min(100, Math.round((bytesTransferred / totalBytes) * 100)));
+                onProgress?.(pct);
+            },
+            (error) => {
+                settle(reject, error);
+            },
+            () => {
+                onProgress?.(100);
+                settle(resolve);
+            }
+        );
+    });
+}
+
 async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     if (!file) return null;
 
@@ -12396,31 +12470,21 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
     const maxRetries = 2;
-    const timeoutMs = 30000;
     const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
+    const uploadTimeouts = getResumableUploadTimeouts(fileToUpload);
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
-            const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-            const uploadPromise = new Promise((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        onProgress?.(pct);
-                    },
-                    reject,
-                    resolve
-                );
+            await runResumableUploadWithTimeout(storageRef, fileToUpload, {
+                onProgress,
+                hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
+                idleTimeoutMs: uploadTimeouts.idleTimeoutMs
             });
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => { uploadTask.cancel(); reject(new Error('업로드 시간 초과. 네트워크를 확인해주세요.')); }, timeoutMs)
-            );
-            await Promise.race([uploadPromise, timeoutPromise]);
 
             const urlPromise = getDownloadURL(storageRef);
             const urlTimeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('URL 가져오기 시간 초과')), 10000)
+                setTimeout(() => reject(new Error('업로드 완료 확인 시간이 초과됐어요. 다시 시도해주세요.')), uploadTimeouts.finalizeTimeoutMs)
             );
             const url = await Promise.race([urlPromise, urlTimeout]);
             console.log('✅ 업로드 완료:', storagePath);
@@ -12578,6 +12642,15 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
     Promise.resolve(promise).then((result) => {
         const current = _pendingUploads.get(inputId);
         if (!current) return;
+        if (!result?.url) {
+            current.done = true;
+            current.result = result || null;
+            current.progress = 0;
+            setInlineUploadProgress(inputId, { state: 'error', pct: 100 });
+            setThumbPendingState(inputId, { visible: false });
+            _pendingUploads.delete(inputId);
+            return;
+        }
         current.done = true;
         current.result = result;
         current.progress = 100;

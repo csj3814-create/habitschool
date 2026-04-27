@@ -8,6 +8,29 @@ const FAST_PATH_IMAGE_LIMITS = Object.freeze({
     'image/png': Math.round(0.9 * MB)
 });
 
+const RESUMABLE_UPLOAD_TIMEOUTS = Object.freeze({
+    image: Object.freeze({
+        hardTimeoutMs: 60 * 1000,
+        idleTimeoutMs: 30 * 1000,
+        finalizeTimeoutMs: 10 * 1000
+    }),
+    video: Object.freeze({
+        minHardTimeoutMs: 5 * 60 * 1000,
+        maxHardTimeoutMs: 20 * 60 * 1000,
+        hardTimeoutPerMbMs: 12 * 1000,
+        minIdleTimeoutMs: 90 * 1000,
+        maxIdleTimeoutMs: 3 * 60 * 1000,
+        idleTimeoutPerMbMs: 4 * 1000,
+        finalizeTimeoutMs: 30 * 1000
+    })
+});
+
+function clampNumber(value, min, max) {
+    const normalized = Number(value);
+    if (!Number.isFinite(normalized)) return min;
+    return Math.max(min, Math.min(max, normalized));
+}
+
 export function shouldFastPathImageCompression(file = null, options = {}) {
     if (!file || typeof file !== 'object') return false;
 
@@ -36,4 +59,30 @@ export function getDeferredVideoThumbDelayMs(fileSize = 0) {
     if (normalizedSize <= 6 * MB) return 650;
     if (normalizedSize <= 20 * MB) return 350;
     return 0;
+}
+
+export function getResumableUploadTimeouts(file = null) {
+    const type = String(file?.type || '').trim().toLowerCase();
+    const size = Math.max(0, Number(file?.size || 0));
+
+    if (!type.startsWith('video/')) {
+        return { ...RESUMABLE_UPLOAD_TIMEOUTS.image };
+    }
+
+    const sizeMb = Math.max(1, Math.ceil(size / MB));
+    const video = RESUMABLE_UPLOAD_TIMEOUTS.video;
+
+    return {
+        hardTimeoutMs: Math.round(clampNumber(
+            sizeMb * video.hardTimeoutPerMbMs,
+            video.minHardTimeoutMs,
+            video.maxHardTimeoutMs
+        )),
+        idleTimeoutMs: Math.round(clampNumber(
+            sizeMb * video.idleTimeoutPerMbMs,
+            video.minIdleTimeoutMs,
+            video.maxIdleTimeoutMs
+        )),
+        finalizeTimeoutMs: video.finalizeTimeoutMs
+    };
 }
