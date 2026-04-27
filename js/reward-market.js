@@ -83,6 +83,16 @@ function formatPhaseLabel(value = '') {
     return value === 'phase2_hybrid_band' ? '시세 완충형' : '내부 기준가';
 }
 
+function formatRewardMarketStockLabel(value = '') {
+    const raw = String(value || '').trim();
+    if (!raw) return '교환 가능';
+    const match = raw.match(/^(\d+)\s*일\s*발급$/);
+    if (match) {
+        return `유효기간 ${match[1]}일`;
+    }
+    return raw;
+}
+
 function getDisplayedPointsBalance() {
     const raw = String(document.getElementById('asset-points-display')?.textContent || '').trim();
     if (!raw) return 0;
@@ -692,6 +702,7 @@ function showRewardCouponLightbox(item = {}) {
     imageEl.src = visual.url;
     imageEl.alt = item.displayName || item.brandName || 'coupon barcode';
     imageEl.classList.toggle('is-barcode', visual.kind === 'barcode');
+    imageEl.classList.toggle('is-rotated-barcode', visual.kind === 'barcode');
     frameEl?.classList.toggle('is-barcode', visual.kind === 'barcode');
     lightboxEl.classList.toggle('is-barcode-open', visual.kind === 'barcode');
     rewardMarketState.expandedCouponVisualId = String(item.id || '');
@@ -705,6 +716,7 @@ function closeRewardCouponLightbox() {
     rewardMarketState.expandedCouponVisualId = '';
     lightboxEl.classList.remove('is-open');
     lightboxEl.classList.remove('is-barcode-open');
+    lightboxEl.querySelector('.reward-coupon-lightbox-image')?.classList.remove('is-rotated-barcode');
     lightboxEl.setAttribute('aria-hidden', 'true');
 }
 
@@ -731,7 +743,7 @@ function renderRewardMarketCatalogView() {
                 buildRewardProductHero(item) +
                 '<div class="reward-market-item-topline">' +
                     buildRewardBrandIdentity(item) +
-                    '<span class="reward-market-stock">' + escapeHtml(item.stockLabel || '교환 가능') + '</span>' +
+                    '<span class="reward-market-stock">' + escapeHtml(formatRewardMarketStockLabel(item.stockLabel)) + '</span>' +
                 '</div>' +
                 '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품 정보 준비 중') + '</div>' +
                 '<div class="reward-market-values">' +
@@ -804,6 +816,10 @@ function buildCouponProductThumb(item = {}) {
 }
 
 function buildCouponMedia(item = {}) {
+    const visual = getRewardCouponVisualSource(item);
+    if (visual?.kind === 'product') {
+        return buildCouponVisual(item);
+    }
     const productThumb = buildCouponProductThumb(item);
     const visualMarkup = buildCouponVisual(item);
     if (productThumb && visualMarkup) {
@@ -851,6 +867,7 @@ function renderRewardCouponVault() {
 
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
         const statusLabel = buildCouponStatusLabel(item.status);
+        const expiresLabel = formatDateLabel(item.expiresAt);
         const explorerLink = item.settlementAsset === 'hbt' && item.burnExplorerUrl
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
@@ -872,7 +889,7 @@ function renderRewardCouponVault() {
                 buildCouponCodeBlock(item) +
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +
-                    '<span>유효기간 ' + escapeHtml(formatDateLabel(item.expiresAt)) + '</span>' +
+                    '<span>유효기간 ' + escapeHtml(expiresLabel === '-' ? expiresLabel : `${expiresLabel}까지`) + '</span>' +
                     '<span>발급 ' + escapeHtml(formatDateLabel(item.issuedAt || item.createdAt, true)) + '</span>' +
                     explorerLink +
                 '</div>' +

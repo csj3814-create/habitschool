@@ -22,9 +22,12 @@ describe('reward market UI render wiring', () => {
             /async function persistRewardRecipientPhone[\s\S]*renderRewardMarketSnapshot\(\);[\s\S]*showToast\('쿠폰 수령 연락처를 저장했어요\.'\);/s
         );
     });
-    it('renders reward-market values on a single inline row', () => {
+
+    it('renders reward-market values on a single inline row and formats stock validity labels', () => {
         expect(rewardMarketSource).toContain('reward-market-price-chip');
         expect(rewardMarketSource).toContain('reward-market-price-separator');
+        expect(rewardMarketSource).toContain('formatRewardMarketStockLabel');
+        expect(rewardMarketSource).toContain('유효기간 ${match[1]}일');
     });
 
     it('wires coupon visual expand and dismiss handlers for the vault', () => {
@@ -34,14 +37,17 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('사용 완료');
         expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
+
     it('supports collapsed reward phone view with an explicit edit action', () => {
         expect(rewardMarketSource).toContain('phoneEditorOpen');
         expect(rewardMarketSource).toContain('reward-market-phone-summary');
         expect(rewardMarketSource).toContain('window.editRewardRecipientPhone = function');
     });
 
-    it('marks barcode lightbox state explicitly for wide fullscreen rendering', () => {
+    it('marks barcode lightbox state explicitly for rotated fullscreen rendering', () => {
         expect(rewardMarketSource).toContain("lightboxEl.classList.toggle('is-barcode-open'");
         expect(rewardMarketSource).toContain("lightboxEl.classList.remove('is-barcode-open')");
+        expect(rewardMarketSource).toContain("imageEl.classList.toggle('is-rotated-barcode'");
+        expect(rewardMarketSource).toContain("expiresLabel === '-' ? expiresLabel : `${expiresLabel}까지`");
     });
 });
