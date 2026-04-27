@@ -14,7 +14,7 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure } from './firebase-config.js?v=167';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=167';
 import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=167';
 import {
     parsePendingSignupOnboardingState,
@@ -7239,8 +7239,10 @@ const ASSET_HISTORY_TIMEOUT_MS = 4500;
 const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
 const ASSET_RETRY_BASE_DELAY_MS = 1200;
 const ASSET_MAX_RETRY_ATTEMPTS = 2;
+const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;
 let _assetRetryTimer = null;
 const _assetRetryCounts = new Map();
+const _assetOptionalQueryLogAt = new Map();
 
 function getAssetStorageKey(uid) {
     return `hs_wallet_${uid}`;
@@ -7417,9 +7419,36 @@ function scheduleAssetRetry(uid, reason = 'unknown') {
 }
 
 // 자산 표시 업데이트 함수
+function shouldLogAssetOptionalQuery(label, message) {
+    const key = `${label}:${message}`;
+    const now = Date.now();
+    const lastLoggedAt = _assetOptionalQueryLogAt.get(key) || 0;
+    if (now - lastLoggedAt < ASSET_OPTIONAL_QUERY_LOG_TTL_MS) return false;
+    _assetOptionalQueryLogAt.set(key, now);
+    return true;
+}
+
+function logAssetOptionalQueryFailure(label, error) {
+    const message = String(error?.message || error || 'unknown');
+    if (!shouldLogAssetOptionalQuery(label, message)) return;
+
+    if (message.startsWith(`asset_${label}_timeout`) || message.includes('timeout')) {
+        console.info(`[asset-display] optional ${label} timed out; keeping cached/fallback UI`);
+        return;
+    }
+
+    const connectivityIssue = noteFirestoreConnectivityFailure(error, `asset-display ${label}`)
+        || isFirestoreConnectivityIssue(error);
+    if (connectivityIssue) {
+        console.info(`[asset-display] optional ${label} skipped:`, message);
+        return;
+    }
+    console.warn(`[asset-display] optional ${label} skipped:`, message);
+}
+
 function withAssetQueryTimeout(task, label = 'asset-query', timeoutMs = ASSET_QUERY_TIMEOUT_MS) {
     return withAsyncTimeout(task, timeoutMs, `asset_${label}_timeout`).catch(error => {
-        console.warn(`[asset-display] ${label} skipped:`, error?.message || error);
+        logAssetOptionalQueryFailure(label, error);
         return null;
     });
 }

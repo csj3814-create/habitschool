@@ -1711,7 +1711,12 @@ export async function settleExpiredChallenges() {
             await updateDoc(userRef, updateData);
         }
     } catch (error) {
-        console.warn('⚠️ 만료 챌린지 처리 오류:', error.message);
+        const connectivityIssue = noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');
+        if (connectivityIssue) {
+            console.info('[challenge-settlement] deferred while Firestore reconnects:', error.message);
+        } else {
+            console.warn('⚠️ 만료 챌린지 처리 오류:', error.message);
+        }
     }
 }
 

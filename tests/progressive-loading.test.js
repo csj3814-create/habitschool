@@ -38,8 +38,11 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('const ASSET_QUERY_TIMEOUT_MS = 3500;');
         expect(appSource).toContain('const ASSET_HISTORY_TIMEOUT_MS = 4500;');
         expect(appSource).toContain('const ASSET_ONCHAIN_TIMEOUT_MS = 6000;');
+        expect(appSource).toContain('const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;');
         expect(appSource).toContain('const DASHBOARD_LOAD_TIMEOUT_MS = 6000;');
         expect(appSource).toContain('function withAssetQueryTimeout');
+        expect(appSource).toContain('function logAssetOptionalQueryFailure');
+        expect(appSource).toContain('optional ${label} timed out; keeping cached/fallback UI');
         expect(appSource).toContain('dashboard_firestore_timeout');
         expect(appSource).toContain('asset_onchain_balance_timeout');
         expect(appSource).toContain('asset_token_stats_timeout');

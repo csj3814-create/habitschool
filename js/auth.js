@@ -276,8 +276,12 @@ async function hydratePushTokenLinkState(user, legacyUserData = null) {
             return { linked: true, token: storedToken };
         }
     } catch (error) {
-        noteFirestoreConnectivityFailure(error, 'hydratePushTokenLinkState');
-        console.warn('[FCM] 현재 기기 토큰 상태 확인 실패:', error.message);
+        const connectivityIssue = noteFirestoreConnectivityFailure(error, 'hydratePushTokenLinkState');
+        if (connectivityIssue) {
+            console.info('[FCM] token link state deferred while Firestore reconnects:', error.message);
+        } else {
+            console.warn('[FCM] 현재 기기 토큰 상태 확인 실패:', error.message);
+        }
     }
 
     _pushTokenLinked = false;
@@ -316,7 +320,12 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
                 resolvedData = serverSnap.data() || {};
             }
         } catch (error) {
-            console.warn('사용자 최신 정보 서버 조회 실패:', error.message);
+            const connectivityIssue = noteFirestoreConnectivityFailure(error, 'resolveLatestUserDocData');
+            if (connectivityIssue) {
+                console.info('[auth] latest user document refresh deferred while Firestore reconnects:', error.message);
+            } else {
+                console.warn('사용자 최신 정보 서버 조회 실패:', error.message);
+            }
         }
     }
 

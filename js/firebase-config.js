@@ -1,7 +1,7 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, initializeFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -67,7 +67,9 @@ const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CON
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true
+});
 const storage = getStorage(app);
 const functions = getFunctions(app, FUNCTIONS_REGION);
 
@@ -99,6 +101,10 @@ function isRetryableFirestoreConnectivityError(error = null) {
         || message.includes('cloud firestore backend')
         || message.includes('backend didn\'t respond')
         || message.includes('failed to get document because the client is offline');
+}
+
+export function isFirestoreConnectivityIssue(error = null) {
+    return isRetryableFirestoreConnectivityError(error);
 }
 
 function delay(ms) {
