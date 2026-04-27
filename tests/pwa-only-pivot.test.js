@@ -31,15 +31,27 @@ describe('PWA-only pivot guardrails', () => {
         expect(hostingConfig.ignore).toContain('scripts/**');
     });
 
-    it('waits briefly for the native install prompt before falling back to manual instructions', () => {
+    it('waits briefly for supported Android install prompts but avoids Samsung Internet dead waits', () => {
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
 
         expect(pwaInstallSource).toContain('let installPromptWaiters = [];');
         expect(pwaInstallSource).toContain('function canWaitForNativeInstallPrompt() {');
-        expect(pwaInstallSource).toContain('const SAMSUNG_INSTALL_PROMPT_WAIT_MS = 3500;');
         expect(pwaInstallSource).toContain('function isSamsungInternetBrowser() {');
-        expect(pwaInstallSource).toContain('async function waitForDeferredInstallPrompt(timeoutMs = getNativeInstallPromptWaitMs()) {');
+        expect(pwaInstallSource).toContain('&& !isSamsungInternetBrowser();');
+        expect(pwaInstallSource).toContain('async function waitForDeferredInstallPrompt(timeoutMs = ANDROID_INSTALL_PROMPT_WAIT_MS) {');
         expect(pwaInstallSource).toContain('const promptEvent = deferredInstallPrompt || await waitForDeferredInstallPrompt();');
         expect(pwaInstallSource).toContain('flushInstallPromptWaiters(event);');
+    });
+
+    it('shows a Samsung Internet fallback with a Chrome open option instead of promising one-click install', () => {
+        const pwaInstallSource = readRepoFile('js/pwa-install.js');
+
+        expect(pwaInstallSource).toContain('function showSamsungInstallFallback() {');
+        expect(pwaInstallSource).toContain("body.textContent = '삼성 인터넷은 사이트 버튼으로 설치 확인창을 직접 열 수 없어요.';");
+        expect(pwaInstallSource).toContain("const chromeButton = createInstallFallbackButton('Chrome에서 열기', 'primary');");
+        expect(pwaInstallSource).toContain('window.location.href = getChromeIntentUrl();');
+        expect(pwaInstallSource).toContain('if (!deferredInstallPrompt && isSamsungInternetBrowser()) {');
+        expect(pwaInstallSource).toContain('showSamsungInstallFallback();');
+        expect(pwaInstallSource).not.toContain('SAMSUNG_INSTALL_PROMPT_WAIT_MS');
     });
 });

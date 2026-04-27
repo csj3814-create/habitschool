@@ -5,9 +5,10 @@ const APP_SERVICE_WORKER_PATH = '/sw.js';
 const INSTALL_BUTTON_LABEL = '홈 화면에 앱 설치';
 const INSTALL_READY_HELPER_TEXT = '설치하면 앱처럼 바로 열 수 있어요.';
 const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
-const SAMSUNG_INSTALL_PROMPT_WAIT_MS = 3500;
+const CHROME_ANDROID_PACKAGE_NAME = 'com.android.chrome';
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
+let installFallbackModal = null;
 
 function readStoredInstallState() {
     try {
@@ -165,6 +166,16 @@ function getManualInstallInstructions() {
         ].join('\n');
     }
 
+    if (isSamsungInternetBrowser()) {
+        return [
+            '삼성 인터넷 설치 안내',
+            '',
+            '삼성 인터넷은 사이트 버튼으로 설치 확인창을 직접 열 수 없어요.',
+            `브라우저 메뉴에서 "${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+            '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도할 수 있어요.'
+        ].join('\n');
+    }
+
     if (/Android/i.test(getInstallUA())) {
         return [
             '설치 방법',
@@ -213,6 +224,14 @@ function getInstallCopy() {
         };
     }
 
+    if (isSamsungInternetBrowser()) {
+        return {
+            visible: true,
+            buttonLabel: INSTALL_BUTTON_LABEL,
+            helperText: '삼성 인터넷은 메뉴에서 설치해야 해요.'
+        };
+    }
+
     return {
         visible: true,
         buttonLabel: INSTALL_BUTTON_LABEL,
@@ -232,14 +251,13 @@ function flushInstallPromptWaiters(promptEvent = null) {
 }
 
 function canWaitForNativeInstallPrompt() {
-    return /Android/i.test(getInstallUA()) && !isIOSInstallDevice() && !isLikelyInstallWebView();
+    return /Android/i.test(getInstallUA())
+        && !isIOSInstallDevice()
+        && !isLikelyInstallWebView()
+        && !isSamsungInternetBrowser();
 }
 
-function getNativeInstallPromptWaitMs() {
-    return isSamsungInternetBrowser() ? SAMSUNG_INSTALL_PROMPT_WAIT_MS : ANDROID_INSTALL_PROMPT_WAIT_MS;
-}
-
-async function waitForDeferredInstallPrompt(timeoutMs = getNativeInstallPromptWaitMs()) {
+async function waitForDeferredInstallPrompt(timeoutMs = ANDROID_INSTALL_PROMPT_WAIT_MS) {
     if (deferredInstallPrompt) return deferredInstallPrompt;
     if (!canWaitForNativeInstallPrompt()) return null;
 
@@ -265,7 +283,155 @@ async function waitForDeferredInstallPrompt(timeoutMs = getNativeInstallPromptWa
     });
 }
 
+function setInlineStyles(element, styles) {
+    Object.entries(styles).forEach(([property, value]) => {
+        element.style[property] = value;
+    });
+}
+
+function closeInstallFallbackModal() {
+    if (!installFallbackModal) return;
+    installFallbackModal.remove();
+    installFallbackModal = null;
+}
+
+function getChromeIntentUrl() {
+    const currentUrl = new URL(window.location.href);
+    const scheme = currentUrl.protocol.replace(':', '') || 'https';
+    const chromeUrl = `${currentUrl.host}${currentUrl.pathname}${currentUrl.search}`;
+    const fallbackUrl = encodeURIComponent(currentUrl.href);
+    return `intent://${chromeUrl}#Intent;scheme=${scheme};package=${CHROME_ANDROID_PACKAGE_NAME};S.browser_fallback_url=${fallbackUrl};end`;
+}
+
+function openCurrentPageInChrome() {
+    try {
+        window.location.href = getChromeIntentUrl();
+    } catch (_) {
+        window.location.href = window.location.href;
+    }
+}
+
+function createInstallFallbackButton(label, variant = 'secondary') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = label;
+    setInlineStyles(button, {
+        border: variant === 'primary' ? '0' : '1px solid #f0c57e',
+        borderRadius: '14px',
+        padding: '12px 16px',
+        fontSize: '15px',
+        fontWeight: '800',
+        color: variant === 'primary' ? '#3f2600' : '#6b3f0b',
+        background: variant === 'primary' ? 'linear-gradient(135deg, #ffb000, #ff8a00)' : '#fff8ed',
+        minHeight: '48px',
+        flex: '1 1 140px'
+    });
+    return button;
+}
+
+function showSamsungInstallFallback() {
+    closeInstallFallbackModal();
+
+    const overlay = document.createElement('div');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'samsung-install-fallback-title');
+    setInlineStyles(overlay, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '10000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px',
+        background: 'rgba(28, 23, 18, 0.42)'
+    });
+
+    const panel = document.createElement('section');
+    setInlineStyles(panel, {
+        width: 'min(92vw, 430px)',
+        maxHeight: '82vh',
+        overflowY: 'auto',
+        borderRadius: '22px',
+        background: '#fffdf8',
+        boxShadow: '0 18px 48px rgba(51, 36, 18, 0.22)',
+        padding: '24px',
+        color: '#4f2f09',
+        fontFamily: 'inherit',
+        lineHeight: '1.45'
+    });
+
+    const title = document.createElement('h2');
+    title.id = 'samsung-install-fallback-title';
+    title.textContent = '삼성 인터넷 설치 안내';
+    setInlineStyles(title, {
+        margin: '0 0 12px',
+        fontSize: '22px',
+        lineHeight: '1.25',
+        letterSpacing: '0',
+        color: '#3f2600'
+    });
+
+    const body = document.createElement('p');
+    body.textContent = '삼성 인터넷은 사이트 버튼으로 설치 확인창을 직접 열 수 없어요.';
+    setInlineStyles(body, {
+        margin: '0 0 14px',
+        fontSize: '16px',
+        fontWeight: '700'
+    });
+
+    const steps = document.createElement('ol');
+    setInlineStyles(steps, {
+        margin: '0 0 18px',
+        paddingLeft: '20px',
+        fontSize: '15px',
+        color: '#6f4d24'
+    });
+
+    [
+        '브라우저 메뉴를 열어주세요.',
+        `"${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+        '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도해주세요.'
+    ].forEach((text) => {
+        const item = document.createElement('li');
+        item.textContent = text;
+        item.style.marginBottom = '8px';
+        steps.appendChild(item);
+    });
+
+    const actions = document.createElement('div');
+    setInlineStyles(actions, {
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '10px',
+        marginTop: '8px'
+    });
+
+    const chromeButton = createInstallFallbackButton('Chrome에서 열기', 'primary');
+    chromeButton.addEventListener('click', openCurrentPageInChrome);
+
+    const closeButton = createInstallFallbackButton('확인');
+    closeButton.addEventListener('click', closeInstallFallbackModal);
+
+    actions.append(chromeButton, closeButton);
+    panel.append(title, body, steps, actions);
+    overlay.appendChild(panel);
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closeInstallFallbackModal();
+    });
+
+    installFallbackModal = overlay;
+    document.body.appendChild(overlay);
+    closeButton.focus({ preventScroll: true });
+}
+
 async function handleInstallCtaAction() {
+    if (!deferredInstallPrompt && isSamsungInternetBrowser()) {
+        showSamsungInstallFallback();
+        notifyInstallCtaStateChanged();
+        return;
+    }
+
     const promptEvent = deferredInstallPrompt || await waitForDeferredInstallPrompt();
     if (promptEvent) {
         try {

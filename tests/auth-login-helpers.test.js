@@ -17,12 +17,12 @@ import {
 } from '../js/auth-login-helpers.js';
 
 describe('shouldUseGoogleRedirectLogin', () => {
-    it('keeps popup flow for Samsung Internet in normal browser tabs', () => {
+    it('uses redirect for Samsung Internet in normal browser tabs', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(false);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(true);
     });
 
-    it('uses redirect for Samsung Internet standalone mode only', () => {
+    it('uses redirect for Samsung Internet standalone mode', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
@@ -34,10 +34,19 @@ describe('shouldUseGoogleRedirectLogin', () => {
 });
 
 describe('resolveGoogleLoginMode', () => {
-    it('honors a popup override after a failed redirect recovery', () => {
+    it('ignores popup overrides for Samsung Internet', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(resolveGoogleLoginMode({
             userAgent: samsungUa,
+            isStandalone: true,
+            overrideMode: 'popup'
+        })).toBe('redirect');
+    });
+
+    it('honors a popup override on regular Chrome', () => {
+        const chromeUa = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36';
+        expect(resolveGoogleLoginMode({
+            userAgent: chromeUa,
             isStandalone: true,
             overrideMode: 'popup'
         })).toBe('popup');

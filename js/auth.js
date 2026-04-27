@@ -56,7 +56,19 @@ function persistGoogleLoginModeOverride(mode = '') {
     } catch (_) {}
 }
 
+function shouldKeepGoogleRedirectAsPrimary() {
+    return resolveGoogleLoginMode({
+        userAgent: navigator.userAgent || navigator.vendor || '',
+        isStandalone: isStandalonePushMode(),
+        overrideMode: ''
+    }) === 'redirect';
+}
+
 function rememberPopupLoginFallback() {
+    if (shouldKeepGoogleRedirectAsPrimary()) {
+        persistGoogleLoginModeOverride('');
+        return;
+    }
     persistGoogleLoginModeOverride('popup');
 }
 

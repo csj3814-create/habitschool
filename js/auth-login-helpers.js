@@ -10,14 +10,16 @@ export function normalizeGoogleLoginMode(mode = '') {
     return mode === 'redirect' || mode === 'popup' ? mode : '';
 }
 
+export function shouldForceGoogleRedirectLogin({ userAgent = '' } = {}) {
+    const ua = String(userAgent || '').trim();
+    return /SamsungBrowser/i.test(ua);
+}
+
 export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {
+    if (shouldForceGoogleRedirectLogin({ userAgent })) return 'redirect';
+
     const normalizedOverride = normalizeGoogleLoginMode(overrideMode);
     if (normalizedOverride) return normalizedOverride;
-
-    const ua = String(userAgent || '').trim();
-    if (/SamsungBrowser/i.test(ua) && isStandalone === true) {
-        return 'redirect';
-    }
 
     return 'popup';
 }
