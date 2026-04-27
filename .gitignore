@@ -7,11 +7,16 @@ dist/
 contracts/artifacts/
 contracts/cache/
 contracts/typechain-types/
+__pycache__/
+*.pyc
 
 # Environment variables
 .env
 .env.local
 .env.production
+functions/.env.reward-market-live
+functions/.env.reward-market-live.local
+functions/*.secret.env
 
 # IDE
 .vscode/

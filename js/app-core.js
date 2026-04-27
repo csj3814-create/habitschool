@@ -21,7 +21,7 @@ import {
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
 } from './auth-login-helpers.js?v=170';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=170';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLog } from './blockchain-config.js?v=170';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -283,8 +283,11 @@ const FRIENDSHIP_LIVE_QUERY_TIMEOUT_MS = 2500;
 const FRIENDSHIP_CACHE_TTL_MS = 30_000;
 const FRIENDSHIP_RETRY_DELAY_MS = 3000;
 const FRIENDSHIP_MAX_RETRY_ATTEMPTS = 2;
+const CHALLENGE_NOTIFICATION_SEEN_ID_LIMIT = 80;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
+const GALLERY_RETRY_BASE_DELAY_MS = 2500;
+const GALLERY_MAX_RETRY_ATTEMPTS = 3;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_KAKAO_CHAT_URL = 'https://pf.kakao.com/_QDZZX/chat';
@@ -294,6 +297,7 @@ const CHATBOT_CONNECT_RETRY_COOLDOWN_MS = 60 * 1000;
 const CHATBOT_CONNECT_FETCH_TIMEOUT_MS = 8000;
 const CHATBOT_CONNECT_FETCH_RETRY_DELAYS_MS = [1200, 3000];
 const CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS = [1500, 4000, 9000];
+const _seenChallengeNotificationIdsByUid = new Map();
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
@@ -4807,11 +4811,13 @@ let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
 let fetchTokenStats = async () => null;
+let isBlockchainManagerReady = false;
 import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     updateChallengeProgress = mod.updateChallengeProgress;
     getConversionRate = mod.getConversionRate;
     getCurrentEra = mod.getCurrentEra;
     fetchTokenStats = mod.fetchTokenStats;
+    isBlockchainManagerReady = true;
     console.log('✅ app.js: 블록체인 모듈 로드');
     if (auth.currentUser && typeof window.updateAssetDisplay === 'function') {
         Promise.resolve().then(() => {
@@ -6399,6 +6405,13 @@ function clearInputs() {
 }
 
 let _dailyLogCache = { docId: null, data: null, ts: 0 };
+const DAILY_LOG_LS_PREFIX = 'hs_daily_log_';
+const DAILY_LOG_LS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const DAILY_LOG_SDK_TIMEOUT_MS = 3000;
+const DAILY_LOG_RETRY_DELAY_MS = 1500;
+const DAILY_LOG_MAX_RETRY_ATTEMPTS = 2;
+let _dailyLogRetryTimer = null;
+const _dailyLogRetryCounts = new Map();
 
 function cloneDailyLogData(data) {
     try {
@@ -6408,17 +6421,78 @@ function cloneDailyLogData(data) {
     }
 }
 
+function getDailyLogStorageKey(docId) {
+    return `${DAILY_LOG_LS_PREFIX}${encodeURIComponent(String(docId || ''))}`;
+}
+
 function updateDailyLogCache(docId, data) {
+    const clonedData = cloneDailyLogData(data);
     _dailyLogCache = {
         docId,
-        data: cloneDailyLogData(data),
+        data: clonedData,
         ts: Date.now()
     };
+    if (!docId) return;
+    try {
+        localStorage.setItem(getDailyLogStorageKey(docId), JSON.stringify({
+            ts: Date.now(),
+            data: clonedData
+        }));
+    } catch (_) {}
 }
 
 function getCachedDailyLog(docId) {
-    if (_dailyLogCache.docId !== docId || !_dailyLogCache.data) return null;
-    return cloneDailyLogData(_dailyLogCache.data);
+    if (_dailyLogCache.docId === docId && _dailyLogCache.data) {
+        return cloneDailyLogData(_dailyLogCache.data);
+    }
+    if (!docId) return null;
+    try {
+        const raw = localStorage.getItem(getDailyLogStorageKey(docId));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed?.data || (Date.now() - Number(parsed.ts || 0)) > DAILY_LOG_LS_TTL_MS) {
+            localStorage.removeItem(getDailyLogStorageKey(docId));
+            return null;
+        }
+        return cloneDailyLogData(parsed.data);
+    } catch (_) {
+        return null;
+    }
+}
+
+function createDeferredDailyLogSnap(reason = 'daily-log-deferred') {
+    return {
+        __deferred: true,
+        reason,
+        exists: () => false,
+        data: () => ({})
+    };
+}
+
+function clearDailyLogRetry(docId) {
+    if (_dailyLogRetryTimer) {
+        clearTimeout(_dailyLogRetryTimer);
+        _dailyLogRetryTimer = null;
+    }
+    if (docId) _dailyLogRetryCounts.delete(docId);
+}
+
+function scheduleDailyLogRetry(uid, selectedDateStr, reason = 'unknown') {
+    if (!uid || auth.currentUser?.uid !== uid) return;
+    const docId = `${uid}_${selectedDateStr}`;
+    const count = _dailyLogRetryCounts.get(docId) || 0;
+    if (count >= DAILY_LOG_MAX_RETRY_ATTEMPTS) return;
+
+    if (_dailyLogRetryTimer) clearTimeout(_dailyLogRetryTimer);
+    const nextCount = count + 1;
+    _dailyLogRetryCounts.set(docId, nextCount);
+    const delay = DAILY_LOG_RETRY_DELAY_MS * nextCount;
+    console.info(`[daily-log] retry scheduled (${reason}) in ${delay}ms`);
+    _dailyLogRetryTimer = setTimeout(() => {
+        if (auth.currentUser?.uid !== uid) return;
+        if (getSelectedRecordDateStr() !== selectedDateStr) return;
+        loadDataForSelectedDate(selectedDateStr).catch(() => {});
+    }, delay);
 }
 
 function collectCurrentDietAnalysisFromUi() {
@@ -6457,23 +6531,76 @@ async function loadDataForSelectedDate(dateStr) {
     try {
         const docId = `${user.uid}_${selectedDateStr}`;
         // 캐시 있으면 즉시, 없으면 최대 3초 대기 후 빈 결과로 진행
+        const dailyLogRef = doc(db, "daily_logs", docId);
         const _empty = { exists: () => false, data: () => ({}) };
+        const _deferred = createDeferredDailyLogSnap('sdk-timeout');
         const myLogDoc = await Promise.race([
-            getDoc(doc(db, "daily_logs", docId)).catch(() => _empty),
-            new Promise(resolve => setTimeout(() => resolve(_empty), 3000))
+            getDoc(dailyLogRef).catch((error) => {
+                const connectivityIssue = noteFirestoreConnectivityFailure(error, 'loadDataForSelectedDate')
+                    || isFirestoreConnectivityIssue(error);
+                if (connectivityIssue) return createDeferredDailyLogSnap(error?.message || 'sdk-connectivity');
+                throw error;
+            }),
+            new Promise(resolve => setTimeout(() => {
+                noteFirestoreConnectivityFailure(
+                    Object.assign(new Error('daily_log_firestore_timeout'), { code: 'deadline-exceeded' }),
+                    'loadDataForSelectedDate timeout'
+                );
+                resolve(_deferred);
+            }, DAILY_LOG_SDK_TIMEOUT_MS))
         ]);
         const pendingOutboxEntry = findOfflineOutboxEntry(user.uid, docId);
 
         // race condition 방지: 날짜가 빠르게 변경된 경우 이전 요청 무시
         if (thisGeneration !== _loadDataGeneration) return;
 
+        let effectiveLogDoc = myLogDoc;
+        if (myLogDoc.__deferred) {
+            scheduleDailyLogRetry(user.uid, selectedDateStr, myLogDoc.reason || 'sdk-deferred');
+            let fallbackData = pendingOutboxEntry
+                ? mergeOfflineOutboxData(getCachedDailyLog(docId) || { awardedPoints: {} }, pendingOutboxEntry)
+                : getCachedDailyLog(docId);
+            let restResult = null;
+            if (!fallbackData) {
+                try {
+                    restResult = await withAsyncTimeout(
+                        _fetchDailyLogViaRest(docId),
+                        DAILY_LOG_SDK_TIMEOUT_MS,
+                        'daily_log_rest_timeout'
+                    );
+                    if (restResult?.exists) {
+                        fallbackData = restResult.data || {};
+                    }
+                } catch (restError) {
+                    noteFirestoreConnectivityFailure(restError, 'loadDataForSelectedDate REST fallback');
+                    console.info('[daily-log] REST fallback skipped:', restError?.message || restError);
+                }
+            }
+
+            if (thisGeneration !== _loadDataGeneration) return;
+
+            if (fallbackData) {
+                effectiveLogDoc = {
+                    __fallback: true,
+                    exists: () => true,
+                    data: () => fallbackData
+                };
+            } else if (restResult?.exists === false) {
+                effectiveLogDoc = _empty;
+            } else {
+                console.info('[daily-log] keeping current UI while Firestore reconnects');
+                return;
+            }
+        }
+
         // 데이터 도착 후에 UI 초기화 (깜빡임 방지)
         clearInputs();
 
-        if (myLogDoc.exists() || pendingOutboxEntry) {
+        if (effectiveLogDoc.exists() || pendingOutboxEntry) {
             const data = pendingOutboxEntry
-                ? mergeOfflineOutboxData(myLogDoc.exists() ? myLogDoc.data() : { awardedPoints: {} }, pendingOutboxEntry)
-                : myLogDoc.data();
+                ? mergeOfflineOutboxData(effectiveLogDoc.exists() ? effectiveLogDoc.data() : { awardedPoints: {} }, pendingOutboxEntry)
+                : effectiveLogDoc.data();
+            clearDailyLogRetry(docId);
             updateDailyLogCache(docId, data);
             const awarded = data.awardedPoints || {};
             applyShareSettingsToControls(data.shareSettings);
@@ -6586,6 +6713,7 @@ async function loadDataForSelectedDate(dateStr) {
 
             // 대시보드는 openTab에서 호출하므로 여기서는 생략
         } else {
+            clearDailyLogRetry(docId);
             updateDailyLogCache(docId, { awardedPoints: {} });
             addExerciseBlock('cardio'); addExerciseBlock('strength');
             applyMeditationLogToUi(null, { selectedDateStr });
@@ -7242,13 +7370,16 @@ const ASSET_CACHE_TTL = 30_000;
 const ASSET_LS_TTL = 24 * 60 * 60 * 1000;
 const ASSET_QUERY_TIMEOUT_MS = 3500;
 const ASSET_HISTORY_TIMEOUT_MS = 4500;
+const ASSET_USER_DOC_TIMEOUT_MS = 5000;
 const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
 const ASSET_RETRY_BASE_DELAY_MS = 1200;
-const ASSET_MAX_RETRY_ATTEMPTS = 2;
+const ASSET_MAX_RETRY_ATTEMPTS = 5;
 const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;
 let _assetRetryTimer = null;
 const _assetRetryCounts = new Map();
 const _assetOptionalQueryLogAt = new Map();
+const _assetChallengeProgressSyncKeys = new Set();
+let _assetTokenStatsPromise = null;
 
 function getAssetStorageKey(uid) {
     return `hs_wallet_${uid}`;
@@ -7273,6 +7404,13 @@ function parseDisplayedAssetNumber(elementId, { allowDecimal = false } = {}) {
     const normalized = raw.replace(/[^0-9.-]/g, '');
     const value = allowDecimal ? Number(normalized) : parseInt(normalized, 10);
     return Number.isFinite(value) ? value : null;
+}
+
+function getFiniteAssetNumber(value, { allowDecimal = false } = {}) {
+    if (value == null || value === '') return null;
+    const normalized = typeof value === 'string' ? value.replace(/,/g, '').trim() : value;
+    const parsed = allowDecimal ? Number(normalized) : parseInt(normalized, 10);
+    return Number.isFinite(parsed) ? parsed : null;
 }
 
 function readAssetDisplayCache(uid) {
@@ -7302,20 +7440,36 @@ function writeAssetDisplayCache(uid, patch = {}) {
 
 function applyCachedAssetDisplay(uid) {
     const cached = readAssetDisplayCache(uid);
-    if (!cached) return null;
-    if ((Date.now() - Number(cached.ts || 0)) >= ASSET_LS_TTL) return null;
+    const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
+    const hasFreshAssetCache = cached && (Date.now() - Number(cached.ts || 0)) < ASSET_LS_TTL;
+    const pointsValue = (hasFreshAssetCache ? getFiniteAssetNumber(cached.coins) : null)
+        ?? getFiniteAssetNumber(dashboardData?.ud?.coins);
+    const hbtValue = hasFreshAssetCache
+        ? getFiniteAssetNumber(cached.hbtBalance, { allowDecimal: true })
+        : null;
+    if (pointsValue == null && hbtValue == null) return null;
 
     const pointsDisplay = document.getElementById('asset-points-display');
-    if (pointsDisplay && Number.isFinite(Number(cached.coins))) {
-        pointsDisplay.innerHTML = formatWalletPointsHtml(cached.coins);
+    if (pointsDisplay && pointsValue != null) {
+        pointsDisplay.innerHTML = formatWalletPointsHtml(pointsValue);
+    }
+
+    const pointBadge = document.getElementById('point-balance');
+    if (pointBadge && pointsValue != null) {
+        pointBadge.textContent = String(pointsValue);
     }
 
     const hbtDisplay = document.getElementById('asset-hbt-display');
-    if (hbtDisplay && Number.isFinite(Number(cached.hbtBalance))) {
-        hbtDisplay.innerHTML = formatWalletHbtHtml(cached.hbtBalance);
+    if (hbtDisplay && hbtValue != null) {
+        hbtDisplay.innerHTML = formatWalletHbtHtml(hbtValue);
+        if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(hbtValue);
     }
 
-    return cached;
+    return {
+        ...(cached || {}),
+        coins: pointsValue ?? cached?.coins,
+        hbtBalance: hbtValue ?? cached?.hbtBalance
+    };
 }
 
 window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived = 0 } = {}) {
@@ -7459,6 +7613,148 @@ function withAssetQueryTimeout(task, label = 'asset-query', timeoutMs = ASSET_QU
     });
 }
 
+function isDeferredAssetSnap(snap) {
+    return !!snap?.__deferred;
+}
+
+function requestAssetChallengeProgressSync(uid, dateStr, reason = 'asset-challenge-projection') {
+    if (!uid || !dateStr || auth.currentUser?.uid !== uid) return;
+
+    const syncKey = `${uid}:${dateStr}:${reason}`;
+    if (_assetChallengeProgressSyncKeys.has(syncKey)) return;
+    _assetChallengeProgressSyncKeys.add(syncKey);
+    setTimeout(() => _assetChallengeProgressSyncKeys.delete(syncKey), 60_000);
+
+    const delayMs = isBlockchainManagerReady ? 0 : 1200;
+    setTimeout(() => {
+        if (auth.currentUser?.uid !== uid) return;
+        updateChallengeProgress().catch(error => {
+            console.warn('[asset-display] challenge progress sync skipped:', error?.message || error);
+        });
+    }, delayMs);
+}
+
+function refreshAssetTokenStats(uid = '') {
+    if (_assetTokenStatsPromise) return _assetTokenStatsPromise;
+
+    _assetTokenStatsPromise = withAsyncTimeout(
+        fetchTokenStats(),
+        ASSET_ONCHAIN_TIMEOUT_MS,
+        'asset_token_stats_timeout'
+    ).then(stats => {
+        if (!stats) {
+            scheduleAssetRetry(uid, 'token-stats-empty');
+            return null;
+        }
+
+        const globalMinted = parseFloat(stats.totalMined) || 0;
+        const phase = stats.currentPhase || 1;
+        const statsChainLabel = String(stats.chainLabel || getActiveOnchainLabel(APP_ENV));
+        const RATE_SCALE = 1e8;
+        const ratePerPoint = (stats.currentRate || RATE_SCALE) / RATE_SCALE;
+        const per100 = ratePerPoint * 100;
+        window._currentConversionRate = Number(stats.currentRate) || null;
+        window._currentConversionPhase = phase;
+
+        const halvingEraEl = document.getElementById('halving-era');
+        if (halvingEraEl) halvingEraEl.textContent = eraToLabel(phase);
+
+        const halvingRateEl = document.getElementById('halving-rate');
+        if (halvingRateEl) {
+            halvingRateEl.textContent = `100P = ${formatPer100HbtDisplay(per100)} HBT`;
+        }
+
+        updateHalvingScheduleUI(phase, per100);
+        updateWalletRateCopy(phase, per100, statsChainLabel);
+        updateConvertRateBadge(phase, per100, statsChainLabel);
+
+        const phaseBounds = [0, 35_000_000, 52_500_000, 61_250_000, 70_000_000];
+        const phaseStart = phaseBounds[Math.min(phase - 1, phaseBounds.length - 2)] || 0;
+        const phaseEnd = phaseBounds[Math.min(phase, phaseBounds.length - 1)] || 70_000_000;
+        const phasePool = phaseEnd - phaseStart;
+        const mintedInPhase = Math.max(globalMinted - phaseStart, 0);
+        const progressPct = phasePool > 0 ? Math.min((mintedInPhase / phasePool) * 100, 100) : 0;
+
+        const halvingProgressText = document.getElementById('halving-progress-text');
+        if (halvingProgressText) {
+            halvingProgressText.textContent = `${Math.round(mintedInPhase).toLocaleString()} / ${phasePool.toLocaleString()} HBT`;
+        }
+
+        const halvingProgressBar = document.getElementById('halving-progress-bar');
+        if (halvingProgressBar) {
+            if (mintedInPhase > 0 && progressPct < 1) {
+                halvingProgressBar.style.width = '1%';
+            } else {
+                halvingProgressBar.style.width = progressPct.toFixed(1) + '%';
+            }
+        }
+
+        clearAssetRetry(uid);
+        return stats;
+    }).catch(err => {
+        console.info('[asset-display] token stats deferred:', err?.message || err);
+        scheduleAssetRetry(uid, 'token-stats-timeout');
+        return null;
+    }).finally(() => {
+        _assetTokenStatsPromise = null;
+    });
+
+    return _assetTokenStatsPromise;
+}
+
+let _assetOnchainBalancePromise = null;
+let _assetOnchainBalanceUid = null;
+
+function refreshAssetOnchainBalance(uid) {
+    if (!uid || !window.fetchOnchainBalance) return Promise.resolve(null);
+    if (_assetOnchainBalancePromise && _assetOnchainBalanceUid === uid) {
+        return _assetOnchainBalancePromise;
+    }
+
+    _assetOnchainBalanceUid = uid;
+    _assetOnchainBalancePromise = withAsyncTimeout(
+        window.fetchOnchainBalance(),
+        ASSET_ONCHAIN_TIMEOUT_MS,
+        'asset_onchain_balance_timeout'
+    ).then(onchainData => {
+        const val = getFiniteAssetNumber(onchainData?.balanceFormatted, { allowDecimal: true });
+        if (val == null) {
+            scheduleAssetRetry(uid, 'onchain-empty');
+            return null;
+        }
+
+        clearAssetRetry(uid);
+        writeAssetDisplayCache(uid, {
+            hbtBalance: val,
+            hbtTs: Date.now()
+        });
+
+        const hbtEl = document.getElementById('asset-hbt-display');
+        if (hbtEl) hbtEl.innerHTML = formatWalletHbtHtml(val);
+        if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
+
+        const onchainBadge = document.getElementById('asset-hbt-onchain');
+        if (onchainBadge) {
+            const onchainText = document.getElementById('asset-hbt-onchain-text');
+            if (onchainText) onchainText.textContent = `온체인(${getActiveOnchainLabel(APP_ENV)})`;
+            onchainBadge.style.display = 'inline-flex';
+        }
+
+        return val;
+    }).catch(err => {
+        console.warn('온체인 잔액 조회 지연:', err?.message || err);
+        scheduleAssetRetry(uid, 'onchain-error');
+        return null;
+    }).finally(() => {
+        if (_assetOnchainBalanceUid === uid) {
+            _assetOnchainBalancePromise = null;
+            _assetOnchainBalanceUid = null;
+        }
+    });
+
+    return _assetOnchainBalancePromise;
+}
+
 window.updateAssetDisplay = async function (forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return;
@@ -7485,6 +7781,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     if (applyCachedAssetDisplay(user.uid) && window.hideWalletSkeleton) {
         window.hideWalletSkeleton();
     }
+    refreshAssetOnchainBalance(user.uid).catch(() => {});
+    refreshAssetTokenStats(user.uid).catch(() => {});
     const hadCachedHistory = applyCachedAssetHistory(user.uid);
     if (hadCachedHistory) {
         _assetHistoryState.isLoading = false;
@@ -7509,10 +7807,19 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         const _startDateStr = _sevenDaysAgo.toISOString().split('T')[0];
 
         // getDoc 타임아웃 헬퍼: 캐시 있으면 즉시, 없으면 최대 3초 후 빈 snap 반환
-        const _emptyAssetSnap = { exists: () => false, data: () => ({}) };
+        const _deferredAssetSnap = { __deferred: true, exists: () => false, data: () => ({}) };
         const _assetTimeout = ms => new Promise(resolve =>
-            setTimeout(() => resolve(_emptyAssetSnap), ms));
-        const _p_user = Promise.race([getDoc(userRef).catch(() => _emptyAssetSnap), _assetTimeout(3000)]);
+            setTimeout(() => resolve(_deferredAssetSnap), ms));
+        const userDocPromise = getDoc(userRef).catch((error) => {
+            const connectivityIssue = noteFirestoreConnectivityFailure(error, 'asset-display user-doc')
+                || isFirestoreConnectivityIssue(error);
+            if (connectivityIssue) return _deferredAssetSnap;
+            throw error;
+        });
+        const _p_user = Promise.race([
+            userDocPromise,
+            _assetTimeout(ASSET_USER_DOC_TIMEOUT_MS)
+        ]);
         const _p_todayLog = Promise.race([
             getDoc(doc(db, 'daily_logs', _todayLogId)),
             _assetTimeout(3000)
@@ -7595,12 +7902,24 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // 캐시 갱신
             _assetCache = { uid: user.uid, ts: Date.now() };
+            const cachedAssetSnapshot = readAssetDisplayCache(user.uid) || {};
+            const dashboardSnapshot = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(user.uid) : null;
+            const coinsValue = getFiniteAssetNumber(userData.coins)
+                ?? getFiniteAssetNumber(cachedAssetSnapshot.coins)
+                ?? getFiniteAssetNumber(dashboardSnapshot?.ud?.coins)
+                ?? parseDisplayedAssetNumber('asset-points-display')
+                ?? parseDisplayedAssetNumber('point-balance')
+                ?? 0;
+            const userDisplayData = {
+                ...userData,
+                coins: coinsValue
+            };
 
             // localStorage에 저장 (다음 방문/재시도 시 즉시 표시용)
             writeAssetDisplayCache(user.uid, {
-                coins: userData.coins || 0
+                coins: coinsValue
             });
-            applyAssetWalletSnapshot(userData);
+            applyAssetWalletSnapshot(userDisplayData);
             loadRewardMarketSnapshot(forceRefresh).catch((error) => {
                 console.warn('reward market load skipped:', error?.message || error);
             });
@@ -7630,8 +7949,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 포인트 표시 업데이트
             const pointsDisplay = document.getElementById('asset-points-display');
             if (pointsDisplay) {
-                const ptsVal = parseInt(userData.coins || 0);
-                pointsDisplay.innerHTML = formatWalletPointsHtml(ptsVal);
+                pointsDisplay.innerHTML = formatWalletPointsHtml(coinsValue);
             }
 
             // HBT 표시 업데이트
@@ -7648,10 +7966,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const pointsDeltaEl = document.getElementById('asset-points-delta');
             if (pointsDeltaEl) {
                 let todayPoints = 0;
+                let todayPointsReady = true;
                 try {
                     // 1) 기록 활동 포인트 (식단/운동/마음)
                     const todayLogSnap = await _p_todayLog;
-                    if (todayLogSnap && todayLogSnap.exists()) {
+                    if (isDeferredAssetSnap(todayLogSnap) || !todayLogSnap) {
+                        todayPointsReady = false;
+                    } else if (todayLogSnap.exists()) {
                         const ap = todayLogSnap.data().awardedPoints || {};
                         todayPoints += (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
                         // 2) 내 오늘 게시물에 달린 리액션 수신 (+1P each)
@@ -7666,9 +7987,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 todayPoints++;
                             }
                         });
+                    } else {
+                        todayPointsReady = false;
                     }
                 } catch (_) {}
-                if (todayPoints > 0) {
+                if (!todayPointsReady) {
+                    scheduleAssetRetry(user.uid, 'today-points-timeout');
+                } else if (todayPoints > 0) {
                     pointsDeltaEl.innerHTML = `<span class="dot"></span>+${todayPoints}P 오늘`;
                     pointsDeltaEl.className = 'wallet-onchain-badge today-delta up';
                     pointsDeltaEl.style.display = 'inline-flex';
@@ -7680,16 +8005,21 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             }
             // 오늘 변환 HBT 합산 (델타 + 일일 한도 양쪽에서 사용)
             let todayHbt = 0;
+            let todayHbtReady = true;
             try {
                 const hbtTxSnap = await _p_hbtTx;
                 if (hbtTxSnap) hbtTxSnap.forEach(d => { todayHbt += d.data().hbtReceived || 0; });
+                else todayHbtReady = false;
                 // 챌린지 정산 HBT도 오늘 합산
                 const settleTxSnap = await _p_settleTx;
                 if (settleTxSnap) settleTxSnap.forEach(d => { todayHbt += d.data().amount || 0; });
+                else todayHbtReady = false;
             } catch (_) {}
             const hbtDeltaEl = document.getElementById('asset-hbt-delta');
             if (hbtDeltaEl) {
-                if (todayHbt > 0) {
+                if (!todayHbtReady) {
+                    scheduleAssetRetry(user.uid, 'today-hbt-timeout');
+                } else if (todayHbt > 0) {
                     hbtDeltaEl.innerHTML = `<span class="dot"></span>+${todayHbt} HBT 오늘`;
                     hbtDeltaEl.className = 'wallet-onchain-badge today-delta up';
                     hbtDeltaEl.style.display = 'inline-flex';
@@ -7711,7 +8041,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const sevenDaysAgo = _sevenDaysAgo;
 
                     const txSnap = await _p_minichart;
-                    if (txSnap) txSnap.forEach(d => {
+                    if (!txSnap) {
+                        scheduleAssetRetry(user.uid, 'mini-chart-timeout');
+                        if (!String(minichartBars.textContent || '').trim()) {
+                            minichartBars.innerHTML = '<div class="wallet-minichart-loading">불러오는 중...</div>';
+                        }
+                    } else {
+                        txSnap.forEach(d => {
                         const txDate = new Date(d.data().date + 'T12:00:00');
                         const diffDays = Math.round((txDate - sevenDaysAgo) / 86400000);
                         if (diffDays >= 0 && diffDays < 7) {
@@ -7728,7 +8064,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         const valLabel = data[i] > 0 ? `<span class="wallet-minichart-bar-value">${data[i]}</span>` : '';
                         barsHtml += `<div class="wallet-minichart-bar${isToday ? ' today' : ''}" style="height:${Math.max(heightPct, 4)}%;" title="${data[i]} HBT">${valLabel}<span class="wallet-minichart-bar-label">${dayLabels[dayIdx]}</span></div>`;
                     }
-                    minichartBars.innerHTML = barsHtml;
+                        minichartBars.innerHTML = barsHtml;
+                    }
                 } catch (chartErr) {
                     console.warn('미니차트 로드 실패:', chartErr.message);
                 }
@@ -7739,6 +8076,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const dailyLimitEl = document.getElementById('convert-daily-limit');
             if (dailyLimitEl) {
                 const txHistorySnap = await _p_txHistory;
+                if (!txHistorySnap) {
+                    scheduleAssetRetry(user.uid, 'daily-limit-timeout');
+                } else {
                 const recentTransactions = txHistorySnap
                     ? txHistorySnap.docs.map((docSnap) => docSnap.data() || {})
                     : [];
@@ -7750,6 +8090,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             }
 
             // 스켈레톤 해제
+            }
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
 
             // 온체인 잔액으로 메인 HBT 표시 업데이트
@@ -7843,9 +8184,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 헤더의 포인트 배지도 업데이트
             const pointBadge = document.getElementById('point-balance');
             if (pointBadge) {
-                pointBadge.textContent = (userData.coins || 0);
+                pointBadge.textContent = String(coinsValue);
             }
-            renderSimpleProfilePanel(userData).catch(() => {});
+            renderSimpleProfilePanel(userDisplayData).catch(() => {});
 
             // ========== 활성 챌린지 UI (통합 전용, 미니→위클리→마스터 순) ==========
             const challengeContainer = document.getElementById('active-challenge-container');
@@ -7863,6 +8204,29 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master', 'challenge-all-30d': 'master'
                 }[legacyId] || 'master';
                 if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
+            }
+
+            let todayChallengeLogData = null;
+            try {
+                const todayChallengeLogSnap = await _p_todayLog;
+                if (isDeferredAssetSnap(todayChallengeLogSnap) || !todayChallengeLogSnap) {
+                    scheduleAssetRetry(user.uid, 'challenge-today-log-timeout');
+                } else if (todayChallengeLogSnap.exists()) {
+                    todayChallengeLogData = todayChallengeLogSnap.data() || {};
+                }
+            } catch (challengeLogError) {
+                console.warn('[asset-display] challenge today log skipped:', challengeLogError?.message || challengeLogError);
+                scheduleAssetRetry(user.uid, 'challenge-today-log-error');
+            }
+
+            const challengeProjection = reconcileActiveChallengesWithDailyLog(
+                activeChallenges,
+                _todayStr,
+                todayChallengeLogData
+            );
+            activeChallenges = challengeProjection.activeChallenges;
+            if (challengeProjection.changed) {
+                requestAssetChallengeProgressSync(user.uid, _todayStr);
             }
 
             // 미니 → 위클리 → 마스터 순서로 정렬
@@ -8247,7 +8611,16 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             }
         } else {
             // 사용자 문서 응답이 늦거나 비어도 마지막 정상값을 유지한 채 재시도
+            // Keep the last good values while the user document is deferred, then retry.
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+            if (isDeferredAssetSnap(userSnap)) {
+                userDocPromise.then(lateSnap => {
+                    if (!lateSnap?.exists?.()) return;
+                    if (auth.currentUser?.uid !== user.uid) return;
+                    if (getVisibleTabName() !== 'assets') return;
+                    window.updateAssetDisplay(true).catch(() => {});
+                }).catch(() => {});
+            }
             scheduleAssetRetry(user.uid, 'user-doc-timeout');
         }
     } catch (error) {
@@ -15799,12 +16172,15 @@ function cleanupGalleryResources() {
     _galleryLoadingPromise = null;
     _galleryLoadingStartedAt = 0;
     _galleryLoadGeneration += 1;
+    clearGalleryRetry();
 }
 window.cleanupGalleryResources = cleanupGalleryResources;
 
 let _galleryLoadingPromise = null; // 중복 로드 방지 + 완료 대기용
 let _galleryLoadingStartedAt = 0;
 let _galleryLoadGeneration = 0;
+let _galleryRetryTimer = null;
+const _galleryRetryCounts = new Map();
 
 function isGalleryTabActive() {
     return !!document.getElementById('gallery')?.classList.contains('active');
@@ -15815,6 +16191,31 @@ function rerenderGalleryFeedIfVisible() {
     galleryDisplayCount = 0;
     sortedFilteredDirty = true;
     renderFeedOnly();
+}
+
+function clearGalleryRetry(uid = auth.currentUser?.uid || 'guest') {
+    if (_galleryRetryTimer) {
+        clearTimeout(_galleryRetryTimer);
+        _galleryRetryTimer = null;
+    }
+    if (uid) _galleryRetryCounts.delete(uid);
+}
+
+function scheduleGalleryRetry(uid = auth.currentUser?.uid || 'guest', reason = 'unknown') {
+    const retryKey = uid || 'guest';
+    const count = _galleryRetryCounts.get(retryKey) || 0;
+    if (count >= GALLERY_MAX_RETRY_ATTEMPTS) return;
+
+    if (_galleryRetryTimer) clearTimeout(_galleryRetryTimer);
+    const nextCount = count + 1;
+    _galleryRetryCounts.set(retryKey, nextCount);
+    const delay = GALLERY_RETRY_BASE_DELAY_MS * nextCount;
+    console.info(`[gallery] retry scheduled (${reason}) in ${delay}ms`);
+    _galleryRetryTimer = setTimeout(() => {
+        _galleryRetryTimer = null;
+        if (retryKey !== 'guest' && auth.currentUser?.uid !== retryKey) return;
+        loadGalleryData(true).catch(() => {});
+    }, delay);
 }
 
 async function loadGalleryData(forceReload = false) {
@@ -15845,6 +16246,20 @@ async function loadGalleryData(forceReload = false) {
             _galleryLoadingStartedAt = 0;
         }
     }
+}
+
+async function _fetchDailyLogViaRest(docId) {
+    const projectId = 'habitschool-8497b';
+    const encodedDocId = encodeURIComponent(String(docId || ''));
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/daily_logs/${encodedDocId}`;
+    const resp = await fetch(url);
+    if (resp.status === 404) return { exists: false, data: null };
+    if (!resp.ok) throw new Error(`daily log REST API ${resp.status}`);
+    const result = await resp.json();
+    return {
+        exists: true,
+        data: _convertFirestoreFields(result.fields || {})
+    };
 }
 
 // Firestore REST API로 갤러리 데이터 직접 조회 (비로그인 cold start 대응)
@@ -15880,6 +16295,20 @@ async function _fetchGalleryViaRest(cutoffStr, limitCount) {
         logsArray.push({ id: docId, data: _convertFirestoreFields(item.document.fields || {}) });
     }
     return logsArray;
+}
+
+async function _applyGalleryRestFallback(cutoffStr, audience = 'auth', limitCount = MAX_CACHE_SIZE) {
+    const logsArray = await withAsyncTimeout(
+        _fetchGalleryViaRest(cutoffStr, limitCount),
+        GALLERY_LOAD_TIMEOUT_MS,
+        'gallery_rest_fallback_timeout'
+    );
+    cachedGalleryLogs = logsArray;
+    galleryCacheAudience = audience;
+    galleryLastDoc = null;
+    galleryHasMore = false;
+    sortedFilteredDirty = true;
+    return true;
 }
 
 // Firestore REST 응답 필드를 JS 객체로 변환
@@ -15945,6 +16374,9 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
             }
 
             let retries = 0;
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+            const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
             // 비로그인: Firestore SDK가 cold start에서 서버 연결 실패 → REST API로 직접 조회
             if (!user) {
@@ -15967,6 +16399,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         break;
                     } catch (e) {
                         retries++;
+                        noteFirestoreConnectivityFailure(e, 'loadGalleryData');
                         console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
                         if (retries < 3) {
                             await new Promise(r => setTimeout(r, 200 * retries));
@@ -15995,6 +16428,9 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
 
                         let logsArray = [];
                         snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
+                        if (logsArray.length === 0 && snapshot.metadata?.fromCache && !hadCachedLogs) {
+                            throw new Error('gallery_firestore_cache_empty_offline');
+                        }
                         cachedGalleryLogs = logsArray;
                         galleryCacheAudience = 'auth';
                         galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
@@ -16003,12 +16439,28 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         break;
                     } catch (e) {
                         retries++;
+                        noteFirestoreConnectivityFailure(e, 'loadGalleryData');
                         console.warn(`갤러리 데이터 로드 재시도 (${retries}/3):`, e.message);
+                        if (!hadCachedLogs) {
+                            try {
+                                await _applyGalleryRestFallback(cutoffStr, 'auth');
+                                break;
+                            } catch (fallbackError) {
+                                console.warn('[gallery] REST fallback failed:', fallbackError?.message || fallbackError);
+                            }
+                        }
                         if (retries < 3) {
                             await new Promise(r => setTimeout(r, 200 * retries));
                         } else if (!hadCachedLogs) {
+                            try {
+                                await _applyGalleryRestFallback(cutoffStr, 'auth');
+                                break;
+                            } catch (fallbackError) {
+                                console.warn('[gallery] REST fallback failed:', fallbackError?.message || fallbackError);
+                            }
                             console.error('갤러리 데이터 로드 실패:', e);
                             container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData()">🔄 다시 시도</button></div>';
+                            scheduleGalleryRetry(user.uid, 'auth-gallery-load-failed');
                             return;
                         } else {
                             console.warn('Firestore 갤러리 새로고침 실패 - 기존 캐시 유지');
@@ -16052,6 +16504,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
     renderActivitySummary(myId);
     buildWeeklyBestSection().catch(() => {});
     setupInfiniteScroll();
+    clearGalleryRetry(user?.uid || 'guest');
     } catch (e) {
         console.error('갤러리 렌더링 중 오류:', e);
         if (container) {
@@ -18610,11 +19063,60 @@ window.respondChallenge = async function(accept) {
     }
 };
 
+function getChallengeNotificationSeenKeys(uid) {
+    return {
+        timestampKey: `challengeNotifSeen_${uid}`,
+        idsKey: `challengeNotifSeenIds_${uid}`
+    };
+}
+
+function readChallengeNotificationSeenState(uid) {
+    const { timestampKey, idsKey } = getChallengeNotificationSeenKeys(uid);
+    let lastSeenTs = 0;
+    let ids = [];
+    try {
+        lastSeenTs = parseInt(localStorage.getItem(timestampKey) || '0', 10) || 0;
+    } catch (_) {}
+    try {
+        const parsedIds = JSON.parse(localStorage.getItem(idsKey) || '[]');
+        ids = Array.isArray(parsedIds)
+            ? parsedIds.map(id => String(id || '').trim()).filter(Boolean)
+            : [];
+    } catch (_) {
+        ids = [];
+    }
+
+    const sessionSeen = _seenChallengeNotificationIdsByUid.get(uid);
+    if (sessionSeen) {
+        ids = Array.from(new Set([...ids, ...sessionSeen]));
+    }
+
+    return {
+        lastSeenTs,
+        ids: new Set(ids)
+    };
+}
+
+function writeChallengeNotificationSeenState(uid, { lastSeenTs = 0, ids = new Set() } = {}) {
+    const { timestampKey, idsKey } = getChallengeNotificationSeenKeys(uid);
+    const normalizedIds = Array.from(ids)
+        .map(id => String(id || '').trim())
+        .filter(Boolean)
+        .slice(-CHALLENGE_NOTIFICATION_SEEN_ID_LIMIT);
+    _seenChallengeNotificationIdsByUid.set(uid, new Set(normalizedIds));
+
+    try {
+        localStorage.setItem(timestampKey, String(Math.max(0, Number(lastSeenTs || 0) || 0)));
+        localStorage.setItem(idsKey, JSON.stringify(normalizedIds));
+    } catch (_) {}
+}
+
 /** 챌린지 결산 알림 확인 (대시보드 로드 시 호출) */
 async function checkChallengeNotifications(uid) {
     try {
-        const storageKey = `challengeNotifSeen_${uid}`;
-        const lastSeen = parseInt(localStorage.getItem(storageKey) || '0');
+        const seenState = readChallengeNotificationSeenState(uid);
+        const lastSeen = seenState.lastSeenTs;
+        const seenIds = seenState.ids;
 
         const snap = await getDocs(query(
             collection(db, 'notifications'),
@@ -18624,16 +19126,27 @@ async function checkChallengeNotifications(uid) {
             limit(5)
         ));
 
-        let hasNew = false;
         let newestSeenTs = lastSeen;
         let openedFriendRequestModal = false;
+        const newNotifications = [];
         snap.forEach(d => {
+            if (seenIds.has(d.id)) return;
             const data = d.data();
             const ts = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0;
-            if (ts <= lastSeen) return;
-            hasNew = true;
+            if (ts > 0 && ts <= lastSeen) return;
+            seenIds.add(d.id);
             newestSeenTs = Math.max(newestSeenTs, ts);
+            newNotifications.push({ id: d.id, data, ts });
+        });
 
+        if (newNotifications.length > 0) {
+            writeChallengeNotificationSeenState(uid, {
+                lastSeenTs: newestSeenTs || Date.now(),
+                ids: seenIds
+            });
+        }
+
+        newNotifications.forEach(({ data }) => {
             if (data.type === 'friend_request') {
                 showToast(`👥 ${data.fromUserName || '친구'}님이 친구 요청을 보냈어요.`);
                 if (!openedFriendRequestModal && data.friendshipId) {
@@ -18662,8 +19175,6 @@ async function checkChallengeNotifications(uid) {
                 showToast(outcomeMsg[data.outcome] || '📋 챌린지가 결산됐어요');
             }
         });
-
-        if (hasNew) localStorage.setItem(storageKey, String(newestSeenTs || Date.now()));
     } catch (e) {
         console.warn('[checkChallengeNotifications]', e.message);
     }

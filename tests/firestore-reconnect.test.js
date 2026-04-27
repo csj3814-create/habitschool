@@ -10,7 +10,9 @@ describe('Firestore reconnect backoff', () => {
 
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
         expect(firebaseConfigSource).toContain('initializeFirestore(app, {');
-        expect(firebaseConfigSource).toContain('experimentalAutoDetectLongPolling: true');
+        expect(firebaseConfigSource).toContain('experimentalForceLongPolling: true');
+        expect(firebaseConfigSource).toContain('experimentalLongPollingOptions:');
+        expect(firebaseConfigSource).toContain('timeoutSeconds: 25');
         expect(firebaseConfigSource).toContain("setLogLevel('silent');");
         expect(firebaseConfigSource).toContain('export function scheduleFirestoreReconnect');
         expect(firebaseConfigSource).toContain('export function noteFirestoreConnectivityFailure');

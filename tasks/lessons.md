@@ -118,6 +118,16 @@
 - Root cause: I let the earlier "popup opens a separate tab" symptom override the later stronger evidence that Samsung redirect restoration can fail completely in normal browser tabs.
 - Lesson: for Samsung Internet, keep normal browser tabs on popup login and reserve redirect only for installed/standalone contexts that truly require it. Also clear any stale redirect pending marker when the current browser context now resolves to popup, so an old failed redirect cannot keep the login shell stuck.
 
+### 200. Firestore reconnect delays must never be treated as empty user data
+- Symptom: when Firestore reported `client is offline` or optional asset checks timed out, the header point badge could fall back to `0`, HBT would not load, and daily-log photos/gallery media could disappear until several refreshes.
+- Root cause: several loaders used timeout fallbacks that looked like real empty snapshots. That allowed delayed Firestore reads to skip independent HBT loading, overwrite media caches with empty daily logs, or replace gallery results with an empty SDK cache.
+- Lesson: distinguish deferred connectivity from authoritative empty data. Keep the last good local snapshot visible, start non-Firestore sources such as onchain/REST independently, and only clear UI/cache when a real server result proves there is no data.
+
+### 201. User-facing notification toasts need per-document consumption, not only a timestamp checkpoint
+- Symptom: the same `공감케어님과 연결됐어요.` friend connection toast could appear again on each login, making it look like the friend request was being re-accepted.
+- Root cause: dashboard notification polling treated `friend_connected` as new based only on a localStorage timestamp checkpoint. If that checkpoint was missing, stale, or read concurrently before being written, the same notification document was toasted again.
+- Lesson: for user-facing notifications, persist consumed notification document IDs and keep an in-memory seen set for the current session. Mark notifications consumed before showing toasts so repeated renders cannot replay the same event.
+
 ---
 ## 2026-04-16 (Admin Email Audit Visibility)
 
@@ -1471,3 +1481,4 @@
 - 2026-04-27: PC 2열 쿠폰 카드처럼 폭이 좁은 반복 카드에는 `교환 포인트`, `쿠폰 금액` 라벨을 값마다 다시 쓰지 않는다. 라벨은 접근성용 `aria-label`에 남기고 시각 UI는 `2,000P · 2,000원`처럼 짧게 표시해야 겹침을 막을 수 있다.
 - 2026-04-27: FCM 푸시를 `/sw.js`로 명시 등록하더라도 Firebase Messaging 기본 경로인 `/firebase-messaging-sw.js` 404가 사용자 브라우저나 오래된 캐시에서 다시 보일 수 있다. 기본 경로 호환 wrapper를 배포하고 no-cache 헤더와 테스트에 포함해 DevTools script 404를 예방한다.
 - 2026-04-27: 영상 업로드 실패를 사진 업로드 기준의 전체 시간 제한으로 판단하지 않는다. Firebase Storage resumable upload는 모바일 업링크에서 오래 걸릴 수 있으므로, 영상은 파일 크기 기반 hard timeout과 progress 기반 idle timeout을 분리하고, `{ url: null }` 결과를 완료 UI로 표시하지 않게 테스트로 막는다.
+- 2026-04-27: 선택적 Firestore 쿼리에 timeout을 걸 때는 timeout 결과를 `0` 데이터처럼 렌더하지 않는다. 특히 자산 미니차트, 오늘 획득량, 채굴 구간 진행도처럼 숫자가 중요한 UI는 마지막 정상값을 유지하고 독립 retry/late refresh가 실제 응답으로 다시 그리게 해야 한다.

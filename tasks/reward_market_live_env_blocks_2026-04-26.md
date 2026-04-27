@@ -1,0 +1,67 @@
+# Reward Market Live Env Blocks (2026-04-26)
+
+## Where to append
+- Staging: `functions/.env.habitschool-staging`
+- Production: `functions/.env.habitschool-8497b`
+
+## Recommended launch block
+- This block assumes:
+  - point settlement
+  - app-vault coupon delivery
+  - two live coffee items at `2000P`
+  - conservative initial limits for launch monitoring
+
+```env
+REWARD_MARKET_MODE=live
+REWARD_MARKET_SETTLEMENT_ASSET=points
+REWARD_MARKET_PRICING_MODE=phase1_fixed_internal
+REWARD_MARKET_DELIVERY_MODE=app_vault
+REWARD_MARKET_FALLBACK_POLICY=manual_resend
+REWARD_MARKET_MIN_REDEEM_POINTS=500
+REWARD_MARKET_DAILY_LIMIT_POINTS=2000
+REWARD_MARKET_WEEKLY_LIMIT_POINTS=5000
+REWARD_MARKET_MONTHLY_LIMIT_POINTS=10000
+REWARD_MARKET_MIN_BIZMONEY_KRW=30000
+REWARD_MARKET_PHASE1_ENDS_AT=2026-05-23T00:00:00+09:00
+
+GIFTISHOW_API_BASE_URL=https://bizapi.giftishow.com
+GIFTISHOW_CUSTOM_AUTH_CODE=REPLACE_WITH_COMMERCIAL_AUTH_CODE
+GIFTISHOW_CUSTOM_AUTH_TOKEN=REPLACE_WITH_COMMERCIAL_AUTH_TOKEN
+GIFTISHOW_CALLBACK_NO=01025899695
+GIFTISHOW_USER_ID=csj38141@gmail.com
+GIFTISHOW_TEMPLATE_ID=202006010057417
+GIFTISHOW_BANNER_ID=202006010058067
+GIFTISHOW_DEV_YN=N
+GIFTISHOW_SEND_TITLE=Habit School Coupon
+GIFTISHOW_SEND_MESSAGE=Your coupon is ready in the Habit School app vault.
+GIFTISHOW_GOODS_PATH=/bizApi/goods
+GIFTISHOW_GOODS_METHOD=POST
+GIFTISHOW_ORDER_PATH=/bizApi/send
+GIFTISHOW_ORDER_METHOD=POST
+GIFTISHOW_COUPON_STATUS_PATH=/bizApi/coupons
+GIFTISHOW_COUPON_STATUS_METHOD=POST
+GIFTISHOW_RESEND_PATH=/bizApi/resend
+GIFTISHOW_RESEND_METHOD=POST
+GIFTISHOW_BIZMONEY_PATH=/bizApi/bizmoney
+GIFTISHOW_BIZMONEY_METHOD=POST
+GIFTISHOW_CATALOG_START=1
+GIFTISHOW_CATALOG_SIZE=50
+GIFTISHOW_CATALOG_LIVE=true
+GIFTISHOW_API_TIMEOUT_MS=15000
+```
+
+## If you want the wider legacy limits instead
+
+```env
+REWARD_MARKET_DAILY_LIMIT_POINTS=20000
+REWARD_MARKET_WEEKLY_LIMIT_POINTS=100000
+REWARD_MARKET_MONTHLY_LIMIT_POINTS=300000
+```
+
+## Notes
+- The only values that should change after commercial-key approval are:
+  - `GIFTISHOW_CUSTOM_AUTH_CODE`
+  - `GIFTISHOW_CUSTOM_AUTH_TOKEN`
+- If Giftishow gives different live paths in the approval mail, follow their final live paths over this block.
+- The current approved launch catalog is tracked in:
+  - `tasks/reward_catalog_seed_2026-04-26.json`

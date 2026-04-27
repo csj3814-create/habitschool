@@ -7,8 +7,11 @@ describe('gallery loading hardening', () => {
 
         expect(appSource).toContain('const GALLERY_LOAD_TIMEOUT_MS = 6000;');
         expect(appSource).toContain('const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;');
+        expect(appSource).toContain('const GALLERY_RETRY_BASE_DELAY_MS = 2500;');
+        expect(appSource).toContain('const GALLERY_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
+        expect(appSource).toContain('function scheduleGalleryRetry');
         expect(appSource).toContain("console.warn('[loadGalleryData] stale gallery load discarded');");
         expect(appSource).toContain('function rerenderGalleryFeedIfVisible() {');
         expect(appSource).toContain('loadMyFriendships()');
@@ -19,6 +22,11 @@ describe('gallery loading hardening', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain("_fetchGalleryViaRest(cutoffStr, MAX_CACHE_SIZE)");
+        expect(appSource).toContain("await _applyGalleryRestFallback(cutoffStr, 'auth');");
+        expect(appSource).toMatch(/catch \(e\) \{[\s\S]*?if \(!hadCachedLogs\) \{[\s\S]*?_applyGalleryRestFallback\(cutoffStr, 'auth'\);[\s\S]*?if \(retries < 3\)/);
+        expect(appSource).toContain("scheduleGalleryRetry(user.uid, 'auth-gallery-load-failed');");
+        expect(appSource).toContain('gallery_firestore_cache_empty_offline');
+        expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'loadGalleryData');");
         expect(appSource).toContain('getDocs(q)');
         expect(appSource).toContain('갤러리 REST 조회 시간이 초과되었어요.');
         expect(appSource).toContain('갤러리 Firestore 조회 시간이 초과되었어요.');

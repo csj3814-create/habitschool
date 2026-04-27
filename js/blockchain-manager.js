@@ -1588,7 +1588,6 @@ export async function updateChallengeProgress() {
 
         // 트랜잭션 완료 후 토스트 표시 & 정산 로그 저장
         toastMessages.forEach(msg => showToast(msg));
-        toastMessages.forEach(msg => showToast(msg));
         for (const log of settlementLogs) {
             try {
                 await addDoc(collection(db, "blockchain_transactions"), log);

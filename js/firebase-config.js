@@ -72,7 +72,10 @@ const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CON
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true
+    experimentalForceLongPolling: true,
+    experimentalLongPollingOptions: {
+        timeoutSeconds: 25
+    }
 });
 const storage = getStorage(app);
 const functions = getFunctions(app, FUNCTIONS_REGION);

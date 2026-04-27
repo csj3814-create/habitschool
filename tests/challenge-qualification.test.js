@@ -10,6 +10,7 @@ import {
     getDefaultChallengeQualificationPolicy,
     normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy,
+    reconcileActiveChallengesWithDailyLog,
     reconcileChallengeCompletionWithDailyLogs
 } from '../js/blockchain-config.js';
 
@@ -174,5 +175,29 @@ describe('challenge qualification policy', () => {
 
         expect(reconciled.completedDates).toEqual(['2026-04-20']);
         expect(reconciled.completedDays).toBe(1);
+    });
+
+    it('projects active weekly progress from today daily log for asset display', () => {
+        const challenge = {
+            challengeId: 'challenge-7d',
+            tier: 'weekly',
+            startDate: '2026-04-27',
+            endDate: '2026-05-03',
+            totalDays: 7,
+            completedDays: 0,
+            completedDates: [],
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('weekly'),
+            status: 'ongoing'
+        };
+
+        const result = reconcileActiveChallengesWithDailyLog({
+            weekly: challenge
+        }, '2026-04-27', {
+            awardedPoints: { dietPoints: 30, exercisePoints: 30, mindPoints: 10 }
+        });
+
+        expect(result.changed).toBe(true);
+        expect(result.activeChallenges.weekly.completedDates).toEqual(['2026-04-27']);
+        expect(result.activeChallenges.weekly.completedDays).toBe(1);
     });
 });

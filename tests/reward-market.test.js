@@ -188,9 +188,44 @@ describe('reward market pricing helpers', () => {
             'GIFTISHOW_CUSTOM_AUTH_TOKEN',
             'GIFTISHOW_CALLBACK_NO',
             'GIFTISHOW_USER_ID',
+            'GIFTISHOW_TEMPLATE_ID_OR_CARD_ID',
+            'GIFTISHOW_BANNER_ID',
         ]));
         expect(config.orderBodyTemplate.api_code).toBe('0204');
         expect(config.bizmoneyBodyTemplate.api_code).toBe('0301');
+    });
+
+    it('requires Giftishow card/template and banner ids before live issuance is ready', () => {
+        const missingIds = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://biz.example.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'test-auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'test-auth-token',
+            GIFTISHOW_CALLBACK_NO: '01012345678',
+            GIFTISHOW_USER_ID: 'test-user',
+        });
+
+        expect(missingIds.providerReady).toBe(false);
+        expect(missingIds.missingProviderConfig).toEqual(expect.arrayContaining([
+            'GIFTISHOW_TEMPLATE_ID_OR_CARD_ID',
+            'GIFTISHOW_BANNER_ID',
+        ]));
+
+        const ready = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://biz.example.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'test-auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'test-auth-token',
+            GIFTISHOW_CALLBACK_NO: '01012345678',
+            GIFTISHOW_USER_ID: 'test-user',
+            GIFTISHOW_CARD_ID: 'test-card-id',
+            GIFTISHOW_BANNER_ID: 'test-banner-id',
+        });
+
+        expect(ready.providerReady).toBe(true);
+        expect(ready.missingProviderConfig).toEqual([]);
+        expect(ready.templateId).toBe('test-card-id');
+        expect(ready.bannerId).toBe('test-banner-id');
     });
 
     it('resolves reward recipient phone from request, user profile, and auth fallback', () => {

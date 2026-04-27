@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>해빛스쿨 Giftishow 상용 Key 제출 화면</title>
+    <style>
+        :root {
+            --bg: #f6f2e9;
+            --paper: #fffdfa;
+            --line: #ead8bf;
+            --line-strong: #d8ba90;
+            --ink: #2f2114;
+            --muted: #796651;
+            --accent: #ff8a00;
+            --accent-soft: #fff1de;
+            --green: #2f6a3f;
+            --green-soft: #eef7f0;
+            --blue-soft: #edf5ff;
+            --blue: #295b90;
+            --shadow: 0 22px 48px rgba(79, 57, 24, 0.14);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 200, 116, 0.22), transparent 30%),
+                linear-gradient(180deg, #fffaf3 0%, #f4eee4 100%);
+            color: var(--ink);
+        }
+
+        .page {
+            width: 1600px;
+            margin: 0 auto;
+            padding: 48px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 24px;
+            align-items: start;
+            margin-bottom: 28px;
+        }
+
+        .hero-card,
+        .hero-side {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(234, 216, 191, 0.95);
+            border-radius: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .hero-card {
+            padding: 28px 30px;
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #8a4e05;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .hero-card h1 {
+            margin: 16px 0 10px;
+            font-size: 38px;
+            line-height: 1.12;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .hero-side {
+            padding: 22px;
+        }
+
+        .hero-side h2 {
+            margin: 0 0 14px;
+            font-size: 18px;
+        }
+
+        .hero-side ul {
+            margin: 0;
+            padding-left: 18px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.75;
+        }
+
+        .section {
+            margin-top: 24px;
+            padding: 28px;
+            border-radius: 32px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(234, 216, 191, 0.96);
+            box-shadow: var(--shadow);
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            align-items: flex-start;
+            margin-bottom: 22px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-size: 29px;
+            letter-spacing: -0.03em;
+        }
+
+        .section-head p {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.65;
+        }
+
+        .badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .badge-accent {
+            background: linear-gradient(135deg, #ffbc5f 0%, #ff8a00 100%);
+            color: #5c3000;
+        }
+
+        .badge-soft {
+            background: var(--accent-soft);
+            border-color: #f0d5af;
+            color: #81531f;
+        }
+
+        .badge-green {
+            background: var(--green-soft);
+            border-color: #c8e2cf;
+            color: var(--green);
+        }
+
+        .device-row {
+            display: grid;
+            grid-template-columns: 430px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        .phone-frame {
+            border-radius: 40px;
+            padding: 18px;
+            background: linear-gradient(180deg, #35312b 0%, #1e1a16 100%);
+            box-shadow: 0 24px 52px rgba(41, 31, 16, 0.24);
+        }
+
+        .phone-screen {
+            min-height: 900px;
+            border-radius: 30px;
+            overflow: hidden;
+            padding: 18px 16px 22px;
+            background:
+                radial-gradient(circle at top right, rgba(255, 179, 71, 0.2), transparent 28%),
+                linear-gradient(180deg, #fffefb 0%, #fff8ef 100%);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            color: #786652;
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .app-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .app-bar small {
+            display: block;
+            color: #9d6a27;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .app-bar strong {
+            display: block;
+            font-size: 26px;
+            letter-spacing: -0.04em;
+        }
+
+        .pill-btn {
+            border: 1px solid #f0d7b4;
+            background: #ffffff;
+            color: #7b5a31;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .summary-card {
+            padding: 14px;
+            border-radius: 18px;
+            background: var(--paper);
+            border: 1px solid #efddc5;
+        }
+
+        .summary-card span {
+            display: block;
+            color: #8f724c;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .summary-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+            color: #3b2714;
+            letter-spacing: -0.03em;
+        }
+
+        .summary-card em {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: #87725a;
+            font-style: normal;
+        }
+
+        .hint {
+            margin-bottom: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: var(--green-soft);
+            border: 1px solid #cae4d2;
+            color: var(--green);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .reward-card {
+            padding: 16px;
+            border-radius: 22px;
+            border: 1px solid #f0dcc3;
+            background: linear-gradient(180deg, #fffdfa 0%, #fff7ed 100%);
+            box-shadow: 0 8px 20px rgba(101, 76, 36, 0.05);
+        }
+
+        .reward-card + .reward-card {
+            margin-top: 14px;
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-head h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #5a3514;
+        }
+
+        .card-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #fff2df;
+            border: 1px solid #f2d4ac;
+            color: #7a5427;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .chip.accent {
+            background: linear-gradient(135deg, #ffb64b 0%, #ff8a00 100%);
+            border-color: transparent;
+            color: #5f3100;
+        }
+
+        .phone-box {
+            padding: 14px;
+            border-radius: 16px;
+            background: #fffdf8;
+            border: 1px solid #f0ddc4;
+            margin-bottom: 14px;
+        }
+
+        .phone-box strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #5d3a13;
+        }
+
+        .phone-box p {
+            margin: 0 0 10px;
+            color: #6f5638;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .phone-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .phone-field,
+        .save-btn {
+            border-radius: 12px;
+            padding: 11px 12px;
+            font-size: 13px;
+        }
+
+        .phone-field {
+            border: 1px solid #dfc39d;
+            background: #ffffff;
+            color: #4a3118;
+        }
+
+        .save-btn {
+            border: none;
+            background: linear-gradient(135deg, #ffb347 0%, #ff8a00 100%);
+            color: #4b2b07;
+            font-weight: 800;
+        }
+
+        .phone-status {
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .reward-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .reward-item,
+        .coupon-item {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid #f0dec6;
+            background: #ffffff;
+        }
+
+        .topline,
+        .footerline {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 12px;
+            font-weight: 800;
+            color: #9a6b28;
+        }
+
+        .stock,
+        .meta {
+            color: #7e684f;
+            font-size: 12px;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #3d2a15;
+        }
+
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .value-main {
+            font-size: 22px;
+            font-weight: 800;
+            color: #e06700;
+        }
+
+        .guide {
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: #fff8ef;
+            color: #5e4a37;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .cta {
+            width: 100%;
+            border: none;
+            border-radius: 12px;
+            padding: 11px 14px;
+            background: linear-gradient(135deg, #ff9a2f 0%, #ff7a00 100%);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 800;
+            box-shadow: 0 8px 18px rgba(255, 122, 0, 0.2);
+        }
+
+        .coupon-visual {
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid #efd5b0;
+            background: linear-gradient(180deg, #fffaf1 0%, #fff2dd 100%);
+        }
+
+        .barcode {
+            height: 80px;
+            margin-top: 12px;
+            border-radius: 12px;
+            border: 1px solid #efd5af;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.76), rgba(255,255,255,0.92)),
+                repeating-linear-gradient(90deg, #111 0 3px, #fff 3px 6px, #111 6px 8px, #fff 8px 12px);
+        }
+
+        .pin-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid #f0dabb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pin-box strong {
+            font-size: 17px;
+            letter-spacing: 0.08em;
+        }
+
+        .link {
+            color: var(--blue);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .copy h3 {
+            margin: 0 0 14px;
+            font-size: 24px;
+        }
+
+        .copy ol {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .note-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .note {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid #edd9bf;
+            background: #fffaf3;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .note p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .admin-shell {
+            border-radius: 28px;
+            padding: 24px;
+            background: linear-gradient(180deg, #f5f0ff 0%, #f5f7fb 100%);
+            border: 1px solid #e0d5f1;
+        }
+
+        .admin-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 18px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: #ffffff;
+        }
+
+        .admin-top h3 {
+            margin: 0;
+            font-size: 24px;
+            color: #5e2ca5;
+        }
+
+        .admin-top p {
+            margin: 6px 0 0;
+            color: #756584;
+            font-size: 13px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .admin-actions button,
+        .tab button,
+        .ops-btn {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .admin-actions button,
+        .tab button {
+            background: #ece4f9;
+            color: #5e2ca5;
+        }
+
+        .tab {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 18px;
+            background: #ffffff;
+        }
+
+        .tab .active {
+            background: #5e2ca5;
+            color: #ffffff;
+        }
+
+        .admin-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .admin-card {
+            padding: 18px;
+            border-radius: 18px;
+            background: #ffffff;
+            text-align: center;
+            border-bottom: 4px solid #5e2ca5;
+        }
+
+        .admin-card.green {
+            border-color: #4caf50;
+        }
+
+        .admin-card.warn {
+            border-color: #ef6c00;
+        }
+
+        .admin-card span {
+            display: block;
+            color: #8a7a99;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .admin-card strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+            letter-spacing: -0.03em;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr;
+            gap: 16px;
+        }
+
+        .admin-box {
+            padding: 18px;
+            border-radius: 20px;
+            background: #ffffff;
+        }
+
+        .admin-box h4 {
+            margin: 0 0 14px;
+            font-size: 18px;
+            color: #473166;
+        }
+
+        .kv {
+            display: grid;
+            gap: 10px;
+        }
+
+        .kv div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed #e5d9f2;
+            color: #6f5f7d;
+            font-size: 13px;
+        }
+
+        .kv strong {
+            color: #2f2114;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            padding: 11px 10px;
+            border-bottom: 1px solid #eee6f7;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            color: #735f89;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .ops-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .ops-pill.ok {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+
+        .ops-pill.warn {
+            background: #fff0e2;
+            color: #b25a00;
+        }
+
+        .ops-pill.pending {
+            background: var(--blue-soft);
+            color: var(--blue);
+        }
+
+        .ops-btn {
+            background: #efe7fb;
+            color: #5e2ca5;
+        }
+
+        .footer-note {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: #fff7ea;
+            border: 1px solid #f0d9b8;
+            color: #7a5f3d;
+            font-size: 13px;
+            line-height: 1.65;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="hero-card">
+                <span class="hero-kicker">Giftishow 상용 Key 승인 제출용</span>
+                <h1>해빛스쿨 포인트 보상몰<br>실서비스 적용 화면 자료</h1>
+                <p>
+                    해빛스쿨(Habit School)은 건강 습관 형성을 돕는 모바일 서비스입니다.
+                    사용자는 식단, 운동, 수면, 마음건강 활동을 수행해 앱 내 포인트를 적립하고,
+                    적립 포인트를 해빛 마켓에서 모바일 쿠폰으로 교환할 수 있습니다.
+                </p>
+                <p style="margin-top:12px;">
+                    현재 상용 운영 범위의 쿠폰 교환은 <strong>오프체인 포인트 차감 기반</strong>으로 설계되어 있으며,
+                    쿠폰은 기본적으로 문자 재판매가 아니라 <strong>앱 내 쿠폰 보관함</strong>에서 확인하는 구조입니다.
+                </p>
+            </div>
+            <aside class="hero-side">
+                <h2>핵심 운영 원칙</h2>
+                <ul>
+                    <li>건강 활동 보상 포인트를 쿠폰으로 교환하는 리워드 서비스입니다.</li>
+                    <li>현금 판매나 PG 재판매가 아니라 앱 내 포인트 사용 흐름으로 운영합니다.</li>
+                    <li>Giftishow API는 쿠폰 발급과 상태 조회, 재확인 용도로 사용합니다.</li>
+                    <li>쿠폰은 앱 보관함에서 이미지 또는 PIN으로 확인합니다.</li>
+                    <li>운영자는 별도 관제탑에서 발급 상태와 비즈머니를 관리합니다.</li>
+                </ul>
+            </aside>
+        </section>
+
+        <section class="section" id="screen-asset">
+            <div class="section-head">
+                <div>
+                    <h2>1. 사용자 자산 탭 - 해빛 마켓</h2>
+                    <p>
+                        사용자는 앱 내 포인트 잔액과 자산 현황을 확인하고, 해빛 마켓에서 건강 지향 리워드를 선택합니다.
+                        현재 상용 운영 계획은 <strong>2,000P 이상부터 쿠폰 교환</strong>이며, 실발급 시 수령 연락처를 저장한 뒤 API 발급을 진행합니다.
+                    </p>
+                </div>
+                <div class="badges">
+                    <span class="badge badge-accent">포인트 교환</span>
+                    <span class="badge badge-soft">앱 보관함 수령</span>
+                    <span class="badge badge-green">재판매 아님</span>
+                </div>
+            </div>
+
+            <div class="device-row">
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="status-bar">
+                            <span>9:42</span>
+                            <span>5G · 92%</span>
+                        </div>
+                        <div class="app-bar">
+                            <div>
+                                <small>자산 탭</small>
+                                <strong>해빛 마켓</strong>
+                            </div>
+                            <button class="pill-btn">교환 내역</button>
+                        </div>
+
+                        <div class="summary-grid">
+                            <div class="summary-card">
+                                <span>보유 포인트</span>
+                                <strong>12,400P</strong>
+                                <em>오늘 활동 보상 포함</em>
+                            </div>
+                            <div class="summary-card">
+                                <span>보유 HBT</span>
+                                <strong>8,000 HBT</strong>
+                                <em>현재 쿠폰 교환에는 미사용</em>
+                            </div>
+                        </div>
+
+                        <div class="hint">
+                            쿠폰 교환은 해빛스쿨 앱 안에서 적립한 포인트를 사용합니다.
+                            HBT는 자산 탭의 별도 시스템으로 유지되며, 현재 쿠폰 교환 흐름과는 분리되어 있습니다.
+                        </div>
+
+                        <div class="reward-card">
+                            <div class="card-head">
+                                <div>
+                                    <h3>해빛 마켓</h3>
+                                    <p>2,000P 이상부터 건강 지향 리워드를 교환할 수 있어요.</p>
+                                </div>
+                            </div>
+
+                            <div class="chip-row">
+                                <div class="chip accent">실발급</div>
+                                <div class="chip">포인트 정액가</div>
+                                <div class="chip">최소 2,000P</div>
+                                <div class="chip">앱 보관함 노출</div>
+                                <div class="chip">관제탑 재확인 가능</div>
+                            </div>
+
+                            <div class="phone-box">
+                                <strong>쿠폰 수령 연락처</strong>
+                                <p>기프티쇼 규격상 수령 연락처를 저장하지만, 쿠폰은 기본적으로 문자 대신 앱 보관함에 노출됩니다.</p>
+                                <div class="phone-form">
+                                    <div class="phone-field">01025899695</div>
+                                    <button class="save-btn">저장</button>
+                                </div>
+                                <div class="phone-status">저장된 연락처 010-****-9695</div>
+                            </div>
+
+                            <div class="reward-grid">
+                                <div class="reward-item">
+                                    <div class="topline">
+                                        <span class="brand">메가MGC커피</span>
+                                        <span class="stock">교환 가능</span>
+                                    </div>
+                                    <div class="title">(ICE) 아메리카노 모바일쿠폰</div>
+                                    <div class="value-row">
+                                        <div class="value-main">2,000P</div>
+                                        <div class="meta">정가 2,000원</div>
+                                    </div>
+                                    <div class="guide">첫 실운영 상품입니다. 가벼운 보상으로 실제 교환 흐름을 검증하기 좋은 구성입니다.</div>
+                                    <button class="cta">2,000P로 교환</button>
+                                </div>
+
+                                <div class="reward-item">
+                                    <div class="topline">
+                                        <span class="brand">배달의민족</span>
+                                        <span class="stock">운영 준비 중</span>
+                                    </div>
+                                    <div class="title">2,000원권 상품권</div>
+                                    <div class="value-row">
+                                        <div class="value-main">2,000P</div>
+                                        <div class="meta">건강 메뉴 탐색 유도</div>
+                                    </div>
+                                    <div class="guide">“배민 상품권으로 샐러드 맛집을 검색해 보세요!” 같은 건강 큐레이션 문구를 함께 제공합니다.</div>
+                                    <button class="cta">운영 준비 중</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="copy">
+                    <h3>이 화면의 승인 포인트</h3>
+                    <ol>
+                        <li>사용자는 먼저 포인트 잔액을 확인하고, 해빛 마켓에서 교환 상품을 선택합니다.</li>
+                        <li>쿠폰 교환 자산은 포인트로 명시되어 있으며, 현금 판매나 결제 재판매 흐름이 아닙니다.</li>
+                        <li>수령 연락처는 API 발급 요건 충족을 위해 저장하지만, 실제 사용자 경험은 앱 보관함 중심입니다.</li>
+                        <li>첫 운영 상품을 소액 상품으로 시작해 발급 안정성과 운영 프로세스를 점검할 계획입니다.</li>
+                    </ol>
+
+                    <div class="note-grid">
+                        <div class="note">
+                            <strong>서비스 목적</strong>
+                            <p>건강 행동을 지속하게 만드는 리워드 경험 제공</p>
+                        </div>
+                        <div class="note">
+                            <strong>교환 자산</strong>
+                            <p>앱 내 포인트 차감 후 쿠폰 발급</p>
+                        </div>
+                        <div class="note">
+                            <strong>수령 방식</strong>
+                            <p>앱 보관함 이미지/PIN 확인, 문자 기본 발송 없음</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="screen-coupon">
+            <div class="section-head">
+                <div>
+                    <h2>2. 사용자 쿠폰 보관함 - 앱 내 직접 확인</h2>
+                    <p>
+                        발급된 쿠폰은 앱 내 쿠폰 보관함에서 직접 확인합니다.
+                        Giftishow 응답의 쿠폰 이미지 또는 PIN을 저장해 보여주며, 유효기간과 발급 상태도 함께 제공합니다.
+                    </p>
+                </div>
+                <div class="badges">
+                    <span class="badge badge-accent">My Coupons</span>
+                    <span class="badge badge-soft">coupon image / PIN</span>
+                    <span class="badge badge-green">앱 내 수령</span>
+                </div>
+            </div>
+
+            <div class="device-row">
+                <div class="phone-frame">
+                    <div class="phone-screen">
+                        <div class="status-bar">
+                            <span>9:42</span>
+                            <span>5G · 92%</span>
+                        </div>
+                        <div class="app-bar">
+                            <div>
+                                <small>자산 탭</small>
+                                <strong>쿠폰 보관함</strong>
+                            </div>
+                            <button class="pill-btn">발급 이력</button>
+                        </div>
+
+                        <div class="reward-card">
+                            <div class="card-head">
+                                <div>
+                                    <h3>My Coupons</h3>
+                                    <p>발급된 바코드와 PIN, 유효기간을 앱 보관함에서 바로 확인하세요.</p>
+                                </div>
+                            </div>
+
+                            <div class="coupon-item">
+                                <div class="topline">
+                                    <span class="brand">메가MGC커피</span>
+                                    <span class="stock">발급 완료</span>
+                                </div>
+                                <div class="title">(ICE) 아메리카노 모바일쿠폰</div>
+                                <div class="meta">차감 포인트 2,000P · 유효기간 2026.05.24</div>
+
+                                <div class="coupon-visual">
+                                    <div style="font-size:14px;font-weight:800;color:#5a3513;">공급사 이미지 또는 앱 렌더링 카드</div>
+                                    <div style="margin-top:6px;color:#7b6549;font-size:12px;line-height:1.5;">couponImgUrl이 있으면 이미지를 우선 표시하고, 없으면 PIN과 상품 정보를 텍스트로 제공합니다.</div>
+                                    <div class="barcode"></div>
+                                    <div class="pin-box">
+                                        <div>
+                                            <div style="font-size:12px;color:#86694a;font-weight:800;">PIN 번호</div>
+                                            <strong>9003 4363 0367</strong>
+                                        </div>
+                                        <span class="link">보관함 수령</span>
+                                    </div>
+                                </div>
+
+                                <div class="guide">
+                                    사용자는 앱 안에서 바로 쿠폰을 사용할 수 있고, 운영 장애 시에는 관제탑에서 재확인 후 상태를 갱신합니다.
+                                </div>
+
+                                <div class="footerline">
+                                    <span class="meta">providerOrderId · tr_id 저장</span>
+                                    <span class="link">거래 추적 가능</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="copy">
+                    <h3>이 화면의 승인 포인트</h3>
+                    <ol>
+                        <li>쿠폰은 문자 기본 발송이 아니라 앱 내 보관함에서 직접 수령하도록 설계했습니다.</li>
+                        <li>Giftishow 응답 데이터 중 이미지 또는 PIN이 있으면 사용자에게 즉시 노출할 수 있습니다.</li>
+                        <li>유효기간, 발급 상태, 거래 추적 정보가 함께 저장되어 고객 문의 대응이 쉽습니다.</li>
+                        <li>쿠폰 정보는 해빛스쿨 서비스 경험 안에서 소비되며, 이벤트성 대량 재판매 구조가 아닙니다.</li>
+                    </ol>
+
+                    <div class="footer-note">
+                        현재 제출 목적은 “해빛스쿨 실서비스에 적용된 쿠폰 수령 UI와 운영 구조”를 설명하는 것입니다.
+                        사용자는 건강 활동으로 적립한 포인트를 리워드 쿠폰으로 교환하고, 쿠폰은 앱 보관함에서 직접 확인합니다.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="screen-admin">
+            <div class="section-head">
+                <div>
+                    <h2>3. 관리자 관제탑 - 보상 마켓 운영 관리</h2>
+                    <p>
+                        운영자는 별도 관제탑에서 발급 상태, 비즈머니 잔액, 수동 확인 대상, 최근 발급 이력을 관리합니다.
+                        사용자 화면과 관리자 운영 기능을 분리해 안정적인 상용 운영을 지원합니다.
+                    </p>
+                </div>
+                <div class="badges">
+                    <span class="badge badge-accent">admin.html</span>
+                    <span class="badge badge-soft">발급 상태 관제</span>
+                    <span class="badge badge-green">수동 재확인 지원</span>
+                </div>
+            </div>
+
+            <div class="admin-shell">
+                <div class="admin-top">
+                    <div>
+                        <h3>해빛스쿨 관제탑</h3>
+                        <p>보상 마켓 운영 상태와 발급 이력을 한 화면에서 관리합니다.</p>
+                    </div>
+                    <div class="admin-actions">
+                        <button>운영 상태 갱신</button>
+                        <button>비즈머니 확인</button>
+                        <button>관리자 로그</button>
+                    </div>
+                </div>
+
+                <div class="tab">
+                    <button>대시보드</button>
+                    <button>회원 관리</button>
+                    <button>자산 &amp; HBT</button>
+                    <button class="active">보상 마켓</button>
+                    <button>신고 관리</button>
+                </div>
+
+                <div class="admin-cards">
+                    <div class="admin-card">
+                        <span>교환 정책</span>
+                        <strong>포인트 정액가</strong>
+                    </div>
+                    <div class="admin-card green">
+                        <span>비즈머니 잔액</span>
+                        <strong>218,000원</strong>
+                    </div>
+                    <div class="admin-card">
+                        <span>오늘 차감 포인트</span>
+                        <strong>6,000P</strong>
+                    </div>
+                    <div class="admin-card warn">
+                        <span>수동 확인 필요</span>
+                        <strong>1건</strong>
+                    </div>
+                </div>
+
+                <div class="admin-grid">
+                    <div class="admin-box">
+                        <h4>운영 설정 요약</h4>
+                        <div class="kv">
+                            <div><span>교환 정책</span><strong>1P = 1원</strong></div>
+                            <div><span>쿠폰 전달</span><strong>앱 보관함 우선</strong></div>
+                            <div><span>수동 대응</span><strong>관제탑 재확인</strong></div>
+                            <div><span>비즈머니 최소 기준</span><strong>30,000원</strong></div>
+                            <div><span>발급 상태</span><strong>실발급 운영 가능</strong></div>
+                            <div><span>HBT 시스템</span><strong>별도 자산 흐름 유지</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="admin-box">
+                        <h4>최근 쿠폰 발급 관제</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>주문</th>
+                                    <th>상품</th>
+                                    <th>상태</th>
+                                    <th>차감</th>
+                                    <th>운영</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>reward_20260424_093422</td>
+                                    <td>MGC 아메리카노</td>
+                                    <td><span class="ops-pill ok">issued</span></td>
+                                    <td>2,000P</td>
+                                    <td><button class="ops-btn">상세 보기</button></td>
+                                </tr>
+                                <tr>
+                                    <td>reward_20260424_101105</td>
+                                    <td>MGC 아메리카노</td>
+                                    <td><span class="ops-pill warn">failed_manual_review</span></td>
+                                    <td>2,000P</td>
+                                    <td><button class="ops-btn">재확인</button></td>
+                                </tr>
+                                <tr>
+                                    <td>reward_20260424_113018</td>
+                                    <td>배민 2,000원권</td>
+                                    <td><span class="ops-pill pending">pending_issue</span></td>
+                                    <td>2,000P</td>
+                                    <td><button class="ops-btn">모니터링</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    관제탑에서는 발급 결과, 장애 상태, 비즈머니 잔액, 수동 확인 이력을 관리합니다.
+                    사용자 경험과 운영 기능을 분리해 상용 환경에서 안정적으로 Giftishow 쿠폰 발급을 운영하려는 목적입니다.
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

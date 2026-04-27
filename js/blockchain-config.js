@@ -285,6 +285,47 @@ export function reconcileChallengeCompletionWithDailyLogs(challenge = {}, dailyL
     };
 }
 
+function getChallengeCompletionDates(challenge = {}) {
+    return Array.isArray(challenge?.completedDates)
+        ? [...new Set(challenge.completedDates.filter(Boolean))]
+        : [];
+}
+
+function hasChallengeCompletionDelta(original = {}, reconciled = {}) {
+    const originalDates = getChallengeCompletionDates(original);
+    const reconciledDates = getChallengeCompletionDates(reconciled);
+    return getChallengeCompletedDays(reconciled) !== getChallengeCompletedDays(original) ||
+        reconciledDates.length !== originalDates.length ||
+        reconciledDates.some((date, index) => date !== originalDates[index]);
+}
+
+export function reconcileActiveChallengesWithDailyLog(activeChallenges = {}, dateStr = '', dailyLogData = null) {
+    if (!activeChallenges || typeof activeChallenges !== 'object' || !isValidDateString(dateStr) || !dailyLogData) {
+        return { activeChallenges, changed: false };
+    }
+
+    const nextActiveChallenges = { ...activeChallenges };
+    let changed = false;
+
+    Object.entries(activeChallenges).forEach(([tier, challenge]) => {
+        if (!challenge || typeof challenge !== 'object') return;
+        const status = String(challenge.status || '').trim();
+        if (status !== 'ongoing' && status !== 'claimable') return;
+
+        const reconciled = reconcileChallengeCompletionWithDailyLogs(
+            challenge,
+            { [dateStr]: dailyLogData },
+            tier
+        );
+        if (hasChallengeCompletionDelta(challenge, reconciled)) {
+            nextActiveChallenges[tier] = reconciled;
+            changed = true;
+        }
+    });
+
+    return { activeChallenges: nextActiveChallenges, changed };
+}
+
 export function getChallengeTimelineState(challenge = {}, todayStr = '') {
     const endDate = String(challenge?.endDate || '').trim();
     return {

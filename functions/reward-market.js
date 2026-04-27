@@ -33,6 +33,8 @@ const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
     ["customAuthToken", "GIFTISHOW_CUSTOM_AUTH_TOKEN"],
     ["callbackNo", "GIFTISHOW_CALLBACK_NO"],
     ["providerUserId", "GIFTISHOW_USER_ID"],
+    ["templateId", "GIFTISHOW_TEMPLATE_ID_OR_CARD_ID"],
+    ["bannerId", "GIFTISHOW_BANNER_ID"],
 ]);
 
 const DEFAULT_REWARD_CATALOG = Object.freeze([
