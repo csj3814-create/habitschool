@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=168';
+import { auth, db, functions } from './firebase-config.js?v=169';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=168';
+import { showToast } from './ui-helpers.js?v=169';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -752,6 +752,8 @@ function renderRewardMarketCatalogView() {
     gridEl.innerHTML = rewardMarketState.catalog.map((item) => {
         const costValue = getRewardCostValue(item);
         const costUnit = getRewardCostUnitLabel(item);
+        const faceValueLabel = formatKrw(item.faceValueKrw || 0);
+        const priceA11yLabel = '교환 포인트 ' + formatNumber(costValue) + costUnit + ', 쿠폰 금액 ' + faceValueLabel;
 
         return (
             '<article class="reward-market-item">' +
@@ -761,10 +763,10 @@ function renderRewardMarketCatalogView() {
                     '<span class="reward-market-stock">' + escapeHtml(formatRewardMarketStockLabel(item.stockLabel)) + '</span>' +
                 '</div>' +
                 '<div class="reward-market-title">' + escapeHtml(item.displayName || item.sku || '상품 정보 준비 중') + '</div>' +
-                '<div class="reward-market-values">' +
-                    '<span class="reward-market-price-chip">교환 포인트 <strong>' + formatNumber(costValue) + escapeHtml(costUnit) + '</strong></span>' +
+                '<div class="reward-market-values" aria-label="' + escapeHtml(priceA11yLabel) + '">' +
+                    '<span class="reward-market-price-chip"><strong>' + formatNumber(costValue) + escapeHtml(costUnit) + '</strong></span>' +
                     '<span class="reward-market-price-separator">·</span>' +
-                    '<span class="reward-market-price-chip">쿠폰 금액 <strong>' + formatKrw(item.faceValueKrw || 0) + '</strong></span>' +
+                    '<span class="reward-market-price-chip"><strong>' + escapeHtml(faceValueLabel) + '</strong></span>' +
                 '</div>' +
                 buildRewardMarketActionView(item) +
             '</article>'

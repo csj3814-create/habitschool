@@ -5,11 +5,11 @@
  */
 
 // 인증 모듈 (initializeApp에서 직접 호출)
-import { initAuth, setupAuthListener } from './auth.js?v=168';
-import { APP_ENV } from './firebase-config.js?v=168';
-import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=168';
+import { initAuth, setupAuthListener } from './auth.js?v=169';
+import { APP_ENV } from './firebase-config.js?v=169';
+import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=169';
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=168';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=169';
 const CONVERSION_RATE_CACHE_KEY = `hs_conversion_rate_${APP_ENV}`;
 
 function readCachedConversionStats() {

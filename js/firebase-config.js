@@ -1,7 +1,7 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, initializeFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -52,6 +52,10 @@ export const FIREBASE_REGION = FUNCTIONS_REGION;
 export const APP_ORIGIN = getCanonicalOrigin(APP_ENV);
 export const APP_OG_IMAGE_URL = `${APP_ORIGIN}/icons/og-image.png`;
 export const FCM_PUBLIC_VAPID_KEY = IS_PROD_ENV ? PROD_VAPID_KEY : STAGING_VAPID_KEY;
+
+if (!IS_LOCAL_ENV) {
+    setLogLevel('silent');
+}
 
 const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];
 const FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS = 5000;
@@ -135,7 +139,7 @@ async function runFirestoreReconnectProbe(reason = '') {
             console.info('[Firestore] reconnect probe succeeded:', reason || 'unspecified');
             return true;
         } catch (error) {
-            console.warn('[Firestore] reconnect probe failed:', reason || 'unspecified', normalizeFirestoreReconnectErrorMessage(error));
+            console.info('[Firestore] reconnect probe still pending:', reason || 'unspecified', normalizeFirestoreReconnectErrorMessage(error));
             return false;
         } finally {
             _firestoreReconnectProbePromise = null;

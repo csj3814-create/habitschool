@@ -11,17 +11,22 @@ describe('Firestore reconnect backoff', () => {
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
         expect(firebaseConfigSource).toContain('initializeFirestore(app, {');
         expect(firebaseConfigSource).toContain('experimentalAutoDetectLongPolling: true');
+        expect(firebaseConfigSource).toContain("setLogLevel('silent');");
         expect(firebaseConfigSource).toContain('export function scheduleFirestoreReconnect');
         expect(firebaseConfigSource).toContain('export function noteFirestoreConnectivityFailure');
         expect(firebaseConfigSource).toContain('export function isFirestoreConnectivityIssue');
+        expect(firebaseConfigSource).toContain('reconnect probe still pending');
         expect(firebaseConfigSource).toContain("window.addEventListener('online'");
 
-        expect(appSource).toContain("noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed');");
-        expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'loadMetabolicScore');");
-        expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'checkOnboarding');");
+        expect(appSource).toContain("noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed')");
+        expect(appSource).toContain("user cache seed deferred while Firestore reconnects");
+        expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'loadMetabolicScore')");
+        expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'checkOnboarding')");
         expect(authSource).toContain("noteFirestoreConnectivityFailure(error, 'hydratePushTokenLinkState');");
         expect(authSource).toContain("noteFirestoreConnectivityFailure(error, 'resolveLatestUserDocData');");
-        expect(blockchainManagerSource).toContain("noteFirestoreConnectivityFailure(error, 'initializeWalletState');");
+        expect(blockchainManagerSource).toContain("noteFirestoreConnectivityFailure(error, 'initializeWalletState')");
+        expect(blockchainManagerSource).toContain('isFirestoreConnectivityIssue(error)');
+        expect(blockchainManagerSource).toContain('[wallet] initialization deferred while Firestore reconnects:');
         expect(blockchainManagerSource).toContain("noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');");
     });
 });

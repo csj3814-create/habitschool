@@ -9,6 +9,10 @@ const rewardMarketSource = readFileSync(
     path.resolve(__dirname, '../js/reward-market.js'),
     'utf8'
 );
+const rewardMarketStyles = readFileSync(
+    path.resolve(__dirname, '../styles-reward-market.css'),
+    'utf8'
+);
 
 describe('reward market UI render wiring', () => {
     it('keeps recipient phone input wired to the current snapshot renderer', () => {
@@ -23,9 +27,17 @@ describe('reward market UI render wiring', () => {
         );
     });
 
-    it('renders reward-market values on a single inline row and formats stock validity labels', () => {
+    it('renders compact reward-market values and formats stock validity labels', () => {
+        expect(rewardMarketSource).toContain('const faceValueLabel = formatKrw(item.faceValueKrw || 0);');
+        expect(rewardMarketSource).toContain('priceA11yLabel');
+        expect(rewardMarketSource).toContain('aria-label');
         expect(rewardMarketSource).toContain('reward-market-price-chip');
         expect(rewardMarketSource).toContain('reward-market-price-separator');
+        expect(rewardMarketSource).toContain("'<span class=\"reward-market-price-chip\"><strong>' + formatNumber(costValue)");
+        expect(rewardMarketSource).toContain("'<span class=\"reward-market-price-chip\"><strong>' + escapeHtml(faceValueLabel)");
+        expect(rewardMarketStyles).toContain('justify-content: center;');
+        expect(rewardMarketStyles).toContain('overflow: hidden;');
+        expect(rewardMarketStyles).toMatch(/\.reward-market-price-chip strong\s*\{[\s\S]*font-size: 17px;/);
         expect(rewardMarketSource).toContain('formatRewardMarketStockLabel');
         expect(rewardMarketSource).toContain('유효기간 ${match[1]}일');
     });

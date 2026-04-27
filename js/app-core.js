@@ -14,32 +14,32 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=168';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=168';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=169';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=169';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=168';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=168';
+} from './auth-login-helpers.js?v=169';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy } from './blockchain-config.js?v=169';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=168';
+} from './exercise-media.js?v=169';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=168';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=168';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=168';
-import { sanitize, compressImage } from './data-manager.js?v=168';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=168';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=168';
+} from './health-connect-utils.js?v=169';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=169';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=169';
+import { sanitize, compressImage } from './data-manager.js?v=169';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=169';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=169';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -52,7 +52,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=168';
+} from './diet-program.js?v=169';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -64,9 +64,9 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=168';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=168';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=168';
+} from './meditation-guide.js?v=169';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=169';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=169';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4416,8 +4416,13 @@ async function loadMyFriendships(forceReload = false) {
                 updatePwaActionableBadge({ friendRequests: getIncomingFriendRequests().length });
             }
         } catch (error) {
-            noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed');
-            console.warn('[loadMyFriendships] user cache seed skipped:', error.message);
+            const connectivityIssue = noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed')
+                || isFirestoreConnectivityIssue(error);
+            if (connectivityIssue) {
+                console.info('[loadMyFriendships] user cache seed deferred while Firestore reconnects:', error.message);
+            } else {
+                console.warn('[loadMyFriendships] user cache seed skipped:', error.message);
+            }
         }
 
         const friendshipQuery = query(
@@ -4795,7 +4800,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=168';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=169';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17054,8 +17059,13 @@ async function updateMetabolicScoreUI() {
         // UI 렌더링
         renderMetabolicScoreCard(container, scoreData);
     } catch (e) {
-        noteFirestoreConnectivityFailure(e, 'loadMetabolicScore');
-        console.warn('대사건강 점수 로드 스킵:', e.message);
+        const connectivityIssue = noteFirestoreConnectivityFailure(e, 'loadMetabolicScore')
+            || isFirestoreConnectivityIssue(e);
+        if (connectivityIssue) {
+            console.info('대사건강 점수 로드 지연:', e.message);
+        } else {
+            console.warn('대사건강 점수 로드 스킵:', e.message);
+        }
     }
 };
 
@@ -17108,8 +17118,13 @@ async function checkOnboarding() {
             return;
         }
     } catch (e) {
-        noteFirestoreConnectivityFailure(e, 'checkOnboarding');
-        console.warn('온보딩 체크 스킵:', e.message);
+        const connectivityIssue = noteFirestoreConnectivityFailure(e, 'checkOnboarding')
+            || isFirestoreConnectivityIssue(e);
+        if (connectivityIssue) {
+            console.info('온보딩 체크 지연:', e.message);
+        } else {
+            console.warn('온보딩 체크 스킵:', e.message);
+        }
     }
 };
 
