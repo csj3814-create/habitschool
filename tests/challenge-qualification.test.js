@@ -10,6 +10,7 @@ import {
     getDefaultChallengeQualificationPolicy,
     normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy,
+    reconcileActiveChallengesWithDailyLogs,
     reconcileActiveChallengesWithDailyLog,
     reconcileChallengeCompletionWithDailyLogs
 } from '../js/blockchain-config.js';
@@ -199,5 +200,45 @@ describe('challenge qualification policy', () => {
         expect(result.changed).toBe(true);
         expect(result.activeChallenges.weekly.completedDates).toEqual(['2026-04-27']);
         expect(result.activeChallenges.weekly.completedDays).toBe(1);
+    });
+
+    it('projects active weekly and master progress from prior daily logs in the challenge range', () => {
+        const weekly = {
+            challengeId: 'challenge-7d',
+            tier: 'weekly',
+            startDate: '2026-04-27',
+            endDate: '2026-05-03',
+            totalDays: 7,
+            completedDays: 0,
+            completedDates: [],
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('weekly'),
+            status: 'ongoing'
+        };
+        const master = {
+            challengeId: 'challenge-30d',
+            tier: 'master',
+            startDate: '2026-04-27',
+            endDate: '2026-05-26',
+            totalDays: 30,
+            completedDays: 0,
+            completedDates: [],
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('master'),
+            status: 'ongoing'
+        };
+
+        const result = reconcileActiveChallengesWithDailyLogs({
+            weekly,
+            master
+        }, {
+            '2026-04-27': {
+                awardedPoints: { dietPoints: 30, exercisePoints: 20, mindPoints: 20 }
+            }
+        });
+
+        expect(result.changed).toBe(true);
+        expect(result.activeChallenges.weekly.completedDates).toEqual(['2026-04-27']);
+        expect(result.activeChallenges.master.completedDates).toEqual(['2026-04-27']);
+        expect(result.activeChallenges.weekly.completedDays).toBe(1);
+        expect(result.activeChallenges.master.completedDays).toBe(1);
     });
 });

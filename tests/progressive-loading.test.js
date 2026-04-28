@@ -33,12 +33,14 @@ describe('progressive loading isolation', () => {
 
     it('bounds optional asset and reward-market enrichment work', () => {
         const appSource = readAppSource();
+        const authSource = readRepoFile('js/auth.js');
         const rewardMarketSource = readRepoFile('js/reward-market.js');
 
         expect(appSource).toContain('const ASSET_QUERY_TIMEOUT_MS = 3500;');
         expect(appSource).toContain('const ASSET_HISTORY_TIMEOUT_MS = 4500;');
         expect(appSource).toContain('const ASSET_USER_DOC_TIMEOUT_MS = 5000;');
         expect(appSource).toContain('const ASSET_ONCHAIN_TIMEOUT_MS = 6000;');
+        expect(appSource).toContain('const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 1800;');
         expect(appSource).toContain('const ASSET_MAX_RETRY_ATTEMPTS = 5;');
         expect(appSource).toContain('const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;');
         expect(appSource).toContain('const DASHBOARD_LOAD_TIMEOUT_MS = 6000;');
@@ -46,6 +48,8 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('function logAssetOptionalQueryFailure');
         expect(appSource).toContain('function refreshAssetTokenStats(uid = \'\')');
         expect(appSource).toContain('refreshAssetTokenStats(user.uid).catch(() => {});');
+        expect(appSource).toContain('function applyCachedPointBalanceFromStorage');
+        expect(authSource).toContain('applyCachedSignedInPointBalance(user.uid);');
         expect(appSource).toContain('const userDocPromise = getDoc(userRef).catch((error) => {');
         expect(appSource).toContain('_assetTimeout(ASSET_USER_DOC_TIMEOUT_MS)');
         expect(appSource).toContain('userDocPromise.then(lateSnap => {');
@@ -57,9 +61,10 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain("pointBadge.textContent = String(coinsValue);");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'today-points-timeout');");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'today-hbt-timeout');");
-        expect(appSource).toContain("scheduleAssetRetry(user.uid, 'challenge-today-log-timeout');");
-        expect(appSource).toContain('reconcileActiveChallengesWithDailyLog(');
-        expect(appSource).toContain('requestAssetChallengeProgressSync(user.uid, _todayStr);');
+        expect(appSource).toContain("scheduleAssetRetry(user.uid, 'challenge-range-logs-timeout');");
+        expect(appSource).toContain('reconcileActiveChallengesWithDailyLogs(activeChallenges, dailyLogsByDate)');
+        expect(appSource).toContain('readCachedChallengeDailyLogsByDate');
+        expect(appSource).toContain("'challenge-range-cache-projection'");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'mini-chart-timeout');");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'daily-limit-timeout');");
         expect(appSource).not.toContain('coins: userData.coins || 0');

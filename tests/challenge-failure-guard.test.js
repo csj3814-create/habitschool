@@ -13,6 +13,9 @@ describe('challenge failure settlement guardrails', () => {
 
         expect(managerSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDate(currentUser.uid, storedChallenge);');
         expect(managerSource).toContain('reconcileChallengeCompletionWithDailyLogs(storedChallenge, dailyLogsByDate, tier)');
+        expect(managerSource).toContain('async function fetchChallengeDailyLogsByDateInTransaction');
+        expect(managerSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDateInTransaction(transaction, currentUser.uid, challenge);');
+        expect(managerSource).toContain('const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);');
         expect(managerSource).toContain('settleResult.data?.skippedFailure || settleResult.data?.claimable');
     });
 });

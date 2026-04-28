@@ -358,6 +358,23 @@ async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
     }, {});
 }
 
+async function fetchChallengeDailyLogsByDateInTransaction(transaction, uid, challenge = {}) {
+    const today = getKstDateString();
+    const dates = getChallengeDateRange(challenge).filter((date) => !today || date <= today);
+    if (!transaction || !uid || dates.length === 0) return {};
+
+    const entries = await Promise.all(dates.map(async (date) => {
+        const logRef = doc(db, 'daily_logs', `${uid}_${date}`);
+        const snap = await transaction.get(logRef);
+        return [date, snap.exists() ? snap.data() : null];
+    }));
+
+    return entries.reduce((acc, [date, log]) => {
+        if (log) acc[date] = log;
+        return acc;
+    }, {});
+}
+
 function hasChallengeCompletionChanged(original = {}, reconciled = {}) {
     const originalDates = Array.isArray(original?.completedDates)
         ? [...new Set(original.completedDates.filter(Boolean))]
@@ -1469,7 +1486,13 @@ export async function updateChallengeProgress() {
 
             for (const tier of tiers) {
                 const originalChallenge = activeChallenges[tier];
-                const challenge = normalizeChallengeCompletion(originalChallenge);
+                let challenge = normalizeChallengeCompletion(originalChallenge);
+                const dailyLogsByDate = await fetchChallengeDailyLogsByDateInTransaction(transaction, currentUser.uid, challenge);
+                const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);
+                if (hasChallengeCompletionChanged(originalChallenge, rangeReconciledChallenge)) {
+                    challenge = rangeReconciledChallenge;
+                    updateData[`activeChallenges.${tier}`] = challenge;
+                }
                 const totalDays = challenge.totalDays || 30;
                 const completedDates = [...(challenge.completedDates || [])];
                 const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;

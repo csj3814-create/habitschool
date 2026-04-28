@@ -304,6 +304,14 @@ export function reconcileActiveChallengesWithDailyLog(activeChallenges = {}, dat
         return { activeChallenges, changed: false };
     }
 
+    return reconcileActiveChallengesWithDailyLogs(activeChallenges, { [dateStr]: dailyLogData });
+}
+
+export function reconcileActiveChallengesWithDailyLogs(activeChallenges = {}, dailyLogsByDate = {}) {
+    if (!activeChallenges || typeof activeChallenges !== 'object' || !dailyLogsByDate) {
+        return { activeChallenges, changed: false };
+    }
+
     const nextActiveChallenges = { ...activeChallenges };
     let changed = false;
 
@@ -314,7 +322,7 @@ export function reconcileActiveChallengesWithDailyLog(activeChallenges = {}, dat
 
         const reconciled = reconcileChallengeCompletionWithDailyLogs(
             challenge,
-            { [dateStr]: dailyLogData },
+            dailyLogsByDate,
             tier
         );
         if (hasChallengeCompletionDelta(challenge, reconciled)) {

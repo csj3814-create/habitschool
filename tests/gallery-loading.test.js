@@ -11,6 +11,9 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('const GALLERY_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
+        expect(appSource).toContain("const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v1';");
+        expect(appSource).toContain('function hydrateGalleryFromPersistentCache');
+        expect(appSource).toContain('writePersistentGalleryCache');
         expect(appSource).toContain('function scheduleGalleryRetry');
         expect(appSource).toContain("console.warn('[loadGalleryData] stale gallery load discarded');");
         expect(appSource).toContain('function rerenderGalleryFeedIfVisible() {');

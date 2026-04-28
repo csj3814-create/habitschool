@@ -21,4 +21,15 @@ describe('video upload resilience', () => {
         expect(source).toContain("setInlineUploadProgress(inputId, { state: 'error', pct: 100 })");
         expect(source).toContain('_pendingUploads.delete(inputId)');
     });
+
+    it('bounds the background Firestore patch after media upload reaches the final sync phase', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;');
+        expect(source).toContain('background_media_patch_timeout');
+        expect(source).toContain('function queueBackgroundMediaPatchRetry');
+        expect(source).toContain('habitschool-background-media-patches-v1');
+        expect(source).toContain("noteFirestoreConnectivityFailure(error, 'background media patch')");
+        expect(source).toContain('flushBackgroundMediaPatchQueue({ quiet: true })');
+    });
 });

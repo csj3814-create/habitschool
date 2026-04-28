@@ -28,6 +28,8 @@ const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
+const AUTH_POINT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const DASHBOARD_LS_KEY = 'dashboardData_v1';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
@@ -36,6 +38,52 @@ let _ensureReferralCodeCallable = null;
 let _googleLoginRecoveryBound = false;
 let _pendingGoogleLoginResetTimer = null;
 const GOOGLE_LOGIN_RECOVERY_POLL_MS = 1500;
+
+function parseCachedPointNumber(value) {
+    const numeric = Number.parseInt(String(value ?? '').replace(/[^\d-]/g, ''), 10);
+    return Number.isFinite(numeric) ? numeric : null;
+}
+
+function readCachedSignedInPointBalance(uid = '') {
+    const normalizedUid = String(uid || '').trim();
+    if (!normalizedUid) return null;
+
+    try {
+        const wallet = JSON.parse(localStorage.getItem(`hs_wallet_${normalizedUid}`) || 'null');
+        const walletAge = Date.now() - Number(wallet?.ts || 0);
+        const walletPoints = parseCachedPointNumber(wallet?.coins);
+        if (walletPoints != null && walletAge >= 0 && walletAge < AUTH_POINT_CACHE_TTL_MS) {
+            return walletPoints;
+        }
+    } catch (_) {}
+
+    try {
+        const dashboard = JSON.parse(localStorage.getItem(DASHBOARD_LS_KEY) || 'null');
+        if (dashboard?.uid === normalizedUid) {
+            const dashboardAge = Date.now() - Number(dashboard?.ts || 0);
+            const dashboardPoints = parseCachedPointNumber(dashboard?.ud?.coins);
+            if (dashboardPoints != null && dashboardAge >= 0 && dashboardAge < AUTH_POINT_CACHE_TTL_MS) {
+                return dashboardPoints;
+            }
+        }
+    } catch (_) {}
+
+    return null;
+}
+
+function applyCachedSignedInPointBalance(uid = '') {
+    const cachedPoints = readCachedSignedInPointBalance(uid);
+    if (cachedPoints == null) return null;
+
+    const pointBalanceEl = document.getElementById('point-balance');
+    if (pointBalanceEl) pointBalanceEl.innerText = cachedPoints;
+
+    const simpleProfilePointsEl = document.getElementById('simple-profile-points');
+    if (simpleProfilePointsEl) simpleProfilePointsEl.textContent = `${Number(cachedPoints || 0).toLocaleString()}P`;
+
+    window.applyCachedPointBalanceFromStorage?.(uid);
+    return cachedPoints;
+}
 
 function readGoogleLoginModeOverride() {
     try {
@@ -308,8 +356,10 @@ function persistPendingInviteRef(code) {
 async function resolveLatestUserDocData(userRef, initialSnap) {
     let resolvedSnap = initialSnap;
     let resolvedData = initialSnap.exists() ? (initialSnap.data() || {}) : {};
+    const cachedPoints = readCachedSignedInPointBalance(userRef?.id);
     const needsServerRefresh = !initialSnap.exists()
         || resolvedData.coins == null
+        || (initialSnap.metadata?.fromCache && Number(resolvedData.coins || 0) === 0 && cachedPoints != null && cachedPoints > 0)
         || !normalizeInviteRefCode(resolvedData.referralCode);
 
     if (needsServerRefresh) {
@@ -360,8 +410,16 @@ async function applySignedInUserUi(user, userData = {}) {
     window.applyDietProgramUserData?.(userData);
 
     const pointBalanceEl = document.getElementById('point-balance');
-    if (pointBalanceEl && userData.coins != null) {
-        pointBalanceEl.innerText = userData.coins;
+    const cachedPoints = readCachedSignedInPointBalance(user.uid);
+    const incomingPoints = parseCachedPointNumber(userData.coins);
+    const resolvedPoints = (userData.__preferCachedPoints && cachedPoints != null)
+        ? cachedPoints
+        : (incomingPoints ?? cachedPoints);
+    if (userData.__preferCachedPoints && resolvedPoints != null) {
+        userData.coins = resolvedPoints;
+    }
+    if (pointBalanceEl && resolvedPoints != null) {
+        pointBalanceEl.innerText = resolvedPoints;
     }
 
     const referralCode = normalizeInviteRefCode(userData.referralCode);
@@ -900,6 +958,7 @@ export function setupAuthListener(callbacks) {
             }
             clearPendingGoogleLoginState();
             applySignedInShellUi(user);
+            applyCachedSignedInPointBalance(user.uid);
 
             // 利됱떆 ??쒕낫???닿린 (renderDashboard媛 ?먯껜 ?곗씠??濡쒕뵫 ?섑뻾)
             const params = new URLSearchParams(window.location.search);
@@ -975,6 +1034,10 @@ export function setupAuthListener(callbacks) {
                 const ensuredReferralCode = await ensureSignedInUserReferralCode(ud);
                 if (ensuredReferralCode) {
                     ud.referralCode = ensuredReferralCode;
+                }
+                const cachedPoints = readCachedSignedInPointBalance(user.uid);
+                if (resolvedUserDoc.metadata?.fromCache && Number(resolvedUserData.coins || 0) === 0 && cachedPoints != null && cachedPoints > 0) {
+                    ud.__preferCachedPoints = true;
                 }
 
                 await hydratePushTokenLinkState(user, ud);

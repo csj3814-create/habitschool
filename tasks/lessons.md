@@ -1482,3 +1482,4 @@
 - 2026-04-27: FCM 푸시를 `/sw.js`로 명시 등록하더라도 Firebase Messaging 기본 경로인 `/firebase-messaging-sw.js` 404가 사용자 브라우저나 오래된 캐시에서 다시 보일 수 있다. 기본 경로 호환 wrapper를 배포하고 no-cache 헤더와 테스트에 포함해 DevTools script 404를 예방한다.
 - 2026-04-27: 영상 업로드 실패를 사진 업로드 기준의 전체 시간 제한으로 판단하지 않는다. Firebase Storage resumable upload는 모바일 업링크에서 오래 걸릴 수 있으므로, 영상은 파일 크기 기반 hard timeout과 progress 기반 idle timeout을 분리하고, `{ url: null }` 결과를 완료 UI로 표시하지 않게 테스트로 막는다.
 - 2026-04-27: 선택적 Firestore 쿼리에 timeout을 걸 때는 timeout 결과를 `0` 데이터처럼 렌더하지 않는다. 특히 자산 미니차트, 오늘 획득량, 채굴 구간 진행도처럼 숫자가 중요한 UI는 마지막 정상값을 유지하고 독립 retry/late refresh가 실제 응답으로 다시 그리게 해야 한다.
+- 2026-04-28: Firestore 지연을 고칠 때는 한 화면의 timeout만 막고 끝내지 않는다. 헤더 포인트, 갤러리 첫 렌더, 챌린지 진행도처럼 같은 사용자 데이터에 의존하는 표면은 모두 "마지막 정상 캐시 먼저 표시 + 서버 응답 도착 후 보정" 원칙을 공유해야 한다. 특히 챌린지 진행도는 오늘 기록뿐 아니라 기간 내 모든 daily log를 기준으로 재계산해야 전날 65P 이상 달성분이 빠지지 않는다.

@@ -21,7 +21,7 @@ import {
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
 } from './auth-login-helpers.js?v=170';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLog } from './blockchain-config.js?v=170';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=170';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -237,6 +237,10 @@ const SHARED_IMPORT_CATEGORY_LABELS = {
 const OFFLINE_OUTBOX_STORAGE_KEY = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
+const BACKGROUND_MEDIA_PATCH_STORAGE_KEY = 'habitschool-background-media-patches-v1';
+const BACKGROUND_MEDIA_PATCH_MAX_ENTRIES = 24;
+const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;
+const BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS = 4000;
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
@@ -277,6 +281,8 @@ let _pendingSharedImportPromise = null;
 let _sharedImportSession = null;
 let _lastDietAutoImportResult = null;
 let _offlineOutboxFlushPromise = null;
+let _backgroundMediaPatchFlushPromise = null;
+let _backgroundMediaPatchRetryTimer = null;
 const FRIENDSHIP_LOAD_TIMEOUT_MS = 2500;
 const FRIENDSHIP_USER_CACHE_TIMEOUT_MS = 1500;
 const FRIENDSHIP_LIVE_QUERY_TIMEOUT_MS = 2500;
@@ -7372,6 +7378,7 @@ const ASSET_QUERY_TIMEOUT_MS = 3500;
 const ASSET_HISTORY_TIMEOUT_MS = 4500;
 const ASSET_USER_DOC_TIMEOUT_MS = 5000;
 const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
+const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 1800;
 const ASSET_RETRY_BASE_DELAY_MS = 1200;
 const ASSET_MAX_RETRY_ATTEMPTS = 5;
 const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;
@@ -7471,6 +7478,33 @@ function applyCachedAssetDisplay(uid) {
         hbtBalance: hbtValue ?? cached?.hbtBalance
     };
 }
+
+function readCachedPointBalance(uid) {
+    if (!uid) return null;
+    const cached = readAssetDisplayCache(uid);
+    const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
+    const hasFreshAssetCache = cached && (Date.now() - Number(cached.ts || 0)) < ASSET_LS_TTL;
+    return (hasFreshAssetCache ? getFiniteAssetNumber(cached.coins) : null)
+        ?? getFiniteAssetNumber(dashboardData?.ud?.coins);
+}
+
+function applyCachedPointBalanceFromStorage(uid = auth.currentUser?.uid || '') {
+    const pointsValue = readCachedPointBalance(uid);
+    if (pointsValue == null) return null;
+
+    const pointBadge = document.getElementById('point-balance');
+    if (pointBadge) pointBadge.textContent = String(pointsValue);
+
+    const pointsDisplay = document.getElementById('asset-points-display');
+    if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(pointsValue);
+
+    const simpleProfilePoints = document.getElementById('simple-profile-points');
+    if (simpleProfilePoints) simpleProfilePoints.textContent = `${Number(pointsValue || 0).toLocaleString()}P`;
+
+    return pointsValue;
+}
+
+window.applyCachedPointBalanceFromStorage = applyCachedPointBalanceFromStorage;
 
 window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived = 0 } = {}) {
     const user = auth.currentUser;
@@ -7632,6 +7666,43 @@ function requestAssetChallengeProgressSync(uid, dateStr, reason = 'asset-challen
             console.warn('[asset-display] challenge progress sync skipped:', error?.message || error);
         });
     }, delayMs);
+}
+
+function collectActiveChallengeProgressDates(activeChallenges = {}, todayStr = getKstDateString()) {
+    const dates = new Set();
+    Object.values(activeChallenges || {}).forEach((challenge) => {
+        if (!challenge || typeof challenge !== 'object') return;
+        const status = String(challenge.status || '').trim();
+        if (status !== 'ongoing' && status !== 'claimable') return;
+        getChallengeDateRange(challenge)
+            .filter((date) => !todayStr || date <= todayStr)
+            .forEach((date) => dates.add(date));
+    });
+    return [...dates].sort();
+}
+
+function readCachedChallengeDailyLogsByDate(uid = '', activeChallenges = {}, todayStr = getKstDateString()) {
+    if (!uid) return {};
+    return collectActiveChallengeProgressDates(activeChallenges, todayStr).reduce((acc, date) => {
+        const cachedLog = getCachedDailyLog(`${uid}_${date}`);
+        if (cachedLog) acc[date] = cachedLog;
+        return acc;
+    }, {});
+}
+
+async function fetchAssetChallengeDailyLogsByDate(uid = '', activeChallenges = {}, todayStr = getKstDateString()) {
+    const dates = collectActiveChallengeProgressDates(activeChallenges, todayStr);
+    if (!uid || dates.length === 0) return {};
+
+    const entries = await Promise.all(dates.map(async (date) => {
+        const snap = await getDoc(doc(db, 'daily_logs', `${uid}_${date}`));
+        return [date, snap.exists() ? (snap.data() || null) : null];
+    }));
+
+    return entries.reduce((acc, [date, log]) => {
+        if (log) acc[date] = log;
+        return acc;
+    }, {});
 }
 
 function refreshAssetTokenStats(uid = '') {
@@ -8206,27 +8277,37 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
             }
 
-            let todayChallengeLogData = null;
-            try {
-                const todayChallengeLogSnap = await _p_todayLog;
-                if (isDeferredAssetSnap(todayChallengeLogSnap) || !todayChallengeLogSnap) {
-                    scheduleAssetRetry(user.uid, 'challenge-today-log-timeout');
-                } else if (todayChallengeLogSnap.exists()) {
-                    todayChallengeLogData = todayChallengeLogSnap.data() || {};
-                }
-            } catch (challengeLogError) {
-                console.warn('[asset-display] challenge today log skipped:', challengeLogError?.message || challengeLogError);
-                scheduleAssetRetry(user.uid, 'challenge-today-log-error');
-            }
+            const applyChallengeProjection = (dailyLogsByDate, reason) => {
+                if (!dailyLogsByDate || Object.keys(dailyLogsByDate).length === 0) return false;
+                const projection = reconcileActiveChallengesWithDailyLogs(activeChallenges, dailyLogsByDate);
+                if (!projection.changed) return false;
+                activeChallenges = projection.activeChallenges;
+                requestAssetChallengeProgressSync(user.uid, _todayStr, reason);
+                return true;
+            };
 
-            const challengeProjection = reconcileActiveChallengesWithDailyLog(
-                activeChallenges,
-                _todayStr,
-                todayChallengeLogData
+            const cachedChallengeLogsByDate = readCachedChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr);
+            applyChallengeProjection(cachedChallengeLogsByDate, 'challenge-range-cache-projection');
+
+            const challengeRangeLogsPromise = fetchAssetChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr);
+            const serverChallengeLogsByDate = await withAssetQueryTimeout(
+                challengeRangeLogsPromise,
+                'challenge-range-logs',
+                ASSET_CHALLENGE_LOG_TIMEOUT_MS
             );
-            activeChallenges = challengeProjection.activeChallenges;
-            if (challengeProjection.changed) {
-                requestAssetChallengeProgressSync(user.uid, _todayStr);
+            if (serverChallengeLogsByDate) {
+                applyChallengeProjection(serverChallengeLogsByDate, 'challenge-range-server-projection');
+            } else if (collectActiveChallengeProgressDates(activeChallenges, _todayStr).length > 0) {
+                scheduleAssetRetry(user.uid, 'challenge-range-logs-timeout');
+                challengeRangeLogsPromise.then((logsByDate) => {
+                    if (!logsByDate || Object.keys(logsByDate).length === 0) return;
+                    const lateProjection = reconcileActiveChallengesWithDailyLogs(activeChallenges, logsByDate);
+                    if (!lateProjection.changed) return;
+                    requestAssetChallengeProgressSync(user.uid, _todayStr, 'challenge-range-late-projection');
+                    if (getVisibleTabName() === 'assets' && auth.currentUser?.uid === user.uid) {
+                        window.updateAssetDisplay(true).catch(() => {});
+                    }
+                }).catch(() => {});
             }
 
             // 미니 → 위클리 → 마스터 순서로 정렬
@@ -13712,24 +13793,45 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
     const { awarded } = getEffectiveAwardedPointResult(nextData, nextData.awardedPoints || {}, nextData.date || '');
     nextData.awardedPoints = awarded;
 
-    const patch = {
-        timestamp: serverTimestamp(),
+    const patchBody = {
         awardedPoints: awarded
     };
 
     if (job.kind === 'diet') {
-        patch.diet = nextData.diet;
+        patchBody.diet = nextData.diet;
     } else if (job.kind === 'sleep') {
-        patch.sleepAndMind = nextData.sleepAndMind;
+        patchBody.sleepAndMind = nextData.sleepAndMind;
     } else {
-        patch.exercise = nextData.exercise;
+        patchBody.exercise = nextData.exercise;
     }
 
-    await setDoc(docRef, patch, { merge: true });
     const committedData = {
         ...nextData,
         timestamp: new Date().toISOString()
     };
+
+    try {
+        await withRejectingTimeout(
+            setDoc(docRef, { ...patchBody, timestamp: serverTimestamp() }, { merge: true }),
+            BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
+            'background_media_patch_timeout'
+        );
+    } catch (error) {
+        const isConnectivityDelay = noteFirestoreConnectivityFailure(error, 'background media patch')
+            || isFirestoreConnectivityIssue(error)
+            || isOfflineSaveCandidateError(error);
+        if (!isConnectivityDelay) throw error;
+        queueBackgroundMediaPatchRetry({
+            userId,
+            docId,
+            job,
+            patchBody,
+            committedData
+        });
+        scheduleBackgroundMediaPatchFlush('background_media_patch_timeout');
+        console.warn('[background-media] daily log patch deferred:', docId, error?.message || error);
+    }
+
     updateLocalDailyLogCaches(docId, committedData, { updateGallery });
 
     if (job.kind === 'diet') {
@@ -14020,6 +14122,164 @@ function isOfflineSaveCandidateError(error = null) {
         || message.includes('failed to fetch');
 }
 
+function createRejectingTimeoutError(message = 'operation_timeout', code = 'deadline-exceeded') {
+    const error = new Error(message);
+    error.code = code;
+    return error;
+}
+
+function withRejectingTimeout(promise, timeoutMs = 8000, message = 'operation_timeout', code = 'deadline-exceeded') {
+    let timeoutId = null;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(createRejectingTimeoutError(message, code)), timeoutMs);
+    });
+    return Promise.race([Promise.resolve(promise), timeoutPromise]).finally(() => {
+        if (timeoutId) clearTimeout(timeoutId);
+    });
+}
+
+function cloneJsonPayload(value = {}) {
+    try {
+        return JSON.parse(JSON.stringify(value || {}));
+    } catch (_) {
+        return {};
+    }
+}
+
+function readBackgroundMediaPatchEntries() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(BACKGROUND_MEDIA_PATCH_STORAGE_KEY) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+}
+
+function writeBackgroundMediaPatchEntries(entries = []) {
+    const normalized = Array.isArray(entries)
+        ? entries
+            .filter((entry) => entry && typeof entry === 'object' && entry.id && entry.key)
+            .sort((a, b) => Number(a.updatedAt || 0) - Number(b.updatedAt || 0))
+            .slice(-BACKGROUND_MEDIA_PATCH_MAX_ENTRIES)
+        : [];
+    try {
+        localStorage.setItem(BACKGROUND_MEDIA_PATCH_STORAGE_KEY, JSON.stringify(normalized));
+    } catch (_) {}
+    return normalized;
+}
+
+function buildBackgroundMediaPatchKey(userId = '', docId = '', job = {}) {
+    const kind = String(job?.kind || 'media').trim() || 'media';
+    const target = String(job?.slot || job?.mediaId || kind).trim() || kind;
+    return [userId, docId, kind, target].map((part) => String(part || '').trim()).join(':');
+}
+
+function queueBackgroundMediaPatchRetry({ userId = '', docId = '', job = {}, patchBody = {}, committedData = {} } = {}) {
+    const normalizedUserId = String(userId || '').trim();
+    const normalizedDocId = String(docId || '').trim();
+    if (!normalizedUserId || !normalizedDocId || !patchBody || typeof patchBody !== 'object') return null;
+
+    const key = buildBackgroundMediaPatchKey(normalizedUserId, normalizedDocId, job);
+    const now = Date.now();
+    const entries = readBackgroundMediaPatchEntries();
+    const existing = entries.find((entry) => String(entry?.key || '') === key);
+    const nextEntry = {
+        id: String(existing?.id || createClientMediaId('media-patch')).trim(),
+        key,
+        userId: normalizedUserId,
+        docId: normalizedDocId,
+        kind: String(job?.kind || '').trim(),
+        target: String(job?.slot || job?.mediaId || '').trim(),
+        createdAt: Number(existing?.createdAt || now) || now,
+        updatedAt: now,
+        attempts: Number(existing?.attempts || 0) || 0,
+        patchBody: cloneJsonPayload(patchBody),
+        committedData: buildPersistableSaveData(committedData)
+    };
+
+    writeBackgroundMediaPatchEntries([
+        ...entries.filter((entry) => String(entry?.key || '') !== key),
+        nextEntry
+    ]);
+    return nextEntry;
+}
+
+function scheduleBackgroundMediaPatchFlush(reason = 'scheduled') {
+    if (_backgroundMediaPatchRetryTimer) clearTimeout(_backgroundMediaPatchRetryTimer);
+    _backgroundMediaPatchRetryTimer = setTimeout(() => {
+        _backgroundMediaPatchRetryTimer = null;
+        flushBackgroundMediaPatchQueue({ quiet: true }).catch((error) => {
+            console.warn('[background-media] deferred patch retry failed:', reason, error?.message || error);
+        });
+    }, BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS);
+}
+
+async function flushBackgroundMediaPatchQueue({ quiet = true } = {}) {
+    if (_backgroundMediaPatchFlushPromise) {
+        return _backgroundMediaPatchFlushPromise;
+    }
+
+    _backgroundMediaPatchFlushPromise = (async () => {
+        if (navigator.onLine === false) return 0;
+        const user = auth.currentUser;
+        if (!user?.uid) return 0;
+
+        let entries = readBackgroundMediaPatchEntries();
+        const pendingEntries = entries
+            .filter((entry) => String(entry?.userId || '').trim() === user.uid)
+            .sort((a, b) => Number(a.updatedAt || 0) - Number(b.updatedAt || 0));
+        if (pendingEntries.length === 0) return 0;
+
+        let flushedCount = 0;
+        for (const entry of pendingEntries) {
+            try {
+                const patchBody = cloneJsonPayload(entry.patchBody || {});
+                if (!entry.docId || !Object.keys(patchBody).length) {
+                    throw new Error('missing background media patch payload');
+                }
+                await withRejectingTimeout(
+                    setDoc(doc(db, 'daily_logs', entry.docId), { ...patchBody, timestamp: serverTimestamp() }, { merge: true }),
+                    BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
+                    'background_media_patch_retry_timeout'
+                );
+
+                if (entry.committedData && typeof entry.committedData === 'object') {
+                    updateLocalDailyLogCaches(entry.docId, entry.committedData, { updateGallery: true });
+                    refreshGalleryFromCacheIfVisible();
+                }
+                _dashboardCache.ts = 0;
+                _assetCache.ts = 0;
+
+                entries = entries.filter((item) => item.id !== entry.id);
+                writeBackgroundMediaPatchEntries(entries);
+                flushedCount += 1;
+            } catch (error) {
+                noteFirestoreConnectivityFailure(error, 'background media patch retry');
+                entries = entries.map((item) => {
+                    if (item.id !== entry.id) return item;
+                    return {
+                        ...item,
+                        attempts: Number(item.attempts || 0) + 1,
+                        updatedAt: Date.now(),
+                        lastError: String(error?.message || error).slice(0, 180)
+                    };
+                });
+                writeBackgroundMediaPatchEntries(entries);
+                console.warn('[background-media] deferred patch still pending:', entry?.docId, error?.message || error);
+            }
+        }
+
+        if (flushedCount > 0 && !quiet) {
+            showToast(`Delayed upload updates synced: ${flushedCount}`);
+        }
+        return flushedCount;
+    })().finally(() => {
+        _backgroundMediaPatchFlushPromise = null;
+    });
+
+    return _backgroundMediaPatchFlushPromise;
+}
+
 function collectOfflineOutboxMediaItems(saveData = {}) {
     const items = [];
     const diet = saveData?.diet || {};
@@ -14229,7 +14489,11 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
                     patchOfflineOutboxSaveData(saveData, mediaItem, uploadResult);
                 }
 
-                await setDoc(doc(db, 'daily_logs', entry.docId), saveData, { merge: true });
+                await withRejectingTimeout(
+                    setDoc(doc(db, 'daily_logs', entry.docId), saveData, { merge: true }),
+                    BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
+                    'offline_outbox_flush_timeout'
+                );
 
                 const hydratedData = mergeOfflineOutboxData(getCachedDailyLog(entry.docId) || {}, {
                     saveData: {
@@ -14266,16 +14530,20 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
 }
 
 window.flushOfflineOutbox = flushOfflineOutbox;
+window.flushBackgroundMediaPatchQueue = flushBackgroundMediaPatchQueue;
 window.addEventListener('online', () => {
     flushOfflineOutbox({ quiet: true }).catch(() => {});
+    flushBackgroundMediaPatchQueue({ quiet: true }).catch(() => {});
 });
 window.addEventListener('focus', () => {
     if (navigator.onLine === false) return;
     flushOfflineOutbox({ quiet: true }).catch(() => {});
+    flushBackgroundMediaPatchQueue({ quiet: true }).catch(() => {});
 });
 document.addEventListener('visibilitychange', () => {
     if (document.hidden || navigator.onLine === false) return;
     flushOfflineOutbox({ quiet: true }).catch(() => {});
+    flushBackgroundMediaPatchQueue({ quiet: true }).catch(() => {});
 });
 
 document.getElementById('saveDataBtn').addEventListener('click', () => {
@@ -15645,6 +15913,9 @@ window.shareToPlatform = async function (platform) {
 
 let cachedGalleryLogs = [];
 let galleryCacheAudience = 'unknown'; // 'guest' | 'auth' | 'unknown'
+const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v1';
+const GALLERY_PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const GALLERY_PERSISTENT_CACHE_LIMIT = 60;
 
 // 무한 스크롤 관련 변수
 let galleryDisplayCount = 0;
@@ -15661,6 +15932,59 @@ let galleryHasMore = false;  // Firestore에 더 가져올 데이터가 있는�
 let sortedFilteredCache = [];
 let sortedFilteredDirty = true;
 
+function getGalleryPersistentCacheKey(audience = 'guest', uid = '') {
+    const viewerKey = audience === 'auth' ? String(uid || auth.currentUser?.uid || 'unknown') : 'guest';
+    return `${GALLERY_PERSISTENT_CACHE_PREFIX}_${audience}_${viewerKey}`;
+}
+
+function normalizePersistedGalleryLogs(logs = []) {
+    return (Array.isArray(logs) ? logs : [])
+        .filter((item) => item?.id && item?.data && typeof item.data === 'object')
+        .slice(0, GALLERY_PERSISTENT_CACHE_LIMIT)
+        .map((item) => ({
+            id: String(item.id),
+            data: cloneDailyLogData(item.data)
+        }));
+}
+
+function readPersistentGalleryCache(audience = 'guest', uid = '') {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(getGalleryPersistentCacheKey(audience, uid)) || 'null');
+        if (!parsed || (Date.now() - Number(parsed.ts || 0)) > GALLERY_PERSISTENT_CACHE_TTL_MS) return null;
+        const logs = normalizePersistedGalleryLogs(parsed.logs || []);
+        return logs.length > 0 ? logs : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function writePersistentGalleryCache(audience = galleryCacheAudience, uid = auth.currentUser?.uid || '', logs = cachedGalleryLogs) {
+    const normalizedAudience = audience === 'auth' ? 'auth' : 'guest';
+    const normalizedLogs = normalizePersistedGalleryLogs(logs);
+    if (!normalizedLogs.length) return false;
+    try {
+        localStorage.setItem(getGalleryPersistentCacheKey(normalizedAudience, uid), JSON.stringify({
+            ts: Date.now(),
+            logs: normalizedLogs
+        }));
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function hydrateGalleryFromPersistentCache(audience = 'guest', uid = '') {
+    if (cachedGalleryLogs.length > 0 && galleryCacheAudience === audience) return false;
+    const persistedLogs = readPersistentGalleryCache(audience, uid);
+    if (!persistedLogs) return false;
+    cachedGalleryLogs = persistedLogs;
+    galleryCacheAudience = audience;
+    galleryLastDoc = null;
+    galleryHasMore = false;
+    sortedFilteredDirty = true;
+    return true;
+}
+
 function upsertGalleryCacheItem(docId, data) {
     if (!docId || !data) return;
 
@@ -15670,6 +15994,7 @@ function upsertGalleryCacheItem(docId, data) {
     ].slice(0, MAX_CACHE_SIZE);
     galleryCacheAudience = auth.currentUser ? 'auth' : galleryCacheAudience;
     sortedFilteredDirty = true;
+    writePersistentGalleryCache(galleryCacheAudience, auth.currentUser?.uid || '', cachedGalleryLogs);
 }
 
 // 갤러리 게시물 삭제 (본인 게시물만)
@@ -16073,6 +16398,7 @@ async function _loadMoreGalleryFromFirestore() {
         if (newDocs.length > 0) {
             cachedGalleryLogs = [...cachedGalleryLogs, ...newDocs];
             galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || galleryLastDoc;
+            writePersistentGalleryCache('auth', user.uid, cachedGalleryLogs);
         }
         galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE && cachedGalleryLogs.length < MAX_CACHE_SIZE;
         sortedFilteredDirty = true;
@@ -16228,6 +16554,14 @@ async function loadGalleryData(forceReload = false) {
             _galleryLoadingStartedAt = 0;
             _galleryLoadGeneration += 1;
         } else {
+            const currentUser = auth.currentUser;
+            const audience = currentUser ? 'auth' : 'guest';
+            const hasRenderableCache = hydrateGalleryFromPersistentCache(audience, currentUser?.uid || '')
+                || (cachedGalleryLogs.length > 0 && galleryCacheAudience === audience);
+            if (hasRenderableCache) {
+                renderFeedOnly();
+                return _galleryLoadingPromise.catch(() => {});
+            }
             // 백그라운드 로드 완료 대기 후 캐시에서 즉시 렌더링
             await _galleryLoadingPromise.catch(() => {});
             return _loadGalleryDataInner(forceReload, _galleryLoadGeneration); // 캐시 있으면 fetch 스킵, forceReload면 fresh fetch
@@ -16308,6 +16642,7 @@ async function _applyGalleryRestFallback(cutoffStr, audience = 'auth', limitCoun
     galleryLastDoc = null;
     galleryHasMore = false;
     sortedFilteredDirty = true;
+    writePersistentGalleryCache(audience, auth.currentUser?.uid || '', logsArray);
     return true;
 }
 
@@ -16353,11 +16688,17 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
         }
 
         const hadCachedLogs = cachedGalleryLogs.length > 0;
+        if (!hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience) {
+            hydrateGalleryFromPersistentCache(expectedGalleryAudience, user?.uid || '');
+        }
+        const hasRenderableCachedLogs = cachedGalleryLogs.length > 0 && galleryCacheAudience === expectedGalleryAudience;
         const shouldFetchFresh = forceReload || !hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience;
 
         if (shouldFetchFresh) {
             // 캐시가 없을 때만 스켈레톤을 보여주고, 기존 목록이 있으면 그대로 유지한다.
-            if (!hadCachedLogs) {
+            if (hasRenderableCachedLogs) {
+                renderFeedOnly();
+            } else {
                 container.innerHTML = createSkeletonHtml(4);
             }
 
@@ -16396,6 +16737,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         galleryLastDoc = null;
                         galleryHasMore = false;
                         sortedFilteredDirty = true;
+                        writePersistentGalleryCache('guest', '', logsArray);
                         break;
                     } catch (e) {
                         retries++;
@@ -16436,6 +16778,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
                         galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
                         sortedFilteredDirty = true;
+                        writePersistentGalleryCache('auth', user.uid, logsArray);
                         break;
                     } catch (e) {
                         retries++;
