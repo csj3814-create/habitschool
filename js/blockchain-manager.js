@@ -2224,6 +2224,7 @@ export async function initializeWalletExternalFirst() {
             || isFirestoreConnectivityIssue(error);
         if (connectivityIssue) {
             console.info('[wallet] initialization deferred while Firestore reconnects:', error.message);
+            return getEffectiveWalletAddress() || window.__assetCachedWalletAddress || null;
         } else {
             console.error('❌ 외부 지갑 우선 초기화 오류:', error);
         }
@@ -2478,7 +2479,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 }
 
 export function getWalletAddressForUI() {
-    return getEffectiveWalletAddress();
+    return getEffectiveWalletAddress() || window.__assetCachedWalletAddress || null;
 }
 
 export async function disconnectExternalWallet() {

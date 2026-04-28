@@ -7188,6 +7188,15 @@ function applyAssetWalletSnapshot(userData = {}) {
         : '';
     const effectiveAddress = externalAddress || appAddress;
 
+    if (effectiveAddress) {
+        window.__assetCachedWalletAddress = effectiveAddress;
+        if (!window.getWalletAddress || !window.getWalletAddress()) {
+            window.getWalletAddress = () => window.__assetCachedWalletAddress || effectiveAddress;
+        }
+    } else {
+        window.__assetCachedWalletAddress = null;
+    }
+
     const walletDisplay = document.getElementById('wallet-address-display');
     if (walletDisplay) {
         if (effectiveAddress) {
@@ -7198,6 +7207,13 @@ function applyAssetWalletSnapshot(userData = {}) {
             walletDisplay.style.color = '';
         }
     }
+
+    const copyBtn = document.querySelector('.wallet-addr-btn[onclick*="copyWallet"]');
+    const explorerBtn = document.querySelector('.wallet-addr-btn[onclick*="openWalletExplorer"]');
+    [copyBtn, explorerBtn].forEach(button => {
+        if (!button) return;
+        button.disabled = !effectiveAddress;
+    });
 
     const statusEl = document.getElementById('wallet-connection-status');
     const subEl = document.getElementById('wallet-connection-sub');
@@ -7445,6 +7461,24 @@ function writeAssetDisplayCache(uid, patch = {}) {
     }
 }
 
+function getAssetWalletSnapshotFromSources(...sources) {
+    const snapshot = {};
+    ['walletAddress', 'externalWalletAddress', 'walletProviderType', 'walletConnectionMode', 'walletChainId'].forEach((key) => {
+        for (const source of sources) {
+            const value = source?.[key];
+            if (typeof value === 'string' && value.trim()) {
+                snapshot[key] = value.trim();
+                break;
+            }
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                snapshot[key] = value;
+                break;
+            }
+        }
+    });
+    return snapshot;
+}
+
 function applyCachedAssetDisplay(uid) {
     const cached = readAssetDisplayCache(uid);
     const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
@@ -7454,7 +7488,15 @@ function applyCachedAssetDisplay(uid) {
     const hbtValue = hasFreshAssetCache
         ? getFiniteAssetNumber(cached.hbtBalance, { allowDecimal: true })
         : null;
-    if (pointsValue == null && hbtValue == null) return null;
+    const cachedWalletSnapshot = getAssetWalletSnapshotFromSources(
+        hasFreshAssetCache ? cached : null,
+        dashboardData?.ud
+    );
+    const hasWalletSnapshot = !!(cachedWalletSnapshot.walletAddress || cachedWalletSnapshot.externalWalletAddress);
+    if (hasWalletSnapshot) {
+        applyAssetWalletSnapshot(cachedWalletSnapshot);
+    }
+    if (pointsValue == null && hbtValue == null && !hasWalletSnapshot) return null;
 
     const pointsDisplay = document.getElementById('asset-points-display');
     if (pointsDisplay && pointsValue != null) {
@@ -7475,7 +7517,8 @@ function applyCachedAssetDisplay(uid) {
     return {
         ...(cached || {}),
         coins: pointsValue ?? cached?.coins,
-        hbtBalance: hbtValue ?? cached?.hbtBalance
+        hbtBalance: hbtValue ?? cached?.hbtBalance,
+        ...cachedWalletSnapshot
     };
 }
 
@@ -7583,6 +7626,54 @@ function writeAssetHistoryCache(uid, { hbtItems = [], pointItems = [] } = {}) {
         hbtHistoryItems: Array.isArray(hbtItems) ? hbtItems.slice(0, ASSET_HISTORY_CACHE_LIMIT) : [],
         pointHistoryItems: Array.isArray(pointItems) ? pointItems.slice(0, ASSET_HISTORY_CACHE_LIMIT) : [],
         historyTs: Date.now()
+    });
+}
+
+function renderAssetMiniChartValues(values = []) {
+    const minichartBars = document.getElementById('minichart-bars');
+    if (!minichartBars) return false;
+
+    const safeValues = Array.from({ length: 7 }, (_, index) => {
+        const value = Number(values[index] || 0);
+        return Number.isFinite(value) && value > 0 ? value : 0;
+    });
+    const dayLabels = ['일', '월', '화', '수', '목', '금', '토'];
+    const todayDow = new Date().getDay();
+    const maxVal = Math.max(...safeValues, 1);
+    let barsHtml = '';
+
+    for (let i = 0; i < 7; i++) {
+        const dayIdx = (todayDow - 6 + i + 7) % 7;
+        const heightPct = Math.round((safeValues[i] / maxVal) * 100);
+        const height = safeValues[i] > 0 ? Math.max(heightPct, 8) : 4;
+        const valueText = safeValues[i] % 1 === 0
+            ? String(safeValues[i])
+            : safeValues[i].toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+        const valLabel = safeValues[i] > 0 ? `<span class="wallet-minichart-bar-value">${valueText}</span>` : '';
+        const isToday = i === 6;
+        barsHtml += `<div class="wallet-minichart-bar${isToday ? ' today' : ''}" style="height:${height}%;" title="${valueText} HBT">${valLabel}<span class="wallet-minichart-bar-label">${dayLabels[dayIdx]}</span></div>`;
+    }
+
+    minichartBars.innerHTML = barsHtml;
+    return true;
+}
+
+function applyCachedAssetMiniChart(uid) {
+    const cached = readAssetDisplayCache(uid);
+    if (!cached) return false;
+    const chartTs = Number(cached.hbtMiniChartTs || 0);
+    if ((Date.now() - chartTs) >= ASSET_LS_TTL) return false;
+    const values = Array.isArray(cached.hbtMiniChartValues) ? cached.hbtMiniChartValues : [];
+    if (values.length !== 7) return false;
+    return renderAssetMiniChartValues(values);
+}
+
+function writeAssetMiniChartCache(uid, values = [], startDate = '') {
+    if (!uid || !Array.isArray(values) || values.length !== 7) return;
+    writeAssetDisplayCache(uid, {
+        hbtMiniChartValues: values.map(value => Number(value || 0) || 0),
+        hbtMiniChartStartDate: startDate,
+        hbtMiniChartTs: Date.now()
     });
 }
 
@@ -7852,6 +7943,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     if (applyCachedAssetDisplay(user.uid) && window.hideWalletSkeleton) {
         window.hideWalletSkeleton();
     }
+    const hadCachedMiniChart = applyCachedAssetMiniChart(user.uid);
     refreshAssetOnchainBalance(user.uid).catch(() => {});
     refreshAssetTokenStats(user.uid).catch(() => {});
     const hadCachedHistory = applyCachedAssetHistory(user.uid);
@@ -7981,14 +8073,17 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 ?? parseDisplayedAssetNumber('asset-points-display')
                 ?? parseDisplayedAssetNumber('point-balance')
                 ?? 0;
+            const walletCachePatch = getAssetWalletSnapshotFromSources(userData, cachedAssetSnapshot, dashboardSnapshot?.ud);
             const userDisplayData = {
                 ...userData,
+                ...walletCachePatch,
                 coins: coinsValue
             };
 
             // localStorage에 저장 (다음 방문/재시도 시 즉시 표시용)
             writeAssetDisplayCache(user.uid, {
-                coins: coinsValue
+                coins: coinsValue,
+                ...walletCachePatch
             });
             applyAssetWalletSnapshot(userDisplayData);
             loadRewardMarketSnapshot(forceRefresh).catch((error) => {
@@ -8103,9 +8198,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             const minichartBars = document.getElementById('minichart-bars');
             if (minichartBars) {
                 try {
-                    const dayLabels = ['일','월','화','수','목','금','토'];
-                    const nowDate = new Date();
-                    const todayDow = nowDate.getDay();
                     const data = Array(7).fill(0);
 
                     // 7일 전 날짜 (병렬 쿼리에서 이미 조회됨)
@@ -8114,8 +8206,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const txSnap = await _p_minichart;
                     if (!txSnap) {
                         scheduleAssetRetry(user.uid, 'mini-chart-timeout');
-                        if (!String(minichartBars.textContent || '').trim()) {
-                            minichartBars.innerHTML = '<div class="wallet-minichart-loading">불러오는 중...</div>';
+                        if (!hadCachedMiniChart) {
+                            renderAssetMiniChartValues(data);
                         }
                     } else {
                         txSnap.forEach(d => {
@@ -8126,16 +8218,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         }
                     });
 
-                    const maxVal = Math.max(...data, 1);
-                    let barsHtml = '';
-                    for (let i = 0; i < 7; i++) {
-                        const dayIdx = (todayDow - 6 + i + 7) % 7;
-                        const heightPct = Math.round((data[i] / maxVal) * 100);
-                        const isToday = i === 6;
-                        const valLabel = data[i] > 0 ? `<span class="wallet-minichart-bar-value">${data[i]}</span>` : '';
-                        barsHtml += `<div class="wallet-minichart-bar${isToday ? ' today' : ''}" style="height:${Math.max(heightPct, 4)}%;" title="${data[i]} HBT">${valLabel}<span class="wallet-minichart-bar-label">${dayLabels[dayIdx]}</span></div>`;
-                    }
-                        minichartBars.innerHTML = barsHtml;
+                        renderAssetMiniChartValues(data);
+                        writeAssetMiniChartCache(user.uid, data, _startDateStr);
                     }
                 } catch (chartErr) {
                     console.warn('미니차트 로드 실패:', chartErr.message);
@@ -8461,6 +8545,15 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         _p_reactionAwardHistory,
                         _p_notificationHistory
                     ]);
+                    const hasHistorySnapshotGap = !txSnap || !pointSnap || !reactionAwardSnap || !notificationSnap;
+                    if (hasHistorySnapshotGap) {
+                        scheduleAssetRetry(user.uid, 'asset-history-timeout');
+                        if (hadCachedHistory) {
+                            _assetHistoryState.isLoading = false;
+                            renderAssetHistory();
+                            return;
+                        }
+                    }
                     const hbtItems = [];
                     const pointItems = [];
 
@@ -8675,9 +8768,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     _assetHistoryState.pointItems = pointItems;
                     _assetHistoryState.hbtPage = 0;
                     _assetHistoryState.pointPage = 0;
-                    _assetHistoryState.isLoading = hbtItems.length === 0 && pointItems.length === 0;
+                    _assetHistoryState.isLoading = false;
                     renderAssetHistory();
-                    writeAssetHistoryCache(user.uid, { hbtItems, pointItems });
+                    if (!hasHistorySnapshotGap) {
+                        writeAssetHistoryCache(user.uid, { hbtItems, pointItems });
+                    } else if (txContainer && hbtItems.length === 0 && pointItems.length === 0) {
+                        txContainer.innerHTML = '<p class="wallet-tx-empty">거래 기록을 다시 불러오는 중이에요.</p>';
+                    }
                 } catch (txErr) {
                     console.warn('⚠️ 거래 기록 로드 스킵:', txErr.message);
                     if (txErr.message?.includes('index')) {

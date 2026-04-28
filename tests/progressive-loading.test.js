@@ -49,6 +49,12 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('function refreshAssetTokenStats(uid = \'\')');
         expect(appSource).toContain('refreshAssetTokenStats(user.uid).catch(() => {});');
         expect(appSource).toContain('function applyCachedPointBalanceFromStorage');
+        expect(appSource).toContain('function getAssetWalletSnapshotFromSources');
+        expect(appSource).toContain('applyAssetWalletSnapshot(cachedWalletSnapshot);');
+        expect(appSource).toContain('window.__assetCachedWalletAddress = effectiveAddress;');
+        expect(appSource).toContain('function applyCachedAssetMiniChart');
+        expect(appSource).toContain('const hadCachedMiniChart = applyCachedAssetMiniChart(user.uid);');
+        expect(appSource).toContain('writeAssetMiniChartCache(user.uid, data, _startDateStr);');
         expect(authSource).toContain('applyCachedSignedInPointBalance(user.uid);');
         expect(appSource).toContain('const userDocPromise = getDoc(userRef).catch((error) => {');
         expect(appSource).toContain('_assetTimeout(ASSET_USER_DOC_TIMEOUT_MS)');
@@ -67,6 +73,9 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain("'challenge-range-cache-projection'");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'mini-chart-timeout');");
         expect(appSource).toContain("scheduleAssetRetry(user.uid, 'daily-limit-timeout');");
+        expect(appSource).toContain("scheduleAssetRetry(user.uid, 'asset-history-timeout');");
+        expect(appSource).toContain('const hasHistorySnapshotGap = !txSnap || !pointSnap || !reactionAwardSnap || !notificationSnap;');
+        expect(appSource).toContain('_assetHistoryState.isLoading = false;');
         expect(appSource).not.toContain('coins: userData.coins || 0');
         expect(appSource).toContain('optional ${label} timed out; keeping cached/fallback UI');
         expect(appSource).toContain('dashboard_firestore_timeout');

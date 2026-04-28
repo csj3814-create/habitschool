@@ -29,6 +29,8 @@ describe('Firestore reconnect backoff', () => {
         expect(blockchainManagerSource).toContain("noteFirestoreConnectivityFailure(error, 'initializeWalletState')");
         expect(blockchainManagerSource).toContain('isFirestoreConnectivityIssue(error)');
         expect(blockchainManagerSource).toContain('[wallet] initialization deferred while Firestore reconnects:');
+        expect(blockchainManagerSource).toContain('return getEffectiveWalletAddress() || window.__assetCachedWalletAddress || null;');
+        expect(blockchainManagerSource).toContain('export function getWalletAddressForUI()');
         expect(blockchainManagerSource).toContain("noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');");
     });
 });
