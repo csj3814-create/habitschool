@@ -48,6 +48,8 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('function logAssetOptionalQueryFailure');
         expect(appSource).toContain('function refreshAssetTokenStats(uid = \'\')');
         expect(appSource).toContain('refreshAssetTokenStats(user.uid).catch(() => {});');
+        expect(appSource).toContain("progressSourceEl.textContent = '구간 진행도';");
+        expect(appSource).not.toContain('progressSourceEl.textContent = `구간 진행도 · ${chainLabel} 기준`;');
         expect(appSource).toContain('function applyCachedPointBalanceFromStorage');
         expect(appSource).toContain('function getAssetWalletSnapshotFromSources');
         expect(appSource).toContain('applyAssetWalletSnapshot(cachedWalletSnapshot);');

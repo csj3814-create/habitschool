@@ -16,6 +16,7 @@ __pycache__/
 .env.production
 functions/.env.reward-market-live
 functions/.env.reward-market-live.local
+functions/.env.habitschool-*
 functions/*.secret.env
 
 # IDE

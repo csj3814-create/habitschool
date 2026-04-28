@@ -10,7 +10,13 @@ describe('friend connection notification dedupe', () => {
         expect(appSource).toContain('function readChallengeNotificationSeenState(uid)');
         expect(appSource).toContain('function writeChallengeNotificationSeenState(uid');
         expect(appSource).toContain('const seenIds = seenState.ids;');
-        expect(appSource).toContain('if (seenIds.has(d.id)) return;');
+        expect(appSource).toContain('function isChallengeNotificationServerSeen(data = {})');
+        expect(appSource).toContain("function markChallengeNotificationClientSeen(notificationId, uid, reason = 'toast-shown')");
+        expect(appSource).toContain('clientSeenAt: serverTimestamp()');
+        expect(appSource).toContain('const locallySeen = seenIds.has(d.id);');
+        expect(appSource).toContain('silentlyConsumedNotifications.push({ id: d.id });');
+        expect(appSource).toContain("markChallengeNotificationClientSeen(id, uid, 'toast-shown')");
+        expect(appSource).toContain("data.type === 'friend_connected' && ts > 0 && nowMs - ts > FRIEND_CONNECTED_TOAST_MAX_AGE_MS");
         expect(appSource).toContain('seenIds.add(d.id);');
         expect(appSource).toContain('writeChallengeNotificationSeenState(uid, {');
         expect(appSource).toContain("showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);");

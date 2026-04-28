@@ -290,6 +290,7 @@ const FRIENDSHIP_CACHE_TTL_MS = 30_000;
 const FRIENDSHIP_RETRY_DELAY_MS = 3000;
 const FRIENDSHIP_MAX_RETRY_ATTEMPTS = 2;
 const CHALLENGE_NOTIFICATION_SEEN_ID_LIMIT = 80;
+const FRIEND_CONNECTED_TOAST_MAX_AGE_MS = 30 * 60 * 1000;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const GALLERY_RETRY_BASE_DELAY_MS = 2500;
@@ -7163,7 +7164,7 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 
     const progressSourceEl = document.getElementById('halving-progress-source-label');
     if (progressSourceEl) {
-        progressSourceEl.textContent = `구간 진행도 · ${chainLabel} 기준`;
+        progressSourceEl.textContent = '구간 진행도';
     }
 
     const tipEl = document.getElementById('wallet-halving-tip');
@@ -19551,6 +19552,30 @@ function writeChallengeNotificationSeenState(uid, { lastSeenTs = 0, ids = new Se
     } catch (_) {}
 }
 
+function isChallengeNotificationServerSeen(data = {}) {
+    return !!(data.clientSeenAt || data.seenAt || data.readAt || data.consumedAt);
+}
+
+function shouldSilentlyConsumeChallengeNotification(data = {}, ts = 0, lastSeen = 0, nowMs = Date.now()) {
+    if (isChallengeNotificationServerSeen(data)) return true;
+    if (ts > 0 && ts <= lastSeen) return true;
+    if (data.type === 'friend_connected' && ts > 0 && nowMs - ts > FRIEND_CONNECTED_TOAST_MAX_AGE_MS) return true;
+    return false;
+}
+
+function markChallengeNotificationClientSeen(notificationId, uid, reason = 'toast-shown') {
+    const safeId = String(notificationId || '').trim();
+    if (!safeId || !uid) return Promise.resolve(false);
+    return updateDoc(doc(db, 'notifications', safeId), {
+        clientSeenAt: serverTimestamp(),
+        clientSeenBy: uid,
+        clientSeenReason: reason
+    }).then(() => true).catch(error => {
+        console.warn('[notification_seen_update]', error.message);
+        return false;
+    });
+}
+
 /** 챌린지 결산 알림 확인 (대시보드 로드 시 호출) */
 async function checkChallengeNotifications(uid) {
     try {
@@ -19569,22 +19594,35 @@ async function checkChallengeNotifications(uid) {
         let newestSeenTs = lastSeen;
         let openedFriendRequestModal = false;
         const newNotifications = [];
+        const silentlyConsumedNotifications = [];
         snap.forEach(d => {
-            if (seenIds.has(d.id)) return;
             const data = d.data();
             const ts = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0;
-            if (ts > 0 && ts <= lastSeen) return;
+            const locallySeen = seenIds.has(d.id);
+            const serverSeen = isChallengeNotificationServerSeen(data);
+            const silentConsume = locallySeen || shouldSilentlyConsumeChallengeNotification(data, ts, lastSeen);
             seenIds.add(d.id);
             newestSeenTs = Math.max(newestSeenTs, ts);
+            if (silentConsume) {
+                if (!serverSeen) {
+                    silentlyConsumedNotifications.push({ id: d.id });
+                }
+                return;
+            }
             newNotifications.push({ id: d.id, data, ts });
         });
 
-        if (newNotifications.length > 0) {
+        if (newNotifications.length > 0 || silentlyConsumedNotifications.length > 0) {
             writeChallengeNotificationSeenState(uid, {
                 lastSeenTs: newestSeenTs || Date.now(),
                 ids: seenIds
             });
         }
+
+        await Promise.all([
+            ...silentlyConsumedNotifications.map(({ id }) => markChallengeNotificationClientSeen(id, uid, 'dedupe-silent')),
+            ...newNotifications.map(({ id }) => markChallengeNotificationClientSeen(id, uid, 'toast-shown'))
+        ]);
 
         newNotifications.forEach(({ data }) => {
             if (data.type === 'friend_request') {

@@ -27,6 +27,7 @@ const DEFAULT_PHASE1_ENDS_AT = "2026-05-23T00:00:00+09:00";
 const DEFAULT_GIFTISHOW_DEV_YN = "N";
 const DEFAULT_GIFTISHOW_CATALOG_START = 1;
 const DEFAULT_GIFTISHOW_CATALOG_SIZE = 50;
+const DEFAULT_GIFTISHOW_BODY_FORMAT = "form";
 const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
     ["baseUrl", "GIFTISHOW_API_BASE_URL"],
     ["customAuthCode", "GIFTISHOW_CUSTOM_AUTH_CODE"],
@@ -89,6 +90,14 @@ function normalizeSku(value = "") {
 function parseNumber(value, fallback = 0) {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function firstPositiveNumber(...values) {
+    for (const value of values) {
+        const numeric = parseNumber(value, 0);
+        if (numeric > 0) return numeric;
+    }
+    return 0;
 }
 
 function parseBoolean(value, fallback = false) {
@@ -523,64 +532,102 @@ function resolveCollectionItems(payload = null) {
     if (Array.isArray(payload.data)) return payload.data;
     if (payload.data && Array.isArray(payload.data.items)) return payload.data.items;
     if (payload.data && Array.isArray(payload.data.goods)) return payload.data.goods;
+    if (payload.data && Array.isArray(payload.data.goodsList)) return payload.data.goodsList;
     if (payload.result && Array.isArray(payload.result.items)) return payload.result.items;
     if (payload.result && Array.isArray(payload.result.goods)) return payload.result.goods;
+    if (payload.result && Array.isArray(payload.result.goodsList)) return payload.result.goodsList;
     return [];
 }
 
 function mapGiftishowGoodsItem(raw = {}, index = 0) {
     const brandName = String(raw.brandName || raw.brandNm || raw.brand || "").trim();
     const displayName = String(raw.goodsName || raw.goodsNm || raw.name || raw.productName || "").trim();
-    const providerGoodsId = String(raw.goodsId || raw.goodsNo || raw.goodsCd || raw.id || raw.productCode || "").trim();
-    const faceValueKrw = Math.max(
-        parseNumber(raw.faceValue, 0),
-        parseNumber(raw.price, 0),
-        parseNumber(raw.sellPrice, 0),
-        parseNumber(raw.sellPriceAmt, 0),
-        parseNumber(raw.cnsmPriceAmt, 0),
-        parseNumber(raw.goodsPrice, 0)
+    const providerGoodsId = String(
+        raw.goodsCode
+        || raw.goodsCd
+        || raw.goods_code
+        || raw.goodsId
+        || raw.productCode
+        || raw.id
+        || raw.goodsNo
+        || ""
+    ).trim();
+    const faceValueKrw = firstPositiveNumber(
+        raw.faceValue,
+        raw.salePrice,
+        raw.realPrice,
+        raw.saleDiscountPrice,
+        raw.sellPrice,
+        raw.sellPriceAmt,
+        raw.cnsmPriceAmt,
+        raw.goodsPrice,
+        raw.price
     );
-    const purchasePriceKrw = Math.max(
-        parseNumber(raw.salePrice, 0),
-        parseNumber(raw.buyPrice, 0),
-        parseNumber(raw.purchasePrice, 0),
-        parseNumber(raw.supplyPrice, 0),
-        parseNumber(raw.sellPriceAmt, 0)
+    const purchasePriceKrw = firstPositiveNumber(
+        raw.discountPrice,
+        raw.realPrice,
+        raw.saleDiscountPrice,
+        raw.buyPrice,
+        raw.purchasePrice,
+        raw.supplyPrice,
+        raw.sellPriceAmt,
+        raw.salePrice
     );
-    const stockQuantity = parseNumber(raw.stockQty, parseNumber(raw.stockQuantity, parseNumber(raw.stock, 0)));
-    const soldOutFlag = String(raw.soldOut || raw.soldout || raw.stockYn || raw.saleYn || "").trim().toLowerCase();
-    const available = soldOutFlag
-        ? !["y", "soldout", "false", "0", "n"].includes(soldOutFlag)
-        : stockQuantity !== 0;
+    const stockValues = [raw.stockQty, raw.stockQuantity, raw.stock]
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+    const stockQuantity = stockValues.length > 0 ? Math.max(...stockValues) : null;
+    const soldOutFlag = String(raw.soldOut || raw.soldout || "").trim().toLowerCase();
+    const stockYn = String(raw.stockYn || "").trim().toUpperCase();
+    const saleYn = String(raw.saleYn || "").trim().toUpperCase();
+    const goodsStateCd = String(raw.goodsStateCd || raw.goodsState || raw.status || "").trim().toUpperCase();
+    const available = goodsStateCd
+        ? goodsStateCd === "SALE"
+        : saleYn
+            ? ["Y", "YES", "TRUE", "1", "SALE"].includes(saleYn)
+            : soldOutFlag
+                ? !["y", "yes", "soldout", "true", "1"].includes(soldOutFlag)
+                : stockYn
+                    ? !["N", "NO", "FALSE", "0", "SOLDOUT"].includes(stockYn)
+                    : stockQuantity !== 0;
+    const validityDays = Math.max(
+        parseNumber(raw.limitDay, 0),
+        parseNumber(raw.limitday, 0),
+        String(raw.validPrdTypeCd || "").trim() === "01" ? parseNumber(raw.validPrdDay, 0) : 0
+    );
 
     return normalizeRewardCatalogItem({
         sku: providerGoodsId || `${brandName}-${displayName}-${index + 1}`,
         brandName: brandName || "기프티쇼",
         displayName: displayName || `기프티쇼 상품 ${index + 1}`,
-        category: String(raw.category || raw.lclsName || "general").trim(),
+        category: String(raw.category || raw.goodsTypeDtlNm || raw.category1Seq || raw.lclsName || "general").trim(),
         faceValueKrw: faceValueKrw || REWARD_MARKET_MIN_REDEMPTION_HBT,
         purchasePriceKrw: purchasePriceKrw || faceValueKrw || REWARD_MARKET_MIN_REDEMPTION_HBT,
         provider: "giftishow",
         providerGoodsId,
-        healthGuide: String(raw.healthGuide || "").trim(),
+        healthGuide: String(raw.healthGuide || raw.content || raw.contentAddDesc || "").trim(),
         productImageUrl: resolveRewardAssetUrl(
             raw.productImageUrl,
             raw.imageUrl,
             raw.goodsImgB,
             raw.goodsImgM,
             raw.goodsImgS,
+            raw.mmsGoodsImg,
             raw.goodsImageUrl,
             raw.thumbnailUrl
         ),
         brandLogoUrl: resolveRewardAssetUrl(
             raw.brandLogoUrl,
             raw.logoUrl,
+            raw.brandIconImg,
+            raw.brandIConImg,
             raw.brandImgUrl,
             raw.brandImageUrl
         ),
         available,
-        stockLabel: stockQuantity > 0 ? `재고 ${stockQuantity}` : "재고 확인 필요",
+        stockLabel: stockQuantity > 0 ? `재고 ${stockQuantity}` : (available ? "SALE" : "판매중지"),
         deliveryMethod: String(raw.deliveryMethod || raw.issueMethod || "pin").trim(),
+        validityDays,
         sortOrder: index + 1,
     });
 }
@@ -731,6 +778,8 @@ function getRewardMarketConfig(env = process.env) {
             buildGiftishowBizmoneyTemplate()
         ),
         headers: safeParseJsonObject(env.GIFTISHOW_API_HEADERS_JSON || ""),
+        bodyFormat: String(env.GIFTISHOW_API_BODY_FORMAT || DEFAULT_GIFTISHOW_BODY_FORMAT).trim().toLowerCase()
+            || DEFAULT_GIFTISHOW_BODY_FORMAT,
         catalogLiveEnabled: String(env.GIFTISHOW_CATALOG_LIVE || "true").trim().toLowerCase() !== "false",
         timeoutMs: Math.max(parseNumber(env.GIFTISHOW_API_TIMEOUT_MS, DEFAULT_GIFTISHOW_TIMEOUT_MS), 1000),
 
@@ -760,6 +809,27 @@ function getRewardMarketConfig(env = process.env) {
 
 const buildRewardMarketConfig = getRewardMarketConfig;
 
+function buildGiftishowHttpBody(body, bodyFormat = DEFAULT_GIFTISHOW_BODY_FORMAT) {
+    if (!body || typeof body !== "object") return undefined;
+    const normalizedFormat = String(bodyFormat || DEFAULT_GIFTISHOW_BODY_FORMAT).trim().toLowerCase();
+    if (normalizedFormat === "json") {
+        return JSON.stringify(body);
+    }
+
+    const params = new URLSearchParams();
+    Object.entries(body).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        params.set(key, String(value));
+    });
+    return params.toString();
+}
+
+function resolveGiftishowContentType(bodyFormat = DEFAULT_GIFTISHOW_BODY_FORMAT) {
+    return String(bodyFormat || DEFAULT_GIFTISHOW_BODY_FORMAT).trim().toLowerCase() === "json"
+        ? "application/json"
+        : "application/x-www-form-urlencoded; charset=UTF-8";
+}
+
 function buildRewardReserveSummary(data = {}) {
     return {
         totalMarginKrw: Math.max(0, parseNumber(data.totalMarginKrw, 0)),
@@ -782,8 +852,12 @@ async function callGiftishowApi(config, endpointPath, options = {}) {
         urlObject.searchParams.set(key, String(value));
     });
     const url = urlObject.toString();
+    const bodyFormat = String(options.bodyFormat || config.bodyFormat || DEFAULT_GIFTISHOW_BODY_FORMAT)
+        .trim()
+        .toLowerCase()
+        || DEFAULT_GIFTISHOW_BODY_FORMAT;
     const headers = {
-        "Content-Type": "application/json",
+        "Content-Type": resolveGiftishowContentType(bodyFormat),
         ...config.headers,
         ...(options.headers || {}),
     };
@@ -796,7 +870,7 @@ async function callGiftishowApi(config, endpointPath, options = {}) {
             headers,
             body: ["GET", "HEAD"].includes(method) || !options.body
                 ? undefined
-                : JSON.stringify(options.body),
+                : buildGiftishowHttpBody(options.body, bodyFormat),
             signal: controller.signal,
         });
 
@@ -2819,6 +2893,10 @@ module.exports = {
         buildIssuancePolicy,
         quoteCatalogItem,
         buildCatalogAvailability,
+        resolveCollectionItems,
+        mapGiftishowGoodsItem,
+        callGiftishowApi,
+        buildGiftishowHttpBody,
         resolveRewardValidityDays,
         buildMockIssuedCoupon,
         shouldChargePointsImmediately,

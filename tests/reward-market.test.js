@@ -193,6 +193,7 @@ describe('reward market pricing helpers', () => {
         ]));
         expect(config.orderBodyTemplate.api_code).toBe('0204');
         expect(config.bizmoneyBodyTemplate.api_code).toBe('0301');
+        expect(config.bodyFormat).toBe('form');
     });
 
     it('requires Giftishow card/template and banner ids before live issuance is ready', () => {
@@ -226,6 +227,93 @@ describe('reward market pricing helpers', () => {
         expect(ready.missingProviderConfig).toEqual([]);
         expect(ready.templateId).toBe('test-card-id');
         expect(ready.bannerId).toBe('test-banner-id');
+    });
+
+    it('maps Giftishow 0101 goodsList responses using documented goodsCode and price fields', () => {
+        const giftishowPayload = {
+            code: '0000',
+            result: {
+                listNum: 1,
+                goodsList: [{
+                    goodsCode: 'G00000280811',
+                    goodsNo: 21445,
+                    goodsName: '광동)비타500 100ml 병',
+                    brandName: '세븐일레븐',
+                    content: '내용',
+                    goodsImgB: 'https://biz.giftishow.com/Resource/goods/G00000280811/G00000280811.jpg',
+                    goodsImgS: 'https://biz.giftishow.com/Resource/goods/G00000280811/G00000280811_250.jpg',
+                    brandIconImg: 'https://biz.giftishow.com/Resource/brand/BR_20140528_171011_3.jpg',
+                    goodsTypeDtlNm: '편의점',
+                    goodsStateCd: 'SALE',
+                    salePrice: 800,
+                    discountPrice: 750,
+                    realPrice: 800,
+                    limitDay: 30,
+                    validPrdTypeCd: '01',
+                }],
+            },
+        };
+
+        const items = __test.resolveCollectionItems(giftishowPayload);
+        expect(items).toHaveLength(1);
+
+        const mapped = __test.mapGiftishowGoodsItem(items[0]);
+        expect(mapped.providerGoodsId).toBe('G00000280811');
+        expect(mapped.sku).toBe('g00000280811');
+        expect(mapped.displayName).toBe('광동)비타500 100ml 병');
+        expect(mapped.brandName).toBe('세븐일레븐');
+        expect(mapped.category).toBe('편의점');
+        expect(mapped.faceValueKrw).toBe(800);
+        expect(mapped.purchasePriceKrw).toBe(750);
+        expect(mapped.productImageUrl).toBe('https://biz.giftishow.com/Resource/goods/G00000280811/G00000280811.jpg');
+        expect(mapped.brandLogoUrl).toBe('https://biz.giftishow.com/Resource/brand/BR_20140528_171011_3.jpg');
+        expect(mapped.validityDays).toBe(30);
+        expect(mapped.available).toBe(true);
+    });
+
+    it('sends Giftishow POST bodies as form-urlencoded by default', async () => {
+        const originalFetch = globalThis.fetch;
+        let captured = null;
+        globalThis.fetch = async (url, options) => {
+            captured = { url, options };
+            return {
+                ok: true,
+                status: 200,
+                text: async () => JSON.stringify({ code: '0000', message: null }),
+            };
+        };
+
+        try {
+            const config = __test.buildRewardMarketConfig({
+                REWARD_MARKET_MODE: 'live',
+                GIFTISHOW_API_BASE_URL: 'https://bizapi.giftishow.com',
+                GIFTISHOW_CUSTOM_AUTH_CODE: 'auth-code',
+                GIFTISHOW_CUSTOM_AUTH_TOKEN: 'auth-token',
+                GIFTISHOW_CALLBACK_NO: '01012345678',
+                GIFTISHOW_USER_ID: 'user@example.com',
+                GIFTISHOW_CARD_ID: 'card-id',
+                GIFTISHOW_BANNER_ID: 'banner-id',
+            });
+
+            await __test.callGiftishowApi(config, '/bizApi/goods', {
+                method: 'POST',
+                body: {
+                    api_code: '0101',
+                    custom_auth_code: 'auth-code',
+                    custom_auth_token: 'auth-token',
+                    dev_yn: 'N',
+                    start: '1',
+                    size: '1',
+                },
+            });
+
+            expect(captured.options.headers['Content-Type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
+            expect(captured.options.body).toContain('api_code=0101');
+            expect(captured.options.body).toContain('start=1');
+            expect(captured.options.body.trim().startsWith('{')).toBe(false);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
     });
 
     it('resolves reward recipient phone from request, user profile, and auth fallback', () => {
