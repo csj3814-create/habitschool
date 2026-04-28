@@ -237,6 +237,7 @@ function buildGiftishowBizmoneyTemplate() {
         custom_auth_code: "{{giftishowCustomAuthCode}}",
         custom_auth_token: "{{giftishowCustomAuthToken}}",
         dev_yn: "{{giftishowDevYn}}",
+        user_id: "{{giftishowUserId}}",
     };
 }
 
@@ -1272,7 +1273,13 @@ async function fetchBizmoneyBalance({ config, context = {} }) {
         return null;
     }
 
-    const requestPayload = buildRequestPayload(config.bizmoneyBodyTemplate, {}, context);
+    const requestPayload = buildRequestPayload(config.bizmoneyBodyTemplate, {}, {
+        ...context,
+        giftishowCustomAuthCode: config.customAuthCode,
+        giftishowCustomAuthToken: config.customAuthToken,
+        giftishowDevYn: config.devYn,
+        giftishowUserId: config.providerUserId,
+    });
     const payload = await callGiftishowApi(config, config.bizmoneyPath, {
         method: config.bizmoneyMethod,
         query: config.bizmoneyMethod === "GET" ? requestPayload : undefined,

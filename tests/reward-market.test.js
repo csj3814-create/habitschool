@@ -193,6 +193,7 @@ describe('reward market pricing helpers', () => {
         ]));
         expect(config.orderBodyTemplate.api_code).toBe('0204');
         expect(config.bizmoneyBodyTemplate.api_code).toBe('0301');
+        expect(config.bizmoneyBodyTemplate.user_id).toBe('{{giftishowUserId}}');
         expect(config.bodyFormat).toBe('form');
     });
 
