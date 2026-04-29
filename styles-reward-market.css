@@ -60,6 +60,10 @@
     margin-bottom: 10px;
 }
 
+.reward-market-status.is-empty {
+    display: none;
+}
+
 .reward-market-status.tone-muted {
     background: #fff3e0;
     color: #8c5e20;

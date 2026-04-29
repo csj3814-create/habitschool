@@ -48,7 +48,8 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         purchasePriceKrw: 1940,
         pointCost: 2000,
         provider: "giftishow",
-        providerGoodsId: "G00002321189",
+        providerGoodsId: "G00002861259",
+        providerGoodsAliases: ["G00002321189"],
         healthGuide: "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
         productImageUrl: "https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg",
         brandLogoUrl: "/assets/reward-market/mega-mgc-logo.png",
@@ -68,6 +69,7 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         pointCost: 2000,
         provider: "giftishow",
         providerGoodsId: "G00001810964",
+        providerGoodsAliases: ["G00002871294"],
         healthGuide: "부담 없이 교환해 보며 건강 습관 보상을 체감하기 좋은 소액 음료 상품입니다.",
         productImageUrl: "https://bizimg.giftishow.com/Resource/goods/2024/G00002871294/G00002871294.jpg",
         brandLogoUrl: "/assets/reward-market/paikdabang-logo.png",
@@ -85,6 +87,63 @@ function normalizeSku(value = "") {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
+}
+
+function normalizeProviderGoodsId(value = "") {
+    return String(value || "").trim().toUpperCase();
+}
+
+function extractGiftishowGoodsCode(value = "") {
+    const match = String(value || "").match(/G\d{8,}/i);
+    return match ? normalizeProviderGoodsId(match[0]) : "";
+}
+
+function resolvePublicRewardProviderGoodsIds(item = {}) {
+    const aliases = Array.isArray(item.providerGoodsAliases) ? item.providerGoodsAliases : [];
+    const candidates = [
+        item.providerGoodsId,
+        item.goodsCode,
+        item.goodsId,
+        item.productCode,
+        item.productImageUrl,
+        item.imageUrl,
+        item.goodsImageUrl,
+        item.thumbnailUrl,
+        ...aliases,
+    ];
+    const ids = [];
+
+    for (const candidate of candidates) {
+        const direct = normalizeProviderGoodsId(candidate);
+        if (/^G\d{8,}$/i.test(direct)) ids.push(direct);
+        const extracted = extractGiftishowGoodsCode(candidate);
+        if (extracted) ids.push(extracted);
+    }
+
+    return [...new Set(ids)];
+}
+
+const PUBLIC_REWARD_CATALOG_SKUS = new Set(
+    DEFAULT_REWARD_CATALOG.map((item) => normalizeSku(item.sku)).filter(Boolean)
+);
+const PUBLIC_REWARD_PROVIDER_GOODS_IDS = new Set(
+    DEFAULT_REWARD_CATALOG.flatMap((item) => resolvePublicRewardProviderGoodsIds(item))
+);
+
+function isPublicRewardCatalogItem(item = {}) {
+    const sku = normalizeSku(item.sku || "");
+    if (sku && PUBLIC_REWARD_CATALOG_SKUS.has(sku)) return true;
+
+    const provider = String(item.provider || "giftishow").trim().toLowerCase();
+    if (provider && provider !== "giftishow") return false;
+
+    return resolvePublicRewardProviderGoodsIds(item)
+        .some((goodsId) => PUBLIC_REWARD_PROVIDER_GOODS_IDS.has(goodsId));
+}
+
+function filterPublicRewardCatalogItems(items = []) {
+    if (!Array.isArray(items)) return [];
+    return items.filter((item) => isPublicRewardCatalogItem(item));
 }
 
 function parseNumber(value, fallback = 0) {
@@ -471,6 +530,7 @@ function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
         hbtCost: pointCost,
         provider: String(item.provider || "giftishow").trim(),
         providerGoodsId: String(item.providerGoodsId || item.goodsId || item.id || sku).trim(),
+        providerGoodsAliases: Array.isArray(item.providerGoodsAliases) ? item.providerGoodsAliases : [],
         healthGuide: String(
             item.healthGuide
             || item.healthCopy
@@ -507,6 +567,9 @@ function buildSeededRewardVisualLookup(items = []) {
     for (const item of items) {
         if (item?.sku) bySku.set(item.sku, item);
         if (item?.providerGoodsId) byProviderGoodsId.set(item.providerGoodsId, item);
+        for (const goodsId of resolvePublicRewardProviderGoodsIds(item)) {
+            byProviderGoodsId.set(goodsId, item);
+        }
     }
 
     return { bySku, byProviderGoodsId };
@@ -922,7 +985,8 @@ async function loadGiftishowCatalog(config) {
 
     return resolveCollectionItems(payload)
         .map((item, index) => mapGiftishowGoodsItem(item, index))
-        .filter((item) => !!item.sku);
+        .filter((item) => !!item.sku)
+        .filter((item) => isPublicRewardCatalogItem(item));
 }
 
 async function loadRewardCatalog({ db, config }) {
@@ -941,10 +1005,12 @@ async function loadRewardCatalog({ db, config }) {
         return seededItems;
     }
 
-    return catalogSnapshot.docs
+    const catalogItems = catalogSnapshot.docs
         .map((docSnap) => normalizeRewardCatalogItem(docSnap.data() || {}, docSnap.id))
+        .filter((item) => isPublicRewardCatalogItem(item))
         .map((item) => applySeededRewardVisuals(item, seededLookup))
         .sort((a, b) => a.sortOrder - b.sortOrder);
+    return catalogItems.length > 0 ? catalogItems : seededItems;
 }
 
 function normalizeFeedData(data = {}, config = {}) {
@@ -2902,6 +2968,8 @@ module.exports = {
         buildCatalogAvailability,
         resolveCollectionItems,
         mapGiftishowGoodsItem,
+        isPublicRewardCatalogItem,
+        filterPublicRewardCatalogItems,
         callGiftishowApi,
         buildGiftishowHttpBody,
         resolveRewardValidityDays,

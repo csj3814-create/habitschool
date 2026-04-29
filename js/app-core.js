@@ -4818,12 +4818,16 @@ let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
 let getCurrentEra = () => 1;
 let fetchTokenStats = async () => null;
+let fetchHbtTransferHistory = async () => [];
 let isBlockchainManagerReady = false;
 import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
     updateChallengeProgress = mod.updateChallengeProgress;
     getConversionRate = mod.getConversionRate;
     getCurrentEra = mod.getCurrentEra;
     fetchTokenStats = mod.fetchTokenStats;
+    fetchHbtTransferHistory = typeof mod.fetchHbtTransferHistory === 'function'
+        ? mod.fetchHbtTransferHistory
+        : fetchHbtTransferHistory;
     isBlockchainManagerReady = true;
     console.log('✅ app.js: 블록체인 모듈 로드');
     if (auth.currentUser && typeof window.updateAssetDisplay === 'function') {
@@ -7159,7 +7163,7 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 
     const convertDescEl = document.getElementById('wallet-convert-desc');
     if (convertDescEl) {
-        convertDescEl.textContent = `100P 단위로 HBT로 바꾸며, 현재 ${chainLabel} 온체인 비율은 100P = ${formattedPer100} HBT (${phaseLabel})예요.`;
+        convertDescEl.textContent = `100P 단위로 HBT로 바꾸며, 현재 비율은 100P = ${formattedPer100} HBT (${phaseLabel})예요.`;
     }
 
     const progressSourceEl = document.getElementById('halving-progress-source-label');
@@ -7169,14 +7173,14 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 
     const tipEl = document.getElementById('wallet-halving-tip');
     if (tipEl) {
-        tipEl.innerHTML = `⚡ 지금은 <strong>${phaseLabel}</strong>! ${chainLabel} 온체인 비율은 <strong>100P = ${formattedPer100} HBT</strong>이며, 비율이 매주 자동 조절됩니다.`;
+        tipEl.innerHTML = `⚡ 지금은 <strong>${phaseLabel}</strong>! 현재 비율은 <strong>100P = ${formattedPer100} HBT</strong>이며, 매주 자동 조절됩니다.`;
     }
 }
 
 function updateConvertRateBadge(currentPhase, per100Hbt, chainLabel = getActiveOnchainLabel(APP_ENV)) {
     const rateBadge = document.getElementById('convert-rate-badge');
     if (!rateBadge) return;
-    rateBadge.textContent = `현재 ${chainLabel} ${eraToLabel(currentPhase)}구간 · 100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
+    rateBadge.textContent = `현재 ${eraToLabel(currentPhase)}구간 · 100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
 }
 
 function applyAssetWalletSnapshot(userData = {}) {
@@ -7234,7 +7238,9 @@ const _assetHistoryState = {
     pointItems: [],
     hbtPage: 0,
     pointPage: 0,
-    isLoading: false
+    isLoading: false,
+    hbtDeferred: false,
+    pointDeferred: false
 };
 
 function formatAssetHistoryDate(value, fallback = '-') {
@@ -7252,17 +7258,93 @@ function formatAssetHistoryAmount(value = 0, unit = '') {
     return `${formatted}${unit ? ` ${unit}` : ''}`;
 }
 
+function normalizeAssetTransactionChainKey(tx = {}) {
+    const explicitChainKey = String(tx.chainKey || '').trim().toLowerCase();
+    if (explicitChainKey === 'mainnet' || explicitChainKey === 'testnet') {
+        return explicitChainKey;
+    }
+
+    const rawNetwork = String(tx.network || tx.networkTag || tx.chain || tx.chainId || '').trim().toLowerCase();
+    if (!rawNetwork) return '';
+
+    const normalizedNetwork = rawNetwork.replace(/[\s_-]/g, '');
+    if (['bsc', 'mainnet', 'bscmainnet', 'bnbmainnet', 'binancesmartchain', '56', '0x38'].includes(normalizedNetwork)) {
+        return 'mainnet';
+    }
+    if (['bsctestnet', 'testnet', 'bnbtestnet', '97', '0x61'].includes(normalizedNetwork)) {
+        return 'testnet';
+    }
+    return '';
+}
+
 function doesTransactionMatchActiveChain(tx = {}) {
-    const networkTag = String(tx.network || tx.networkTag || '').trim();
-    if (networkTag) {
-        return networkTag === ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG;
+    const chainKey = normalizeAssetTransactionChainKey(tx);
+    if (chainKey) {
+        return chainKey === ACTIVE_WALLET_CHAIN_KEY;
     }
 
     const txDate = String(tx.date || '').trim();
-    if (!txDate) return ACTIVE_WALLET_CHAIN_KEY !== 'mainnet';
+    if (!txDate) return true;
     return ACTIVE_WALLET_CHAIN_KEY === 'mainnet'
         ? txDate >= MAINNET_CHALLENGE_CUTOVER_DATE
         : txDate < MAINNET_CHALLENGE_CUTOVER_DATE;
+}
+
+function buildOnchainHbtHistoryItem(transfer = {}) {
+    if (!doesTransactionMatchActiveChain(transfer)) return null;
+
+    const amount = Number(transfer.amount || 0);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+
+    const direction = String(transfer.direction || '').trim();
+    const kind = String(transfer.kind || '').trim();
+    const isOutgoing = direction === 'out' || kind === 'burn';
+    const txDateObj = Number(transfer.timestampMs || 0) > 0
+        ? new Date(Number(transfer.timestampMs))
+        : null;
+    const txDate = formatAssetHistoryDate(txDateObj, transfer.date || '-');
+    const sortKey = txDateObj
+        ? txDateObj.toISOString()
+        : `${transfer.date || ''}T12:00:00`;
+    const labelByKind = {
+        mint: 'HBT 민팅',
+        burn: 'HBT 소각',
+        staking: isOutgoing ? '챌린지 예치' : '챌린지 반환',
+        self: 'HBT 이동',
+        external: isOutgoing ? 'HBT 전송' : 'HBT 수신'
+    };
+
+    return {
+        sortKey,
+        txHash: String(transfer.txHash || '').trim().toLowerCase(),
+        icon: kind === 'staking' ? '🔐' : kind === 'burn' ? '🔥' : '💎',
+        iconClass: isOutgoing ? 'withdraw' : 'settle',
+        label: labelByKind[kind] || (isOutgoing ? 'HBT 전송' : 'HBT 수신'),
+        date: txDate,
+        amountText: `${isOutgoing ? '-' : '+'}${formatAssetHistoryAmount(amount, 'HBT')}`,
+        amountClass: isOutgoing ? 'negative' : 'positive',
+        statusText: '온체인'
+    };
+}
+
+function appendOnchainHbtHistoryItems(hbtItems = [], transfers = []) {
+    if (!Array.isArray(transfers) || transfers.length === 0) return 0;
+
+    const knownHashes = new Set(
+        hbtItems
+            .map(item => String(item.txHash || '').trim().toLowerCase())
+            .filter(Boolean)
+    );
+    let added = 0;
+    transfers.forEach((transfer) => {
+        const item = buildOnchainHbtHistoryItem(transfer);
+        if (!item) return;
+        if (item.txHash && knownHashes.has(item.txHash)) return;
+        if (item.txHash) knownHashes.add(item.txHash);
+        hbtItems.push(item);
+        added += 1;
+    });
+    return added;
 }
 
 function renderAssetHistoryItem({ icon, iconClass, label, date, amountText, amountClass = '', statusText = '' }) {
@@ -7283,14 +7365,14 @@ function renderAssetHistoryItem({ icon, iconClass, label, date, amountText, amou
     `;
 }
 
-function renderAssetHistorySection(kind, title, caption, items, pageIndex) {
+function renderAssetHistorySection(kind, title, caption, items, pageIndex, isDeferred = false) {
     const safePageIndex = Math.max(0, pageIndex || 0);
     const pageCount = Math.max(1, Math.ceil(items.length / ASSET_HISTORY_PAGE_SIZE));
     const clampedPage = Math.min(safePageIndex, pageCount - 1);
     const start = clampedPage * ASSET_HISTORY_PAGE_SIZE;
     const pagedItems = items.slice(start, start + ASSET_HISTORY_PAGE_SIZE);
-    const emptyText = kind === 'hbt'
-        ? `아직 ${title}이 없습니다.`
+    const emptyText = isDeferred
+        ? `${title}을 확인하는 중입니다.`
         : `아직 ${title}이 없습니다.`;
 
     const pagerHtml = items.length > ASSET_HISTORY_PAGE_SIZE ? `
@@ -7325,14 +7407,16 @@ function renderAssetHistory() {
     const hbtItems = _assetHistoryState.hbtItems || [];
     const pointItems = _assetHistoryState.pointItems || [];
     const isLoading = !!_assetHistoryState.isLoading;
+    const hbtDeferred = !!_assetHistoryState.hbtDeferred;
+    const pointDeferred = !!_assetHistoryState.pointDeferred;
 
     if (hbtItems.length === 0 && pointItems.length === 0) {
         txContainer.innerHTML = `
             <div class="wallet-tx-empty-cta">
-                <div class="wallet-tx-empty-icon">${isLoading ? '⏳' : '💎'}</div>
-                <div class="wallet-tx-empty-text">${isLoading ? '거래 기록을 확인하는 중입니다' : '아직 거래 기록이 없습니다'}</div>
-                <div class="wallet-tx-empty-sub">${isLoading ? '최근 HBT 거래와 포인트 기록을 불러오는 중이에요.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
-                ${isLoading
+                <div class="wallet-tx-empty-icon">${isLoading || hbtDeferred || pointDeferred ? '⏳' : '💎'}</div>
+                <div class="wallet-tx-empty-text">${isLoading || hbtDeferred || pointDeferred ? '거래 기록을 확인하는 중입니다' : '아직 거래 기록이 없습니다'}</div>
+                <div class="wallet-tx-empty-sub">${isLoading || hbtDeferred || pointDeferred ? '최근 HBT 거래와 포인트 기록을 불러오는 중이에요.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
+                ${isLoading || hbtDeferred || pointDeferred
                     ? '<div class="wallet-tx-subempty">잠시만 기다려주세요...</div>'
                     : '<button class="wallet-tx-empty-btn" onclick="document.getElementById(\'convert-point-input\')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>'
                 }
@@ -7345,8 +7429,8 @@ function renderAssetHistory() {
         ? '메인넷 HBT 최근 5개씩'
         : '테스트넷 HBT 최근 5개씩';
     txContainer.innerHTML = `
-        ${renderAssetHistorySection('hbt', 'HBT 거래 기록', chainCaptionBase, hbtItems, _assetHistoryState.hbtPage)}
-        ${renderAssetHistorySection('point', '포인트 기록', '포인트 최근 5개씩', pointItems, _assetHistoryState.pointPage)}
+        ${renderAssetHistorySection('hbt', 'HBT 거래 기록', chainCaptionBase, hbtItems, _assetHistoryState.hbtPage, hbtDeferred)}
+        ${renderAssetHistorySection('point', '포인트 기록', '포인트 최근 5개씩', pointItems, _assetHistoryState.pointPage, pointDeferred)}
     `;
 }
 
@@ -7395,7 +7479,7 @@ const ASSET_QUERY_TIMEOUT_MS = 3500;
 const ASSET_HISTORY_TIMEOUT_MS = 4500;
 const ASSET_USER_DOC_TIMEOUT_MS = 5000;
 const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
-const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 1800;
+const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 600;
 const ASSET_RETRY_BASE_DELAY_MS = 1200;
 const ASSET_MAX_RETRY_ATTEMPTS = 5;
 const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;
@@ -7617,6 +7701,8 @@ function applyCachedAssetHistory(uid) {
     _assetHistoryState.hbtPage = 0;
     _assetHistoryState.pointPage = 0;
     _assetHistoryState.isLoading = false;
+    _assetHistoryState.hbtDeferred = false;
+    _assetHistoryState.pointDeferred = false;
     renderAssetHistory();
     return true;
 }
@@ -7788,7 +7874,9 @@ async function fetchAssetChallengeDailyLogsByDate(uid = '', activeChallenges = {
 
     const entries = await Promise.all(dates.map(async (date) => {
         const snap = await getDoc(doc(db, 'daily_logs', `${uid}_${date}`));
-        return [date, snap.exists() ? (snap.data() || null) : null];
+        const log = snap.exists() ? (snap.data() || null) : null;
+        if (log) updateDailyLogCache(`${uid}_${date}`, log);
+        return [date, log];
     }));
 
     return entries.reduce((acc, [date, log]) => {
@@ -7957,6 +8045,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         _assetHistoryState.hbtPage = 0;
         _assetHistoryState.pointPage = 0;
         _assetHistoryState.isLoading = true;
+        _assetHistoryState.hbtDeferred = true;
+        _assetHistoryState.pointDeferred = true;
         renderAssetHistory();
     }
 
@@ -8016,6 +8106,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("timestamp", "desc"),
             limit(100)
         )), 'hbt-history', ASSET_HISTORY_TIMEOUT_MS);
+        const _p_onchainHbtHistory = withAssetQueryTimeout(
+            Promise.resolve().then(() => fetchHbtTransferHistory(ASSET_HISTORY_CACHE_LIMIT)),
+            'hbt-transfer-history',
+            ASSET_HISTORY_TIMEOUT_MS
+        );
         const _p_pointHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "daily_logs"),
             where("userId", "==", user.uid),
@@ -8371,19 +8466,30 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 return true;
             };
 
+            const challengeProgressDates = collectActiveChallengeProgressDates(activeChallenges, _todayStr);
             const cachedChallengeLogsByDate = readCachedChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr);
-            applyChallengeProjection(cachedChallengeLogsByDate, 'challenge-range-cache-projection');
+            const usedCachedChallengeProjection = applyChallengeProjection(cachedChallengeLogsByDate, 'challenge-range-cache-projection');
+            const hasCachedChallengeLogs = Object.keys(cachedChallengeLogsByDate || {}).length > 0;
 
-            const challengeRangeLogsPromise = fetchAssetChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr);
-            const serverChallengeLogsByDate = await withAssetQueryTimeout(
-                challengeRangeLogsPromise,
-                'challenge-range-logs',
-                ASSET_CHALLENGE_LOG_TIMEOUT_MS
-            );
+            const challengeRangeLogsPromise = challengeProgressDates.length > 0
+                ? fetchAssetChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr)
+                : Promise.resolve({});
+            const shouldWaitForServerChallengeLogs = challengeProgressDates.length > 0
+                && !usedCachedChallengeProjection
+                && !hasCachedChallengeLogs;
+            const serverChallengeLogsByDate = shouldWaitForServerChallengeLogs
+                ? await withAssetQueryTimeout(
+                    challengeRangeLogsPromise,
+                    'challenge-range-logs',
+                    ASSET_CHALLENGE_LOG_TIMEOUT_MS
+                )
+                : null;
             if (serverChallengeLogsByDate) {
                 applyChallengeProjection(serverChallengeLogsByDate, 'challenge-range-server-projection');
-            } else if (collectActiveChallengeProgressDates(activeChallenges, _todayStr).length > 0) {
-                scheduleAssetRetry(user.uid, 'challenge-range-logs-timeout');
+            } else if (challengeProgressDates.length > 0) {
+                if (shouldWaitForServerChallengeLogs) {
+                    scheduleAssetRetry(user.uid, 'challenge-range-logs-timeout');
+                }
                 challengeRangeLogsPromise.then((logsByDate) => {
                     if (!logsByDate || Object.keys(logsByDate).length === 0) return;
                     const lateProjection = reconcileActiveChallengesWithDailyLogs(activeChallenges, logsByDate);
@@ -8546,17 +8652,21 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         _p_reactionAwardHistory,
                         _p_notificationHistory
                     ]);
-                    const hasHistorySnapshotGap = !txSnap || !pointSnap || !reactionAwardSnap || !notificationSnap;
+                    const hbtHistoryDeferred = !txSnap;
+                    const pointHistoryDeferred = !pointSnap || !reactionAwardSnap || !notificationSnap;
+                    const hasHistorySnapshotGap = hbtHistoryDeferred || pointHistoryDeferred;
                     if (hasHistorySnapshotGap) {
                         scheduleAssetRetry(user.uid, 'asset-history-timeout');
-                        if (hadCachedHistory) {
-                            _assetHistoryState.isLoading = false;
-                            renderAssetHistory();
-                            return;
-                        }
+                        console.info('[asset-display] history partially deferred; keeping cache/fallback sections');
                     }
-                    const hbtItems = [];
-                    const pointItems = [];
+                    const hbtItems = hbtHistoryDeferred
+                        ? [...(_assetHistoryState.hbtItems || [])]
+                        : [];
+                    const pointItems = pointHistoryDeferred && (_assetHistoryState.pointItems || []).length > 0
+                        ? [...(_assetHistoryState.pointItems || [])]
+                        : [];
+                    const shouldBuildPointItems = !pointHistoryDeferred || pointItems.length === 0;
+                    let hbtOnchainHistoryDeferred = false;
 
                     if (txSnap && !txSnap.empty) {
                         txSnap.forEach(txDoc => {
@@ -8630,6 +8740,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
                             hbtItems.push({
                                 sortKey,
+                                txHash: String(tx.txHash || '').trim().toLowerCase(),
                                 icon,
                                 iconClass,
                                 label,
@@ -8667,7 +8778,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         });
                     }
 
-                    if (pointSnap && !pointSnap.empty) {
+                    if (shouldBuildPointItems && pointSnap && !pointSnap.empty) {
                         pointSnap.forEach(pointDoc => {
                             const log = pointDoc.data();
                             const awarded = log.awardedPoints || {};
@@ -8712,7 +8823,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         });
                     }
 
-                    if (reactionAwardSnap && !reactionAwardSnap.empty) {
+                    if (shouldBuildPointItems && reactionAwardSnap && !reactionAwardSnap.empty) {
                         const outgoingReactionByDate = new Map();
                         reactionAwardSnap.forEach(reactionDoc => {
                             const log = reactionDoc.data() || {};
@@ -8735,7 +8846,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         });
                     }
 
-                    if (notificationSnap && !notificationSnap.empty) {
+                    if (shouldBuildPointItems && notificationSnap && !notificationSnap.empty) {
                         notificationSnap.forEach(notificationDoc => {
                             const notification = notificationDoc.data() || {};
                             if (notification.type !== 'challenge_settled') return;
@@ -8762,6 +8873,21 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         });
                     }
 
+                    if (hbtItems.length === 0 || hbtHistoryDeferred) {
+                        const onchainTransfers = await _p_onchainHbtHistory;
+                        hbtOnchainHistoryDeferred = onchainTransfers === null || !isBlockchainManagerReady;
+                        const addedOnchainItems = appendOnchainHbtHistoryItems(hbtItems, onchainTransfers);
+                        if (addedOnchainItems > 0) {
+                            console.info(`[asset-display] filled HBT history from onchain transfers (${addedOnchainItems})`);
+                            hbtOnchainHistoryDeferred = false;
+                        } else if (hbtHistoryDeferred) {
+                            console.info('[asset-display] hbt Firestore history deferred; using onchain/cache fallback');
+                        }
+                        if (hbtOnchainHistoryDeferred && hbtItems.length === 0) {
+                            scheduleAssetRetry(user.uid, 'hbt-transfer-history-timeout');
+                        }
+                    }
+
                     hbtItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
                     pointItems.sort((a, b) => String(b.sortKey).localeCompare(String(a.sortKey)));
 
@@ -8770,11 +8896,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     _assetHistoryState.hbtPage = 0;
                     _assetHistoryState.pointPage = 0;
                     _assetHistoryState.isLoading = false;
+                    _assetHistoryState.hbtDeferred = (hbtHistoryDeferred || hbtOnchainHistoryDeferred) && hbtItems.length === 0;
+                    _assetHistoryState.pointDeferred = pointHistoryDeferred && pointItems.length === 0;
                     renderAssetHistory();
                     if (!hasHistorySnapshotGap) {
                         writeAssetHistoryCache(user.uid, { hbtItems, pointItems });
-                    } else if (txContainer && hbtItems.length === 0 && pointItems.length === 0) {
-                        txContainer.innerHTML = '<p class="wallet-tx-empty">거래 기록을 다시 불러오는 중이에요.</p>';
                     }
                 } catch (txErr) {
                     console.warn('⚠️ 거래 기록 로드 스킵:', txErr.message);
@@ -8782,10 +8908,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         console.info('💡 Firebase Console에서 복합 인덱스를 생성해주세요. 위 에러 메시지의 링크를 클릭하면 자동 생성됩니다.');
                     }
                     _assetHistoryState.isLoading = false;
+                    _assetHistoryState.hbtDeferred = _assetHistoryState.hbtItems.length === 0;
+                    _assetHistoryState.pointDeferred = _assetHistoryState.pointItems.length === 0;
                     renderAssetHistory();
-                    if (txContainer && _assetHistoryState.hbtItems.length === 0 && _assetHistoryState.pointItems.length === 0) {
-                        txContainer.innerHTML = '<p class="wallet-tx-empty">거래 기록을 잠시 후 다시 불러올게요.</p>';
-                    }
                 }
             }
         } else {

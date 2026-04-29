@@ -289,48 +289,23 @@ async function ensureRewardMarketFunctions() {
 function renderRewardMarketStatus(message = '', tone = 'muted') {
     const statusEl = document.getElementById('reward-market-status');
     if (!statusEl) return;
+    if (!message) {
+        statusEl.textContent = '';
+        statusEl.className = 'reward-market-status is-empty';
+        return;
+    }
     statusEl.textContent = message;
     statusEl.className = `reward-market-status tone-${tone}`;
 }
 
 function buildLimitChip(label, bucket) {
-    if (!bucket) return '';
-    const remainingPoints = Number(bucket.remainingPoints ?? bucket.remainingHbt ?? 0) || 0;
-    return `<div class="reward-market-chip">${escapeHtml(label)} ${formatNumber(remainingPoints)}P 남음</div>`;
+    return '';
 }
 
 function renderRewardMarketMeta() {
     const metaEl = document.getElementById('reward-market-meta');
     if (!metaEl) return;
-
-    const settings = rewardMarketState.settings || {};
-    const modeLabel = settings.mode === 'live' ? '실발급' : '테스트 발급';
-    const isPointMarket = settings.settlementAsset !== 'hbt';
-    const pricingLabel = isPointMarket ? '포인트 정액가' : formatPhaseLabel(settings.pricingMode);
-    const quotedLabel = isPointMarket
-        ? '내부 교환 기준 1P = 1원'
-        : (settings.quotedAt ? `기준 시각 ${formatDateLabel(settings.quotedAt, true)}` : '기준 시각 준비 중');
-    const nextRefreshLabel = isPointMarket
-        ? 'HBT 시스템은 자산 탭에서 별도로 운영 중'
-        : (settings.nextRefreshAt ? `다음 갱신 ${formatDateLabel(settings.nextRefreshAt, true)}` : '다음 갱신 준비 중');
-    const supportLabel = settings.deliveryMode === 'app_vault'
-        ? '앱 보관함 노출'
-        : settings.deliveryMode || '앱 보관함';
-
-    metaEl.innerHTML = `
-        <div class="reward-market-chip accent">${escapeHtml(modeLabel)}</div>
-        <div class="reward-market-chip">${escapeHtml(pricingLabel)}</div>
-        <div class="reward-market-chip">최소 ${formatNumber(settings.minRedeemPoints || DEFAULT_MIN_REDEEM_POINTS)}P</div>
-        ${isPointMarket ? '' : `<div class="reward-market-chip">일일 변동폭 ±${formatNumber(settings.dailyBandPct || 0)}%</div>`}
-        <div class="reward-market-chip">보관 방식 ${escapeHtml(supportLabel)}</div>
-        <div class="reward-market-chip">${escapeHtml(settings.providerReady ? '연동 준비됨' : '운영 설정 필요')}</div>
-        <div class="reward-market-chip">${escapeHtml(settings.manualResendAvailable ? '장애 시 관제탑 재확인' : '자동 재전송 없음')}</div>
-        <div class="reward-market-chip">${escapeHtml(quotedLabel)}</div>
-        <div class="reward-market-chip">${escapeHtml(nextRefreshLabel)}</div>
-        ${buildLimitChip('오늘', settings.limits?.daily)}
-        ${buildLimitChip('이번 주', settings.limits?.weekly)}
-        ${buildLimitChip('이번 달', settings.limits?.monthly)}
-    `;
+    metaEl.innerHTML = '';
 }
 
 function renderRewardRecipientPhonePanel() {
@@ -395,9 +370,8 @@ function buildRewardMarketAction(item = {}) {
         label = '재고 확인 중';
         disabled = true;
     } else if (!settings.issuanceEnabled) {
-        label = '발급 일시중지';
+        label = '\uAD50\uD658 \uC900\uBE44 \uC911';
         disabled = true;
-        helper = settings.issuanceBlockedReason || '';
     } else if (!item.redeemable) {
         label = '교환 불가';
         disabled = true;
@@ -429,32 +403,13 @@ function renderRewardMarketCatalog() {
 
 
 function buildCompactLimitChip(settings = {}) {
-    const candidates = [
-        ['오늘', settings.limits?.daily],
-        ['이번 주', settings.limits?.weekly],
-        ['이번 달', settings.limits?.monthly],
-    ];
-    const selected = candidates.find(([, bucket]) => bucket);
-    if (!selected) return '';
-    const [label, bucket] = selected;
-    const remainingPoints = Number(bucket.remainingPoints ?? bucket.remainingHbt ?? 0) || 0;
-    return `<div class="reward-market-chip">${escapeHtml(label)} 남은 교환 ${formatNumber(remainingPoints)}P</div>`;
+    return '';
 }
 
 function renderRewardMarketMetaView() {
     const metaEl = document.getElementById('reward-market-meta');
     if (!metaEl) return;
-
-    const settings = rewardMarketState.settings || {};
-    const chips = [
-        buildCompactLimitChip(settings),
-    ];
-
-    if (!settings.providerReady) {
-        chips.push('<div class="reward-market-chip warning">\uC6B4\uC601 \uC124\uC815 \uD544\uC694</div>');
-    }
-
-    metaEl.innerHTML = chips.filter(Boolean).join('');
+    metaEl.innerHTML = '';
 }
 
 function renderRewardRecipientPhonePanelView() {
@@ -536,9 +491,8 @@ function buildRewardMarketActionView(item = {}) {
         label = '준비 중';
         disabled = true;
     } else if (!settings.issuanceEnabled) {
-        label = '발급 일시중지';
+        label = '\uAD50\uD658 \uC900\uBE44 \uC911';
         disabled = true;
-        helper = settings.issuanceBlockedReason || '';
     } else if (!item.redeemable) {
         label = '교환 불가';
         disabled = true;
@@ -933,8 +887,8 @@ function renderRewardMarketSnapshot() {
     }
 
     const settings = rewardMarketState.settings || {};
-    if (!settings.issuanceEnabled && settings.issuanceBlockedReason) {
-        renderRewardMarketStatus(settings.issuanceBlockedReason, 'warning');
+    if (!settings.issuanceEnabled) {
+        renderRewardMarketStatus('', 'muted');
         return;
     }
 
@@ -1096,7 +1050,7 @@ async function redeemRewardCouponLive(item = {}, clientRequestId = '') {
         throw new Error('선택한 상품을 다시 불러와 주세요.');
     }
     if (!latestState.settings.issuanceEnabled) {
-        throw new Error(latestState.settings.issuanceBlockedReason || '현재는 발급이 일시 중지된 상태예요.');
+        throw new Error('\uC9C0\uAE08\uC740 \uAD50\uD658\uC744 \uC900\uBE44\uD558\uACE0 \uC788\uC5B4\uC694.');
     }
     if (!latestItem.redeemable) {
         throw new Error(latestItem.blockedReason || '지금은 이 상품을 교환할 수 없어요.');

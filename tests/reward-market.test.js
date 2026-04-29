@@ -272,6 +272,51 @@ describe('reward market pricing helpers', () => {
         expect(mapped.available).toBe(true);
     });
 
+    it('filters the live Giftishow catalog to the two public coffee coupons', () => {
+        const giftishowPayload = {
+            code: '0000',
+            result: {
+                goodsList: [
+                    {
+                        goodsCode: 'G00002861259',
+                        goodsName: 'Mega iced americano',
+                        brandName: 'Mega MGC Coffee',
+                        goodsStateCd: 'SALE',
+                        salePrice: 2000,
+                        discountPrice: 1880,
+                        limitDay: 60,
+                    },
+                    {
+                        goodsCode: 'G00002871294',
+                        goodsName: 'Paikdabang iced americano',
+                        brandName: 'Paikdabang',
+                        goodsStateCd: 'SALE',
+                        salePrice: 2000,
+                        discountPrice: 1880,
+                        limitDay: 60,
+                    },
+                    {
+                        goodsCode: 'G00009999999',
+                        goodsName: 'Book gift card',
+                        brandName: 'Other',
+                        goodsStateCd: 'SALE',
+                        salePrice: 20000,
+                        discountPrice: 20000,
+                    },
+                ],
+            },
+        };
+
+        const mapped = __test.resolveCollectionItems(giftishowPayload)
+            .map((item, index) => __test.mapGiftishowGoodsItem(item, index));
+        const filtered = __test.filterPublicRewardCatalogItems(mapped);
+
+        expect(filtered.map((item) => item.providerGoodsId)).toEqual([
+            'G00002861259',
+            'G00002871294',
+        ]);
+    });
+
     it('sends Giftishow POST bodies as form-urlencoded by default', async () => {
         const originalFetch = globalThis.fetch;
         let captured = null;

@@ -56,6 +56,14 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('window.editRewardRecipientPhone = function');
     });
 
+    it('keeps operations-only market limits and provider reasons out of the user view', () => {
+        expect(rewardMarketSource).toMatch(/function buildCompactLimitChip[\s\S]*return '';/);
+        expect(rewardMarketSource).toMatch(/function renderRewardMarketMetaView[\s\S]*metaEl\.innerHTML = '';/);
+        expect(rewardMarketSource).not.toContain('renderRewardMarketStatus(settings.issuanceBlockedReason');
+        expect(rewardMarketSource).not.toContain('helper = settings.issuanceBlockedReason');
+        expect(rewardMarketStyles).toContain('.reward-market-status.is-empty');
+    });
+
     it('marks barcode lightbox state explicitly for rotated fullscreen rendering', () => {
         expect(rewardMarketSource).toContain("lightboxEl.classList.toggle('is-barcode-open'");
         expect(rewardMarketSource).toContain("lightboxEl.classList.remove('is-barcode-open')");
