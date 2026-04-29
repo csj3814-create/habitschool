@@ -1543,20 +1543,21 @@ function buildIssuancePolicy({
         parseNumber(bizmoney.balanceKrw, 0),
         parseNumber(reserve.lastBizmoneyBalanceKrw, 0)
     );
+    const bizmoneyStatus = String(bizmoney.status || reserve.bizmoneyStatus || "").trim().toLowerCase();
+    const hasKnownBizmoneyBalance = config.mode === "live" && (
+        bizmoneyStatus === "ok"
+        || bizmoneyStatus === "cached"
+        || lastBizmoneyBalanceKrw > 0
+    );
 
     if (
         issuanceEnabled
         && config.mode === "live"
-        && String(bizmoney.status || "").trim() === "error"
+        && bizmoneyStatus === "error"
         && !(lastBizmoneyBalanceKrw > 0)
     ) {
         issuanceEnabled = false;
         blockedReason = "비즈머니 확인이 불안정해 쿠폰 발급을 잠시 멈췄어요.";
-    }
-
-    if (issuanceEnabled && config.mode === "live" && lastBizmoneyBalanceKrw > 0 && lastBizmoneyBalanceKrw < config.minBizmoneyKrw) {
-        issuanceEnabled = false;
-        blockedReason = "비즈머니 잔액이 최소 운영 기준 아래예요. 관제탑 확인이 필요해요.";
     }
 
     return {
@@ -1564,6 +1565,8 @@ function buildIssuancePolicy({
         blockedReason,
         lastBizmoneyBalanceKrw,
         minBizmoneyKrw: config.minBizmoneyKrw,
+        bizmoneyStatus,
+        hasKnownBizmoneyBalance,
         limits: limitSummary,
     };
 }
@@ -1588,8 +1591,9 @@ function buildCatalogAvailability(item = {}, policy = {}) {
     if ((limits.monthly?.remainingPoints ?? limits.monthly?.remainingHbt ?? 0) < itemCost) {
         blockedReasons.push("이번 달 교환 한도를 모두 사용했어요.");
     }
-    if (policy.lastBizmoneyBalanceKrw > 0 && (policy.lastBizmoneyBalanceKrw - item.purchasePriceKrw) < policy.minBizmoneyKrw) {
-        blockedReasons.push("비즈머니 운영 기준에 먼저 맞춰야 해요.");
+    const purchasePriceKrw = Math.max(parseNumber(item.purchasePriceKrw, 0), 0);
+    if (policy.hasKnownBizmoneyBalance && purchasePriceKrw > 0 && policy.lastBizmoneyBalanceKrw < purchasePriceKrw) {
+        blockedReasons.push("지금은 이 쿠폰을 교환할 수 없어요. 잠시 후 다시 시도해 주세요.");
     }
 
     return {
@@ -2265,7 +2269,7 @@ async function redeemRewardCouponLegacy({
         throw new HttpsError("failed-precondition", product.blockedReason || "현재는 쿠폰 발급이 잠시 어려워요.");
     }
 
-    if (policy.lastBizmoneyBalanceKrw > 0 && (policy.lastBizmoneyBalanceKrw - reserve.purchasePriceKrw) < config.minBizmoneyKrw) {
+    if (policy.hasKnownBizmoneyBalance && reserve.purchasePriceKrw > 0 && policy.lastBizmoneyBalanceKrw < reserve.purchasePriceKrw) {
         await redemptionRef.set(buildManualReviewDoc({
             uid,
             userData,
@@ -2277,15 +2281,15 @@ async function redeemRewardCouponLegacy({
             burnExplorerUrl,
             networkTag,
             providerTrId,
-            reason: "bizmoney_below_operational_floor",
-            errorMessage: "bizmoney_below_operational_floor",
+            reason: "bizmoney_below_coupon_purchase_price",
+            errorMessage: "bizmoney_below_coupon_purchase_price",
             quoteVersion: effectiveQuoteVersion,
             quoteSource: effectiveQuoteSource,
             quotedAt: effectiveQuotedAt,
             hbtCost: requestedQuotedHbtCost,
         }), { merge: true });
 
-        throw new HttpsError("failed-precondition", "비즈머니 운영 기준이 부족해 관리자 확인이 필요해요.");
+        throw new HttpsError("failed-precondition", "쿠폰 발급 잔액이 부족해요. 잠시 후 다시 시도해 주세요.");
     }
 
     if (config.mode === "live") {
@@ -2601,7 +2605,7 @@ async function redeemRewardCoupon({
         throw new HttpsError("failed-precondition", product.blockedReason || "현재는 이 쿠폰을 발급할 수 없어요.");
     }
 
-    if (policy.lastBizmoneyBalanceKrw > 0 && (policy.lastBizmoneyBalanceKrw - reserve.purchasePriceKrw) < config.minBizmoneyKrw) {
+    if (policy.hasKnownBizmoneyBalance && reserve.purchasePriceKrw > 0 && policy.lastBizmoneyBalanceKrw < reserve.purchasePriceKrw) {
         await redemptionRef.set(buildManualReviewDoc({
             uid,
             userData,
@@ -2610,8 +2614,8 @@ async function redeemRewardCoupon({
             reserve,
             normalizedPhone,
             providerTrId: buildProviderTrId(),
-            reason: "bizmoney_below_operational_floor",
-            errorMessage: "bizmoney_below_operational_floor",
+            reason: "bizmoney_below_coupon_purchase_price",
+            errorMessage: "bizmoney_below_coupon_purchase_price",
             quoteVersion: effectiveQuoteVersion,
             quoteSource: effectiveQuoteSource,
             quotedAt: effectiveQuotedAt,
@@ -2619,7 +2623,7 @@ async function redeemRewardCoupon({
             clientRequestId: normalizedRequestId,
         }), { merge: true });
 
-        throw new HttpsError("failed-precondition", "비즈머니 운영 기준이 부족해 관제탑 확인이 필요해요.");
+        throw new HttpsError("failed-precondition", "쿠폰 발급 잔액이 부족해요. 잠시 후 다시 시도해 주세요.");
     }
 
     const providerTrId = buildProviderTrId();

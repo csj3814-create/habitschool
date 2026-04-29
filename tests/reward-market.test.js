@@ -511,7 +511,7 @@ describe('reward market pricing helpers', () => {
         expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'live' })).toBe(false);
     });
 
-    it('keeps point settlement available without a price quote but still blocks low bizmoney', () => {
+    it('keeps point settlement available below the ops reserve floor and only blocks unaffordable coupons', () => {
         const limits = __test.buildLimitSummary(
             {
                 dailyLimitPoints: 20000,
@@ -556,7 +556,7 @@ describe('reward market pricing helpers', () => {
         });
         expect(hbtSettlement.issuanceEnabled).toBe(false);
 
-        const lowBizmoney = __test.buildIssuancePolicy({
+        const belowOpsFloor = __test.buildIssuancePolicy({
             config: {
                 mode: 'live',
                 minBizmoneyKrw: 30000,
@@ -568,7 +568,34 @@ describe('reward market pricing helpers', () => {
             limitSummary: limits,
             bizmoney: { balanceKrw: 10000 },
         });
-        expect(lowBizmoney.issuanceEnabled).toBe(false);
+        expect(belowOpsFloor.issuanceEnabled).toBe(true);
+        expect(__test.buildCatalogAvailability({
+            sku: 'paikdabang-iced-americano-60d',
+            pointCost: 2000,
+            purchasePriceKrw: 1940,
+            available: true,
+        }, belowOpsFloor).redeemable).toBe(true);
+
+        const belowCouponPrice = __test.buildIssuancePolicy({
+            config: {
+                mode: 'live',
+                minBizmoneyKrw: 30000,
+                settlementAsset: 'points',
+                providerReady: true,
+            },
+            pricing: { quoteState: 'ready' },
+            reserve: {},
+            limitSummary: limits,
+            bizmoney: { balanceKrw: 1000, status: 'ok' },
+        });
+        const unavailableCoupon = __test.buildCatalogAvailability({
+            sku: 'paikdabang-iced-americano-60d',
+            pointCost: 2000,
+            purchasePriceKrw: 1940,
+            available: true,
+        }, belowCouponPrice);
+        expect(belowCouponPrice.issuanceEnabled).toBe(true);
+        expect(unavailableCoupon.redeemable).toBe(false);
     });
 
     it('completes mock redemptions without charging points or crashing on reserve ledger writes', async () => {
