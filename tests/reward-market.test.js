@@ -272,6 +272,28 @@ describe('reward market pricing helpers', () => {
         expect(mapped.available).toBe(true);
     });
 
+    it('maps nested Giftishow couponInfoList expiry from coupon status responses', () => {
+        const mapped = __test.mapGiftishowOrderPayload(
+            {
+                code: '0000',
+                result: [{
+                    couponInfoList: [{
+                        pinNo: '123456789012',
+                        validPrdEndDt: '20260529235959',
+                    }],
+                    resCode: '0000',
+                    resMsg: 'OK',
+                }],
+            },
+            { validityDays: 60 },
+            '01012345678'
+        );
+
+        expect(mapped.providerResponseCode).toBe('0000');
+        expect(mapped.pinCode).toBe('123456789012');
+        expect(mapped.expiresAt).toBe('2026-05-29T14:59:59.000Z');
+    });
+
     it('filters the live Giftishow catalog to the two public coffee coupons', () => {
         const giftishowPayload = {
             code: '0000',

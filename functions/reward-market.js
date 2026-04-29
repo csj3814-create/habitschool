@@ -732,8 +732,23 @@ function buildRequestPayload(templateObject = {}, fallbackPayload = {}, context 
     );
 }
 
+function firstPlainObject(value) {
+    if (Array.isArray(value)) {
+        return value.find((item) => item && typeof item === "object" && !Array.isArray(item)) || {};
+    }
+    return value && typeof value === "object" ? value : {};
+}
+
 function unwrapNestedResult(payload = {}) {
-    const layers = [payload, payload?.data, payload?.result, payload?.result?.result];
+    const layers = [
+        payload,
+        payload?.data,
+        firstPlainObject(payload?.data),
+        payload?.result,
+        firstPlainObject(payload?.result),
+        payload?.result?.result,
+        firstPlainObject(payload?.result?.result),
+    ];
     return layers.reduce((accumulator, current) => ({
         ...accumulator,
         ...(current && typeof current === "object" ? current : {}),
@@ -1724,9 +1739,46 @@ function buildMockIssuedCoupon(product = {}, recipientPhone = "") {
     };
 }
 
+function findFirstNestedObject(value, predicate, seen = new Set()) {
+    if (!value || typeof value !== "object" || seen.has(value)) return null;
+    seen.add(value);
+    if (!Array.isArray(value) && predicate(value)) return value;
+    const entries = Array.isArray(value) ? value : Object.values(value);
+    for (const entry of entries) {
+        const found = findFirstNestedObject(entry, predicate, seen);
+        if (found) return found;
+    }
+    return null;
+}
+
+function resolveGiftishowCouponInfo(payload = {}) {
+    const holder = findFirstNestedObject(payload, (candidate) => (
+        Array.isArray(candidate.couponInfoList)
+        && candidate.couponInfoList.some((item) => item && typeof item === "object")
+    ));
+    return holder?.couponInfoList?.find((item) => item && typeof item === "object") || {};
+}
+
+function parseGiftishowDate(value = "", fallback = "") {
+    const raw = String(value || "").trim();
+    const match = raw.match(/^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?$/);
+    if (match) {
+        const [, year, month, day, hour = "23", minute = "59", second = "59"] = match;
+        return makeKstDate(
+            parseNumber(year, 1970),
+            parseNumber(month, 1),
+            parseNumber(day, 1),
+            parseNumber(hour, 23),
+            parseNumber(minute, 59),
+            parseNumber(second, 59)
+        ).toISOString();
+    }
+    return toPlainDate(raw, fallback);
+}
+
 function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "") {
     const flattened = unwrapNestedResult(payload);
-    const couponInfo = Array.isArray(payload?.couponInfoList) ? payload.couponInfoList[0] || {} : {};
+    const couponInfo = resolveGiftishowCouponInfo(payload);
     const merged = {
         ...payload,
         ...flattened,
@@ -1741,7 +1793,7 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         pinCode: String(merged.pin || merged.pinCode || merged.pinNo || merged.couponNo || merged.couponNumber || "").trim(),
         couponImgUrl: String(merged.couponImgUrl || merged.barcodeUrl || merged.barcodeURL || merged.imageUrl || merged.imgUrl || "").trim(),
         barcodeUrl: String(merged.barcodeUrl || merged.couponImgUrl || merged.barcodeURL || merged.imageUrl || merged.imgUrl || "").trim(),
-        expiresAt: toPlainDate(
+        expiresAt: parseGiftishowDate(
             merged.expiresAt || merged.expiredAt || merged.expireDate || merged.validUntil || merged.validPrdEndDt,
             new Date(Date.now() + (resolveRewardValidityDays(product) * 24 * 60 * 60 * 1000)).toISOString()
         ),
@@ -2972,6 +3024,7 @@ module.exports = {
         buildCatalogAvailability,
         resolveCollectionItems,
         mapGiftishowGoodsItem,
+        mapGiftishowOrderPayload,
         isPublicRewardCatalogItem,
         filterPublicRewardCatalogItems,
         callGiftishowApi,
