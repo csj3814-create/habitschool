@@ -6521,6 +6521,117 @@ function collectCurrentDietAnalysisFromUi() {
     return dietAnalysis;
 }
 
+function getDietSlotMediaKeys(slot = '') {
+    const normalizedSlot = String(slot || '').trim();
+    return {
+        urlKey: `${normalizedSlot}Url`,
+        thumbKey: `${normalizedSlot}ThumbUrl`
+    };
+}
+
+function mergeDietMediaWithExisting(previousDiet = {}, nextDiet = {}, { removedSlots = new Set() } = {}) {
+    const previous = previousDiet && typeof previousDiet === 'object' ? previousDiet : {};
+    const next = nextDiet && typeof nextDiet === 'object' ? nextDiet : {};
+    const removed = removedSlots instanceof Set ? removedSlots : new Set(removedSlots || []);
+    const merged = { ...previous };
+    const mediaKeys = new Set();
+
+    DIET_DEEP_LINK_SLOTS.forEach((slot) => {
+        const { urlKey, thumbKey } = getDietSlotMediaKeys(slot);
+        mediaKeys.add(urlKey);
+        mediaKeys.add(thumbKey);
+
+        if (removed.has(slot)) {
+            merged[urlKey] = null;
+            merged[thumbKey] = null;
+            return;
+        }
+
+        const nextUrl = hasMediaUrl(next[urlKey]) ? next[urlKey] : null;
+        if (!nextUrl) return;
+
+        const previousUrl = hasMediaUrl(previous[urlKey]) ? previous[urlKey] : null;
+        const previousThumb = hasMediaUrl(previous[thumbKey]) ? previous[thumbKey] : null;
+        const nextThumb = hasMediaUrl(next[thumbKey]) ? next[thumbKey] : null;
+
+        merged[urlKey] = nextUrl;
+        merged[thumbKey] = nextThumb || (previousUrl === nextUrl ? previousThumb : null);
+    });
+
+    Object.entries(next).forEach(([key, value]) => {
+        if (mediaKeys.has(key) || typeof value === 'undefined') return;
+        merged[key] = value;
+    });
+
+    return merged;
+}
+
+function resolveDietPreviewThumbUrl(meal = '', imageUrl = '') {
+    const inputId = `diet-img-${meal}`;
+    const previewImg = document.getElementById(`preview-${meal}`);
+    const pendingSnapshot = getPendingUploadSnapshot(inputId);
+    const pendingResult = pendingSnapshot?.result || null;
+    if (
+        pendingResult
+        && pendingResult.url === imageUrl
+        && hasMediaUrl(pendingResult.thumbUrl)
+    ) {
+        return pendingResult.thumbUrl;
+    }
+    const savedThumbUrl = previewImg?.getAttribute('data-saved-thumb-url');
+    return hasMediaUrl(savedThumbUrl) ? savedThumbUrl : null;
+}
+
+async function persistAnalyzedDietPhotoAndResult({ user, docId, meal, imageUrl, thumbUrl, analysis }) {
+    if (!user?.uid || !docId || !meal || !hasMediaUrl(imageUrl) || !analysis) return null;
+
+    const { urlKey, thumbKey } = getDietSlotMediaKeys(meal);
+    const dietPatch = {
+        [urlKey]: imageUrl,
+        [thumbKey]: hasMediaUrl(thumbUrl) ? thumbUrl : null
+    };
+    const patchBody = {
+        diet: dietPatch,
+        dietAnalysis: { [meal]: analysis }
+    };
+    const cachedData = getCachedDailyLog(docId) || {};
+    const committedData = {
+        ...cachedData,
+        diet: mergeDietMediaWithExisting(cachedData.diet || {}, dietPatch),
+        dietAnalysis: {
+            ...(cachedData.dietAnalysis || {}),
+            [meal]: analysis
+        },
+        timestamp: new Date().toISOString()
+    };
+
+    try {
+        await withRejectingTimeout(
+            setDoc(doc(db, "daily_logs", docId), { ...patchBody, timestamp: serverTimestamp() }, { merge: true }),
+            BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
+            'diet_analysis_media_patch_timeout'
+        );
+    } catch (error) {
+        const isConnectivityDelay = noteFirestoreConnectivityFailure(error, 'diet analysis media patch')
+            || isFirestoreConnectivityIssue(error)
+            || isOfflineSaveCandidateError(error);
+        if (!isConnectivityDelay) throw error;
+        queueBackgroundMediaPatchRetry({
+            userId: user.uid,
+            docId,
+            job: { kind: 'diet', slot: meal, inputId: `diet-img-${meal}` },
+            patchBody,
+            committedData
+        });
+        scheduleBackgroundMediaPatchFlush('diet_analysis_media_patch_timeout');
+        console.warn('[diet-analysis] media patch deferred:', docId, error?.message || error);
+    }
+
+    updateLocalDailyLogCaches(docId, committedData, { updateGallery: true });
+    persistSavedPreview(`diet-img-${meal}`, document.getElementById(`preview-${meal}`), imageUrl, thumbUrl || null);
+    return committedData;
+}
+
 function getCurrentSleepAnalysisFromUi() {
     const resultBox = document.getElementById('sleep-analysis-result');
     const analysis = resultBox?._analysisData;
@@ -14505,12 +14616,12 @@ async function flushBackgroundMediaPatchQueue({ quiet = true } = {}) {
 
 function collectOfflineOutboxMediaItems(saveData = {}) {
     const items = [];
-    const diet = saveData?.diet || {};
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
         const input = document.getElementById(`diet-img-${slot}`);
         const preview = document.getElementById(`preview-${slot}`);
         const file = input?.files?.[0];
-        if (!file || preview?.hasAttribute('data-user-removed') || hasMediaUrl(diet[`${slot}Url`])) return;
+        const pendingSnapshot = getPendingUploadSnapshot(input?.id);
+        if (!file || preview?.hasAttribute('data-user-removed') || hasMediaUrl(pendingSnapshot?.result?.url)) return;
         items.push({
             kind: 'diet',
             slot,
@@ -15025,6 +15136,23 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const sleepUrl = sleepResult.url;
             const sleepThumbUrl = sleepResult.thumbUrl;
 
+            const removedDietSlots = new Set(DIET_DEEP_LINK_SLOTS.filter((slot) => {
+                return document.getElementById(`preview-${slot}`)?.hasAttribute('data-user-removed');
+            }));
+            const dietMediaPatch = {
+                breakfastUrl: bUrl,
+                lunchUrl: lUrl,
+                dinnerUrl: dUrl,
+                snackUrl: sUrl,
+                breakfastThumbUrl: bThumbUrl,
+                lunchThumbUrl: lThumbUrl,
+                dinnerThumbUrl: dThumbUrl,
+                snackThumbUrl: sThumbUrl
+            };
+            const mergedDietData = mergeDietMediaWithExisting(oldData.diet || {}, dietMediaPatch, {
+                removedSlots: removedDietSlots
+            });
+
             const meditationPayload = buildMeditationSavePayload(selectedDateStr);
             const meditationDone = meditationPayload.meditationDone;
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
@@ -15034,17 +15162,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             const provisionalLogData = {
                 ...oldData,
-                diet: {
-                    ...(oldData.diet || {}),
-                    breakfastUrl: bUrl,
-                    lunchUrl: lUrl,
-                    dinnerUrl: dUrl,
-                    snackUrl: sUrl,
-                    breakfastThumbUrl: bThumbUrl,
-                    lunchThumbUrl: lThumbUrl,
-                    dinnerThumbUrl: dThumbUrl,
-                    snackThumbUrl: sThumbUrl
-                },
+                diet: mergedDietData,
                 exercise: {
                     ...(oldData.exercise || {}),
                     cardioList,
@@ -15070,11 +15188,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const saveData = sanitize({
                 userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
                 metrics: { weight: document.getElementById('weight').value, glucose: document.getElementById('glucose').value, bpSystolic: document.getElementById('bp-systolic').value, bpDiastolic: document.getElementById('bp-diastolic').value },
-                diet: {
-                    ...(oldData.diet || {}),
-                    breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,
-                    breakfastThumbUrl: bThumbUrl, lunchThumbUrl: lThumbUrl, dinnerThumbUrl: dThumbUrl, snackThumbUrl: sThumbUrl
-                },
+                diet: mergedDietData,
                 dietAnalysis: currentDietAnalysis,
                 exercise: {
                     ...(oldData.exercise || {}),
@@ -17905,6 +18019,7 @@ async function analyzeMealPhoto(meal) {
             return;
         }
     }
+    const thumbUrl = resolveDietPreviewThumbUrl(meal, imageUrl);
 
     // 로딩 상태
     if (btn) { btn.classList.add('loading'); btn.textContent = '🤖 AI 분석 중...'; }
@@ -17918,21 +18033,18 @@ async function analyzeMealPhoto(meal) {
             resultContainer.style.display = 'block';
             btn.textContent = '🤖 분석 접기';
 
-            // Firestore에 분석 결과 저장
+            // 분석만 남고 사진 URL이 빠지는 경로를 막기 위해 사진 URL과 분석을 함께 저장한다.
             const user = auth.currentUser;
             if (user) {
                 const selectedDateStr = document.getElementById('selected-date').value;
                 const docId = `${user.uid}_${selectedDateStr}`;
-                await setDoc(doc(db, "daily_logs", docId), {
-                    dietAnalysis: { [meal]: analysis }
-                }, { merge: true });
-                const cachedData = getCachedDailyLog(docId) || {};
-                updateDailyLogCache(docId, {
-                    ...cachedData,
-                    dietAnalysis: {
-                        ...(cachedData.dietAnalysis || {}),
-                        [meal]: analysis
-                    }
+                await persistAnalyzedDietPhotoAndResult({
+                    user,
+                    docId,
+                    meal,
+                    imageUrl,
+                    thumbUrl,
+                    analysis
                 });
             }
             showToast('✅ AI 식단 분석 완료!');

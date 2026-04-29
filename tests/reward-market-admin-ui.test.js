@@ -35,4 +35,15 @@ describe('reward market admin UI copy and actions', () => {
         expect(adminSource).not.toContain("row.quoteVersion || '-'");
         expect(adminSource).toContain("reason: 'admin_provider_recheck'");
     });
+
+    it('shows real coupon issuance capacity instead of treating the ops floor as a user block', () => {
+        expect(adminSource).toContain('최저 매입가');
+        expect(adminSource).toContain('실발급 가능');
+        expect(adminSource).toContain('사용자 차단 기준');
+        expect(adminSource).toContain('공급사 잔액 < 상품 매입가');
+        expect(adminSource).toContain('관제 참고용');
+        expect(adminSource).toContain('사용자 차단 아님');
+        expect(adminSource).toContain('purchasePriceKrw');
+        expect(adminSource).not.toContain('비즈머니 최소 기준');
+    });
 });
