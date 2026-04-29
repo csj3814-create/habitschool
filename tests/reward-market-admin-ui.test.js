@@ -20,15 +20,21 @@ describe('reward market admin UI copy and actions', () => {
     it('renders mode and delivery labels for admin rows', () => {
         expect(adminSource).toContain('getRewardMarketAdminModeLabel');
         expect(adminSource).toContain('getRewardMarketAdminDeliveryLabel');
+        expect(adminSource).toContain('isRewardMarketRealIssueRow');
+        expect(adminSource).toContain('실발급 완료');
+        expect(adminSource).toContain('테스트 완료');
         expect(adminSource).toContain('실발급');
         expect(adminSource).toContain('테스트');
-        expect(adminSource).toContain('PIN 지급');
-        expect(adminSource).toContain('이미지 포함');
+        expect(adminSource).toContain('PIN 보관');
+        expect(adminSource).toContain('쿠폰 이미지');
+        expect(adminSource).toContain('주문 ${escapeHtml(row.providerOrderId)}');
+        expect(adminSource).toContain('TR ${escapeHtml(row.providerTrId)}');
     });
 
     it('limits recheck actions to rows that still need provider confirmation', () => {
         expect(adminSource).toContain('canRewardMarketAdminRecheck');
         expect(adminSource).toContain("['pending_issue', 'failed_manual_review']");
+        expect(adminSource).toContain('isRewardMarketRealIssueRow(row) && !!row.providerTrId && !hasRewardMarketCouponPayload(row)');
     });
 
     it('does not expose internal quoteVersion strings in the admin row layout', () => {
@@ -41,9 +47,13 @@ describe('reward market admin UI copy and actions', () => {
         expect(adminSource).toContain('실발급 가능');
         expect(adminSource).toContain('사용자 차단 기준');
         expect(adminSource).toContain('공급사 잔액 < 상품 매입가');
-        expect(adminSource).toContain('관제 참고용');
-        expect(adminSource).toContain('사용자 차단 아님');
         expect(adminSource).toContain('purchasePriceKrw');
         expect(adminSource).not.toContain('비즈머니 최소 기준');
+        expect(adminSource).not.toContain("['운영 하한선'");
+        expect(adminSource).not.toContain("['HBT 시스템'");
+        expect(adminSource).not.toContain("['피드 소스'");
+        expect(adminSource).not.toContain("['누적 마진'");
+        expect(adminSource).not.toContain('준비금 및 피드');
+        expect(adminSource).toContain('<h3>준비금</h3>');
     });
 });

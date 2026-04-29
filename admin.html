@@ -410,7 +410,7 @@
                 </div>
             </div>
             <div class="box">
-                <h3>준비금 및 피드</h3>
+                <h3>준비금</h3>
                 <div id="reward-market-reserve" class="reward-admin-kv">
                     <div class="reward-admin-row"><span>로딩 중...</span><strong>-</strong></div>
                 </div>
@@ -420,7 +420,7 @@
         <div class="box">
             <h3>쿠폰 발급 관제</h3>
             <div class="filter-bar">
-                <input type="text" class="search-inp" id="reward-market-search" placeholder="회원명, 브랜드, 상품명, PIN 검색" oninput="renderRewardMarketAdminRows()">
+                <input type="text" class="search-inp" id="reward-market-search" placeholder="회원명, 상품, 주문번호, PIN 검색" oninput="renderRewardMarketAdminRows()">
                 <button class="chip active" data-rm-filter="all" onclick="setRewardMarketFilter('all')">전체</button>
                 <button class="chip" data-rm-filter="pending_issue" onclick="setRewardMarketFilter('pending_issue')">발급 대기</button>
                 <button class="chip" data-rm-filter="failed_manual_review" onclick="setRewardMarketFilter('failed_manual_review')">수동 확인</button>
@@ -563,7 +563,7 @@
 </div>
 
 <script type="module">
-    import { collection, getDocs, getCountFromServer, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
@@ -1694,10 +1694,20 @@
     };
 
     // ── Tab 4: Moderation ─────────────────────────────────────
-    function rewardMarketStatusBadge(status = '') {
-        if (status === 'issued') return '<span class="badge badge-green">발급 완료</span>';
-        if (status === 'pending_issue') return '<span class="badge badge-gray">발급 대기</span>';
-        if (status === 'failed_manual_review') return '<span class="badge badge-red">수동 확인</span>';
+    function isRewardMarketRealIssueRow(row = {}) {
+        const mode = String(row.mode || '').trim().toLowerCase();
+        const providerOrderId = String(row.providerOrderId || '').trim().toLowerCase();
+        const providerMessage = String(row.providerResponseMessage || '').trim().toLowerCase();
+        if (mode === 'live') return true;
+        if (providerOrderId && !providerOrderId.startsWith('mock_')) return true;
+        return !!providerMessage && !providerMessage.includes('mock');
+    }
+
+    function rewardMarketStatusBadge(status = '', row = {}) {
+        const isRealIssue = isRewardMarketRealIssueRow(row);
+        if (status === 'issued') return `<span class="badge badge-green">${isRealIssue ? '실발급 완료' : '테스트 완료'}</span>`;
+        if (status === 'pending_issue') return `<span class="badge badge-gray">${isRealIssue ? '실발급 대기' : '테스트 대기'}</span>`;
+        if (status === 'failed_manual_review') return `<span class="badge badge-red">${isRealIssue ? '실발급 확인' : '수동 확인'}</span>`;
         if (status === 'cancelled') return '<span class="badge badge-gray">취소됨</span>';
         return `<span class="badge badge-gray">${escapeHtml(status || '-')}</span>`;
     }
@@ -1803,6 +1813,8 @@
             quoteVersion: data.quoteVersion || '',
             providerOrderId: data.providerOrderId || '',
             providerTrId: data.providerTrId || '',
+            providerResponseCode: data.providerResponseCode || '',
+            providerResponseMessage: data.providerResponseMessage || '',
             pinCode: data.pinCode || '',
             couponImgUrl: data.couponImgUrl || data.barcodeUrl || '',
             burnExplorerUrl: data.burnExplorerUrl || '',
@@ -1813,20 +1825,26 @@
     }
 
     function getRewardMarketAdminModeLabel(row = {}) {
-        return row.mode === 'live' ? '실발급' : '테스트';
+        return isRewardMarketRealIssueRow(row) ? '실발급' : '테스트';
     }
 
     function getRewardMarketAdminDeliveryLabel(row = {}) {
-        if (row.couponImgUrl) return '이미지 포함';
-        if (row.pinCode) return 'PIN 지급';
+        const prefix = isRewardMarketRealIssueRow(row) ? '실' : '';
+        if (row.couponImgUrl) return `${prefix}쿠폰 이미지`;
+        if (row.pinCode) return `${prefix}PIN 보관`;
         return 'PIN·이미지 없음';
     }
 
-    function canRewardMarketAdminRecheck(row = {}) {
-        return ['pending_issue', 'failed_manual_review'].includes(String(row.status || '').trim());
+    function hasRewardMarketCouponPayload(row = {}) {
+        return !!(String(row.pinCode || '').trim() || String(row.couponImgUrl || '').trim());
     }
 
-    function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, feed = {}, counts = {}, catalog = [] }) {
+    function canRewardMarketAdminRecheck(row = {}) {
+        if (['pending_issue', 'failed_manual_review'].includes(String(row.status || '').trim())) return true;
+        return isRewardMarketRealIssueRow(row) && !!row.providerTrId && !hasRewardMarketCouponPayload(row);
+    }
+
+    function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, counts = {}, catalog = [] }) {
         const realIssuance = summarizeRewardMarketRealIssuance({ reserve, pricing, catalog });
         document.getElementById('rm-pricing-mode').textContent = '포인트 정액가';
         document.getElementById('rm-price-value').textContent = '1P = 1원';
@@ -1838,15 +1856,10 @@
         document.getElementById('rm-ops-budget').textContent = `${formatAdminNumber(realIssuance.issueableCount, 0)}건`;
 
         document.getElementById('reward-market-policy').innerHTML = [
-            ['교환 정책', '포인트 정액가'],
-            ['현재 교환가', '1P = 1원'],
             ['사용자 차단 기준', '공급사 잔액 < 상품 매입가'],
             ['현재 실발급 상태', realIssuance.statusLabel],
             ['공개 상품', `${formatAdminNumber(realIssuance.saleItemCount, 0)}개 · 최저 ${formatRewardMoney(realIssuance.minPurchasePriceKrw)}`],
-            ['쿠폰 전달', '앱 보관함 우선 노출'],
             ['장애 대응', '관제탑 수동 재확인'],
-            ['HBT 시스템', '자산 탭에서 별도 유지'],
-            ['운영 하한선', `${formatRewardMoney(realIssuance.minBizmoneyKrw)} · 관제 참고용`],
         ].map(([label, value]) => `
             <div class="reward-admin-row">
                 <span>${escapeHtml(label)}</span>
@@ -1859,14 +1872,7 @@
             ['현재 비즈머니', formatRewardMoney(realIssuance.balanceKrw)],
             ['현재 잔액 발급 가능', `${formatAdminNumber(realIssuance.issueableCount, 0)}건`],
             ['실발급 가능 상품', `${formatAdminNumber(realIssuance.affordableItemCount, 0)} / ${formatAdminNumber(realIssuance.saleItemCount, 0)}개`],
-            ['최저 매입가', formatRewardMoney(realIssuance.minPurchasePriceKrw)],
-            ['운영 하한선', `${formatRewardMoney(realIssuance.minBizmoneyKrw)} · 사용자 차단 아님`],
-            ['비즈머니 확인', reserve.bizmoneyCheckedAt ? formatAdminDateTime(reserve.bizmoneyCheckedAt) : '-'],
-            ['누적 마진', formatRewardMoney(reserve.totalMarginKrw || 0)],
-            ['정산 자산', '포인트'],
-            ['쿠폰 전달', '앱 보관함 / PIN'],
-            ['피드 소스', pricing.feedSource || feed.source || 'point_fixed_internal'],
-            ['HBT 시장 연동', '현재 비활성'],
+            ['최종 확인', reserve.bizmoneyCheckedAt ? formatAdminDateTime(reserve.bizmoneyCheckedAt) : '-'],
         ].map(([label, value]) => `
             <div class="reward-admin-row">
                 <span>${escapeHtml(label)}</span>
@@ -1921,6 +1927,12 @@
 
         tbody.innerHTML = rows.map((row) => {
             const policyLabel = row.settlementAsset === 'hbt' ? rewardMarketModeLabel(row.pricingMode) : '포인트 정액가';
+            const providerOrderLine = row.providerOrderId
+                ? `<div class="reward-admin-code">주문 ${escapeHtml(row.providerOrderId)}</div>`
+                : '';
+            const providerTrLine = row.providerTrId
+                ? `<div class="reward-admin-code">TR ${escapeHtml(row.providerTrId)}</div>`
+                : '';
             return `
             <tr>
                 <td>
@@ -1928,7 +1940,7 @@
                     ${row.issuedLabel ? `<div class="reward-admin-muted">발급 ${escapeHtml(row.issuedLabel)}</div>` : ''}
                 </td>
                 <td>
-                    ${rewardMarketStatusBadge(row.status)}
+                    ${rewardMarketStatusBadge(row.status, row)}
                     <div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(getRewardMarketAdminModeLabel(row))}</div>
                     ${row.manualReviewReason ? `<div class="reward-admin-muted" style="margin-top:6px;">${escapeHtml(row.manualReviewReason)}</div>` : ''}
                 </td>
@@ -1948,6 +1960,8 @@
                 <td>
                     ${row.pinCode ? `<div class="reward-admin-code">PIN ${escapeHtml(row.pinCode)}</div>` : '<div class="reward-admin-muted">PIN 없음</div>'}
                     <div class="reward-admin-muted">${escapeHtml(getRewardMarketAdminDeliveryLabel(row))}</div>
+                    ${providerOrderLine}
+                    ${providerTrLine}
                     ${row.manualResendCount ? `<div class="reward-admin-muted">재조회 ${row.manualResendCount}회</div>` : ''}
                 </td>
                 <td>${buildRewardMarketAdminActions(row)}</td>
@@ -1983,35 +1997,27 @@
                 redemptionSnap,
                 reserveSnap,
                 pricingSnap,
-                feedSnap,
                 catalogSnap,
-                pendingCountSnap,
-                manualCountSnap,
-                issuedCountSnap,
             ] = await Promise.all([
                 getDocs(query(rewardRef, orderBy('createdAt', 'desc'), limit(120))),
                 getDoc(doc(db, 'reward_reserve_metrics', 'main')),
                 getDoc(doc(db, 'reward_market_pricing', 'main')),
-                getDoc(doc(db, 'reward_market_feeds', 'main')),
                 getDocs(collection(db, 'reward_catalog')),
-                getCountFromServer(query(rewardRef, where('status', '==', 'pending_issue'))),
-                getCountFromServer(query(rewardRef, where('status', '==', 'failed_manual_review'))),
-                getCountFromServer(query(rewardRef, where('status', '==', 'issued'))),
             ]);
 
             rewardMarketRows = redemptionSnap.docs
                 .map((docSnap) => normalizeRewardMarketAdminRow(docSnap))
                 .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
+            const realRows = rewardMarketRows.filter((row) => isRewardMarketRealIssueRow(row));
 
             renderRewardMarketAdminSummary({
                 pricing: pricingSnap.exists() ? pricingSnap.data() || {} : {},
                 reserve: reserveSnap.exists() ? reserveSnap.data() || {} : {},
-                feed: feedSnap.exists() ? feedSnap.data() || {} : {},
                 catalog: buildRewardMarketAdminCatalog(catalogSnap),
                 counts: {
-                    pending: pendingCountSnap.data().count || 0,
-                    manual: manualCountSnap.data().count || 0,
-                    issued: issuedCountSnap.data().count || 0,
+                    pending: realRows.filter((row) => row.status === 'pending_issue').length,
+                    manual: realRows.filter((row) => row.status === 'failed_manual_review').length,
+                    issued: realRows.filter((row) => row.status === 'issued').length,
                 }
             });
             renderRewardMarketAdminRows();
