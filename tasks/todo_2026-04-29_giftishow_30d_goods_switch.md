@@ -11,7 +11,7 @@
 - [x] 30일 상품 코드/가격 기준 반영
 - [x] 테스트와 문서 갱신
 - [x] 검증
-- [ ] 스테이징 배포
+- [x] 스테이징 배포
 - [ ] 본서버 배포
 
 ## 메모
@@ -26,3 +26,4 @@
 - `G00004450931`은 현재 인증키의 API 상품 목록에 없으므로 발급 주문 코드로 쓰지 않는다.
 - 코드 fallback catalog와 시드 JSON은 공개 상품 2종을 30일 상품 코드와 매입가 1,880원 기준으로 맞췄다.
 - `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=$env:TEMP\habitschool-app-check.js`, `git diff --check`를 통과했다.
+- `npm run deploy:staging`으로 스테이징 배포를 완료했고, 스테이징 Firestore `reward_catalog` 두 문서도 시드 기준 전체 필드로 보정했다.
