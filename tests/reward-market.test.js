@@ -301,6 +301,7 @@ describe('reward market pricing helpers', () => {
                 goodsList: [
                     {
                         goodsCode: 'G00002861259',
+                        goodsNo: 52118,
                         goodsName: 'Mega iced americano',
                         brandName: 'Mega MGC Coffee',
                         goodsStateCd: 'SALE',
@@ -310,12 +311,23 @@ describe('reward market pricing helpers', () => {
                     },
                     {
                         goodsCode: 'G00002871294',
+                        goodsNo: 52304,
                         goodsName: 'Paikdabang iced americano',
                         brandName: 'Paikdabang',
                         goodsStateCd: 'SALE',
                         salePrice: 2000,
                         discountPrice: 1880,
                         limitDay: 30,
+                    },
+                    {
+                        goodsCode: 'G00004450931',
+                        goodsNo: 61443,
+                        goodsName: 'Paikdabang iced americano 15 days',
+                        brandName: 'Paikdabang',
+                        goodsStateCd: 'SALE',
+                        salePrice: 2000,
+                        discountPrice: 1800,
+                        limitDay: 15,
                     },
                     {
                         goodsCode: 'G00009999999',
@@ -337,15 +349,19 @@ describe('reward market pricing helpers', () => {
             'G00002861259',
             'G00002871294',
         ]);
+        expect(filtered.map((item) => item.providerGoodsNo)).toEqual(['52118', '52304']);
+        expect(filtered.map((item) => item.purchasePriceKrw)).toEqual([1880, 1880]);
     });
 
-    it('keeps fallback public coffee coupons on the confirmed 30 day Giftishow validity', () => {
+    it('keeps fallback public coffee coupons on the confirmed 30 day Giftishow codes and pricing', () => {
         const fallback = __test.buildFallbackCatalog()
-            .filter((item) => ['G00002861259', 'G00001810964'].includes(item.providerGoodsId));
+            .filter((item) => ['G00002861259', 'G00002871294'].includes(item.providerGoodsId));
 
         expect(fallback).toHaveLength(2);
+        expect(fallback.map((item) => item.providerGoodsNo)).toEqual(['52118', '52304']);
         expect(fallback.map((item) => item.stockLabel)).toEqual(['30일 발급', '30일 발급']);
         expect(fallback.map((item) => item.validityDays)).toEqual([30, 30]);
+        expect(fallback.map((item) => item.purchasePriceKrw)).toEqual([1880, 1880]);
     });
 
     it('sends Giftishow POST bodies as form-urlencoded by default', async () => {
@@ -483,7 +499,7 @@ describe('reward market pricing helpers', () => {
             {
                 sku: 'mega-ice-americano-60d',
                 faceValueKrw: 2000,
-                purchasePriceKrw: 1940,
+                purchasePriceKrw: 1880,
                 pointCost: 2000,
                 productImageUrl: 'https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg',
                 brandLogoUrl: '/assets/reward-market/mega-mgc-logo.png',
@@ -603,7 +619,7 @@ describe('reward market pricing helpers', () => {
         expect(__test.buildCatalogAvailability({
             sku: 'paikdabang-iced-americano-60d',
             pointCost: 2000,
-            purchasePriceKrw: 1940,
+            purchasePriceKrw: 1880,
             available: true,
         }, belowOpsFloor).redeemable).toBe(true);
 
@@ -622,7 +638,7 @@ describe('reward market pricing helpers', () => {
         const unavailableCoupon = __test.buildCatalogAvailability({
             sku: 'paikdabang-iced-americano-60d',
             pointCost: 2000,
-            purchasePriceKrw: 1940,
+            purchasePriceKrw: 1880,
             available: true,
         }, belowCouponPrice);
         expect(belowCouponPrice.issuanceEnabled).toBe(true);
