@@ -12,7 +12,7 @@
 - [x] 테스트와 문서 갱신
 - [x] 검증
 - [x] 스테이징 배포
-- [ ] 본서버 배포
+- [x] 본서버 배포
 
 ## 메모
 - MGC 30일: goodsNo 52118 / goodsCode G00002861259
@@ -27,3 +27,4 @@
 - 코드 fallback catalog와 시드 JSON은 공개 상품 2종을 30일 상품 코드와 매입가 1,880원 기준으로 맞췄다.
 - `npm test`, `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=$env:TEMP\habitschool-app-check.js`, `git diff --check`를 통과했다.
 - `npm run deploy:staging`으로 스테이징 배포를 완료했고, 스테이징 Firestore `reward_catalog` 두 문서도 시드 기준 전체 필드로 보정했다.
+- `firebase deploy --project prod --only "hosting,functions"`로 본서버 배포를 완료했고, production Firestore `reward_catalog` 두 문서도 같은 30일 상품 코드/매입가 기준으로 보정했다.
