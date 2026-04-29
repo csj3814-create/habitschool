@@ -94,6 +94,34 @@ function formatDateLabel(value = '', withTime = false) {
         : date.toLocaleDateString('ko-KR');
 }
 
+function getKstDaySerial(value = new Date()) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        }).formatToParts(date)
+            .filter((entry) => entry.type !== 'literal')
+            .map((entry) => [entry.type, Number(entry.value)])
+    );
+    return Date.UTC(parts.year, parts.month - 1, parts.day) / 86_400_000;
+}
+
+function formatCouponExpiryLabel(value = '') {
+    const date = new Date(value);
+    if (!value || Number.isNaN(date.getTime())) return formatDateLabel(value);
+    const expiresDay = getKstDaySerial(date);
+    const today = getKstDaySerial(new Date());
+    const daysLeft = expiresDay === null || today === null
+        ? null
+        : Math.max(0, expiresDay - today);
+    const suffix = daysLeft === null ? '' : ` (${daysLeft}일 남음)`;
+    return `${formatDateLabel(value)}${suffix}`;
+}
+
 function formatPhaseLabel(value = '') {
     return value === 'phase2_hybrid_band' ? '시세 완충형' : '내부 기준가';
 }
@@ -838,7 +866,7 @@ function renderRewardCouponVault() {
 
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
         const statusLabel = buildCouponStatusLabel(item.status);
-        const expiresLabel = formatDateLabel(item.expiresAt);
+        const expiresLabel = formatCouponExpiryLabel(item.expiresAt);
         const explorerLink = item.settlementAsset === 'hbt' && item.burnExplorerUrl
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
@@ -860,7 +888,7 @@ function renderRewardCouponVault() {
                 buildCouponCodeBlock(item) +
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +
-                    '<span>유효기간 ' + escapeHtml(expiresLabel === '-' ? expiresLabel : `${expiresLabel}까지`) + '</span>' +
+                    '<span>유효기간 ' + escapeHtml(expiresLabel) + '</span>' +
                     '<span>발급 ' + escapeHtml(formatDateLabel(item.issuedAt || item.createdAt, true)) + '</span>' +
                     explorerLink +
                 '</div>' +

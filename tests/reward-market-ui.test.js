@@ -68,6 +68,9 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain("lightboxEl.classList.toggle('is-barcode-open'");
         expect(rewardMarketSource).toContain("lightboxEl.classList.remove('is-barcode-open')");
         expect(rewardMarketSource).toContain("imageEl.classList.toggle('is-rotated-barcode'");
-        expect(rewardMarketSource).toContain("expiresLabel === '-' ? expiresLabel : `${expiresLabel}까지`");
+        expect(rewardMarketSource).toContain('formatCouponExpiryLabel');
+        expect(rewardMarketSource).toContain('일 남음');
+        expect(rewardMarketSource).toContain("'<span>유효기간 ' + escapeHtml(expiresLabel) + '</span>'");
+        expect(rewardMarketSource).not.toContain('`${expiresLabel}까지`');
     });
 });
