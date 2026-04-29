@@ -1497,3 +1497,4 @@
 - 2026-04-29: 공급사 기준이 바뀐 쿠폰 유효기간은 보관함 만료일만 고치면 부족하다. 해빛 마켓 카드의 `stockLabel`, fallback catalog, seed JSON, Firestore `reward_catalog` 문서까지 같은 30일 기준으로 맞춰야 사용자가 교환 전/후에 서로 다른 기간을 보지 않는다.
 - 2026-04-29: 기프티쇼 API 발급 상품은 웹 상세 페이지의 비슷한 상품명만 보고 60일/30일/15일을 추정하지 않는다. `goods` API 0101에서 실제 계정에 노출되는 `goodsCode`, `goodsNo`, `discountPrice`, `limitDay`, `goodsStateCd`를 확인한 뒤 allowlist와 매입가를 맞춘다. API 목록에 없는 15일 상품은 주문 코드로 쓰지 않는다.
 - 2026-04-29: 사용자가 `본서버`라고만 말하면 별도 재확인 없이 본서버 배포 요청으로 처리한다. 이 프로젝트의 배포 shorthand는 `스테이징`과 `본서버` 모두 실행 명령이므로, 이미 검증/커밋/푸시가 준비된 상태라면 확인 질문으로 흐름을 끊지 않는다.
+- 2026-04-30: Firebase Hosting `public`이 루트 `.`이면 `.git`, 로그, 테스트, 문서, 임시 산출물, 로컬 설정 파일을 명시적으로 ignore해야 한다. Hosting 배포 뒤에는 `.firebase/hosting..cache` 파일 수와 총 크기를 확인해 repo 내부 파일이 업로드되지 않았는지 검증하고, 과거 Hosting versions가 누적되어 무료 저장용량을 넘기지 않게 보관 정책에 따라 주기적으로 정리한다.
