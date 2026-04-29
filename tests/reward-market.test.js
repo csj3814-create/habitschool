@@ -306,7 +306,7 @@ describe('reward market pricing helpers', () => {
                         goodsStateCd: 'SALE',
                         salePrice: 2000,
                         discountPrice: 1880,
-                        limitDay: 60,
+                        limitDay: 30,
                     },
                     {
                         goodsCode: 'G00002871294',
@@ -315,7 +315,7 @@ describe('reward market pricing helpers', () => {
                         goodsStateCd: 'SALE',
                         salePrice: 2000,
                         discountPrice: 1880,
-                        limitDay: 60,
+                        limitDay: 30,
                     },
                     {
                         goodsCode: 'G00009999999',
@@ -337,6 +337,15 @@ describe('reward market pricing helpers', () => {
             'G00002861259',
             'G00002871294',
         ]);
+    });
+
+    it('keeps fallback public coffee coupons on the confirmed 30 day Giftishow validity', () => {
+        const fallback = __test.buildFallbackCatalog()
+            .filter((item) => ['G00002861259', 'G00001810964'].includes(item.providerGoodsId));
+
+        expect(fallback).toHaveLength(2);
+        expect(fallback.map((item) => item.stockLabel)).toEqual(['30일 발급', '30일 발급']);
+        expect(fallback.map((item) => item.validityDays)).toEqual([30, 30]);
     });
 
     it('sends Giftishow POST bodies as form-urlencoded by default', async () => {
@@ -514,14 +523,14 @@ describe('reward market pricing helpers', () => {
     });
 
     it('uses the catalog validity days when building mock coupon expiry', () => {
-        expect(__test.resolveRewardValidityDays({ validityDays: 60 })).toBe(60);
-        expect(__test.resolveRewardValidityDays({ stockLabel: '60일 발급' })).toBe(60);
+        expect(__test.resolveRewardValidityDays({ validityDays: 30 })).toBe(30);
+        expect(__test.resolveRewardValidityDays({ stockLabel: '30일 발급' })).toBe(30);
 
-        const issued = __test.buildMockIssuedCoupon({ validityDays: 60 }, '');
+        const issued = __test.buildMockIssuedCoupon({ validityDays: 30 }, '');
         const expiresAt = new Date(issued.expiresAt);
         const diffDays = Math.round((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-        expect(diffDays).toBeGreaterThanOrEqual(59);
-        expect(diffDays).toBeLessThanOrEqual(60);
+        expect(diffDays).toBeGreaterThanOrEqual(29);
+        expect(diffDays).toBeLessThanOrEqual(30);
     });
 
     it('allows dismiss only for failed or non-live pending reward redemptions', () => {

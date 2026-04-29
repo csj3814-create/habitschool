@@ -16,8 +16,9 @@
         "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg",
         "brandLogoUrl": "/assets/reward-market/mega-mgc-logo.png",
         "available": true,
-        "stockLabel": "60일 발급",
+        "stockLabel": "30일 발급",
         "deliveryMethod": "pin",
+        "validityDays": 30,
         "sortOrder": 10
       }
     },
@@ -37,8 +38,9 @@
         "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2024/G00002871294/G00002871294.jpg",
         "brandLogoUrl": "/assets/reward-market/paikdabang-logo.png",
         "available": true,
-        "stockLabel": "60일 발급",
+        "stockLabel": "30일 발급",
         "deliveryMethod": "pin",
+        "validityDays": 30,
         "sortOrder": 20
       }
     }
