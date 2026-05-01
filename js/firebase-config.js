@@ -60,6 +60,7 @@ if (!IS_LOCAL_ENV) {
 const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];
 const FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS = 5000;
 const FIRESTORE_INTERNAL_ASSERTION_LOG_TTL_MS = 30_000;
+const FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS = 15_000;
 
 let _firestoreReconnectTimers = [];
 let _firestoreReconnectSequence = 0;
@@ -68,6 +69,8 @@ let _firestoreReconnectHooksBound = false;
 let _firestoreInternalErrorGuardBound = false;
 let _firestoreInternalAssertionLastLoggedAt = 0;
 let _pendingFirestoreReconnectReason = '';
+const _firestoreReconnectLastScheduledAtByReason = new Map();
+const _firestoreReconnectProbeLogAt = new Map();
 
 const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
 
@@ -127,6 +130,17 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function logFirestoreReconnectProbe(state, reason = '', error = null) {
+    if (IS_PROD_ENV) return;
+    const key = `${state}:${reason || 'unspecified'}`;
+    const now = Date.now();
+    const lastLoggedAt = _firestoreReconnectProbeLogAt.get(key) || 0;
+    if (now - lastLoggedAt < FIRESTORE_INTERNAL_ASSERTION_LOG_TTL_MS) return;
+    _firestoreReconnectProbeLogAt.set(key, now);
+    const suffix = error ? normalizeFirestoreReconnectErrorMessage(error) : '';
+    console.info(`[Firestore] reconnect probe ${state}:`, reason || 'unspecified', suffix);
+}
+
 async function runFirestoreReconnectProbe(reason = '') {
     if (IS_LOCAL_ENV || typeof window === 'undefined') return false;
     if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
@@ -148,10 +162,10 @@ async function runFirestoreReconnectProbe(reason = '') {
 
             _pendingFirestoreReconnectReason = '';
             clearFirestoreReconnectTimers();
-            console.info('[Firestore] reconnect probe succeeded:', reason || 'unspecified');
+            logFirestoreReconnectProbe('succeeded', reason);
             return true;
         } catch (error) {
-            console.info('[Firestore] reconnect probe still pending:', reason || 'unspecified', normalizeFirestoreReconnectErrorMessage(error));
+            logFirestoreReconnectProbe('still pending', reason, error);
             return false;
         } finally {
             _firestoreReconnectProbePromise = null;
@@ -210,6 +224,17 @@ export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { 
     bindFirestoreReconnectHooks();
 
     const normalizedReason = String(reason || 'firestore-connectivity').trim();
+    const now = Date.now();
+    const lastScheduledAt = _firestoreReconnectLastScheduledAtByReason.get(normalizedReason) || 0;
+    if (
+        _pendingFirestoreReconnectReason === normalizedReason
+        && _firestoreReconnectTimers.length > 0
+        && now - lastScheduledAt < FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS
+    ) {
+        return;
+    }
+    _firestoreReconnectLastScheduledAtByReason.set(normalizedReason, now);
+
     const scheduleToken = ++_firestoreReconnectSequence;
     const delays = includeImmediate
         ? [0, ...FIRESTORE_RECONNECT_RETRY_DELAYS_MS]

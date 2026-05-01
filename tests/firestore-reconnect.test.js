@@ -9,6 +9,7 @@ describe('Firestore reconnect backoff', () => {
         const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
 
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
+        expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS = 15_000;');
         expect(firebaseConfigSource).toContain('initializeFirestore(app, {');
         expect(firebaseConfigSource).toContain('experimentalAutoDetectLongPolling: true');
         expect(firebaseConfigSource).not.toContain('experimentalForceLongPolling: true');
@@ -19,9 +20,12 @@ describe('Firestore reconnect backoff', () => {
         expect(firebaseConfigSource).toContain('export function noteFirestoreConnectivityFailure');
         expect(firebaseConfigSource).toContain('export function isFirestoreConnectivityIssue');
         expect(firebaseConfigSource).toContain('function bindFirestoreInternalErrorGuard');
+        expect(firebaseConfigSource).toContain('function logFirestoreReconnectProbe');
+        expect(firebaseConfigSource).toContain('const _firestoreReconnectLastScheduledAtByReason = new Map();');
         expect(firebaseConfigSource).toContain('firestore-watch-assertion');
         expect(firebaseConfigSource).toContain('event.preventDefault();');
-        expect(firebaseConfigSource).toContain('reconnect probe still pending');
+        expect(firebaseConfigSource).toContain("logFirestoreReconnectProbe('still pending', reason, error);");
+        expect(firebaseConfigSource).toContain('now - lastScheduledAt < FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS');
         expect(firebaseConfigSource).toContain("window.addEventListener('online'");
 
         expect(appSource).toContain("noteFirestoreConnectivityFailure(error, 'loadMyFriendships user cache seed')");

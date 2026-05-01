@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=172';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=172';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=173';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=173';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=172';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=172';
+} from './auth-login-helpers.js?v=173';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=173';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=172';
+} from './exercise-media.js?v=173';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=172';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=172';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=172';
-import { sanitize, compressImage } from './data-manager.js?v=172';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=172';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=172';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=172';
+} from './health-connect-utils.js?v=173';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=173';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=173';
+import { sanitize, compressImage } from './data-manager.js?v=173';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=173';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=173';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=173';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=172';
+} from './diet-program.js?v=173';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,9 +65,9 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=172';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=172';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=172';
+} from './meditation-guide.js?v=173';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=173';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=173';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4824,7 +4824,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=172';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=173';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7533,14 +7533,19 @@ function renderAssetHistory() {
     const hbtDeferred = !!_assetHistoryState.hbtDeferred;
     const pointDeferred = !!_assetHistoryState.pointDeferred;
 
+    const hasDeferredHistory = hbtDeferred || pointDeferred;
+    const showWaiting = isLoading;
+
     if (hbtItems.length === 0 && pointItems.length === 0) {
         txContainer.innerHTML = `
             <div class="wallet-tx-empty-cta">
-                <div class="wallet-tx-empty-icon">${isLoading || hbtDeferred || pointDeferred ? '⏳' : '💎'}</div>
-                <div class="wallet-tx-empty-text">${isLoading || hbtDeferred || pointDeferred ? '거래 기록을 확인하는 중입니다' : '아직 거래 기록이 없습니다'}</div>
-                <div class="wallet-tx-empty-sub">${isLoading || hbtDeferred || pointDeferred ? '최근 HBT 거래와 포인트 기록을 불러오는 중이에요.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
-                ${isLoading || hbtDeferred || pointDeferred
+                <div class="wallet-tx-empty-icon">${showWaiting ? '⏳' : hasDeferredHistory ? '🔄' : '💎'}</div>
+                <div class="wallet-tx-empty-text">${showWaiting ? '거래 기록을 확인하는 중입니다' : hasDeferredHistory ? '거래 기록을 다시 확인하고 있어요' : '아직 거래 기록이 없습니다'}</div>
+                <div class="wallet-tx-empty-sub">${showWaiting ? '최근 HBT 거래와 포인트 기록을 불러오는 중이에요.' : hasDeferredHistory ? '연결이 안정되면 자동으로 다시 확인해요. 기존 기록은 캐시에 보관됩니다.' : 'HBT 거래와 포인트 적립 내역을 박스별로 볼 수 있어요'}</div>
+                ${showWaiting
                     ? '<div class="wallet-tx-subempty">잠시만 기다려주세요...</div>'
+                    : hasDeferredHistory
+                        ? '<button class="wallet-tx-empty-btn" onclick="window.updateAssetDisplay?.(true);">새로 확인</button>'
                     : '<button class="wallet-tx-empty-btn" onclick="document.getElementById(\'convert-point-input\')?.focus(); setConvertAmount(100);">첫 HBT 변환하기 →</button>'
                 }
             </div>
@@ -7895,22 +7900,34 @@ function clearAssetRetry(uid) {
     if (uid) _assetRetryCounts.delete(uid);
 }
 
+function shouldLogAssetDebug() {
+    return APP_ENV !== 'prod' || globalThis.__HABITSCHOOL_DEBUG_ASSET === true;
+}
+
 function scheduleAssetRetry(uid, reason = 'unknown') {
-    if (!uid || auth.currentUser?.uid !== uid) return;
+    if (!uid || auth.currentUser?.uid !== uid) return false;
 
     const count = _assetRetryCounts.get(uid) || 0;
-    if (count >= ASSET_MAX_RETRY_ATTEMPTS) return;
+    if (count >= ASSET_MAX_RETRY_ATTEMPTS) {
+        if (shouldLogAssetDebug()) {
+            console.info(`[asset-display] retry skipped (${reason}); max attempts reached`);
+        }
+        return false;
+    }
 
     if (_assetRetryTimer) clearTimeout(_assetRetryTimer);
     const nextCount = count + 1;
     _assetRetryCounts.set(uid, nextCount);
 
-    const delay = ASSET_RETRY_BASE_DELAY_MS * nextCount;
-    console.info(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
+    const delay = ASSET_RETRY_BASE_DELAY_MS * Math.min(nextCount * nextCount, 12);
+    if (shouldLogAssetDebug()) {
+        console.info(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
+    }
     _assetRetryTimer = setTimeout(() => {
         if (auth.currentUser?.uid !== uid) return;
         window.updateAssetDisplay(true).catch(() => { });
     }, delay);
+    return true;
 }
 
 // 자산 표시 업데이트 함수
@@ -7928,14 +7945,18 @@ function logAssetOptionalQueryFailure(label, error) {
     if (!shouldLogAssetOptionalQuery(label, message)) return;
 
     if (message.startsWith(`asset_${label}_timeout`) || message.includes('timeout')) {
-        console.info(`[asset-display] optional ${label} timed out; keeping cached/fallback UI`);
+        if (shouldLogAssetDebug()) {
+            console.info(`[asset-display] optional ${label} timed out; keeping cached/fallback UI`);
+        }
         return;
     }
 
     const connectivityIssue = noteFirestoreConnectivityFailure(error, `asset-display ${label}`)
         || isFirestoreConnectivityIssue(error);
     if (connectivityIssue) {
-        console.info(`[asset-display] optional ${label} skipped:`, message);
+        if (shouldLogAssetDebug()) {
+            console.info(`[asset-display] optional ${label} skipped:`, message);
+        }
         return;
     }
     console.warn(`[asset-display] optional ${label} skipped:`, message);
@@ -8063,7 +8084,6 @@ function refreshAssetTokenStats(uid = '') {
             }
         }
 
-        clearAssetRetry(uid);
         return stats;
     }).catch(err => {
         console.info('[asset-display] token stats deferred:', err?.message || err);
@@ -8097,7 +8117,6 @@ function refreshAssetOnchainBalance(uid) {
             return null;
         }
 
-        clearAssetRetry(uid);
         writeAssetDisplayCache(uid, {
             hbtBalance: val,
             hbtTs: Date.now()
@@ -8477,7 +8496,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const hbtEl = document.getElementById('asset-hbt-display');
                     const val = parseFloat(onchainData?.balanceFormatted);
                     if (Number.isFinite(val)) {
-                        clearAssetRetry(user.uid);
                         writeAssetDisplayCache(user.uid, {
                             hbtBalance: val,
                             hbtTs: Date.now()
@@ -9040,7 +9058,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 사용자 문서 응답이 늦거나 비어도 마지막 정상값을 유지한 채 재시도
             // Keep the last good values while the user document is deferred, then retry.
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
-            if (isDeferredAssetSnap(userSnap)) {
+            const userDocDeferred = isDeferredAssetSnap(userSnap);
+            if (userDocDeferred) {
                 userDocPromise.then(lateSnap => {
                     if (!lateSnap?.exists?.()) return;
                     if (auth.currentUser?.uid !== user.uid) return;
@@ -9048,7 +9067,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     window.updateAssetDisplay(true).catch(() => {});
                 }).catch(() => {});
             }
-            scheduleAssetRetry(user.uid, 'user-doc-timeout');
+            const retryScheduled = scheduleAssetRetry(user.uid, 'user-doc-timeout');
+            _assetHistoryState.isLoading = false;
+            _assetHistoryState.hbtDeferred = _assetHistoryState.hbtItems.length === 0 && (userDocDeferred || retryScheduled);
+            _assetHistoryState.pointDeferred = _assetHistoryState.pointItems.length === 0 && (userDocDeferred || retryScheduled);
+            renderAssetHistory();
         }
     } catch (error) {
         console.error('자산 표시 업데이트 오류:', error);
