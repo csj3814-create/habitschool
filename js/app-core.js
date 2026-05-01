@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=170';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=170';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=171';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=171';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=170';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=170';
+} from './auth-login-helpers.js?v=171';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=171';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=170';
+} from './exercise-media.js?v=171';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=170';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=170';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=170';
-import { sanitize, compressImage } from './data-manager.js?v=170';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=170';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=170';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=170';
+} from './health-connect-utils.js?v=171';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=171';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=171';
+import { sanitize, compressImage } from './data-manager.js?v=171';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=171';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=171';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=171';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=170';
+} from './diet-program.js?v=171';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,9 +65,9 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=170';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=170';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=170';
+} from './meditation-guide.js?v=171';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=171';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=171';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -296,6 +296,8 @@ const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const GALLERY_RETRY_BASE_DELAY_MS = 2500;
 const GALLERY_MAX_RETRY_ATTEMPTS = 3;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
+const SOCIAL_CHALLENGE_CACHE_TTL_MS = 60_000;
+const OPTIONAL_DATA_TIMEOUT_LOG_THROTTLE_MS = 30_000;
 const CHATBOT_CONNECT_API_ORIGIN = 'https://habitchatbot.onrender.com';
 const CHATBOT_KAKAO_CHAT_URL = 'https://pf.kakao.com/_QDZZX/chat';
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
@@ -313,6 +315,7 @@ let _chatbotConnectInfoPromise = null;
 let _chatbotConnectModalToken = '';
 let _chatbotConnectCompleting = false;
 let _chatbotConnectLoginPromptShown = false;
+const _optionalDataTimeoutLogAt = new Map();
 let _chatbotLinkStatusCache = {};
 let _chatbotConnectAutoRetryTimer = null;
 let _chatbotConnectAutoRetryToken = '';
@@ -2595,6 +2598,16 @@ async function withAsyncTimeout(task, timeoutMs, errorMessage = '작업 시간�
     }
 }
 
+function logOptionalDataTimeout(label, error = null) {
+    const shouldLog = APP_ENV !== 'prod' || globalThis.__HABITSCHOOL_DEBUG_OPTIONAL_DATA === true;
+    if (!shouldLog) return;
+    const now = Date.now();
+    const lastLoggedAt = _optionalDataTimeoutLogAt.get(label) || 0;
+    if (now - lastLoggedAt < OPTIONAL_DATA_TIMEOUT_LOG_THROTTLE_MS) return;
+    _optionalDataTimeoutLogAt.set(label, now);
+    console.info(`[optional-data] ${label}; keeping cached/fallback UI`, error?.message || error || '');
+}
+
 async function requestPreparedShareMediaAssets(items = []) {
     if (!auth.currentUser || !Array.isArray(items) || !items.length) return [];
 
@@ -4394,7 +4407,7 @@ async function loadMyFriendships(forceReload = false) {
                 );
             } catch (error) {
                 if (error?.message === 'friendships_pending_timeout') {
-                    console.warn('[loadMyFriendships] pending load timeout, using current cache');
+                    logOptionalDataTimeout('friendships_pending_timeout', error);
                     return cachedMyFriendships;
                 }
                 throw error;
@@ -4459,11 +4472,10 @@ async function loadMyFriendships(forceReload = false) {
             });
         } catch (error) {
             liveQueryFailed = true;
-            if (nextMap.size === 0) {
-                console.warn('[loadMyFriendships] live query failed, using empty cache:', error.message);
-            } else {
-                console.warn('[loadMyFriendships] live query failed, using user cache:', error.message);
-            }
+            logOptionalDataTimeout(
+                nextMap.size === 0 ? 'friendship_live_query_empty_cache' : 'friendship_live_query_user_cache',
+                error
+            );
         }
 
         cachedMyFriendships = nextMap;
@@ -4504,12 +4516,12 @@ async function waitForFriendshipsForUi({ forceReload = false, timeoutMs = FRIEND
         return { timedOut: false, activeFriendIds: getActiveFriendIds() };
     } catch (error) {
         if (error?.message === 'friendships_timeout') {
-            console.warn('[friendships] timeout, using current cache');
+            logOptionalDataTimeout('friendships_timeout', error);
             return { timedOut: true, activeFriendIds: getActiveFriendIds() };
         }
 
         if (cachedMyFriendships.size > 0) {
-            console.warn('[friendships] load failed, using cache:', error.message);
+            logOptionalDataTimeout('friendships_load_failed_with_cache', error);
             return { timedOut: true, activeFriendIds: getActiveFriendIds() };
         }
 
@@ -4812,7 +4824,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=170';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=171';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11115,6 +11127,8 @@ const _communityFocusState = {
     monthlyUsers: 0,
     primaryAction: 'invite'
 };
+let _communityFocusRefreshPromise = null;
+let _communityFocusRefreshKey = '';
 
 function focusProfileFriendCard(preferRequests = false) {
     const requestCard = document.getElementById('profile-friend-requests-card');
@@ -11249,6 +11263,24 @@ function renderCommunityFocusPanel() {
 
 async function refreshCommunityFocusSummary(user, todayStr, communityStats = null) {
     if (!user) return;
+    const refreshKey = `${user.uid}:${todayStr}`;
+    if (_communityFocusRefreshPromise && _communityFocusRefreshKey === refreshKey) {
+        return _communityFocusRefreshPromise;
+    }
+
+    const refreshPromise = refreshCommunityFocusSummaryInner(user, todayStr, communityStats).finally(() => {
+        if (_communityFocusRefreshPromise === refreshPromise) {
+            _communityFocusRefreshPromise = null;
+            _communityFocusRefreshKey = '';
+        }
+    });
+    _communityFocusRefreshPromise = refreshPromise;
+    _communityFocusRefreshKey = refreshKey;
+    return refreshPromise;
+}
+
+async function refreshCommunityFocusSummaryInner(user, todayStr, communityStats = null) {
+    if (!user) return;
 
     _communityFocusState.monthlyUsers = communityStats?.totalUsers || 0;
     _communityFocusState.pendingChallengeId = '';
@@ -11277,12 +11309,14 @@ async function refreshCommunityFocusSummary(user, todayStr, communityStats = nul
             const complete = !!(awarded.diet && awarded.exercise && awarded.mind);
             return { active, complete };
         })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'community_friend_status_timeout').catch(error => {
-            console.warn('[refreshCommunityFocusSummary] friend status timeout:', error.message);
-            return [];
+            logOptionalDataTimeout('community_friend_status_timeout', error);
+            return null;
         });
 
-        _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
-        _communityFocusState.completeFriends = friendStatusRows.filter(row => row.complete).length;
+        if (Array.isArray(friendStatusRows)) {
+            _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
+            _communityFocusState.completeFriends = friendStatusRows.filter(row => row.complete).length;
+        }
 
         const [asParticipant, asInvitee] = await Promise.all([
             getDocs(query(
@@ -11309,7 +11343,7 @@ async function refreshCommunityFocusSummary(user, todayStr, communityStats = nul
         _communityFocusState.activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
         _communityFocusState.pendingChallengeId = pendingChallenge?.id || '';
     } catch (e) {
-        console.warn('[refreshCommunityFocusSummary] 오류:', e.message);
+        logOptionalDataTimeout('community_focus_summary_deferred', e);
     }
 
     renderCommunityFocusPanel();
@@ -12127,7 +12161,7 @@ async function renderFriendActivityCard(user, todayStr) {
                 mind: (ap.mindPoints || 0) > 0
             };
         })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'friend_activity_timeout').catch(error => {
-            console.warn('[renderFriendActivityCard] friend activity timeout:', error.message);
+            logOptionalDataTimeout('friend_activity_timeout', error);
             return [];
         });
 
@@ -18865,6 +18899,17 @@ let _socialChallengeFriendReadinessCache = {
     loadedAt: 0,
     items: []
 };
+let _socialChallengeFriendReadinessPromise = null;
+let _socialChallengeFriendReadinessPromiseKey = '';
+let _openSocialChallengesCache = {
+    uid: '',
+    loadedAt: 0,
+    result: [[], []]
+};
+let _openSocialChallengesPromise = null;
+let _openSocialChallengesPromiseKey = '';
+let _renderSocialChallengesPromise = null;
+let _renderSocialChallengesPromiseUid = '';
 
 function addDaysFromKstDateString(dateStr, diffDays) {
     const base = new Date(`${dateStr}T12:00:00Z`);
@@ -18882,12 +18927,20 @@ function countCompletedHabitBuckets(awardedPoints = {}) {
 async function loadSocialChallengeFriendReadiness(user, { forceReload = false } = {}) {
     const { todayStr, weekStrs } = getDatesInfo();
     const activeFriendIds = getActiveFriendIds();
+    const cacheMatches = _socialChallengeFriendReadinessCache.uid === user.uid
+        && _socialChallengeFriendReadinessCache.todayStr === todayStr;
 
     if (!forceReload
-        && _socialChallengeFriendReadinessCache.uid === user.uid
-        && _socialChallengeFriendReadinessCache.todayStr === todayStr
-        && Date.now() - _socialChallengeFriendReadinessCache.loadedAt < 60000) {
+        && cacheMatches
+        && Date.now() - _socialChallengeFriendReadinessCache.loadedAt < SOCIAL_CHALLENGE_CACHE_TTL_MS) {
         return _socialChallengeFriendReadinessCache.items;
+    }
+
+    const promiseKey = `${user.uid}:${todayStr}:${activeFriendIds.join(',')}`;
+    if (!forceReload
+        && _socialChallengeFriendReadinessPromise
+        && _socialChallengeFriendReadinessPromiseKey === promiseKey) {
+        return _socialChallengeFriendReadinessPromise;
     }
 
     if (activeFriendIds.length === 0) {
@@ -18915,64 +18968,72 @@ async function loadSocialChallengeFriendReadiness(user, { forceReload = false } 
         };
     });
 
-    const items = await withAsyncTimeout(Promise.all(activeFriendIds.map(async friendId => {
-        const friendship = cachedMyFriendships.get(friendId);
-        const name = getFriendshipName(friendship, user.uid) || '친구';
-        const logsSnap = await getDocs(query(
-            collection(db, 'daily_logs'),
-            where('userId', '==', friendId),
-            where('date', '>=', thirtyDaysAgo)
-        ));
+    const readinessPromise = (async () => {
+        const items = await withAsyncTimeout(Promise.all(activeFriendIds.map(async friendId => {
+            const friendship = cachedMyFriendships.get(friendId);
+            const name = getFriendshipName(friendship, user.uid) || '친구';
+            const logsSnap = await getDocs(query(
+                collection(db, 'daily_logs'),
+                where('userId', '==', friendId),
+                where('date', '>=', thirtyDaysAgo)
+            ));
 
-        let recentDays = 0;
-        let weekDays = 0;
-        let todayCompleted = 0;
+            let recentDays = 0;
+            let weekDays = 0;
+            let todayCompleted = 0;
 
-        logsSnap.forEach(logDoc => {
-            const data = logDoc.data() || {};
-            const date = data.date || '';
-            recentDays += 1;
-            if (weekSet.has(date)) weekDays += 1;
-            if (date === todayStr) {
-                todayCompleted = countCompletedHabitBuckets(data.awardedPoints || {});
-            }
+            logsSnap.forEach(logDoc => {
+                const data = logDoc.data() || {};
+                const date = data.date || '';
+                recentDays += 1;
+                if (weekSet.has(date)) weekDays += 1;
+                if (date === todayStr) {
+                    todayCompleted = countCompletedHabitBuckets(data.awardedPoints || {});
+                }
+            });
+
+            const eligible = recentDays >= 5;
+            const shortfall = Math.max(0, 5 - recentDays);
+
+            return {
+                uid: friendId,
+                name,
+                todayCompleted,
+                weekDays,
+                recentDays,
+                eligible,
+                shortfall
+            };
+        })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'social_challenge_readiness_timeout').catch(error => {
+            logOptionalDataTimeout('social_challenge_readiness_timeout', error);
+            return cacheMatches ? _socialChallengeFriendReadinessCache.items : fallbackItems;
         });
 
-        const eligible = recentDays >= 5;
-        const shortfall = Math.max(0, 5 - recentDays);
+        items.sort((a, b) => {
+            if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
+            if (a.weekDays !== b.weekDays) return b.weekDays - a.weekDays;
+            if (a.todayCompleted !== b.todayCompleted) return b.todayCompleted - a.todayCompleted;
+            return a.name.localeCompare(b.name, 'ko');
+        });
 
-        return {
-            uid: friendId,
-            name,
-            todayCompleted,
-            weekDays,
-            recentDays,
-            eligible,
-            shortfall
+        _socialChallengeFriendReadinessCache = {
+            uid: user.uid,
+            todayStr,
+            loadedAt: Date.now(),
+            items
         };
-    })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'social_challenge_readiness_timeout').catch(error => {
-        console.warn('[loadSocialChallengeFriendReadiness] timeout, using fallback:', error.message);
-        return _socialChallengeFriendReadinessCache.uid === user.uid
-            && _socialChallengeFriendReadinessCache.todayStr === todayStr
-            ? _socialChallengeFriendReadinessCache.items
-            : fallbackItems;
+
+        return items;
+    })().finally(() => {
+        if (_socialChallengeFriendReadinessPromise === readinessPromise) {
+            _socialChallengeFriendReadinessPromise = null;
+            _socialChallengeFriendReadinessPromiseKey = '';
+        }
     });
 
-    items.sort((a, b) => {
-        if (a.eligible !== b.eligible) return a.eligible ? -1 : 1;
-        if (a.weekDays !== b.weekDays) return b.weekDays - a.weekDays;
-        if (a.todayCompleted !== b.todayCompleted) return b.todayCompleted - a.todayCompleted;
-        return a.name.localeCompare(b.name, 'ko');
-    });
-
-    _socialChallengeFriendReadinessCache = {
-        uid: user.uid,
-        todayStr,
-        loadedAt: Date.now(),
-        items
-    };
-
-    return items;
+    _socialChallengeFriendReadinessPromise = readinessPromise;
+    _socialChallengeFriendReadinessPromiseKey = promiseKey;
+    return readinessPromise;
 }
 
 function getSocialChallengeFriendContextPriority(status = '') {
@@ -19127,26 +19188,60 @@ function buildSocialChallengeFriendReadinessSection(readinessItems = [], challen
     `;
 }
 
-async function loadOpenSocialChallengesForUser(user, timeoutMs = SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS) {
-    return Promise.race([
-        Promise.all([
-            getDocs(query(
-                collection(db, 'social_challenges'),
-                where('participants', 'array-contains', user.uid),
-                where('status', 'in', ['pending', 'active']),
-                limit(5)
-            )),
-            getDocs(query(
-                collection(db, 'social_challenges'),
-                where('invitees', 'array-contains', user.uid),
-                where('status', '==', 'pending'),
-                limit(5)
-            ))
-        ]),
-        new Promise((_, reject) => {
-            window.setTimeout(() => reject(new Error('social_challenges_timeout')), timeoutMs);
+async function loadOpenSocialChallengesForUser(user, options = {}) {
+    const timeoutMs = typeof options === 'number'
+        ? options
+        : (options.timeoutMs || SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS);
+    const forceReload = typeof options === 'object' && !!options.forceReload;
+    const cacheMatches = _openSocialChallengesCache.uid === user.uid;
+
+    if (!forceReload
+        && cacheMatches
+        && Date.now() - _openSocialChallengesCache.loadedAt < SOCIAL_CHALLENGE_CACHE_TTL_MS) {
+        return _openSocialChallengesCache.result;
+    }
+
+    const promiseKey = `${user.uid}:${timeoutMs}`;
+    if (!forceReload && _openSocialChallengesPromise && _openSocialChallengesPromiseKey === promiseKey) {
+        return _openSocialChallengesPromise;
+    }
+
+    const openChallengesPromise = withAsyncTimeout(Promise.all([
+        getDocs(query(
+            collection(db, 'social_challenges'),
+            where('participants', 'array-contains', user.uid),
+            where('status', 'in', ['pending', 'active']),
+            limit(5)
+        )),
+        getDocs(query(
+            collection(db, 'social_challenges'),
+            where('invitees', 'array-contains', user.uid),
+            where('status', '==', 'pending'),
+            limit(5)
+        ))
+    ]), timeoutMs, 'social_challenges_timeout')
+        .then(result => {
+            _openSocialChallengesCache = {
+                uid: user.uid,
+                loadedAt: Date.now(),
+                result
+            };
+            return result;
         })
-    ]);
+        .catch(error => {
+            logOptionalDataTimeout('social_challenges_timeout', error);
+            return cacheMatches ? _openSocialChallengesCache.result : [[], []];
+        })
+        .finally(() => {
+            if (_openSocialChallengesPromise === openChallengesPromise) {
+                _openSocialChallengesPromise = null;
+                _openSocialChallengesPromiseKey = '';
+            }
+        });
+
+    _openSocialChallengesPromise = openChallengesPromise;
+    _openSocialChallengesPromiseKey = promiseKey;
+    return openChallengesPromise;
 }
 
 window.retrySocialChallengesCard = function() {
@@ -19156,6 +19251,24 @@ window.retrySocialChallengesCard = function() {
 };
 
 async function renderSocialChallenges(user) {
+    if (!user) return;
+    if (_renderSocialChallengesPromise && _renderSocialChallengesPromiseUid === user.uid) {
+        return _renderSocialChallengesPromise;
+    }
+
+    const renderPromise = renderSocialChallengesInner(user).finally(() => {
+        if (_renderSocialChallengesPromise === renderPromise) {
+            _renderSocialChallengesPromise = null;
+            _renderSocialChallengesPromiseUid = '';
+        }
+    });
+
+    _renderSocialChallengesPromise = renderPromise;
+    _renderSocialChallengesPromiseUid = user.uid;
+    return renderPromise;
+}
+
+async function renderSocialChallengesInner(user) {
     const card = document.getElementById('social-challenge-card');
     const list = document.getElementById('social-challenge-list');
     if (!card || !list) return;
@@ -19292,7 +19405,7 @@ async function renderSocialChallenges(user) {
             ${buildCommunityExpandableRows('social-challenges', challengeRowsHtml, 2)}
         `;
     } catch (e) {
-        console.warn('[renderSocialChallenges] 오류:', e.message);
+        logOptionalDataTimeout('social_challenges_render_deferred', e);
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
         const activeFriendIds = getActiveFriendIds();
         setSocialChallengeHeadAction(activeFriendIds.length > 0 ? 'start' : (hasPendingRequests ? 'requests' : 'invite'));
@@ -19398,7 +19511,7 @@ window.openCreateChallengeModal = async function(options = {}) {
         const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
         const [readinessItems, [asParticipant, asInvitee]] = await Promise.all([
             loadSocialChallengeFriendReadiness(user, { forceReload: true }),
-            loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS)
+            loadOpenSocialChallengesForUser(user, { timeoutMs: SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, forceReload: true })
         ]);
         const challenges = mergeOpenSocialChallenges(asParticipant, asInvitee);
         const { busyFriendIds, disabledTypes } = buildSocialChallengeCreateAvailability(challenges, user.uid);

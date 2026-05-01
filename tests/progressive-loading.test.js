@@ -15,9 +15,10 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain("scheduleFriendshipRetry(user.uid, 'live-query');");
         expect(appSource).toContain('const friendshipLoadPromise = (async () => {');
         expect(appSource).toContain('if (_friendshipsLoadingPromise === friendshipLoadPromise)');
-        expect(appSource).toContain("console.warn('[friendships] timeout, using current cache');");
-        expect(appSource).not.toContain("console.warn('[friendships] timeout, using current cache');\r\n            _friendshipsLoadingPromise = null;");
-        expect(appSource).not.toContain("console.warn('[friendships] timeout, using current cache');\n            _friendshipsLoadingPromise = null;");
+        expect(appSource).toContain("logOptionalDataTimeout('friendships_timeout', error);");
+        expect(appSource).not.toContain("console.warn('[friendships] timeout, using current cache');");
+        expect(appSource).not.toContain("logOptionalDataTimeout('friendships_timeout', error);\r\n            _friendshipsLoadingPromise = null;");
+        expect(appSource).not.toContain("logOptionalDataTimeout('friendships_timeout', error);\n            _friendshipsLoadingPromise = null;");
     });
 
     it('loads hidden gallery and asset tabs only when they are visible after login', () => {
@@ -98,5 +99,22 @@ describe('progressive loading isolation', () => {
         expect(rewardMarketSource).toContain('const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;');
         expect(rewardMarketSource).toContain('function withRewardMarketTimeout');
         expect(rewardMarketSource).toContain('reward_market_snapshot_timeout');
+    });
+
+    it('keeps social challenge timeout fallback out of warning-level console noise', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('const SOCIAL_CHALLENGE_CACHE_TTL_MS = 60_000;');
+        expect(appSource).toContain('function logOptionalDataTimeout');
+        expect(appSource).toContain("APP_ENV !== 'prod' || globalThis.__HABITSCHOOL_DEBUG_OPTIONAL_DATA === true");
+        expect(appSource).toContain("logOptionalDataTimeout('social_challenge_readiness_timeout', error);");
+        expect(appSource).toContain("logOptionalDataTimeout('social_challenges_timeout', error);");
+        expect(appSource).toContain("logOptionalDataTimeout('community_friend_status_timeout', error);");
+        expect(appSource).toContain('let _openSocialChallengesPromise = null;');
+        expect(appSource).toContain('let _renderSocialChallengesPromise = null;');
+        expect(appSource).toContain('let _communityFocusRefreshPromise = null;');
+        expect(appSource).not.toContain("console.warn('[loadSocialChallengeFriendReadiness] timeout");
+        expect(appSource).not.toContain("console.warn('[renderSocialChallenges] 오류:', e.message);");
+        expect(appSource).not.toContain("console.warn('[refreshCommunityFocusSummary] friend status timeout:");
     });
 });

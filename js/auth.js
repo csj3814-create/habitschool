@@ -1,11 +1,11 @@
-// ?몄쬆 愿由?紐⑤뱢
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=170';
+// 인증 관리 모듈
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=171';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=170';
-import { getDatesInfo } from './ui-helpers.js?v=170';
-import { escapeHtml } from './security.js?v=170';
+import { showToast } from './ui-helpers.js?v=171';
+import { getDatesInfo } from './ui-helpers.js?v=171';
+import { escapeHtml } from './security.js?v=171';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -18,11 +18,11 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=170';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=170';
-// blockchain-manager???숈쟻 import (濡쒕뱶 ?ㅽ뙣?대룄 ?몄쬆???곹뼢 ?놁쓬)
+} from './auth-login-helpers.js?v=171';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=171';
+// blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=170';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=171';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -583,7 +583,7 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
     return maybePromptExistingMemberInviteFriendship(code);
 }
 
-// ?섏씠吏 濡쒕뱶 ???ref= ?뚮씪誘명꽣 ???(珥덈? 留곹겕)
+// 페이지 로드 시 ref 파라미터 저장(초대 링크)
 const _refCode = getInviteRefFromUrl();
 if (_refCode) {
     persistPendingInviteRef(_refCode);
@@ -595,14 +595,14 @@ if (_chatbotConnectTokenFromUrl) {
     localStorage.setItem(CHATBOT_CONNECT_PENDING_KEY, _chatbotConnectTokenFromUrl);
 }
 
-// WebView(?몄빋 釉뚮씪?곗?) 媛먯?
+// WebView(인앱 브라우저) 감지
 function isWebView() {
     const ua = navigator.userAgent || navigator.vendor || '';
-    // 二쇱슂 ?몄빋 釉뚮씪?곗? ?⑦꽩
+    // 주요 인앱 브라우저 패턴
     const webviewPatterns = [
         /KAKAOTALK/i,
-        /NAVER\(/i,           // ?ㅼ씠踰???(NAVER( ?⑦꽩)
-        /NAVER/i,             // ?ㅼ씠踰?愿???꾨컲
+        /NAVER\(/i,           // 네이버 앱 패턴
+        /NAVER/i,             // 네이버 관련 일반 패턴
         /NaverMatome/i,
         /FBAN|FBAV/i,         // Facebook
         /FB_IAB/i,            // Facebook In-App Browser
@@ -610,18 +610,18 @@ function isWebView() {
         /Line\//i,
         /Twitter/i,
         /Snapchat/i,
-        /DaumApps/i,          // ?ㅼ쓬/移댁뭅??怨꾩뿴
+        /DaumApps/i,          // 다음/카카오 계열
         /everytimeApp/i,
-        /BAND\//i,            // ?ㅼ씠踰?諛대뱶
-        /Whale\//i,           // ?ㅼ씠踰??⑥씪 ????WebView
-        /\bwv\b/i,            // Android WebView ?뚮옒洹?
-        /;\s*wv\)/i,          // Android WebView (?뺥솗???⑦꽩)
+        /BAND\//i,            // 네이버 밴드
+        /Whale\//i,           // 네이버 웨일 또는 WebView
+        /\bwv\b/i,            // Android WebView 플래그
+        /;\s*wv\)/i,          // Android WebView 보조 패턴
         /WebView/i,
         /GSA\//i,             // Google Search App
-        /\[FB/i,              // Facebook bracket ?⑦꽩
+        /\[FB/i,              // Facebook bracket 패턴
     ];
 
-    // Safari媛 ?꾨땶??iOS??寃쎌슦 = WebView??媛?μ꽦 ?믪쓬
+    // Safari가 아닌 iOS 환경은 WebView 가능성이 높음
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
     if (isIOS && !isSafari && !/Chrome|CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua)) return true;
@@ -629,23 +629,23 @@ function isWebView() {
     return webviewPatterns.some(pattern => pattern.test(ua));
 }
 
-// ?몃? 釉뚮씪?곗?濡??닿린 (Android intent, iOS Safari fallback)
+// 외부 브라우저로 열기(Android intent, iOS Safari fallback)
 function openInExternalBrowser() {
     const currentUrl = window.location.href;
     const ua = navigator.userAgent || '';
 
     if (/android/i.test(ua)) {
-        // Android: Chrome intent濡??닿린
+        // Android: Chrome intent로 열기
         window.location.href = 'intent://' + currentUrl.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end;';
     } else if (/iphone|ipad|ipod/i.test(ua)) {
-        // iOS: Safari濡??닿린 ?쒕룄
+        // iOS: Safari로 열기 시도
         window.location.href = currentUrl;
     } else {
         window.open(currentUrl, '_system');
     }
 }
 
-// 援ш? 濡쒓렇??
+// 구글 로그인
 export function initAuth() {
     const loginBtn = document.getElementById('loginBtn');
     const webviewWarning = document.getElementById('webview-warning');
@@ -655,7 +655,7 @@ export function initAuth() {
         return;
     }
 
-    // WebView 媛먯? ??寃쎄퀬 ?쒖떆
+    // WebView 감지 시 경고 표시
     if (isWebView()) {
         loginBtn.style.display = 'none';
         if (webviewWarning) {
@@ -946,7 +946,7 @@ function scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise = Pro
     });
 }
 
-// ?몄쬆 ?곹깭 蹂寃?由ъ뒪??
+// 인증 상태 변경 리스너
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
 
@@ -960,7 +960,7 @@ export function setupAuthListener(callbacks) {
             applySignedInShellUi(user);
             applyCachedSignedInPointBalance(user.uid);
 
-            // 利됱떆 ??쒕낫???닿린 (renderDashboard媛 ?먯껜 ?곗씠??濡쒕뵫 ?섑뻾)
+            // 즉시 대시보드 열기(renderDashboard가 자체 데이터 로딩 수행)
             const params = new URLSearchParams(window.location.search);
             const urlTab = params.get('tab');
             const appEntryFocus = params.get('focus');
@@ -1010,10 +1010,10 @@ export function setupAuthListener(callbacks) {
                 }, 120);
             }
 
-            // 媛ㅻ윭由?+ 吏媛??곗씠??諛깃렇?쇱슫??pre-fetch (???대┃ ?꾩뿉 誘몃━ 濡쒕뱶)
+            // 갤러리 + 지갑 데이터는 백그라운드 pre-fetch로 미리 로드
             scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise);
 
-            // 諛깃렇?쇱슫?? ?ъ슜??臾몄꽌 濡쒕뱶 (?됰꽕??肄붿씤/?꾨줈???낅뜲?댄듃??
+            // 백그라운드 사용자 문서 로드(닉네임, 코인, 프로필 업데이트)
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
                 const { snap: resolvedUserDoc, data: resolvedUserData } = await resolveLatestUserDocData(userRef, userDoc);
@@ -1087,7 +1087,7 @@ export function setupAuthListener(callbacks) {
 
             updateNotificationPermissionCard(user);
 
-            // 5珥???遺媛 湲곕뒫 (??쒕낫???꾩쟾???쒖떆????
+            // 5초 뒤 부가 기능 초기화(대시보드 우선 표시)
             setTimeout(() => {
                 if (window.checkOnboarding) window.checkOnboarding();
                 if (window.updateMetabolicScoreUI) window.updateMetabolicScoreUI();
@@ -1129,7 +1129,7 @@ export function setupAuthListener(callbacks) {
 
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
-            // 濡쒓렇?꾩썐 ??紐⑤뱺 由ъ냼???뺣━ (硫붾え由??꾩닔 諛⑹?)
+            // 로그아웃 시 리소스 정리(메모리 누수 방지)
             const loginBtn = document.getElementById('loginBtn');
             const pendingGoogleLoginState = readPendingGoogleLoginState();
             if (getPreferredGoogleLoginMode() !== 'redirect' && pendingGoogleLoginState?.mode === 'redirect') {
@@ -1151,12 +1151,12 @@ export function setupAuthListener(callbacks) {
             window._blockedUsers = [];
             window.applyDietProgramUserData?.(null);
 
-            // 媛ㅻ윭由?由ъ냼???뺣━
+            // 갤러리 리소스 정리
             if (window.cleanupGalleryResources) {
                 window.cleanupGalleryResources();
             }
 
-            // 濡쒓렇?꾩썐??寃쎌슦?먮쭔 媛ㅻ윭由???쑝濡??대룞 (珥덇린 cold start??濡쒓렇??紐⑤떖留??쒖떆)
+            // 로그아웃한 경우에만 갤러리 탭으로 이동(초기 cold start는 로그인 모달만 표시)
             if (window._wasLoggedIn && window.openTab) {
                 window.openTab('gallery', false);
             }
@@ -1180,7 +1180,7 @@ export function setupAuthListener(callbacks) {
     });
 }
 
-// 濡쒓렇?꾩썐 ??濡쒓렇???붾㈃?쇰줈 蹂듦?
+// 로그아웃 후 로그인 화면으로 복귀
 window.logoutAndReset = async function () {
     try {
         await signOut(auth);
@@ -1190,7 +1190,7 @@ window.logoutAndReset = async function () {
     }
 };
 
-// 怨꾩젙 ??젣 (Firestore ?곗씠??+ Storage ?뚯씪 + Auth 怨꾩젙)
+// 계정 삭제(Firestore 데이터 + Storage 파일 + Auth 계정)
 window.deleteAccountAndData = async function () {
     const user = auth.currentUser;
     if (!user) {
@@ -1214,7 +1214,7 @@ window.deleteAccountAndData = async function () {
     try {
         const uid = user.uid;
 
-        // 1. daily_logs ??젣 (userId 湲곕컲)
+        // 1. daily_logs 삭제(userId 기반)
         const logsQuery = query(collection(db, 'daily_logs'), where('userId', '==', uid));
         const logsSnap = await getDocs(logsQuery);
         const batch1 = writeBatch(db);
@@ -1226,7 +1226,7 @@ window.deleteAccountAndData = async function () {
         }
         if (count > 0) await batch1.commit();
 
-        // ?⑥? 臾몄꽌媛 ?덉쑝硫?異붽? ??젣
+        // 남은 문서가 있으면 추가 삭제
         if (logsSnap.docs.length > 500) {
             const batch2 = writeBatch(db);
             for (let i = 500; i < logsSnap.docs.length; i++) {
@@ -1235,7 +1235,7 @@ window.deleteAccountAndData = async function () {
             await batch2.commit();
         }
 
-        // 2. users/{uid}/inbodyHistory ?쒕툕而щ젆????젣
+        // 2. users/{uid}/inbodyHistory 서브컬렉션 삭제
         const inbodySnap = await getDocs(collection(db, 'users', uid, 'inbodyHistory'));
         if (!inbodySnap.empty) {
             const batchInbody = writeBatch(db);
@@ -1243,7 +1243,7 @@ window.deleteAccountAndData = async function () {
             await batchInbody.commit();
         }
 
-        // 3. users/{uid}/bloodTests ?쒕툕而щ젆????젣
+        // 3. users/{uid}/bloodTests 서브컬렉션 삭제
         const bloodSnap = await getDocs(collection(db, 'users', uid, 'bloodTests'));
         if (!bloodSnap.empty) {
             const batchBlood = writeBatch(db);
@@ -1262,7 +1262,7 @@ window.deleteAccountAndData = async function () {
         // 5. users/{uid} 메인 문서 삭제
         await deleteDoc(doc(db, 'users', uid));
 
-        // 6. Storage ?뚯씪 ??젣 (Firebase Storage???대씪?댁뼵?몄뿉???대뜑 ??젣 遺덇? ??媛쒕퀎 ??젣 ?쒕룄)
+        // 6. Storage 파일 삭제(Firebase Storage 클라이언트에서 폴더 삭제 불가, 개별 삭제 시도)
         try {
             const { storage } = await import('./firebase-config.js');
             const { ref, listAll, deleteObject } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
@@ -1273,7 +1273,7 @@ window.deleteAccountAndData = async function () {
             console.warn('Storage 파일 삭제 일부 실패 (계속 진행):', storageErr.message);
         }
 
-        // 7. Firebase Auth 怨꾩젙 ??젣 (?ъ씤利??꾩슂?????덉쓬)
+        // 7. Firebase Auth 계정 삭제(재인증이 필요할 수 있음)
         try {
             await deleteUser(user);
         } catch (authErr) {
@@ -1287,7 +1287,7 @@ window.deleteAccountAndData = async function () {
             }
         }
 
-        // 濡쒖뺄 ?곗씠???뺣━
+        // 로컬 데이터 정리
         localStorage.clear();
 
         showToast('계정이 완전히 삭제되었습니다.');

@@ -30,7 +30,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=170';
+} from './blockchain-config.js?v=171';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +48,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=170';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=171';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=170';
-import { getKstDateString } from './ui-helpers.js?v=170';
-import { checkRateLimit } from './security.js?v=170';
+import { showToast } from './ui-helpers.js?v=171';
+import { getKstDateString } from './ui-helpers.js?v=171';
+import { checkRateLimit } from './security.js?v=171';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -928,7 +928,7 @@ export async function initializeUserWallet() {
             }
             await updateDoc(userRef, migrateData);
             await ensureUserReferralCode(userRef, userData).catch((e) => {
-                console.warn('?좑툘 珥덈? 肄붾뱶 蹂댁옣 ?ㅽ뙣 (Case 2):', e?.message || e);
+                console.warn('⚠️ 초대 코드 보장 실패 (Case 2):', e?.message || e);
             });
 
             console.log('✅ v2 지갑 마이그레이션 완료:', userWalletAddress.substring(0, 10) + '...');
@@ -959,7 +959,7 @@ export async function initializeUserWallet() {
             walletVersion: 2
         }, { merge: true });
         referralCode = await ensureUserReferralCode(userRef, userData).catch((e) => {
-            console.warn('?좑툘 珥덈? 肄붾뱶 蹂댁옣 ?ㅽ뙣 (Case 3):', e?.message || e);
+            console.warn('⚠️ 초대 코드 보장 실패 (Case 3):', e?.message || e);
             return '';
         });
 
@@ -1516,7 +1516,7 @@ export async function updateChallengeProgress() {
                     const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
                     if (dailyLogData) {
                         if (!dailyQualification.qualified) {
-                            console.log(`?뱄툘 梨뚮┛吏: ?ㅻ뒛 ?몄젙 誘몃떖 (${dailyQualification.totalPoints}P, 湲곗?: ${describeChallengeQualification(dailyQualification.policy)})`);
+                            console.log(`ℹ️ 챌린지: 오늘 인정 미달 (${dailyQualification.totalPoints}P, 기준: ${describeChallengeQualification(dailyQualification.policy)})`);
                         } else {
                             completedDates.push(today);
                             challenge.completedDates = [...new Set(completedDates)];
@@ -1525,14 +1525,14 @@ export async function updateChallengeProgress() {
 
                             if (!isFinalDay) {
                                 const remain = totalDays - challenge.completedDays;
-                                toastMessages.push(`??${challengeDef.emoji || '?룇'} ${challenge.completedDays}/${totalDays}??(${remain}???⑥쓬)`);
+                                toastMessages.push(`✅ ${challengeDef.emoji || '🏆'} ${challenge.completedDays}/${totalDays}일 (${remain}일 남음)`);
                             }
                         }
                     } else {
-                        console.log(`?뱄툘 梨뚮┛吏: ?ㅻ뒛 湲곕줉 ?놁쓬`);
+                        console.log(`ℹ️ 챌린지: 오늘 기록 없음`);
                     }
                 } else if (completedDates.includes(today)) {
-                    console.log(`?뱄툘 ${tier} 梨뚮┛吏: ?ㅻ뒛 ?대? ?몄쬆 ?꾨즺`);
+                    console.log(`ℹ️ ${tier} 챌린지: 오늘 이미 인증 완료`);
                 }
 
                 if (!isFinalDay && !isPastEnd) {

@@ -1341,7 +1341,7 @@
                 (reward.winners || []).forEach(winner => addPoints(dateKey, winner.reward));
             });
         } catch (e) {
-            console.warn('?ㅻ뒛 異붽? ?ъ씤??吏묎퀎 ?ㅻ쪟:', e);
+            console.warn('오늘 추가 포인트 집계 오류:', e);
         }
 
         usersQ.forEach(u => {
