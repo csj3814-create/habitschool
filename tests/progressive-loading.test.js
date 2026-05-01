@@ -70,6 +70,9 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('const userDocPromise = getDoc(userRef).catch((error) => {');
         expect(appSource).toContain('_assetTimeout(ASSET_USER_DOC_TIMEOUT_MS)');
         expect(appSource).toContain('userDocPromise.then(lateSnap => {');
+        expect(appSource).toContain("globalThis.__HABITSCHOOL_DEBUG_PERF === true");
+        expect(appSource).not.toContain("console.time('⏱️ 대시보드 데이터 로드');");
+        expect(appSource).not.toContain("console.timeEnd('⏱️ 대시보드 데이터 로드');");
         expect(appSource).toContain('function refreshAssetOnchainBalance(uid)');
         expect(appSource).toContain('refreshAssetOnchainBalance(user.uid).catch(() => {});');
         expect(appSource).toContain("const pointsValue = (hasFreshAssetCache ? getFiniteAssetNumber(cached.coins) : null)");

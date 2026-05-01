@@ -11634,8 +11634,14 @@ async function renderDashboard() {
 }
 
 async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
+    const shouldLogDashboardTimer = APP_ENV !== 'prod' && globalThis.__HABITSCHOOL_DEBUG_PERF === true;
+    const dashboardTimerLabel = `⏱️ 대시보드 데이터 로드 ${Date.now()}`;
+    let dashboardTimerActive = false;
     try {
-        console.time('⏱️ 대시보드 데이터 로드');
+        if (shouldLogDashboardTimer) {
+            dashboardTimerActive = true;
+            console.time(dashboardTimerLabel);
+        }
         const weekStart = weekStrs[0];
         const weekEnd = weekStrs[6];
 
@@ -11663,7 +11669,10 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
                 'dashboard_firestore_timeout'
             );
         }
-        console.timeEnd('⏱️ 대시보드 데이터 로드');
+        if (dashboardTimerActive) {
+            dashboardTimerActive = false;
+            console.timeEnd(dashboardTimerLabel);
+        }
 
         const loadingEl = document.querySelector('.dashboard-loading-indicator');
         if (loadingEl) loadingEl.remove();
@@ -11673,6 +11682,10 @@ async function _fetchFreshDashboard(user, todayStr, weekStrs, currentWeekId) {
 
         _renderDashboardWithData(dashData, todayStr, weekStrs, currentWeekId, user);
     } catch (error) {
+        if (dashboardTimerActive) {
+            dashboardTimerActive = false;
+            console.timeEnd(dashboardTimerLabel);
+        }
         console.error('대시보드 데이터 로드 오류:', error);
         const loadingEl = document.querySelector('.dashboard-loading-indicator');
         if (loadingEl) loadingEl.remove();
