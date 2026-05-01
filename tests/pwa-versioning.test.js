@@ -101,5 +101,13 @@ describe('PWA asset versioning', () => {
         expect(headerSources).toContain('/js/**');
         expect(headerSources).toContain('/sw.js');
         expect(headerSources).toContain('/firebase-messaging-sw.js');
+
+        const globalHeaders = firebaseConfig.hosting[0].headers.find((item) => item.source === '**')?.headers || [];
+        expect(globalHeaders).toEqual(expect.arrayContaining([
+            {
+                key: 'Cross-Origin-Opener-Policy',
+                value: 'same-origin-allow-popups'
+            }
+        ]));
     });
 });

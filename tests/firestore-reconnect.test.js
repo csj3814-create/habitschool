@@ -10,13 +10,17 @@ describe('Firestore reconnect backoff', () => {
 
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
         expect(firebaseConfigSource).toContain('initializeFirestore(app, {');
-        expect(firebaseConfigSource).toContain('experimentalForceLongPolling: true');
+        expect(firebaseConfigSource).toContain('experimentalAutoDetectLongPolling: true');
+        expect(firebaseConfigSource).not.toContain('experimentalForceLongPolling: true');
         expect(firebaseConfigSource).toContain('experimentalLongPollingOptions:');
         expect(firebaseConfigSource).toContain('timeoutSeconds: 25');
         expect(firebaseConfigSource).toContain("setLogLevel('silent');");
         expect(firebaseConfigSource).toContain('export function scheduleFirestoreReconnect');
         expect(firebaseConfigSource).toContain('export function noteFirestoreConnectivityFailure');
         expect(firebaseConfigSource).toContain('export function isFirestoreConnectivityIssue');
+        expect(firebaseConfigSource).toContain('function bindFirestoreInternalErrorGuard');
+        expect(firebaseConfigSource).toContain('firestore-watch-assertion');
+        expect(firebaseConfigSource).toContain('event.preventDefault();');
         expect(firebaseConfigSource).toContain('reconnect probe still pending');
         expect(firebaseConfigSource).toContain("window.addEventListener('online'");
 

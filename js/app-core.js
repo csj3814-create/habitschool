@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=171';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=171';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=172';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=172';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=171';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=171';
+} from './auth-login-helpers.js?v=172';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=172';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=171';
+} from './exercise-media.js?v=172';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=171';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=171';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=171';
-import { sanitize, compressImage } from './data-manager.js?v=171';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=171';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=171';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=171';
+} from './health-connect-utils.js?v=172';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=172';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=172';
+import { sanitize, compressImage } from './data-manager.js?v=172';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=172';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=172';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=172';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=171';
+} from './diet-program.js?v=172';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,9 +65,9 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=171';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=171';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=171';
+} from './meditation-guide.js?v=172';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=172';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=172';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4824,7 +4824,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=171';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=172';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

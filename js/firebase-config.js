@@ -59,11 +59,14 @@ if (!IS_LOCAL_ENV) {
 
 const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];
 const FIRESTORE_RECONNECT_PROBE_TIMEOUT_MS = 5000;
+const FIRESTORE_INTERNAL_ASSERTION_LOG_TTL_MS = 30_000;
 
 let _firestoreReconnectTimers = [];
 let _firestoreReconnectSequence = 0;
 let _firestoreReconnectProbePromise = null;
 let _firestoreReconnectHooksBound = false;
+let _firestoreInternalErrorGuardBound = false;
+let _firestoreInternalAssertionLastLoggedAt = 0;
 let _pendingFirestoreReconnectReason = '';
 
 const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
@@ -72,7 +75,7 @@ const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CON
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
     experimentalLongPollingOptions: {
         timeoutSeconds: 25
     }
@@ -112,6 +115,12 @@ function isRetryableFirestoreConnectivityError(error = null) {
 
 export function isFirestoreConnectivityIssue(error = null) {
     return isRetryableFirestoreConnectivityError(error);
+}
+
+function isKnownFirestoreWatchAssertion(error = null) {
+    const message = normalizeFirestoreReconnectErrorMessage(error);
+    return message.includes('FIRESTORE (10.8.0) INTERNAL ASSERTION FAILED: Unexpected state')
+        || message.includes('INTERNAL ASSERTION FAILED: Unexpected state');
 }
 
 function delay(ms) {
@@ -168,6 +177,33 @@ function bindFirestoreReconnectHooks() {
     });
 }
 
+function logFirestoreInternalAssertionGuard(reason = '') {
+    if (IS_PROD_ENV) return;
+    const now = Date.now();
+    if (now - _firestoreInternalAssertionLastLoggedAt < FIRESTORE_INTERNAL_ASSERTION_LOG_TTL_MS) return;
+    _firestoreInternalAssertionLastLoggedAt = now;
+    console.info('[Firestore] recovered transient watch assertion:', reason || 'unexpected-state');
+}
+
+function bindFirestoreInternalErrorGuard() {
+    if (_firestoreInternalErrorGuardBound || typeof window === 'undefined') return;
+    _firestoreInternalErrorGuardBound = true;
+
+    window.addEventListener('unhandledrejection', (event) => {
+        if (!isKnownFirestoreWatchAssertion(event.reason)) return;
+        event.preventDefault();
+        scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
+        logFirestoreInternalAssertionGuard('unhandledrejection');
+    });
+
+    window.addEventListener('error', (event) => {
+        if (!isKnownFirestoreWatchAssertion(event.error || event.message)) return;
+        event.preventDefault();
+        scheduleFirestoreReconnect('firestore-watch-assertion', { includeImmediate: true });
+        logFirestoreInternalAssertionGuard('error');
+    });
+}
+
 export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { includeImmediate = false } = {}) {
     if (IS_LOCAL_ENV || typeof window === 'undefined') return;
 
@@ -206,6 +242,7 @@ export function noteFirestoreConnectivityFailure(error = null, context = '') {
 
 if (!IS_LOCAL_ENV) {
     bindFirestoreReconnectHooks();
+    bindFirestoreInternalErrorGuard();
 }
 
 // 상수
