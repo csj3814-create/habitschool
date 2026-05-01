@@ -1502,3 +1502,4 @@
 - 2026-05-01: 친구/커뮤니티 보조 데이터처럼 없어도 핵심 UI가 돌아가는 Firestore 조회는 timeout fallback을 장애 경고처럼 반복 출력하지 않는다. 같은 화면에서 여러 카드가 같은 데이터를 필요로 하면 in-flight promise와 짧은 캐시로 묶고, 운영 환경에서는 선택 데이터 지연 로그를 숨겨 실제 에러와 구분한다.
 - 2026-05-01: Firebase Auth popup 경고와 Firestore SDK 내부 assertion은 화면이 떠도 같은 급으로 취급하지 않는다. COOP `window.closed` 경고는 팝업 호환 헤더로 줄이고, Firestore `INTERNAL ASSERTION FAILED`는 transport 설정과 reconnect guard로 실제 데이터 갱신 불안정까지 함께 방어한다.
 - 2026-05-01: Firestore 지연 루프는 로그만 숨기면 해결된 것이 아니다. 독립 백그라운드 조회(온체인 잔액, 토큰 통계)가 성공했다고 공용 자산 재시도 카운터를 지우면 사용자 문서 timeout 재시도가 계속 1회차로 되살아나므로, 재시도 해제는 핵심 사용자 문서가 실제로 도착했을 때만 한다. 타임아웃 UI도 무한 `잠시만 기다려주세요`가 아니라 캐시 유지/수동 재확인 상태로 빠져나오게 한다.
+- 2026-05-01: 관제탑 기능이 새 컬렉션을 읽기 시작하면 Hosting 배포만으로는 부족하다. `reward_redemptions`처럼 보안 규칙이 필요한 운영 화면은 본서버 배포 때 `firestore:rules` 반영 여부를 함께 확인해야 하며, 화면에 `Missing or insufficient permissions`가 뜨면 코드보다 live rules 누락을 먼저 의심한다.
