@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>업데이트 노트 - 해빛스쿨</title>
-    <meta name="description" content="해빛스쿨의 주요 업데이트와 개선 기록">
+    <title>업데이트 노트 - 해빗스쿨</title>
+    <meta name="description" content="해빗스쿨의 주요 업데이트와 개선 기록">
     <link rel="canonical" href="https://habitschool.web.app/changelog.html">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="업데이트 노트 - 해빛스쿨">
-    <meta property="og:description" content="해빛스쿨의 주요 업데이트와 개선 기록">
+    <meta property="og:title" content="업데이트 노트 - 해빗스쿨">
+    <meta property="og:description" content="해빗스쿨의 주요 업데이트와 개선 기록">
     <meta property="og:image" content="https://habitschool.web.app/icons/icon-512.png">
     <meta property="og:url" content="https://habitschool.web.app/changelog.html">
     <meta property="og:locale" content="ko_KR">
@@ -17,7 +17,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 50%, #FFE0B2 100%);
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 50%, #ffe0b2 100%);
             color: #333;
             line-height: 1.6;
             min-height: 100vh;
@@ -37,8 +37,8 @@
             border: none;
             border-radius: 12px;
             font-size: 14px;
-            font-weight: 600;
-            color: #FF8C00;
+            font-weight: 700;
+            color: #ff8c00;
             text-decoration: none;
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
@@ -48,7 +48,7 @@
         .header {
             text-align: center;
             padding: 32px 20px 24px;
-            background: linear-gradient(135deg, #FF8C00, #FFA726);
+            background: linear-gradient(135deg, #ff8c00, #ffa726);
             border-radius: 20px;
             margin-bottom: 24px;
             color: white;
@@ -88,16 +88,16 @@
             padding: 4px 12px;
             border-radius: 999px;
             color: white;
-            background: linear-gradient(135deg, #FF8C00, #FFA726);
+            background: linear-gradient(135deg, #ff8c00, #ffa726);
             flex-shrink: 0;
         }
         .version-badge.old {
-            background: #F1F1F1;
+            background: #f1f1f1;
             color: #777;
         }
         .version-date {
             font-size: 12px;
-            color: #8B8B8B;
+            color: #8b8b8b;
         }
         .version-title {
             font-size: 16px;
@@ -113,7 +113,7 @@
             color: #555;
             padding: 7px 0 7px 22px;
             position: relative;
-            border-bottom: 1px solid #F8F0E6;
+            border-bottom: 1px solid #f8f0e6;
             line-height: 1.55;
         }
         .change-list li:last-child {
@@ -124,7 +124,7 @@
             position: absolute;
             left: 7px;
             top: 7px;
-            color: #FF8C00;
+            color: #ff8c00;
             font-size: 14px;
             font-weight: 800;
         }
@@ -137,14 +137,14 @@
             margin-right: 4px;
             vertical-align: middle;
         }
-        .tag-new { background: #E8F5E9; color: #2E7D32; }
-        .tag-fix { background: #FFF3E0; color: #E65100; }
-        .tag-improve { background: #E3F2FD; color: #1565C0; }
+        .tag-new { background: #e8f5e9; color: #2e7d32; }
+        .tag-fix { background: #fff3e0; color: #e65100; }
+        .tag-improve { background: #e3f2fd; color: #1565c0; }
         .footer {
             text-align: center;
             padding: 28px 24px 12px;
             font-size: 14px;
-            color: #5D4037;
+            color: #5d4037;
         }
         .footer p:first-child {
             margin-bottom: 12px;
@@ -152,11 +152,11 @@
         }
         .footer a {
             color: #fff;
-            background: #FF8C00;
+            background: #ff8c00;
             text-decoration: none;
             padding: 10px 28px;
             border-radius: 24px;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 14px;
             display: inline-block;
         }
@@ -173,22 +173,38 @@
 
         <div class="header">
             <h1>업데이트 노트</h1>
-            <div class="subtitle">해빛스쿨의 주요 변경과 개선 기록</div>
-            <div class="update">최신 업데이트: 2026년 4월 29일</div>
+            <div class="subtitle">해빗스쿨의 주요 변경과 개선 기록</div>
+            <div class="update">최신 업데이트: 2026년 5월 1일</div>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.10</span>
+                <span class="version-badge">v1.0.11</span>
+                <span class="version-date">2026년 5월 1일</span>
+            </div>
+            <div class="version-title">로딩 안정성과 관제탑 운영 화면을 정리했습니다</div>
+            <ul class="change-list">
+                <li><span class="tag tag-fix">수정</span> 자산 탭에서 Firestore가 늦을 때 거래 기록과 HBT 정보가 무한 로딩처럼 남던 흐름을 끊었습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 포인트, HBT, 미니 차트, 거래 기록은 가능한 마지막 정상 값을 먼저 보여주고 서버 응답이 도착하면 다시 갱신합니다.</li>
+                <li><span class="tag tag-improve">개선</span> 친구, 커뮤니티, 갤러리 같은 보조 데이터가 늦어도 핵심 화면이 막히지 않도록 중복 조회와 콘솔 소음을 줄였습니다.</li>
+                <li><span class="tag tag-fix">수정</span> PC와 모바일에서 반복되던 인증 팝업 및 Firestore 재연결 콘솔 오류를 줄이고 PWA 캐시를 새 버전으로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 관제탑 보상마켓이 운영 Firestore 규칙에 막히지 않도록 권한 배포를 정리했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 한글이 깨져 보이는 UI와 콘솔 문구를 점검하고, 같은 문제가 다시 들어오지 않도록 검사 범위를 넓혔습니다.</li>
+            </ul>
+        </div>
+
+        <div class="version-card">
+            <div class="version-header">
+                <span class="version-badge old">v1.0.10</span>
                 <span class="version-date">2026년 4월 29일</span>
             </div>
-            <div class="version-title">실쿠폰 유효기간과 보관함 표시를 더 정확하게 맞췄습니다</div>
+            <div class="version-title">쿠폰 유효기간과 보관함 표시를 더 정확하게 맞췄습니다</div>
             <ul class="change-list">
                 <li><span class="tag tag-fix">수정</span> 해빛 마켓의 아메리카노 쿠폰 유효기간을 실제 기프티쇼 발급 기준인 30일로 맞췄습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 공개 아메리카노 쿠폰은 기프티쇼 API에서 확인된 30일 상품 코드와 6% 할인 매입가 기준으로 맞췄습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 만료 날짜와 함께 남은 일수를 보여줘 사용 가능 기간을 바로 알 수 있게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 실발급 쿠폰 상태조회 응답의 만료일을 우선 반영해 앱 보관함의 날짜가 공급사 기준과 어긋나지 않게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 관제탑의 보상마켓 정보는 실발급 확인에 필요한 항목 중심으로 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 공개 아메리카노 쿠폰은 기프티쇼 API에서 확인한 30일 상품 코드와 6% 할인 매입가 기준으로 맞췄습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 만료 날짜와 함께 남은 일수를 보여줘 사용 가능한 기간을 바로 판단할 수 있게 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 실발급 쿠폰 상태조회 응답의 만료일을 우선 반영해 보관함 날짜가 공급사 기준과 어긋나지 않게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 관제탑 보상마켓 정보는 실발급 확인에 필요한 항목 중심으로 정리했습니다.</li>
             </ul>
         </div>
 
@@ -197,13 +213,13 @@
                 <span class="version-badge old">v1.0.9</span>
                 <span class="version-date">2026년 4월 27일</span>
             </div>
-            <div class="version-title">쿠폰 교환과 확인이 더 쉽고 깔끔해졌습니다</div>
+            <div class="version-title">쿠폰 교환과 확인 흐름을 더 읽기 쉽게 정리했습니다</div>
             <ul class="change-list">
                 <li><span class="tag tag-improve">개선</span> 해빛 마켓과 쿠폰 보관함에서 상품 이미지와 브랜드 표시를 더 보기 쉽게 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 저장된 쿠폰 수령 연락처는 접힌 상태로 보여주고, 필요할 때만 바로 수정할 수 있게 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 저장된 쿠폰 수령 연락처는 접힌 상태로 보여주고 필요할 때만 바로 수정할 수 있게 했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 바코드, PIN, 유효기간을 더 쉽게 확인할 수 있게 다듬었습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 모바일에서는 바코드를 더 크게 띄워 실제 사용 전에 확인하기 편하게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 2,000P 쿠폰이 잘못 막히던 교환 한도 계산 문제를 바로잡았습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 2,000P 쿠폰이 잘못된 교환 한도 계산 때문에 막히던 문제를 바로잡았습니다.</li>
             </ul>
         </div>
 
@@ -212,13 +228,13 @@
                 <span class="version-badge old">v1.0.8</span>
                 <span class="version-date">2026년 4월 23일</span>
             </div>
-            <div class="version-title">식단 코칭, 명상 가이드, 로그인 안정화를 한 번에 반영했습니다</div>
+            <div class="version-title">식단 코칭, 명상 가이드, 로그인 안정성을 함께 보완했습니다</div>
             <ul class="change-list">
                 <li><span class="tag tag-new">신규</span> 프로필에서 고른 식단 방식에 맞춰 기록 가이드, 대시보드 요약, 식전 알림 문구를 정리했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 명상과 호흡 가이드를 더 자연스럽게 다듬고 단계 표현과 사운드 안내를 보완했습니다.</li>
                 <li><span class="tag tag-new">신규</span> 감사일기 박스를 명상 흐름과 맞는 구조로 정리하고 브라우저에서 접근하기 쉽게 개선했습니다.</li>
                 <li><span class="tag tag-fix">수정</span> Galaxy 계열 브라우저에서 반복되던 Google 로그인 루프를 줄이도록 로그인 경로를 다시 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 푸시 알림의 `지금 기록` 버튼이 실제 기록 화면으로 이어지도록 딥링크 연결을 보완했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 임시 알림의 `지금 기록` 버튼이 실제 기록 화면으로 이어지도록 연결을 보완했습니다.</li>
             </ul>
         </div>
 
@@ -231,9 +247,9 @@
             <ul class="change-list">
                 <li><span class="tag tag-improve">개선</span> 앱 설치 흐름을 다시 정리해 브라우저에서 더 쉽게 이해하고 진행할 수 있게 했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 사진과 영상 업로드의 전처리 부담을 줄여 더 빠르게 올릴 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 배경 업로드 진행 표시를 다듬어 업로드 체감이 더 안정적으로 보이도록 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 배경 업로드 진행 표시를 다듬어 업로드 체감이 안정적으로 보이도록 했습니다.</li>
                 <li><span class="tag tag-fix">수정</span> 7일 챌린지 마지막 날 기록 후 정산이 어긋나던 문제를 바로잡았습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 서비스워커 버전과 자산 캐시를 정리해 최신 코드 반영이 더 안정적으로 이뤄지게 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 서비스워커 버전과 자산 캐시를 정리해 최신 코드 반영이 안정적으로 이뤄지게 했습니다.</li>
             </ul>
         </div>
 
@@ -242,13 +258,13 @@
                 <span class="version-badge old">v1.0.6</span>
                 <span class="version-date">2026년 4월 12일</span>
             </div>
-            <div class="version-title">자산 화면과 업로드 흐름, 커뮤니티 연결을 손봤습니다</div>
+            <div class="version-title">자산 화면과 업로드 흐름, 커뮤니티 연결을 다듬었습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 자산 탭의 HBT 기록과 요약을 더 안정적으로 불러오도록 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 로그인 직후에도 최근 요약 값이 먼저 보이고, 뒤에서 최신 값으로 자연스럽게 갱신되도록 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 자산 탭의 HBT 기록과 요약값을 더 안정적으로 불러오도록 정리했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 로그인 직후에도 최근 요약 값이 먼저 보이고 최신 값으로 자연스럽게 갱신되도록 했습니다.</li>
                 <li><span class="tag tag-improve">개선</span> 사진과 영상 업로드 진행을 화면에서 바로 확인할 수 있도록 개선했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 같은 날 여러 기록을 남겨도 기존 미디어가 잘못 사라지지 않도록 업로드 병합 방식을 보완했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 해빛코치 계정 연결과 1:1 상담 진입을 더 쉽게 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 같은 날 여러 기록을 저장할 때 기존 미디어가 잘못 사라지지 않도록 업로드 병합 방식을 보완했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 해빗코치 계정 연결과 1:1 상담 진입을 더 쉽게 정리했습니다.</li>
             </ul>
         </div>
 
