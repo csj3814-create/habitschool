@@ -13,6 +13,7 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
         expect(appSource).toContain("const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v1';");
         expect(appSource).toContain('function hydrateGalleryFromPersistentCache');
+        expect(appSource).toContain('function mergeGalleryLogsForProvisionalCache');
         expect(appSource).toContain('writePersistentGalleryCache');
         expect(appSource).toContain('function scheduleGalleryRetry');
         expect(appSource).toContain("console.warn('[loadGalleryData] stale gallery load discarded');");
@@ -29,6 +30,8 @@ describe('gallery loading hardening', () => {
         expect(appSource).toMatch(/catch \(e\) \{[\s\S]*?if \(!hadCachedLogs\) \{[\s\S]*?_applyGalleryRestFallback\(cutoffStr, 'auth'\);[\s\S]*?if \(retries < 3\)/);
         expect(appSource).toContain("scheduleGalleryRetry(user.uid, 'auth-gallery-load-failed');");
         expect(appSource).toContain('gallery_firestore_cache_empty_offline');
+        expect(appSource).toContain('const snapshotFromCache = !!snapshot.metadata?.fromCache;');
+        expect(appSource).toContain("scheduleGalleryRetry(user.uid, 'auth-gallery-cache-only');");
         expect(appSource).toContain("noteFirestoreConnectivityFailure(e, 'loadGalleryData');");
         expect(appSource).toContain('getDocs(q)');
         expect(appSource).toContain('갤러리 REST 조회 시간이 초과되었어요.');

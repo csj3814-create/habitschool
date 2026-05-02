@@ -117,7 +117,8 @@ function isRetryableFirestoreConnectivityError(error = null) {
 }
 
 export function isFirestoreConnectivityIssue(error = null) {
-    return isRetryableFirestoreConnectivityError(error);
+    return isRetryableFirestoreConnectivityError(error)
+        || isKnownFirestoreWatchAssertion(error);
 }
 
 function isKnownFirestoreWatchAssertion(error = null) {
@@ -254,7 +255,7 @@ export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { 
 }
 
 export function noteFirestoreConnectivityFailure(error = null, context = '') {
-    if (!isRetryableFirestoreConnectivityError(error)) return false;
+    if (!isFirestoreConnectivityIssue(error)) return false;
     const normalizedContext = String(context || '').trim();
     const normalizedError = normalizeFirestoreReconnectErrorMessage(error);
     const reason = normalizedContext

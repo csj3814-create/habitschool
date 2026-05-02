@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=174';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=174';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=175';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=175';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=174';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=174';
+} from './auth-login-helpers.js?v=175';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=175';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=174';
+} from './exercise-media.js?v=175';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=174';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=174';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=174';
-import { sanitize, compressImage } from './data-manager.js?v=174';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=174';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=174';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=174';
+} from './health-connect-utils.js?v=175';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=175';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=175';
+import { sanitize, compressImage } from './data-manager.js?v=175';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=175';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=175';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=175';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=174';
+} from './diet-program.js?v=175';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,18 +65,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=174';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=174';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=174';
+} from './meditation-guide.js?v=175';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=175';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=175';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=174';
+} from './social-challenge-readiness.js?v=175';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=174';
+} from './monthly-mvp-reward.js?v=175';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4834,7 +4834,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=174';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=175';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14529,9 +14529,14 @@ function isOfflineSaveCandidateError(error = null) {
     const message = String(error?.message || '').trim().toLowerCase();
     if (navigator.onLine === false) return true;
     return ['unavailable', 'failed-precondition', 'deadline-exceeded'].includes(code)
+        || code === 'internal'
         || code.includes('network')
+        || message.includes('internal assertion failed')
         || message.includes('network')
         || message.includes('offline')
+        || message.includes('timeout')
+        || message.includes('webchannel')
+        || message.includes('transport')
         || message.includes('failed to fetch');
 }
 
@@ -14988,6 +14993,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let latestSaveData = null;
         let latestOldData = { awardedPoints: {} };
         let offlineOutboxMediaItems = [];
+        let primarySaveAcknowledged = false;
         try {
             selectedDateStr = document.getElementById('selected-date').value;
             const rewardPolicy = getRewardEligibilityForDate(selectedDateStr);
@@ -15296,11 +15302,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             );
             try {
             await doSetDoc();
+            primarySaveAcknowledged = true;
             } catch (e) {
                 if (e.code === 'unavailable' || e.code === 'failed-precondition') {
                     // 연결 안정화 대기 후 1회 재시도
                     await new Promise(r => setTimeout(r, 1500));
                     await doSetDoc();
+                    primarySaveAcknowledged = true;
                 } else { throw e; }
             }
             await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
@@ -15404,6 +15412,19 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
         } catch (e) {
             console.error('데이터 저장 오류:', e);
+            if (primarySaveAcknowledged && latestSaveData && docId) {
+                const committedData = {
+                    ...latestOldData,
+                    ...latestSaveData,
+                    timestamp: new Date().toISOString()
+                };
+                updateDailyLogCache(docId, committedData);
+                upsertGalleryCacheItem(docId, committedData);
+                refreshGalleryFromCacheIfVisible();
+                showToast('\u2705 \uae30\ub85d\uc740 \uc800\uc7a5\ub410\uc5b4\uc694. \uac24\ub7ec\ub9ac \ubc18\uc601\uc740 \ub2e4\uc2dc \ud655\uc778\ud560\uac8c\uc694.');
+                loadGalleryData(true).catch(() => {});
+                return;
+            }
             if (latestSaveData && docId && isOfflineSaveCandidateError(e)) {
                 const queuedEntry = await queueOfflineOutboxEntry({
                     userId: user.uid,
@@ -16935,6 +16956,18 @@ function rerenderGalleryFeedIfVisible() {
     renderFeedOnly();
 }
 
+function mergeGalleryLogsForProvisionalCache(existingLogs = [], nextLogs = []) {
+    const merged = new Map();
+    [existingLogs, nextLogs].forEach((logs) => {
+        (Array.isArray(logs) ? logs : []).forEach((item) => {
+            const id = String(item?.id || '').trim();
+            if (!id || !item?.data) return;
+            merged.set(id, item);
+        });
+    });
+    return Array.from(merged.values());
+}
+
 function clearGalleryRetry(uid = auth.currentUser?.uid || 'guest') {
     if (_galleryRetryTimer) {
         clearTimeout(_galleryRetryTimer);
@@ -17188,6 +17221,27 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         snapshot.forEach(d => { logsArray.push({ id: d.id, data: d.data() }); });
                         if (logsArray.length === 0 && snapshot.metadata?.fromCache && !hadCachedLogs) {
                             throw new Error('gallery_firestore_cache_empty_offline');
+                        }
+                        const snapshotFromCache = !!snapshot.metadata?.fromCache;
+                        if (snapshotFromCache) {
+                            cachedGalleryLogs = mergeGalleryLogsForProvisionalCache(
+                                hasRenderableCachedLogs ? cachedGalleryLogs : [],
+                                logsArray
+                            );
+                            galleryCacheAudience = 'auth';
+                            galleryLastDoc = null;
+                            galleryHasMore = true;
+                            sortedFilteredDirty = true;
+                            writePersistentGalleryCache('auth', user.uid, cachedGalleryLogs);
+                            renderFeedOnly();
+                            try {
+                                await _applyGalleryRestFallback(cutoffStr, 'auth');
+                                clearGalleryRetry(user.uid);
+                            } catch (fallbackError) {
+                                console.warn('[gallery] cache-only snapshot; authoritative refresh deferred:', fallbackError?.message || fallbackError);
+                                scheduleGalleryRetry(user.uid, 'auth-gallery-cache-only');
+                            }
+                            break;
                         }
                         cachedGalleryLogs = logsArray;
                         galleryCacheAudience = 'auth';

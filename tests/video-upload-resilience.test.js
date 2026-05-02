@@ -32,4 +32,13 @@ describe('video upload resilience', () => {
         expect(source).toContain("noteFirestoreConnectivityFailure(error, 'background media patch')");
         expect(source).toContain('flushBackgroundMediaPatchQueue({ quiet: true })');
     });
+
+    it('does not show a hard save failure after the primary daily log write already succeeded', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('let primarySaveAcknowledged = false;');
+        expect(source).toContain('primarySaveAcknowledged = true;');
+        expect(source).toContain('if (primarySaveAcknowledged && latestSaveData && docId)');
+        expect(source).toContain("showToast('\\u2705 \\uae30\\ub85d\\uc740 \\uc800\\uc7a5\\ub410\\uc5b4\\uc694.");
+    });
 });
