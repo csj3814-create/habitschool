@@ -1503,3 +1503,5 @@
 - 2026-05-01: Firebase Auth popup 경고와 Firestore SDK 내부 assertion은 화면이 떠도 같은 급으로 취급하지 않는다. COOP `window.closed` 경고는 팝업 호환 헤더로 줄이고, Firestore `INTERNAL ASSERTION FAILED`는 transport 설정과 reconnect guard로 실제 데이터 갱신 불안정까지 함께 방어한다.
 - 2026-05-01: Firestore 지연 루프는 로그만 숨기면 해결된 것이 아니다. 독립 백그라운드 조회(온체인 잔액, 토큰 통계)가 성공했다고 공용 자산 재시도 카운터를 지우면 사용자 문서 timeout 재시도가 계속 1회차로 되살아나므로, 재시도 해제는 핵심 사용자 문서가 실제로 도착했을 때만 한다. 타임아웃 UI도 무한 `잠시만 기다려주세요`가 아니라 캐시 유지/수동 재확인 상태로 빠져나오게 한다.
 - 2026-05-01: 관제탑 기능이 새 컬렉션을 읽기 시작하면 Hosting 배포만으로는 부족하다. `reward_redemptions`처럼 보안 규칙이 필요한 운영 화면은 본서버 배포 때 `firestore:rules` 반영 여부를 함께 확인해야 하며, 화면에 `Missing or insufficient permissions`가 뜨면 코드보다 live rules 누락을 먼저 의심한다.
+- 2026-05-01: 친구 챌린지 준비도처럼 월초와 직전 월 기록이 함께 필요한 기준은 캘린더 월 단위 쿼리나 timeout fallback에 기대지 않는다. 기준 날짜 목록을 직접 만들고 월 경계를 넘는 기록을 테스트로 고정하며, Firestore 확인이 지연된 상태를 `5일 부족` 같은 확정 실패로 캐시하지 않는다.
+- 2026-05-01: 월초 자동 정산 보조 트리거는 암묵적인 전역 `Date` 변수에 기대지 않는다. KST 날짜 문자열에서 대상 월과 실행 가능일을 계산하는 작은 helper로 분리하고, `today.getUTCDate()`처럼 정의되지 않은 변수를 참조하지 않는 회귀 테스트를 둔다.
