@@ -32,7 +32,7 @@ describe('meditation guide helpers', () => {
 
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).guide).toBe('배를 부풀리며 4초 들이쉼, 6초 내쉼');
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).phaseSteps[0]).toEqual(
-            expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale' })
+            expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale', voiceCue: '천천히 들이쉬세요' })
         );
         expect(formatMeditationDurationLabel(300)).toBe('5분');
     });
@@ -66,7 +66,7 @@ describe('meditation guide helpers', () => {
         })).toBe('숨을 멈추고 가슴을 편하게 둬요.');
 
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).phaseSteps[1]).toEqual(
-            expect.objectContaining({ label: '멈춤', seconds: 7, visual: 'hold-full' })
+            expect.objectContaining({ label: '멈춤', seconds: 7, visual: 'hold-full', voiceCue: '잠시 멈춰요' })
         );
 
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.MINDFULNESS, {
@@ -81,10 +81,10 @@ describe('meditation guide helpers', () => {
             totalSec: 180
         })).toEqual({
             steps: [
-                expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale' }),
-                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-full' }),
-                expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale' }),
-                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-empty' })
+                expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale', voiceCue: '들이쉬세요' }),
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-full', voiceCue: '잠시 멈춰요' }),
+                expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale', voiceCue: '내쉬세요' }),
+                expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-empty', voiceCue: '잠시 멈춰요' })
             ],
             activeIndex: 1,
             cycleIndex: 0,
@@ -101,13 +101,20 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain("const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;");
+        expect(APP_SOURCE).toContain('const MEDITATION_VOICE_INTRO_CYCLES = 2;');
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
         expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
+        expect(APP_SOURCE).toContain('function getMeditationSpeechSynthesis()');
+        expect(APP_SOURCE).toContain('new window.SpeechSynthesisUtterance(text)');
+        expect(APP_SOURCE).toContain('function cancelMeditationVoiceCue()');
+        expect(APP_SOURCE).toContain('speakMeditationVoiceCue(cueInfo.voiceCue)');
+        expect(APP_SOURCE).toContain('cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
+        expect(APP_SOURCE).toContain("soundToggleBtn.textContent = enabled ? '안내 켬' : '안내 끔';");
         expect(APP_SOURCE).toContain('window.selectMeditationVideo = function(videoId = \'\')');
         expect(APP_SOURCE).toContain('function getGratitudeSpeechRecognitionCtor()');
         expect(APP_SOURCE).toContain('window.toggleGratitudeVoiceInput = function()');
@@ -128,6 +135,7 @@ describe('meditation guide helpers', () => {
 
         expect(INDEX_SOURCE).toContain('id="meditation-method-chip-list"');
         expect(INDEX_SOURCE).toContain('id="meditation-sound-toggle"');
+        expect(INDEX_SOURCE).toContain('onclick="toggleMeditationSound()">안내 끔</button>');
         expect(INDEX_SOURCE).toContain('id="meditation-phase-steps"');
         expect(INDEX_SOURCE).toContain('명상하며 느낀 3줄 감사 일기');
         expect(INDEX_SOURCE).toContain('id="gratitude-voice-btn"');

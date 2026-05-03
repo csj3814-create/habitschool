@@ -97,6 +97,7 @@ const MEDITATION_DRAFT_STORAGE_KEY = 'habitschool-meditation-draft-v1';
 const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
 const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
 const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
+const MEDITATION_VOICE_INTRO_CYCLES = 2;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -9752,6 +9753,48 @@ function ensureMeditationAudioContext() {
     return _meditationAudioContext;
 }
 
+function getMeditationSpeechSynthesis() {
+    if (typeof window === 'undefined') return null;
+    if (!window.speechSynthesis || typeof window.SpeechSynthesisUtterance !== 'function') return null;
+    return window.speechSynthesis;
+}
+
+function getMeditationKoreanVoice(synth) {
+    if (!synth || typeof synth.getVoices !== 'function') return null;
+    const voices = synth.getVoices() || [];
+    return voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith('ko')) || null;
+}
+
+function cancelMeditationVoiceCue() {
+    const synth = getMeditationSpeechSynthesis();
+    if (!synth || typeof synth.cancel !== 'function') return;
+    try {
+        synth.cancel();
+    } catch (_) {}
+}
+
+function speakMeditationVoiceCue(message = '') {
+    if (!isMeditationSoundEnabled()) return false;
+    const text = String(message || '').trim();
+    const synth = getMeditationSpeechSynthesis();
+    if (!text || !synth) return false;
+
+    try {
+        const utterance = new window.SpeechSynthesisUtterance(text);
+        const koreanVoice = getMeditationKoreanVoice(synth);
+        utterance.lang = 'ko-KR';
+        utterance.rate = 0.88;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        if (koreanVoice) utterance.voice = koreanVoice;
+        cancelMeditationVoiceCue();
+        synth.speak(utterance);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
 function playMeditationToneSequence(sequence = []) {
     if (!isMeditationSoundEnabled()) return;
     const ctx = ensureMeditationAudioContext();
@@ -9765,8 +9808,9 @@ function playMeditationToneSequence(sequence = []) {
         const gain = ctx.createGain();
         oscillator.type = tone.type || 'sine';
         oscillator.frequency.setValueAtTime(Math.max(160, Number(tone.frequency || 660)), cursor);
+        const peakVolume = Math.min(0.16, Math.max(0.0001, Number(tone.volume || 0.08)));
         gain.gain.setValueAtTime(0.0001, cursor);
-        gain.gain.exponentialRampToValueAtTime(Number(tone.volume || 0.05), cursor + 0.015);
+        gain.gain.exponentialRampToValueAtTime(peakVolume, cursor + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, cursor + durationSec);
         oscillator.connect(gain);
         gain.connect(ctx.destination);
@@ -9779,24 +9823,24 @@ function playMeditationToneSequence(sequence = []) {
 function playMeditationCue(kind = '') {
     switch (kind) {
     case 'inhale':
-        playMeditationToneSequence([{ frequency: 880, durationSec: 0.11, volume: 0.045 }]);
+        playMeditationToneSequence([{ frequency: 880, durationSec: 0.16, volume: 0.1 }]);
         break;
     case 'hold':
         playMeditationToneSequence([
-            { frequency: 640, durationSec: 0.08, gapSec: 0.05, volume: 0.04 },
-            { frequency: 640, durationSec: 0.08, gapSec: 0.04, volume: 0.04 }
+            { frequency: 640, durationSec: 0.1, gapSec: 0.05, volume: 0.085 },
+            { frequency: 640, durationSec: 0.1, gapSec: 0.04, volume: 0.085 }
         ]);
         break;
     case 'exhale':
-        playMeditationToneSequence([{ frequency: 440, durationSec: 0.14, volume: 0.05 }]);
+        playMeditationToneSequence([{ frequency: 440, durationSec: 0.2, volume: 0.11 }]);
         break;
     case 'mindfulness_start':
-        playMeditationToneSequence([{ frequency: 720, durationSec: 0.13, volume: 0.04 }]);
+        playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.08 }]);
         break;
     case 'complete':
         playMeditationToneSequence([
-            { frequency: 660, durationSec: 0.1, gapSec: 0.05, volume: 0.04 },
-            { frequency: 880, durationSec: 0.16, gapSec: 0.02, volume: 0.05 }
+            { frequency: 660, durationSec: 0.12, gapSec: 0.05, volume: 0.08 },
+            { frequency: 880, durationSec: 0.18, gapSec: 0.02, volume: 0.1 }
         ]);
         break;
     default:
@@ -9904,9 +9948,12 @@ function getMeditationRunningCueInfo(state = _meditationUiState) {
         const kind = visual.startsWith('hold')
             ? 'hold'
             : (visual === 'exhale' ? 'exhale' : 'inhale');
+        const cycleIndex = Number(phaseUiState.cycleIndex || 0);
         return {
-            token: `${state.dateStr}:${state.methodId}:${phaseUiState.cycleIndex || 0}:${phaseUiState.activeIndex}`,
-            kind
+            token: `${state.dateStr}:${state.methodId}:${cycleIndex}:${phaseUiState.activeIndex}`,
+            kind,
+            voiceCue: String(step.voiceCue || '').trim(),
+            cycleIndex
         };
     }
     return null;
@@ -9926,7 +9973,11 @@ function maybePlayMeditationRunningCue({ force = false } = {}) {
     const shouldPlay = force || cueInfo.token !== _meditationLastCueToken;
     _meditationLastCueToken = cueInfo.token;
     if (shouldPlay) {
-        playMeditationCue(cueInfo.kind);
+        const shouldUseVoice = cueInfo.voiceCue && cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES;
+        const voiceQueued = shouldUseVoice ? speakMeditationVoiceCue(cueInfo.voiceCue) : false;
+        if (!voiceQueued) {
+            playMeditationCue(cueInfo.kind);
+        }
     }
 }
 
@@ -10154,7 +10205,7 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
     if (noteEl) noteEl.textContent = MEDITATION_COMMON_NOTE;
     if (soundToggleBtn) {
         const enabled = isMeditationSoundEnabled();
-        soundToggleBtn.textContent = enabled ? '소리 켬' : '소리 끔';
+        soundToggleBtn.textContent = enabled ? '안내 켬' : '안내 끔';
         soundToggleBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
         soundToggleBtn.classList.toggle('is-on', enabled);
     }
@@ -10185,6 +10236,7 @@ function completeMeditationSession({ shouldNotify = true } = {}) {
     });
     _meditationRestorableState = createMeditationUiState(_meditationUiState);
     writeMeditationDraftState(_meditationUiState);
+    cancelMeditationVoiceCue();
     _meditationLastCueToken = '';
     playMeditationCue('complete');
     renderMeditationUi();
@@ -10211,6 +10263,7 @@ function startMeditationTimerTick() {
 
 function applyMeditationLogToUi(sleepAndMind = null, { selectedDateStr = getSelectedRecordDateStr() } = {}) {
     stopMeditationTimerTick();
+    cancelMeditationVoiceCue();
 
     const saved = normalizeMeditationLog(sleepAndMind || {});
     let nextState = createMeditationUiState({
@@ -10573,6 +10626,7 @@ window.startMeditationSession = function() {
     const currentDateStr = getSelectedRecordDateStr();
     const methodMeta = getMeditationMethodMeta(_meditationUiState?.methodId || DEFAULT_MEDITATION_METHOD_ID);
     ensureMeditationAudioContext();
+    cancelMeditationVoiceCue();
     stopMeditationTimerTick();
     clearMeditationDraftState(currentDateStr);
     _meditationRestorableState = _meditationUiState
@@ -10606,6 +10660,7 @@ window.pauseMeditationSession = function() {
     if (!_meditationUiState || _meditationUiState.status !== 'running') return;
     const remainingSec = getMeditationCountdownSeconds(_meditationUiState);
     stopMeditationTimerTick();
+    cancelMeditationVoiceCue();
     _meditationUiState = createMeditationUiState({
         ..._meditationUiState,
         status: 'paused',
@@ -10637,6 +10692,7 @@ window.resumeMeditationSession = function() {
 window.cancelMeditationSession = function() {
     if (!_meditationUiState) return;
     stopMeditationTimerTick();
+    cancelMeditationVoiceCue();
     clearMeditationJson(MEDITATION_TIMER_STORAGE_KEY);
     closeMindfulnessFullscreenExperience();
     const fallbackState = (_meditationRestorableState && _meditationRestorableState.dateStr === getSelectedRecordDateStr())
@@ -10674,8 +10730,15 @@ window.toggleMeditationSound = function() {
     }
     persistMeditationSoundEnabled(nextEnabled);
     if (_meditationUiState?.status === 'running') {
-        setMeditationCueTokenFromState(_meditationUiState);
+        if (nextEnabled) {
+            _meditationLastCueToken = '';
+            maybePlayMeditationRunningCue({ force: true });
+        } else {
+            cancelMeditationVoiceCue();
+            setMeditationCueTokenFromState(null);
+        }
     } else if (!nextEnabled) {
+        cancelMeditationVoiceCue();
         setMeditationCueTokenFromState(null);
     }
     renderMeditationUi({ skipGuideUpdate: true });

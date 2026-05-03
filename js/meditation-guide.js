@@ -14,8 +14,8 @@ const METHOD_LIST = Object.freeze([
         guide: '배를 부풀리며 4초 들이쉼, 6초 내쉼',
         durationSec: 180,
         phaseSteps: [
-            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '배를 부풀리며 천천히 들이마셔요.' },
-            { label: '내쉼', seconds: 6, visual: 'exhale', line: '배를 가라앉히며 길게 내쉬어요.' }
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '배를 부풀리며 천천히 들이마셔요.', voiceCue: '천천히 들이쉬세요' },
+            { label: '내쉼', seconds: 6, visual: 'exhale', line: '배를 가라앉히며 길게 내쉬어요.', voiceCue: '길게 내쉬세요' }
         ],
         completionLine: '복식호흡으로 몸의 긴장을 풀었어요.'
     },
@@ -25,9 +25,9 @@ const METHOD_LIST = Object.freeze([
         guide: '4초 들이쉼, 7초 멈춤, 8초 내쉼',
         durationSec: 180,
         phaseSteps: [
-            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 코로 들이마셔요.' },
-            { label: '멈춤', seconds: 7, visual: 'hold-full', line: '숨을 멈추고 가슴을 편하게 둬요.' },
-            { label: '내쉼', seconds: 8, visual: 'exhale', line: '8초 동안 길게 내쉬어요.' }
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 코로 들이마셔요.', voiceCue: '들이쉬세요' },
+            { label: '멈춤', seconds: 7, visual: 'hold-full', line: '숨을 멈추고 가슴을 편하게 둬요.', voiceCue: '잠시 멈춰요' },
+            { label: '내쉼', seconds: 8, visual: 'exhale', line: '8초 동안 길게 내쉬어요.', voiceCue: '길게 내쉬세요' }
         ],
         completionLine: '4-7-8 호흡으로 호흡 리듬을 정리했어요.'
     },
@@ -37,10 +37,10 @@ const METHOD_LIST = Object.freeze([
         guide: '4초 들이쉼, 4초 멈춤, 4초 내쉼, 4초 멈춤',
         durationSec: 180,
         phaseSteps: [
-            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 들이마셔요.' },
-            { label: '멈춤', seconds: 4, visual: 'hold-full', line: '숨을 멈추고 어깨 힘을 빼요.' },
-            { label: '내쉼', seconds: 4, visual: 'exhale', line: '4초 동안 천천히 내쉬어요.' },
-            { label: '멈춤', seconds: 4, visual: 'hold-empty', line: '빈 호흡으로 잠시 머물러요.' }
+            { label: '들이쉼', seconds: 4, visual: 'inhale', line: '4초 동안 들이마셔요.', voiceCue: '들이쉬세요' },
+            { label: '멈춤', seconds: 4, visual: 'hold-full', line: '숨을 멈추고 어깨 힘을 빼요.', voiceCue: '잠시 멈춰요' },
+            { label: '내쉼', seconds: 4, visual: 'exhale', line: '4초 동안 천천히 내쉬어요.', voiceCue: '내쉬세요' },
+            { label: '멈춤', seconds: 4, visual: 'hold-empty', line: '빈 호흡으로 잠시 머물러요.', voiceCue: '잠시 멈춰요' }
         ],
         completionLine: '박스호흡으로 긴장을 차분히 가라앉혔어요.'
     },
