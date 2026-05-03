@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=175';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=175';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=176';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=176';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=175';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=175';
+} from './auth-login-helpers.js?v=176';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=176';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=175';
+} from './exercise-media.js?v=176';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=175';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=175';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=175';
-import { sanitize, compressImage } from './data-manager.js?v=175';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=175';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=175';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=175';
+} from './health-connect-utils.js?v=176';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=176';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=176';
+import { sanitize, compressImage } from './data-manager.js?v=176';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=176';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=176';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=176';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=175';
+} from './diet-program.js?v=176';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,18 +65,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=175';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=175';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=175';
+} from './meditation-guide.js?v=176';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=176';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=176';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=175';
+} from './social-challenge-readiness.js?v=176';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=175';
+} from './monthly-mvp-reward.js?v=176';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4834,7 +4834,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=175';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=176';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7423,6 +7423,19 @@ function doesTransactionMatchActiveChain(tx = {}) {
         : txDate < MAINNET_CHALLENGE_CUTOVER_DATE;
 }
 
+function shouldHideAssetHbtHistoryTransaction(tx = {}) {
+    const type = String(tx.type || '').trim();
+    if (type !== 'challenge_settlement' && type !== 'challenge_failure') return false;
+
+    const amount = Number(tx.amount || 0);
+    const staked = Number(tx.staked || 0);
+    const burned = Number(tx.burned || 0);
+    const returned = Number(tx.returned || 0);
+    const hasHbtMovement = [amount, staked, burned, returned].some(value => Number.isFinite(value) && Math.abs(value) > 0);
+
+    return !hasHbtMovement && String(tx.status || '').trim() !== 'success';
+}
+
 function buildOnchainHbtHistoryItem(transfer = {}) {
     if (!doesTransactionMatchActiveChain(transfer)) return null;
 
@@ -8039,6 +8052,177 @@ async function fetchAssetChallengeDailyLogsByDate(uid = '', activeChallenges = {
     }, {});
 }
 
+const ASSET_CHALLENGE_TIER_ORDER = ['mini', 'weekly', 'master'];
+const ASSET_CHALLENGE_TIER_LABELS = { mini: '⚡ 3일 미니', weekly: '🔥 7일 위클리', master: '🏆 30일 마스터' };
+const ASSET_CHALLENGE_TIER_COLORS = { mini: '#4CAF50', weekly: '#FF9800', master: '#E65100' };
+const ASSET_CHALLENGE_REWARD_POINTS = { mini: 30, weekly: 100, master: 500 };
+const ASSET_CHALLENGE_LEGACY_BONUS_BPS = { mini: 0, weekly: 5000, master: 20000 };
+
+function getAssetActiveChallengesFromUserData(userData = {}) {
+    const activeChallenges = userData.activeChallenges && typeof userData.activeChallenges === 'object'
+        ? { ...userData.activeChallenges }
+        : {};
+
+    if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
+        const legacyId = userData.activeChallenge.challengeId;
+        const legacyTier = {
+            'challenge-3d': 'mini', 'challenge-7d': 'weekly', 'challenge-30d': 'master',
+            'challenge-diet-3d': 'mini', 'challenge-exercise-3d': 'mini', 'challenge-mind-3d': 'mini', 'challenge-all-3d': 'mini',
+            'challenge-diet-7d': 'weekly', 'challenge-exercise-7d': 'weekly', 'challenge-mind-7d': 'weekly', 'challenge-all-7d': 'weekly',
+            'challenge-diet-30d': 'master', 'challenge-exercise-30d': 'master', 'challenge-mind-30d': 'master', 'challenge-all-30d': 'master'
+        }[legacyId] || 'master';
+        if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
+    }
+
+    return activeChallenges;
+}
+
+function formatAssetChallengeHbt(value) {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric)) return '0';
+    return numeric.toFixed(numeric >= 100 ? 0 : 2).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+}
+
+function getAssetChallengeBonusBps(challenge, tier) {
+    const stored = Number(challenge?.bonusPolicy?.rateBps ?? challenge?.bonusRateBps);
+    return Number.isFinite(stored) ? stored : (ASSET_CHALLENGE_LEGACY_BONUS_BPS[tier] || 0);
+}
+
+function getAssetChallengeQualificationText(challenge, tier) {
+    const policy = challenge?.qualificationPolicy
+        ? normalizeChallengeQualificationPolicy(challenge.qualificationPolicy, tier)
+        : tier;
+    return formatChallengeQualificationLabel(policy);
+}
+
+function isAssetChallengePastEnd(challenge = {}, todayStr = getKstDateString()) {
+    const endDate = String(challenge?.endDate || '').trim();
+    return !!endDate && !!todayStr && todayStr > endDate;
+}
+
+function canClaimAssetChallengeNow(challenge = {}, tier = 'mini', todayStr = getKstDateString()) {
+    if (challenge?.status !== 'claimable') return false;
+    const totalDays = Math.max(1, parseInt(challenge.totalDays, 10) || (tier === 'master' ? 30 : tier === 'weekly' ? 7 : 3));
+    const completed = getChallengeCompletedDays(challenge);
+    return completed >= totalDays || isAssetChallengePastEnd(challenge, todayStr);
+}
+
+function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateString()) {
+    const challengeContainer = document.getElementById('active-challenge-container');
+    const challengeInfo = document.getElementById('active-challenge-info');
+    const challengeSelection = document.getElementById('challenge-selection');
+
+    const activeTiers = ASSET_CHALLENGE_TIER_ORDER.filter(t => {
+        const s = activeChallenges[t]?.status;
+        return s === 'ongoing' || s === 'claimable';
+    });
+
+    if (activeTiers.length > 0) {
+        let challengeHtml = '';
+        const tierBgClass = { mini: 'tier-mini-bg', weekly: 'tier-weekly-bg', master: 'tier-master-bg' };
+
+        for (const tier of activeTiers) {
+            const ch = activeChallenges[tier] || {};
+            const totalDays = Math.max(1, parseInt(ch.totalDays, 10) || 30);
+            const completed = getChallengeCompletedDays(ch);
+            const progressPct = Math.round((completed / totalDays) * 100);
+            const remain = Math.max(totalDays - completed, 0);
+            const color = ASSET_CHALLENGE_TIER_COLORS[tier];
+            const stakeText = ch.hbtStaked > 0 ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT` : '🎯 무료';
+            const isClaimable = canClaimAssetChallengeNow(ch, tier, todayStr);
+            const isFullCompletion = completed >= totalDays;
+            const radius = 40;
+            const circumference = 2 * Math.PI * radius;
+            const dashOffset = circumference - (circumference * Math.min(progressPct, 100) / 100);
+
+            if (isClaimable) {
+                const titleSuffix = isFullCompletion ? '성공!' : '정산 가능';
+                const claimCopy = isFullCompletion ? '👆 탭하여 보상 수령' : '👆 탭하여 정산 수령';
+                challengeHtml += `
+                        <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="claimChallengeReward('${tier}')">
+                            <svg class="challenge-ring-svg" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
+                                <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
+                                    stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
+                                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                                <text x="50" y="50" text-anchor="middle" font-size="18" dominant-baseline="central" fill="${color}">${isFullCompletion ? '🎉' : '🧾'}</text>
+                            </svg>
+                            <div class="challenge-ring-info">
+                                <div class="challenge-ring-name">${ASSET_CHALLENGE_TIER_LABELS[tier]} ${titleSuffix}</div>
+                                <div class="challenge-ring-date">${completed}/${totalDays}일 달성 (${progressPct}%)</div>
+                                <div class="challenge-ring-stake">${stakeText}</div>
+                                <div class="challenge-ring-date">${escapeHtml(getAssetChallengeQualificationText(ch, tier))}</div>
+                                <div class="challenge-ring-claim">${claimCopy}</div>
+                            </div>
+                        </div>
+                    `;
+            } else {
+                const pts = ASSET_CHALLENGE_REWARD_POINTS[tier];
+                const rewardText = ch.hbtStaked > 0
+                    ? `${pts}P + ${formatAssetChallengeHbt(Number(ch.hbtStaked || 0) + ((Number(ch.hbtStaked || 0) * getAssetChallengeBonusBps(ch, tier)) / 10000))} HBT`
+                    : `${pts}P`;
+                const forfeitButton = ch.status === 'ongoing'
+                    ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>`
+                    : '';
+                challengeHtml += `
+                        <div class="challenge-ring-card ${tierBgClass[tier]}">
+                            ${forfeitButton}
+                            <svg class="challenge-ring-svg" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
+                                <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
+                                    stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
+                                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                                <text x="50" y="46" text-anchor="middle" font-size="14" font-weight="bold" fill="${color}">${progressPct}%</text>
+                                <text x="50" y="60" text-anchor="middle" font-size="7" fill="#666">${completed}/${totalDays}일</text>
+                            </svg>
+                            <div class="challenge-ring-info">
+                                <div class="challenge-ring-name">${ASSET_CHALLENGE_TIER_LABELS[tier]}</div>
+                                <div class="challenge-ring-date">${escapeHtml(String(ch.startDate))} ~ ${escapeHtml(String(ch.endDate))}</div>
+                                <div class="challenge-ring-stake">${stakeText}</div>
+                                <div class="challenge-ring-date">${escapeHtml(getAssetChallengeQualificationText(ch, tier))}</div>
+                                <div class="challenge-ring-remain">남은 ${remain}일 · 완료 시 ${rewardText}</div>
+                            </div>
+                        </div>
+                    `;
+            }
+        }
+
+        if (challengeContainer) challengeContainer.style.display = 'block';
+        if (challengeInfo) challengeInfo.innerHTML = challengeHtml;
+    } else {
+        if (challengeContainer) challengeContainer.style.display = 'none';
+    }
+
+    for (const tier of ASSET_CHALLENGE_TIER_ORDER) {
+        const card = document.getElementById('tier-card-' + tier);
+        if (!card) continue;
+        if (activeTiers.includes(tier)) {
+            card.style.opacity = '0.4';
+            card.style.pointerEvents = 'none';
+        } else {
+            card.style.opacity = '1';
+            card.style.pointerEvents = 'auto';
+        }
+    }
+
+    if (challengeSelection) {
+        challengeSelection.style.display = '';
+        const toggleBtn = document.getElementById('challenge-toggle-btn');
+        const tierWrap = document.getElementById('challenge-tier-wrap');
+        const arrow = document.getElementById('challenge-toggle-arrow');
+        const text = document.getElementById('challenge-toggle-text');
+        if (activeTiers.length > 0) {
+            if (toggleBtn) toggleBtn.style.display = 'flex';
+            if (tierWrap) tierWrap.style.display = 'none';
+            if (arrow) arrow.classList.remove('open');
+            if (text) text.textContent = '📋 새 챌린지 시작하기';
+        } else {
+            if (toggleBtn) toggleBtn.style.display = 'none';
+            if (tierWrap) tierWrap.style.display = '';
+        }
+    }
+}
+
 function refreshAssetTokenStats(uid = '') {
     if (_assetTokenStatsPromise) return _assetTokenStatsPromise;
 
@@ -8376,6 +8560,36 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // user doc 로드 완료 → 기본 정보(포인트, HBT 플레이스홀더) 준비됨 → 스켈레톤 즉시 해제
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
 
+            // 챌린지 카드는 사용자 문서만 도착하면 즉시 렌더하고, 일자별 로그 보정은 백그라운드에서 반영한다.
+            let activeChallenges = getAssetActiveChallengesFromUserData(userData);
+            const applyChallengeProjection = (dailyLogsByDate, reason) => {
+                if (!dailyLogsByDate || Object.keys(dailyLogsByDate).length === 0) return false;
+                const projection = reconcileActiveChallengesWithDailyLogs(activeChallenges, dailyLogsByDate);
+                if (!projection.changed) return false;
+                activeChallenges = projection.activeChallenges;
+                requestAssetChallengeProgressSync(user.uid, _todayStr, reason);
+                return true;
+            };
+            const cachedChallengeLogsByDate = readCachedChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr);
+            applyChallengeProjection(cachedChallengeLogsByDate, 'challenge-range-cache-projection');
+            renderAssetChallengePanel(activeChallenges, _todayStr);
+
+            const challengeProgressDates = collectActiveChallengeProgressDates(activeChallenges, _todayStr);
+            if (challengeProgressDates.length > 0) {
+                fetchAssetChallengeDailyLogsByDate(user.uid, activeChallenges, _todayStr)
+                    .then((logsByDate) => {
+                        if (!logsByDate || Object.keys(logsByDate).length === 0) return;
+                        if (!applyChallengeProjection(logsByDate, 'challenge-range-server-projection')) return;
+                        if (getVisibleTabName() === 'assets' && auth.currentUser?.uid === user.uid) {
+                            renderAssetChallengePanel(activeChallenges, _todayStr);
+                        }
+                    })
+                    .catch((error) => {
+                        logAssetOptionalQueryFailure('challenge-range-logs', error);
+                        scheduleAssetRetry(user.uid, 'challenge-range-logs-timeout');
+                    });
+            }
+
             // ========== 자산 변동 표시 (오늘 획득분) ==========
             const pointsDeltaEl = document.getElementById('asset-points-delta');
             if (pointsDeltaEl) {
@@ -8590,6 +8804,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             }
             renderSimpleProfilePanel(userDisplayData).catch(() => {});
 
+            if (false) {
             // ========== 활성 챌린지 UI (통합 전용, 미니→위클리→마스터 순) ==========
             const challengeContainer = document.getElementById('active-challenge-container');
             const challengeInfo = document.getElementById('active-challenge-info');
@@ -8689,7 +8904,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const remain = totalDays - completed;
                     const color = tierColors[tier];
                     const stakeText = ch.hbtStaked > 0 ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT` : '🎯 무료';
-                    const isClaimable = ch.status === 'claimable';
+                    const isClaimable = canClaimAssetChallengeNow(ch, tier, _todayStr);
+                    const isFullCompletion = completed >= totalDays;
 
                     // SVG ring chart
                     const radius = 40;
@@ -8705,14 +8921,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
                                     stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}"
                                     stroke-linecap="round" transform="rotate(-90 50 50)"/>
-                                <text x="50" y="50" text-anchor="middle" font-size="18" dominant-baseline="central" fill="${color}">🎉</text>
+                                <text x="50" y="50" text-anchor="middle" font-size="18" dominant-baseline="central" fill="${color}">${isFullCompletion ? '🎉' : '🧾'}</text>
                             </svg>
                             <div class="challenge-ring-info">
-                                <div class="challenge-ring-name">${tierLabels[tier]} 성공!</div>
+                                <div class="challenge-ring-name">${tierLabels[tier]} ${isFullCompletion ? '성공!' : '정산 가능'}</div>
                                 <div class="challenge-ring-date">${completed}/${totalDays}일 달성 (${progressPct}%)</div>
                                 <div class="challenge-ring-stake">${stakeText}</div>
                                 <div class="challenge-ring-date">${escapeHtml(getChallengeQualificationText(ch, tier))}</div>
-                                <div class="challenge-ring-claim">👆 탭하여 보상 수령</div>
+                                <div class="challenge-ring-claim">${isFullCompletion ? '👆 탭하여 보상 수령' : '👆 탭하여 정산 수령'}</div>
                             </div>
                         </div>
                     `;
@@ -8720,7 +8936,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         // 진행 중 카드
                         challengeHtml += `
                         <div class="challenge-ring-card ${tierBgClass[tier]}">
-                            <button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>
+                            ${ch.status === 'ongoing' ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>` : ''}
                             <svg class="challenge-ring-svg" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
@@ -8793,6 +9009,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 }
             }
 
+            }
+
             // ========== 거래 기록 로드 ==========
             const txContainer = document.getElementById('transaction-history');
             if (txContainer) {
@@ -8823,6 +9041,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         txSnap.forEach(txDoc => {
                             const tx = txDoc.data();
                             if (!doesTransactionMatchActiveChain(tx)) return;
+                            if (shouldHideAssetHbtHistoryTransaction(tx)) return;
 
                             const txDateObj = tx.timestamp?.toDate?.();
                             const txDate = formatAssetHistoryDate(txDateObj, tx.date || '-');

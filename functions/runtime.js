@@ -3920,6 +3920,18 @@ function normalizeChallengeCompletion(challenge = {}) {
     };
 }
 
+function isChallengePastEnd(challenge = {}, todayStr = getCurrentKstDateString()) {
+    const endDate = String(challenge?.endDate || "").trim();
+    return !!endDate && !!todayStr && todayStr > endDate;
+}
+
+function canSettleChallengeAsClaimable(challenge = {}, completedDays = 0, totalDays = 1, todayStr = getCurrentKstDateString()) {
+    const safeTotalDays = Math.max(1, Number(totalDays) || 1);
+    const safeCompletedDays = Number(completedDays) || 0;
+    const successRate = safeCompletedDays / safeTotalDays;
+    return safeCompletedDays >= safeTotalDays || (isChallengePastEnd(challenge, todayStr) && successRate >= 0.8);
+}
+
 function getChallengeDateRange(challenge = {}) {
     const startDate = String(challenge?.startDate || "").trim();
     const totalDays = Math.max(0, Number(challenge?.totalDays || 0));
@@ -4105,7 +4117,7 @@ exports.startChallenge = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { challengeId, hbtAmount, stakeTxHash } = request.data;
+        const { challengeId, hbtAmount, stakeTxHash, stakeWalletAddress } = request.data;
         // 하위 호환: 기존 ID를 새 ID로 매핑
         const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
         const def = CHALLENGE_DEFS[resolvedId];
@@ -4115,6 +4127,14 @@ exports.startChallenge = onCall(
 
         const stakeAmount = parseFloat(hbtAmount) || 0;
         let stakeContractMode = stakeAmount > 0 ? "legacy" : null;
+        let resolvedStakeWalletAddress = null;
+        if (stakeAmount > 0 && stakeWalletAddress) {
+            try {
+                resolvedStakeWalletAddress = ethers.getAddress(String(stakeWalletAddress));
+            } catch (_) {
+                throw new HttpsError("invalid-argument", "예치 지갑 주소가 올바르지 않습니다.");
+            }
+        }
         if (def.hbtStake > 0 && stakeAmount < def.hbtStake) {
             throw new HttpsError("invalid-argument", `최소 ${def.hbtStake} HBT 이상 예치해야 합니다.`);
         }
@@ -4170,6 +4190,14 @@ exports.startChallenge = onCall(
                 const receipt = await provider.getTransactionReceipt(stakeTxHash);
                 if (!receipt || receipt.status !== 1) {
                     throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 실패했거나 아직 확인되지 않았습니다.");
+                }
+                const txInfo = await provider.getTransaction(stakeTxHash).catch(() => null);
+                if (txInfo?.from) {
+                    const txFrom = ethers.getAddress(txInfo.from);
+                    if (resolvedStakeWalletAddress && txFrom !== resolvedStakeWalletAddress) {
+                        throw new HttpsError("failed-precondition", "예치 트랜잭션 지갑 주소가 챌린지 시작 요청과 다릅니다.");
+                    }
+                    resolvedStakeWalletAddress = txFrom;
                 }
                 stakeContractMode = resolveStakeContractModeFromReceipt(receipt);
             } catch (verifyErr) {
@@ -4252,6 +4280,7 @@ exports.startChallenge = onCall(
             totalDays: def.duration,
             hbtStaked: stakeAmount,
             stakeTxHash: stakeTxHash || null,
+            stakeWalletAddress: stakeAmount > 0 ? (resolvedStakeWalletAddress || getEffectiveWalletAddress(userData)) : null,
             stakedOnChain: stakeAmount > 0,
             stakeContract: stakeContractMode,
             bonusPolicy: {
@@ -4280,6 +4309,7 @@ exports.startChallenge = onCall(
                 challengeId: resolvedId,
                 amount: stakeAmount,
                 stakeTxHash,
+                stakeWalletAddress: resolvedStakeWalletAddress || null,
                 onChain: true,
                 network: ACTIVE_CHAIN.networkTag,
                 timestamp: FieldValue.serverTimestamp(),
@@ -4341,6 +4371,12 @@ exports.claimChallengeReward = onCall(
         const totalDays = challenge.totalDays || 30;
         const completedDays = getChallengeCompletedDays(challenge);
         const successRate = completedDays / totalDays;
+        if (!canSettleChallengeAsClaimable(challenge, completedDays, totalDays)) {
+            throw new HttpsError(
+                "failed-precondition",
+                "마지막 날은 임무를 완료해야 바로 수령할 수 있고, 부분 달성 정산은 다음날부터 가능합니다."
+            );
+        }
         const staked = challenge.hbtStaked || 0;
         const stakedOnChain = challenge.stakedOnChain || false;
         const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
@@ -4372,7 +4408,7 @@ exports.claimChallengeReward = onCall(
 
         // 온체인 정산: resolveChallenge(user, true) → 스테이킹 100% 반환
         if (stakedOnChain && staked > 0 && successRate >= 0.8) {
-            const userWalletAddress = getEffectiveWalletAddress(userData);
+            const userWalletAddress = String(challenge.stakeWalletAddress || '').trim() || getEffectiveWalletAddress(userData);
             if (!userWalletAddress) {
                 throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
             }
@@ -4449,6 +4485,7 @@ exports.claimChallengeReward = onCall(
             amount: rewardHbt,
             date: _kstDateStr,
             staked: staked,
+            stakeWalletAddress: challenge.stakeWalletAddress || null,
             successRate: successRate,
             completedDays,
             completedDates: challenge.completedDates || [],
@@ -4526,7 +4563,8 @@ exports.settleChallengeFailure = onCall(
         const completedDays = getChallengeCompletedDays(challenge);
         const successRate = completedDays / totalDays;
 
-        if (successRate >= 0.8 || challenge.status === "claimable") {
+        const canClaimInsteadOfFailing = canSettleChallengeAsClaimable(challenge, completedDays, totalDays);
+        if (canClaimInsteadOfFailing || (challenge.status === "claimable" && isChallengePastEnd(challenge))) {
             const claimableChallenge = {
                 ...challenge,
                 status: "claimable"
@@ -4552,7 +4590,7 @@ exports.settleChallengeFailure = onCall(
 
         // 온체인 정산: resolveChallenge(user, false) → 50% 소각 + 50% 반환
         if (stakedOnChain && staked > 0) {
-            const userWalletAddress = getEffectiveWalletAddress(userData);
+            const userWalletAddress = String(challenge.stakeWalletAddress || '').trim() || getEffectiveWalletAddress(userData);
             if (!userWalletAddress) {
                 throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
             }
@@ -4587,6 +4625,7 @@ exports.settleChallengeFailure = onCall(
             challengeId: challenge.challengeId,
             date: _kstDateStrFail,
             staked: staked,
+            stakeWalletAddress: challenge.stakeWalletAddress || null,
             burned: stakedOnChain ? staked / 2 : 0,
             returned: stakedOnChain ? staked / 2 : 0,
             successRate: successRate,

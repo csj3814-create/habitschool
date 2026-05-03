@@ -1,6 +1,13 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-03 (Asset Challenge Settlement Timing)
+
+### 202. Challenge cards must separate full success from next-day partial settlement
+- Symptom: on the 7th day of a weekly challenge, a 6/7 partial completion could still render as `7일 위클리 성공!` with a reward-claim CTA, and the HBT history filled with repeated `0 HBT 실패` settlement rows.
+- Root cause: the client treated final-day partial progress as a settleable terminal state too early, and the asset tab had two challenge renderers: the newer fast path and an older server-log-waiting path that could redraw stale state later.
+- Lesson: for time-boxed challenges, use three explicit states: in-progress, full-completion claimable, and next-day partial settlement. Do not write HBT transaction rows when no HBT moved, and keep a single owner for the user-facing challenge renderer.
+
 ## 2026-04-20 (Diet Method Reminder Consent)
 
 ### 177. When a user asks for a simple yes/no consent flow, keep both the copy and the state transition just as direct

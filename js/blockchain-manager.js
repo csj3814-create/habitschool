@@ -30,7 +30,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=175';
+} from './blockchain-config.js?v=176';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +48,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=175';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=176';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=175';
-import { getKstDateString } from './ui-helpers.js?v=175';
-import { checkRateLimit } from './security.js?v=175';
+import { showToast } from './ui-helpers.js?v=176';
+import { getKstDateString } from './ui-helpers.js?v=176';
+import { checkRateLimit } from './security.js?v=176';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -300,7 +300,8 @@ async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, cha
         const result = await startChallengeFunction({
             challengeId: resolvedId,
             hbtAmount: pending.hbtAmount,
-            stakeTxHash: pending.stakeTxHash
+            stakeTxHash: pending.stakeTxHash,
+            stakeWalletAddress: pending.walletAddress || null
         });
         clearPendingChallengeStart(currentUser.uid);
         showChallengeStartSuccessToast(result.data, challengeDef, challengeDef.duration || 30, tier, true);
@@ -455,6 +456,13 @@ async function getConnectedWallet() {
             address,
             type: 'external'
         };
+    }
+
+    if (!userWallet && auth.currentUser) {
+        await initializeUserWallet().catch((error) => {
+            console.warn('앱 지갑 준비 실패:', error?.message || error);
+            return null;
+        });
     }
 
     if (!userWallet) return null;
@@ -1321,6 +1329,7 @@ export async function startChallenge30D(challengeId) {
 
         // 온체인 스테이킹 (HBT 예치가 있는 경우)
         let stakeTxHash = null;
+        let stakeWalletAddress = null;
         if (hbtAmount > 0) {
             const pendingRecovery = await recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount);
             if (pendingRecovery.handled) {
@@ -1388,12 +1397,13 @@ export async function startChallenge30D(challengeId) {
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
+                stakeWalletAddress = connectedWallet.address;
                 writePendingChallengeStart(currentUser.uid, {
                     challengeId: resolvedId,
                     tier,
                     hbtAmount,
                     stakeTxHash,
-                    walletAddress: connectedWallet.address
+                    walletAddress: stakeWalletAddress
                 });
                 console.log('✅ 온체인 스테이킹 완료:', stakeTxHash);
             } catch (txError) {
@@ -1414,7 +1424,7 @@ export async function startChallenge30D(challengeId) {
             return false;
         }
 
-        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
+        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash, stakeWalletAddress });
         const data = result.data;
         clearPendingChallengeStart(currentUser.uid);
 
@@ -1540,12 +1550,20 @@ export async function updateChallengeProgress() {
                 }
 
                 if (isFinalDay || isPastEnd) {
-                    const successRate = getChallengeCompletedDays(challenge) / totalDays;
+                    const completedDaysNow = getChallengeCompletedDays(challenge);
+                    const successRate = completedDaysNow / totalDays;
+                    const isFullCompletion = completedDaysNow >= totalDays;
 
-                    if (successRate >= 0.8) {
+                    if (isFinalDay && !isFullCompletion) {
+                        updateData[`activeChallenges.${tier}`] = challenge;
+                        continue;
+                    }
+
+                    if (isFullCompletion || (isPastEnd && successRate >= 0.8)) {
                         challenge.status = 'claimable';
                         updateData[`activeChallenges.${tier}`] = challenge;
-                        toastMessages.push(`🎉 ${totalDays}일 챌린지 완료! 내 지갑에서 보상을 수령하세요.`);
+                        const claimLabel = isFullCompletion ? '완료' : '부분 달성 정산 가능';
+                        toastMessages.push(`🎉 ${totalDays}일 챌린지 ${claimLabel}! 내 지갑에서 보상을 수령하세요.`);
                     } else {
                         const staked = challenge.hbtStaked || 0;
                         const stakedOnChain = challenge.stakedOnChain || false;
@@ -1561,18 +1579,20 @@ export async function updateChallengeProgress() {
                             updateData[`activeChallenges.${tier}`] = null;
                             toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
                         }
-                        settlementLogs.push({
-                            userId: currentUser.uid,
-                            type: 'challenge_settlement',
-                            challengeId: challenge.challengeId,
-                            amount: 0,
-                            staked: staked,
-                            burned: stakedOnChain ? staked / 2 : 0,
-                            successRate: successRate,
-                            completedDays: getChallengeCompletedDays(challenge),
-                            timestamp: serverTimestamp(),
-                            status: 'failed'
-                        });
+                        if (staked > 0 && !stakedOnChain) {
+                            settlementLogs.push({
+                                userId: currentUser.uid,
+                                type: 'challenge_failure',
+                                challengeId: challenge.challengeId,
+                                staked: staked,
+                                burned: staked / 2,
+                                returned: staked / 2,
+                                successRate: successRate,
+                                completedDays: getChallengeCompletedDays(challenge),
+                                timestamp: serverTimestamp(),
+                                status: 'success'
+                            });
+                        }
                     }
                     continue;
                 }
@@ -1670,11 +1690,16 @@ export async function settleExpiredChallenges() {
             }
 
             const successRate = normalizedCompletedDays / totalDays;
+            const isFullCompletion = normalizedCompletedDays >= totalDays;
+            const isPastEnd = today > challenge.endDate;
 
-            if (successRate >= 0.8) {
+            if (isFullCompletion || (isPastEnd && successRate >= 0.8)) {
                 // 성공 → claimable 상태로 전환 (사용자가 수령)
                 challenge.status = 'claimable';
                 updateData[`activeChallenges.${tier}`] = challenge;
+            } else if (!isPastEnd) {
+                updateData[`activeChallenges.${tier}`] = challenge;
+                continue;
             } else {
                 // 실패 → 온체인 resolveChallenge(user, false) 호출 (50% 소각)
                 const staked = challenge.hbtStaked || 0;
@@ -1708,22 +1733,26 @@ export async function settleExpiredChallenges() {
                     updateData[`activeChallenges.${tier}`] = deleteField();
                     showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
 
-                    try {
-                        await addDoc(collection(db, "blockchain_transactions"), {
-                            userId: currentUser.uid,
-                            type: 'challenge_settlement',
-                            challengeId: challenge.challengeId,
-                            staked: staked,
-                            successRate: successRate,
-                            completedDays: normalizedCompletedDays,
-                            completedDates: challenge.completedDates || [],
-                            startDate: challenge.startDate || null,
-                            endDate: challenge.endDate || null,
-                            timestamp: serverTimestamp(),
-                            status: 'failed'
-                        });
-                    } catch (logErr) {
-                        console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
+                    if (staked > 0) {
+                        try {
+                            await addDoc(collection(db, "blockchain_transactions"), {
+                                userId: currentUser.uid,
+                                type: 'challenge_failure',
+                                challengeId: challenge.challengeId,
+                                staked: staked,
+                                burned: staked / 2,
+                                returned: staked / 2,
+                                successRate: successRate,
+                                completedDays: normalizedCompletedDays,
+                                completedDates: challenge.completedDates || [],
+                                startDate: challenge.startDate || null,
+                                endDate: challenge.endDate || null,
+                                timestamp: serverTimestamp(),
+                                status: 'success'
+                            });
+                        } catch (logErr) {
+                            console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
+                        }
                     }
                 }
             }
@@ -1841,20 +1870,23 @@ export async function forfeitChallenge(tier) {
             await updateDoc(userRef, updateData);
 
             // 정산 기록 저장
-            try {
-                await addDoc(collection(db, "blockchain_transactions"), {
-                    userId: currentUser.uid,
-                    type: 'challenge_settlement',
-                    challengeId: challenge.challengeId,
-                    amount: 0,
-                    staked: staked,
-                    successRate: (challenge.completedDays || 0) / (challenge.totalDays || 1),
-                    completedDays: challenge.completedDays || 0,
-                    timestamp: serverTimestamp(),
-                    status: 'forfeit'
-                });
-            } catch (logErr) {
-                console.warn('⚠️ 포기 기록 저장 실패:', logErr.message);
+            if (staked > 0) {
+                try {
+                    await addDoc(collection(db, "blockchain_transactions"), {
+                        userId: currentUser.uid,
+                        type: 'challenge_failure',
+                        challengeId: challenge.challengeId,
+                        staked: staked,
+                        burned: staked / 2,
+                        returned: staked / 2,
+                        successRate: (challenge.completedDays || 0) / (challenge.totalDays || 1),
+                        completedDays: challenge.completedDays || 0,
+                        timestamp: serverTimestamp(),
+                        status: 'success'
+                    });
+                } catch (logErr) {
+                    console.warn('⚠️ 포기 기록 저장 실패:', logErr.message);
+                }
             }
 
             showToast('🏳️ 챌린지를 포기했습니다.');
@@ -2197,7 +2229,8 @@ export async function initializeWalletExternalFirst() {
             });
         }
 
-        if (!externalWalletAddress && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+        const hasActiveExternalWallet = !!externalWalletAddress && !!externalWalletProvider;
+        if (!hasActiveExternalWallet && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
             try {
                 const privateKeyHex = await decryptPrivateKey(
                     userData.encryptedKey,
@@ -2213,7 +2246,7 @@ export async function initializeWalletExternalFirst() {
                 console.error('⚠️ 앱 지갑 복호화 실패:', error);
                 userWalletAddress = userData.walletAddress || null;
             }
-        } else if (!externalWalletAddress && userData?.walletAddress) {
+        } else if (!hasActiveExternalWallet && userData?.walletAddress) {
             userWalletAddress = userData.walletAddress;
         }
 
@@ -2364,6 +2397,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         showToast(`⏳ ${duration}일 챌린지 시작 중...`);
 
         let stakeTxHash = null;
+        let stakeWalletAddress = null;
         if (hbtAmount > 0) {
             const pendingRecovery = await recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount);
             if (pendingRecovery.handled) {
@@ -2372,9 +2406,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 
             const connectedWallet = await getConnectedWallet();
             if (!connectedWallet) {
-                showToast(externalWalletAddress
-                    ? '❌ 외부 지갑을 다시 연결한 뒤 챌린지를 시작해 주세요.'
-                    : '❌ MetaMask 또는 Trust Wallet을 연결해 주세요.');
+                showToast('❌ 앱 지갑을 준비하지 못했어요. 새로고침 후 다시 시도해 주세요.');
                 return false;
             }
 
@@ -2433,12 +2465,13 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 showToast('⏳ 블록체인 확인 대기 중...');
                 const receipt = await tx.wait();
                 stakeTxHash = receipt.transactionHash;
+                stakeWalletAddress = connectedWallet.address;
                 writePendingChallengeStart(currentUser.uid, {
                     challengeId: resolvedId,
                     tier,
                     hbtAmount,
                     stakeTxHash,
-                    walletAddress: connectedWallet.address
+                    walletAddress: stakeWalletAddress
                 });
             } catch (error) {
                 console.error('❌ 온체인 예치 실패:', error);
@@ -2457,7 +2490,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             return false;
         }
 
-        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash });
+        const result = await startChallengeFunction({ challengeId: resolvedId, hbtAmount, stakeTxHash, stakeWalletAddress });
         const data = result.data;
         clearPendingChallengeStart(currentUser.uid);
 
