@@ -31,4 +31,18 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('hasMediaUrl(pendingSnapshot?.result?.url)');
         expect(appSource).not.toContain('hasMediaUrl(diet[`${slot}Url`]) return');
     });
+
+    it('clears the removed marker when a diet photo slot receives a replacement file', () => {
+        const appSource = readAppSource();
+        const previewStaticStart = appSource.indexOf('window.previewStaticImage = function');
+        const renderStart = appSource.indexOf('const render = () => {', previewStaticStart);
+        const uploadStart = appSource.indexOf('if (auth?.currentUser && input.id)', renderStart);
+        const renderPrelude = appSource.slice(renderStart, uploadStart);
+
+        expect(previewStaticStart).toBeGreaterThan(-1);
+        expect(renderStart).toBeGreaterThan(previewStaticStart);
+        expect(renderPrelude).toContain("preview.removeAttribute('data-user-removed');");
+        expect(renderPrelude).toContain("preview.removeAttribute('data-saved-url');");
+        expect(renderPrelude).toContain("preview.removeAttribute('data-saved-thumb-url');");
+    });
 });

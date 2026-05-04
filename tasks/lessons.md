@@ -8,6 +8,16 @@
 - Root cause: the client treated final-day partial progress as a settleable terminal state too early, and the asset tab had two challenge renderers: the newer fast path and an older server-log-waiting path that could redraw stale state later.
 - Lesson: for time-boxed challenges, use three explicit states: in-progress, full-completion claimable, and next-day partial settlement. Do not write HBT transaction rows when no HBT moved, and keep a single owner for the user-facing challenge renderer.
 
+### 203. Replacement photo previews must clear prior deletion markers before any save snapshot is built
+- Symptom: after deleting the first diet photo, choosing another image, and saving, the app could show an offline-backup toast and the refreshed record lost the first meal photo.
+- Root cause: `removeStaticImage()` marked the preview with `data-user-removed`, but `previewStaticImage()` did not clear that marker when a replacement file was accepted, so save code still treated the visible new photo as an intentional deletion.
+- Lesson: every replacement-upload path must clear deletion markers and stale saved-url metadata before starting a new pending upload. A visible preview is not enough if hidden DOM state still says the slot was removed.
+
+### 204. Connectivity fallback toasts should distinguish true offline from delayed save confirmation
+- Symptom: a mind-record save could show `오프라인 보관함` even though refresh later showed the record was saved correctly.
+- Root cause: transient Firestore/WebChannel failures and delayed acknowledgements were grouped under the same offline outbox message as real offline saves.
+- Lesson: keep the offline outbox safety net, but message delayed online saves as a backup/retry state rather than literal offline mode. Users need to know whether the app is disconnected or just waiting for confirmation.
+
 ## 2026-04-20 (Diet Method Reminder Consent)
 
 ### 177. When a user asks for a simple yes/no consent flow, keep both the copy and the state transition just as direct

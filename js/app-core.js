@@ -5909,6 +5909,10 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         };
 
         const render = () => {
+            preview.removeAttribute('data-user-removed');
+            preview.removeAttribute('data-saved-url');
+            preview.removeAttribute('data-saved-thumb-url');
+
             if (auth?.currentUser && input.id) {
                 const folder = input.id.startsWith('diet-') ? 'diet_images'
                              : input.id === 'sleep-img' ? 'sleep_images'
@@ -9807,7 +9811,12 @@ function playMeditationToneSequence(sequence = []) {
         const oscillator = ctx.createOscillator();
         const gain = ctx.createGain();
         oscillator.type = tone.type || 'sine';
-        oscillator.frequency.setValueAtTime(Math.max(160, Number(tone.frequency || 660)), cursor);
+        const startFrequency = Math.max(160, Number(tone.frequency || 660));
+        const endFrequency = Math.max(160, Number(tone.endFrequency || startFrequency));
+        oscillator.frequency.setValueAtTime(startFrequency, cursor);
+        if (endFrequency !== startFrequency) {
+            oscillator.frequency.exponentialRampToValueAtTime(endFrequency, cursor + durationSec);
+        }
         const peakVolume = Math.min(0.16, Math.max(0.0001, Number(tone.volume || 0.08)));
         gain.gain.setValueAtTime(0.0001, cursor);
         gain.gain.exponentialRampToValueAtTime(peakVolume, cursor + 0.015);
@@ -9820,19 +9829,28 @@ function playMeditationToneSequence(sequence = []) {
     }
 }
 
-function playMeditationCue(kind = '') {
+function playMeditationCue(kind = '', { soft = false } = {}) {
     switch (kind) {
     case 'inhale':
-        playMeditationToneSequence([{ frequency: 880, durationSec: 0.16, volume: 0.1 }]);
+        playMeditationToneSequence([{
+            frequency: 820,
+            durationSec: soft ? 0.1 : 0.15,
+            volume: soft ? 0.035 : 0.09
+        }]);
         break;
     case 'hold':
         playMeditationToneSequence([
-            { frequency: 640, durationSec: 0.1, gapSec: 0.05, volume: 0.085 },
-            { frequency: 640, durationSec: 0.1, gapSec: 0.04, volume: 0.085 }
+            { frequency: 560, durationSec: soft ? 0.06 : 0.09, gapSec: 0.05, volume: soft ? 0.032 : 0.065 },
+            { frequency: 560, durationSec: soft ? 0.06 : 0.09, gapSec: 0.04, volume: soft ? 0.032 : 0.065 }
         ]);
         break;
     case 'exhale':
-        playMeditationToneSequence([{ frequency: 440, durationSec: 0.2, volume: 0.11 }]);
+        playMeditationToneSequence([{
+            frequency: 430,
+            endFrequency: 340,
+            durationSec: soft ? 0.12 : 0.2,
+            volume: soft ? 0.035 : 0.075
+        }]);
         break;
     case 'mindfulness_start':
         playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.08 }]);
@@ -9975,6 +9993,9 @@ function maybePlayMeditationRunningCue({ force = false } = {}) {
     if (shouldPlay) {
         const shouldUseVoice = cueInfo.voiceCue && cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES;
         const voiceQueued = shouldUseVoice ? speakMeditationVoiceCue(cueInfo.voiceCue) : false;
+        if (voiceQueued && cueInfo.kind !== 'inhale') {
+            playMeditationCue(cueInfo.kind, { soft: true });
+        }
         if (!voiceQueued) {
             playMeditationCue(cueInfo.kind);
         }
@@ -15720,7 +15741,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     updateDailyLogCache(docId, pendingData);
                     upsertGalleryCacheItem(docId, pendingData);
                     refreshGalleryFromCacheIfVisible();
-                    showToast('📦 오프라인 보관함에 임시 저장했어요. 연결되면 자동으로 전송할게요.');
+                    showToast(navigator.onLine === false
+                        ? '📦 오프라인 보관함에 임시 저장했어요. 연결되면 자동으로 전송할게요.'
+                        : '📦 저장 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
                     return;
                 }
             }
