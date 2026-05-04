@@ -98,8 +98,8 @@ const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
 const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
 const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
 const MEDITATION_VOICE_INTRO_CYCLES = 2;
-const MEDITATION_TTS_VOLUME = 0.9;
-const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.32;
+const MEDITATION_TTS_VOLUME = 0.72;
+const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -9837,13 +9837,13 @@ function playMeditationCue(kind = '', { soft = false } = {}) {
         playMeditationToneSequence([{
             frequency: 820,
             durationSec: soft ? 0.1 : 0.16,
-            volume: soft ? 0.08 : 0.18
+            volume: soft ? 0.13 : 0.26
         }]);
         break;
     case 'hold':
         playMeditationToneSequence([
-            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.05, volume: soft ? 0.075 : 0.15 },
-            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.04, volume: soft ? 0.075 : 0.15 }
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.05, volume: soft ? 0.12 : 0.22 },
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.04, volume: soft ? 0.12 : 0.22 }
         ]);
         break;
     case 'exhale':
@@ -9851,16 +9851,16 @@ function playMeditationCue(kind = '', { soft = false } = {}) {
             frequency: 430,
             endFrequency: 340,
             durationSec: soft ? 0.13 : 0.22,
-            volume: soft ? 0.08 : 0.16
+            volume: soft ? 0.13 : 0.24
         }]);
         break;
     case 'mindfulness_start':
-        playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.12 }]);
+        playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.18 }]);
         break;
     case 'complete':
         playMeditationToneSequence([
-            { frequency: 660, durationSec: 0.12, gapSec: 0.05, volume: 0.12 },
-            { frequency: 880, durationSec: 0.18, gapSec: 0.02, volume: 0.16 }
+            { frequency: 660, durationSec: 0.12, gapSec: 0.05, volume: 0.18 },
+            { frequency: 880, durationSec: 0.18, gapSec: 0.02, volume: 0.24 }
         ]);
         break;
     default:

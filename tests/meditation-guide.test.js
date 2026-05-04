@@ -102,8 +102,8 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;");
         expect(APP_SOURCE).toContain('const MEDITATION_VOICE_INTRO_CYCLES = 2;');
-        expect(APP_SOURCE).toContain('const MEDITATION_TTS_VOLUME = 0.9;');
-        expect(APP_SOURCE).toContain('const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.32;');
+        expect(APP_SOURCE).toContain('const MEDITATION_TTS_VOLUME = 0.72;');
+        expect(APP_SOURCE).toContain('const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;');
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
         expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
         expect(APP_SOURCE).toContain('function getMeditationSpeechSynthesis()');
@@ -114,7 +114,8 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('speakMeditationVoiceCue(cueInfo.voiceCue)');
         expect(APP_SOURCE).toContain('cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES');
         expect(APP_SOURCE).toContain("playMeditationCue(cueInfo.kind, { soft: true });");
-        expect(APP_SOURCE).toContain('volume: soft ? 0.08 : 0.18');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.13 : 0.26');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.12 : 0.22');
         expect(APP_SOURCE).toContain('endFrequency: 340');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');

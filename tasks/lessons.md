@@ -3,6 +3,11 @@
 ---
 ## 2026-05-03 (Asset Challenge Settlement Timing)
 
+### 206. Treat repeated audio balance feedback as a clear calibration signal
+- Symptom: after raising meditation tone volume once, the user still heard the voice as too dominant and asked to lower voice while increasing alert tones.
+- Root cause: the first correction was too conservative for phone speaker perception; short oscillator cues still did not compete with browser TTS.
+- Lesson: when the user gives repeated sensory feedback, make a decisive calibration step instead of tiny incremental changes. Keep constants explicit so the next adjustment is obvious.
+
 ### 205. Balance meditation TTS and tones by perceived device loudness, not raw API volume
 - Symptom: after adding browser TTS for breathing guidance, the follow-up tone cues sounded much smaller than the spoken voice on mobile.
 - Root cause: `SpeechSynthesisUtterance.volume = 1` uses the browser/system speech path, while WebAudio oscillator tones were capped at a conservative `0.16` peak with much lower phase volumes.
