@@ -3,6 +3,11 @@
 ---
 ## 2026-05-03 (Asset Challenge Settlement Timing)
 
+### 205. Balance meditation TTS and tones by perceived device loudness, not raw API volume
+- Symptom: after adding browser TTS for breathing guidance, the follow-up tone cues sounded much smaller than the spoken voice on mobile.
+- Root cause: `SpeechSynthesisUtterance.volume = 1` uses the browser/system speech path, while WebAudio oscillator tones were capped at a conservative `0.16` peak with much lower phase volumes.
+- Lesson: when mixing TTS and generated tones, set explicit balance constants and verify the relative perceived loudness. Short tones often need a higher peak than their numeric value suggests, especially on phone speakers.
+
 ### 202. Challenge cards must separate full success from next-day partial settlement
 - Symptom: on the 7th day of a weekly challenge, a 6/7 partial completion could still render as `7일 위클리 성공!` with a reward-claim CTA, and the HBT history filled with repeated `0 HBT 실패` settlement rows.
 - Root cause: the client treated final-day partial progress as a settleable terminal state too early, and the asset tab had two challenge renderers: the newer fast path and an older server-log-waiting path that could redraw stale state later.

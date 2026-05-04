@@ -98,6 +98,8 @@ const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
 const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
 const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
 const MEDITATION_VOICE_INTRO_CYCLES = 2;
+const MEDITATION_TTS_VOLUME = 0.9;
+const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.32;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -9789,7 +9791,7 @@ function speakMeditationVoiceCue(message = '') {
         utterance.lang = 'ko-KR';
         utterance.rate = 0.88;
         utterance.pitch = 1;
-        utterance.volume = 1;
+        utterance.volume = MEDITATION_TTS_VOLUME;
         if (koreanVoice) utterance.voice = koreanVoice;
         cancelMeditationVoiceCue();
         synth.speak(utterance);
@@ -9817,7 +9819,7 @@ function playMeditationToneSequence(sequence = []) {
         if (endFrequency !== startFrequency) {
             oscillator.frequency.exponentialRampToValueAtTime(endFrequency, cursor + durationSec);
         }
-        const peakVolume = Math.min(0.16, Math.max(0.0001, Number(tone.volume || 0.08)));
+        const peakVolume = Math.min(MEDITATION_TONE_PEAK_VOLUME_LIMIT, Math.max(0.0001, Number(tone.volume || 0.08)));
         gain.gain.setValueAtTime(0.0001, cursor);
         gain.gain.exponentialRampToValueAtTime(peakVolume, cursor + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, cursor + durationSec);
@@ -9834,31 +9836,31 @@ function playMeditationCue(kind = '', { soft = false } = {}) {
     case 'inhale':
         playMeditationToneSequence([{
             frequency: 820,
-            durationSec: soft ? 0.1 : 0.15,
-            volume: soft ? 0.035 : 0.09
+            durationSec: soft ? 0.1 : 0.16,
+            volume: soft ? 0.08 : 0.18
         }]);
         break;
     case 'hold':
         playMeditationToneSequence([
-            { frequency: 560, durationSec: soft ? 0.06 : 0.09, gapSec: 0.05, volume: soft ? 0.032 : 0.065 },
-            { frequency: 560, durationSec: soft ? 0.06 : 0.09, gapSec: 0.04, volume: soft ? 0.032 : 0.065 }
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.05, volume: soft ? 0.075 : 0.15 },
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.04, volume: soft ? 0.075 : 0.15 }
         ]);
         break;
     case 'exhale':
         playMeditationToneSequence([{
             frequency: 430,
             endFrequency: 340,
-            durationSec: soft ? 0.12 : 0.2,
-            volume: soft ? 0.035 : 0.075
+            durationSec: soft ? 0.13 : 0.22,
+            volume: soft ? 0.08 : 0.16
         }]);
         break;
     case 'mindfulness_start':
-        playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.08 }]);
+        playMeditationToneSequence([{ frequency: 720, durationSec: 0.15, volume: 0.12 }]);
         break;
     case 'complete':
         playMeditationToneSequence([
-            { frequency: 660, durationSec: 0.12, gapSec: 0.05, volume: 0.08 },
-            { frequency: 880, durationSec: 0.18, gapSec: 0.02, volume: 0.1 }
+            { frequency: 660, durationSec: 0.12, gapSec: 0.05, volume: 0.12 },
+            { frequency: 880, durationSec: 0.18, gapSec: 0.02, volume: 0.16 }
         ]);
         break;
     default:
