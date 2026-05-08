@@ -37,6 +37,7 @@ let _pushTokenValue = '';
 let _ensureReferralCodeCallable = null;
 let _googleLoginRecoveryBound = false;
 let _pendingGoogleLoginResetTimer = null;
+let _mediaPickerSignedOutRecoveryTimer = null;
 const GOOGLE_LOGIN_RECOVERY_POLL_MS = 1500;
 
 function parseCachedPointNumber(value) {
@@ -946,6 +947,94 @@ function scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise = Pro
     });
 }
 
+function getMediaPickerAuthRecoveryRemainingMs() {
+    try {
+        return Math.max(0, Number(window.getHabitschoolMediaPickerRecoveryRemainingMs?.() || 0));
+    } catch (_) {
+        return 0;
+    }
+}
+
+function shouldDeferLoggedOutShellForMediaPicker() {
+    return getMediaPickerAuthRecoveryRemainingMs() > 0;
+}
+
+function clearMediaPickerSignedOutRecoveryTimer() {
+    if (_mediaPickerSignedOutRecoveryTimer) {
+        clearTimeout(_mediaPickerSignedOutRecoveryTimer);
+        _mediaPickerSignedOutRecoveryTimer = null;
+    }
+}
+
+function scheduleMediaPickerSignedOutRecovery(callbacks) {
+    clearMediaPickerSignedOutRecoveryTimer();
+    const delayMs = Math.max(300, getMediaPickerAuthRecoveryRemainingMs() + 80);
+    _mediaPickerSignedOutRecoveryTimer = setTimeout(() => {
+        _mediaPickerSignedOutRecoveryTimer = null;
+        if (auth.currentUser) return;
+        handleSignedOutAuthState(callbacks);
+    }, delayMs);
+}
+
+function handleSignedOutAuthState(callbacks) {
+    const loginBtn = document.getElementById('loginBtn');
+    const pendingGoogleLoginState = readPendingGoogleLoginState();
+    if (getPreferredGoogleLoginMode() !== 'redirect' && pendingGoogleLoginState?.mode === 'redirect') {
+        rememberPopupLoginFallback();
+        clearPendingGoogleLoginState();
+    } else if (shouldKeepPendingGoogleRedirectRecovery(pendingGoogleLoginState)) {
+        window._isPopupLogin = true;
+        setGoogleLoginPendingUi(loginBtn, true);
+        schedulePendingGoogleLoginReset(loginBtn);
+        return;
+    }
+
+    if (shouldDeferLoggedOutShellForMediaPicker()) {
+        window._isPopupLogin = true;
+        setGoogleLoginPendingUi(loginBtn, true);
+        scheduleMediaPickerSignedOutRecovery(callbacks);
+        return;
+    }
+
+    clearPendingGoogleLoginResetTimer();
+    clearMediaPickerSignedOutRecoveryTimer();
+    window._isPopupLogin = false;
+    setGoogleLoginPendingUi(loginBtn, false);
+    document.getElementById('login-modal').style.display = 'flex';
+    document.getElementById('point-badge-ui').style.display = 'none';
+    document.getElementById('date-ui').style.display = 'none';
+    document.getElementById('user-greeting').innerHTML = '';
+    window._userDisplayName = null;
+    window._blockedUsers = [];
+    window.applyDietProgramUserData?.(null);
+
+    // 갤러리 리소스 정리
+    if (window.cleanupGalleryResources) {
+        window.cleanupGalleryResources();
+    }
+
+    // 로그아웃한 경우에만 갤러리 탭으로 이동(초기 cold start는 로그인 모달만 표시)
+    if (window._wasLoggedIn && window.openTab) {
+        window.openTab('gallery', false);
+    }
+    window._wasLoggedIn = false;
+    _pushTokenLinked = false;
+    _pushTokenValue = '';
+    window.clearPwaActionableBadge?.();
+    const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
+    if (pendingChatbotToken && window.handleLoggedOutChatbotConnect) {
+        setTimeout(() => {
+            window.handleLoggedOutChatbotConnect();
+        }, 80);
+    }
+
+    // 콜백 실행
+    if (callbacks && callbacks.onLogout) {
+        callbacks.onLogout();
+    }
+    updateNotificationPermissionCard(null);
+}
+
 // 인증 상태 변경 리스너
 export function setupAuthListener(callbacks) {
     const { todayStr } = getDatesInfo();
@@ -953,6 +1042,7 @@ export function setupAuthListener(callbacks) {
     onAuthStateChanged(auth, (user) => {
         if (user) {
             clearPendingGoogleLoginResetTimer();
+            clearMediaPickerSignedOutRecoveryTimer();
             if (window._isPopupLogin) {
                 window._isPopupLogin = false;
             }
@@ -1129,53 +1219,7 @@ export function setupAuthListener(callbacks) {
 
             if (callbacks && callbacks.onLogin) callbacks.onLogin(user);
         } else {
-            // 로그아웃 시 리소스 정리(메모리 누수 방지)
-            const loginBtn = document.getElementById('loginBtn');
-            const pendingGoogleLoginState = readPendingGoogleLoginState();
-            if (getPreferredGoogleLoginMode() !== 'redirect' && pendingGoogleLoginState?.mode === 'redirect') {
-                rememberPopupLoginFallback();
-                clearPendingGoogleLoginState();
-            } else if (shouldKeepPendingGoogleRedirectRecovery(pendingGoogleLoginState)) {
-                window._isPopupLogin = true;
-                setGoogleLoginPendingUi(loginBtn, true);
-                schedulePendingGoogleLoginReset(loginBtn);
-                return;
-            }
-            clearPendingGoogleLoginResetTimer();
-            setGoogleLoginPendingUi(loginBtn, false);
-            document.getElementById('login-modal').style.display = 'flex';
-            document.getElementById('point-badge-ui').style.display = 'none';
-            document.getElementById('date-ui').style.display = 'none';
-            document.getElementById('user-greeting').innerHTML = '';
-            window._userDisplayName = null;
-            window._blockedUsers = [];
-            window.applyDietProgramUserData?.(null);
-
-            // 갤러리 리소스 정리
-            if (window.cleanupGalleryResources) {
-                window.cleanupGalleryResources();
-            }
-
-            // 로그아웃한 경우에만 갤러리 탭으로 이동(초기 cold start는 로그인 모달만 표시)
-            if (window._wasLoggedIn && window.openTab) {
-                window.openTab('gallery', false);
-            }
-            window._wasLoggedIn = false;
-            _pushTokenLinked = false;
-            _pushTokenValue = '';
-            window.clearPwaActionableBadge?.();
-            const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
-            if (pendingChatbotToken && window.handleLoggedOutChatbotConnect) {
-                setTimeout(() => {
-                    window.handleLoggedOutChatbotConnect();
-                }, 80);
-            }
-
-            // 肄쒕갚 ?ㅽ뻾
-            if (callbacks && callbacks.onLogout) {
-                callbacks.onLogout();
-            }
-            updateNotificationPermissionCard(null);
+            handleSignedOutAuthState(callbacks);
         }
     });
 }

@@ -45,4 +45,25 @@ describe('diet photo persistence', () => {
         expect(renderPrelude).toContain("preview.removeAttribute('data-saved-url');");
         expect(renderPrelude).toContain("preview.removeAttribute('data-saved-thumb-url');");
     });
+
+    it('preserves local meal previews while camera or file picker recovery is still settling', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;');
+        expect(appSource).toContain('window.markHabitschoolMediaPickerActivity = markHabitschoolMediaPickerActivity;');
+        expect(appSource).toContain("preview.setAttribute('data-local-draft', 'true');");
+        expect(appSource).toContain('function shouldPreserveDailyLogMediaUi');
+        expect(appSource).toContain('clearInputs({ preserveMedia: preserveLocalMediaUi });');
+        expect(appSource).toContain('if (preserveLocalMediaUi && shouldSkipDietHydrationForLocalDraft(k, previewEl)) return;');
+    });
+
+    it('keeps pending upload slots from being overwritten by daily-log hydration', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('function hasLocalMediaDraftForInput');
+        expect(appSource).toContain('const pendingSnapshot = inputId ? getPendingUploadSnapshot(inputId) : null;');
+        expect(appSource).toContain('function hasLocalExerciseMediaDraft');
+        expect(appSource).toContain('if (!preserveLocalMediaUi && data.exercise)');
+        expect(appSource).toContain("previewEl.removeAttribute('data-local-draft');");
+    });
 });

@@ -100,6 +100,7 @@ const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
 const MEDITATION_VOICE_INTRO_CYCLES = 2;
 const MEDITATION_TTS_VOLUME = 0.72;
 const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;
+const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -129,6 +130,10 @@ const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
 ]);
 let _meditationTimerTickHandle = 0;
 let _meditationUiState = null;
+let _mediaPickerRecoveryUntilMs = 0;
+let _mediaPickerRecoveryTimer = 0;
+let _mediaPickerLastInputId = '';
+let _mediaPickerLastDateStr = '';
 let _meditationRestorableState = null;
 let _meditationAudioContext = null;
 let _meditationLastCueToken = '';
@@ -1933,6 +1938,93 @@ function handleDietUploadDeepLink() {
 }
 
 const DIET_DEEP_LINK_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+function getHabitschoolMediaPickerRecoveryRemainingMs(now = Date.now()) {
+    return Math.max(0, _mediaPickerRecoveryUntilMs - (Number(now) || Date.now()));
+}
+
+function scheduleMediaPickerRecoveryExpiry() {
+    if (_mediaPickerRecoveryTimer) {
+        window.clearTimeout(_mediaPickerRecoveryTimer);
+        _mediaPickerRecoveryTimer = 0;
+    }
+    const remainingMs = getHabitschoolMediaPickerRecoveryRemainingMs();
+    if (remainingMs <= 0) return;
+    _mediaPickerRecoveryTimer = window.setTimeout(() => {
+        _mediaPickerRecoveryTimer = 0;
+        if (getHabitschoolMediaPickerRecoveryRemainingMs() > 0) {
+            scheduleMediaPickerRecoveryExpiry();
+            return;
+        }
+        _mediaPickerLastInputId = '';
+        _mediaPickerLastDateStr = '';
+    }, remainingMs + 80);
+}
+
+function markHabitschoolMediaPickerActivity({
+    inputId = '',
+    dateStr = getSelectedRecordDateStr(),
+    graceMs = MEDIA_PICKER_RECOVERY_GRACE_MS
+} = {}) {
+    const now = Date.now();
+    _mediaPickerRecoveryUntilMs = Math.max(
+        _mediaPickerRecoveryUntilMs,
+        now + Math.max(1000, Number(graceMs) || MEDIA_PICKER_RECOVERY_GRACE_MS)
+    );
+    _mediaPickerLastInputId = String(inputId || _mediaPickerLastInputId || '').trim();
+    _mediaPickerLastDateStr = String(dateStr || _mediaPickerLastDateStr || '').trim();
+    scheduleMediaPickerRecoveryExpiry();
+    return _mediaPickerRecoveryUntilMs;
+}
+
+window.markHabitschoolMediaPickerActivity = markHabitschoolMediaPickerActivity;
+window.getHabitschoolMediaPickerRecoveryRemainingMs = getHabitschoolMediaPickerRecoveryRemainingMs;
+window.isHabitschoolMediaPickerRecovering = function (now = Date.now()) {
+    return getHabitschoolMediaPickerRecoveryRemainingMs(now) > 0;
+};
+
+function hasLocalMediaDraftForInput(inputId = '', previewEl = null) {
+    const input = inputId ? document.getElementById(inputId) : null;
+    const pendingSnapshot = inputId ? getPendingUploadSnapshot(inputId) : null;
+    return !!(
+        input?.files?.length
+        || pendingSnapshot
+        || previewEl?.getAttribute('data-local-draft') === 'true'
+    );
+}
+
+function hasLocalExerciseMediaDraft() {
+    return Array.from(document.querySelectorAll('#exercise input[type="file"]')).some((input) => {
+        const block = input.closest('.exercise-block');
+        return !!(
+            input.files?.length
+            || getPendingUploadSnapshot(input.id)
+            || block?.getAttribute('data-local-draft') === 'true'
+            || block?.querySelector('[data-local-draft="true"]')
+        );
+    });
+}
+
+function hasAnyLocalDailyLogMediaDraft() {
+    const hasDietDraft = DIET_DEEP_LINK_SLOTS.some((slot) => {
+        return hasLocalMediaDraftForInput(`diet-img-${slot}`, document.getElementById(`preview-${slot}`));
+    });
+    const hasSleepDraft = hasLocalMediaDraftForInput('sleep-img', document.getElementById('preview-sleep'));
+    return hasDietDraft || hasSleepDraft || hasLocalExerciseMediaDraft();
+}
+
+function shouldPreserveDailyLogMediaUi(dateStr = '') {
+    const selectedDateStr = String(getSelectedRecordDateStr() || '').trim();
+    const targetDateStr = String(dateStr || selectedDateStr).trim();
+    if (selectedDateStr && targetDateStr && selectedDateStr !== targetDateStr) return false;
+    const pickerMatchesDate = window.isHabitschoolMediaPickerRecovering?.()
+        && (!_mediaPickerLastDateStr || _mediaPickerLastDateStr === targetDateStr);
+    return hasAnyLocalDailyLogMediaDraft() || pickerMatchesDate;
+}
+
+function shouldSkipDietHydrationForLocalDraft(slot = '', previewEl = null) {
+    return hasLocalMediaDraftForInput(`diet-img-${slot}`, previewEl);
+}
 
 function resolveDietDeepLinkTarget(focus = '') {
     const normalizedFocus = String(focus || '').trim();
@@ -5911,9 +6003,11 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         };
 
         const render = () => {
+            markHabitschoolMediaPickerActivity({ inputId: input.id });
             preview.removeAttribute('data-user-removed');
             preview.removeAttribute('data-saved-url');
             preview.removeAttribute('data-saved-thumb-url');
+            preview.setAttribute('data-local-draft', 'true');
 
             if (auth?.currentUser && input.id) {
                 const folder = input.id.startsWith('diet-') ? 'diet_images'
@@ -5946,6 +6040,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 const exerciseBlock = input.closest('.exercise-block');
                 if (exerciseBlock) {
                     exerciseBlock.removeAttribute('data-user-removed');
+                    exerciseBlock.setAttribute('data-local-draft', 'true');
                     ensureExerciseBlockMediaId(exerciseBlock, exerciseBlock.classList.contains('strength-block') ? 'strength' : 'cardio');
                     exerciseBlock.removeAttribute('data-ai-analysis');
                     exerciseBlock.removeAttribute('data-url');
@@ -6046,6 +6141,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     document.getElementById(previewId).setAttribute('data-user-removed', 'true');
     document.getElementById(previewId).removeAttribute('data-saved-url');
     document.getElementById(previewId).removeAttribute('data-saved-thumb-url');
+    document.getElementById(previewId).removeAttribute('data-local-draft');
     document.getElementById(btnId).style.display = "none";
     if (document.getElementById(txtId)) document.getElementById(txtId).style.display = "inline-block";
 
@@ -6089,6 +6185,7 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
             exerciseBlock.removeAttribute('data-ai-analysis');
             exerciseBlock.removeAttribute('data-url');
             exerciseBlock.removeAttribute('data-thumb-url');
+            exerciseBlock.removeAttribute('data-local-draft');
         }
     }
 
@@ -6139,12 +6236,22 @@ function openDietSlotPicker(slot, source = 'library') {
     if (box) box.style.display = 'block';
 
     const normalizedSource = source === 'camera' ? 'camera' : 'library';
+    markHabitschoolMediaPickerActivity({ inputId: input.id });
     const cleanup = () => {
         input.removeAttribute('capture');
         input.removeEventListener('change', cleanup, true);
         window.removeEventListener('focus', handleFocus, true);
+        window.removeEventListener('pageshow', handleFocus, true);
+        document.removeEventListener('visibilitychange', handleVisibilityChange, true);
     };
-    const handleFocus = () => window.setTimeout(cleanup, 0);
+    const finishPickerReturn = () => {
+        markHabitschoolMediaPickerActivity({ inputId: input.id });
+        cleanup();
+    };
+    const handleFocus = () => window.setTimeout(finishPickerReturn, 0);
+    const handleVisibilityChange = () => {
+        if (!document.hidden) handleFocus();
+    };
 
     if (normalizedSource === 'camera') {
         input.setAttribute('capture', 'environment');
@@ -6154,6 +6261,8 @@ function openDietSlotPicker(slot, source = 'library') {
 
     input.addEventListener('change', cleanup, { once: true, capture: true });
     window.addEventListener('focus', handleFocus, { once: true, capture: true });
+    window.addEventListener('pageshow', handleFocus, { once: true, capture: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true });
     input.click();
     return true;
 }
@@ -6383,10 +6492,10 @@ window.smartUpload = async function (input) {
     }
 };
 
-function clearInputs() {
+function clearInputs({ preserveMedia = false } = {}) {
     stopGratitudeVoiceInput({ preserveStatus: false });
     ['weight', 'glucose', 'bp-systolic', 'bp-diastolic', 'gratitude-journal'].forEach(id => document.getElementById(id).value = '');
-    loadStepData(null);
+    if (!preserveMedia) loadStepData(null);
     _lastDietAutoImportResult = null;
     renderDietShareImportBanner();
 
@@ -6397,7 +6506,9 @@ function clearInputs() {
         const box = document.getElementById(`diet-box-${k}`);
         const inputId = k === 'sleep' ? 'sleep-img' : `diet-img-${k}`;
         
-        if (pv) { pv.style.display = 'none'; pv.src = ''; pv.removeAttribute('data-user-removed'); pv.removeAttribute('data-saved-url'); pv.removeAttribute('data-saved-thumb-url'); }
+        if (preserveMedia) return;
+
+        if (pv) { pv.style.display = 'none'; pv.src = ''; pv.removeAttribute('data-user-removed'); pv.removeAttribute('data-saved-url'); pv.removeAttribute('data-saved-thumb-url'); pv.removeAttribute('data-local-draft'); }
         if (rm) rm.style.display = 'none';
         if (tx) tx.style.display = 'inline-block';
         if (box && k !== 'breakfast' && k !== 'sleep') { 
@@ -6429,15 +6540,19 @@ function clearInputs() {
     const mindResultBox = document.getElementById('mind-analysis-result');
     if (mindResultBox) { mindResultBox.innerHTML = ''; mindResultBox.style.display = 'none'; }
 
-    document.getElementById('cardio-list').innerHTML = '';
-    document.getElementById('strength-list').innerHTML = '';
-    resetRemovedExerciseMediaIds();
+    if (!preserveMedia) {
+        document.getElementById('cardio-list').innerHTML = '';
+        document.getElementById('strength-list').innerHTML = '';
+        resetRemovedExerciseMediaIds();
+    }
 
     document.getElementById('quest-diet').className = 'quest-check'; document.getElementById('quest-diet').innerText = '미달성';
     document.getElementById('quest-exercise').className = 'quest-check'; document.getElementById('quest-exercise').innerText = '미달성';
     document.getElementById('quest-mind').className = 'quest-check'; document.getElementById('quest-mind').innerText = '미달성';
 
-    document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
+    if (!preserveMedia) {
+        document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
+    }
     applyShareSettingsToControls(getDefaultShareSettings());
     setShareSettingsExpanded(false);
     applyMeditationLogToUi(null, { selectedDateStr: getSelectedRecordDateStr() });
@@ -6744,8 +6859,10 @@ async function loadDataForSelectedDate(dateStr) {
             }
         }
 
-        // 데이터 도착 후에 UI 초기화 (깜빡임 방지)
-        clearInputs();
+        const preserveLocalMediaUi = shouldPreserveDailyLogMediaUi(selectedDateStr);
+
+        // 데이터 도착 후에 UI 초기화 (깜빡임 방지). 카메라/file picker 복귀 중 미저장 미디어는 보존한다.
+        clearInputs({ preserveMedia: preserveLocalMediaUi });
 
         if (effectiveLogDoc.exists() || pendingOutboxEntry) {
             const data = pendingOutboxEntry
@@ -6766,6 +6883,7 @@ async function loadDataForSelectedDate(dateStr) {
                 ['breakfast', 'lunch', 'dinner', 'snack'].forEach(k => {
                     if (data.diet[`${k}Url`] && isValidStorageUrl(data.diet[`${k}Url`])) {
                         const previewEl = document.getElementById(`preview-${k}`);
+                        if (preserveLocalMediaUi && shouldSkipDietHydrationForLocalDraft(k, previewEl)) return;
                         previewEl.src = data.diet[`${k}Url`];
                         previewEl.style.display = 'block';
                         // 저장 시 oldData 타임아웃 대비: URL을 DOM에 보존
@@ -6782,7 +6900,7 @@ async function loadDataForSelectedDate(dateStr) {
                     document.getElementById('quest-diet').innerText = `+${dp}P`;
                 }
             }
-            if (data.exercise) {
+            if (!preserveLocalMediaUi && data.exercise) {
                 // 유산소: cardioList가 최우선 (legacy 필드 무시)
                 if (data.exercise.cardioList && data.exercise.cardioList.length > 0) {
                     data.exercise.cardioList.forEach(item => addExerciseBlock('cardio', item));
@@ -6807,10 +6925,10 @@ async function loadDataForSelectedDate(dateStr) {
                     document.getElementById('quest-exercise').className = 'quest-check done';
                     document.getElementById('quest-exercise').innerText = `+${ep}P`;
                 }
-            } else { addCardioBlock(); addStrengthBlock(); }
+            } else if (!preserveLocalMediaUi) { addCardioBlock(); addStrengthBlock(); }
 
             if (data.sleepAndMind) {
-                if (data.sleepAndMind.sleepImageUrl) {
+                if (data.sleepAndMind.sleepImageUrl && !(preserveLocalMediaUi && hasLocalMediaDraftForInput('sleep-img', document.getElementById('preview-sleep')))) {
                     document.getElementById('preview-sleep').src = data.sleepAndMind.sleepImageUrl;
                     document.getElementById('preview-sleep').style.display = 'block';
                     document.getElementById('preview-sleep').setAttribute('data-saved-url', data.sleepAndMind.sleepImageUrl);
@@ -6866,7 +6984,9 @@ async function loadDataForSelectedDate(dateStr) {
         } else {
             clearDailyLogRetry(docId);
             updateDailyLogCache(docId, { awardedPoints: {} });
-            addExerciseBlock('cardio'); addExerciseBlock('strength');
+            if (!preserveLocalMediaUi) {
+                addExerciseBlock('cardio'); addExerciseBlock('strength');
+            }
             applyMeditationLogToUi(null, { selectedDateStr });
         }
 
@@ -14097,9 +14217,11 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
         if (thumbUrl) previewEl.setAttribute('data-saved-thumb-url', thumbUrl);
         else previewEl.removeAttribute('data-saved-thumb-url');
         previewEl.removeAttribute('data-user-removed');
+        previewEl.removeAttribute('data-local-draft');
     } else {
         previewEl.removeAttribute('data-saved-url');
         previewEl.removeAttribute('data-saved-thumb-url');
+        previewEl.removeAttribute('data-local-draft');
     }
 }
 
@@ -14132,6 +14254,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
         }
     }
     block.removeAttribute('data-user-removed');
+    block.removeAttribute('data-local-draft');
 
     if (url) block.setAttribute('data-url', url);
     else block.removeAttribute('data-url');

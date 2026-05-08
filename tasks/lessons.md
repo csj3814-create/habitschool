@@ -1,6 +1,13 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-08 (Samsung Internet Camera Recovery)
+
+### 207. Do not clear media inputs while Android camera/file picker recovery is still settling
+- Symptom: on Samsung Internet Android, a user could return from camera capture and see meal photos disappear or briefly land on the login screen.
+- Root cause: camera/file picker handoff can trigger visibility/focus/auth and daily-log reload events while selected files and pending uploads are still local-only.
+- Lesson: treat file picker recovery as a short protected state. During that window, preserve local previews and pending uploads, and delay logged-out shell rendering until Firebase Auth has had a chance to recover.
+
 ## 2026-05-03 (Asset Challenge Settlement Timing)
 
 ### 206. Treat repeated audio balance feedback as a clear calibration signal

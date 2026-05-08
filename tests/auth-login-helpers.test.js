@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readRepoFile } from './source-helpers.js';
 
 import {
     createPendingGoogleLoginState,
@@ -15,6 +16,8 @@ import {
     shouldShowSignupOnboarding,
     shouldUseGoogleRedirectLogin
 } from '../js/auth-login-helpers.js';
+
+const AUTH_SOURCE = readRepoFile('js/auth.js');
 
 describe('shouldUseGoogleRedirectLogin', () => {
     it('keeps popup for Samsung Internet in normal browser tabs', () => {
@@ -107,6 +110,16 @@ describe('pending google login state helpers', () => {
         const redirectState = createPendingGoogleLoginState('redirect', 5000);
         expect(getPendingGoogleRedirectRecoveryRemainingMs(redirectState, 5000 + 3000)).toBe(17000);
         expect(getPendingGoogleRedirectRecoveryRemainingMs(redirectState, 5000 + 22000)).toBe(0);
+    });
+});
+
+describe('auth shell recovery guards', () => {
+    it('defers the logged-out shell while camera or file picker recovery is active', () => {
+        expect(AUTH_SOURCE).toContain('function shouldDeferLoggedOutShellForMediaPicker()');
+        expect(AUTH_SOURCE).toContain('window.getHabitschoolMediaPickerRecoveryRemainingMs');
+        expect(AUTH_SOURCE).toContain('scheduleMediaPickerSignedOutRecovery(callbacks);');
+        expect(AUTH_SOURCE).toContain('if (shouldDeferLoggedOutShellForMediaPicker())');
+        expect(AUTH_SOURCE).toContain('handleSignedOutAuthState(callbacks);');
     });
 });
 
