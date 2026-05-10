@@ -50,6 +50,7 @@ describe('diet photo persistence', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain('const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;');
+        expect(appSource).toContain("const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';");
         expect(appSource).toContain('window.markHabitschoolMediaPickerActivity = markHabitschoolMediaPickerActivity;');
         expect(appSource).toContain("preview.setAttribute('data-local-draft', 'true');");
         expect(appSource).toContain('function shouldPreserveDailyLogMediaUi');
@@ -65,5 +66,21 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('function hasLocalExerciseMediaDraft');
         expect(appSource).toContain('if (!preserveLocalMediaUi && data.exercise)');
         expect(appSource).toContain("previewEl.removeAttribute('data-local-draft');");
+    });
+
+    it('persists Samsung Internet camera recovery across page restore before auth settles', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;');
+        expect(appSource).toContain('const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 45000;');
+        expect(appSource).toContain('function readMediaPickerRecoveryMarker');
+        expect(appSource).toContain('function writeMediaPickerRecoveryMarker');
+        expect(appSource).toContain('treatFreshCameraAsReturn: true');
+        expect(appSource).toContain('source: normalizedSource');
+        expect(appSource).toContain('returnSeen: false');
+        expect(appSource).toContain('graceMs: openingGraceMs');
+        expect(appSource).toContain('returnSeen: true');
+        expect(appSource).toContain('graceMs: returnGraceMs');
+        expect(appSource).toContain("input.addEventListener('change', finishPickerReturn");
     });
 });

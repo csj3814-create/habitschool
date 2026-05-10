@@ -1,6 +1,13 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-10 (Samsung Internet Camera Auth Return)
+
+### 208. Camera recovery markers must survive Samsung Internet page restoration
+- Symptom: after the first Samsung Internet camera fix, gallery uploads worked but taking a new photo could still return to the Google login screen.
+- Root cause: the recovery flag lived only in memory and the login modal is visible by default. If Samsung Internet restored or reloaded the page after the camera app, Firebase Auth could briefly emit `null` before the in-memory marker existed.
+- Lesson: for Android camera handoffs, persist a short recovery marker before opening the camera and hide the default logged-out shell while that marker is active. Convert long "camera open" grace into a shorter "returned and auth is settling" grace once the app resumes.
+
 ## 2026-05-08 (Samsung Internet Camera Recovery)
 
 ### 207. Do not clear media inputs while Android camera/file picker recovery is still settling

@@ -101,6 +101,9 @@ const MEDITATION_VOICE_INTRO_CYCLES = 2;
 const MEDITATION_TTS_VOLUME = 0.72;
 const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;
 const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;
+const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;
+const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 45000;
+const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -134,6 +137,7 @@ let _mediaPickerRecoveryUntilMs = 0;
 let _mediaPickerRecoveryTimer = 0;
 let _mediaPickerLastInputId = '';
 let _mediaPickerLastDateStr = '';
+let _mediaPickerLastSource = '';
 let _meditationRestorableState = null;
 let _meditationAudioContext = null;
 let _meditationLastCueToken = '';
@@ -1939,8 +1943,98 @@ function handleDietUploadDeepLink() {
 
 const DIET_DEEP_LINK_SLOTS = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+function getMediaPickerRecoveryStores() {
+    const stores = [];
+    try {
+        if (window.sessionStorage) stores.push(window.sessionStorage);
+    } catch (_) {}
+    try {
+        if (window.localStorage) stores.push(window.localStorage);
+    } catch (_) {}
+    return stores;
+}
+
+function readMediaPickerRecoveryMarker(now = Date.now()) {
+    const safeNow = Number(now) || Date.now();
+    let bestMarker = null;
+    for (const store of getMediaPickerRecoveryStores()) {
+        try {
+            const raw = store.getItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            const expiresAt = Number(parsed?.expiresAt || 0);
+            if (!Number.isFinite(expiresAt) || expiresAt <= safeNow) {
+                store.removeItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
+                continue;
+            }
+            const marker = {
+                inputId: String(parsed.inputId || '').trim(),
+                dateStr: String(parsed.dateStr || '').trim(),
+                source: String(parsed.source || '').trim(),
+                openedAt: Number(parsed.openedAt || 0),
+                returnSeen: parsed.returnSeen === true,
+                expiresAt
+            };
+            if (!bestMarker || marker.expiresAt > bestMarker.expiresAt) {
+                bestMarker = marker;
+            }
+        } catch (_) {}
+    }
+    return bestMarker;
+}
+
+function writeMediaPickerRecoveryMarker(marker = {}) {
+    const expiresAt = Number(marker.expiresAt || 0);
+    if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) return;
+    const payload = JSON.stringify({
+        version: 1,
+        inputId: String(marker.inputId || '').trim(),
+        dateStr: String(marker.dateStr || '').trim(),
+        source: String(marker.source || 'picker').trim(),
+        openedAt: Number(marker.openedAt || Date.now()),
+        returnSeen: marker.returnSeen === true,
+        expiresAt
+    });
+    for (const store of getMediaPickerRecoveryStores()) {
+        try {
+            store.setItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY, payload);
+        } catch (_) {}
+    }
+}
+
+function clearMediaPickerRecoveryMarker() {
+    for (const store of getMediaPickerRecoveryStores()) {
+        try {
+            store.removeItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
+        } catch (_) {}
+    }
+}
+
+function applyMediaPickerRecoveryMarker(marker, { treatFreshCameraAsReturn = false } = {}) {
+    if (!marker) return false;
+    const now = Date.now();
+    const isFreshCameraReturn = treatFreshCameraAsReturn && marker.source === 'camera' && !marker.returnSeen;
+    const expiresAt = isFreshCameraReturn
+        ? now + MEDIA_PICKER_CAMERA_RETURN_GRACE_MS
+        : marker.expiresAt;
+    _mediaPickerRecoveryUntilMs = Math.max(_mediaPickerRecoveryUntilMs, expiresAt);
+    _mediaPickerLastInputId = String(marker.inputId || _mediaPickerLastInputId || '').trim();
+    _mediaPickerLastDateStr = String(marker.dateStr || _mediaPickerLastDateStr || '').trim();
+    _mediaPickerLastSource = String(marker.source || _mediaPickerLastSource || '').trim();
+    if (isFreshCameraReturn) {
+        writeMediaPickerRecoveryMarker({
+            ...marker,
+            returnSeen: true,
+            expiresAt
+        });
+    }
+    return true;
+}
+
 function getHabitschoolMediaPickerRecoveryRemainingMs(now = Date.now()) {
-    return Math.max(0, _mediaPickerRecoveryUntilMs - (Number(now) || Date.now()));
+    const safeNow = Number(now) || Date.now();
+    applyMediaPickerRecoveryMarker(readMediaPickerRecoveryMarker(safeNow));
+    return Math.max(0, _mediaPickerRecoveryUntilMs - safeNow);
 }
 
 function scheduleMediaPickerRecoveryExpiry() {
@@ -1958,24 +2052,49 @@ function scheduleMediaPickerRecoveryExpiry() {
         }
         _mediaPickerLastInputId = '';
         _mediaPickerLastDateStr = '';
+        _mediaPickerLastSource = '';
+        clearMediaPickerRecoveryMarker();
     }, remainingMs + 80);
 }
 
 function markHabitschoolMediaPickerActivity({
     inputId = '',
     dateStr = getSelectedRecordDateStr(),
+    source = '',
+    returnSeen = true,
     graceMs = MEDIA_PICKER_RECOVERY_GRACE_MS
 } = {}) {
     const now = Date.now();
-    _mediaPickerRecoveryUntilMs = Math.max(
-        _mediaPickerRecoveryUntilMs,
-        now + Math.max(1000, Number(graceMs) || MEDIA_PICKER_RECOVERY_GRACE_MS)
-    );
-    _mediaPickerLastInputId = String(inputId || _mediaPickerLastInputId || '').trim();
-    _mediaPickerLastDateStr = String(dateStr || _mediaPickerLastDateStr || '').trim();
+    const nextInputId = String(inputId || _mediaPickerLastInputId || '').trim();
+    const nextDateStr = String(dateStr || _mediaPickerLastDateStr || '').trim();
+    const nextSource = String(source || _mediaPickerLastSource || 'picker').trim();
+    const requestedGraceMs = Math.max(1000, Number(graceMs) || MEDIA_PICKER_RECOVERY_GRACE_MS);
+    const effectiveGraceMs = nextSource === 'camera' && returnSeen
+        ? Math.max(requestedGraceMs, MEDIA_PICKER_CAMERA_RETURN_GRACE_MS)
+        : requestedGraceMs;
+    const expiresAt = now + effectiveGraceMs;
+    if (nextSource === 'camera' && returnSeen) {
+        _mediaPickerRecoveryUntilMs = expiresAt;
+    } else {
+        _mediaPickerRecoveryUntilMs = Math.max(_mediaPickerRecoveryUntilMs, expiresAt);
+    }
+    _mediaPickerLastInputId = nextInputId;
+    _mediaPickerLastDateStr = nextDateStr;
+    _mediaPickerLastSource = nextSource;
+    writeMediaPickerRecoveryMarker({
+        inputId: nextInputId,
+        dateStr: nextDateStr,
+        source: nextSource,
+        openedAt: now,
+        returnSeen,
+        expiresAt: _mediaPickerRecoveryUntilMs
+    });
     scheduleMediaPickerRecoveryExpiry();
     return _mediaPickerRecoveryUntilMs;
 }
+
+applyMediaPickerRecoveryMarker(readMediaPickerRecoveryMarker(), { treatFreshCameraAsReturn: true });
+scheduleMediaPickerRecoveryExpiry();
 
 window.markHabitschoolMediaPickerActivity = markHabitschoolMediaPickerActivity;
 window.getHabitschoolMediaPickerRecoveryRemainingMs = getHabitschoolMediaPickerRecoveryRemainingMs;
@@ -6236,16 +6355,33 @@ function openDietSlotPicker(slot, source = 'library') {
     if (box) box.style.display = 'block';
 
     const normalizedSource = source === 'camera' ? 'camera' : 'library';
-    markHabitschoolMediaPickerActivity({ inputId: input.id });
+    const openingGraceMs = normalizedSource === 'camera'
+        ? MEDIA_PICKER_CAMERA_GRACE_MS
+        : MEDIA_PICKER_RECOVERY_GRACE_MS;
+    const returnGraceMs = normalizedSource === 'camera'
+        ? MEDIA_PICKER_CAMERA_RETURN_GRACE_MS
+        : MEDIA_PICKER_RECOVERY_GRACE_MS;
+    markHabitschoolMediaPickerActivity({
+        inputId: input.id,
+        source: normalizedSource,
+        returnSeen: false,
+        graceMs: openingGraceMs
+    });
     const cleanup = () => {
         input.removeAttribute('capture');
-        input.removeEventListener('change', cleanup, true);
+        input.removeEventListener('change', finishPickerReturn, true);
+        input.removeEventListener('cancel', finishPickerReturn, true);
         window.removeEventListener('focus', handleFocus, true);
         window.removeEventListener('pageshow', handleFocus, true);
         document.removeEventListener('visibilitychange', handleVisibilityChange, true);
     };
     const finishPickerReturn = () => {
-        markHabitschoolMediaPickerActivity({ inputId: input.id });
+        markHabitschoolMediaPickerActivity({
+            inputId: input.id,
+            source: normalizedSource,
+            returnSeen: true,
+            graceMs: returnGraceMs
+        });
         cleanup();
     };
     const handleFocus = () => window.setTimeout(finishPickerReturn, 0);
@@ -6259,7 +6395,8 @@ function openDietSlotPicker(slot, source = 'library') {
         input.removeAttribute('capture');
     }
 
-    input.addEventListener('change', cleanup, { once: true, capture: true });
+    input.addEventListener('change', finishPickerReturn, { once: true, capture: true });
+    input.addEventListener('cancel', finishPickerReturn, { once: true, capture: true });
     window.addEventListener('focus', handleFocus, { once: true, capture: true });
     window.addEventListener('pageshow', handleFocus, { once: true, capture: true });
     document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true });

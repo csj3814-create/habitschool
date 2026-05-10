@@ -686,6 +686,11 @@ export function initAuth() {
         return;
     }
 
+    if (shouldDeferLoggedOutShellForMediaPicker()) {
+        window._isPopupLogin = true;
+        applyMediaPickerAuthRecoveryShellUi(loginBtn);
+    }
+
     bindPendingGoogleLoginRecovery();
     if (readPendingGoogleLoginState()) {
         setGoogleLoginPendingUi(loginBtn, true);
@@ -959,6 +964,12 @@ function shouldDeferLoggedOutShellForMediaPicker() {
     return getMediaPickerAuthRecoveryRemainingMs() > 0;
 }
 
+function applyMediaPickerAuthRecoveryShellUi(loginBtn) {
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'none';
+    setGoogleLoginPendingUi(loginBtn, true);
+}
+
 function clearMediaPickerSignedOutRecoveryTimer() {
     if (_mediaPickerSignedOutRecoveryTimer) {
         clearTimeout(_mediaPickerSignedOutRecoveryTimer);
@@ -991,7 +1002,7 @@ function handleSignedOutAuthState(callbacks) {
 
     if (shouldDeferLoggedOutShellForMediaPicker()) {
         window._isPopupLogin = true;
-        setGoogleLoginPendingUi(loginBtn, true);
+        applyMediaPickerAuthRecoveryShellUi(loginBtn);
         scheduleMediaPickerSignedOutRecovery(callbacks);
         return;
     }

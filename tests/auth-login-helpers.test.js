@@ -117,8 +117,13 @@ describe('auth shell recovery guards', () => {
     it('defers the logged-out shell while camera or file picker recovery is active', () => {
         expect(AUTH_SOURCE).toContain('function shouldDeferLoggedOutShellForMediaPicker()');
         expect(AUTH_SOURCE).toContain('window.getHabitschoolMediaPickerRecoveryRemainingMs');
+        expect(AUTH_SOURCE).toContain('function applyMediaPickerAuthRecoveryShellUi(loginBtn)');
+        expect(AUTH_SOURCE).toContain("if (loginModal) loginModal.style.display = 'none';");
+        expect(AUTH_SOURCE).toContain('if (shouldDeferLoggedOutShellForMediaPicker())');
+        expect(AUTH_SOURCE).toContain('window._isPopupLogin = true;');
         expect(AUTH_SOURCE).toContain('scheduleMediaPickerSignedOutRecovery(callbacks);');
         expect(AUTH_SOURCE).toContain('if (shouldDeferLoggedOutShellForMediaPicker())');
+        expect(AUTH_SOURCE).toContain('applyMediaPickerAuthRecoveryShellUi(loginBtn);');
         expect(AUTH_SOURCE).toContain('handleSignedOutAuthState(callbacks);');
     });
 });
