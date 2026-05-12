@@ -1,6 +1,13 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-12 (PWA Asset Rotation After Runtime Fixes)
+
+### 209. Runtime fixes must rotate the PWA asset version before mobile retesting
+- Symptom: a Samsung Internet camera/auth fix reached production, but the affected phone still reproduced the old login-return behavior.
+- Root cause: the changed `app-core.js` and `auth.js` kept the same `?v=176` URLs and `habitschool-v176` service worker cache, so Samsung Internet/PWA clients could continue using stale module/cache entries.
+- Lesson: whenever runtime JS changes are meant to fix a real-device mobile issue, bump the aligned release version across `index.html`, local module imports, `styles.css`, and `sw.js` cache/precache entries before staging or production validation.
+
 ## 2026-05-10 (Samsung Internet Camera Auth Return)
 
 ### 208. Camera recovery markers must survive Samsung Internet page restoration
