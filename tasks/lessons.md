@@ -3,6 +3,11 @@
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 
+### 215. Do not make `showOpenFilePicker()` the global Android image path
+- Symptom: v179 improved Samsung Internet by opening the Files recent screen, but Chrome Android regressed from the image picker grid to the Files recent list.
+- Root cause: the runtime switched every browser with `window.showOpenFilePicker` to the system picker, ignoring that Chrome's plain image file input already opens a better native photo grid.
+- Lesson: choose the picker by observed browser behavior, not only API availability. Keep Samsung Internet on `showOpenFilePicker()` when that is the least bad route, and keep Chrome Android on the plain image file input path.
+
 ### 214. Permission-denied pickers need user-retap fallbacks, not async auto fallback
 - Symptom: Samsung Internet's library button still opened Android's generic "작업 선택" sheet instead of the useful recent-images screen, and users who denied the first permission prompt could be left with a broken-feeling flow.
 - Root cause: v178 skipped `showOpenFilePicker()` on Android/Samsung to avoid the permission prompt, but the useful path on that browser is exactly the system file picker reached by `showOpenFilePicker()`. The risky part is auto-clicking a fallback file input after a denial, because that can lose user activation.

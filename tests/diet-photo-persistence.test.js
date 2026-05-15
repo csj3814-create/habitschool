@@ -86,13 +86,15 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("input.addEventListener('change', finishPickerReturn");
     });
 
-    it('uses an image-only Samsung Internet friendly picker for diet library uploads', () => {
+    it('uses the system image picker only for Samsung Internet library uploads', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain("const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';");
         expect(appSource).toContain('const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('isSamsungInternetUserAgent');
         expect(appSource).toContain('function shouldUseSystemImagePickerForDietLibrary');
-        expect(appSource).toContain("return typeof window.showOpenFilePicker === 'function';");
+        expect(appSource).toContain("if (typeof window.showOpenFilePicker !== 'function') return false;");
+        expect(appSource).toContain("return isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '');");
         expect(appSource).not.toContain("return !/Android|SamsungBrowser/i.test(ua);");
         expect(appSource).toContain('function openDietSlotWithSystemImagePicker');
         expect(appSource).toContain('if (!shouldUseSystemImagePickerForDietLibrary()) return false;');
