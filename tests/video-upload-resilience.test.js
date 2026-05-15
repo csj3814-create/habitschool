@@ -22,6 +22,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('_pendingUploads.delete(inputId)');
     });
 
+    it('turns a stalled 0 percent pending upload into a delayed background-save state', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const INLINE_UPLOAD_STALLED_MS = 8000;');
+        expect(source).toContain('function schedulePendingUploadStalledNotice');
+        expect(source).toContain('업로드가 지연돼요. 저장하면 자동으로 이어갈게요.');
+        expect(source).toContain("els.percentEl.textContent = state === 'error' || message ? '' : `${normalizedPct}%`;");
+        expect(source).toContain('schedulePendingUploadStalledNotice(inputId, entry);');
+        expect(source).toContain('clearPendingUploadDelayTimer(current);');
+    });
+
     it('bounds the background Firestore patch after media upload reaches the final sync phase', () => {
         const source = readAppSource();
 
@@ -31,6 +42,16 @@ describe('video upload resilience', () => {
         expect(source).toContain('habitschool-background-media-patches-v1');
         expect(source).toContain("noteFirestoreConnectivityFailure(error, 'background media patch')");
         expect(source).toContain('flushBackgroundMediaPatchQueue({ quiet: true })');
+    });
+
+    it('retries a background media upload from the selected file if the initial pending upload lost its URL', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function retryBackgroundMediaUploadFromSelectedFile');
+        expect(source).toContain('getBackgroundUploadFolderForJob(job)');
+        expect(source).toContain('pendingUpload = uploadWithThumb(file, folder, userId, uploadOptions);');
+        expect(source).toContain('pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);');
+        expect(source).toContain('result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });');
     });
 
     it('does not show a hard save failure after the primary daily log write already succeeded', () => {

@@ -1667,6 +1667,60 @@ textarea {
     background: linear-gradient(90deg, #ff8a80 0%, #d32f2f 100%);
 }
 
+.diet-picker-fallback-panel {
+    max-width: min(100%, 760px);
+    margin: 12px auto 18px;
+    padding: 13px 14px;
+    border: 1px solid rgba(76, 175, 80, 0.28);
+    border-radius: 8px;
+    background: rgba(248, 255, 249, 0.98);
+    box-shadow: 0 8px 20px rgba(29, 96, 48, 0.08);
+}
+
+.diet-picker-fallback-panel[hidden] {
+    display: none !important;
+}
+
+.diet-picker-fallback-panel__title {
+    margin-bottom: 5px;
+    color: #1f6f37;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.diet-picker-fallback-panel__body {
+    color: #42624a;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+    letter-spacing: 0;
+}
+
+.diet-picker-fallback-panel__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.diet-picker-fallback-panel__button {
+    min-height: 36px;
+    padding: 8px 11px;
+    border: 1px solid rgba(76, 175, 80, 0.36);
+    border-radius: 8px;
+    background: #31a952;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.diet-picker-fallback-panel__button.is-secondary {
+    background: #fff;
+    color: #2c7b3c;
+}
+
 .static-remove-btn { 
     display: none; 
     position: absolute; 

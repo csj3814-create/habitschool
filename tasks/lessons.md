@@ -3,6 +3,11 @@
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 
+### 214. Permission-denied pickers need user-retap fallbacks, not async auto fallback
+- Symptom: Samsung Internet's library button still opened Android's generic "작업 선택" sheet instead of the useful recent-images screen, and users who denied the first permission prompt could be left with a broken-feeling flow.
+- Root cause: v178 skipped `showOpenFilePicker()` on Android/Samsung to avoid the permission prompt, but the useful path on that browser is exactly the system file picker reached by `showOpenFilePicker()`. The risky part is auto-clicking a fallback file input after a denial, because that can lose user activation.
+- Lesson: when a picker API needs permission, use it when it opens the better native surface, but on denial/failure render explicit retry choices that the user taps. Keep fallback input clicks inside a fresh user gesture.
+
 ### 210. Separate camera capture failures from Android gallery/provider picker failures
 - Symptom: after a Samsung Internet upload fix, the first report said camera upload was broken, but direct testing showed camera capture worked while the library button opened a generic action sheet without Gallery.
 - Root cause: the web file input path can be interpreted by Samsung Internet/Android as a generic file provider chooser even when `accept="image/*"` is present; this is a different failure mode from camera/auth return.

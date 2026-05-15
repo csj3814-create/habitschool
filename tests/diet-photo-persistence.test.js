@@ -27,8 +27,10 @@ describe('diet photo persistence', () => {
     it('keeps a selected diet file in the offline outbox until that selected upload has a URL', () => {
         const appSource = readAppSource();
 
+        expect(appSource).toContain('function shouldQueueSelectedFileForOfflineOutbox');
         expect(appSource).toContain('const pendingSnapshot = getPendingUploadSnapshot(input?.id);');
-        expect(appSource).toContain('hasMediaUrl(pendingSnapshot?.result?.url)');
+        expect(appSource).toContain('!hasMediaUrl(pendingSnapshot?.result?.url)');
+        expect(appSource).toContain('shouldQueueSelectedFileForOfflineOutbox({');
         expect(appSource).not.toContain('hasMediaUrl(diet[`${slot}Url`]) return');
     });
 
@@ -90,7 +92,8 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';");
         expect(appSource).toContain('const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze');
         expect(appSource).toContain('function shouldUseSystemImagePickerForDietLibrary');
-        expect(appSource).toContain("return !/Android|SamsungBrowser/i.test(ua);");
+        expect(appSource).toContain("return typeof window.showOpenFilePicker === 'function';");
+        expect(appSource).not.toContain("return !/Android|SamsungBrowser/i.test(ua);");
         expect(appSource).toContain('function openDietSlotWithSystemImagePicker');
         expect(appSource).toContain('if (!shouldUseSystemImagePickerForDietLibrary()) return false;');
         expect(appSource).toContain('excludeAcceptAllOption: true');
@@ -100,5 +103,18 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("input.removeAttribute('capture');");
         expect(appSource).toContain("input.setAttribute('data-picker-temporary-visible', 'true');");
         expect(appSource).toContain("input.style.display = 'block';");
+    });
+
+    it('keeps Android picker fallback clicks inside a fresh user tap after permission denial', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('function getDietLibraryPickerFailureReason');
+        expect(appSource).toContain('function showDietLibraryPickerFallback');
+        expect(appSource).toContain("data-action=\"fallback-input\"");
+        expect(appSource).toContain("data-action=\"camera\"");
+        expect(appSource).toContain("openDietSlotWithInputFallback(liveInput, 'library'");
+        expect(appSource).toContain('showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });');
+        expect(appSource).not.toContain("openDietSlotWithInputFallback(input, 'library', returnGraceMs);");
+        expect(appSource).not.toContain('file input으로 전환합니다');
     });
 });

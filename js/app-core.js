@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=178';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=178';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=179';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=179';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=178';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=178';
+} from './auth-login-helpers.js?v=179';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=179';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=178';
+} from './exercise-media.js?v=179';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=178';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=178';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=178';
-import { sanitize, compressImage } from './data-manager.js?v=178';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=178';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=178';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=178';
+} from './health-connect-utils.js?v=179';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=179';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=179';
+import { sanitize, compressImage } from './data-manager.js?v=179';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=179';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=179';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=179';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=178';
+} from './diet-program.js?v=179';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,18 +65,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=178';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=178';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=178';
+} from './meditation-guide.js?v=179';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=179';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=179';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=178';
+} from './social-challenge-readiness.js?v=179';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=178';
+} from './monthly-mvp-reward.js?v=179';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -106,7 +106,9 @@ const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+const DIET_LIBRARY_PICKER_HELPER_ID = 'diet-library-picker-helper';
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
+const INLINE_UPLOAD_STALLED_MS = 8000;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -5060,7 +5062,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=178';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=179';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6379,6 +6381,88 @@ function showDietLibraryNoFileToast() {
     showToast('사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.');
 }
 
+function getDietLibraryPickerFallbackHost() {
+    let host = document.getElementById(DIET_LIBRARY_PICKER_HELPER_ID);
+    if (host) return host;
+
+    host = document.createElement('div');
+    host.id = DIET_LIBRARY_PICKER_HELPER_ID;
+    host.className = 'diet-picker-fallback-panel';
+    host.hidden = true;
+
+    const anchor = document.querySelector('#diet .upload-cta-split')
+        || document.getElementById('diet-share-import-banner')
+        || document.getElementById('diet-boxes-container')
+        || document.getElementById('diet');
+    if (anchor?.parentNode) {
+        anchor.parentNode.insertBefore(host, anchor.nextSibling);
+    } else {
+        document.body.appendChild(host);
+    }
+
+    return host;
+}
+
+function hideDietLibraryPickerFallback() {
+    const host = document.getElementById(DIET_LIBRARY_PICKER_HELPER_ID);
+    if (!host) return;
+    host.hidden = true;
+    host.replaceChildren();
+}
+
+function getDietLibraryPickerFailureReason(error) {
+    const name = String(error?.name || '').trim();
+    const message = String(error?.message || error || '').trim().toLowerCase();
+    if (name === 'AbortError') return 'cancelled';
+    if (
+        name === 'NotAllowedError'
+        || name === 'SecurityError'
+        || message.includes('permission')
+        || message.includes('denied')
+        || message.includes('not allowed')
+        || message.includes('user activation')
+    ) {
+        return 'denied';
+    }
+    return 'failed';
+}
+
+function showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason = 'failed' } = {}) {
+    const host = getDietLibraryPickerFallbackHost();
+    const isDenied = reason === 'denied';
+    host.innerHTML = `
+        <div class="diet-picker-fallback-panel__title">${isDenied ? '사진 선택 권한이 막혀 있어요' : '사진 선택을 다시 열어볼게요'}</div>
+        <div class="diet-picker-fallback-panel__body">${isDenied ? '권한을 허용하면 최근 사진 화면으로 바로 열려요. 아래 방법 중 하나를 다시 눌러주세요.' : '브라우저 사진 선택창을 열지 못했어요. 아래 방법 중 하나를 다시 눌러주세요.'}</div>
+        <div class="diet-picker-fallback-panel__actions">
+            <button type="button" class="diet-picker-fallback-panel__button" data-action="retry-system">다시 사진 선택</button>
+            <button type="button" class="diet-picker-fallback-panel__button is-secondary" data-action="fallback-input">일반 선택창 열기</button>
+            <button type="button" class="diet-picker-fallback-panel__button is-secondary" data-action="camera">카메라로 촬영</button>
+        </div>
+    `;
+    host.hidden = false;
+
+    host.querySelector('[data-action="retry-system"]')?.addEventListener('click', () => {
+        hideDietLibraryPickerFallback();
+        openDietSlotPicker(slot, 'library');
+    });
+    host.querySelector('[data-action="fallback-input"]')?.addEventListener('click', () => {
+        hideDietLibraryPickerFallback();
+        const liveInput = document.getElementById(input?.id || `diet-img-${slot}`);
+        if (!liveInput) return;
+        markHabitschoolMediaPickerActivity({
+            inputId: liveInput.id,
+            source: 'library',
+            returnSeen: false,
+            graceMs: MEDIA_PICKER_RECOVERY_GRACE_MS
+        });
+        openDietSlotWithInputFallback(liveInput, 'library', returnGraceMs || MEDIA_PICKER_RECOVERY_GRACE_MS);
+    });
+    host.querySelector('[data-action="camera"]')?.addEventListener('click', () => {
+        hideDietLibraryPickerFallback();
+        openDietSlotPicker(slot, 'camera');
+    });
+}
+
 function isAcceptedDietImageFile(file) {
     if (!file) return false;
     const type = String(file.type || '').toLowerCase();
@@ -6512,9 +6596,7 @@ function openDietSlotWithInputFallback(input, source, returnGraceMs) {
 }
 
 function shouldUseSystemImagePickerForDietLibrary() {
-    if (typeof window.showOpenFilePicker !== 'function') return false;
-    const ua = navigator.userAgent || navigator.vendor || '';
-    return !/Android|SamsungBrowser/i.test(ua);
+    return typeof window.showOpenFilePicker === 'function';
 }
 
 function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
@@ -6531,8 +6613,15 @@ function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
             }]
         });
     } catch (error) {
-        console.info('브라우저 사진 선택 API를 사용할 수 없어 file input으로 전환합니다:', error?.message || error);
-        return false;
+        const reason = getDietLibraryPickerFailureReason(error);
+        markMediaPickerReturned(input, 'library', returnGraceMs);
+        if (reason === 'cancelled') {
+            showDietLibraryNoFileToast();
+        } else {
+            console.warn('브라우저 사진 선택 API를 열지 못했습니다.', error?.message || error);
+            showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
+        }
+        return true;
     }
 
     Promise.resolve(pickerPromise)
@@ -6543,6 +6632,7 @@ function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
                 showDietLibraryNoFileToast();
                 return;
             }
+            hideDietLibraryPickerFallback();
             const { previewId, removeId } = getDietPickerTargetIds(slot);
             const applied = await applySharedImageToStaticInput(input.id, previewId, removeId, [file], false);
             if (!applied) {
@@ -6551,12 +6641,13 @@ function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
         })
         .catch((error) => {
             markMediaPickerReturned(input, 'library', returnGraceMs);
-            if (error?.name === 'AbortError') {
+            const reason = getDietLibraryPickerFailureReason(error);
+            if (reason === 'cancelled') {
                 showDietLibraryNoFileToast();
                 return;
             }
-            console.warn('브라우저 사진 선택 API가 실패해 file input으로 전환합니다:', error?.message || error);
-            openDietSlotWithInputFallback(input, 'library', returnGraceMs);
+            console.warn('브라우저 사진 선택 API가 실패했습니다.', error?.message || error);
+            showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
         });
 
     return true;
@@ -6567,6 +6658,7 @@ function openDietSlotPicker(slot, source = 'library') {
     const box = document.getElementById(`diet-box-${slot}`);
     if (!input) return false;
 
+    hideDietLibraryPickerFallback();
     if (box) box.style.display = 'block';
 
     const normalizedSource = source === 'camera' ? 'camera' : 'library';
@@ -14142,6 +14234,26 @@ function clearInlineUploadProgressTimer(inputId) {
     }
 }
 
+function clearPendingUploadDelayTimer(entry) {
+    if (!entry?.delayTimer) return;
+    clearTimeout(entry.delayTimer);
+    entry.delayTimer = 0;
+}
+
+function schedulePendingUploadStalledNotice(inputId, entry) {
+    if (!inputId || !entry || entry.delayTimer) return;
+    entry.delayTimer = setTimeout(() => {
+        const current = _pendingUploads.get(inputId);
+        if (!current || current.done || Number(current.progress || 0) > 0) return;
+        current.delayed = true;
+        setInlineUploadProgress(inputId, {
+            state: 'uploading',
+            pct: 0,
+            message: '업로드가 지연돼요. 저장하면 자동으로 이어갈게요.'
+        });
+    }, INLINE_UPLOAD_STALLED_MS);
+}
+
 function getInlineUploadProgressEls(inputId) {
     const input = typeof inputId === 'string' ? document.getElementById(inputId) : inputId;
     const uploadArea = input?.closest('.upload-area');
@@ -14211,7 +14323,7 @@ function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, messag
     els.statusEl.classList.toggle('is-complete', state === 'complete');
     els.statusEl.classList.toggle('is-error', state === 'error');
     els.labelEl.textContent = label;
-    els.percentEl.textContent = state === 'error' ? '' : `${normalizedPct}%`;
+    els.percentEl.textContent = state === 'error' || message ? '' : `${normalizedPct}%`;
     els.fillEl.style.width = `${state === 'error' ? 100 : Math.max(normalizedPct, normalizedPct > 0 ? 6 : 0)}%`;
 }
 
@@ -14219,6 +14331,7 @@ function hideInlineUploadProgress(inputId) {
     const els = getInlineUploadProgressEls(inputId);
     if (!els) return;
     clearInlineUploadProgressTimer(els.input.id);
+    clearPendingUploadDelayTimer(_pendingUploads.get(els.input.id));
     els.statusEl.hidden = true;
     els.statusEl.classList.remove('is-complete', 'is-error');
     els.labelEl.textContent = '';
@@ -14244,6 +14357,7 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
     const localThumbDataUrl = resolveUsableStrengthLocalThumb(uploadSource?.localThumbDataUrl);
     if (!promise) return null;
 
+    clearPendingUploadDelayTimer(_pendingUploads.get(inputId));
     setInlineUploadProgress(inputId, { state: 'uploading', pct: 0 });
 
     const entry = {
@@ -14254,13 +14368,17 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         done: false,
         result: null,
         progress: 0,
-        reportProgress: false
+        reportProgress: false,
+        delayed: false,
+        delayTimer: 0
     };
     _pendingUploads.set(inputId, entry);
+    schedulePendingUploadStalledNotice(inputId, entry);
 
     Promise.resolve(promise).then((result) => {
         const current = _pendingUploads.get(inputId);
         if (!current) return;
+        clearPendingUploadDelayTimer(current);
         if (!result?.url) {
             current.done = true;
             current.result = result || null;
@@ -14283,6 +14401,7 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         }
         setThumbPendingState(inputId, { visible: false });
     }).catch(() => {
+        clearPendingUploadDelayTimer(_pendingUploads.get(inputId));
         setInlineUploadProgress(inputId, { state: 'error', pct: 100 });
         setThumbPendingState(inputId, { visible: false });
         _pendingUploads.delete(inputId);
@@ -14307,6 +14426,9 @@ function updatePendingUploadProgress(inputId, pct) {
     const entry = _pendingUploads.get(inputId);
     if (!entry) return;
     entry.progress = Math.max(entry.progress || 0, Math.round(Number(pct) || 0));
+    if (entry.progress > 0) {
+        clearPendingUploadDelayTimer(entry);
+    }
     setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress });
     if (entry.reportProgress && entry.progress > 0 && entry.progress < 100) {
         updateSaveButtonUploadProgress(entry.progress);
@@ -15021,6 +15143,45 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
     return committedData;
 }
 
+function getBackgroundUploadFolderForJob(job = {}) {
+    if (job.kind === 'diet') return 'diet_images';
+    if (job.kind === 'sleep') return 'sleep_images';
+    if (job.kind === 'cardio') return 'exercise_images';
+    if (job.kind === 'strength') return 'exercise_videos';
+    return '';
+}
+
+async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) {
+    if (!userId || !job?.inputId) return null;
+    const input = document.getElementById(job.inputId);
+    const file = input?.files?.[0];
+    const folder = getBackgroundUploadFolderForJob(job);
+    if (!file || !folder) return null;
+
+    const uploadOptions = {
+        onProgress: (pct) => {
+            updatePendingUploadProgress(job.inputId, pct);
+            updateBackgroundUploadProgressTracker(job.inputId, { transferPct: pct, syncPct: 6 });
+        }
+    };
+    let pendingUpload = null;
+    if (job.kind === 'strength') {
+        const block = document.getElementById(job.blockId);
+        const previewImg = block?.querySelector('.preview-strength-img');
+        const localThumbSeed = resolveUsableStrengthLocalThumb(
+            block?.getAttribute('data-local-thumb'),
+            previewImg?.getAttribute('data-local-thumb'),
+            getPendingUploadSnapshot(job.inputId)?.localThumbDataUrl
+        );
+        pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);
+    } else {
+        pendingUpload = uploadWithThumb(file, folder, userId, uploadOptions);
+    }
+
+    beginTrackedPendingUpload(job.inputId, pendingUpload);
+    return resolvePendingUploadResult(job.inputId);
+}
+
 function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false, onSettled = null }) {
     if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
 
@@ -15033,8 +15194,12 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
         for (const job of jobs) {
             try {
                 updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
-                const pendingSnapshot = getPendingUploadSnapshot(job.inputId);
-                const result = await resolvePendingUploadResult(job.inputId);
+                let pendingSnapshot = getPendingUploadSnapshot(job.inputId);
+                let result = await resolvePendingUploadResult(job.inputId);
+                if (!result?.url) {
+                    result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });
+                    pendingSnapshot = getPendingUploadSnapshot(job.inputId);
+                }
                 if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
                 updateBackgroundUploadProgressTracker(job.inputId, {
                     transferPct: 100,
@@ -15453,6 +15618,12 @@ async function flushBackgroundMediaPatchQueue({ quiet = true } = {}) {
     return _backgroundMediaPatchFlushPromise;
 }
 
+function shouldQueueSelectedFileForOfflineOutbox({ file, removed = false, pendingSnapshot = null } = {}) {
+    return file instanceof File
+        && !removed
+        && !hasMediaUrl(pendingSnapshot?.result?.url);
+}
+
 function collectOfflineOutboxMediaItems(saveData = {}) {
     const items = [];
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
@@ -15460,7 +15631,11 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         const preview = document.getElementById(`preview-${slot}`);
         const file = input?.files?.[0];
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
-        if (!file || preview?.hasAttribute('data-user-removed') || hasMediaUrl(pendingSnapshot?.result?.url)) return;
+        if (!shouldQueueSelectedFileForOfflineOutbox({
+            file,
+            removed: preview?.hasAttribute('data-user-removed'),
+            pendingSnapshot
+        })) return;
         items.push({
             kind: 'diet',
             slot,
@@ -15469,17 +15644,13 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         });
     });
 
-    const cardioItems = new Map(
-        Array.isArray(saveData?.exercise?.cardioList)
-            ? saveData.exercise.cardioList.map((item) => [String(item?.mediaId || '').trim(), item])
-            : []
-    );
     document.querySelectorAll('.cardio-block').forEach((block) => {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
         const file = input?.files?.[0];
-        if (!mediaId || !file || hasMediaUrl(cardioItems.get(mediaId)?.imageUrl)) return;
+        const pendingSnapshot = getPendingUploadSnapshot(input?.id);
+        if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         items.push({
             kind: 'cardio',
             mediaId,
@@ -15488,17 +15659,13 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         });
     });
 
-    const strengthItems = new Map(
-        Array.isArray(saveData?.exercise?.strengthList)
-            ? saveData.exercise.strengthList.map((item) => [String(item?.mediaId || '').trim(), item])
-            : []
-    );
     document.querySelectorAll('.strength-block').forEach((block) => {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
         const file = input?.files?.[0];
-        if (!mediaId || !file || hasMediaUrl(strengthItems.get(mediaId)?.videoUrl)) return;
+        const pendingSnapshot = getPendingUploadSnapshot(input?.id);
+        if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         const previewImg = block.querySelector('.preview-strength-img');
         items.push({
             kind: 'strength',
@@ -15515,7 +15682,12 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
     const sleepInput = document.getElementById('sleep-img');
     const sleepPreview = document.getElementById('preview-sleep');
     const sleepFile = sleepInput?.files?.[0];
-    if (sleepFile && !sleepPreview?.hasAttribute('data-user-removed') && !hasMediaUrl(saveData?.sleepAndMind?.sleepImageUrl)) {
+    const sleepPendingSnapshot = getPendingUploadSnapshot(sleepInput?.id);
+    if (shouldQueueSelectedFileForOfflineOutbox({
+        file: sleepFile,
+        removed: sleepPreview?.hasAttribute('data-user-removed'),
+        pendingSnapshot: sleepPendingSnapshot
+    })) {
         items.push({
             kind: 'sleep',
             folder: 'sleep_images',
