@@ -72,7 +72,7 @@ describe('diet photo persistence', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain('const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;');
-        expect(appSource).toContain('const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 45000;');
+        expect(appSource).toContain('const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;');
         expect(appSource).toContain('function readMediaPickerRecoveryMarker');
         expect(appSource).toContain('function writeMediaPickerRecoveryMarker');
         expect(appSource).toContain('treatFreshCameraAsReturn: true');
@@ -82,5 +82,23 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('returnSeen: true');
         expect(appSource).toContain('graceMs: returnGraceMs');
         expect(appSource).toContain("input.addEventListener('change', finishPickerReturn");
+    });
+
+    it('uses an image-only Samsung Internet friendly picker for diet library uploads', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';");
+        expect(appSource).toContain('const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('function shouldUseSystemImagePickerForDietLibrary');
+        expect(appSource).toContain("return !/Android|SamsungBrowser/i.test(ua);");
+        expect(appSource).toContain('function openDietSlotWithSystemImagePicker');
+        expect(appSource).toContain('if (!shouldUseSystemImagePickerForDietLibrary()) return false;');
+        expect(appSource).toContain('excludeAcceptAllOption: true');
+        expect(appSource).toContain("accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS }");
+        expect(appSource).toContain('applySharedImageToStaticInput(input.id, previewId, removeId, [file], false)');
+        expect(appSource).toContain("input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);");
+        expect(appSource).toContain("input.removeAttribute('capture');");
+        expect(appSource).toContain("input.setAttribute('data-picker-temporary-visible', 'true');");
+        expect(appSource).toContain("input.style.display = 'block';");
     });
 });

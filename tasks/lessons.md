@@ -1,6 +1,29 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-15 (Samsung Internet Photo Picker)
+
+### 210. Separate camera capture failures from Android gallery/provider picker failures
+- Symptom: after a Samsung Internet upload fix, the first report said camera upload was broken, but direct testing showed camera capture worked while the library button opened a generic action sheet without Gallery.
+- Root cause: the web file input path can be interpreted by Samsung Internet/Android as a generic file provider chooser even when `accept="image/*"` is present; this is a different failure mode from camera/auth return.
+- Lesson: for mobile photo bugs, verify camera capture and library selection as separate flows. Keep the working camera `capture` path stable, and make the library path explicitly image-only with a standards picker fallback, no stale `capture`, and PWA version rotation.
+
+### 211. Do not lead Samsung Internet photo uploads with a permission-first picker API
+- Symptom: Samsung Internet may show an OS permission prompt the first time a user taps photo selection; users who choose deny can experience upload as broken.
+- Root cause: starting with `showOpenFilePicker()` can create a permission-denial trap, and async fallback file input clicks may no longer have the original user activation.
+- Lesson: on Android/Samsung Internet, start with the plain image file input path and keep standards picker APIs for less risky browser contexts. If users already denied permission, explain the browser permission reset path instead of assuming another click will re-prompt.
+
+### 212. Camera return auth grace must cover slow Samsung Internet restores
+- Symptom: a Samsung Internet user still saw the Google login screen after taking a photo on v177.
+- Root cause: a 45-second returned-camera grace may be too tight when Samsung Internet restores the page, service worker assets, and Firebase Auth state slowly or in a partial reload.
+- Lesson: keep the pre-camera marker long enough to survive the external app handoff, and keep returned-camera auth suppression comfortably longer than the expected Firebase restore window. Do not shorten the camera recovery window on early focus events.
+
+### 213. Auth must be able to read camera recovery markers before app-core is ready
+- Symptom: after pressing OK in the Samsung camera, the app could immediately show the Google login screen rather than merely waiting for a recovery timer.
+- Root cause: `app-core.js` owned the media picker recovery reader, but `auth.js` decides whether to render the logged-out shell. On a camera return reload, auth can run before app-core exposes its helper, or the HTML shell can briefly show the login modal before modules settle.
+- Lesson: any guard that suppresses the logged-out shell must be owned or duplicated in the auth/bootstrap layer. Persisted recovery markers should be readable directly by auth and by a tiny HTML bootstrap class before the app's large runtime finishes loading.
+
+---
 ## 2026-05-12 (PWA Asset Rotation After Runtime Fixes)
 
 ### 209. Runtime fixes must rotate the PWA asset version before mobile retesting

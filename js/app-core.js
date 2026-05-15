@@ -14,33 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=177';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=177';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=178';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=178';
 import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=177';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=177';
+} from './auth-login-helpers.js?v=178';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=178';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=177';
+} from './exercise-media.js?v=178';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=177';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=177';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=177';
-import { sanitize, compressImage } from './data-manager.js?v=177';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=177';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=177';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=177';
+} from './health-connect-utils.js?v=178';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=178';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=178';
+import { sanitize, compressImage } from './data-manager.js?v=178';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=178';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=178';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=178';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -53,7 +53,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=177';
+} from './diet-program.js?v=178';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -65,18 +65,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=177';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=177';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=177';
+} from './meditation-guide.js?v=178';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=178';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=178';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=177';
+} from './social-challenge-readiness.js?v=178';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=177';
+} from './monthly-mvp-reward.js?v=178';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -102,8 +102,11 @@ const MEDITATION_TTS_VOLUME = 0.72;
 const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;
 const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;
 const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;
-const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 45000;
+const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
+const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
+const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -2008,6 +2011,9 @@ function clearMediaPickerRecoveryMarker() {
             store.removeItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
         } catch (_) {}
     }
+    try {
+        document.documentElement.classList.remove('media-picker-auth-recovery');
+    } catch (_) {}
 }
 
 function applyMediaPickerRecoveryMarker(marker, { treatFreshCameraAsReturn = false } = {}) {
@@ -2028,6 +2034,9 @@ function applyMediaPickerRecoveryMarker(marker, { treatFreshCameraAsReturn = fal
             expiresAt
         });
     }
+    try {
+        document.documentElement.classList.add('media-picker-auth-recovery');
+    } catch (_) {}
     return true;
 }
 
@@ -2089,6 +2098,9 @@ function markHabitschoolMediaPickerActivity({
         returnSeen,
         expiresAt: _mediaPickerRecoveryUntilMs
     });
+    try {
+        document.documentElement.classList.add('media-picker-auth-recovery');
+    } catch (_) {}
     scheduleMediaPickerRecoveryExpiry();
     return _mediaPickerRecoveryUntilMs;
 }
@@ -5048,7 +5060,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=177';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=178';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6347,6 +6359,209 @@ window.rotateImage = function (e, previewId, inputId) {
     tempImg.src = img.src;
 };
 
+function getDietPickerTargetIds(slot) {
+    return {
+        previewId: `preview-${slot}`,
+        removeId: `rm-${slot}`
+    };
+}
+
+function markMediaPickerReturned(input, source, returnGraceMs) {
+    markHabitschoolMediaPickerActivity({
+        inputId: input.id,
+        source,
+        returnSeen: true,
+        graceMs: returnGraceMs
+    });
+}
+
+function showDietLibraryNoFileToast() {
+    showToast('사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.');
+}
+
+function isAcceptedDietImageFile(file) {
+    if (!file) return false;
+    const type = String(file.type || '').toLowerCase();
+    if (type.startsWith('image/')) return true;
+    const name = String(file.name || '').toLowerCase();
+    return DIET_LIBRARY_IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
+function applyTemporaryPickerInputMode(input, source) {
+    const previousAccept = input.getAttribute('accept');
+    const previousCapture = input.getAttribute('capture');
+
+    if (source === 'camera') {
+        input.setAttribute('accept', 'image/*');
+        input.setAttribute('capture', 'environment');
+    } else {
+        input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
+        input.removeAttribute('capture');
+    }
+
+    return () => {
+        if (previousAccept === null) input.removeAttribute('accept');
+        else input.setAttribute('accept', previousAccept);
+
+        if (previousCapture === null) input.removeAttribute('capture');
+        else input.setAttribute('capture', previousCapture);
+    };
+}
+
+function exposeHiddenFileInputForPicker(input) {
+    const previousStyle = {
+        position: input.style.position,
+        left: input.style.left,
+        top: input.style.top,
+        width: input.style.width,
+        height: input.style.height,
+        opacity: input.style.opacity,
+        pointerEvents: input.style.pointerEvents,
+        display: input.style.display,
+        zIndex: input.style.zIndex
+    };
+
+    input.setAttribute('data-picker-temporary-visible', 'true');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    input.style.top = '0';
+    input.style.width = '1px';
+    input.style.height = '1px';
+    input.style.opacity = '0';
+    input.style.pointerEvents = 'auto';
+    input.style.display = 'block';
+    input.style.zIndex = '-1';
+
+    return () => {
+        input.style.position = previousStyle.position;
+        input.style.left = previousStyle.left;
+        input.style.top = previousStyle.top;
+        input.style.width = previousStyle.width;
+        input.style.height = previousStyle.height;
+        input.style.opacity = previousStyle.opacity;
+        input.style.pointerEvents = previousStyle.pointerEvents;
+        input.style.display = previousStyle.display;
+        input.style.zIndex = previousStyle.zIndex;
+        input.removeAttribute('data-picker-temporary-visible');
+    };
+}
+
+function openDietSlotWithInputFallback(input, source, returnGraceMs) {
+    const restorePickerMode = applyTemporaryPickerInputMode(input, source);
+    const restoreVisibleInput = exposeHiddenFileInputForPicker(input);
+    let completed = false;
+    let fallbackCleanupTimer = 0;
+    let sawPickerSuspension = false;
+    const openedAt = Date.now();
+
+    const cleanupPickerState = () => {
+        if (completed) return;
+        completed = true;
+        window.clearTimeout(fallbackCleanupTimer);
+        restorePickerMode();
+        restoreVisibleInput();
+        input.removeEventListener('change', finishPickerReturn, true);
+        input.removeEventListener('cancel', finishPickerReturn, true);
+        window.removeEventListener('focus', handleFocus, true);
+        window.removeEventListener('pageshow', handlePageShow, true);
+        document.removeEventListener('visibilitychange', handleVisibilityChange, true);
+    };
+    const finishPickerReturn = (event) => {
+        if (completed) return;
+        markMediaPickerReturned(input, source, returnGraceMs);
+        if (source === 'library' && (event?.type === 'cancel' || (event?.type === 'change' && !input.files?.length))) {
+            showDietLibraryNoFileToast();
+        }
+        cleanupPickerState();
+    };
+    const schedulePickerFallbackCleanup = () => {
+        if (completed || document.hidden) return;
+        if (!sawPickerSuspension && Date.now() - openedAt < 600) return;
+        markMediaPickerReturned(input, source, returnGraceMs);
+        window.clearTimeout(fallbackCleanupTimer);
+        fallbackCleanupTimer = window.setTimeout(cleanupPickerState, MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS);
+    };
+    const handleFocus = () => window.setTimeout(schedulePickerFallbackCleanup, 0);
+    const handlePageShow = () => {
+        sawPickerSuspension = true;
+        handleFocus();
+    };
+    const handleVisibilityChange = () => {
+        if (document.hidden) {
+            sawPickerSuspension = true;
+            return;
+        }
+        if (!document.hidden) handleFocus();
+    };
+
+    input.addEventListener('change', finishPickerReturn, { once: true, capture: true });
+    input.addEventListener('cancel', finishPickerReturn, { once: true, capture: true });
+    window.addEventListener('focus', handleFocus, { capture: true });
+    window.addEventListener('pageshow', handlePageShow, { capture: true });
+    document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true });
+
+    try {
+        input.click();
+        return true;
+    } catch (error) {
+        console.warn('식단 사진 선택창을 열지 못했습니다:', error?.message || error);
+        cleanupPickerState();
+        showToast('사진 선택 창을 열지 못했어요. 다시 눌러주세요.');
+        return false;
+    }
+}
+
+function shouldUseSystemImagePickerForDietLibrary() {
+    if (typeof window.showOpenFilePicker !== 'function') return false;
+    const ua = navigator.userAgent || navigator.vendor || '';
+    return !/Android|SamsungBrowser/i.test(ua);
+}
+
+function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
+    if (!shouldUseSystemImagePickerForDietLibrary()) return false;
+
+    let pickerPromise;
+    try {
+        pickerPromise = window.showOpenFilePicker({
+            multiple: false,
+            excludeAcceptAllOption: true,
+            types: [{
+                description: 'Images',
+                accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS }
+            }]
+        });
+    } catch (error) {
+        console.info('브라우저 사진 선택 API를 사용할 수 없어 file input으로 전환합니다:', error?.message || error);
+        return false;
+    }
+
+    Promise.resolve(pickerPromise)
+        .then(async (handles) => {
+            const file = await handles?.[0]?.getFile?.();
+            markMediaPickerReturned(input, 'library', returnGraceMs);
+            if (!isAcceptedDietImageFile(file)) {
+                showDietLibraryNoFileToast();
+                return;
+            }
+            const { previewId, removeId } = getDietPickerTargetIds(slot);
+            const applied = await applySharedImageToStaticInput(input.id, previewId, removeId, [file], false);
+            if (!applied) {
+                showToast('사진을 불러오지 못했어요. 다시 선택해 주세요.');
+            }
+        })
+        .catch((error) => {
+            markMediaPickerReturned(input, 'library', returnGraceMs);
+            if (error?.name === 'AbortError') {
+                showDietLibraryNoFileToast();
+                return;
+            }
+            console.warn('브라우저 사진 선택 API가 실패해 file input으로 전환합니다:', error?.message || error);
+            openDietSlotWithInputFallback(input, 'library', returnGraceMs);
+        });
+
+    return true;
+}
+
 function openDietSlotPicker(slot, source = 'library') {
     const input = document.getElementById(`diet-img-${slot}`);
     const box = document.getElementById(`diet-box-${slot}`);
@@ -6367,41 +6582,16 @@ function openDietSlotPicker(slot, source = 'library') {
         returnSeen: false,
         graceMs: openingGraceMs
     });
-    const cleanup = () => {
-        input.removeAttribute('capture');
-        input.removeEventListener('change', finishPickerReturn, true);
-        input.removeEventListener('cancel', finishPickerReturn, true);
-        window.removeEventListener('focus', handleFocus, true);
-        window.removeEventListener('pageshow', handleFocus, true);
-        document.removeEventListener('visibilitychange', handleVisibilityChange, true);
-    };
-    const finishPickerReturn = () => {
-        markHabitschoolMediaPickerActivity({
-            inputId: input.id,
-            source: normalizedSource,
-            returnSeen: true,
-            graceMs: returnGraceMs
-        });
-        cleanup();
-    };
-    const handleFocus = () => window.setTimeout(finishPickerReturn, 0);
-    const handleVisibilityChange = () => {
-        if (!document.hidden) handleFocus();
-    };
 
-    if (normalizedSource === 'camera') {
-        input.setAttribute('capture', 'environment');
-    } else {
+    if (normalizedSource === 'library') {
+        input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
         input.removeAttribute('capture');
+        if (openDietSlotWithSystemImagePicker(input, slot, returnGraceMs)) {
+            return true;
+        }
     }
 
-    input.addEventListener('change', finishPickerReturn, { once: true, capture: true });
-    input.addEventListener('cancel', finishPickerReturn, { once: true, capture: true });
-    window.addEventListener('focus', handleFocus, { once: true, capture: true });
-    window.addEventListener('pageshow', handleFocus, { once: true, capture: true });
-    document.addEventListener('visibilitychange', handleVisibilityChange, { capture: true });
-    input.click();
-    return true;
+    return openDietSlotWithInputFallback(input, normalizedSource, returnGraceMs);
 }
 
 /* CTA 버튼: 다음 빈 식단 칸으로 이동 */

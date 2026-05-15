@@ -1,11 +1,11 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=177';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=178';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=177';
-import { getDatesInfo } from './ui-helpers.js?v=177';
-import { escapeHtml } from './security.js?v=177';
+import { showToast } from './ui-helpers.js?v=178';
+import { getDatesInfo } from './ui-helpers.js?v=178';
+import { escapeHtml } from './security.js?v=178';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -18,11 +18,11 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=177';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=177';
+} from './auth-login-helpers.js?v=178';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=178';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=177';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=178';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -30,6 +30,7 @@ const PUSH_TOKEN_SUBCOLLECTION = 'pushTokens';
 const PUSH_DEVICE_ID_STORAGE_KEY = 'habitschoolPushDeviceId';
 const AUTH_POINT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const DASHBOARD_LS_KEY = 'dashboardData_v1';
+const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 let _messagingPromise = null;
 let _foregroundPushListenerBound = false;
 let _pushTokenLinked = false;
@@ -802,6 +803,7 @@ function showWebViewWarning() {
 }
 
 function applySignedInShellUi(user) {
+    setMediaPickerAuthRecoveryClass(false);
     const loginBtn = document.getElementById('loginBtn');
     setGoogleLoginPendingUi(loginBtn, false);
 
@@ -953,10 +955,12 @@ function scheduleVisibleTabBackgroundRefresh(user, initialDailyLoadPromise = Pro
 }
 
 function getMediaPickerAuthRecoveryRemainingMs() {
+    const storageRemaining = getStoredMediaPickerAuthRecoveryRemainingMs();
     try {
-        return Math.max(0, Number(window.getHabitschoolMediaPickerRecoveryRemainingMs?.() || 0));
+        const appCoreRemaining = Number(window.getHabitschoolMediaPickerRecoveryRemainingMs?.() || 0);
+        return Math.max(0, appCoreRemaining, storageRemaining);
     } catch (_) {
-        return 0;
+        return storageRemaining;
     }
 }
 
@@ -964,7 +968,41 @@ function shouldDeferLoggedOutShellForMediaPicker() {
     return getMediaPickerAuthRecoveryRemainingMs() > 0;
 }
 
+function getStoredMediaPickerAuthRecoveryRemainingMs(now = Date.now()) {
+    const safeNow = Number(now) || Date.now();
+    const stores = [];
+    try {
+        if (window.sessionStorage) stores.push(window.sessionStorage);
+    } catch (_) {}
+    try {
+        if (window.localStorage) stores.push(window.localStorage);
+    } catch (_) {}
+
+    let remainingMs = 0;
+    for (const store of stores) {
+        try {
+            const raw = store.getItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            const expiresAt = Number(parsed?.expiresAt || 0);
+            if (!Number.isFinite(expiresAt) || expiresAt <= safeNow) {
+                store.removeItem(MEDIA_PICKER_RECOVERY_STORAGE_KEY);
+                continue;
+            }
+            remainingMs = Math.max(remainingMs, expiresAt - safeNow);
+        } catch (_) {}
+    }
+    return remainingMs;
+}
+
+function setMediaPickerAuthRecoveryClass(isActive) {
+    try {
+        document.documentElement.classList.toggle('media-picker-auth-recovery', !!isActive);
+    } catch (_) {}
+}
+
 function applyMediaPickerAuthRecoveryShellUi(loginBtn) {
+    setMediaPickerAuthRecoveryClass(true);
     const loginModal = document.getElementById('login-modal');
     if (loginModal) loginModal.style.display = 'none';
     setGoogleLoginPendingUi(loginBtn, true);
@@ -1007,6 +1045,7 @@ function handleSignedOutAuthState(callbacks) {
         return;
     }
 
+    setMediaPickerAuthRecoveryClass(false);
     clearPendingGoogleLoginResetTimer();
     clearMediaPickerSignedOutRecoveryTimer();
     window._isPopupLogin = false;

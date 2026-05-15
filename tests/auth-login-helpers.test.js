@@ -18,6 +18,8 @@ import {
 } from '../js/auth-login-helpers.js';
 
 const AUTH_SOURCE = readRepoFile('js/auth.js');
+const APP_CORE_SOURCE = readRepoFile('js/app-core.js');
+const INDEX_SOURCE = readRepoFile('index.html');
 
 describe('shouldUseGoogleRedirectLogin', () => {
     it('keeps popup for Samsung Internet in normal browser tabs', () => {
@@ -116,8 +118,13 @@ describe('pending google login state helpers', () => {
 describe('auth shell recovery guards', () => {
     it('defers the logged-out shell while camera or file picker recovery is active', () => {
         expect(AUTH_SOURCE).toContain('function shouldDeferLoggedOutShellForMediaPicker()');
+        expect(AUTH_SOURCE).toContain("const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';");
+        expect(AUTH_SOURCE).toContain('function getStoredMediaPickerAuthRecoveryRemainingMs');
+        expect(AUTH_SOURCE).toContain('return Math.max(0, appCoreRemaining, storageRemaining);');
+        expect(AUTH_SOURCE).toContain('function setMediaPickerAuthRecoveryClass(isActive)');
         expect(AUTH_SOURCE).toContain('window.getHabitschoolMediaPickerRecoveryRemainingMs');
         expect(AUTH_SOURCE).toContain('function applyMediaPickerAuthRecoveryShellUi(loginBtn)');
+        expect(AUTH_SOURCE).toContain("document.documentElement.classList.toggle('media-picker-auth-recovery', !!isActive);");
         expect(AUTH_SOURCE).toContain("if (loginModal) loginModal.style.display = 'none';");
         expect(AUTH_SOURCE).toContain('if (shouldDeferLoggedOutShellForMediaPicker())');
         expect(AUTH_SOURCE).toContain('window._isPopupLogin = true;');
@@ -125,6 +132,11 @@ describe('auth shell recovery guards', () => {
         expect(AUTH_SOURCE).toContain('if (shouldDeferLoggedOutShellForMediaPicker())');
         expect(AUTH_SOURCE).toContain('applyMediaPickerAuthRecoveryShellUi(loginBtn);');
         expect(AUTH_SOURCE).toContain('handleSignedOutAuthState(callbacks);');
+        expect(APP_CORE_SOURCE).toContain("document.documentElement.classList.add('media-picker-auth-recovery');");
+        expect(APP_CORE_SOURCE).toContain('const handleFocus = () => window.setTimeout(schedulePickerFallbackCleanup, 0);');
+        expect(APP_CORE_SOURCE).not.toContain('const handleFocus = () => window.setTimeout(finishPickerReturn, 0);');
+        expect(INDEX_SOURCE).toContain("var key = 'habitschool-media-picker-recovery-v1';");
+        expect(INDEX_SOURCE).toContain('html.media-picker-auth-recovery #login-modal');
     });
 });
 

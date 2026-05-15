@@ -104,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=177">
+    <link rel="stylesheet" href="styles.css?v=178">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -697,9 +697,33 @@
                 font-size: 12px;
             }
         }
+        html.media-picker-auth-recovery #login-modal {
+            display: none !important;
+        }
     </style>
 
-    <script src="js/webview-detect.js?v=177"></script>
+    <script src="js/webview-detect.js?v=178"></script>
+    <script>
+        (function () {
+            var key = 'habitschool-media-picker-recovery-v1';
+            var stores = [];
+            try { if (window.sessionStorage) stores.push(window.sessionStorage); } catch (_) {}
+            try { if (window.localStorage) stores.push(window.localStorage); } catch (_) {}
+            var now = Date.now();
+            for (var i = 0; i < stores.length; i += 1) {
+                try {
+                    var raw = stores[i].getItem(key);
+                    if (!raw) continue;
+                    var parsed = JSON.parse(raw);
+                    var expiresAt = Number(parsed && parsed.expiresAt || 0);
+                    if (Number.isFinite(expiresAt) && expiresAt > now) {
+                        document.documentElement.classList.add('media-picker-auth-recovery');
+                        break;
+                    }
+                } catch (_) {}
+            }
+        }());
+    </script>
     <!-- exif-js, html2canvas, ethers.js, kakao SDK: 사용 시점에 동적 로드 (초기 로딩 차단 방지) -->
 </head>
 
@@ -1597,7 +1621,7 @@
                         </div>
                         <div class="record-flow-actions">
                             <button class="record-flow-btn tone-success" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">사진 바로 추가</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="clickNextEmptyDietSlot()">사진 선택</button>
                             <button class="record-flow-btn" type="button" onclick="document.getElementById('weight').focus()">공복 지표 입력</button>
                         </div>
                     </div>
@@ -1615,7 +1639,7 @@
                     </div>
                     <div class="upload-cta-actions">
                         <button class="upload-cta-btn primary" type="button" onclick="clickNextEmptyDietSlot('camera')">카메라로 촬영</button>
-                        <button class="upload-cta-btn" type="button" onclick="clickNextEmptyDietSlot('library')">보관함에서 선택</button>
+                        <button class="upload-cta-btn" type="button" onclick="clickNextEmptyDietSlot('library')">사진 선택</button>
                     </div>
                 </div>
                 <div id="diet-share-import-banner" class="diet-share-import-banner" style="display:none;"></div>
@@ -2404,13 +2428,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=177"></script>
-    <script type="module" src="js/main.js?v=177"></script>
-    <script type="module" src="js/diet-analysis.js?v=177"></script>
-    <script type="module" src="js/metabolic-score.js?v=177"></script>
+    <script type="module" src="js/app.js?v=178"></script>
+    <script type="module" src="js/main.js?v=178"></script>
+    <script type="module" src="js/diet-analysis.js?v=178"></script>
+    <script type="module" src="js/metabolic-score.js?v=178"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=177"></script>
+    <script src="js/pwa-install.js?v=178"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
