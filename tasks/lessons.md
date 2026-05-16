@@ -1,6 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
 ---
+## 2026-05-17 (Samsung Internet Media Picker Kinds)
+
+### 216. Samsung picker workarounds must include the media kind
+- Symptom: the desired Samsung Internet picker surface differs for image uploads and video uploads: images should open the image recent screen, while exercise videos should open the video recent screen.
+- Root cause: previous picker logic treated "library upload" as one behavior and only split by browser, not by media kind and feature surface.
+- Lesson: when using browser-specific picker APIs, split by both browser and media kind. Keep Chrome on its native input path, and for Samsung Internet use explicit image-only or video-only `showOpenFilePicker()` filters per upload entry point.
+
+---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 
 ### 215. Do not make `showOpenFilePicker()` the global Android image path

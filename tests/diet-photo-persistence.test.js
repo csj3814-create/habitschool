@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource } from './source-helpers.js';
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('diet photo persistence', () => {
     it('saves the analyzed diet photo URL with the AI analysis result', () => {
@@ -93,11 +93,12 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze');
         expect(appSource).toContain('isSamsungInternetUserAgent');
         expect(appSource).toContain('function shouldUseSystemImagePickerForDietLibrary');
-        expect(appSource).toContain("if (typeof window.showOpenFilePicker !== 'function') return false;");
-        expect(appSource).toContain("return isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '');");
+        expect(appSource).toContain("return shouldUseSamsungSystemMediaPicker(input, 'image');");
+        expect(appSource).toContain('function shouldUseSamsungSystemMediaPicker');
+        expect(appSource).toContain("if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;");
         expect(appSource).not.toContain("return !/Android|SamsungBrowser/i.test(ua);");
         expect(appSource).toContain('function openDietSlotWithSystemImagePicker');
-        expect(appSource).toContain('if (!shouldUseSystemImagePickerForDietLibrary()) return false;');
+        expect(appSource).toContain('if (!shouldUseSystemImagePickerForDietLibrary(input)) return false;');
         expect(appSource).toContain('excludeAcceptAllOption: true');
         expect(appSource).toContain("accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS }");
         expect(appSource).toContain('applySharedImageToStaticInput(input.id, previewId, removeId, [file], false)');
@@ -118,5 +119,23 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });');
         expect(appSource).not.toContain("openDietSlotWithInputFallback(input, 'library', returnGraceMs);");
         expect(appSource).not.toContain('file input으로 전환합니다');
+    });
+
+    it('routes Samsung Internet exercise and sleep media pickers by media kind', () => {
+        const appSource = readAppSource();
+        const indexSource = readRepoFile('index.html');
+
+        expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';");
+        expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('function getSamsungSystemPickerMediaConfig');
+        expect(appSource).toContain("accept: { 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS }");
+        expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_c_${id}', 'image')\"");
+        expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_s_${id}', 'video')\"");
+        expect(appSource).toContain('window.openSleepImagePicker = function');
+        expect(appSource).toContain("applySharedImageToStaticInput('sleep-img', 'preview-sleep', 'rm-sleep'");
+        expect(appSource).toContain('function applyPickedVideoToExerciseInput');
+        expect(appSource).toContain('window.previewDynamicVid?.(input);');
+        expect(appSource).toContain('if (event?.target === input) return true;');
+        expect(indexSource).toContain('onclick="openSleepImagePicker(event)"');
     });
 });
