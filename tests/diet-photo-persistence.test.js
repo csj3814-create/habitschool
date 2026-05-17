@@ -127,12 +127,20 @@ describe('diet photo persistence', () => {
 
         expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';");
         expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze');
+        expect(appSource).toContain("'video/mp4': ['.mp4', '.m4v']");
         expect(appSource).toContain('function getSamsungSystemPickerMediaConfig');
         expect(appSource).toContain("if (mediaKind === 'video') return false;");
-        expect(appSource).toContain('function shouldUseSamsungNativeVideoInputPicker');
+        expect(appSource).toContain('function shouldUseSamsungSystemVideoPicker');
         expect(appSource).toContain("if (mediaKind !== 'video') return false;");
+        expect(appSource).toContain("if (typeof window.showOpenFilePicker !== 'function') return false;");
+        expect(appSource).toContain('function buildExerciseVideoPickerOptions');
+        expect(appSource).toContain('function openSamsungExerciseVideoSystemPicker');
         expect(appSource).toContain('function openExerciseNativeInputPicker');
-        expect(appSource).toContain('if (shouldUseSamsungNativeVideoInputPicker(normalizedKind))');
+        expect(appSource).toContain('buildExerciseVideoPickerOptions(EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES)');
+        expect(appSource).toContain("buildExerciseVideoPickerOptions({ 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS })");
+        expect(appSource).toContain('if (shouldUseSamsungSystemVideoPicker(normalizedKind))');
+        expect(appSource).toContain('return openSamsungExerciseVideoSystemPicker(input);');
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_c_${id}', 'image')\"");
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_s_${id}', 'video')\"");
         expect(appSource).toContain('window.addCardioBlockWithFile = function(event)');
@@ -146,7 +154,6 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('window.previewDynamicVid?.(input);');
         expect(appSource).toContain('prepareNativeMediaInput(input, mediaKind);');
         expect(appSource).toContain('input.click();');
-        expect(appSource).not.toContain('EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES');
         expect(appSource).not.toContain("startIn: 'videos'");
         expect(appSource).not.toContain('id: config.pickerId');
         expect(appSource).toContain('if (event?.target === input) return true;');

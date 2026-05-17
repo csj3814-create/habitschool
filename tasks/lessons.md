@@ -23,6 +23,11 @@
 - Root cause: `showOpenFilePicker()` support is not uniform across Samsung Internet versions and option sets; passing newer hints can synchronously fail.
 - Lesson: do not layer more hints onto a failing native picker API. For Samsung exercise videos, use the stable `input[type=file]` path with `accept=video/*` inside the user's tap, and reserve `showOpenFilePicker()` only for the image surfaces where it has been observed to help.
 
+### 220. Samsung native file inputs can open an action chooser instead of a useful file list
+- Symptom: switching exercise videos to `input[type=file][accept=video/*]` avoided the `showOpenFilePicker()` error but opened Samsung Internet's "Camera / My Files / Files" action sheet.
+- Root cause: Android/Samsung browser input pickers may route through an app chooser even with a video accept hint.
+- Lesson: for Samsung exercise videos, prefer `showOpenFilePicker()` without risky `id`/`startIn` options to open the Files recent list directly. Keep native input only as a fallback, and never reintroduce the failing `startIn` picker hints.
+
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 
