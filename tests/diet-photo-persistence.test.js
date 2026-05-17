@@ -127,15 +127,12 @@ describe('diet photo persistence', () => {
 
         expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';");
         expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze');
-        expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze');
-        expect(appSource).toContain("'video/mp4': ['.mp4', '.m4v']");
-        expect(appSource).toContain("'video/quicktime': ['.mov']");
         expect(appSource).toContain('function getSamsungSystemPickerMediaConfig');
-        expect(appSource).toContain('accept: EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES');
-        expect(appSource).toContain("pickerId: 'habitschool-exercise-video-library'");
-        expect(appSource).toContain("startIn: 'videos'");
-        expect(appSource).toContain('id: config.pickerId');
-        expect(appSource).toContain('startIn: config.startIn');
+        expect(appSource).toContain("if (mediaKind === 'video') return false;");
+        expect(appSource).toContain('function shouldUseSamsungNativeVideoInputPicker');
+        expect(appSource).toContain("if (mediaKind !== 'video') return false;");
+        expect(appSource).toContain('function openExerciseNativeInputPicker');
+        expect(appSource).toContain('if (shouldUseSamsungNativeVideoInputPicker(normalizedKind))');
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_c_${id}', 'image')\"");
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_s_${id}', 'video')\"");
         expect(appSource).toContain('window.addCardioBlockWithFile = function(event)');
@@ -147,8 +144,11 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("applySharedImageToStaticInput('sleep-img', 'preview-sleep', 'rm-sleep'");
         expect(appSource).toContain('function applyPickedVideoToExerciseInput');
         expect(appSource).toContain('window.previewDynamicVid?.(input);');
-        expect(appSource).toContain('prepareNativeMediaInput(input, normalizedKind);');
+        expect(appSource).toContain('prepareNativeMediaInput(input, mediaKind);');
         expect(appSource).toContain('input.click();');
+        expect(appSource).not.toContain('EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES');
+        expect(appSource).not.toContain("startIn: 'videos'");
+        expect(appSource).not.toContain('id: config.pickerId');
         expect(appSource).toContain('if (event?.target === input) return true;');
         expect(indexSource).toContain('onclick="addCardioBlockWithFile(event)"');
         expect(indexSource).toContain('onclick="addStrengthBlockWithFile(event)"');

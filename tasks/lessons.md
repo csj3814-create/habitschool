@@ -13,10 +13,15 @@
 - Root cause: the CTA creates or reuses a block and directly calls the hidden file input, so the corrected label `onclick` never runs.
 - Lesson: when fixing mobile file picker behavior, trace from the visible CTA all the way to the final input activation. Shared picker helpers should be used by both inner labels and outer add buttons before any fallback `input.click()`.
 
-### 218. Samsung `showOpenFilePicker()` may not honor broad media wildcards as the initial tab
-- Symptom: an exercise video picker configured with `video/*` can still open Samsung Files on an image-heavy recent list.
-- Root cause: browser file picker options are only hints to the OS picker; broad wildcard filters may not drive Samsung Files' initial chip/tab or list mode.
-- Lesson: for Samsung Internet video uploads, use concrete video MIME groups plus a video-specific picker `id` and `startIn: 'videos'`. Do not promise control over grid/list layout; the web API exposes type, directory, and remembered-id hints, not picker view mode.
+### 218. Samsung `showOpenFilePicker()` may not honor media filters as the initial tab
+- Symptom: an exercise video picker configured with video filters can still open Samsung Files on an image-heavy recent list.
+- Root cause: browser file picker options are only hints to the OS picker; Samsung Files may ignore them for the initial chip/tab or list mode.
+- Lesson: do not rely on `showOpenFilePicker()` for Samsung Internet exercise videos. Do not promise control over grid/list layout; the web API exposes type hints, not picker view mode.
+
+### 219. If a Samsung picker hint throws on-device, stop using that API for the failing surface
+- Symptom: adding `id`/`startIn` to improve the video picker caused Samsung Internet to show "영상 선택창을 열지 못했어요" instead of opening any picker.
+- Root cause: `showOpenFilePicker()` support is not uniform across Samsung Internet versions and option sets; passing newer hints can synchronously fail.
+- Lesson: do not layer more hints onto a failing native picker API. For Samsung exercise videos, use the stable `input[type=file]` path with `accept=video/*` inside the user's tap, and reserve `showOpenFilePicker()` only for the image surfaces where it has been observed to help.
 
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
