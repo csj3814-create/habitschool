@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=181';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=181';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=182';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=182';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=181';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=181';
+} from './auth-login-helpers.js?v=182';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=182';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=181';
+} from './exercise-media.js?v=182';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=181';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=181';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=181';
-import { sanitize, compressImage } from './data-manager.js?v=181';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=181';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=181';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=181';
+} from './health-connect-utils.js?v=182';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=182';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=182';
+import { sanitize, compressImage } from './data-manager.js?v=182';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=182';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=182';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=182';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=181';
+} from './diet-program.js?v=182';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=181';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=181';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=181';
+} from './meditation-guide.js?v=182';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=182';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=182';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=181';
+} from './social-challenge-readiness.js?v=182';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=181';
+} from './monthly-mvp-reward.js?v=182';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5065,7 +5065,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=181';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=182';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5841,11 +5841,11 @@ function isExerciseBlockEmpty(block) {
 }
 
 // CTA에서 블록 생성 후 파일 선택 다이얼로그 열기
-window.addCardioBlockWithFile = function() {
+window.addCardioBlockWithFile = function(event) {
     const reusableBlock = findReusableExerciseBlock('cardio');
     if (reusableBlock) {
         const reusableInput = reusableBlock.querySelector('.exer-file');
-        if (reusableInput) reusableInput.click();
+        if (reusableInput) openExerciseMediaInput(reusableInput, 'image', event);
         return;
     }
     addCardioBlock();
@@ -5853,15 +5853,15 @@ window.addCardioBlockWithFile = function() {
     const lastBlock = blocks[blocks.length - 1];
     if (lastBlock) {
         const innerInput = lastBlock.querySelector('.exer-file');
-        if (innerInput) innerInput.click();
+        if (innerInput) openExerciseMediaInput(innerInput, 'image', event);
     }
 };
 
-window.addStrengthBlockWithFile = function() {
+window.addStrengthBlockWithFile = function(event) {
     const reusableBlock = findReusableExerciseBlock('strength');
     if (reusableBlock) {
         const reusableInput = reusableBlock.querySelector('.exer-file');
-        if (reusableInput) reusableInput.click();
+        if (reusableInput) openExerciseMediaInput(reusableInput, 'video', event);
         return;
     }
     addStrengthBlock();
@@ -5869,7 +5869,7 @@ window.addStrengthBlockWithFile = function() {
     const lastBlock = blocks[blocks.length - 1];
     if (lastBlock) {
         const innerInput = lastBlock.querySelector('.exer-file');
-        if (innerInput) innerInput.click();
+        if (innerInput) openExerciseMediaInput(innerInput, 'video', event);
     }
 };
 
@@ -6825,10 +6825,8 @@ function applyPickedVideoToExerciseInput(input, file) {
     return true;
 }
 
-window.openExerciseMediaPicker = function(event, inputId, mediaKind = 'image') {
-    const input = document.getElementById(inputId);
-    if (!input) return true;
-    if (event?.target === input) return true;
+function openExerciseMediaInput(input, mediaKind = 'image', event = null) {
+    if (!input) return false;
     const normalizedKind = mediaKind === 'video' ? 'video' : 'image';
     const handled = normalizedKind === 'video'
         ? openSamsungSystemMediaPicker({
@@ -6846,14 +6844,21 @@ window.openExerciseMediaPicker = function(event, inputId, mediaKind = 'image') {
             }
         });
 
-    if (handled) {
-        event?.preventDefault?.();
-        event?.stopPropagation?.();
-        return false;
-    }
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    if (handled) return true;
 
     prepareNativeMediaInput(input, normalizedKind);
+    input.click();
     return true;
+}
+
+window.openExerciseMediaPicker = function(event, inputId, mediaKind = 'image') {
+    const input = document.getElementById(inputId);
+    if (!input) return true;
+    if (event?.target === input) return true;
+    openExerciseMediaInput(input, mediaKind, event);
+    return false;
 };
 
 window.openSleepImagePicker = function(event) {

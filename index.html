@@ -104,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=181">
+    <link rel="stylesheet" href="styles.css?v=182">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -702,7 +702,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=181"></script>
+    <script src="js/webview-detect.js?v=182"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1781,8 +1781,8 @@
                         </div>
                         <div class="record-flow-actions">
                             <button class="record-flow-btn tone-success" type="button" onclick="focusStepManualInput()">걸음수 입력</button>
-                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile()">운동 이미지</button>
-                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile()">운동 영상</button>
+                            <button class="record-flow-btn tone-accent" type="button" onclick="addCardioBlockWithFile(event)">운동 이미지</button>
+                            <button class="record-flow-btn" type="button" onclick="addStrengthBlockWithFile(event)">운동 영상</button>
                         </div>
                     </div>
                 </div>
@@ -1817,14 +1817,14 @@
                 </div>
                 <!-- 업로드 CTA -->
                 <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
-                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile()">
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile(event)">
                         <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
                         <div class="upload-cta-text">
                             <strong style="font-size:13px;">운동 이미지 등록</strong>
                         </div>
                         <div class="upload-cta-arrow">›</div>
                     </div>
-                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile()">
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile(event)">
                         <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
                         <div class="upload-cta-text">
                             <strong style="font-size:13px;">운동 영상 등록</strong>
@@ -2428,13 +2428,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=181"></script>
-    <script type="module" src="js/main.js?v=181"></script>
-    <script type="module" src="js/diet-analysis.js?v=181"></script>
-    <script type="module" src="js/metabolic-score.js?v=181"></script>
+    <script type="module" src="js/app.js?v=182"></script>
+    <script type="module" src="js/main.js?v=182"></script>
+    <script type="module" src="js/diet-analysis.js?v=182"></script>
+    <script type="module" src="js/metabolic-score.js?v=182"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=181"></script>
+    <script src="js/pwa-install.js?v=182"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

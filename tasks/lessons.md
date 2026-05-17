@@ -8,6 +8,11 @@
 - Root cause: previous picker logic treated "library upload" as one behavior and only split by browser, not by media kind and feature surface.
 - Lesson: when using browser-specific picker APIs, split by both browser and media kind. Keep Chrome on its native input path, and for Samsung Internet use explicit image-only or video-only `showOpenFilePicker()` filters per upload entry point.
 
+### 217. CTA wrappers that call `input.click()` can bypass fixed label handlers
+- Symptom: the upload area label uses the Samsung system picker, but the visible add-media CTA still opens Android's generic "Camera / My Files / Files" action sheet.
+- Root cause: the CTA creates or reuses a block and directly calls the hidden file input, so the corrected label `onclick` never runs.
+- Lesson: when fixing mobile file picker behavior, trace from the visible CTA all the way to the final input activation. Shared picker helpers should be used by both inner labels and outer add buttons before any fallback `input.click()`.
+
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 
