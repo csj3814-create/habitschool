@@ -13,6 +13,11 @@
 - Root cause: the CTA creates or reuses a block and directly calls the hidden file input, so the corrected label `onclick` never runs.
 - Lesson: when fixing mobile file picker behavior, trace from the visible CTA all the way to the final input activation. Shared picker helpers should be used by both inner labels and outer add buttons before any fallback `input.click()`.
 
+### 218. Samsung `showOpenFilePicker()` may not honor broad media wildcards as the initial tab
+- Symptom: an exercise video picker configured with `video/*` can still open Samsung Files on an image-heavy recent list.
+- Root cause: browser file picker options are only hints to the OS picker; broad wildcard filters may not drive Samsung Files' initial chip/tab or list mode.
+- Lesson: for Samsung Internet video uploads, use concrete video MIME groups plus a video-specific picker `id` and `startIn: 'videos'`. Do not promise control over grid/list layout; the web API exposes type, directory, and remembered-id hints, not picker view mode.
+
 ---
 ## 2026-05-15 (Samsung Internet Photo Picker)
 

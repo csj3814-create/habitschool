@@ -127,8 +127,15 @@ describe('diet photo persistence', () => {
 
         expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';");
         expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze');
+        expect(appSource).toContain("'video/mp4': ['.mp4', '.m4v']");
+        expect(appSource).toContain("'video/quicktime': ['.mov']");
         expect(appSource).toContain('function getSamsungSystemPickerMediaConfig');
-        expect(appSource).toContain("accept: { 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS }");
+        expect(appSource).toContain('accept: EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES');
+        expect(appSource).toContain("pickerId: 'habitschool-exercise-video-library'");
+        expect(appSource).toContain("startIn: 'videos'");
+        expect(appSource).toContain('id: config.pickerId');
+        expect(appSource).toContain('startIn: config.startIn');
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_c_${id}', 'image')\"");
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_s_${id}', 'video')\"");
         expect(appSource).toContain('window.addCardioBlockWithFile = function(event)');
