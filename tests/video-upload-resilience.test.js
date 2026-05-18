@@ -33,6 +33,21 @@ describe('video upload resilience', () => {
         expect(source).toContain('clearPendingUploadDelayTimer(current);');
     });
 
+    it('uses a simpler Samsung Internet image upload path instead of resumable progress that can stall at 1 percent', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;');
+        expect(source).toContain('function shouldUseSamsungSimpleImageUpload');
+        expect(source).toContain('return isSamsungInternetUserAgent(ua);');
+        expect(source).toContain('async function uploadSamsungImageWithSimplePut');
+        expect(source).toContain('uploadBytes(storageRef, file, {');
+        expect(source).toContain('samsung_image_upload_timeout');
+        expect(source).toContain('const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);');
+        expect(source).toContain('const maxRetries = useSamsungSimpleImageUpload ? 0 : 2;');
+        expect(source).toContain('if (useSamsungSimpleImageUpload) {');
+        expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
+    });
+
     it('bounds the background Firestore patch after media upload reaches the final sync phase', () => {
         const source = readAppSource();
 
@@ -52,6 +67,19 @@ describe('video upload resilience', () => {
         expect(source).toContain('pendingUpload = uploadWithThumb(file, folder, userId, uploadOptions);');
         expect(source).toContain('pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);');
         expect(source).toContain('result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });');
+    });
+
+    it('backs up selected media to the offline outbox while background uploads still need a Storage URL', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('let backgroundOutboxBackupQueued = false;');
+        expect(source).toContain('if (backgroundJobs.length > 0 && offlineOutboxMediaItems.length > 0) {');
+        expect(source).toContain('const backupEntry = await queueOfflineOutboxEntry({');
+        expect(source).toContain('mediaItems: offlineOutboxMediaItems');
+        expect(source).toContain('backgroundOutboxBackupQueued = !!backupEntry;');
+        expect(source).toContain('if (backgroundOutboxBackupQueued && Number(failed || 0) === 0) {');
+        expect(source).toContain('removeOfflineOutboxEntry(user.uid, docId).catch(() => {});');
+        expect(source).toContain('flushOfflineOutbox({ quiet: true }).catch(() => {});');
     });
 
     it('does not show a hard save failure after the primary daily log write already succeeded', () => {

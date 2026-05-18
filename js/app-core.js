@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=185';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=185';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=186';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=186';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=185';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=185';
+} from './auth-login-helpers.js?v=186';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=186';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=185';
+} from './exercise-media.js?v=186';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=185';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=185';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=185';
-import { sanitize, compressImage } from './data-manager.js?v=185';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=185';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=185';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=185';
+} from './health-connect-utils.js?v=186';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=186';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=186';
+import { sanitize, compressImage } from './data-manager.js?v=186';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=186';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=186';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=186';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=185';
+} from './diet-program.js?v=186';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=185';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=185';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=185';
+} from './meditation-guide.js?v=186';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=186';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=186';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=185';
+} from './social-challenge-readiness.js?v=186';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=185';
+} from './monthly-mvp-reward.js?v=186';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -118,6 +118,7 @@ const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze({
 const DIET_LIBRARY_PICKER_HELPER_ID = 'diet-library-picker-helper';
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
+const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -5071,7 +5072,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=185';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=186';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6580,6 +6581,9 @@ function openSamsungSystemMediaPicker({ input, mediaKind = 'image', applyFile } 
             const file = await handles?.[0]?.getFile?.();
             markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
             if (!isAcceptedSamsungSystemMediaFile(file, mediaKind)) {
+                if (mediaKind === 'image') {
+                    input.dataset.samsungSystemPickerFallback = mediaKind;
+                }
                 showToast(config.noFileMessage);
                 return;
             }
@@ -6590,7 +6594,12 @@ function openSamsungSystemMediaPicker({ input, mediaKind = 'image', applyFile } 
             markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
             const reason = getDietLibraryPickerFailureReason(error);
             if (reason === 'cancelled') {
-                showToast(config.noFileMessage);
+                if (mediaKind === 'image') {
+                    input.dataset.samsungSystemPickerFallback = mediaKind;
+                    showToast('사진 선택이 완료되지 않았어요. 다시 누르면 일반 선택창을 열어요.');
+                } else {
+                    showToast(config.noFileMessage);
+                }
                 return;
             }
             input.dataset.samsungSystemPickerFallback = mediaKind;
@@ -6683,6 +6692,9 @@ function openDietSlotWithInputFallback(input, source, returnGraceMs) {
     const finishPickerReturn = (event) => {
         if (completed) return;
         markMediaPickerReturned(input, source, returnGraceMs);
+        if (event?.type === 'change' && input.files?.length) {
+            delete input.dataset.samsungSystemPickerFallback;
+        }
         if (source === 'library' && (event?.type === 'cancel' || (event?.type === 'change' && !input.files?.length))) {
             showDietLibraryNoFileToast();
         }
@@ -6759,7 +6771,7 @@ function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
             const file = await handles?.[0]?.getFile?.();
             markMediaPickerReturned(input, 'library', returnGraceMs);
             if (!isAcceptedDietImageFile(file)) {
-                showDietLibraryNoFileToast();
+                showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason: 'cancelled' });
                 return;
             }
             hideDietLibraryPickerFallback();
@@ -6773,7 +6785,7 @@ function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
             markMediaPickerReturned(input, 'library', returnGraceMs);
             const reason = getDietLibraryPickerFailureReason(error);
             if (reason === 'cancelled') {
-                showDietLibraryNoFileToast();
+                showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
                 return;
             }
             console.warn('브라우저 사진 선택 API가 실패했습니다.', error?.message || error);
@@ -6879,6 +6891,9 @@ function openExerciseNativeInputPicker(input, mediaKind = 'image') {
     const finishPickerReturn = (event) => {
         if (completed) return;
         markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
+        if (event?.type === 'change' && input.files?.length) {
+            delete input.dataset.samsungSystemPickerFallback;
+        }
         if (event?.type === 'cancel' || (event?.type === 'change' && !input.files?.length)) {
             showToast(config.noFileMessage);
         }
@@ -14438,6 +14453,27 @@ function updateSaveButtonUploadProgress(pct) {
     saveBtn.innerText = `저장 중... ${normalized}%`;
 }
 
+function shouldUseSamsungSimpleImageUpload(file = null) {
+    const type = String(file?.type || '').trim().toLowerCase();
+    if (!type.startsWith('image/')) return false;
+    const ua = typeof navigator !== 'undefined'
+        ? (navigator.userAgent || navigator.vendor || '')
+        : '';
+    return isSamsungInternetUserAgent(ua);
+}
+
+async function uploadSamsungImageWithSimplePut(storageRef, file, onProgress = null) {
+    onProgress?.(12);
+    await withRejectingTimeout(
+        uploadBytes(storageRef, file, {
+            contentType: String(file?.type || 'image/jpeg').trim() || 'image/jpeg'
+        }),
+        SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS,
+        'samsung_image_upload_timeout'
+    );
+    onProgress?.(100);
+}
+
 function runResumableUploadWithTimeout(storageRef, file, {
     onProgress = null,
     hardTimeoutMs = 60 * 1000,
@@ -14537,18 +14573,23 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const timestamp = Date.now();
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
-    const maxRetries = 2;
     const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
     const uploadTimeouts = getResumableUploadTimeouts(fileToUpload);
+    const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);
+    const maxRetries = useSamsungSimpleImageUpload ? 0 : 2;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
-            await runResumableUploadWithTimeout(storageRef, fileToUpload, {
-                onProgress,
-                hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
-                idleTimeoutMs: uploadTimeouts.idleTimeoutMs
-            });
+            if (useSamsungSimpleImageUpload) {
+                await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);
+            } else {
+                await runResumableUploadWithTimeout(storageRef, fileToUpload, {
+                    onProgress,
+                    hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
+                    idleTimeoutMs: uploadTimeouts.idleTimeoutMs
+                });
+            }
 
             const urlPromise = getDownloadURL(storageRef);
             const urlTimeout = new Promise((_, reject) =>
@@ -16278,6 +16319,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let latestOldData = { awardedPoints: {} };
         let offlineOutboxMediaItems = [];
         let primarySaveAcknowledged = false;
+        let backgroundOutboxBackupQueued = false;
         try {
             selectedDateStr = document.getElementById('selected-date').value;
             const rewardPolicy = getRewardEligibilityForDate(selectedDateStr);
@@ -16595,7 +16637,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     primarySaveAcknowledged = true;
                 } else { throw e; }
             }
-            await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
+            if (backgroundJobs.length > 0 && offlineOutboxMediaItems.length > 0) {
+                const backupEntry = await queueOfflineOutboxEntry({
+                    userId: user.uid,
+                    docId,
+                    date: selectedDateStr,
+                    saveData,
+                    mediaItems: offlineOutboxMediaItems
+                }).catch(() => null);
+                backgroundOutboxBackupQueued = !!backupEntry;
+            } else {
+                await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
+            }
             clearMeditationDraftState(selectedDateStr);
 
             if (uploadFailures.length > 0) {
@@ -16688,7 +16741,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     docId,
                     jobs: backgroundJobs,
                     deferGalleryUntilComplete: true,
-                    onSettled: () => runPostSaveFollowUps({ forceGalleryRefresh: true })
+                    onSettled: ({ failed } = {}) => {
+                        if (backgroundOutboxBackupQueued && Number(failed || 0) === 0) {
+                            removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
+                        } else if (backgroundOutboxBackupQueued) {
+                            flushOfflineOutbox({ quiet: true }).catch(() => {});
+                        }
+                        return runPostSaveFollowUps({ forceGalleryRefresh: true });
+                    }
                 });
             } else {
                 runPostSaveFollowUps().catch(() => {});

@@ -117,6 +117,8 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("data-action=\"camera\"");
         expect(appSource).toContain("openDietSlotWithInputFallback(liveInput, 'library'");
         expect(appSource).toContain('showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });');
+        expect(appSource).toContain("showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason: 'cancelled' });");
+        expect(appSource).toContain("showToast('사진 선택이 완료되지 않았어요. 다시 누르면 일반 선택창을 열어요.');");
         expect(appSource).not.toContain("openDietSlotWithInputFallback(input, 'library', returnGraceMs);");
         expect(appSource).not.toContain('file input으로 전환합니다');
     });

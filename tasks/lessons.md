@@ -3,6 +3,16 @@
 ---
 ## 2026-05-17 (Samsung Internet Media Picker Kinds)
 
+### 221. Samsung upload fixes must cover transfer behavior, not only picker shape
+- Symptom: after correcting Samsung Internet picker surfaces, users still saw selected exercise images stuck around 1% with a delayed-upload message.
+- Root cause: picker success does not prove the upload transport is healthy. `uploadBytesResumable` can still appear stalled on Samsung Internet even after the file reaches the app.
+- Lesson: for Samsung Internet image uploads, choose the simpler and more reliable upload transport when progress reporting itself becomes the failure surface. Keep the local preview and background/offline queue as the source of truth until a real Storage URL exists.
+
+### 222. Treat Samsung picker AbortError as recoverable ambiguity
+- Symptom: Samsung Internet users saw "사진이 선택되지 않았어요" after tapping photo selection, even when the picker/permission flow itself may have failed rather than the user intentionally cancelling.
+- Root cause: Android picker failures, denied provider permission, and true user cancellation can all surface as a generic abort-like result.
+- Lesson: on Samsung Internet media pickers, do not end the flow with only a no-file toast. Offer an immediate retry/fallback action path and keep the next fallback click inside a fresh user gesture.
+
 ### 216. Samsung picker workarounds must include the media kind
 - Symptom: the desired Samsung Internet picker surface differs for image uploads and video uploads: images should open the image recent screen, while exercise videos should open the video recent screen.
 - Root cause: previous picker logic treated "library upload" as one behavior and only split by browser, not by media kind and feature surface.
