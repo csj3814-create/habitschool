@@ -10,7 +10,7 @@
 - [x] Run `npm test`.
 - [x] Run `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`.
 - [x] Run `node --check sw.js`.
-- [ ] Deploy staging and verify v189 is served.
+- [x] Deploy staging and verify v189 is served.
 
 ## Notes
 
@@ -23,3 +23,4 @@
 - `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`: passed.
 - `node --check sw.js`: passed.
 - Runtime source scan confirmed no `showOpenFilePicker`, Samsung system picker helpers, or `_habitschoolPickedFile` paths remain under `index.html`, `sw.js`, `styles.css`, or `js/`.
+- Staging deploy: passed. `https://habitschool-staging.web.app` serves `index.html` with `app.js?v=189`, `sw.js` with `habitschool-v189`, and `app-core.js?v=189` with no removed picker remnants.
