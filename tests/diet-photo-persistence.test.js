@@ -148,9 +148,13 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('function buildExerciseVideoPickerOptions');
         expect(appSource).toContain('function openSamsungExerciseVideoSystemPicker');
         expect(appSource).toContain('function openExerciseNativeInputPicker');
+        expect(appSource).toContain('function getSelectedMediaFile(input)');
+        expect(appSource).toContain('input._habitschoolPickedFile = file;');
+        expect(appSource).toContain('noFileMessage: EXERCISE_VIDEO_FALLBACK_MESSAGE');
         expect(appSource).toContain('function isGenericExerciseVideoPickerFile');
         expect(appSource).toContain('EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES.includes(type)');
         expect(appSource).toContain('showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);');
+        expect(appSource).not.toContain('영상이 선택되지 않았어요. 영상 파일을 다시 선택해 주세요.');
         expect(appSource).toContain('buildExerciseVideoPickerOptions(EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES)');
         expect(appSource).toContain("buildExerciseVideoPickerOptions({ 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS })");
         expect(appSource).toContain('if (shouldUseSamsungSystemVideoPicker(input, normalizedKind))');

@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=187';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=187';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=188';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=188';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=187';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=187';
+} from './auth-login-helpers.js?v=188';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=188';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=187';
+} from './exercise-media.js?v=188';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=187';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=187';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=187';
-import { sanitize, compressImage } from './data-manager.js?v=187';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=187';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=187';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=187';
+} from './health-connect-utils.js?v=188';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=188';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=188';
+import { sanitize, compressImage } from './data-manager.js?v=188';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=188';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=188';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=188';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=187';
+} from './diet-program.js?v=188';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=187';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=187';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=187';
+} from './meditation-guide.js?v=188';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=188';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=188';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=187';
+} from './social-challenge-readiness.js?v=188';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=187';
+} from './monthly-mvp-reward.js?v=188';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2143,7 +2143,7 @@ function hasLocalMediaDraftForInput(inputId = '', previewEl = null) {
     const input = inputId ? document.getElementById(inputId) : null;
     const pendingSnapshot = inputId ? getPendingUploadSnapshot(inputId) : null;
     return !!(
-        input?.files?.length
+        getSelectedMediaFile(input)
         || pendingSnapshot
         || previewEl?.getAttribute('data-local-draft') === 'true'
     );
@@ -2153,7 +2153,7 @@ function hasLocalExerciseMediaDraft() {
     return Array.from(document.querySelectorAll('#exercise input[type="file"]')).some((input) => {
         const block = input.closest('.exercise-block');
         return !!(
-            input.files?.length
+            getSelectedMediaFile(input)
             || getPendingUploadSnapshot(input.id)
             || block?.getAttribute('data-local-draft') === 'true'
             || block?.querySelector('[data-local-draft="true"]')
@@ -5085,7 +5085,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=187';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=188';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5423,7 +5423,7 @@ window.removeExerciseBlock = function(block) {
     const type = getExerciseBlockType(block);
     const mediaId = String(block.dataset.mediaId || '').trim();
     const hasPersistedMedia = !!String(block.getAttribute('data-url') || '').trim();
-    const hasPendingMedia = !!(input?.files && input.files.length > 0);
+    const hasPendingMedia = !!getSelectedMediaFile(input);
     if (mediaId && (hasPersistedMedia || hasPendingMedia)) {
         _removedExerciseMediaIds[type].add(mediaId);
     }
@@ -5851,7 +5851,7 @@ function isExerciseBlockEmpty(block) {
     const input = block.querySelector('.exer-file');
     const previewImg = block.querySelector('.preview-img, .preview-strength-img');
     const previewWrap = block.querySelector('.preview-strength');
-    const hasFile = !!(input?.files && input.files.length > 0);
+    const hasFile = !!getSelectedMediaFile(input);
     const hasUrl = !!block.getAttribute('data-url');
     const hasThumb = !!block.getAttribute('data-thumb-url');
     const srcValue = previewImg?.getAttribute('src') || '';
@@ -5894,7 +5894,7 @@ window.addStrengthBlockWithFile = function(event) {
 };
 
 window.previewDynamicVid = function (input) {
-    const file = input.files[0];
+    const file = getSelectedMediaFile(input);
     if (!file) return;
     if (file.size > MAX_VID_SIZE) { alert("100MB 이하만 가능!"); input.value = ""; return; }
 
@@ -6553,7 +6553,7 @@ function getSamsungSystemPickerMediaConfig(mediaKind = 'image') {
             accept: { 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS },
             inputAccept: EXERCISE_LIBRARY_VIDEO_ACCEPT,
             source: 'video-library',
-            noFileMessage: '영상이 선택되지 않았어요. 영상 파일을 다시 선택해 주세요.'
+            noFileMessage: EXERCISE_VIDEO_FALLBACK_MESSAGE
         };
     }
     return {
@@ -6592,11 +6592,24 @@ function setSingleFileOnInput(input, file) {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(file);
         input.files = dataTransfer.files;
-        return input.files.length > 0;
+        if (input.files.length > 0) {
+            delete input._habitschoolPickedFile;
+            return true;
+        }
     } catch (error) {
         console.warn('선택 파일 적용 실패:', error?.message || error);
-        return false;
     }
+    input._habitschoolPickedFile = file;
+    return true;
+}
+
+function getSelectedMediaFile(input) {
+    return input?.files?.[0] || input?._habitschoolPickedFile || null;
+}
+
+function clearSelectedMediaFile(input) {
+    if (!input) return;
+    delete input._habitschoolPickedFile;
 }
 
 function isAcceptedSamsungSystemMediaFile(file, mediaKind = 'image') {
@@ -6950,10 +6963,14 @@ function openExerciseNativeInputPicker(input, mediaKind = 'image') {
     const finishPickerReturn = (event) => {
         if (completed) return;
         markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-        if (event?.type === 'change' && input.files?.length) {
+        if (event?.type === 'change' && getSelectedMediaFile(input)) {
             delete input.dataset.samsungSystemPickerFallback;
+            delete input.dataset.samsungSystemVideoPickerFallback;
         }
-        if (event?.type === 'cancel' || (event?.type === 'change' && !input.files?.length)) {
+        if (event?.type === 'cancel' || (event?.type === 'change' && !getSelectedMediaFile(input))) {
+            if (normalizedKind === 'video') {
+                input.dataset.samsungSystemVideoPickerFallback = 'video';
+            }
             showToast(config.noFileMessage);
         }
         cleanupPickerState();
@@ -7056,6 +7073,7 @@ function openSamsungExerciseVideoSystemPicker(input) {
             markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
             const reason = getDietLibraryPickerFailureReason(error);
             if (reason === 'cancelled') {
+                input.dataset.samsungSystemVideoPickerFallback = 'video';
                 showToast(config.noFileMessage);
                 return;
             }
@@ -7406,7 +7424,10 @@ function clearInputs({ preserveMedia = false } = {}) {
     document.getElementById('quest-mind').className = 'quest-check'; document.getElementById('quest-mind').innerText = '미달성';
 
     if (!preserveMedia) {
-        document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => input.value = '');
+        document.querySelectorAll('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]').forEach(input => {
+            input.value = '';
+            clearSelectedMediaFile(input);
+        });
     }
     applyShareSettingsToControls(getDefaultShareSettings());
     setShareSettingsExpanded(false);
@@ -10314,7 +10335,7 @@ function _getExerciseGuideCounts() {
     const cardioCount = cardioBlocks.filter(block => {
         const input = block.querySelector('.exer-file');
         const preview = block.querySelector('.preview-img');
-        const hasFile = !!(input?.files && input.files.length > 0);
+        const hasFile = !!getSelectedMediaFile(input);
         const hasUrl = !!block.getAttribute('data-url');
         const hasPreview = !!(preview && preview.style.display !== 'none' && preview.src && preview.src !== window.location.href);
         return hasFile || hasUrl || hasPreview;
@@ -10323,7 +10344,7 @@ function _getExerciseGuideCounts() {
     const strengthCount = strengthBlocks.filter(block => {
         const input = block.querySelector('.exer-file');
         const preview = block.querySelector('.preview-strength');
-        const hasFile = !!(input?.files && input.files.length > 0);
+        const hasFile = !!getSelectedMediaFile(input);
         const hasUrl = !!block.getAttribute('data-url');
         const hasPreview = !!(preview && preview.style.display !== 'none');
         return hasFile || hasUrl || hasPreview;
@@ -15127,7 +15148,10 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
             } else {
                 hideInlineUploadProgress(input.id);
             }
-            if (input) input.value = '';
+            if (input) {
+                input.value = '';
+                clearSelectedMediaFile(input);
+            }
         }
         setThumbPendingState(input.id, { visible: false });
     }
@@ -15171,7 +15195,10 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
             } else {
                 hideInlineUploadProgress(input.id);
             }
-            if (input) input.value = '';
+            if (input) {
+                input.value = '';
+                clearSelectedMediaFile(input);
+            }
         }
     }
     block.removeAttribute('data-user-removed');
@@ -15626,7 +15653,7 @@ function getBackgroundUploadFolderForJob(job = {}) {
 async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) {
     if (!userId || !job?.inputId) return null;
     const input = document.getElementById(job.inputId);
-    const file = input?.files?.[0];
+    const file = getSelectedMediaFile(input);
     const folder = getBackgroundUploadFolderForJob(job);
     if (!file || !folder) return null;
 
@@ -16120,7 +16147,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
-        const file = input?.files?.[0];
+        const file = getSelectedMediaFile(input);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         items.push({
@@ -16135,7 +16162,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
-        const file = input?.files?.[0];
+        const file = getSelectedMediaFile(input);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         const previewImg = block.querySelector('.preview-strength-img');
@@ -16532,9 +16559,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (hasPendingThumbBackfill(pendingSnapshot)) {
                         queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }
-                } else if (fileInput?.files?.[0]) {
+                } else if (getSelectedMediaFile(fileInput)) {
+                    const selectedFile = getSelectedMediaFile(fileInput);
                     if (!pendingSnapshot) {
-                        ensureDeferredImageUpload(fileInput.id, fileInput.files[0], 'exercise_images');
+                        ensureDeferredImageUpload(fileInput.id, selectedFile, 'exercise_images');
                     }
                     queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                 }
@@ -16577,9 +16605,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (hasPendingThumbBackfill(pendingSnapshot)) {
                         queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }
-                } else if (fileInput?.files?.[0]) {
+                } else if (getSelectedMediaFile(fileInput)) {
+                    const selectedFile = getSelectedMediaFile(fileInput);
                     if (!pendingSnapshot) {
-                        ensureDeferredVideoUpload(fileInput.id, fileInput.files[0], localThumbSeed);
+                        ensureDeferredVideoUpload(fileInput.id, selectedFile, localThumbSeed);
                     }
                     queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                 }
