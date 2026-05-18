@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=188';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=188';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=189';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=189';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=188';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=188';
+} from './auth-login-helpers.js?v=189';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=189';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=188';
+} from './exercise-media.js?v=189';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=188';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=188';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=188';
-import { sanitize, compressImage } from './data-manager.js?v=188';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=188';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=188';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=188';
+} from './health-connect-utils.js?v=189';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=189';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=189';
+import { sanitize, compressImage } from './data-manager.js?v=189';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=189';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=189';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=189';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=188';
+} from './diet-program.js?v=189';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=188';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=188';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=188';
+} from './meditation-guide.js?v=189';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=189';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=189';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=188';
+} from './social-challenge-readiness.js?v=189';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=188';
+} from './monthly-mvp-reward.js?v=189';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -118,16 +118,6 @@ const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze([
     'application/vnd.apple.mpegurl',
     'application/x-mpegurl'
 ]);
-const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze({
-    'video/mp4': ['.mp4', '.m4v'],
-    'video/quicktime': ['.mov'],
-    'video/webm': ['.webm'],
-    'video/3gpp': ['.3gp', '.3gpp'],
-    'video/x-msvideo': ['.avi'],
-    'video/x-matroska': ['.mkv'],
-    'video/mpeg': ['.mpeg', '.mpg']
-});
-const DIET_LIBRARY_PICKER_HELPER_ID = 'diet-library-picker-helper';
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
@@ -5085,7 +5075,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=188';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=189';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6404,88 +6394,6 @@ function showDietLibraryNoFileToast() {
     showToast('사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.');
 }
 
-function getDietLibraryPickerFallbackHost() {
-    let host = document.getElementById(DIET_LIBRARY_PICKER_HELPER_ID);
-    if (host) return host;
-
-    host = document.createElement('div');
-    host.id = DIET_LIBRARY_PICKER_HELPER_ID;
-    host.className = 'diet-picker-fallback-panel';
-    host.hidden = true;
-
-    const anchor = document.querySelector('#diet .upload-cta-split')
-        || document.getElementById('diet-share-import-banner')
-        || document.getElementById('diet-boxes-container')
-        || document.getElementById('diet');
-    if (anchor?.parentNode) {
-        anchor.parentNode.insertBefore(host, anchor.nextSibling);
-    } else {
-        document.body.appendChild(host);
-    }
-
-    return host;
-}
-
-function hideDietLibraryPickerFallback() {
-    const host = document.getElementById(DIET_LIBRARY_PICKER_HELPER_ID);
-    if (!host) return;
-    host.hidden = true;
-    host.replaceChildren();
-}
-
-function getDietLibraryPickerFailureReason(error) {
-    const name = String(error?.name || '').trim();
-    const message = String(error?.message || error || '').trim().toLowerCase();
-    if (name === 'AbortError') return 'cancelled';
-    if (
-        name === 'NotAllowedError'
-        || name === 'SecurityError'
-        || message.includes('permission')
-        || message.includes('denied')
-        || message.includes('not allowed')
-        || message.includes('user activation')
-    ) {
-        return 'denied';
-    }
-    return 'failed';
-}
-
-function showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason = 'failed' } = {}) {
-    const host = getDietLibraryPickerFallbackHost();
-    const isDenied = reason === 'denied';
-    host.innerHTML = `
-        <div class="diet-picker-fallback-panel__title">${isDenied ? '사진 선택 권한이 막혀 있어요' : '사진 선택을 다시 열어볼게요'}</div>
-        <div class="diet-picker-fallback-panel__body">${isDenied ? '권한을 허용하면 최근 사진 화면으로 바로 열려요. 아래 방법 중 하나를 다시 눌러주세요.' : '브라우저 사진 선택창을 열지 못했어요. 아래 방법 중 하나를 다시 눌러주세요.'}</div>
-        <div class="diet-picker-fallback-panel__actions">
-            <button type="button" class="diet-picker-fallback-panel__button" data-action="retry-system">다시 사진 선택</button>
-            <button type="button" class="diet-picker-fallback-panel__button is-secondary" data-action="fallback-input">일반 선택창 열기</button>
-            <button type="button" class="diet-picker-fallback-panel__button is-secondary" data-action="camera">카메라로 촬영</button>
-        </div>
-    `;
-    host.hidden = false;
-
-    host.querySelector('[data-action="retry-system"]')?.addEventListener('click', () => {
-        hideDietLibraryPickerFallback();
-        openDietSlotPicker(slot, 'library');
-    });
-    host.querySelector('[data-action="fallback-input"]')?.addEventListener('click', () => {
-        hideDietLibraryPickerFallback();
-        const liveInput = document.getElementById(input?.id || `diet-img-${slot}`);
-        if (!liveInput) return;
-        markHabitschoolMediaPickerActivity({
-            inputId: liveInput.id,
-            source: 'library',
-            returnSeen: false,
-            graceMs: MEDIA_PICKER_RECOVERY_GRACE_MS
-        });
-        openDietSlotWithInputFallback(liveInput, 'library', returnGraceMs || MEDIA_PICKER_RECOVERY_GRACE_MS);
-    });
-    host.querySelector('[data-action="camera"]')?.addEventListener('click', () => {
-        hideDietLibraryPickerFallback();
-        openDietSlotPicker(slot, 'camera');
-    });
-}
-
 function isAcceptedDietImageFile(file) {
     if (!file) return false;
     const type = String(file.type || '').toLowerCase();
@@ -6546,11 +6454,10 @@ function getExerciseVideoContentType(file) {
     return 'video/mp4';
 }
 
-function getSamsungSystemPickerMediaConfig(mediaKind = 'image') {
+function getNativeMediaInputConfig(mediaKind = 'image') {
     if (mediaKind === 'video') {
         return {
             description: 'Videos',
-            accept: { 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS },
             inputAccept: EXERCISE_LIBRARY_VIDEO_ACCEPT,
             source: 'video-library',
             noFileMessage: EXERCISE_VIDEO_FALLBACK_MESSAGE
@@ -6558,24 +6465,15 @@ function getSamsungSystemPickerMediaConfig(mediaKind = 'image') {
     }
     return {
         description: 'Images',
-        accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS },
         inputAccept: DIET_LIBRARY_IMAGE_ACCEPT,
         source: 'library',
         noFileMessage: '사진이 선택되지 않았어요. 갤러리가 안 보이면 카메라 촬영이나 사진 앱 공유를 이용해 주세요.'
     };
 }
 
-function shouldUseSamsungSystemMediaPicker(input, mediaKind = 'image') {
-    if (mediaKind === 'video') return false;
-    if (mediaKind === 'image' && isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
-    if (typeof window.showOpenFilePicker !== 'function') return false;
-    if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
-    return input?.dataset?.samsungSystemPickerFallback !== mediaKind;
-}
-
 function prepareNativeMediaInput(input, mediaKind = 'image') {
     if (!input) return;
-    const config = getSamsungSystemPickerMediaConfig(mediaKind);
+    const config = getNativeMediaInputConfig(mediaKind);
     input.setAttribute('accept', config.inputAccept);
     input.removeAttribute('capture');
     markHabitschoolMediaPickerActivity({
@@ -6586,99 +6484,12 @@ function prepareNativeMediaInput(input, mediaKind = 'image') {
     });
 }
 
-function setSingleFileOnInput(input, file) {
-    if (!input || !file) return false;
-    try {
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
-        input.files = dataTransfer.files;
-        if (input.files.length > 0) {
-            delete input._habitschoolPickedFile;
-            return true;
-        }
-    } catch (error) {
-        console.warn('선택 파일 적용 실패:', error?.message || error);
-    }
-    input._habitschoolPickedFile = file;
-    return true;
-}
-
 function getSelectedMediaFile(input) {
-    return input?.files?.[0] || input?._habitschoolPickedFile || null;
+    return input?.files?.[0] || null;
 }
 
 function clearSelectedMediaFile(input) {
     if (!input) return;
-    delete input._habitschoolPickedFile;
-}
-
-function isAcceptedSamsungSystemMediaFile(file, mediaKind = 'image') {
-    return mediaKind === 'video'
-        ? isAcceptedExerciseVideoFile(file)
-        : isAcceptedDietImageFile(file);
-}
-
-function openSamsungSystemMediaPicker({ input, mediaKind = 'image', applyFile } = {}) {
-    if (!input || typeof applyFile !== 'function') return false;
-    if (!shouldUseSamsungSystemMediaPicker(input, mediaKind)) return false;
-
-    const config = getSamsungSystemPickerMediaConfig(mediaKind);
-    prepareNativeMediaInput(input, mediaKind);
-
-    let pickerPromise;
-    try {
-        pickerPromise = window.showOpenFilePicker({
-            multiple: false,
-            excludeAcceptAllOption: true,
-            types: [{
-                description: config.description,
-                accept: config.accept
-            }]
-        });
-    } catch (error) {
-        markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-        const reason = getDietLibraryPickerFailureReason(error);
-        if (reason === 'cancelled') {
-            showToast(config.noFileMessage);
-        } else {
-            input.dataset.samsungSystemPickerFallback = mediaKind;
-            showToast(`${mediaKind === 'video' ? '영상' : '사진'} 선택창을 열지 못했어요. 다시 누르면 일반 선택창을 열어요.`);
-        }
-        return true;
-    }
-
-    Promise.resolve(pickerPromise)
-        .then(async (handles) => {
-            const file = await handles?.[0]?.getFile?.();
-            markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-            if (!isAcceptedSamsungSystemMediaFile(file, mediaKind)) {
-                if (mediaKind === 'image') {
-                    input.dataset.samsungSystemPickerFallback = mediaKind;
-                }
-                showToast(config.noFileMessage);
-                return;
-            }
-            delete input.dataset.samsungSystemPickerFallback;
-            await applyFile(file);
-        })
-        .catch((error) => {
-            markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-            const reason = getDietLibraryPickerFailureReason(error);
-            if (reason === 'cancelled') {
-                if (mediaKind === 'image') {
-                    input.dataset.samsungSystemPickerFallback = mediaKind;
-                    showToast('사진 선택이 완료되지 않았어요. 다시 누르면 일반 선택창을 열어요.');
-                } else {
-                    showToast(config.noFileMessage);
-                }
-                return;
-            }
-            input.dataset.samsungSystemPickerFallback = mediaKind;
-            console.warn('Samsung Internet media picker failed:', error?.message || error);
-            showToast(`${mediaKind === 'video' ? '영상' : '사진'} 선택창을 열지 못했어요. 다시 누르면 일반 선택창을 열어요.`);
-        });
-
-    return true;
 }
 
 function applyTemporaryPickerInputMode(input, source) {
@@ -6763,9 +6574,6 @@ function openDietSlotWithInputFallback(input, source, returnGraceMs) {
     const finishPickerReturn = (event) => {
         if (completed) return;
         markMediaPickerReturned(input, source, returnGraceMs);
-        if (event?.type === 'change' && input.files?.length) {
-            delete input.dataset.samsungSystemPickerFallback;
-        }
         if (source === 'library' && (event?.type === 'cancel' || (event?.type === 'change' && !input.files?.length))) {
             showDietLibraryNoFileToast();
         }
@@ -6808,70 +6616,10 @@ function openDietSlotWithInputFallback(input, source, returnGraceMs) {
     }
 }
 
-function shouldUseSystemImagePickerForDietLibrary(input = null) {
-    return shouldUseSamsungSystemMediaPicker(input, 'image');
-}
-
-function openDietSlotWithSystemImagePicker(input, slot, returnGraceMs) {
-    if (!shouldUseSystemImagePickerForDietLibrary(input)) return false;
-
-    let pickerPromise;
-    try {
-        pickerPromise = window.showOpenFilePicker({
-            multiple: false,
-            excludeAcceptAllOption: true,
-            types: [{
-                description: 'Images',
-                accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS }
-            }]
-        });
-    } catch (error) {
-        const reason = getDietLibraryPickerFailureReason(error);
-        markMediaPickerReturned(input, 'library', returnGraceMs);
-        if (reason === 'cancelled') {
-            showDietLibraryNoFileToast();
-        } else {
-            console.warn('브라우저 사진 선택 API를 열지 못했습니다.', error?.message || error);
-            showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
-        }
-        return true;
-    }
-
-    Promise.resolve(pickerPromise)
-        .then(async (handles) => {
-            const file = await handles?.[0]?.getFile?.();
-            markMediaPickerReturned(input, 'library', returnGraceMs);
-            if (!isAcceptedDietImageFile(file)) {
-                showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason: 'cancelled' });
-                return;
-            }
-            hideDietLibraryPickerFallback();
-            const { previewId, removeId } = getDietPickerTargetIds(slot);
-            const applied = await applySharedImageToStaticInput(input.id, previewId, removeId, [file], false);
-            if (!applied) {
-                showToast('사진을 불러오지 못했어요. 다시 선택해 주세요.');
-            }
-        })
-        .catch((error) => {
-            markMediaPickerReturned(input, 'library', returnGraceMs);
-            const reason = getDietLibraryPickerFailureReason(error);
-            if (reason === 'cancelled') {
-                showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
-                return;
-            }
-            console.warn('브라우저 사진 선택 API가 실패했습니다.', error?.message || error);
-            showDietLibraryPickerFallback({ input, slot, returnGraceMs, reason });
-        });
-
-    return true;
-}
-
 function openDietSlotPicker(slot, source = 'library') {
     const input = document.getElementById(`diet-img-${slot}`);
     const box = document.getElementById(`diet-box-${slot}`);
     if (!input) return false;
-
-    hideDietLibraryPickerFallback();
     if (box) box.style.display = 'block';
 
     const normalizedSource = source === 'camera' ? 'camera' : 'library';
@@ -6891,37 +6639,12 @@ function openDietSlotPicker(slot, source = 'library') {
     if (normalizedSource === 'library') {
         input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);
         input.removeAttribute('capture');
-        if (openDietSlotWithSystemImagePicker(input, slot, returnGraceMs)) {
-            return true;
-        }
     }
 
     return openDietSlotWithInputFallback(input, normalizedSource, returnGraceMs);
 }
 
 /* CTA 버튼: 다음 빈 식단 칸으로 이동 */
-function getExerciseStaticPickerTargets(input) {
-    const block = input?.closest?.('.exercise-block');
-    return {
-        previewId: block?.querySelector('.preview-img')?.id || '',
-        removeId: block?.querySelector('.static-remove-btn')?.id || ''
-    };
-}
-
-function applyPickedVideoToExerciseInput(input, file) {
-    if (!setSingleFileOnInput(input, file)) return false;
-    window.previewDynamicVid?.(input);
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    return true;
-}
-
-function shouldUseSamsungSystemVideoPicker(input, mediaKind = 'image') {
-    if (mediaKind !== 'video') return false;
-    if (typeof window.showOpenFilePicker !== 'function') return false;
-    if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
-    return input?.dataset?.samsungSystemVideoPickerFallback !== mediaKind;
-}
-
 function applyTemporaryNativeMediaInputMode(input, mediaKind = 'image') {
     const previousAccept = input.getAttribute('accept');
     const previousCapture = input.getAttribute('capture');
@@ -6940,7 +6663,7 @@ function applyTemporaryNativeMediaInputMode(input, mediaKind = 'image') {
 function openExerciseNativeInputPicker(input, mediaKind = 'image') {
     if (!input) return false;
     const normalizedKind = mediaKind === 'video' ? 'video' : 'image';
-    const config = getSamsungSystemPickerMediaConfig(normalizedKind);
+    const config = getNativeMediaInputConfig(normalizedKind);
     const restorePickerMode = applyTemporaryNativeMediaInputMode(input, normalizedKind);
     const restoreVisibleInput = exposeHiddenFileInputForPicker(input);
     let completed = false;
@@ -6963,14 +6686,7 @@ function openExerciseNativeInputPicker(input, mediaKind = 'image') {
     const finishPickerReturn = (event) => {
         if (completed) return;
         markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-        if (event?.type === 'change' && getSelectedMediaFile(input)) {
-            delete input.dataset.samsungSystemPickerFallback;
-            delete input.dataset.samsungSystemVideoPickerFallback;
-        }
         if (event?.type === 'cancel' || (event?.type === 'change' && !getSelectedMediaFile(input))) {
-            if (normalizedKind === 'video') {
-                input.dataset.samsungSystemVideoPickerFallback = 'video';
-            }
             showToast(config.noFileMessage);
         }
         cleanupPickerState();
@@ -7014,103 +6730,11 @@ function openExerciseNativeInputPicker(input, mediaKind = 'image') {
     }
 }
 
-function buildExerciseVideoPickerOptions(accept) {
-    return {
-        multiple: false,
-        excludeAcceptAllOption: true,
-        types: [{
-            description: 'Videos',
-            accept
-        }]
-    };
-}
-
-function openSamsungExerciseVideoSystemPicker(input) {
-    if (!input) return false;
-    if (!shouldUseSamsungSystemVideoPicker(input, 'video')) return false;
-
-    const config = getSamsungSystemPickerMediaConfig('video');
-    prepareNativeMediaInput(input, 'video');
-
-    let pickerPromise = null;
-    let lastError = null;
-    const pickerOptions = [
-        buildExerciseVideoPickerOptions(EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES),
-        buildExerciseVideoPickerOptions({ 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS })
-    ];
-
-    for (const options of pickerOptions) {
-        try {
-            pickerPromise = window.showOpenFilePicker(options);
-            break;
-        } catch (error) {
-            lastError = error;
-        }
-    }
-
-    if (!pickerPromise) {
-        console.warn('Samsung exercise video picker failed before opening:', lastError?.message || lastError);
-        return openExerciseNativeInputPicker(input, 'video');
-    }
-
-    Promise.resolve(pickerPromise)
-        .then(async (handles) => {
-            const file = await handles?.[0]?.getFile?.();
-            markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-            if (!isAcceptedExerciseVideoFile(file)) {
-                input.dataset.samsungSystemVideoPickerFallback = 'video';
-                showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);
-                return;
-            }
-            delete input.dataset.samsungSystemVideoPickerFallback;
-            const applied = await applyPickedVideoToExerciseInput(input, file);
-            if (!applied) {
-                input.dataset.samsungSystemVideoPickerFallback = 'video';
-                showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);
-            }
-        })
-        .catch((error) => {
-            markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
-            const reason = getDietLibraryPickerFailureReason(error);
-            if (reason === 'cancelled') {
-                input.dataset.samsungSystemVideoPickerFallback = 'video';
-                showToast(config.noFileMessage);
-                return;
-            }
-            console.warn('Samsung exercise video picker rejected:', error?.message || error);
-            openExerciseNativeInputPicker(input, 'video');
-        });
-
-    return true;
-}
-
 function openExerciseMediaInput(input, mediaKind = 'image', event = null) {
     if (!input) return false;
     const normalizedKind = mediaKind === 'video' ? 'video' : 'image';
     event?.preventDefault?.();
     event?.stopPropagation?.();
-
-    if (shouldUseSamsungSystemVideoPicker(input, normalizedKind)) {
-        return openSamsungExerciseVideoSystemPicker(input);
-    }
-
-    const handled = normalizedKind === 'video'
-        ? openSamsungSystemMediaPicker({
-            input,
-            mediaKind: 'video',
-            applyFile: (file) => applyPickedVideoToExerciseInput(input, file)
-        })
-        : openSamsungSystemMediaPicker({
-            input,
-            mediaKind: 'image',
-            applyFile: async (file) => {
-                const { previewId, removeId } = getExerciseStaticPickerTargets(input);
-                if (!previewId || !removeId) return false;
-                return await applySharedImageToStaticInput(input.id, previewId, removeId, [file], false);
-            }
-        });
-
-    if (handled) return true;
 
     return openExerciseNativeInputPicker(input, normalizedKind);
 }
@@ -7129,13 +6753,6 @@ window.openSleepImagePicker = function(event) {
     if (event?.target === input) return true;
     event?.preventDefault?.();
     event?.stopPropagation?.();
-
-    const handled = openSamsungSystemMediaPicker({
-        input,
-        mediaKind: 'image',
-        applyFile: (file) => applySharedImageToStaticInput('sleep-img', 'preview-sleep', 'rm-sleep', [file], false)
-    });
-    if (handled) return false;
 
     openExerciseNativeInputPicker(input, 'image');
     return false;

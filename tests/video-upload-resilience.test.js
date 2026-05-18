@@ -54,9 +54,11 @@ describe('video upload resilience', () => {
         expect(source).toContain('function isAcceptedExerciseVideoFile(file)');
         expect(source).toContain('function isGenericExerciseVideoPickerFile(file)');
         expect(source).toContain('function getSelectedMediaFile(input)');
-        expect(source).toContain('input._habitschoolPickedFile = file;');
         expect(source).toContain('const file = getSelectedMediaFile(input);');
         expect(source).toContain('ensureDeferredVideoUpload(fileInput.id, selectedFile, localThumbSeed);');
+        expect(source).not.toContain('window.showOpenFilePicker');
+        expect(source).not.toContain('_habitschoolPickedFile');
+        expect(source).not.toContain('samsungSystemVideoPickerFallback');
         expect(source).toContain('const EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES = Object.freeze');
         expect(source).toContain("'application/octet-stream'");
         expect(source).toContain('function isExerciseVideoUploadCandidate(file, folderName = \'\')');
