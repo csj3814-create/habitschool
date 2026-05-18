@@ -48,6 +48,23 @@ describe('video upload resilience', () => {
         expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
     });
 
+    it('treats Samsung exercise videos with generic file metadata as video uploads', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function isAcceptedExerciseVideoFile(file)');
+        expect(source).toContain('function isGenericExerciseVideoPickerFile(file)');
+        expect(source).toContain('const EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES = Object.freeze');
+        expect(source).toContain("'application/octet-stream'");
+        expect(source).toContain('function isExerciseVideoUploadCandidate(file, folderName = \'\')');
+        expect(source).toContain("const isExerciseVideoFolder = normalizedFolderName === 'exercise_videos';");
+        expect(source).toContain('if (!isValidFileType(file) && !(isExerciseVideoFolder && isVideoUpload))');
+        expect(source).toContain('const isVideo = isExerciseVideoUploadCandidate(fileToUpload, normalizedFolderName);');
+        expect(source).toContain('const videoContentType = isVideo ? getExerciseVideoContentType(fileToUpload) : \'\';');
+        expect(source).toContain('const uploadMetadata = isVideo ? { contentType: videoContentType } : undefined;');
+        expect(source).toContain('metadata: uploadMetadata');
+        expect(source).toContain('const uploadTask = uploadBytesResumable(storageRef, file, metadata);');
+    });
+
     it('bounds the background Firestore patch after media upload reaches the final sync phase', () => {
         const source = readAppSource();
 

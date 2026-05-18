@@ -86,7 +86,7 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain("input.addEventListener('change', finishPickerReturn");
     });
 
-    it('uses the system image picker only for Samsung Internet library uploads', () => {
+    it('opens Samsung Internet image uploads through the native file input first', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain("const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';");
@@ -95,6 +95,7 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('function shouldUseSystemImagePickerForDietLibrary');
         expect(appSource).toContain("return shouldUseSamsungSystemMediaPicker(input, 'image');");
         expect(appSource).toContain('function shouldUseSamsungSystemMediaPicker');
+        expect(appSource).toContain("if (mediaKind === 'image' && isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;");
         expect(appSource).toContain("if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;");
         expect(appSource).not.toContain("return !/Android|SamsungBrowser/i.test(ua);");
         expect(appSource).toContain('function openDietSlotWithSystemImagePicker');
@@ -102,6 +103,8 @@ describe('diet photo persistence', () => {
         expect(appSource).toContain('excludeAcceptAllOption: true');
         expect(appSource).toContain("accept: { 'image/*': DIET_LIBRARY_IMAGE_EXTENSIONS }");
         expect(appSource).toContain('applySharedImageToStaticInput(input.id, previewId, removeId, [file], false)');
+        expect(appSource).toContain('return openDietSlotWithInputFallback(input, normalizedSource, returnGraceMs);');
+        expect(appSource).toContain("openExerciseNativeInputPicker(input, 'image');");
         expect(appSource).toContain("input.setAttribute('accept', DIET_LIBRARY_IMAGE_ACCEPT);");
         expect(appSource).toContain("input.removeAttribute('capture');");
         expect(appSource).toContain("input.setAttribute('data-picker-temporary-visible', 'true');");
@@ -127,21 +130,30 @@ describe('diet photo persistence', () => {
         const appSource = readAppSource();
         const indexSource = readRepoFile('index.html');
 
-        expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';");
+        expect(appSource).toContain("const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp,.avi,.mkv,.mpeg,.mpg';");
         expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze');
+        expect(appSource).toContain('const EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES = Object.freeze');
+        expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze');
+        expect(appSource).toContain('const EXERCISE_VIDEO_FALLBACK_MESSAGE =');
         expect(appSource).toContain('const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze');
         expect(appSource).toContain("'video/mp4': ['.mp4', '.m4v']");
+        expect(appSource).toContain("'video/x-msvideo': ['.avi']");
+        expect(appSource).toContain("'video/x-matroska': ['.mkv']");
         expect(appSource).toContain('function getSamsungSystemPickerMediaConfig');
         expect(appSource).toContain("if (mediaKind === 'video') return false;");
         expect(appSource).toContain('function shouldUseSamsungSystemVideoPicker');
         expect(appSource).toContain("if (mediaKind !== 'video') return false;");
         expect(appSource).toContain("if (typeof window.showOpenFilePicker !== 'function') return false;");
+        expect(appSource).toContain("return input?.dataset?.samsungSystemVideoPickerFallback !== mediaKind;");
         expect(appSource).toContain('function buildExerciseVideoPickerOptions');
         expect(appSource).toContain('function openSamsungExerciseVideoSystemPicker');
         expect(appSource).toContain('function openExerciseNativeInputPicker');
+        expect(appSource).toContain('function isGenericExerciseVideoPickerFile');
+        expect(appSource).toContain('EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES.includes(type)');
+        expect(appSource).toContain('showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);');
         expect(appSource).toContain('buildExerciseVideoPickerOptions(EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES)');
         expect(appSource).toContain("buildExerciseVideoPickerOptions({ 'video/*': EXERCISE_LIBRARY_VIDEO_EXTENSIONS })");
-        expect(appSource).toContain('if (shouldUseSamsungSystemVideoPicker(normalizedKind))');
+        expect(appSource).toContain('if (shouldUseSamsungSystemVideoPicker(input, normalizedKind))');
         expect(appSource).toContain('return openSamsungExerciseVideoSystemPicker(input);');
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_c_${id}', 'image')\"");
         expect(appSource).toContain("onclick=\"return openExerciseMediaPicker(event, 'file_s_${id}', 'video')\"");

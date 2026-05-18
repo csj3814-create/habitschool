@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=186';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=186';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=187';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=187';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=186';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=186';
+} from './auth-login-helpers.js?v=187';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=187';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=186';
+} from './exercise-media.js?v=187';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=186';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=186';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=186';
-import { sanitize, compressImage } from './data-manager.js?v=186';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=186';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=186';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=186';
+} from './health-connect-utils.js?v=187';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=187';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=187';
+import { sanitize, compressImage } from './data-manager.js?v=187';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=187';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=187';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=187';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=186';
+} from './diet-program.js?v=187';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=186';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=186';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=186';
+} from './meditation-guide.js?v=187';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=187';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=187';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=186';
+} from './social-challenge-readiness.js?v=187';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=186';
+} from './monthly-mvp-reward.js?v=187';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -107,18 +107,31 @@ const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
-const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp';
-const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze(['.mp4', '.mov', '.webm', '.m4v', '.3gp', '.3gpp']);
+const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp,.avi,.mkv,.mpeg,.mpg';
+const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze(['.mp4', '.mov', '.webm', '.m4v', '.3gp', '.3gpp', '.avi', '.mkv', '.mpeg', '.mpg']);
+const EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES = Object.freeze(['', 'application/octet-stream', 'application/x-empty']);
+const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze([
+    'application/mp4',
+    'application/x-mp4',
+    'application/quicktime',
+    'application/x-matroska',
+    'application/vnd.apple.mpegurl',
+    'application/x-mpegurl'
+]);
 const EXERCISE_LIBRARY_VIDEO_ACCEPT_TYPES = Object.freeze({
     'video/mp4': ['.mp4', '.m4v'],
     'video/quicktime': ['.mov'],
     'video/webm': ['.webm'],
-    'video/3gpp': ['.3gp', '.3gpp']
+    'video/3gpp': ['.3gp', '.3gpp'],
+    'video/x-msvideo': ['.avi'],
+    'video/x-matroska': ['.mkv'],
+    'video/mpeg': ['.mpeg', '.mpg']
 });
 const DIET_LIBRARY_PICKER_HELPER_ID = 'diet-library-picker-helper';
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
+const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
@@ -5072,7 +5085,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=186';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=187';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6481,12 +6494,56 @@ function isAcceptedDietImageFile(file) {
     return DIET_LIBRARY_IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext));
 }
 
+function hasAcceptedExerciseVideoExtension(file) {
+    const name = String(file?.name || '').toLowerCase();
+    return EXERCISE_LIBRARY_VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext));
+}
+
+function isGenericExerciseVideoPickerFile(file) {
+    if (!file) return false;
+    const size = Number(file.size || 0);
+    if (!Number.isFinite(size) || size <= 0) return false;
+
+    const type = String(file.type || '').trim().toLowerCase();
+    if (type.startsWith('image/') || type.startsWith('audio/')) return false;
+    if (type === 'application/pdf' || type.startsWith('text/') || type.includes('javascript')) return false;
+    return EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES.includes(type);
+}
+
 function isAcceptedExerciseVideoFile(file) {
     if (!file) return false;
     const type = String(file.type || '').toLowerCase();
     if (type.startsWith('video/')) return true;
-    const name = String(file.name || '').toLowerCase();
-    return EXERCISE_LIBRARY_VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext));
+    if (EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES.includes(type)) return true;
+    if (hasAcceptedExerciseVideoExtension(file)) return true;
+    return isGenericExerciseVideoPickerFile(file);
+}
+
+function isExerciseVideoUploadCandidate(file, folderName = '') {
+    const normalizedFolder = String(folderName || '').trim();
+    if (normalizedFolder === 'exercise_videos') return isAcceptedExerciseVideoFile(file);
+    if (!file) return false;
+    const type = String(file.type || '').trim().toLowerCase();
+    return type.startsWith('video/')
+        || EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES.includes(type)
+        || hasAcceptedExerciseVideoExtension(file);
+}
+
+function getExerciseVideoContentType(file) {
+    const type = String(file?.type || '').trim().toLowerCase();
+    if (type.startsWith('video/')) return type;
+    if (type === 'application/quicktime') return 'video/quicktime';
+    if (type === 'application/x-matroska') return 'video/x-matroska';
+    if (type === 'application/vnd.apple.mpegurl' || type === 'application/x-mpegurl') return 'application/vnd.apple.mpegurl';
+    if (type === 'application/mp4' || type === 'application/x-mp4') return 'video/mp4';
+    const name = String(file?.name || '').toLowerCase();
+    if (name.endsWith('.mov')) return 'video/quicktime';
+    if (name.endsWith('.webm')) return 'video/webm';
+    if (name.endsWith('.3gp') || name.endsWith('.3gpp')) return 'video/3gpp';
+    if (name.endsWith('.avi')) return 'video/x-msvideo';
+    if (name.endsWith('.mkv')) return 'video/x-matroska';
+    if (name.endsWith('.mpeg') || name.endsWith('.mpg')) return 'video/mpeg';
+    return 'video/mp4';
 }
 
 function getSamsungSystemPickerMediaConfig(mediaKind = 'image') {
@@ -6510,6 +6567,7 @@ function getSamsungSystemPickerMediaConfig(mediaKind = 'image') {
 
 function shouldUseSamsungSystemMediaPicker(input, mediaKind = 'image') {
     if (mediaKind === 'video') return false;
+    if (mediaKind === 'image' && isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
     if (typeof window.showOpenFilePicker !== 'function') return false;
     if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
     return input?.dataset?.samsungSystemPickerFallback !== mediaKind;
@@ -6844,10 +6902,11 @@ function applyPickedVideoToExerciseInput(input, file) {
     return true;
 }
 
-function shouldUseSamsungSystemVideoPicker(mediaKind = 'image') {
+function shouldUseSamsungSystemVideoPicker(input, mediaKind = 'image') {
     if (mediaKind !== 'video') return false;
     if (typeof window.showOpenFilePicker !== 'function') return false;
-    return isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '');
+    if (!isSamsungInternetUserAgent(navigator.userAgent || navigator.vendor || '')) return false;
+    return input?.dataset?.samsungSystemVideoPickerFallback !== mediaKind;
 }
 
 function applyTemporaryNativeMediaInputMode(input, mediaKind = 'image') {
@@ -6951,7 +7010,7 @@ function buildExerciseVideoPickerOptions(accept) {
 
 function openSamsungExerciseVideoSystemPicker(input) {
     if (!input) return false;
-    if (!shouldUseSamsungSystemVideoPicker('video')) return false;
+    if (!shouldUseSamsungSystemVideoPicker(input, 'video')) return false;
 
     const config = getSamsungSystemPickerMediaConfig('video');
     prepareNativeMediaInput(input, 'video');
@@ -6982,10 +7041,16 @@ function openSamsungExerciseVideoSystemPicker(input) {
             const file = await handles?.[0]?.getFile?.();
             markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
             if (!isAcceptedExerciseVideoFile(file)) {
-                showToast(config.noFileMessage);
+                input.dataset.samsungSystemVideoPickerFallback = 'video';
+                showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);
                 return;
             }
-            await applyPickedVideoToExerciseInput(input, file);
+            delete input.dataset.samsungSystemVideoPickerFallback;
+            const applied = await applyPickedVideoToExerciseInput(input, file);
+            if (!applied) {
+                input.dataset.samsungSystemVideoPickerFallback = 'video';
+                showToast(EXERCISE_VIDEO_FALLBACK_MESSAGE);
+            }
         })
         .catch((error) => {
             markMediaPickerReturned(input, config.source, MEDIA_PICKER_RECOVERY_GRACE_MS);
@@ -7007,7 +7072,7 @@ function openExerciseMediaInput(input, mediaKind = 'image', event = null) {
     event?.preventDefault?.();
     event?.stopPropagation?.();
 
-    if (shouldUseSamsungSystemVideoPicker(normalizedKind)) {
+    if (shouldUseSamsungSystemVideoPicker(input, normalizedKind)) {
         return openSamsungExerciseVideoSystemPicker(input);
     }
 
@@ -7054,8 +7119,7 @@ window.openSleepImagePicker = function(event) {
     });
     if (handled) return false;
 
-    prepareNativeMediaInput(input, 'image');
-    input.click();
+    openExerciseNativeInputPicker(input, 'image');
     return false;
 };
 
@@ -14477,9 +14541,10 @@ async function uploadSamsungImageWithSimplePut(storageRef, file, onProgress = nu
 function runResumableUploadWithTimeout(storageRef, file, {
     onProgress = null,
     hardTimeoutMs = 60 * 1000,
-    idleTimeoutMs = 30 * 1000
+    idleTimeoutMs = 30 * 1000,
+    metadata = undefined
 } = {}) {
-    const uploadTask = uploadBytesResumable(storageRef, file);
+    const uploadTask = uploadBytesResumable(storageRef, file, metadata);
     const hardLimit = Math.max(1000, Number(hardTimeoutMs) || 0);
     const idleLimit = Math.max(1000, Number(idleTimeoutMs) || 0);
 
@@ -14550,18 +14615,22 @@ function runResumableUploadWithTimeout(storageRef, file, {
 async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     if (!file) return null;
 
-    if (!isValidFileType(file)) {
+    const normalizedFolderName = String(folderName || '').trim();
+    const isExerciseVideoFolder = normalizedFolderName === 'exercise_videos';
+    const isVideoUpload = isExerciseVideoUploadCandidate(file, normalizedFolderName);
+
+    if (!isValidFileType(file) && !(isExerciseVideoFolder && isVideoUpload)) {
         showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
         return null;
     }
 
     let fileToUpload = file;
-    if (file.type.startsWith('image/')) {
+    if (!isVideoUpload && String(file.type || '').startsWith('image/')) {
         fileToUpload = await compressImage(file);
     }
 
     // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
-    const isVideo = fileToUpload.type && fileToUpload.type.startsWith('video/');
+    const isVideo = isExerciseVideoUploadCandidate(fileToUpload, normalizedFolderName);
     const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
     const maxLabel = isVideo ? '100' : '20';
     const fileSizeMB = fileToUpload.size / (1024 * 1024);
@@ -14574,7 +14643,11 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
     const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
-    const uploadTimeouts = getResumableUploadTimeouts(fileToUpload);
+    const videoContentType = isVideo ? getExerciseVideoContentType(fileToUpload) : '';
+    const uploadTimeouts = getResumableUploadTimeouts(isVideo
+        ? { type: videoContentType, size: fileToUpload.size }
+        : fileToUpload);
+    const uploadMetadata = isVideo ? { contentType: videoContentType } : undefined;
     const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);
     const maxRetries = useSamsungSimpleImageUpload ? 0 : 2;
 
@@ -14587,7 +14660,8 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
                 await runResumableUploadWithTimeout(storageRef, fileToUpload, {
                     onProgress,
                     hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
-                    idleTimeoutMs: uploadTimeouts.idleTimeoutMs
+                    idleTimeoutMs: uploadTimeouts.idleTimeoutMs,
+                    metadata: uploadMetadata
                 });
             }
 

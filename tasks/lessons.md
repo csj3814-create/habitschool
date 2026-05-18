@@ -3,6 +3,11 @@
 ---
 ## 2026-05-17 (Samsung Internet Media Picker Kinds)
 
+### 223. If the fallback is the only Samsung image picker path that works, make it primary
+- Symptom: on staging v186, tapping `사진 선택` in Samsung Internet showed the retry/fallback panel, while `일반 선택창 열기` immediately allowed selecting and uploading photos.
+- Root cause: the app still tried `showOpenFilePicker()` first for Samsung image uploads even though the observed reliable path was the native file input fallback.
+- Lesson: prefer the path proven on-device over the theoretically nicer picker. For Samsung Internet image uploads, open the native image file input directly from the original tap; keep camera capture separate and leave standards picker APIs for surfaces where they are actually reliable.
+
 ### 221. Samsung upload fixes must cover transfer behavior, not only picker shape
 - Symptom: after correcting Samsung Internet picker surfaces, users still saw selected exercise images stuck around 1% with a delayed-upload message.
 - Root cause: picker success does not prove the upload transport is healthy. `uploadBytesResumable` can still appear stalled on Samsung Internet even after the file reaches the app.
@@ -1626,3 +1631,4 @@
 - 2026-05-01: 월초 자동 정산 보조 트리거는 암묵적인 전역 `Date` 변수에 기대지 않는다. KST 날짜 문자열에서 대상 월과 실행 가능일을 계산하는 작은 helper로 분리하고, `today.getUTCDate()`처럼 정의되지 않은 변수를 참조하지 않는 회귀 테스트를 둔다.
 - 2026-05-02: 영상/사진 저장은 원본 저장, daily log patch, 갤러리 재조회, 썸네일 보강을 한 성공/실패 단위로 묶지 않는다. 원본과 daily log 본문이 저장됐으면 사용자에게 저장 실패를 띄우지 말고, 후속 갤러리/썸네일 반영은 캐시 업데이트와 재시도 큐로 분리해야 한다.
 - 2026-05-02: 갤러리의 로그인 직후 Firestore 결과가 `metadata.fromCache`이면 내용이 있어도 전체 피드가 아니다. 내 문서만 들어 있는 캐시 스냅샷을 권위 결과로 저장하지 말고, 우선 보여준 뒤 서버/REST 재조회로 자동 보정해야 한다.
+- 2026-05-18: Samsung Internet/Android video pickers can return a real video as a generic blob with empty or `application/octet-stream` MIME metadata. Do not treat that as "no file selected"; validate by picker context, extension, and known non-video exclusions, and make the upload path use video limits/timeouts/content type when the destination folder is `exercise_videos`.
