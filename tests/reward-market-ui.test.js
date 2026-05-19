@@ -56,6 +56,18 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
 
+    it('folds used or expired coupon media until the user expands the archived coupon', () => {
+        expect(rewardMarketSource).toContain('expandedArchivedCouponIds: new Set()');
+        expect(rewardMarketSource).toContain('function canFoldRewardCouponItem');
+        expect(rewardMarketSource).toContain('function buildArchivedCouponSummary');
+        expect(rewardMarketSource).toContain('window.toggleRewardCouponArchiveDetail = function');
+        expect(rewardMarketSource).toContain('is-archived-collapsed');
+        expect(rewardMarketSource).toContain('isArchivedExpanded ? buildCouponMedia(item) :');
+        expect(rewardMarketSource).toContain('rewardMarketState.expandedArchivedCouponIds.delete(redemptionId);');
+        expect(rewardMarketStyles).toContain('.reward-coupon-archive-summary.is-collapsed');
+        expect(rewardMarketStyles).toContain('filter: blur(0.8px);');
+    });
+
     it('supports collapsed reward phone view with an explicit edit action', () => {
         expect(rewardMarketSource).toContain('phoneEditorOpen');
         expect(rewardMarketSource).toContain('reward-market-phone-summary');
