@@ -1209,7 +1209,7 @@ window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
     }
 
     const confirmed = window.confirm(
-        '\ucfe0\ud3f0 \uc815\ubcf4\uac00 \uc644\uc804\ud788 \uc0ad\uc81c\ub429\ub2c8\ub2e4. \uacc4\uc18d\ud560\uae4c\uc694?'
+        '\ucfe0\ud3f0 \uc815\ubcf4\uac00 \uc644\uc804\ud788 \uc0ac\ub77c\uc9d1\ub2c8\ub2e4. \uacc4\uc18d\ud560\uae4c\uc694?'
     );
     if (!confirmed) return false;
 
