@@ -39,6 +39,9 @@ const {
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
     dismissRewardCoupon: dismissRewardCouponFlow,
+    markRewardCouponUsed: markRewardCouponUsedFlow,
+    deleteRewardCoupon: deleteRewardCouponFlow,
+    cleanupExpiredRewardCoupons: cleanupExpiredRewardCouponsFlow,
     adminResendRewardCoupon: adminResendRewardCouponFlow,
     syncRewardMarketOps,
 } = require("./reward-market");
@@ -1770,6 +1773,59 @@ exports.dismissRewardCoupon = onCall(
     }
 );
 
+exports.markRewardCouponUsed = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        try {
+            return await markRewardCouponUsedFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                uid: request.auth.uid,
+                redemptionId: request.data?.redemptionId,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("markRewardCouponUsed error:", error);
+            throw new HttpsError("internal", "쿠폰 사용 완료 처리 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.deleteRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        try {
+            return await deleteRewardCouponFlow({
+                db,
+                HttpsError,
+                uid: request.auth.uid,
+                redemptionId: request.data?.redemptionId,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("deleteRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 삭제 중 오류가 발생했습니다.");
+        }
+    }
+);
+
 exports.adminResendRewardCoupon = onCall(
     {
         region: "asia-northeast3",
@@ -1799,6 +1855,31 @@ exports.adminResendRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("adminResendRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 재확인 처리 중 문제가 발생했어요.");
+        }
+    }
+);
+
+exports.cleanupExpiredRewardCoupons = onSchedule(
+    {
+        region: "asia-northeast3",
+        schedule: "20 3 * * *",
+        timeZone: "Asia/Seoul",
+        timeoutSeconds: 120,
+        memory: "256MiB"
+    },
+    async () => {
+        try {
+            const result = await cleanupExpiredRewardCouponsFlow({
+                db,
+                now: new Date()
+            });
+            console.log("expired reward coupons cleaned", {
+                deletedCount: result?.deletedCount || 0,
+                checkedCount: result?.checkedCount || 0
+            });
+        } catch (error) {
+            console.error("cleanupExpiredRewardCoupons error:", error);
+            throw error;
         }
     }
 );

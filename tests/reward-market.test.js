@@ -71,6 +71,11 @@ function createFakeFirestore(initialDocs = {}) {
                             const valueMs = value instanceof Date ? value.getTime() : new Date(value).getTime();
                             return currentMs >= valueMs;
                         }
+                        if (op === '<=') {
+                            const currentMs = current instanceof Date ? current.getTime() : new Date(current).getTime();
+                            const valueMs = value instanceof Date ? value.getTime() : new Date(value).getTime();
+                            return currentMs <= valueMs;
+                        }
                         throw new Error(`Unsupported query operator: ${op}`);
                     });
                 });
@@ -118,6 +123,9 @@ function createFakeFirestore(initialDocs = {}) {
             async set(value, options = {}) {
                 writeDoc(normalizedPath, value, options);
             },
+            async delete() {
+                store.delete(normalizedPath);
+            },
         };
     }
 
@@ -130,10 +138,15 @@ function createFakeFirestore(initialDocs = {}) {
                 set(ref, value, options = {}) {
                     operations.push({ type: 'set', ref, value, options });
                 },
+                delete(ref) {
+                    operations.push({ type: 'delete', ref });
+                },
                 async commit() {
                     operations.forEach((operation) => {
                         if (operation.type === 'set') {
                             writeDoc(operation.ref.path, operation.value, operation.options);
+                        } else if (operation.type === 'delete') {
+                            store.delete(normalizePath(operation.ref.path));
                         }
                     });
                 },
@@ -442,6 +455,11 @@ describe('reward market pricing helpers', () => {
         })).toBe(true);
         expect(__test.shouldCountTowardIssuanceUsage({
             mode: 'live',
+            status: 'used_completed',
+            pointsCharged: true,
+        })).toBe(true);
+        expect(__test.shouldCountTowardIssuanceUsage({
+            mode: 'live',
             status: 'pending_issue',
             pointsCharged: true,
         })).toBe(true);
@@ -556,6 +574,72 @@ describe('reward market pricing helpers', () => {
         expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'mock' })).toBe(true);
         expect(__test.canDismissRewardRedemption({ status: 'pending_issue', mode: 'live' })).toBe(false);
         expect(__test.canDismissRewardRedemption({ status: 'issued', mode: 'live' })).toBe(false);
+    });
+
+    it('marks issued coupons used before allowing full deletion', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/live-coupon': {
+                userId: 'user-1',
+                status: 'issued',
+                mode: 'live',
+                pointsCharged: true,
+                expiresAt: new Date('2026-06-01T00:00:00.000Z'),
+                createdAt: new Date('2026-05-01T00:00:00.000Z'),
+            },
+        });
+        const FieldValue = createFakeFieldValue();
+
+        expect(__test.canDeleteRewardRedemption({
+            status: 'issued',
+            expiresAt: new Date('2026-06-01T00:00:00.000Z'),
+        }, new Date('2026-05-10T00:00:00.000Z'))).toBe(false);
+
+        await rewardMarketModule.markRewardCouponUsed({
+            db,
+            FieldValue,
+            HttpsError: FakeHttpsError,
+            uid: 'user-1',
+            redemptionId: 'live-coupon',
+            now: new Date('2026-05-10T00:00:00.000Z'),
+        });
+        expect(db.__get('reward_redemptions/live-coupon').status).toBe('used_completed');
+
+        await rewardMarketModule.deleteRewardCoupon({
+            db,
+            HttpsError: FakeHttpsError,
+            uid: 'user-1',
+            redemptionId: 'live-coupon',
+            now: new Date('2026-05-10T00:00:00.000Z'),
+        });
+        expect(db.__get('reward_redemptions/live-coupon')).toBeUndefined();
+    });
+
+    it('auto deletes reward coupons only after the 30 day expiry grace window', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/old-expired': {
+                userId: 'user-1',
+                status: 'issued',
+                expiresAt: new Date('2026-04-01T00:00:00.000Z'),
+                createdAt: new Date('2026-03-01T00:00:00.000Z'),
+            },
+            'reward_redemptions/recent-expired': {
+                userId: 'user-1',
+                status: 'issued',
+                expiresAt: new Date('2026-04-20T00:00:00.000Z'),
+                createdAt: new Date('2026-03-20T00:00:00.000Z'),
+            },
+        });
+
+        const result = await __test.cleanupExpiredRewardCoupons({
+            db,
+            now: new Date('2026-05-10T00:00:00.000Z'),
+            limit: 10,
+        });
+
+        expect(result.deletedCount).toBe(1);
+        expect(result.redemptionIds).toEqual(['old-expired']);
+        expect(db.__get('reward_redemptions/old-expired')).toBeUndefined();
+        expect(db.__get('reward_redemptions/recent-expired')).toBeTruthy();
     });
 
     it('keeps point settlement available below the ops reserve floor and only blocks unaffordable coupons', () => {

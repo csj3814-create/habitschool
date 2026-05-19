@@ -584,6 +584,12 @@
     cursor: pointer;
 }
 
+.reward-coupon-remove.is-delete {
+    border-color: #e6b5ac;
+    background: #fff1ef;
+    color: #9f3f35;
+}
+
 .reward-coupon-warning {
     border-radius: 12px;
     background: #fff4f2;

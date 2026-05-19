@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=189';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=189';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=190';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=190';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=189';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=189';
+} from './auth-login-helpers.js?v=190';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=190';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=189';
+} from './exercise-media.js?v=190';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=189';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=189';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=189';
-import { sanitize, compressImage } from './data-manager.js?v=189';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=189';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=189';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=189';
+} from './health-connect-utils.js?v=190';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=190';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=190';
+import { sanitize, compressImage } from './data-manager.js?v=190';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=190';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=190';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=190';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=189';
+} from './diet-program.js?v=190';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=189';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=189';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=189';
+} from './meditation-guide.js?v=190';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=190';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=190';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=189';
+} from './social-challenge-readiness.js?v=190';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=189';
+} from './monthly-mvp-reward.js?v=190';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -98,9 +98,9 @@ const MEDITATION_DRAFT_STORAGE_KEY = 'habitschool-meditation-draft-v1';
 const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';
 const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';
 const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;
-const MEDITATION_VOICE_INTRO_CYCLES = 2;
+const MEDITATION_VOICE_INTRO_CYCLES = 3;
 const MEDITATION_TTS_VOLUME = 0.72;
-const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;
+const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.8;
 const MEDIA_PICKER_RECOVERY_GRACE_MS = 12000;
 const MEDIA_PICKER_CAMERA_GRACE_MS = 5 * 60 * 1000;
 const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
@@ -5075,7 +5075,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=189';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=190';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10450,13 +10450,13 @@ function playMeditationCue(kind = '', { soft = false } = {}) {
         playMeditationToneSequence([{
             frequency: 820,
             durationSec: soft ? 0.1 : 0.16,
-            volume: soft ? 0.13 : 0.26
+            volume: soft ? 0.13 : 0.8
         }]);
         break;
     case 'hold':
         playMeditationToneSequence([
-            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.05, volume: soft ? 0.12 : 0.22 },
-            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.04, volume: soft ? 0.12 : 0.22 }
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.05, volume: soft ? 0.12 : 0.8 },
+            { frequency: 560, durationSec: soft ? 0.07 : 0.1, gapSec: 0.04, volume: soft ? 0.12 : 0.8 }
         ]);
         break;
     case 'exhale':
@@ -10464,7 +10464,7 @@ function playMeditationCue(kind = '', { soft = false } = {}) {
             frequency: 430,
             endFrequency: 340,
             durationSec: soft ? 0.13 : 0.22,
-            volume: soft ? 0.13 : 0.24
+            volume: soft ? 0.13 : 0.8
         }]);
         break;
     case 'mindfulness_start':
@@ -10909,7 +10909,7 @@ function applyMeditationLogToUi(sleepAndMind = null, { selectedDateStr = getSele
         done: saved.meditationDone,
         completedAt: saved.meditationCompletedAt,
         status: saved.meditationDone ? 'completed' : 'idle',
-        remainingSec: saved.meditationDone ? 0 : saved.meditationDurationSec
+        remainingSec: saved.meditationDone ? 0 : undefined
     });
 
     const draftState = readMeditationDraftState(selectedDateStr);

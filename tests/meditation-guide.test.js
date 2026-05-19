@@ -25,9 +25,9 @@ describe('meditation guide helpers', () => {
             MEDITATION_METHOD_IDS.MINDFULNESS
         ]);
 
-        expect(getMeditationMethodMeta(DEFAULT_MEDITATION_METHOD_ID).durationSec).toBe(180);
-        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).durationSec).toBe(180);
-        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.BOX).durationSec).toBe(180);
+        expect(getMeditationMethodMeta(DEFAULT_MEDITATION_METHOD_ID).durationSec).toBe(300);
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).durationSec).toBe(300);
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.BOX).durationSec).toBe(300);
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.MINDFULNESS).durationSec).toBe(300);
 
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).guide).toBe('배를 부풀리며 4초 들이쉼, 6초 내쉼');
@@ -61,8 +61,8 @@ describe('meditation guide helpers', () => {
 
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT, {
             elapsedSec: 5,
-            remainingSec: 60,
-            totalSec: 180
+            remainingSec: 295,
+            totalSec: 300
         })).toBe('숨을 멈추고 가슴을 편하게 둬요.');
 
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).phaseSteps[1]).toEqual(
@@ -77,8 +77,8 @@ describe('meditation guide helpers', () => {
 
         expect(getMeditationPhaseUiState(MEDITATION_METHOD_IDS.BOX, {
             elapsedSec: 5,
-            remainingSec: 175,
-            totalSec: 180
+            remainingSec: 295,
+            totalSec: 300
         })).toEqual({
             steps: [
                 expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale', voiceCue: '들이쉬세요' }),
@@ -101,10 +101,11 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain("const MEDITATION_SOUND_STORAGE_KEY = 'habitschool-meditation-sound-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_STORAGE_KEY = 'habitschool-mindfulness-video-v1';");
         expect(APP_SOURCE).toContain("const MEDITATION_VIDEO_RANDOM_START_MAX_SEC = 240;");
-        expect(APP_SOURCE).toContain('const MEDITATION_VOICE_INTRO_CYCLES = 2;');
+        expect(APP_SOURCE).toContain('const MEDITATION_VOICE_INTRO_CYCLES = 3;');
         expect(APP_SOURCE).toContain('const MEDITATION_TTS_VOLUME = 0.72;');
-        expect(APP_SOURCE).toContain('const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.42;');
+        expect(APP_SOURCE).toContain('const MEDITATION_TONE_PEAK_VOLUME_LIMIT = 0.8;');
         expect(APP_SOURCE).toContain('const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;');
+        expect(APP_SOURCE).toContain('remainingSec: saved.meditationDone ? 0 : undefined');
         expect(APP_SOURCE).toContain('getMeditationPhaseUiState');
         expect(APP_SOURCE).toContain('function getMeditationSpeechSynthesis()');
         expect(APP_SOURCE).toContain('new window.SpeechSynthesisUtterance(text)');
@@ -114,8 +115,8 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('speakMeditationVoiceCue(cueInfo.voiceCue)');
         expect(APP_SOURCE).toContain('cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES');
         expect(APP_SOURCE).toContain("playMeditationCue(cueInfo.kind, { soft: true });");
-        expect(APP_SOURCE).toContain('volume: soft ? 0.13 : 0.26');
-        expect(APP_SOURCE).toContain('volume: soft ? 0.12 : 0.22');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.13 : 0.8');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.12 : 0.8');
         expect(APP_SOURCE).toContain('endFrequency: 340');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');

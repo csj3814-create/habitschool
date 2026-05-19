@@ -28,6 +28,8 @@ const DEFAULT_GIFTISHOW_DEV_YN = "N";
 const DEFAULT_GIFTISHOW_CATALOG_START = 1;
 const DEFAULT_GIFTISHOW_CATALOG_SIZE = 50;
 const DEFAULT_GIFTISHOW_BODY_FORMAT = "form";
+const REWARD_COUPON_DELETE_GRACE_DAYS = 30;
+const REWARD_COUPON_DELETE_GRACE_MS = REWARD_COUPON_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000;
 const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
     ["baseUrl", "GIFTISHOW_API_BASE_URL"],
     ["customAuthCode", "GIFTISHOW_CUSTOM_AUTH_CODE"],
@@ -195,6 +197,22 @@ function toTimestampMillis(value) {
     if (value instanceof Date) return value.getTime();
     const parsed = Date.parse(String(value));
     return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getRewardRedemptionExpiryMs(data = {}) {
+    return toTimestampMillis(data.expiresAt);
+}
+
+function isRewardRedemptionExpired(data = {}, now = new Date()) {
+    const expiresAtMs = getRewardRedemptionExpiryMs(data);
+    const nowMs = toTimestampMillis(now) || Date.now();
+    return expiresAtMs > 0 && expiresAtMs <= nowMs;
+}
+
+function isRewardRedemptionPastDeleteGrace(data = {}, now = new Date()) {
+    const expiresAtMs = getRewardRedemptionExpiryMs(data);
+    const nowMs = toTimestampMillis(now) || Date.now();
+    return expiresAtMs > 0 && (expiresAtMs + REWARD_COUPON_DELETE_GRACE_MS) <= nowMs;
 }
 
 function normalizeRecipientPhone(rawPhone = "") {
@@ -1332,14 +1350,18 @@ function serializeRedemptionDoc(docSnap) {
 }
 
 async function loadUserRedemptions({ db, uid, limit = 12 }) {
+    const safeLimit = Math.max(1, limit);
     const snapshot = await db.collection("reward_redemptions")
         .where("userId", "==", uid)
-        .limit(Math.max(1, limit))
+        .limit(safeLimit * 4)
         .get();
 
+    const now = new Date();
     return snapshot.docs
         .filter((docSnap) => !docSnap.data()?.hiddenByUserAt)
+        .filter((docSnap) => !isRewardRedemptionPastDeleteGrace(docSnap.data(), now))
         .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt))
+        .slice(0, safeLimit)
         .map((docSnap) => serializeRedemptionDoc(docSnap));
 }
 
@@ -2096,7 +2118,7 @@ function shouldCountTowardIssuanceUsage(data = {}) {
     const status = String(data.status || "").trim();
     return mode === "live"
         && data.pointsCharged === true
-        && ["issued", "pending_issue"].includes(status);
+        && ["issued", "used_completed", "pending_issue"].includes(status);
 }
 
 function canDismissRewardRedemption(data = {}) {
@@ -2105,6 +2127,17 @@ function canDismissRewardRedemption(data = {}) {
     if (status === "issued" && mode !== "live") return true;
     if (["failed_manual_review", "cancelled"].includes(status)) return true;
     return status === "pending_issue" && mode !== "live";
+}
+
+function canMarkRewardRedemptionUsed(data = {}, now = new Date()) {
+    const status = String(data.status || "").trim();
+    return status === "issued" && !isRewardRedemptionPastDeleteGrace(data, now);
+}
+
+function canDeleteRewardRedemption(data = {}, now = new Date()) {
+    const status = String(data.status || "").trim();
+    if (["used_completed", "failed_manual_review", "cancelled"].includes(status)) return true;
+    return isRewardRedemptionExpired(data, now);
 }
 
 async function refundChargedRewardPoints({
@@ -2193,6 +2226,134 @@ async function dismissRewardCoupon({
         success: true,
         dismissed: true,
         redemptionId: normalizedId,
+    };
+}
+
+async function markRewardCouponUsed({
+    db,
+    FieldValue,
+    HttpsError,
+    uid,
+    redemptionId = "",
+    now = new Date(),
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "사용 완료할 쿠폰을 다시 선택해 주세요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const redemptionSnap = await redemptionRef.get();
+    if (!redemptionSnap.exists) {
+        throw new HttpsError("not-found", "쿠폰 기록을 찾을 수 없어요.");
+    }
+
+    const redemption = redemptionSnap.data() || {};
+    if (String(redemption.userId || "").trim() !== String(uid || "").trim()) {
+        throw new HttpsError("permission-denied", "다른 사용자의 쿠폰은 변경할 수 없어요.");
+    }
+
+    if (String(redemption.status || "").trim() === "used_completed") {
+        return {
+            success: true,
+            markedUsed: true,
+            alreadyMarked: true,
+            redemptionId: normalizedId,
+        };
+    }
+
+    if (!canMarkRewardRedemptionUsed(redemption, now)) {
+        throw new HttpsError("failed-precondition", "이 쿠폰은 사용 완료로 바꿀 수 없어요.");
+    }
+
+    await redemptionRef.set({
+        status: "used_completed",
+        usedCompletedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    return {
+        success: true,
+        markedUsed: true,
+        redemptionId: normalizedId,
+    };
+}
+
+async function deleteRewardCoupon({
+    db,
+    HttpsError,
+    uid,
+    redemptionId = "",
+    now = new Date(),
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "삭제할 쿠폰을 다시 선택해 주세요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const redemptionSnap = await redemptionRef.get();
+    if (!redemptionSnap.exists) {
+        return {
+            success: true,
+            deleted: true,
+            alreadyDeleted: true,
+            redemptionId: normalizedId,
+        };
+    }
+
+    const redemption = redemptionSnap.data() || {};
+    if (String(redemption.userId || "").trim() !== String(uid || "").trim()) {
+        throw new HttpsError("permission-denied", "다른 사용자의 쿠폰은 삭제할 수 없어요.");
+    }
+
+    if (!canDeleteRewardRedemption(redemption, now)) {
+        throw new HttpsError("failed-precondition", "사용 완료 또는 기간 만료 쿠폰만 삭제할 수 있어요.");
+    }
+
+    await redemptionRef.delete();
+
+    return {
+        success: true,
+        deleted: true,
+        redemptionId: normalizedId,
+    };
+}
+
+async function cleanupExpiredRewardCoupons({
+    db,
+    now = new Date(),
+    limit = 300,
+} = {}) {
+    const threshold = new Date((toTimestampMillis(now) || Date.now()) - REWARD_COUPON_DELETE_GRACE_MS);
+    const safeLimit = Math.max(1, Math.min(500, Number(limit) || 300));
+    const snapshot = await db.collection("reward_redemptions")
+        .where("expiresAt", "<=", threshold)
+        .limit(safeLimit)
+        .get();
+
+    const docsToDelete = snapshot.docs
+        .filter((docSnap) => isRewardRedemptionPastDeleteGrace(docSnap.data(), now));
+
+    if (docsToDelete.length === 0) {
+        return {
+            success: true,
+            deletedCount: 0,
+            checkedCount: snapshot.docs.length,
+        };
+    }
+
+    const batch = db.batch();
+    docsToDelete.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+    });
+    await batch.commit();
+
+    return {
+        success: true,
+        deletedCount: docsToDelete.length,
+        checkedCount: snapshot.docs.length,
+        redemptionIds: docsToDelete.map((docSnap) => docSnap.id),
     };
 }
 
@@ -3020,6 +3181,9 @@ module.exports = {
     buildRewardMarketSnapshot,
     redeemRewardCoupon,
     dismissRewardCoupon,
+    markRewardCouponUsed,
+    deleteRewardCoupon,
+    cleanupExpiredRewardCoupons,
     adminResendRewardCoupon,
     syncRewardMarketOps,
     __test: {
@@ -3046,6 +3210,9 @@ module.exports = {
         shouldChargePointsImmediately,
         shouldCountTowardIssuanceUsage,
         canDismissRewardRedemption,
+        canMarkRewardRedemptionUsed,
+        canDeleteRewardRedemption,
+        cleanupExpiredRewardCoupons,
         normalizeFeedData,
         computeRawKrwPerHbt,
         getKstDayKey,

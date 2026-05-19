@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=189';
+import { auth, db, functions } from './firebase-config.js?v=190';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=189';
+import { showToast } from './ui-helpers.js?v=190';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -12,6 +12,8 @@ const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-poin
 let getRewardMarketSnapshotFn = null;
 let redeemRewardCouponFn = null;
 let dismissRewardCouponFn = null;
+let markRewardCouponUsedFn = null;
+let deleteRewardCouponFn = null;
 let rewardMarketFunctionsReady = false;
 
 async function withRewardMarketTimeout(task, timeoutMs, errorMessage = 'reward_market_timeout') {
@@ -311,6 +313,8 @@ async function ensureRewardMarketFunctions() {
     getRewardMarketSnapshotFn = httpsCallable(functions, 'getRewardMarketSnapshot');
     redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon');
     dismissRewardCouponFn = httpsCallable(functions, 'dismissRewardCoupon');
+    markRewardCouponUsedFn = httpsCallable(functions, 'markRewardCouponUsed');
+    deleteRewardCouponFn = httpsCallable(functions, 'deleteRewardCoupon');
     rewardMarketFunctionsReady = true;
 }
 
@@ -833,6 +837,26 @@ function buildCouponCodeBlock(item = {}) {
     return `<div class="reward-coupon-code">PIN ${escapeHtml(pinCode)}</div>`;
 }
 
+function getRewardCouponExpiryMs(item = {}) {
+    const date = new Date(item.expiresAt);
+    return item.expiresAt && !Number.isNaN(date.getTime()) ? date.getTime() : 0;
+}
+
+function isRewardCouponExpired(item = {}) {
+    const expiresAtMs = getRewardCouponExpiryMs(item);
+    return expiresAtMs > 0 && expiresAtMs <= Date.now();
+}
+
+function canMarkRewardCouponUsedItem(item = {}) {
+    return String(item.status || '').trim() === 'issued' && !isRewardCouponExpired(item);
+}
+
+function canDeleteRewardCouponItem(item = {}) {
+    const status = String(item.status || '').trim();
+    if (['used_completed', 'failed_manual_review', 'cancelled'].includes(status)) return true;
+    return isRewardCouponExpired(item);
+}
+
 function canDismissRewardCouponItem(item = {}) {
     const status = String(item.status || '').trim();
     const mode = String(item.mode || '').trim().toLowerCase();
@@ -846,6 +870,12 @@ function getRewardCouponDismissLabel(item = {}) {
     const mode = String(item.mode || '').trim().toLowerCase();
     if (status === 'issued' && mode !== 'live') return '사용 완료';
     return '지우기';
+}
+
+function getRewardCouponPrimaryStatusLabel(item = {}) {
+    if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
+    if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
+    return buildCouponStatusLabel(item.status);
 }
 
 function renderRewardCouponVault() {
@@ -865,13 +895,16 @@ function renderRewardCouponVault() {
     }
 
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
-        const statusLabel = buildCouponStatusLabel(item.status);
+        const statusLabel = getRewardCouponPrimaryStatusLabel(item);
         const expiresLabel = formatCouponExpiryLabel(item.expiresAt);
         const explorerLink = item.settlementAsset === 'hbt' && item.burnExplorerUrl
             ? '<a class="reward-coupon-link" href="' + escapeHtml(item.burnExplorerUrl) + '" target="_blank" rel="noopener">BscScan</a>'
             : '';
-        const dismissButton = canDismissRewardCouponItem(item)
-            ? '<button type="button" class="reward-coupon-remove" onclick="dismissRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">' + escapeHtml(getRewardCouponDismissLabel(item)) + '</button>'
+        const markUsedButton = canMarkRewardCouponUsedItem(item)
+            ? '<button type="button" class="reward-coupon-remove" onclick="markRewardCouponUsedItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ac\uc6a9 \uc644\ub8cc</button>'
+            : '';
+        const deleteButton = canDeleteRewardCouponItem(item)
+            ? '<button type="button" class="reward-coupon-remove is-delete" onclick="deleteRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ad\uc81c</button>'
             : '';
         return (
             '<article class="reward-coupon-item">' +
@@ -879,7 +912,8 @@ function renderRewardCouponVault() {
                     buildRewardBrandIdentity(item, 'reward-coupon-brand') +
                     '<div class="reward-coupon-top-actions">' +
                         '<span class="reward-coupon-status">' + escapeHtml(statusLabel) + '</span>' +
-                        dismissButton +
+                        markUsedButton +
+                        deleteButton +
                     '</div>' +
                 '</div>' +
                 '<div class="reward-coupon-title">' + escapeHtml(item.displayName || item.sku || '쿠폰 정보 준비 중') + '</div>' +
@@ -1136,6 +1170,68 @@ window.toggleRewardCouponVisual = function (encodedRedemptionId = '') {
 
     showRewardCouponLightbox(item);
     return true;
+};
+
+window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
+    const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
+    if (!redemptionId) {
+        showToast('\uc0ac\uc6a9 \uc644\ub8cc\ud560 \ucfe0\ud3f0\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.');
+        return false;
+    }
+
+    try {
+        await ensureRewardMarketFunctions();
+        await markRewardCouponUsedFn({
+            redemptionId,
+        });
+        const item = rewardMarketState.redemptions.find(
+            (entry) => String(entry.id || '') === redemptionId
+        );
+        if (item) {
+            item.status = 'used_completed';
+            item.usedCompletedAt = new Date().toISOString();
+        }
+        renderRewardMarketSnapshot();
+        showToast('\uc0ac\uc6a9 \uc644\ub8cc\ub85c \ud45c\uc2dc\ud588\uc5b4\uc694. \uc774\uc81c \uc0ad\uc81c\ud560 \uc218 \uc788\uc5b4\uc694.');
+        return true;
+    } catch (error) {
+        console.error('mark reward coupon used failed:', error);
+        showToast(error?.message || '\ucfe0\ud3f0\uc744 \uc0ac\uc6a9 \uc644\ub8cc\ub85c \ubc14\uafb8\uc9c0 \ubabb\ud588\uc5b4\uc694.');
+        return false;
+    }
+};
+
+window.deleteRewardCouponItem = async function (encodedRedemptionId = '') {
+    const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
+    if (!redemptionId) {
+        showToast('\uc0ad\uc81c\ud560 \ucfe0\ud3f0\uc744 \ub2e4\uc2dc \uc120\ud0dd\ud574 \uc8fc\uc138\uc694.');
+        return false;
+    }
+
+    const confirmed = window.confirm(
+        '\ucfe0\ud3f0 \uc815\ubcf4\uac00 \uc644\uc804\ud788 \uc0ad\uc81c\ub429\ub2c8\ub2e4. \uacc4\uc18d\ud560\uae4c\uc694?'
+    );
+    if (!confirmed) return false;
+
+    try {
+        await ensureRewardMarketFunctions();
+        await deleteRewardCouponFn({
+            redemptionId,
+        });
+        rewardMarketState.redemptions = rewardMarketState.redemptions.filter(
+            (entry) => String(entry.id || '') !== redemptionId
+        );
+        if (rewardMarketState.expandedCouponVisualId === redemptionId) {
+            closeRewardCouponLightbox();
+        }
+        renderRewardMarketSnapshot();
+        showToast('\ucfe0\ud3f0\uc744 \uc0ad\uc81c\ud588\uc5b4\uc694.');
+        return true;
+    } catch (error) {
+        console.error('delete reward coupon failed:', error);
+        showToast(error?.message || '\ucfe0\ud3f0\uc744 \uc0ad\uc81c\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694.');
+        return false;
+    }
 };
 
 window.dismissRewardCouponItem = async function (encodedRedemptionId = '') {

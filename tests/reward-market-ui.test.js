@@ -42,11 +42,17 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('유효기간 ${match[1]}일');
     });
 
-    it('wires coupon visual expand and dismiss handlers for the vault', () => {
+    it('wires coupon visual expand, used, and delete handlers for the vault', () => {
         expect(rewardMarketSource).toContain('window.toggleRewardCouponVisual = function');
-        expect(rewardMarketSource).toContain('window.dismissRewardCouponItem = async function');
+        expect(rewardMarketSource).toContain('window.markRewardCouponUsedItem = async function');
+        expect(rewardMarketSource).toContain('window.deleteRewardCouponItem = async function');
+        expect(rewardMarketSource).toContain("httpsCallable(functions, 'markRewardCouponUsed')");
+        expect(rewardMarketSource).toContain("httpsCallable(functions, 'deleteRewardCoupon')");
         expect(rewardMarketSource).toContain('reward-coupon-remove');
-        expect(rewardMarketSource).toContain('사용 완료');
+        expect(rewardMarketSource).toContain('canMarkRewardCouponUsedItem');
+        expect(rewardMarketSource).toContain('canDeleteRewardCouponItem');
+        expect(rewardMarketSource).toContain('window.confirm');
+        expect(rewardMarketStyles).toContain('.reward-coupon-remove.is-delete');
         expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
 
