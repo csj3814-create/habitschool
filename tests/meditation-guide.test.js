@@ -34,6 +34,9 @@ describe('meditation guide helpers', () => {
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).phaseSteps[0]).toEqual(
             expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale', voiceCue: '천천히 들이쉬세요' })
         );
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.ABDOMINAL).phaseSteps[1]).toEqual(
+            expect.objectContaining({ label: '내쉼', seconds: 6, visual: 'exhale', voiceCue: '숨을 길게 내쉬어 주세요' })
+        );
         expect(formatMeditationDurationLabel(300)).toBe('5분');
     });
 
@@ -68,6 +71,9 @@ describe('meditation guide helpers', () => {
         expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).phaseSteps[1]).toEqual(
             expect.objectContaining({ label: '멈춤', seconds: 7, visual: 'hold-full', voiceCue: '잠시 멈춰요' })
         );
+        expect(getMeditationMethodMeta(MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT).phaseSteps[2]).toEqual(
+            expect.objectContaining({ label: '내쉼', seconds: 8, visual: 'exhale', voiceCue: '숨을 길게 내쉬어 주세요' })
+        );
 
         expect(getMeditationPhaseLine(MEDITATION_METHOD_IDS.MINDFULNESS, {
             elapsedSec: 220,
@@ -83,7 +89,7 @@ describe('meditation guide helpers', () => {
             steps: [
                 expect.objectContaining({ label: '들이쉼', seconds: 4, visual: 'inhale', voiceCue: '들이쉬세요' }),
                 expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-full', voiceCue: '잠시 멈춰요' }),
-                expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale', voiceCue: '내쉬세요' }),
+                expect.objectContaining({ label: '내쉼', seconds: 4, visual: 'exhale', voiceCue: '숨을 내쉬어 주세요' }),
                 expect.objectContaining({ label: '멈춤', seconds: 4, visual: 'hold-empty', voiceCue: '잠시 멈춰요' })
             ],
             activeIndex: 1,
