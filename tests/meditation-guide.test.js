@@ -115,8 +115,8 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('speakMeditationVoiceCue(cueInfo.voiceCue)');
         expect(APP_SOURCE).toContain('cueInfo.cycleIndex < MEDITATION_VOICE_INTRO_CYCLES');
         expect(APP_SOURCE).toContain("playMeditationCue(cueInfo.kind, { soft: true });");
-        expect(APP_SOURCE).toContain('volume: soft ? 0.13 : 0.8');
-        expect(APP_SOURCE).toContain('volume: soft ? 0.12 : 0.8');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.13 : 1.2');
+        expect(APP_SOURCE).toContain('volume: soft ? 0.12 : 1.2');
         expect(APP_SOURCE).toContain('endFrequency: 340');
         expect(APP_SOURCE).toContain('window.startMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.pauseMeditationSession = function()');
