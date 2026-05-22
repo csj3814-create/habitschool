@@ -1636,3 +1636,4 @@
 - 2026-05-18: When repeated Samsung Internet picker fixes keep failing, stop adding more browser-specific picker branches. If the native file input path is the one users confirm works, make photos and videos share that path and remove `showOpenFilePicker()` from runtime media selection.
 - 2026-05-21: 호흡 알림음 보정에서 사용자가 `peak limit`과 phase volume을 함께 지정하면 둘을 같은 값으로 뭉개지 않는다. soft 톤은 음성 안내 보조음으로 유지하고, non-soft phase volume은 요청값을 그대로 반영하되 최종 gain은 별도 peak cap으로 제한한다.
 - 2026-05-21: 호흡 TTS 문구가 된소리처럼 들린다는 피드백이 오면 같은 짧은 명령형을 반복하지 말고 `숨을 ... 주세요`처럼 문장을 풀어 발음 안정성을 먼저 보정한다.
+- 2026-05-22: 날짜 입력은 초기 렌더에서 오늘로 세팅해도 브라우저 새로고침/복원 과정에서 이전 값이 되살아날 수 있다. 오래 열린 PWA의 reload 흐름을 고칠 때는 `DOMContentLoaded`/`pageshow` 이후 한 번 더 KST 오늘 날짜로 보정하고, 필요하면 오늘 기록을 다시 로드한다.

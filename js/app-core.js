@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=193';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=193';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=194';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=194';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=193';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=193';
+} from './auth-login-helpers.js?v=194';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=194';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=193';
+} from './exercise-media.js?v=194';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=193';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=193';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=193';
-import { sanitize, compressImage } from './data-manager.js?v=193';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=193';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=193';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=193';
+} from './health-connect-utils.js?v=194';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=194';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=194';
+import { sanitize, compressImage } from './data-manager.js?v=194';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=194';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=194';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=194';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=193';
+} from './diet-program.js?v=194';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=193';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=193';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=193';
+} from './meditation-guide.js?v=194';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=194';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=194';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=193';
+} from './social-challenge-readiness.js?v=194';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=193';
+} from './monthly-mvp-reward.js?v=194';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2183,14 +2183,78 @@ function resolveDietDeepLinkTarget(focus = '') {
     return null;
 }
 
-async function ensureTodayDietDateSelected() {
+function getPageNavigationType() {
+    try {
+        const entries = typeof performance !== 'undefined' && typeof performance.getEntriesByType === 'function'
+            ? performance.getEntriesByType('navigation')
+            : [];
+        return String(entries[0]?.type || '').trim();
+    } catch (_) {
+        return '';
+    }
+}
+
+function syncSelectedRecordDateToToday({ reloadData = false, reason = 'manual' } = {}) {
     const dateInput = document.getElementById('selected-date');
     const { todayStr } = getDatesInfo();
-    if (!dateInput) return todayStr;
+    if (!dateInput) return { todayStr, changed: false };
+
+    dateInput.max = todayStr;
+    dateInput.defaultValue = todayStr;
+    dateInput.setAttribute('value', todayStr);
+
+    const minDate = new Date(`${todayStr}T12:00:00Z`);
+    minDate.setUTCDate(minDate.getUTCDate() - 30);
+    dateInput.min = minDate.toISOString().split('T')[0];
+
     const currentDate = String(dateInput.value || '').trim();
-    if (currentDate === todayStr) return todayStr;
-    dateInput.value = todayStr;
-    if (typeof loadDataForSelectedDate === 'function') {
+    const changed = currentDate !== todayStr;
+    if (changed) {
+        dateInput.value = todayStr;
+    }
+
+    if (changed && reloadData && auth.currentUser && window.loadDataForSelectedDate) {
+        Promise.resolve(window.loadDataForSelectedDate(todayStr)).catch((error) => {
+            console.warn(`[date-sync] reload today refresh skipped (${reason}):`, error?.message || error);
+        });
+    }
+
+    return { todayStr, changed };
+}
+
+function scheduleRecordDateTodayCheck(reason = 'page-load') {
+    const run = () => syncSelectedRecordDateToToday({ reloadData: true, reason });
+    run();
+    setTimeout(run, 0);
+    setTimeout(run, 250);
+}
+
+function installRecordDateReloadGuard() {
+    const runIfReload = () => {
+        if (getPageNavigationType() === 'reload') {
+            scheduleRecordDateTodayCheck('reload');
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runIfReload, { once: true });
+    } else {
+        runIfReload();
+    }
+
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted || getPageNavigationType() === 'reload') {
+            scheduleRecordDateTodayCheck(event.persisted ? 'pageshow-persisted' : 'pageshow-reload');
+        }
+    });
+}
+
+async function ensureTodayDietDateSelected() {
+    const { todayStr, changed } = syncSelectedRecordDateToToday({
+        reloadData: false,
+        reason: 'diet-deep-link'
+    });
+    if (changed && typeof loadDataForSelectedDate === 'function') {
         await loadDataForSelectedDate(todayStr);
     }
     return todayStr;
@@ -5075,7 +5139,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=193';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=194';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5305,19 +5369,14 @@ window.claimMilestoneBonus = async function (milestoneId, reward) {
 };
 
 try {
-    const { todayStr, yesterdayStr, weekStrs } = getDatesInfo();
     const dateInput = document.getElementById('selected-date');
     if (dateInput) {
-        dateInput.max = todayStr;
-        // KST 기준 30일 전까지 선택 가능
-        const minDate = new Date(todayStr);
-        minDate.setDate(minDate.getDate() - 30);
-        dateInput.min = minDate.toISOString().split('T')[0];
-        dateInput.value = todayStr;
+        syncSelectedRecordDateToToday({ reloadData: false, reason: 'init' });
         dateInput.addEventListener('change', () => {
             if (window.loadDataForSelectedDate) window.loadDataForSelectedDate(dateInput.value);
         });
     }
+    installRecordDateReloadGuard();
 
     window.changeDateTo = function (dStr) {
         const di = document.getElementById('selected-date');
