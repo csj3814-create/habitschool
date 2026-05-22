@@ -27,4 +27,6 @@
 - `npm test` 통과 (42 files, 297 tests).
 
 ## Deployment
-- Pending staging deploy.
+- Staging deploy complete: `npm run deploy:staging`.
+- Verified `https://habitschool-staging.web.app` serves `js/app.js?v=194`, `styles.css?v=194`, and `habitschool-v194`.
+- Verified `https://habitschool-staging.web.app/changelog.html` contains `v1.0.13` and `2026년 5월 22일`.
