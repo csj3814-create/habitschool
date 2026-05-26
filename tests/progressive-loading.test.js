@@ -70,7 +70,10 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('const hadCachedMiniChart = applyCachedAssetMiniChart(user.uid);');
         expect(appSource).toContain('writeAssetMiniChartCache(user.uid, data, _startDateStr);');
         expect(authSource).toContain('applyCachedSignedInPointBalance(user.uid);');
-        expect(appSource).toContain('const userDocPromise = getDoc(userRef).catch((error) => {');
+        expect(appSource).toContain('const userDocPromise = (forceRefresh');
+        expect(appSource).toContain('? getDocFromServer(userRef).catch((serverError) => {');
+        expect(appSource).toContain("noteFirestoreConnectivityFailure(serverError, 'asset-display user-doc-server')");
+        expect(appSource).toContain('return getDoc(userRef).catch(() => _deferredAssetSnap);');
         expect(appSource).toContain('_assetTimeout(ASSET_USER_DOC_TIMEOUT_MS)');
         expect(appSource).toContain('userDocPromise.then(lateSnap => {');
         expect(appSource).toContain("const retryScheduled = scheduleAssetRetry(user.uid, 'user-doc-timeout');");

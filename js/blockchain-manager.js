@@ -30,7 +30,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=194';
+} from './blockchain-config.js?v=195';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +48,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=194';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=195';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=194';
-import { getKstDateString } from './ui-helpers.js?v=194';
-import { checkRateLimit } from './security.js?v=194';
+import { showToast } from './ui-helpers.js?v=195';
+import { getKstDateString } from './ui-helpers.js?v=195';
+import { checkRateLimit } from './security.js?v=195';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -119,6 +119,7 @@ const ACTIVE_CHAIN_PARAMS = {
 
 const PENDING_CHALLENGE_START_KEY_PREFIX = 'habitschool:pending-challenge-start';
 const PENDING_REWARD_REDEMPTION_KEY_PREFIX = 'habitschool:pending-reward-redemption';
+const challengeStartInFlight = new Set();
 
 function getPendingChallengeStartStorageKey(uid) {
     return `${PENDING_CHALLENGE_START_KEY_PREFIX}:${ACTIVE_CHAIN_KEY}:${uid}`;
@@ -126,6 +127,10 @@ function getPendingChallengeStartStorageKey(uid) {
 
 function getPendingRewardRedemptionStorageKey(uid) {
     return `${PENDING_REWARD_REDEMPTION_KEY_PREFIX}:${ACTIVE_CHAIN_KEY}:${uid}`;
+}
+
+function getChallengeStartLockKey(tier, challengeId) {
+    return `${ACTIVE_CHAIN_KEY}:${tier || 'unknown'}:${challengeId || 'unknown'}`;
 }
 
 function readPendingChallengeStart(uid) {
@@ -267,11 +272,17 @@ async function inspectChallengeStakeAudit(currentUser, connectedWallet) {
 function showChallengeStartSuccessToast(data, challengeDef, duration, tier, recovered = false) {
     const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
     const recoveryPrefix = recovered || data?.recovered ? '♻️ 이전 예치 복구 완료!\n' : '';
+    const deferredLine = data?.deferredStart && data?.startDate
+        ? `\n📅 오늘은 대기일이에요. ${data.startDate}부터 1일차로 시작해요.`
+        : '';
+    const todayCreditLine = !data?.deferredStart && data.initialCompletedDays > 0
+        ? '\n📌 오늘 인증분 1일 반영!'
+        : '';
     if (data.hbtStaked > 0) {
-        showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n🎉 오늘 인증분 1일 반영!' : ''}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} / 80%+ 시 예치금 반환`);
+        showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${todayCreditLine}${deferredLine}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} / 80%+ 시 예치금 반환`);
         return;
     }
-    showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}${data.initialCompletedDays > 0 ? '\n🎉 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
+    showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}${todayCreditLine}${deferredLine}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
 }
 
 async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount) {
@@ -481,6 +492,47 @@ async function getConnectedWallet() {
 
 function getEffectiveWalletAddress() {
     return externalWalletAddress || userWalletAddress || null;
+}
+
+function waitForChallengeWalletRetry(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function ensureChallengeSigningWalletReady({ context = 'challenge-start' } = {}) {
+    const retryDelays = [0, 700, 1500, 3000];
+    let announced = false;
+    let lastError = null;
+
+    for (let attempt = 0; attempt < retryDelays.length; attempt += 1) {
+        if (retryDelays[attempt] > 0) {
+            await waitForChallengeWalletRetry(retryDelays[attempt]);
+        }
+
+        try {
+            const connectedWallet = await getConnectedWallet();
+            if (connectedWallet) return connectedWallet;
+
+            if (!announced) {
+                showToast('⏳ 앱 지갑을 준비 중이에요. 잠시만 기다려 주세요.');
+                announced = true;
+            }
+
+            await initializeWalletExternalFirst({ forceServer: true }).catch((error) => {
+                lastError = error;
+                console.warn(`[${context}] wallet state refresh failed:`, error?.message || error);
+                return null;
+            });
+            const refreshedWallet = await getConnectedWallet();
+            if (refreshedWallet) return refreshedWallet;
+        } catch (error) {
+            lastError = error;
+            console.warn(`[${context}] wallet preparation attempt failed:`, error?.message || error);
+        }
+    }
+
+    console.warn(`[${context}] signing wallet was not ready after retries:`, lastError?.message || lastError || 'unknown');
+    showToast('❌ 앱 지갑을 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+    return null;
 }
 
 function updateLegacyWalletExportState(userData = {}) {
@@ -865,8 +917,9 @@ async function decryptPrivateKey(encryptedData, iv, uid, email) {
  * v2: 랜덤 지갑 + 암호화 저장
  * @returns {string} 지갑 주소
  */
-export async function initializeUserWallet() {
+export async function initializeUserWallet(options = {}) {
     try {
+        const { forceServer = false } = options || {};
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.warn('⚠️ 로그인되지 않음. 지갑 생성 불가.');
@@ -874,7 +927,9 @@ export async function initializeUserWallet() {
         }
 
         const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+        const userSnap = forceServer
+            ? await getDocFromServer(userRef).catch(() => getDoc(userRef))
+            : await getDoc(userRef);
         const userData = userSnap.data();
 
         // Case 1: v2 암호화 지갑이 있는 경우 → 복호화하여 복원
@@ -1287,6 +1342,7 @@ function eraLabel(era) {
  * - 7일/30일: 온체인 stakeForChallenge → CF로 Firestore 기록
  */
 export async function startChallenge30D(challengeId) {
+    let startLockKey = null;
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -1305,6 +1361,13 @@ export async function startChallenge30D(challengeId) {
         const minStake = challengeDef.hbtStake || 0;
         const maxStake = challengeDef.maxStake || 10000;
         const tier = challengeDef.tier || 'master';
+
+        startLockKey = getChallengeStartLockKey(tier, resolvedId);
+        if (challengeStartInFlight.has(startLockKey)) {
+            showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+            return false;
+        }
+        challengeStartInFlight.add(startLockKey);
 
         // 티어별 인라인 입력에서 예치량 읽기
         let hbtAmount = 0;
@@ -1336,11 +1399,8 @@ export async function startChallenge30D(challengeId) {
                 return pendingRecovery.success;
             }
 
-            const connectedWallet = await getConnectedWallet();
-            if (!connectedWallet) {
-                showToast('❌ 지갑이 초기화되지 않았습니다. 페이지를 새로고침해주세요.');
-                return false;
-            }
+            const connectedWallet = await ensureChallengeSigningWalletReady({ context: 'challenge-start-legacy' });
+            if (!connectedWallet) return false;
 
             const erc20Contract = getErc20Contract(connectedWallet.signer);
             const legacyStakeContract = getLegacyStakeContract(connectedWallet.signer);
@@ -1428,14 +1488,9 @@ export async function startChallenge30D(challengeId) {
         const data = result.data;
         clearPendingChallengeStart(currentUser.uid);
 
-        const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
-        if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 온체인 예치 완료.${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n현재 적용 보너스: ${data.bonusRateLabel || '0%'} · 80%+ 시 예치금 반환`);
-        } else {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}${data.initialCompletedDays > 0 ? '\n📌 오늘 인증분 1일 반영!' : ''}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
-        }
+        showChallengeStartSuccessToast(data, challengeDef, duration, tier);
 
-        window.updateAssetDisplay && window.updateAssetDisplay(true);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         return true;
 
     } catch (error) {
@@ -1443,6 +1498,8 @@ export async function startChallenge30D(challengeId) {
         const msg = error.message || '알 수 없는 오류';
         showToast(`❌ 오류: ${msg}`);
         return false;
+    } finally {
+        if (startLockKey) challengeStartInFlight.delete(startLockKey);
     }
 }
 
@@ -1508,6 +1565,7 @@ export async function updateChallengeProgress() {
                 const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
                 const challengeDef = CHALLENGES[resolvedChallengeId] || {};
                 const { isFinalDay, isPastEnd } = getChallengeTimelineState(challenge, today);
+                const isTodayInChallengeRange = getChallengeDateRange(challenge).includes(today);
                 const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
                     ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
                     : [];
@@ -1522,7 +1580,7 @@ export async function updateChallengeProgress() {
                 }
 
                 // 챌린지 종료일 확인 (endDate 당일 포함 — today >= endDate)
-                if (!isPastEnd && !completedDates.includes(today)) {
+                if (isTodayInChallengeRange && !isPastEnd && !completedDates.includes(today)) {
                     const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
                     if (dailyLogData) {
                         if (!dailyQualification.qualified) {
@@ -1799,9 +1857,9 @@ export async function claimChallengeReward(tier) {
         const policySuffix = data.bonusRateLabel ? ` (보너스 ${data.bonusRateLabel})` : '';
         showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}${policySuffix}`);
 
-        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         // 챌린지 카드 UI 갱신 (카드가 그대로 남아 재시도 방지)
-        if (window.loadDashboard) setTimeout(() => window.loadDashboard(), 500);
+        if (window.loadDashboard) window.loadDashboard();
         return true;
     } catch (error) {
         console.error('❌ 보상 수령 오류:', error);
@@ -2196,8 +2254,9 @@ function refreshWalletUi(address = null) {
     syncLegacyWalletExportUi();
 }
 
-export async function initializeWalletExternalFirst() {
+export async function initializeWalletExternalFirst(options = {}) {
     try {
+        const { forceServer = false } = options || {};
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.warn('⚠️ 로그인되지 않음. 지갑 초기화 중단.');
@@ -2213,7 +2272,9 @@ export async function initializeWalletExternalFirst() {
         userWalletAddress = null;
 
         const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
+        const userSnap = forceServer
+            ? await getDocFromServer(userRef).catch(() => getDoc(userRef))
+            : await getDoc(userRef);
         const userData = userSnap.data() || {};
         updateLegacyWalletExportState(userData);
 
@@ -2357,6 +2418,7 @@ export async function copyLegacyWalletPrivateKey() {
 }
 
 export async function startChallenge30DWithConnectedWallet(challengeId) {
+    let startLockKey = null;
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
@@ -2375,6 +2437,13 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         const minStake = challengeDef.hbtStake || 0;
         const maxStake = challengeDef.maxStake || 10000;
         const tier = challengeDef.tier || 'master';
+
+        startLockKey = getChallengeStartLockKey(tier, resolvedId);
+        if (challengeStartInFlight.has(startLockKey)) {
+            showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+            return false;
+        }
+        challengeStartInFlight.add(startLockKey);
 
         let hbtAmount = 0;
         if (minStake > 0) {
@@ -2404,11 +2473,8 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 return pendingRecovery.success;
             }
 
-            const connectedWallet = await getConnectedWallet();
-            if (!connectedWallet) {
-                showToast('❌ 앱 지갑을 준비하지 못했어요. 새로고침 후 다시 시도해 주세요.');
-                return false;
-            }
+            const connectedWallet = await ensureChallengeSigningWalletReady({ context: 'challenge-start' });
+            if (!connectedWallet) return false;
 
             const erc20Contract = getErc20Contract(connectedWallet.signer);
             const legacyStakeContract = getLegacyStakeContract(connectedWallet.signer);
@@ -2494,20 +2560,17 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         const data = result.data;
         clearPendingChallengeStart(currentUser.uid);
 
-        const qualificationLabel = data.qualificationLabel || describeChallengeQualification(data.qualificationPolicy || tier);
-        if (data.hbtStaked > 0) {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${data.hbtStaked} HBT 예치 완료`);
-        } else {
-            showToast(`✅ ${data.duration}일 챌린지 시작!\n${qualificationLabel}\n${challengeDef.rewardPoints}P 보상 도전`);
-        }
+        showChallengeStartSuccessToast(data, challengeDef, duration, tier);
 
-        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
         return true;
     } catch (error) {
         console.error('❌ 외부 지갑 챌린지 시작 오류:', error);
         const msg = error.message || '알 수 없는 오류';
         showToast(`❌ 오류: ${msg}`);
         return false;
+    } finally {
+        if (startLockKey) challengeStartInFlight.delete(startLockKey);
     }
 }
 

@@ -202,6 +202,31 @@ describe('challenge qualification policy', () => {
         expect(result.activeChallenges.weekly.completedDays).toBe(1);
     });
 
+    it('does not project same-day completion into a future-start restarted challenge', () => {
+        const challenge = {
+            challengeId: 'challenge-7d',
+            tier: 'weekly',
+            startDate: '2026-04-28',
+            endDate: '2026-05-04',
+            totalDays: 7,
+            completedDays: 0,
+            completedDates: [],
+            deferredStart: true,
+            qualificationPolicy: getDefaultChallengeQualificationPolicy('weekly'),
+            status: 'ongoing'
+        };
+
+        const result = reconcileActiveChallengesWithDailyLog({
+            weekly: challenge
+        }, '2026-04-27', {
+            awardedPoints: { dietPoints: 30, exercisePoints: 30, mindPoints: 10 }
+        });
+
+        expect(result.changed).toBe(false);
+        expect(result.activeChallenges.weekly.completedDates).toEqual([]);
+        expect(result.activeChallenges.weekly.completedDays).toBe(0);
+    });
+
     it('projects active weekly and master progress from prior daily logs in the challenge range', () => {
         const weekly = {
             challengeId: 'challenge-7d',

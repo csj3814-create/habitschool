@@ -21,7 +21,9 @@ describe('challenge failure settlement guardrails', () => {
         expect(managerSource).toContain('const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);');
         expect(managerSource).toContain('settleResult.data?.skippedFailure || settleResult.data?.claimable');
         expect(managerSource).toContain('if (isFinalDay && !isFullCompletion)');
-        expect(managerSource).toContain("showToast('❌ 앱 지갑을 준비하지 못했어요. 새로고침 후 다시 시도해 주세요.');");
+        expect(managerSource).toContain("showToast('⏳ 앱 지갑을 준비 중이에요. 잠시만 기다려 주세요.');");
+        expect(managerSource).toContain("showToast('❌ 앱 지갑을 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');");
+        expect(managerSource).toContain('async function ensureChallengeSigningWalletReady');
 
         expect(appCoreSource).toContain('function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateString())');
         expect(appCoreSource).toContain('renderAssetChallengePanel(activeChallenges, _todayStr);');

@@ -4314,6 +4314,9 @@ exports.startChallenge = onCall(
                     bonusPhase: Number(existingChallenge?.bonusPolicy?.phase || 1),
                     bonusMse30: Number(existingChallenge?.bonusPolicy?.mse30 || 0),
                     bonusExtraHalvingApplied: !!existingChallenge?.bonusPolicy?.extraHalvingApplied,
+                    startDate: existingChallenge.startDate || null,
+                    endDate: existingChallenge.endDate || null,
+                    deferredStart: !!existingChallenge.deferredStart,
                     qualificationPolicy: recoveredQualificationPolicy,
                     qualificationLabel: formatChallengeQualificationLabel(recoveredQualificationPolicy)
                 };
@@ -4325,10 +4328,12 @@ exports.startChallenge = onCall(
         }
 
         // KST 날짜 계산
-        const now = new Date();
-        const kstOffset = 9 * 60 * 60 * 1000;
-        const kstDate = new Date(now.getTime() + kstOffset);
-        const startDate = kstDate.toISOString().split('T')[0];
+        const todayStr = getCurrentKstDateString();
+        const lastTierSettlement = userData?.lastChallengeSettlementByTier?.[def.tier] || null;
+        const sameTierSettledToday = String(lastTierSettlement?.date || '') === todayStr;
+        const startDate = sameTierSettledToday
+            ? addDaysToKstDateString(todayStr, 1)
+            : todayStr;
         const endDateObj = new Date(startDate + 'T12:00:00Z');
         endDateObj.setUTCDate(endDateObj.getUTCDate() + Math.max(0, def.duration - 1));
         const endDate = endDateObj.toISOString().split('T')[0];
@@ -4339,12 +4344,14 @@ exports.startChallenge = onCall(
         let initialCompletedDays = 0;
         let initialCompletedDates = [];
         try {
-            const todayLogSnap = await db.doc(`daily_logs/${uid}_${startDate}`).get();
-            if (todayLogSnap.exists) {
-                const ap = todayLogSnap.data().awardedPoints || {};
-                if (doesAwardedPointsMeetChallengeRule(ap, qualificationPolicy)) {
-                    initialCompletedDays = 1;
-                    initialCompletedDates = [startDate];
+            if (!sameTierSettledToday && startDate === todayStr) {
+                const todayLogSnap = await db.doc(`daily_logs/${uid}_${todayStr}`).get();
+                if (todayLogSnap.exists) {
+                    const ap = todayLogSnap.data().awardedPoints || {};
+                    if (doesAwardedPointsMeetChallengeRule(ap, qualificationPolicy)) {
+                        initialCompletedDays = 1;
+                        initialCompletedDates = [todayStr];
+                    }
                 }
             }
         } catch (e) {
@@ -4369,6 +4376,8 @@ exports.startChallenge = onCall(
                 calculatedAt: FieldValue.serverTimestamp()
             },
             qualificationPolicy,
+            deferredStart: sameTierSettledToday,
+            deferredStartReason: sameTierSettledToday ? 'same_day_restart_after_claim' : null,
             status: 'ongoing',
             tier: def.tier,
             chainKey: ACTIVE_CHAIN.key,
@@ -4404,6 +4413,9 @@ exports.startChallenge = onCall(
             duration: def.duration,
             hbtStaked: stakeAmount,
             initialCompletedDays,
+            startDate,
+            endDate,
+            deferredStart: sameTierSettledToday,
             bonusRateBps: appliedChallengeBonusPolicy?.rateBps || 0,
             bonusRateLabel: appliedChallengeBonusPolicy?.rateLabel || "0%",
             bonusPhase: appliedChallengeBonusPolicy?.phase || 1,
@@ -4551,20 +4563,28 @@ exports.claimChallengeReward = onCall(
         }
 
         // Firestore 업데이트 (hbtBalance 제거 — 온체인이 진실의 원천)
+        const settlementDate = getCurrentKstDateString();
         const updateData = {};
         updateData[`activeChallenges.${tier}`] = FieldValue.delete();
+        updateData[`lastChallengeSettlementByTier.${tier}`] = {
+            date: settlementDate,
+            challengeId: resolvedChallengeId,
+            completedDays,
+            totalDays,
+            successRate,
+            settledAt: FieldValue.serverTimestamp()
+        };
         if (rewardPoints > 0) updateData.coins = FieldValue.increment(rewardPoints);
 
         await userRef.update(updateData);
 
         // 거래 기록 (온체인 TX 해시 포함, date 필드 추가 — 앱의 날짜별 HBT 집계에 필요)
-        const _kstDateStr = new Date(Date.now() + 9 * 3600 * 1000).toISOString().split('T')[0];
         await db.collection("blockchain_transactions").add({
             userId: uid,
             type: 'challenge_settlement',
             challengeId: challenge.challengeId,
             amount: rewardHbt,
-            date: _kstDateStr,
+            date: settlementDate,
             staked: staked,
             stakeWalletAddress: challenge.stakeWalletAddress || null,
             successRate: successRate,
@@ -4591,6 +4611,7 @@ exports.claimChallengeReward = onCall(
             rewardHbt,
             rewardPoints,
             tier,
+            settlementDate,
             bonusRateBps,
             bonusRateLabel,
             successRate: Math.round(successRate * 100),

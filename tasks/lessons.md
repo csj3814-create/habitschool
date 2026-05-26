@@ -1,5 +1,17 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-05-26 (Challenge Same-Day Restart)
+
+### 224. Same-day challenge restarts must not inherit the completed day
+- Symptom: after claiming a completed weekly challenge and starting it again on the same KST day, the new challenge was already counted as 1/7 because today's daily log qualified.
+- Root cause: `startChallenge` always used today as `startDate` and immediately checked today's log, without distinguishing a normal first start from a same-tier restart after settlement.
+- Lesson: when a time-boxed challenge is completed and restarted on the same day, treat the claim day as a waiting day and set the new challenge's actual `startDate` to the next KST date. Client-side progress projection must also refuse to add dates outside the challenge range.
+
+### 225. Post-mutation asset screens need authoritative refresh before the next action
+- Symptom: after challenge reward claiming, the asset tab could keep stale active challenge state long enough for the next start flow to feel broken or blocked.
+- Root cause: the UI kicked off an async refresh without awaiting it, and forced asset refreshes could still read cached user documents.
+- Lesson: after challenge claim/start mutations, await an asset refresh that tries the server user document first. Cache fallback is useful for display continuity, but it should not be the first source after a successful mutation.
+
 ---
 ## 2026-05-17 (Samsung Internet Media Picker Kinds)
 
