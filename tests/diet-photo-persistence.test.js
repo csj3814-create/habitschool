@@ -24,6 +24,17 @@ describe('diet photo persistence', () => {
         expect(appSource).not.toContain('breakfastUrl: bUrl, lunchUrl: lUrl, dinnerUrl: dUrl, snackUrl: sUrl,');
     });
 
+    it('does not carry stale previous-day preview URLs into a new-day save', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("reason: 'pre-save'");
+        expect(appSource).toContain('const ignoreStalePreviewFallback = !!dateSyncResult.changed');
+        expect(appSource).toContain('|| wasRecordDateAutoAdvancedRecently(selectedDateStr);');
+        expect(appSource).toContain("!ignoreStalePreviewFallback && hasMediaUrl(previewEl?.getAttribute('data-saved-url'))");
+        expect(appSource).toContain('!ignoreStalePreviewFallback && hasMediaUrl(previewEl?.src)');
+        expect(appSource).toContain('const currentDietAnalysis = ignoreStalePreviewFallback ? {} : collectCurrentDietAnalysisFromUi();');
+    });
+
     it('keeps a selected diet file in the offline outbox until that selected upload has a URL', () => {
         const appSource = readAppSource();
 

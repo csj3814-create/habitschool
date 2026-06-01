@@ -14,34 +14,34 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=195';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=195';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=196';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=196';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=195';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=195';
+} from './auth-login-helpers.js?v=196';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=196';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=195';
+} from './exercise-media.js?v=196';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=195';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=195';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=195';
-import { sanitize, compressImage } from './data-manager.js?v=195';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=195';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=195';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=195';
+} from './health-connect-utils.js?v=196';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=196';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=196';
+import { sanitize, compressImage } from './data-manager.js?v=196';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=196';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=196';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=196';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +54,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=195';
+} from './diet-program.js?v=196';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +66,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=195';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=195';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=195';
+} from './meditation-guide.js?v=196';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=196';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=196';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=195';
+} from './social-challenge-readiness.js?v=196';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=195';
+} from './monthly-mvp-reward.js?v=196';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2194,10 +2194,46 @@ function getPageNavigationType() {
     }
 }
 
-function syncSelectedRecordDateToToday({ reloadData = false, reason = 'manual' } = {}) {
+let _lastKnownRecordTodayStr = getKstDateString();
+let _recordDateManualSelection = { dateStr: '', at: 0 };
+let _recordDateAutoAdvance = { fromDateStr: '', toDateStr: '', at: 0 };
+
+function rememberRecordDateManualSelection(dateStr = '') {
+    _recordDateManualSelection = {
+        dateStr: String(dateStr || '').trim(),
+        at: Date.now()
+    };
+    _recordDateAutoAdvance = { fromDateStr: '', toDateStr: '', at: 0 };
+}
+
+function shouldAutoAdvanceSelectedRecordDate({
+    currentDate = '',
+    previousTodayStr = '',
+    todayStr = '',
+    onlyIfStaleToday = false
+} = {}) {
+    if (!onlyIfStaleToday) return currentDate !== todayStr;
+    if (!currentDate || currentDate > todayStr) return true;
+    if (!previousTodayStr || previousTodayStr === todayStr) return false;
+    if (currentDate !== previousTodayStr) return false;
+    if (_recordDateManualSelection.dateStr === currentDate && _recordDateManualSelection.at > 0) {
+        return false;
+    }
+    return true;
+}
+
+function syncSelectedRecordDateToToday({
+    reloadData = false,
+    reason = 'manual',
+    onlyIfStaleToday = false,
+    previousTodayStr = _lastKnownRecordTodayStr
+} = {}) {
     const dateInput = document.getElementById('selected-date');
     const { todayStr } = getDatesInfo();
-    if (!dateInput) return { todayStr, changed: false };
+    if (!dateInput) {
+        _lastKnownRecordTodayStr = todayStr;
+        return { todayStr, changed: false };
+    }
 
     dateInput.max = todayStr;
     dateInput.defaultValue = todayStr;
@@ -2208,10 +2244,23 @@ function syncSelectedRecordDateToToday({ reloadData = false, reason = 'manual' }
     dateInput.min = minDate.toISOString().split('T')[0];
 
     const currentDate = String(dateInput.value || '').trim();
-    const changed = currentDate !== todayStr;
+    const shouldChange = shouldAutoAdvanceSelectedRecordDate({
+        currentDate,
+        previousTodayStr,
+        todayStr,
+        onlyIfStaleToday
+    });
+    const changed = currentDate !== todayStr && shouldChange;
     if (changed) {
         dateInput.value = todayStr;
+        _recordDateManualSelection = { dateStr: '', at: 0 };
+        _recordDateAutoAdvance = {
+            fromDateStr: currentDate,
+            toDateStr: todayStr,
+            at: Date.now()
+        };
     }
+    _lastKnownRecordTodayStr = todayStr;
 
     if (changed && reloadData && auth.currentUser && window.loadDataForSelectedDate) {
         Promise.resolve(window.loadDataForSelectedDate(todayStr)).catch((error) => {
@@ -2222,11 +2271,44 @@ function syncSelectedRecordDateToToday({ reloadData = false, reason = 'manual' }
     return { todayStr, changed };
 }
 
+function wasRecordDateAutoAdvancedRecently(dateStr = '', maxAgeMs = 5 * 60 * 1000) {
+    const targetDateStr = String(dateStr || '').trim();
+    return !!(
+        targetDateStr
+        && _recordDateAutoAdvance.toDateStr === targetDateStr
+        && (Date.now() - Number(_recordDateAutoAdvance.at || 0)) <= maxAgeMs
+    );
+}
+
 function scheduleRecordDateTodayCheck(reason = 'page-load') {
     const run = () => syncSelectedRecordDateToToday({ reloadData: true, reason });
     run();
     setTimeout(run, 0);
     setTimeout(run, 250);
+}
+
+function scheduleRecordDateResumeCheck(reason = 'resume') {
+    const previousTodayStr = _lastKnownRecordTodayStr;
+    const run = () => syncSelectedRecordDateToToday({
+        reloadData: true,
+        reason,
+        onlyIfStaleToday: true,
+        previousTodayStr
+    });
+    run();
+    setTimeout(run, 250);
+}
+
+function installRecordDateMediaInputFreshnessGuard() {
+    document.addEventListener('click', (event) => {
+        const input = event.target?.closest?.('#diet input[type="file"], #exercise input[type="file"], #sleep input[type="file"]');
+        if (!input) return;
+        syncSelectedRecordDateToToday({
+            reloadData: true,
+            reason: 'media-input-click',
+            onlyIfStaleToday: true
+        });
+    }, true);
 }
 
 function installRecordDateReloadGuard() {
@@ -2246,6 +2328,10 @@ function installRecordDateReloadGuard() {
         if (event.persisted || getPageNavigationType() === 'reload') {
             scheduleRecordDateTodayCheck(event.persisted ? 'pageshow-persisted' : 'pageshow-reload');
         }
+    });
+    window.addEventListener('focus', () => scheduleRecordDateResumeCheck('focus'));
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) scheduleRecordDateResumeCheck('visibility');
     });
 }
 
@@ -2363,6 +2449,11 @@ async function handleSharedUploadDeepLink() {
     }
 
     _pendingSharedImportPromise = (async () => {
+        syncSelectedRecordDateToToday({
+            reloadData: true,
+            reason: 'shared-upload',
+            onlyIfStaleToday: true
+        });
         const selectedDate = document.getElementById('selected-date')?.value;
         if (selectedDate && typeof loadDataForSelectedDate === 'function') {
             await loadDataForSelectedDate(selectedDate);
@@ -5139,7 +5230,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=195';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=196';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5373,14 +5464,19 @@ try {
     if (dateInput) {
         syncSelectedRecordDateToToday({ reloadData: false, reason: 'init' });
         dateInput.addEventListener('change', () => {
+            rememberRecordDateManualSelection(dateInput.value);
             if (window.loadDataForSelectedDate) window.loadDataForSelectedDate(dateInput.value);
         });
     }
     installRecordDateReloadGuard();
+    installRecordDateMediaInputFreshnessGuard();
 
     window.changeDateTo = function (dStr) {
         const di = document.getElementById('selected-date');
-        if (di) di.value = dStr;
+        if (di) {
+            di.value = dStr;
+            rememberRecordDateManualSelection(dStr);
+        }
         if (window.loadDataForSelectedDate) window.loadDataForSelectedDate(dStr);
         window.scrollTo(0, 0);
     };
@@ -6208,6 +6304,11 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         };
 
         const render = () => {
+            syncSelectedRecordDateToToday({
+                reloadData: false,
+                reason: 'media-picker-return',
+                onlyIfStaleToday: true
+            });
             markHabitschoolMediaPickerActivity({ inputId: input.id });
             preview.removeAttribute('data-user-removed');
             preview.removeAttribute('data-saved-url');
@@ -6532,6 +6633,11 @@ function getNativeMediaInputConfig(mediaKind = 'image') {
 
 function prepareNativeMediaInput(input, mediaKind = 'image') {
     if (!input) return;
+    syncSelectedRecordDateToToday({
+        reloadData: true,
+        reason: 'native-media-picker-open',
+        onlyIfStaleToday: true
+    });
     const config = getNativeMediaInputConfig(mediaKind);
     input.setAttribute('accept', config.inputAccept);
     input.removeAttribute('capture');
@@ -6679,6 +6785,11 @@ function openDietSlotPicker(slot, source = 'library') {
     const input = document.getElementById(`diet-img-${slot}`);
     const box = document.getElementById(`diet-box-${slot}`);
     if (!input) return false;
+    syncSelectedRecordDateToToday({
+        reloadData: true,
+        reason: 'diet-slot-picker-open',
+        onlyIfStaleToday: true
+    });
     if (box) box.style.display = 'block';
 
     const normalizedSource = source === 'camera' ? 'camera' : 'library';
@@ -6948,6 +7059,11 @@ async function importDietFilesIntoEmptySlots(files) {
     }
 
     const dateInput = document.getElementById('selected-date');
+    syncSelectedRecordDateToToday({
+        reloadData: true,
+        reason: 'diet-import',
+        onlyIfStaleToday: true
+    });
     const validDate = dateInput?.value;
     if (!validDate) {
         alert("⚠️ 인증 날짜를 먼저 선택해 주세요.");
@@ -16108,7 +16224,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let primarySaveAcknowledged = false;
         let backgroundOutboxBackupQueued = false;
         try {
+            const dateSyncResult = syncSelectedRecordDateToToday({
+                reloadData: false,
+                reason: 'pre-save',
+                onlyIfStaleToday: true
+            });
             selectedDateStr = document.getElementById('selected-date').value;
+            const ignoreStalePreviewFallback = !!dateSyncResult.changed
+                || wasRecordDateAutoAdvancedRecently(selectedDateStr);
             const rewardPolicy = getRewardEligibilityForDate(selectedDateStr);
             // 미래 날짜 저장 방지
             const { todayStr: saveToday } = getDatesInfo();
@@ -16138,10 +16261,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             };
             const getStoredPreviewState = (previewEl, oldUrl, oldThumbUrl) => {
                 const savedUrl = (hasMediaUrl(oldUrl) ? oldUrl : null)
-                    || (hasMediaUrl(previewEl?.getAttribute('data-saved-url')) ? previewEl.getAttribute('data-saved-url') : null)
-                    || (hasMediaUrl(previewEl?.src) ? previewEl.src : null);
+                    || (!ignoreStalePreviewFallback && hasMediaUrl(previewEl?.getAttribute('data-saved-url')) ? previewEl.getAttribute('data-saved-url') : null)
+                    || (!ignoreStalePreviewFallback && hasMediaUrl(previewEl?.src) ? previewEl.src : null);
                 const savedThumb = (hasMediaUrl(oldThumbUrl) ? oldThumbUrl : null)
-                    || (hasMediaUrl(previewEl?.getAttribute('data-saved-thumb-url')) ? previewEl.getAttribute('data-saved-thumb-url') : null)
+                    || (!ignoreStalePreviewFallback && hasMediaUrl(previewEl?.getAttribute('data-saved-thumb-url')) ? previewEl.getAttribute('data-saved-thumb-url') : null)
                     || null;
                 return { url: savedUrl || null, thumbUrl: savedThumb };
             };
@@ -16234,10 +16357,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     _removedExerciseMediaIds.cardio.add(mediaId);
                     return;
                 }
-                let url = hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
-                let thumbUrl = hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
+                let url = !ignoreStalePreviewFallback && hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
+                let thumbUrl = !ignoreStalePreviewFallback && hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
                 let aiAnalysis = null;
-                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                if (!ignoreStalePreviewFallback) {
+                    try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                }
                 const pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
                 if (pendingSnapshot?.result?.url) {
                     url = pendingSnapshot.result.url;
@@ -16275,10 +16400,12 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     _removedExerciseMediaIds.strength.add(mediaId);
                     continue;
                 }
-                let url = hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
-                let thumbUrl = hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
+                let url = !ignoreStalePreviewFallback && hasMediaUrl(block.getAttribute('data-url')) ? block.getAttribute('data-url') : null;
+                let thumbUrl = !ignoreStalePreviewFallback && hasMediaUrl(block.getAttribute('data-thumb-url')) ? block.getAttribute('data-thumb-url') : null;
                 let aiAnalysis = null;
-                try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                if (!ignoreStalePreviewFallback) {
+                    try { aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis')); } catch (_) {}
+                }
                 let pendingSnapshot = getPendingUploadSnapshot(fileInput?.id);
                 let localThumbSeed = resolveUsableStrengthLocalThumb(
                     block.getAttribute('data-local-thumb'),
@@ -16356,8 +16483,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const meditationPayload = buildMeditationSavePayload(selectedDateStr);
             const meditationDone = meditationPayload.meditationDone;
             const gratitudeText = sanitizeText(document.getElementById('gratitude-journal').value, 500);
-            const currentDietAnalysis = collectCurrentDietAnalysisFromUi();
-            const currentSleepAnalysis = getCurrentSleepAnalysisFromUi();
+            const currentDietAnalysis = ignoreStalePreviewFallback ? {} : collectCurrentDietAnalysisFromUi();
+            const currentSleepAnalysis = ignoreStalePreviewFallback ? null : getCurrentSleepAnalysisFromUi();
             const shareSettings = getCurrentShareSettings();
 
             const provisionalLogData = {
@@ -19304,6 +19431,11 @@ async function analyzeMealPhoto(meal) {
             // 분석만 남고 사진 URL이 빠지는 경로를 막기 위해 사진 URL과 분석을 함께 저장한다.
             const user = auth.currentUser;
             if (user) {
+                syncSelectedRecordDateToToday({
+                    reloadData: false,
+                    reason: 'diet-analysis',
+                    onlyIfStaleToday: true
+                });
                 const selectedDateStr = document.getElementById('selected-date').value;
                 const docId = `${user.uid}_${selectedDateStr}`;
                 await persistAnalyzedDietPhotoAndResult({
@@ -19654,6 +19786,11 @@ window.analyzeSleepData = async function() {
             // Firestore에 수면 분석 결과 저장
             const user = auth.currentUser;
             if (user) {
+                syncSelectedRecordDateToToday({
+                    reloadData: false,
+                    reason: 'sleep-analysis',
+                    onlyIfStaleToday: true
+                });
                 const selectedDateStr = document.getElementById('selected-date').value;
                 const docId = `${user.uid}_${selectedDateStr}`;
                 await setDoc(doc(db, "daily_logs", docId), {
