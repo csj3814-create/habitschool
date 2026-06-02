@@ -85,6 +85,7 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/diet-analysis.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/exercise-media.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/firebase-config.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/habit-groups.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/health-connect-utils.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/metabolic-score.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/milestone-helpers.js?v=${releaseVersion}'`);

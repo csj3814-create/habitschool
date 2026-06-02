@@ -6386,6 +6386,533 @@ exports.adjustUserCoins = onCall(
 );
 
 // ========================================
+// EXERCISE HABIT GROUPS
+// ========================================
+
+const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
+const EXERCISE_GROUP_REWARD_TARGET = 100;
+const EXERCISE_GROUP_REWARD_POINTS = 2000;
+const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
+const EXERCISE_HABIT_GROUPS = Object.freeze([
+    {
+        id: "exercise-walking-10000",
+        type: "exercise",
+        title: "만보 걷기",
+        requirement: { kind: "steps", minSteps: 10000 },
+    },
+    {
+        id: "exercise-home-training",
+        type: "exercise",
+        title: "홈트 인증방",
+        requirement: { kind: "exercise_record" },
+    },
+    {
+        id: "exercise-gym-checkin",
+        type: "exercise",
+        title: "헬스장 출석",
+        requirement: { kind: "exercise_record" },
+    },
+    {
+        id: "exercise-running-club",
+        type: "exercise",
+        title: "러닝 클럽",
+        requirement: { kind: "exercise_record" },
+    },
+]);
+const EXERCISE_HABIT_GROUP_IDS = new Set(EXERCISE_HABIT_GROUPS.map(group => group.id));
+const HABIT_GROUP_REVIEW_STATUSES = new Set(["pending", "approved", "rejected"]);
+const HABIT_GROUP_LEADER_ROLES = new Set(["leader", "owner"]);
+
+function getExerciseHabitGroup(groupId = "") {
+    const normalizedId = String(groupId || "").trim();
+    return EXERCISE_HABIT_GROUPS.find(group => group.id === normalizedId) || null;
+}
+
+function getHabitGroupMemberDocId(groupId = "", uid = "") {
+    return `${String(groupId || "").trim()}_${String(uid || "").trim()}`;
+}
+
+function getHabitGroupCheckinDocId(groupId = "", dateStr = "", uid = "") {
+    return `${String(groupId || "").trim()}_${String(dateStr || "").trim()}_${String(uid || "").trim()}`;
+}
+
+function getExerciseGroupRewardProgressDocId(groupId = "", uid = "") {
+    return getHabitGroupMemberDocId(groupId, uid);
+}
+
+function normalizeDateArray(values = []) {
+    return [...new Set((Array.isArray(values) ? values : [])
+        .map(value => String(value || "").trim())
+        .filter(Boolean))]
+        .sort();
+}
+
+function isKstDateString(value = "") {
+    return /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(String(value || "").trim());
+}
+
+function getHabitGroupDisplayName(request) {
+    return String(
+        request.data?.displayName
+        || request.auth?.token?.name
+        || request.auth?.token?.email
+        || "회원"
+    ).trim().slice(0, 40);
+}
+
+function getHabitGroupPhotoUrl(request) {
+    const url = String(request.data?.photoURL || request.auth?.token?.picture || "").trim();
+    return url.startsWith("https://") ? url.slice(0, 500) : null;
+}
+
+function normalizeHabitGroupReviewStatus(status = "pending") {
+    const normalized = String(status || "pending").trim();
+    return HABIT_GROUP_REVIEW_STATUSES.has(normalized) ? normalized : "pending";
+}
+
+function normalizeHabitGroupCheckinForProgress(data = null) {
+    if (!data || typeof data !== "object") return null;
+    const groupId = String(data.groupId || "").trim();
+    const uid = String(data.uid || "").trim();
+    const date = String(data.date || "").trim();
+    if (!EXERCISE_HABIT_GROUP_IDS.has(groupId) || !uid || !isKstDateString(date)) return null;
+    return {
+        groupId,
+        uid,
+        date,
+        reviewStatus: normalizeHabitGroupReviewStatus(data.reviewStatus),
+        countsTowardReward: data.countsTowardReward !== false,
+    };
+}
+
+function removeHabitGroupDate(progress, date) {
+    if (!date) return;
+    ["submittedDates", "approvedDates", "pendingDates", "rejectedDates"].forEach(key => {
+        progress[key] = normalizeDateArray(progress[key]).filter(item => item !== date);
+    });
+}
+
+function addHabitGroupDate(progress, key, date) {
+    if (!date) return;
+    progress[key] = normalizeDateArray([...normalizeDateArray(progress[key]), date]);
+}
+
+function isHabitGroupDateInWindow(date, progress) {
+    if (!date) return false;
+    const startedDate = String(progress.startedDate || "").trim();
+    const windowEndDate = String(progress.windowEndDate || "").trim();
+    if (startedDate && date < startedDate) return false;
+    if (windowEndDate && date > windowEndDate) return false;
+    return true;
+}
+
+function applyHabitGroupProgressMutation(progress = {}, previousCheckin = null, nextCheckin = null) {
+    const next = {
+        ...progress,
+        submittedDates: normalizeDateArray(progress.submittedDates),
+        approvedDates: normalizeDateArray(progress.approvedDates),
+        pendingDates: normalizeDateArray(progress.pendingDates),
+        rejectedDates: normalizeDateArray(progress.rejectedDates),
+    };
+
+    if (previousCheckin?.date) {
+        removeHabitGroupDate(next, previousCheckin.date);
+    }
+
+    if (nextCheckin?.date && isHabitGroupDateInWindow(nextCheckin.date, next)) {
+        const reviewStatus = normalizeHabitGroupReviewStatus(nextCheckin.reviewStatus);
+        if (nextCheckin.countsTowardReward !== false && (reviewStatus === "pending" || reviewStatus === "approved")) {
+            addHabitGroupDate(next, "submittedDates", nextCheckin.date);
+            addHabitGroupDate(next, reviewStatus === "approved" ? "approvedDates" : "pendingDates", nextCheckin.date);
+        } else if (reviewStatus === "rejected") {
+            addHabitGroupDate(next, "rejectedDates", nextCheckin.date);
+        }
+    }
+
+    next.submittedDates = normalizeDateArray(next.submittedDates);
+    next.approvedDates = normalizeDateArray(next.approvedDates);
+    next.pendingDates = normalizeDateArray(next.pendingDates);
+    next.rejectedDates = normalizeDateArray(next.rejectedDates);
+    next.submittedCount = next.submittedDates.length;
+    next.approvedCount = next.approvedDates.length;
+    next.pendingCount = next.pendingDates.length;
+    next.rejectedCount = next.rejectedDates.length;
+    return next;
+}
+
+function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
+    const startedDate = isKstDateString(startDate) ? startDate : getCurrentKstDateString();
+    return {
+        groupId,
+        uid,
+        startedDate,
+        windowEndDate: addDaysToKstDateString(startedDate, EXERCISE_GROUP_REWARD_WINDOW_DAYS - 1),
+        submittedDates: [],
+        approvedDates: [],
+        pendingDates: [],
+        rejectedDates: [],
+        submittedCount: 0,
+        approvedCount: 0,
+        pendingCount: 0,
+        rejectedCount: 0,
+        rewardStatus: "in_progress",
+        rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+    };
+}
+
+async function assertHabitGroupReviewer(uid, email, groupId) {
+    if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+    if (!getExerciseHabitGroup(groupId)) {
+        throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+    }
+    if (isBootstrapAdminEmail(email)) return true;
+
+    const [adminSnap, memberSnap] = await Promise.all([
+        db.doc(`admins/${uid}`).get(),
+        db.doc(`habit_group_members/${getHabitGroupMemberDocId(groupId, uid)}`).get(),
+    ]);
+    if (adminSnap.exists) return true;
+
+    const member = memberSnap.exists ? (memberSnap.data() || {}) : {};
+    if (member.active !== false && HABIT_GROUP_LEADER_ROLES.has(String(member.role || "").trim())) {
+        return true;
+    }
+    throw new HttpsError("permission-denied", "모임장 또는 관리자 권한이 필요합니다.");
+}
+
+exports.joinHabitGroup = onCall(
+    { region: "asia-northeast3", maxInstances: 20, timeoutSeconds: 30 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const groupId = String(request.data?.groupId || "").trim();
+        const group = getExerciseHabitGroup(groupId);
+        if (!group) throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+
+        const email = normalizeEmail(request.auth?.token?.email);
+        const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
+        const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
+        const adminRef = db.doc(`admins/${uid}`);
+        const membershipQuery = db.collection("habit_group_members")
+            .where("uid", "==", uid)
+            .limit(20);
+        const todayStr = getCurrentKstDateString();
+        const now = FieldValue.serverTimestamp();
+        const displayName = getHabitGroupDisplayName(request);
+        const photoURL = getHabitGroupPhotoUrl(request);
+
+        const result = await db.runTransaction(async (tx) => {
+            const [membershipSnap, memberSnap, progressSnap, adminSnap] = await Promise.all([
+                tx.get(membershipQuery),
+                tx.get(memberRef),
+                tx.get(progressRef),
+                tx.get(adminRef),
+            ]);
+
+            const activeMemberships = [];
+            membershipSnap.forEach(docSnap => {
+                const data = docSnap.data() || {};
+                if (data.active !== false && EXERCISE_HABIT_GROUP_IDS.has(String(data.groupId || "").trim())) {
+                    activeMemberships.push({ id: docSnap.id, groupId: data.groupId });
+                }
+            });
+
+            const alreadyActive = activeMemberships.some(item => item.groupId === group.id);
+            if (!alreadyActive && activeMemberships.length >= MAX_HABIT_GROUP_MEMBERSHIPS) {
+                throw new HttpsError(
+                    "failed-precondition",
+                    `운동 소모임은 최대 ${MAX_HABIT_GROUP_MEMBERSHIPS}개까지 동시에 참여할 수 있습니다.`
+                );
+            }
+
+            const existingMember = memberSnap.exists ? (memberSnap.data() || {}) : {};
+            const existingRole = String(existingMember.role || "").trim();
+            const isAdminLeader = adminSnap.exists || isBootstrapAdminEmail(email);
+            const role = HABIT_GROUP_LEADER_ROLES.has(existingRole) || isAdminLeader ? "leader" : "member";
+
+            tx.set(memberRef, {
+                groupId: group.id,
+                groupType: "exercise",
+                groupTitle: group.title,
+                uid,
+                displayName,
+                photoURL,
+                active: true,
+                role,
+                joinedAt: existingMember.joinedAt || now,
+                leftAt: FieldValue.delete(),
+                rewardProgressId: progressRef.id,
+                updatedAt: now,
+            }, { merge: true });
+
+            if (!progressSnap.exists) {
+                tx.set(progressRef, {
+                    ...buildInitialHabitGroupProgress({ groupId: group.id, uid, startDate: todayStr }),
+                    startedAt: now,
+                    createdAt: now,
+                    updatedAt: now,
+                }, { merge: true });
+            } else {
+                tx.set(progressRef, {
+                    groupId: group.id,
+                    uid,
+                    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                    updatedAt: now,
+                }, { merge: true });
+            }
+
+            return {
+                groupId: group.id,
+                activeCount: alreadyActive ? activeMemberships.length : activeMemberships.length + 1,
+                role,
+            };
+        });
+
+        return {
+            success: true,
+            ...result,
+            maxMemberships: MAX_HABIT_GROUP_MEMBERSHIPS,
+        };
+    }
+);
+
+exports.leaveHabitGroup = onCall(
+    { region: "asia-northeast3", maxInstances: 20, timeoutSeconds: 30 },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const groupId = String(request.data?.groupId || "").trim();
+        const group = getExerciseHabitGroup(groupId);
+        if (!group) throw new HttpsError("invalid-argument", "유효하지 않은 운동 소모임입니다.");
+
+        const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
+        const memberSnap = await memberRef.get();
+        if (!memberSnap.exists) {
+            return { success: true, groupId: group.id, active: false };
+        }
+
+        await memberRef.set({
+            groupId: group.id,
+            groupType: "exercise",
+            groupTitle: group.title,
+            uid,
+            active: false,
+            leftAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        return { success: true, groupId: group.id, active: false };
+    }
+);
+
+exports.reviewHabitGroupCheckin = onCall(
+    { region: "asia-northeast3", maxInstances: 20, timeoutSeconds: 30 },
+    async (request) => {
+        const reviewerUid = request.auth?.uid;
+        if (!reviewerUid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const groupId = String(request.data?.groupId || "").trim();
+        const targetUid = String(request.data?.uid || request.data?.targetUid || "").trim();
+        const date = String(request.data?.date || "").trim();
+        const reviewStatus = normalizeHabitGroupReviewStatus(request.data?.reviewStatus);
+        const reviewNote = String(request.data?.reviewNote || "").trim().slice(0, 500);
+        const group = getExerciseHabitGroup(groupId);
+        if (!group || !targetUid || !isKstDateString(date)) {
+            throw new HttpsError("invalid-argument", "소모임, 회원, 날짜 정보가 필요합니다.");
+        }
+        if (reviewStatus === "pending") {
+            throw new HttpsError("invalid-argument", "승인 또는 반려 상태만 선택할 수 있습니다.");
+        }
+
+        await assertHabitGroupReviewer(reviewerUid, request.auth?.token?.email, group.id);
+
+        const checkinRef = db.doc(`habit_group_checkins/${getHabitGroupCheckinDocId(group.id, date, targetUid)}`);
+        const checkinSnap = await checkinRef.get();
+        if (!checkinSnap.exists) throw new HttpsError("not-found", "확인할 제출 기록이 없습니다.");
+
+        const checkin = checkinSnap.data() || {};
+        if (String(checkin.groupId || "") !== group.id || String(checkin.uid || "") !== targetUid) {
+            throw new HttpsError("failed-precondition", "제출 기록 정보가 소모임과 일치하지 않습니다.");
+        }
+
+        const now = FieldValue.serverTimestamp();
+        await checkinRef.set({
+            reviewStatus,
+            countsTowardReward: reviewStatus === "approved",
+            reviewedBy: reviewerUid,
+            reviewedAt: now,
+            reviewNote: reviewNote || FieldValue.delete(),
+            approvedAt: reviewStatus === "approved" ? now : FieldValue.delete(),
+            rejectedAt: reviewStatus === "rejected" ? now : FieldValue.delete(),
+            updatedAt: now,
+        }, { merge: true });
+
+        return { success: true, groupId: group.id, uid: targetUid, date, reviewStatus };
+    }
+);
+
+exports.transferHabitGroupLeader = onCall(
+    { region: "asia-northeast3", maxInstances: 10, timeoutSeconds: 30 },
+    async (request) => {
+        const currentLeaderUid = request.auth?.uid;
+        if (!currentLeaderUid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const groupId = String(request.data?.groupId || "").trim();
+        const nextLeaderUid = String(request.data?.nextLeaderUid || request.data?.targetUid || "").trim();
+        const group = getExerciseHabitGroup(groupId);
+        if (!group || !nextLeaderUid) {
+            throw new HttpsError("invalid-argument", "소모임과 새 모임장 정보가 필요합니다.");
+        }
+
+        await assertHabitGroupReviewer(currentLeaderUid, request.auth?.token?.email, group.id);
+
+        const currentRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, currentLeaderUid)}`);
+        const nextRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, nextLeaderUid)}`);
+        const now = FieldValue.serverTimestamp();
+
+        await db.runTransaction(async (tx) => {
+            const [nextSnap, currentSnap] = await Promise.all([
+                tx.get(nextRef),
+                tx.get(currentRef),
+            ]);
+            if (!nextSnap.exists || nextSnap.data()?.active === false) {
+                throw new HttpsError("failed-precondition", "새 모임장은 현재 참여 중인 회원이어야 합니다.");
+            }
+
+            tx.set(nextRef, {
+                role: "leader",
+                leaderGrantedAt: now,
+                leaderGrantedBy: currentLeaderUid,
+                updatedAt: now,
+            }, { merge: true });
+
+            if (currentSnap.exists && String(currentSnap.data()?.role || "") === "leader") {
+                tx.set(currentRef, {
+                    role: "member",
+                    leaderTransferredAt: now,
+                    leaderTransferredTo: nextLeaderUid,
+                    updatedAt: now,
+                }, { merge: true });
+            }
+        });
+
+        return { success: true, groupId: group.id, nextLeaderUid };
+    }
+);
+
+exports.onHabitGroupCheckinWritten = onDocumentWritten(
+    { document: "habit_group_checkins/{checkinId}", region: "asia-northeast3", maxInstances: 30, timeoutSeconds: 30 },
+    async (event) => {
+        const before = normalizeHabitGroupCheckinForProgress(event.data?.before?.data());
+        const after = normalizeHabitGroupCheckinForProgress(event.data?.after?.data());
+        const target = after || before;
+        if (!target) return;
+
+        const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(target.groupId, target.uid)}`);
+        const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(target.groupId, target.uid)}`);
+        const payoutRef = db.doc(`blockchain_transactions/exercise_group_reward_${target.groupId}_${target.uid}`);
+        const userRef = db.doc(`users/${target.uid}`);
+        const todayStr = getCurrentKstDateString();
+        const now = FieldValue.serverTimestamp();
+
+        await db.runTransaction(async (tx) => {
+            const [progressSnap, memberSnap, payoutSnap] = await Promise.all([
+                tx.get(progressRef),
+                tx.get(memberRef),
+                tx.get(payoutRef),
+            ]);
+
+            if (!progressSnap.exists && !after) return;
+
+            const baseProgress = progressSnap.exists
+                ? (progressSnap.data() || {})
+                : buildInitialHabitGroupProgress({ groupId: target.groupId, uid: target.uid, startDate: target.date });
+            const progress = applyHabitGroupProgressMutation(baseProgress, before, after);
+            const group = getExerciseHabitGroup(target.groupId);
+            const windowEndDate = String(progress.windowEndDate || "").trim();
+            const shouldPay = progress.approvedCount >= EXERCISE_GROUP_REWARD_TARGET
+                && String(baseProgress.rewardStatus || "") !== "paid"
+                && !payoutSnap.exists;
+
+            let rewardStatus = String(baseProgress.rewardStatus || "in_progress").trim();
+            if (rewardStatus === "paid" || payoutSnap.exists) {
+                rewardStatus = "paid";
+            } else if (shouldPay) {
+                rewardStatus = "paid";
+            } else if (progress.approvedCount >= EXERCISE_GROUP_REWARD_TARGET) {
+                rewardStatus = "pending_review";
+            } else if (progress.submittedCount >= EXERCISE_GROUP_REWARD_TARGET) {
+                rewardStatus = "pending_review";
+            } else if (windowEndDate && todayStr > windowEndDate) {
+                rewardStatus = "expired";
+            } else {
+                rewardStatus = "in_progress";
+            }
+
+            const progressPayload = {
+                groupId: target.groupId,
+                groupTitle: group?.title || null,
+                uid: target.uid,
+                startedDate: progress.startedDate || target.date,
+                windowEndDate: progress.windowEndDate || addDaysToKstDateString(progress.startedDate || target.date, EXERCISE_GROUP_REWARD_WINDOW_DAYS - 1),
+                submittedDates: progress.submittedDates,
+                approvedDates: progress.approvedDates,
+                pendingDates: progress.pendingDates,
+                rejectedDates: progress.rejectedDates,
+                submittedCount: progress.submittedCount,
+                approvedCount: progress.approvedCount,
+                pendingCount: progress.pendingCount,
+                rejectedCount: progress.rejectedCount,
+                rewardStatus,
+                rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                updatedAt: now,
+            };
+            if (!progressSnap.exists) {
+                progressPayload.startedAt = now;
+                progressPayload.createdAt = now;
+            }
+            if (rewardStatus === "paid" && !baseProgress.paidAt) {
+                progressPayload.paidAt = now;
+            }
+
+            tx.set(progressRef, progressPayload, { merge: true });
+
+            if (memberSnap.exists) {
+                tx.set(memberRef, {
+                    submittedCount: progress.submittedCount,
+                    approvedCount: progress.approvedCount,
+                    pendingCount: progress.pendingCount,
+                    lastCheckinDate: after?.date || memberSnap.data()?.lastCheckinDate || null,
+                    updatedAt: now,
+                }, { merge: true });
+            }
+
+            if (shouldPay) {
+                tx.set(userRef, {
+                    coins: FieldValue.increment(EXERCISE_GROUP_REWARD_POINTS),
+                }, { merge: true });
+                tx.set(payoutRef, {
+                    userId: target.uid,
+                    uid: target.uid,
+                    type: "exercise_group_reward",
+                    groupId: target.groupId,
+                    groupTitle: group?.title || null,
+                    progressId: progressRef.id,
+                    rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
+                    submittedCount: progress.submittedCount,
+                    approvedCount: progress.approvedCount,
+                    date: todayStr,
+                    timestamp: now,
+                    status: "success",
+                }, { merge: false });
+            }
+        });
+    }
+);
+
+// ========================================
 // SOCIAL CHALLENGES
 // ========================================
 
@@ -6428,6 +6955,10 @@ exports.createSocialChallenge = onCall(
     { region: "asia-northeast3" },
     async (request) => {
         if (!request.auth) throw new HttpsError("unauthenticated", "로그인 필요");
+        throw new HttpsError(
+            "failed-precondition",
+            "친구 챌린지 신규 생성은 소모임 시스템으로 전환되어 종료되었습니다."
+        );
         const uid = request.auth.uid;
         const { type, inviteeIds, durationDays, stakePoints } = request.data;
 

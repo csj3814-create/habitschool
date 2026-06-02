@@ -14,34 +14,49 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=196';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=196';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=198';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=198';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=196';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=196';
+} from './auth-login-helpers.js?v=198';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=198';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=196';
+} from './exercise-media.js?v=198';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=196';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=196';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=196';
-import { sanitize, compressImage } from './data-manager.js?v=196';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=196';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=196';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=196';
+} from './health-connect-utils.js?v=198';
+import {
+    DEFAULT_HABIT_GROUPS,
+    EXERCISE_GROUP_REWARD_TARGET,
+    MAX_HABIT_GROUP_MEMBERSHIPS,
+    getHabitGroupById,
+    getHabitGroupCheckinDocId,
+    getHabitGroupMemberDocId,
+    getHabitGroupRecordStatus,
+    getHabitGroupRecordTab,
+    getHabitGroupRewardProgressDocId,
+    getHabitGroupTypeLabel,
+    getRecommendedHabitGroups,
+    summarizeHabitGroupProgress,
+    summarizeHabitGroups
+} from './habit-groups.js?v=198';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=198';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=198';
+import { sanitize, compressImage } from './data-manager.js?v=198';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=198';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=198';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=198';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -54,7 +69,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=196';
+} from './diet-program.js?v=198';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -66,18 +81,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=196';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=196';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=196';
+} from './meditation-guide.js?v=198';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=198';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=198';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=196';
+} from './social-challenge-readiness.js?v=198';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=196';
+} from './monthly-mvp-reward.js?v=198';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -331,6 +346,8 @@ const FRIENDSHIP_MAX_RETRY_ATTEMPTS = 2;
 const CHALLENGE_NOTIFICATION_SEEN_ID_LIMIT = 80;
 const FRIEND_CONNECTED_TOAST_MAX_AGE_MS = 30 * 60 * 1000;
 const SOCIAL_CHALLENGE_DOC_ID_QUERY_CHUNK_SIZE = 30;
+const HABIT_GROUP_LOAD_TIMEOUT_MS = 2500;
+const HABIT_GROUP_CACHE_TTL_MS = 60_000;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const GALLERY_RETRY_BASE_DELAY_MS = 2500;
@@ -1291,20 +1308,9 @@ window.refreshPwaActionableBadgeFromServer = async function(user = auth.currentU
         await loadMyFriendships();
     } catch (_) {}
 
-    let challengeInvites = _pwaActionableBadgeState.challengeInvites;
-    try {
-        const inviteSnap = await getDocs(query(
-            collection(db, 'social_challenges'),
-            where('invitees', 'array-contains', user.uid),
-            where('status', '==', 'pending'),
-            limit(10)
-        ));
-        challengeInvites = inviteSnap.size;
-    } catch (_) {}
-
     return updatePwaActionableBadge({
         friendRequests: getIncomingFriendRequests().length,
-        challengeInvites
+        challengeInvites: 0
     });
 };
 
@@ -1946,8 +1952,9 @@ async function handleChallengeDeepLink(challengeId = '') {
 
     if (challengeId) {
         window.setTimeout(() => {
-            Promise.resolve(window.openChallengeInviteModal?.(challengeId)).catch(error => {
-                console.warn('[handleAppEntryDeepLink] challenge invite modal failed:', error.message);
+            showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+            Promise.resolve(window.openHabitGroupDirectory?.()).catch(error => {
+                console.warn('[handleAppEntryDeepLink] habit group directory failed:', error.message);
             });
         }, 260);
     }
@@ -4746,7 +4753,6 @@ function refreshFriendshipUiAfterRetry(user) {
         const { todayStr } = getDatesInfo();
         renderFriendActivityCard(user, todayStr).catch(() => {});
         renderSocialChallenges(user).catch(() => {});
-        refreshCommunityFocusSummary(user, todayStr).catch(() => {});
     }
 }
 
@@ -5230,7 +5236,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=196';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=198';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -13147,7 +13153,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         _communityFocusState.monthlyUsers = data.communityStats?.totalUsers || 0;
         renderCommunityFocusPanel();
 
-        refreshCommunityFocusSummary(user, todayStr, data.communityStats).catch(() => {});
+        // 소모임 카드는 renderSocialChallenges가 직접 갱신한다.
         // 친구 스트릭 달성 알림
         checkFriendStreakNotifications(user.uid).catch(() => {});
         // 챌린지 관련 알림
@@ -16140,6 +16146,14 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
                     BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
                     'offline_outbox_flush_timeout'
                 );
+                await syncHabitGroupCheckinsForDailyLog({
+                    user,
+                    docId: entry.docId,
+                    dateStr: entry.date,
+                    saveData
+                }).catch((error) => {
+                    logOptionalDataTimeout('habit_group_offline_checkin_deferred', error);
+                });
 
                 const hydratedData = mergeOfflineOutboxData(getCachedDailyLog(entry.docId) || {}, {
                     saveData: {
@@ -16553,6 +16567,13 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     primarySaveAcknowledged = true;
                 } else { throw e; }
             }
+            await withAsyncTimeout(
+                syncHabitGroupCheckinsForDailyLog({ user, dateStr: selectedDateStr, docId, saveData }),
+                HABIT_GROUP_LOAD_TIMEOUT_MS,
+                'habit_group_post_save_timeout'
+            ).catch((error) => {
+                logOptionalDataTimeout('habit_group_post_save_timeout', error);
+            });
             if (backgroundJobs.length > 0 && offlineOutboxMediaItems.length > 0) {
                 const backupEntry = await queueOfflineOutboxEntry({
                     userId: user.uid,
@@ -16618,6 +16639,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 }
 
                 try {
+                    renderSocialChallenges(user).catch(() => {});
                     await checkMilestones(user.uid);
                     await renderMilestones(user.uid);
                     await updateChallengeProgress();
@@ -20209,15 +20231,9 @@ function setSocialChallengeHeadAction(mode = 'start') {
     if (!button) return;
     button.disabled = false;
 
-    if (mode === 'requests') {
-        button.textContent = '요청 확인';
-        button.onclick = () => window.openFriendRequestFlow();
-        return;
-    }
-
-    if (mode === 'invite') {
-        button.textContent = '친구 연결';
-        button.onclick = () => window.openFriendInviteFlow();
+    if (mode === 'record') {
+        button.textContent = '오늘 기록';
+        button.onclick = () => openTab(getNextRecordTab() || 'diet');
         return;
     }
 
@@ -20227,14 +20243,14 @@ function setSocialChallengeHeadAction(mode = 'start') {
         return;
     }
 
-    if (mode === 'blocked') {
-        button.textContent = '5일 필요';
-        button.onclick = () => showToast('최근 30일 5일 이상 기록한 친구가 있어야 챌린지를 시작할 수 있어요.');
+    if (mode === 'joined') {
+        button.textContent = '내 소모임';
+        button.onclick = () => window.openHabitGroupDirectory();
         return;
     }
 
-    button.textContent = '챌린지 시작';
-    button.onclick = () => window.openCreateChallengeModal();
+    button.textContent = '소모임 찾기';
+    button.onclick = () => window.openHabitGroupDirectory();
 }
 
 function buildSocialChallengeFriendSummary(activeFriendIds = []) {
@@ -20281,6 +20297,27 @@ let _openSocialChallengesPromise = null;
 let _openSocialChallengesPromiseKey = '';
 let _renderSocialChallengesPromise = null;
 let _renderSocialChallengesPromiseUid = '';
+let _habitGroupMembershipCache = {
+    uid: '',
+    loadedAt: 0,
+    memberships: []
+};
+let _habitGroupMembershipPromise = null;
+let _habitGroupMembershipPromiseUid = '';
+let _habitGroupCheckinCache = {
+    uid: '',
+    dateStr: '',
+    groupKey: '',
+    loadedAt: 0,
+    checkins: []
+};
+let _habitGroupProgressCache = {
+    uid: '',
+    groupKey: '',
+    loadedAt: 0,
+    progressByGroupId: new Map()
+};
+let _habitGroupDirectoryFilter = 'all';
 
 function addDaysFromKstDateString(dateStr, diffDays) {
     const base = new Date(`${dateStr}T12:00:00Z`);
@@ -20664,6 +20701,468 @@ async function loadOpenSocialChallengesForUser(user, options = {}) {
     return openChallengesPromise;
 }
 
+function normalizeHabitGroupMembership(docSnap) {
+    const data = docSnap?.data?.() || docSnap || {};
+    const groupId = String(data.groupId || '').trim();
+    const group = getHabitGroupById(groupId);
+    if (!group) return null;
+    return {
+        id: docSnap?.id || getHabitGroupMemberDocId(groupId, data.uid),
+        groupId,
+        uid: String(data.uid || '').trim(),
+        active: data.active !== false,
+        joinedAt: data.joinedAt || null,
+        lastCheckinDate: String(data.lastCheckinDate || '').trim(),
+        group
+    };
+}
+
+function invalidateHabitGroupCaches() {
+    _habitGroupMembershipCache.loadedAt = 0;
+    _habitGroupCheckinCache.loadedAt = 0;
+    _habitGroupProgressCache.loadedAt = 0;
+}
+
+async function loadMyHabitGroupMemberships(user = auth.currentUser, { forceReload = false } = {}) {
+    if (!user?.uid) return [];
+    const cacheMatches = _habitGroupMembershipCache.uid === user.uid;
+    if (!forceReload
+        && cacheMatches
+        && Date.now() - _habitGroupMembershipCache.loadedAt < HABIT_GROUP_CACHE_TTL_MS) {
+        return _habitGroupMembershipCache.memberships;
+    }
+
+    if (!forceReload && _habitGroupMembershipPromise && _habitGroupMembershipPromiseUid === user.uid) {
+        return _habitGroupMembershipPromise;
+    }
+
+    const membershipPromise = withAsyncTimeout(getDocs(query(
+        collection(db, 'habit_group_members'),
+        where('uid', '==', user.uid),
+        limit(40)
+    )), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_members_timeout')
+        .then(snap => {
+            const memberships = [];
+            snap.forEach(memberDoc => {
+                const membership = normalizeHabitGroupMembership(memberDoc);
+                if (membership?.active) memberships.push(membership);
+            });
+            memberships.sort((a, b) => {
+                const typeOrder = DEFAULT_HABIT_GROUPS.findIndex(group => group.id === a.groupId)
+                    - DEFAULT_HABIT_GROUPS.findIndex(group => group.id === b.groupId);
+                return typeOrder || a.group.title.localeCompare(b.group.title, 'ko');
+            });
+            _habitGroupMembershipCache = {
+                uid: user.uid,
+                loadedAt: Date.now(),
+                memberships
+            };
+            return memberships;
+        })
+        .catch(error => {
+            logOptionalDataTimeout('habit_group_members_timeout', error);
+            return cacheMatches ? _habitGroupMembershipCache.memberships : [];
+        })
+        .finally(() => {
+            if (_habitGroupMembershipPromise === membershipPromise) {
+                _habitGroupMembershipPromise = null;
+                _habitGroupMembershipPromiseUid = '';
+            }
+        });
+
+    _habitGroupMembershipPromise = membershipPromise;
+    _habitGroupMembershipPromiseUid = user.uid;
+    return membershipPromise;
+}
+
+async function loadHabitGroupTodayCheckins(user = auth.currentUser, dateStr = getDatesInfo().todayStr, groupIds = [], { forceReload = false } = {}) {
+    if (!user?.uid || !dateStr || groupIds.length === 0) return [];
+    const normalizedGroupIds = [...new Set(groupIds.map(id => String(id || '').trim()).filter(Boolean))].sort();
+    const groupKey = normalizedGroupIds.join('|');
+    const cacheMatches = _habitGroupCheckinCache.uid === user.uid
+        && _habitGroupCheckinCache.dateStr === dateStr
+        && _habitGroupCheckinCache.groupKey === groupKey;
+    if (!forceReload
+        && cacheMatches
+        && Date.now() - _habitGroupCheckinCache.loadedAt < HABIT_GROUP_CACHE_TTL_MS) {
+        return _habitGroupCheckinCache.checkins;
+    }
+
+    const checkins = await withAsyncTimeout(Promise.all(normalizedGroupIds.map(async groupId => {
+        const snap = await getDoc(doc(db, 'habit_group_checkins', getHabitGroupCheckinDocId(groupId, dateStr, user.uid)));
+        return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    })), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_checkins_timeout')
+        .then(items => items.filter(Boolean))
+        .catch(error => {
+            logOptionalDataTimeout('habit_group_checkins_timeout', error);
+            return cacheMatches ? _habitGroupCheckinCache.checkins : [];
+        });
+
+    _habitGroupCheckinCache = {
+        uid: user.uid,
+        dateStr,
+        groupKey,
+        loadedAt: Date.now(),
+        checkins
+    };
+    return checkins;
+}
+
+async function loadHabitGroupRewardProgress(user = auth.currentUser, groupIds = [], { forceReload = false } = {}) {
+    if (!user?.uid || groupIds.length === 0) return new Map();
+    const normalizedGroupIds = [...new Set(groupIds.map(id => String(id || '').trim()).filter(Boolean))].sort();
+    const groupKey = normalizedGroupIds.join('|');
+    const cacheMatches = _habitGroupProgressCache.uid === user.uid
+        && _habitGroupProgressCache.groupKey === groupKey;
+    if (!forceReload
+        && cacheMatches
+        && Date.now() - _habitGroupProgressCache.loadedAt < HABIT_GROUP_CACHE_TTL_MS) {
+        return _habitGroupProgressCache.progressByGroupId;
+    }
+
+    const progressItems = await withAsyncTimeout(Promise.all(normalizedGroupIds.map(async groupId => {
+        const progressId = getHabitGroupRewardProgressDocId(groupId, user.uid);
+        const snap = await getDoc(doc(db, 'exercise_group_reward_progress', progressId));
+        return snap.exists()
+            ? { id: snap.id, ...snap.data() }
+            : { id: progressId, groupId, uid: user.uid, rewardStatus: 'in_progress' };
+    })), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_progress_timeout')
+        .catch(error => {
+            logOptionalDataTimeout('habit_group_progress_timeout', error);
+            return cacheMatches ? [..._habitGroupProgressCache.progressByGroupId.values()] : [];
+        });
+
+    const progressByGroupId = new Map(progressItems
+        .filter(item => item?.groupId)
+        .map(item => [item.groupId, { ...item, ...summarizeHabitGroupProgress(item) }]));
+    _habitGroupProgressCache = {
+        uid: user.uid,
+        groupKey,
+        loadedAt: Date.now(),
+        progressByGroupId
+    };
+    return progressByGroupId;
+}
+
+function resolveHabitGroupCheckinThumb(saveData = {}) {
+    const exercise = saveData.exercise || {};
+    const cardio = Array.isArray(exercise.cardioList) ? exercise.cardioList : [];
+    const strength = Array.isArray(exercise.strengthList) ? exercise.strengthList : [];
+    const media = [...cardio, ...strength].find(item => (
+        isPersistedStorageUrl(item?.imageThumbUrl)
+        || isPersistedStorageUrl(item?.imageUrl)
+        || isPersistedStorageUrl(item?.videoThumbUrl)
+    ));
+    if (media) {
+        return media.imageThumbUrl || media.imageUrl || media.videoThumbUrl || null;
+    }
+    return null;
+}
+
+function toHabitGroupSafeText(value = '', maxLength = 120) {
+    return String(value || '').trim().slice(0, maxLength);
+}
+
+function pickHabitGroupMediaUrl(...urls) {
+    return urls.find(url => isPersistedStorageUrl(url)) || null;
+}
+
+function summarizeHabitGroupExerciseItem(item = {}) {
+    const summary = {};
+    const name = toHabitGroupSafeText(item.name || item.exerciseName || item.type, 60);
+    const memo = toHabitGroupSafeText(item.memo || item.note, 120);
+    const minutes = Number(item.minutes || item.time || item.cardioTime || item.duration || 0) || 0;
+    const distance = Number(item.distance || item.cardioDist || item.dist || 0) || 0;
+    const sets = Number(item.sets || item.setCount || 0) || 0;
+    const reps = Number(item.reps || item.count || 0) || 0;
+    if (name) summary.name = name;
+    if (memo) summary.memo = memo;
+    if (minutes > 0) summary.minutes = minutes;
+    if (distance > 0) summary.distance = distance;
+    if (sets > 0) summary.sets = sets;
+    if (reps > 0) summary.reps = reps;
+    const imageUrl = pickHabitGroupMediaUrl(item.imageThumbUrl, item.imageUrl);
+    const videoThumbUrl = pickHabitGroupMediaUrl(item.videoThumbUrl);
+    if (imageUrl) summary.imageUrl = imageUrl;
+    if (videoThumbUrl) summary.videoThumbUrl = videoThumbUrl;
+    return summary;
+}
+
+function buildHabitGroupExerciseSnapshot(saveData = {}, status = {}) {
+    const exercise = saveData.exercise || {};
+    const steps = saveData.steps || {};
+    const cardioList = Array.isArray(exercise.cardioList) ? exercise.cardioList : [];
+    const strengthList = Array.isArray(exercise.strengthList) ? exercise.strengthList : [];
+    const stepCount = Number(status.stepCount || steps.count || steps.steps || 0) || 0;
+    const exerciseSnapshot = {
+        cardioList: cardioList.slice(0, 6).map(summarizeHabitGroupExerciseItem).filter(item => Object.keys(item).length > 0),
+        strengthList: strengthList.slice(0, 6).map(summarizeHabitGroupExerciseItem).filter(item => Object.keys(item).length > 0)
+    };
+    const cardioTime = Number(exercise.cardioTime || 0) || 0;
+    const cardioDist = Number(exercise.cardioDist || 0) || 0;
+    const memo = toHabitGroupSafeText(exercise.memo, 160);
+    if (cardioTime > 0) exerciseSnapshot.cardioTime = cardioTime;
+    if (cardioDist > 0) exerciseSnapshot.cardioDist = cardioDist;
+    if (memo) exerciseSnapshot.memo = memo;
+
+    const pieces = [];
+    if (stepCount > 0) pieces.push(`${stepCount.toLocaleString('ko-KR')}보`);
+    if (exerciseSnapshot.cardioList.length > 0) pieces.push(`유산소 ${exerciseSnapshot.cardioList.length}개`);
+    if (exerciseSnapshot.strengthList.length > 0) pieces.push(`근력 ${exerciseSnapshot.strengthList.length}개`);
+    if (cardioTime > 0) pieces.push(`${cardioTime}분`);
+    if (cardioDist > 0) pieces.push(`${cardioDist}km`);
+
+    return {
+        exerciseSummary: pieces.join(' · ') || '운동 기록 제출',
+        exerciseSnapshot,
+        stepsSnapshot: {
+            count: stepCount,
+            minSteps: Number(status.minSteps || 0) || null,
+            source: toHabitGroupSafeText(steps.source || status.source, 40)
+        }
+    };
+}
+
+async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, dateStr = '', docId = '', saveData = {} } = {}) {
+    if (!user?.uid || !dateStr || !docId || !saveData) return { checkedIn: 0, removed: 0 };
+    const memberships = await loadMyHabitGroupMemberships(user);
+    const activeMemberships = memberships.filter(item => item?.active !== false);
+    if (activeMemberships.length === 0) return { checkedIn: 0, removed: 0 };
+
+    let checkedIn = 0;
+    let removed = 0;
+    const displayName = getUserDisplayName();
+    await Promise.all(activeMemberships.map(async membership => {
+        const group = membership.group || getHabitGroupById(membership.groupId);
+        if (!group) return;
+        const status = getHabitGroupRecordStatus(group, saveData);
+        const checkinId = getHabitGroupCheckinDocId(group.id, dateStr, user.uid);
+        const checkinRef = doc(db, 'habit_group_checkins', checkinId);
+        if (!status.complete) {
+            await deleteDoc(checkinRef).then(() => { removed += 1; }).catch(() => {});
+            return;
+        }
+
+        const now = serverTimestamp();
+        const snapshot = buildHabitGroupExerciseSnapshot(saveData, status);
+        const checkinPayload = {
+            groupId: group.id,
+            groupType: 'exercise',
+            groupTitle: group.title,
+            uid: user.uid,
+            displayName,
+            photoURL: user.photoURL || null,
+            date: dateStr,
+            dailyLogId: docId,
+            source: status.source,
+            recordTab: 'exercise',
+            recordSource: status.source,
+            mediaThumbUrl: resolveHabitGroupCheckinThumb(saveData),
+            exerciseSummary: snapshot.exerciseSummary,
+            exerciseSnapshot: snapshot.exerciseSnapshot,
+            stepsSnapshot: snapshot.stepsSnapshot,
+            reviewStatus: 'pending',
+            countsTowardReward: true,
+            rewardProgressId: getHabitGroupRewardProgressDocId(group.id, user.uid),
+            reviewedBy: deleteField(),
+            reviewedAt: deleteField(),
+            reviewNote: deleteField(),
+            approvedAt: deleteField(),
+            rejectedAt: deleteField(),
+            createdAt: now,
+            updatedAt: now
+        };
+        await setDoc(checkinRef, checkinPayload, { merge: true });
+        checkedIn += 1;
+    }));
+
+    invalidateHabitGroupCaches();
+    return { checkedIn, removed };
+}
+
+function buildHabitGroupSummaryHtml(summary) {
+    return `
+        <div class="social-challenge-summary">
+            <span class="social-challenge-pill">👥 참여 ${summary.joinedCount}/${MAX_HABIT_GROUP_MEMBERSHIPS}</span>
+            <span class="social-challenge-pill">✅ 오늘 ${summary.checkedInCount}/${summary.joinedCount || 0}</span>
+            <span class="social-challenge-pill">☕ 소모임별 ${EXERCISE_GROUP_REWARD_TARGET}회</span>
+        </div>
+    `;
+}
+
+function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true } = {}) {
+    const typeLabel = getHabitGroupTypeLabel(group.type);
+    const reviewStatus = String(checkin?.reviewStatus || '').trim();
+    const progressSummary = summarizeHabitGroupProgress(progress || {});
+    const isRejectedToday = reviewStatus === 'rejected';
+    const statusClass = reviewStatus === 'approved'
+        ? 'is-active'
+        : joined || checkedIn
+        ? 'is-pending'
+        : '';
+    const statusText = reviewStatus === 'approved'
+        ? '오늘 승인 완료'
+        : reviewStatus === 'pending' || (checkedIn && !reviewStatus)
+        ? '오늘 제출 · 확인 대기'
+        : isRejectedToday
+        ? '오늘 제출이 반려됐어요'
+        : joined
+        ? `${typeLabel} 기록을 남기면 제출돼요`
+        : canJoin
+        ? '탭 한 번으로 바로 참여'
+        : `${MAX_HABIT_GROUP_MEMBERSHIPS}개 참여 중`;
+    const progressHtml = joined
+        ? `<div class="habit-group-progress-text">
+                이 소모임 ${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET} 제출
+                <span>승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}</span>
+           </div>`
+        : '';
+    const actionHtml = reviewStatus === 'approved'
+        ? '<button type="button" class="social-challenge-cta is-active" disabled>승인</button>'
+        : reviewStatus === 'pending' || (checkedIn && !isRejectedToday)
+        ? '<button type="button" class="social-challenge-cta is-active" disabled>대기</button>'
+        : joined
+        ? `<button type="button" class="social-challenge-cta" onclick="openHabitGroupRecordTab('${group.id}')">기록하기</button>`
+        : canJoin
+        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">참여</button>`
+        : '<button type="button" class="social-challenge-cta is-muted" disabled>2개 참여 중</button>';
+
+    return `
+        <div class="social-challenge-item habit-group-row ${statusClass}">
+            <div class="social-challenge-main">
+                <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
+                <div class="social-challenge-meta">${typeLabel} · ${escapeHtml(group.description)}</div>
+                <div class="social-challenge-status ${statusClass}">${statusText}</div>
+                ${progressHtml}
+            </div>
+            ${actionHtml}
+        </div>
+    `;
+}
+
+async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceReload = false } = {}) {
+    const list = document.getElementById('habit-group-directory-list');
+    const tabs = document.querySelectorAll('.habit-group-filter-btn');
+    if (!list || !user?.uid) return;
+
+    tabs.forEach(btn => {
+        const isActive = btn.dataset.type === _habitGroupDirectoryFilter;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    list.innerHTML = buildCommunityEmptyState('소모임을 불러오고 있어요', '잠시만 기다려 주세요.');
+    const memberships = await loadMyHabitGroupMemberships(user, { forceReload });
+    const joinedGroupIds = new Set(memberships.map(item => item.groupId));
+    const progressByGroupId = await loadHabitGroupRewardProgress(user, [...joinedGroupIds], { forceReload });
+    const canJoinMore = joinedGroupIds.size < MAX_HABIT_GROUP_MEMBERSHIPS;
+    const groups = DEFAULT_HABIT_GROUPS.filter(group => (
+        _habitGroupDirectoryFilter === 'all' || group.type === _habitGroupDirectoryFilter
+    ));
+
+    list.innerHTML = groups.map(group => {
+        const joined = joinedGroupIds.has(group.id);
+        const progressSummary = summarizeHabitGroupProgress(progressByGroupId.get(group.id) || {});
+        const progressHtml = joined
+            ? `<div class="habit-group-progress-text">
+                    이 소모임 ${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET} 제출
+                    <span>승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}</span>
+               </div>`
+            : '';
+        return `
+            <div class="social-challenge-item habit-group-directory-row ${joined ? 'is-active' : ''}">
+                <div class="social-challenge-main">
+                    <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
+                    <div class="social-challenge-meta">${getHabitGroupTypeLabel(group.type)} · ${escapeHtml(group.tags.join(' · '))}</div>
+                    <div class="social-challenge-status ${joined ? 'is-active' : ''}">${joined ? '참여 중' : escapeHtml(group.description)}</div>
+                    ${progressHtml}
+                </div>
+                <div class="social-challenge-row-actions">
+                    ${joined
+                        ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">나가기</button>`
+                        : canJoinMore
+                        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">참여</button>`
+                        : '<button type="button" class="social-challenge-cta is-muted" disabled>2개 참여 중</button>'}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+window.setHabitGroupDirectoryFilter = function(type = 'all') {
+    const nextType = String(type || 'all').trim();
+    _habitGroupDirectoryFilter = ['all', 'exercise'].includes(nextType) ? nextType : 'all';
+    renderHabitGroupDirectoryList(auth.currentUser).catch(error => {
+        logOptionalDataTimeout('habit_group_directory_filter_failed', error);
+    });
+};
+
+window.openHabitGroupDirectory = async function() {
+    const user = auth.currentUser;
+    if (!user) {
+        document.getElementById('login-modal').style.display = 'flex';
+        return;
+    }
+    const modal = document.getElementById('habit-group-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    renderHabitGroupDirectoryList(user).catch(error => {
+        logOptionalDataTimeout('habit_group_directory_failed', error);
+    });
+};
+
+window.closeHabitGroupDirectory = function() {
+    const modal = document.getElementById('habit-group-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+};
+
+window.joinHabitGroup = async function(groupId) {
+    const user = auth.currentUser;
+    const group = getHabitGroupById(groupId);
+    if (!user || !group) return;
+    try {
+        const fn = httpsCallable(functions, 'joinHabitGroup');
+        await fn({
+            groupId: group.id,
+            displayName: getUserDisplayName(),
+            photoURL: user.photoURL || null
+        });
+        invalidateHabitGroupCaches();
+        showToast(`${group.title}에 참여했어요.`);
+        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(() => {});
+        renderSocialChallenges(user).catch(() => {});
+    } catch (error) {
+        console.error('[joinHabitGroup]', error);
+        showToast(error?.message || '소모임 참여에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+};
+
+window.leaveHabitGroup = async function(groupId) {
+    const user = auth.currentUser;
+    const group = getHabitGroupById(groupId);
+    if (!user || !group) return;
+    try {
+        const fn = httpsCallable(functions, 'leaveHabitGroup');
+        await fn({ groupId: group.id });
+        invalidateHabitGroupCaches();
+        showToast(`${group.title}에서 나왔어요.`);
+        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(() => {});
+        renderSocialChallenges(user).catch(() => {});
+    } catch (error) {
+        console.error('[leaveHabitGroup]', error);
+        showToast(error?.message || '소모임 나가기에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+};
+
+window.openHabitGroupRecordTab = function(groupId) {
+    const group = getHabitGroupById(groupId);
+    const tabName = getHabitGroupRecordTab(group || 'diet');
+    openTab(tabName);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 window.retrySocialChallengesCard = function() {
     const user = auth.currentUser;
     if (!user) return;
@@ -20695,156 +21194,80 @@ async function renderSocialChallengesInner(user) {
 
     try {
         card.style.display = 'block';
-        setSocialChallengeHeadAction('start');
+        setSocialChallengeHeadAction('browse');
         list.innerHTML = buildCommunityEmptyState(
-            '친구 챌린지를 준비하고 있어요',
-            '친구 상태와 열린 챌린지를 불러오는 중입니다.'
+            '소모임을 준비하고 있어요',
+            '내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.'
         );
 
-        const friendshipState = await waitForFriendshipsForUi({ timeoutMs: FRIENDSHIP_LOAD_TIMEOUT_MS });
-        const activeFriendIds = friendshipState.activeFriendIds;
-        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
-        const summaryHtml = buildSocialChallengeFriendSummary(activeFriendIds);
-        _communityFocusState.friendCount = activeFriendIds.length;
-
-        if (friendshipState.timedOut && cachedMyFriendships.size === 0) {
-            setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
-            _communityFocusState.pendingChallenges = 0;
-            _communityFocusState.activeChallenges = 0;
-            updatePwaActionableBadge({ challengeInvites: 0 });
-            renderCommunityFocusPanel();
-            list.innerHTML = `
-                ${summaryHtml}
-                ${buildCommunityEmptyState(
-                    hasPendingRequests ? '친구 요청을 먼저 확인해요' : '친구를 먼저 연결해요',
-                    hasPendingRequests ? '프로필에서 요청을 확인해요.' : '프로필에서 친구를 추가해요.',
-                    [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
-                )}
-            `;
-            return;
-        }
-
-        if (activeFriendIds.length === 0) {
-            setSocialChallengeHeadAction(hasPendingRequests ? 'requests' : 'invite');
-            _communityFocusState.pendingChallenges = 0;
-            _communityFocusState.activeChallenges = 0;
-            updatePwaActionableBadge({ challengeInvites: 0 });
-            renderCommunityFocusPanel();
-            list.innerHTML = `
-                ${summaryHtml}
-                ${buildCommunityEmptyState(
-                    hasPendingRequests ? '친구 요청부터 확인해 주세요' : '수락된 친구가 있어야 챌린지를 시작할 수 있어요',
-                    hasPendingRequests
-                        ? '프로필 탭에서 요청을 수락하면 바로 친구 챌린지를 시작할 수 있어요.'
-                        : '친구에게 초대 링크를 보내면 신규 가입 보너스와 친구 연결이 한 번에 이어져요.',
-                    [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
-                )}
-            `;
-            return;
-        }
-
-        const [readinessItems, [asParticipant, asInvitee]] = await Promise.all([
-            loadSocialChallengeFriendReadiness(user),
-            loadOpenSocialChallengesForUser(user, SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS)
+        const { todayStr } = getDatesInfo();
+        const memberships = await loadMyHabitGroupMemberships(user);
+        const joinedGroupIds = memberships.map(item => item.groupId);
+        const [checkins, progressByGroupId] = await Promise.all([
+            loadHabitGroupTodayCheckins(user, todayStr, joinedGroupIds),
+            loadHabitGroupRewardProgress(user, joinedGroupIds)
         ]);
-
-        const challenges = mergeOpenSocialChallenges(asParticipant, asInvitee);
-        const { busyFriendIds, disabledTypes } = buildSocialChallengeCreateAvailability(challenges, user.uid);
-        const hasAvailableType = !disabledTypes.group_goal || !disabledTypes.competition;
-        const challengeContextMap = buildSocialChallengeFriendContextMap(challenges, user.uid);
-        const readinessHtml = buildSocialChallengeFriendReadinessSection(readinessItems, challengeContextMap, {
-            canStartAnyChallenge: hasAvailableType
+        const summary = summarizeHabitGroups({
+            groups: DEFAULT_HABIT_GROUPS,
+            memberships,
+            checkins
         });
-        const readyCount = hasAvailableType
-            ? readinessItems.filter(item => item.eligible && !busyFriendIds.has(item.uid)).length
-            : 0;
-        const pendingReadinessCount = hasAvailableType
-            ? readinessItems.filter(item => item.readinessUnknown && !busyFriendIds.has(item.uid)).length
-            : 0;
+        const summaryHtml = buildHabitGroupSummaryHtml(summary);
+        const checkinByGroupId = new Map(checkins.map(item => [item.groupId, item]));
+        const checkinGroupIds = new Set(checkins
+            .filter(item => String(item.reviewStatus || 'pending') !== 'rejected')
+            .map(item => item.groupId));
+        const canJoinMore = joinedGroupIds.length < MAX_HABIT_GROUP_MEMBERSHIPS;
+        const joinedRows = memberships
+            .map(membership => membership.group || getHabitGroupById(membership.groupId))
+            .filter(Boolean)
+            .map(group => buildHabitGroupDashboardRow(group, {
+                joined: true,
+                checkedIn: checkinGroupIds.has(group.id),
+                checkin: checkinByGroupId.get(group.id) || null,
+                progress: progressByGroupId.get(group.id) || null
+            }));
+        const recommendedRows = getRecommendedHabitGroups(getCachedDailyLog(`${user.uid}_${todayStr}`) || {}, joinedGroupIds)
+            .slice(0, joinedRows.length ? 2 : 3)
+            .map(group => buildHabitGroupDashboardRow(group, { joined: false, checkedIn: false, canJoin: canJoinMore }));
 
-        const pendingChallenges = challenges.filter(ch => ch.isInvite).length;
-        const activeChallenges = challenges.filter(ch => !ch.isInvite && ch.status === 'active').length;
-        updatePwaActionableBadge({ challengeInvites: pendingChallenges });
-        setSocialChallengeHeadAction((readyCount > 0 || pendingReadinessCount > 0) && hasAvailableType ? 'start' : 'blocked');
-        _communityFocusState.pendingChallenges = pendingChallenges;
-        _communityFocusState.activeChallenges = activeChallenges;
+        updatePwaActionableBadge({ challengeInvites: 0 });
+        setSocialChallengeHeadAction(summary.joinedCount > 0 ? 'joined' : 'browse');
+        _communityFocusState.friendCount = summary.joinedCount;
+        _communityFocusState.pendingChallenges = 0;
+        _communityFocusState.activeChallenges = summary.checkedInCount;
         renderCommunityFocusPanel();
 
-        const orderedChallenges = challenges.slice().sort((a, b) => Number(b.isInvite) - Number(a.isInvite));
-        const challengeRowsHtml = orderedChallenges.map(ch => {
-            const typeLabel = ch.type === 'competition' ? '1:1 경쟁' : '함께 목표';
-            const durationLabel = `${ch.durationDays}일`;
-            if (ch.isInvite) {
-                return `
-                    <div class="social-challenge-item is-invite">
-                        <div class="social-challenge-main">
-                            <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
-                            <div class="social-challenge-meta">${escapeHtml(ch.creatorName || '친구')}님이 초대했어요${ch.type === 'competition' ? ` · 스테이크 ${ch.stakePoints}P` : ''}</div>
-                            <div class="social-challenge-status is-pending">수락하면 오늘부터 바로 시작돼요</div>
-                        </div>
-                        <button type="button" class="social-challenge-cta" onclick="openChallengeInviteModal('${ch.id}')">응답하기</button>
-                    </div>
-                `;
-            }
-
-            const statusLabel = ch.status === 'active'
-                ? `진행 중 · ${ch.startDate} ~ ${ch.endDate}`
-                : '수락 대기 중';
-            const isOutgoingPending = ch.status === 'pending' && ch.creatorId === user.uid;
-
-            return `
-                <div class="social-challenge-item ${ch.status === 'active' ? 'is-active' : ''}${isOutgoingPending ? ' is-pending' : ''}">
-                    <div class="social-challenge-main">
-                        <div class="social-challenge-type">${typeLabel} · ${durationLabel}</div>
-                        <div class="social-challenge-status ${ch.status === 'active' ? 'is-active' : 'is-pending'}">${escapeHtml(statusLabel)}</div>
-                        ${ch.type === 'competition' ? `<div class="social-challenge-meta">스테이크 ${ch.stakePoints}P</div>` : ''}
-                    </div>
-                    ${isOutgoingPending ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="cancelPendingSocialChallenge('${ch.id}')">취소</button>` : ''}
-                </div>
-            `;
-        });
-
-        if (challenges.length === 0) {
-            const canAttemptChallenge = readyCount > 0 || pendingReadinessCount > 0;
-            const emptyTitle = canAttemptChallenge ? '바로 챌린지 가능한 친구가 있어요' : '아직 5일 기록이 필요한 친구가 있어요';
-            const emptyBody = canAttemptChallenge
-                ? (pendingReadinessCount > 0 ? '기록 확인이 늦는 친구는 시작할 때 한 번 더 확인해요.' : '')
-                : '최근 30일 안의 기록을 기준으로 확인해요.';
+        if (joinedRows.length === 0) {
             list.innerHTML = `
                 ${summaryHtml}
-                ${readinessHtml}
-                <div class="community-empty-state">
-                    <strong>${emptyTitle}</strong>
-                    ${emptyBody ? `<span>${emptyBody}</span>` : ''}
-                </div>
+                ${buildCommunityEmptyState(
+                    '같이 할 소모임을 골라보세요',
+                    `운동 소모임은 최대 ${MAX_HABIT_GROUP_MEMBERSHIPS}개까지 참여할 수 있어요.`,
+                    ['<button type="button" class="community-empty-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>']
+                )}
+                <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">추천 소모임</div>
+                ${buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, 3)}
             `;
             return;
         }
 
         list.innerHTML = `
             ${summaryHtml}
-            ${readinessHtml}
-            <div class="social-challenge-summary">
-                <span class="social-challenge-pill">🏆 진행 ${activeChallenges}개</span>
-                <span class="social-challenge-pill">📩 응답 대기 ${pendingChallenges}개</span>
-            </div>
-            ${buildCommunityExpandableRows('social-challenges', challengeRowsHtml, 2)}
+            <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">내 소모임</div>
+            ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, 3)}
+            ${recommendedRows.length ? `
+                <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">더 함께할 수 있어요</div>
+                ${buildCommunityExpandableRows('habit-groups-recommended', recommendedRows, 2)}
+            ` : ''}
         `;
     } catch (e) {
-        logOptionalDataTimeout('social_challenges_render_deferred', e);
-        const hasPendingRequests = getIncomingFriendRequests().length > 0 || getOutgoingFriendRequests().length > 0;
-        const activeFriendIds = getActiveFriendIds();
-        setSocialChallengeHeadAction(activeFriendIds.length > 0 ? 'start' : (hasPendingRequests ? 'requests' : 'invite'));
+        logOptionalDataTimeout('habit_groups_render_deferred', e);
+        setSocialChallengeHeadAction('retry');
         list.innerHTML = buildCommunityEmptyState(
-            activeFriendIds.length > 0
-                ? '친구 상태를 다시 확인 중이에요'
-                : (hasPendingRequests ? '친구 요청을 먼저 확인해요' : '친구를 먼저 연결해요'),
-            activeFriendIds.length > 0
-                ? '잠시 후 다시 확인해요.'
-                : (hasPendingRequests ? '프로필에서 요청을 확인해요.' : '프로필에서 친구를 추가해요.'),
-            activeFriendIds.length > 0
-                ? []
-                : [`<button type="button" class="community-empty-btn" onclick="${hasPendingRequests ? 'openFriendRequestFlow()' : 'openFriendInviteFlow()'}">${hasPendingRequests ? '📩 요청 확인' : '👥 친구 연결'}</button>`]
+            '소모임 상태를 다시 확인 중이에요',
+            '잠시 후 다시 불러오면 이어서 확인할 수 있어요.',
+            ['<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">다시 불러오기</button>']
         );
         card.style.display = 'block';
     }
@@ -20922,11 +21345,15 @@ let _challengeState = {
 
 /** 챌린지 생성 모달 열기 */
 window.openCreateChallengeModal = async function(options = {}) {
+    {
+        const user = auth.currentUser;
+        if (!user) { showToast('로그인이 필요합니다'); return; }
+        showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+        return window.openHabitGroupDirectory();
+    }
+
     const modal = document.getElementById('create-challenge-modal');
     if (!modal) return;
-
-    const user = auth.currentUser;
-    if (!user) { showToast('로그인이 필요합니다'); return; }
     const preselectedFriendUid = typeof options?.preselectedFriendUid === 'string'
         ? options.preselectedFriendUid.trim()
         : '';
@@ -21161,6 +21588,9 @@ window.selectStake = function(points) {
 };
 
 window.submitCreateChallenge = async function() {
+    showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+    return window.openHabitGroupDirectory();
+
     const user = auth.currentUser;
     if (!user) return;
 
@@ -21230,6 +21660,9 @@ window.cancelPendingSocialChallenge = async function(challengeId) {
 
 /** 챌린지 초대 모달 열기 */
 window.openChallengeInviteModal = async function(challengeId) {
+    showToast('친구 챌린지는 소모임으로 바뀌었어요.');
+    return window.openHabitGroupDirectory();
+
     const modal = document.getElementById('challenge-invite-modal');
     const info = document.getElementById('challenge-invite-info');
     if (!modal || !info) return;
@@ -21366,7 +21799,7 @@ async function checkChallengeNotifications(uid) {
         const snap = await getDocs(query(
             collection(db, 'notifications'),
             where('postOwnerId', '==', uid),
-            where('type', 'in', ['friend_request', 'friend_connected', 'friend_declined', 'challenge_invite', 'challenge_settled']),
+            where('type', 'in', ['friend_request', 'friend_connected', 'friend_declined', 'challenge_settled']),
             orderBy('createdAt', 'desc'),
             limit(5)
         ));
@@ -21419,8 +21852,6 @@ async function checkChallengeNotifications(uid) {
                 showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);
             } else if (data.type === 'friend_declined') {
                 showToast(`🙂 ${data.fromUserName || '상대'}님이 이번 친구 요청은 보류했어요.`);
-            } else if (data.type === 'challenge_invite') {
-                showToast(`🏆 ${data.fromUserName}님이 챌린지에 초대했어요!\n대시보드에서 확인하세요`);
             } else if (data.type === 'challenge_settled') {
                 const outcomeMsg = {
                     'success': '🎉 단체 목표 달성! 보너스 포인트가 지급됐어요',

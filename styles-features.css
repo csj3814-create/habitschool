@@ -2831,6 +2831,11 @@ textarea {
     color: #2E7D32;
 }
 
+.social-challenge-cta.is-muted {
+    background: #ECEFF3;
+    color: #6B7280;
+}
+
 .social-challenge-cta:disabled {
     opacity: 1;
 }
@@ -2898,6 +2903,56 @@ textarea {
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
+}
+
+.habit-group-filter-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    margin: 12px 0;
+}
+
+.habit-group-filter-btn {
+    min-height: 34px;
+    border: 1px solid rgba(124, 77, 255, 0.18);
+    border-radius: 12px;
+    background: #fff;
+    color: #6C43E0;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.habit-group-filter-btn.active {
+    background: #7C4DFF;
+    border-color: #7C4DFF;
+    color: #fff;
+}
+
+.habit-group-directory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.habit-group-row .social-challenge-main,
+.habit-group-directory-row .social-challenge-main {
+    flex: 1 1 auto;
+}
+
+.habit-group-progress-text {
+    margin-top: 5px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.35;
+    color: #4B5563;
+}
+
+.habit-group-progress-text span {
+    display: block;
+    margin-top: 2px;
+    font-weight: 700;
+    color: #8A6F3C;
 }
 
 /* 그룹 챌린지 */

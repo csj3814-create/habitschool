@@ -104,7 +104,7 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=196">
+    <link rel="stylesheet" href="styles.css?v=198">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -702,7 +702,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=196"></script>
+    <script src="js/webview-detect.js?v=198"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -944,13 +944,13 @@
 
                     <div class="card metrics-card social-challenge-dashboard-card" id="social-challenge-card">
                         <div class="social-challenge-dashboard-head">
-                            <h3>🤝 친구 챌린지</h3>
-                            <button type="button" class="social-challenge-head-btn" onclick="openCreateChallengeModal()">챌린지 시작</button>
+                            <h3>🤝 함께 소모임</h3>
+                            <button type="button" class="social-challenge-head-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>
                         </div>
                         <div id="social-challenge-list">
                             <div class="community-empty-state">
-                                <strong>친구 챌린지를 준비하고 있어요</strong>
-                                <span>친구 상태와 열린 챌린지를 불러오는 중입니다.</span>
+                                <strong>소모임을 준비하고 있어요</strong>
+                                <span>내가 참여한 모임과 오늘 인증 상태를 불러오는 중입니다.</span>
                             </div>
                         </div>
                     </div>
@@ -2428,13 +2428,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=196"></script>
-    <script type="module" src="js/main.js?v=196"></script>
-    <script type="module" src="js/diet-analysis.js?v=196"></script>
-    <script type="module" src="js/metabolic-score.js?v=196"></script>
+    <script type="module" src="js/app.js?v=198"></script>
+    <script type="module" src="js/main.js?v=198"></script>
+    <script type="module" src="js/diet-analysis.js?v=198"></script>
+    <script type="module" src="js/metabolic-score.js?v=198"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=196"></script>
+    <script src="js/pwa-install.js?v=198"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -2466,7 +2466,27 @@
         </div>
     </div>
 
-    <!-- ===== 소셜 챌린지 생성 모달 ===== -->
+    <!-- ===== 소모임 찾기 모달 ===== -->
+    <div id="habit-group-modal" onclick="if(event.target===this)closeHabitGroupDirectory()"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:var(--card-bg,#fff);border-radius:20px;padding:22px 18px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto;position:relative;">
+            <button onclick="closeHabitGroupDirectory()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:#bbb;">✕</button>
+            <h3 style="margin:0 0 6px;font-size:17px;font-weight:800;">🤝 함께 소모임</h3>
+            <p style="margin:0 0 14px;font-size:12px;line-height:1.5;color:#777;">운동 소모임은 최대 2개까지 참여할 수 있고, 모임장이 제출 기록을 확인해요.</p>
+            <div class="habit-group-filter-row" role="group" aria-label="소모임 분류">
+                <button type="button" class="habit-group-filter-btn active" data-type="all" aria-pressed="true" onclick="setHabitGroupDirectoryFilter('all')">전체</button>
+                <button type="button" class="habit-group-filter-btn" data-type="exercise" aria-pressed="false" onclick="setHabitGroupDirectoryFilter('exercise')">운동</button>
+            </div>
+            <div id="habit-group-directory-list" class="habit-group-directory-list">
+                <div class="community-empty-state">
+                    <strong>소모임을 불러오고 있어요</strong>
+                    <span>잠시만 기다려 주세요.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 소셜 챌린지 생성 모달 (legacy) ===== -->
     <div id="create-challenge-modal" onclick="if(event.target===this)closeCreateChallengeModal()"
          style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center;padding:16px;">
         <div style="background:var(--card-bg,#fff);border-radius:20px;padding:24px 20px;width:100%;max-width:340px;max-height:90vh;overflow-y:auto;position:relative;">
