@@ -55,13 +55,15 @@ describe('exercise habit groups', () => {
         expect(getHabitGroupRecordStatus(group, { exercise: {}, steps: { count: 12000 } }).complete).toBe(false);
     });
 
-    it('recommends unjoined groups that match today completed exercise first', () => {
+    it('recommends unjoined groups by estimated participant count', () => {
         const recommended = getRecommendedHabitGroups({
             steps: { count: 12000 },
             exercise: { cardioList: [{ name: '러닝' }] }
         }, ['exercise-home-training']);
 
         expect(recommended[0].id).toBe('exercise-walking-10000');
+        expect(recommended[1].id).toBe('exercise-running-club');
+        expect(recommended[2].id).toBe('exercise-gym-checkin');
         expect(recommended.some(group => group.id === 'exercise-home-training')).toBe(false);
     });
 

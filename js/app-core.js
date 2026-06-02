@@ -14,28 +14,28 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=198';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=198';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=199';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=199';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=198';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=198';
+} from './auth-login-helpers.js?v=199';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=199';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=198';
+} from './exercise-media.js?v=199';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=198';
+} from './health-connect-utils.js?v=199';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_REWARD_TARGET,
@@ -50,13 +50,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=198';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=198';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=198';
-import { sanitize, compressImage } from './data-manager.js?v=198';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=198';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=198';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=198';
+} from './habit-groups.js?v=199';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=199';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=199';
+import { sanitize, compressImage } from './data-manager.js?v=199';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=199';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=199';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=199';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -69,7 +69,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=198';
+} from './diet-program.js?v=199';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -81,18 +81,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=198';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=198';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=198';
+} from './meditation-guide.js?v=199';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=199';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=199';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=198';
+} from './social-challenge-readiness.js?v=199';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=198';
+} from './monthly-mvp-reward.js?v=199';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5236,7 +5236,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=198';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=199';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -20990,6 +20990,10 @@ function buildHabitGroupSummaryHtml(summary) {
     `;
 }
 
+function formatHabitGroupProgressLine(progressSummary = {}) {
+    return `${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}`;
+}
+
 function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true } = {}) {
     const typeLabel = getHabitGroupTypeLabel(group.type);
     const reviewStatus = String(checkin?.reviewStatus || '').trim();
@@ -21006,16 +21010,14 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         ? '오늘 제출 · 확인 대기'
         : isRejectedToday
         ? '오늘 제출이 반려됐어요'
-        : joined
-        ? `${typeLabel} 기록을 남기면 제출돼요`
-        : canJoin
-        ? '탭 한 번으로 바로 참여'
-        : `${MAX_HABIT_GROUP_MEMBERSHIPS}개 참여 중`;
+        : !canJoin && !joined
+        ? `${MAX_HABIT_GROUP_MEMBERSHIPS}개 참여 중`
+        : '';
+    const statusHtml = statusText
+        ? `<div class="social-challenge-status ${statusClass}">${statusText}</div>`
+        : '';
     const progressHtml = joined
-        ? `<div class="habit-group-progress-text">
-                이 소모임 ${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET} 제출
-                <span>승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}</span>
-           </div>`
+        ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
         : '';
     const actionHtml = reviewStatus === 'approved'
         ? '<button type="button" class="social-challenge-cta is-active" disabled>승인</button>'
@@ -21032,7 +21034,7 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
             <div class="social-challenge-main">
                 <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
                 <div class="social-challenge-meta">${typeLabel} · ${escapeHtml(group.description)}</div>
-                <div class="social-challenge-status ${statusClass}">${statusText}</div>
+                ${statusHtml}
                 ${progressHtml}
             </div>
             ${actionHtml}
@@ -21064,10 +21066,7 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
         const joined = joinedGroupIds.has(group.id);
         const progressSummary = summarizeHabitGroupProgress(progressByGroupId.get(group.id) || {});
         const progressHtml = joined
-            ? `<div class="habit-group-progress-text">
-                    이 소모임 ${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET} 제출
-                    <span>승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}</span>
-               </div>`
+            ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
             : '';
         return `
             <div class="social-challenge-item habit-group-directory-row ${joined ? 'is-active' : ''}">

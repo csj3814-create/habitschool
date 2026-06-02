@@ -21,8 +21,9 @@ describe('habit group transition', () => {
         const htmlSource = readRepoFile('index.html');
 
         expect(appSource).toContain('MAX_HABIT_GROUP_MEMBERSHIPS');
-        expect(appSource).toContain('이 소모임 ${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET} 제출');
-        expect(appSource).toContain('승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}');
+        expect(appSource).toContain('${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}');
+        expect(appSource).not.toContain('탭 한 번으로 바로 참여');
+        expect(appSource).not.toContain('기록을 남기면 제출돼요');
         expect(htmlSource).toContain('운동 소모임은 최대 2개까지 참여할 수 있고');
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('diet')");
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('mind')");

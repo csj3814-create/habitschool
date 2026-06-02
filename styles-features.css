@@ -2948,13 +2948,6 @@ textarea {
     color: #4B5563;
 }
 
-.habit-group-progress-text span {
-    display: block;
-    margin-top: 2px;
-    font-weight: 700;
-    color: #8A6F3C;
-}
-
 /* 그룹 챌린지 */
 .group-challenge-section {
     margin-top: 12px;

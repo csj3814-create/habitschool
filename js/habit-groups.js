@@ -153,10 +153,13 @@ export function getHabitGroupRecordStatus(groupOrType = '', dailyLog = {}) {
 
 export function getRecommendedHabitGroups(dailyLog = {}, joinedGroupIds = []) {
     const joinedSet = new Set((joinedGroupIds || []).map(id => String(id || '').trim()).filter(Boolean));
-    const ranked = DEFAULT_HABIT_GROUPS.filter(group => !joinedSet.has(group.id));
-    const completeGroups = ranked.filter(group => getHabitGroupRecordStatus(group, dailyLog).complete);
-    const pendingGroups = ranked.filter(group => !completeGroups.some(item => item.id === group.id));
-    return [...completeGroups, ...pendingGroups];
+    return DEFAULT_HABIT_GROUPS
+        .filter(group => !joinedSet.has(group.id))
+        .sort((a, b) => {
+            const memberDiff = (Number(b.memberCountEstimate) || 0) - (Number(a.memberCountEstimate) || 0);
+            if (memberDiff) return memberDiff;
+            return DEFAULT_HABIT_GROUPS.indexOf(a) - DEFAULT_HABIT_GROUPS.indexOf(b);
+        });
 }
 
 function normalizeDateArray(values = []) {
