@@ -10,6 +10,7 @@ describe('habit group transition', () => {
         expect(appSource).toContain("'exercise_group_reward_progress'");
         expect(appSource).toContain("httpsCallable(functions, 'joinHabitGroup')");
         expect(appSource).toContain("httpsCallable(functions, 'leaveHabitGroup')");
+        expect(appSource).toContain("httpsCallable(functions, 'reviewHabitGroupCheckin')");
         expect(appSource).toContain("challengeInvites: 0");
         expect(appSource).toContain("showToast('친구 챌린지는 소모임으로 바뀌었어요.');");
         expect(appSource).toContain('return window.openHabitGroupDirectory();');
@@ -26,6 +27,11 @@ describe('habit group transition', () => {
         expect(appSource).toContain('formatHabitGroupJoinCta');
         expect(appSource).toContain('buildHabitGroupRecommendationSection');
         expect(appSource).toContain('toggleHabitGroupRecommendationsWhenFull');
+        expect(appSource).toContain('getHabitGroupLeaderMemberships');
+        expect(appSource).toContain('loadHabitGroupPendingReviewsForLeader');
+        expect(appSource).toContain('buildHabitGroupLeaderReviewSection');
+        expect(appSource).toContain('window.reviewHabitGroupCheckin');
+        expect(appSource).not.toContain('오늘 제출 · 확인 대기');
         expect(appSource).toContain('showUnavailableAction: canJoinMore');
         expect(appSource).toContain('최대 2모임');
         expect(appSource).not.toContain('2개 참여 중');
@@ -41,6 +47,7 @@ describe('habit group transition', () => {
 
     it('blocks new social challenge writes at rules and functions boundaries', () => {
         const rulesSource = readRepoFile('firestore.rules');
+        const indexesSource = readRepoFile('firestore.indexes.json');
         const runtimeSource = readFunctionsSource();
 
         expect(rulesSource).toContain('match /habit_group_members/{memberId}');
@@ -51,6 +58,8 @@ describe('habit group transition', () => {
         expect(rulesSource).toContain('&& isHabitGroupActiveMember(request.resource.data.groupId)');
         expect(rulesSource).toContain('match /social_challenges/{challengeId}');
         expect(rulesSource).toContain('allow create: if false;');
+        expect(indexesSource).toContain('"collectionGroup": "habit_group_checkins"');
+        expect(indexesSource).toContain('"fieldPath": "reviewStatus"');
         expect(runtimeSource).toContain('const MAX_HABIT_GROUP_MEMBERSHIPS = 2;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
         expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 3000;');

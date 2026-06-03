@@ -1,5 +1,18 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-03 (Habit Group Leader Review UI)
+
+### 229. Pending moderation needs an owner-facing queue, not only member-facing status
+- Symptom: members could submit exercise group checkins and see a pending state, but the group leader had no visible place to confirm them.
+- Root cause: the backend review callable existed, yet the dashboard only rendered member progress and did not expose the moderation queue.
+- Lesson: whenever a feature introduces a `pending` state that requires human confirmation, ship the confirmer's workflow in the same surface. A pending label is not enough unless the responsible role has an actionable queue.
+
+### 230. Do not repeat transient pending copy across compact cards
+- Symptom: a joined group card showed both a pending progress line and an extra `오늘 제출 · 확인 대기` status line.
+- Root cause: daily status copy was layered on top of reward progress copy without checking for duplicate meaning.
+- Lesson: compact dashboard rows should show pending state once. Prefer the persistent progress summary and action button, and reserve extra status text for exceptions such as approval or rejection.
+
+---
 ## 2026-06-03 (Habit Group Full Membership UI)
 
 ### 228. Full membership recommendations should collapse by default

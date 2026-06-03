@@ -2948,6 +2948,41 @@ textarea {
     color: #4B5563;
 }
 
+.habit-group-review-row {
+    align-items: center;
+}
+
+.habit-group-review-thumb {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #F2DFC5;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #fff;
+}
+
+.habit-group-review-actions {
+    gap: 6px;
+}
+
+@media (max-width: 420px) {
+    .habit-group-review-row {
+        align-items: flex-start;
+    }
+
+    .habit-group-review-thumb {
+        width: 36px;
+        height: 36px;
+    }
+
+    .habit-group-review-actions .social-challenge-cta,
+    .habit-group-review-actions .social-challenge-inline-btn {
+        min-height: 32px;
+        padding: 0 9px;
+    }
+}
+
 /* 그룹 챌린지 */
 .group-challenge-section {
     margin-top: 12px;

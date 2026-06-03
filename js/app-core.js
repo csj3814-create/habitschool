@@ -14,29 +14,29 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=203';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=203';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=204';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=204';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=203';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=203';
+} from './auth-login-helpers.js?v=204';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=204';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=203';
+} from './exercise-media.js?v=204';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=203';
+} from './health-connect-utils.js?v=204';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -53,13 +53,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=203';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=203';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=203';
-import { sanitize, compressImage } from './data-manager.js?v=203';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=203';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=203';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=203';
+} from './habit-groups.js?v=204';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=204';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=204';
+import { sanitize, compressImage } from './data-manager.js?v=204';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=204';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=204';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=204';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -72,7 +72,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=203';
+} from './diet-program.js?v=204';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -84,18 +84,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=203';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=203';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=203';
+} from './meditation-guide.js?v=204';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=204';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=204';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=203';
+} from './social-challenge-readiness.js?v=204';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=203';
+} from './monthly-mvp-reward.js?v=204';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5240,7 +5240,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=203';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=204';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -20452,6 +20452,14 @@ let _habitGroupProgressCache = {
     loadedAt: 0,
     progressByGroupId: new Map()
 };
+let _habitGroupLeaderPendingReviewCache = {
+    uid: '',
+    groupKey: '',
+    loadedAt: 0,
+    items: []
+};
+let _habitGroupLeaderPendingReviewPromise = null;
+let _habitGroupLeaderPendingReviewPromiseKey = '';
 let _habitGroupDirectoryFilter = 'all';
 let _habitGroupRecommendationsExpandedWhenFull = false;
 
@@ -20846,6 +20854,7 @@ function normalizeHabitGroupMembership(docSnap) {
         id: docSnap?.id || getHabitGroupMemberDocId(groupId, data.uid),
         groupId,
         uid: String(data.uid || '').trim(),
+        role: String(data.role || 'member').trim() || 'member',
         active: data.active !== false,
         joinedAt: data.joinedAt || null,
         lastCheckinDate: String(data.lastCheckinDate || '').trim(),
@@ -20857,6 +20866,7 @@ function invalidateHabitGroupCaches() {
     _habitGroupMembershipCache.loadedAt = 0;
     _habitGroupCheckinCache.loadedAt = 0;
     _habitGroupProgressCache.loadedAt = 0;
+    _habitGroupLeaderPendingReviewCache.loadedAt = 0;
 }
 
 async function loadMyHabitGroupMemberships(user = auth.currentUser, { forceReload = false } = {}) {
@@ -20978,6 +20988,119 @@ async function loadHabitGroupRewardProgress(user = auth.currentUser, groupIds = 
         progressByGroupId
     };
     return progressByGroupId;
+}
+
+function getHabitGroupLeaderMemberships(memberships = []) {
+    return memberships.filter(item => {
+        const role = String(item?.role || '').trim();
+        return item?.active !== false && ['leader', 'owner'].includes(role);
+    });
+}
+
+function getHabitGroupTimestampMs(value) {
+    if (!value) return 0;
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.toDate === 'function') return value.toDate().getTime();
+    if (typeof value.seconds === 'number') return value.seconds * 1000;
+    const parsed = Date.parse(String(value));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeHabitGroupCheckin(docSnap) {
+    const data = docSnap?.data?.() || docSnap || {};
+    const groupId = String(data.groupId || '').trim();
+    const uid = String(data.uid || '').trim();
+    const date = String(data.date || '').trim();
+    const group = getHabitGroupById(groupId);
+    if (!group || !uid || !date) return null;
+    return {
+        id: docSnap?.id || getHabitGroupCheckinDocId(groupId, date, uid),
+        ...data,
+        groupId,
+        uid,
+        date,
+        group,
+        groupTitle: String(data.groupTitle || group.title || groupId).trim(),
+        displayName: toHabitGroupSafeText(data.displayName || uid, 40),
+        exerciseSummary: toHabitGroupSafeText(data.exerciseSummary || '', 100)
+    };
+}
+
+function sortHabitGroupPendingReviews(a, b) {
+    const dateOrder = String(b.date || '').localeCompare(String(a.date || ''));
+    if (dateOrder) return dateOrder;
+    const bTime = getHabitGroupTimestampMs(b.updatedAt || b.createdAt);
+    const aTime = getHabitGroupTimestampMs(a.updatedAt || a.createdAt);
+    if (bTime !== aTime) return bTime - aTime;
+    return String(a.displayName || '').localeCompare(String(b.displayName || ''), 'ko');
+}
+
+async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, leaderGroupIds = [], { forceReload = false } = {}) {
+    if (!user?.uid || leaderGroupIds.length === 0) return [];
+    const normalizedGroupIds = [...new Set(leaderGroupIds.map(id => String(id || '').trim()).filter(Boolean))].sort();
+    if (normalizedGroupIds.length === 0) return [];
+    const groupKey = normalizedGroupIds.join('|');
+    const cacheMatches = _habitGroupLeaderPendingReviewCache.uid === user.uid
+        && _habitGroupLeaderPendingReviewCache.groupKey === groupKey;
+    if (!forceReload
+        && cacheMatches
+        && Date.now() - _habitGroupLeaderPendingReviewCache.loadedAt < HABIT_GROUP_CACHE_TTL_MS) {
+        return _habitGroupLeaderPendingReviewCache.items;
+    }
+
+    const promiseKey = `${user.uid}:${groupKey}`;
+    if (!forceReload
+        && _habitGroupLeaderPendingReviewPromise
+        && _habitGroupLeaderPendingReviewPromiseKey === promiseKey) {
+        return _habitGroupLeaderPendingReviewPromise;
+    }
+
+    const pendingReviewPromise = withAsyncTimeout(Promise.all(
+        chunkArray(normalizedGroupIds, 10).map(async chunkGroupIds => {
+            const snap = await getDocs(query(
+                collection(db, 'habit_group_checkins'),
+                where('groupId', 'in', chunkGroupIds),
+                where('reviewStatus', '==', 'pending'),
+                limit(30)
+            ));
+            const items = [];
+            snap.forEach(checkinDoc => {
+                const item = normalizeHabitGroupCheckin(checkinDoc);
+                if (item) items.push(item);
+            });
+            return items;
+        })
+    ), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_pending_reviews_timeout')
+        .then(chunkedItems => {
+            const itemsById = new Map();
+            chunkedItems.flat().forEach(item => {
+                if (item?.id) itemsById.set(item.id, item);
+            });
+            const items = [...itemsById.values()]
+                .sort(sortHabitGroupPendingReviews)
+                .slice(0, 40);
+            _habitGroupLeaderPendingReviewCache = {
+                uid: user.uid,
+                groupKey,
+                loadedAt: Date.now(),
+                items
+            };
+            return items;
+        })
+        .catch(error => {
+            logOptionalDataTimeout('habit_group_pending_reviews_timeout', error);
+            return cacheMatches ? _habitGroupLeaderPendingReviewCache.items : [];
+        })
+        .finally(() => {
+            if (_habitGroupLeaderPendingReviewPromise === pendingReviewPromise) {
+                _habitGroupLeaderPendingReviewPromise = null;
+                _habitGroupLeaderPendingReviewPromiseKey = '';
+            }
+        });
+
+    _habitGroupLeaderPendingReviewPromise = pendingReviewPromise;
+    _habitGroupLeaderPendingReviewPromiseKey = promiseKey;
+    return pendingReviewPromise;
 }
 
 function resolveHabitGroupCheckinThumb(saveData = {}) {
@@ -21146,8 +21269,6 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         : '';
     const statusText = reviewStatus === 'approved'
         ? '오늘 승인 완료'
-        : reviewStatus === 'pending' || (checkedIn && !reviewStatus)
-        ? '오늘 제출 · 확인 대기'
         : isRejectedToday
         ? '오늘 제출이 반려됐어요'
         : '';
@@ -21178,6 +21299,55 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
                 ${progressHtml}
             </div>
             ${actionHtml}
+        </div>
+    `;
+}
+
+function formatHabitGroupReviewDate(dateStr = '') {
+    const parts = String(dateStr || '').split('-');
+    if (parts.length !== 3) return dateStr || '날짜 없음';
+    return `${Number(parts[1]) || parts[1]}/${Number(parts[2]) || parts[2]}`;
+}
+
+function formatHabitGroupReviewSummary(checkin = {}) {
+    const stepCount = Number(checkin.stepsSnapshot?.count || 0) || 0;
+    const stepText = stepCount > 0 ? `${stepCount.toLocaleString('ko-KR')}보` : '';
+    const summary = toHabitGroupSafeText(checkin.exerciseSummary || stepText || checkin.source || '운동 기록', 90);
+    return summary || '운동 기록';
+}
+
+function buildHabitGroupLeaderReviewRow(checkin = {}) {
+    const group = checkin.group || getHabitGroupById(checkin.groupId);
+    if (!group) return '';
+    const mediaUrl = isPersistedStorageUrl(checkin.mediaThumbUrl) ? checkin.mediaThumbUrl : '';
+    const mediaHtml = mediaUrl
+        ? `<img class="habit-group-review-thumb" src="${escapeHtml(mediaUrl)}" alt="">`
+        : '';
+    return `
+        <div class="social-challenge-item habit-group-review-row is-pending">
+            <div class="social-challenge-main">
+                <div class="social-challenge-type">${group.emoji} ${escapeHtml(group.title)}</div>
+                <div class="social-challenge-meta">${escapeHtml(checkin.displayName || '회원')} · ${formatHabitGroupReviewDate(checkin.date)} · ${escapeHtml(formatHabitGroupReviewSummary(checkin))}</div>
+            </div>
+            ${mediaHtml}
+            <div class="social-challenge-row-actions habit-group-review-actions">
+                <button type="button" class="social-challenge-cta" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'approved')">승인</button>
+                <button type="button" class="social-challenge-inline-btn cancel" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'rejected')">반려</button>
+            </div>
+        </div>
+    `;
+}
+
+function buildHabitGroupLeaderReviewSection(pendingReviews = []) {
+    const rows = pendingReviews.map(buildHabitGroupLeaderReviewRow).filter(Boolean);
+    if (rows.length === 0) return '';
+    return `
+        <div class="habit-group-leader-review-section">
+            <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">모임장 컨펌</div>
+            <div class="social-challenge-summary">
+                <span class="social-challenge-pill">대기 ${rows.length}건</span>
+            </div>
+            ${buildCommunityExpandableRows('habit-group-leader-reviews', rows, 3)}
         </div>
     `;
 }
@@ -21333,6 +21503,39 @@ window.leaveHabitGroup = async function(groupId) {
     }
 };
 
+window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, reviewStatus) {
+    const user = auth.currentUser;
+    const group = getHabitGroupById(groupId);
+    const nextStatus = reviewStatus === 'approved'
+        ? 'approved'
+        : reviewStatus === 'rejected'
+        ? 'rejected'
+        : '';
+    if (!user || !group || !targetUid || !dateStr || !nextStatus) return;
+    if (nextStatus === 'rejected' && !window.confirm('이 제출 기록을 반려할까요?')) return;
+
+    try {
+        const fn = httpsCallable(functions, 'reviewHabitGroupCheckin');
+        await fn({
+            groupId: group.id,
+            uid: targetUid,
+            targetUid,
+            date: dateStr,
+            reviewStatus: nextStatus
+        });
+        invalidateHabitGroupCaches();
+        _renderSocialChallengesPromise = null;
+        _renderSocialChallengesPromiseUid = '';
+        showToast(nextStatus === 'approved' ? '소모임 기록을 승인했어요.' : '소모임 기록을 반려했어요.');
+        renderSocialChallenges(user).catch(error => {
+            logOptionalDataTimeout('habit_group_review_refresh_failed', error);
+        });
+    } catch (error) {
+        console.error('[reviewHabitGroupCheckin]', error);
+        showToast(error?.message || '소모임 기록 컨펌에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+};
+
 window.openHabitGroupRecordTab = function(groupId) {
     const group = getHabitGroupById(groupId);
     const tabName = getHabitGroupRecordTab(group || 'diet');
@@ -21380,9 +21583,11 @@ async function renderSocialChallengesInner(user) {
         const { todayStr } = getDatesInfo();
         const memberships = await loadMyHabitGroupMemberships(user);
         const joinedGroupIds = memberships.map(item => item.groupId);
-        const [checkins, progressByGroupId] = await Promise.all([
+        const leaderGroupIds = getHabitGroupLeaderMemberships(memberships).map(item => item.groupId);
+        const [checkins, progressByGroupId, pendingReviews] = await Promise.all([
             loadHabitGroupTodayCheckins(user, todayStr, joinedGroupIds),
-            loadHabitGroupRewardProgress(user, joinedGroupIds)
+            loadHabitGroupRewardProgress(user, joinedGroupIds),
+            loadHabitGroupPendingReviewsForLeader(user, leaderGroupIds)
         ]);
         const summary = summarizeHabitGroups({
             groups: DEFAULT_HABIT_GROUPS,
@@ -21390,6 +21595,7 @@ async function renderSocialChallengesInner(user) {
             checkins
         });
         const summaryHtml = buildHabitGroupSummaryHtml(summary);
+        const leaderReviewSectionHtml = buildHabitGroupLeaderReviewSection(pendingReviews);
         const checkinByGroupId = new Map(checkins.map(item => [item.groupId, item]));
         const checkinGroupIds = new Set(checkins
             .filter(item => String(item.reviewStatus || 'pending') !== 'rejected')
@@ -21423,6 +21629,7 @@ async function renderSocialChallengesInner(user) {
         if (joinedRows.length === 0) {
             list.innerHTML = `
                 ${summaryHtml}
+                ${leaderReviewSectionHtml}
                 ${buildCommunityEmptyState(
                     '같이 할 소모임을 골라보세요',
                     `운동 소모임은 최대 ${MAX_HABIT_GROUP_MEMBERSHIPS}개까지 참여할 수 있어요.`,
@@ -21436,6 +21643,7 @@ async function renderSocialChallengesInner(user) {
 
         list.innerHTML = `
             ${summaryHtml}
+            ${leaderReviewSectionHtml}
             <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">내 소모임</div>
             ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, 3)}
             ${buildHabitGroupRecommendationSection(recommendedRows, { canJoinMore })}
