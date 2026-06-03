@@ -14,29 +14,29 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=204';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=204';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=205';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=205';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=204';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=204';
+} from './auth-login-helpers.js?v=205';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=205';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=204';
+} from './exercise-media.js?v=205';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=204';
+} from './health-connect-utils.js?v=205';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -53,13 +53,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=204';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=204';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=204';
-import { sanitize, compressImage } from './data-manager.js?v=204';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=204';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=204';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=204';
+} from './habit-groups.js?v=205';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=205';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=205';
+import { sanitize, compressImage } from './data-manager.js?v=205';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=205';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=205';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=205';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -72,7 +72,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=204';
+} from './diet-program.js?v=205';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -84,18 +84,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=204';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=204';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=204';
+} from './meditation-guide.js?v=205';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=205';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=205';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=204';
+} from './social-challenge-readiness.js?v=205';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=204';
+} from './monthly-mvp-reward.js?v=205';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5240,7 +5240,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=204';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=205';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -21111,9 +21111,10 @@ function resolveHabitGroupCheckinThumb(saveData = {}) {
         isPersistedStorageUrl(item?.imageThumbUrl)
         || isPersistedStorageUrl(item?.imageUrl)
         || isPersistedStorageUrl(item?.videoThumbUrl)
+        || isPersistedStorageUrl(item?.videoUrl)
     ));
     if (media) {
-        return media.imageThumbUrl || media.imageUrl || media.videoThumbUrl || null;
+        return media.imageThumbUrl || media.imageUrl || media.videoThumbUrl || media.videoUrl || null;
     }
     return null;
 }
@@ -21140,9 +21141,13 @@ function summarizeHabitGroupExerciseItem(item = {}) {
     if (distance > 0) summary.distance = distance;
     if (sets > 0) summary.sets = sets;
     if (reps > 0) summary.reps = reps;
-    const imageUrl = pickHabitGroupMediaUrl(item.imageThumbUrl, item.imageUrl);
+    const imageUrl = pickHabitGroupMediaUrl(item.imageUrl, item.imageThumbUrl);
+    const imageThumbUrl = pickHabitGroupMediaUrl(item.imageThumbUrl);
+    const videoUrl = pickHabitGroupMediaUrl(item.videoUrl);
     const videoThumbUrl = pickHabitGroupMediaUrl(item.videoThumbUrl);
     if (imageUrl) summary.imageUrl = imageUrl;
+    if (imageThumbUrl) summary.imageThumbUrl = imageThumbUrl;
+    if (videoUrl) summary.videoUrl = videoUrl;
     if (videoThumbUrl) summary.videoThumbUrl = videoThumbUrl;
     return summary;
 }
@@ -21316,13 +21321,71 @@ function formatHabitGroupReviewSummary(checkin = {}) {
     return summary || '운동 기록';
 }
 
+function collectHabitGroupReviewMedia(checkin = {}) {
+    const items = [];
+    const seen = new Set();
+    const addMedia = (type, originalUrl, thumbUrl = '') => {
+        const mediaUrl = pickHabitGroupMediaUrl(originalUrl, thumbUrl);
+        const previewUrl = pickHabitGroupMediaUrl(thumbUrl, originalUrl);
+        if (!mediaUrl && !previewUrl) return;
+        const url = mediaUrl || previewUrl;
+        const resolvedType = type === 'video' || isVideoUrl(url) ? 'video' : 'image';
+        const key = `${resolvedType}|${url}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        items.push({
+            type: resolvedType,
+            url,
+            thumbUrl: previewUrl || url
+        });
+    };
+
+    const snapshot = checkin.exerciseSnapshot || {};
+    const strengthList = Array.isArray(snapshot.strengthList) ? snapshot.strengthList : [];
+    const cardioList = Array.isArray(snapshot.cardioList) ? snapshot.cardioList : [];
+    strengthList.forEach(item => addMedia('video', item?.videoUrl, item?.videoThumbUrl));
+    cardioList.forEach(item => addMedia('image', item?.imageUrl, item?.imageThumbUrl));
+
+    if (items.length === 0) {
+        const fallbackUrl = pickHabitGroupMediaUrl(checkin.mediaUrl, checkin.mediaThumbUrl);
+        if (fallbackUrl) addMedia(isVideoUrl(fallbackUrl) ? 'video' : 'image', fallbackUrl, checkin.mediaThumbUrl);
+    }
+
+    return items.slice(0, 3);
+}
+
+function buildHabitGroupReviewMediaHtml(checkin = {}) {
+    const mediaItems = collectHabitGroupReviewMedia(checkin);
+    if (!mediaItems.length) return '';
+    const mediaHtml = mediaItems.map((item, index) => {
+        const safeUrl = escapeHtml(item.url);
+        const safeThumbUrl = escapeHtml(item.thumbUrl || item.url);
+        if (item.type === 'video') {
+            const previewHtml = item.thumbUrl && !isVideoUrl(item.thumbUrl)
+                ? `<img src="${safeThumbUrl}" alt="소모임 제출 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">`
+                : `<video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="소모임 제출 영상"></video>`;
+            return `
+                <div class="habit-group-review-media-item video-thumb-wrapper" data-video-src="${safeUrl}" onclick="event.stopPropagation(); playGalleryVideo(this)" onkeydown="handleHabitGroupReviewVideoKeydown(event, this)" role="button" tabindex="0" aria-label="제출 영상 재생">
+                    ${previewHtml}
+                    <div class="video-play-btn">&#9654;</div>
+                </div>
+            `;
+        }
+
+        return `
+            <button type="button" class="habit-group-review-media-item habit-group-review-image-btn" data-full-url="${safeUrl}" onclick="openHabitGroupReviewImage(this)" aria-label="제출 사진 크게 보기 ${index + 1}">
+                <img src="${safeThumbUrl}" alt="소모임 제출 사진" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">
+            </button>
+        `;
+    }).join('');
+
+    return `<div class="habit-group-review-media-strip">${mediaHtml}</div>`;
+}
+
 function buildHabitGroupLeaderReviewRow(checkin = {}) {
     const group = checkin.group || getHabitGroupById(checkin.groupId);
     if (!group) return '';
-    const mediaUrl = isPersistedStorageUrl(checkin.mediaThumbUrl) ? checkin.mediaThumbUrl : '';
-    const mediaHtml = mediaUrl
-        ? `<img class="habit-group-review-thumb" src="${escapeHtml(mediaUrl)}" alt="">`
-        : '';
+    const mediaHtml = buildHabitGroupReviewMediaHtml(checkin);
     return `
         <div class="social-challenge-item habit-group-review-row is-pending">
             <div class="social-challenge-main">
@@ -21500,6 +21563,22 @@ window.leaveHabitGroup = async function(groupId) {
     } catch (error) {
         console.error('[leaveHabitGroup]', error);
         showToast(error?.message || '소모임 나가기에 실패했어요. 잠시 후 다시 시도해 주세요.');
+    }
+};
+
+window.openHabitGroupReviewImage = function(buttonEl) {
+    const fullUrl = String(buttonEl?.dataset?.fullUrl || '').trim();
+    if (!fullUrl || typeof window.openLightbox !== 'function') return;
+    window.openLightbox(fullUrl);
+};
+
+window.handleHabitGroupReviewVideoKeydown = function(event, wrapperEl) {
+    if (!event || !wrapperEl) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof window.playGalleryVideo === 'function') {
+        window.playGalleryVideo(wrapperEl);
     }
 };
 

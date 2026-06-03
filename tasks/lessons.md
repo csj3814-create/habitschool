@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-04 (Habit Group Review Media)
+
+### 231. Moderation queues need the same media affordances as the source feed
+- Symptom: the group leader review queue showed a small media thumbnail, but videos were not playable and photos could not be enlarged.
+- Root cause: the queue rendered only `mediaThumbUrl` and did not reuse the gallery lightbox/media model.
+- Lesson: when moderation depends on uploaded proof, preserve both thumbnail and original media URLs in the review payload and expose the same image/video viewing affordances used in the gallery.
+
+---
+
 ## 2026-06-03 (Habit Group Leader Review UI)
 
 ### 229. Pending moderation needs an owner-facing queue, not only member-facing status

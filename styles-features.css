@@ -2950,15 +2950,64 @@ textarea {
 
 .habit-group-review-row {
     align-items: center;
+    flex-wrap: wrap;
 }
 
-.habit-group-review-thumb {
+.habit-group-review-media-strip {
     flex-shrink: 0;
-    width: 42px;
-    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.habit-group-review-media-item {
+    position: relative;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
     border: 1px solid #F2DFC5;
     border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.habit-group-review-media-item img,
+.habit-group-review-media-item video {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
+    display: block;
+}
+
+.habit-group-review-image-btn {
+    padding: 0;
+    cursor: pointer;
+}
+
+.habit-group-review-media-item.video-thumb-wrapper {
+    width: 48px;
+    height: 48px;
+    aspect-ratio: auto;
+    border-radius: 8px;
+}
+
+.habit-group-review-media-item.video-thumb-wrapper .video-play-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    padding-left: 3px;
+}
+
+.habit-group-review-media-item.video-thumb-wrapper.playing {
+    width: 160px;
+    height: 96px;
+    aspect-ratio: auto;
+    grid-column: auto;
+}
+
+.habit-group-review-media-item.video-thumb-wrapper.playing video {
+    height: 100%;
+    max-height: none;
     background: #fff;
 }
 
@@ -2971,9 +3020,24 @@ textarea {
         align-items: flex-start;
     }
 
-    .habit-group-review-thumb {
-        width: 36px;
-        height: 36px;
+    .habit-group-review-media-strip {
+        width: 100%;
+        order: 3;
+    }
+
+    .habit-group-review-actions {
+        order: 4;
+    }
+
+    .habit-group-review-media-item,
+    .habit-group-review-media-item.video-thumb-wrapper {
+        width: 44px;
+        height: 44px;
+    }
+
+    .habit-group-review-media-item.video-thumb-wrapper.playing {
+        width: 100%;
+        height: 180px;
     }
 
     .habit-group-review-actions .social-challenge-cta,

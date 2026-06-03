@@ -30,6 +30,14 @@ describe('habit group transition', () => {
         expect(appSource).toContain('getHabitGroupLeaderMemberships');
         expect(appSource).toContain('loadHabitGroupPendingReviewsForLeader');
         expect(appSource).toContain('buildHabitGroupLeaderReviewSection');
+        expect(appSource).toContain('buildHabitGroupReviewMediaHtml');
+        expect(appSource).toContain('collectHabitGroupReviewMedia');
+        expect(appSource).toContain('if (videoUrl) summary.videoUrl = videoUrl;');
+        expect(appSource).toContain('if (imageThumbUrl) summary.imageThumbUrl = imageThumbUrl;');
+        expect(appSource).toContain('window.openHabitGroupReviewImage');
+        expect(appSource).toContain('window.handleHabitGroupReviewVideoKeydown');
+        expect(appSource).toContain('playGalleryVideo(this)');
+        expect(appSource).toContain('data-full-url');
         expect(appSource).toContain('window.reviewHabitGroupCheckin');
         expect(appSource).not.toContain('오늘 제출 · 확인 대기');
         expect(appSource).toContain('showUnavailableAction: canJoinMore');
