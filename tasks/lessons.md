@@ -1,5 +1,13 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-03 (Habit Group Full Membership UI)
+
+### 228. Full membership recommendations should collapse by default
+- Symptom: when a user had already joined two exercise groups, the dashboard still showed other groups with repeated disabled `2개 참여 중` labels.
+- Root cause: the recommendation renderer treated "cannot join more" as a per-card status instead of a section-level state.
+- Lesson: when a limit applies to an entire recommendation section, show the limit once and collapse unavailable choices by default. Let users expand for browsing, but avoid repeating the same disabled reason on every row.
+
+---
 ## 2026-06-03 (Samsung Internet Exercise Video Upload)
 
 ### 226. Samsung upload transport workarounds must include exercise videos, not only images

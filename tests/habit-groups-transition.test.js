@@ -24,6 +24,11 @@ describe('habit group transition', () => {
         expect(appSource).toContain('EXERCISE_GROUP_ENTRY_FEE_POINTS');
         expect(appSource).toContain('EXERCISE_GROUP_REWARD_POINTS');
         expect(appSource).toContain('formatHabitGroupJoinCta');
+        expect(appSource).toContain('buildHabitGroupRecommendationSection');
+        expect(appSource).toContain('toggleHabitGroupRecommendationsWhenFull');
+        expect(appSource).toContain('showUnavailableAction: canJoinMore');
+        expect(appSource).toContain('최대 2모임');
+        expect(appSource).not.toContain('2개 참여 중');
         expect(appSource).toContain('applyPointBalanceSnapshot(result.coins, user.uid)');
         expect(appSource).toContain('${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}');
         expect(appSource).toContain('entryFeeCharged');

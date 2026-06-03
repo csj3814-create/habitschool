@@ -4,10 +4,10 @@
  * Gemini Vision API를 통한 초가공식품 판별 + 미량영양소 분석
  */
 
-import { auth, functions } from './firebase-config.js?v=202';
+import { auth, functions } from './firebase-config.js?v=203';
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=202';
-import { escapeHtml } from './security.js?v=202';
+import { showToast } from './ui-helpers.js?v=203';
+import { escapeHtml } from './security.js?v=203';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
