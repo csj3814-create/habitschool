@@ -2,6 +2,11 @@
 
 ## 2026-06-04 (Habit Group Review Media)
 
+### 232. Never treat a thumbnail URL as a playable video URL
+- Symptom: the review queue rendered a video player, but Chrome logged `NotSupportedError: Failed to load because no supported source was found`.
+- Root cause: older pending checkins had `videoThumbUrl` without `videoUrl`, and the review media fallback passed the thumbnail image URL into the video source.
+- Lesson: media fallback must preserve type semantics. A thumbnail can be a preview image, but only a validated original video URL should become a `<video>` source.
+
 ### 231. Moderation queues need the same media affordances as the source feed
 - Symptom: the group leader review queue showed a small media thumbnail, but videos were not playable and photos could not be enlarged.
 - Root cause: the queue rendered only `mediaThumbUrl` and did not reuse the gallery lightbox/media model.

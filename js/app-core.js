@@ -14,29 +14,29 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=205';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=205';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=206';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=206';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=205';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=205';
+} from './auth-login-helpers.js?v=206';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=206';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=205';
+} from './exercise-media.js?v=206';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=205';
+} from './health-connect-utils.js?v=206';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -53,13 +53,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=205';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=205';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=205';
-import { sanitize, compressImage } from './data-manager.js?v=205';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=205';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=205';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=205';
+} from './habit-groups.js?v=206';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=206';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=206';
+import { sanitize, compressImage } from './data-manager.js?v=206';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=206';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=206';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=206';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -72,7 +72,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=205';
+} from './diet-program.js?v=206';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -84,18 +84,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=205';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=205';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=205';
+} from './meditation-guide.js?v=206';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=206';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=206';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=205';
+} from './social-challenge-readiness.js?v=206';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=205';
+} from './monthly-mvp-reward.js?v=206';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5240,7 +5240,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=205';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=206';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -21035,6 +21035,65 @@ function sortHabitGroupPendingReviews(a, b) {
     return String(a.displayName || '').localeCompare(String(b.displayName || ''), 'ko');
 }
 
+function hasHabitGroupPlayableVideoUrl(url = '') {
+    const normalized = String(url || '').trim();
+    return isPersistedStorageUrl(normalized) && isVideoUrl(normalized);
+}
+
+function habitGroupReviewNeedsDailyLogMedia(checkin = {}) {
+    const docId = String(checkin.dailyLogId || `${checkin.uid || ''}_${checkin.date || ''}`).trim();
+    if (!docId || docId === '_') return false;
+    const snapshot = checkin.exerciseSnapshot || {};
+    const strengthList = Array.isArray(snapshot.strengthList) ? snapshot.strengthList : [];
+    const cardioList = Array.isArray(snapshot.cardioList) ? snapshot.cardioList : [];
+    const hasPlayableVideo = strengthList.some(item => hasHabitGroupPlayableVideoUrl(item?.videoUrl));
+    const hasVideoThumbOnly = strengthList.some(item => !hasHabitGroupPlayableVideoUrl(item?.videoUrl) && isPersistedStorageUrl(item?.videoThumbUrl));
+    const hasImageOnly = cardioList.some(item => isPersistedStorageUrl(item?.imageUrl) || isPersistedStorageUrl(item?.imageThumbUrl));
+    return hasVideoThumbOnly || (!hasPlayableVideo && !hasImageOnly && isPersistedStorageUrl(checkin.mediaThumbUrl));
+}
+
+function mergeHabitGroupReviewExerciseSnapshot(checkinSnapshot = {}, dailyLogSnapshot = {}) {
+    const next = { ...(checkinSnapshot || {}) };
+    const dailyCardioList = Array.isArray(dailyLogSnapshot.cardioList) ? dailyLogSnapshot.cardioList : [];
+    const dailyStrengthList = Array.isArray(dailyLogSnapshot.strengthList) ? dailyLogSnapshot.strengthList : [];
+    if (dailyCardioList.length > 0) next.cardioList = dailyCardioList;
+    if (dailyStrengthList.length > 0) next.strengthList = dailyStrengthList;
+    return next;
+}
+
+async function hydrateHabitGroupReviewMediaFromDailyLogs(items = []) {
+    const targets = items.filter(habitGroupReviewNeedsDailyLogMedia);
+    if (targets.length === 0) return items;
+
+    const docIds = [...new Set(targets
+        .map(item => String(item.dailyLogId || `${item.uid || ''}_${item.date || ''}`).trim())
+        .filter(docId => docId && docId !== '_'))];
+    if (docIds.length === 0) return items;
+
+    const logResults = await withAsyncTimeout(Promise.all(docIds.map(async docId => {
+        const snap = await getDoc(doc(db, 'daily_logs', docId));
+        return snap.exists() ? { id: docId, data: snap.data() || {} } : null;
+    })), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_review_daily_logs_timeout')
+        .catch(error => {
+            logOptionalDataTimeout('habit_group_review_daily_logs_timeout', error);
+            return [];
+        });
+
+    const logById = new Map(logResults.filter(Boolean).map(item => [item.id, item.data]));
+    if (logById.size === 0) return items;
+
+    return items.map(item => {
+        const docId = String(item.dailyLogId || `${item.uid || ''}_${item.date || ''}`).trim();
+        const dailyLog = logById.get(docId);
+        if (!dailyLog?.exercise) return item;
+        const dailySnapshot = buildHabitGroupExerciseSnapshot(dailyLog, {}).exerciseSnapshot;
+        return {
+            ...item,
+            exerciseSnapshot: mergeHabitGroupReviewExerciseSnapshot(item.exerciseSnapshot || {}, dailySnapshot)
+        };
+    });
+}
+
 async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, leaderGroupIds = [], { forceReload = false } = {}) {
     if (!user?.uid || leaderGroupIds.length === 0) return [];
     const normalizedGroupIds = [...new Set(leaderGroupIds.map(id => String(id || '').trim()).filter(Boolean))].sort();
@@ -21071,14 +21130,14 @@ async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, le
             return items;
         })
     ), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_pending_reviews_timeout')
-        .then(chunkedItems => {
+        .then(async chunkedItems => {
             const itemsById = new Map();
             chunkedItems.flat().forEach(item => {
                 if (item?.id) itemsById.set(item.id, item);
             });
-            const items = [...itemsById.values()]
+            const items = await hydrateHabitGroupReviewMediaFromDailyLogs([...itemsById.values()]
                 .sort(sortHabitGroupPendingReviews)
-                .slice(0, 40);
+                .slice(0, 40));
             _habitGroupLeaderPendingReviewCache = {
                 uid: user.uid,
                 groupKey,
@@ -21325,11 +21384,15 @@ function collectHabitGroupReviewMedia(checkin = {}) {
     const items = [];
     const seen = new Set();
     const addMedia = (type, originalUrl, thumbUrl = '') => {
-        const mediaUrl = pickHabitGroupMediaUrl(originalUrl, thumbUrl);
+        const original = pickHabitGroupMediaUrl(originalUrl);
         const previewUrl = pickHabitGroupMediaUrl(thumbUrl, originalUrl);
-        if (!mediaUrl && !previewUrl) return;
-        const url = mediaUrl || previewUrl;
-        const resolvedType = type === 'video' || isVideoUrl(url) ? 'video' : 'image';
+        const resolvedType = type === 'video' || isVideoUrl(original) ? 'video' : 'image';
+        if (resolvedType === 'video' && !hasHabitGroupPlayableVideoUrl(original)) {
+            if (previewUrl) addMedia('image', previewUrl, previewUrl);
+            return;
+        }
+        const url = original || previewUrl;
+        if (!url) return;
         const key = `${resolvedType}|${url}`;
         if (seen.has(key)) return;
         seen.add(key);

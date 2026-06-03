@@ -32,6 +32,11 @@ describe('habit group transition', () => {
         expect(appSource).toContain('buildHabitGroupLeaderReviewSection');
         expect(appSource).toContain('buildHabitGroupReviewMediaHtml');
         expect(appSource).toContain('collectHabitGroupReviewMedia');
+        expect(appSource).toContain('hasHabitGroupPlayableVideoUrl');
+        expect(appSource).toContain('hydrateHabitGroupReviewMediaFromDailyLogs');
+        expect(appSource).toContain("getDoc(doc(db, 'daily_logs', docId))");
+        expect(appSource).toContain("if (resolvedType === 'video' && !hasHabitGroupPlayableVideoUrl(original))");
+        expect(appSource).toContain("if (previewUrl) addMedia('image', previewUrl, previewUrl);");
         expect(appSource).toContain('if (videoUrl) summary.videoUrl = videoUrl;');
         expect(appSource).toContain('if (imageThumbUrl) summary.imageThumbUrl = imageThumbUrl;');
         expect(appSource).toContain('window.openHabitGroupReviewImage');
