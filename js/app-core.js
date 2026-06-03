@@ -14,30 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=199';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=199';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=202';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=202';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=199';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=199';
+} from './auth-login-helpers.js?v=202';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=202';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
-    resolveStrengthVideoThumbUrl
-} from './exercise-media.js?v=199';
+    resolveStrengthVideoThumbUrl,
+    shouldDeferStrengthThumbUntilUpload
+} from './exercise-media.js?v=202';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=199';
+} from './health-connect-utils.js?v=202';
 import {
     DEFAULT_HABIT_GROUPS,
+    EXERCISE_GROUP_ENTRY_FEE_POINTS,
+    EXERCISE_GROUP_REWARD_POINTS,
     EXERCISE_GROUP_REWARD_TARGET,
     MAX_HABIT_GROUP_MEMBERSHIPS,
     getHabitGroupById,
@@ -50,13 +53,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=199';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=199';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=199';
-import { sanitize, compressImage } from './data-manager.js?v=199';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=199';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=199';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=199';
+} from './habit-groups.js?v=202';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=202';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=202';
+import { sanitize, compressImage } from './data-manager.js?v=202';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=202';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=202';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=202';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -69,7 +72,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=199';
+} from './diet-program.js?v=202';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -81,18 +84,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=199';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=199';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=199';
+} from './meditation-guide.js?v=202';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=202';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=202';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=199';
+} from './social-challenge-readiness.js?v=202';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=199';
+} from './monthly-mvp-reward.js?v=202';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -136,6 +139,7 @@ const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze([
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
+const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
@@ -5236,7 +5240,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=199';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=202';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6085,21 +6089,26 @@ window.previewDynamicVid = function (input) {
         const localThumbSeed = resolveUsableStrengthLocalThumb(
             currentBlock?.getAttribute('data-local-thumb')
         );
-        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, {
+        const uploadOptions = {
             onProgress: (pct) => updatePendingUploadProgress(input.id, pct),
-            thumbDataUrlPromise: localThumbPromise
-        });
+        };
+        if (localThumbPromise) {
+            uploadOptions.thumbDataUrlPromise = localThumbPromise;
+        }
+        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, localThumbSeed, uploadOptions);
         beginTrackedPendingUpload(input.id, pendingUpload);
     }
 
-    localThumbPromise
-        .then((thumbDataUrl) => {
-            const normalizedThumb = syncPendingStrengthLocalThumb(input.id, thumbDataUrl);
-            if (normalizedThumb) {
-                showStrengthPreviewImage(currentBlock || input.parentElement, normalizedThumb, { localThumb: normalizedThumb });
-            }
-        })
-        .catch(() => { });
+    if (localThumbPromise) {
+        localThumbPromise
+            .then((thumbDataUrl) => {
+                const normalizedThumb = syncPendingStrengthLocalThumb(input.id, thumbDataUrl);
+                if (normalizedThumb) {
+                    showStrengthPreviewImage(currentBlock || input.parentElement, normalizedThumb, { localThumb: normalizedThumb });
+                }
+            })
+            .catch(() => { });
+    }
 
     const strengthList = document.getElementById('strength-list');
     if (currentBlock && strengthList) {
@@ -6113,6 +6122,8 @@ window.previewDynamicVid = function (input) {
 };
 
 function scheduleStrengthLocalThumbExtraction(file) {
+    if (shouldDeferStrengthThumbUntilUpload(file?.size || 0)) return null;
+
     const delayMs = getDeferredStrengthThumbDelayMs(file?.size || 0);
     if (!delayMs) {
         return extractVideoThumbFromFile(file).catch(() => '');
@@ -6286,6 +6297,38 @@ async function extractVideoThumbFromUrl(videoUrl) {
 // 갤러리에서 접근 가능하도록 전역 노출
 window.extractVideoThumbFromUrl = extractVideoThumbFromUrl;
 
+function revokeLocalPreviewObjectUrl(previewEl) {
+    const objectUrl = String(previewEl?.getAttribute('data-local-preview-object-url') || '').trim();
+    if (!objectUrl) return;
+    try {
+        URL.revokeObjectURL(objectUrl);
+    } catch (_) {}
+    previewEl.removeAttribute('data-local-preview-object-url');
+}
+
+function setLocalImagePreviewSource(previewEl, file) {
+    if (!previewEl || !file || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return false;
+    revokeLocalPreviewObjectUrl(previewEl);
+    try {
+        const objectUrl = URL.createObjectURL(file);
+        previewEl.src = objectUrl;
+        previewEl.setAttribute('data-local-preview-object-url', objectUrl);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function replaceLocalPreviewObjectUrl(previewEl, nextSrc = '') {
+    const objectUrl = String(previewEl?.getAttribute('data-local-preview-object-url') || '').trim();
+    if (!previewEl || !objectUrl) return;
+    const normalizedNext = String(nextSrc || '').trim();
+    if (normalizedNext && previewEl.src === objectUrl) {
+        previewEl.src = normalizedNext;
+    }
+    revokeLocalPreviewObjectUrl(previewEl);
+}
+
 window.previewStaticImage = function (input, previewId, btnId, skipExif = false) {
     const preview = document.getElementById(previewId);
     const rmBtn = document.getElementById(btnId);
@@ -6304,6 +6347,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
         const resetRejectedUpload = () => {
             input.value = "";
+            revokeLocalPreviewObjectUrl(preview);
             preview.style.display = 'none';
             if (rmBtn) rmBtn.style.display = 'none';
             if (txtSpan) txtSpan.style.display = 'inline-block';
@@ -6334,9 +6378,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 }
             }
 
-            const reader = new FileReader();
-            reader.onload = e => {
-                preview.src = e.target.result;
+            const renderPreviewFrame = () => {
                 preview.style.display = 'block';
                 if (rmBtn) rmBtn.style.display = 'block';
                 if (txtSpan) txtSpan.style.display = 'none';
@@ -6393,8 +6435,18 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 }
 
                 updateRecordFlowGuides(getVisibleTabName());
+            };
+
+            if (setLocalImagePreviewSource(preview, file)) {
+                renderPreviewFrame();
+            } else {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    renderPreviewFrame();
+                };
+                reader.readAsDataURL(file);
             }
-            reader.readAsDataURL(file);
 
             // 빈 박스 보이기 로직
             const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -6447,18 +6499,21 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     _pendingUploads.delete(inputId); // 진행 중인 pre-upload 폐기
     hideInlineUploadProgress(inputId);
     setThumbPendingState(inputId, { visible: false });
+    const previewEl = document.getElementById(previewId);
+    revokeLocalPreviewObjectUrl(previewEl);
     document.getElementById(inputId).value = "";
-    document.getElementById(previewId).src = "";
-    document.getElementById(previewId).style.display = "none";
-    document.getElementById(previewId).setAttribute('data-user-removed', 'true');
-    document.getElementById(previewId).removeAttribute('data-saved-url');
-    document.getElementById(previewId).removeAttribute('data-saved-thumb-url');
-    document.getElementById(previewId).removeAttribute('data-local-draft');
+    if (previewEl) {
+        previewEl.src = "";
+        previewEl.style.display = "none";
+        previewEl.setAttribute('data-user-removed', 'true');
+        previewEl.removeAttribute('data-saved-url');
+        previewEl.removeAttribute('data-saved-thumb-url');
+        previewEl.removeAttribute('data-local-draft');
+    }
     document.getElementById(btnId).style.display = "none";
     if (document.getElementById(txtId)) document.getElementById(txtId).style.display = "inline-block";
 
     // 회전 버튼 숨기기
-    const previewEl = document.getElementById(previewId);
     const rotBtn = previewEl?.parentElement?.querySelector('.static-rotate-btn');
     if (rotBtn) rotBtn.style.display = 'none';
 
@@ -8585,6 +8640,23 @@ function applyCachedPointBalanceFromStorage(uid = auth.currentUser?.uid || '') {
 }
 
 window.applyCachedPointBalanceFromStorage = applyCachedPointBalanceFromStorage;
+
+function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '') {
+    const parsedPoints = getFiniteAssetNumber(pointsValue);
+    if (parsedPoints == null) return null;
+
+    const nextCache = writeAssetDisplayCache(uid, { coins: parsedPoints });
+    const pointBadge = document.getElementById('point-balance');
+    if (pointBadge) pointBadge.textContent = String(parsedPoints);
+
+    const pointsDisplay = document.getElementById('asset-points-display');
+    if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(parsedPoints);
+
+    const simpleProfilePoints = document.getElementById('simple-profile-points');
+    if (simpleProfilePoints) simpleProfilePoints.textContent = `${parsedPoints.toLocaleString()}P`;
+
+    return nextCache;
+}
 
 window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived = 0 } = {}) {
     const user = auth.currentUser;
@@ -14355,14 +14427,48 @@ function shouldUseSamsungSimpleImageUpload(file = null) {
     return isSamsungInternetUserAgent(ua);
 }
 
+function shouldUseSamsungSimpleVideoUpload(file = null, folderName = '') {
+    if (!isExerciseVideoUploadCandidate(file, folderName)) return false;
+    const ua = typeof navigator !== 'undefined'
+        ? (navigator.userAgent || navigator.vendor || '')
+        : '';
+    return isSamsungInternetUserAgent(ua);
+}
+
+function scheduleSimpleUploadProgress(onProgress, payload) {
+    if (typeof onProgress !== 'function') return;
+    Promise.resolve()
+        .then(() => onProgress(payload))
+        .catch(() => {});
+}
+
 async function uploadSamsungImageWithSimplePut(storageRef, file, onProgress = null) {
-    onProgress?.(12);
+    scheduleSimpleUploadProgress(onProgress, 12);
     await withRejectingTimeout(
         uploadBytes(storageRef, file, {
             contentType: String(file?.type || 'image/jpeg').trim() || 'image/jpeg'
         }),
         SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS,
         'samsung_image_upload_timeout'
+    );
+    onProgress?.(100);
+}
+
+async function uploadSamsungVideoWithSimplePut(storageRef, file, {
+    onProgress = null,
+    contentType = 'video/mp4',
+    timeoutMs = 5 * 60 * 1000
+} = {}) {
+    scheduleSimpleUploadProgress(onProgress, {
+        pct: 0,
+        message: SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL
+    });
+    await withRejectingTimeout(
+        uploadBytes(storageRef, file, {
+            contentType: String(contentType || 'video/mp4').trim() || 'video/mp4'
+        }),
+        timeoutMs,
+        'samsung_video_upload_timeout'
     );
     onProgress?.(100);
 }
@@ -14478,12 +14584,20 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
         : fileToUpload);
     const uploadMetadata = isVideo ? { contentType: videoContentType } : undefined;
     const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);
-    const maxRetries = useSamsungSimpleImageUpload ? 0 : 2;
+    const useSamsungSimpleVideoUpload = isVideo && shouldUseSamsungSimpleVideoUpload(fileToUpload, normalizedFolderName);
+    const useSamsungSimpleUpload = useSamsungSimpleImageUpload || useSamsungSimpleVideoUpload;
+    const maxRetries = useSamsungSimpleUpload ? 0 : 2;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
-            if (useSamsungSimpleImageUpload) {
+            if (useSamsungSimpleVideoUpload) {
+                await uploadSamsungVideoWithSimplePut(storageRef, fileToUpload, {
+                    onProgress,
+                    contentType: videoContentType,
+                    timeoutMs: uploadTimeouts.hardTimeoutMs
+                });
+            } else if (useSamsungSimpleImageUpload) {
                 await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);
             } else {
                 await runResumableUploadWithTimeout(storageRef, fileToUpload, {
@@ -14669,6 +14783,7 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         done: false,
         result: null,
         progress: 0,
+        progressMessage: '',
         reportProgress: false,
         delayed: false,
         delayTimer: 0
@@ -14722,16 +14837,31 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
     return entry;
 }
 
-function updatePendingUploadProgress(inputId, pct) {
+function normalizeUploadProgressPayload(payload) {
+    if (payload && typeof payload === 'object') {
+        return {
+            pct: Math.round(Number(payload.pct ?? payload.progress ?? 0) || 0),
+            message: String(payload.message || '').trim()
+        };
+    }
+    return {
+        pct: Math.round(Number(payload) || 0),
+        message: ''
+    };
+}
+
+function updatePendingUploadProgress(inputId, progressPayload) {
     if (!inputId) return;
     const entry = _pendingUploads.get(inputId);
     if (!entry) return;
-    entry.progress = Math.max(entry.progress || 0, Math.round(Number(pct) || 0));
-    if (entry.progress > 0) {
+    const { pct, message } = normalizeUploadProgressPayload(progressPayload);
+    entry.progress = Math.max(entry.progress || 0, pct);
+    entry.progressMessage = message;
+    if (entry.progress > 0 || message) {
         clearPendingUploadDelayTimer(entry);
     }
-    setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress });
-    if (entry.reportProgress && entry.progress > 0 && entry.progress < 100) {
+    setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress, message });
+    if (entry.reportProgress && entry.progress > 0 && entry.progress < 100 && !message) {
         updateSaveButtonUploadProgress(entry.progress);
     }
 }
@@ -14740,7 +14870,7 @@ function enablePendingUploadProgress() {
     for (const entry of _pendingUploads.values()) {
         if (!entry) continue;
         entry.reportProgress = true;
-        if (!entry.done && entry.progress > 0 && entry.progress < 100) {
+        if (!entry.done && entry.progress > 0 && entry.progress < 100 && !entry.progressMessage) {
             updateSaveButtonUploadProgress(entry.progress);
         }
     }
@@ -14966,6 +15096,7 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     if (!previewEl) return;
 
     if (url) {
+        replaceLocalPreviewObjectUrl(previewEl, thumbUrl || url);
         previewEl.setAttribute('data-saved-url', url);
         if (thumbUrl) previewEl.setAttribute('data-saved-thumb-url', thumbUrl);
         else previewEl.removeAttribute('data-saved-thumb-url');
@@ -15206,7 +15337,11 @@ function updateBackgroundUploadProgressTracker(inputId, updates = {}) {
     if (!inputId || !_backgroundUploadProgressTracker?.jobs?.length) return;
     const jobState = _backgroundUploadProgressTracker.jobs.find(job => job.inputId === inputId);
     if (!jobState) return;
-    Object.assign(jobState, updates);
+    const nextUpdates = { ...(updates || {}) };
+    if (Object.prototype.hasOwnProperty.call(nextUpdates, 'transferPct')) {
+        nextUpdates.transferPct = normalizeUploadProgressPayload(nextUpdates.transferPct).pct;
+    }
+    Object.assign(jobState, nextUpdates);
     renderBackgroundUploadProgressTracker();
 }
 
@@ -20985,13 +21120,17 @@ function buildHabitGroupSummaryHtml(summary) {
         <div class="social-challenge-summary">
             <span class="social-challenge-pill">👥 참여 ${summary.joinedCount}/${MAX_HABIT_GROUP_MEMBERSHIPS}</span>
             <span class="social-challenge-pill">✅ 오늘 ${summary.checkedInCount}/${summary.joinedCount || 0}</span>
-            <span class="social-challenge-pill">☕ 소모임별 ${EXERCISE_GROUP_REWARD_TARGET}회</span>
+            <span class="social-challenge-pill">☕ ${EXERCISE_GROUP_REWARD_TARGET}일 ${EXERCISE_GROUP_REWARD_POINTS.toLocaleString('ko-KR')}P</span>
         </div>
     `;
 }
 
 function formatHabitGroupProgressLine(progressSummary = {}) {
     return `${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}`;
+}
+
+function formatHabitGroupJoinCta() {
+    return `${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 참여`;
 }
 
 function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true } = {}) {
@@ -21026,7 +21165,7 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         : joined
         ? `<button type="button" class="social-challenge-cta" onclick="openHabitGroupRecordTab('${group.id}')">기록하기</button>`
         : canJoin
-        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">참여</button>`
+        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">${formatHabitGroupJoinCta()}</button>`
         : '<button type="button" class="social-challenge-cta is-muted" disabled>2개 참여 중</button>';
 
     return `
@@ -21080,7 +21219,7 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
                     ${joined
                         ? `<button type="button" class="social-challenge-inline-btn cancel" onclick="leaveHabitGroup('${group.id}')">나가기</button>`
                         : canJoinMore
-                        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">참여</button>`
+                        ? `<button type="button" class="social-challenge-cta" onclick="joinHabitGroup('${group.id}')">${formatHabitGroupJoinCta()}</button>`
                         : '<button type="button" class="social-challenge-cta is-muted" disabled>2개 참여 중</button>'}
                 </div>
             </div>
@@ -21123,13 +21262,20 @@ window.joinHabitGroup = async function(groupId) {
     if (!user || !group) return;
     try {
         const fn = httpsCallable(functions, 'joinHabitGroup');
-        await fn({
+        const response = await fn({
             groupId: group.id,
             displayName: getUserDisplayName(),
             photoURL: user.photoURL || null
         });
+        const result = response?.data || {};
+        if (result.coins != null) {
+            applyPointBalanceSnapshot(result.coins, user.uid);
+        }
         invalidateHabitGroupCaches();
-        showToast(`${group.title}에 참여했어요.`);
+        const feeText = result.entryFeeCharged
+            ? ` · ${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 사용`
+            : '';
+        showToast(`${group.title}에 참여했어요${feeText}.`);
         await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(() => {});
         renderSocialChallenges(user).catch(() => {});
     } catch (error) {

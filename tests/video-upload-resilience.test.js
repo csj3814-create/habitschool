@@ -43,9 +43,49 @@ describe('video upload resilience', () => {
         expect(source).toContain('uploadBytes(storageRef, file, {');
         expect(source).toContain('samsung_image_upload_timeout');
         expect(source).toContain('const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);');
-        expect(source).toContain('const maxRetries = useSamsungSimpleImageUpload ? 0 : 2;');
+        expect(source).toContain('const useSamsungSimpleUpload = useSamsungSimpleImageUpload || useSamsungSimpleVideoUpload;');
+        expect(source).toContain('const maxRetries = useSamsungSimpleUpload ? 0 : 2;');
         expect(source).toContain('if (useSamsungSimpleImageUpload) {');
         expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
+    });
+
+    it('uses a simpler Samsung Internet exercise video upload path instead of resumable progress that can stall at 1 percent', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL');
+        expect(source).toContain('function shouldUseSamsungSimpleVideoUpload');
+        expect(source).toContain('async function uploadSamsungVideoWithSimplePut');
+        expect(source).toContain('scheduleSimpleUploadProgress(onProgress, {');
+        expect(source).toContain('message: SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL');
+        expect(source).toContain('samsung_video_upload_timeout');
+        expect(source).toContain('const useSamsungSimpleVideoUpload = isVideo && shouldUseSamsungSimpleVideoUpload(fileToUpload, normalizedFolderName);');
+        expect(source).toContain('if (useSamsungSimpleVideoUpload) {');
+        expect(source).toContain('await uploadSamsungVideoWithSimplePut(storageRef, fileToUpload, {');
+        expect(source).toContain('contentType: videoContentType');
+        expect(source).toContain('timeoutMs: uploadTimeouts.hardTimeoutMs');
+        expect(source).toContain('function normalizeUploadProgressPayload');
+        expect(source).toContain('entry.progressMessage = message;');
+    });
+
+    it('keeps large exercise video thumbnail extraction behind the original upload', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('shouldDeferStrengthThumbUntilUpload');
+        expect(source).toContain('if (shouldDeferStrengthThumbUntilUpload(file?.size || 0)) return null;');
+        expect(source).toContain('if (localThumbPromise) {');
+        expect(source).toContain('uploadOptions.thumbDataUrlPromise = localThumbPromise;');
+        expect(source).toContain('const pendingUpload = uploadVideoWithThumb(file, \'exercise_videos\', auth.currentUser.uid, localThumbSeed, uploadOptions);');
+    });
+
+    it('uses object URLs for local photo previews and releases them after persistence', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function setLocalImagePreviewSource(previewEl, file)');
+        expect(source).toContain('URL.createObjectURL(file)');
+        expect(source).toContain("previewEl.setAttribute('data-local-preview-object-url', objectUrl);");
+        expect(source).toContain('if (setLocalImagePreviewSource(preview, file)) {');
+        expect(source).toContain('replaceLocalPreviewObjectUrl(previewEl, thumbUrl || url);');
+        expect(source).toContain('revokeLocalPreviewObjectUrl(previewEl);');
     });
 
     it('treats Samsung exercise videos with generic file metadata as video uploads', () => {

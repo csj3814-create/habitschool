@@ -33,6 +33,12 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/habit_group_members/$(groupId + '_' + request.auth.uid)).data.role in ['leader', 'owner'];
     }
 
+    function isHabitGroupActiveMember(groupId) {
+      return isSignedIn()
+          && exists(/databases/$(database)/documents/habit_group_members/$(groupId + '_' + request.auth.uid))
+          && get(/databases/$(database)/documents/habit_group_members/$(groupId + '_' + request.auth.uid)).data.active == true;
+    }
+
     // 헬퍼 함수: 공유 설정 검증
     function isValidShareSettings(settings) {
       return settings is map
@@ -371,6 +377,7 @@ service cloud.firestore {
                     && (!exists(/databases/$(database)/documents/habit_group_checkins/$(checkinId)) || resource.data.uid == request.auth.uid)
                     && request.resource.data.uid == request.auth.uid
                     && isExerciseHabitGroupId(request.resource.data.groupId)
+                    && isHabitGroupActiveMember(request.resource.data.groupId)
                     && request.resource.data.groupType == 'exercise'
                     && request.resource.data.date is string
                     && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')

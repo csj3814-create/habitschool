@@ -21,10 +21,15 @@ describe('habit group transition', () => {
         const htmlSource = readRepoFile('index.html');
 
         expect(appSource).toContain('MAX_HABIT_GROUP_MEMBERSHIPS');
+        expect(appSource).toContain('EXERCISE_GROUP_ENTRY_FEE_POINTS');
+        expect(appSource).toContain('EXERCISE_GROUP_REWARD_POINTS');
+        expect(appSource).toContain('formatHabitGroupJoinCta');
+        expect(appSource).toContain('applyPointBalanceSnapshot(result.coins, user.uid)');
         expect(appSource).toContain('${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}');
+        expect(appSource).toContain('entryFeeCharged');
         expect(appSource).not.toContain('탭 한 번으로 바로 참여');
         expect(appSource).not.toContain('기록을 남기면 제출돼요');
-        expect(htmlSource).toContain('운동 소모임은 최대 2개까지 참여할 수 있고');
+        expect(htmlSource).toContain('200P 예치 후 100일 완료하면 3,000P');
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('diet')");
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('mind')");
     });
@@ -37,10 +42,16 @@ describe('habit group transition', () => {
         expect(rulesSource).toContain('match /habit_group_checkins/{checkinId}');
         expect(rulesSource).toContain('match /exercise_group_reward_progress/{progressId}');
         expect(rulesSource).toContain("request.resource.data.reviewStatus == 'pending'");
+        expect(rulesSource).toContain('function isHabitGroupActiveMember(groupId)');
+        expect(rulesSource).toContain('&& isHabitGroupActiveMember(request.resource.data.groupId)');
         expect(rulesSource).toContain('match /social_challenges/{challengeId}');
         expect(rulesSource).toContain('allow create: if false;');
         expect(runtimeSource).toContain('const MAX_HABIT_GROUP_MEMBERSHIPS = 2;');
+        expect(runtimeSource).toContain('const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;');
+        expect(runtimeSource).toContain('const EXERCISE_GROUP_REWARD_POINTS = 3000;');
         expect(runtimeSource).toContain('exports.joinHabitGroup');
+        expect(runtimeSource).toContain('coins: FieldValue.increment(-EXERCISE_GROUP_ENTRY_FEE_POINTS)');
+        expect(runtimeSource).toContain('blockchain_transactions/exercise_group_entry_${group.id}_${uid}');
         expect(runtimeSource).toContain('exports.reviewHabitGroupCheckin');
         expect(runtimeSource).toContain('exports.transferHabitGroupLeader');
         expect(runtimeSource).toContain('exports.onHabitGroupCheckinWritten');

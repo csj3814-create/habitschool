@@ -7,7 +7,8 @@ import {
     isLocalExerciseVideoThumb,
     resolveLegacyStrengthVideoThumbUrl,
     resolveStrengthLocalThumbSeed,
-    resolveStrengthVideoThumbUrl
+    resolveStrengthVideoThumbUrl,
+    shouldDeferStrengthThumbUntilUpload
 } from '../js/exercise-media.js';
 
 describe('resolveLegacyStrengthVideoThumbUrl', () => {
@@ -106,9 +107,11 @@ describe('strength local thumb helpers', () => {
         expect(getStrengthThumbSaveWaitMs('')).toBe(1200);
     });
 
-    it('delays local thumb extraction briefly for smaller uploads', () => {
+    it('delays local thumb extraction briefly for smaller uploads and defers large uploads', () => {
         expect(getDeferredStrengthThumbDelayMs(4 * 1024 * 1024)).toBe(650);
         expect(getDeferredStrengthThumbDelayMs(12 * 1024 * 1024)).toBe(350);
         expect(getDeferredStrengthThumbDelayMs(24 * 1024 * 1024)).toBe(0);
+        expect(shouldDeferStrengthThumbUntilUpload(20 * 1024 * 1024)).toBe(false);
+        expect(shouldDeferStrengthThumbUntilUpload(24 * 1024 * 1024)).toBe(true);
     });
 });

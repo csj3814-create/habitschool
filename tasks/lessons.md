@@ -1,5 +1,18 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-03 (Samsung Internet Exercise Video Upload)
+
+### 226. Samsung upload transport workarounds must include exercise videos, not only images
+- Symptom: after image upload stalls were handled, exercise video uploads could still sit at 1% with the delayed-upload UI on Samsung/Android.
+- Root cause: the simple `uploadBytes` workaround was scoped to images while exercise videos still used Firebase Storage `uploadBytesResumable`, the same progress transport that can stall on Samsung Internet.
+- Lesson: when a browser-specific Storage transport is proven unreliable, apply the workaround by media surface and browser, not just by MIME family. For Samsung Internet exercise videos, prefer simple `uploadBytes` with video metadata and video-sized timeout.
+
+### 227. Simple-upload progress must be scheduled after pending upload tracking exists
+- Symptom: video simple upload can start without an image-compression await, so an immediate first progress callback may fire before `_pendingUploads` has an entry.
+- Root cause: the pre-upload promise starts as soon as it is created, while `beginTrackedPendingUpload()` registers the entry afterward.
+- Lesson: for no-progress/simple upload paths, schedule the initial UI progress state on the next microtask so the pending tracker receives it. Otherwise the UI can still show the delayed/stalled message even when the alternate transport is active.
+
+---
 ## 2026-05-26 (Challenge Same-Day Restart)
 
 ### 224. Same-day challenge restarts must not inherit the completed day

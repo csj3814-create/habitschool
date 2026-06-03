@@ -1,7 +1,8 @@
 export const HABIT_GROUP_TYPES = Object.freeze(['exercise']);
 export const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
+export const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 export const EXERCISE_GROUP_REWARD_TARGET = 100;
-export const EXERCISE_GROUP_REWARD_POINTS = 2000;
+export const EXERCISE_GROUP_REWARD_POINTS = 3000;
 export const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
 
 export const DEFAULT_HABIT_GROUPS = Object.freeze([
@@ -191,6 +192,7 @@ export function summarizeHabitGroupProgress(progress = {}) {
         remainingCount,
         rewardStatus: progress.rewardStatus || 'in_progress',
         rewardPoints: Number(progress.rewardPoints || EXERCISE_GROUP_REWARD_POINTS) || EXERCISE_GROUP_REWARD_POINTS,
+        entryFeePoints: Number(progress.entryFeePoints || EXERCISE_GROUP_ENTRY_FEE_POINTS) || EXERCISE_GROUP_ENTRY_FEE_POINTS,
         complete: submittedCount >= EXERCISE_GROUP_REWARD_TARGET
     };
 }

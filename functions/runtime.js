@@ -6390,8 +6390,9 @@ exports.adjustUserCoins = onCall(
 // ========================================
 
 const MAX_HABIT_GROUP_MEMBERSHIPS = 2;
+const EXERCISE_GROUP_ENTRY_FEE_POINTS = 200;
 const EXERCISE_GROUP_REWARD_TARGET = 100;
-const EXERCISE_GROUP_REWARD_POINTS = 2000;
+const EXERCISE_GROUP_REWARD_POINTS = 3000;
 const EXERCISE_GROUP_REWARD_WINDOW_DAYS = 120;
 const EXERCISE_HABIT_GROUPS = Object.freeze([
     {
@@ -6556,6 +6557,7 @@ function buildInitialHabitGroupProgress({ groupId, uid, startDate = "" } = {}) {
         pendingCount: 0,
         rejectedCount: 0,
         rewardStatus: "in_progress",
+        entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
         rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
     };
 }
@@ -6594,6 +6596,8 @@ exports.joinHabitGroup = onCall(
         const memberRef = db.doc(`habit_group_members/${getHabitGroupMemberDocId(group.id, uid)}`);
         const progressRef = db.doc(`exercise_group_reward_progress/${getExerciseGroupRewardProgressDocId(group.id, uid)}`);
         const adminRef = db.doc(`admins/${uid}`);
+        const userRef = db.doc(`users/${uid}`);
+        const entryFeeRef = db.doc(`blockchain_transactions/exercise_group_entry_${group.id}_${uid}`);
         const membershipQuery = db.collection("habit_group_members")
             .where("uid", "==", uid)
             .limit(20);
@@ -6603,11 +6607,13 @@ exports.joinHabitGroup = onCall(
         const photoURL = getHabitGroupPhotoUrl(request);
 
         const result = await db.runTransaction(async (tx) => {
-            const [membershipSnap, memberSnap, progressSnap, adminSnap] = await Promise.all([
+            const [membershipSnap, memberSnap, progressSnap, adminSnap, userSnap, entryFeeSnap] = await Promise.all([
                 tx.get(membershipQuery),
                 tx.get(memberRef),
                 tx.get(progressRef),
                 tx.get(adminRef),
+                tx.get(userRef),
+                tx.get(entryFeeRef),
             ]);
 
             const activeMemberships = [];
@@ -6630,6 +6636,41 @@ exports.joinHabitGroup = onCall(
             const existingRole = String(existingMember.role || "").trim();
             const isAdminLeader = adminSnap.exists || isBootstrapAdminEmail(email);
             const role = HABIT_GROUP_LEADER_ROLES.has(existingRole) || isAdminLeader ? "leader" : "member";
+            const hasPaidEntryFee = entryFeeSnap.exists
+                || existingMember.entryFeePaid === true
+                || Number(existingMember.entryFeePoints || 0) >= EXERCISE_GROUP_ENTRY_FEE_POINTS;
+            const shouldChargeEntryFee = !alreadyActive && !hasPaidEntryFee;
+            const userData = userSnap.exists ? (userSnap.data() || {}) : {};
+            const currentCoins = Number(userData.coins || 0) || 0;
+
+            if (shouldChargeEntryFee && currentCoins < EXERCISE_GROUP_ENTRY_FEE_POINTS) {
+                throw new HttpsError(
+                    "failed-precondition",
+                    `소모임 참여에는 ${EXERCISE_GROUP_ENTRY_FEE_POINTS}P가 필요합니다. 현재 ${currentCoins}P예요.`
+                );
+            }
+
+            if (shouldChargeEntryFee) {
+                tx.set(userRef, {
+                    coins: FieldValue.increment(-EXERCISE_GROUP_ENTRY_FEE_POINTS),
+                }, { merge: true });
+                tx.set(entryFeeRef, {
+                    userId: uid,
+                    uid,
+                    type: "exercise_group_entry",
+                    groupId: group.id,
+                    groupTitle: group.title,
+                    pointsUsed: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+                    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+                    date: todayStr,
+                    timestamp: now,
+                    status: "success",
+                }, { merge: false });
+            }
+
+            const entryFeeStatus = shouldChargeEntryFee || hasPaidEntryFee
+                ? "paid"
+                : String(existingMember.entryFeeStatus || "grandfathered").trim();
 
             tx.set(memberRef, {
                 groupId: group.id,
@@ -6640,9 +6681,15 @@ exports.joinHabitGroup = onCall(
                 photoURL,
                 active: true,
                 role,
-                joinedAt: existingMember.joinedAt || now,
+                joinedAt: alreadyActive && existingMember.joinedAt ? existingMember.joinedAt : now,
                 leftAt: FieldValue.delete(),
                 rewardProgressId: progressRef.id,
+                entryFeePoints: shouldChargeEntryFee || hasPaidEntryFee
+                    ? EXERCISE_GROUP_ENTRY_FEE_POINTS
+                    : Number(existingMember.entryFeePoints || 0) || 0,
+                entryFeePaid: shouldChargeEntryFee || hasPaidEntryFee,
+                entryFeeStatus,
+                entryFeePaidAt: shouldChargeEntryFee ? now : (existingMember.entryFeePaidAt || FieldValue.delete()),
                 updatedAt: now,
             }, { merge: true });
 
@@ -6657,6 +6704,7 @@ exports.joinHabitGroup = onCall(
                 tx.set(progressRef, {
                     groupId: group.id,
                     uid,
+                    entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
                     rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
                     updatedAt: now,
                 }, { merge: true });
@@ -6666,6 +6714,9 @@ exports.joinHabitGroup = onCall(
                 groupId: group.id,
                 activeCount: alreadyActive ? activeMemberships.length : activeMemberships.length + 1,
                 role,
+                entryFeeCharged: shouldChargeEntryFee,
+                entryFeePoints: EXERCISE_GROUP_ENTRY_FEE_POINTS,
+                coins: shouldChargeEntryFee ? currentCoins - EXERCISE_GROUP_ENTRY_FEE_POINTS : currentCoins,
             };
         });
 
@@ -6825,6 +6876,8 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
             ]);
 
             if (!progressSnap.exists && !after) return;
+            const memberData = memberSnap.exists ? (memberSnap.data() || {}) : {};
+            if (after && (!memberSnap.exists || memberData.active === false)) return;
 
             const baseProgress = progressSnap.exists
                 ? (progressSnap.data() || {})
@@ -6866,6 +6919,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                 pendingCount: progress.pendingCount,
                 rejectedCount: progress.rejectedCount,
                 rewardStatus,
+                entryFeePoints: Number(baseProgress.entryFeePoints || EXERCISE_GROUP_ENTRY_FEE_POINTS) || EXERCISE_GROUP_ENTRY_FEE_POINTS,
                 rewardPoints: EXERCISE_GROUP_REWARD_POINTS,
                 updatedAt: now,
             };
@@ -6884,7 +6938,7 @@ exports.onHabitGroupCheckinWritten = onDocumentWritten(
                     submittedCount: progress.submittedCount,
                     approvedCount: progress.approvedCount,
                     pendingCount: progress.pendingCount,
-                    lastCheckinDate: after?.date || memberSnap.data()?.lastCheckinDate || null,
+                    lastCheckinDate: after?.date || memberData.lastCheckinDate || null,
                     updatedAt: now,
                 }, { merge: true });
             }

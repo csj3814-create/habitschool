@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     DEFAULT_HABIT_GROUPS,
+    EXERCISE_GROUP_ENTRY_FEE_POINTS,
     EXERCISE_GROUP_REWARD_POINTS,
     EXERCISE_GROUP_REWARD_TARGET,
     MAX_HABIT_GROUP_MEMBERSHIPS,
@@ -26,6 +27,7 @@ describe('exercise habit groups', () => {
             'exercise-running-club'
         ]);
         expect(MAX_HABIT_GROUP_MEMBERSHIPS).toBe(2);
+        expect(EXERCISE_GROUP_ENTRY_FEE_POINTS).toBe(200);
     });
 
     it('requires ten thousand steps for the walking group', () => {
@@ -150,7 +152,7 @@ describe('exercise habit groups', () => {
         expect(progress.rejectedCount).toBe(1);
     });
 
-    it('marks one hundred submissions as pending review with a 2,000P group reward', () => {
+    it('marks one hundred submissions as pending review with a 3,000P group reward', () => {
         const dates = Array.from({ length: EXERCISE_GROUP_REWARD_TARGET }, (_, index) => {
             const date = new Date('2026-06-01T00:00:00Z');
             date.setUTCDate(date.getUTCDate() + index);
@@ -164,6 +166,7 @@ describe('exercise habit groups', () => {
         expect(summary.submittedCount).toBe(EXERCISE_GROUP_REWARD_TARGET);
         expect(progress.rewardStatus).toBe('pending_review');
         expect(summary.rewardPoints).toBe(EXERCISE_GROUP_REWARD_POINTS);
-        expect(EXERCISE_GROUP_REWARD_POINTS).toBe(2000);
+        expect(summary.entryFeePoints).toBe(EXERCISE_GROUP_ENTRY_FEE_POINTS);
+        expect(EXERCISE_GROUP_REWARD_POINTS).toBe(3000);
     });
 });
