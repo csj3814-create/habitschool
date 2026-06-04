@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-05 (Habit Group Review Media Layout)
+
+### 235. Full-width media in flex rows must reserve its own row on mobile
+- Symptom: in the group leader confirmation queue, a second exercise video thumbnail overflowed outside the card instead of moving below the large playing media.
+- Root cause: the mobile review media item could become `width: 100%`, but its parent strip did not wrap flex items. The following thumbnail tried to stay on the same row.
+- Lesson: when a moderation card mixes expandable media and thumbnails, set the media strip to wrap, cap it to the card width, and make expanded media claim a full flex row on narrow screens.
+
+---
+
 ## 2026-06-04 (Gallery Community Entry)
 
 ### 234. Korean integrity tests must catch plain question-mark replacement text

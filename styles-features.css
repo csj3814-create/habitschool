@@ -2949,15 +2949,23 @@ textarea {
 }
 
 .habit-group-review-row {
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
+    overflow: hidden;
+}
+
+.habit-group-review-row .social-challenge-main {
+    flex: 1 1 180px;
 }
 
 .habit-group-review-media-strip {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    align-items: flex-start;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 .habit-group-review-media-item {
@@ -2999,6 +3007,7 @@ textarea {
 }
 
 .habit-group-review-media-item.video-thumb-wrapper.playing {
+    flex: 0 1 160px;
     width: 160px;
     height: 96px;
     aspect-ratio: auto;
@@ -3036,6 +3045,7 @@ textarea {
     }
 
     .habit-group-review-media-item.video-thumb-wrapper.playing {
+        flex: 1 0 100%;
         width: 100%;
         height: 180px;
     }

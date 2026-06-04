@@ -64,6 +64,18 @@ describe('habit group transition', () => {
         expect(htmlSource).not.toContain("setHabitGroupDirectoryFilter('mind')");
     });
 
+    it('keeps habit group review media wrapped inside moderation cards', () => {
+        const styleSource = readRepoFile('styles-features.css');
+
+        expect(styleSource).toContain('.habit-group-review-row .social-challenge-main');
+        expect(styleSource).toContain('flex: 1 1 180px;');
+        expect(styleSource).toContain('.habit-group-review-media-strip');
+        expect(styleSource).toContain('max-width: 100%;');
+        expect(styleSource).toContain('flex-wrap: wrap;');
+        expect(styleSource).toContain('.habit-group-review-media-item.video-thumb-wrapper.playing');
+        expect(styleSource).toContain('flex: 1 0 100%;');
+    });
+
     it('blocks new social challenge writes at rules and functions boundaries', () => {
         const rulesSource = readRepoFile('firestore.rules');
         const indexesSource = readRepoFile('firestore.indexes.json');
