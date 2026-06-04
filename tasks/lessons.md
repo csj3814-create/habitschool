@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-04 (Gallery Community Entry)
+
+### 233. Do not put account-linking before community entry
+- Symptom: users were not completing Kakao registration when the community-entry path required opening a 1:1 chat and finishing account linking first.
+- Root cause: the product goal was lightweight group participation, but the proposed flow treated identity linking as a prerequisite.
+- Lesson: community entry should be direct and low-friction. Keep account linking optional and ask for it only when a user tries account-specific chatbot or reward features.
+
+---
+
 ## 2026-06-04 (Habit Group Review Media)
 
 ### 232. Never treat a thumbnail URL as a playable video URL

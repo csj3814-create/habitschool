@@ -22,6 +22,7 @@ describe('habit group transition', () => {
         const htmlSource = readRepoFile('index.html');
 
         expect(appSource).toContain('MAX_HABIT_GROUP_MEMBERSHIPS');
+        expect(appSource).toContain('const HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT = 4;');
         expect(appSource).toContain('EXERCISE_GROUP_ENTRY_FEE_POINTS');
         expect(appSource).toContain('EXERCISE_GROUP_REWARD_POINTS');
         expect(appSource).toContain('formatHabitGroupJoinCta');
@@ -46,6 +47,11 @@ describe('habit group transition', () => {
         expect(appSource).toContain('window.reviewHabitGroupCheckin');
         expect(appSource).not.toContain('오늘 제출 · 확인 대기');
         expect(appSource).toContain('showUnavailableAction: canJoinMore');
+        expect(appSource).toContain(".slice(0, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)");
+        expect(appSource).toContain("buildCommunityExpandableRows('habit-groups-recommended', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)");
+        expect(appSource).toContain("buildCommunityExpandableRows('habit-groups-recommended-full', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)");
+        expect(appSource).toContain("buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)");
+        expect(appSource).toContain("buildCommunityExpandableRows('habit-groups-joined', joinedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)");
         expect(appSource).toContain('최대 2모임');
         expect(appSource).not.toContain('2개 참여 중');
         expect(appSource).toContain('applyPointBalanceSnapshot(result.coins, user.uid)');

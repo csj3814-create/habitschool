@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource } from './source-helpers.js';
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('gallery loading hardening', () => {
     it('does not block the first gallery render on friendship loading and can recover from stale in-flight loads', () => {
@@ -45,5 +45,19 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('const shouldFetchFresh = forceReload || !hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience;');
         expect(appSource).toContain("galleryCacheAudience = 'guest';");
         expect(appSource).toContain("galleryCacheAudience = 'auth';");
+    });
+
+    it('keeps the gallery chat CTA as direct OpenChat entry without account-link gating', () => {
+        const appSource = readAppSource();
+        const htmlSource = readRepoFile('index.html');
+
+        expect(appSource).toContain("const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';");
+        expect(appSource).toContain('function openCommunityChat()');
+        expect(appSource).toContain('window.openCommunityChat = openCommunityChat;');
+        expect(appSource).toContain("if (mode === 'chat')");
+        expect(appSource).toContain('openCommunityChat();');
+        expect(htmlSource).toContain('id="chat-banner"');
+        expect(htmlSource).toContain('onclick="openCommunityChat()"');
+        expect(htmlSource).not.toContain('id="chat-banner"\n                onclick="openChatbotKakaoChat()');
     });
 });

@@ -14,29 +14,29 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=206';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=206';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=208';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=208';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=206';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=206';
+} from './auth-login-helpers.js?v=208';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=208';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=206';
+} from './exercise-media.js?v=208';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=206';
+} from './health-connect-utils.js?v=208';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -53,13 +53,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=206';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=206';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=206';
-import { sanitize, compressImage } from './data-manager.js?v=206';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=206';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=206';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=206';
+} from './habit-groups.js?v=208';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=208';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=208';
+import { sanitize, compressImage } from './data-manager.js?v=208';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=208';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=208';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=208';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -72,7 +72,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=206';
+} from './diet-program.js?v=208';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -84,18 +84,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=206';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=206';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=206';
+} from './meditation-guide.js?v=208';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=208';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=208';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=206';
+} from './social-challenge-readiness.js?v=208';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=206';
+} from './monthly-mvp-reward.js?v=208';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -352,6 +352,7 @@ const FRIEND_CONNECTED_TOAST_MAX_AGE_MS = 30 * 60 * 1000;
 const SOCIAL_CHALLENGE_DOC_ID_QUERY_CHUNK_SIZE = 30;
 const HABIT_GROUP_LOAD_TIMEOUT_MS = 2500;
 const HABIT_GROUP_CACHE_TTL_MS = 60_000;
+const HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT = 4;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
 const GALLERY_RETRY_BASE_DELAY_MS = 2500;
@@ -5240,7 +5241,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=206';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=208';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -12327,9 +12328,14 @@ function focusDashboardModule(moduleId) {
 }
 
 const COMMUNITY_CHAT_URL = 'https://open.kakao.com/o/gv23urgi';
-window.openCommunityChat = function() {
-    window.open(COMMUNITY_CHAT_URL, '_blank', 'noopener');
-};
+function openCommunityChat() {
+    try {
+        window.open(COMMUNITY_CHAT_URL, '_blank', 'noopener');
+    } catch (_) {
+        window.location.href = COMMUNITY_CHAT_URL;
+    }
+}
+window.openCommunityChat = openCommunityChat;
 
 const _communityFocusState = {
     friendCount: 0,
@@ -21489,14 +21495,14 @@ function buildHabitGroupRecommendationSection(rows = [], { canJoinMore = true } 
             </button>
             ${expanded ? `
                 <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">다른 소모임</div>
-                ${buildCommunityExpandableRows('habit-groups-recommended-full', rows, 2)}
+                ${buildCommunityExpandableRows('habit-groups-recommended-full', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             ` : ''}
         `;
     }
 
     return `
         <div style="margin:12px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">더 함께할 수 있어요</div>
-        ${buildCommunityExpandableRows('habit-groups-recommended', rows, 2)}
+        ${buildCommunityExpandableRows('habit-groups-recommended', rows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
     `;
 }
 
@@ -21753,7 +21759,7 @@ async function renderSocialChallengesInner(user) {
                 progress: progressByGroupId.get(group.id) || null
             }));
         const recommendedRows = getRecommendedHabitGroups(getCachedDailyLog(`${user.uid}_${todayStr}`) || {}, joinedGroupIds)
-            .slice(0, joinedRows.length ? 2 : 3)
+            .slice(0, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)
             .map(group => buildHabitGroupDashboardRow(group, {
                 joined: false,
                 checkedIn: false,
@@ -21778,7 +21784,7 @@ async function renderSocialChallengesInner(user) {
                     ['<button type="button" class="community-empty-btn" onclick="openHabitGroupDirectory()">소모임 찾기</button>']
                 )}
                 <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">추천 소모임</div>
-                ${buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, 3)}
+                ${buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             `;
             return;
         }
@@ -21787,7 +21793,7 @@ async function renderSocialChallengesInner(user) {
             ${summaryHtml}
             ${leaderReviewSectionHtml}
             <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">내 소모임</div>
-            ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, 3)}
+            ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             ${buildHabitGroupRecommendationSection(recommendedRows, { canJoinMore })}
         `;
     } catch (e) {
