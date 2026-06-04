@@ -21,6 +21,7 @@ const ROOT_RUNTIME_FILES = [
 
 const MOJIBAKE_PATTERN = /\uFFFD|[\uF900-\uFAFF]|[\u8AED\u7B4C\u91AB\u75AB\u6C83\u8881\u8E42\u745C\u6FE1\u7337]|\?[\u3131-\u318E\uAC00-\uD7A3]/u;
 const BROKEN_CSS_CONTENT_PATTERN = /content:\s*"[^"]*\?{2,}[^"]*";/;
+const BROKEN_CHANGELOG_QUESTION_RUN_PATTERN = /\?{3,}/;
 
 function readRepoFile(relativePath) {
     return readFileSync(resolve(ROOT_DIR, relativePath), 'utf8');
@@ -71,5 +72,14 @@ describe('Korean text integrity', () => {
         }
 
         expect(hits).toEqual([]);
+    });
+
+    it('keeps the public changelog free of question-mark replacement text', () => {
+        const changelogSource = readRepoFile('changelog.html');
+
+        expect(changelogSource).toContain('<title>업데이트 노트 - 해빛스쿨</title>');
+        expect(changelogSource).toContain('마지막 업데이트: 2026년 6월 4일');
+        expect(changelogSource).not.toMatch(BROKEN_CHANGELOG_QUESTION_RUN_PATTERN);
+        expect(changelogSource).not.toMatch(MOJIBAKE_PATTERN);
     });
 });

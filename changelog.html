@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>업데이트 노트 - 해빗스쿨</title>
-    <meta name="description" content="해빗스쿨의 주요 업데이트와 개선 기록">
+    <title>업데이트 노트 - 해빛스쿨</title>
+    <meta name="description" content="해빛스쿨의 주요 업데이트와 개선 기록">
     <link rel="canonical" href="https://habitschool.web.app/changelog.html">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="업데이트 노트 - 해빗스쿨">
-    <meta property="og:description" content="해빗스쿨의 주요 업데이트와 개선 기록">
+    <meta property="og:title" content="업데이트 노트 - 해빛스쿨">
+    <meta property="og:description" content="해빛스쿨의 주요 업데이트와 개선 기록">
     <meta property="og:image" content="https://habitschool.web.app/icons/icon-512.png">
     <meta property="og:url" content="https://habitschool.web.app/changelog.html">
     <meta property="og:locale" content="ko_KR">
@@ -120,7 +120,7 @@
             border-bottom: none;
         }
         .change-list li::before {
-            content: "•";
+            content: "*";
             position: absolute;
             left: 7px;
             top: 7px;
@@ -173,147 +173,118 @@
 
         <div class="header">
             <h1>업데이트 노트</h1>
-            <div class="subtitle">해빗스쿨의 주요 변경과 개선 기록</div>
-            <div class="update">?? ????: 2026? 5? 26?</div>
+            <div class="subtitle">해빛스쿨의 주요 변경과 개선 기록</div>
+            <div class="update">마지막 업데이트: 2026년 6월 4일</div>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.14</span>
-                <span class="version-date">2026? 5? 26?</span>
+                <span class="version-badge">v1.0.16</span>
+                <span class="version-date">2026년 6월 4일</span>
             </div>
-            <div class="version-title">??? ?? ? ?? ???? ??? ? ????? ?????</div>
+            <div class="version-title">운동 소모임과 단톡방 진입 흐름을 다듬었습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">??</span> ??? ?? ?? ? ?? ?? ?? ??? ?? ?? ? ???? ?? ??? ? ?? ????.</li>
-                <li><span class="tag tag-fix">??</span> ??? ?? ?? ???? ?? ???? ??? ???? ?? ????? 1??? ????? ????.</li>
-                <li><span class="tag tag-improve">??</span> ? ?? ??? ?? ? ?? ???? ?? ?? ???? ?? ????? ?? ??? ???? ????.</li>
-                <li><span class="tag tag-fix">??</span> PWA ?? ??? ??? ?? ??? ??? ???? ????? ???? ????.</li>
+                <li><span class="tag tag-improve">개선</span> 대시보드에서 소모임을 최대 4개까지 볼 수 있도록 조정했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 갤러리의 단톡방 참여 버튼은 계정 연결 없이 바로 오픈채팅방을 열도록 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v208로 갱신해 최신 화면이 안정적으로 반영되도록 했습니다.</li>
+            </ul>
+        </div>
+
+        <div class="version-card">
+            <div class="version-header">
+                <span class="version-badge old">v1.0.15</span>
+                <span class="version-date">2026년 6월 4일</span>
+            </div>
+            <div class="version-title">운동 소모임 시범 운영 기능을 추가했습니다</div>
+            <ul class="change-list">
+                <li><span class="tag tag-new">신규</span> 만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽 소모임을 추가했습니다.</li>
+                <li><span class="tag tag-new">신규</span> 사용자는 최대 2개 소모임에 참여할 수 있고, 각 소모임의 100일 보상 진행도는 따로 쌓입니다.</li>
+                <li><span class="tag tag-new">신규</span> 모임장이 제출 기록을 확인하고 승인 또는 반려할 수 있는 검토 화면을 추가했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 소모임 참여 시 200P 예치, 100일 승인 완료 시 3,000P 보상 구조를 반영했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 같은 날짜에 2개 소모임 조건을 모두 만족하면 각 소모임 진행도가 각각 1회씩 오르도록 고쳤습니다.</li>
+            </ul>
+        </div>
+
+        <div class="version-card">
+            <div class="version-header">
+                <span class="version-badge old">v1.0.14</span>
+                <span class="version-date">2026년 6월 3일</span>
+            </div>
+            <div class="version-title">동영상 업로드와 모임장 검토 미디어를 안정화했습니다</div>
+            <ul class="change-list">
+                <li><span class="tag tag-fix">수정</span> 일부 삼성 인터넷에서 운동 영상 업로드가 1%에 머무는 문제를 줄였습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 모임장 검토 화면에서 사진은 크게 보고, 영상은 실제 영상 파일이 있을 때만 재생되도록 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 영상 썸네일만 있는 오래된 제출 기록은 관련 일일 기록에서 원본 영상 주소를 보강해 보여줍니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
                 <span class="version-badge old">v1.0.13</span>
-                <span class="version-date">2026년 5월 22일</span>
+                <span class="version-date">2026년 6월 1일</span>
             </div>
-            <div class="version-title">오래 켜둔 화면도 오늘 기록으로 자연스럽게 돌아오게 했습니다</div>
+            <div class="version-title">새 날짜 리로드와 기록 유지 흐름을 보강했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 해빗스쿨을 오래 열어 둔 뒤 새로고침하거나 화면을 다시 열 때, 선택 날짜가 오늘이 아니면 자동으로 오늘 날짜로 맞추도록 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 날짜가 오늘로 바뀐 경우 오늘 기록을 다시 불러와 대시보드와 기록 화면이 이전 날짜에 머물지 않게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 마음 탭 호흡 안내의 내쉼 음성 문구를 더 자연스럽게 다듬어 “내쉬세요”가 세게 들리는 느낌을 줄였습니다.</li>
-                <li><span class="tag tag-fix">수정</span> PWA 캐시 버전을 갱신해 최신 날짜 보정과 음성 안내 수정이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 오랜만에 앱을 열었을 때 새 날짜 기준으로 더 정확하게 다시 불러오도록 개선했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 같은 날 사진을 추가로 올린 뒤 앞선 기록이 사라져 보일 수 있는 흐름을 점검하고 보강했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 날짜가 바뀐 뒤에도 선택 날짜와 화면 상태가 어긋나지 않도록 갱신 조건을 정리했습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
                 <span class="version-badge old">v1.0.12</span>
-                <span class="version-date">2026년 5월 19일</span>
+                <span class="version-date">2026년 5월 26일</span>
             </div>
-            <div class="version-title">쿠폰 정리와 호흡 가이드를 더 쓰기 편하게 다듬었습니다</div>
+            <div class="version-title">주간 챌린지 재시작과 PWA 갱신을 안정화했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> 발급된 쿠폰은 사용 완료로 표시한 뒤 필요할 때 완전히 삭제할 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 사용 완료 또는 기간 만료 쿠폰은 보관함에서 사진과 바코드를 접고, 쿠폰명과 가격, PIN만 흐릿하게 보여줍니다.</li>
-                <li><span class="tag tag-improve">개선</span> 접힌 쿠폰을 누르면 사진과 바코드를 다시 펼쳐 확인할 수 있습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 기간 만료 후 30일이 지난 쿠폰은 자동 삭제되도록 서버 정리 작업을 추가했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 마음 탭 호흡 3종을 5분으로 늘리고, 안내 음성은 3사이클까지만 들리도록 조정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 4번째 사이클부터 쓰는 알림음만 더 크게 조정해 음성 안내와 톤의 역할을 분리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 완료한 주간 챌린지를 같은 날 다시 시작할 때 이미 1일차로 잡히던 문제를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 보상 수령 뒤 자산 화면이 오래된 챌린지 상태를 보여주지 않도록 서버 기준 새로고침을 강화했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> PWA 캐시 버전을 갱신해 최신 코드가 더 안정적으로 반영되도록 했습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
                 <span class="version-badge old">v1.0.11</span>
-                <span class="version-date">2026년 5월 1일</span>
+                <span class="version-date">2026년 5월 19일</span>
             </div>
-            <div class="version-title">로딩 안정성과 관제탑 운영 화면을 정리했습니다</div>
+            <div class="version-title">쿠폰 보관함과 마음 힌트 흐름을 정리했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 자산 탭에서 Firestore가 늦을 때 거래 기록과 HBT 정보가 무한 로딩처럼 남던 흐름을 끊었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 포인트, HBT, 미니 차트, 거래 기록은 가능한 마지막 정상 값을 먼저 보여주고 서버 응답이 도착하면 다시 갱신합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 친구, 커뮤니티, 갤러리 같은 보조 데이터가 늦어도 핵심 화면이 막히지 않도록 중복 조회와 콘솔 소음을 줄였습니다.</li>
-                <li><span class="tag tag-fix">수정</span> PC와 모바일에서 반복되던 인증 팝업 및 Firestore 재연결 콘솔 오류를 줄이고 PWA 캐시를 새 버전으로 갱신했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 관제탑 보상마켓이 운영 Firestore 규칙에 막히지 않도록 권한 배포를 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 한글이 깨져 보이는 UI와 콘솔 문구를 점검하고, 같은 문제가 다시 들어오지 않도록 검사 범위를 넓혔습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 사용 완료 또는 만료된 쿠폰은 보관함에서 사진과 바코드를 접고 핵심 정보만 보이도록 정리했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 마음 기록의 힌트 안내와 명상 흐름을 더 짧고 자연스럽게 다듬었습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 오래된 쿠폰이 자동 정리되도록 서버 정리 작업을 보강했습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
                 <span class="version-badge old">v1.0.10</span>
-                <span class="version-date">2026년 4월 29일</span>
+                <span class="version-date">2026년 5월 1일</span>
             </div>
-            <div class="version-title">쿠폰 유효기간과 보관함 표시를 더 정확하게 맞췄습니다</div>
+            <div class="version-title">로딩 안정성과 관리자 화면을 개선했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 해빛 마켓의 아메리카노 쿠폰 유효기간을 실제 기프티쇼 발급 기준인 30일로 맞췄습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 공개 아메리카노 쿠폰은 기프티쇼 API에서 확인한 30일 상품 코드와 6% 할인 매입가 기준으로 맞췄습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 만료 날짜와 함께 남은 일수를 보여줘 사용 가능한 기간을 바로 판단할 수 있게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 실발급 쿠폰 상태조회 응답의 만료일을 우선 반영해 보관함 날짜가 공급사 기준과 어긋나지 않게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 관제탑 보상마켓 정보는 실발급 확인에 필요한 항목 중심으로 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 자산 탭에서 Firestore가 느릴 때 거래 기록과 HBT 정보가 무한 로딩처럼 보이던 문제를 줄였습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 친구, 커뮤니티, 갤러리 같은 보조 데이터 로딩이 화면 전체를 막지 않도록 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 관리자 보상마켓 운영에 필요한 Firestore 권한 배포를 정리했습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
                 <span class="version-badge old">v1.0.9</span>
-                <span class="version-date">2026년 4월 27일</span>
+                <span class="version-date">2026년 4월 29일</span>
             </div>
-            <div class="version-title">쿠폰 교환과 확인 흐름을 더 읽기 쉽게 정리했습니다</div>
+            <div class="version-title">쿠폰 유효기간과 표시 정보를 정확하게 맞췄습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 해빛 마켓과 쿠폰 보관함에서 상품 이미지와 브랜드 표시를 더 보기 쉽게 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 저장된 쿠폰 수령 연락처는 접힌 상태로 보여주고 필요할 때만 바로 수정할 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 바코드, PIN, 유효기간을 더 쉽게 확인할 수 있게 다듬었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 모바일에서는 바코드를 더 크게 띄워 실제 사용 전에 확인하기 편하게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 2,000P 쿠폰이 잘못된 교환 한도 계산 때문에 막히던 문제를 바로잡았습니다.</li>
-            </ul>
-        </div>
-
-        <div class="version-card">
-            <div class="version-header">
-                <span class="version-badge old">v1.0.8</span>
-                <span class="version-date">2026년 4월 23일</span>
-            </div>
-            <div class="version-title">식단 코칭, 명상 가이드, 로그인 안정성을 함께 보완했습니다</div>
-            <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> 프로필에서 고른 식단 방식에 맞춰 기록 가이드, 대시보드 요약, 식전 알림 문구를 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 명상과 호흡 가이드를 더 자연스럽게 다듬고 단계 표현과 사운드 안내를 보완했습니다.</li>
-                <li><span class="tag tag-new">신규</span> 감사일기 박스를 명상 흐름과 맞는 구조로 정리하고 브라우저에서 접근하기 쉽게 개선했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> Galaxy 계열 브라우저에서 반복되던 Google 로그인 루프를 줄이도록 로그인 경로를 다시 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 임시 알림의 `지금 기록` 버튼이 실제 기록 화면으로 이어지도록 연결을 보완했습니다.</li>
-            </ul>
-        </div>
-
-        <div class="version-card">
-            <div class="version-header">
-                <span class="version-badge old">v1.0.7</span>
-                <span class="version-date">2026년 4월 20일</span>
-            </div>
-            <div class="version-title">설치 안내, 업로드 체감, 챌린지 정산 정확도를 보완했습니다</div>
-            <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 앱 설치 흐름을 다시 정리해 브라우저에서 더 쉽게 이해하고 진행할 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 사진과 영상 업로드의 전처리 부담을 줄여 더 빠르게 올릴 수 있게 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 배경 업로드 진행 표시를 다듬어 업로드 체감이 안정적으로 보이도록 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 7일 챌린지 마지막 날 기록 후 정산이 어긋나던 문제를 바로잡았습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 서비스워커 버전과 자산 캐시를 정리해 최신 코드 반영이 안정적으로 이뤄지게 했습니다.</li>
-            </ul>
-        </div>
-
-        <div class="version-card">
-            <div class="version-header">
-                <span class="version-badge old">v1.0.6</span>
-                <span class="version-date">2026년 4월 12일</span>
-            </div>
-            <div class="version-title">자산 화면과 업로드 흐름, 커뮤니티 연결을 다듬었습니다</div>
-            <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 자산 탭의 HBT 기록과 요약값을 더 안정적으로 불러오도록 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 로그인 직후에도 최근 요약 값이 먼저 보이고 최신 값으로 자연스럽게 갱신되도록 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 사진과 영상 업로드 진행을 화면에서 바로 확인할 수 있도록 개선했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 같은 날 여러 기록을 저장할 때 기존 미디어가 잘못 사라지지 않도록 업로드 병합 방식을 보완했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 해빗코치 계정 연결과 1:1 상담 진입을 더 쉽게 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 아메리카노 쿠폰 유효기간을 실제 발급 기준과 맞췄습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 만료 날짜와 남은 일수를 더 쉽게 확인할 수 있도록 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 쿠폰 상태 조회 응답에서 만료일을 우선 반영하도록 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="footer">
-            <p>앞으로도 더 안정적이고 쓰기 쉬운 건강 습관 앱으로 계속 다듬겠습니다.</p>
+            <p>앞으로도 안정적이고 이어가기 쉬운 건강 습관 앱으로 계속 다듬겠습니다.</p>
             <a href="/#profile">앱으로 돌아가기</a>
         </div>
     </div>

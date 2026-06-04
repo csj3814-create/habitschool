@@ -2,6 +2,13 @@
 
 ## 2026-06-04 (Gallery Community Entry)
 
+### 234. Korean integrity tests must catch plain question-mark replacement text
+- Symptom: the public changelog rendered Korean copy as question-mark placeholder text, but the existing mojibake test did not fail.
+- Root cause: the test caught replacement characters and some mojibake CJK ranges, but it did not check for plain repeated `?` runs in user-facing HTML.
+- Lesson: for Korean-facing static pages, test both mojibake glyphs and repeated question-mark replacement text. A file can be broken even when it contains no Unicode replacement character.
+
+---
+
 ### 233. Do not put account-linking before community entry
 - Symptom: users were not completing Kakao registration when the community-entry path required opening a 1:1 chat and finishing account linking first.
 - Root cause: the product goal was lightweight group participation, but the proposed flow treated identity linking as a prerequisite.

@@ -23,17 +23,21 @@ All notable changes to Habitschool are documented here.
   - `reviewHabitGroupCheckin`
   - `transferHabitGroupLeader`
   - `onHabitGroupCheckinWritten`
+- Added a user-facing Korean changelog page refresh for the latest habit group and gallery entry updates.
 
 ### Changed
+- Updated the gallery community CTA so users enter the Kakao OpenChat directly without account-linking friction.
+- Increased habit group dashboard visibility to show up to four groups while keeping membership capped at two groups.
 - Refined the joined group dashboard copy:
   - Removed repeated "today submitted / pending review" copy from compact group cards.
   - Kept progress copy concise with completion, approved, and pending counts.
 - Collapsed unavailable recommendations by default when a user is already in two groups.
 - Replaced repeated "2 groups joined" labels with a single "maximum 2 groups" section-level control.
 - Sorted recommended exercise groups by participant count.
-- Rotated PWA assets through v206 to ensure mobile/PWA clients pick up the latest runtime.
+- Rotated PWA assets through v208 to ensure mobile/PWA clients pick up the latest runtime.
 
 ### Fixed
+- Fixed mojibake in `changelog.html`, where Korean release notes were rendered as question-mark placeholder text.
 - Fixed same-day group reward progress so two joined groups can each count on the same date when both conditions are met.
 - Fixed duplicate checkin counting within the same group and date by keeping progress scoped to `user + groupId`.
 - Fixed Samsung Internet exercise video uploads that could remain stuck around 1% by using the safer upload path for exercise videos.
@@ -54,4 +58,4 @@ All notable changes to Habitschool are documented here.
 ### Deployment
 - Staging: `https://habitschool-staging.web.app`
 - Production: `https://habitschool.web.app`
-- Latest production commit: `fa3e768 Fix habit group review video sources`
+- Latest production commit: `6b0b080 Update habit group and gallery entry UI`
