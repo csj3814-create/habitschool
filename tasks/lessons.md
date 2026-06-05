@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-05 (Daily Log Save Acknowledgement)
+
+### 236. Never convert a primary Firestore save timeout into a successful acknowledgement
+- Symptom: exercise and mind records appeared complete locally, but after refresh the dashboard returned to the server state and the records disappeared.
+- Root cause: the primary daily log `setDoc()` used a timeout helper that resolved `null`, then the caller set `primarySaveAcknowledged = true` without proving Firestore had acknowledged the write.
+- Lesson: primary persistence writes must either receive a real ACK or fail into a durable retry path. Only optional/background refreshes may use non-rejecting timeout fallbacks.
+
+---
+
 ## 2026-06-05 (Habit Group Review Media Layout)
 
 ### 235. Full-width media in flex rows must reserve its own row on mobile

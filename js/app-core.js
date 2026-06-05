@@ -16691,18 +16691,19 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             latestSaveData = saveData;
             offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData);
 
-            // Firestore 저장: 서버 ACK 최대 5초 대기, unavailable 에러 시 1회 자동 재시도
-            const doSetDoc = () => withTimeout(
+            // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.
+            // 타임아웃을 성공처럼 처리하면 로컬 점수만 오른 뒤 새로고침 때 기록이 사라질 수 있다.
+            const doSetDoc = () => withRejectingTimeout(
                 setDoc(doc(db, "daily_logs", docId), saveData, { merge: true }),
                 5000,
-                null
+                'daily_log_primary_save_timeout'
             );
             try {
-            await doSetDoc();
-            primarySaveAcknowledged = true;
+                await doSetDoc();
+                primarySaveAcknowledged = true;
             } catch (e) {
-                if (e.code === 'unavailable' || e.code === 'failed-precondition') {
-                    // 연결 안정화 대기 후 1회 재시도
+                if (isOfflineSaveCandidateError(e)) {
+                    // 연결 안정화 대기 후 1회 재시도. 재시도도 실패하면 바깥 catch에서 오프라인 보관함에 저장한다.
                     await new Promise(r => setTimeout(r, 1500));
                     await doSetDoc();
                     primarySaveAcknowledged = true;

@@ -17,4 +17,17 @@ describe('daily log offline fallback', () => {
         expect(appSource).toContain('if (effectiveLogDoc.exists() || pendingOutboxEntry)');
         expect(appSource).not.toContain('getDoc(doc(db, "daily_logs", docId)).catch(() => _empty)');
     });
+
+    it('does not mark a daily log save as acknowledged when the Firestore write times out', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('daily_log_primary_save_timeout');
+        expect(appSource).toContain('const doSetDoc = () => withRejectingTimeout');
+        expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), saveData, { merge: true })');
+        expect(appSource).toContain('if (isOfflineSaveCandidateError(e))');
+        expect(appSource).toContain('if (latestSaveData && docId && isOfflineSaveCandidateError(e))');
+        expect(appSource).toContain('queueOfflineOutboxEntry({');
+        expect(appSource).toContain('mediaItems: offlineOutboxMediaItems');
+        expect(appSource).not.toContain('const doSetDoc = () => withTimeout(');
+    });
 });
