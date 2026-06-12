@@ -152,6 +152,26 @@ describe('exercise habit groups', () => {
         expect(progress.rejectedCount).toBe(1);
     });
 
+    it('keeps an approved checkin approved when the same date is updated', () => {
+        let progress = applyHabitGroupProgressChange(
+            { groupId: 'exercise-home-training', uid: 'uid123' },
+            null,
+            { date: '2026-06-01', reviewStatus: 'approved' }
+        );
+        progress = applyHabitGroupProgressChange(
+            progress,
+            { date: '2026-06-01', reviewStatus: 'approved' },
+            { date: '2026-06-01', reviewStatus: 'approved' }
+        );
+
+        expect(progress.submittedDates).toEqual(['2026-06-01']);
+        expect(progress.approvedDates).toEqual(['2026-06-01']);
+        expect(progress.pendingDates).toEqual([]);
+        expect(progress.submittedCount).toBe(1);
+        expect(progress.approvedCount).toBe(1);
+        expect(progress.pendingCount).toBe(0);
+    });
+
     it('marks one hundred submissions as pending review with a 3,000P group reward', () => {
         const dates = Array.from({ length: EXERCISE_GROUP_REWARD_TARGET }, (_, index) => {
             const date = new Date('2026-06-01T00:00:00Z');

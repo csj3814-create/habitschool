@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-12 (Habit Group Approved Checkin Updates)
+
+### 237. Never demote an approved moderation record during member-owned content updates
+- Symptom: a group leader had to approve the same member again whenever the member updated exercise media or summaries for an already approved checkin.
+- Root cause: the member save path rewrote the checkin with `reviewStatus: 'pending'` and deleted review metadata on every qualifying exercise save.
+- Lesson: split content ownership from moderation state. Member writes may update evidence fields, but once a reviewer approves a checkin, only reviewer/admin paths should change that approval state.
+
+---
+
 ## 2026-06-05 (Daily Log Save Acknowledgement)
 
 ### 236. Never convert a primary Firestore save timeout into a successful acknowledgement

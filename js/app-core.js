@@ -21268,6 +21268,19 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
         const status = getHabitGroupRecordStatus(group, saveData);
         const checkinId = getHabitGroupCheckinDocId(group.id, dateStr, user.uid);
         const checkinRef = doc(db, 'habit_group_checkins', checkinId);
+        let existingCheckin = null;
+        try {
+            const existingCheckinSnap = await withAsyncTimeout(
+                getDoc(checkinRef),
+                HABIT_GROUP_LOAD_TIMEOUT_MS,
+                'habit_group_existing_checkin_timeout'
+            );
+            existingCheckin = existingCheckinSnap.exists() ? (existingCheckinSnap.data() || {}) : null;
+        } catch (error) {
+            logOptionalDataTimeout('habit_group_existing_checkin_timeout', error);
+            return;
+        }
+
         if (!status.complete) {
             await deleteDoc(checkinRef).then(() => { removed += 1; }).catch(() => {});
             return;
@@ -21275,6 +21288,7 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
 
         const now = serverTimestamp();
         const snapshot = buildHabitGroupExerciseSnapshot(saveData, status);
+        const preserveApprovedReview = String(existingCheckin?.reviewStatus || '').trim() === 'approved';
         const checkinPayload = {
             groupId: group.id,
             groupType: 'exercise',
@@ -21291,17 +21305,21 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
             exerciseSummary: snapshot.exerciseSummary,
             exerciseSnapshot: snapshot.exerciseSnapshot,
             stepsSnapshot: snapshot.stepsSnapshot,
-            reviewStatus: 'pending',
-            countsTowardReward: true,
+            reviewStatus: preserveApprovedReview ? 'approved' : 'pending',
+            countsTowardReward: preserveApprovedReview ? existingCheckin.countsTowardReward !== false : true,
             rewardProgressId: getHabitGroupRewardProgressDocId(group.id, user.uid),
-            reviewedBy: deleteField(),
-            reviewedAt: deleteField(),
-            reviewNote: deleteField(),
-            approvedAt: deleteField(),
-            rejectedAt: deleteField(),
-            createdAt: now,
             updatedAt: now
         };
+        if (!existingCheckin) {
+            checkinPayload.createdAt = now;
+        }
+        if (!preserveApprovedReview) {
+            checkinPayload.reviewedBy = deleteField();
+            checkinPayload.reviewedAt = deleteField();
+            checkinPayload.reviewNote = deleteField();
+            checkinPayload.approvedAt = deleteField();
+            checkinPayload.rejectedAt = deleteField();
+        }
         await setDoc(checkinRef, checkinPayload, { merge: true });
         checkedIn += 1;
     }));

@@ -40,6 +40,11 @@ describe('habit group transition', () => {
         expect(appSource).toContain("if (previewUrl) addMedia('image', previewUrl, previewUrl);");
         expect(appSource).toContain('if (videoUrl) summary.videoUrl = videoUrl;');
         expect(appSource).toContain('if (imageThumbUrl) summary.imageThumbUrl = imageThumbUrl;');
+        expect(appSource).toContain('const existingCheckinSnap = await withAsyncTimeout(');
+        expect(appSource).toContain("'habit_group_existing_checkin_timeout'");
+        expect(appSource).toContain("const preserveApprovedReview = String(existingCheckin?.reviewStatus || '').trim() === 'approved';");
+        expect(appSource).toContain("reviewStatus: preserveApprovedReview ? 'approved' : 'pending'");
+        expect(appSource).toContain('if (!preserveApprovedReview) {');
         expect(appSource).toContain('window.openHabitGroupReviewImage');
         expect(appSource).toContain('window.handleHabitGroupReviewVideoKeydown');
         expect(appSource).toContain('playGalleryVideo(this)');
@@ -85,6 +90,12 @@ describe('habit group transition', () => {
         expect(rulesSource).toContain('match /habit_group_checkins/{checkinId}');
         expect(rulesSource).toContain('match /exercise_group_reward_progress/{progressId}');
         expect(rulesSource).toContain("request.resource.data.reviewStatus == 'pending'");
+        expect(rulesSource).toContain("!request.resource.data.keys().hasAny(['reviewedBy', 'reviewedAt', 'reviewNote', 'approvedAt', 'rejectedAt'])");
+        expect(rulesSource).toContain('function isApprovedHabitGroupCheckinUpdate(checkinId)');
+        expect(rulesSource).toContain("resource.data.reviewStatus == 'approved'");
+        expect(rulesSource).toContain("request.resource.data.reviewStatus == 'approved'");
+        expect(rulesSource).toContain("resource.data.reviewStatus != 'approved'");
+        expect(rulesSource).toContain("request.resource.data.diff(resource.data).affectedKeys().hasOnly([");
         expect(rulesSource).toContain('function isHabitGroupActiveMember(groupId)');
         expect(rulesSource).toContain('&& isHabitGroupActiveMember(request.resource.data.groupId)');
         expect(rulesSource).toContain('match /social_challenges/{challengeId}');
