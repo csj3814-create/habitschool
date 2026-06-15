@@ -6091,6 +6091,7 @@ window.previewDynamicVid = function (input) {
             currentBlock?.getAttribute('data-local-thumb')
         );
         const uploadOptions = {
+            suppressFailureToast: true,
             onProgress: (pct) => updatePendingUploadProgress(input.id, pct),
         };
         if (localThumbPromise) {
@@ -6373,6 +6374,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                 if (folder) {
                     _pendingUploads.delete(input.id);
                     const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                        suppressFailureToast: true,
                         onProgress: (pct) => updatePendingUploadProgress(input.id, pct)
                     });
                     beginTrackedPendingUpload(input.id, pendingUpload);
@@ -14584,6 +14586,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
     const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
+    const suppressFailureToast = options?.suppressFailureToast === true;
     const videoContentType = isVideo ? getExerciseVideoContentType(fileToUpload) : '';
     const uploadTimeouts = getResumableUploadTimeouts(isVideo
         ? { type: videoContentType, size: fileToUpload.size }
@@ -14632,7 +14635,9 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
                 return null;
             }
             if (attempt === maxRetries) {
-                showToast(`⚠️ 업로드 실패: ${error.message}`);
+                if (!suppressFailureToast) {
+                    showToast(`⚠️ 업로드 실패: ${error.message}`);
+                }
                 return null;
             }
             // 재시도 전 대기 (1초, 2초 exponential backoff)
@@ -15115,6 +15120,31 @@ function persistSavedPreview(inputId, previewEl, url, thumbUrl) {
     }
 }
 
+function hydrateStrengthPreviewFromPersistedVideo(block, url) {
+    if (!block || !url) return;
+    showStrengthPreviewImage(block, getVideoPlaceholderDataUrl());
+    readAnyCachedLocalExerciseVideoThumb(url)
+        .then((persistedThumb) => {
+            if (persistedThumb.startsWith('data:image/')) {
+                showStrengthPreviewImage(block, persistedThumb, { localThumb: persistedThumb });
+                return;
+            }
+            return extractVideoThumbFromUrl(url)
+                .then((extractedThumb) => {
+                    const normalizedThumb = resolveUsableStrengthLocalThumb(extractedThumb);
+                    if (normalizedThumb) {
+                        cacheLocalExerciseVideoThumb(url, normalizedThumb);
+                        showStrengthPreviewImage(block, normalizedThumb, { localThumb: normalizedThumb });
+                        return;
+                    }
+                    showStrengthPreviewVideo(block, url);
+                });
+        })
+        .catch(() => {
+            showStrengthPreviewVideo(block, url);
+        });
+}
+
 function persistSavedExerciseBlock(block, url, thumbUrl) {
     if (!block) return;
     const input = block.querySelector('.exer-file');
@@ -15172,18 +15202,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
             if (cachedLocalThumb.startsWith('data:image/')) {
                 showStrengthPreviewImage(block, cachedLocalThumb, { localThumb: cachedLocalThumb });
             } else {
-                showStrengthPreviewImage(block, getVideoPlaceholderDataUrl());
-                readAnyCachedLocalExerciseVideoThumb(url)
-                    .then((persistedThumb) => {
-                        if (persistedThumb.startsWith('data:image/')) {
-                            showStrengthPreviewImage(block, persistedThumb, { localThumb: persistedThumb });
-                            return;
-                        }
-                        showStrengthPreviewVideo(block, url);
-                    })
-                    .catch(() => {
-                        showStrengthPreviewVideo(block, url);
-                    });
+                hydrateStrengthPreviewFromPersistedVideo(block, url);
             }
         }
     }
@@ -15607,6 +15626,7 @@ async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) 
     if (!file || !folder) return null;
 
     const uploadOptions = {
+        suppressFailureToast: true,
         onProgress: (pct) => {
             updatePendingUploadProgress(job.inputId, pct);
             updateBackgroundUploadProgressTracker(job.inputId, { transferPct: pct, syncPct: 6 });
@@ -16120,8 +16140,9 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
             mediaId,
             folder: 'exercise_videos',
             localThumbSeed: resolveUsableStrengthLocalThumb(
-                block.getAttribute('data-local-thumb')
-                || previewImg?.getAttribute('data-local-thumb')
+                block.getAttribute('data-local-thumb'),
+                previewImg?.getAttribute('data-local-thumb'),
+                pendingSnapshot?.localThumbDataUrl
             ),
             file
         });
@@ -16198,6 +16219,36 @@ async function removeOfflineOutboxEntry(userId = '', docId = '') {
     return true;
 }
 
+function upsertOfflineOutboxExerciseMedia(saveData = {}, mediaItem = null, uploadResult = {}, type = 'cardio') {
+    if (!saveData || !mediaItem || !uploadResult?.url) return saveData;
+    const mediaId = String(mediaItem.mediaId || '').trim();
+    if (!mediaId) return saveData;
+
+    saveData.exercise = saveData.exercise || {};
+    const listKey = type === 'strength' ? 'strengthList' : 'cardioList';
+    saveData.exercise[listKey] = Array.isArray(saveData.exercise[listKey])
+        ? saveData.exercise[listKey]
+        : [];
+
+    let target = saveData.exercise[listKey].find((item) => {
+        return String(item?.mediaId || '').trim() === mediaId;
+    });
+    if (!target) {
+        target = { mediaId };
+        saveData.exercise[listKey].push(target);
+    }
+
+    if (type === 'strength') {
+        target.videoUrl = uploadResult.url;
+        target.videoThumbUrl = uploadResult.thumbUrl || null;
+    } else {
+        target.imageUrl = uploadResult.url;
+        target.imageThumbUrl = uploadResult.thumbUrl || null;
+    }
+
+    return saveData;
+}
+
 function patchOfflineOutboxSaveData(saveData = {}, mediaItem = null, uploadResult = {}) {
     if (!saveData || !mediaItem || !uploadResult?.url) return saveData;
     if (mediaItem.kind === 'diet' && mediaItem.slot) {
@@ -16213,23 +16264,10 @@ function patchOfflineOutboxSaveData(saveData = {}, mediaItem = null, uploadResul
         return saveData;
     }
     if (mediaItem.kind === 'cardio') {
-        const target = Array.isArray(saveData?.exercise?.cardioList)
-            ? saveData.exercise.cardioList.find((item) => String(item?.mediaId || '').trim() === String(mediaItem.mediaId || '').trim())
-            : null;
-        if (target) {
-            target.imageUrl = uploadResult.url;
-            target.imageThumbUrl = uploadResult.thumbUrl || null;
-        }
-        return saveData;
+        return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, 'cardio');
     }
     if (mediaItem.kind === 'strength') {
-        const target = Array.isArray(saveData?.exercise?.strengthList)
-            ? saveData.exercise.strengthList.find((item) => String(item?.mediaId || '').trim() === String(mediaItem.mediaId || '').trim())
-            : null;
-        if (target) {
-            target.videoUrl = uploadResult.url;
-            target.videoThumbUrl = uploadResult.thumbUrl || null;
-        }
+        return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, 'strength');
     }
     return saveData;
 }
@@ -16265,12 +16303,16 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
 
                     let uploadResult = null;
                     if (mediaItem.kind === 'strength') {
-                        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', user.uid, String(mediaItem.localThumbSeed || '').trim());
+                        const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', user.uid, String(mediaItem.localThumbSeed || '').trim(), {
+                            suppressFailureToast: true
+                        });
                         const result = await pendingUpload.promise;
                         const thumbUrl = await pendingUpload.thumbPromise.catch(() => null);
                         uploadResult = result?.url ? { ...result, thumbUrl: thumbUrl || result.thumbUrl || null } : null;
                     } else {
-                        const pendingUpload = uploadWithThumb(file, String(mediaItem.folder || '').trim(), user.uid);
+                        const pendingUpload = uploadWithThumb(file, String(mediaItem.folder || '').trim(), user.uid, {
+                            suppressFailureToast: true
+                        });
                         const result = await pendingUpload.promise;
                         const thumbUrl = await pendingUpload.thumbPromise.catch(() => null);
                         uploadResult = result?.url ? { ...result, thumbUrl: thumbUrl || result.thumbUrl || null } : null;
@@ -16281,6 +16323,13 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
                     }
                     patchOfflineOutboxSaveData(saveData, mediaItem, uploadResult);
                 }
+
+                const { awarded } = getEffectiveAwardedPointResult(
+                    saveData,
+                    saveData.awardedPoints || {},
+                    saveData.date || entry.date || ''
+                );
+                saveData.awardedPoints = awarded;
 
                 await withRejectingTimeout(
                     setDoc(doc(db, 'daily_logs', entry.docId), saveData, { merge: true }),
@@ -16428,6 +16477,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const existing = _pendingUploads.get(inputId);
                 if (existing) return;
                 const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {
+                    suppressFailureToast: true,
                     onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
                 });
                 beginTrackedPendingUpload(inputId, pendingUpload);
@@ -16437,6 +16487,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 const existing = _pendingUploads.get(inputId);
                 if (existing) return;
                 const pendingUpload = uploadVideoWithThumb(file, 'exercise_videos', auth.currentUser.uid, resolveUsableStrengthLocalThumb(localThumbSeed), {
+                    suppressFailureToast: true,
                     onProgress: (pct) => updatePendingUploadProgress(inputId, pct)
                 });
                 beginTrackedPendingUpload(inputId, pendingUpload);

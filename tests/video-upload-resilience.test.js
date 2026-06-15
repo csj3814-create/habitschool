@@ -132,6 +132,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });');
     });
 
+    it('suppresses automatic pre-upload failure toasts while deferred save paths retry media uploads', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const suppressFailureToast = options?.suppressFailureToast === true;');
+        expect(source).toContain('if (!suppressFailureToast) {');
+        expect(source).toContain('showToast(`⚠️ 업로드 실패: ${error.message}`);');
+        expect(source).toContain('suppressFailureToast: true');
+        expect(source).toContain('const pendingUpload = uploadVideoWithThumb(file, \'exercise_videos\', auth.currentUser.uid, localThumbSeed, uploadOptions);');
+        expect(source).toContain('const pendingUpload = uploadWithThumb(file, folder, auth.currentUser.uid, {');
+    });
+
     it('backs up selected media to the offline outbox while background uploads still need a Storage URL', () => {
         const source = readAppSource();
 
@@ -143,6 +154,32 @@ describe('video upload resilience', () => {
         expect(source).toContain('if (backgroundOutboxBackupQueued && Number(failed || 0) === 0) {');
         expect(source).toContain('removeOfflineOutboxEntry(user.uid, docId).catch(() => {});');
         expect(source).toContain('flushOfflineOutbox({ quiet: true }).catch(() => {});');
+    });
+
+    it('restores exercise media into offline outbox save data even when the pending upload had no saved list item yet', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function upsertOfflineOutboxExerciseMedia(saveData = {}, mediaItem = null, uploadResult = {}, type = \'cardio\')');
+        expect(source).toContain('saveData.exercise[listKey] = Array.isArray(saveData.exercise[listKey])');
+        expect(source).toContain('target = { mediaId };');
+        expect(source).toContain('saveData.exercise[listKey].push(target);');
+        expect(source).toContain('target.imageUrl = uploadResult.url;');
+        expect(source).toContain('target.videoUrl = uploadResult.url;');
+        expect(source).toContain('return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, \'cardio\');');
+        expect(source).toContain('return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, \'strength\');');
+        expect(source).toContain('saveData.awardedPoints = awarded;');
+    });
+
+    it('preserves exercise video thumbnails through replay and rehydrates missing persisted thumbnails after refresh', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('pendingSnapshot?.localThumbDataUrl');
+        expect(source).toContain('const thumbUrl = await pendingUpload.thumbPromise.catch(() => null);');
+        expect(source).toContain('target.videoThumbUrl = uploadResult.thumbUrl || null;');
+        expect(source).toContain('function hydrateStrengthPreviewFromPersistedVideo(block, url)');
+        expect(source).toContain('extractVideoThumbFromUrl(url)');
+        expect(source).toContain('cacheLocalExerciseVideoThumb(url, normalizedThumb);');
+        expect(source).toContain('hydrateStrengthPreviewFromPersistedVideo(block, url);');
     });
 
     it('does not show a hard save failure after the primary daily log write already succeeded', () => {

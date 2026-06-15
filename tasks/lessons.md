@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-15 (Exercise Multi Media Upload Fallback)
+
+### 238. Offline media replay for dynamic exercise lists must insert missing items
+- Symptom: uploading two exercise videos, or an exercise video plus photo, could show an upload failure and leave no saved exercise media, while two fixed-slot diet photos worked.
+- Root cause: exercise media with a pending Storage URL was normalized out of `cardioList`/`strengthList`, and the offline outbox replay only patched an existing `mediaId` target instead of creating the missing list item.
+- Lesson: retry/replay paths for dynamic media collections must upsert the collection item and then recalculate derived state such as points. Fixed-slot media can be patched by field name, but list media needs an insert path.
+
+---
+
 ## 2026-06-12 (Habit Group Approved Checkin Updates)
 
 ### 237. Never demote an approved moderation record during member-owned content updates
