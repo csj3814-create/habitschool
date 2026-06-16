@@ -102,9 +102,9 @@ describe('strength local thumb helpers', () => {
         )).toBe('data:image/png;base64,seed-a');
     });
 
-    it('skips the remote thumb wait when a local thumb already exists', () => {
-        expect(getStrengthThumbSaveWaitMs('data:image/jpeg;base64,thumb')).toBe(0);
-        expect(getStrengthThumbSaveWaitMs('')).toBe(1200);
+    it('waits briefly for the remote thumb URL before saving a strength video', () => {
+        expect(getStrengthThumbSaveWaitMs('data:image/jpeg;base64,thumb')).toBe(2200);
+        expect(getStrengthThumbSaveWaitMs('')).toBe(3600);
     });
 
     it('delays local thumb extraction briefly for smaller uploads and defers large uploads', () => {

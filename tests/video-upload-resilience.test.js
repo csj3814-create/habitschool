@@ -182,6 +182,18 @@ describe('video upload resilience', () => {
         expect(source).toContain('hydrateStrengthPreviewFromPersistedVideo(block, url);');
     });
 
+    it('waits for strength video thumbnail URLs before the save or background patch writes exercise media', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('getStrengthThumbSaveWaitMs');
+        expect(source).toContain('function getStrengthThumbWaitMsForBlock(block = null, pendingSnapshot = null)');
+        expect(source).toContain('function getStrengthThumbWaitMsForJob(job = {}, pendingSnapshot = null)');
+        expect(source).toContain('return resolvePendingUploadResult(job.inputId, { waitForThumbMs });');
+        expect(source).toContain('waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)');
+        expect(source).toContain('const thumbResult = await resolvePendingUploadResult(fileInput?.id, {');
+        expect(source).toContain('waitForThumbMs: getStrengthThumbWaitMsForBlock(block, pendingSnapshot)');
+    });
+
     it('does not show a hard save failure after the primary daily log write already succeeded', () => {
         const source = readAppSource();
 

@@ -14,29 +14,30 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=209';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=209';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=210';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=210';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=209';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=209';
+} from './auth-login-helpers.js?v=210';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=210';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
+    getStrengthThumbSaveWaitMs,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=209';
+} from './exercise-media.js?v=210';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=209';
+} from './health-connect-utils.js?v=210';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -53,13 +54,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=209';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=209';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=209';
-import { sanitize, compressImage } from './data-manager.js?v=209';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=209';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=209';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=209';
+} from './habit-groups.js?v=210';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=210';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=210';
+import { sanitize, compressImage } from './data-manager.js?v=210';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=210';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=210';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=210';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -72,7 +73,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=209';
+} from './diet-program.js?v=210';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -84,18 +85,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=209';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=209';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=209';
+} from './meditation-guide.js?v=210';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=210';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=210';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=209';
+} from './social-challenge-readiness.js?v=210';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=209';
+} from './monthly-mvp-reward.js?v=210';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5241,7 +5242,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=209';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=210';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15057,6 +15058,21 @@ function hasPendingThumbBackfill(pendingLike = null) {
     return !!(pendingLike.thumbPromise && pendingLike.result?.url && !pendingLike.result?.thumbUrl);
 }
 
+function getStrengthThumbWaitMsForBlock(block = null, pendingSnapshot = null) {
+    const previewImg = block?.querySelector?.('.preview-strength-img');
+    const localThumbSeed = resolveUsableStrengthLocalThumb(
+        pendingSnapshot?.localThumbDataUrl,
+        block?.getAttribute?.('data-local-thumb'),
+        previewImg?.getAttribute?.('data-local-thumb')
+    );
+    return getStrengthThumbSaveWaitMs(localThumbSeed);
+}
+
+function getStrengthThumbWaitMsForJob(job = {}, pendingSnapshot = null) {
+    if (job?.kind !== 'strength') return 0;
+    return getStrengthThumbWaitMsForBlock(document.getElementById(job.blockId), pendingSnapshot);
+}
+
 function shouldPreservePendingOriginal(pendingEntry = null, normalizedUrl = '') {
     if (!pendingEntry) return false;
     const pendingResultUrl = String(pendingEntry?.result?.url || '').trim();
@@ -15633,6 +15649,7 @@ async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) 
         }
     };
     let pendingUpload = null;
+    let waitForThumbMs = 0;
     if (job.kind === 'strength') {
         const block = document.getElementById(job.blockId);
         const previewImg = block?.querySelector('.preview-strength-img');
@@ -15641,13 +15658,14 @@ async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) 
             previewImg?.getAttribute('data-local-thumb'),
             getPendingUploadSnapshot(job.inputId)?.localThumbDataUrl
         );
+        waitForThumbMs = getStrengthThumbSaveWaitMs(localThumbSeed);
         pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);
     } else {
         pendingUpload = uploadWithThumb(file, folder, userId, uploadOptions);
     }
 
     beginTrackedPendingUpload(job.inputId, pendingUpload);
-    return resolvePendingUploadResult(job.inputId);
+    return resolvePendingUploadResult(job.inputId, { waitForThumbMs });
 }
 
 function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false, onSettled = null }) {
@@ -15663,10 +15681,19 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
             try {
                 updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
                 let pendingSnapshot = getPendingUploadSnapshot(job.inputId);
-                let result = await resolvePendingUploadResult(job.inputId);
+                let result = await resolvePendingUploadResult(job.inputId, {
+                    waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
+                });
+                pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
                 if (!result?.url) {
                     result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });
                     pendingSnapshot = getPendingUploadSnapshot(job.inputId);
+                } else if (job.kind === 'strength' && !result.thumbUrl && pendingSnapshot?.thumbPromise) {
+                    const thumbResult = await resolvePendingUploadResult(job.inputId, {
+                        waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
+                    });
+                    if (thumbResult?.url) result = thumbResult;
+                    pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
                 }
                 if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
                 updateBackgroundUploadProgressTracker(job.inputId, {
@@ -16619,8 +16646,18 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     pendingSnapshot?.localThumbDataUrl
                 );
                 if (pendingSnapshot?.result?.url) {
-                    url = pendingSnapshot.result.url;
-                    thumbUrl = pendingSnapshot.result.thumbUrl || thumbUrl;
+                    let pendingResult = pendingSnapshot.result;
+                    if (!pendingResult.thumbUrl && pendingSnapshot.thumbPromise) {
+                        const thumbResult = await resolvePendingUploadResult(fileInput?.id, {
+                            waitForThumbMs: getStrengthThumbWaitMsForBlock(block, pendingSnapshot)
+                        });
+                        if (thumbResult?.url) {
+                            pendingResult = thumbResult;
+                            pendingSnapshot = getPendingUploadSnapshot(fileInput?.id) || pendingSnapshot;
+                        }
+                    }
+                    url = pendingResult.url;
+                    thumbUrl = pendingResult.thumbUrl || thumbUrl;
                     if (hasPendingThumbBackfill(pendingSnapshot)) {
                         queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
                     }

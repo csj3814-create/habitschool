@@ -15,7 +15,7 @@ export function resolveStrengthLocalThumbSeed(...candidates) {
 }
 
 export function getStrengthThumbSaveWaitMs(localThumbSeed = '') {
-    return isLocalExerciseVideoThumb(localThumbSeed) ? 0 : 1200;
+    return isLocalExerciseVideoThumb(localThumbSeed) ? 2200 : 3600;
 }
 
 const STRENGTH_THUMB_UPLOAD_FIRST_SIZE_BYTES = 20 * 1024 * 1024;

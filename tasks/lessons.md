@@ -2,6 +2,13 @@
 
 ## 2026-06-15 (Exercise Multi Media Upload Fallback)
 
+### 239. Persist video thumbnails before the first refreshable save when possible
+- Symptom: an exercise video thumbnail appeared immediately after selection, but disappeared after refresh because the persisted `strengthList` item only had `videoUrl`.
+- Root cause: the save/background paths wrote the video URL first and relied on a later thumbnail backfill. If the user refreshed before that patch landed, reload had no reliable `videoThumbUrl`.
+- Lesson: UI-only local thumbnails are not enough for refresh-safe video records. Wait briefly for the remote thumbnail URL before the first save or background patch, then keep the async backfill only as a fallback.
+
+---
+
 ### 238. Offline media replay for dynamic exercise lists must insert missing items
 - Symptom: uploading two exercise videos, or an exercise video plus photo, could show an upload failure and leave no saved exercise media, while two fixed-slot diet photos worked.
 - Root cause: exercise media with a pending Storage URL was normalized out of `cardioList`/`strengthList`, and the offline outbox replay only patched an existing `mediaId` target instead of creating the missing list item.
