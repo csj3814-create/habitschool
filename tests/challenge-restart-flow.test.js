@@ -17,10 +17,18 @@ describe('same-day challenge restart flow', () => {
         const managerSource = readRepoFile('js/blockchain-manager.js');
         const appCoreSource = readRepoFile('js/app-core.js');
 
-        expect(managerSource).toContain('if (window.updateAssetDisplay) await window.updateAssetDisplay(true);');
-        expect(managerSource).toContain('const isTodayInChallengeRange = getChallengeDateRange(challenge).includes(today);');
-        expect(managerSource).toContain('if (isTodayInChallengeRange && !isPastEnd && !completedDates.includes(today))');
+        expect(managerSource).toContain('async function refreshAssetDisplayAfterChallengeMutation');
+        expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-start-recovery');");
+        expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-start');");
+        expect(managerSource).toContain('export async function updateChallengeProgress(options = {})');
+        expect(managerSource).toContain('const targetDate = normalizeChallengeProgressDate(progressOptions.dateStr) || today;');
+        expect(managerSource).toContain('dailyLogsByDate[targetDate] = dailyLogData;');
+        expect(managerSource).toContain('const isTargetDateInChallengeRange = getChallengeDateRange(challenge).includes(targetDate);');
         expect(managerSource).toContain('challengeStartInFlight.add(startLockKey);');
+        expect(appCoreSource).toContain('updateChallengeProgress({ dateStr }).catch(error => {');
+        expect(appCoreSource).toContain('dateStr: selectedDateStr');
+        expect(appCoreSource).toContain('dailyLogData: saveData');
+        expect(appCoreSource).toContain('class="challenge-ring-progress"');
         expect(appCoreSource).toContain('? getDocFromServer(userRef).catch((serverError) => {');
         expect(appCoreSource).toContain("noteFirestoreConnectivityFailure(serverError, 'asset-display user-doc-server')");
     });

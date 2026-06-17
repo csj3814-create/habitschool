@@ -30,7 +30,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=210';
+} from './blockchain-config.js?v=211';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +48,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=210';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=211';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=210';
-import { getKstDateString } from './ui-helpers.js?v=210';
-import { checkRateLimit } from './security.js?v=210';
+import { showToast } from './ui-helpers.js?v=211';
+import { getKstDateString } from './ui-helpers.js?v=211';
+import { checkRateLimit } from './security.js?v=211';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -285,6 +285,23 @@ function showChallengeStartSuccessToast(data, challengeDef, duration, tier, reco
     showToast(`${recoveryPrefix}✅ ${data.duration || duration}일 챌린지 시작!\n${qualificationLabel}${todayCreditLine}${deferredLine}\n${duration}일 동안 매일 인증하면 ${challengeDef.rewardPoints}P 보상!`);
 }
 
+async function refreshAssetDisplayAfterChallengeMutation(reason = 'challenge-mutation') {
+    if (!window.updateAssetDisplay) return;
+
+    try {
+        await window.updateAssetDisplay(true);
+    } catch (error) {
+        console.warn(`[challenge] asset refresh skipped after ${reason}:`, error?.message || error);
+    }
+
+    setTimeout(() => {
+        if (!auth.currentUser || !window.updateAssetDisplay) return;
+        window.updateAssetDisplay(true).catch(error => {
+            console.warn(`[challenge] delayed asset refresh skipped after ${reason}:`, error?.message || error);
+        });
+    }, 1200);
+}
+
 async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, challengeDef, tier, hbtAmount) {
     const pending = readPendingChallengeStart(currentUser?.uid);
     if (!pending) {
@@ -316,7 +333,7 @@ async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, cha
         });
         clearPendingChallengeStart(currentUser.uid);
         showChallengeStartSuccessToast(result.data, challengeDef, challengeDef.duration || 30, tier, true);
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        await refreshAssetDisplayAfterChallengeMutation('challenge-start-recovery');
         return { handled: true, success: true };
     } catch (error) {
         console.error('❌ pending challenge 복구 실패:', error);
@@ -347,6 +364,11 @@ function doesDailyLogQualifyForChallenge(dailyLogData, challenge = null, tier = 
         totalPoints: getAwardedPointsTotal(awarded),
         qualified: doesAwardedPointsMeetChallengeRule(awarded, policy)
     };
+}
+
+function normalizeChallengeProgressDate(dateStr) {
+    const normalized = String(dateStr || '').trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : '';
 }
 
 async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
@@ -1490,7 +1512,7 @@ export async function startChallenge30D(challengeId) {
 
         showChallengeStartSuccessToast(data, challengeDef, duration, tier);
 
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        await refreshAssetDisplayAfterChallengeMutation('challenge-start');
         return true;
 
     } catch (error) {
@@ -1511,20 +1533,31 @@ export async function startChallenge30D(challengeId) {
  * - 7일 챌린지: 80%+ → 원금 환급 + 포인트, 100% → +보너스
  * - 30일 챌린지: 80%+ → 원금 환급, 100% → +20% HBT 보너스
  */
-export async function updateChallengeProgress() {
+export async function updateChallengeProgress(options = {}) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
         const userRef = doc(db, "users", currentUser.uid);
         const today = getKstDateString();
+        const progressOptions = typeof options === 'string'
+            ? { dateStr: options }
+            : (options && typeof options === 'object' ? options : {});
+        const targetDate = normalizeChallengeProgressDate(progressOptions.dateStr) || today;
+        const targetDailyLogData = progressOptions.dailyLogData && typeof progressOptions.dailyLogData === 'object'
+            ? progressOptions.dailyLogData
+            : null;
 
         // 통합 챌린지 검증을 위해 트랜잭션 전에 daily_logs 읽기 (다른 컬렉션이므로 트랜잭션 밖)
         let dailyLogData = null;
         try {
-            const logDocId = `${currentUser.uid}_${today}`;
-            const logSnap = await getDoc(doc(db, "daily_logs", logDocId));
-            if (logSnap.exists()) dailyLogData = logSnap.data();
+            if (targetDailyLogData) {
+                dailyLogData = targetDailyLogData;
+            } else {
+                const logDocId = `${currentUser.uid}_${targetDate}`;
+                const logSnap = await getDoc(doc(db, "daily_logs", logDocId));
+                if (logSnap.exists()) dailyLogData = logSnap.data();
+            }
         } catch (_) {}
 
         const toastMessages = [];
@@ -1555,6 +1588,9 @@ export async function updateChallengeProgress() {
                 const originalChallenge = activeChallenges[tier];
                 let challenge = normalizeChallengeCompletion(originalChallenge);
                 const dailyLogsByDate = await fetchChallengeDailyLogsByDateInTransaction(transaction, currentUser.uid, challenge);
+                if (targetDate && dailyLogData && getChallengeDateRange(challenge).includes(targetDate)) {
+                    dailyLogsByDate[targetDate] = dailyLogData;
+                }
                 const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);
                 if (hasChallengeCompletionChanged(originalChallenge, rangeReconciledChallenge)) {
                     challenge = rangeReconciledChallenge;
@@ -1565,7 +1601,7 @@ export async function updateChallengeProgress() {
                 const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
                 const challengeDef = CHALLENGES[resolvedChallengeId] || {};
                 const { isFinalDay, isPastEnd } = getChallengeTimelineState(challenge, today);
-                const isTodayInChallengeRange = getChallengeDateRange(challenge).includes(today);
+                const isTargetDateInChallengeRange = getChallengeDateRange(challenge).includes(targetDate);
                 const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
                     ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
                     : [];
@@ -1580,13 +1616,13 @@ export async function updateChallengeProgress() {
                 }
 
                 // 챌린지 종료일 확인 (endDate 당일 포함 — today >= endDate)
-                if (isTodayInChallengeRange && !isPastEnd && !completedDates.includes(today)) {
+                if (isTargetDateInChallengeRange && !completedDates.includes(targetDate)) {
                     const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
                     if (dailyLogData) {
                         if (!dailyQualification.qualified) {
                             console.log(`ℹ️ 챌린지: 오늘 인정 미달 (${dailyQualification.totalPoints}P, 기준: ${describeChallengeQualification(dailyQualification.policy)})`);
                         } else {
-                            completedDates.push(today);
+                            completedDates.push(targetDate);
                             challenge.completedDates = [...new Set(completedDates)];
                             challenge.completedDays = getChallengeCompletedDays(challenge);
                             updateData[`activeChallenges.${tier}`] = challenge;
@@ -1599,7 +1635,7 @@ export async function updateChallengeProgress() {
                     } else {
                         console.log(`ℹ️ 챌린지: 오늘 기록 없음`);
                     }
-                } else if (completedDates.includes(today)) {
+                } else if (completedDates.includes(targetDate)) {
                     console.log(`ℹ️ ${tier} 챌린지: 오늘 이미 인증 완료`);
                 }
 
@@ -1697,7 +1733,7 @@ export async function updateChallengeProgress() {
             }
         }
 
-        window.updateAssetDisplay && window.updateAssetDisplay(true);
+        await refreshAssetDisplayAfterChallengeMutation('challenge-progress');
 
     } catch (error) {
         console.error('⚠️ 챌린지 진행도 업데이트 오류:', error);
@@ -2562,7 +2598,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
 
         showChallengeStartSuccessToast(data, challengeDef, duration, tier);
 
-        if (window.updateAssetDisplay) await window.updateAssetDisplay(true);
+        await refreshAssetDisplayAfterChallengeMutation('connected-wallet-challenge-start');
         return true;
     } catch (error) {
         console.error('❌ 외부 지갑 챌린지 시작 오류:', error);

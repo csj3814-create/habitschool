@@ -1188,6 +1188,26 @@
     margin-bottom: 1px;
 }
 
+.challenge-ring-progress {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 2px 0;
+}
+
+.challenge-ring-progress strong {
+    font-size: 12px;
+    line-height: 1.2;
+    color: #3D2B1F;
+}
+
+.challenge-ring-progress span {
+    font-size: 10px;
+    line-height: 1.2;
+    color: #7A6E65;
+}
+
 .challenge-ring-stake {
     font-size: 10px;
     color: #555;
