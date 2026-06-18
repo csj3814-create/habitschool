@@ -111,6 +111,20 @@ describe('video upload resilience', () => {
         expect(source).toContain('const uploadTask = uploadBytesResumable(storageRef, file, metadata);');
     });
 
+    it('keeps validated selected media files available when mobile pickers clear input.files', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const _selectedMediaFileFallbacks = new WeakMap();');
+        expect(source).toContain('function rememberSelectedMediaFile(input, file)');
+        expect(source).toContain('_selectedMediaFileFallbacks.set(input, file);');
+        expect(source).toContain('return input ? (_selectedMediaFileFallbacks.get(input) || null) : null;');
+        expect(source).toContain('rememberSelectedMediaFile(input, file);');
+        expect(source).toContain('const selectedFile = getSelectedMediaFile(inputEl);');
+        expect(source).toContain('const selectedSleepFile = getSelectedMediaFile(sleepFile);');
+        expect(source).toContain('const file = getSelectedMediaFile(input);');
+        expect(source).toContain('clearSelectedMediaFile(input);');
+    });
+
     it('bounds the background Firestore patch after media upload reaches the final sync phase', () => {
         const source = readAppSource();
 
@@ -168,6 +182,19 @@ describe('video upload resilience', () => {
         expect(source).toContain('return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, \'cardio\');');
         expect(source).toContain('return upsertOfflineOutboxExerciseMedia(saveData, mediaItem, uploadResult, \'strength\');');
         expect(source).toContain('saveData.awardedPoints = awarded;');
+    });
+
+    it('restores pending exercise upload cards from the offline outbox before Storage URLs exist', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function upsertOfflineOutboxPendingExerciseMedia(data = {}, mediaItem = null)');
+        expect(source).toContain('function mergeOfflineOutboxPendingMediaItems(data = {}, mediaItems = [])');
+        expect(source).toContain('return mergeOfflineOutboxPendingMediaItems(mergedData, entry.mediaItems);');
+        expect(source).toContain('uploadPending: true');
+        expect(source).toContain('pendingUpload: true');
+        expect(source).toContain('pendingItem.localThumbSeed = localThumbSeed;');
+        expect(source).toContain("div.setAttribute('data-upload-pending', 'true');");
+        expect(source).toContain('showStrengthPreviewImage(div, localThumbSeed, { localThumb: localThumbSeed });');
     });
 
     it('preserves exercise video thumbnails through replay and rehydrates missing persisted thumbnails after refresh', () => {

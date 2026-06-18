@@ -5533,8 +5533,9 @@ function addExerciseBlock(type, data = null) {
         `;
     } else {
         // 저장된 thumbUrl이 없을 수 있어 이미지 + 비디오 fallback 구조를 함께 준비한다.
+        const hasStrengthMedia = !!(data && (data.videoUrl || data.uploadPending || data.localThumbSeed));
         const statusHtml = `
-            <div id="s_preview_${id}" class="preview-strength" style="${data && data.videoUrl ? 'display:block;' : 'display:none;'}">
+            <div id="s_preview_${id}" class="preview-strength" style="${hasStrengthMedia ? 'display:block;' : 'display:none;'}">
                 <img id="s_img_${id}" class="preview-strength-img" alt="근력 영상 썸네일">
                 <video id="s_video_${id}" class="preview-strength-video" muted playsinline preload="metadata" hidden></video>
                 <span class="preview-strength-play">▶</span>
@@ -5560,6 +5561,12 @@ function addExerciseBlock(type, data = null) {
     if (!isCardio && data && data.videoThumbUrl) {
         div.setAttribute('data-thumb-url', data.videoThumbUrl);
     }
+    if (!isCardio && data && data.uploadPending) {
+        div.setAttribute('data-upload-pending', 'true');
+    }
+    if (!isCardio && data && data.localThumbSeed) {
+        div.setAttribute('data-local-thumb', data.localThumbSeed);
+    }
     // AI 분석 결과 보존 (갤러리에서 표시용)
     if (hasAnalysis) {
         div.setAttribute('data-ai-analysis', JSON.stringify(data.aiAnalysis));
@@ -5571,6 +5578,15 @@ function addExerciseBlock(type, data = null) {
     // 근력 영상 복원은 저장 후 패치 경로와 동일한 함수를 사용해 갤러리/운동 탭 분기를 줄인다.
     if (!isCardio && data && data.videoUrl && isValidStorageUrl(data.videoUrl)) {
         persistSavedExerciseBlock(div, data.videoUrl, data.videoThumbUrl || null);
+    } else if (!isCardio && data && (data.uploadPending || data.localThumbSeed)) {
+        const promptSpan = div.querySelector('.upload-area > span');
+        if (promptSpan) promptSpan.style.display = 'none';
+        const localThumbSeed = resolveUsableStrengthLocalThumb(data.localThumbSeed);
+        if (localThumbSeed) {
+            showStrengthPreviewImage(div, localThumbSeed, { localThumb: localThumbSeed });
+        } else {
+            showStrengthPreviewImage(div, getVideoPlaceholderDataUrl());
+        }
     }
 }
 
@@ -5587,6 +5603,7 @@ window.removeExerciseBlock = function(block) {
     if (input?.id) {
         _pendingUploads.delete(input.id);
         hideInlineUploadProgress(input.id);
+        clearSelectedMediaFile(input);
     }
     block.remove();
     updateRecordFlowGuides('exercise');
@@ -6053,6 +6070,7 @@ window.addStrengthBlockWithFile = function(event) {
 window.previewDynamicVid = function (input) {
     const file = getSelectedMediaFile(input);
     if (!file) return;
+    if (file.size > MAX_VID_SIZE) clearSelectedMediaFile(input);
     if (file.size > MAX_VID_SIZE) { alert("100MB 이하만 가능!"); input.value = ""; return; }
 
     // 동영상 파일의 수정 날짜 확인 (촬영 당일만 허용)
@@ -6063,9 +6081,12 @@ window.previewDynamicVid = function (input) {
     if (fileDateStr !== selectedDateStr) {
         if (!confirm(`⚠️ 파일 날짜(${fileDateStr})가 선택한 인증 날짜(${selectedDateStr})와 다릅니다.\n그래도 업로드하시겠습니까?`)) {
             input.value = "";
+            clearSelectedMediaFile(input);
             return;
         }
     }
+
+    rememberSelectedMediaFile(input, file);
 
     const previewWrap = input.parentElement.querySelector('.preview-strength');
     // 업로드 텍스트 숨기기
@@ -6347,9 +6368,11 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
 
     if (input.files && input.files[0]) {
         const file = input.files[0];
+        if (file.size > MAX_IMG_SIZE) clearSelectedMediaFile(input);
         if (file.size > MAX_IMG_SIZE) { alert("20MB 이하만 가능합니다."); input.value = ""; return; }
         const resetRejectedUpload = () => {
             input.value = "";
+            clearSelectedMediaFile(input);
             revokeLocalPreviewObjectUrl(preview);
             preview.style.display = 'none';
             if (rmBtn) rmBtn.style.display = 'none';
@@ -6357,6 +6380,7 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
         };
 
         const render = () => {
+            rememberSelectedMediaFile(input, file);
             syncSelectedRecordDateToToday({
                 reloadData: false,
                 reason: 'media-picker-return',
@@ -6505,7 +6529,11 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
     setThumbPendingState(inputId, { visible: false });
     const previewEl = document.getElementById(previewId);
     revokeLocalPreviewObjectUrl(previewEl);
-    document.getElementById(inputId).value = "";
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.value = "";
+        clearSelectedMediaFile(inputEl);
+    }
     if (previewEl) {
         previewEl.src = "";
         previewEl.style.display = "none";
@@ -6714,12 +6742,25 @@ function prepareNativeMediaInput(input, mediaKind = 'image') {
     });
 }
 
+const _selectedMediaFileFallbacks = new WeakMap();
+
+function rememberSelectedMediaFile(input, file) {
+    if (!input || !file) return null;
+    const isFile = typeof File === 'undefined' ? typeof file === 'object' : file instanceof File;
+    if (!isFile) return null;
+    _selectedMediaFileFallbacks.set(input, file);
+    return file;
+}
+
 function getSelectedMediaFile(input) {
-    return input?.files?.[0] || null;
+    const liveFile = input?.files?.[0] || null;
+    if (liveFile) return liveFile;
+    return input ? (_selectedMediaFileFallbacks.get(input) || null) : null;
 }
 
 function clearSelectedMediaFile(input) {
     if (!input) return;
+    _selectedMediaFileFallbacks.delete(input);
 }
 
 function applyTemporaryPickerInputMode(input, source) {
@@ -15197,6 +15238,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     }
     block.removeAttribute('data-user-removed');
     block.removeAttribute('data-local-draft');
+    block.removeAttribute('data-upload-pending');
 
     if (url) block.setAttribute('data-url', url);
     else block.removeAttribute('data-url');
@@ -15916,9 +15958,62 @@ function buildPersistableSaveData(saveData = {}) {
     }
 }
 
+function upsertOfflineOutboxPendingExerciseMedia(data = {}, mediaItem = null) {
+    const kind = String(mediaItem?.kind || '').trim();
+    if (kind !== 'cardio' && kind !== 'strength') return data;
+
+    const mediaId = String(mediaItem?.mediaId || '').trim();
+    if (!mediaId) return data;
+
+    data.exercise = {
+        ...(data.exercise || {})
+    };
+
+    const listKey = kind === 'strength' ? 'strengthList' : 'cardioList';
+    const list = Array.isArray(data.exercise[listKey])
+        ? [...data.exercise[listKey]]
+        : [];
+    const existingIndex = list.findIndex((item) => String(item?.mediaId || '').trim() === mediaId);
+    const existing = existingIndex >= 0 && list[existingIndex] && typeof list[existingIndex] === 'object'
+        ? { ...list[existingIndex] }
+        : null;
+
+    const persistedUrl = kind === 'strength' ? existing?.videoUrl : existing?.imageUrl;
+    if (hasMediaUrl(persistedUrl)) {
+        data.exercise[listKey] = list;
+        return data;
+    }
+
+    const pendingItem = {
+        ...(existing || {}),
+        mediaId,
+        uploadPending: true,
+        pendingUpload: true
+    };
+
+    if (kind === 'strength') {
+        const localThumbSeed = resolveUsableStrengthLocalThumb(mediaItem?.localThumbSeed);
+        if (localThumbSeed) pendingItem.localThumbSeed = localThumbSeed;
+    }
+
+    if (existingIndex >= 0) list[existingIndex] = pendingItem;
+    else list.push(pendingItem);
+    data.exercise[listKey] = list;
+    return data;
+}
+
+function mergeOfflineOutboxPendingMediaItems(data = {}, mediaItems = []) {
+    if (!Array.isArray(mediaItems) || mediaItems.length === 0) return data;
+    const merged = cloneDailyLogData(data);
+    mediaItems.forEach((mediaItem) => {
+        upsertOfflineOutboxPendingExerciseMedia(merged, mediaItem);
+    });
+    return merged;
+}
+
 function mergeOfflineOutboxData(baseData = {}, entry = null) {
     if (!entry?.saveData || typeof entry.saveData !== 'object') return baseData;
-    return {
+    const mergedData = {
         ...baseData,
         ...entry.saveData,
         metrics: {
@@ -15940,6 +16035,7 @@ function mergeOfflineOutboxData(baseData = {}, entry = null) {
         shareSettings: entry.saveData.shareSettings || baseData.shareSettings,
         _offlinePending: true
     };
+    return mergeOfflineOutboxPendingMediaItems(mergedData, entry.mediaItems);
 }
 
 function isOfflineSaveCandidateError(error = null) {
@@ -16127,7 +16223,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
         const input = document.getElementById(`diet-img-${slot}`);
         const preview = document.getElementById(`preview-${slot}`);
-        const file = input?.files?.[0];
+        const file = getSelectedMediaFile(input);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!shouldQueueSelectedFileForOfflineOutbox({
             file,
@@ -16180,7 +16276,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
 
     const sleepInput = document.getElementById('sleep-img');
     const sleepPreview = document.getElementById('preview-sleep');
-    const sleepFile = sleepInput?.files?.[0];
+    const sleepFile = getSelectedMediaFile(sleepInput);
     const sleepPendingSnapshot = getPendingUploadSnapshot(sleepInput?.id);
     if (shouldQueueSelectedFileForOfflineOutbox({
         file: sleepFile,
@@ -16537,9 +16633,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     }
                     return pendingSnapshot.result;
                 }
-                if (inputEl?.files?.[0] && hasVisiblePreview) {
+                const selectedFile = getSelectedMediaFile(inputEl);
+                if (selectedFile && hasVisiblePreview) {
                     if (!pendingSnapshot) {
-                        ensureDeferredImageUpload(inputId, inputEl.files[0], folder);
+                        ensureDeferredImageUpload(inputId, selectedFile, folder);
                     }
                     queueBackgroundJob({ kind: backgroundKind, slot, inputId });
                 }
@@ -16688,6 +16785,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             const sleepPreview = document.getElementById('preview-sleep');
             const sleepFile = document.getElementById('sleep-img');
+            const selectedSleepFile = getSelectedMediaFile(sleepFile);
             let sleepResult = getStoredPreviewState(sleepPreview, oldData?.sleepAndMind?.sleepImageUrl, oldData?.sleepAndMind?.sleepImageThumbUrl);
             const sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img');
             if (sleepPreview?.hasAttribute('data-user-removed')) {
@@ -16697,9 +16795,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (hasPendingThumbBackfill(sleepPendingSnapshot)) {
                     queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
                 }
-            } else if (sleepPreview?.style.display !== 'none' && sleepFile?.files?.[0]) {
+            } else if (sleepPreview?.style.display !== 'none' && selectedSleepFile) {
                 if (!sleepPendingSnapshot) {
-                    ensureDeferredImageUpload('sleep-img', sleepFile.files[0], 'sleep_images');
+                    ensureDeferredImageUpload('sleep-img', selectedSleepFile, 'sleep_images');
                 }
                 queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
             }
