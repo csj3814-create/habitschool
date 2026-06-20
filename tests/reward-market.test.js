@@ -313,10 +313,10 @@ describe('reward market pricing helpers', () => {
             result: {
                 goodsList: [
                     {
-                        goodsCode: 'G00002861259',
-                        goodsNo: 52118,
-                        goodsName: 'Mega iced americano',
-                        brandName: 'Mega MGC Coffee',
+                        goodsCode: 'G00005791059',
+                        goodsNo: 67255,
+                        goodsName: '(ICE)아메리카노',
+                        brandName: '메가MGC커피',
                         goodsStateCd: 'SALE',
                         salePrice: 2000,
                         discountPrice: 1880,
@@ -359,22 +359,79 @@ describe('reward market pricing helpers', () => {
         const filtered = __test.filterPublicRewardCatalogItems(mapped);
 
         expect(filtered.map((item) => item.providerGoodsId)).toEqual([
-            'G00002861259',
+            'G00005791059',
             'G00002871294',
         ]);
-        expect(filtered.map((item) => item.providerGoodsNo)).toEqual(['52118', '52304']);
+        expect(filtered.map((item) => item.providerGoodsNo)).toEqual(['67255', '52304']);
         expect(filtered.map((item) => item.purchasePriceKrw)).toEqual([1880, 1880]);
     });
 
     it('keeps fallback public coffee coupons on the confirmed 30 day Giftishow codes and pricing', () => {
         const fallback = __test.buildFallbackCatalog()
-            .filter((item) => ['G00002861259', 'G00002871294'].includes(item.providerGoodsId));
+            .filter((item) => ['G00005791059', 'G00002871294'].includes(item.providerGoodsId));
 
         expect(fallback).toHaveLength(2);
-        expect(fallback.map((item) => item.providerGoodsNo)).toEqual(['52118', '52304']);
+        expect(fallback.map((item) => item.providerGoodsNo)).toEqual(['67255', '52304']);
         expect(fallback.map((item) => item.stockLabel)).toEqual(['30일 발급', '30일 발급']);
         expect(fallback.map((item) => item.validityDays)).toEqual([30, 30]);
         expect(fallback.map((item) => item.purchasePriceKrw)).toEqual([1880, 1880]);
+        expect(fallback.map((item) => item.deliveryMethod)).toEqual(['image', 'image']);
+    });
+
+    it('reconciles a stable public SKU to the provider current goods code', () => {
+        const seeded = __test.buildFallbackCatalog();
+        const live = [
+            __test.mapGiftishowGoodsItem({
+                goodsCode: 'G00005791059',
+                goodsNo: 67255,
+                goodsName: '(ICE)아메리카노',
+                brandName: '메가MGC커피',
+                goodsStateCd: 'SALE',
+                salePrice: 2000,
+                discountPrice: 1880,
+                limitDay: 30,
+                goodsImgB: 'https://provider.example/mega-current.jpg',
+            }),
+            __test.mapGiftishowGoodsItem({
+                goodsCode: 'G00002871294',
+                goodsNo: 52304,
+                goodsName: '아메리카노(ICED)',
+                brandName: '빽다방',
+                goodsStateCd: 'SALE',
+                salePrice: 2000,
+                discountPrice: 1880,
+                limitDay: 30,
+            }),
+        ];
+
+        const reconciled = __test.reconcilePublicRewardCatalog(seeded, live);
+        const mega = reconciled.find((item) => item.sku === 'mega-ice-americano-60d');
+
+        expect(mega.providerGoodsId).toBe('G00005791059');
+        expect(mega.providerGoodsNo).toBe('67255');
+        expect(mega.productImageUrl).toBe('https://provider.example/mega-current.jpg');
+        expect(mega.deliveryMethod).toBe('image');
+        expect(mega.available).toBe(true);
+    });
+
+    it('treats provider-level error codes as failed coupon responses', () => {
+        expect(__test.isSuccessfulGiftishowCouponResponse({
+            providerResponseCode: '0000',
+        })).toBe(true);
+        expect(__test.isSuccessfulGiftishowCouponResponse({
+            providerResponseCode: 'ERR0401',
+            providerResponseMessage: 'No products requested',
+        })).toBe(false);
+    });
+
+    it('blocks live redemption when the provider catalog cannot be confirmed', () => {
+        const unavailable = __test.markRewardCatalogProviderUnavailable(
+            __test.buildFallbackCatalog()
+        );
+
+        expect(unavailable).toHaveLength(2);
+        expect(unavailable.every((item) => item.available === false)).toBe(true);
+        expect(unavailable.every((item) => item.stockLabel === '공급사 재확인 필요')).toBe(true);
     });
 
     it('sends Giftishow POST bodies as form-urlencoded by default', async () => {

@@ -15563,6 +15563,54 @@ function refreshGalleryFromCacheIfVisible() {
     renderFeedOnly();
 }
 
+function runBackgroundMediaFollowup(label, callback) {
+    try {
+        return callback();
+    } catch (error) {
+        console.warn(`[background-media] ${label} skipped:`, error?.message || error);
+        return null;
+    }
+}
+
+function findPersistedBackgroundMediaUrl(logData = {}, job = {}) {
+    if (job.kind === 'diet') {
+        return logData?.diet?.[`${job.slot}Url`] || '';
+    }
+    if (job.kind === 'sleep') {
+        return logData?.sleepAndMind?.sleepImageUrl || '';
+    }
+    if (job.kind === 'cardio') {
+        const item = (Array.isArray(logData?.exercise?.cardioList) ? logData.exercise.cardioList : [])
+            .find((entry) => String(entry?.mediaId || '') === String(job.mediaId || ''));
+        return item?.imageUrl || '';
+    }
+    if (job.kind === 'strength') {
+        const item = (Array.isArray(logData?.exercise?.strengthList) ? logData.exercise.strengthList : [])
+            .find((entry) => String(entry?.mediaId || '') === String(job.mediaId || ''));
+        return item?.videoUrl || '';
+    }
+    return '';
+}
+
+async function verifyBackgroundMediaPersisted({ userId, docId, job, result } = {}) {
+    if (!userId || !docId || !job || !result?.url) return null;
+    const docRef = doc(db, 'daily_logs', docId);
+    let snapshot = null;
+    try {
+        snapshot = await withRejectingTimeout(
+            getDocFromServer(docRef),
+            8000,
+            'background_media_verify_timeout'
+        );
+    } catch (_) {
+        snapshot = await getDoc(docRef).catch(() => null);
+    }
+    if (!snapshot?.exists?.()) return null;
+    const persistedData = snapshot.data() || {};
+    const persistedUrl = findPersistedBackgroundMediaUrl(persistedData, job);
+    return persistedUrl === result.url ? persistedData : null;
+}
+
 async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGallery = true, baseData = null }) {
     if (!userId || !docId || !job || !result?.url) return false;
     const docRef = doc(db, 'daily_logs', docId);
@@ -15650,23 +15698,35 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
         console.warn('[background-media] daily log patch deferred:', docId, error?.message || error);
     }
 
-    updateLocalDailyLogCaches(docId, committedData, { updateGallery });
+    runBackgroundMediaFollowup('local cache refresh', () => {
+        updateLocalDailyLogCaches(docId, committedData, { updateGallery });
+    });
 
     if (job.kind === 'diet') {
-        persistSavedPreview(`diet-img-${job.slot}`, document.getElementById(`preview-${job.slot}`), result.url, result.thumbUrl || null);
+        runBackgroundMediaFollowup('diet preview refresh', () => {
+            persistSavedPreview(`diet-img-${job.slot}`, document.getElementById(`preview-${job.slot}`), result.url, result.thumbUrl || null);
+        });
     } else if (job.kind === 'sleep') {
-        persistSavedPreview('sleep-img', document.getElementById('preview-sleep'), result.url, result.thumbUrl || null);
+        runBackgroundMediaFollowup('sleep preview refresh', () => {
+            persistSavedPreview('sleep-img', document.getElementById('preview-sleep'), result.url, result.thumbUrl || null);
+        });
     } else if (job.kind === 'cardio' || job.kind === 'strength') {
         const block = document.getElementById(job.blockId);
         if (block && String(block.dataset.mediaId || '') === job.mediaId) {
-            persistSavedExerciseBlock(block, result.url, result.thumbUrl || null);
+            runBackgroundMediaFollowup('exercise preview refresh', () => {
+                persistSavedExerciseBlock(block, result.url, result.thumbUrl || null);
+            });
         }
     }
 
-    _assetCache.ts = 0;
-    _dashboardCache.ts = 0;
+    runBackgroundMediaFollowup('asset cache invalidation', () => {
+        _assetCache.ts = 0;
+        _dashboardCache.ts = 0;
+    });
     if (job.kind === 'strength') {
-        scheduleShareCardRefresh({ forceMediaRefresh: true });
+        runBackgroundMediaFollowup('share card refresh', () => {
+            scheduleShareCardRefresh({ forceMediaRefresh: true });
+        });
     }
     return committedData;
 }
@@ -15723,10 +15783,11 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
 
     (async () => {
         for (const job of jobs) {
+            let result = null;
             try {
                 updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
                 let pendingSnapshot = getPendingUploadSnapshot(job.inputId);
-                let result = await resolvePendingUploadResult(job.inputId, {
+                result = await resolvePendingUploadResult(job.inputId, {
                     waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
                 });
                 pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
@@ -15775,14 +15836,31 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     });
                 }
             } catch (error) {
-                failed++;
-                console.error('백그라운드 미디어 저장 실패:', job, error);
-                updateBackgroundUploadProgressTracker(job.inputId, {
-                    transferPct: 100,
-                    syncPct: 100,
-                    finished: false,
-                    failed: true
-                });
+                const persistedData = await verifyBackgroundMediaPersisted({
+                    userId,
+                    docId,
+                    job,
+                    result
+                }).catch(() => null);
+                if (persistedData) {
+                    latestCommittedData = cloneDailyLogData(persistedData);
+                    console.info('[background-media] recovered completed save after follow-up error:', job.kind, job.inputId);
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        finished: true,
+                        failed: false
+                    });
+                } else {
+                    failed++;
+                    console.error('백그라운드 미디어 저장 실패:', job, error);
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        finished: false,
+                        failed: true
+                    });
+                }
             }
         }
 

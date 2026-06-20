@@ -229,4 +229,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('if (primarySaveAcknowledged && latestSaveData && docId)');
         expect(source).toContain("showToast('\\u2705 \\uae30\\ub85d\\uc740 \\uc800\\uc7a5\\ub410\\uc5b4\\uc694.");
     });
+
+    it('does not report an upload failure when the media URL is already durable in the daily log', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function runBackgroundMediaFollowup(label, callback)');
+        expect(source).toContain('function findPersistedBackgroundMediaUrl(logData = {}, job = {})');
+        expect(source).toContain('async function verifyBackgroundMediaPersisted');
+        expect(source).toContain('getDocFromServer(docRef)');
+        expect(source).toContain('const persistedData = await verifyBackgroundMediaPersisted');
+        expect(source).toContain("console.info('[background-media] recovered completed save after follow-up error:'");
+        expect(source).toContain('finished: true');
+        expect(source).toContain('failed: false');
+    });
 });

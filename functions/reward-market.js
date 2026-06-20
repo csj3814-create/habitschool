@@ -28,6 +28,8 @@ const DEFAULT_GIFTISHOW_DEV_YN = "N";
 const DEFAULT_GIFTISHOW_CATALOG_START = 1;
 const DEFAULT_GIFTISHOW_CATALOG_SIZE = 50;
 const DEFAULT_GIFTISHOW_BODY_FORMAT = "form";
+const GIFTISHOW_PUBLIC_CATALOG_FETCH_SIZE = 3000;
+const GIFTISHOW_CATALOG_CACHE_MS = 15 * 60 * 1000;
 const REWARD_COUPON_DELETE_GRACE_DAYS = 30;
 const REWARD_COUPON_DELETE_GRACE_MS = REWARD_COUPON_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000;
 const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
@@ -50,15 +52,15 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         purchasePriceKrw: 1880,
         pointCost: 2000,
         provider: "giftishow",
-        providerGoodsId: "G00002861259",
-        providerGoodsNo: "52118",
-        providerGoodsAliases: ["G00002321189"],
+        providerGoodsId: "G00005791059",
+        providerGoodsNo: "67255",
+        providerGoodsAliases: ["G00002861259", "G00002321189"],
         healthGuide: "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
-        productImageUrl: "https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg",
+        productImageUrl: "https://bizimg.giftishow.com/Resource/goods/2026/51aa72559a104bfe87f3fe014400782f.jpg",
         brandLogoUrl: "/assets/reward-market/mega-mgc-logo.png",
         available: true,
         stockLabel: "30일 발급",
-        deliveryMethod: "pin",
+        deliveryMethod: "image",
         validityDays: 30,
         sortOrder: 10,
     },
@@ -79,7 +81,7 @@ const DEFAULT_REWARD_CATALOG = Object.freeze([
         brandLogoUrl: "/assets/reward-market/paikdabang-logo.png",
         available: true,
         stockLabel: "30일 발급",
-        deliveryMethod: "pin",
+        deliveryMethod: "image",
         validityDays: 30,
         sortOrder: 20,
     },
@@ -133,6 +135,11 @@ const PUBLIC_REWARD_CATALOG_SKUS = new Set(
 const PUBLIC_REWARD_PROVIDER_GOODS_IDS = new Set(
     DEFAULT_REWARD_CATALOG.flatMap((item) => resolvePublicRewardProviderGoodsIds(item))
 );
+let giftishowCatalogCache = {
+    key: "",
+    expiresAt: 0,
+    items: [],
+};
 
 function isPublicRewardCatalogItem(item = {}) {
     const sku = normalizeSku(item.sku || "");
@@ -718,6 +725,73 @@ function mapGiftishowGoodsItem(raw = {}, index = 0) {
     });
 }
 
+function normalizeRewardMatchText(value = "") {
+    return String(value || "")
+        .normalize("NFKC")
+        .toLowerCase()
+        .replace(/\uBAA8\uBC14\uC77C\uCFE0\uD3F0/g, "")
+        .replace(/[^0-9a-z\uAC00-\uD7A3]+/g, "");
+}
+
+function isSameLiveRewardProduct(seed = {}, liveItem = {}) {
+    const seedBrand = normalizeRewardMatchText(seed.brandName);
+    const liveBrand = normalizeRewardMatchText(liveItem.brandName);
+    if (!seedBrand || !liveBrand || seedBrand !== liveBrand) return false;
+
+    const seedName = normalizeRewardMatchText(seed.displayName);
+    const liveName = normalizeRewardMatchText(liveItem.displayName);
+    if (!seedName || !liveName || seedName !== liveName) return false;
+
+    return parseNumber(seed.faceValueKrw, 0) === parseNumber(liveItem.faceValueKrw, 0);
+}
+
+function findCurrentLiveRewardProduct(seed = {}, liveItems = []) {
+    const providerIds = new Set(resolvePublicRewardProviderGoodsIds(seed));
+    return liveItems.find((item) => providerIds.has(normalizeProviderGoodsId(item.providerGoodsId)))
+        || liveItems.find((item) => isSameLiveRewardProduct(seed, item))
+        || null;
+}
+
+function reconcilePublicRewardCatalog(seededItems = [], liveItems = []) {
+    return seededItems.map((seed) => {
+        const liveItem = findCurrentLiveRewardProduct(seed, liveItems);
+        if (!liveItem) {
+            return {
+                ...seed,
+                available: false,
+                stockLabel: "provider_unavailable",
+            };
+        }
+
+        return {
+            ...seed,
+            providerGoodsId: liveItem.providerGoodsId,
+            providerGoodsNo: liveItem.providerGoodsNo || seed.providerGoodsNo || "",
+            providerGoodsAliases: [
+                ...new Set([
+                    ...(Array.isArray(seed.providerGoodsAliases) ? seed.providerGoodsAliases : []),
+                    seed.providerGoodsId,
+                ].filter(Boolean)),
+            ],
+            faceValueKrw: liveItem.faceValueKrw || seed.faceValueKrw,
+            purchasePriceKrw: liveItem.purchasePriceKrw || seed.purchasePriceKrw,
+            productImageUrl: liveItem.productImageUrl || seed.productImageUrl || "",
+            validityDays: liveItem.validityDays || seed.validityDays || 30,
+            available: liveItem.available !== false,
+            stockLabel: liveItem.available === false ? "provider_unavailable" : seed.stockLabel,
+            deliveryMethod: seed.deliveryMethod || "image",
+        };
+    });
+}
+
+function markRewardCatalogProviderUnavailable(seededItems = []) {
+    return seededItems.map((seed) => ({
+        ...seed,
+        available: false,
+        stockLabel: "\uACF5\uAE09\uC0AC \uC7AC\uD655\uC778 \uD544\uC694",
+    }));
+}
+
 function replaceTemplateString(input = "", context = {}) {
     return String(input || "").replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key) => {
         const value = context[key];
@@ -1006,13 +1080,26 @@ async function callGiftishowApi(config, endpointPath, options = {}) {
 
 async function loadGiftishowCatalog(config) {
     if (config.mode !== "live" || !config.baseUrl || !config.catalogLiveEnabled) return [];
+    const cacheKey = [
+        config.baseUrl,
+        config.goodsPath,
+        config.devYn,
+        config.customAuthCode,
+    ].join("|");
+    if (
+        giftishowCatalogCache.key === cacheKey
+        && giftishowCatalogCache.expiresAt > Date.now()
+        && giftishowCatalogCache.items.length > 0
+    ) {
+        return giftishowCatalogCache.items.map((item) => ({ ...item }));
+    }
 
     const requestPayload = buildRequestPayload(config.goodsBodyTemplate, {}, {
         giftishowCustomAuthCode: config.customAuthCode,
         giftishowCustomAuthToken: config.customAuthToken,
         giftishowDevYn: config.devYn,
         catalogStart: config.catalogStart,
-        catalogSize: config.catalogSize,
+        catalogSize: Math.max(config.catalogSize, GIFTISHOW_PUBLIC_CATALOG_FETCH_SIZE),
     });
     const payload = await callGiftishowApi(config, config.goodsPath, {
         method: config.goodsMethod,
@@ -1020,21 +1107,34 @@ async function loadGiftishowCatalog(config) {
         body: config.goodsMethod === "GET" ? undefined : requestPayload,
     });
 
-    return resolveCollectionItems(payload)
+    const items = resolveCollectionItems(payload)
         .map((item, index) => mapGiftishowGoodsItem(item, index))
-        .filter((item) => !!item.sku)
-        .filter((item) => isPublicRewardCatalogItem(item));
+        .filter((item) => !!item.sku);
+    giftishowCatalogCache = {
+        key: cacheKey,
+        expiresAt: Date.now() + GIFTISHOW_CATALOG_CACHE_MS,
+        items,
+    };
+    return items.map((item) => ({ ...item }));
 }
 
 async function loadRewardCatalog({ db, config }) {
     const seededItems = buildFallbackCatalog();
     const seededLookup = buildSeededRewardVisualLookup(seededItems);
 
-    const liveItems = await loadGiftishowCatalog(config).catch(() => []);
-    if (liveItems.length > 0) {
-        return liveItems
+    let liveItems = null;
+    try {
+        liveItems = await loadGiftishowCatalog(config);
+    } catch (error) {
+        console.error("Giftishow catalog refresh failed:", error?.message || error);
+    }
+    if (Array.isArray(liveItems) && liveItems.length > 0) {
+        return reconcilePublicRewardCatalog(seededItems, liveItems)
             .map((item) => applySeededRewardVisuals(item, seededLookup))
             .sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+    if (config.mode === "live") {
+        return markRewardCatalogProviderUnavailable(seededItems);
     }
 
     const catalogSnapshot = await db.collection("reward_catalog").get();
@@ -1813,7 +1913,7 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
 
     return {
         providerOrderId: String(
-            merged.orderId || merged.orderNo || merged.id || merged.sendRstCd || `gift_${Date.now().toString(36)}`
+            merged.orderId || merged.orderNo || merged.id || merged.sendRstCd || ""
         ).trim(),
         deliveryMethod: String(merged.deliveryMethod || merged.issueMethod || product.deliveryMethod || "pin").trim(),
         pinCode: String(merged.pin || merged.pinCode || merged.pinNo || merged.couponNo || merged.couponNumber || "").trim(),
@@ -1829,6 +1929,20 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         providerResponseCode: String(merged.code || merged.resCode || merged.sendRstCd || "").trim(),
         providerResponseMessage: String(merged.message || merged.resMsg || merged.sendRstMsg || "").trim(),
     };
+}
+
+function isSuccessfulGiftishowCouponResponse(result = {}) {
+    const code = String(result.providerResponseCode || "").trim().toUpperCase();
+    return !code || code === "0000" || code === "200";
+}
+
+function createGiftishowProviderError(result = {}) {
+    const code = String(result.providerResponseCode || "giftishow_provider_error").trim();
+    const message = String(result.providerResponseMessage || code).trim();
+    const error = new Error(message || "giftishow_provider_error");
+    error.code = code || "giftishow_provider_error";
+    error.providerResult = result;
+    return error;
 }
 
 function buildProviderContext({
@@ -1922,7 +2036,11 @@ async function issueCouponWithProvider({
         body: config.orderMethod === "GET" ? undefined : body,
     });
 
-    return mapGiftishowOrderPayload(payload, product, recipientPhone);
+    const result = mapGiftishowOrderPayload(payload, product, recipientPhone);
+    if (!isSuccessfulGiftishowCouponResponse(result)) {
+        throw createGiftishowProviderError(result);
+    }
+    return result;
 }
 
 async function queryCouponStatusWithProvider({
@@ -1966,7 +2084,11 @@ async function queryCouponStatusWithProvider({
         body: config.couponStatusMethod === "GET" ? undefined : body,
     });
 
-    return mapGiftishowOrderPayload(payload, product, recipientPhone);
+    const result = mapGiftishowOrderPayload(payload, product, recipientPhone);
+    if (!isSuccessfulGiftishowCouponResponse(result)) {
+        throw createGiftishowProviderError(result);
+    }
+    return result;
 }
 
 async function resendCouponWithProvider({
@@ -2037,6 +2159,28 @@ function isUsableCouponPayload(issuedCoupon = {}) {
     return Boolean(String(issuedCoupon.pinCode || "").trim() || String(issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "").trim());
 }
 
+async function recoverMissingCouponPayload({
+    issuedCoupon,
+    config,
+    uid,
+    product,
+    rewardName,
+    recipientPhone,
+    providerTrId,
+}) {
+    if (isUsableCouponPayload(issuedCoupon)) return issuedCoupon;
+    const recoveredCoupon = await queryCouponStatusWithProvider({
+        config,
+        uid,
+        product,
+        rewardName,
+        recipientPhone,
+        providerTrId,
+        providerOrderId: issuedCoupon?.providerOrderId || "",
+    }).catch(() => null);
+    return isUsableCouponPayload(recoveredCoupon) ? recoveredCoupon : issuedCoupon;
+}
+
 function buildManualReviewDoc({
     uid,
     userData = {},
@@ -2047,6 +2191,8 @@ function buildManualReviewDoc({
     providerTrId,
     reason,
     errorMessage,
+    providerResponseCode = "",
+    providerResponseMessage = "",
     quoteVersion,
     quoteSource,
     quotedAt,
@@ -2087,6 +2233,8 @@ function buildManualReviewDoc({
         recipientPhone: normalizedPhone,
         errorMessage: errorMessage || reason || "reward_issue_manual_review",
         manualReviewReason: reason || "reward_issue_manual_review",
+        providerResponseCode: String(providerResponseCode || "").trim(),
+        providerResponseMessage: String(providerResponseMessage || "").trim(),
         updatedAt: new Date(),
         userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
     };
@@ -2589,6 +2737,8 @@ async function redeemRewardCouponLegacy({
                     ? "giftishow_timeout_manual_review"
                     : "giftishow_issue_failed_manual_review",
                 errorMessage: error?.message || "reward_issue_failed",
+                providerResponseCode: error?.providerResult?.providerResponseCode || error?.code || "",
+                providerResponseMessage: error?.providerResult?.providerResponseMessage || error?.message || "",
                 quoteVersion: effectiveQuoteVersion,
                 quoteSource: effectiveQuoteSource,
                 quotedAt: effectiveQuotedAt,
@@ -2597,6 +2747,16 @@ async function redeemRewardCouponLegacy({
             throw new HttpsError("internal", "쿠폰 발급 응답이 불안정해 수동 확인으로 넘겼어요.");
         }
     }
+
+    issuedCoupon = await recoverMissingCouponPayload({
+        issuedCoupon,
+        config,
+        uid,
+        product: { ...product, hbtCost: requestedQuotedHbtCost },
+        rewardName,
+        recipientPhone: normalizedPhone,
+        providerTrId,
+    });
 
     if (!isUsableCouponPayload(issuedCoupon)) {
         await redemptionRef.set(buildManualReviewDoc({
@@ -2612,6 +2772,8 @@ async function redeemRewardCouponLegacy({
             providerTrId,
             reason: "provider_coupon_payload_missing",
             errorMessage: "provider_coupon_payload_missing",
+            providerResponseCode: issuedCoupon?.providerResponseCode || "",
+            providerResponseMessage: issuedCoupon?.providerResponseMessage || "",
             quoteVersion: effectiveQuoteVersion,
             quoteSource: effectiveQuoteSource,
             quotedAt: effectiveQuotedAt,
@@ -2964,6 +3126,8 @@ async function redeemRewardCoupon({
                     ? "giftishow_timeout_manual_review"
                     : "giftishow_issue_failed_manual_review",
                 errorMessage: error?.message || "reward_issue_failed",
+                providerResponseCode: error?.providerResult?.providerResponseCode || error?.code || "",
+                providerResponseMessage: error?.providerResult?.providerResponseMessage || error?.message || "",
                 quoteVersion: effectiveQuoteVersion,
                 quoteSource: effectiveQuoteSource,
                 quotedAt: effectiveQuotedAt,
@@ -2973,6 +3137,16 @@ async function redeemRewardCoupon({
             throw new HttpsError("internal", "쿠폰 발급 응답이 불안정해 수동 확인 대상으로 넘겼어요.");
         }
     }
+
+    issuedCoupon = await recoverMissingCouponPayload({
+        issuedCoupon,
+        config,
+        uid,
+        product: { ...product, pointCost: requestedQuotedPointCost, hbtCost: requestedQuotedPointCost },
+        rewardName,
+        recipientPhone: normalizedPhone,
+        providerTrId,
+    });
 
     if (!isUsableCouponPayload(issuedCoupon)) {
         await redemptionRef.set(buildManualReviewDoc({
@@ -2985,6 +3159,8 @@ async function redeemRewardCoupon({
             providerTrId,
             reason: "provider_coupon_payload_missing",
             errorMessage: "provider_coupon_payload_missing",
+            providerResponseCode: issuedCoupon?.providerResponseCode || "",
+            providerResponseMessage: issuedCoupon?.providerResponseMessage || "",
             quoteVersion: effectiveQuoteVersion,
             quoteSource: effectiveQuoteSource,
             quotedAt: effectiveQuotedAt,
@@ -3200,6 +3376,9 @@ module.exports = {
         resolveCollectionItems,
         mapGiftishowGoodsItem,
         mapGiftishowOrderPayload,
+        reconcilePublicRewardCatalog,
+        markRewardCatalogProviderUnavailable,
+        isSuccessfulGiftishowCouponResponse,
         buildFallbackCatalog,
         isPublicRewardCatalogItem,
         filterPublicRewardCatalogItems,

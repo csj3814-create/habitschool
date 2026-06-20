@@ -11,17 +11,18 @@
         "purchasePriceKrw": 1880,
         "pointCost": 2000,
         "provider": "giftishow",
-        "providerGoodsId": "G00002861259",
-        "providerGoodsNo": "52118",
+        "providerGoodsId": "G00005791059",
+        "providerGoodsNo": "67255",
         "providerGoodsAliases": [
+          "G00002861259",
           "G00002321189"
         ],
         "healthGuide": "가벼운 보상으로 건강 루틴을 이어가 보기 좋은 첫 교환 상품입니다.",
-        "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2024/G00002861259/G00002861259.jpg",
+        "productImageUrl": "https://bizimg.giftishow.com/Resource/goods/2026/51aa72559a104bfe87f3fe014400782f.jpg",
         "brandLogoUrl": "/assets/reward-market/mega-mgc-logo.png",
         "available": true,
         "stockLabel": "30일 발급",
-        "deliveryMethod": "pin",
+        "deliveryMethod": "image",
         "validityDays": 30,
         "sortOrder": 10
       }
@@ -47,7 +48,7 @@
         "brandLogoUrl": "/assets/reward-market/paikdabang-logo.png",
         "available": true,
         "stockLabel": "30일 발급",
-        "deliveryMethod": "pin",
+        "deliveryMethod": "image",
         "validityDays": 30,
         "sortOrder": 20
       }
