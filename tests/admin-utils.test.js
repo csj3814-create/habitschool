@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
     filterAdminAssetRows,
+    filterAdminRowsByName,
     getAdminPaginationState,
     normalizeAdminEmailLog,
 } from '../js/admin-utils.js';
@@ -19,6 +20,10 @@ describe('admin asset table helpers', () => {
         ]);
         expect(filterAdminAssetRows(rows, '효은').map((row) => row.name)).toEqual([
             '윤효은',
+        ]);
+        expect(filterAdminRowsByName(rows, '윤').map((row) => row.name)).toEqual([
+            '윤효은',
+            '최윤서',
         ]);
     });
 

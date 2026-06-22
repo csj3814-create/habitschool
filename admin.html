@@ -330,13 +330,19 @@
             </div>
             <div class="box">
                 <h3>💸 최근 HBT 거래</h3>
+                <div class="asset-table-toolbar">
+                    <input type="search" class="search-inp" id="tx-name-search" placeholder="회원 이름 검색" oninput="resetTxPageAndRender()">
+                    <span id="tx-result-meta" class="asset-result-meta">총 0건</span>
+                </div>
                 <table>
-                    <thead><tr><th>날짜</th><th>유형</th><th>금액</th><th>TxHash</th></tr></thead>
-                    <tbody id="tx-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
+                    <thead><tr><th>날짜</th><th>회원</th><th>유형</th><th>금액</th><th>TxHash</th></tr></thead>
+                    <tbody id="tx-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
-                <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+                <div class="asset-page-controls">
                     <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="txPage(-1)" id="tx-prev">◀ 이전</button>
-                    <span id="tx-page-label">1 페이지</span>
+                    <span id="tx-page-label">1 / 1</span>
+                    <input type="number" id="tx-page-input" class="asset-page-input" min="1" value="1" aria-label="HBT 거래 이동 페이지" onkeydown="if(event.key==='Enter') txGoToPage()">
+                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="txGoToPage()">이동</button>
                     <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="txPage(1)" id="tx-next">다음 ▶</button>
                 </div>
             </div>
@@ -344,13 +350,19 @@
         <div class="box" style="margin-top:16px;">
             <h3>📋 포인트 지급 내역 전체</h3>
             <p style="font-size:12px;color:#888;margin-top:0;">일일 습관 + MVP 보상 + 챌린지 + 가입 축하 + 초대 이벤트 · 리액션(+1P)은 개별 로그 없이 직접 지급됨</p>
+            <div class="asset-table-toolbar">
+                <input type="search" class="search-inp" id="all-points-name-search" placeholder="회원 이름 검색" oninput="resetAllPointsPageAndRender()">
+                <span id="all-points-result-meta" class="asset-result-meta">총 0건</span>
+            </div>
             <table style="font-size:12px;">
                 <thead><tr><th>날짜</th><th>회원</th><th>유형</th><th style="text-align:center;">포인트</th></tr></thead>
                 <tbody id="all-points-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
             </table>
-            <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+            <div class="asset-page-controls">
                 <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="allPointsPage(-1)" id="all-points-prev" disabled>◀ 이전</button>
-                <span id="all-points-label">1 페이지</span>
+                <span id="all-points-label">1 / 1</span>
+                <input type="number" id="all-points-page-input" class="asset-page-input" min="1" value="1" aria-label="포인트 내역 이동 페이지" onkeydown="if(event.key==='Enter') allPointsGoToPage()">
+                <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="allPointsGoToPage()">이동</button>
                 <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="allPointsPage(1)" id="all-points-next">다음 ▶</button>
             </div>
         </div>
@@ -576,12 +588,13 @@
 </div>
 
 <script type="module">
-    import { collection, getDocs, query, orderBy, limit, startAfter, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
     import {
         filterAdminAssetRows,
+        filterAdminRowsByName,
         formatAdminDateTime,
         getAdminPaginationState,
         normalizeAdminEmailLog,
@@ -1202,9 +1215,8 @@
     const RATE_SCALE = 1e8;
     const PAGE_SIZE_TOP20 = 20;
     const PAGE_SIZE_TX = 20;
-    const PAGE_SIZE_POINTS = 30;
     let top20AllRows = [], top20CurrentPage = 0;
-    let txCursors = [null], txCurrentPage = 0;
+    let txAllRows = [], txCurrentPage = 0;
     let pointsUsersMap = {};
     let currentConversionRatePerPoint = 1;
     let adminTokenStatsCache = null;
@@ -1465,33 +1477,85 @@
         return total;
     }
 
-    async function loadTxPage() {
-        try {
-            const cursor = txCursors[txCurrentPage];
-            const q = cursor
-                ? query(collection(db,'blockchain_transactions'), orderBy('timestamp','desc'), startAfter(cursor), limit(PAGE_SIZE_TX))
-                : query(collection(db,'blockchain_transactions'), orderBy('timestamp','desc'), limit(PAGE_SIZE_TX));
-            const snap = await getDocs(q);
-            document.getElementById('tx-body').innerHTML = snap.empty ? '<tr><td colspan="4" style="color:#999;">없음</td></tr>' : snap.docs.map(d => {
-                const t=d.data(), ts=t.timestamp, date=ts ? new Date(ts.seconds?ts.seconds*1000:ts).toLocaleDateString('ko') : '-';
-                const amt = t.details?.hbtAmount ?? t.hbtReceived ?? t.amount ?? '-';
-                return `<tr><td>${date}</td><td>${escapeHtml(t.type||'-')}</td><td>${typeof amt==='number'?amt.toLocaleString():amt}</td><td style="font-family:monospace;font-size:11px;">${t.txHash?t.txHash.slice(0,8)+'...':'-'}</td></tr>`;
-            }).join('');
-            // 다음 페이지 커서 저장
-            if (!snap.empty && snap.docs.length === PAGE_SIZE_TX) {
-                txCursors[txCurrentPage+1] = snap.docs[snap.docs.length-1];
-            }
-            document.getElementById('tx-page-label').textContent = `${txCurrentPage+1} 페이지`;
-            document.getElementById('tx-prev').disabled = txCurrentPage === 0;
-            document.getElementById('tx-next').disabled = snap.empty || snap.docs.length < PAGE_SIZE_TX;
-        } catch(e) { console.error('HBT tx 조회 오류:', e); document.getElementById('tx-body').innerHTML='<tr><td colspan="4" style="color:#999;">없음</td></tr>'; }
+    function renderTxRows() {
+        const searchTerm = document.getElementById('tx-name-search')?.value || '';
+        const filteredRows = filterAdminRowsByName(txAllRows, searchTerm);
+        const pagination = getAdminPaginationState(
+            filteredRows.length,
+            PAGE_SIZE_TX,
+            txCurrentPage
+        );
+        txCurrentPage = pagination.pageIndex;
+        const pageRows = filteredRows.slice(
+            pagination.start,
+            pagination.start + pagination.pageSize
+        );
+
+        document.getElementById('tx-body').innerHTML = pageRows.length
+            ? pageRows.map((row) => `<tr>
+                <td>${escapeHtml(row.date)}</td>
+                <td>${escapeHtml(row.name)}</td>
+                <td>${escapeHtml(row.type)}</td>
+                <td>${escapeHtml(row.amountLabel)}</td>
+                <td style="font-family:monospace;font-size:11px;">${escapeHtml(row.hashLabel)}</td>
+            </tr>`).join('')
+            : '<tr><td colspan="5" style="color:#999;">검색 결과가 없습니다.</td></tr>';
+
+        document.getElementById('tx-result-meta').textContent = searchTerm.trim()
+            ? `검색 ${filteredRows.length}건 · 전체 ${txAllRows.length}건`
+            : `총 ${filteredRows.length}건 · 페이지당 ${PAGE_SIZE_TX}건`;
+        document.getElementById('tx-page-label').textContent = `${txCurrentPage + 1} / ${pagination.totalPages}`;
+        document.getElementById('tx-prev').disabled = txCurrentPage === 0;
+        document.getElementById('tx-next').disabled = txCurrentPage >= pagination.totalPages - 1;
+        const pageInput = document.getElementById('tx-page-input');
+        pageInput.max = String(pagination.totalPages);
+        pageInput.value = String(txCurrentPage + 1);
     }
-    window.txPage = async function(dir) {
-        const next = txCurrentPage + dir;
-        if (next < 0) return;
-        if (dir > 0 && !txCursors[next]) return;
-        txCurrentPage = next;
-        await loadTxPage();
+
+    async function loadTxRows() {
+        try {
+            const snap = await getDocs(query(
+                collection(db, 'blockchain_transactions'),
+                orderBy('timestamp', 'desc'),
+                limit(500)
+            ));
+            txAllRows = snap.docs.map((docSnap) => {
+                const t = docSnap.data();
+                const ts = t.timestamp || t.updatedAt;
+                const txDate = toJsDate(ts);
+                const date = txDate
+                    ? txDate.toLocaleDateString('ko')
+                    : (t.date || '-');
+                const amt = t.details?.hbtAmount ?? t.hbtReceived ?? t.amount ?? '-';
+                const txHash = t.txHash || t.stakeTxHash || t.resolveTxHash || t.refundTxHash || '';
+                return {
+                    date,
+                    name: pointsUsersMap[t.userId] || t.userName || t.userId?.slice(0, 8) || '-',
+                    type: t.type || '-',
+                    amountLabel: typeof amt === 'number' ? amt.toLocaleString() : String(amt),
+                    hashLabel: txHash ? `${txHash.slice(0, 8)}...` : '-',
+                };
+            });
+            txCurrentPage = 0;
+            renderTxRows();
+        } catch(e) {
+            console.error('HBT tx 조회 오류:', e);
+            txAllRows = [];
+            renderTxRows();
+        }
+    }
+    window.resetTxPageAndRender = function() {
+        txCurrentPage = 0;
+        renderTxRows();
+    };
+    window.txPage = function(dir) {
+        txCurrentPage += dir;
+        renderTxRows();
+    };
+    window.txGoToPage = function() {
+        const requestedPage = Number(document.getElementById('tx-page-input')?.value);
+        txCurrentPage = Number.isFinite(requestedPage) ? requestedPage - 1 : 0;
+        renderTxRows();
     };
 
     // ── 통합 포인트 내역 ──────────────────────────────────
@@ -1578,25 +1642,48 @@
 
     function renderAllPoints() {
         const tbody = document.getElementById('all-points-body');
-        const start = allPointsPage * ALL_POINTS_PAGE_SIZE;
-        const slice = allPointsRows.slice(start, start + ALL_POINTS_PAGE_SIZE);
+        const searchTerm = document.getElementById('all-points-name-search')?.value || '';
+        const filteredRows = filterAdminRowsByName(allPointsRows, searchTerm);
+        const pagination = getAdminPaginationState(
+            filteredRows.length,
+            ALL_POINTS_PAGE_SIZE,
+            allPointsPage
+        );
+        allPointsPage = pagination.pageIndex;
+        const slice = filteredRows.slice(
+            pagination.start,
+            pagination.start + pagination.pageSize
+        );
         tbody.innerHTML = slice.length === 0
-            ? '<tr><td colspan="4" style="color:#999;">내역 없음</td></tr>'
+            ? '<tr><td colspan="4" style="color:#999;">검색 결과가 없습니다.</td></tr>'
             : slice.map(r => `<tr>
                 <td>${escapeHtml(r.date)}</td>
                 <td>${escapeHtml(r.name)}</td>
                 <td>${escapeHtml(r.type)}</td>
                 <td style="font-weight:600;color:#388E3C;text-align:center;">+${r.points.toLocaleString()}P</td>
             </tr>`).join('');
-        document.getElementById('all-points-label').textContent = `${allPointsPage + 1} / ${Math.ceil(allPointsRows.length / ALL_POINTS_PAGE_SIZE) || 1} 페이지`;
+        document.getElementById('all-points-result-meta').textContent = searchTerm.trim()
+            ? `검색 ${filteredRows.length}건 · 전체 ${allPointsRows.length}건`
+            : `총 ${filteredRows.length}건 · 페이지당 ${ALL_POINTS_PAGE_SIZE}건`;
+        document.getElementById('all-points-label').textContent = `${allPointsPage + 1} / ${pagination.totalPages}`;
         document.getElementById('all-points-prev').disabled = allPointsPage === 0;
-        document.getElementById('all-points-next').disabled = start + ALL_POINTS_PAGE_SIZE >= allPointsRows.length;
+        document.getElementById('all-points-next').disabled = allPointsPage >= pagination.totalPages - 1;
+        const pageInput = document.getElementById('all-points-page-input');
+        pageInput.max = String(pagination.totalPages);
+        pageInput.value = String(allPointsPage + 1);
     }
 
+    window.resetAllPointsPageAndRender = function() {
+        allPointsPage = 0;
+        renderAllPoints();
+    };
     window.allPointsPage = function(dir) {
-        const next = allPointsPage + dir;
-        if (next < 0 || next * ALL_POINTS_PAGE_SIZE >= allPointsRows.length) return;
-        allPointsPage = next;
+        allPointsPage += dir;
+        renderAllPoints();
+    };
+    window.allPointsGoToPage = function() {
+        const requestedPage = Number(document.getElementById('all-points-page-input')?.value);
+        allPointsPage = Number.isFinite(requestedPage) ? requestedPage - 1 : 0;
         renderAllPoints();
     };
 
@@ -1630,9 +1717,9 @@
         pointsUsersMap = {};
         usersQ.forEach(u => { const d=u.data(); pointsUsersMap[u.id] = d.customDisplayName||d.displayName||u.id.slice(0,8); });
 
-        // HBT Transactions (페이지네이션)
-        txCursors = [null]; txCurrentPage = 0;
-        await loadTxPage();
+        // HBT Transactions
+        txCurrentPage = 0;
+        await loadTxRows();
 
         // 통합 포인트 지급 내역
         allPointsPage = 0;

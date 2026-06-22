@@ -13,7 +13,7 @@ function isRecord(value) {
     return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-export function filterAdminAssetRows(rows = [], searchTerm = "") {
+export function filterAdminRowsByName(rows = [], searchTerm = "") {
     const normalizedTerm = String(searchTerm || "").trim().toLocaleLowerCase("ko-KR");
     if (!normalizedTerm) return [...rows];
 
@@ -21,6 +21,8 @@ export function filterAdminAssetRows(rows = [], searchTerm = "") {
         String(row?.name || "").toLocaleLowerCase("ko-KR").includes(normalizedTerm)
     );
 }
+
+export const filterAdminAssetRows = filterAdminRowsByName;
 
 export function getAdminPaginationState(totalRows, pageSize, requestedPageIndex = 0) {
     const safeTotalRows = Math.max(0, Number(totalRows) || 0);
@@ -168,6 +170,7 @@ export function normalizeAdminEmailLog(rawLog = {}, { email = "" } = {}) {
 
 export default {
     filterAdminAssetRows,
+    filterAdminRowsByName,
     formatAdminDateTime,
     getAdminPaginationState,
     getReEngagementMethodLabel,
