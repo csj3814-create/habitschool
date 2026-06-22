@@ -65,7 +65,28 @@ describe("HaBitStaking", function () {
     });
   });
 
-  describe("legacy operator path", function () {
+  describe("tier-keyed operator path", function () {
+    it("keeps weekly and master stakes isolated for the same user", async function () {
+      await habit.connect(user1).approve(await staking.getAddress(), 800n * UNIT);
+      await staking.connect(minter).startChallenge(user1.address, "challenge-7d", 1, 7, 300n * UNIT);
+      await staking.connect(minter).startChallenge(user1.address, "challenge-30d", 2, 30, 500n * UNIT);
+
+      expect((await staking.getChallenge(user1.address, 1))[1]).to.equal(300n * UNIT);
+      expect((await staking.getChallenge(user1.address, 2))[1]).to.equal(500n * UNIT);
+      expect(await staking.totalActiveStakes()).to.equal(800n * UNIT);
+
+      for (let i = 0; i < 7; i++) {
+        await staking.connect(minter).recordDay(user1.address, 1);
+      }
+      await staking.connect(minter).settleChallenge(user1.address, 1);
+
+      expect((await staking.getChallenge(user1.address, 1))[4]).to.equal(true);
+      expect((await staking.getChallenge(user1.address, 2))[4]).to.equal(false);
+      expect((await staking.getChallenge(user1.address, 2))[1]).to.equal(500n * UNIT);
+      expect(await staking.totalActiveStakes()).to.equal(500n * UNIT);
+      expect(await habit.balanceOf(user1.address)).to.equal(500n * UNIT);
+    });
+
     it("keeps legacy start/settle flow working", async function () {
       await habit.connect(user1).approve(await staking.getAddress(), 500n * UNIT);
       await staking.connect(minter).startChallenge(user1.address, "challenge-30d", 2, 30, 500n * UNIT);

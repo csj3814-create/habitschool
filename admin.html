@@ -74,6 +74,8 @@
         .badge-green { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
         .badge-red { background: #FFEBEE; color: #C62828; border: 1px solid #EF9A9A; animation: pulse 1.5s infinite; }
         .badge-gray { background: #eee; color: #888; }
+        .badge-orange { background: #FFF3E0; color: #E65100; border: 1px solid #FFCC80; }
+        .badge-blue { background: #E3F2FD; color: #1565C0; border: 1px solid #90CAF9; }
 
         /* Filter bar */
         .filter-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
@@ -146,6 +148,10 @@
         .member-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; flex-wrap: wrap; }
         .member-pagination-meta { color: #666; }
         .member-pagination-controls { display: flex; align-items: center; gap: 10px; }
+        .asset-table-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .asset-page-controls { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; flex-wrap: wrap; }
+        .asset-page-input { width: 64px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 7px; text-align: center; font-size: 12px; }
+        .asset-result-meta { color: #666; font-size: 12px; }
 
         .history-wrap { height: 100%; overflow-y: auto; background: white; border-radius: 8px; border: 1px solid #eee; padding: 10px; }
         .hc { border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
@@ -305,14 +311,20 @@
     <div id="tab-economy" class="tab-panel">
         <div class="two-col">
             <div class="box">
-                <h3>🥇 현재 포인트+HBT TOP 20</h3>
+                <h3>🥇 회원 자산 목록</h3>
+                <div class="asset-table-toolbar">
+                    <input type="search" class="search-inp" id="asset-name-search" placeholder="이름 검색" oninput="resetAssetPageAndRender()">
+                    <span id="top20-result-meta" class="asset-result-meta">총 0명</span>
+                </div>
                 <table>
                     <thead><tr><th>#</th><th>이름</th><th>현재 포인트</th><th>현재 HBT</th><th>스트릭</th></tr></thead>
                     <tbody id="top10-body"><tr><td colspan="5">로딩 중...</td></tr></tbody>
                 </table>
-                <div class="page-bar" id="top20-page-bar" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px;font-size:13px;">
+                <div class="asset-page-controls" id="top20-page-bar">
                     <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="top20Page(-1)" id="top20-prev">◀ 이전</button>
-                    <span id="top20-page-label">1 페이지</span>
+                    <span id="top20-page-label">1 / 1</span>
+                    <input type="number" id="top20-page-input" class="asset-page-input" min="1" value="1" aria-label="이동할 페이지" onkeydown="if(event.key==='Enter') top20GoToPage()">
+                    <button class="btn btn-primary" style="padding:4px 10px;font-size:12px;" onclick="top20GoToPage()">이동</button>
                     <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="top20Page(1)" id="top20-next">다음 ▶</button>
                 </div>
             </div>
@@ -345,6 +357,7 @@
         <div class="two-col">
             <div class="box">
                 <h3>⚙️ 마이닝 레이트</h3>
+                <p style="font-size:12px;color:#777;margin:-6px 0 12px;">매주 월요일 00:00 KST 자동 검토 · 변동 없음과 실패도 이력에 기록</p>
                 <div class="chart-wrap" style="height:160px;"><canvas id="miningChart"></canvas></div>
                 <div class="row-inp">
                     <input type="number" id="rate-val" class="inp" placeholder="계수 (예: 0.8)" step="0.01" min="0.01" max="5" style="width:140px;">
@@ -354,8 +367,8 @@
                 <div style="margin-top:14px;">
                     <div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">조정 이력</div>
                     <table style="font-size:12px;table-layout:fixed;width:100%;">
-                        <colgroup><col style="width:30%"><col style="width:20%"><col style="width:50%"></colgroup>
-                        <thead><tr><th>날짜</th><th>계수</th><th>사유</th></tr></thead>
+                        <colgroup><col style="width:28%"><col style="width:25%"><col style="width:47%"></colgroup>
+                        <thead><tr><th>주차·날짜</th><th>결정 레이트</th><th>결과</th></tr></thead>
                         <tbody id="rate-history-body"><tr><td colspan="3">로딩 중...</td></tr></tbody>
                     </table>
                 </div>
@@ -567,7 +580,13 @@
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
-    import { formatAdminDateTime, normalizeAdminEmailLog, getReEngagementMethodLabel } from './js/admin-utils.js';
+    import {
+        filterAdminAssetRows,
+        formatAdminDateTime,
+        getAdminPaginationState,
+        normalizeAdminEmailLog,
+        getReEngagementMethodLabel
+    } from './js/admin-utils.js';
     import { escapeHtml, isValidStorageUrl } from './js/security.js';
 
     let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
@@ -1191,19 +1210,42 @@
     let adminTokenStatsCache = null;
 
     function renderTop20() {
-        const start = top20CurrentPage * PAGE_SIZE_TOP20;
-        const page = top20AllRows.slice(start, start + PAGE_SIZE_TOP20);
+        const searchTerm = document.getElementById('asset-name-search')?.value || '';
+        const filteredRows = filterAdminAssetRows(top20AllRows, searchTerm);
+        const pagination = getAdminPaginationState(
+            filteredRows.length,
+            PAGE_SIZE_TOP20,
+            top20CurrentPage
+        );
+        top20CurrentPage = pagination.pageIndex;
+        const page = filteredRows.slice(
+            pagination.start,
+            pagination.start + pagination.pageSize
+        );
         document.getElementById('top10-body').innerHTML = page.map((u, i) =>
-            `<tr><td>${start+i+1}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`
-        ).join('') || '<tr><td colspan="5" style="color:#999;">없음</td></tr>';
-        document.getElementById('top20-page-label').textContent = `${top20CurrentPage+1} 페이지`;
+            `<tr><td>${pagination.start+i+1}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`
+        ).join('') || '<tr><td colspan="5" style="color:#999;">검색 결과가 없습니다.</td></tr>';
+        document.getElementById('top20-result-meta').textContent = searchTerm.trim()
+            ? `검색 ${filteredRows.length}명 · 전체 ${top20AllRows.length}명`
+            : `총 ${filteredRows.length}명 · 페이지당 ${PAGE_SIZE_TOP20}명`;
+        document.getElementById('top20-page-label').textContent = `${top20CurrentPage+1} / ${pagination.totalPages}`;
         document.getElementById('top20-prev').disabled = top20CurrentPage === 0;
-        document.getElementById('top20-next').disabled = start + PAGE_SIZE_TOP20 >= top20AllRows.length;
+        document.getElementById('top20-next').disabled = top20CurrentPage >= pagination.totalPages - 1;
+        const pageInput = document.getElementById('top20-page-input');
+        pageInput.max = String(pagination.totalPages);
+        pageInput.value = String(top20CurrentPage + 1);
     }
+    window.resetAssetPageAndRender = function() {
+        top20CurrentPage = 0;
+        renderTop20();
+    };
     window.top20Page = function(dir) {
-        const next = top20CurrentPage + dir;
-        if (next < 0 || next * PAGE_SIZE_TOP20 >= top20AllRows.length) return;
-        top20CurrentPage = next;
+        top20CurrentPage += dir;
+        renderTop20();
+    };
+    window.top20GoToPage = function() {
+        const requestedPage = Number(document.getElementById('top20-page-input')?.value);
+        top20CurrentPage = Number.isFinite(requestedPage) ? requestedPage - 1 : 0;
         renderTop20();
     };
 
@@ -1605,17 +1647,38 @@
             document.getElementById('rate-history-body').innerHTML = rows.length ? rows.map(r => {
                 const ts=r.timestamp, date=ts ? new Date(ts.seconds?ts.seconds*1000:ts).toLocaleDateString('ko') : (r.weekId||'-');
                 const ratePer100 = Number(r.newRate) > 0 ? Number(r.newRate) * 100 : null;
-                const rateLabel = ratePer100 ? `100P = ${formatAdminNumber(ratePer100)} HBT` : `×${r.adjustmentFactor??'-'}`;
-                return `<tr><td>${date}</td><td>${rateLabel}</td><td>${escapeHtml(r.reason||'-')}</td></tr>`;
+                const previousRatePer100 = Number(r.previousRate) > 0 ? Number(r.previousRate) * 100 : null;
+                const rateLabel = ratePer100
+                    ? `100P = ${formatAdminNumber(ratePer100)} HBT`
+                    : previousRatePer100
+                        ? `기존 ${formatAdminNumber(previousRatePer100)} HBT`
+                        : '-';
+                const statusMeta = {
+                    success: ['조정 완료', 'badge-green'],
+                    no_change: ['변동 없음', 'badge-gray'],
+                    manual: ['수동 조정', 'badge-blue'],
+                    chain_error: ['반영 실패', 'badge-red'],
+                    error: ['결정 실패', 'badge-red'],
+                    evaluating: ['검토 중', 'badge-orange'],
+                }[r.status] || [r.status || '기록', 'badge-gray'];
+                const errorDetail = r.errorMessage
+                    ? `<div style="color:#C62828;margin-top:4px;overflow-wrap:anywhere;">${escapeHtml(String(r.errorMessage).slice(0, 180))}</div>`
+                    : '';
+                return `<tr>
+                    <td><strong>${escapeHtml(r.weekId||'-')}</strong><div style="color:#888;margin-top:3px;">${date}</div></td>
+                    <td>${rateLabel}</td>
+                    <td><span class="badge ${statusMeta[1]}">${escapeHtml(statusMeta[0])}</span><div style="margin-top:5px;">${escapeHtml(r.reason||'-')}</div>${errorDetail}</td>
+                </tr>`;
             }).join('') : '<tr><td colspan="3" style="color:#999;">이력 없음</td></tr>';
 
-            if (rows.length > 1) {
-                const rev = [...rows].reverse();
+            const chartRows = rows.filter(r => Number(r.newRate) > 0);
+            if (chartRows.length > 0) {
+                const rev = [...chartRows].reverse();
                 const labels = rev.map(r => { const ts=r.timestamp; return ts ? new Date(ts.seconds?ts.seconds*1000:ts).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}) : (r.weekId||'-'); });
-                const vals = rev.map(r => r.adjustmentFactor||1);
+                const vals = rev.map(r => Number(r.newRate) * 100);
                 const ctx = document.getElementById('miningChart').getContext('2d');
                 if (miningChart) miningChart.destroy();
-                miningChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'조정 계수', data:vals, borderColor:'#9C27B0', backgroundColor:'rgba(156,39,176,0.1)', borderWidth:2, tension:0.3, pointRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:false } } } });
+                miningChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'100P당 HBT', data:vals, borderColor:'#9C27B0', backgroundColor:'rgba(156,39,176,0.1)', borderWidth:2, tension:0.3, pointRadius:4 }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:false } } } });
             }
         } catch(e) { console.error('마이닝 레이트 조회 오류:', e); document.getElementById('rate-history-body').innerHTML='<tr><td colspan="3" style="color:#999;">이력 없음</td></tr>'; }
 

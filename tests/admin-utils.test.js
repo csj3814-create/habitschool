@@ -1,5 +1,45 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeAdminEmailLog } from '../js/admin-utils.js';
+import {
+    filterAdminAssetRows,
+    getAdminPaginationState,
+    normalizeAdminEmailLog,
+} from '../js/admin-utils.js';
+
+describe('admin asset table helpers', () => {
+    const rows = [
+        { name: '최석재', coins: 1200 },
+        { name: '윤효은', coins: 950 },
+        { name: '최윤서', coins: 800 },
+    ];
+
+    it('returns only names matching a trimmed, case-insensitive search term', () => {
+        expect(filterAdminAssetRows(rows, '  최  ').map((row) => row.name)).toEqual([
+            '최석재',
+            '최윤서',
+        ]);
+        expect(filterAdminAssetRows(rows, '효은').map((row) => row.name)).toEqual([
+            '윤효은',
+        ]);
+    });
+
+    it('clamps direct page jumps to the available page range', () => {
+        expect(getAdminPaginationState(45, 20, 1)).toMatchObject({
+            totalPages: 3,
+            pageIndex: 1,
+            start: 20,
+        });
+        expect(getAdminPaginationState(45, 20, 99)).toMatchObject({
+            totalPages: 3,
+            pageIndex: 2,
+            start: 40,
+        });
+        expect(getAdminPaginationState(0, 20, -3)).toMatchObject({
+            totalPages: 1,
+            pageIndex: 0,
+            start: 0,
+        });
+    });
+});
 
 describe('normalizeAdminEmailLog', () => {
     it('merges stored day details with recent history', () => {

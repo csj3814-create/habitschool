@@ -13,9 +13,9 @@ import "./HaBit.sol";
  * - HaBit.sol: token, minting, rate updates
  * - HaBitStaking.sol: stake custody, principal return, slash handling
  *
- * Legacy operator-driven functions are kept for backward compatibility with
- * older off-chain challenge bookkeeping. New runtime paths should prefer
- * stakeForChallenge() + resolveChallenge().
+ * Tier-keyed operator functions isolate weekly and master stakes so both can
+ * run at the same time. The aggregate direct-deposit functions remain only
+ * for backward compatibility with older challenge records.
  */
 contract HaBitStaking is Ownable, ReentrancyGuard {
     HaBit public immutable hbtToken;
@@ -31,7 +31,7 @@ contract HaBitStaking is Ownable, ReentrancyGuard {
         bool settled;
     }
 
-    // Legacy operator-driven challenge state.
+    // Tier-keyed challenge state.
     // tier: 0 = mini, 1 = weekly, 2 = master
     mapping(address => mapping(uint8 => Challenge)) public activeChallenges;
 
@@ -129,7 +129,7 @@ contract HaBitStaking is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Legacy flow kept for compatibility with older challenge records.
+     * @notice Tier-keyed flow used by current weekly/master challenge records.
      */
     function startChallenge(
         address user,
@@ -174,7 +174,7 @@ contract HaBitStaking is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Legacy settlement path kept for older operator workflows.
+     * @notice Settles only the requested challenge tier.
      * @dev Bonus minting is still expected to happen off-chain.
      */
     function settleChallenge(address user, uint8 tier) external onlyOperator nonReentrant {

@@ -13,6 +13,32 @@ function isRecord(value) {
     return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+export function filterAdminAssetRows(rows = [], searchTerm = "") {
+    const normalizedTerm = String(searchTerm || "").trim().toLocaleLowerCase("ko-KR");
+    if (!normalizedTerm) return [...rows];
+
+    return rows.filter((row) =>
+        String(row?.name || "").toLocaleLowerCase("ko-KR").includes(normalizedTerm)
+    );
+}
+
+export function getAdminPaginationState(totalRows, pageSize, requestedPageIndex = 0) {
+    const safeTotalRows = Math.max(0, Number(totalRows) || 0);
+    const safePageSize = Math.max(1, Number(pageSize) || 1);
+    const totalPages = Math.max(1, Math.ceil(safeTotalRows / safePageSize));
+    const numericPageIndex = Number(requestedPageIndex);
+    const requested = Number.isFinite(numericPageIndex) ? Math.trunc(numericPageIndex) : 0;
+    const pageIndex = Math.min(Math.max(0, requested), totalPages - 1);
+
+    return {
+        totalRows: safeTotalRows,
+        totalPages,
+        pageIndex,
+        start: pageIndex * safePageSize,
+        pageSize: safePageSize,
+    };
+}
+
 function normalizeEmailEntry(rawEntry, fallbackDays = null, fallbackEmail = "") {
     if (!isRecord(rawEntry) || Object.keys(rawEntry).length === 0) return null;
 
@@ -141,7 +167,9 @@ export function normalizeAdminEmailLog(rawLog = {}, { email = "" } = {}) {
 }
 
 export default {
+    filterAdminAssetRows,
     formatAdminDateTime,
+    getAdminPaginationState,
     getReEngagementMethodLabel,
     normalizeAdminEmailLog,
 };

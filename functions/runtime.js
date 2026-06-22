@@ -35,6 +35,10 @@ const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
 const { buildReEngagementEmailTemplate } = require("./reengagement-email");
 const {
+    getKstIsoWeekId,
+    isCompletedRateDecision,
+} = require("./mining-rate-utils");
+const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
@@ -1344,7 +1348,123 @@ function resolveStakeContractModeFromReceipt(receipt) {
     return isConfiguredAddress(STAKING_ADDRESS) ? "staking" : "legacy";
 }
 
-async function resolveChallengeStake(wallet, userWalletAddress, isSuccess, preferredMode = "staking") {
+function readTieredChallengeTuple(tuple = []) {
+    return {
+        challengeId: String(tuple?.[0] || ""),
+        stakedRaw: BigInt(tuple?.[1] || 0),
+        completedDays: Number(tuple?.[2] || 0),
+        totalDays: Number(tuple?.[3] || 0),
+        settled: !!tuple?.[4]
+    };
+}
+
+async function startTieredChallengeStake(wallet, {
+    userWalletAddress,
+    challengeId,
+    tier,
+    totalDays,
+    stakeAmount
+}) {
+    const stakingContract = getStakingContract(wallet);
+    if (!stakingContract) {
+        throw new Error("Tiered challenge staking contract is unavailable");
+    }
+
+    const tierIndex = CHALLENGE_TIER_INDEX[tier];
+    if (!Number.isInteger(tierIndex)) {
+        throw new HttpsError("invalid-argument", "유효하지 않은 챌린지 단계입니다.");
+    }
+
+    const expectedRaw = ethers.parseUnits(String(stakeAmount), HBT_DECIMALS);
+    const existing = readTieredChallengeTuple(
+        await stakingContract.getChallenge(userWalletAddress, tierIndex)
+    );
+    if (existing.stakedRaw > 0n && !existing.settled) {
+        if (
+            existing.challengeId === challengeId &&
+            existing.stakedRaw === expectedRaw &&
+            existing.totalDays === Number(totalDays)
+        ) {
+            return { recovered: true, txHash: null, tierIndex };
+        }
+        throw new HttpsError(
+            "failed-precondition",
+            "해당 단계의 온체인 챌린지가 이미 진행 중입니다."
+        );
+    }
+
+    const habitContract = getHabitContract(wallet);
+    const allowanceRaw = await habitContract.allowance(userWalletAddress, STAKING_ADDRESS);
+    if (allowanceRaw < expectedRaw) {
+        throw new HttpsError(
+            "failed-precondition",
+            "HBT 예치 권한이 부족합니다. 지갑에서 예치 승인을 다시 진행해 주세요."
+        );
+    }
+
+    const tx = await stakingContract.startChallenge(
+        userWalletAddress,
+        challengeId,
+        tierIndex,
+        Number(totalDays),
+        expectedRaw
+    );
+    const receipt = await tx.wait();
+    return { recovered: false, txHash: receipt.hash, tierIndex };
+}
+
+async function syncTieredChallengeProgress(wallet, userWalletAddress, tier, completedDays) {
+    const stakingContract = getStakingContract(wallet);
+    if (!stakingContract) {
+        throw new Error("Tiered challenge staking contract is unavailable");
+    }
+
+    const tierIndex = CHALLENGE_TIER_INDEX[tier];
+    if (!Number.isInteger(tierIndex)) {
+        throw new HttpsError("invalid-argument", "유효하지 않은 챌린지 단계입니다.");
+    }
+
+    let onchain = readTieredChallengeTuple(
+        await stakingContract.getChallenge(userWalletAddress, tierIndex)
+    );
+    if (onchain.settled || onchain.totalDays === 0) {
+        throw new HttpsError("failed-precondition", "온체인 챌린지 예치 내역을 찾을 수 없습니다.");
+    }
+
+    const targetDays = Math.min(
+        onchain.totalDays,
+        Math.max(0, Number(completedDays) || 0)
+    );
+    while (onchain.completedDays < targetDays) {
+        const recordTx = await stakingContract.recordDay(userWalletAddress, tierIndex);
+        await recordTx.wait();
+        onchain = {
+            ...onchain,
+            completedDays: onchain.completedDays + 1
+        };
+    }
+
+    return { stakingContract, tierIndex, onchain };
+}
+
+async function resolveChallengeStake(
+    wallet,
+    userWalletAddress,
+    isSuccess,
+    preferredMode = "staking",
+    options = {}
+) {
+    if (preferredMode === "tiered") {
+        const { stakingContract, tierIndex } = await syncTieredChallengeProgress(
+            wallet,
+            userWalletAddress,
+            options.tier,
+            options.completedDays
+        );
+        const tx = await stakingContract.settleChallenge(userWalletAddress, tierIndex);
+        return { tx, mode: "tiered" };
+    }
+
     const modes = preferredMode === "legacy"
         ? ["legacy", "staking"]
         : ["staking", "legacy"];
@@ -1368,6 +1488,33 @@ async function resolveChallengeStake(wallet, userWalletAddress, isSuccess, prefe
     }
 
     throw lastError || new Error("No challenge settlement contract available");
+}
+
+async function assertIsolatedChallengeStake(wallet, userWalletAddress, expectedStake, preferredMode = "staking") {
+    if (preferredMode === "tiered") return;
+
+    const expectedRaw = ethers.parseUnits(String(expectedStake), 8);
+    const contract = preferredMode === "legacy"
+        ? getHabitContract(wallet)
+        : getStakingContract(wallet);
+    if (!contract) {
+        throw new Error(`Challenge staking contract is unavailable for mode: ${preferredMode}`);
+    }
+
+    const actualRaw = await contract.challengeStakes(userWalletAddress);
+    if (actualRaw !== expectedRaw) {
+        console.error("Challenge stake isolation mismatch", {
+            userWalletAddress,
+            preferredMode,
+            expectedStake: String(expectedStake),
+            expectedRaw: expectedRaw.toString(),
+            actualRaw: actualRaw.toString()
+        });
+        throw new HttpsError(
+            "failed-precondition",
+            "챌린지 예치 내역이 서로 섞여 있어 자동 정산을 중단했습니다. 운영 확인 후 안전하게 정산됩니다."
+        );
+    }
 }
 
 // ========================================
@@ -3840,6 +3987,7 @@ const CHALLENGE_DEFS = {
     'challenge-7d': { duration: 7, hbtStake: 50, maxStake: 5000, category: 'all', tier: 'weekly' },
     'challenge-30d': { duration: 30, hbtStake: 100, maxStake: 10000, category: 'all', tier: 'master' }
 };
+const CHALLENGE_TIER_INDEX = { mini: 0, weekly: 1, master: 2 };
 
 const CHALLENGE_BASE_BONUS_BPS = {
     mini: 0,
@@ -4200,14 +4348,22 @@ exports.startChallenge = onCall(
         secrets: [SERVER_MINTER_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 30
+        timeoutSeconds: 120
     },
     async (request) => {
         if (!request.auth) {
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { challengeId, hbtAmount, stakeTxHash, stakeWalletAddress } = request.data;
+        const {
+            challengeId,
+            hbtAmount,
+            stakeTxHash,
+            stakeApprovalTxHash,
+            stakeWalletAddress,
+            stakeFlowVersion = 1,
+            preflightOnly = false
+        } = request.data;
         // 하위 호환: 기존 ID를 새 ID로 매핑
         const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
         const def = CHALLENGE_DEFS[resolvedId];
@@ -4216,7 +4372,11 @@ exports.startChallenge = onCall(
         }
 
         const stakeAmount = parseFloat(hbtAmount) || 0;
-        let stakeContractMode = stakeAmount > 0 ? "legacy" : null;
+        const isTieredStakeRequest = stakeAmount > 0 && Number(stakeFlowVersion) >= 2;
+        let stakeContractMode = stakeAmount > 0
+            ? (isTieredStakeRequest ? "tiered" : "staking")
+            : null;
+        let resolvedStakeTxHash = null;
         let resolvedStakeWalletAddress = null;
         if (stakeAmount > 0 && stakeWalletAddress) {
             try {
@@ -4242,6 +4402,38 @@ exports.startChallenge = onCall(
 
         let userData = userSnap.data();
         userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
+        const activeChallenges = userData.activeChallenges || {};
+        if (preflightOnly) {
+            const existingChallenge = activeChallenges[def.tier] || null;
+            if (existingChallenge &&
+                ["ongoing", "claimable", "expired"].includes(String(existingChallenge.status || ""))) {
+                throw new HttpsError(
+                    "failed-precondition",
+                    "이미 해당 단계에서 진행 중이거나 정산할 챌린지가 있습니다."
+                );
+            }
+            return {
+                success: true,
+                eligible: true,
+                tier: def.tier,
+                duration: def.duration
+            };
+        }
+        if (stakeAmount > 0) {
+            if (!resolvedStakeWalletAddress) {
+                throw new HttpsError("failed-precondition", "예치 지갑 주소가 필요합니다.");
+            }
+            const effectiveWalletAddress = getEffectiveWalletAddress(userData);
+            if (
+                effectiveWalletAddress &&
+                normalizeAddress(effectiveWalletAddress) !== normalizeAddress(resolvedStakeWalletAddress)
+            ) {
+                throw new HttpsError(
+                    "failed-precondition",
+                    "로그인 계정에 연결된 지갑과 예치 지갑이 다릅니다."
+                );
+            }
+        }
         let appliedChallengeBonusPolicy = null;
 
         try {
@@ -4269,46 +4461,54 @@ exports.startChallenge = onCall(
             throw new HttpsError("internal", "현재 챌린지 보상 정책을 불러오지 못했습니다.");
         }
 
-        // 온체인 스테이킹 검증 (HBT 예치가 있는 경우)
+        // 기존 캐시 클라이언트의 직접 예치와 신규 클라이언트의 approve 경로를 모두 검증한다.
         if (stakeAmount > 0) {
-            if (!stakeTxHash) {
-                throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 필요합니다.");
-            }
-            // 온체인에서 트랜잭션 확인
             try {
                 const { provider } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-                const receipt = await provider.getTransactionReceipt(stakeTxHash);
-                if (!receipt || receipt.status !== 1) {
-                    throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 실패했거나 아직 확인되지 않았습니다.");
+                if (!isTieredStakeRequest && !stakeTxHash) {
+                    throw new HttpsError("failed-precondition", "온체인 예치 트랜잭션이 필요합니다.");
                 }
-                const txInfo = await provider.getTransaction(stakeTxHash).catch(() => null);
-                if (txInfo?.from) {
-                    const txFrom = ethers.getAddress(txInfo.from);
-                    if (resolvedStakeWalletAddress && txFrom !== resolvedStakeWalletAddress) {
-                        throw new HttpsError("failed-precondition", "예치 트랜잭션 지갑 주소가 챌린지 시작 요청과 다릅니다.");
+                const authorizationTxHash = stakeApprovalTxHash || stakeTxHash || null;
+                if (authorizationTxHash) {
+                    const receipt = await provider.getTransactionReceipt(authorizationTxHash);
+                    if (!receipt || receipt.status !== 1) {
+                        throw new HttpsError("failed-precondition", "온체인 예치 승인 트랜잭션이 아직 확인되지 않았습니다.");
                     }
-                    resolvedStakeWalletAddress = txFrom;
+                    const txInfo = await provider.getTransaction(authorizationTxHash).catch(() => null);
+                    if (txInfo?.from) {
+                        const txFrom = ethers.getAddress(txInfo.from);
+                        if (txFrom !== resolvedStakeWalletAddress) {
+                            throw new HttpsError("failed-precondition", "예치 승인 지갑이 챌린지 시작 요청과 다릅니다.");
+                        }
+                    }
+
+                    if (stakeApprovalTxHash) {
+                        const txTarget = normalizeAddress(txInfo?.to);
+                        if (txTarget && txTarget !== normalizeAddress(HABIT_ADDRESS)) {
+                            throw new HttpsError("failed-precondition", "HBT 예치 승인 트랜잭션이 아닙니다.");
+                        }
+                    } else {
+                        stakeContractMode = resolveStakeContractModeFromReceipt(receipt);
+                        resolvedStakeTxHash = stakeTxHash;
+                    }
                 }
-                stakeContractMode = resolveStakeContractModeFromReceipt(receipt);
             } catch (verifyErr) {
                 if (verifyErr.code) throw verifyErr; // HttpsError는 그대로 전달
-                console.error("온체인 검증 오류:", verifyErr.message);
-                throw new HttpsError("internal", "온체인 예치 검증에 실패했습니다.");
+                console.error("온체인 예치 승인 검증 오류:", verifyErr.message);
+                throw new HttpsError("internal", "온체인 예치 승인을 확인하지 못했습니다.");
             }
         }
 
         // 같은 티어에 진행 중인 챌린지 확인
-        const activeChallenges = userData.activeChallenges || {};
         const existingChallenge = activeChallenges[def.tier] || null;
         if (existingChallenge &&
             (existingChallenge.status === 'ongoing' || existingChallenge.status === 'claimable')) {
             const normalizedExistingId = CHALLENGE_ID_MAP[existingChallenge.challengeId] || existingChallenge.challengeId;
-            const sameStakeTx =
-                !!stakeTxHash &&
-                !!existingChallenge.stakeTxHash &&
-                existingChallenge.stakeTxHash === stakeTxHash;
             const sameStakeAmount = Math.abs(Number(existingChallenge.hbtStaked || 0) - stakeAmount) < 0.0000001;
-            if (sameStakeTx && sameStakeAmount && normalizedExistingId === resolvedId) {
+            const sameStakeWallet =
+                !resolvedStakeWalletAddress ||
+                normalizeAddress(existingChallenge.stakeWalletAddress) === normalizeAddress(resolvedStakeWalletAddress);
+            if (sameStakeAmount && sameStakeWallet && normalizedExistingId === resolvedId) {
                 const recoveredQualificationPolicy = normalizeChallengeQualificationPolicy(existingChallenge.qualificationPolicy, def.tier);
                 const recoveredBonusRateBps = getStoredChallengeBonusBps(existingChallenge, def.tier);
                 return {
@@ -4334,6 +4534,27 @@ exports.startChallenge = onCall(
         if (activeChallenges[def.tier] && 
             (activeChallenges[def.tier].status === 'ongoing' || activeChallenges[def.tier].status === 'claimable')) {
             throw new HttpsError("failed-precondition", "이미 해당 티어에 진행 중인 챌린지가 있습니다.");
+        }
+
+        if (isTieredStakeRequest) {
+            try {
+                const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const tieredStart = await startTieredChallengeStake(wallet, {
+                    userWalletAddress: resolvedStakeWalletAddress,
+                    challengeId: resolvedId,
+                    tier: def.tier,
+                    totalDays: def.duration,
+                    stakeAmount
+                });
+                resolvedStakeTxHash = tieredStart.txHash;
+                stakeContractMode = "tiered";
+            } catch (stakeError) {
+                if (stakeError instanceof HttpsError || stakeError?.code) {
+                    throw stakeError;
+                }
+                console.error("챌린지 단계별 예치 오류:", stakeError);
+                throw new HttpsError("internal", "챌린지 예치를 완료하지 못했습니다.");
+            }
         }
 
         // KST 날짜 계산
@@ -4376,7 +4597,8 @@ exports.startChallenge = onCall(
             completedDates: initialCompletedDates,
             totalDays: def.duration,
             hbtStaked: stakeAmount,
-            stakeTxHash: stakeTxHash || null,
+            stakeTxHash: resolvedStakeTxHash || stakeTxHash || null,
+            stakeApprovalTxHash: stakeApprovalTxHash || null,
             stakeWalletAddress: stakeAmount > 0 ? (resolvedStakeWalletAddress || getEffectiveWalletAddress(userData)) : null,
             stakedOnChain: stakeAmount > 0,
             stakeContract: stakeContractMode,
@@ -4407,8 +4629,10 @@ exports.startChallenge = onCall(
                 type: 'staking',
                 challengeId: resolvedId,
                 amount: stakeAmount,
-                stakeTxHash,
+                stakeTxHash: resolvedStakeTxHash || stakeTxHash || null,
+                stakeApprovalTxHash: stakeApprovalTxHash || null,
                 stakeWalletAddress: resolvedStakeWalletAddress || null,
+                stakeContract: stakeContractMode,
                 onChain: true,
                 network: ACTIVE_CHAIN.networkTag,
                 timestamp: FieldValue.serverTimestamp(),
@@ -4441,7 +4665,7 @@ exports.claimChallengeReward = onCall(
         secrets: [SERVER_MINTER_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 60
+        timeoutSeconds: 300
     },
     async (request) => {
         if (!request.auth) {
@@ -4491,13 +4715,25 @@ exports.claimChallengeReward = onCall(
         const preferredStakeContract = challenge.stakeContract || "legacy";
         const bonusRateBps = getStoredChallengeBonusBps(challenge, tier);
         const bonusRateLabel = formatBonusPercentLabel(bonusRateBps);
+        const principalAlreadyReturned = challenge.stakePrincipalReturnedEarly === true;
+        const bonusEligibleStake = Math.max(
+            0,
+            Number(
+                challenge.stakeBonusBasis ??
+                (stakedOnChain || principalAlreadyReturned ? staked : 0)
+            ) || 0
+        );
+        const principalRewardHbt = stakedOnChain && !principalAlreadyReturned ? Number(staked) : 0;
+        const bonusRewardHbt = successRate >= 1.0
+            ? (bonusEligibleStake * bonusRateBps) / 10000
+            : 0;
 
-        if (staked > 0) {
+        if (staked > 0 || bonusEligibleStake > 0) {
             if (successRate >= 1.0) {
-                rewardHbt = staked + ((staked * bonusRateBps) / 10000);
+                rewardHbt = principalRewardHbt + bonusRewardHbt;
                 rewardPoints = baseRewardP;
             } else if (successRate >= 0.8) {
-                rewardHbt = staked;
+                rewardHbt = principalRewardHbt;
                 rewardPoints = baseRewardP;
             }
         } else {
@@ -4517,35 +4753,27 @@ exports.claimChallengeReward = onCall(
 
             try {
                 const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-                const habitContract = getHabitContract(wallet);
+                await assertIsolatedChallengeStake(
+                    wallet,
+                    userWalletAddress,
+                    staked,
+                    preferredStakeContract
+                );
 
                 // 1) resolveChallenge(user, true) — 스테이킹 원금 100% 반환
                 const { tx: resolveTx } = await resolveChallengeStake(
                     wallet,
                     userWalletAddress,
                     true,
-                    preferredStakeContract
+                    preferredStakeContract,
+                    { tier, completedDays }
                 );
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
-
-                // 2) 100% 달성 시 보너스 HBT 온체인 민팅
-                if (successRate >= 1.0) {
-                    const DECIMALS = 8;
-                    const stakedRaw = ethers.parseUnits(staked.toString(), DECIMALS);
-                    const bonusHbtRaw = stakedRaw * BigInt(bonusRateBps) / 10000n;
-
-                    if (bonusHbtRaw > 0n) {
-                        const currentRate = await habitContract.currentRate();
-                        const pointAmount = bonusHbtRaw / currentRate;
-                        if (pointAmount > 0n) {
-                            const bonusTx = await habitContract.mint(userWalletAddress, pointAmount);
-                            const bonusReceipt = await bonusTx.wait();
-                            bonusTxHash = bonusReceipt.hash;
-                        }
-                    }
-                }
             } catch (onChainErr) {
+                if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
+                    throw onChainErr;
+                }
                 // NoStakeFound(0x59be8f02): 이미 온체인 정산 완료 → Firestore 정리만 진행
                 // ethers v6가 커스텀 에러를 "unknown custom error"로 표시하므로 data 셀렉터로 판별
                 const errData = onChainErr?.data || onChainErr?.error?.data || '';
@@ -4555,7 +4783,7 @@ exports.claimChallengeReward = onCall(
                     String(errData).startsWith('0x59be8f02'); // NoStakeFound() selector
                 if (isAlreadySettled) {
                     console.warn("온체인 이미 정산됨(NoStakeFound), Firestore 정리만 진행합니다.");
-                    rewardHbt = 0; // HBT는 이미 반환됨
+                    rewardHbt = bonusRewardHbt;
                 } else {
                     console.error("온체인 정산 오류:", onChainErr.message);
                     throw new HttpsError("internal", "온체인 챌린지 정산에 실패했습니다.");
@@ -4563,9 +4791,31 @@ exports.claimChallengeReward = onCall(
             }
         }
 
-        if (tier === "master" && successRate >= 1.0 && staked > 0) {
+        if (bonusRewardHbt > 0) {
+            const userWalletAddress = String(challenge.stakeWalletAddress || '').trim() || getEffectiveWalletAddress(userData);
+            if (!userWalletAddress) {
+                throw new HttpsError("failed-precondition", "사용자 지갑 주소를 찾을 수 없습니다.");
+            }
             try {
-                await recordMasterFullCompletionStake(staked);
+                const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const habitContract = getHabitContract(wallet);
+                const bonusHbtRaw = ethers.parseUnits(bonusRewardHbt.toString(), HBT_DECIMALS);
+                const currentRate = await habitContract.currentRate();
+                const pointAmount = bonusHbtRaw / currentRate;
+                if (pointAmount > 0n) {
+                    const bonusTx = await habitContract.mint(userWalletAddress, pointAmount);
+                    const bonusReceipt = await bonusTx.wait();
+                    bonusTxHash = bonusReceipt.hash;
+                }
+            } catch (bonusError) {
+                console.error("챌린지 보너스 민팅 오류:", bonusError);
+                throw new HttpsError("internal", "챌린지 보너스 지급에 실패했습니다.");
+            }
+        }
+
+        if (tier === "master" && successRate >= 1.0 && bonusEligibleStake > 0) {
+            try {
+                await recordMasterFullCompletionStake(bonusEligibleStake);
             } catch (metricsError) {
                 console.warn("master completion aggregate update failed:", metricsError?.message || metricsError);
             }
@@ -4595,6 +4845,8 @@ exports.claimChallengeReward = onCall(
             amount: rewardHbt,
             date: settlementDate,
             staked: staked,
+            bonusEligibleStake,
+            principalAlreadyReturned,
             stakeWalletAddress: challenge.stakeWalletAddress || null,
             successRate: successRate,
             completedDays,
@@ -4638,7 +4890,7 @@ exports.settleChallengeFailure = onCall(
         secrets: [SERVER_MINTER_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 60
+        timeoutSeconds: 300
     },
     async (request) => {
         if (!request.auth) {
@@ -4708,15 +4960,25 @@ exports.settleChallengeFailure = onCall(
 
             try {
                 const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                await assertIsolatedChallengeStake(
+                    wallet,
+                    userWalletAddress,
+                    staked,
+                    preferredStakeContract
+                );
                 const { tx: resolveTx } = await resolveChallengeStake(
                     wallet,
                     userWalletAddress,
                     false,
-                    preferredStakeContract
+                    preferredStakeContract,
+                    { tier, completedDays }
                 );
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
             } catch (onChainErr) {
+                if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
+                    throw onChainErr;
+                }
                 console.error("온체인 소각 정산 오류:", onChainErr.message);
                 throw new HttpsError("internal", "온체인 챌린지 실패 정산에 실패했습니다.");
             }
@@ -5122,26 +5384,28 @@ exports.adjustMiningRate = onSchedule(
     },
     async (event) => {
         console.log("⛏️ 주간 채굴 난이도 조절 시작...");
+        const currentWeekId = getKstIsoWeekId();
+        const decisionContext = {};
 
         try {
-            // 1. 온체인 현재 상태 조회
-            const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
-            const habitContract = getHabitContract(wallet);
-
             // 멱등성 보장: Firestore mining_rate_history에 이번 주(weekId) 기록이 이미 있으면 스킵
-            // (온체인 lastRateUpdate 6일 기준은 수동 조정 후 다음 주 스케줄이 skip되는 버그 있음)
-            const nowForWeek = new Date();
-            const dayOfWeekForCheck = (nowForWeek.getUTCDay() + 6) % 7;
-            const mondayForCheck = new Date(nowForWeek.getTime() - dayOfWeekForCheck * 86400000);
-            const jan4ForCheck = new Date(Date.UTC(mondayForCheck.getUTCFullYear(), 0, 4));
-            const isoWeekForCheck = Math.round((mondayForCheck - jan4ForCheck) / (7 * 86400000)) + 1;
-            const currentWeekId = `${mondayForCheck.getUTCFullYear()}-W${String(isoWeekForCheck).padStart(2, "0")}`;
-
             const existingRecord = await db.collection("mining_rate_history").doc(currentWeekId).get();
-            if (existingRecord.exists && existingRecord.data()?.status === "success") {
+            if (existingRecord.exists && isCompletedRateDecision(existingRecord.data()?.status)) {
                 console.log(`⏭️ 이미 이번 주(${currentWeekId}) 비율 조정 완료, 건너뜁니다.`);
                 return;
             }
+
+            await db.collection("mining_rate_history").doc(currentWeekId).set({
+                weekId: currentWeekId,
+                timestamp: FieldValue.serverTimestamp(),
+                status: "evaluating",
+                source: "scheduled",
+                reason: "주간 마이닝 레이트 검토 중"
+            }, { merge: true });
+
+            // 1. 온체인 현재 상태 조회
+            const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+            const habitContract = getHabitContract(wallet);
 
             const currentRateRaw = await habitContract.currentRate();
             const totalMintedRaw = await habitContract.totalMintedFromMining();
@@ -5149,6 +5413,8 @@ exports.adjustMiningRate = onSchedule(
 
             const currentRateNumber = Number(currentRateRaw) / RATE_SCALE; // HBT per P
             const totalMinedHbt = parseFloat(ethers.formatUnits(totalMintedRaw, decimals));
+            decisionContext.previousRate = currentRateNumber;
+            decisionContext.totalMinedHbt = totalMinedHbt;
 
             console.log(`📊 현재 비율: ${currentRateNumber} HBT/P (raw: ${currentRateRaw})`);
             console.log(`📊 누적 채굴량: ${totalMinedHbt.toLocaleString()} HBT`);
@@ -5169,13 +5435,29 @@ exports.adjustMiningRate = onSchedule(
                 .where("date", ">=", startDateStr)
                 .where("date", "<=", endDateStr);
 
-            const txSnap = await txQuery.get();
+            let txSnap;
+            try {
+                txSnap = await txQuery.get();
+            } catch (queryError) {
+                if (Number(queryError?.code) !== 9) throw queryError;
+                console.warn("⚠️ network 복합 인덱스 준비 중: 기본 주간 거래 쿼리로 재시도합니다.");
+                txSnap = await db.collection("blockchain_transactions")
+                    .where("type", "==", "conversion")
+                    .where("status", "==", "success")
+                    .where("date", ">=", startDateStr)
+                    .where("date", "<=", endDateStr)
+                    .get();
+            }
             let last7DaysMinted = 0;
             let txCount = 0;
             txSnap.forEach(doc => {
-                last7DaysMinted += doc.data().hbtReceived || 0;
+                const txData = doc.data();
+                if (txData.network !== ACTIVE_CHAIN.networkTag) return;
+                last7DaysMinted += txData.hbtReceived || 0;
                 txCount++;
             });
+            decisionContext.last7DaysMinted = last7DaysMinted;
+            decisionContext.transactionCount = txCount;
 
             console.log(`📊 7일간 채굴량: ${last7DaysMinted.toLocaleString()} HBT (${txCount}건)`);
 
@@ -5189,7 +5471,17 @@ exports.adjustMiningRate = onSchedule(
             // 4. 비율 변경이 없으면 스킵
             if (result.newRateScaled === Number(currentRateRaw)) {
                 console.log("⏭️ 비율 변경 없음, 스킵합니다.");
-                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "no_change");
+                await saveRateHistory(
+                    result,
+                    currentRateNumber,
+                    last7DaysMinted,
+                    totalMinedHbt,
+                    txCount,
+                    null,
+                    "no_change",
+                    null,
+                    { weekId: currentWeekId, documentId: currentWeekId, source: "scheduled" }
+                );
                 return;
             }
 
@@ -5219,23 +5511,64 @@ exports.adjustMiningRate = onSchedule(
                         attemptRateScaled = mid;
                         console.log(`🔄 이분탐색 재시도 (${currentRateScaled} → ${attemptRateScaled})`);
                     } else {
-                        await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", chainErrorMsg);
+                        await saveRateHistory(
+                            result,
+                            currentRateNumber,
+                            last7DaysMinted,
+                            totalMinedHbt,
+                            txCount,
+                            null,
+                            "chain_error",
+                            chainErrorMsg,
+                            { weekId: currentWeekId, documentId: currentWeekId, source: "scheduled" }
+                        );
                         return;
                     }
                 }
             }
             if (!txHash) {
-                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, null, "chain_error", "RateChangeExceedsLimit: 이분탐색 실패");
+                await saveRateHistory(
+                    result,
+                    currentRateNumber,
+                    last7DaysMinted,
+                    totalMinedHbt,
+                    txCount,
+                    null,
+                    "chain_error",
+                    "RateChangeExceedsLimit: 이분탐색 실패",
+                    { weekId: currentWeekId, documentId: currentWeekId, source: "scheduled" }
+                );
                 return;
             }
 
             // 6. Firestore에 이력 저장
-            await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, txHash, "success");
+            await saveRateHistory(
+                result,
+                currentRateNumber,
+                last7DaysMinted,
+                totalMinedHbt,
+                txCount,
+                txHash,
+                "success",
+                null,
+                { weekId: currentWeekId, documentId: currentWeekId, source: "scheduled" }
+            );
 
             console.log("✅ 주간 채굴 난이도 조절 완료!");
 
         } catch (error) {
             console.error("❌ 주간 난이도 조절 오류:", error);
+            try {
+                await saveRateDecisionFailure({
+                    weekId: currentWeekId,
+                    documentId: currentWeekId,
+                    source: "scheduled",
+                    error,
+                    ...decisionContext,
+                });
+            } catch (historyError) {
+                console.error("❌ 마이닝 레이트 실패 이력 저장 오류:", historyError);
+            }
         }
     }
 );
@@ -5243,18 +5576,30 @@ exports.adjustMiningRate = onSchedule(
 /**
  * 비율 조정 이력 Firestore 저장
  */
-async function saveRateHistory(result, previousRate, last7DaysMinted, totalMinedHbt, txCount, txHash, status, errorMessage) {
-    const now = new Date();
-    // ISO 8601 주차 계산 (목요일 기준)
-    const jan4 = new Date(Date.UTC(now.getUTCFullYear(), 0, 4));
-    const dayOfWeek = (now.getUTCDay() + 6) % 7; // 월=0 ... 일=6
-    const monday = new Date(now.getTime() - dayOfWeek * 86400000);
-    const isoWeek = Math.round((monday - jan4) / (7 * 86400000)) + 1;
-    const weekId = `${monday.getUTCFullYear()}-W${String(isoWeek).padStart(2, "0")}`;
+async function saveRateHistory(
+    result,
+    previousRate,
+    last7DaysMinted,
+    totalMinedHbt,
+    txCount,
+    txHash,
+    status,
+    errorMessage,
+    options = {}
+) {
+    const weekId = options.weekId || getKstIsoWeekId();
+    const documentId = options.documentId || weekId;
+    const reasonByStatus = {
+        success: "주간 검토 완료 · 레이트 조정",
+        no_change: "주간 검토 완료 · 변동 없음",
+        chain_error: "주간 검토 완료 · 온체인 반영 실패",
+        manual: "관리자 수동 검토 완료",
+    };
 
-    await db.collection("mining_rate_history").doc(weekId).set({
+    await db.collection("mining_rate_history").doc(documentId).set({
         weekId,
         timestamp: FieldValue.serverTimestamp(),
+        source: options.source || "scheduled",
         previousRate,
         newRate: result.newRate,
         newRateScaled: result.newRateScaled,
@@ -5269,8 +5614,34 @@ async function saveRateHistory(result, previousRate, last7DaysMinted, totalMined
         clampReason: result.clampReason || "",
         txHash: txHash || null,
         status,
+        reason: reasonByStatus[status] || "마이닝 레이트 검토",
         errorMessage: errorMessage || null
-    });
+    }, { merge: true });
+}
+
+async function saveRateDecisionFailure({
+    weekId = getKstIsoWeekId(),
+    documentId = weekId,
+    source = "scheduled",
+    error,
+    previousRate = null,
+    totalMinedHbt = null,
+    last7DaysMinted = null,
+    transactionCount = null,
+}) {
+    const errorMessage = String(error?.message || error || "Unknown error").slice(0, 1500);
+    await db.collection("mining_rate_history").doc(documentId).set({
+        weekId,
+        timestamp: FieldValue.serverTimestamp(),
+        source,
+        status: "error",
+        reason: "주간 검토 실패",
+        errorMessage,
+        previousRate,
+        totalMinedHbt,
+        last7DaysMinted,
+        transactionCount,
+    }, { merge: true });
 }
 
 /**
@@ -5296,7 +5667,7 @@ exports.adjustMiningRateManual = onCall(
         }
 
         try {
-            const { provider, wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+            const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
             const habitContract = getHabitContract(wallet);
 
             const currentRateRaw = await habitContract.currentRate();
@@ -5313,18 +5684,32 @@ exports.adjustMiningRateManual = onCall(
             const startDateStr = toKstDateStr(sevenDaysAgo);
             const endDateStr = toKstDateStr(now);
 
-            const txSnap = await db.collection("blockchain_transactions")
+            const txQuery = db.collection("blockchain_transactions")
                 .where("type", "==", "conversion")
                 .where("status", "==", "success")
                 .where("network", "==", ACTIVE_CHAIN.networkTag)
                 .where("date", ">=", startDateStr)
-                .where("date", "<=", endDateStr)
-                .get();
+                .where("date", "<=", endDateStr);
+
+            let txSnap;
+            try {
+                txSnap = await txQuery.get();
+            } catch (queryError) {
+                if (Number(queryError?.code) !== 9) throw queryError;
+                txSnap = await db.collection("blockchain_transactions")
+                    .where("type", "==", "conversion")
+                    .where("status", "==", "success")
+                    .where("date", ">=", startDateStr)
+                    .where("date", "<=", endDateStr)
+                    .get();
+            }
 
             let last7DaysMinted = 0;
             let txCount = 0;
             txSnap.forEach(doc => {
-                last7DaysMinted += doc.data().hbtReceived || 0;
+                const txData = doc.data();
+                if (txData.network !== ACTIVE_CHAIN.networkTag) return;
+                last7DaysMinted += txData.hbtReceived || 0;
                 txCount++;
             });
 
@@ -5367,7 +5752,21 @@ exports.adjustMiningRateManual = onCall(
                         }
                     }
                 }
-                await saveRateHistory(result, currentRateNumber, last7DaysMinted, totalMinedHbt, txCount, txHash, "manual");
+                await saveRateHistory(
+                    result,
+                    currentRateNumber,
+                    last7DaysMinted,
+                    totalMinedHbt,
+                    txCount,
+                    txHash,
+                    "manual",
+                    null,
+                    {
+                        weekId: getKstIsoWeekId(),
+                        documentId: `manual_${Date.now()}`,
+                        source: "manual",
+                    }
+                );
                 return {
                     success: true,
                     txHash,
@@ -5379,6 +5778,21 @@ exports.adjustMiningRateManual = onCall(
                 };
             }
 
+            await saveRateHistory(
+                result,
+                currentRateNumber,
+                last7DaysMinted,
+                totalMinedHbt,
+                txCount,
+                null,
+                "no_change",
+                null,
+                {
+                    weekId: getKstIsoWeekId(),
+                    documentId: `manual_${Date.now()}`,
+                    source: "manual",
+                }
+            );
             return {
                 success: true,
                 noChange: true,

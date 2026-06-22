@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=211';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=211';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=212';
+import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=212';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=211';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=211';
+} from './auth-login-helpers.js?v=212';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=212';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=211';
+} from './exercise-media.js?v=212';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=211';
+} from './health-connect-utils.js?v=212';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,13 +54,13 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=211';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=211';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=211';
-import { sanitize, compressImage } from './data-manager.js?v=211';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=211';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=211';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=211';
+} from './habit-groups.js?v=212';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=212';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=212';
+import { sanitize, compressImage } from './data-manager.js?v=212';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=212';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=212';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=212';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -73,7 +73,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=211';
+} from './diet-program.js?v=212';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -85,18 +85,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=211';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=211';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=211';
+} from './meditation-guide.js?v=212';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=212';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=212';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=211';
+} from './social-challenge-readiness.js?v=212';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=211';
+} from './monthly-mvp-reward.js?v=212';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5242,7 +5242,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=211';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=212';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9046,7 +9046,11 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             const progressPct = Math.round((completed / totalDays) * 100);
             const remain = Math.max(totalDays - completed, 0);
             const color = ASSET_CHALLENGE_TIER_COLORS[tier];
-            const stakeText = ch.hbtStaked > 0 ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT` : '🎯 무료';
+            const stakeText = ch.stakePrincipalReturnedEarly
+                ? `💰 원금 ${escapeHtml(String(ch.hbtStaked))} HBT 반환 완료`
+                : ch.hbtStaked > 0
+                    ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT`
+                    : '🎯 무료';
             const isClaimable = canClaimAssetChallengeNow(ch, tier, todayStr);
             const isFullCompletion = completed >= totalDays;
             const radius = 40;
@@ -9079,7 +9083,10 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             } else {
                 const pts = ASSET_CHALLENGE_REWARD_POINTS[tier];
                 const rewardText = ch.hbtStaked > 0
-                    ? `${pts}P + ${formatAssetChallengeHbt(Number(ch.hbtStaked || 0) + ((Number(ch.hbtStaked || 0) * getAssetChallengeBonusBps(ch, tier)) / 10000))} HBT`
+                    ? `${pts}P + ${formatAssetChallengeHbt(
+                        (ch.stakePrincipalReturnedEarly ? 0 : Number(ch.hbtStaked || 0)) +
+                        ((Number(ch.stakeBonusBasis ?? ch.hbtStaked ?? 0) * getAssetChallengeBonusBps(ch, tier)) / 10000)
+                    )} HBT`
                     : `${pts}P`;
                 const forfeitButton = ch.status === 'ongoing'
                     ? `<button class="challenge-ring-forfeit" onclick="event.stopPropagation(); forfeitChallenge('${tier}')">포기</button>`
@@ -9834,7 +9841,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     const progressPct = Math.round((completed / totalDays) * 100);
                     const remain = totalDays - completed;
                     const color = tierColors[tier];
-                    const stakeText = ch.hbtStaked > 0 ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT` : '🎯 무료';
+                    const stakeText = ch.stakePrincipalReturnedEarly
+                        ? `💰 원금 ${escapeHtml(String(ch.hbtStaked))} HBT 반환 완료`
+                        : ch.hbtStaked > 0
+                            ? `💰 ${escapeHtml(String(ch.hbtStaked))} HBT`
+                            : '🎯 무료';
                     const isClaimable = canClaimAssetChallengeNow(ch, tier, _todayStr);
                     const isFullCompletion = completed >= totalDays;
 
@@ -9885,7 +9896,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                     const pts = tierRewardP[tier];
                                     if (ch.hbtStaked > 0) {
                                         const bonusBps = getChallengeBonusBps(ch, tier);
-                                        const totalHbt = Number(ch.hbtStaked || 0) + ((Number(ch.hbtStaked || 0) * bonusBps) / 10000);
+                                        const totalHbt =
+                                            (ch.stakePrincipalReturnedEarly ? 0 : Number(ch.hbtStaked || 0)) +
+                                            ((Number(ch.stakeBonusBasis ?? ch.hbtStaked ?? 0) * bonusBps) / 10000);
                                         return `${pts}P + ${formatChallengeHbt(totalHbt)} HBT`;
                                     }
                                     return `${pts}P`;

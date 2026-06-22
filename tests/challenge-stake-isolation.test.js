@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest';
+import { readRepoFile } from './source-helpers.js';
+
+describe('challenge stake isolation', () => {
+    it('starts weekly and master stakes in independent on-chain tier slots', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+        const managerSource = readRepoFile('js/blockchain-manager.js');
+        const appCoreSource = readRepoFile('js/app-core.js');
+
+        expect(runtimeSource).toContain('const CHALLENGE_TIER_INDEX = { mini: 0, weekly: 1, master: 2 };');
+        expect(runtimeSource).toContain('async function startTieredChallengeStake');
+        expect(runtimeSource).toContain('await stakingContract.getChallenge(userWalletAddress, tierIndex)');
+        expect(runtimeSource).toContain('await stakingContract.startChallenge(');
+        expect(runtimeSource).toContain('stakeContractMode = "tiered"');
+        expect(runtimeSource).not.toContain('HBT 예치 챌린지는 한 번에 하나만 참여할 수 있습니다.');
+
+        expect(managerSource).toContain('async function verifyPaidChallengeStartEligibility');
+        expect(managerSource.match(/stakeFlowVersion: 2/g).length).toBeGreaterThanOrEqual(3);
+        expect(managerSource.match(/erc20Contract\.approve\(ACTIVE_STAKING_ADDRESS, rawAmount\)/g)).toHaveLength(2);
+        expect(managerSource).not.toContain('stakingContract.stakeForChallenge(rawAmount)');
+        expect(managerSource).toContain('동시 진행 지원: mini/weekly/master 티어별 1개');
+
+        expect(appCoreSource).not.toContain('hasAssetOpenPaidChallenge');
+        expect(appCoreSource).not.toContain('blockedByPaidChallenge');
+    });
+
+    it('syncs and settles only the requested tier', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+
+        expect(runtimeSource).toContain('async function syncTieredChallengeProgress');
+        expect(runtimeSource).toContain('await stakingContract.recordDay(userWalletAddress, tierIndex)');
+        expect(runtimeSource).toContain('await stakingContract.settleChallenge(userWalletAddress, tierIndex)');
+        expect(runtimeSource).toContain('if (preferredMode === "tiered")');
+        expect(runtimeSource.match(/\{ tier, completedDays \}/g)).toHaveLength(2);
+    });
+
+    it('keeps completion bonus eligibility when principal was already returned by reconciliation', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+
+        expect(runtimeSource).toContain('challenge.stakePrincipalReturnedEarly === true');
+        expect(runtimeSource).toContain('challenge.stakeBonusBasis');
+        expect(runtimeSource).toContain('const bonusRewardHbt = successRate >= 1.0');
+        expect(runtimeSource).toContain('rewardHbt = principalRewardHbt + bonusRewardHbt');
+    });
+});

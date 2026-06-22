@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-22 (Challenge Stake Isolation)
+
+### 240. Per-tier app records cannot share an aggregate on-chain settlement slot
+- Symptom: settling a 5,000 HBT weekly challenge returned 12,000 HBT because the same wallet also had a 7,000 HBT master stake, creating a visible 9,500 HBT liquid increase after the weekly bonus and re-stake.
+- Root cause: Firestore tracked weekly and master stakes separately, while the deployed contract stored only `challengeStakes[user]` and cleared the entire aggregate balance on any settlement.
+- Lesson: do not remove valid simultaneous participation to work around an accounting defect. Use the deployed contract's tier-keyed `activeChallenges[user][tier]` path so weekly and master stakes are deposited and settled independently, while keeping the aggregate path only for older records.
+
+---
+
 ## 2026-06-15 (Exercise Multi Media Upload Fallback)
 
 ### 239. Persist video thumbnails before the first refreshable save when possible
@@ -1763,3 +1772,5 @@
 - 2026-06-17: 모바일/삼성 인터넷에서 여러 운동 영상을 고를 때 `input.files`만 믿으면 두 번째 picker 이후 첫 번째 파일 참조가 비거나, URL 없는 업로드 대기 항목이 새로고침 후 사라질 수 있다. 검증을 통과한 File은 별도 fallback에 보관하고, 서버에는 URL 없는 운동 항목을 쓰지 않더라도 오프라인 outbox merge 단계에서 pending 카드와 로컬 썸네일을 복원해야 한다.
 - 2026-06-20: 백그라운드 미디어 저장은 Storage URL과 `daily_logs` 반영이 끝났다면 로컬 캐시·미리보기·공유카드 후처리 실패를 사용자용 업로드 실패로 승격하지 않는다. 예외가 발생하면 해당 URL이 서버 문서에 실제 존재하는지 재확인한 뒤 성공으로 정정해야 한다.
 - 2026-06-20: 기프티쇼 같은 공급사 API는 HTTP 200 안에 `ERR0401` 같은 업무 오류를 담을 수 있으므로 응답 코드와 PIN/이미지를 함께 검증한다. 정적 `goodsCode`는 상품 개편 때 폐기될 수 있으니 발급 전에 0101 최신 카탈로그를 브랜드·상품명·금액으로 대조하고, 확인 실패 시 포인트 차감보다 상품 비활성화를 우선한다.
+- 2026-06-22: 주간 스케줄 함수가 “변동 없음”을 저장하는 코드만 갖고 있어도 그 전에 Firestore 인덱스 오류가 나면 운영 이력은 통째로 비게 된다. 외부 조회 전에 `evaluating` 기록을 만들고 최상위 실패도 같은 주차 문서에 `error`로 남기며, 필요한 복합 인덱스와 인덱스 준비 중 fallback을 함께 둔다.
+- 2026-06-22: 월요일 00:00 KST에 실행되는 주간 작업의 주차 키를 UTC 일요일 기준으로 계산하면 주차가 틀어진다. KST 달력 날짜를 먼저 만든 뒤 표준 ISO week-year 알고리즘으로 주차를 계산하고 연말 경계까지 테스트한다.
