@@ -3,13 +3,69 @@ function buildReEngagementEmailTemplate({
     name = "회원",
     appBaseUrl = "",
     appIconUrl = "",
+    locale = "ko",
 } = {}) {
     if (![3, 7].includes(Number(days))) {
         throw new Error("days must be 3 or 7");
     }
 
-    const resolvedName = String(name || "회원").trim() || "회원";
+    const normalizedLocale = String(locale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
+    const isEnglish = normalizedLocale === "en";
+    const fallbackName = isEnglish ? "member" : "회원";
+    const resolvedName = String(name || fallbackName).trim() || fallbackName;
     const isThreeDay = Number(days) === 3;
+
+    if (isEnglish) {
+        const subject = isThreeDay
+            ? `[Habit School] ${resolvedName}, ready for one small health check-in today? 🌞`
+            : `[Habit School] We miss you, ${resolvedName} 💙`;
+        const summary = isThreeDay
+            ? "A gentle reminder for users who have not recorded food, exercise, or sleep for 3 days."
+            : "An encouraging comeback email for users who have not recorded for 7 days or more.";
+        const html = isThreeDay ? `
+<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
+  <div style="background:linear-gradient(135deg,#f9a825,#ff7043);padding:32px 24px;text-align:center;">
+    <img src="${appIconUrl}" width="60" style="border-radius:12px;" alt="Habit School"/>
+    <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">One healthy check-in today</h2>
+    <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">Small records become real change.</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <p style="font-size:16px;color:#333;line-height:1.6;">Hi <strong>${resolvedName}</strong>,</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">You have not logged in Habit School for the last 3 days.<br>One food, exercise, or sleep check-in is enough to restart today’s rhythm.</p>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#f9a825,#ff7043);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">Record now</a>
+    </div>
+    <p style="font-size:13px;color:#aaa;text-align:center;">Consistent records build healthier habits 🌿</p>
+  </div>
+</div>` : `
+<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0f0f0;">
+  <div style="background:linear-gradient(135deg,#1565c0,#42a5f5);padding:32px 24px;text-align:center;">
+    <img src="${appIconUrl}" width="60" style="border-radius:12px;" alt="Habit School"/>
+    <h2 style="color:#fff;margin:16px 0 4px;font-size:22px;">We saved your seat, ${resolvedName}</h2>
+    <p style="color:rgba(255,255,255,0.9);margin:0;font-size:15px;">Habit School is ready when you are.</p>
+  </div>
+  <div style="padding:28px 24px;">
+    <p style="font-size:16px;color:#333;line-height:1.6;">Hi <strong>${resolvedName}</strong>, hope you are doing well 💙</p>
+    <p style="font-size:15px;color:#555;line-height:1.7;">It has been 7+ days since your last record, which probably means life got busy.<br>Starting again today still counts. We are cheering for you.</p>
+    <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
+      <p style="margin:0;font-size:14px;color:#666;">When you return, <strong style="color:#1565c0;">momentum and confidence</strong> come back with you 🙌</p>
+    </div>
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">Return to Habit School</a>
+    </div>
+    <p style="font-size:13px;color:#aaa;text-align:center;">You can rebuild a healthy day from one small action ✨</p>
+  </div>
+</div>`;
+
+        return {
+            days: Number(days),
+            locale: normalizedLocale,
+            subject,
+            summary,
+            html,
+            method: "gmail_nodemailer",
+        };
+    }
 
     const subject = isThreeDay
         ? `[해빛스쿨] ${resolvedName}님, 오늘 건강 기록은 어떠세요? 🌞`
@@ -56,6 +112,7 @@ function buildReEngagementEmailTemplate({
 
     return {
         days: Number(days),
+        locale: normalizedLocale,
         subject,
         summary,
         html,

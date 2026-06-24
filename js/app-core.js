@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=212';
-import { applyAppModeChrome, buildAppModeUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, isSimpleMode, normalizeTabForMode } from './app-mode.js?v=212';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=213';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=213';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=212';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=212';
+} from './auth-login-helpers.js?v=213';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=213';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=212';
+} from './exercise-media.js?v=213';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=212';
+} from './health-connect-utils.js?v=213';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,13 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=212';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=212';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=212';
-import { sanitize, compressImage } from './data-manager.js?v=212';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=212';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=212';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=212';
+} from './habit-groups.js?v=213';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=213';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=213';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=213';
+import { sanitize, compressImage } from './data-manager.js?v=213';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=213';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=213';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=213';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -73,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=212';
+} from './diet-program.js?v=213';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -85,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=212';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=212';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=212';
+} from './meditation-guide.js?v=213';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=213';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=213';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=212';
+} from './social-challenge-readiness.js?v=213';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=212';
+} from './monthly-mvp-reward.js?v=213';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -386,6 +387,12 @@ let _chatbotConnectAutoRetryIndex = 0;
 let _floatingBarLayoutFrame = 0;
 
 applyAppModeChrome();
+applyDomTranslations();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => installLocaleDomObserver(), { once: true });
+} else {
+    installLocaleDomObserver();
+}
 
 function openChatbotKakaoChat() {
     try {
@@ -1859,7 +1866,8 @@ function applyPwaLaunchTargetUrl(targetUrl = '') {
 
 function resolveAppEntryTargetTabFromLocation() {
     const params = getAppEntryDeepLinkParams();
-    const appMode = getAppModeFromPath(window.location.pathname);
+    const routeContext = getRouteContext(window.location.pathname);
+    const appMode = routeContext.mode;
     const validTabs = getAllowedTabsForMode(appMode);
     const hashTab = String(new URL(window.location.href).hash || '').replace('#', '');
     const requestedTab = (params.tab && validTabs.includes(params.tab))
@@ -1868,7 +1876,7 @@ function resolveAppEntryTargetTabFromLocation() {
             ? hashTab
             : getVisibleTabName()
                 || getDefaultTabForMode(appMode);
-    return normalizeTabForMode(requestedTab, appMode);
+    return normalizeTabForRoute(requestedTab, routeContext);
 }
 
 function scheduleAppEntryDeepLink(initialTab = getVisibleTabName()) {
@@ -5242,7 +5250,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=212';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=213';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5507,6 +5515,8 @@ function addExerciseBlock(type, data = null) {
     const div = document.createElement('div');
     div.className = `exercise-block ${type}-block`;
     div.id = id;
+    const photoPrompt = isEnglishLocale() ? 'Upload workout photo' : '운동 이미지 올리기';
+    const videoPrompt = isEnglishLocale() ? 'Upload workout video' : '운동 영상 올리기';
 
     let contentHtml = '';
     let dataUrl = '';
@@ -5527,7 +5537,7 @@ function addExerciseBlock(type, data = null) {
             <button class="block-remove-btn" onclick="removeExerciseBlock(this.parentElement)">X</button>
             <label class="upload-area" onclick="return openExerciseMediaPicker(event, 'file_c_${id}', 'image')">
                 <input type="file" id="file_c_${id}" accept="image/*" class="exer-file" onchange="previewStaticImage(this, 'c_img_${id}', 'rm_c_${id}')">
-                <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">운동 이미지 올리기</span>
+                <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">${photoPrompt}</span>
                 ${imgHtml}
             </label>
         `;
@@ -5547,7 +5557,7 @@ function addExerciseBlock(type, data = null) {
             <button class="block-remove-btn" onclick="removeExerciseBlock(this.parentElement)">X</button>
             <label class="upload-area" onclick="return openExerciseMediaPicker(event, 'file_s_${id}', 'video')">
                 <input type="file" id="file_s_${id}" accept="video/*" class="exer-file" onchange="previewDynamicVid(this)">
-                <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">운동 영상 올리기</span>
+                <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">${videoPrompt}</span>
                 ${statusHtml}
             </label>
         `;
@@ -10353,14 +10363,14 @@ function renderGratitudeVoiceUi() {
     }
 
     if (!_gratitudeSpeechSupported) {
-        button.textContent = '음성 미지원';
+        button.textContent = isEnglishLocale() ? t('voice.unsupported') : '음성 미지원';
         button.disabled = true;
         button.classList.remove('is-listening');
         button.setAttribute('aria-pressed', 'false');
         if (status) {
             status.hidden = false;
             status.dataset.tone = 'muted';
-            status.textContent = '지원 브라우저에서만 음성 입력을 쓸 수 있어요.';
+            status.textContent = isEnglishLocale() ? t('voice.unsupported') : '지원 브라우저에서만 음성 입력을 쓸 수 있어요.';
         }
         return;
     }
@@ -10369,11 +10379,11 @@ function renderGratitudeVoiceUi() {
     button.classList.toggle('is-listening', _gratitudeSpeechListening);
     button.setAttribute('aria-pressed', _gratitudeSpeechListening ? 'true' : 'false');
     if (_gratitudeSpeechStarting) {
-        button.textContent = '켜는 중...';
+        button.textContent = isEnglishLocale() ? t('voice.startingMic') : '켜는 중...';
     } else if (_gratitudeSpeechListening) {
-        button.textContent = '듣는 중...';
+        button.textContent = isEnglishLocale() ? t('voice.listening') : '듣는 중...';
     } else {
-        button.textContent = '음성 입력';
+        button.textContent = isEnglishLocale() ? t('voice.idle') : '음성 입력';
     }
 
     if (status) {
@@ -10420,7 +10430,7 @@ function initGratitudeVoiceInput() {
     }
 
     const recognition = new RecognitionCtor();
-    recognition.lang = 'ko-KR';
+    recognition.lang = isEnglishLocale() ? 'en-US' : 'ko-KR';
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
@@ -10429,7 +10439,7 @@ function initGratitudeVoiceInput() {
         _gratitudeSpeechStarting = false;
         _gratitudeSpeechSuppressEndStatus = false;
         _gratitudeSpeechListening = true;
-        setGratitudeVoiceStatus('말씀하시면 감사일기에 적을게요.', 'active');
+        setGratitudeVoiceStatus(isEnglishLocale() ? t('voice.startStatus') : '말씀하시면 감사일기에 적을게요.', 'active');
     };
 
     recognition.onresult = (event) => {
@@ -10447,7 +10457,7 @@ function initGratitudeVoiceInput() {
         _gratitudeSpeechFinalText = nextFinalText;
         const spokenDraft = appendGratitudeSpeechSegment(_gratitudeSpeechFinalText, interimText);
         setGratitudeJournalValue(buildGratitudeJournalDraft(_gratitudeSpeechBaseText, spokenDraft));
-        setGratitudeVoiceStatus('말하는 내용이 적히고 있어요.', 'active');
+        setGratitudeVoiceStatus(isEnglishLocale() ? t('voice.resultStatus') : '말하는 내용이 적히고 있어요.', 'active');
     };
 
     recognition.onerror = (event) => {
@@ -10455,15 +10465,15 @@ function initGratitudeVoiceInput() {
         _gratitudeSpeechListening = false;
         _gratitudeSpeechEndReason = 'error';
         const errorCode = String(event?.error || '').trim();
-        let message = '음성 입력을 다시 시도해 주세요.';
+        let message = isEnglishLocale() ? t('voice.retry') : '음성 입력을 다시 시도해 주세요.';
         if (errorCode === 'not-allowed' || errorCode === 'service-not-allowed') {
-            message = '마이크 권한을 허용하면 음성 입력을 쓸 수 있어요.';
+            message = isEnglishLocale() ? t('voice.permission') : '마이크 권한을 허용하면 음성 입력을 쓸 수 있어요.';
         } else if (errorCode === 'no-speech') {
-            message = '음성이 들리지 않았어요. 다시 말씀해 주세요.';
+            message = isEnglishLocale() ? t('voice.noSpeech') : '음성이 들리지 않았어요. 다시 말씀해 주세요.';
         } else if (errorCode === 'audio-capture') {
-            message = '마이크를 찾지 못했어요.';
+            message = isEnglishLocale() ? t('voice.noMic') : '마이크를 찾지 못했어요.';
         } else if (errorCode === 'network') {
-            message = '네트워크 상태를 확인해 주세요.';
+            message = isEnglishLocale() ? t('voice.network') : '네트워크 상태를 확인해 주세요.';
         }
         setGratitudeVoiceStatus(message, 'error');
     };
@@ -10489,7 +10499,9 @@ function initGratitudeVoiceInput() {
             return;
         }
         setGratitudeVoiceStatus(
-            hadSpeech ? '음성 입력을 마쳤어요.' : '음성이 들리지 않았어요. 다시 시도해 주세요.',
+            hadSpeech
+                ? (isEnglishLocale() ? t('voice.done') : '음성 입력을 마쳤어요.')
+                : (isEnglishLocale() ? t('voice.tryAgain') : '음성이 들리지 않았어요. 다시 시도해 주세요.'),
             hadSpeech ? 'muted' : 'error'
         );
     };
@@ -10501,7 +10513,7 @@ function initGratitudeVoiceInput() {
 window.toggleGratitudeVoiceInput = function() {
     initGratitudeVoiceInput();
     if (!_gratitudeSpeechSupported || !_gratitudeSpeechRecognition) {
-        showToast('이 브라우저에서는 음성 입력을 지원하지 않아요.');
+        showToast(isEnglishLocale() ? t('voice.unsupported') : '이 브라우저에서는 음성 입력을 지원하지 않아요.');
         return;
     }
 
@@ -10516,13 +10528,13 @@ window.toggleGratitudeVoiceInput = function() {
     _gratitudeSpeechEndReason = '';
     _gratitudeSpeechStarting = true;
     _gratitudeSpeechListening = false;
-    setGratitudeVoiceStatus('마이크를 켜는 중이에요.', 'muted');
+    setGratitudeVoiceStatus(isEnglishLocale() ? t('voice.startingMic') : '마이크를 켜는 중이에요.', 'muted');
     try {
         _gratitudeSpeechRecognition.start();
     } catch (error) {
         _gratitudeSpeechStarting = false;
         _gratitudeSpeechListening = false;
-        setGratitudeVoiceStatus('음성 입력을 다시 시도해 주세요.', 'error');
+        setGratitudeVoiceStatus(isEnglishLocale() ? t('voice.retry') : '음성 입력을 다시 시도해 주세요.', 'error');
     }
 };
 
@@ -10702,10 +10714,11 @@ function getMeditationSpeechSynthesis() {
     return window.speechSynthesis;
 }
 
-function getMeditationKoreanVoice(synth) {
+function getMeditationPreferredVoice(synth) {
     if (!synth || typeof synth.getVoices !== 'function') return null;
     const voices = synth.getVoices() || [];
-    return voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith('ko')) || null;
+    const preferredPrefix = isEnglishLocale() ? 'en' : 'ko';
+    return voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith(preferredPrefix)) || null;
 }
 
 function cancelMeditationVoiceCue() {
@@ -10724,12 +10737,12 @@ function speakMeditationVoiceCue(message = '') {
 
     try {
         const utterance = new window.SpeechSynthesisUtterance(text);
-        const koreanVoice = getMeditationKoreanVoice(synth);
-        utterance.lang = 'ko-KR';
+        const preferredVoice = getMeditationPreferredVoice(synth);
+        utterance.lang = isEnglishLocale() ? 'en-US' : 'ko-KR';
         utterance.rate = 0.88;
         utterance.pitch = 1;
         utterance.volume = MEDITATION_TTS_VOLUME;
-        if (koreanVoice) utterance.voice = koreanVoice;
+        if (preferredVoice) utterance.voice = preferredVoice;
         cancelMeditationVoiceCue();
         synth.speak(utterance);
         return true;
@@ -11355,6 +11368,41 @@ function _getRecordGuideStates() {
         mindHelper = `${meditationMeta.name} ${formatMeditationDurationLabel(meditationMeta.durationSec)}로 바로 시작할 수 있어요.`;
     }
 
+    if (isEnglishLocale()) {
+        const dietReadyCount = dietPhotos + fastingMetricsCount;
+        const dietStatus = dietPhotos > 0
+            ? `${dietPhotos}/4 meal photo(s) ready · ${fastingMetricsCount} fasting metric(s)`
+            : 'Add your first meal photo to start today’s food log.';
+        const exerciseStatusEn = exerciseReadyCount > 0
+            ? `Steps ${stepReady ? stepCount.toLocaleString('en-US') : 'not entered'} · ${cardioCount} photo(s) · ${strengthCount} video(s)`
+            : 'Add steps, a workout photo, or a workout video to save today’s exercise log.';
+        const mindStatusEn = meditationActive
+            ? `Meditation in progress · ${formatMeditationClock(meditationRemainingSec)} left`
+            : meditationReady
+                ? 'Meditation complete. You can save today’s mind log.'
+                : mindReadyCount > 0
+                    ? `${mindReadyCount} mind item(s) ready.`
+                    : 'Try a sleep screenshot, meditation, or gratitude journal.';
+
+        return {
+            diet: {
+                badge: `${dietPhotos}/4`,
+                status: dietStatus,
+                helper: dietReadyCount > 0 ? 'Save when your food log is ready.' : 'Meal photos and fasting metrics stay in your daily record.'
+            },
+            exercise: {
+                badge: `${exerciseReadyCount} ready`,
+                status: exerciseStatusEn,
+                helper: stepPointReady ? 'Save to record today’s exercise.' : '8,000+ steps can count toward today’s exercise progress.'
+            },
+            sleep: {
+                badge: meditationActive ? 'Running' : `${mindReadyCount} ready`,
+                status: mindStatusEn,
+                helper: 'Sleep, meditation, and gratitude share the same daily mind record.'
+            }
+        };
+    }
+
     return {
         diet: {
             badge: dietGuide.badge,
@@ -11390,6 +11438,12 @@ function getRewardEligibilityForDate(dateStr = String(document.getElementById('s
 
 function getSaveButtonLabel(tabName = getVisibleTabName(), rewardPolicy = getRewardEligibilityForDate()) {
     const retroSaveOnly = !!rewardPolicy?.isRetroNoPoint;
+    if (isEnglishLocale()) {
+        if (tabName === 'diet') return 'Save food log';
+        if (tabName === 'exercise') return 'Save exercise log';
+        if (tabName === 'sleep') return 'Save mind log';
+        return 'Save';
+    }
     if (tabName === 'diet') return retroSaveOnly ? '식단 저장하기' : '식단 저장하고 포인트 받기 🅿️';
     if (tabName === 'exercise') return retroSaveOnly ? '운동 저장하기' : '운동 저장하고 포인트 받기 🅿️';
     if (tabName === 'sleep') return retroSaveOnly ? '마음 저장하기' : '마음 저장하고 포인트 받기 🅿️';
@@ -11448,6 +11502,15 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
 
     resetSubmitBarMode();
     const states = guideStates || _getRecordGuideStates();
+
+    if (isEnglishLocale()) {
+        helperEl.style.display = 'block';
+        helperEl.textContent = rewardPolicy.isRetroNoPoint
+            ? 'Past-date edits are saved, but points are not added.'
+            : (states[tabName]?.helper || '');
+        if (!saveBtn.disabled) applySaveButtonLabel(saveBtn, tabName, rewardPolicy);
+        return;
+    }
 
     if (tabName === 'diet') {
         helperEl.style.display = 'block';
@@ -11711,16 +11774,35 @@ document.addEventListener('fullscreenchange', () => {
 });
 
 function openTab(tabName, pushState = true) {
-    const resolvedTabName = normalizeTabForMode(tabName);
+    const routeContext = getRouteContext(window.location.pathname);
+    const resolvedTabName = normalizeTabForRoute(tabName, routeContext);
     if (!_appBootReady) {
         _pendingBootTabRequest = { tabName: resolvedTabName, pushState };
         return;
     }
     const user = auth.currentUser;
     if (!user && resolvedTabName !== 'gallery') {
+        if (routeContext.isEnglish) {
+            document.documentElement.classList.add('signed-out');
+            document.documentElement.classList.remove('signed-in', 'auth-pending');
+            const landing = document.getElementById('english-public-page');
+            if (landing) landing.hidden = false;
+            const loginModal = document.getElementById('login-modal');
+            if (loginModal) loginModal.style.display = 'none';
+            applyDomTranslations();
+            return;
+        }
         document.getElementById('login-modal').style.display = 'flex'; return;
     }
-    if (pushState) history.pushState({ tab: resolvedTabName }, '', '#' + resolvedTabName);
+    if (pushState) {
+        if (routeContext.isEnglish) {
+            const searchParams = new URLSearchParams(window.location.search);
+            const nextUrl = new URL(buildLocalizedUrl('en', resolvedTabName, searchParams));
+            history.pushState({ tab: resolvedTabName }, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`);
+        } else {
+            history.pushState({ tab: resolvedTabName }, '', '#' + resolvedTabName);
+        }
+    }
 
     const contents = document.getElementsByClassName("content-section");
     for (let i = 0; i < contents.length; i++) { contents[i].style.display = "none"; contents[i].classList.remove("active"); }
@@ -11843,6 +11925,7 @@ function openTab(tabName, pushState = true) {
     updateRecordFlowGuides(resolvedTabName);
     syncGuidePanels(resolvedTabName);
     if (resolvedTabName === 'dashboard') syncDashboardPanels();
+    applyDomTranslations();
     scheduleFloatingBarLayoutUpdate();
     setTimeout(() => { document.getElementById(resolvedTabName).classList.add("active"); }, 10);
 };
@@ -11853,7 +11936,7 @@ window.addEventListener('popstate', (e) => {
 });
 
 function switchToDefaultMode() {
-    window.location.assign(buildAppModeUrl('default', getVisibleTabName()));
+    window.location.assign(buildLocalizedUrl('ko', getVisibleTabName()));
 }
 
 // 페이지 종료 시 리소스 정리 (메모리 누수 방지)
@@ -20414,7 +20497,7 @@ async function handleStepScreenshot(fileInput) {
         await uploadBytes(imgRef, file);
         const downloadUrl = await getDownloadURL(imgRef);
 
-        // 2. AI 분석 호출 (gemini-2.0-flash — 초고속)
+        // 2. AI 분석 호출 (gemini-2.5-flash)
         const result = await requestStepScreenshotAnalysis(downloadUrl);
         if (!result) {
             showToast('⚠️ 인식에 실패했습니다. 다시 시도해주세요.');

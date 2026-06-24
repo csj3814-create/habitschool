@@ -26,6 +26,7 @@ describe('PWA asset versioning', () => {
         const blockchainManagerSource = readRepoFile('js/blockchain-manager.js');
         const dataManagerSource = readRepoFile('js/data-manager.js');
         const dietAnalysisSource = readRepoFile('js/diet-analysis.js');
+        const i18nSource = readRepoFile('js/i18n.js');
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
         const uiHelpersSource = readRepoFile('js/ui-helpers.js');
         const stylesEntrySource = readRepoFile('styles.css');
@@ -51,6 +52,7 @@ describe('PWA asset versioning', () => {
         expect(firebaseMessagingSwSource).toContain("importScripts('/sw.js');");
         expect(captureVersion(swSource, /habitschool-v(\d+)/, 'service worker cache')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-base\.css\?v=(\d+)/, 'styles base import')).toBe(releaseVersion);
+        expect(captureVersion(stylesEntrySource, /styles-en\.css\?v=(\d+)/, 'styles en import')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-features\.css\?v=(\d+)/, 'styles features import')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-reward-market\.css\?v=(\d+)/, 'styles reward market import')).toBe(releaseVersion);
         expect(captureVersion(stylesEntrySource, /styles-dashboard\.css\?v=(\d+)/, 'styles dashboard import')).toBe(releaseVersion);
@@ -63,11 +65,13 @@ describe('PWA asset versioning', () => {
         expectVersionedLocalImports(blockchainManagerSource, releaseVersion, 'blockchain-manager.js');
         expectVersionedLocalImports(dataManagerSource, releaseVersion, 'data-manager.js');
         expectVersionedLocalImports(dietAnalysisSource, releaseVersion, 'diet-analysis.js');
+        expectVersionedLocalImports(i18nSource, releaseVersion, 'i18n.js');
         expectVersionedLocalImports(mainSource, releaseVersion, 'main.js');
         expectVersionedLocalImports(uiHelpersSource, releaseVersion, 'ui-helpers.js');
 
         expect(swSource).toContain(`'./styles.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-base.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-en.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-features.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-reward-market.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-dashboard.css?v=${releaseVersion}'`);
@@ -78,6 +82,7 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/app-core.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app-mode.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/auth.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/i18n.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/auth-login-helpers.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/blockchain-config.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/blockchain-manager.js?v=${releaseVersion}'`);
@@ -97,11 +102,14 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/upload-performance.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/webview-detect.js?v=${releaseVersion}'`);
         expect(swSource).toContain("'./firebase-messaging-sw.js'");
+        expect(swSource).toContain("'./manifest-en.json'");
 
         const headerSources = firebaseConfig.hosting[0].headers.map((item) => item.source);
         expect(headerSources).toContain('/');
         expect(headerSources).toContain('**/*.html');
         expect(headerSources).toContain('/manifest.json');
+        expect(headerSources).toContain('/manifest-en.json');
+        expect(headerSources).toContain('/en');
         expect(headerSources).toContain('/styles.css');
         expect(headerSources).toContain('/js/**');
         expect(headerSources).toContain('/sw.js');

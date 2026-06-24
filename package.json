@@ -6,6 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "build:en": "node scripts/generate-en-entry.js",
+    "check:en": "node scripts/generate-en-entry.js --check",
     "mainnet:config:check": "node scripts/sync-mainnet-config.js --check",
     "mainnet:config:sync": "node scripts/sync-mainnet-config.js",
     "mainnet:config:enable": "node scripts/sync-mainnet-config.js --enable-prod-mainnet",

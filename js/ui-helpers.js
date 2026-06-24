@@ -1,5 +1,6 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=212';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=213';
+import { translateText } from './i18n.js?v=213';
 
 // 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
 export function getKstDateString() {
@@ -32,7 +33,7 @@ export function getDatesInfo() {
 // 토스트 메시지 표시
 export function showToast(message) {
     const toast = document.getElementById("toast");
-    toast.innerText = message;
+    toast.innerText = translateText(message);
     toast.className = "show";
     setTimeout(() => { 
         toast.className = toast.className.replace("show", ""); 

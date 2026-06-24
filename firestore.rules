@@ -192,7 +192,7 @@ service cloud.firestore {
                     'oldWalletAddress', 'encryptedWallet', 'externalWalletAddress',
                     'walletConnectionMode', 'walletProviderType', 'walletChainId', 'walletConnectedAt',
                     'activeChallenge', 'activeChallenges', 'milestones', 'settings',
-                    'lastLogin', 'fcmToken', 'healthProfile', 'inbodyData',
+                    'lastLogin', 'fcmToken', 'locale', 'healthProfile', 'inbodyData',
                     'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
                     'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
                     'missionBadges', 'selectedMissions', 'missionLevelUpDate',

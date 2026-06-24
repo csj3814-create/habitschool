@@ -1,0 +1,130 @@
+{
+  "name": "Habit School - Better habits, one day at a time",
+  "short_name": "Habit School",
+  "description": "Record food, exercise, sleep, meditation, and gratitude with Habit School.",
+  "start_url": "/en",
+  "scope": "/",
+  "id": "/en",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FF9800",
+  "lang": "en",
+  "categories": [
+    "health",
+    "fitness",
+    "lifestyle"
+  ],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest-en.json",
+      "id": "/en"
+    }
+  ],
+  "prefer_related_applications": false,
+  "share_target": {
+    "action": "/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "sharedImages",
+          "accept": [
+            "image/*"
+          ]
+        }
+      ]
+    }
+  },
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "auto"
+    ]
+  },
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icons/og-image-en.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "Habit School English landing page",
+      "form_factor": "wide"
+    },
+    {
+      "src": "icons/feature-graphic-minimal.png",
+      "sizes": "1024x500",
+      "type": "image/png",
+      "label": "Habit School habit tracking app",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Food log",
+      "short_name": "Food",
+      "description": "Open today’s food photo log.",
+      "url": "/en#diet",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Exercise log",
+      "short_name": "Exercise",
+      "description": "Open today’s exercise log.",
+      "url": "/en#exercise",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Mind log",
+      "short_name": "Mind",
+      "description": "Open sleep, meditation, and gratitude.",
+      "url": "/en#sleep",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

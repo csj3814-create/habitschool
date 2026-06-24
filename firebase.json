@@ -28,6 +28,8 @@
     {
       "target": "app",
       "public": ".",
+      "cleanUrls": true,
+      "trailingSlash": false,
       "ignore": [
         "firebase.json",
         ".git",
@@ -68,6 +70,36 @@
       ],
       "redirects": [
         {
+          "source": "/en/",
+          "destination": "/en",
+          "type": 301
+        },
+        {
+          "source": "/en/index.html",
+          "destination": "/en",
+          "type": 301
+        },
+        {
+          "source": "/en/privacy/",
+          "destination": "/en/privacy",
+          "type": 301
+        },
+        {
+          "source": "/en/privacy.html",
+          "destination": "/en/privacy",
+          "type": 301
+        },
+        {
+          "source": "/en/terms/",
+          "destination": "/en/terms",
+          "type": 301
+        },
+        {
+          "source": "/en/terms.html",
+          "destination": "/en/terms",
+          "type": 301
+        },
+        {
           "source": "/simple/",
           "destination": "/simple",
           "type": 301
@@ -77,6 +109,18 @@
         {
           "source": "/simple",
           "destination": "/index.html"
+        },
+        {
+          "source": "/en",
+          "destination": "/en/index.html"
+        },
+        {
+          "source": "/en/privacy",
+          "destination": "/en/privacy.html"
+        },
+        {
+          "source": "/en/terms",
+          "destination": "/en/terms.html"
         }
       ],
       "headers": [
@@ -100,6 +144,24 @@
         },
         {
           "source": "/manifest.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/manifest-en.json",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/en",
           "headers": [
             {
               "key": "Cache-Control",

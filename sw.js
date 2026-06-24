@@ -78,7 +78,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v212';
+const CACHE_NAME = 'habitschool-v213';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
@@ -161,38 +161,44 @@ async function handleSharedTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=212',
-    './styles-base.css?v=212',
-    './styles-features.css?v=212',
-    './styles-reward-market.css?v=212',
-    './styles-dashboard.css?v=212',
-    './styles-dark-mode.css?v=212',
-    './styles-reports.css?v=212',
-    './js/main.js?v=212',
-    './js/app.js?v=212',
-    './js/app-core.js?v=212',
-    './js/auth.js?v=212',
-    './js/app-mode.js?v=212',
-    './js/auth-login-helpers.js?v=212',
-    './js/blockchain-config.js?v=212',
-    './js/blockchain-manager.js?v=212',
-    './js/data-manager.js?v=212',
-    './js/diet-program.js?v=212',
-    './js/diet-analysis.js?v=212',
-    './js/exercise-media.js?v=212',
-    './js/firebase-config.js?v=212',
-    './js/habit-groups.js?v=212',
-    './js/health-connect-utils.js?v=212',
-    './js/metabolic-score.js?v=212',
-    './js/milestone-helpers.js?v=212',
-    './js/monthly-mvp-reward.js?v=212',
-    './js/pwa-install.js?v=212',
-    './js/security.js?v=212',
-    './js/social-challenge-readiness.js?v=212',
-    './js/ui-helpers.js?v=212',
-    './js/upload-performance.js?v=212',
-    './js/webview-detect.js?v=212',
+    './styles.css?v=213',
+    './styles-base.css?v=213',
+    './styles-en.css?v=213',
+    './styles-features.css?v=213',
+    './styles-reward-market.css?v=213',
+    './styles-dashboard.css?v=213',
+    './styles-dark-mode.css?v=213',
+    './styles-reports.css?v=213',
+    './js/main.js?v=213',
+    './js/app.js?v=213',
+    './js/app-core.js?v=213',
+    './js/auth.js?v=213',
+    './js/i18n.js?v=213',
+    './js/app-mode.js?v=213',
+    './js/auth-login-helpers.js?v=213',
+    './js/blockchain-config.js?v=213',
+    './js/blockchain-manager.js?v=213',
+    './js/data-manager.js?v=213',
+    './js/diet-program.js?v=213',
+    './js/diet-analysis.js?v=213',
+    './js/exercise-media.js?v=213',
+    './js/firebase-config.js?v=213',
+    './js/habit-groups.js?v=213',
+    './js/health-connect-utils.js?v=213',
+    './js/metabolic-score.js?v=213',
+    './js/milestone-helpers.js?v=213',
+    './js/monthly-mvp-reward.js?v=213',
+    './js/pwa-install.js?v=213',
+    './js/security.js?v=213',
+    './js/social-challenge-readiness.js?v=213',
+    './js/ui-helpers.js?v=213',
+    './js/upload-performance.js?v=213',
+    './js/webview-detect.js?v=213',
     './manifest.json',
+    './manifest-en.json',
+    './en/index.html',
+    './en/privacy.html',
+    './en/terms.html',
     './icons/icon-192.png',
     './icons/icon-192.svg',
     './icons/icon-512.png',
@@ -201,10 +207,23 @@ const STATIC_ASSETS = [
     './icons/feature-graphic.png',
     './icons/feature-graphic-minimal.png',
     './firebase-messaging-sw.js',
-    './icons/og-image.png'
+    './icons/og-image.png',
+    './icons/og-image-en.png'
 ];
 
 const INDEX_URL = new URL('./', self.location).href;
+const EN_INDEX_URL = new URL('./en/index.html', self.location).href;
+const EN_PRIVACY_URL = new URL('./en/privacy.html', self.location).href;
+const EN_TERMS_URL = new URL('./en/terms.html', self.location).href;
+
+function getOfflineNavigationFallback(pathname) {
+    if (pathname === '/en/privacy' || pathname === '/en/privacy.html') return EN_PRIVACY_URL;
+    if (pathname === '/en/terms' || pathname === '/en/terms.html') return EN_TERMS_URL;
+    if (pathname === '/en' || pathname === '/en/' || pathname === '/en/index.html' || pathname.startsWith('/en/')) {
+        return EN_INDEX_URL;
+    }
+    return INDEX_URL;
+}
 
 self.addEventListener('install', (event) => {
     console.log('[SW] install');
@@ -263,7 +282,8 @@ self.addEventListener('fetch', (event) => {
             .catch(() => caches.match(request).then((cached) => {
                 if (cached) return cached;
                 if (request.mode === 'navigate') {
-                    return caches.match(INDEX_URL);
+                    const fallbackUrl = getOfflineNavigationFallback(requestUrl.pathname);
+                    return caches.match(fallbackUrl).then((fallback) => fallback || caches.match(INDEX_URL));
                 }
                 return new Response('', { status: 503 });
             }))
@@ -288,7 +308,7 @@ self.addEventListener('notificationclick', (event) => {
                     try {
                         const url = new URL(client.url);
                         return url.origin === self.location.origin
-                            && (url.pathname === '/' || url.pathname === '/index.html');
+                            && (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/en' || url.pathname === '/en/index.html');
                     } catch (_) {
                         return false;
                     }

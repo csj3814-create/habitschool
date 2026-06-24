@@ -1,11 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=212';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=213';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=212';
-import { getDatesInfo } from './ui-helpers.js?v=212';
-import { escapeHtml } from './security.js?v=212';
+import { showToast } from './ui-helpers.js?v=213';
+import { getDatesInfo } from './ui-helpers.js?v=213';
+import { escapeHtml } from './security.js?v=213';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=213';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -18,11 +19,11 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=212';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, normalizeTabForMode } from './app-mode.js?v=212';
+} from './auth-login-helpers.js?v=213';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=213';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=212';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=213';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -40,6 +41,40 @@ let _googleLoginRecoveryBound = false;
 let _pendingGoogleLoginResetTimer = null;
 let _mediaPickerSignedOutRecoveryTimer = null;
 const GOOGLE_LOGIN_RECOVERY_POLL_MS = 1500;
+
+function setEnglishAuthShellState(state = 'pending') {
+    if (!isEnglishLocale()) return;
+    const root = document.documentElement;
+    const signedIn = state === 'signed-in';
+    const signedOut = state === 'signed-out';
+    root.classList.toggle('signed-in', signedIn);
+    root.classList.toggle('signed-out', signedOut);
+    root.classList.toggle('auth-pending', !signedIn && !signedOut);
+
+    const landing = document.getElementById('english-public-page');
+    if (landing) landing.hidden = !signedOut;
+    const loginModal = document.getElementById('login-modal');
+    if (loginModal) loginModal.style.display = 'none';
+    applyDomTranslations();
+}
+
+function updateEnglishProfilePanel(user, userData = {}) {
+    if (!isEnglishLocale()) return;
+    const displayName = String(userData.customDisplayName || user?.displayName || user?.email || 'Habit School member').trim();
+    const email = String(user?.email || userData.email || '').trim();
+    const nameEl = document.getElementById('english-profile-name');
+    const emailEl = document.getElementById('english-profile-email');
+    const localeEl = document.getElementById('english-profile-locale');
+    if (nameEl) nameEl.textContent = displayName || 'Habit School member';
+    if (emailEl) emailEl.textContent = email || 'Google account';
+    if (localeEl) localeEl.textContent = getLocale() === 'en' ? 'English' : '한국어';
+}
+
+window.switchHabitSchoolLocale = function (locale = 'ko') {
+    const nextLocale = locale === 'en' ? 'en' : 'ko';
+    const tabName = typeof getVisibleAuthTabName === 'function' ? getVisibleAuthTabName() : '';
+    window.location.assign(buildLocalizedUrl(nextLocale, tabName));
+};
 
 function parseCachedPointNumber(value) {
     const numeric = Number.parseInt(String(value ?? '').replace(/[^\d-]/g, ''), 10);
@@ -652,6 +687,11 @@ export function initAuth() {
     const loginBtn = document.getElementById('loginBtn');
     const webviewWarning = document.getElementById('webview-warning');
 
+    window.startEnglishGoogleSignIn = function () {
+        if (window._isPopupLogin) return;
+        loginBtn?.click();
+    };
+
     if (!loginBtn) {
         console.error('로그인 버튼을 찾을 수 없습니다.');
         return;
@@ -803,6 +843,7 @@ function showWebViewWarning() {
 }
 
 function applySignedInShellUi(user) {
+    setEnglishAuthShellState('signed-in');
     setMediaPickerAuthRecoveryClass(false);
     const loginBtn = document.getElementById('loginBtn');
     setGoogleLoginPendingUi(loginBtn, false);
@@ -1050,7 +1091,11 @@ function handleSignedOutAuthState(callbacks) {
     clearMediaPickerSignedOutRecoveryTimer();
     window._isPopupLogin = false;
     setGoogleLoginPendingUi(loginBtn, false);
-    document.getElementById('login-modal').style.display = 'flex';
+    if (isEnglishLocale()) {
+        setEnglishAuthShellState('signed-out');
+    } else {
+        document.getElementById('login-modal').style.display = 'flex';
+    }
     document.getElementById('point-badge-ui').style.display = 'none';
     document.getElementById('date-ui').style.display = 'none';
     document.getElementById('user-greeting').innerHTML = '';
@@ -1105,7 +1150,8 @@ export function setupAuthListener(callbacks) {
             const urlTab = params.get('tab');
             const appEntryFocus = params.get('focus');
             const hashTab = window.location.hash.replace('#', '');
-            const appMode = getAppModeFromPath(window.location.pathname);
+            const routeContext = getRouteContext(window.location.pathname);
+            const appMode = routeContext.mode;
             const validTabs = getAllowedTabsForMode(appMode);
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
             const requestedTab = (urlTab && validTabs.includes(urlTab))
@@ -1113,7 +1159,7 @@ export function setupAuthListener(callbacks) {
                 : (hashTab && validTabs.includes(hashTab))
                     ? hashTab
                     : getDefaultTabForMode(appMode);
-            const targetTab = normalizeTabForMode(requestedTab, appMode);
+            const targetTab = normalizeTabForRoute(requestedTab, routeContext);
             if (window.openTab) {
                 window.openTab(targetTab, false);
             }
@@ -1160,7 +1206,8 @@ export function setupAuthListener(callbacks) {
                 const isNewUser = !resolvedUserDoc.exists();
                 const updateData = {
                     email: user.email || '',
-                    displayName: user.displayName || '사용자'
+                    displayName: user.displayName || '사용자',
+                    locale: getLocale()
                 };
                 if (isNewUser) updateData.createdAt = serverTimestamp();
                 await setDoc(userRef, updateData, { merge: true }).catch(() => {});
@@ -1189,6 +1236,7 @@ export function setupAuthListener(callbacks) {
                 }
 
                 await applySignedInUserUi(user, ud);
+                updateEnglishProfilePanel(user, ud);
 
                 await maybeHandleInviteLinkAfterAuth(user, ud, {
                     isNewUser

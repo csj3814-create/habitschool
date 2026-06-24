@@ -529,6 +529,7 @@ async function sendPushToUsers(userIds, payload) {
 function addPushTarget(targetMap, {
     token,
     uid,
+    locale = "ko",
     tokenDocRef = null,
     legacyUserRef = null
 }) {
@@ -538,11 +539,13 @@ function addPushTarget(targetMap, {
     const existing = targetMap.get(normalizedToken) || {
         token: normalizedToken,
         uid,
+        locale: normalizeLocale(locale),
         userIds: new Set(),
         tokenDocRefs: [],
         legacyUserRefs: []
     };
 
+    existing.locale = normalizeLocale(locale || existing.locale);
     existing.userIds.add(uid);
     if (tokenDocRef) existing.tokenDocRefs.push(tokenDocRef);
     if (legacyUserRef) existing.legacyUserRefs.push(legacyUserRef);
@@ -567,7 +570,7 @@ async function collectLegacyPushTargets(targetMap, userIds = null) {
     } else {
         usersSnap = await db.collection("users")
             .where("fcmToken", "!=", "")
-            .select("fcmToken")
+            .select("fcmToken", "locale")
             .get();
     }
 
@@ -577,6 +580,7 @@ async function collectLegacyPushTargets(targetMap, userIds = null) {
         addPushTarget(targetMap, {
             token,
             uid: snap.id,
+            locale: snap.data()?.locale,
             legacyUserRef: snap.ref
         });
     });
@@ -586,6 +590,15 @@ async function collectPushTargetsForUsers(userIds) {
     const targetMap = new Map();
     const uniqueUserIds = [...new Set((userIds || []).filter(Boolean))];
     if (uniqueUserIds.length === 0) return [];
+
+    const userLocaleById = new Map();
+    try {
+        const userRefs = uniqueUserIds.map((uid) => db.doc(`users/${uid}`));
+        const userSnaps = userRefs.length ? await db.getAll(...userRefs) : [];
+        userSnaps.forEach((snap) => {
+            if (snap.exists) userLocaleById.set(snap.id, snap.data()?.locale);
+        });
+    } catch (_) {}
 
     await Promise.all(uniqueUserIds.map(async (uid) => {
         const tokenSnap = await db.collection(`users/${uid}/${PUSH_TOKEN_SUBCOLLECTION}`)
@@ -599,6 +612,7 @@ async function collectPushTargetsForUsers(userIds) {
             addPushTarget(targetMap, {
                 token: data.token,
                 uid,
+                locale: userLocaleById.get(uid),
                 tokenDocRef: docSnap.ref
             });
         });
@@ -651,6 +665,64 @@ function buildNotificationActions(actions = []) {
             title: String(action.title),
             url: action.url ? String(action.url) : ""
         }));
+}
+
+async function hydratePushTargetLocales(targets = []) {
+    const normalizedTargets = Array.isArray(targets) ? targets : [];
+    const missingLocaleUserIds = [...new Set(normalizedTargets
+        .filter((target) => target?.uid && !target.locale)
+        .map((target) => target.uid))];
+    if (missingLocaleUserIds.length === 0) {
+        return normalizedTargets.map((target) => ({
+            ...target,
+            locale: normalizeLocale(target?.locale)
+        }));
+    }
+
+    const localeByUid = new Map();
+    try {
+        const snaps = await db.getAll(...missingLocaleUserIds.map((uid) => db.doc(`users/${uid}`)));
+        snaps.forEach((snap) => {
+            if (snap.exists) localeByUid.set(snap.id, snap.data()?.locale);
+        });
+    } catch (_) {}
+
+    return normalizedTargets.map((target) => ({
+        ...target,
+        locale: normalizeLocale(target?.locale || localeByUid.get(target?.uid))
+    }));
+}
+
+function groupPushTargetsByLocale(targets = []) {
+    return targets.reduce((acc, target) => {
+        const locale = normalizeLocale(target?.locale);
+        if (!acc[locale]) acc[locale] = [];
+        acc[locale].push(target);
+        return acc;
+    }, { ko: [], en: [] });
+}
+
+function buildLocalizedAppPath(locale = "ko", tab = "dashboard", extras = {}) {
+    if (normalizeLocale(locale) !== "en") return buildAppPath(tab, extras);
+
+    const params = new URLSearchParams();
+    Object.entries(extras || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "") return;
+        params.set(key, String(value));
+    });
+    const query = params.toString();
+    const normalizedTab = ["diet", "exercise", "sleep", "profile"].includes(tab) ? tab : "diet";
+    const hash = normalizedTab && normalizedTab !== "diet" ? `#${normalizedTab}` : "";
+    return `/en${query ? `?${query}` : ""}${hash}`;
+}
+
+async function sendLocalizedMulticast(targets = [], payloadBuilder) {
+    const localizedTargets = await hydratePushTargetLocales(targets);
+    const grouped = groupPushTargetsByLocale(localizedTargets);
+    await Promise.all(Object.entries(grouped).map(async ([locale, localeTargets]) => {
+        if (!localeTargets.length) return;
+        await sendMulticast(localeTargets, payloadBuilder(locale));
+    }));
 }
 
 function buildFriendRequestPushPayload({ requesterName, friendshipId }) {
@@ -2269,6 +2341,10 @@ exports.getTokenStats = onCall(
 // ========================================
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+function normalizeLocale(rawLocale = "ko") {
+    return String(rawLocale || "ko").trim().toLowerCase().startsWith("en") ? "en" : "ko";
+}
+
 const DIET_ANALYSIS_PROMPT = `당신은 최고건강전문 영양 분석 AI입니다. 사진 속 음식을 분석해주세요.
 
 ## 핵심 철학
@@ -2315,6 +2391,28 @@ const DIET_ANALYSIS_PROMPT = `당신은 최고건강전문 영양 분석 AI입�
   "summary": "한줄 총평"
 }`;
 
+const DIET_ANALYSIS_PROMPT_EN = `You are a practical nutrition analysis AI for Habit School. Analyze the food visible in the image.
+
+Return only valid JSON with the exact same schema:
+{
+  "foods": [
+    {"name": "food name", "category": "natural|processed|ultraprocessed", "nutrients": "short nutrient note"}
+  ],
+  "scores": {
+    "vitamins": 80,
+    "minerals": 70,
+    "fiber": 90,
+    "antioxidants": 60
+  },
+  "grade": "A|B|C|D|F",
+  "naturalRatio": 80,
+  "insulinComment": "1-2 sentence comment about likely glucose/insulin impact",
+  "suggestion": "one specific practical improvement",
+  "summary": "short overall summary"
+}
+
+Food quality matters more than calories alone. Classify whole/minimally processed foods as "natural", traditional/simple processed foods as "processed", and packaged instant snacks, sweet drinks, processed meats, ramen, and similar industrial foods as "ultraprocessed". Write all user-facing strings in natural English.`;
+
 exports.analyzeDiet = onCall(
     {
         secrets: [GEMINI_API_KEY],
@@ -2327,7 +2425,8 @@ exports.analyzeDiet = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl } = request.data;
+        const { imageUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
         if (!imageUrl || typeof imageUrl !== "string") {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
@@ -2358,7 +2457,7 @@ exports.analyzeDiet = onCall(
             });
 
             const result = await model.generateContent([
-                DIET_ANALYSIS_PROMPT,
+                locale === "en" ? DIET_ANALYSIS_PROMPT_EN : DIET_ANALYSIS_PROMPT,
                 {
                     inlineData: {
                         data: base64Image,
@@ -2569,6 +2668,27 @@ const SLEEP_MIND_ANALYSIS_PROMPT = `당신은 수면 건강 전문가이자 마�
 }
 마크다운 코드 블록으로 출력하지 말고, 순수 JSON만 출력하세요.`;
 
+const SLEEP_MIND_ANALYSIS_PROMPT_EN = `You are a sleep health expert and mindfulness coach for Habit School.
+
+The user may provide a sleep tracker screenshot or a mind-related text record such as a gratitude journal or meditation note.
+
+Return only valid JSON with the exact same schema:
+{
+  "type": "sleep" | "mind",
+  "grade": "A" | "B" | "C" | "D" | "F",
+  "summary": "short overall summary",
+  "details": {
+    "sleepDuration": "sleep duration such as 7h 30m, or null",
+    "sleepQuality": "short sleep quality note, or null",
+    "emotionTone": "positive/neutral/negative, or null",
+    "stressLevel": "low/medium/high, or null"
+  },
+  "tip": "one practical improvement",
+  "feedback": "2-3 encouraging analysis sentences"
+}
+
+Use the requested analysis type when the evidence is ambiguous. Keep all user-facing strings in natural English.`;
+
 exports.analyzeSleepMind = onCall(
     {
         secrets: [GEMINI_API_KEY],
@@ -2581,7 +2701,8 @@ exports.analyzeSleepMind = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl, textData, analysisType } = request.data;
+        const { imageUrl, textData, analysisType, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
         if (!imageUrl && !textData) {
             throw new HttpsError("invalid-argument", "이미지 또는 텍스트 데이터가 필요합니다.");
         }
@@ -2596,7 +2717,7 @@ exports.analyzeSleepMind = onCall(
                 }
             });
 
-            const contentParts = [SLEEP_MIND_ANALYSIS_PROMPT];
+            const contentParts = [locale === "en" ? SLEEP_MIND_ANALYSIS_PROMPT_EN : SLEEP_MIND_ANALYSIS_PROMPT];
 
             if (imageUrl && typeof imageUrl === "string") {
                 // SSRF 방지: Firebase Storage URL 또는 data: URL만 허용
@@ -2643,10 +2764,10 @@ exports.analyzeSleepMind = onCall(
             }
 
             if (textData) {
-                contentParts.push(`사용자 기록: ${textData}`);
+                contentParts.push(locale === "en" ? `User record: ${textData}` : `사용자 기록: ${textData}`);
             }
 
-            contentParts.push(`분석 유형: ${analysisType || 'sleep'}`);
+            contentParts.push(locale === "en" ? `Analysis type: ${analysisType || 'sleep'}` : `분석 유형: ${analysisType || 'sleep'}`);
 
             const result = await model.generateContent(contentParts);
             const responseText = result.response.text();
@@ -2720,6 +2841,25 @@ const STEP_SCREENSHOT_PROMPT = `당신은 건강 앱 스크린샷을 분석하�
 }
 마크다운 코드 블록으로 출력하지 말고, 순수 JSON만 출력하세요.`;
 
+const STEP_SCREENSHOT_PROMPT_EN = `You are an AI that extracts step-count data from health app screenshots.
+
+Analyze screenshots from Samsung Health, Apple Health, or another health/step-count app.
+
+Return only valid JSON with the exact same schema:
+{
+  "steps": 8432,
+  "distance_km": 5.2,
+  "calories": 312,
+  "active_minutes": 45,
+  "date": "2025-03-22",
+  "source": "samsung_health" | "apple_health" | "other",
+  "notHealthApp": false,
+  "confidence": "high" | "medium" | "low",
+  "summary": "Today you walked 8,432 steps and moved about 5.2 km."
+}
+
+If the image is not a health or step-count app screenshot, return "notHealthApp": true. Convert miles to kilometers. Use natural English for summary.`;
+
 exports.analyzeStepScreenshot = onCall(
     {
         secrets: [GEMINI_API_KEY],
@@ -2732,7 +2872,8 @@ exports.analyzeStepScreenshot = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        const { imageUrl } = request.data;
+        const { imageUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
         if (!imageUrl || typeof imageUrl !== "string") {
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
@@ -2766,7 +2907,7 @@ exports.analyzeStepScreenshot = onCall(
             });
 
             const result = await model.generateContent([
-                STEP_SCREENSHOT_PROMPT,
+                locale === "en" ? STEP_SCREENSHOT_PROMPT_EN : STEP_SCREENSHOT_PROMPT,
                 {
                     inlineData: {
                         data: base64Image,
@@ -6384,7 +6525,9 @@ async function sendDietProgramReminder({
     intermittentFasting = false,
     slot = "",
     title = "",
+    titleEn = "",
     body = "",
+    bodyEn = "",
     tag = "diet-program",
     focus = "upload"
 } = {}) {
@@ -6413,15 +6556,18 @@ async function sendDietProgramReminder({
         return 0;
     }
 
-    const reminderUrl = buildAppPath("diet", { focus });
-    await sendMulticast(targets, {
-        title,
-        body,
-        tag,
-        url: reminderUrl,
-        actions: buildNotificationActions([
-            { action: "record-now", title: "지금 기록", url: reminderUrl }
-        ])
+    await sendLocalizedMulticast(targets, (locale) => {
+        const reminderUrl = buildLocalizedAppPath(locale, "diet", { focus });
+        const en = normalizeLocale(locale) === "en";
+        return {
+            title: en ? (titleEn || title) : title,
+            body: en ? (bodyEn || body) : body,
+            tag,
+            url: reminderUrl,
+            actions: buildNotificationActions([
+                { action: "record-now", title: en ? "Record now" : "지금 기록", url: reminderUrl }
+            ])
+        };
     });
     console.log(`${tag}: ${targets.length} targets`);
     return targets.length;
@@ -6537,6 +6683,7 @@ exports.sendReEngagementEmailsV2 = onCall(
             try {
                 const userData = userDocMap.get(uid) || {};
                 const name = userData.customDisplayName || userData.displayName || "회원";
+                const locale = normalizeLocale(userData.locale);
                 let email = String(userData.email || "").trim();
                 if (!email) {
                     try {
@@ -6546,7 +6693,7 @@ exports.sendReEngagementEmailsV2 = onCall(
                 }
 
                 if (email) {
-                    targets.push({ uid, name, email });
+                    targets.push({ uid, name, email, locale });
                 }
             } catch (_) {}
         }));
@@ -6554,7 +6701,7 @@ exports.sendReEngagementEmailsV2 = onCall(
         if (preview) {
             return {
                 count: targets.length,
-                targets: targets.map((target) => ({ name: target.name, email: target.email })),
+                targets: targets.map((target) => ({ name: target.name, email: target.email, locale: target.locale })),
             };
         }
 
@@ -6571,8 +6718,9 @@ exports.sendReEngagementEmailsV2 = onCall(
             const template = buildReEngagementEmailTemplate({
                 days,
                 name: target.name,
-                appBaseUrl: APP_BASE_URL,
+                appBaseUrl: target.locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
                 appIconUrl: APP_ICON_URL,
+                locale: target.locale,
             });
             const sentAtIso = new Date().toISOString();
             const emailLogRef = db.collection("emailLogs").doc(target.uid);
@@ -6585,6 +6733,7 @@ exports.sendReEngagementEmailsV2 = onCall(
                 days,
                 sentAt: sentAtIso,
                 recipientEmail: target.email,
+                locale: target.locale,
                 method: template.method,
                 subject: template.subject,
                 summary: template.summary,
@@ -6592,7 +6741,7 @@ exports.sendReEngagementEmailsV2 = onCall(
             };
 
             await transporter.sendMail({
-                from: `"해빛스쿨" <${GMAIL_USER.value()}>`,
+                from: `"${target.locale === "en" ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
                 to: target.email,
                 subject: template.subject,
                 html: template.html,
@@ -6647,15 +6796,28 @@ exports.sendDailyReminder = onSchedule(
             .filter((target) => !loggedIds.has(target.uid));
 
         console.log(`sendDailyReminder: ${targets.length} targets / ${loggedIds.size} logged today`);
-        const reminderUrl = buildAppPath("diet", { focus: "upload" });
-        await sendMulticast(targets, {
-            title: "오늘 기록을 시작해 볼까요?",
-            body: "식단 사진 한 장부터 올리면 오늘 루틴이 바로 시작돼요.",
-            tag: "daily-reminder",
-            url: reminderUrl,
-            actions: buildNotificationActions([
-                { action: "record-now", title: "지금 기록", url: reminderUrl }
-            ])
+        await sendLocalizedMulticast(targets, (locale) => {
+            const reminderUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload" });
+            if (normalizeLocale(locale) === "en") {
+                return {
+                    title: "Ready to start today’s record?",
+                    body: "Upload one food photo and today’s routine begins.",
+                    tag: "daily-reminder",
+                    url: reminderUrl,
+                    actions: buildNotificationActions([
+                        { action: "record-now", title: "Record now", url: reminderUrl }
+                    ])
+                };
+            }
+            return {
+                title: "오늘 기록을 시작해 볼까요?",
+                body: "식단 사진 한 장부터 올리면 오늘 루틴이 바로 시작돼요.",
+                tag: "daily-reminder",
+                url: reminderUrl,
+                actions: buildNotificationActions([
+                    { action: "record-now", title: "지금 기록", url: reminderUrl }
+                ])
+            };
         }); /*
             "🌞 오늘 건강 기록하셨나요?",
             "식단·운동·수면 기록으로 건강 습관을 이어가세요!",
@@ -6687,15 +6849,28 @@ exports.sendStreakAlert = onSchedule(
 
         const targets = await collectPushTargetsForUsers(eligibleUserIds);
         console.log(`sendStreakAlert: ${targets.length} targets`);
-        const streakUrl = buildAppPath("diet", { focus: "upload" });
-        await sendMulticast(targets, {
-            title: "연속 기록을 이어갈 시간이에요",
-            body: "지금 기록하면 이어온 흐름을 지킬 수 있어요.",
-            tag: "streak-alert",
-            url: streakUrl,
-            actions: buildNotificationActions([
-                { action: "record-now", title: "지금 기록", url: streakUrl }
-            ])
+        await sendLocalizedMulticast(targets, (locale) => {
+            const streakUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload" });
+            if (normalizeLocale(locale) === "en") {
+                return {
+                    title: "Time to keep your streak alive",
+                    body: "Record now to protect the momentum you have built.",
+                    tag: "streak-alert",
+                    url: streakUrl,
+                    actions: buildNotificationActions([
+                        { action: "record-now", title: "Record now", url: streakUrl }
+                    ])
+                };
+            }
+            return {
+                title: "연속 기록을 이어갈 시간이에요",
+                body: "지금 기록하면 이어온 흐름을 지킬 수 있어요.",
+                tag: "streak-alert",
+                url: streakUrl,
+                actions: buildNotificationActions([
+                    { action: "record-now", title: "지금 기록", url: streakUrl }
+                ])
+            };
         }); /*
             sendJobs.map(j => j.token),
             sendJobs.map(j => j.uid),
@@ -6711,7 +6886,9 @@ exports.sendDietProgramLunchReminder = onSchedule(
     async () => sendDietProgramReminder({
         slot: "lunch",
         title: "점심 전에 식단 방법을 떠올려볼까요?",
+        titleEn: "Quick meal-method check before lunch",
         body: "선택한 식단 방법에 맞춰 이번 식사를 준비해보세요.",
+        bodyEn: "Use your selected food method to prepare this meal.",
         tag: "diet-program-pre-lunch",
         focus: "lunch"
     })
@@ -6722,7 +6899,9 @@ exports.sendDietProgramDinnerReminder = onSchedule(
     async () => sendDietProgramReminder({
         slot: "dinner",
         title: "저녁 전에 식단 방법을 한번 더 체크해볼까요?",
+        titleEn: "One more meal-method check before dinner",
         body: "오늘 저녁도 선택한 식단 방법 흐름에 맞춰 준비해보세요.",
+        bodyEn: "Keep tonight’s dinner aligned with the food method you chose.",
         tag: "diet-program-pre-dinner",
         focus: "dinner"
     })
@@ -6733,7 +6912,9 @@ exports.sendDietProgramFastingStartReminder = onSchedule(
     async () => sendDietProgramReminder({
         intermittentFasting: true,
         title: "간헐적 단식 식사 시간이 열렸어요",
+        titleEn: "Your intermittent-fasting eating window is open",
         body: "12:00부터 20:00까지 식사할 수 있어요. 첫 식사는 단백질과 채소부터 시작해보세요.",
+        bodyEn: "You can eat from 12:00 to 20:00. Try starting with protein and vegetables.",
         tag: "diet-program-fasting-start",
         focus: "lunch"
     })
@@ -6744,7 +6925,9 @@ exports.sendDietProgramFastingClosingReminder = onSchedule(
     async () => sendDietProgramReminder({
         intermittentFasting: true,
         title: "오늘 식사 창 마감이 가까워졌어요",
+        titleEn: "Your eating window is closing soon",
         body: "지금은 19:30이에요. 20:00 전에 식사를 마무리해보세요.",
+        bodyEn: "It is 19:30 now. Try to finish eating before 20:00.",
         tag: "diet-program-fasting-close",
         focus: "dinner"
     })

@@ -61,20 +61,103 @@ const METHOD_LIST = Object.freeze([
 
 const METHOD_MAP = new Map(METHOD_LIST.map((method) => [method.id, method]));
 
+const ENGLISH_METHOD_OVERRIDES = Object.freeze({
+    [MEDITATION_METHOD_IDS.ABDOMINAL]: {
+        name: 'Belly breathing',
+        guide: 'Inhale for 4 seconds, exhale for 6 seconds.',
+        completionLine: 'Belly breathing helped your body soften.',
+        phaseSteps: [
+            { label: 'Inhale', line: 'Let your belly gently rise as you breathe in.', voiceCue: 'Slowly breathe in.' },
+            { label: 'Exhale', line: 'Let your belly fall as you breathe out long and steady.', voiceCue: 'Breathe out slowly.' }
+        ]
+    },
+    [MEDITATION_METHOD_IDS.FOUR_SEVEN_EIGHT]: {
+        name: '4-7-8 breathing',
+        guide: 'Inhale 4 seconds, hold 7, exhale 8.',
+        completionLine: '4-7-8 breathing helped settle your rhythm.',
+        phaseSteps: [
+            { label: 'Inhale', line: 'Breathe in through your nose for 4 seconds.', voiceCue: 'Breathe in.' },
+            { label: 'Hold', line: 'Hold gently and keep your chest relaxed.', voiceCue: 'Hold for a moment.' },
+            { label: 'Exhale', line: 'Breathe out slowly for 8 seconds.', voiceCue: 'Breathe out slowly.' }
+        ]
+    },
+    [MEDITATION_METHOD_IDS.BOX]: {
+        name: 'Box breathing',
+        guide: 'Inhale 4, hold 4, exhale 4, hold 4.',
+        completionLine: 'Box breathing brought your attention back to center.',
+        phaseSteps: [
+            { label: 'Inhale', line: 'Breathe in for 4 seconds.', voiceCue: 'Breathe in.' },
+            { label: 'Hold', line: 'Hold gently with full lungs.', voiceCue: 'Hold for a moment.' },
+            { label: 'Exhale', line: 'Breathe out slowly for 4 seconds.', voiceCue: 'Breathe out.' },
+            { label: 'Hold', line: 'Rest briefly before the next breath.', voiceCue: 'Hold for a moment.' }
+        ]
+    },
+    [MEDITATION_METHOD_IDS.MINDFULNESS]: {
+        name: 'Short mindfulness',
+        guide: 'Notice your breath and body, then let today pass through gently.',
+        completionLine: 'Mindfulness helped your body and thoughts settle again.',
+        segments: [
+            { line: 'Begin by noticing the feeling of your breath.' },
+            { line: 'Let your shoulders and jaw soften.' },
+            { line: 'Let today pass through, then return to your breath.' },
+            { line: 'Finish with one slow, steady breath.' }
+        ]
+    }
+});
+
+function getMeditationLocale() {
+    try {
+        if (typeof document !== 'undefined') {
+            const root = document.documentElement;
+            if (String(root?.lang || '').toLowerCase().startsWith('en')) return 'en';
+            if (root?.classList?.contains('locale-en')) return 'en';
+        }
+        if (typeof window !== 'undefined') {
+            const path = String(window.location?.pathname || '').replace(/\/+$/, '') || '/';
+            if (path === '/en' || path === '/en/index.html') return 'en';
+        }
+    } catch (_) {}
+    return 'ko';
+}
+
+function isEnglishMeditationLocale() {
+    return getMeditationLocale() === 'en';
+}
+
+function localizeMeditationMethod(method) {
+    if (!method || !isEnglishMeditationLocale()) return { ...method };
+    const overrides = ENGLISH_METHOD_OVERRIDES[method.id] || {};
+    const localized = { ...method, ...overrides };
+    if (Array.isArray(method.phaseSteps)) {
+        localized.phaseSteps = method.phaseSteps.map((step, index) => ({
+            ...step,
+            ...(overrides.phaseSteps?.[index] || {})
+        }));
+    }
+    if (Array.isArray(method.segments)) {
+        localized.segments = method.segments.map((segment, index) => ({
+            ...segment,
+            ...(overrides.segments?.[index] || {})
+        }));
+    }
+    return localized;
+}
+
 export const MEDITATION_COMMON_NOTE = '편하게 앉고, 무리하지 말고, 어지러우면 중단.';
 
 export function listMeditationMethods() {
-    return METHOD_LIST.map((method) => ({ ...method }));
+    return METHOD_LIST.map((method) => localizeMeditationMethod(method));
 }
 
 export function getMeditationMethodMeta(methodId = '') {
     const normalizedId = String(methodId || '').trim();
-    return METHOD_MAP.get(normalizedId) || METHOD_MAP.get(DEFAULT_MEDITATION_METHOD_ID);
+    return localizeMeditationMethod(METHOD_MAP.get(normalizedId) || METHOD_MAP.get(DEFAULT_MEDITATION_METHOD_ID));
 }
 
 export function formatMeditationDurationLabel(durationSec = 0) {
     const safeSec = Math.max(0, Number(durationSec) || 0);
     const minutes = Math.max(1, Math.round(safeSec / 60));
+    if (isEnglishMeditationLocale()) return `${minutes} min`;
     return `${minutes}분`;
 }
 
