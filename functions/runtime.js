@@ -4513,7 +4513,9 @@ exports.startChallenge = onCall(
         }
 
         const stakeAmount = parseFloat(hbtAmount) || 0;
-        const isTieredStakeRequest = stakeAmount > 0 && Number(stakeFlowVersion) >= 2;
+        const stakeFlowVersionNumber = Number(stakeFlowVersion) || 1;
+        const hasTieredStakeRequestHint = !stakeTxHash && (stakeApprovalTxHash || stakeWalletAddress);
+        const isTieredStakeRequest = stakeAmount > 0 && (stakeFlowVersionNumber >= 2 || hasTieredStakeRequestHint);
         let stakeContractMode = stakeAmount > 0
             ? (isTieredStakeRequest ? "tiered" : "staking")
             : null;

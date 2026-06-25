@@ -11,10 +11,16 @@ describe('challenge stake isolation', () => {
         expect(runtimeSource).toContain('async function startTieredChallengeStake');
         expect(runtimeSource).toContain('await stakingContract.getChallenge(userWalletAddress, tierIndex)');
         expect(runtimeSource).toContain('await stakingContract.startChallenge(');
+        expect(runtimeSource).toContain('const stakeFlowVersionNumber = Number(stakeFlowVersion) || 1;');
+        expect(runtimeSource).toContain('const hasTieredStakeRequestHint = !stakeTxHash && (stakeApprovalTxHash || stakeWalletAddress);');
+        expect(runtimeSource).toContain('const isTieredStakeRequest = stakeAmount > 0 && (stakeFlowVersionNumber >= 2 || hasTieredStakeRequestHint);');
         expect(runtimeSource).toContain('stakeContractMode = "tiered"');
         expect(runtimeSource).not.toContain('HBT 예치 챌린지는 한 번에 하나만 참여할 수 있습니다.');
 
         expect(managerSource).toContain('async function verifyPaidChallengeStartEligibility');
+        expect(managerSource).toContain('function getPendingChallengeStakeFlowVersion(pending = {})');
+        expect(managerSource).toContain('if (pending.stakeApprovalTxHash && !pending.stakeTxHash)');
+        expect(managerSource).toContain('stakeFlowVersion: getPendingChallengeStakeFlowVersion(pending)');
         expect(managerSource.match(/stakeFlowVersion: 2/g).length).toBeGreaterThanOrEqual(3);
         expect(managerSource.match(/erc20Contract\.approve\(ACTIVE_STAKING_ADDRESS, rawAmount\)/g)).toHaveLength(2);
         expect(managerSource).not.toContain('stakingContract.stakeForChallenge(rawAmount)');
