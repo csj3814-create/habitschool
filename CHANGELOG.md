@@ -2,6 +2,27 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-06-25
+
+### Changed
+- Added the English `/en` simple app entry and polished its signed-in design hierarchy.
+- Updated English simple app cards, upload zones, AI buttons, and CTAs to better match the Korean simple visual quality.
+- Rotated PWA/assets through v216 so production clients receive the latest English styling.
+
+### Fixed
+- Fixed remaining Korean labels in the English Exercise and Mind simple flows.
+- Updated meditation guide tests to cover the current English/Korean guide toggle copy.
+
+### Verification
+- `npm test`
+- `npm run check:en`
+- `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
+- `git diff --check`
+
+### Deployment
+- Production: `https://habitschool.web.app/en`
+- Latest production commit: `ecfccb3 Polish English simple app styling`
+
 ## 2026-06-04
 
 ### Added
