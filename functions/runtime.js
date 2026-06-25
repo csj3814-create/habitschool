@@ -1847,16 +1847,29 @@ exports.getOnchainBalance = onCall(
         }
 
         const uid = request.auth.uid;
+        const targetUid = String(request.data?.targetUid || uid).trim();
+        if (!targetUid || targetUid.includes("/")) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 사용자입니다.");
+        }
 
         try {
-            const userSnap = await db.collection("users").doc(uid).get();
+            if (targetUid !== uid) {
+                const email = normalizeEmail(request.auth?.token?.email);
+                const uidAdminSnap = await db.doc(`admins/${uid}`).get();
+                const emailAdminSnap = email ? await db.doc(`admins/${email}`).get() : null;
+                if (!uidAdminSnap.exists && !emailAdminSnap?.exists && !isBootstrapAdminEmail(email)) {
+                    throw new HttpsError("permission-denied", "관리자 권한 필요");
+                }
+            }
+
+            const userSnap = await db.collection("users").doc(targetUid).get();
             if (!userSnap.exists) {
                 throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
             }
 
             const walletAddress = getEffectiveWalletAddress(userSnap.data());
             if (!walletAddress) {
-                return { balance: "0", balanceFormatted: "0" };
+                return { balance: "0", balanceFormatted: "0", uid: targetUid };
             }
 
             const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
@@ -1869,6 +1882,7 @@ exports.getOnchainBalance = onCall(
             return {
                 balance: balance.toString(),
                 balanceFormatted: formatted,
+                uid: targetUid,
                 walletAddress: walletAddress
             };
 

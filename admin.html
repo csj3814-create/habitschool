@@ -288,13 +288,14 @@
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
                     <th class="sort" onclick="sortBy('coins')">현재 포인트 ↕</th>
                     <th class="sort" onclick="sortBy('hbt')">누적 HBT ↕</th>
+                    <th>온체인 HBT</th>
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
                     <th>미활동 이메일</th>
                     <th>상세</th>
                 </tr></thead>
-                <tbody id="member-tbody"><tr><td colspan="12">데이터를 불러오는 중...</td></tr></tbody>
+                <tbody id="member-tbody"><tr><td colspan="13">데이터를 불러오는 중...</td></tr></tbody>
             </table>
             <div class="member-pagination">
                 <div id="member-page-meta" class="member-pagination-meta">총 0명</div>
@@ -605,6 +606,7 @@
     let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
+    const memberOnchainHbt = {};
     const PAGE_SIZE_MEMBERS = 20;
     const tabLoaded = {};
     let rewardMarketRows = [];
@@ -793,6 +795,7 @@
     // ── Auth ──────────────────────────────────────────────────
     const ADMIN_EMAILS = ['csj3814@gmail.com'];
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
+    const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
     function normalizeEmail(email) {
@@ -1139,7 +1142,7 @@
             memberCurrentPage = 0;
             renderMembers();
         } catch(e) {
-            document.getElementById('member-tbody').innerHTML = `<tr><td colspan="12" style="color:red;">${escapeHtml(e.message)}</td></tr>`;
+            document.getElementById('member-tbody').innerHTML = `<tr><td colspan="13" style="color:red;">${escapeHtml(e.message)}</td></tr>`;
             renderMemberPagination(0);
         }
     }
@@ -1160,7 +1163,7 @@
         });
         const tbody = document.getElementById('member-tbody');
         if (!rows.length) {
-            tbody.innerHTML='<tr><td colspan="12" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
+            tbody.innerHTML='<tr><td colspan="13" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
             memberCurrentPage = 0;
             renderMemberPagination(0);
             return;
@@ -1177,6 +1180,7 @@
             <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
             <td>Lv.${r.level}</td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td><td>${r.hbt.toLocaleString()}</td>
+            <td>${renderMemberOnchainHbtCell(r.uid)}</td>
             <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
             <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
             <td>${r.msgBadge}</td>
@@ -1184,6 +1188,31 @@
             <td><button class="btn-view" onclick="openDetail('${r.uid}')">🔍 상세</button></td>
         </tr>`).join('');
         renderMemberPagination(totalRows);
+    };
+
+    function renderMemberOnchainHbtCell(uid) {
+        const state = memberOnchainHbt[uid];
+        if (state?.status === 'loading') {
+            return '<button class="btn-view" style="opacity:.6;" disabled>조회 중</button>';
+        }
+        if (state?.status === 'done') {
+            return `<span style="font-weight:600;">${formatAdminNumber(state.value, 3)}</span> <button class="btn-view" style="padding:4px 6px;" data-uid="${escapeHtml(uid)}" onclick="checkMemberOnchainHbt(this.dataset.uid)">↻</button>`;
+        }
+        const label = state?.status === 'error' ? '재시도' : '확인';
+        const title = state?.message ? ` title="${escapeHtml(state.message)}"` : '';
+        return `<button class="btn-view" data-uid="${escapeHtml(uid)}"${title} onclick="checkMemberOnchainHbt(this.dataset.uid)">${label}</button>`;
+    }
+
+    window.checkMemberOnchainHbt = async function(uid) {
+        memberOnchainHbt[uid] = { status: 'loading' };
+        renderMembers();
+        try {
+            const res = await getOnchainBalanceCallable({ targetUid: uid });
+            memberOnchainHbt[uid] = { status: 'done', value: res.data?.balanceFormatted || '0' };
+        } catch (e) {
+            memberOnchainHbt[uid] = { status: 'error', message: e.message || '조회 실패' };
+        }
+        renderMembers();
     };
 
     window.resetMemberPageAndRender = function() {
