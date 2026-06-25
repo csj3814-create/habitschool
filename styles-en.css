@@ -8,6 +8,9 @@
     --en-mint-2: #F5FFF9;
     --en-line: #D8EFE2;
     --en-muted: #587163;
+    --en-orange: #FF8A00;
+    --en-orange-dark: #9A4B00;
+    --en-cream: #FFF8EE;
     --en-shadow: 0 24px 70px rgba(13, 91, 56, 0.14);
 }
 
@@ -374,12 +377,13 @@ html.locale-en body {
 
 html.locale-en.signed-in .app-container {
     max-width: 430px;
-    background: #F7FFF9;
+    background: linear-gradient(180deg, #FFFDF7 0%, #F4FFF8 45%, #F8FFFB 100%);
 }
 
 html.locale-en #main-app .header {
-    background: #FFFFFF;
+    background: rgba(255, 255, 255, 0.94);
     border-bottom: 1px solid var(--en-line);
+    box-shadow: 0 8px 24px rgba(72, 45, 12, 0.04);
 }
 
 html.locale-en #user-greeting {
@@ -411,6 +415,7 @@ html.locale-en .tab-btn {
 
 html.locale-en .tab-btn.active {
     color: var(--en-green-dark);
+    border-bottom-color: var(--en-orange);
 }
 
 html.locale-en .content-section {
@@ -420,14 +425,13 @@ html.locale-en .content-section {
 html.locale-en .record-flow-card,
 html.locale-en .card,
 html.locale-en .upload-area {
-    border-color: var(--en-line);
-    border-radius: 26px;
-    background: #FFFFFF;
-    box-shadow: 0 14px 34px rgba(13, 91, 56, 0.08);
+    border-color: rgba(226, 205, 171, 0.72);
+    border-radius: 22px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDF8 100%);
+    box-shadow: 0 16px 36px rgba(72, 45, 12, 0.07);
 }
 
 html.locale-en .record-flow-btn,
-html.locale-en .diet-ai-btn,
 html.locale-en .step-input-btn,
 html.locale-en .submit-btn {
     background: var(--en-green);
@@ -437,11 +441,49 @@ html.locale-en .submit-btn {
     box-shadow: 0 12px 28px rgba(19, 184, 106, 0.18);
 }
 
+html.locale-en .record-flow-btn.tone-accent {
+    background: linear-gradient(135deg, var(--en-orange), #FF6D00);
+    box-shadow: 0 12px 26px rgba(255, 138, 0, 0.22);
+}
+
 html.locale-en .record-flow-btn:not(.tone-success):not(.tone-accent) {
     background: #FFFFFF;
     color: var(--en-green-dark);
     border: 1px solid var(--en-line);
     box-shadow: none;
+}
+
+html.locale-en .diet-ai-btn {
+    background: linear-gradient(135deg, #DFF6E5, #C9EFD2);
+    color: var(--en-green-dark);
+    border: 1px solid #A7DDB8;
+    box-shadow: none;
+}
+
+html.locale-en .card-fasting {
+    background: linear-gradient(180deg, #F4FBFF 0%, #FFFFFF 100%) !important;
+    border-color: #CFE9FA !important;
+}
+
+html.locale-en .upload-area {
+    min-height: 168px;
+    border-style: dashed;
+    border-color: #CFEEDB;
+    background: rgba(255, 255, 255, 0.78);
+}
+
+html.locale-en .upload-area .preview-img {
+    max-height: 112px;
+    border-radius: 10px;
+    box-shadow: 0 10px 24px rgba(72, 45, 12, 0.10);
+}
+
+html.locale-en .static-remove-btn {
+    border-radius: 10px;
+    background: #FFF3F1;
+    border: 1px solid #FFD2CE;
+    color: #D93025;
+    font-weight: 800;
 }
 
 html.locale-en .simple-profile-shell,

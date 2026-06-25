@@ -129,7 +129,8 @@ describe('meditation guide helpers', () => {
         expect(APP_SOURCE).toContain('window.resumeMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.cancelMeditationSession = function()');
         expect(APP_SOURCE).toContain('window.toggleMeditationSound = function()');
-        expect(APP_SOURCE).toContain("soundToggleBtn.textContent = enabled ? '안내 켬' : '안내 끔';");
+        expect(APP_SOURCE).toContain('soundToggleBtn.textContent = isEnglishLocale()');
+        expect(APP_SOURCE).toContain("? (enabled ? 'Guide on' : 'Guide off')");
         expect(APP_SOURCE).toContain('window.selectMeditationVideo = function(videoId = \'\')');
         expect(APP_SOURCE).toContain('function getGratitudeSpeechRecognitionCtor()');
         expect(APP_SOURCE).toContain('window.toggleGratitudeVoiceInput = function()');
