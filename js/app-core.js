@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=214';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=214';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=215';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=215';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=214';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=214';
+} from './auth-login-helpers.js?v=215';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=215';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=214';
+} from './exercise-media.js?v=215';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=214';
+} from './health-connect-utils.js?v=215';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=214';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=214';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=214';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=214';
-import { sanitize, compressImage } from './data-manager.js?v=214';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=214';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=214';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=214';
+} from './habit-groups.js?v=215';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=215';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=215';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=215';
+import { sanitize, compressImage } from './data-manager.js?v=215';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=215';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=215';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=215';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=214';
+} from './diet-program.js?v=215';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=214';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=214';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=214';
+} from './meditation-guide.js?v=215';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=215';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=215';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=214';
+} from './social-challenge-readiness.js?v=215';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=214';
+} from './monthly-mvp-reward.js?v=215';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -148,24 +148,28 @@ const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
         id: 'calm-ocean-1',
         label: '고요한 바다',
+        labelEn: 'Calm ocean',
         videoId: 'Zr_nvOU8dd0',
         randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-2',
         label: '상쾌한 숲속',
+        labelEn: 'Fresh forest',
         videoId: 'VNu15Qqomt8',
         randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-3',
         label: '새하얀 설경',
+        labelEn: 'Snowy calm',
         videoId: '0ZAH8NUMNDQ',
         randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     },
     {
         id: 'calm-ocean-4',
         label: '푸른 산호 바다',
+        labelEn: 'Blue coral sea',
         videoId: 'sebYYzRiHqE',
         randomStartMaxSec: MEDITATION_VIDEO_RANDOM_START_MAX_SEC
     }
@@ -5250,7 +5254,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=214';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=215';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10998,7 +11002,7 @@ function renderMindfulnessVideoChips({ disabled = false } = {}) {
             onclick="selectMeditationVideo('${option.id}')"
             ${disabled ? 'disabled' : ''}
             aria-pressed="${option.id === selectedId ? 'true' : 'false'}"
-        >${escapeHtml(option.label)}</button>
+        >${escapeHtml(isEnglishLocale() ? (option.labelEn || option.label) : option.label)}</button>
     `).join('');
 }
 
@@ -11074,7 +11078,7 @@ function renderMeditationPhaseSteps(phaseStepsEl, phaseUiState = null) {
                 </span>
                 <span class="meditation-phase-copy">
                     <strong class="meditation-phase-label">${escapeHtml(step.label || '')}</strong>
-                    <span class="meditation-phase-time">${escapeHtml(String(step.seconds || ''))}초</span>
+                    <span class="meditation-phase-time">${escapeHtml(String(step.seconds || ''))}${isEnglishLocale() ? ' sec' : '초'}</span>
                 </span>
             </span>
         `).join('');
@@ -11175,16 +11179,22 @@ function renderMeditationUi({ skipGuideUpdate = false } = {}) {
         completionEl.textContent = completionLine;
         completionEl.hidden = !completionLine;
     }
-    if (noteEl) noteEl.textContent = MEDITATION_COMMON_NOTE;
+    if (noteEl) noteEl.textContent = isEnglishLocale()
+        ? 'Sit comfortably. Do not force it. Stop if you feel dizzy.'
+        : MEDITATION_COMMON_NOTE;
     if (soundToggleBtn) {
         const enabled = isMeditationSoundEnabled();
-        soundToggleBtn.textContent = enabled ? '안내 켬' : '안내 끔';
+        soundToggleBtn.textContent = isEnglishLocale()
+            ? (enabled ? 'Guide on' : 'Guide off')
+            : (enabled ? '안내 켬' : '안내 끔');
         soundToggleBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
         soundToggleBtn.classList.toggle('is-on', enabled);
     }
     if (startBtn) {
         startBtn.hidden = isActive;
-        startBtn.textContent = state.done ? '다시 하기' : '시작';
+        startBtn.textContent = isEnglishLocale()
+            ? (state.done ? 'Restart' : 'Start')
+            : (state.done ? '다시 하기' : '시작');
     }
     if (pauseBtn) pauseBtn.hidden = state.status !== 'running';
     if (resumeBtn) resumeBtn.hidden = state.status !== 'paused';
@@ -11214,7 +11224,9 @@ function completeMeditationSession({ shouldNotify = true } = {}) {
     playMeditationCue('complete');
     renderMeditationUi();
     if (shouldNotify) {
-        showToast('🧘 명상을 마쳤어요. 저장하면 오늘 기록에 반영돼요.');
+        showToast(isEnglishLocale()
+            ? '🧘 Meditation complete. Save to add it to today’s log.'
+            : '🧘 명상을 마쳤어요. 저장하면 오늘 기록에 반영돼요.');
     }
 }
 
@@ -11743,7 +11755,9 @@ window.cancelMeditationSession = function() {
     }
     setMeditationCueTokenFromState(null);
     renderMeditationUi();
-    showToast('🧘 명상 타이머를 중단했어요.');
+    showToast(isEnglishLocale()
+        ? '🧘 Meditation timer stopped.'
+        : '🧘 명상 타이머를 중단했어요.');
 };
 
 window.toggleMeditationSound = function() {

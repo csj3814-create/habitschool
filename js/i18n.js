@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=214';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=215';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -97,10 +97,22 @@ const ENGLISH_TEXT_REPLACEMENTS = new Map([
     ['캡처 올리기', 'Upload screenshot'],
     ['운동 이미지 올리기', 'Upload workout photo'],
     ['운동 영상 올리기', 'Upload workout video'],
+    ['운동 이미지 등록', 'Add workout photo'],
+    ['운동 영상 등록', 'Add workout video'],
+    ['운동 이미지', 'Workout photo'],
+    ['운동 영상', 'Workout video'],
+    ['사진은 촬영 당일에만 등록 가능합니다.', 'Photos can only be uploaded on the day they were taken.'],
+    ['영상은 촬영 당일에만 등록 가능합니다.', 'Videos can only be uploaded on the day they were recorded.'],
     ['삭제', 'Remove'],
+    ['X 삭제', 'X Remove'],
+    ['미달성', 'Not yet'],
     ['입력', 'Enter'],
     ['접기', 'Collapse'],
     ['펼치기', 'Expand'],
+    ['시작', 'Start'],
+    ['일시정지', 'Pause'],
+    ['재개', 'Resume'],
+    ['중단', 'Stop'],
     ['식단 저장하기', 'Save food log'],
     ['운동 저장하기', 'Save exercise log'],
     ['마음 저장하기', 'Save mind log'],
@@ -149,9 +161,14 @@ const SELECTOR_TEXTS = [
     ['#exercise-guide-body .record-flow-actions button:nth-child(1)', 'Enter steps'],
     ['#exercise-guide-body .record-flow-actions button:nth-child(2)', 'Workout photo'],
     ['#exercise-guide-body .record-flow-actions button:nth-child(3)', 'Workout video'],
+    ['#exercise .quest-item span:first-child', '🏃 Cardio/steps 10+5P, strength 10+5P'],
+    ['#quest-exercise', 'Not yet'],
     ['#step-card h3', '👣 Today’s steps'],
-    ['#exercise .card:nth-of-type(2) h3', '🏋️ Workout photos'],
-    ['#exercise .card:nth-of-type(3) h3', '🎬 Workout videos'],
+    ['#exercise-cardio-title', '📸 Workout photo'],
+    ['#exercise-cardio-date-note', '📸 Photos can only be uploaded on the day they were taken.'],
+    ['#exercise-strength-title', '📹 Workout video'],
+    ['#exercise-strength-date-note', '📹 Videos can only be uploaded on the day they were recorded.'],
+    ['#exercise-strength-date-note + .guide-btn', '📸 Easy 10-second hyperlapse guide'],
     ['#sleep .record-flow-kicker', 'Guide'],
     ['#sleep .simple-mode-record-title', 'Log your mind today'],
     ['#sleep-guide-body h3', 'Reset with sleep, meditation, and gratitude.'],
@@ -160,10 +177,18 @@ const SELECTOR_TEXTS = [
     ['#sleep-guide-body .record-flow-actions button:nth-child(1)', 'Sleep screenshot'],
     ['#sleep-guide-body .record-flow-actions button:nth-child(2)', 'Start meditation'],
     ['#sleep-guide-body .record-flow-actions button:nth-child(3)', 'Gratitude journal'],
+    ['#sleep .quest-item span:first-child', '🧘 Mind/sleep log (10P each, up to 20P)'],
+    ['#quest-mind', 'Not yet'],
+    ['#sleep .upload-cta-text strong', 'Upload a sleep screenshot'],
+    ['#sleep .upload-cta-text span', 'AI will analyze your sleep pattern and suggest improvements.'],
     ['#sleep .card h3', '🌙 Sleep analysis'],
+    ['#sleep-date-note', '📸 Photos can only be uploaded on the day they were taken.'],
     ['#txt-sleep', 'Upload screenshot'],
     ['#ai-btn-sleep', '✨ AI analysis'],
+    ['#meditation-card-title', '🧘 Today’s meditation'],
     ['#meditation-practice-card .meditation-practice-kicker', 'Breathing guide'],
+    ['.meditation-common-note', 'Sit comfortably. Do not force it. Stop if you feel dizzy.'],
+    ['.meditation-journal-label', 'Three-line gratitude journal after meditation'],
     ['#gratitude-voice-btn', 'Voice input']
 ];
 
@@ -180,6 +205,11 @@ const SELECTOR_ATTRS = [
     ['#preview-dinner', 'alt', 'Meal 3 preview'],
     ['#preview-snack', 'alt', 'Meal 4 preview'],
     ['#preview-sleep', 'alt', 'Sleep screenshot preview'],
+    ['#rm-breakfast', 'aria-label', 'Remove meal 1 photo'],
+    ['#rm-lunch', 'aria-label', 'Remove meal 2 photo'],
+    ['#rm-dinner', 'aria-label', 'Remove meal 3 photo'],
+    ['#rm-snack', 'aria-label', 'Remove meal 4 photo'],
+    ['#rm-sleep', 'aria-label', 'Remove sleep screenshot'],
     ['#user-greeting', 'aria-label', 'Open profile']
 ];
 

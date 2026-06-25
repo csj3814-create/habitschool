@@ -191,7 +191,7 @@ export function buildMeditationCompletionLabel(log = {}) {
     const completionDurationSec = Number.isFinite(normalized.completionDurationSec) && normalized.completionDurationSec > 0
         ? Math.round(normalized.completionDurationSec)
         : normalized.meditationDurationSec;
-    const parts = ['오늘 명상 완료'];
+    const parts = [isEnglishMeditationLocale() ? 'Meditation complete today' : '오늘 명상 완료'];
     if (completionMethodId) parts.push(methodMeta.name);
     if (completionDurationSec > 0) {
         parts.push(formatMeditationDurationLabel(completionDurationSec));
