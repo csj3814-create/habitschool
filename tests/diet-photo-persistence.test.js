@@ -45,6 +45,20 @@ describe('diet photo persistence', () => {
         expect(appSource).not.toContain('hasMediaUrl(diet[`${slot}Url`]) return');
     });
 
+    it('waits briefly for selected diet image uploads before falling back to background save', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;');
+        expect(appSource).toContain("const getImmediateMediaResult = async ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {");
+        expect(appSource).toContain('waitForOriginalMs: STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS');
+        expect(appSource).toContain('const [breakfastResult, lunchResult, dinnerResult, snackResult] = await Promise.all([');
+        expect(appSource).toContain("getImmediateMediaResult({\n                    inputId: 'diet-img-breakfast'");
+        expect(appSource).toContain('const stillSelectedFile = getSelectedMediaFile(inputEl);');
+        expect(appSource).toContain('if (!stillVisiblePreview || stillSelectedFile !== selectedFile)');
+        expect(appSource).toContain('const resolvedSleepResult = await resolvePendingUploadResult(\'sleep-img\', {');
+        expect(appSource).toContain('if (sleepPreview?.hasAttribute(\'data-user-removed\'))');
+    });
+
     it('clears the removed marker when a diet photo slot receives a replacement file', () => {
         const appSource = readAppSource();
         const previewStaticStart = appSource.indexOf('window.previewStaticImage = function');

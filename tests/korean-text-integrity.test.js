@@ -78,7 +78,7 @@ describe('Korean text integrity', () => {
         const changelogSource = readRepoFile('changelog.html');
 
         expect(changelogSource).toContain('<title>업데이트 노트 - 해빛스쿨</title>');
-        expect(changelogSource).toContain('마지막 업데이트: 2026년 6월 4일');
+        expect(changelogSource).toContain('마지막 업데이트: 2026년 6월 25일');
         expect(changelogSource).not.toMatch(BROKEN_CHANGELOG_QUESTION_RUN_PATTERN);
         expect(changelogSource).not.toMatch(MOJIBAKE_PATTERN);
     });

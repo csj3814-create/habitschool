@@ -22,7 +22,9 @@ describe('daily log offline fallback', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain('daily_log_primary_save_timeout');
+        expect(appSource).toContain('const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;');
         expect(appSource).toContain('const doSetDoc = () => withRejectingTimeout');
+        expect(appSource).toContain('DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS');
         expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), saveData, { merge: true })');
         expect(appSource).toContain('if (isOfflineSaveCandidateError(e))');
         expect(appSource).toContain('if (latestSaveData && docId && isOfflineSaveCandidateError(e))');

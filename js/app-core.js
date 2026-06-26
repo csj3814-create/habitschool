@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=216';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=216';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=217';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=217';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=216';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=216';
+} from './auth-login-helpers.js?v=217';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=217';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=216';
+} from './exercise-media.js?v=217';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=216';
+} from './health-connect-utils.js?v=217';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=216';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=216';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=216';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=216';
-import { sanitize, compressImage } from './data-manager.js?v=216';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=216';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=216';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=216';
+} from './habit-groups.js?v=217';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=217';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=217';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=217';
+import { sanitize, compressImage } from './data-manager.js?v=217';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=217';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=217';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=217';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=216';
+} from './diet-program.js?v=217';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=216';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=216';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=216';
+} from './meditation-guide.js?v=217';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=217';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=217';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=216';
+} from './social-challenge-readiness.js?v=217';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=216';
+} from './monthly-mvp-reward.js?v=217';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -303,8 +303,10 @@ const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
 const BACKGROUND_MEDIA_PATCH_STORAGE_KEY = 'habitschool-background-media-patches-v1';
 const BACKGROUND_MEDIA_PATCH_MAX_ENTRIES = 24;
+const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;
 const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;
 const BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS = 4000;
+const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
@@ -5254,7 +5256,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=216';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=217';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15184,14 +15186,24 @@ async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
     }
 }
 
-async function resolvePendingUploadResult(inputId, { waitForThumbMs = 0 } = {}) {
+async function resolvePendingUploadResult(inputId, { waitForOriginalMs = 0, waitForThumbMs = 0 } = {}) {
     if (!inputId) return null;
     const entry = _pendingUploads.get(inputId);
     if (!entry) return null;
 
     try {
         if (!entry.done || !entry.result) {
-            entry.result = await entry.promise;
+            if (waitForOriginalMs > 0) {
+                const timedOut = Symbol('pending-upload-timeout');
+                const result = await Promise.race([
+                    entry.promise,
+                    new Promise(resolve => setTimeout(() => resolve(timedOut), waitForOriginalMs))
+                ]);
+                if (result === timedOut) return null;
+                entry.result = result;
+            } else {
+                entry.result = await entry.promise;
+            }
             entry.done = true;
         }
         if (waitForThumbMs > 0 && entry.result?.url && !entry.result.thumbUrl && entry.thumbPromise) {
@@ -16807,10 +16819,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 beginTrackedPendingUpload(inputId, pendingUpload);
             };
 
-            const getImmediateMediaResult = ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {
+            const getImmediateMediaResult = async ({ inputId, previewEl, oldUrl, oldThumbUrl, folder, backgroundKind, slot = '' }) => {
                 const inputEl = document.getElementById(inputId);
                 const hasVisiblePreview = !!previewEl && previewEl.style.display !== 'none';
-                const pendingSnapshot = getPendingUploadSnapshot(inputId);
+                let pendingSnapshot = getPendingUploadSnapshot(inputId);
 
                 if (previewEl?.hasAttribute('data-user-removed')) {
                     return { url: null, thumbUrl: null };
@@ -16825,48 +16837,69 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 if (selectedFile && hasVisiblePreview) {
                     if (!pendingSnapshot) {
                         ensureDeferredImageUpload(inputId, selectedFile, folder);
+                        pendingSnapshot = getPendingUploadSnapshot(inputId);
+                    }
+                    const resolvedResult = await resolvePendingUploadResult(inputId, {
+                        waitForOriginalMs: STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS
+                    });
+                    const stillSelectedFile = getSelectedMediaFile(inputEl);
+                    const stillVisiblePreview = !!previewEl && previewEl.style.display !== 'none';
+                    if (previewEl?.hasAttribute('data-user-removed')) {
+                        return { url: null, thumbUrl: null };
+                    }
+                    if (!stillVisiblePreview || stillSelectedFile !== selectedFile) {
+                        return getStoredPreviewState(previewEl, oldUrl, oldThumbUrl);
+                    }
+                    pendingSnapshot = getPendingUploadSnapshot(inputId) || pendingSnapshot;
+                    if (resolvedResult?.url) {
+                        if (hasPendingThumbBackfill(pendingSnapshot)) {
+                            queueBackgroundJob({ kind: backgroundKind, slot, inputId });
+                        }
+                        return resolvedResult;
                     }
                     queueBackgroundJob({ kind: backgroundKind, slot, inputId });
                 }
                 return getStoredPreviewState(previewEl, oldUrl, oldThumbUrl);
             };
 
-            const breakfastResult = getImmediateMediaResult({
-                inputId: 'diet-img-breakfast',
-                previewEl: document.getElementById('preview-breakfast'),
-                oldUrl: oldData?.diet?.breakfastUrl,
-                oldThumbUrl: oldData?.diet?.breakfastThumbUrl,
-                folder: 'diet_images',
-                backgroundKind: 'diet',
-                slot: 'breakfast'
-            });
-            const lunchResult = getImmediateMediaResult({
-                inputId: 'diet-img-lunch',
-                previewEl: document.getElementById('preview-lunch'),
-                oldUrl: oldData?.diet?.lunchUrl,
-                oldThumbUrl: oldData?.diet?.lunchThumbUrl,
-                folder: 'diet_images',
-                backgroundKind: 'diet',
-                slot: 'lunch'
-            });
-            const dinnerResult = getImmediateMediaResult({
-                inputId: 'diet-img-dinner',
-                previewEl: document.getElementById('preview-dinner'),
-                oldUrl: oldData?.diet?.dinnerUrl,
-                oldThumbUrl: oldData?.diet?.dinnerThumbUrl,
-                folder: 'diet_images',
-                backgroundKind: 'diet',
-                slot: 'dinner'
-            });
-            const snackResult = getImmediateMediaResult({
-                inputId: 'diet-img-snack',
-                previewEl: document.getElementById('preview-snack'),
-                oldUrl: oldData?.diet?.snackUrl,
-                oldThumbUrl: oldData?.diet?.snackThumbUrl,
-                folder: 'diet_images',
-                backgroundKind: 'diet',
-                slot: 'snack'
-            });
+            const [breakfastResult, lunchResult, dinnerResult, snackResult] = await Promise.all([
+                getImmediateMediaResult({
+                    inputId: 'diet-img-breakfast',
+                    previewEl: document.getElementById('preview-breakfast'),
+                    oldUrl: oldData?.diet?.breakfastUrl,
+                    oldThumbUrl: oldData?.diet?.breakfastThumbUrl,
+                    folder: 'diet_images',
+                    backgroundKind: 'diet',
+                    slot: 'breakfast'
+                }),
+                getImmediateMediaResult({
+                    inputId: 'diet-img-lunch',
+                    previewEl: document.getElementById('preview-lunch'),
+                    oldUrl: oldData?.diet?.lunchUrl,
+                    oldThumbUrl: oldData?.diet?.lunchThumbUrl,
+                    folder: 'diet_images',
+                    backgroundKind: 'diet',
+                    slot: 'lunch'
+                }),
+                getImmediateMediaResult({
+                    inputId: 'diet-img-dinner',
+                    previewEl: document.getElementById('preview-dinner'),
+                    oldUrl: oldData?.diet?.dinnerUrl,
+                    oldThumbUrl: oldData?.diet?.dinnerThumbUrl,
+                    folder: 'diet_images',
+                    backgroundKind: 'diet',
+                    slot: 'dinner'
+                }),
+                getImmediateMediaResult({
+                    inputId: 'diet-img-snack',
+                    previewEl: document.getElementById('preview-snack'),
+                    oldUrl: oldData?.diet?.snackUrl,
+                    oldThumbUrl: oldData?.diet?.snackThumbUrl,
+                    folder: 'diet_images',
+                    backgroundKind: 'diet',
+                    slot: 'snack'
+                })
+            ]);
 
             const cardioBlocks = [...document.querySelectorAll('.cardio-block')];
             const cardioPersistResults = new Map();
@@ -16975,7 +17008,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const sleepFile = document.getElementById('sleep-img');
             const selectedSleepFile = getSelectedMediaFile(sleepFile);
             let sleepResult = getStoredPreviewState(sleepPreview, oldData?.sleepAndMind?.sleepImageUrl, oldData?.sleepAndMind?.sleepImageThumbUrl);
-            const sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img');
+            let sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img');
             if (sleepPreview?.hasAttribute('data-user-removed')) {
                 sleepResult = { url: null, thumbUrl: null };
             } else if (sleepPreview?.style.display !== 'none' && sleepPendingSnapshot?.result?.url) {
@@ -16986,8 +17019,26 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             } else if (sleepPreview?.style.display !== 'none' && selectedSleepFile) {
                 if (!sleepPendingSnapshot) {
                     ensureDeferredImageUpload('sleep-img', selectedSleepFile, 'sleep_images');
+                    sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img');
                 }
-                queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+                const resolvedSleepResult = await resolvePendingUploadResult('sleep-img', {
+                    waitForOriginalMs: STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS
+                });
+                const stillSelectedSleepFile = getSelectedMediaFile(sleepFile);
+                const stillVisibleSleepPreview = !!sleepPreview && sleepPreview.style.display !== 'none';
+                sleepPendingSnapshot = getPendingUploadSnapshot('sleep-img') || sleepPendingSnapshot;
+                if (sleepPreview?.hasAttribute('data-user-removed')) {
+                    sleepResult = { url: null, thumbUrl: null };
+                } else if (!stillVisibleSleepPreview || stillSelectedSleepFile !== selectedSleepFile) {
+                    sleepResult = getStoredPreviewState(sleepPreview, oldData?.sleepAndMind?.sleepImageUrl, oldData?.sleepAndMind?.sleepImageThumbUrl);
+                } else if (resolvedSleepResult?.url) {
+                    sleepResult = resolvedSleepResult;
+                    if (hasPendingThumbBackfill(sleepPendingSnapshot)) {
+                        queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+                    }
+                } else {
+                    queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+                }
             }
 
             const bUrl = breakfastResult.url, lUrl = lunchResult.url, dUrl = dinnerResult.url, sUrl = snackResult.url;
@@ -17072,7 +17123,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             // 타임아웃을 성공처럼 처리하면 로컬 점수만 오른 뒤 새로고침 때 기록이 사라질 수 있다.
             const doSetDoc = () => withRejectingTimeout(
                 setDoc(doc(db, "daily_logs", docId), saveData, { merge: true }),
-                5000,
+                DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS,
                 'daily_log_primary_save_timeout'
             );
             try {
