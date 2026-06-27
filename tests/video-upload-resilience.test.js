@@ -77,6 +77,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('const pendingUpload = uploadVideoWithThumb(file, \'exercise_videos\', auth.currentUser.uid, localThumbSeed, uploadOptions);');
     });
 
+    it('updates the exercise tab preview when a deferred video thumbnail resolves after upload', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function updateStrengthPreviewAfterResolvedThumb');
+        expect(source).toContain("currentBlock.setAttribute('data-local-draft', 'true');");
+        expect(source).toContain("currentBlock.removeAttribute('data-url');");
+        expect(source).toContain('updateStrengthPreviewAfterResolvedThumb(inputId, {');
+        expect(source).toContain('entry.localThumbDataUrl = thumbDataUrl;');
+        expect(source).toContain('showStrengthPreviewImage(block, normalizedThumbUrl, { savedThumbUrl: normalizedThumbUrl });');
+    });
+
     it('uses object URLs for local photo previews and releases them after persistence', () => {
         const source = readAppSource();
 

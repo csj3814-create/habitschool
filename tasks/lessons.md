@@ -1,5 +1,14 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-06-27 (Exercise Video Thumbnail Preview)
+
+### 241. Deferred video thumbnail backfill must update the live exercise preview too
+- Symptom: after an exercise video upload completed, the exercise tab could keep showing the placeholder instead of the generated thumbnail.
+- Root cause: large exercise videos deferred thumbnail extraction until after the original upload, but the later `thumbPromise` result only updated pending upload metadata and persisted data paths. It did not push the resolved local/remote thumbnail back into the current `.preview-strength-img`.
+- Lesson: when a media pipeline defers thumbnail work for performance, treat the live preview as a first-class consumer of the resolved thumbnail, not only Firestore/backfill state. Also clear stale saved media URL attributes when a replacement upload starts.
+
+---
+
 ## 2026-06-22 (Challenge Stake Isolation)
 
 ### 240. Per-tier app records cannot share an aggregate on-chain settlement slot
@@ -1775,3 +1784,5 @@
 - 2026-06-22: 주간 스케줄 함수가 “변동 없음”을 저장하는 코드만 갖고 있어도 그 전에 Firestore 인덱스 오류가 나면 운영 이력은 통째로 비게 된다. 외부 조회 전에 `evaluating` 기록을 만들고 최상위 실패도 같은 주차 문서에 `error`로 남기며, 필요한 복합 인덱스와 인덱스 준비 중 fallback을 함께 둔다.
 - 2026-06-22: 월요일 00:00 KST에 실행되는 주간 작업의 주차 키를 UTC 일요일 기준으로 계산하면 주차가 틀어진다. KST 달력 날짜를 먼저 만든 뒤 표준 ISO week-year 알고리즘으로 주차를 계산하고 연말 경계까지 테스트한다.
 - 2026-06-22: 관제탑의 같은 탭에 여러 운영 테이블이 있으면 검색·직접 페이지 이동을 한 표에만 붙여 끝내지 않는다. 동일한 데이터 탐색 요구가 있는 회원 자산, HBT 거래, 포인트 지급 내역에 공통 필터·페이지 계산을 적용해 운영 동선을 일관되게 만든다.
+- 2026-06-25: 해빛스쿨/Doctors0 영어 콘텐츠에서 의사 영문 표기는 사용자가 확인한 `CHOI SUKJAE`를 기준으로 한다. 기존 산출물에 `CHOI SEOKJAE` 같은 다른 로마자 표기가 보이면 새 카피나 페이지에 재사용하기 전에 `CHOI SUKJAE`로 정규화 대상으로 표시한다.
+- 2026-06-25: 영어 `/en` 화면은 정적 DOM만 번역해서 끝내지 않는다. MutationObserver 이후에도 동적 렌더링 함수가 버튼, 상태, 완료 라벨, 시간 단위를 한글로 다시 쓰는지 확인하고, 스크린샷 기준 visible text와 aria-label까지 함께 검증한다.

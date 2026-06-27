@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=217';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=217';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=218';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=218';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=217';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=217';
+} from './auth-login-helpers.js?v=218';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=218';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=217';
+} from './exercise-media.js?v=218';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=217';
+} from './health-connect-utils.js?v=218';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=217';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=217';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=217';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=217';
-import { sanitize, compressImage } from './data-manager.js?v=217';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=217';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=217';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=217';
+} from './habit-groups.js?v=218';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=218';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=218';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=218';
+import { sanitize, compressImage } from './data-manager.js?v=218';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=218';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=218';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=218';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=217';
+} from './diet-program.js?v=218';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=217';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=217';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=217';
+} from './meditation-guide.js?v=218';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=218';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=218';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=217';
+} from './social-challenge-readiness.js?v=218';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=217';
+} from './monthly-mvp-reward.js?v=218';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5256,7 +5256,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=217';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=218';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5948,6 +5948,36 @@ function syncPendingStrengthLocalThumb(inputId, thumbDataUrl = '') {
     return normalizedThumb;
 }
 
+function updateStrengthPreviewAfterResolvedThumb(inputId, { videoUrl = '', thumbUrl = '', localThumbDataUrl = '' } = {}) {
+    if (!inputId) return false;
+    const input = document.getElementById(inputId);
+    const block = input?.closest('.strength-block');
+    if (!block || block.hasAttribute('data-user-removed')) return false;
+
+    const normalizedVideoUrl = String(videoUrl || '').trim();
+    const currentVideoUrl = String(block.getAttribute('data-url') || '').trim();
+    if (normalizedVideoUrl) {
+        if (currentVideoUrl && currentVideoUrl !== normalizedVideoUrl) return false;
+        block.setAttribute('data-url', normalizedVideoUrl);
+    }
+
+    const normalizedThumbUrl = String(thumbUrl || '').trim();
+    if (normalizedThumbUrl && isPersistedStorageUrl(normalizedThumbUrl)) {
+        block.setAttribute('data-thumb-url', normalizedThumbUrl);
+        showStrengthPreviewImage(block, normalizedThumbUrl, { savedThumbUrl: normalizedThumbUrl });
+        return true;
+    }
+
+    const normalizedLocalThumb = resolveUsableStrengthLocalThumb(localThumbDataUrl);
+    if (normalizedLocalThumb) {
+        if (normalizedVideoUrl) cacheResolvedExerciseVideoThumb(normalizedVideoUrl, normalizedLocalThumb);
+        showStrengthPreviewImage(block, normalizedLocalThumb, { localThumb: normalizedLocalThumb });
+        return true;
+    }
+
+    return false;
+}
+
 function clearStrengthPreviewVideo(previewVideo) {
     if (!previewVideo) return;
     try { previewVideo.pause(); } catch (_) {}
@@ -6113,6 +6143,8 @@ window.previewDynamicVid = function (input) {
     if (currentBlock) {
         currentBlock.removeAttribute('data-user-removed');
         ensureExerciseBlockMediaId(currentBlock, 'strength');
+        currentBlock.setAttribute('data-local-draft', 'true');
+        currentBlock.removeAttribute('data-url');
         currentBlock.removeAttribute('data-thumb-url');
     }
 
@@ -14981,7 +15013,18 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         // 파일 선택 직후의 사전 업로드 단계에서는 보이지 않게 하고,
         // 이후 저장/후속 패치 경로에서만 명시적으로 상태를 켠다.
         if (current.thumbPromise && !result?.thumbUrl) {
-            current.thumbPromise.then(() => {}).catch(() => {});
+            current.thumbPromise.then((thumbUrl) => {
+                if (!thumbUrl) return;
+                const latest = _pendingUploads.get(inputId);
+                const latestUrl = String(latest?.result?.url || '').trim();
+                if (!latest || latestUrl !== String(result.url || '').trim()) return;
+                latest.result.thumbUrl = thumbUrl;
+                updateStrengthPreviewAfterResolvedThumb(inputId, {
+                    videoUrl: latestUrl,
+                    thumbUrl,
+                    localThumbDataUrl: latest.localThumbDataUrl
+                });
+            }).catch(() => {});
         }
         setThumbPendingState(inputId, { visible: false });
     }).catch(() => {
@@ -15128,6 +15171,16 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
             thumbDataUrl = resolveUsableStrengthLocalThumb(thumbDataUrl);
             if (thumbDataUrl) {
                 cacheResolvedExerciseVideoThumb(url, thumbDataUrl);
+                for (const [inputId, entry] of _pendingUploads) {
+                    const entryUrl = String(entry.result?.url || entry.resolvedUrl || '').trim();
+                    if (entryUrl === url) {
+                        entry.localThumbDataUrl = thumbDataUrl;
+                        updateStrengthPreviewAfterResolvedThumb(inputId, {
+                            videoUrl: url,
+                            localThumbDataUrl: thumbDataUrl
+                        });
+                    }
+                }
             }
 
             let thumbUrl = null;
@@ -15147,9 +15200,14 @@ function uploadVideoWithThumb(file, folder, userId, localThumbDataUrl = '', opti
             }
 
             if (thumbUrl) {
-                for (const [, entry] of _pendingUploads) {
+                for (const [inputId, entry] of _pendingUploads) {
                     if (entry.result && entry.result.url === url) {
                         entry.result.thumbUrl = thumbUrl;
+                        updateStrengthPreviewAfterResolvedThumb(inputId, {
+                            videoUrl: url,
+                            thumbUrl,
+                            localThumbDataUrl: entry.localThumbDataUrl || thumbDataUrl
+                        });
                     }
                 }
             }
