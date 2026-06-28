@@ -1242,6 +1242,26 @@
     transform: scale(0.97);
 }
 
+.challenge-ring-pending {
+    border: 1px solid rgba(76, 175, 80, 0.22);
+}
+
+.challenge-ring-retry {
+    margin-top: 6px;
+    border: 1px solid rgba(76, 175, 80, 0.35);
+    background: rgba(255,255,255,0.72);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: #2E7D32;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.challenge-ring-retry:active {
+    transform: scale(0.98);
+}
+
 .challenge-ring-forfeit {
     position: absolute;
     top: 8px;
