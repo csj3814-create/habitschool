@@ -150,11 +150,19 @@ describe('video upload resilience', () => {
     it('retries a background media upload from the selected file if the initial pending upload lost its URL', () => {
         const source = readAppSource();
 
+        expect(source).toContain('const BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS = 3;');
+        expect(source).toContain('const BACKGROUND_MEDIA_UPLOAD_RETRY_BASE_DELAY_MS = 1500;');
         expect(source).toContain('function retryBackgroundMediaUploadFromSelectedFile');
+        expect(source).toContain('function resolveBackgroundMediaUploadWithRetries');
+        expect(source).toContain('for (let retryAttempt = 1; retryAttempt <= BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS; retryAttempt++)');
+        expect(source).toContain('await waitForBackgroundMediaUploadRetry(retryAttempt - 1);');
+        expect(source).toContain('retrying: true');
+        expect(source).toContain('업로드 재시도 중');
         expect(source).toContain('getBackgroundUploadFolderForJob(job)');
         expect(source).toContain('pendingUpload = uploadWithThumb(file, folder, userId, uploadOptions);');
         expect(source).toContain('pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);');
-        expect(source).toContain('result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });');
+        expect(source).toContain('const uploadResult = await resolveBackgroundMediaUploadWithRetries({ userId, job });');
+        expect(source).toContain('result = uploadResult.result;');
     });
 
     it('suppresses automatic pre-upload failure toasts while deferred save paths retry media uploads', () => {

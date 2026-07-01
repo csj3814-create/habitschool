@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=220';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=220';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=221';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=221';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=220';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=220';
+} from './auth-login-helpers.js?v=221';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=221';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=220';
+} from './exercise-media.js?v=221';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=220';
+} from './health-connect-utils.js?v=221';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=220';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=220';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=220';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=220';
-import { sanitize, compressImage } from './data-manager.js?v=220';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=220';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=220';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=220';
+} from './habit-groups.js?v=221';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=221';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=221';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=221';
+import { sanitize, compressImage } from './data-manager.js?v=221';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=221';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=221';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=221';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=220';
+} from './diet-program.js?v=221';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=220';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=220';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=220';
+} from './meditation-guide.js?v=221';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=221';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=221';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=220';
+} from './social-challenge-readiness.js?v=221';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=220';
+} from './monthly-mvp-reward.js?v=221';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5256,7 +5256,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=220';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=221';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15696,6 +15696,8 @@ let _backgroundUploadProgressPoller = null;
 let _backgroundUploadProgressTracker = null;
 const BACKGROUND_UPLOAD_TRANSFER_WEIGHT = 0.88;
 const BACKGROUND_UPLOAD_SYNC_WEIGHT = 0.12;
+const BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS = 3;
+const BACKGROUND_MEDIA_UPLOAD_RETRY_BASE_DELAY_MS = 1500;
 
 function ensureBackgroundUploadStatusEl() {
     let el = document.getElementById('background-upload-status');
@@ -15787,6 +15789,7 @@ function renderBackgroundUploadProgressTracker() {
 
     const failedCount = tracker.jobs.filter(job => job.failed).length;
     const finishedCount = tracker.jobs.filter(job => job.finished || job.failed).length;
+    const retryingJob = tracker.jobs.find(job => job.retrying);
     const aggregateProgress = Math.round(
         tracker.jobs.reduce((sum, job) => sum + getBackgroundUploadJobProgress(job), 0) / tracker.jobs.length
     );
@@ -15797,6 +15800,8 @@ function renderBackgroundUploadProgressTracker() {
         error: !!tracker.done && failedCount > 0,
         title: tracker.done
             ? (failedCount === 0 ? '업로드 완료' : '일부 업로드 실패')
+            : retryingJob
+                ? `업로드 재시도 중 (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})`
             : `업로드 ${finishedCount}/${tracker.jobs.length}`,
         progress: tracker.done ? 100 : aggregateProgress
     });
@@ -15811,6 +15816,8 @@ function startBackgroundUploadProgressTracker(jobs = []) {
             inputId: job.inputId,
             transferPct: Number(getPendingUploadSnapshot(job.inputId)?.progress || 0),
             syncPct: 0,
+            retrying: false,
+            retryAttempt: 0,
             finished: false,
             failed: false
         }))
@@ -16176,6 +16183,77 @@ async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) 
     return resolvePendingUploadResult(job.inputId, { waitForThumbMs });
 }
 
+function waitForBackgroundMediaUploadRetry(attempt = 1) {
+    const delay = BACKGROUND_MEDIA_UPLOAD_RETRY_BASE_DELAY_MS * Math.max(1, Number(attempt || 1));
+    return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+async function finalizeBackgroundMediaUploadResult(job = {}, result = null, pendingSnapshot = null) {
+    let nextResult = result;
+    let nextPendingSnapshot = pendingSnapshot;
+
+    if (job.kind === 'strength' && nextResult?.url && !nextResult.thumbUrl && nextPendingSnapshot?.thumbPromise) {
+        const thumbResult = await resolvePendingUploadResult(job.inputId, {
+            waitForThumbMs: getStrengthThumbWaitMsForJob(job, nextPendingSnapshot)
+        });
+        if (thumbResult?.url) nextResult = thumbResult;
+        nextPendingSnapshot = getPendingUploadSnapshot(job.inputId) || nextPendingSnapshot;
+    }
+
+    return {
+        result: nextResult,
+        pendingSnapshot: nextPendingSnapshot
+    };
+}
+
+async function resolveBackgroundMediaUploadWithRetries({ userId, job } = {}) {
+    let pendingSnapshot = getPendingUploadSnapshot(job?.inputId);
+    let result = await resolvePendingUploadResult(job?.inputId, {
+        waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
+    });
+    pendingSnapshot = getPendingUploadSnapshot(job?.inputId) || pendingSnapshot;
+
+    let finalized = await finalizeBackgroundMediaUploadResult(job, result, pendingSnapshot);
+    if (finalized.result?.url) return finalized;
+
+    const input = document.getElementById(job?.inputId);
+    for (let retryAttempt = 1; retryAttempt <= BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS; retryAttempt++) {
+        const selectedFile = getSelectedMediaFile(input);
+        if (!selectedFile) break;
+
+        if (retryAttempt > 1) {
+            await waitForBackgroundMediaUploadRetry(retryAttempt - 1);
+        }
+        updateBackgroundUploadProgressTracker(job.inputId, {
+            retrying: true,
+            retryAttempt,
+            finished: false,
+            failed: false,
+            syncPct: 6
+        });
+
+        result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });
+        pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
+        finalized = await finalizeBackgroundMediaUploadResult(job, result, pendingSnapshot);
+        if (finalized.result?.url) {
+            updateBackgroundUploadProgressTracker(job.inputId, {
+                retrying: false,
+                retryAttempt: 0
+            });
+            return finalized;
+        }
+    }
+
+    updateBackgroundUploadProgressTracker(job?.inputId, {
+        retrying: false,
+        retryAttempt: 0
+    });
+    return {
+        result: null,
+        pendingSnapshot: getPendingUploadSnapshot(job?.inputId) || pendingSnapshot
+    };
+}
+
 function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false, onSettled = null }) {
     if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
 
@@ -16189,25 +16267,15 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
             let result = null;
             try {
                 updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
-                let pendingSnapshot = getPendingUploadSnapshot(job.inputId);
-                result = await resolvePendingUploadResult(job.inputId, {
-                    waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
-                });
-                pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
-                if (!result?.url) {
-                    result = await retryBackgroundMediaUploadFromSelectedFile({ userId, job });
-                    pendingSnapshot = getPendingUploadSnapshot(job.inputId);
-                } else if (job.kind === 'strength' && !result.thumbUrl && pendingSnapshot?.thumbPromise) {
-                    const thumbResult = await resolvePendingUploadResult(job.inputId, {
-                        waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
-                    });
-                    if (thumbResult?.url) result = thumbResult;
-                    pendingSnapshot = getPendingUploadSnapshot(job.inputId) || pendingSnapshot;
-                }
+                const uploadResult = await resolveBackgroundMediaUploadWithRetries({ userId, job });
+                result = uploadResult.result;
+                const pendingSnapshot = uploadResult.pendingSnapshot;
                 if (!result?.url) throw new Error('업로드 결과 URL이 없습니다.');
                 updateBackgroundUploadProgressTracker(job.inputId, {
                     transferPct: 100,
-                    syncPct: 42
+                    syncPct: 42,
+                    retrying: false,
+                    retryAttempt: 0
                 });
                 const committedData = await applyBackgroundMediaPatch({
                     userId,
@@ -16227,6 +16295,8 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
                         syncPct: 72,
+                        retrying: false,
+                        retryAttempt: 0,
                         finished: false,
                         failed: false
                     });
@@ -16234,6 +16304,8 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
                         syncPct: 100,
+                        retrying: false,
+                        retryAttempt: 0,
                         finished: true,
                         failed: false
                     });
@@ -16251,6 +16323,8 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
                         syncPct: 100,
+                        retrying: false,
+                        retryAttempt: 0,
                         finished: true,
                         failed: false
                     });
@@ -16260,6 +16334,8 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
                         syncPct: 100,
+                        retrying: false,
+                        retryAttempt: 0,
                         finished: false,
                         failed: true
                     });
@@ -23151,4 +23227,3 @@ if (_pendingBootTabRequest) {
     _pendingBootTabRequest = null;
     openTab(pendingBootTabRequest.tabName, pendingBootTabRequest.pushState);
 }
-
