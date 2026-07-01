@@ -21,6 +21,7 @@ describe('same-day challenge restart flow', () => {
         expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-start-recovery');");
         expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-start');");
         expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-claim');");
+        expect(managerSource).toContain('window.applyOptimisticChallengeSettlement?.(data);');
         expect(managerSource).toContain('export async function updateChallengeProgress(options = {})');
         expect(managerSource).toContain('const targetDate = normalizeChallengeProgressDate(progressOptions.dateStr) || today;');
         expect(managerSource).toContain('dailyLogsByDate[targetDate] = dailyLogData;');
@@ -31,6 +32,11 @@ describe('same-day challenge restart flow', () => {
         expect(appCoreSource).toContain('dailyLogData: saveData');
         expect(appCoreSource).toContain('class="challenge-ring-progress"');
         expect(appCoreSource).toContain('function renderAssetChallengePendingState');
+        expect(appCoreSource).toContain('function renderAssetChallengeFromCachedUserData');
+        expect(appCoreSource).toContain('function collectChallengeSettlementRecords');
+        expect(appCoreSource).toContain('function applyChallengeSettlementRecordsToUserData');
+        expect(appCoreSource).toContain('const settleTxSnap = await _p_settleTx;');
+        expect(appCoreSource).toContain("renderAssetChallengeFromCachedUserData(\n                user.uid,\n                _todayStr,");
         expect(appCoreSource).toContain("renderAssetChallengePendingState(userDocDeferred ? 'user-doc-deferred' : 'user-doc-missing');");
         expect(appCoreSource).toContain('? getDocFromServer(userRef).catch((serverError) => {');
         expect(appCoreSource).toContain("noteFirestoreConnectivityFailure(serverError, 'asset-display user-doc-server')");

@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=219';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=219';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=220';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=220';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=219';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=219';
+} from './auth-login-helpers.js?v=220';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=220';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=219';
+} from './exercise-media.js?v=220';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=219';
+} from './health-connect-utils.js?v=220';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=219';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=219';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=219';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=219';
-import { sanitize, compressImage } from './data-manager.js?v=219';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=219';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=219';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=219';
+} from './habit-groups.js?v=220';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=220';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=220';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=220';
+import { sanitize, compressImage } from './data-manager.js?v=220';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=220';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=220';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=220';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=219';
+} from './diet-program.js?v=220';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=219';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=219';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=219';
+} from './meditation-guide.js?v=220';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=220';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=220';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=219';
+} from './social-challenge-readiness.js?v=220';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=219';
+} from './monthly-mvp-reward.js?v=220';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5256,7 +5256,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=219';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=220';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8734,6 +8734,144 @@ function applyCachedPointBalanceFromStorage(uid = auth.currentUser?.uid || '') {
 
 window.applyCachedPointBalanceFromStorage = applyCachedPointBalanceFromStorage;
 
+function getCachedAssetUserData(uid = auth.currentUser?.uid || '') {
+    if (!uid) return null;
+    const cached = readAssetDisplayCache(uid);
+    const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
+    const hasFreshAssetCache = cached && (Date.now() - Number(cached.ts || 0)) < ASSET_LS_TTL;
+    const hasFreshDashboardCache = dashboardData && (Date.now() - Number(dashboardData.ts || 0)) < ASSET_LS_TTL;
+    const cachedUserData = cached?.userData && typeof cached.userData === 'object'
+        ? cached.userData
+        : null;
+    const dashboardUserData = dashboardData?.ud && typeof dashboardData.ud === 'object'
+        ? dashboardData.ud
+        : null;
+    if (hasFreshAssetCache && cachedUserData) return cachedUserData;
+    if (hasFreshDashboardCache && dashboardUserData) return dashboardUserData;
+    return null;
+}
+
+function buildAssetUserDataCachePatch(userData = {}) {
+    const patch = {
+        coins: getFiniteAssetNumber(userData.coins),
+        userData: {
+            activeChallenges: userData.activeChallenges && typeof userData.activeChallenges === 'object'
+                ? userData.activeChallenges
+                : {},
+            lastChallengeSettlementByTier: userData.lastChallengeSettlementByTier && typeof userData.lastChallengeSettlementByTier === 'object'
+                ? userData.lastChallengeSettlementByTier
+                : {},
+            activeChallenge: userData.activeChallenge || null,
+            coins: getFiniteAssetNumber(userData.coins)
+        }
+    };
+    if (patch.coins == null) delete patch.coins;
+    return patch;
+}
+
+function persistCachedAssetUserData(uid, userData = {}) {
+    if (!uid || !userData || typeof userData !== 'object') return;
+    writeAssetDisplayCache(uid, buildAssetUserDataCachePatch(userData));
+    if (typeof _patchDashboardUserData === 'function') {
+        _patchDashboardUserData(uid, ud => {
+            ud.activeChallenges = userData.activeChallenges && typeof userData.activeChallenges === 'object'
+                ? userData.activeChallenges
+                : {};
+            ud.lastChallengeSettlementByTier = userData.lastChallengeSettlementByTier && typeof userData.lastChallengeSettlementByTier === 'object'
+                ? userData.lastChallengeSettlementByTier
+                : {};
+            if (userData.coins != null) ud.coins = userData.coins;
+            if (userData.activeChallenge) ud.activeChallenge = userData.activeChallenge;
+            else delete ud.activeChallenge;
+        });
+    }
+}
+
+function collectChallengeSettlementRecords(settleTxSnap) {
+    const records = [];
+    if (!settleTxSnap?.forEach) return records;
+
+    settleTxSnap.forEach(docSnap => {
+        const tx = docSnap?.data?.() || {};
+        if (String(tx.status || '').trim() !== 'success') return;
+        if (!doesTransactionMatchActiveChain(tx)) return;
+
+        const tier = String(tx.tier || '').trim();
+        if (!ASSET_CHALLENGE_TIER_ORDER.includes(tier)) return;
+        records.push({
+            tier,
+            settlementDate: String(tx.date || getKstDateString()).trim()
+        });
+    });
+
+    return records;
+}
+
+function applyChallengeSettlementRecordsToUserData(userData = {}, records = []) {
+    const activeChallenges = userData.activeChallenges && typeof userData.activeChallenges === 'object'
+        ? { ...userData.activeChallenges }
+        : {};
+    const lastChallengeSettlementByTier = userData.lastChallengeSettlementByTier && typeof userData.lastChallengeSettlementByTier === 'object'
+        ? { ...userData.lastChallengeSettlementByTier }
+        : {};
+    let changed = false;
+
+    records.forEach(record => {
+        const tier = String(record?.tier || '').trim();
+        if (!ASSET_CHALLENGE_TIER_ORDER.includes(tier)) return;
+
+        if (activeChallenges[tier]) {
+            delete activeChallenges[tier];
+            changed = true;
+        }
+        const settlementDate = String(record?.settlementDate || getKstDateString()).trim();
+        if (settlementDate && String(lastChallengeSettlementByTier[tier]?.date || '') !== settlementDate) {
+            lastChallengeSettlementByTier[tier] = {
+                ...(lastChallengeSettlementByTier[tier] || {}),
+                date: settlementDate
+            };
+            changed = true;
+        }
+    });
+
+    return {
+        changed,
+        userData: {
+            ...userData,
+            activeChallenges,
+            lastChallengeSettlementByTier
+        }
+    };
+}
+
+window.applyOptimisticChallengeSettlement = function(data = {}) {
+    const user = auth.currentUser;
+    const tier = String(data?.tier || '').trim();
+    if (!user?.uid || !ASSET_CHALLENGE_TIER_ORDER.includes(tier)) return;
+
+    const cachedUserData = getCachedAssetUserData(user.uid) || {};
+    const { userData: nextUserData } = applyChallengeSettlementRecordsToUserData(cachedUserData, [{
+        tier,
+        settlementDate: String(data?.settlementDate || getKstDateString()).trim()
+    }]);
+
+    persistCachedAssetUserData(user.uid, nextUserData);
+    const {
+        activeChallenges: sanitizedActiveChallenges,
+        legacyActiveChallenge
+    } = sanitizeChallengeStateForActiveChain(nextUserData);
+    const displayUserData = {
+        ...nextUserData,
+        activeChallenges: sanitizedActiveChallenges
+    };
+    if (legacyActiveChallenge) {
+        displayUserData.activeChallenge = legacyActiveChallenge;
+    } else {
+        delete displayUserData.activeChallenge;
+    }
+    renderAssetChallengePanel(getAssetActiveChallengesFromUserData(displayUserData), getKstDateString());
+};
+
 function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '') {
     const parsedPoints = getFiniteAssetNumber(pointsValue);
     if (parsedPoints == null) return null;
@@ -9085,7 +9223,7 @@ function renderAssetChallengePendingState(reason = 'user-doc-timeout') {
                 <div class="challenge-ring-info">
                     <div class="challenge-ring-name">챌린지 상태 확인 중</div>
                     <div class="challenge-ring-date">저장 결과를 서버와 다시 맞추고 있어요.</div>
-                    <button type="button" class="challenge-ring-retry" onclick="window.updateAssetDisplay?.(true)">새로 확인</button>
+                    <button type="button" class="challenge-ring-retry" onclick="window.retryAssetChallengeStatus?.(this)">새로 확인</button>
                 </div>
             </div>
         `;
@@ -9096,6 +9234,56 @@ function renderAssetChallengePendingState(reason = 'user-doc-timeout') {
         console.info(`[asset-display] challenge panel pending: ${reason}`);
     }
 }
+
+function renderAssetChallengeFromCachedUserData(uid = auth.currentUser?.uid || '', todayStr = getKstDateString(), reason = 'user-doc-timeout', settleTxSnap = null) {
+    let cachedUserData = getCachedAssetUserData(uid);
+    if (!cachedUserData) return false;
+
+    const settlementRecords = collectChallengeSettlementRecords(settleTxSnap);
+    if (settlementRecords.length > 0) {
+        const settlementResult = applyChallengeSettlementRecordsToUserData(cachedUserData, settlementRecords);
+        cachedUserData = settlementResult.userData;
+        if (settlementResult.changed) {
+            persistCachedAssetUserData(uid, cachedUserData);
+        }
+    }
+
+    const {
+        activeChallenges: sanitizedActiveChallenges,
+        legacyActiveChallenge
+    } = sanitizeChallengeStateForActiveChain(cachedUserData);
+    const displayUserData = {
+        ...cachedUserData,
+        activeChallenges: sanitizedActiveChallenges
+    };
+    if (legacyActiveChallenge) {
+        displayUserData.activeChallenge = legacyActiveChallenge;
+    } else {
+        delete displayUserData.activeChallenge;
+    }
+    const activeChallenges = getAssetActiveChallengesFromUserData(displayUserData);
+    renderAssetChallengePanel(activeChallenges, todayStr);
+
+    if (shouldLogAssetDebug()) {
+        console.info(`[asset-display] challenge panel used cached user data: ${reason}`);
+    }
+    return true;
+}
+
+window.retryAssetChallengeStatus = async function(button) {
+    if (button) {
+        button.disabled = true;
+        button.textContent = '확인 중';
+    }
+    try {
+        await window.updateAssetDisplay?.(true);
+    } finally {
+        if (button?.isConnected) {
+            button.disabled = false;
+            button.textContent = '새로 확인';
+        }
+    }
+};
 
 function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateString()) {
     const challengeContainer = document.getElementById('active-challenge-container');
@@ -9524,6 +9712,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
 
             // localStorage에 저장 (다음 방문/재시도 시 즉시 표시용)
             writeAssetDisplayCache(user.uid, {
+                ...buildAssetUserDataCachePatch(userDisplayData),
                 coins: coinsValue,
                 ...walletCachePatch
             });
@@ -10304,7 +10493,16 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // Keep the last good values while the user document is deferred, then retry.
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
             const userDocDeferred = isDeferredAssetSnap(userSnap);
-            renderAssetChallengePendingState(userDocDeferred ? 'user-doc-deferred' : 'user-doc-missing');
+            const settleTxSnap = await _p_settleTx;
+            const usedCachedChallengePanel = renderAssetChallengeFromCachedUserData(
+                user.uid,
+                _todayStr,
+                userDocDeferred ? 'user-doc-deferred' : 'user-doc-missing',
+                settleTxSnap
+            );
+            if (!usedCachedChallengePanel) {
+                renderAssetChallengePendingState(userDocDeferred ? 'user-doc-deferred' : 'user-doc-missing');
+            }
             if (userDocDeferred) {
                 userDocPromise.then(lateSnap => {
                     if (!lateSnap?.exists?.()) return;
