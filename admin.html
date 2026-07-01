@@ -605,6 +605,12 @@
 
     let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
+    const ADMIN_DASHBOARD_CORE_TIMEOUT_MS = 9000;
+    const ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS = 7000;
+    const EMPTY_ADMIN_QUERY_SNAPSHOT = {
+        size: 0,
+        forEach() {}
+    };
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
     const memberOnchainHbt = {};
     const PAGE_SIZE_MEMBERS = 20;
@@ -894,24 +900,82 @@
         const name = document.querySelector('.tab-btn.active')?.dataset.tab || 'dashboard';
         tabLoaded[name] = false;
         adminTokenStatsCache = null;
-        if (name === 'members') cache = null;
+        cache = null;
         loadTab(name);
     };
 
+    function setAdminText(id, value) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    }
+
+    function renderAdminTableMessage(id, colspan, message, color = '#777') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = `<tr><td colspan="${colspan}" style="color:${color};">${escapeHtml(message)}</td></tr>`;
+    }
+
+    async function resolveAdminRead(promise, label, fallback, timeoutMs = ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS) {
+        let timeoutId = null;
+        const timeoutResult = new Promise((resolve) => {
+            timeoutId = setTimeout(() => {
+                resolve({ value: fallback, fallback: true, reason: 'timeout' });
+            }, timeoutMs);
+        });
+
+        try {
+            const result = await Promise.race([
+                Promise.resolve(promise).then((value) => ({ value, fallback: false, reason: 'ok' })),
+                timeoutResult
+            ]);
+            if (result.fallback) {
+                console.info(`[admin-dashboard] ${label} timed out; rendering partial data.`);
+            }
+            return result;
+        } catch (e) {
+            console.warn(`[admin-dashboard] ${label} failed; rendering partial data.`, e);
+            return { value: fallback, fallback: true, reason: 'error', error: e };
+        } finally {
+            if (timeoutId) clearTimeout(timeoutId);
+        }
+    }
+
     // ── Shared data cache ─────────────────────────────────────
-    async function getData(force = false) {
+    async function getData(force = false, options = {}) {
         if (!force && cache) return cache;
-        const [snap, usersQ] = await Promise.all([
-            getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500))),
-            getDocs(collection(db, 'users'))
-        ]);
+        const dailyLogsPromise = getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500)));
+        const usersPromise = getDocs(collection(db, 'users'));
+        if (options.allowPartial) {
+            const fallback = cache || { snap: EMPTY_ADMIN_QUERY_SNAPSHOT, usersQ: EMPTY_ADMIN_QUERY_SNAPSHOT };
+            const [snapRead, usersRead] = await Promise.all([
+                resolveAdminRead(dailyLogsPromise, 'daily_logs recent', fallback.snap, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
+                resolveAdminRead(usersPromise, 'users', fallback.usersQ, ADMIN_DASHBOARD_CORE_TIMEOUT_MS)
+            ]);
+            const snap = snapRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
+            const usersQ = usersRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
+            const result = {
+                snap,
+                usersQ,
+                partial: snapRead.fallback || usersRead.fallback,
+                snapFallback: snapRead.fallback,
+                usersFallback: usersRead.fallback
+            };
+            if (!result.partial) cache = { snap, usersQ };
+            return result;
+        }
+        const [snap, usersQ] = await Promise.all([dailyLogsPromise, usersPromise]);
         cache = { snap, usersQ };
         return cache;
     }
 
     // ── Tab 1: Dashboard ──────────────────────────────────────
     async function loadDashboard() {
-        const { snap, usersQ } = await getData();
+        ['s-total', 's-today', 's-week', 's-reports', 's-health', 's-hbt', 's-points', 's-rate']
+            .forEach((id) => setAdminText(id, '확인 중'));
+        renderAdminTableMessage('top5-body', 5, '로딩 중...');
+
+        const data = await getData(false, { allowPartial: true });
+        const { snap, usersQ } = data;
         const ago7 = new Date(todayStr);
         ago7.setDate(ago7.getDate() - 6);
         const ago7str = toDateKey(ago7);
@@ -925,16 +989,20 @@
             dailyPointsMap[key] = 0;
         }
 
-        const [weekSnap, reportsSnap, tokenStats, bonusPointsMap] = await Promise.all([
-            getDocs(query(
+        const [weekRead, reportsRead, tokenStatsRead, bonusPointsRead] = await Promise.all([
+            resolveAdminRead(getDocs(query(
                 collection(db, 'daily_logs'),
                 where('date', '>=', ago7str),
                 where('date', '<=', todayStr)
-            )),
-            getDocs(collection(db, 'reports')),
-            loadAdminTokenStats(),
-            loadBonusPointsMap(usersQ, Object.keys(dailyPointsMap))
+            )), 'daily_logs week', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
+            resolveAdminRead(getDocs(collection(db, 'reports')), 'reports', EMPTY_ADMIN_QUERY_SNAPSHOT),
+            resolveAdminRead(loadAdminTokenStats(), 'token stats', null),
+            resolveAdminRead(loadBonusPointsMap(usersQ, Object.keys(dailyPointsMap)), 'bonus points', {})
         ]);
+        const weekSnap = weekRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
+        const reportsSnap = reportsRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
+        const tokenStats = tokenStatsRead.value || null;
+        const bonusPointsMap = bonusPointsRead.value || {};
 
         let todaySet = new Set(), weekSet = new Set(), alerts = 0;
         weekSnap.forEach(d => {
@@ -964,14 +1032,15 @@
             rate = `${phaseToLabel(Number(tokenStats.currentPhase) || 1)}구간 · 100P = ${formatAdminNumber(per100)} HBT`;
         }
 
-        document.getElementById('s-total').textContent = usersQ.size;
-        document.getElementById('s-today').textContent = todaySet.size;
-        document.getElementById('s-week').textContent = weekSet.size;
-        document.getElementById('s-reports').textContent = reportsSnap.size;
-        document.getElementById('s-health').textContent = alerts;
-        document.getElementById('s-hbt').textContent = totalHbt;
-        document.getElementById('s-points').textContent = (dailyPointsMap[todayStr] || 0).toLocaleString();
-        document.getElementById('s-rate').textContent = rate;
+        const weekDelayed = weekRead.fallback;
+        setAdminText('s-total', data.usersFallback ? '확인 중' : usersQ.size);
+        setAdminText('s-today', weekDelayed ? '확인 중' : todaySet.size);
+        setAdminText('s-week', weekDelayed ? '확인 중' : weekSet.size);
+        setAdminText('s-reports', reportsRead.fallback ? '확인 중' : reportsSnap.size);
+        setAdminText('s-health', weekDelayed ? '확인 중' : alerts);
+        setAdminText('s-hbt', tokenStatsRead.fallback ? '확인 중' : totalHbt);
+        setAdminText('s-points', weekDelayed ? '확인 중' : (dailyPointsMap[todayStr] || 0).toLocaleString());
+        setAdminText('s-rate', tokenStatsRead.fallback ? '확인 중' : rate);
 
         // Activity chart
         const labels = Object.keys(dayMap).map(d => d.slice(5));
@@ -986,10 +1055,14 @@
         dailyPointsChart = new Chart(pointsCtx, { type: 'bar', data: { labels, datasets: [{ label: '지급 포인트', data: pointVals, backgroundColor: 'rgba(255,152,0,0.55)', borderColor: '#FB8C00', borderWidth: 1, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
         // Top 5
-        const arr = [];
-        usersQ.forEach(u => arr.push(buildCombinedRankRow(u)));
-        sortCombinedRankRows(arr);
-        document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
+        if (data.usersFallback) {
+            renderAdminTableMessage('top5-body', 5, '회원 조회가 지연되고 있습니다. 새로고침으로 다시 확인해 주세요.');
+        } else {
+            const arr = [];
+            usersQ.forEach(u => arr.push(buildCombinedRankRow(u)));
+            sortCombinedRankRows(arr);
+            document.getElementById('top5-body').innerHTML = arr.slice(0,5).map((u,i) => `<tr><td>${['🥇','🥈','🥉','4','5'][i]}</td><td>${escapeHtml(u.name)}</td><td>${u.coins.toLocaleString()}</td><td>${u.hbt.toLocaleString()}</td><td>🔥${u.streak}</td></tr>`).join('') || '<tr><td colspan="5" style="color:#999;">데이터 없음</td></tr>';
+        }
 
         // 기록 유형별 도넛 차트 — awardedPoints 기준 (사진 없는 기록도 포함)
         let dietCnt = 0, exCnt = 0, mindCnt = 0;
@@ -1049,27 +1122,31 @@
 
         // 누적 완료: blockchain_transactions type=challenge_settlement + status=success
         let miniDone=0, weeklyDone=0, masterDone=0;
-        try {
-            const doneSnap = await getDocs(query(
+        const doneRead = await resolveAdminRead(getDocs(query(
                 collection(db, 'blockchain_transactions'),
                 where('type', '==', 'challenge_settlement'),
                 where('status', '==', 'success')
-            ));
-            doneSnap.forEach(d => {
-                const cid = d.data().challengeId || '';
-                if (cid.includes('3d')) miniDone++;
-                else if (cid.includes('7d')) weeklyDone++;
-                else if (cid.includes('30d')) masterDone++;
-            });
-        } catch(e) { console.error('챌린지 완료 조회 오류:', e); }
+            )), 'challenge settlements', EMPTY_ADMIN_QUERY_SNAPSHOT);
+        const doneSnap = doneRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
+        doneSnap.forEach(d => {
+            const cid = d.data().challengeId || '';
+            if (cid.includes('3d')) miniDone++;
+            else if (cid.includes('7d')) weeklyDone++;
+            else if (cid.includes('30d')) masterDone++;
+        });
 
-        document.getElementById('challenge-body').innerHTML = [
-            ['🌱 미니 (3일)', miniOn, miniWait, miniDone],
-            ['🔥 위클리 (7일)', weeklyOn, weeklyWait, weeklyDone],
-            ['👑 마스터 (30일)', masterOn, masterWait, masterDone]
-        ].map(([label, on, wait, done]) =>
-            `<tr><td>${label}</td><td>${on}명</td><td style="color:${wait>0?'#FF9800':'#999'};">${wait > 0 ? wait+'명 ⏳' : '-'}</td><td style="color:${done>0?'#4CAF50':'#999'};">${done > 0 ? done+'건 ✅' : '-'}</td></tr>`
-        ).join('');
+        if (data.usersFallback) {
+            renderAdminTableMessage('challenge-body', 4, '회원 조회가 지연되고 있습니다. 새로고침으로 다시 확인해 주세요.');
+        } else {
+            document.getElementById('challenge-body').innerHTML = [
+                ['🌱 미니 (3일)', miniOn, miniWait, miniDone],
+                ['🔥 위클리 (7일)', weeklyOn, weeklyWait, weeklyDone],
+                ['👑 마스터 (30일)', masterOn, masterWait, masterDone]
+            ].map(([label, on, wait, done]) => {
+                const doneLabel = doneRead.fallback ? '확인 중' : (done > 0 ? done+'건 ✅' : '-');
+                return `<tr><td>${label}</td><td>${on}명</td><td style="color:${wait>0?'#FF9800':'#999'};">${wait > 0 ? wait+'명 ⏳' : '-'}</td><td style="color:${done>0?'#4CAF50':'#999'};">${doneLabel}</td></tr>`;
+            }).join('');
+        }
     }
 
     // ── Tab 2: Members ────────────────────────────────────────
