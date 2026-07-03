@@ -4878,11 +4878,14 @@ exports.claimChallengeReward = onCall(
         let userData = userSnap.data();
         userData = await sanitizeUserChallengesForActiveChain(userRef, userData);
         const activeChallenges = userData.activeChallenges || {};
-        const challenge = normalizeChallengeCompletion(activeChallenges[tier]);
+        let challenge = normalizeChallengeCompletion(activeChallenges[tier]);
 
         if (!challenge || challenge.status !== 'claimable') {
             throw new HttpsError("failed-precondition", "수령할 보상이 없습니다.");
         }
+
+        const dailyLogsByDate = await fetchChallengeDailyLogsByDate(uid, challenge);
+        challenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);
 
         const totalDays = challenge.totalDays || 30;
         const completedDays = getChallengeCompletedDays(challenge);

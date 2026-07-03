@@ -12,6 +12,16 @@
 - Root cause: older paid challenge records can carry a nonpositive stored bonus rate, and settlement history only stored a blended `amount`, hiding whether principal or bonus was actually paid.
 - Lesson: for paid challenge tiers, treat missing or nonpositive stored bonus rates as legacy/default policy unless the tier is intentionally free. Store principal, paid bonus, target bonus, and actual received HBT separately so underpayment is visible and auditable.
 
+### 244. Claim paths must recompute challenge completion from daily logs at payout time
+- Symptom: a weekly challenge with seven qualifying daily logs could settle as 6/7 and return only principal when the last daily log had not yet been copied into the active challenge cache.
+- Root cause: `settleChallengeFailure` reconciled against `daily_logs`, but `claimChallengeReward` calculated payout from cached `completedDates` only.
+- Lesson: any path that calculates challenge payout must fetch the challenge date range daily logs and reconcile completion immediately before money moves. Cached progress is display state, not settlement state.
+
+### 245. Backfill scripts must exclude their own compensation transactions
+- Symptom: after a successful bonus backfill, a dry-run could treat the new compensation transaction as another underpaid settlement because it reused `challenge_settlement`.
+- Root cause: the scanner excluded no generated compensation documents, so its own audit trail matched the business query.
+- Lesson: idempotent compensation scripts need two guards: a stable compensation lock keyed to the source transaction, and a source scanner that excludes transactions created by the same backfill reason/doc id prefix.
+
 ---
 
 ## 2026-06-27 (Exercise Video Thumbnail Preview)

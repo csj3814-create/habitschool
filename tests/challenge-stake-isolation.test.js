@@ -74,4 +74,13 @@ describe('challenge stake isolation', () => {
         expect(runtimeSource).toContain('Number.isFinite(stored) && (stored > 0 || tier === "mini")');
         expect(appCoreSource).toContain("Number.isFinite(stored) && (stored > 0 || tier === 'mini')");
     });
+
+    it('reconciles claimable challenge completion with daily logs before payout', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+
+        expect(runtimeSource).toContain('let challenge = normalizeChallengeCompletion(activeChallenges[tier]);');
+        expect(runtimeSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDate(uid, challenge);');
+        expect(runtimeSource).toContain('challenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);');
+        expect(runtimeSource).toContain('const successRate = completedDays / totalDays;');
+    });
 });
