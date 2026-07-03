@@ -4477,7 +4477,7 @@ function getStoredChallengeBonusBps(challenge, tier) {
         challenge?.bonusPolicy?.rateBps ??
         challenge?.bonusRateBps
     );
-    if (Number.isFinite(stored)) {
+    if (Number.isFinite(stored) && (stored > 0 || tier === "mini")) {
         return stored;
     }
     return getLegacyChallengeBonusBps(tier);
@@ -4668,6 +4668,21 @@ exports.startChallenge = onCall(
             if (sameStakeAmount && sameStakeWallet && normalizedExistingId === resolvedId) {
                 const recoveredQualificationPolicy = normalizeChallengeQualificationPolicy(existingChallenge.qualificationPolicy, def.tier);
                 const recoveredBonusRateBps = getStoredChallengeBonusBps(existingChallenge, def.tier);
+                const {
+                    calculatedAt: _ignoredCalculatedAt,
+                    ...recoveredBonusPolicy
+                } = existingChallenge?.bonusPolicy || {};
+                const recoveredClientChallenge = {
+                    ...existingChallenge,
+                    qualificationPolicy: recoveredQualificationPolicy,
+                    bonusPolicy: {
+                        ...recoveredBonusPolicy,
+                        rateBps: recoveredBonusRateBps,
+                        rateLabel: existingChallenge?.bonusPolicy?.rateLabel || formatBonusPercentLabel(recoveredBonusRateBps)
+                    },
+                    status: existingChallenge.status || "ongoing",
+                    tier: def.tier
+                };
                 return {
                     success: true,
                     recovered: true,
@@ -4684,7 +4699,12 @@ exports.startChallenge = onCall(
                     endDate: existingChallenge.endDate || null,
                     deferredStart: !!existingChallenge.deferredStart,
                     qualificationPolicy: recoveredQualificationPolicy,
-                    qualificationLabel: formatChallengeQualificationLabel(recoveredQualificationPolicy)
+                    qualificationLabel: formatChallengeQualificationLabel(recoveredQualificationPolicy),
+                    challengeId: resolvedId,
+                    activeChallenge: recoveredClientChallenge,
+                    activeChallenges: {
+                        [def.tier]: recoveredClientChallenge
+                    }
                 };
             }
         }
@@ -4745,7 +4765,7 @@ exports.startChallenge = onCall(
             // 무시
         }
 
-        const challengeData = {
+        const clientChallengeData = {
             challengeId: resolvedId,
             startDate,
             endDate,
@@ -4761,7 +4781,7 @@ exports.startChallenge = onCall(
             stakeContract: stakeContractMode,
             bonusPolicy: {
                 ...appliedChallengeBonusPolicy,
-                calculatedAt: FieldValue.serverTimestamp()
+                calculatedAt: new Date().toISOString()
             },
             qualificationPolicy,
             deferredStart: sameTierSettledToday,
@@ -4772,6 +4792,13 @@ exports.startChallenge = onCall(
             network: ACTIVE_CHAIN.networkTag,
             chainId: ACTIVE_CHAIN.chainId,
             chainLabel: ACTIVE_CHAIN.label
+        };
+        const challengeData = {
+            ...clientChallengeData,
+            bonusPolicy: {
+                ...appliedChallengeBonusPolicy,
+                calculatedAt: FieldValue.serverTimestamp()
+            }
         };
 
         const updateData = {};
@@ -4803,9 +4830,15 @@ exports.startChallenge = onCall(
             duration: def.duration,
             hbtStaked: stakeAmount,
             initialCompletedDays,
+            initialCompletedDates,
             startDate,
             endDate,
             deferredStart: sameTierSettledToday,
+            challengeId: resolvedId,
+            activeChallenge: clientChallengeData,
+            activeChallenges: {
+                [def.tier]: clientChallengeData
+            },
             bonusRateBps: appliedChallengeBonusPolicy?.rateBps || 0,
             bonusRateLabel: appliedChallengeBonusPolicy?.rateLabel || "0%",
             bonusPhase: appliedChallengeBonusPolicy?.phase || 1,
@@ -4884,6 +4917,8 @@ exports.claimChallengeReward = onCall(
         const bonusRewardHbt = successRate >= 1.0
             ? (bonusEligibleStake * bonusRateBps) / 10000
             : 0;
+        let principalPaidHbt = principalRewardHbt;
+        let bonusPaidHbt = 0;
 
         if (staked > 0 || bonusEligibleStake > 0) {
             if (successRate >= 1.0) {
@@ -4940,6 +4975,7 @@ exports.claimChallengeReward = onCall(
                     String(errData).startsWith('0x59be8f02'); // NoStakeFound() selector
                 if (isAlreadySettled) {
                     console.warn("온체인 이미 정산됨(NoStakeFound), Firestore 정리만 진행합니다.");
+                    principalPaidHbt = 0;
                     rewardHbt = bonusRewardHbt;
                 } else {
                     console.error("온체인 정산 오류:", onChainErr.message);
@@ -4958,15 +4994,27 @@ exports.claimChallengeReward = onCall(
                 const habitContract = getHabitContract(wallet);
                 const bonusHbtRaw = ethers.parseUnits(bonusRewardHbt.toString(), HBT_DECIMALS);
                 const currentRate = await habitContract.currentRate();
-                const pointAmount = bonusHbtRaw / currentRate;
+                const pointAmount = (bonusHbtRaw + currentRate - 1n) / currentRate;
                 if (pointAmount > 0n) {
                     const bonusTx = await habitContract.mint(userWalletAddress, pointAmount);
                     const bonusReceipt = await bonusTx.wait();
                     bonusTxHash = bonusReceipt.hash;
+                    bonusPaidHbt = Number(ethers.formatUnits(pointAmount * currentRate, HBT_DECIMALS));
                 }
             } catch (bonusError) {
                 console.error("챌린지 보너스 민팅 오류:", bonusError);
                 throw new HttpsError("internal", "챌린지 보너스 지급에 실패했습니다.");
+            }
+            if (!(bonusPaidHbt > 0)) {
+                throw new HttpsError("internal", "챌린지 보너스 지급이 완료되지 않았습니다.");
+            }
+        }
+
+        if (staked > 0 || bonusEligibleStake > 0) {
+            if (successRate >= 1.0) {
+                rewardHbt = principalPaidHbt + bonusPaidHbt;
+            } else if (successRate >= 0.8) {
+                rewardHbt = principalPaidHbt;
             }
         }
 
@@ -4991,6 +5039,7 @@ exports.claimChallengeReward = onCall(
             settledAt: FieldValue.serverTimestamp()
         };
         if (rewardPoints > 0) updateData.coins = FieldValue.increment(rewardPoints);
+        if (bonusPaidHbt > 0) updateData.totalHbtEarned = FieldValue.increment(bonusPaidHbt);
 
         await userRef.update(updateData);
 
@@ -5000,9 +5049,13 @@ exports.claimChallengeReward = onCall(
             type: 'challenge_settlement',
             challengeId: challenge.challengeId,
             amount: rewardHbt,
+            hbtReceived: rewardHbt,
             date: settlementDate,
             staked: staked,
             bonusEligibleStake,
+            principalRewardHbt: principalPaidHbt,
+            bonusRewardHbt: bonusPaidHbt,
+            targetBonusRewardHbt: bonusRewardHbt,
             principalAlreadyReturned,
             stakeWalletAddress: challenge.stakeWalletAddress || null,
             successRate: successRate,
@@ -5027,6 +5080,9 @@ exports.claimChallengeReward = onCall(
         return {
             success: true,
             rewardHbt,
+            principalRewardHbt: principalPaidHbt,
+            bonusRewardHbt: bonusPaidHbt,
+            targetBonusRewardHbt: bonusRewardHbt,
             rewardPoints,
             tier,
             settlementDate,

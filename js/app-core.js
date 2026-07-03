@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=221';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=221';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=222';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=222';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=221';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=221';
+} from './auth-login-helpers.js?v=222';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=222';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=221';
+} from './exercise-media.js?v=222';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=221';
+} from './health-connect-utils.js?v=222';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=221';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=221';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=221';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=221';
-import { sanitize, compressImage } from './data-manager.js?v=221';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=221';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=221';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=221';
+} from './habit-groups.js?v=222';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=222';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=222';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=222';
+import { sanitize, compressImage } from './data-manager.js?v=222';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=222';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=222';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=222';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=221';
+} from './diet-program.js?v=222';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=221';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=221';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=221';
+} from './meditation-guide.js?v=222';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=222';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=222';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=221';
+} from './social-challenge-readiness.js?v=222';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=221';
+} from './monthly-mvp-reward.js?v=222';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5256,7 +5256,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=221';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=222';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8872,6 +8872,48 @@ window.applyOptimisticChallengeSettlement = function(data = {}) {
     renderAssetChallengePanel(getAssetActiveChallengesFromUserData(displayUserData), getKstDateString());
 };
 
+window.applyOptimisticChallengeStart = function(data = {}) {
+    const user = auth.currentUser;
+    const tier = String(data?.tier || data?.activeChallenge?.tier || '').trim();
+    if (!user?.uid || !ASSET_CHALLENGE_TIER_ORDER.includes(tier)) return;
+
+    const totalDays = Math.max(1, Number(data?.duration || data?.activeChallenge?.totalDays || (tier === 'master' ? 30 : tier === 'weekly' ? 7 : 3)) || 1);
+    const activeChallenge = {
+        ...(data.activeChallenge || {}),
+        challengeId: data?.activeChallenge?.challengeId || data?.challengeId || (tier === 'master' ? 'challenge-30d' : tier === 'weekly' ? 'challenge-7d' : 'challenge-3d'),
+        tier,
+        status: data?.activeChallenge?.status || 'ongoing',
+        totalDays,
+        completedDays: Number(data?.activeChallenge?.completedDays ?? data?.initialCompletedDays ?? 0) || 0,
+        completedDates: Array.isArray(data?.activeChallenge?.completedDates)
+            ? data.activeChallenge.completedDates
+            : (Array.isArray(data?.initialCompletedDates) ? data.initialCompletedDates : []),
+        startDate: data?.activeChallenge?.startDate || data?.startDate || getKstDateString(),
+        endDate: data?.activeChallenge?.endDate || data?.endDate || '',
+        hbtStaked: Number(data?.activeChallenge?.hbtStaked ?? data?.hbtStaked ?? 0) || 0,
+        stakedOnChain: data?.activeChallenge?.stakedOnChain ?? (Number(data?.hbtStaked || 0) > 0),
+        bonusPolicy: data?.activeChallenge?.bonusPolicy || {
+            rateBps: Number(data?.bonusRateBps || 0) || ASSET_CHALLENGE_LEGACY_BONUS_BPS[tier] || 0,
+            rateLabel: data?.bonusRateLabel || ''
+        },
+        qualificationPolicy: data?.activeChallenge?.qualificationPolicy || data?.qualificationPolicy || undefined,
+        qualificationLabel: data?.activeChallenge?.qualificationLabel || data?.qualificationLabel || ''
+    };
+
+    const cachedUserData = getCachedAssetUserData(user.uid) || {};
+    const nextUserData = {
+        ...cachedUserData,
+        activeChallenges: {
+            ...(cachedUserData.activeChallenges || {}),
+            [tier]: activeChallenge
+        }
+    };
+    delete nextUserData.activeChallenge;
+
+    persistCachedAssetUserData(user.uid, nextUserData);
+    renderAssetChallengePanel(getAssetActiveChallengesFromUserData(nextUserData), getKstDateString());
+};
+
 function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '') {
     const parsedPoints = getFiniteAssetNumber(pointsValue);
     if (parsedPoints == null) return null;
@@ -9189,7 +9231,9 @@ function formatAssetChallengeHbt(value) {
 
 function getAssetChallengeBonusBps(challenge, tier) {
     const stored = Number(challenge?.bonusPolicy?.rateBps ?? challenge?.bonusRateBps);
-    return Number.isFinite(stored) ? stored : (ASSET_CHALLENGE_LEGACY_BONUS_BPS[tier] || 0);
+    return Number.isFinite(stored) && (stored > 0 || tier === 'mini')
+        ? stored
+        : (ASSET_CHALLENGE_LEGACY_BONUS_BPS[tier] || 0);
 }
 
 function getAssetChallengeQualificationText(challenge, tier) {
@@ -10083,7 +10127,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             };
             const getChallengeBonusBps = (challenge, tier) => {
                 const stored = Number(challenge?.bonusPolicy?.rateBps ?? challenge?.bonusRateBps);
-                return Number.isFinite(stored) ? stored : (legacyTierBonusBps[tier] || 0);
+                return Number.isFinite(stored) && (stored > 0 || tier === 'mini')
+                    ? stored
+                    : (legacyTierBonusBps[tier] || 0);
             };
             const getChallengeQualificationText = (challenge, tier) => {
                 const policy = challenge?.qualificationPolicy
@@ -10296,7 +10342,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 amountText = `-${formatAssetHistoryAmount(tx.amount, 'HBT')}`;
                                 amountClass = 'negative';
                             } else if (tx.type === 'challenge_settlement') {
-                                const amount = Number(tx.amount || 0);
+                                const amount = Number(tx.hbtReceived ?? tx.amount ?? 0);
                                 amountText = amount > 0 ? `+${formatAssetHistoryAmount(amount, 'HBT')}` : '0 HBT';
                                 amountClass = amount > 0 ? 'positive' : '';
                             } else if (tx.type === 'challenge_failure') {

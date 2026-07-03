@@ -46,6 +46,32 @@ describe('challenge stake isolation', () => {
         expect(runtimeSource).toContain('challenge.stakePrincipalReturnedEarly === true');
         expect(runtimeSource).toContain('challenge.stakeBonusBasis');
         expect(runtimeSource).toContain('const bonusRewardHbt = successRate >= 1.0');
-        expect(runtimeSource).toContain('rewardHbt = principalRewardHbt + bonusRewardHbt');
+        expect(runtimeSource).toContain('let principalPaidHbt = principalRewardHbt;');
+        expect(runtimeSource).toContain('rewardHbt = principalPaidHbt + bonusPaidHbt');
+        expect(runtimeSource).toContain('principalRewardHbt: principalPaidHbt');
+        expect(runtimeSource).toContain('bonusRewardHbt: bonusPaidHbt');
+        expect(runtimeSource).toContain('targetBonusRewardHbt: bonusRewardHbt');
+        expect(runtimeSource).toContain('hbtReceived: rewardHbt');
+    });
+
+    it('renders a newly started paid challenge from the callable response before Firestore refresh catches up', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+        const managerSource = readRepoFile('js/blockchain-manager.js');
+        const appCoreSource = readRepoFile('js/app-core.js');
+
+        expect(runtimeSource).toContain('activeChallenge: clientChallengeData');
+        expect(runtimeSource).toContain('activeChallenges: {');
+        expect(managerSource.match(/window\.applyOptimisticChallengeStart\?\.\(/g).length).toBeGreaterThanOrEqual(3);
+        expect(appCoreSource).toContain('window.applyOptimisticChallengeStart = function(data = {})');
+        expect(appCoreSource).toContain('persistCachedAssetUserData(user.uid, nextUserData);');
+        expect(appCoreSource).toContain('renderAssetChallengePanel(getAssetActiveChallengesFromUserData(nextUserData), getKstDateString());');
+    });
+
+    it('falls back to the tier default bonus when paid challenge records carry a zero stored rate', () => {
+        const runtimeSource = readRepoFile('functions/runtime.js');
+        const appCoreSource = readRepoFile('js/app-core.js');
+
+        expect(runtimeSource).toContain('Number.isFinite(stored) && (stored > 0 || tier === "mini")');
+        expect(appCoreSource).toContain("Number.isFinite(stored) && (stored > 0 || tier === 'mini')");
     });
 });

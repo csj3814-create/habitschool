@@ -1,5 +1,19 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-04 (Weekly Challenge Start And Bonus Settlement)
+
+### 242. Challenge starts must render from the mutation response before server refresh
+- Symptom: after staking HBT for a 7-day weekly challenge, the asset tab could still show the start card until the user refreshed.
+- Root cause: the client waited for a post-mutation `users` document refresh to pick up `activeChallenges`, and delayed Firestore reads could fall back to stale cache.
+- Lesson: challenge start callables should return a client-safe active challenge payload, and the client should optimistically seed the asset cache/render from that payload before awaiting the authoritative refresh.
+
+### 243. Paid challenge settlement needs principal/bonus accounting, not one blended amount
+- Symptom: a 100% weekly challenge showed only a 5,000 HBT settlement even though the UI promised 5,000 principal plus a 2,500 HBT bonus.
+- Root cause: older paid challenge records can carry a nonpositive stored bonus rate, and settlement history only stored a blended `amount`, hiding whether principal or bonus was actually paid.
+- Lesson: for paid challenge tiers, treat missing or nonpositive stored bonus rates as legacy/default policy unless the tier is intentionally free. Store principal, paid bonus, target bonus, and actual received HBT separately so underpayment is visible and auditable.
+
+---
+
 ## 2026-06-27 (Exercise Video Thumbnail Preview)
 
 ### 241. Deferred video thumbnail backfill must update the live exercise preview too

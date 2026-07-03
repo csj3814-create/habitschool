@@ -30,7 +30,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=221';
+} from './blockchain-config.js?v=222';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +48,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=221';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=222';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=221';
-import { getKstDateString } from './ui-helpers.js?v=221';
-import { checkRateLimit } from './security.js?v=221';
+import { showToast } from './ui-helpers.js?v=222';
+import { getKstDateString } from './ui-helpers.js?v=222';
+import { checkRateLimit } from './security.js?v=222';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -309,6 +309,12 @@ async function recoverPendingChallengeStartIfNeeded(currentUser, resolvedId, cha
         });
         clearPendingChallengeStart(currentUser.uid);
         showChallengeStartSuccessToast(result.data, challengeDef, challengeDef.duration || 30, tier, true);
+        window.applyOptimisticChallengeStart?.({
+            ...result.data,
+            challengeId: resolvedId,
+            tier,
+            hbtStaked: pending.hbtAmount
+        });
         await refreshAssetDisplayAfterChallengeMutation('challenge-start-recovery');
         return { handled: true, success: true };
     } catch (error) {
@@ -1479,6 +1485,12 @@ export async function startChallenge30D(challengeId) {
         clearPendingChallengeStart(currentUser.uid);
 
         showChallengeStartSuccessToast(data, challengeDef, duration, tier);
+        window.applyOptimisticChallengeStart?.({
+            ...data,
+            challengeId: resolvedId,
+            tier,
+            hbtStaked: hbtAmount
+        });
 
         await refreshAssetDisplayAfterChallengeMutation('challenge-start');
         return true;
@@ -2559,6 +2571,12 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         clearPendingChallengeStart(currentUser.uid);
 
         showChallengeStartSuccessToast(data, challengeDef, duration, tier);
+        window.applyOptimisticChallengeStart?.({
+            ...data,
+            challengeId: resolvedId,
+            tier,
+            hbtStaked: hbtAmount
+        });
 
         await refreshAssetDisplayAfterChallengeMutation('connected-wallet-challenge-start');
         return true;
