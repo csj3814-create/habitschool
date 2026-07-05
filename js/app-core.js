@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=222';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=222';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=223';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=223';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=222';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=222';
+} from './auth-login-helpers.js?v=223';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=223';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=222';
+} from './exercise-media.js?v=223';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=222';
+} from './health-connect-utils.js?v=223';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=222';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=222';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=222';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=222';
-import { sanitize, compressImage } from './data-manager.js?v=222';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=222';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=222';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=222';
+} from './habit-groups.js?v=223';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=223';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=223';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=223';
+import { sanitize, compressImage } from './data-manager.js?v=223';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=223';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=223';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=223';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=222';
+} from './diet-program.js?v=223';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=222';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=222';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=222';
+} from './meditation-guide.js?v=223';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=223';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=223';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=222';
+} from './social-challenge-readiness.js?v=223';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=222';
+} from './monthly-mvp-reward.js?v=223';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -141,6 +141,7 @@ const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze([
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
+const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;
 const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
@@ -5256,7 +5257,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=222';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=223';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15053,7 +15054,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);
     const useSamsungSimpleVideoUpload = isVideo && shouldUseSamsungSimpleVideoUpload(fileToUpload, normalizedFolderName);
     const useSamsungSimpleUpload = useSamsungSimpleImageUpload || useSamsungSimpleVideoUpload;
-    const maxRetries = useSamsungSimpleUpload ? 0 : 2;
+    const maxRetries = useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS : 2;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
@@ -16309,7 +16310,27 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
     startBackgroundUploadProgressTracker(jobs);
 
     (async () => {
-        for (const job of jobs) {
+        let patchChain = Promise.resolve();
+        const applyBackgroundMediaPatchSequentially = ({ job, result, updateGallery = true }) => {
+            const runPatch = patchChain
+                .catch(() => {})
+                .then(async () => {
+                    const committedData = await applyBackgroundMediaPatch({
+                        userId,
+                        docId,
+                        job,
+                        result,
+                        updateGallery,
+                        baseData: latestCommittedData
+                    });
+                    if (committedData) latestCommittedData = committedData;
+                    return committedData;
+                });
+            patchChain = runPatch.catch(() => {});
+            return runPatch;
+        };
+
+        const processBackgroundMediaJob = async (job) => {
             let result = null;
             try {
                 updateBackgroundUploadProgressTracker(job.inputId, { syncPct: 6 });
@@ -16323,15 +16344,11 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                     retrying: false,
                     retryAttempt: 0
                 });
-                const committedData = await applyBackgroundMediaPatch({
-                    userId,
-                    docId,
+                await applyBackgroundMediaPatchSequentially({
                     job,
                     result,
-                    updateGallery: !deferGalleryUntilComplete,
-                    baseData: latestCommittedData
+                    updateGallery: !deferGalleryUntilComplete
                 });
-                if (committedData) latestCommittedData = committedData;
                 if (!result.thumbUrl && pendingSnapshot?.thumbPromise) {
                     deferredThumbPatches.push({
                         job,
@@ -16356,6 +16373,7 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                         failed: false
                     });
                 }
+                return { failed: false };
             } catch (error) {
                 const persistedData = await verifyBackgroundMediaPersisted({
                     userId,
@@ -16374,8 +16392,8 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                         finished: true,
                         failed: false
                     });
+                    return { failed: false };
                 } else {
-                    failed++;
                     console.error('백그라운드 미디어 저장 실패:', job, error);
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
@@ -16385,9 +16403,14 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                         finished: false,
                         failed: true
                     });
+                    return { failed: true };
                 }
             }
-        }
+        };
+
+        const jobResults = await Promise.all(jobs.map((job) => processBackgroundMediaJob(job)));
+        await patchChain.catch(() => {});
+        failed = jobResults.filter((result) => result?.failed).length;
 
         if (deferGalleryUntilComplete && latestCommittedData) {
             upsertGalleryCacheItem(docId, latestCommittedData);

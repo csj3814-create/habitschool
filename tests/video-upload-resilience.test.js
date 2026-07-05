@@ -44,7 +44,8 @@ describe('video upload resilience', () => {
         expect(source).toContain('samsung_image_upload_timeout');
         expect(source).toContain('const useSamsungSimpleImageUpload = shouldUseSamsungSimpleImageUpload(fileToUpload);');
         expect(source).toContain('const useSamsungSimpleUpload = useSamsungSimpleImageUpload || useSamsungSimpleVideoUpload;');
-        expect(source).toContain('const maxRetries = useSamsungSimpleUpload ? 0 : 2;');
+        expect(source).toContain('const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;');
+        expect(source).toContain('const maxRetries = useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS : 2;');
         expect(source).toContain('if (useSamsungSimpleImageUpload) {');
         expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
     });
@@ -163,6 +164,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('pendingUpload = uploadVideoWithThumb(file, folder, userId, localThumbSeed, uploadOptions);');
         expect(source).toContain('const uploadResult = await resolveBackgroundMediaUploadWithRetries({ userId, job });');
         expect(source).toContain('result = uploadResult.result;');
+    });
+
+    it('runs independent background media uploads together while serializing document patches', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const applyBackgroundMediaPatchSequentially = ({ job, result, updateGallery = true }) => {');
+        expect(source).toContain('baseData: latestCommittedData');
+        expect(source).toContain('patchChain = runPatch.catch(() => {});');
+        expect(source).toContain('const processBackgroundMediaJob = async (job) => {');
+        expect(source).toContain('const jobResults = await Promise.all(jobs.map((job) => processBackgroundMediaJob(job)));');
+        expect(source).toContain('failed = jobResults.filter((result) => result?.failed).length;');
     });
 
     it('suppresses automatic pre-upload failure toasts while deferred save paths retry media uploads', () => {

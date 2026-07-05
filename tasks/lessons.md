@@ -1,5 +1,17 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-05 (Media Upload Resilience)
+
+### 246. Background media uploads should parallelize transfers but serialize document patches
+- Symptom: saving multiple photos or photos plus video could feel slower after updates, and transient failures surfaced as "일부 업로드 실패" after all work completed.
+- Root cause: independent background media jobs were handled one-by-one, while Samsung Internet simple uploads had no internal retry before the slower background retry path.
+- Lesson: let independent Storage transfers resolve concurrently and retry transient simple-upload failures, but serialize writes back into the same `daily_logs` document so later patches do not overwrite earlier media fields or local cache state.
+
+### 247. Version bumps must use UTF-8-safe tooling
+- Symptom: a mechanical PWA version bump attempted through PowerShell text writes could corrupt Korean source strings.
+- Root cause: the shell decoded/wrote files with the wrong text encoding during a broad replacement.
+- Lesson: for Korean source files, perform mechanical version rewrites with UTF-8-safe tooling and immediately run Korean text integrity tests plus a focused diff check before continuing.
+
 ## 2026-07-04 (Weekly Challenge Start And Bonus Settlement)
 
 ### 242. Challenge starts must render from the mutation response before server refresh
