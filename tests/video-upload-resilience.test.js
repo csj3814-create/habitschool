@@ -50,6 +50,20 @@ describe('video upload resilience', () => {
         expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
     });
 
+    it('serializes Samsung simple uploads and recovers URLs after client-side timeouts', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;');
+        expect(source).toContain('let _samsungSimpleUploadChain = Promise.resolve();');
+        expect(source).toContain('function runSamsungSimpleUploadInSequence(callback)');
+        expect(source).toContain('_samsungSimpleUploadChain = run.catch(() => {});');
+        expect(source).toContain('function getDownloadUrlWithTimeout(storageRef, timeoutMs = 10000)');
+        expect(source).toContain('async function recoverDownloadUrlAfterPossibleUploadTimeout');
+        expect(source).toContain('const recoveredUrl = await recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {');
+        expect(source).toContain('attempts: useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS : 1');
+        expect(source).toContain('return runSamsungSimpleUploadInSequence(runUploadAttempts);');
+    });
+
     it('uses a simpler Samsung Internet exercise video upload path instead of resumable progress that can stall at 1 percent', () => {
         const source = readAppSource();
 
@@ -175,6 +189,21 @@ describe('video upload resilience', () => {
         expect(source).toContain('const processBackgroundMediaJob = async (job) => {');
         expect(source).toContain('const jobResults = await Promise.all(jobs.map((job) => processBackgroundMediaJob(job)));');
         expect(source).toContain('failed = jobResults.filter((result) => result?.failed).length;');
+    });
+
+    it('treats backed-up background upload failures as deferred retry instead of terminal failure UI', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('deferFailuresToOutbox = false');
+        expect(source).toContain('deferredFailureInputIds = null');
+        expect(source).toContain('deferFailuresToOutbox: backgroundOutboxBackupQueued');
+        expect(source).toContain('deferredFailureInputIds: backgroundOutboxBackupInputIds');
+        expect(source).toContain('function isBackgroundJobBackedByOutbox(job = {}, backedInputIds = null)');
+        expect(source).toContain('job.failed && !job.deferred');
+        expect(source).toContain("deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료'");
+        expect(source).toContain("console.warn('[background-media] upload deferred to offline outbox:'");
+        expect(source).toContain('return { failed: true, deferred: true };');
+        expect(source).toContain('📦 업로드 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
     });
 
     it('suppresses automatic pre-upload failure toasts while deferred save paths retry media uploads', () => {

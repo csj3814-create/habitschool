@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=223';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=223';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=224';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=224';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=223';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=223';
+} from './auth-login-helpers.js?v=224';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=224';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=223';
+} from './exercise-media.js?v=224';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=223';
+} from './health-connect-utils.js?v=224';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=223';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=223';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=223';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=223';
-import { sanitize, compressImage } from './data-manager.js?v=223';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=223';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=223';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=223';
+} from './habit-groups.js?v=224';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=224';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=224';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=224';
+import { sanitize, compressImage } from './data-manager.js?v=224';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=224';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=224';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=224';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=223';
+} from './diet-program.js?v=224';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=223';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=223';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=223';
+} from './meditation-guide.js?v=224';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=224';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=224';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=223';
+} from './social-challenge-readiness.js?v=224';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=223';
+} from './monthly-mvp-reward.js?v=224';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -142,6 +142,8 @@ const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
 const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;
+const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;
+const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS = 900;
 const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
@@ -5257,7 +5259,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=223';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=224';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6793,10 +6795,14 @@ function prepareNativeMediaInput(input, mediaKind = 'image') {
 
 const _selectedMediaFileFallbacks = new WeakMap();
 
+function isSelectedMediaFileObject(file) {
+    if (!file) return false;
+    return typeof File === 'undefined' ? typeof file === 'object' : file instanceof File;
+}
+
 function rememberSelectedMediaFile(input, file) {
     if (!input || !file) return null;
-    const isFile = typeof File === 'undefined' ? typeof file === 'object' : file instanceof File;
-    if (!isFile) return null;
+    if (!isSelectedMediaFileObject(file)) return null;
     _selectedMediaFileFallbacks.set(input, file);
     return file;
 }
@@ -14909,6 +14915,48 @@ function scheduleSimpleUploadProgress(onProgress, payload) {
         .catch(() => {});
 }
 
+let _samsungSimpleUploadChain = Promise.resolve();
+
+function runSamsungSimpleUploadInSequence(callback) {
+    if (typeof callback !== 'function') return Promise.resolve(null);
+    const run = _samsungSimpleUploadChain
+        .catch(() => {})
+        .then(callback);
+    _samsungSimpleUploadChain = run.catch(() => {});
+    return run;
+}
+
+function waitForSimpleUploadRecoveryDelay(attempt = 1, baseDelayMs = SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS) {
+    const delay = Math.max(0, Number(baseDelayMs || 0)) * Math.max(1, Number(attempt || 1));
+    return new Promise(resolve => setTimeout(resolve, delay));
+}
+
+async function getDownloadUrlWithTimeout(storageRef, timeoutMs = 10000) {
+    return withRejectingTimeout(
+        getDownloadURL(storageRef),
+        Math.max(1000, Number(timeoutMs || 0)),
+        'upload_url_recovery_timeout'
+    );
+}
+
+async function recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {
+    attempts = 1,
+    delayMs = 0,
+    timeoutMs = 10000
+} = {}) {
+    const maxAttempts = Math.max(1, Number(attempts || 1));
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        if (attempt > 0 || delayMs > 0) {
+            await waitForSimpleUploadRecoveryDelay(delayMs > 0 ? attempt + 1 : 1, delayMs);
+        }
+        try {
+            const url = await getDownloadUrlWithTimeout(storageRef, timeoutMs);
+            if (url) return url;
+        } catch (_) {}
+    }
+    return null;
+}
+
 async function uploadSamsungImageWithSimplePut(storageRef, file, onProgress = null) {
     scheduleSimpleUploadProgress(onProgress, 12);
     await withRejectingTimeout(
@@ -15056,54 +15104,68 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const useSamsungSimpleUpload = useSamsungSimpleImageUpload || useSamsungSimpleVideoUpload;
     const maxRetries = useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS : 2;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
-            if (useSamsungSimpleVideoUpload) {
-                await uploadSamsungVideoWithSimplePut(storageRef, fileToUpload, {
-                    onProgress,
-                    contentType: videoContentType,
-                    timeoutMs: uploadTimeouts.hardTimeoutMs
-                });
-            } else if (useSamsungSimpleImageUpload) {
-                await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);
-            } else {
-                await runResumableUploadWithTimeout(storageRef, fileToUpload, {
-                    onProgress,
-                    hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
-                    idleTimeoutMs: uploadTimeouts.idleTimeoutMs,
-                    metadata: uploadMetadata
-                });
-            }
-
-            const urlPromise = getDownloadURL(storageRef);
-            const urlTimeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('업로드 완료 확인 시간이 초과됐어요. 다시 시도해주세요.')), uploadTimeouts.finalizeTimeoutMs)
-            );
-            const url = await Promise.race([urlPromise, urlTimeout]);
-            console.log('✅ 업로드 완료:', storagePath);
-            return url;
-        } catch (error) {
-            console.error(`파일 업로드 오류 (시도 ${attempt + 1}):`, error.code || '', error.message);
-            if (error.code === 'storage/unauthorized') {
-                showToast('⚠️ 업로드 권한이 없습니다.');
-                return null;
-            }
-            if (error.code === 'storage/quota-exceeded') {
-                showToast('⚠️ 저장 공간이 부족합니다.');
-                return null;
-            }
-            if (attempt === maxRetries) {
-                if (!suppressFailureToast) {
-                    showToast(`⚠️ 업로드 실패: ${error.message}`);
+    const runUploadAttempts = async () => {
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`📤 업로드 시작 (시도 ${attempt + 1}/${maxRetries + 1}):`, storagePath);
+                if (useSamsungSimpleVideoUpload) {
+                    await uploadSamsungVideoWithSimplePut(storageRef, fileToUpload, {
+                        onProgress,
+                        contentType: videoContentType,
+                        timeoutMs: uploadTimeouts.hardTimeoutMs
+                    });
+                } else if (useSamsungSimpleImageUpload) {
+                    await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);
+                } else {
+                    await runResumableUploadWithTimeout(storageRef, fileToUpload, {
+                        onProgress,
+                        hardTimeoutMs: uploadTimeouts.hardTimeoutMs,
+                        idleTimeoutMs: uploadTimeouts.idleTimeoutMs,
+                        metadata: uploadMetadata
+                    });
                 }
-                return null;
+
+                const url = await getDownloadUrlWithTimeout(storageRef, uploadTimeouts.finalizeTimeoutMs);
+                console.log('✅ 업로드 완료:', storagePath);
+                return url;
+            } catch (error) {
+                console.error(`파일 업로드 오류 (시도 ${attempt + 1}):`, error.code || '', error.message);
+                if (error.code === 'storage/unauthorized') {
+                    showToast('⚠️ 업로드 권한이 없습니다.');
+                    return null;
+                }
+                if (error.code === 'storage/quota-exceeded') {
+                    showToast('⚠️ 저장 공간이 부족합니다.');
+                    return null;
+                }
+
+                const recoveredUrl = await recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {
+                    attempts: useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS : 1,
+                    delayMs: useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS : 0,
+                    timeoutMs: uploadTimeouts.finalizeTimeoutMs
+                });
+                if (recoveredUrl) {
+                    console.log('✅ 업로드 완료 확인 복구:', storagePath);
+                    return recoveredUrl;
+                }
+
+                if (attempt === maxRetries) {
+                    if (!suppressFailureToast) {
+                        showToast(`⚠️ 업로드 실패: ${error.message}`);
+                    }
+                    return null;
+                }
+                // 재시도 전 대기 (1초, 2초 exponential backoff)
+                await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
             }
-            // 재시도 전 대기 (1초, 2초 exponential backoff)
-            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         }
+        return null;
+    };
+
+    if (useSamsungSimpleUpload) {
+        return runSamsungSimpleUploadInSequence(runUploadAttempts);
     }
-    return null;
+    return runUploadAttempts();
 }
 
 // === 파일 선택 즉시 업로드를 위한 상태 저장소 ===
@@ -15812,7 +15874,7 @@ function stopBackgroundUploadProgressTracker({ keepStatus = true } = {}) {
 
 function getBackgroundUploadJobProgress(jobState = null) {
     if (!jobState) return 0;
-    if (jobState.finished || jobState.failed) return 100;
+    if (jobState.finished || jobState.failed || jobState.deferred) return 100;
     const pendingSnapshot = getPendingUploadSnapshot(jobState.inputId);
     const transferPct = pendingSnapshot?.done
         ? 100
@@ -15834,8 +15896,9 @@ function renderBackgroundUploadProgressTracker() {
         return;
     }
 
-    const failedCount = tracker.jobs.filter(job => job.failed).length;
-    const finishedCount = tracker.jobs.filter(job => job.finished || job.failed).length;
+    const failedCount = tracker.jobs.filter(job => job.failed && !job.deferred).length;
+    const deferredCount = tracker.jobs.filter(job => job.deferred).length;
+    const finishedCount = tracker.jobs.filter(job => job.finished || job.failed || job.deferred).length;
     const retryingJob = tracker.jobs.find(job => job.retrying);
     const aggregateProgress = Math.round(
         tracker.jobs.reduce((sum, job) => sum + getBackgroundUploadJobProgress(job), 0) / tracker.jobs.length
@@ -15846,7 +15909,9 @@ function renderBackgroundUploadProgressTracker() {
         complete: !!tracker.done && failedCount === 0,
         error: !!tracker.done && failedCount > 0,
         title: tracker.done
-            ? (failedCount === 0 ? '업로드 완료' : '일부 업로드 실패')
+            ? (failedCount === 0
+                ? (deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료')
+                : '일부 업로드 실패')
             : retryingJob
                 ? `업로드 재시도 중 (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})`
             : `업로드 ${finishedCount}/${tracker.jobs.length}`,
@@ -15866,7 +15931,8 @@ function startBackgroundUploadProgressTracker(jobs = []) {
             retrying: false,
             retryAttempt: 0,
             finished: false,
-            failed: false
+            failed: false,
+            deferred: false
         }))
     };
     renderBackgroundUploadProgressTracker();
@@ -16196,10 +16262,26 @@ function getBackgroundUploadFolderForJob(job = {}) {
     return '';
 }
 
+function isBackgroundJobBackedByOutbox(job = {}, backedInputIds = null) {
+    const inputId = String(job?.inputId || '').trim();
+    if (!inputId) return false;
+    if (backedInputIds instanceof Set) return backedInputIds.has(inputId);
+    if (Array.isArray(backedInputIds)) {
+        return backedInputIds.map((id) => String(id || '').trim()).includes(inputId);
+    }
+    return false;
+}
+
+function getBackgroundMediaRetryFile(job = {}) {
+    const input = document.getElementById(job?.inputId);
+    const selectedFile = getSelectedMediaFile(input);
+    if (selectedFile) return selectedFile;
+    return isSelectedMediaFileObject(job?.file) ? job.file : null;
+}
+
 async function retryBackgroundMediaUploadFromSelectedFile({ userId, job } = {}) {
     if (!userId || !job?.inputId) return null;
-    const input = document.getElementById(job.inputId);
-    const file = getSelectedMediaFile(input);
+    const file = getBackgroundMediaRetryFile(job);
     const folder = getBackgroundUploadFolderForJob(job);
     if (!file || !folder) return null;
 
@@ -16263,9 +16345,8 @@ async function resolveBackgroundMediaUploadWithRetries({ userId, job } = {}) {
     let finalized = await finalizeBackgroundMediaUploadResult(job, result, pendingSnapshot);
     if (finalized.result?.url) return finalized;
 
-    const input = document.getElementById(job?.inputId);
     for (let retryAttempt = 1; retryAttempt <= BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS; retryAttempt++) {
-        const selectedFile = getSelectedMediaFile(input);
+        const selectedFile = getBackgroundMediaRetryFile(job);
         if (!selectedFile) break;
 
         if (retryAttempt > 1) {
@@ -16301,10 +16382,19 @@ async function resolveBackgroundMediaUploadWithRetries({ userId, job } = {}) {
     };
 }
 
-function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUntilComplete = false, onSettled = null }) {
+function runBackgroundMediaSyncJobs({
+    userId,
+    docId,
+    jobs = [],
+    deferGalleryUntilComplete = false,
+    deferFailuresToOutbox = false,
+    deferredFailureInputIds = null,
+    onSettled = null
+}) {
     if (!userId || !docId || !Array.isArray(jobs) || !jobs.length) return;
 
     let failed = 0;
+    let deferred = 0;
     let latestCommittedData = cloneDailyLogData(getCachedDailyLog(docId) || {});
     const deferredThumbPatches = [];
     startBackgroundUploadProgressTracker(jobs);
@@ -16393,6 +16483,18 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
                         failed: false
                     });
                     return { failed: false };
+                } else if (deferFailuresToOutbox && isBackgroundJobBackedByOutbox(job, deferredFailureInputIds)) {
+                    console.warn('[background-media] upload deferred to offline outbox:', job.kind, job.inputId, error?.message || error);
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        retrying: false,
+                        retryAttempt: 0,
+                        finished: false,
+                        failed: false,
+                        deferred: true
+                    });
+                    return { failed: true, deferred: true };
                 } else {
                     console.error('백그라운드 미디어 저장 실패:', job, error);
                     updateBackgroundUploadProgressTracker(job.inputId, {
@@ -16410,7 +16512,9 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
 
         const jobResults = await Promise.all(jobs.map((job) => processBackgroundMediaJob(job)));
         await patchChain.catch(() => {});
+        deferred = jobResults.filter((result) => result?.deferred).length;
         failed = jobResults.filter((result) => result?.failed).length;
+        const terminalFailed = Math.max(0, failed - deferred);
 
         if (deferGalleryUntilComplete && latestCommittedData) {
             upsertGalleryCacheItem(docId, latestCommittedData);
@@ -16468,14 +16572,16 @@ function runBackgroundMediaSyncJobs({ userId, docId, jobs = [], deferGalleryUnti
 
         window.updateAssetDisplay?.(true).catch(() => { });
 
-        if (failed === 0) {
+        if (terminalFailed === 0 && deferred > 0) {
+            showToast('📦 업로드 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
+        } else if (failed === 0) {
             showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
         } else {
-            showToast(`⚠️ 백그라운드 업로드 중 ${failed}건이 실패했습니다.`);
+            showToast(`⚠️ 백그라운드 업로드 중 ${terminalFailed}건이 실패했습니다.`);
         }
 
         try {
-            await onSettled?.({ failed, latestCommittedData });
+            await onSettled?.({ failed, deferred, latestCommittedData });
         } catch (settledError) {
             console.warn('업로드 후속 작업 실패:', settledError?.message || settledError);
         }
@@ -16839,17 +16945,30 @@ async function flushBackgroundMediaPatchQueue({ quiet = true } = {}) {
 }
 
 function shouldQueueSelectedFileForOfflineOutbox({ file, removed = false, pendingSnapshot = null } = {}) {
-    return file instanceof File
+    return isSelectedMediaFileObject(file)
         && !removed
         && !hasMediaUrl(pendingSnapshot?.result?.url);
 }
 
-function collectOfflineOutboxMediaItems(saveData = {}) {
+function findQueuedBackgroundJobFile(backgroundJobs = [], inputId = '') {
+    if (!inputId) return null;
+    const job = (Array.isArray(backgroundJobs) ? backgroundJobs : [])
+        .find((item) => String(item?.inputId || '') === String(inputId || ''));
+    return isSelectedMediaFileObject(job?.file) ? job.file : null;
+}
+
+function getSelectedOrQueuedMediaFile(input, backgroundJobs = []) {
+    const selectedFile = getSelectedMediaFile(input);
+    if (selectedFile) return selectedFile;
+    return findQueuedBackgroundJobFile(backgroundJobs, input?.id);
+}
+
+function collectOfflineOutboxMediaItems(saveData = {}, backgroundJobs = []) {
     const items = [];
     ['breakfast', 'lunch', 'dinner', 'snack'].forEach((slot) => {
         const input = document.getElementById(`diet-img-${slot}`);
         const preview = document.getElementById(`preview-${slot}`);
-        const file = getSelectedMediaFile(input);
+        const file = getSelectedOrQueuedMediaFile(input, backgroundJobs);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!shouldQueueSelectedFileForOfflineOutbox({
             file,
@@ -16858,6 +16977,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         })) return;
         items.push({
             kind: 'diet',
+            inputId: input?.id || '',
             slot,
             folder: 'diet_images',
             file
@@ -16868,11 +16988,12 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
-        const file = getSelectedMediaFile(input);
+        const file = getSelectedOrQueuedMediaFile(input, backgroundJobs);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         items.push({
             kind: 'cardio',
+            inputId: input?.id || '',
             mediaId,
             folder: 'exercise_images',
             file
@@ -16883,12 +17004,13 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
         if (block.hasAttribute('data-user-removed')) return;
         const mediaId = String(block.dataset.mediaId || '').trim();
         const input = block.querySelector('.exer-file');
-        const file = getSelectedMediaFile(input);
+        const file = getSelectedOrQueuedMediaFile(input, backgroundJobs);
         const pendingSnapshot = getPendingUploadSnapshot(input?.id);
         if (!mediaId || !shouldQueueSelectedFileForOfflineOutbox({ file, pendingSnapshot })) return;
         const previewImg = block.querySelector('.preview-strength-img');
         items.push({
             kind: 'strength',
+            inputId: input?.id || '',
             mediaId,
             folder: 'exercise_videos',
             localThumbSeed: resolveUsableStrengthLocalThumb(
@@ -16902,7 +17024,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
 
     const sleepInput = document.getElementById('sleep-img');
     const sleepPreview = document.getElementById('preview-sleep');
-    const sleepFile = getSelectedMediaFile(sleepInput);
+    const sleepFile = getSelectedOrQueuedMediaFile(sleepInput, backgroundJobs);
     const sleepPendingSnapshot = getPendingUploadSnapshot(sleepInput?.id);
     if (shouldQueueSelectedFileForOfflineOutbox({
         file: sleepFile,
@@ -16911,6 +17033,7 @@ function collectOfflineOutboxMediaItems(saveData = {}) {
     })) {
         items.push({
             kind: 'sleep',
+            inputId: sleepInput?.id || '',
             folder: 'sleep_images',
             file: sleepFile
         });
@@ -16933,9 +17056,10 @@ async function queueOfflineOutboxEntry({ userId = '', docId = '', date = '', sav
     const persistedMediaItems = [];
     for (const mediaItem of Array.isArray(mediaItems) ? mediaItems : []) {
         const file = mediaItem?.file;
-        if (!(file instanceof File)) continue;
+        if (!isSelectedMediaFileObject(file)) continue;
         const cachedItem = await cacheOfflineOutboxFile(entryId, {
             kind: String(mediaItem.kind || '').trim(),
+            inputId: String(mediaItem.inputId || '').trim(),
             slot: String(mediaItem.slot || '').trim(),
             mediaId: String(mediaItem.mediaId || '').trim(),
             folder: String(mediaItem.folder || '').trim(),
@@ -17179,6 +17303,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let offlineOutboxMediaItems = [];
         let primarySaveAcknowledged = false;
         let backgroundOutboxBackupQueued = false;
+        let backgroundOutboxBackupInputIds = new Set();
         try {
             const dateSyncResult = syncSelectedRecordDateToToday({
                 reloadData: false,
@@ -17212,7 +17337,15 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const backgroundJobs = [];
             const queueBackgroundJob = (job) => {
                 if (!job?.inputId) return;
-                if (backgroundJobs.some(item => item.inputId === job.inputId)) return;
+                const existingJob = backgroundJobs.find(item => item.inputId === job.inputId);
+                if (existingJob) {
+                    if (!existingJob.file && isSelectedMediaFileObject(job.file)) existingJob.file = job.file;
+                    if (!existingJob.slot && job.slot) existingJob.slot = job.slot;
+                    if (!existingJob.mediaId && job.mediaId) existingJob.mediaId = job.mediaId;
+                    if (!existingJob.blockId && job.blockId) existingJob.blockId = job.blockId;
+                    if (!existingJob.aiAnalysis && job.aiAnalysis) existingJob.aiAnalysis = job.aiAnalysis;
+                    return;
+                }
                 backgroundJobs.push(job);
             };
             const getStoredPreviewState = (previewEl, oldUrl, oldThumbUrl) => {
@@ -17283,7 +17416,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         }
                         return resolvedResult;
                     }
-                    queueBackgroundJob({ kind: backgroundKind, slot, inputId });
+                    queueBackgroundJob({ kind: backgroundKind, slot, inputId, file: selectedFile });
                 }
                 return getStoredPreviewState(previewEl, oldUrl, oldThumbUrl);
             };
@@ -17355,7 +17488,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (!pendingSnapshot) {
                         ensureDeferredImageUpload(fileInput.id, selectedFile, 'exercise_images');
                     }
-                    queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    queueBackgroundJob({ kind: 'cardio', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis, file: selectedFile });
                 }
                 const item = normalizeExerciseItem('cardio', {
                     mediaId,
@@ -17413,7 +17546,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     if (!pendingSnapshot) {
                         ensureDeferredVideoUpload(fileInput.id, selectedFile, localThumbSeed);
                     }
-                    queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis });
+                    queueBackgroundJob({ kind: 'strength', inputId: fileInput.id, mediaId, blockId: block.id, aiAnalysis, file: selectedFile });
                 }
                 const item = normalizeExerciseItem('strength', {
                     mediaId,
@@ -17463,7 +17596,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
                     }
                 } else {
-                    queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img' });
+                    queueBackgroundJob({ kind: 'sleep', inputId: 'sleep-img', file: selectedSleepFile });
                 }
             }
 
@@ -17543,7 +17676,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 shareSettings: shareSettings
             });
             latestSaveData = saveData;
-            offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData);
+            offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData, backgroundJobs);
 
             // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.
             // 타임아웃을 성공처럼 처리하면 로컬 점수만 오른 뒤 새로고침 때 기록이 사라질 수 있다.
@@ -17579,6 +17712,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     mediaItems: offlineOutboxMediaItems
                 }).catch(() => null);
                 backgroundOutboxBackupQueued = !!backupEntry;
+                backgroundOutboxBackupInputIds = new Set((backupEntry?.mediaItems || [])
+                    .map((item) => String(item?.inputId || '').trim())
+                    .filter(Boolean));
             } else {
                 await removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
             }
@@ -17678,6 +17814,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     docId,
                     jobs: backgroundJobs,
                     deferGalleryUntilComplete: true,
+                    deferFailuresToOutbox: backgroundOutboxBackupQueued,
+                    deferredFailureInputIds: backgroundOutboxBackupInputIds,
                     onSettled: ({ failed } = {}) => {
                         if (backgroundOutboxBackupQueued && Number(failed || 0) === 0) {
                             removeOfflineOutboxEntry(user.uid, docId).catch(() => {});

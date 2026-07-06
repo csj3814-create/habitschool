@@ -1,5 +1,12 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-06 (Mobile Multi-Photo Upload Retry)
+
+### 248. Mobile media retry jobs must keep their own File and distinguish deferred recovery from terminal failure
+- Symptom: after a v223 upload resilience fix, uploading multiple diet photos on mobile could still end at `일부 업로드 실패` even though previews remained visible.
+- Root cause: Samsung Internet simple uploads could still contend with each other on the same mobile uplink, timeout before the Storage object was observable, and later retries depended on `input.files` still containing the selected file. When the offline outbox had a recoverable copy, the progress UI still presented the state as terminal failure.
+- Lesson: serialize fragile browser-specific simple uploads, poll Storage for a late URL after client-side timeout, attach the selected `File` directly to background retry jobs/outbox backups, and show recoverable outbox-backed failures as deferred retry rather than terminal failure.
+
 ## 2026-07-05 (Media Upload Resilience)
 
 ### 246. Background media uploads should parallelize transfers but serialize document patches

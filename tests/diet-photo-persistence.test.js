@@ -45,6 +45,22 @@ describe('diet photo persistence', () => {
         expect(appSource).not.toContain('hasMediaUrl(diet[`${slot}Url`]) return');
     });
 
+    it('keeps selected diet files on background jobs so mobile retries do not depend on input.files', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('function isSelectedMediaFileObject(file)');
+        expect(appSource).toContain('function getBackgroundMediaRetryFile(job = {})');
+        expect(appSource).toContain('return isSelectedMediaFileObject(job?.file) ? job.file : null;');
+        expect(appSource).toContain('const selectedFile = getBackgroundMediaRetryFile(job);');
+        expect(appSource).toContain('if (!existingJob.file && isSelectedMediaFileObject(job.file)) existingJob.file = job.file;');
+        expect(appSource).toContain('queueBackgroundJob({ kind: backgroundKind, slot, inputId, file: selectedFile });');
+        expect(appSource).toContain('collectOfflineOutboxMediaItems(saveData, backgroundJobs)');
+        expect(appSource).toContain('function getSelectedOrQueuedMediaFile(input, backgroundJobs = [])');
+        expect(appSource).toContain('const file = getSelectedOrQueuedMediaFile(input, backgroundJobs);');
+        expect(appSource).toContain('inputId: input?.id ||');
+        expect(appSource).toContain('backgroundOutboxBackupInputIds = new Set((backupEntry?.mediaItems || [])');
+    });
+
     it('waits briefly for selected diet image uploads before falling back to background save', () => {
         const appSource = readAppSource();
 
