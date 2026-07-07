@@ -1,5 +1,12 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-07 (Challenge Progress After Background Media Save)
+
+### 249. Post-save challenge updates must use the latest committed daily log
+- Symptom: after completing all three habits for a challenge day, the asset tab could stay at `2/3` until the user backgrounded and foregrounded the app.
+- Root cause: background media uploads patched the final Storage URLs into `daily_logs`, but the post-save challenge recompute still used the initial pre-patch `saveData` payload.
+- Lesson: any post-save follow-up that decides challenge/milestone/social state must receive the latest committed daily log from background media settlement, with cache fallback, instead of closing over the initial save payload.
+
 ## 2026-07-06 (Mobile Multi-Photo Upload Retry)
 
 ### 248. Mobile media retry jobs must keep their own File and distinguish deferred recovery from terminal failure

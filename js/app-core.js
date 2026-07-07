@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=224';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=224';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=225';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=225';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=224';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=224';
+} from './auth-login-helpers.js?v=225';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=225';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=224';
+} from './exercise-media.js?v=225';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=224';
+} from './health-connect-utils.js?v=225';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=224';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=224';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=224';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=224';
-import { sanitize, compressImage } from './data-manager.js?v=224';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=224';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=224';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=224';
+} from './habit-groups.js?v=225';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=225';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=225';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=225';
+import { sanitize, compressImage } from './data-manager.js?v=225';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=225';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=225';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=225';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=224';
+} from './diet-program.js?v=225';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=224';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=224';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=224';
+} from './meditation-guide.js?v=225';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=225';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=225';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=224';
+} from './social-challenge-readiness.js?v=225';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=224';
+} from './monthly-mvp-reward.js?v=225';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5259,7 +5259,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=224';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=225';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17756,7 +17756,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             _assetCache.ts = 0;
             setTimeout(() => updateRecordFlowGuides(getVisibleTabName()), 0);
 
-            const runPostSaveFollowUps = async ({ forceGalleryRefresh = false } = {}) => {
+            const runPostSaveFollowUps = async ({ forceGalleryRefresh = false, dailyLogData = saveData } = {}) => {
+                const challengeDailyLogData = dailyLogData && typeof dailyLogData === 'object'
+                    ? dailyLogData
+                    : saveData;
                 if (forceGalleryRefresh) {
                     await loadGalleryData(true).catch((refreshError) => {
                         console.warn('업로드 완료 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
@@ -17776,7 +17779,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     await renderMilestones(user.uid);
                     await updateChallengeProgress({
                         dateStr: selectedDateStr,
-                        dailyLogData: saveData
+                        dailyLogData: challengeDailyLogData
                     });
                 } catch (_) {}
             };
@@ -17816,13 +17819,16 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     deferGalleryUntilComplete: true,
                     deferFailuresToOutbox: backgroundOutboxBackupQueued,
                     deferredFailureInputIds: backgroundOutboxBackupInputIds,
-                    onSettled: ({ failed } = {}) => {
+                    onSettled: ({ failed, latestCommittedData } = {}) => {
                         if (backgroundOutboxBackupQueued && Number(failed || 0) === 0) {
                             removeOfflineOutboxEntry(user.uid, docId).catch(() => {});
                         } else if (backgroundOutboxBackupQueued) {
                             flushOfflineOutbox({ quiet: true }).catch(() => {});
                         }
-                        return runPostSaveFollowUps({ forceGalleryRefresh: true });
+                        return runPostSaveFollowUps({
+                            forceGalleryRefresh: true,
+                            dailyLogData: latestCommittedData || getCachedDailyLog(docId) || saveData
+                        });
                     }
                 });
             } else {

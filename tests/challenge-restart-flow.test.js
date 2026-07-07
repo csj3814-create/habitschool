@@ -29,7 +29,7 @@ describe('same-day challenge restart flow', () => {
         expect(managerSource).toContain('challengeStartInFlight.add(startLockKey);');
         expect(appCoreSource).toContain('updateChallengeProgress({ dateStr }).catch(error => {');
         expect(appCoreSource).toContain('dateStr: selectedDateStr');
-        expect(appCoreSource).toContain('dailyLogData: saveData');
+        expect(appCoreSource).toContain('dailyLogData: challengeDailyLogData');
         expect(appCoreSource).toContain('class="challenge-ring-progress"');
         expect(appCoreSource).toContain('function renderAssetChallengePendingState');
         expect(appCoreSource).toContain('function renderAssetChallengeFromCachedUserData');
@@ -40,5 +40,15 @@ describe('same-day challenge restart flow', () => {
         expect(appCoreSource).toContain("renderAssetChallengePendingState(userDocDeferred ? 'user-doc-deferred' : 'user-doc-missing');");
         expect(appCoreSource).toContain('? getDocFromServer(userRef).catch((serverError) => {');
         expect(appCoreSource).toContain("noteFirestoreConnectivityFailure(serverError, 'asset-display user-doc-server')");
+    });
+
+    it('recomputes challenge progress from the latest committed media save after background uploads settle', () => {
+        const appCoreSource = readRepoFile('js/app-core.js');
+
+        expect(appCoreSource).toContain('const runPostSaveFollowUps = async ({ forceGalleryRefresh = false, dailyLogData = saveData } = {}) => {');
+        expect(appCoreSource).toContain('const challengeDailyLogData = dailyLogData && typeof dailyLogData === \'object\'');
+        expect(appCoreSource).toContain('onSettled: ({ failed, latestCommittedData } = {}) => {');
+        expect(appCoreSource).toContain('dailyLogData: latestCommittedData || getCachedDailyLog(docId) || saveData');
+        expect(appCoreSource).toContain('dailyLogData: challengeDailyLogData');
     });
 });
