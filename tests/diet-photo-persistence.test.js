@@ -147,6 +147,22 @@ describe('diet photo persistence', () => {
         expect(appSource).not.toContain('samsungSystemPickerFallback');
     });
 
+    it('blocks gallery-incompatible or empty diet image uploads before saving broken URLs', () => {
+        const appSource = readAppSource();
+        const dataManagerSource = readRepoFile('js/data-manager.js');
+
+        expect(appSource).toContain('const NON_GALLERY_COMPAT_IMAGE_TYPES = Object.freeze([\'image/heic\', \'image/heif\']);');
+        expect(appSource).toContain('function isNonGalleryCompatibleImageFile(file = null)');
+        expect(appSource).toContain('const originalSize = Number(file.size || 0);');
+        expect(appSource).toContain('선택한 파일이 비어 있어 업로드할 수 없어요.');
+        expect(appSource).toContain('if (!isVideoUpload && isNonGalleryCompatibleImageFile(fileToUpload))');
+        expect(appSource).toContain('HEIC 사진은 갤러리에서 표시되지 않을 수 있어요.');
+        expect(appSource).toContain('imgEl.src = createImagePlaceholderBase64(\'사진 로드 실패\');');
+        expect(dataManagerSource).toContain('function requiresGalleryCompatibleImageConversion(file)');
+        expect(dataManagerSource).toContain('if (isSmall && !needsResize && !mustConvertForGallery)');
+        expect(dataManagerSource).toContain('if (blob.size > file.size && !mustConvertForGallery)');
+    });
+
     it('keeps library photo picker on the native input path without permission fallback UI', () => {
         const appSource = readAppSource();
 

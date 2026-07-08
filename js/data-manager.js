@@ -3,9 +3,17 @@
  * 데이터 처리 및 파일 업로드 유틸리티 모듈
  */
 
-import { storage } from './firebase-config.js?v=225';
+import { storage } from './firebase-config.js?v=226';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { shouldFastPathImageCompression } from './upload-performance.js?v=225';
+import { shouldFastPathImageCompression } from './upload-performance.js?v=226';
+
+function requiresGalleryCompatibleImageConversion(file) {
+    const type = String(file?.type || '').trim().toLowerCase();
+    if (type === 'image/heic' || type === 'image/heif') return true;
+    if (type) return false;
+    const name = String(file?.name || '').trim().toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif');
+}
 
 /**
  * 객체를 깔끔하게 정리 (undefined 를 null 로 변환)
@@ -25,6 +33,7 @@ export function sanitize(obj) {
  */
 export async function compressImage(file, maxWidth = 640, maxHeight = 640, quality = 0.6, options = {}) {
     if (!file?.type?.startsWith('image/')) return file;
+    const mustConvertForGallery = requiresGalleryCompatibleImageConversion(file);
 
     if (shouldFastPathImageCompression(file, {
         maxWidth,
@@ -47,7 +56,7 @@ export async function compressImage(file, maxWidth = 640, maxHeight = 640, quali
                 const needsResize = width > maxWidth || height > maxHeight;
                 const isSmall = file.size < 200 * 1024;
 
-                if (isSmall && !needsResize) {
+                if (isSmall && !needsResize && !mustConvertForGallery) {
                     bitmap.close();
                     resolve(file);
                     return;
@@ -72,7 +81,7 @@ export async function compressImage(file, maxWidth = 640, maxHeight = 640, quali
                         return;
                     }
 
-                    if (blob.size > file.size) {
+                    if (blob.size > file.size && !mustConvertForGallery) {
                         resolve(file);
                         return;
                     }

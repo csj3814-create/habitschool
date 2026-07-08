@@ -302,4 +302,16 @@ describe('video upload resilience', () => {
         expect(source).toContain('finished: true');
         expect(source).toContain('failed: false');
     });
+
+    it('verifies uploaded Storage objects are non-empty before returning a download URL', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('getDownloadURL, getMetadata');
+        expect(source).toContain('async function verifyNonEmptyStorageObject(storageRef, timeoutMs = 10000)');
+        expect(source).toContain('getMetadata(storageRef)');
+        expect(source).toContain("error.code = 'upload/empty-object';");
+        expect(source).toContain('async function getVerifiedDownloadUrlWithTimeout(storageRef, timeoutMs = 10000)');
+        expect(source).toContain('const url = await getVerifiedDownloadUrlWithTimeout(storageRef, uploadTimeouts.finalizeTimeoutMs);');
+        expect(source).toContain('const url = await getVerifiedDownloadUrlWithTimeout(storageRef, timeoutMs);');
+    });
 });

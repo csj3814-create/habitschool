@@ -11,18 +11,18 @@ import {
     arrayRemove, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=225';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=225';
+import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=226';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=226';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=225';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=225';
+} from './auth-login-helpers.js?v=226';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=226';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=225';
+} from './exercise-media.js?v=226';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=225';
+} from './health-connect-utils.js?v=226';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,14 +54,14 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=225';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=225';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=225';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=225';
-import { sanitize, compressImage } from './data-manager.js?v=225';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=225';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=225';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=225';
+} from './habit-groups.js?v=226';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=226';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=226';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=226';
+import { sanitize, compressImage } from './data-manager.js?v=226';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=226';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=226';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=226';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -74,7 +74,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=225';
+} from './diet-program.js?v=226';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -86,18 +86,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=225';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=225';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=225';
+} from './meditation-guide.js?v=226';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=226';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=226';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=225';
+} from './social-challenge-readiness.js?v=226';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=225';
+} from './monthly-mvp-reward.js?v=226';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -127,6 +127,8 @@ const MEDIA_PICKER_CAMERA_RETURN_GRACE_MS = 90 * 1000;
 const MEDIA_PICKER_RECOVERY_STORAGE_KEY = 'habitschool-media-picker-recovery-v1';
 const DIET_LIBRARY_IMAGE_ACCEPT = 'image/*,.jpg,.jpeg,.png,.webp,.heic,.heif';
 const DIET_LIBRARY_IMAGE_EXTENSIONS = Object.freeze(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+const NON_GALLERY_COMPAT_IMAGE_TYPES = Object.freeze(['image/heic', 'image/heif']);
+const NON_GALLERY_COMPAT_IMAGE_EXTENSIONS = Object.freeze(['.heic', '.heif']);
 const EXERCISE_LIBRARY_VIDEO_ACCEPT = 'video/*,.mp4,.mov,.webm,.m4v,.3gp,.3gpp,.avi,.mkv,.mpeg,.mpg';
 const EXERCISE_LIBRARY_VIDEO_EXTENSIONS = Object.freeze(['.mp4', '.mov', '.webm', '.m4v', '.3gp', '.3gpp', '.avi', '.mkv', '.mpeg', '.mpg']);
 const EXERCISE_LIBRARY_GENERIC_VIDEO_TYPES = Object.freeze(['', 'application/octet-stream', 'application/x-empty']);
@@ -147,6 +149,15 @@ const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS = 900;
 const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
+
+function isNonGalleryCompatibleImageFile(file = null) {
+    if (!file || typeof file !== 'object') return false;
+    const type = String(file.type || '').trim().toLowerCase();
+    if (type) return NON_GALLERY_COMPAT_IMAGE_TYPES.includes(type);
+    const name = String(file.name || '').trim().toLowerCase();
+    return NON_GALLERY_COMPAT_IMAGE_EXTENSIONS.some(ext => name.endsWith(ext));
+}
+
 const MINDFULNESS_VIDEO_OPTIONS = Object.freeze([
     {
         id: 'calm-ocean-1',
@@ -5259,7 +5270,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=225';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=226';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14939,6 +14950,26 @@ async function getDownloadUrlWithTimeout(storageRef, timeoutMs = 10000) {
     );
 }
 
+async function verifyNonEmptyStorageObject(storageRef, timeoutMs = 10000) {
+    const metadata = await withRejectingTimeout(
+        getMetadata(storageRef),
+        Math.max(1000, Number(timeoutMs || 0)),
+        'upload_metadata_recovery_timeout'
+    );
+    const size = Number(metadata?.size || 0);
+    if (!Number.isFinite(size) || size <= 0) {
+        const error = new Error('업로드된 파일이 비어 있어 저장하지 않았어요. 다시 선택해주세요.');
+        error.code = 'upload/empty-object';
+        throw error;
+    }
+    return size;
+}
+
+async function getVerifiedDownloadUrlWithTimeout(storageRef, timeoutMs = 10000) {
+    await verifyNonEmptyStorageObject(storageRef, timeoutMs);
+    return getDownloadUrlWithTimeout(storageRef, timeoutMs);
+}
+
 async function recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {
     attempts = 1,
     delayMs = 0,
@@ -14950,7 +14981,7 @@ async function recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {
             await waitForSimpleUploadRecoveryDelay(delayMs > 0 ? attempt + 1 : 1, delayMs);
         }
         try {
-            const url = await getDownloadUrlWithTimeout(storageRef, timeoutMs);
+            const url = await getVerifiedDownloadUrlWithTimeout(storageRef, timeoutMs);
             if (url) return url;
         } catch (_) {}
     }
@@ -15068,9 +15099,15 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const normalizedFolderName = String(folderName || '').trim();
     const isExerciseVideoFolder = normalizedFolderName === 'exercise_videos';
     const isVideoUpload = isExerciseVideoUploadCandidate(file, normalizedFolderName);
+    const originalSize = Number(file.size || 0);
+    const suppressFailureToast = options?.suppressFailureToast === true;
 
     if (!isValidFileType(file) && !(isExerciseVideoFolder && isVideoUpload)) {
         showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
+        return null;
+    }
+    if (!Number.isFinite(originalSize) || originalSize <= 0) {
+        if (!suppressFailureToast) showToast('⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
         return null;
     }
 
@@ -15078,12 +15115,24 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     if (!isVideoUpload && String(file.type || '').startsWith('image/')) {
         fileToUpload = await compressImage(file);
     }
+    if (!fileToUpload) {
+        if (!suppressFailureToast) showToast('⚠️ 사진을 처리하지 못했어요. JPG 또는 PNG로 다시 선택해주세요.');
+        return null;
+    }
+    if (!isVideoUpload && isNonGalleryCompatibleImageFile(fileToUpload)) {
+        if (!suppressFailureToast) showToast('⚠️ HEIC 사진은 갤러리에서 표시되지 않을 수 있어요. JPG 또는 PNG로 다시 선택해주세요.');
+        return null;
+    }
 
     // 이미지는 20MB, 동영상은 100MB 제한 (firebase-config 상수 사용)
     const isVideo = isExerciseVideoUploadCandidate(fileToUpload, normalizedFolderName);
     const maxBytes = isVideo ? MAX_VID_SIZE : MAX_IMG_SIZE;
     const maxLabel = isVideo ? '100' : '20';
     const fileSizeMB = fileToUpload.size / (1024 * 1024);
+    if (!Number.isFinite(Number(fileToUpload.size || 0)) || Number(fileToUpload.size || 0) <= 0) {
+        if (!suppressFailureToast) showToast('⚠️ 선택한 파일이 비어 있어 업로드할 수 없어요. 다시 선택해주세요.');
+        return null;
+    }
     if (fileToUpload.size > maxBytes) {
         showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
         return null;
@@ -15093,7 +15142,6 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const storagePath = `${folderName}/${userId}/${timestamp}_${fileToUpload.name}`;
     const storageRef = ref(storage, storagePath);
     const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
-    const suppressFailureToast = options?.suppressFailureToast === true;
     const videoContentType = isVideo ? getExerciseVideoContentType(fileToUpload) : '';
     const uploadTimeouts = getResumableUploadTimeouts(isVideo
         ? { type: videoContentType, size: fileToUpload.size }
@@ -15125,7 +15173,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
                     });
                 }
 
-                const url = await getDownloadUrlWithTimeout(storageRef, uploadTimeouts.finalizeTimeoutMs);
+                const url = await getVerifiedDownloadUrlWithTimeout(storageRef, uploadTimeouts.finalizeTimeoutMs);
                 console.log('✅ 업로드 완료:', storagePath);
                 return url;
             } catch (error) {
@@ -18175,6 +18223,7 @@ window.handleThumbFallback = function (imgEl) {
     if (!list.length) {
         imgEl.onerror = null;
         imgEl.classList.add('img-error');
+        imgEl.src = createImagePlaceholderBase64('사진 로드 실패');
         return;
     }
     const next = list.shift();

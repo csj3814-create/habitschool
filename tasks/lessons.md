@@ -1,5 +1,12 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-08 (Gallery Missing Breakfast Photos)
+
+### 250. Media credit requires displayable, non-empty storage objects, not just URLs
+- Symptom: gallery diet cards could show a broken breakfast image while still showing points and an analysis button.
+- Root cause: the save path accepted any Storage download URL as media evidence. Production data included an HEIC original without a JPEG thumbnail and a zero-byte JPEG object, both of which produced valid-looking URLs but no renderable gallery image.
+- Lesson: validate media before awarding/rendering by rejecting empty files, avoiding gallery-incompatible originals such as unconverted HEIC/HEIF, and verifying Storage metadata size before saving a download URL.
+
 ## 2026-07-07 (Challenge Progress After Background Media Save)
 
 ### 249. Post-save challenge updates must use the latest committed daily log
