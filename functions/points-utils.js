@@ -24,7 +24,32 @@ function clampDailyAwardTotal(awarded = {}) {
         + clampField(awarded.mindPoints, DAILY_POINT_CAPS.mindPoints);
 }
 
+// 리액션 토글 결정(순수 함수). 실제 저장(coins increment 등)은 호출자가 트랜잭션에서
+// 수행한다. uid는 반드시 서버가 검증한 request.auth.uid여야 한다(위조 불가). 정책:
+//   - 이미 리액션함 → 취소(표시 배열에서 제거, 포인트 회수 없음, award=false)
+//   - 처음 리액션 → 추가, 본인 게시물이 아니고 (post,reactor) 최초일 때만 award=true
+function computeReactionToggle(logData, uid, reactionType) {
+    const src = (logData && typeof logData.reactions === 'object' && logData.reactions) ? logData.reactions : {};
+    const reactions = { ...src };
+    const list = Array.isArray(reactions[reactionType]) ? [...reactions[reactionType]] : [];
+    const postOwnerId = logData && logData.userId ? logData.userId : null;
+
+    if (list.includes(uid)) {
+        reactions[reactionType] = list.filter((u) => u !== uid);
+        return { active: false, award: false, reactions, postOwnerId, count: reactions[reactionType].length };
+    }
+
+    list.push(uid);
+    reactions[reactionType] = list;
+    const rewardedUserIds = Array.isArray(logData && logData.reactionPointAwardedUserIds)
+        ? logData.reactionPointAwardedUserIds
+        : [];
+    const award = !!postOwnerId && postOwnerId !== uid && !rewardedUserIds.includes(uid);
+    return { active: true, award, reactions, postOwnerId, count: reactions[reactionType].length };
+}
+
 module.exports = {
     DAILY_POINT_CAPS,
     clampDailyAwardTotal,
+    computeReactionToggle,
 };

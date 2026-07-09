@@ -38,7 +38,7 @@ const {
     getKstIsoWeekId,
     isCompletedRateDecision,
 } = require("./mining-rate-utils");
-const { clampDailyAwardTotal } = require("./points-utils");
+const { clampDailyAwardTotal, computeReactionToggle } = require("./points-utils");
 const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
@@ -3140,57 +3140,49 @@ exports.awardMilestoneBonus = onDocumentWritten(
 );
 
 /**
- * 갤러리 리액션 시 포인트 지급
- * heart/fire/clap 배열에 새 UID가 추가되면 리액션 누른 사람 +1P, 게시물 주인 +1P
- * 본인 게시물 제외, 리액션 취소 시 회수 없음
+ * 갤러리 리액션 토글 (서버 authoritative) + 포인트 지급
+ *
+ * 이전에는 클라이언트가 daily_logs.reactions 배열에 직접 자기 UID를 arrayUnion하고
+ * onDocumentWritten 트리거가 새 UID마다 게시물 주인에게 +1P를 지급했다. 그러나 firestore
+ * 룰이 아무 로그인 사용자에게 reactions 쓰기를 허용했고 daily_logs는 공개 읽기라 UID를
+ * 수집할 수 있어서, 자기 게시물에 타인 UID 수백 개를 위조 삽입해 코인을 무한 발행할 수
+ * 있었다(C1과 동종 경제 취약점). 이제 리액션 쓰기를 이 callable로만 제한하고(룰에서 클라
+ * 직접 쓰기 차단), 서버가 request.auth.uid(위조 불가)로만 토글·정산한다.
+ *
+ * 정책 유지: 리액션 누른 사람 +1P, 게시물 주인 +1P, 본인 게시물 제외,
+ *           (post, reactor)당 최초 1회만 지급, 리액션 취소 시 회수 없음.
  */
-exports.awardReactionPoints = onDocumentWritten(
-    { document: "daily_logs/{logId}", region: "asia-northeast3" },
-    async (event) => {
-        const after = event.data?.after?.data();
-        const before = event.data?.before?.data();
-        if (!after) return;
-        const postOwnerId = after.userId;
-        if (!postOwnerId) return;
+exports.toggleReactionOnPost = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
 
-        const beforeReactors = new Set(getUniqueReactionUserIds(before));
-        const afterReactors = getUniqueReactionUserIds(after);
-        const firstTimeReactors = afterReactors.filter((uid) => !beforeReactors.has(uid));
-        if (firstTimeReactors.length === 0) return;
-
-        const logRef = event.data.after.ref;
-        for (const reactorUid of firstTimeReactors) {
-            if (!reactorUid || reactorUid === postOwnerId) continue;
-
-            const awarded = await db.runTransaction(async (tx) => {
-                const logSnap = await tx.get(logRef);
-                if (!logSnap.exists) return false;
-
-                const currentLog = logSnap.data() || {};
-                const currentReactors = new Set(getUniqueReactionUserIds(currentLog));
-                if (!currentReactors.has(reactorUid)) return false;
-
-                const rewardedUserIds = Array.isArray(currentLog.reactionPointAwardedUserIds)
-                    ? currentLog.reactionPointAwardedUserIds
-                    : [];
-                if (rewardedUserIds.includes(reactorUid)) return false;
-
-                tx.set(db.doc(`users/${reactorUid}`), {
-                    coins: FieldValue.increment(1)
-                }, { merge: true });
-                tx.set(db.doc(`users/${postOwnerId}`), {
-                    coins: FieldValue.increment(1)
-                }, { merge: true });
-                tx.set(logRef, {
-                    reactionPointAwardedUserIds: FieldValue.arrayUnion(reactorUid)
-                }, { merge: true });
-                return true;
-            });
-
-            if (awarded) {
-                console.log(`reactionPoints: ${reactorUid} → ${postOwnerId} +1P each (first reaction on post)`);
-            }
+        const logId = typeof request.data?.logId === "string" ? request.data.logId.trim() : "";
+        const reactionType = typeof request.data?.reactionType === "string" ? request.data.reactionType.trim() : "";
+        if (!logId) throw new HttpsError("invalid-argument", "logId가 필요합니다.");
+        if (!["heart", "fire", "clap"].includes(reactionType)) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 리액션 유형입니다.");
         }
+
+        const logRef = db.doc(`daily_logs/${logId}`);
+        return await db.runTransaction(async (tx) => {
+            const snap = await tx.get(logRef);
+            if (!snap.exists) throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
+
+            const decision = computeReactionToggle(snap.data() || {}, uid, reactionType);
+
+            const update = { reactions: decision.reactions };
+            if (decision.award) {
+                update.reactionPointAwardedUserIds = FieldValue.arrayUnion(uid);
+                tx.set(db.doc(`users/${uid}`), { coins: FieldValue.increment(1) }, { merge: true });
+                tx.set(db.doc(`users/${decision.postOwnerId}`), { coins: FieldValue.increment(1) }, { merge: true });
+                console.log(`reactionPoints: ${uid} → ${decision.postOwnerId} +1P each (first reaction on post)`);
+            }
+            tx.set(logRef, update, { merge: true });
+
+            return { active: decision.active, count: decision.count };
+        });
     }
 );
 

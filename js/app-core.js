@@ -17973,18 +17973,11 @@ window.toggleReaction = async function (docId, reactionType, btnElement) {
     span.innerText = count;
 
     try {
-        const logRef = doc(db, "daily_logs", docId);
-
-        // arrayUnion/arrayRemove로 원자적 업데이트 (전체 문서 읽기 불필요)
-        if (isActive) {
-            await setDoc(logRef, {
-                reactions: { [reactionType]: arrayRemove(user.uid) }
-            }, { merge: true });
-        } else {
-            await setDoc(logRef, {
-                reactions: { [reactionType]: arrayUnion(user.uid) }
-            }, { merge: true });
-        }
+        // 리액션 쓰기는 서버 callable로만 수행한다. 클라가 daily_logs.reactions를 직접
+        // 쓰면 타인 UID를 위조해 코인을 발행할 수 있어(경제 취약점) 룰에서 차단했다.
+        // 서버가 request.auth.uid로만 토글·정산하므로 위조가 불가능하다.
+        const toggleReactionFn = httpsCallable(functions, 'toggleReactionOnPost');
+        await toggleReactionFn({ logId: docId, reactionType });
 
         // 캐시 동기화: Firestore 성공 후 cachedGalleryLogs도 업데이트
         const cached = cachedGalleryLogs.find(l => l.id === docId);

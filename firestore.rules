@@ -274,12 +274,17 @@ service cloud.firestore {
                     && isValidDailyLog()
                     && request.resource.data.userId == request.auth.uid;
       
+      // 리액션 코인 발행 방지: reactions와 포인트 지급 원장(reactionPointAwardedUserIds)은
+      // 클라이언트가 직접 쓸 수 없다. 조작 시 타인 UID를 리액터로 위조해 게시물 주인에게
+      // 코인을 무한 지급할 수 있으므로(awardReactionPoints), 오직 서버 callable
+      // toggleReactionOnPost(admin SDK)만 이 필드를 쓴다. 댓글은 기존대로 허용.
       allow update: if isSignedIn() && (
-        (isOwner(resource.data.userId) 
+        (isOwner(resource.data.userId)
           && isValidDailyLog()
-          && request.resource.data.userId == resource.data.userId)
+          && request.resource.data.userId == resource.data.userId
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['reactions', 'reactionPointAwardedUserIds']))
         ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions', 'comments']))
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments']))
       );
       
       allow update: if isAdmin();
