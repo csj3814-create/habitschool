@@ -1171,9 +1171,10 @@
                 let msgBadge = `<span class="badge badge-gray">대기중</span>`;
                 if (m.feedbackDate) {
                     const diff = (new Date(todayStr) - new Date(m.feedbackDate)) / 86400000;
-                    const safeMsg = (m.adminFeedback ? escapeHtml(m.adminFeedback) : '').replace(/'/g,"&#39;").replace(/\n/g,"\\n");
+                    // 피드백 내용을 onclick에 인라인하면 따옴표(예: don't)가 HTML 디코딩 후
+                    // JS 문자열을 깨뜨린다. data-* 속성 + 위임 리스너로 안전하게 처리한다.
                     msgBadge = diff <= 3
-                        ? `<span class="badge badge-green" onclick="alertMsg('${m.feedbackDate}','${safeMsg}')">✅ 발송됨</span>`
+                        ? `<span class="badge badge-green feedback-sent-badge" style="cursor:pointer;" data-date="${escapeHtml(m.feedbackDate)}" data-msg="${escapeHtml(m.adminFeedback || '')}">✅ 발송됨</span>`
                         : `<span class="badge badge-red">⚠️ ${Math.floor(diff)}일 경과</span>`;
                 }
                 const rawName = r.userName || '';
@@ -2487,6 +2488,11 @@
 
     // ── Detail modal ──────────────────────────────────────────
     window.alertMsg = function(date, msg) { alert(`[발송일: ${date}]\n\n${msg}`); };
+    // '발송됨' 뱃지 클릭: 인라인 onclick 대신 위임 리스너(피드백에 따옴표가 있어도 안전).
+    document.addEventListener('click', (e) => {
+        const badge = e.target.closest('.feedback-sent-badge');
+        if (badge) alertMsg(badge.dataset.date || '', badge.dataset.msg || '');
+    });
 
     window.openDetail = async function(uid) {
         document.getElementById('detail-modal').style.display = 'flex';
