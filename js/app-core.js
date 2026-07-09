@@ -7794,7 +7794,15 @@ async function loadDataForSelectedDate(dateStr) {
                         }
                     }
                 }
-                setGratitudeJournalValue(data.sleepAndMind.gratitude || '', { emitInput: false });
+                // H2: 공개 문서에서 숨긴(hideMind) gratitude는 소유자 전용 하위문서에서 복원한다.
+                let ownerGratitude = data.sleepAndMind.gratitude || '';
+                if (!ownerGratitude && data.shareSettings?.hideMind && data.userId === user.uid) {
+                    try {
+                        const privMind = await getDoc(doc(db, "daily_logs", docId, "private", "mind"));
+                        if (privMind.exists()) ownerGratitude = privMind.data().gratitude || '';
+                    } catch (_) {}
+                }
+                setGratitudeJournalValue(ownerGratitude, { emitInput: false });
                 applyMeditationLogToUi(data.sleepAndMind, { selectedDateStr });
 
                 if (awarded.mind) {
@@ -17702,8 +17710,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 selectedDateStr
             );
 
+            // H2: shareSettings 서버 강제 — daily_logs는 갤러리 공개용으로 누구나 읽을 수 있으므로,
+            //     사용자가 숨김을 켜면 민감 필드(userName·gratitude)를 공개 문서에서 아예 제거한다.
+            //     (기존엔 클라이언트 렌더에서만 가렸어서 raw 읽기로 노출됐음.) 원본은 아래에서
+            //     소유자 전용 하위문서에 보관해 소유자 본인은 계속 볼 수 있게 한다.
+            const publicUserName = shareSettings.hideIdentity ? '' : getUserDisplayName();
+            const publicGratitude = shareSettings.hideMind ? '' : gratitudeText;
             const saveData = sanitize({
-                userId: user.uid, userName: getUserDisplayName(), date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
+                userId: user.uid, userName: publicUserName, date: selectedDateStr, timestamp: serverTimestamp(), awardedPoints: awarded,
                 metrics: { weight: document.getElementById('weight').value, glucose: document.getElementById('glucose').value, bpSystolic: document.getElementById('bp-systolic').value, bpDiastolic: document.getElementById('bp-diastolic').value },
                 diet: mergedDietData,
                 dietAnalysis: currentDietAnalysis,
@@ -17719,11 +17733,19 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     sleepImageThumbUrl: sleepThumbUrl,
                     sleepAnalysis: currentSleepAnalysis,
                     ...meditationPayload,
-                    gratitude: gratitudeText
+                    gratitude: publicGratitude
                 },
                 shareSettings: shareSettings
             });
             latestSaveData = saveData;
+
+            // H2: gratitude 원본을 소유자 전용 하위문서에 보관(공개 문서에서 숨겨도 소유자는 복구 가능).
+            //     Firestore SDK가 오프라인 쓰기를 자동 큐잉하므로 별도 outbox 없이 온/오프라인 모두 동작.
+            setDoc(
+                doc(db, "daily_logs", docId, "private", "mind"),
+                { userId: user.uid, gratitude: gratitudeText || '', updatedAt: serverTimestamp() },
+                { merge: true }
+            ).catch(() => {});
             offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData, backgroundJobs);
 
             // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.

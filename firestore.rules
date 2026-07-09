@@ -130,6 +130,20 @@ service cloud.firestore {
           && (!('gratitude' in sleepAndMind) || sleepAndMind.gratitude == null || sleepAndMind.gratitude is string);
     }
 
+    // 헬퍼 함수: 포인트 검증 (클라이언트 조작으로 코인 무한 발행 방지)
+    // 정상 상한: diet 30 / exercise 30 / mind 20 (하루 최대 80P). awardPoints 트리거가
+    // 이 값의 차액만큼 users.coins를 증액하므로, 여기서 상한을 넘는 쓰기를 원천 차단한다.
+    function isValidAwardedPoints(awarded) {
+      return awarded is map
+          && awarded.keys().hasOnly(['diet', 'exercise', 'mind', 'dietPoints', 'exercisePoints', 'mindPoints'])
+          && (!('dietPoints' in awarded) || (awarded.dietPoints is number && awarded.dietPoints >= 0 && awarded.dietPoints <= 30))
+          && (!('exercisePoints' in awarded) || (awarded.exercisePoints is number && awarded.exercisePoints >= 0 && awarded.exercisePoints <= 30))
+          && (!('mindPoints' in awarded) || (awarded.mindPoints is number && awarded.mindPoints >= 0 && awarded.mindPoints <= 20))
+          && (!('diet' in awarded) || awarded.diet is bool)
+          && (!('exercise' in awarded) || awarded.exercise is bool)
+          && (!('mind' in awarded) || awarded.mind is bool);
+    }
+
     // 헬퍼 함수: 데이터 검증
     function isValidDailyLog() {
       let data = request.resource.data;
@@ -143,6 +157,7 @@ service cloud.firestore {
           && (!('diet' in data) || data.diet is map)
           && (!('exercise' in data) || data.exercise is map)
           && (!('sleepAndMind' in data) || isValidSleepAndMindData(data.sleepAndMind))
+          && (!('awardedPoints' in data) || isValidAwardedPoints(data.awardedPoints))
           && (!('shareSettings' in data) || isValidShareSettings(data.shareSettings));
     }
 
@@ -269,8 +284,15 @@ service cloud.firestore {
       
       allow update: if isAdmin();
       allow delete: if isOwner(resource.data.userId) || isAdmin();
+
+      // H2: 소유자 전용 민감 필드 보관소 (gratitude 등). 부모 daily_logs는 갤러리용으로
+      //     공개 읽기지만, 숨김 설정한 민감 원본은 여기에만 저장되어 소유자만 읽는다.
+      match /private/{privId} {
+        allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      }
     }
-    
+
     // ===== Health Profiles Collection =====
     match /health_profiles/{userId} {
       allow read: if isOwner(userId) || isAdmin();

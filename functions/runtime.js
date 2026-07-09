@@ -38,6 +38,7 @@ const {
     getKstIsoWeekId,
     isCompletedRateDecision,
 } = require("./mining-rate-utils");
+const { clampDailyAwardTotal } = require("./points-utils");
 const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
@@ -2988,8 +2989,10 @@ exports.awardPoints = onDocumentWritten(
             return;
         }
 
-        const newTotal = (newAwarded.dietPoints || 0) + (newAwarded.exercisePoints || 0) + (newAwarded.mindPoints || 0);
-        const oldTotal = (oldAwarded.dietPoints || 0) + (oldAwarded.exercisePoints || 0) + (oldAwarded.mindPoints || 0);
+        // 방어 심화: 클라이언트가 awardedPoints를 조작해도(룰 우회/admin 경로) 서버가
+        // 정상 상한(diet 30 / exercise 30 / mind 20)으로 클램프해 코인 무한 발행을 차단한다.
+        const newTotal = clampDailyAwardTotal(newAwarded);
+        const oldTotal = clampDailyAwardTotal(oldAwarded);
         const diff = newTotal - oldTotal;
 
         if (diff <= 0) return;
@@ -4868,6 +4871,29 @@ exports.claimChallengeReward = onCall(
         }
 
         const uid = request.auth.uid;
+
+        // H1: 동시 이중청구(double-claim) 방지 — 온체인 정산(수 초 소요) 도중 두 번째 호출이
+        // 같은 claimable 챌린지를 다시 정산하지 못하도록 원자적 락을 건다. admin SDK의 create()는
+        // 문서가 이미 존재하면 실패하므로 진짜 상호배제가 된다(mint_locks의 get-then-set은 racy).
+        // 아래 handler 전체를 try/finally로 감싸 정산 완료·실패와 무관하게 락을 해제한다.
+        const claimLockRef = db.doc(`challenge_claim_locks/${uid}_${tier}`);
+        const CLAIM_LOCK_STALE_MS = 300000; // 함수 타임아웃(300s)보다 오래된 락은 죽은 것으로 인수
+        const existingLock = await claimLockRef.get();
+        if (existingLock.exists) {
+            const lockAgeMs = Date.now() - (existingLock.data().timestamp?.toMillis?.() || 0);
+            if (lockAgeMs < CLAIM_LOCK_STALE_MS) {
+                throw new HttpsError("already-exists", "이전 보상 정산이 처리 중입니다. 잠시 후 다시 시도해주세요.");
+            }
+            await claimLockRef.delete().catch(() => {});
+        }
+        try {
+            await claimLockRef.create({ uid, tier, timestamp: FieldValue.serverTimestamp() });
+        } catch (lockErr) {
+            // create() 실패 = 다른 호출이 방금 락을 선점 → 동시 요청
+            throw new HttpsError("already-exists", "이전 보상 정산이 처리 중입니다. 잠시 후 다시 시도해주세요.");
+        }
+
+        try {
         const userRef = db.doc(`users/${uid}`);
         const userSnap = await userRef.get();
 
@@ -5095,6 +5121,11 @@ exports.claimChallengeReward = onCall(
             resolveTxHash,
             bonusTxHash
         };
+        } finally {
+            // H1: 정산 완료·실패와 무관하게 락 해제 (재시도 가능하게). 성공 시에는 챌린지가
+            // activeChallenges에서 제거되므로 재시도해도 claimable 전제조건에서 막힌다.
+            await claimLockRef.delete().catch(() => {});
+        }
     }
 );
 
