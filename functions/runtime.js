@@ -1618,24 +1618,32 @@ exports.mintHBT = onCall(
             throw new HttpsError("invalid-argument", "100P 단위로만 변환 가능합니다.");
         }
 
-        try {
-            // 0. 중복 요청 방지: 처리 중 락
-            const lockRef = db.collection("mint_locks").doc(uid);
-            const lockSnap = await lockRef.get();
-            if (lockSnap.exists) {
-                const lockData = lockSnap.data();
-                const lockAge = Date.now() - (lockData.timestamp?.toMillis() || 0);
-                // 60초 이내 락이면 중복 요청 차단
-                if (lockAge < 60000) {
-                    throw new HttpsError("already-exists", "이전 변환이 처리 중입니다. 잠시 후 다시 시도해주세요.");
-                }
+        // 0. 중복 요청 방지: 원자적 락. create()는 문서가 이미 있으면 실패하므로 진짜
+        //    상호배제가 된다(기존 get-then-set은 동시 두 요청이 모두 통과 가능 →
+        //    포인트 이중 차감·이중 온체인 민팅 위험). 락 획득은 아래 처리 try 바깥에서
+        //    수행해, 락 경쟁에서 패한 동시 요청이 승자의 락을 지우지 않게 한다.
+        const lockRef = db.collection("mint_locks").doc(uid);
+        const existingLock = await lockRef.get();
+        if (existingLock.exists) {
+            const lockAge = Date.now() - (existingLock.data().timestamp?.toMillis?.() || 0);
+            if (lockAge < 60000) {
+                throw new HttpsError("already-exists", "이전 변환이 처리 중입니다. 잠시 후 다시 시도해주세요.");
             }
-            await lockRef.set({
+            // 60초 넘은 죽은 락은 인수(재시도 허용)
+            await lockRef.delete().catch(() => {});
+        }
+        try {
+            await lockRef.create({
                 timestamp: FieldValue.serverTimestamp(),
                 pointAmount: pointAmount,
                 attemptId
             });
+        } catch (lockErr) {
+            // create() 실패 = 다른 호출이 방금 락을 선점 → 동시 요청
+            throw new HttpsError("already-exists", "이전 변환이 처리 중입니다. 잠시 후 다시 시도해주세요.");
+        }
 
+        try {
             // 1. Firestore에서 사용자 데이터 확인
             const userRef = db.collection("users").doc(uid);
             const userSnap = await userRef.get();
