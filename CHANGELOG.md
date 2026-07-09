@@ -2,6 +2,35 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-07-10
+
+### Security
+- Blocked client-forged coin minting via `daily_logs.awardedPoints`: `firestore.rules` now whitelists/caps `awardedPoints` (diet 30 / exercise 30 / mind 20) and the `awardPoints` trigger clamps the credited diff server-side (`functions/points-utils.js`).
+- Made reactions server-authoritative to stop reaction-based coin minting: any signed-in user could previously write arbitrary UIDs into `daily_logs.reactions` and mint coins for the post owner (and inflate MVP score). New `toggleReactionOnPost` callable toggles/awards with the verified `request.auth.uid` only; `firestore.rules` now bars client writes to `reactions`/`reactionPointAwardedUserIds`. Replaces the `awardReactionPoints` trigger.
+- Made `claimChallengeReward` atomic with a per-user/tier claim lock (`create()` mutual exclusion) to prevent concurrent double-claim of reward points / bonus HBT during on-chain settlement.
+- Made the `mintHBT` lock atomic (`create()` instead of get-then-set) to prevent concurrent double-deduct / double-mint.
+- Enforced `shareSettings` server-side: `daily_logs` stays gallery-public, but hidden fields (userName, gratitude) are stripped from the public doc and the gratitude original is kept in an owner-only `daily_logs/{id}/private/mind` subdocument. (Default sharing remains public by product decision.)
+
+### Changed
+- Extracted the challenge settlement/qualification math into `functions/challenge-utils.js` (single source of truth) with behavioral tests — previously untested inline logic in `runtime.js`, the top recurring-bug area.
+- Extracted pure friendship predicates into `js/friendship-utils.js` as the first safe step of splitting the 1MB `app-core.js` monolith.
+
+### Fixed
+- Suppressed stale in-app notification toasts: notifications older than 30 minutes are now silently marked seen instead of popping up late when the app is reopened (applies to all notification types, not just `friend_connected`).
+- Fixed the admin member table's "발송됨" feedback badge breaking on apostrophes: replaced onclick interpolation with `data-*` attributes and a delegated click listener.
+
+### Chore
+- Removed tracked scratch file `temp_cmd.txt` and the byte-identical duplicate `HBT_TOKENOMICS.txt`; ran `git gc` (loose objects ~61 MiB → packed ~7.7 MiB).
+
+### Verification
+- `npm test` (409 passing, incl. new `points-utils`, `challenge-utils`, `friendship-utils` suites)
+- `npx esbuild js/app-core.js --bundle --external:https://* --format=esm` (client bundle parse check)
+- `node -c functions/runtime.js` (server syntax check)
+
+### Deployment
+- Production (`https://habitschool.web.app`, PWA v226): security hardening + notification fix — commits `d5c9978` → `0b5ae5b`.
+- Pending deployment (committed, staged for staging→prod): settlement extraction `bfbadad`, friendship extraction `6d60ec2`, admin badge fix `9ded33d`. Note: the next production deploy must bump the PWA version past v226.
+
 ## 2026-06-25
 
 ### Changed
