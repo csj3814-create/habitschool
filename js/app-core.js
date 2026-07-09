@@ -61,6 +61,7 @@ import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLoc
 import { sanitize, compressImage } from './data-manager.js?v=226';
 import { getResumableUploadTimeouts } from './upload-performance.js?v=226';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=226';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=226';
 import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=226';
 import {
     DIET_PROGRAM_FASTING_PRESET,
@@ -3936,41 +3937,8 @@ function buildFriendshipId(uidA, uidB) {
     return [uidA, uidB].sort().join('__');
 }
 
-function toDateSafe(value) {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    if (typeof value?.toDate === 'function') return value.toDate();
-    if (typeof value === 'string' || typeof value === 'number') {
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-    return null;
-}
-
-function getFriendshipOtherUid(friendship, myUid) {
-    const users = Array.isArray(friendship?.users) ? friendship.users : [];
-    return users.find(uid => uid !== myUid) || null;
-}
-
-function isFriendshipExpired(friendship) {
-    if (!friendship || friendship.status !== 'pending') return false;
-    const expiresAt = toDateSafe(friendship.expiresAt);
-    return !!expiresAt && expiresAt.getTime() < Date.now();
-}
-
-function getEffectiveFriendshipStatus(friendship) {
-    if (!friendship) return 'none';
-    if (friendship.status === 'pending' && isFriendshipExpired(friendship)) return 'expired';
-    return friendship.status || 'none';
-}
-
-function getFriendshipName(friendship, myUid) {
-    const otherUid = getFriendshipOtherUid(friendship, myUid);
-    if (!otherUid) return '친구';
-    return friendship?.userNames?.[otherUid]
-        || (friendship.requesterUid === otherUid ? friendship.requesterName : null)
-        || '친구';
-}
+// 친구관계 순수 헬퍼(toDateSafe, getFriendshipOtherUid, isFriendshipExpired,
+// getEffectiveFriendshipStatus, getFriendshipName)는 ./friendship-utils.js 로 추출됨.
 
 function findFriendshipById(friendshipId) {
     for (const friendship of cachedMyFriendships.values()) {

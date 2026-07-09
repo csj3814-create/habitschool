@@ -183,6 +183,7 @@ const STATIC_ASSETS = [
     './js/diet-analysis.js?v=226',
     './js/exercise-media.js?v=226',
     './js/firebase-config.js?v=226',
+    './js/friendship-utils.js?v=226',
     './js/habit-groups.js?v=226',
     './js/health-connect-utils.js?v=226',
     './js/metabolic-score.js?v=226',
