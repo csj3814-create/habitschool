@@ -4,6 +4,7 @@ import { readRepoFile } from './source-helpers.js';
 describe('challenge failure settlement guardrails', () => {
     it('rechecks daily logs before allowing failed challenge settlement', () => {
         const runtimeSource = readRepoFile('functions/runtime.js');
+        const challengeUtilsSource = readRepoFile('functions/challenge-utils.js');
         const managerSource = readRepoFile('js/blockchain-manager.js');
         const appCoreSource = readRepoFile('js/app-core.js');
 
@@ -11,7 +12,9 @@ describe('challenge failure settlement guardrails', () => {
         expect(runtimeSource).toContain('reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier)');
         expect(runtimeSource).toContain('skippedFailure: true');
         expect(runtimeSource).toContain('claimable: true');
-        expect(runtimeSource).toContain('function canSettleChallengeAsClaimable');
+        // 정산 계산은 challenge-utils.js로 추출됨. runtime은 require로 배선되어 여전히 사용한다.
+        expect(runtimeSource).toContain('require("./challenge-utils")');
+        expect(challengeUtilsSource).toContain('function canSettleChallengeAsClaimable');
         expect(runtimeSource).toContain('마지막 날은 임무를 완료해야 바로 수령할 수 있고, 부분 달성 정산은 다음날부터 가능합니다.');
 
         expect(managerSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDate(currentUser.uid, storedChallenge);');
