@@ -16,7 +16,8 @@ describe('friend connection notification dedupe', () => {
         expect(appSource).toContain('const locallySeen = seenIds.has(d.id);');
         expect(appSource).toContain('silentlyConsumedNotifications.push({ id: d.id });');
         expect(appSource).toContain("markChallengeNotificationClientSeen(id, uid, 'toast-shown')");
-        expect(appSource).toContain("data.type === 'friend_connected' && ts > 0 && nowMs - ts > FRIEND_CONNECTED_TOAST_MAX_AGE_MS");
+        // 오래된 알림은 종류와 무관하게 뒤늦게 토스트되지 않도록 조용히 소비한다.
+        expect(appSource).toContain("if (ts > 0 && nowMs - ts > NOTIFICATION_TOAST_MAX_AGE_MS) return true;");
         expect(appSource).toContain('seenIds.add(d.id);');
         expect(appSource).toContain('writeChallengeNotificationSeenState(uid, {');
         expect(appSource).toContain("showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);");

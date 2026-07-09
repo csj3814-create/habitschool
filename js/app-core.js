@@ -370,7 +370,7 @@ const FRIENDSHIP_CACHE_TTL_MS = 30_000;
 const FRIENDSHIP_RETRY_DELAY_MS = 3000;
 const FRIENDSHIP_MAX_RETRY_ATTEMPTS = 2;
 const CHALLENGE_NOTIFICATION_SEEN_ID_LIMIT = 80;
-const FRIEND_CONNECTED_TOAST_MAX_AGE_MS = 30 * 60 * 1000;
+const NOTIFICATION_TOAST_MAX_AGE_MS = 30 * 60 * 1000; // 이보다 오래된 알림은 앱을 뒤늦게 열어도 토스트하지 않음
 const SOCIAL_CHALLENGE_DOC_ID_QUERY_CHUNK_SIZE = 30;
 const HABIT_GROUP_LOAD_TIMEOUT_MS = 2500;
 const HABIT_GROUP_CACHE_TTL_MS = 60_000;
@@ -13938,11 +13938,14 @@ async function checkFriendStreakNotifications(uid) {
             limit(5)
         ));
 
+        const nowMs = Date.now();
         const newNotifs = [];
         snap.forEach(d => {
             const data = d.data();
             const ts = data.createdAt?.seconds ? data.createdAt.seconds * 1000 : 0;
-            if (ts > lastSeen) newNotifs.push(data);
+            // 미확인이면서 최근(NOTIFICATION_TOAST_MAX_AGE_MS 이내)인 것만 토스트. 오래 지난
+            // 알림은 앱을 뒤늦게 열어도 뒤늦게 튀어나오지 않도록 제외한다.
+            if (ts > lastSeen && nowMs - ts <= NOTIFICATION_TOAST_MAX_AGE_MS) newNotifs.push(data);
         });
 
         if (newNotifs.length === 0) return;
@@ -23391,7 +23394,8 @@ function isChallengeNotificationServerSeen(data = {}) {
 function shouldSilentlyConsumeChallengeNotification(data = {}, ts = 0, lastSeen = 0, nowMs = Date.now()) {
     if (isChallengeNotificationServerSeen(data)) return true;
     if (ts > 0 && ts <= lastSeen) return true;
-    if (data.type === 'friend_connected' && ts > 0 && nowMs - ts > FRIEND_CONNECTED_TOAST_MAX_AGE_MS) return true;
+    // 오래 지난 알림은 앱을 뒤늦게 열었을 때 토스트로 뒤늦게 튀어나오지 않도록 조용히 소비한다(모든 종류 공통).
+    if (ts > 0 && nowMs - ts > NOTIFICATION_TOAST_MAX_AGE_MS) return true;
     return false;
 }
 
