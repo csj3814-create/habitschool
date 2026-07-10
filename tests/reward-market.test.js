@@ -109,6 +109,11 @@ function createFakeFirestore(initialDocs = {}) {
                     docs,
                 };
             },
+            async add(value) {
+                const id = `auto_${Math.random().toString(36).slice(2, 10)}`;
+                writeDoc(`${normalizedPath}/${id}`, value, {});
+                return doc(`${normalizedPath}/${id}`);
+            },
         };
     }
 
@@ -674,6 +679,61 @@ describe('reward market pricing helpers', () => {
         expect(softDeleted).toBeDefined();
         expect(softDeleted.deletedByUserAt).toBeTruthy();
         expect(softDeleted.status).toBe('used_completed');
+    });
+
+    it('admin refund returns charged points, cancels the record, and notifies the user', async () => {
+        const db = createFakeFirestore({
+            'users/hyeong': { coins: 500 },
+            'reward_redemptions/stuck-coupon': {
+                userId: 'hyeong',
+                status: 'pending_issue',
+                mode: 'live',
+                pointsCharged: true,
+                pointCost: 2000,
+                displayName: '메가MGC커피 아메리카노',
+            },
+        });
+        const FieldValue = createFakeFieldValue();
+
+        const result = await rewardMarketModule.adminRefundRewardCoupon({
+            db,
+            FieldValue,
+            HttpsError: FakeHttpsError,
+            adminUid: 'admin-1',
+            redemptionId: 'stuck-coupon',
+        });
+
+        expect(result).toMatchObject({ success: true, refunded: true, pointCost: 2000 });
+        expect(db.__get('users/hyeong').coins).toBe(2500); // 500 + 2000 환불
+        const redemption = db.__get('reward_redemptions/stuck-coupon');
+        expect(redemption.status).toBe('cancelled'); // 기록 보존(삭제 아님)
+        expect(redemption.pointsCharged).toBe(false);
+        expect(redemption.pointsRefundedAt).toBeTruthy();
+        // 사용자 안내 알림이 생성됐는지
+        const notifs = (await db.collection('notifications').get()).docs.map((d) => d.data());
+        expect(notifs.some((n) => n.postOwnerId === 'hyeong' && n.type === 'reward_refund')).toBe(true);
+    });
+
+    it('admin refund refuses an already-issued coupon (no double payout)', async () => {
+        const db = createFakeFirestore({
+            'users/hyeong': { coins: 0 },
+            'reward_redemptions/good-coupon': {
+                userId: 'hyeong',
+                status: 'issued',
+                mode: 'live',
+                pointsCharged: true,
+                pointCost: 2000,
+                pinCode: '1234-5678',
+            },
+        });
+        await expect(rewardMarketModule.adminRefundRewardCoupon({
+            db,
+            FieldValue: createFakeFieldValue(),
+            HttpsError: FakeHttpsError,
+            adminUid: 'admin-1',
+            redemptionId: 'good-coupon',
+        })).rejects.toThrow();
+        expect(db.__get('users/hyeong').coins).toBe(0); // 환불 안 됨
     });
 
     it('auto deletes reward coupons only after the 30 day expiry grace window', async () => {

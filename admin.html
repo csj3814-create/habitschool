@@ -803,6 +803,7 @@
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
+    const adminRefundRewardCouponCallable = httpsCallable(fns, 'adminRefundRewardCoupon');
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
     function normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
@@ -2084,6 +2085,7 @@
             recipientPhone: data.recipientPhone || '',
             deletedByUser: !!data.deletedByUserAt,
             hiddenByUser: !!data.hiddenByUserAt,
+            pointsRefundedAt: data.pointsRefundedAt || null,
         };
     }
 
@@ -2105,6 +2107,14 @@
     function canRewardMarketAdminRecheck(row = {}) {
         if (['pending_issue', 'failed_manual_review'].includes(String(row.status || '').trim())) return true;
         return isRewardMarketRealIssueRow(row) && !!row.providerTrId && !hasRewardMarketCouponPayload(row);
+    }
+
+    // 발급 대기·실패로 갇혔고 아직 환불 안 된 실발급 건만 환불 가능(발급 완료 건은 제외).
+    function canRewardMarketAdminRefund(row = {}) {
+        return isRewardMarketRealIssueRow(row)
+            && ['pending_issue', 'failed_manual_review'].includes(String(row.status || '').trim())
+            && !hasRewardMarketCouponPayload(row)
+            && !row.pointsRefundedAt;
     }
 
     function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, counts = {}, catalog = [] }) {
@@ -2155,11 +2165,25 @@
         const recheckButton = canRewardMarketAdminRecheck(row)
             ? `<button class="btn-view" onclick="adminRewardManualResend('${encodedId}')">쿠폰 재조회</button>`
             : '';
+        const refundButton = canRewardMarketAdminRefund(row)
+            ? `<button class="btn-view" style="color:#c0392b;border-color:#c0392b;" onclick="adminRewardRefund('${encodedId}')">환불 처리</button>`
+            : '';
+        const refundedTag = row.pointsRefundedAt
+            ? '<div class="reward-admin-muted">✅ 환불 완료</div>'
+            : '';
+        // 실발급 실패 사유를 관제탑에 노출(조용한 pending 방지).
+        const failReason = String(row.providerResponseMessage || row.manualReviewReason || '').trim();
+        const failTag = (!hasRewardMarketCouponPayload(row) && failReason)
+            ? `<div class="reward-admin-muted" style="color:#c0392b;" title="${escapeHtml(failReason)}">사유: ${escapeHtml(failReason.slice(0, 60))}</div>`
+            : '';
         return `
             <div class="reward-admin-actions">
                 ${recheckButton}
+                ${refundButton}
                 ${couponLink}
                 ${txLink}
+                ${refundedTag}
+                ${failTag}
             </div>
         `;
     }
@@ -2327,6 +2351,30 @@
             await loadRewardMarketAdmin();
         } catch (e) {
             alert(`쿠폰 재조회 실패: ${e.message || '알 수 없는 오류'}`);
+        }
+    };
+
+    window.adminRewardRefund = async function(encodedId) {
+        const redemptionId = decodeURIComponent(String(encodedId || ''));
+        const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
+        if (!row) {
+            alert('대상 쿠폰을 찾지 못했습니다.');
+            return;
+        }
+        const pts = Number(row.pointCost || row.hbtCost || 0) || 0;
+        if (!confirm(`${row.userName || '회원'}님의 "${row.displayName || '쿠폰'}" 발급을 취소하고 ${pts.toLocaleString()}P를 환불합니다.\n사용자에게 안내 알림도 발송됩니다. 진행할까요?`)) {
+            return;
+        }
+        try {
+            const result = await adminRefundRewardCouponCallable({
+                redemptionId,
+                note: 'admin_refund_issue_failed',
+            });
+            alert(`환불 완료: ${(result?.data?.pointCost ?? pts).toLocaleString()}P를 돌려주고 사용자에게 안내했습니다.`);
+            tabLoaded['reward-market'] = false;
+            await loadRewardMarketAdmin();
+        } catch (e) {
+            alert(`환불 처리 실패: ${e.message || '알 수 없는 오류'}`);
         }
     };
 

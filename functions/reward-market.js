@@ -3342,6 +3342,88 @@ async function adminResendRewardCoupon({
     };
 }
 
+// 관제탑 환불 처리: 발급 실패/대기로 갇힌 쿠폰의 차감 포인트를 사용자에게 돌려주고,
+// 기록은 cancelled로 보존하며, 사용자에게 안내 알림을 남긴다. 실제 쿠폰이 발급된
+// 건(issued/used_completed)은 중복 지급 위험이 있어 환불 대상에서 제외한다.
+async function adminRefundRewardCoupon({
+    db,
+    FieldValue,
+    HttpsError,
+    adminUid,
+    redemptionId = "",
+    note = "",
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "환불할 쿠폰을 선택해 주세요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const redemptionSnap = await redemptionRef.get();
+    if (!redemptionSnap.exists) {
+        throw new HttpsError("not-found", "쿠폰 이력을 찾을 수 없어요.");
+    }
+
+    const data = redemptionSnap.data() || {};
+    const uid = String(data.userId || "").trim();
+    if (!uid) {
+        throw new HttpsError("failed-precondition", "회원 정보가 없어 환불할 수 없어요.");
+    }
+
+    const status = String(data.status || "").trim();
+    if (!["pending_issue", "failed_manual_review"].includes(status)) {
+        throw new HttpsError("failed-precondition", "발급 대기·실패 상태의 쿠폰만 환불할 수 있어요.");
+    }
+    if (data.pointsCharged !== true || data.pointsRefundedAt) {
+        throw new HttpsError("failed-precondition", "이미 환불되었거나 차감 내역이 없어요.");
+    }
+
+    const pointCost = parseNumber(data.pointCost || data.hbtCost || 0, 0);
+    const refunded = await refundChargedRewardPoints({
+        db,
+        FieldValue,
+        userRef: db.collection("users").doc(uid),
+        redemptionRef,
+        pointCost,
+        reason: "admin_refund_issue_failed",
+    });
+    if (!refunded) {
+        throw new HttpsError("failed-precondition", "환불 처리에 실패했어요(이미 처리되었을 수 있어요).");
+    }
+
+    const now = new Date();
+    const trimmedNote = String(note || "").trim().slice(0, 500);
+    await redemptionRef.set({
+        status: "cancelled",
+        cancelledByAdminAt: now,
+        cancelledByAdminUid: adminUid,
+        adminRefundNote: trimmedNote,
+        updatedAt: now,
+    }, { merge: true });
+
+    // 사용자 안내 알림 (포인트도 즉시 복원되어 잔액으로 바로 확인 가능)
+    await db.collection("notifications").doc().set({
+        postOwnerId: uid,
+        type: "reward_refund",
+        title: "쿠폰 발급이 지연되어 포인트를 환불했어요",
+        message: `${data.displayName || "쿠폰"} 발급이 원활하지 않아 ${pointCost.toLocaleString()}P를 돌려드렸어요. 다시 교환하실 수 있어요.`,
+        redemptionId: normalizedId,
+        createdAt: FieldValue.serverTimestamp(),
+    });
+
+    await db.collection("reward_reserve_ledger").add({
+        redemptionId: normalizedId,
+        userId: uid,
+        eventType: "admin_refund",
+        pointCost,
+        adminUid,
+        note: trimmedNote,
+        createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, refunded: true, redemptionId: normalizedId, pointCost };
+}
+
 async function syncRewardMarketOps({ db, config, now = new Date() }) {
     const pricing = await ensurePublishedPricing({ db, config, now });
     const bizmoney = await syncBizmoneyMetrics({
@@ -3369,6 +3451,7 @@ module.exports = {
     deleteRewardCoupon,
     cleanupExpiredRewardCoupons,
     adminResendRewardCoupon,
+    adminRefundRewardCoupon,
     syncRewardMarketOps,
     __test: {
         buildRewardMarketConfig,

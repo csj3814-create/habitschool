@@ -69,6 +69,7 @@ const {
     deleteRewardCoupon: deleteRewardCouponFlow,
     cleanupExpiredRewardCoupons: cleanupExpiredRewardCouponsFlow,
     adminResendRewardCoupon: adminResendRewardCouponFlow,
+    adminRefundRewardCoupon: adminRefundRewardCouponFlow,
     syncRewardMarketOps,
 } = require("./reward-market");
 
@@ -2119,6 +2120,31 @@ exports.adminResendRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("adminResendRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 재확인 처리 중 문제가 발생했어요.");
+        }
+    }
+);
+
+exports.adminRefundRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 5,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        try {
+            return await adminRefundRewardCouponFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                adminUid,
+                redemptionId: request.data?.redemptionId,
+                note: request.data?.note,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("adminRefundRewardCoupon error:", error);
+            throw new HttpsError("internal", "환불 처리 중 오류가 발생했어요.");
         }
     }
 );
