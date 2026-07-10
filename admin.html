@@ -1962,11 +1962,15 @@
 
     function rewardMarketStatusBadge(status = '', row = {}) {
         const isRealIssue = isRewardMarketRealIssueRow(row);
-        if (status === 'issued') return `<span class="badge badge-green">${isRealIssue ? '실발급 완료' : '테스트 완료'}</span>`;
-        if (status === 'pending_issue') return `<span class="badge badge-gray">${isRealIssue ? '실발급 대기' : '테스트 대기'}</span>`;
-        if (status === 'failed_manual_review') return `<span class="badge badge-red">${isRealIssue ? '실발급 확인' : '수동 확인'}</span>`;
-        if (status === 'cancelled') return '<span class="badge badge-gray">취소됨</span>';
-        return `<span class="badge badge-gray">${escapeHtml(status || '-')}</span>`;
+        // 사용자가 삭제한 기록도 관제탑엔 감사용으로 남는다. 상태 뱃지 옆에 표시.
+        const userRemovedTag = row.deletedByUser
+            ? ' <span class="badge badge-gray" title="사용자가 보관함에서 삭제(기록은 보존됨)">🗑️ 사용자 삭제</span>'
+            : '';
+        if (status === 'issued') return `<span class="badge badge-green">${isRealIssue ? '실발급 완료' : '테스트 완료'}</span>${userRemovedTag}`;
+        if (status === 'pending_issue') return `<span class="badge badge-gray">${isRealIssue ? '실발급 대기' : '테스트 대기'}</span>${userRemovedTag}`;
+        if (status === 'failed_manual_review') return `<span class="badge badge-red">${isRealIssue ? '실발급 확인' : '수동 확인'}</span>${userRemovedTag}`;
+        if (status === 'cancelled') return `<span class="badge badge-gray">취소됨</span>${userRemovedTag}`;
+        return `<span class="badge badge-gray">${escapeHtml(status || '-')}</span>${userRemovedTag}`;
     }
 
     function rewardMarketModeLabel(pricingMode = '') {
@@ -2078,6 +2082,8 @@
             manualReviewReason: data.manualReviewReason || data.errorMessage || '',
             manualResendCount: Number(data.manualResendCount || 0) || 0,
             recipientPhone: data.recipientPhone || '',
+            deletedByUser: !!data.deletedByUserAt,
+            hiddenByUser: !!data.hiddenByUserAt,
         };
     }
 

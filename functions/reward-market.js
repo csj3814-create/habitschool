@@ -1459,6 +1459,7 @@ async function loadUserRedemptions({ db, uid, limit = 12 }) {
     const now = new Date();
     return snapshot.docs
         .filter((docSnap) => !docSnap.data()?.hiddenByUserAt)
+        .filter((docSnap) => !docSnap.data()?.deletedByUserAt)
         .filter((docSnap) => !isRewardRedemptionPastDeleteGrace(docSnap.data(), now))
         .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt))
         .slice(0, safeLimit)
@@ -2429,6 +2430,7 @@ async function markRewardCouponUsed({
 
 async function deleteRewardCoupon({
     db,
+    FieldValue,
     HttpsError,
     uid,
     redemptionId = "",
@@ -2459,7 +2461,13 @@ async function deleteRewardCoupon({
         throw new HttpsError("failed-precondition", "사용 완료 또는 기간 만료 쿠폰만 삭제할 수 있어요.");
     }
 
-    await redemptionRef.delete();
+    // 실화폐성 쿠폰이므로 문서를 물리 삭제하지 않고 soft-delete한다. 사용자 목록에서는
+    // deletedByUserAt로 숨기되(loadUserRedemptions 필터), 관제탑은 감사 기록으로 계속 보관한다.
+    await redemptionRef.set({
+        deletedByUserAt: FieldValue.serverTimestamp(),
+        deletedByUserUid: uid,
+        updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
 
     return {
         success: true,

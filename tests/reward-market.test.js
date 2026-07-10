@@ -663,12 +663,17 @@ describe('reward market pricing helpers', () => {
 
         await rewardMarketModule.deleteRewardCoupon({
             db,
+            FieldValue,
             HttpsError: FakeHttpsError,
             uid: 'user-1',
             redemptionId: 'live-coupon',
             now: new Date('2026-05-10T00:00:00.000Z'),
         });
-        expect(db.__get('reward_redemptions/live-coupon')).toBeUndefined();
+        // soft-delete: 감사 기록 보존 — 문서는 남고 deletedByUserAt만 세팅된다.
+        const softDeleted = db.__get('reward_redemptions/live-coupon');
+        expect(softDeleted).toBeDefined();
+        expect(softDeleted.deletedByUserAt).toBeTruthy();
+        expect(softDeleted.status).toBe('used_completed');
     });
 
     it('auto deletes reward coupons only after the 30 day expiry grace window', async () => {

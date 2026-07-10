@@ -2077,6 +2077,7 @@ exports.deleteRewardCoupon = onCall(
         try {
             return await deleteRewardCouponFlow({
                 db,
+                FieldValue,
                 HttpsError,
                 uid: request.auth.uid,
                 redemptionId: request.data?.redemptionId,
