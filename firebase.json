@@ -32,6 +32,8 @@
       "trailingSlash": false,
       "ignore": [
         "firebase.json",
+        ".firebaserc",
+        "firestore.indexes.json",
         ".git",
         ".git/**",
         ".claude/**",
