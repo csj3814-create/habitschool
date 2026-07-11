@@ -161,6 +161,11 @@ service cloud.firestore {
           && (!('shareSettings' in data) || isValidShareSettings(data.shareSettings));
     }
 
+    function isCanonicalDailyLogId(logId) {
+      return isSignedIn()
+          && logId == request.auth.uid + '_' + request.resource.data.date;
+    }
+
     function isValidDietProgramPreference(dietPreference) {
       return dietPreference is map
           && dietPreference.keys().hasOnly(['methodId', 'remindersEnabled', 'activatedAt', 'fastingPreset'])
@@ -217,15 +222,40 @@ service cloud.firestore {
                     'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
                     'chatbotConnectLastKakaoDisplayName']);
     }
+
+    function isAllowedUserCreate() {
+      return request.resource.data.keys().hasOnly([
+        'email', 'displayName', 'customDisplayName', 'photoURL', 'createdAt',
+        'walletAddress', 'walletCreatedAt', 'encryptedKey', 'walletIv', 'walletVersion',
+        'oldWalletAddress', 'encryptedWallet', 'externalWalletAddress',
+        'walletConnectionMode', 'walletProviderType', 'walletChainId', 'walletConnectedAt',
+        'settings', 'lastLogin', 'fcmToken', 'locale', 'healthProfile', 'inbodyData',
+        'dietAnalysis', 'exerciseAnalysis', 'sleepAndMind', 'blockedUsers',
+        'weeklyMissionData', 'missionHistory', 'missionStreak', 'missionLevel',
+        'missionBadges', 'selectedMissions', 'missionLevelUpDate',
+        'onboardingComplete', 'friends', 'programPreferences', 'rewardRecipientPhone',
+        'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
+        'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
+        'chatbotConnectLastKakaoDisplayName'
+      ]);
+    }
     
     // ===== Users Collection =====
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isAllowedUserCreate()
+        && isValidUserProgramPreferences()
+        && isValidRewardRecipientPhone();
       // 사용자가 직접 수정 가능한 필드 제한 (hbtBalance, totalHbtEarned, coins는 Cloud Functions만 수정 가능)
       allow update: if isOwner(userId)
         && (!request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['hbtBalance', 'totalHbtEarned', 'coins']))
+            .hasAny([
+              'hbtBalance', 'totalHbtEarned', 'coins',
+              'activeChallenge', 'activeChallenges', 'milestones', 'currentStreak',
+              'welcomeBonusGiven', 'referredBy', 'referralCode',
+              'referralDay3BonusGiven', 'referralDay7BonusGiven'
+            ]))
         && isAllowedUserField()
         && isValidUserProgramPreferences()
         && isValidRewardRecipientPhone();
@@ -267,35 +297,85 @@ service cloud.firestore {
     
     // ===== Daily Logs Collection =====
     match /daily_logs/{logId} {
-      // 갤러리: 비로그인 사용자도 읽기 허용 (접근성)
-      allow read: if true;
+      // 개인 건강 원문은 소유자와 관리자만 읽는다.
+      allow read: if isOwner(resource.data.userId) || isAdmin();
       
       allow create: if isSignedIn() 
                     && isValidDailyLog()
-                    && request.resource.data.userId == request.auth.uid;
+                    && isCanonicalDailyLogId(logId)
+                    && request.resource.data.userId == request.auth.uid
+                    && !request.resource.data.keys().hasAny([
+                      'awardedPoints', 'currentStreak', 'rewardLedgerVersion',
+                      'streakNotifiedDays', 'reactions', 'reactionPointAwardedUserIds'
+                    ]);
       
-      // 리액션 코인 발행 방지: reactions와 포인트 지급 원장(reactionPointAwardedUserIds)은
-      // 클라이언트가 직접 쓸 수 없다. 조작 시 타인 UID를 리액터로 위조해 게시물 주인에게
-      // 코인을 무한 지급할 수 있으므로(awardReactionPoints), 오직 서버 callable
-      // toggleReactionOnPost(admin SDK)만 이 필드를 쓴다. 댓글은 기존대로 허용.
+      // 서버 계산 필드와 소셜 반응은 개인 원문에 클라이언트가 직접 쓸 수 없다.
+      // 댓글·리액션은 gallery_posts 전용 callable에서만 처리한다.
       allow update: if isSignedIn() && (
         (isOwner(resource.data.userId)
           && isValidDailyLog()
+          && isCanonicalDailyLogId(logId)
           && request.resource.data.userId == resource.data.userId
-          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['reactions', 'reactionPointAwardedUserIds']))
-        ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments']))
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'awardedPoints', 'currentStreak', 'rewardLedgerVersion',
+            'streakNotifiedDays', 'reactions', 'reactionPointAwardedUserIds'
+          ]))
       );
       
       allow update: if isAdmin();
       allow delete: if isOwner(resource.data.userId) || isAdmin();
 
-      // H2: 소유자 전용 민감 필드 보관소 (gratitude 등). 부모 daily_logs는 갤러리용으로
-      //     공개 읽기지만, 숨김 설정한 민감 원본은 여기에만 저장되어 소유자만 읽는다.
+      // 소유자 전용 민감 필드 보관소 (gratitude 등). 부모와 하위문서 모두 비공개다.
       match /private/{privId} {
         allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
         allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       }
+    }
+
+    // ===== Signed-in Gallery Projection =====
+    match /gallery_posts/{postId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    // ===== Privacy-thresholded Guest Activity =====
+    match /public_stats/guest_activity {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ===== Server-owned immutable reward ledgers =====
+    match /point_ledger/{ledgerId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false;
+
+      match /entries/{entryId} {
+        allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+        allow write: if false;
+      }
+    }
+
+    match /reaction_point_ledger/{entryId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.reactorUserId == request.auth.uid ||
+        resource.data.postOwnerId == request.auth.uid
+      ));
+      allow write: if false;
+    }
+
+    match /step_verifications/{verificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    match /reward_evidence_ledger/{evidenceId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    match /notification_delivery_ledger/{entryId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ===== Health Profiles Collection =====

@@ -25,7 +25,10 @@ describe('daily log offline fallback', () => {
         expect(appSource).toContain('const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;');
         expect(appSource).toContain('const doSetDoc = () => withRejectingTimeout');
         expect(appSource).toContain('DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS');
-        expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), saveData, { merge: true })');
+        expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), getClientWritableDailyLogData(saveData), { merge: true })');
+        expect(appSource).toContain('let primarySaveAcknowledged = false;');
+        expect(appSource).toContain('await doSetDoc();\n                primarySaveAcknowledged = true;');
+        expect(appSource).toContain('if (primarySaveAcknowledged && latestSaveData && docId)');
         expect(appSource).toContain('if (isOfflineSaveCandidateError(e))');
         expect(appSource).toContain('if (latestSaveData && docId && isOfflineSaveCandidateError(e))');
         expect(appSource).toContain('queueOfflineOutboxEntry({');

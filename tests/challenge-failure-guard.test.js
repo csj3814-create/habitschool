@@ -10,22 +10,24 @@ describe('challenge failure settlement guardrails', () => {
 
         expect(runtimeSource).toContain('async function fetchChallengeDailyLogsByDate(uid, challenge = {})');
         expect(runtimeSource).toContain('reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier)');
+        expect(runtimeSource).toContain('exports.refreshChallengeProgress = onCall(');
+        expect(runtimeSource).toContain('const projections = await buildAuthoritativeChallengeProgress(uid, sanitizedUserData);');
         expect(runtimeSource).toContain('skippedFailure: true');
         expect(runtimeSource).toContain('claimable: true');
-        // 정산 계산은 challenge-utils.js로 추출됨. runtime은 require로 배선되어 여전히 사용한다.
+        // 정산 계산은 challenge-utils.js로 추출해 runtime에서 서버 권한으로 재사용한다.
         expect(runtimeSource).toContain('require("./challenge-utils")');
         expect(challengeUtilsSource).toContain('function canSettleChallengeAsClaimable');
         expect(runtimeSource).toContain('마지막 날은 임무를 완료해야 바로 수령할 수 있고, 부분 달성 정산은 다음날부터 가능합니다.');
+        expect(runtimeSource).toContain('if (!forceForfeit && (canClaimInsteadOfFailing ||');
+        expect(runtimeSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDate(uid, challenge);');
 
-        expect(managerSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDate(currentUser.uid, storedChallenge);');
-        expect(managerSource).toContain('reconcileChallengeCompletionWithDailyLogs(storedChallenge, dailyLogsByDate, tier)');
-        expect(managerSource).toContain('async function fetchChallengeDailyLogsByDateInTransaction');
-        expect(managerSource).toContain('const dailyLogsByDate = await fetchChallengeDailyLogsByDateInTransaction(transaction, currentUser.uid, challenge);');
-        expect(managerSource).toContain('const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);');
-        expect(managerSource).toContain('settleResult.data?.skippedFailure || settleResult.data?.claimable');
-        expect(managerSource).toContain('if (isFinalDay && !isFullCompletion)');
-        expect(managerSource).toContain("showToast('⏳ 앱 지갑을 준비 중이에요. 잠시만 기다려 주세요.');");
-        expect(managerSource).toContain("showToast('❌ 앱 지갑을 아직 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');");
+        expect(managerSource).toContain("const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');");
+        expect(managerSource).toContain('const refreshResult = await refreshProgressFn({});');
+        expect(managerSource).toContain("const settleFn = httpsCallable(functions, 'settleChallengeFailure');");
+        expect(managerSource).toContain('await settleFn({ tier });');
+        expect(managerSource).toContain('await forfeitFn({ tier, forceForfeit: true });');
+        expect(managerSource).not.toContain("doc(db, 'daily_logs'");
+        expect(managerSource).not.toContain('fetchChallengeDailyLogsByDateInTransaction');
         expect(managerSource).toContain('async function ensureChallengeSigningWalletReady');
 
         expect(appCoreSource).toContain('function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateString())');

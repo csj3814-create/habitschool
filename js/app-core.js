@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=227';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=227';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=228';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=228';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=227';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=227';
+} from './auth-login-helpers.js?v=228';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=228';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=227';
+} from './exercise-media.js?v=228';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=227';
+} from './health-connect-utils.js?v=228';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,15 +54,27 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=227';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=227';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=227';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=227';
-import { sanitize, compressImage } from './data-manager.js?v=227';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=227';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=227';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=227';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=227';
+} from './habit-groups.js?v=228';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=228';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=228';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=228';
+import { sanitize, compressImage } from './data-manager.js?v=228';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=228';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=228';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=228';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=228';
+import {
+    APP_EXPERIENCE_STATES,
+    DEMO_TABS,
+    clearGuestDemoSession,
+    createGuestDemoController,
+    getGuestDemoPoints,
+    isDemoTab,
+    loadGuestDemoSession,
+    normalizeDemoTab
+} from './guest-demo.js?v=228';
+import { trackProductEvent } from './product-events.js?v=228';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=228';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -75,7 +87,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=227';
+} from './diet-program.js?v=228';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -87,18 +99,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=227';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=227';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=227';
+} from './meditation-guide.js?v=228';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=228';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=228';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=227';
+} from './social-challenge-readiness.js?v=228';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=227';
+} from './monthly-mvp-reward.js?v=228';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -251,8 +263,20 @@ async function _ensureKakao() {
 window.checkOnboarding = checkOnboarding;
 window.analyzeMealPhoto = analyzeMealPhoto;
 window.completeOnboarding = completeOnboarding;
+window.selectOnboardingHabit = selectOnboardingHabit;
 window.goOnboardingStep = goOnboardingStep;
 window.openTab = openTab;
+window.startGuestDemo = startGuestDemo;
+window.restoreGuestDemoIfAvailable = restoreGuestDemoIfAvailable;
+window.isGuestDemoActive = isGuestDemoActive;
+window.finishGuestDemoAuthentication = finishGuestDemoAuthentication;
+window.handleGuestAuthenticationFailure = handleGuestAuthenticationFailure;
+window.getPendingGuestAuthIntent = readPendingGuestAuthIntent;
+window.prepareGuestOnboarding = prepareGuestOnboarding;
+window.resumeGuestIntentForExistingUser = resumeGuestIntentForExistingUser;
+window.finishFirstRecordResult = finishFirstRecordResult;
+window.continueAfterFirstRecord = continueAfterFirstRecord;
+window.enableFirstRecordReminder = enableFirstRecordReminder;
 window.switchToDefaultMode = switchToDefaultMode;
 window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
@@ -294,6 +318,8 @@ const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercis
 const SHARE_TEMPLATE_STORAGE_KEY = 'habitschool_share_template';
 const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
+const PENDING_GUEST_AUTH_INTENT_KEY = 'habitschool_guest_auth_intent_v1';
+const FIRST_RECORD_RESULT_PREFIX = 'habitschool_first_record_result_v1';
 const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
 const DASHBOARD_HERO_COLLAPSE_KEY = 'habitschool_dashboard_hero_collapsed';
 const DASHBOARD_MORE_TOOLS_COLLAPSE_KEY = 'habitschool_dashboard_more_tools_collapsed';
@@ -322,6 +348,290 @@ const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;
 const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;
 const BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS = 4000;
 const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;
+
+const GUEST_EVENT_ACTION_MAP = Object.freeze({
+    diet_sample_selected: 'continue',
+    diet_ai_result_viewed: 'continue',
+    diet_saved: 'continue',
+    exercise_sample_reviewed: 'continue',
+    exercise_saved: 'continue',
+    sleep_sample_reviewed: 'continue',
+    sleep_saved: 'continue',
+    gallery_filter_all: 'change_tab',
+    gallery_filter_diet: 'change_tab',
+    gallery_filter_exercise: 'change_tab',
+    gallery_filter_sleep: 'change_tab',
+    gallery_view_media: 'open_media',
+    gallery_close_media: 'close',
+    gallery_reacted: 'continue'
+});
+
+let _selectedOnboardingHabit = '';
+let _firstRecordResultContext = null;
+
+function mapGuestEventForAnalytics(name, payload = {}) {
+    const common = { variant: 'demo_v1' };
+    if (name === 'guest_demo_start') {
+        return {
+            ...common,
+            entry_point: payload.entryPoint === 'login_modal' ? 'login_modal' : 'direct',
+            locale: 'ko',
+            app_mode: 'default'
+        };
+    }
+    if (name === 'guest_demo_tab_view') return { ...common, tab: payload.tab };
+    if (name === 'guest_demo_action') {
+        return {
+            ...common,
+            tab: payload.tab,
+            action: GUEST_EVENT_ACTION_MAP[payload.action] || 'continue',
+            entry_point: 'record_prompt'
+        };
+    }
+    if (name === 'guest_demo_signup_click') {
+        return { ...common, tab: payload.tab, entry_point: 'record_prompt' };
+    }
+    if (name === 'auth_result') {
+        return {
+            ...common,
+            status: payload.success === true ? 'success' : 'cancelled',
+            auth_method: 'google',
+            entry_point: 'resume_prompt'
+        };
+    }
+    return common;
+}
+
+function removeGuestDemoHosts() {
+    document.querySelectorAll('.guest-demo-host').forEach((host) => host.remove());
+}
+
+function updateGuestDemoChrome(session = null) {
+    const activeSession = session || guestDemoController.getSession();
+    const points = activeSession ? getGuestDemoPoints(activeSession) : null;
+    const greeting = document.getElementById('user-greeting');
+    const pointBadge = document.getElementById('point-badge-ui');
+    const pointBalance = document.getElementById('point-balance');
+    const dateUi = document.getElementById('date-ui');
+    if (greeting) {
+        greeting.innerHTML = '<img src="icons/icon-192.svg" alt="" style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨 체험';
+    }
+    if (pointBadge) {
+        pointBadge.style.display = points ? 'inline-flex' : 'none';
+        pointBadge.setAttribute('aria-label', points ? `예시 포인트 ${points.total}P` : '해빛 포인트');
+    }
+    if (pointBalance && points) pointBalance.textContent = String(points.total);
+    if (dateUi) dateUi.style.display = 'none';
+}
+
+function ensureGuestDemoHost(tab) {
+    const section = document.getElementById(normalizeDemoTab(tab));
+    if (!section) return null;
+    let host = section.querySelector(':scope > .guest-demo-host');
+    if (!host) {
+        host = document.createElement('div');
+        host.className = 'guest-demo-host';
+        host.setAttribute('aria-live', 'polite');
+        section.appendChild(host);
+    }
+    return host;
+}
+
+function showGuestLoginChoice(intent = null) {
+    if (intent) persistPendingGuestAuthIntent(intent);
+    document.documentElement.classList.add('guest-auth-prompt-open');
+    const modal = document.getElementById('login-modal');
+    if (modal) modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('loginBtn')?.focus(), 0);
+}
+
+const guestDemoController = createGuestDemoController({
+    onEvent(name, payload) {
+        trackProductEvent(name, mapGuestEventForAnalytics(name, payload));
+    },
+    onLoginIntent(intent) {
+        showGuestLoginChoice(intent);
+    },
+    onTabChange({ tab }) {
+        updateGuestDemoChrome();
+        ensureGuestDemoHost(tab);
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    },
+    onStateChange(state, session) {
+        const root = document.documentElement;
+        root.classList.toggle('guest-demo-active', state === APP_EXPERIENCE_STATES.GUEST_DEMO);
+        if (state !== APP_EXPERIENCE_STATES.GUEST_DEMO) root.classList.remove('guest-auth-prompt-open');
+        if (state === APP_EXPERIENCE_STATES.GUEST_DEMO) {
+            const modal = document.getElementById('login-modal');
+            if (modal && !root.classList.contains('guest-auth-prompt-open')) modal.style.display = 'none';
+            updateGuestDemoChrome(session);
+        }
+        if (state === APP_EXPERIENCE_STATES.SIGNED_OUT) {
+            removeGuestDemoHosts();
+            const modal = document.getElementById('login-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+    },
+    onRender() {
+        updateGuestDemoChrome();
+    }
+});
+
+function isGuestDemoActive() {
+    return guestDemoController.getState() === APP_EXPERIENCE_STATES.GUEST_DEMO
+        && !!guestDemoController.getSession();
+}
+
+async function loadGuestActivityStats() {
+    if (!isGuestDemoActive()) return;
+    try {
+        const snapshot = await getDoc(doc(db, 'public_stats', 'guest_activity'));
+        if (!isGuestDemoActive() || !snapshot.exists()) return;
+        guestDemoController.setActivityStats(snapshot.data());
+    } catch (_) {
+        // Optional trust signal: the synthetic demo remains fully usable offline.
+    }
+}
+
+function startGuestDemo(tab = 'gallery') {
+    const routeContext = getRouteContext(window.location.pathname);
+    if (routeContext.isEnglish || routeContext.mode === 'simple') {
+        window.location.assign('/');
+        return false;
+    }
+    document.documentElement.classList.remove('guest-auth-prompt-open');
+    if (isGuestDemoActive()) {
+        const activeTab = normalizeDemoTab(guestDemoController.getSession()?.activeTab || tab);
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) loginModal.style.display = 'none';
+        openTab(activeTab, false);
+        return true;
+    }
+    const normalizedTab = normalizeDemoTab(tab);
+    const host = ensureGuestDemoHost(normalizedTab);
+    guestDemoController.mount(host);
+    guestDemoController.start({
+        tab: normalizedTab,
+        entryPoint: 'login_modal',
+        deferOpenTab: true
+    });
+    openTab(normalizedTab, true);
+    loadGuestActivityStats();
+    return true;
+}
+
+function restoreGuestDemoIfAvailable() {
+    if (auth.currentUser || isEnglishLocale()) return false;
+    const restored = guestDemoController.restore();
+    if (!restored) return false;
+    const tab = normalizeDemoTab(restored.activeTab);
+    const host = ensureGuestDemoHost(tab);
+    guestDemoController.mount(host);
+    openTab(tab, false);
+    loadGuestActivityStats();
+    return true;
+}
+
+function persistPendingGuestAuthIntent(intent) {
+    if (!intent || !isDemoTab(intent.tab)) return false;
+    try {
+        sessionStorage.setItem(PENDING_GUEST_AUTH_INTENT_KEY, JSON.stringify({
+            tab: normalizeDemoTab(intent.tab),
+            action: String(intent.action || 'start_record').slice(0, 48)
+        }));
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function readPendingGuestAuthIntent() {
+    try {
+        const parsed = JSON.parse(sessionStorage.getItem(PENDING_GUEST_AUTH_INTENT_KEY) || 'null');
+        if (!parsed || !isDemoTab(parsed.tab)) return null;
+        return { tab: normalizeDemoTab(parsed.tab), action: String(parsed.action || 'start_record') };
+    } catch (_) {
+        return null;
+    }
+}
+
+function clearPendingGuestAuthIntent() {
+    try { sessionStorage.removeItem(PENDING_GUEST_AUTH_INTENT_KEY); } catch (_) { }
+}
+
+function finishGuestDemoAuthentication(success = true) {
+    const persistedSession = loadGuestDemoSession();
+    const persistedIntent = persistedSession?.pendingIntent || null;
+    const standaloneIntent = readPendingGuestAuthIntent();
+    const controllerIntent = isGuestDemoActive()
+        ? guestDemoController.finishAuthentication(success === true)
+        : null;
+    if (success !== true) return null;
+    const intent = controllerIntent || standaloneIntent || persistedIntent;
+    if (intent) persistPendingGuestAuthIntent(intent);
+    clearGuestDemoSession();
+    document.documentElement.classList.remove('guest-demo-active');
+    document.documentElement.classList.remove('guest-auth-prompt-open');
+    removeGuestDemoHosts();
+    return intent;
+}
+
+function handleGuestAuthenticationFailure() {
+    if (!isGuestDemoActive()) return false;
+    guestDemoController.finishAuthentication(false);
+    document.documentElement.classList.remove('guest-auth-prompt-open');
+    const modal = document.getElementById('login-modal');
+    if (modal) modal.style.display = 'none';
+    return true;
+}
+
+function selectOnboardingHabit(habit) {
+    const normalized = ['diet', 'exercise', 'sleep'].includes(habit) ? habit : '';
+    if (!normalized) return false;
+    _selectedOnboardingHabit = normalized;
+    document.querySelectorAll('[data-onboarding-habit]').forEach((button) => {
+        button.setAttribute('aria-pressed', button.dataset.onboardingHabit === normalized ? 'true' : 'false');
+    });
+    const startButton = document.getElementById('onboarding-start-btn');
+    if (startButton) startButton.disabled = false;
+    return true;
+}
+
+function prepareGuestOnboarding() {
+    const intent = readPendingGuestAuthIntent();
+    const preferred = ['diet', 'exercise', 'sleep'].includes(intent?.tab) ? intent.tab : 'diet';
+    selectOnboardingHabit(preferred);
+    return preferred;
+}
+
+function focusRecordEntry(tab) {
+    const normalized = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
+    const section = document.getElementById(normalized);
+    const guide = section?.querySelector(`[data-record-guide="${normalized}"]`);
+    const target = guide?.querySelector('.record-flow-btn') || section?.querySelector('button, input, textarea');
+    if (!target) return false;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => target.focus({ preventScroll: true }), 250);
+    return true;
+}
+
+function resumeGuestIntentForExistingUser() {
+    const intent = readPendingGuestAuthIntent();
+    if (!intent) return false;
+    const targetTab = normalizeDemoTab(intent.tab);
+    openTab(targetTab, false);
+    const didFocus = ['diet', 'exercise', 'sleep'].includes(targetTab)
+        ? focusRecordEntry(targetTab)
+        : true;
+    trackProductEvent('resume_intent_result', {
+        intent: targetTab === 'assets' ? 'reward' : (targetTab === 'gallery' ? 'gallery' : 'record'),
+        status: didFocus ? 'success' : 'error',
+        entry_point: 'resume_prompt',
+        variant: 'demo_v1'
+    });
+    clearPendingGuestAuthIntent();
+    return didFocus;
+}
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
@@ -1044,7 +1354,7 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
         if (consentModal) consentModal.style.display = 'none';
         finishDietProgramSelectorFlow();
 
-        const result = await window.requestAppNotificationPermission?.();
+        const result = await window.ensureAppNotificationPermission?.();
         const connected = result?.connected === true;
         if (connected) {
             showToast(`${getDietProgramMethodMeta(pending.methodId).name} 알림까지 함께 켰어요.`);
@@ -1096,7 +1406,7 @@ window.handleDietProgramReminderToggle = async function (checked) {
         const pushState = window.getAppPushPermissionState?.() || { connected: false };
         let connected = pushState.connected === true;
         if (!connected) {
-            const permissionResult = await window.requestAppNotificationPermission?.();
+            const permissionResult = await window.ensureAppNotificationPermission?.();
             connected = permissionResult?.connected === true;
         }
 
@@ -1809,6 +2119,39 @@ async function openSharedImportSheetFlow({ manifest, files }) {
 let _pendingNativeStepImport = null;
 let _activeNativeStepImport = null;
 const NATIVE_APP_SOURCE_SESSION_KEY = 'habitschoolNativeAppSource';
+const NOTIFICATION_RECORD_ENTRY_SESSION_KEY = 'habitschool_notification_record_entry_v1';
+const NOTIFICATION_RECORD_ATTRIBUTION_MS = 2 * 60 * 60 * 1000;
+
+function rememberNotificationRecordEntry(params = {}) {
+    const source = String(params.source || '').trim();
+    const isReminder = source === 'habit-reminder'
+        || source === 'streak-alert'
+        || source.startsWith('diet-program-');
+    const tab = ['diet', 'exercise', 'sleep'].includes(params.tab) ? params.tab : '';
+    if (!isReminder || !tab) return false;
+    try {
+        sessionStorage.setItem(NOTIFICATION_RECORD_ENTRY_SESSION_KEY, JSON.stringify({
+            tab,
+            openedAt: Date.now()
+        }));
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+function consumeNotificationRecordAttribution(tab) {
+    try {
+        const value = JSON.parse(sessionStorage.getItem(NOTIFICATION_RECORD_ENTRY_SESSION_KEY) || 'null');
+        const age = Date.now() - Number(value?.openedAt || 0);
+        const valid = value?.tab === tab && age >= 0 && age <= NOTIFICATION_RECORD_ATTRIBUTION_MS;
+        sessionStorage.removeItem(NOTIFICATION_RECORD_ENTRY_SESSION_KEY);
+        return valid;
+    } catch (_) {
+        try { sessionStorage.removeItem(NOTIFICATION_RECORD_ENTRY_SESSION_KEY); } catch (_) { }
+        return false;
+    }
+}
 
 function rememberNativeAppSource(params = getAppEntryDeepLinkParams()) {
     const source = String(params?.native || '').trim();
@@ -1843,6 +2186,7 @@ function getAppEntryDeepLinkParams() {
         native: String(url.searchParams.get('native') || '').trim(),
         panel: String(url.searchParams.get('panel') || '').trim(),
         focus: String(url.searchParams.get('focus') || '').trim(),
+        source: String(url.searchParams.get('source') || '').trim(),
         stepCount: String(url.searchParams.get('stepCount') || '').trim(),
         stepSource: String(url.searchParams.get('stepSource') || '').trim(),
         stepProvider: String(url.searchParams.get('stepProvider') || '').trim(),
@@ -1855,7 +2199,7 @@ function getAppEntryDeepLinkParams() {
 function clearAppEntryDeepLinkParams(tabName = getVisibleTabName()) {
     const url = new URL(window.location.href);
     let changed = false;
-    ['tab', 'native', 'panel', 'focus', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
+    ['tab', 'native', 'panel', 'focus', 'source', 'stepCount', 'stepSource', 'stepProvider', 'syncedAt', 'friendshipId', 'challengeId'].forEach(key => {
         if (url.searchParams.has(key)) {
             url.searchParams.delete(key);
             changed = true;
@@ -2763,6 +3107,7 @@ function handleNativeStepImportDeepLink(params = getAppEntryDeepLinkParams(), { 
 window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName() } = {}) {
     const params = getAppEntryDeepLinkParams();
     rememberNativeAppSource(params);
+    const notificationEntryRemembered = rememberNotificationRecordEntry(params);
     if (!params.panel && !params.focus && !params.friendshipId && !params.challengeId) return false;
 
     if (params.panel === 'friends' || params.panel === 'invite' || params.friendshipId) {
@@ -2794,8 +3139,34 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         return true;
     }
 
+    if (params.focus === 'record' && ['exercise', 'sleep'].includes(params.tab || initialTab)) {
+        const targetTab = params.tab || initialTab;
+        if (getVisibleTabName() !== targetTab) window.openTab?.(targetTab, false);
+        const target = targetTab === 'exercise'
+            ? document.getElementById('step-manual-input')
+            : (document.getElementById('sleep-img') || document.getElementById('meditation-start-btn'));
+        requestAnimationFrame(() => focusElementWithHighlight(target));
+        window.setTimeout(() => focusElementWithHighlight(target), 180);
+        clearAppEntryDeepLinkParams(targetTab);
+        if (notificationEntryRemembered) {
+            trackProductEvent('first_record_start', {
+                tab: targetTab,
+                entry_point: 'notification',
+                variant: 'personalized_v1'
+            });
+        }
+        return true;
+    }
+
     if ((params.tab === 'diet' || initialTab === 'diet') && params.focus) {
         if (handleDietRecordDeepLink(params.focus)) {
+            if (notificationEntryRemembered) {
+                trackProductEvent('first_record_start', {
+                    tab: 'diet',
+                    entry_point: 'notification',
+                    variant: 'personalized_v1'
+                });
+            }
             clearAppEntryDeepLinkParams('diet');
             return true;
         }
@@ -5238,7 +5609,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=227';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=228';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -5269,81 +5640,20 @@ import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
 // 프로그레시브 마일스톤 체크 (자동 감지, 보너스는 클릭 시 지급)
 async function checkMilestones(userId) {
     try {
-        const userRef = doc(db, "users", userId);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        let milestones = userData.milestones || {};
-        let newMilestones = [];
-
-        // 일일 기록 조회
-        const q = query(collection(db, "daily_logs"), where("userId", "==", userId), orderBy("date", "desc"), limit(61));
-        let logs = [];
-        try {
-            const logsSnap = await getDocs(q);
-            logsSnap.forEach(d => logs.push({ date: d.data().date, awarded: d.data().awardedPoints }));
-        } catch (e) {
-            console.warn('⚠️ 마일스톤 로그 조회 스킵:', e.message);
-            logs = [];
-        }
-
-        // 통계 계산
-        let streak = 0;
-        for (let log of logs) {
-            if (log.awarded?.diet || log.awarded?.exercise || log.awarded?.mind) streak++;
-            else break;
-        }
-        let dietCount = 0, exerciseCount = 0, mindCount = 0;
-        for (let log of logs) {
-            if (log.awarded?.diet) dietCount++;
-            if (log.awarded?.exercise) exerciseCount++;
-            if (log.awarded?.mind) mindCount++;
-        }
-
-        const points = Number.parseInt(String(userData.coins ?? 0), 10) || 0;
-        const statMap = { streak, diet: dietCount, exercise: exerciseCount, mind: mindCount, points };
-
-        // 각 마일스톤 확인
-        for (const [category, catData] of Object.entries(MILESTONES)) {
-            const val = statMap[category] || 0;
-            for (const level of catData.levels) {
-                if (!milestones[level.id]?.achieved && val >= level.target) {
-                    milestones[level.id] = { achieved: true, date: getKstDateString(), bonusClaimed: false };
-                    newMilestones.push(level);
-                }
-            }
-        }
-
-        // 구 뱃지 → 마일스톤 마이그레이션
-        const badges = userData.badges || {};
-        const badgeMap = { starter: 'streak1', streak7: 'streak7', diet7: 'diet7', exercise7: 'exercise7', mind7: 'mind7', streak30: 'streak30', points100: 'points100', points300: 'points300' };
-        let migrated = false;
-        for (const [old, nw] of Object.entries(badgeMap)) {
-            if (badges[old]?.earned && !milestones[nw]?.achieved) {
-                milestones[nw] = { achieved: true, date: badges[old].date || getKstDateString(), bonusClaimed: badges[old].bonusAwarded || false };
-                migrated = true;
-            }
-        }
-
-        const reconciled = reconcileMilestoneState(milestones, MILESTONES, {
-            statMap,
-            today: getKstDateString()
-        });
-        milestones = reconciled.milestones;
-        newMilestones = reconciled.freshMilestones;
-
-        const saveFields = (newMilestones.length > 0 || migrated || reconciled.changed)
-            ? { milestones, currentStreak: streak }
-            : { currentStreak: streak };
-        // failed-precondition(동시 쓰기 충돌) 시 1회 재시도
-        try {
-            await setDoc(userRef, saveFields, { merge: true });
-        } catch (e2) {
-            if (e2.code === 'failed-precondition') {
-                await new Promise(r => setTimeout(r, 1000));
-                await setDoc(userRef, saveFields, { merge: true });
-            } else { throw e2; }
-        }
-        newMilestones.forEach(m => {
+        if (!auth.currentUser || auth.currentUser.uid !== userId) return;
+        const refreshFn = httpsCallable(functions, 'refreshMilestones');
+        const result = await refreshFn({});
+        const newMilestoneIds = Array.isArray(result.data?.newMilestones)
+            ? result.data.newMilestones
+            : [];
+        const definitionsById = new Map(
+            Object.values(MILESTONES)
+                .flatMap((category) => Array.isArray(category?.levels) ? category.levels : [])
+                .map((level) => [level.id, level])
+        );
+        newMilestoneIds.forEach((milestoneId) => {
+            const m = definitionsById.get(milestoneId);
+            if (!m) return;
             showToast(`🎯 마일스톤 달성! ${m.emoji} ${m.name} — 보너스 +${m.reward}P를 받아가세요!`);
         });
     } catch (error) {
@@ -5367,13 +5677,8 @@ async function renderMilestones(userId, prefetchedData) {
         });
         const milestones = reconciled.milestones;
 
-        if (reconciled.changed) {
-            setDoc(doc(db, "users", userId), { milestones }, { merge: true }).catch(error => {
-                console.warn('마일스톤 정규화 저장 스킵:', error.code || error.message);
-            });
-        }
-
         const grid = document.getElementById('badges-grid');
+        if (!grid) return;
         grid.innerHTML = '';
         let hasClaimed = false;
 
@@ -5406,7 +5711,7 @@ async function renderMilestones(userId, prefetchedData) {
             if (claimable.length > 0) {
                 cardHtml += `<div class="ms-claimable-list">`;
                 for (const lv of claimable) {
-                    cardHtml += `<div class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}', ${lv.reward})"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></div>`;
+                    cardHtml += `<button type="button" class="milestone-completed-item claimable" onclick="claimMilestoneBonus('${lv.id}')"><span>${lv.emoji}</span><span class="ms-sm-name">${lv.name}</span><span class="ms-claim-btn">+${lv.reward}P 받기</span></button>`;
                 }
                 cardHtml += `</div>`;
             }
@@ -5437,33 +5742,37 @@ async function renderMilestones(userId, prefetchedData) {
 }
 
 // 마일스톤 보너스 클릭 시 수령
-window.claimMilestoneBonus = async function (milestoneId, reward) {
+window.claimMilestoneBonus = async function (milestoneId) {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) { showToast('❌ 로그인이 필요합니다.'); return; }
-
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        const milestones = userData.milestones || {};
-
-        if (!milestones[milestoneId]?.achieved) { showToast('❌ 아직 달성하지 못한 마일스톤입니다.'); return; }
-        if (milestones[milestoneId]?.bonusClaimed) { showToast('이미 보너스를 수령했습니다.'); return; }
-
-        milestones[milestoneId].bonusClaimed = true;
-        milestones[milestoneId].bonusAmount = reward;
-        await setDoc(userRef, { milestones }, { merge: true });
+        const claimFn = httpsCallable(functions, 'claimMilestoneBonus');
+        const result = await claimFn({ milestoneId });
+        const reward = Math.max(0, Number(result.data?.reward) || 0);
+        const authoritativeBalance = Number.isFinite(Number(result.data?.balance))
+            ? Math.max(0, Number(result.data.balance))
+            : null;
 
         showToast(`🎁 보너스 +${reward}P 지급 완료!`);
         const pointEl = document.getElementById('point-balance');
         const currentPts = parseInt(pointEl?.textContent) || 0;
-        if (pointEl) pointEl.textContent = currentPts + reward;
-        renderSimpleProfilePanel({ coins: currentPts + reward }).catch(() => {});
+        const nextBalance = authoritativeBalance ?? (currentPts + reward);
+        if (pointEl) pointEl.textContent = nextBalance;
+        renderSimpleProfilePanel({ coins: nextBalance }).catch(() => {});
 
-        renderMilestones(currentUser.uid);
+        await renderMilestones(currentUser.uid, {
+            milestones: result.data?.milestones || {},
+            coins: nextBalance,
+        });
     } catch (error) {
         console.error('보너스 수령 오류:', error);
-        showToast('⚠️ 보너스 지급 중 오류가 발생했습니다.');
+        if (error?.code === 'functions/already-exists') {
+            showToast('이미 보너스를 수령했습니다.');
+        } else if (error?.code === 'functions/failed-precondition') {
+            showToast('❌ 아직 달성하지 못한 마일스톤입니다.');
+        } else {
+            showToast('⚠️ 보너스 지급 중 오류가 발생했습니다.');
+        }
     }
 };
 
@@ -9568,7 +9877,102 @@ function refreshAssetOnchainBalance(uid) {
     return _assetOnchainBalancePromise;
 }
 
+function ensureAssetInformationArchitecture() {
+    const section = document.getElementById('assets');
+    if (!section || section.dataset.rewardLayoutReady === 'true') return;
+    const goalCard = document.getElementById('asset-reward-goal-card');
+    const marketCard = section.querySelector('.reward-market-card');
+    const couponCard = section.querySelector('.reward-coupon-card');
+    if (!goalCard || !marketCard || !couponCard) return;
+
+    goalCard.after(marketCard, couponCard);
+    const details = document.createElement('details');
+    details.className = 'asset-advanced-details';
+    const summary = document.createElement('summary');
+    summary.textContent = '고급 자산 기능 · 챌린지 · HBT · 지갑';
+    const body = document.createElement('div');
+    body.className = 'asset-advanced-body';
+    details.append(summary, body);
+    couponCard.after(details);
+
+    const assetCard = document.getElementById('wallet-asset-section');
+    const hbtItem = assetCard?.querySelectorAll('.wallet-asset-item')?.[1] || null;
+    const advancedHbt = document.createElement('div');
+    advancedHbt.className = 'asset-advanced-hbt';
+    if (hbtItem) advancedHbt.appendChild(hbtItem);
+    const disclaimer = assetCard?.querySelector('.hbt-disclaimer');
+    const minichart = assetCard?.querySelector('.wallet-minichart');
+    if (disclaimer) advancedHbt.appendChild(disclaimer);
+    if (minichart) advancedHbt.appendChild(minichart);
+    if (advancedHbt.childElementCount > 0) body.appendChild(advancedHbt);
+
+    [
+        section.querySelector('.wallet-challenge-card'),
+        section.querySelector('.wallet-convert-card'),
+        section.querySelector('.wallet-halving-card'),
+        section.querySelector('.wallet-info-card'),
+        section.querySelector('.wallet-tx-card'),
+    ].filter(Boolean).forEach((node) => body.appendChild(node));
+    section.dataset.rewardLayoutReady = 'true';
+}
+
+function updateAssetRewardGoal(coins, logs = null) {
+    const current = Math.max(0, Number(coins) || 0);
+    const target = 2000;
+    const remaining = Math.max(0, target - current);
+    const progress = Math.min(100, (current / target) * 100);
+    const copy = document.getElementById('asset-reward-goal-copy');
+    const remainingEl = document.getElementById('asset-reward-remaining');
+    const fill = document.getElementById('asset-reward-progress-fill');
+    const progressbar = fill?.parentElement;
+    const estimate = document.getElementById('asset-reward-estimate');
+    if (copy) copy.textContent = remaining > 0
+        ? `현재 ${current.toLocaleString('ko-KR')}P · 조금씩 채워 첫 쿠폰에 도전해요.`
+        : `현재 ${current.toLocaleString('ko-KR')}P · 쿠폰을 교환할 수 있어요.`;
+    if (remainingEl) remainingEl.textContent = remaining > 0
+        ? `${remaining.toLocaleString('ko-KR')}P 남음`
+        : '지금 교환 가능';
+    if (fill) fill.style.width = `${progress}%`;
+    if (progressbar) progressbar.setAttribute('aria-valuenow', String(Math.min(current, target)));
+
+    if (!estimate) return;
+    if (remaining <= 0) {
+        estimate.hidden = false;
+        estimate.textContent = '교환 상품과 실제 발급 조건은 해빛 마켓에서 확인해 주세요.';
+        return;
+    }
+    if (!Array.isArray(logs)) {
+        estimate.hidden = true;
+        return;
+    }
+    const today = getKstDateString();
+    const startDate = addCalendarDays(today, -6);
+    const recentTotal = logs
+        .filter((log) => String(log?.date || '') >= startDate && String(log?.date || '') <= today)
+        .reduce((sum, log) => {
+            const awarded = log?.awardedPoints || {};
+            return sum + Number(awarded.dietPoints || 0)
+                + Number(awarded.exercisePoints || 0)
+                + Number(awarded.mindPoints || 0);
+        }, 0);
+    const dailyAverage = recentTotal / 7;
+    if (!(dailyAverage > 0)) {
+        estimate.hidden = true;
+        return;
+    }
+    estimate.hidden = false;
+    estimate.textContent = `최근 7일 평균 기준 약 ${Math.ceil(remaining / dailyAverage)}일 · 예상치이며 보장값이 아닙니다.`;
+}
+
+function scrollToRewardMarket() {
+    const market = document.querySelector('#assets .reward-market-card');
+    market?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => market?.querySelector('button')?.focus({ preventScroll: true }), 250);
+}
+window.scrollToRewardMarket = scrollToRewardMarket;
+
 window.updateAssetDisplay = async function (forceRefresh = false) {
+    ensureAssetInformationArchitecture();
     const user = auth.currentUser;
     if (!user) return;
 
@@ -9689,23 +10093,23 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             orderBy("date", "desc"),
             limit(100)
         )), 'point-history', ASSET_HISTORY_TIMEOUT_MS);
-        const _p_reactionAwardHistory = withAssetQueryTimeout(getDocs(query(
-            collection(db, "daily_logs"),
-            where("reactionPointAwardedUserIds", "array-contains", user.uid),
-            limit(100)
-        )), 'reaction-awards', ASSET_HISTORY_TIMEOUT_MS);
+        const _p_reactionAwardHistory = withAssetQueryTimeout(Promise.all([
+            getDocs(query(
+                collection(db, "reaction_point_ledger"),
+                where("reactorUserId", "==", user.uid),
+                limit(100)
+            )),
+            getDocs(query(
+                collection(db, "reaction_point_ledger"),
+                where("postOwnerId", "==", user.uid),
+                limit(100)
+            ))
+        ]).then(([given, received]) => ({ given, received })), 'reaction-awards', ASSET_HISTORY_TIMEOUT_MS);
         const _p_notificationHistory = withAssetQueryTimeout(getDocs(query(
             collection(db, "notifications"),
             where("postOwnerId", "==", user.uid),
             limit(100)
         )), 'notification-history', ASSET_HISTORY_TIMEOUT_MS);
-        // 오늘 전체 로그 (리액션 포인트 집계용)
-        const _p_todayAllLogs = withAssetQueryTimeout(getDocs(query(
-            collection(db, 'daily_logs'),
-            where('date', '==', _todayStr),
-            limit(200)
-        )), 'today-all-logs');
-
         const userSnap = await _p_user;
 
         if (userSnap.exists()) {
@@ -9717,13 +10121,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 legacyActiveChallenge,
                 cleanupUpdate
             } = sanitizeChallengeStateForActiveChain(userData);
-            if (Object.keys(cleanupUpdate).length > 0) {
-                try {
-                    await updateDoc(userRef, cleanupUpdate);
-                } catch (cleanupError) {
-                    console.warn('active challenge cleanup skipped:', cleanupError?.message || cleanupError);
-                }
-            }
+            // 체인별 정리는 서버 챌린지 callable이 수행한다. 이 화면은 안전한 투영만 사용한다.
             userData.activeChallenges = sanitizedActiveChallenges;
             if (legacyActiveChallenge) {
                 userData.activeChallenge = legacyActiveChallenge;
@@ -9786,6 +10184,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (pointsDisplay) {
                 pointsDisplay.innerHTML = formatWalletPointsHtml(coinsValue);
             }
+            updateAssetRewardGoal(coinsValue);
 
             // HBT 표시 업데이트
             // HBT 표시: 온체인 잔액이 진실의 원천 (hbtBalance 사용 안 함)
@@ -9840,18 +10239,18 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     } else if (todayLogSnap.exists()) {
                         const ap = todayLogSnap.data().awardedPoints || {};
                         todayPoints += (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
-                        // 2) 내 오늘 게시물에 달린 리액션 수신 (+1P each)
-                        todayPoints += getUniqueReactionCount(todayLogSnap.data());
                     }
-                    // 3) 오늘 다른 사람 게시물에 내가 준 리액션 (+1P each)
-                    const todayAllSnap = await _p_todayAllLogs;
-                    if (todayAllSnap) {
-                        todayAllSnap.forEach(d => {
-                            if (d.data().userId === user.uid) return;
-                            if (getUniqueReactionUserIdsForPost(d.data()).includes(user.uid)) {
-                                todayPoints++;
-                            }
-                        });
+                    // 2) 서버 원장 기준 오늘 보낸/받은 리액션 포인트
+                    const reactionHistory = await _p_reactionAwardHistory;
+                    if (reactionHistory) {
+                        const isToday = (entry) => {
+                            const data = entry.data() || {};
+                            if (data.date) return data.date === _todayStr;
+                            const createdAt = data.createdAt?.toDate?.();
+                            return !!createdAt && getKstDateString(createdAt) === _todayStr;
+                        };
+                        todayPoints += reactionHistory.given.docs.filter(isToday).length;
+                        todayPoints += reactionHistory.received.docs.filter(isToday).length;
                     } else {
                         todayPointsReady = false;
                     }
@@ -10394,6 +10793,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     }
 
                     if (shouldBuildPointItems && pointSnap && !pointSnap.empty) {
+                        updateAssetRewardGoal(coinsValue, pointSnap.docs.map((docSnapshot) => docSnapshot.data() || {}));
                         pointSnap.forEach(pointDoc => {
                             const log = pointDoc.data();
                             const awarded = log.awardedPoints || {};
@@ -10420,45 +10820,30 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                                 });
                             }
 
-                            const incomingReactionPoints = Array.isArray(log.reactionPointAwardedUserIds)
-                                ? log.reactionPointAwardedUserIds.length
-                                : 0;
-                            if (incomingReactionPoints > 0) {
-                                pointItems.push({
-                                    sortKey: `${log.date || ''}T21:00:00`,
-                                    icon: '❤️',
-                                    iconClass: 'settle',
-                                    label: '받은 응원 포인트',
-                                    date: log.date || '-',
-                                    amountText: `+${formatAssetHistoryAmount(incomingReactionPoints, 'P')}`,
-                                    amountClass: 'positive',
-                                    statusText: '리액션'
-                                });
-                            }
                         });
                     }
 
-                    if (shouldBuildPointItems && reactionAwardSnap && !reactionAwardSnap.empty) {
-                        const outgoingReactionByDate = new Map();
-                        reactionAwardSnap.forEach(reactionDoc => {
-                            const log = reactionDoc.data() || {};
-                            if (log.userId === user.uid) return;
-                            const dateKey = String(log.date || '').trim() || '-';
-                            outgoingReactionByDate.set(dateKey, (outgoingReactionByDate.get(dateKey) || 0) + 1);
-                        });
-
-                        outgoingReactionByDate.forEach((count, dateKey) => {
-                            pointItems.push({
-                                sortKey: `${dateKey}T20:00:00`,
-                                icon: '👏',
-                                iconClass: 'convert',
-                                label: '보낸 응원 포인트',
-                                date: dateKey,
-                                amountText: `+${formatAssetHistoryAmount(count, 'P')}`,
-                                amountClass: 'positive',
-                                statusText: '리액션'
+                    if (shouldBuildPointItems && reactionAwardSnap) {
+                        const appendReactionHistory = (snapshot, label, icon, iconClass) => {
+                            snapshot?.forEach((reactionDoc) => {
+                                const entry = reactionDoc.data() || {};
+                                const createdAt = entry.createdAt?.toDate?.();
+                                const dateKey = String(entry.date || '').trim()
+                                    || (createdAt ? getKstDateString(createdAt) : '-');
+                                pointItems.push({
+                                    sortKey: createdAt?.toISOString?.() || `${dateKey}T20:00:00`,
+                                    icon,
+                                    iconClass,
+                                    label,
+                                    date: dateKey,
+                                    amountText: '+1P',
+                                    amountClass: 'positive',
+                                    statusText: '리액션'
+                                });
                             });
-                        });
+                        };
+                        appendReactionHistory(reactionAwardSnap.given, '보낸 응원 포인트', '👏', 'convert');
+                        appendReactionHistory(reactionAwardSnap.received, '받은 응원 포인트', '❤️', 'settle');
                     }
 
                     if (shouldBuildPointItems && notificationSnap && !notificationSnap.empty) {
@@ -12092,7 +12477,8 @@ function openTab(tabName, pushState = true) {
         return;
     }
     const user = auth.currentUser;
-    if (!user && resolvedTabName !== 'gallery') {
+    const guestDemoActive = !user && isGuestDemoActive();
+    if (!user && !guestDemoActive) {
         if (routeContext.isEnglish) {
             document.documentElement.classList.add('signed-out');
             document.documentElement.classList.remove('signed-in', 'auth-pending');
@@ -12104,6 +12490,10 @@ function openTab(tabName, pushState = true) {
             return;
         }
         document.getElementById('login-modal').style.display = 'flex'; return;
+    }
+    if (guestDemoActive && !isDemoTab(resolvedTabName)) {
+        guestDemoController.requestLogin('open_profile', guestDemoController.getSession()?.activeTab || 'gallery');
+        return;
     }
     if (pushState) {
         if (routeContext.isEnglish) {
@@ -12135,6 +12525,21 @@ function openTab(tabName, pushState = true) {
         targetBtn.setAttribute("aria-current", "page");
     }
     document.getElementById(resolvedTabName).style.display = "block";
+
+    if (guestDemoActive) {
+        const submitBar = document.getElementById('submit-bar');
+        const chatBanner = document.getElementById('chat-banner');
+        if (submitBar) submitBar.style.display = 'none';
+        if (chatBanner) chatBanner.style.display = 'none';
+        const host = ensureGuestDemoHost(resolvedTabName);
+        guestDemoController.mount(host);
+        guestDemoController.openTab(resolvedTabName, { source: pushState ? 'navigation' : 'restore' });
+        updateGuestDemoChrome();
+        applyDomTranslations();
+        scheduleFloatingBarLayoutUpdate();
+        document.getElementById(resolvedTabName)?.classList.add('active');
+        return;
+    }
 
     const submitBar = document.getElementById('submit-bar');
     const saveBtn = document.getElementById('saveDataBtn');
@@ -12679,14 +13084,14 @@ function updateGalleryPrimaryAction() {
 
     helperEl.style.display = 'block';
     helperEl.textContent = canShare
-        ? '기록 카드 준비 완료. 단톡방에 공유해요.'
-        : '단톡방에서 오늘 기록 이어가기';
-    saveBtn.dataset.mode = 'chat';
+        ? '공유할 기록과 공개 범위를 확인해 주세요.'
+        : '오늘 기록 하나를 저장하면 내 공유 카드가 준비돼요.';
+    saveBtn.dataset.mode = canShare ? 'gallery-share' : 'gallery-record';
     saveBtn.disabled = false;
-    saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
-    saveBtn.style.background = '#FEE500';
-    saveBtn.style.color = '#3C1E1E';
-    saveBtn.style.boxShadow = '0 8px 18px rgba(254,229,0,0.28)';
+    saveBtn.innerText = canShare ? '내 기록 공유하기' : '오늘 기록하기';
+    saveBtn.style.background = '';
+    saveBtn.style.color = '';
+    saveBtn.style.boxShadow = '';
 }
 
 function handleMissionPrimaryAction() {
@@ -12975,17 +13380,27 @@ async function refreshCommunityFocusSummaryInner(user, todayStr, communityStats 
             return;
         }
 
-        const friendStatusRows = await withAsyncTimeout(Promise.all(activeFriendIds.map(async fid => {
-            const logSnap = await getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`));
-            if (!logSnap.exists()) return { active: false, complete: false };
-            const awarded = logSnap.data()?.awardedPoints || {};
-            const active = !!(awarded.diet || awarded.exercise || awarded.mind);
-            const complete = !!(awarded.diet && awarded.exercise && awarded.mind);
-            return { active, complete };
-        })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'community_friend_status_timeout').catch(error => {
+        const friendActivity = await withAsyncTimeout(
+            fetchSocialChallengeReadinessLogsByDocId(activeFriendIds, [todayStr]),
+            SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS,
+            'community_friend_status_timeout'
+        ).catch(error => {
             logOptionalDataTimeout('community_friend_status_timeout', error);
             return null;
         });
+
+        const friendStatusRows = friendActivity ? activeFriendIds.map((friendId) => {
+            const todayLog = (friendActivity.logsByFriend.get(friendId) || [])
+                .find((entry) => entry.date === todayStr);
+            const awarded = todayLog?.data?.awardedPoints || {};
+            const diet = !!awarded.diet || Number(awarded.dietPoints || 0) > 0;
+            const exercise = !!awarded.exercise || Number(awarded.exercisePoints || 0) > 0;
+            const mind = !!awarded.mind || Number(awarded.mindPoints || 0) > 0;
+            return {
+                active: diet || exercise || mind,
+                complete: diet && exercise && mind
+            };
+        }) : null;
 
         if (Array.isArray(friendStatusRows)) {
             _communityFocusState.activeFriends = friendStatusRows.filter(row => row.active).length;
@@ -13046,7 +13461,7 @@ function renderMissionFocusState({
 
     if (stripEl) stripEl.style.display = isWeekActive && totalMissions > 0 ? 'none' : 'flex';
 
-    let tags = dailyGoalMet ? [`오늘 ${DASHBOARD_DAILY_POINT_GOAL}점 기준 달성`] : [`오늘 ${doneToday}/3 완료`];
+    let tags = dailyGoalMet ? [`풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P 달성`] : [`오늘 ${doneToday}/3 기록`];
 
     if (levelUpLockedToday) {
         kickerEl.textContent = '레벨업 완료';
@@ -13159,6 +13574,39 @@ function isDashboardDailyGoalMet(todayAwarded = {}) {
     return getDashboardTodayPointTotal(todayAwarded) >= DASHBOARD_DAILY_POINT_GOAL;
 }
 
+function applyDashboardLifecycleState({
+    recordedDayCount = 0,
+    primaryHabit = 'diet',
+    todayAwarded = {},
+} = {}) {
+    const dashboard = document.getElementById('dashboard');
+    if (!dashboard) return 'established';
+    const normalizedCount = Math.max(0, Number(recordedDayCount) || 0);
+    const lifecycle = normalizedCount === 0
+        ? 'first'
+        : normalizedCount === 1
+            ? 'repeat'
+            : normalizedCount <= 3
+                ? 'forming'
+                : 'established';
+    dashboard.dataset.lifecycle = lifecycle;
+
+    const preferredType = primaryHabit === 'exercise'
+        ? 'exercise'
+        : (primaryHabit === 'sleep' ? 'mind' : 'diet');
+    ['diet', 'exercise', 'mind'].forEach((type) => {
+        const button = document.getElementById(DASHBOARD_ACTION_META[type].buttonId);
+        if (button) button.hidden = lifecycle === 'first' && type !== preferredType;
+    });
+
+    const title = document.getElementById('dashboard-focus-title');
+    if (title && lifecycle === 'first') title.textContent = '첫 기록 하나로 시작해요';
+    if (title && lifecycle === 'repeat' && isDashboardDailyGoalMet(todayAwarded)) {
+        title.textContent = '첫 기록 완료 · 내일 한 번 더';
+    }
+    return lifecycle;
+}
+
 function _renderDashboardHeroState({
     userId = null,
     todayAwarded = {},
@@ -13194,13 +13642,14 @@ function _renderDashboardHeroState({
     if (heroPill) {
         heroPill.classList.toggle('is-complete', dailyGoalMet);
         heroPill.textContent = dailyGoalMet
-            ? (isSelectedToday ? '오늘 완료' : '완료')
-            : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}`;
+            ? `풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P`
+            : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}P`;
+        heroPill.setAttribute('aria-label', `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 중 ${todayPointTotal}포인트`);
     }
 
     if (focusTitle) {
         if (dailyGoalMet) {
-            focusTitle.textContent = isSelectedToday ? '오늘 해빛 완료' : `${selectedDateLabel} 해빛 완료`;
+            focusTitle.textContent = isSelectedToday ? '오늘 풀 루틴 달성' : `${selectedDateLabel} 풀 루틴 달성`;
         } else if (!isSelectedToday) {
             focusTitle.textContent = `${selectedDateLabel} 기록`;
         } else if (levelUpLockedToday) {
@@ -13243,7 +13692,7 @@ function _renderDashboardHeroState({
         const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
         const isMaxed = maxPoints > 0 && earnedPoints >= maxPoints;
         const hasProgress = earnedPoints > 0;
-        const isVisuallyComplete = dailyGoalMet || isMaxed;
+        const isVisuallyComplete = isMaxed;
         const isFocus = !dailyGoalMet && !hasProgress && type === nextType;
 
         if (!button || !label || !sub) return;
@@ -13253,12 +13702,7 @@ function _renderDashboardHeroState({
         button.classList.toggle('is-focus', isFocus);
         if (score) score.textContent = `${earnedPoints}/${maxPoints}`;
 
-        if (dailyGoalMet) {
-            label.textContent = meta.doneLabel;
-            sub.textContent = isMaxed
-                ? (isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`)
-                : `${isSelectedToday ? '오늘' : selectedDateLabel} 기준 달성 · ${earnedPoints}/${maxPoints}`;
-        } else if (isMaxed) {
+        if (isMaxed) {
             label.textContent = meta.doneLabel;
             sub.textContent = isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`;
         } else if (hasProgress) {
@@ -13461,13 +13905,9 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         const todayLog = logsMap[todayStr];
         const todayAwarded = todayLog?.awardedPoints || {};
 
-        let streakCount = 0;
         const streakLogs = data.streakLogs || [];
-        for (const log of streakLogs) {
-            const awarded = log.awardedPoints || log.awarded || {};
-            if (awarded.diet || awarded.exercise || awarded.mind) streakCount++;
-            else break;
-        }
+        const streakCount = calculateActivityStreak(streakLogs, todayStr);
+        const recordedDayCount = countActiveDays(streakLogs);
         // 주간 그래프 (월~일)
         const graphArea = document.getElementById('week-graph');
         graphArea.innerHTML = '';
@@ -13664,9 +14104,14 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             completedMissions,
             levelUpLockedToday
         });
+        const lifecycle = applyDashboardLifecycleState({
+            recordedDayCount,
+            primaryHabit: ud.settings?.primaryHabit,
+            todayAwarded,
+        });
         syncDashboardPanels();
 
-        renderMissionBadges(missionBadges);
+        if (lifecycle !== 'first' && lifecycle !== 'repeat') renderMissionBadges(missionBadges);
 
         if (data.communityStats) {
             renderGroupChallengeFromData(data.communityStats);
@@ -13674,7 +14119,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
         }
 
-        renderSocialChallenges(user).catch(() => {});
+        if (lifecycle === 'established') renderSocialChallenges(user).catch(() => {});
 
         _communityFocusState.friendCount = 0;
         _communityFocusState.activeFriends = 0;
@@ -13830,27 +14275,30 @@ async function renderFriendActivityCard(user, todayStr) {
             return;
         }
 
-        const results = await withAsyncTimeout(Promise.all(friendIds.map(async fid => {
-            const [logSnap, userSnap] = await Promise.all([
-                getDoc(doc(db, 'daily_logs', `${fid}_${todayStr}`)),
-                getDoc(doc(db, 'users', fid))
-            ]);
-            const ud = userSnap.exists() ? userSnap.data() : {};
-            const name = ud.customDisplayName || ud.displayName || fid.slice(0, 8);
-            const streak = ud.currentStreak || 0;
-            if (!logSnap.exists()) return { name, streak, diet: false, exercise: false, mind: false };
-            const ap = logSnap.data().awardedPoints || {};
+        const friendActivity = await withAsyncTimeout(
+            fetchSocialChallengeReadinessLogsByDocId(friendIds, [todayStr]),
+            SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS,
+            'friend_activity_timeout'
+        ).catch(error => {
+            logOptionalDataTimeout('friend_activity_timeout', error);
+            return null;
+        });
+
+        const results = friendActivity ? friendIds.map((fid) => {
+            const profile = friendActivity.profilesByFriend.get(fid) || {};
+            const name = profile.displayName || '친구';
+            const streak = profile.currentStreak || 0;
+            const todayLog = (friendActivity.logsByFriend.get(fid) || [])
+                .find((entry) => entry.date === todayStr);
+            const ap = todayLog?.data?.awardedPoints || {};
             return {
                 name,
                 streak,
-                diet: (ap.dietPoints || 0) > 0,
-                exercise: (ap.exercisePoints || 0) > 0,
-                mind: (ap.mindPoints || 0) > 0
+                diet: !!ap.diet || Number(ap.dietPoints || 0) > 0,
+                exercise: !!ap.exercise || Number(ap.exercisePoints || 0) > 0,
+                mind: !!ap.mind || Number(ap.mindPoints || 0) > 0
             };
-        })), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'friend_activity_timeout').catch(error => {
-            logOptionalDataTimeout('friend_activity_timeout', error);
-            return [];
-        });
+        }) : [];
 
         const activeResults = results.filter(r => r.diet || r.exercise || r.mind);
         const completeFriends = activeResults.filter(r => r.diet && r.exercise && r.mind).length;
@@ -16043,6 +16491,15 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
     return { awarded, pointsToGive };
 }
 
+function getClientWritableDailyLogData(value = {}) {
+    const writable = { ...(value || {}) };
+    delete writable.awardedPoints;
+    delete writable.currentStreak;
+    delete writable.rewardLedgerVersion;
+    delete writable.streakNotifiedDays;
+    return writable;
+}
+
 function normalizeExerciseItem(type, item = null, index = 0) {
     if (!item || typeof item !== 'object') return null;
     const mediaId = getExerciseItemMediaId(type, item, index);
@@ -16209,9 +16666,7 @@ async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGal
     const { awarded } = getEffectiveAwardedPointResult(nextData, nextData.awardedPoints || {}, nextData.date || '');
     nextData.awardedPoints = awarded;
 
-    const patchBody = {
-        awardedPoints: awarded
-    };
+    const patchBody = {};
 
     if (job.kind === 'diet') {
         patchBody.diet = nextData.diet;
@@ -16929,7 +17384,7 @@ async function flushBackgroundMediaPatchQueue({ quiet = true } = {}) {
                     throw new Error('missing background media patch payload');
                 }
                 await withRejectingTimeout(
-                    setDoc(doc(db, 'daily_logs', entry.docId), { ...patchBody, timestamp: serverTimestamp() }, { merge: true }),
+                    setDoc(doc(db, 'daily_logs', entry.docId), getClientWritableDailyLogData({ ...patchBody, timestamp: serverTimestamp() }), { merge: true }),
                     BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
                     'background_media_patch_retry_timeout'
                 );
@@ -17235,7 +17690,7 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
                 saveData.awardedPoints = awarded;
 
                 await withRejectingTimeout(
-                    setDoc(doc(db, 'daily_logs', entry.docId), saveData, { merge: true }),
+                    setDoc(doc(db, 'daily_logs', entry.docId), getClientWritableDailyLogData(saveData), { merge: true }),
                     BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
                     'offline_outbox_flush_timeout'
                 );
@@ -17308,6 +17763,14 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     }
     if (mode === 'chat') {
         openCommunityChat();
+        return;
+    }
+    if (mode === 'gallery-record') {
+        goToGalleryRecordAction();
+        return;
+    }
+    if (mode === 'gallery-share') {
+        triggerGalleryShareAction();
         return;
     }
 
@@ -17681,10 +18144,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 selectedDateStr
             );
 
-            // H2: shareSettings 서버 강제 — daily_logs는 갤러리 공개용으로 누구나 읽을 수 있으므로,
-            //     사용자가 숨김을 켜면 민감 필드(userName·gratitude)를 공개 문서에서 아예 제거한다.
-            //     (기존엔 클라이언트 렌더에서만 가렸어서 raw 읽기로 노출됐음.) 원본은 아래에서
-            //     소유자 전용 하위문서에 보관해 소유자 본인은 계속 볼 수 있게 한다.
+            // daily_logs는 개인 원문이고, gallery_posts 투영 트리거가 공유 설정에 맞는
+            // 미디어·별칭·날짜·포인트만 별도 문서로 내보낸다.
             const publicUserName = shareSettings.hideIdentity ? '' : getUserDisplayName();
             const publicGratitude = shareSettings.hideMind ? '' : gratitudeText;
             const saveData = sanitize({
@@ -17710,7 +18171,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             });
             latestSaveData = saveData;
 
-            // H2: gratitude 원본을 소유자 전용 하위문서에 보관(공개 문서에서 숨겨도 소유자는 복구 가능).
+            // gratitude 원본은 소유자 전용 하위문서에도 보관해 공유 설정 변경과 무관하게 복구한다.
             //     Firestore SDK가 오프라인 쓰기를 자동 큐잉하므로 별도 outbox 없이 온/오프라인 모두 동작.
             setDoc(
                 doc(db, "daily_logs", docId, "private", "mind"),
@@ -17722,7 +18183,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.
             // 타임아웃을 성공처럼 처리하면 로컬 점수만 오른 뒤 새로고침 때 기록이 사라질 수 있다.
             const doSetDoc = () => withRejectingTimeout(
-                setDoc(doc(db, "daily_logs", docId), saveData, { merge: true }),
+                setDoc(doc(db, "daily_logs", docId), getClientWritableDailyLogData(saveData), { merge: true }),
                 DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS,
                 'daily_log_primary_save_timeout'
             );
@@ -17761,15 +18222,35 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             }
             clearMeditationDraftState(selectedDateStr);
 
+            const currentDisplayed = parseInt(document.getElementById('point-balance').innerText) || 0;
+            const nextDisplayed = currentDisplayed + Math.max(0, pointsToGive);
+            if (pointsToGive > 0) {
+                document.getElementById('point-balance').innerText = nextDisplayed;
+                renderSimpleProfilePanel({ coins: nextDisplayed }).catch(() => {});
+            }
+            const savedTab = ['diet', 'exercise', 'sleep'].includes(getVisibleTabName()) ? getVisibleTabName() : 'dashboard';
+            const notificationAttributed = consumeNotificationRecordAttribution(savedTab);
+            trackProductEvent('record_saved', {
+                tab: savedTab,
+                status: 'success',
+                ...(notificationAttributed ? { entry_point: 'notification' } : {}),
+                variant: notificationAttributed ? 'personalized_v1' : 'full'
+            });
+
             if (uploadFailures.length > 0) {
                 showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
             } else if (pointsToGive > 0) {
-                const currentDisplayed = parseInt(document.getElementById('point-balance').innerText) || 0;
-                document.getElementById('point-balance').innerText = currentDisplayed + pointsToGive;
-                renderSimpleProfilePanel({ coins: currentDisplayed + pointsToGive }).catch(() => {});
-                showToast(backgroundJobs.length > 0
-                    ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
-                    : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
+                const firstResultShown = await maybeShowFirstRecordResult({
+                    user,
+                    tab: getVisibleTabName(),
+                    pointsEarned: pointsToGive,
+                    currentPoints: nextDisplayed
+                });
+                if (!firstResultShown) {
+                    showToast(backgroundJobs.length > 0
+                        ? `🎉 저장 완료! ${pointsToGive}P 반영, 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어갑니다.`
+                        : `🎉 저장 완료! 새롭게 ${pointsToGive}P 획득!`);
+                }
             } else if (rewardPolicy.isRetroNoPoint) {
                 showToast(backgroundJobs.length > 0
                     ? `🎉 저장 완료! 업로드 ${backgroundJobs.length}건은 백그라운드에서 이어가고, 2일 이상 지난 기록이라 포인트는 올라가지 않습니다.`
@@ -18831,9 +19312,10 @@ let galleryHasMore = false;  // Firestore에 더 가져올 데이터가 있는�
 let sortedFilteredCache = [];
 let sortedFilteredDirty = true;
 
-function getGalleryPersistentCacheKey(audience = 'guest', uid = '') {
-    const viewerKey = audience === 'auth' ? String(uid || auth.currentUser?.uid || 'unknown') : 'guest';
-    return `${GALLERY_PERSISTENT_CACHE_PREFIX}_${audience}_${viewerKey}`;
+function getGalleryPersistentCacheKey(audience = 'auth', uid = '') {
+    if (audience !== 'auth') return '';
+    const viewerKey = String(uid || auth.currentUser?.uid || '');
+    return viewerKey ? `${GALLERY_PERSISTENT_CACHE_PREFIX}_auth_${viewerKey}` : '';
 }
 
 function normalizePersistedGalleryLogs(logs = []) {
@@ -18846,9 +19328,11 @@ function normalizePersistedGalleryLogs(logs = []) {
         }));
 }
 
-function readPersistentGalleryCache(audience = 'guest', uid = '') {
+function readPersistentGalleryCache(audience = 'auth', uid = '') {
+    const cacheKey = getGalleryPersistentCacheKey(audience, uid);
+    if (!cacheKey) return null;
     try {
-        const parsed = JSON.parse(localStorage.getItem(getGalleryPersistentCacheKey(audience, uid)) || 'null');
+        const parsed = JSON.parse(localStorage.getItem(cacheKey) || 'null');
         if (!parsed || (Date.now() - Number(parsed.ts || 0)) > GALLERY_PERSISTENT_CACHE_TTL_MS) return null;
         const logs = normalizePersistedGalleryLogs(parsed.logs || []);
         return logs.length > 0 ? logs : null;
@@ -18858,11 +19342,12 @@ function readPersistentGalleryCache(audience = 'guest', uid = '') {
 }
 
 function writePersistentGalleryCache(audience = galleryCacheAudience, uid = auth.currentUser?.uid || '', logs = cachedGalleryLogs) {
-    const normalizedAudience = audience === 'auth' ? 'auth' : 'guest';
+    const cacheKey = getGalleryPersistentCacheKey(audience, uid);
+    if (!cacheKey) return false;
     const normalizedLogs = normalizePersistedGalleryLogs(logs);
     if (!normalizedLogs.length) return false;
     try {
-        localStorage.setItem(getGalleryPersistentCacheKey(normalizedAudience, uid), JSON.stringify({
+        localStorage.setItem(cacheKey, JSON.stringify({
             ts: Date.now(),
             logs: normalizedLogs
         }));
@@ -18872,7 +19357,8 @@ function writePersistentGalleryCache(audience = galleryCacheAudience, uid = auth
     }
 }
 
-function hydrateGalleryFromPersistentCache(audience = 'guest', uid = '') {
+function hydrateGalleryFromPersistentCache(audience = 'auth', uid = '') {
+    if (audience !== 'auth' || !uid) return false;
     if (cachedGalleryLogs.length > 0 && galleryCacheAudience === audience) return false;
     const persistedLogs = readPersistentGalleryCache(audience, uid);
     if (!persistedLogs) return false;
@@ -18884,16 +19370,18 @@ function hydrateGalleryFromPersistentCache(audience = 'guest', uid = '') {
     return true;
 }
 
-function upsertGalleryCacheItem(docId, data) {
-    if (!docId || !data) return;
+let _galleryProjectionRefreshTimer = null;
 
-    cachedGalleryLogs = [
-        { id: docId, data: cloneDailyLogData(data) },
-        ...cachedGalleryLogs.filter(item => item.id !== docId)
-    ].slice(0, MAX_CACHE_SIZE);
-    galleryCacheAudience = auth.currentUser ? 'auth' : galleryCacheAudience;
-    sortedFilteredDirty = true;
-    writePersistentGalleryCache(galleryCacheAudience, auth.currentUser?.uid || '', cachedGalleryLogs);
+function upsertGalleryCacheItem(docId, data) {
+    // daily_logs contains private health fields and must never be copied into the
+    // gallery memory/localStorage cache. The server projects an allowlist-only
+    // gallery_posts document; debounce a refresh and keep the last safe card until then.
+    if (!docId || !data || !auth.currentUser) return;
+    if (_galleryProjectionRefreshTimer) clearTimeout(_galleryProjectionRefreshTimer);
+    _galleryProjectionRefreshTimer = setTimeout(() => {
+        _galleryProjectionRefreshTimer = null;
+        loadGalleryData(true).catch(() => {});
+    }, 900);
 }
 
 // 갤러리 게시물 삭제 (본인 게시물만)
@@ -18972,17 +19460,30 @@ window.deleteGalleryPost = async function (docId) {
         showToast('본인 게시물만 삭제할 수 있습니다.');
         return;
     }
-    if (!confirm('이 게시물을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
+    if (!confirm('이 게시물의 갤러리 공유를 해제하시겠습니까?\n개인 기록은 내 기록에 그대로 유지됩니다.')) return;
 
     try {
-        await deleteDoc(doc(db, "daily_logs", docId));
+        const sourceLogId = String(item.data.sourceLogId || docId).trim();
+        const currentSettings = item.data.shareSettings && typeof item.data.shareSettings === 'object'
+            ? item.data.shareSettings
+            : {};
+        await setDoc(doc(db, 'daily_logs', sourceLogId), {
+            shareSettings: {
+                ...currentSettings,
+                hideDiet: true,
+                hideExercise: true,
+                hideMind: true,
+                hideMindText: true
+            },
+            timestamp: serverTimestamp()
+        }, { merge: true });
         cachedGalleryLogs = cachedGalleryLogs.filter(l => l.id !== docId);
         sortedFilteredDirty = true;
         renderFeedOnly();
-        showToast('✅ 게시물이 삭제되었습니다.');
+        showToast('✅ 갤러리 공유가 해제되었습니다. 내 기록은 유지됩니다.');
     } catch (e) {
-        console.error('게시물 삭제 오류:', e);
-        showToast('삭제에 실패했습니다. 다시 시도해주세요.');
+        console.error('게시물 공유 해제 오류:', e);
+        showToast('공유 해제에 실패했습니다. 다시 시도해주세요.');
     }
 };
 
@@ -19089,11 +19590,16 @@ async function buildWeeklyBestSection() {
     let weekLogs = [];
     try {
         const weekSnap = await getDocs(query(
-            collection(db, 'daily_logs'),
-            where('date', '>=', mondayStr),
-            orderBy('date', 'desc')
+            collection(db, 'gallery_posts'),
+            orderBy('updatedAt', 'desc'),
+            limit(MAX_CACHE_SIZE)
         ));
         weekSnap.forEach(d => weekLogs.push({ id: d.id, data: d.data() }));
+        const mondayStartMs = Date.parse(`${mondayStr}T00:00:00+09:00`);
+        weekLogs = weekLogs.filter((item) => {
+            if (item.data?.date) return item.data.date >= mondayStr;
+            return getGallerySortMillis(item.data) >= mondayStartMs;
+        });
     } catch (e) {
         // 쿼리 실패 시 캐시 폴백
         weekLogs = cachedGalleryLogs.filter(item => item.data.date >= mondayStr);
@@ -19252,6 +19758,14 @@ function hasMediaForFilter(data, filter) {
     return false;
 }
 
+function getGallerySortMillis(data = {}) {
+    const value = data.updatedAt || data.timestamp || '';
+    if (typeof value?.toMillis === 'function') return value.toMillis();
+    if (Number.isFinite(Number(value?.seconds))) return Number(value.seconds) * 1000;
+    const parsed = Date.parse(String(value || ''));
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
 // 정렬+필터 캐시 갱신 (매번 재정렬/재필터 방지)
 function refreshSortedFiltered() {
     if (!sortedFilteredDirty) return;
@@ -19262,6 +19776,9 @@ function refreshSortedFiltered() {
         sorted = sorted.filter(item => item.data.userId === galleryUserFilter.userId);
     }
     sorted.sort((a, b) => {
+        const timestampCompare = getGallerySortMillis(b.data) - getGallerySortMillis(a.data);
+        if (timestampCompare !== 0) return timestampCompare;
+
         const aDate = String(a?.data?.date || '');
         const bDate = String(b?.data?.date || '');
         const dateCompare = bDate.localeCompare(aDate);
@@ -19286,9 +19803,8 @@ async function _loadMoreGalleryFromFirestore() {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 30);
         const cutoffStr = cutoffDate.toISOString().split('T')[0];
-        const q = query(collection(db, "daily_logs"),
-            where("date", ">=", cutoffStr),
-            orderBy("date", "desc"),
+        const q = query(collection(db, "gallery_posts"),
+            orderBy("updatedAt", "desc"),
             startAfter(galleryLastDoc),
             limit(FIRESTORE_PAGE_SIZE));
         const snapshot = await getDocs(q);
@@ -19397,6 +19913,10 @@ function cleanupGalleryResources() {
     _galleryLoadingPromise = null;
     _galleryLoadingStartedAt = 0;
     _galleryLoadGeneration += 1;
+    if (_galleryProjectionRefreshTimer) {
+        clearTimeout(_galleryProjectionRefreshTimer);
+        _galleryProjectionRefreshTimer = null;
+    }
     clearGalleryRetry();
 }
 window.cleanupGalleryResources = cleanupGalleryResources;
@@ -19494,10 +20014,15 @@ async function loadGalleryData(forceReload = false) {
 }
 
 async function _fetchDailyLogViaRest(docId) {
-    const projectId = 'habitschool-8497b';
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('daily log REST API requires authentication');
+    const projectId = app.options.projectId;
+    const idToken = await currentUser.getIdToken();
     const encodedDocId = encodeURIComponent(String(docId || ''));
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/daily_logs/${encodedDocId}`;
-    const resp = await fetch(url);
+    const resp = await fetch(url, {
+        headers: { Authorization: `Bearer ${idToken}` }
+    });
     if (resp.status === 404) return { exists: false, data: null };
     if (!resp.ok) throw new Error(`daily log REST API ${resp.status}`);
     const result = await resp.json();
@@ -19507,27 +20032,27 @@ async function _fetchDailyLogViaRest(docId) {
     };
 }
 
-// Firestore REST API로 갤러리 데이터 직접 조회 (비로그인 cold start 대응)
+// Firestore REST API로 정제된 회원 갤러리만 조회 (로그인 SDK fallback)
 async function _fetchGalleryViaRest(cutoffStr, limitCount) {
-    const projectId = 'habitschool-8497b';
+    void cutoffStr;
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('gallery REST API requires authentication');
+    const projectId = app.options.projectId;
+    const idToken = await currentUser.getIdToken();
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`;
     const body = {
         structuredQuery: {
-            from: [{ collectionId: 'daily_logs' }],
-            where: {
-                fieldFilter: {
-                    field: { fieldPath: 'date' },
-                    op: 'GREATER_THAN_OR_EQUAL',
-                    value: { stringValue: cutoffStr }
-                }
-            },
-            orderBy: [{ field: { fieldPath: 'date' }, direction: 'DESCENDING' }],
+            from: [{ collectionId: 'gallery_posts' }],
+            orderBy: [{ field: { fieldPath: 'updatedAt' }, direction: 'DESCENDING' }],
             limit: limitCount
         }
     };
     const resp = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`
+        },
         body: JSON.stringify(body)
     });
     if (!resp.ok) throw new Error(`REST API ${resp.status}`);
@@ -19587,6 +20112,10 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
     const abortIfSuperseded = () => !isCurrentLoad();
 
     if (!container) return;
+    if (!user) {
+        try { localStorage.removeItem('habitschool_gallery_cache_v1_guest_guest'); } catch (_) { }
+        return;
+    }
 
     try {
         // 게스트 모드: 공유 카드/활동 요약 숨김, CTA 배너 표시
@@ -19630,48 +20159,16 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
             cutoffDate.setDate(cutoffDate.getDate() - 30);
             const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
-            // 비로그인: Firestore SDK가 cold start에서 서버 연결 실패 → REST API로 직접 조회
+            // 실제 회원 피드는 로그인 사용자만 정제된 gallery_posts에서 읽는다.
             if (!user) {
-                const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - 30);
-                const cutoffStr = cutoffDate.toISOString().split('T')[0];
-                while (retries < 3) {
-                    try {
-                        const logsArray = await withAsyncTimeout(
-                            _fetchGalleryViaRest(cutoffStr, MAX_CACHE_SIZE),
-                            GALLERY_LOAD_TIMEOUT_MS,
-                            '갤러리 REST 조회 시간이 초과되었어요.'
-                        );
-                        if (abortIfSuperseded()) return;
-                        cachedGalleryLogs = logsArray;
-                        galleryCacheAudience = 'guest';
-                        galleryLastDoc = null;
-                        galleryHasMore = false;
-                        sortedFilteredDirty = true;
-                        writePersistentGalleryCache('guest', '', logsArray);
-                        break;
-                    } catch (e) {
-                        retries++;
-                        noteFirestoreConnectivityFailure(e, 'loadGalleryData');
-                        console.warn(`REST 갤러리 로드 재시도 (${retries}/3):`, e.message);
-                        if (retries < 3) {
-                            await new Promise(r => setTimeout(r, 200 * retries));
-                        } else if (!hadCachedLogs) {
-                            container.innerHTML = '<div style="text-align:center; padding:40px 20px;"><p style="font-size:15px; color:#666; margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p><button class="google-btn" style="margin:0 auto;" onclick="loadGalleryData(true)">🔄 다시 시도</button></div>';
-                            return;
-                        } else {
-                            console.warn('REST 갤러리 새로고침 실패 - 기존 캐시 유지');
-                        }
-                    }
-                }
-            } else {
+                container.innerHTML = '';
+                return;
+            }
+            {
                 // 로그인: SDK 사용 (캐시 활용 가능)
                 while (retries < 3) {
                     try {
-                        const cutoffDate = new Date();
-                        cutoffDate.setDate(cutoffDate.getDate() - 30);
-                        const cutoffStr = cutoffDate.toISOString().split('T')[0];
-                        const q = query(collection(db, "daily_logs"), where("date", ">=", cutoffStr), orderBy("date", "desc"), limit(FIRESTORE_PAGE_SIZE));
+                        const q = query(collection(db, "gallery_posts"), orderBy("updatedAt", "desc"), limit(FIRESTORE_PAGE_SIZE));
                         const snapshot = await withAsyncTimeout(
                             getDocs(q),
                             GALLERY_LOAD_TIMEOUT_MS,
@@ -19927,14 +20424,10 @@ window.addComment = async function (docId) {
     if (text.length > 200) { showToast('댓글은 200자까지 가능합니다.'); return; }
 
     try {
-        const logRef = doc(db, "daily_logs", docId);
-        const newComment = {
-            userId: user.uid,
-            userName: getUserDisplayName(),
-            text: sanitizeText(text),
-            timestamp: Date.now()
-        };
-        await setDoc(logRef, { comments: arrayUnion(newComment) }, { merge: true });
+        const addCommentFn = httpsCallable(functions, 'addGalleryComment');
+        const response = await addCommentFn({ postId: docId, text: sanitizeText(text) });
+        const newComment = response.data?.comment;
+        if (!newComment) throw new Error('comment response missing');
         input.value = '';
 
         // 로컬 캐시 업데이트 & 댓글만 다시 렌더
@@ -19963,9 +20456,15 @@ window.deleteComment = async function (docId, commentIdx) {
     if (!confirm('이 댓글을 삭제하시겠습니까?\n삭제하면 복구할 수 없습니다.')) return;
 
     try {
-        const logRef = doc(db, "daily_logs", docId);
-        await setDoc(logRef, { comments: arrayRemove(comment) }, { merge: true });
-        item.data.comments.splice(commentIdx, 1);
+        const deleteCommentFn = httpsCallable(functions, 'deleteGalleryComment');
+        const response = await deleteCommentFn({
+            postId: docId,
+            commentId: comment.id || '',
+            commentIndex: commentIdx
+        });
+        item.data.comments = Array.isArray(response.data?.comments)
+            ? response.data.comments
+            : item.data.comments.filter((_, index) => index !== commentIdx);
         renderCommentList(docId, item.data.comments);
         renderActivitySummary(user.uid);
     } catch (e) {
@@ -20778,6 +21277,117 @@ function _restoreDietAnalysis(data) {
     updateDietDaySummary();
 };
 
+function getFirstRecordResultStorageKey(uid) {
+    return `${FIRST_RECORD_RESULT_PREFIX}_${String(uid || 'unknown')}`;
+}
+
+async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoints }) {
+    if (!user?.uid || !(Number(pointsEarned) > 0)) return false;
+    const storageKey = getFirstRecordResultStorageKey(user.uid);
+    try {
+        if (localStorage.getItem(storageKey) === 'shown') return false;
+    } catch (_) { }
+
+    try {
+        const userSnapshot = await getDoc(doc(db, 'users', user.uid));
+        if (userSnapshot.data()?.settings?.firstRewardSeenAt) {
+            try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
+            return false;
+        }
+    } catch (_) {
+        // The result panel is still useful offline; the local marker prevents repetition.
+    }
+
+    const normalizedTab = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
+    const normalizedCurrentPoints = Math.max(0, Number(currentPoints) || 0);
+    _firstRecordResultContext = {
+        tab: normalizedTab,
+        nextTab: normalizedTab === 'diet' ? 'exercise' : (normalizedTab === 'exercise' ? 'sleep' : 'diet')
+    };
+
+    const modal = document.getElementById('first-record-result-modal');
+    const earnedEl = document.getElementById('first-record-earned-points');
+    const currentEl = document.getElementById('first-record-current-points');
+    const remainingEl = document.getElementById('first-record-remaining-points');
+    const categoryEl = document.getElementById('first-record-reminder-category');
+    const timeEl = document.getElementById('first-record-reminder-time');
+    if (!modal || !earnedEl || !currentEl || !remainingEl) return false;
+
+    earnedEl.textContent = `+${Math.max(0, Number(pointsEarned) || 0)}P`;
+    currentEl.textContent = `${normalizedCurrentPoints.toLocaleString('ko-KR')}P`;
+    const remaining = Math.max(0, 2000 - normalizedCurrentPoints);
+    remainingEl.textContent = remaining > 0 ? `${remaining.toLocaleString('ko-KR')}P 남음` : '교환 가능';
+    if (categoryEl) categoryEl.value = normalizedTab;
+    if (timeEl) {
+        const nextHour = new Date(Date.now() + 60 * 60 * 1000).getHours();
+        timeEl.value = `${String(nextHour).padStart(2, '0')}:00`;
+    }
+
+    try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
+    setDoc(doc(db, 'users', user.uid), {
+        settings: { firstRewardSeenAt: serverTimestamp() }
+    }, { merge: true }).catch(() => {});
+
+    modal.style.display = 'flex';
+    setTimeout(() => modal.querySelector('.first-record-primary')?.focus(), 0);
+    trackProductEvent('first_reward_view', {
+        entry_point: 'reward_prompt',
+        variant: 'demo_v1'
+    }, { once: true, dedupeKey: user.uid });
+    return true;
+}
+
+function finishFirstRecordResult() {
+    const modal = document.getElementById('first-record-result-modal');
+    if (modal) modal.style.display = 'none';
+    _firstRecordResultContext = null;
+    document.getElementById('saveDataBtn')?.focus();
+}
+
+function continueAfterFirstRecord() {
+    const nextTab = _firstRecordResultContext?.nextTab || 'diet';
+    finishFirstRecordResult();
+    openTab(nextTab);
+    focusRecordEntry(nextTab);
+    trackProductEvent('first_record_start', {
+        tab: nextTab,
+        entry_point: 'reward_prompt',
+        variant: 'demo_v1'
+    });
+}
+
+async function enableFirstRecordReminder() {
+    const user = auth.currentUser;
+    if (!user) return;
+    const categoryEl = document.getElementById('first-record-reminder-category');
+    const timeEl = document.getElementById('first-record-reminder-time');
+    const category = ['diet', 'exercise', 'sleep'].includes(categoryEl?.value)
+        ? categoryEl.value
+        : (_firstRecordResultContext?.tab || 'diet');
+    const timeMatch = String(timeEl?.value || '').match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+    const hourKst = timeMatch ? Number(timeMatch[1]) : 20;
+
+    const permissionResult = await window.ensureAppNotificationPermission?.();
+    if (!permissionResult?.connected) return;
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            settings: {
+                reminderPreference: {
+                    enabled: true,
+                    category,
+                    hourKst,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        }, { merge: true });
+        showToast(`🔔 매일 ${String(hourKst).padStart(2, '0')}:00에 알려드릴게요.`);
+        finishFirstRecordResult();
+    } catch (error) {
+        console.warn('첫 기록 알림 설정 실패:', error.message);
+        showToast('알림 시간을 저장하지 못했습니다. 프로필에서 다시 설정해주세요.');
+    }
+}
+
 // 온보딩 스텝 이동
 function goOnboardingStep(step) {
     for (let i = 1; i <= 3; i++) {
@@ -20793,17 +21403,31 @@ async function completeOnboarding() {
     const user = auth.currentUser;
     if (!user) return;
 
-    // 모달 즉시 닫기 (저장 실패해도 진행)
-    document.getElementById('onboarding-modal').style.display = 'none';
-    clearPendingSignupOnboardingState();
-    showToast('🌞 환영합니다! 건강 습관 여정을 시작합니다!');
+    const selectedHabit = ['diet', 'exercise', 'sleep'].includes(_selectedOnboardingHabit)
+        ? _selectedOnboardingHabit
+        : prepareGuestOnboarding();
+    if (!selectedHabit) return;
+    const startButton = document.getElementById('onboarding-start-btn');
+    if (startButton) {
+        startButton.disabled = true;
+        startButton.textContent = '첫 기록을 준비하는 중...';
+    }
 
     try {
         await setDoc(doc(db, "users", user.uid), {
-            onboardingComplete: true
+            onboardingComplete: true,
+            settings: {
+                primaryHabit: selectedHabit
+            }
         }, { merge: true });
     } catch (e) {
-        console.warn('온보딩 저장 스킵:', e.message);
+        console.warn('온보딩 저장 실패:', e.message);
+        showToast('시작 설정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+        if (startButton) {
+            startButton.disabled = false;
+            startButton.textContent = '선택한 습관으로 시작하기';
+        }
+        return;
     }
 
     // 가입 축하 보너스 +200P
@@ -20815,6 +21439,24 @@ async function completeOnboarding() {
         console.warn('환영 보너스 지급 스킵:', e.message);
     }
 
+    document.getElementById('onboarding-modal').style.display = 'none';
+    clearPendingSignupOnboardingState();
+    clearPendingGuestAuthIntent();
+    _selectedOnboardingHabit = '';
+    openTab(selectedHabit, false);
+    focusRecordEntry(selectedHabit);
+    trackProductEvent('first_record_start', {
+        tab: selectedHabit,
+        entry_point: 'onboarding',
+        variant: 'demo_v1'
+    }, { once: true });
+    trackProductEvent('resume_intent_result', {
+        intent: 'record',
+        status: 'success',
+        entry_point: 'onboarding',
+        variant: 'demo_v1'
+    }, { once: true });
+    showToast('🌞 첫 습관을 골랐어요. 바로 한 번 기록해보세요!');
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 
@@ -20896,7 +21538,11 @@ async function checkOnboarding() {
         }
 
         if (isPendingSignup) {
-            if (modal) modal.style.display = 'flex';
+            prepareGuestOnboarding();
+            if (modal) {
+                modal.style.display = 'flex';
+                setTimeout(() => modal.querySelector('[aria-pressed="true"]')?.focus(), 0);
+            }
             return;
         }
 
@@ -21522,51 +22168,38 @@ function chunkArray(items = [], chunkSize = 10) {
 
 async function fetchSocialChallengeReadinessLogsByDocId(friendIds = [], dateStrs = []) {
     const logsByFriend = new Map(friendIds.map(friendId => [friendId, []]));
+    const profilesByFriend = new Map(friendIds.map(friendId => [friendId, {
+        displayName: '',
+        currentStreak: 0
+    }]));
     const failedFriendIds = new Set();
-    const docIdToMeta = new Map();
-    const docIds = [];
-
-    friendIds.forEach(friendId => {
-        dateStrs.forEach(dateStr => {
-            const docId = `${friendId}_${dateStr}`;
-            docIds.push(docId);
-            docIdToMeta.set(docId, { friendId, dateStr });
-        });
-    });
-
-    const chunkResults = await Promise.all(chunkArray(docIds, SOCIAL_CHALLENGE_DOC_ID_QUERY_CHUNK_SIZE).map(async (chunkDocIds) => {
-        try {
-            const snap = await withAsyncTimeout(getDocs(query(
-                collection(db, 'daily_logs'),
-                where(documentId(), 'in', chunkDocIds)
-            )), SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS, 'social_challenge_readiness_doc_timeout');
-            return { ok: true, snap };
-        } catch (error) {
-            return { ok: false, error, chunkDocIds };
-        }
-    }));
-
-    chunkResults.forEach(result => {
-        if (!result.ok) {
-            logOptionalDataTimeout('social_challenge_readiness_timeout', result.error);
-            (result.chunkDocIds || []).forEach(docId => {
-                const meta = docIdToMeta.get(docId);
-                if (meta?.friendId) failedFriendIds.add(meta.friendId);
+    try {
+        const readinessFn = httpsCallable(functions, 'getFriendActivityReadiness');
+        const response = await readinessFn({ friendIds, dateStrs });
+        const returnedIds = new Set();
+        (Array.isArray(response.data?.items) ? response.data.items : []).forEach((item) => {
+            const friendId = String(item?.friendId || '').trim();
+            if (!logsByFriend.has(friendId)) return;
+            returnedIds.add(friendId);
+            profilesByFriend.set(friendId, {
+                displayName: String(item?.displayName || '').trim().slice(0, 40),
+                currentStreak: Math.max(0, Number(item?.currentStreak || 0) || 0)
             });
-            return;
-        }
-
-        result.snap.forEach(logDoc => {
-            const meta = docIdToMeta.get(logDoc.id);
-            if (!meta) return;
-            const data = logDoc.data() || {};
-            const logs = logsByFriend.get(meta.friendId) || [];
-            logs.push({ date: String(data.date || meta.dateStr || '').trim(), data });
-            logsByFriend.set(meta.friendId, logs);
+            const logs = (Array.isArray(item.logs) ? item.logs : []).map((log) => ({
+                date: String(log?.date || '').trim(),
+                data: { awardedPoints: log?.awardedPoints || {} }
+            }));
+            logsByFriend.set(friendId, logs);
         });
-    });
+        friendIds.forEach((friendId) => {
+            if (!returnedIds.has(friendId)) failedFriendIds.add(friendId);
+        });
+    } catch (error) {
+        logOptionalDataTimeout('social_challenge_readiness_timeout', error);
+        friendIds.forEach((friendId) => failedFriendIds.add(friendId));
+    }
 
-    return { logsByFriend, failedFriendIds };
+    return { logsByFriend, profilesByFriend, failedFriendIds };
 }
 
 async function loadSocialChallengeFriendReadiness(user, { forceReload = false } = {}) {
@@ -22083,60 +22716,6 @@ function hasHabitGroupPlayableVideoUrl(url = '') {
     return isPersistedStorageUrl(normalized) && isVideoUrl(normalized);
 }
 
-function habitGroupReviewNeedsDailyLogMedia(checkin = {}) {
-    const docId = String(checkin.dailyLogId || `${checkin.uid || ''}_${checkin.date || ''}`).trim();
-    if (!docId || docId === '_') return false;
-    const snapshot = checkin.exerciseSnapshot || {};
-    const strengthList = Array.isArray(snapshot.strengthList) ? snapshot.strengthList : [];
-    const cardioList = Array.isArray(snapshot.cardioList) ? snapshot.cardioList : [];
-    const hasPlayableVideo = strengthList.some(item => hasHabitGroupPlayableVideoUrl(item?.videoUrl));
-    const hasVideoThumbOnly = strengthList.some(item => !hasHabitGroupPlayableVideoUrl(item?.videoUrl) && isPersistedStorageUrl(item?.videoThumbUrl));
-    const hasImageOnly = cardioList.some(item => isPersistedStorageUrl(item?.imageUrl) || isPersistedStorageUrl(item?.imageThumbUrl));
-    return hasVideoThumbOnly || (!hasPlayableVideo && !hasImageOnly && isPersistedStorageUrl(checkin.mediaThumbUrl));
-}
-
-function mergeHabitGroupReviewExerciseSnapshot(checkinSnapshot = {}, dailyLogSnapshot = {}) {
-    const next = { ...(checkinSnapshot || {}) };
-    const dailyCardioList = Array.isArray(dailyLogSnapshot.cardioList) ? dailyLogSnapshot.cardioList : [];
-    const dailyStrengthList = Array.isArray(dailyLogSnapshot.strengthList) ? dailyLogSnapshot.strengthList : [];
-    if (dailyCardioList.length > 0) next.cardioList = dailyCardioList;
-    if (dailyStrengthList.length > 0) next.strengthList = dailyStrengthList;
-    return next;
-}
-
-async function hydrateHabitGroupReviewMediaFromDailyLogs(items = []) {
-    const targets = items.filter(habitGroupReviewNeedsDailyLogMedia);
-    if (targets.length === 0) return items;
-
-    const docIds = [...new Set(targets
-        .map(item => String(item.dailyLogId || `${item.uid || ''}_${item.date || ''}`).trim())
-        .filter(docId => docId && docId !== '_'))];
-    if (docIds.length === 0) return items;
-
-    const logResults = await withAsyncTimeout(Promise.all(docIds.map(async docId => {
-        const snap = await getDoc(doc(db, 'daily_logs', docId));
-        return snap.exists() ? { id: docId, data: snap.data() || {} } : null;
-    })), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_review_daily_logs_timeout')
-        .catch(error => {
-            logOptionalDataTimeout('habit_group_review_daily_logs_timeout', error);
-            return [];
-        });
-
-    const logById = new Map(logResults.filter(Boolean).map(item => [item.id, item.data]));
-    if (logById.size === 0) return items;
-
-    return items.map(item => {
-        const docId = String(item.dailyLogId || `${item.uid || ''}_${item.date || ''}`).trim();
-        const dailyLog = logById.get(docId);
-        if (!dailyLog?.exercise) return item;
-        const dailySnapshot = buildHabitGroupExerciseSnapshot(dailyLog, {}).exerciseSnapshot;
-        return {
-            ...item,
-            exerciseSnapshot: mergeHabitGroupReviewExerciseSnapshot(item.exerciseSnapshot || {}, dailySnapshot)
-        };
-    });
-}
-
 async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, leaderGroupIds = [], { forceReload = false } = {}) {
     if (!user?.uid || leaderGroupIds.length === 0) return [];
     const normalizedGroupIds = [...new Set(leaderGroupIds.map(id => String(id || '').trim()).filter(Boolean))].sort();
@@ -22173,14 +22752,16 @@ async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, le
             return items;
         })
     ), HABIT_GROUP_LOAD_TIMEOUT_MS, 'habit_group_pending_reviews_timeout')
-        .then(async chunkedItems => {
+        .then(chunkedItems => {
             const itemsById = new Map();
             chunkedItems.flat().forEach(item => {
                 if (item?.id) itemsById.set(item.id, item);
             });
-            const items = await hydrateHabitGroupReviewMediaFromDailyLogs([...itemsById.values()]
+            // 리더 검토 화면은 멤버가 명시적으로 제출한 정제 checkin 스냅샷만 사용한다.
+            // 개인 원문인 daily_logs를 다른 사용자 세션에서 다시 읽지 않는다.
+            const items = [...itemsById.values()]
                 .sort(sortHabitGroupPendingReviews)
-                .slice(0, 40));
+                .slice(0, 40);
             _habitGroupLeaderPendingReviewCache = {
                 uid: user.uid,
                 groupKey,

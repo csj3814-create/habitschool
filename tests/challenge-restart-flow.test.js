@@ -23,9 +23,11 @@ describe('same-day challenge restart flow', () => {
         expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-claim');");
         expect(managerSource).toContain('window.applyOptimisticChallengeSettlement?.(data);');
         expect(managerSource).toContain('export async function updateChallengeProgress(options = {})');
-        expect(managerSource).toContain('const targetDate = normalizeChallengeProgressDate(progressOptions.dateStr) || today;');
-        expect(managerSource).toContain('dailyLogsByDate[targetDate] = dailyLogData;');
-        expect(managerSource).toContain('const isTargetDateInChallengeRange = getChallengeDateRange(challenge).includes(targetDate);');
+        expect(managerSource).toContain("const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');");
+        expect(managerSource).toContain('const result = await refreshProgressFn({});');
+        expect(managerSource).toContain("await refreshAssetDisplayAfterChallengeMutation('challenge-progress');");
+        expect(managerSource).not.toContain("doc(db, 'daily_logs'");
+        expect(managerSource).not.toContain('fetchChallengeDailyLogsByDateInTransaction');
         expect(managerSource).toContain('challengeStartInFlight.add(startLockKey);');
         expect(appCoreSource).toContain('updateChallengeProgress({ dateStr }).catch(error => {');
         expect(appCoreSource).toContain('dateStr: selectedDateStr');

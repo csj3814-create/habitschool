@@ -34,8 +34,9 @@ describe('habit group transition', () => {
         expect(appSource).toContain('buildHabitGroupReviewMediaHtml');
         expect(appSource).toContain('collectHabitGroupReviewMedia');
         expect(appSource).toContain('hasHabitGroupPlayableVideoUrl');
-        expect(appSource).toContain('hydrateHabitGroupReviewMediaFromDailyLogs');
-        expect(appSource).toContain("getDoc(doc(db, 'daily_logs', docId))");
+        expect(appSource).not.toContain('hydrateHabitGroupReviewMediaFromDailyLogs');
+        expect(appSource).not.toContain("getDoc(doc(db, 'daily_logs', docId))");
+        expect(appSource).toContain('개인 원문인 daily_logs를 다른 사용자 세션에서 다시 읽지 않는다.');
         expect(appSource).toContain("if (resolvedType === 'video' && !hasHabitGroupPlayableVideoUrl(original))");
         expect(appSource).toContain("if (previewUrl) addMedia('image', previewUrl, previewUrl);");
         expect(appSource).toContain('if (videoUrl) summary.videoUrl = videoUrl;');

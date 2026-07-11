@@ -77,6 +77,7 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./styles-dashboard.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-dark-mode.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./styles-reports.css?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./styles-guest-demo.css?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/main.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/app-core.js?v=${releaseVersion}'`);
@@ -95,6 +96,10 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/metabolic-score.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/milestone-helpers.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/monthly-mvp-reward.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/meditation-guide.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/reward-market.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/guest-demo.js?v=${releaseVersion}'`);
+        expect(swSource).toContain(`'./js/product-events.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/pwa-install.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/security.js?v=${releaseVersion}'`);
         expect(swSource).toContain(`'./js/social-challenge-readiness.js?v=${releaseVersion}'`);
@@ -103,6 +108,9 @@ describe('PWA asset versioning', () => {
         expect(swSource).toContain(`'./js/webview-detect.js?v=${releaseVersion}'`);
         expect(swSource).toContain("'./firebase-messaging-sw.js'");
         expect(swSource).toContain("'./manifest-en.json'");
+        expect(swSource).toContain("'./assets/guest-demo/meal.webp'");
+        expect(swSource).toContain("'./assets/guest-demo/exercise.webp'");
+        expect(swSource).toContain("'./assets/guest-demo/mind.webp'");
 
         const headerSources = firebaseConfig.hosting[0].headers.map((item) => item.source);
         expect(headerSources).toContain('/');

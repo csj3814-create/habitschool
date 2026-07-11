@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=227';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=228';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=227';
-import { getDatesInfo } from './ui-helpers.js?v=227';
-import { escapeHtml } from './security.js?v=227';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=227';
+import { showToast } from './ui-helpers.js?v=228';
+import { getDatesInfo } from './ui-helpers.js?v=228';
+import { escapeHtml } from './security.js?v=228';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=228';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,11 +19,11 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=227';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=227';
+} from './auth-login-helpers.js?v=228';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=228';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=227';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=228';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -757,6 +757,7 @@ export function initAuth() {
                 clearPendingGoogleLoginResetTimer();
                 window._isPopupLogin = false;
                 setGoogleLoginPendingUi(loginBtn, false);
+                window.handleGuestAuthenticationFailure?.();
 
                 let errorMsg = '로그인에 실패했습니다.';
                 if (error.code === 'auth/network-request-failed') {
@@ -792,12 +793,14 @@ export function initAuth() {
                 clearPendingGoogleLoginResetTimer();
                 window._isPopupLogin = false;
                 setGoogleLoginPendingUi(loginBtn, false);
+                window.handleGuestAuthenticationFailure?.();
                 return;
             }
             clearPendingGoogleLoginState();
             clearPendingGoogleLoginResetTimer();
             window._isPopupLogin = false;
             setGoogleLoginPendingUi(loginBtn, false);
+            window.handleGuestAuthenticationFailure?.();
 
             let errorMsg = '로그인에 실패했습니다.';
             if (error.code === 'auth/popup-blocked') {
@@ -1091,6 +1094,20 @@ function handleSignedOutAuthState(callbacks) {
     clearMediaPickerSignedOutRecoveryTimer();
     window._isPopupLogin = false;
     setGoogleLoginPendingUi(loginBtn, false);
+
+    if (window.cleanupGalleryResources) {
+        window.cleanupGalleryResources();
+    }
+    if (!isEnglishLocale() && window.restoreGuestDemoIfAvailable?.()) {
+        window._wasLoggedIn = false;
+        _pushTokenLinked = false;
+        _pushTokenValue = '';
+        window.clearPwaActionableBadge?.();
+        if (callbacks && callbacks.onLogout) callbacks.onLogout();
+        updateNotificationPermissionCard(null);
+        return;
+    }
+
     if (isEnglishLocale()) {
         setEnglishAuthShellState('signed-out');
     } else {
@@ -1102,11 +1119,6 @@ function handleSignedOutAuthState(callbacks) {
     window._userDisplayName = null;
     window._blockedUsers = [];
     window.applyDietProgramUserData?.(null);
-
-    // 갤러리 리소스 정리
-    if (window.cleanupGalleryResources) {
-        window.cleanupGalleryResources();
-    }
 
     // 로그아웃한 경우에만 갤러리 탭으로 이동(초기 cold start는 로그인 모달만 표시)
     if (window._wasLoggedIn && window.openTab) {
@@ -1142,6 +1154,9 @@ export function setupAuthListener(callbacks) {
                 window._isPopupLogin = false;
             }
             clearPendingGoogleLoginState();
+            const guestAuthIntent = window.finishGuestDemoAuthentication?.(true)
+                || window.getPendingGuestAuthIntent?.()
+                || null;
             applySignedInShellUi(user);
             applyCachedSignedInPointBalance(user.uid);
 
@@ -1154,7 +1169,9 @@ export function setupAuthListener(callbacks) {
             const appMode = routeContext.mode;
             const validTabs = getAllowedTabsForMode(appMode);
             const pendingChatbotToken = String(localStorage.getItem(CHATBOT_CONNECT_PENDING_KEY) || '').trim();
-            const requestedTab = (urlTab && validTabs.includes(urlTab))
+            const requestedTab = (guestAuthIntent?.tab && validTabs.includes(guestAuthIntent.tab))
+                ? guestAuthIntent.tab
+                : (urlTab && validTabs.includes(urlTab))
                 ? urlTab
                 : (hashTab && validTabs.includes(hashTab))
                     ? hashTab
@@ -1217,6 +1234,7 @@ export function setupAuthListener(callbacks) {
                 };
                 if (isNewUser) {
                     rememberPendingSignupOnboarding(user);
+                    window.prepareGuestOnboarding?.();
                 }
                 const ensuredReferralCode = await ensureSignedInUserReferralCode(ud);
                 if (ensuredReferralCode) {
@@ -1237,6 +1255,12 @@ export function setupAuthListener(callbacks) {
 
                 await applySignedInUserUi(user, ud);
                 updateEnglishProfilePanel(user, ud);
+
+                if (isNewUser) {
+                    setTimeout(() => window.checkOnboarding?.(), 0);
+                } else if (guestAuthIntent) {
+                    setTimeout(() => window.resumeGuestIntentForExistingUser?.(), 80);
+                }
 
                 await maybeHandleInviteLinkAfterAuth(user, ud, {
                     isNewUser
@@ -2012,9 +2036,10 @@ async function syncCurrentPushState(user = auth.currentUser) {
     return result;
 }
 
-window.requestAppNotificationPermission = async function () {
+window.requestAppNotificationPermission = async function (options = {}) {
     const user = auth.currentUser;
     const state = getPushPermissionUiState(user);
+    const ensureEnabled = options?.ensureEnabled === true;
     const buildResult = ({ status = '', connected = isAppPushConnected(), action = state.action || '' } = {}) => ({
         status,
         connected: !!connected,
@@ -2051,6 +2076,9 @@ window.requestAppNotificationPermission = async function () {
 
     try {
         if (state.action === 'disable') {
+            if (ensureEnabled) {
+                return buildResult({ status: 'granted', connected: true, action: 'enable' });
+            }
             const result = await disableFCMToken(user);
             if (result.status === 'disabled') {
                 showToast('이 기기의 해빛스쿨 푸시 알림을 껐어요.');
@@ -2091,6 +2119,10 @@ window.requestAppNotificationPermission = async function () {
     } finally {
         updateNotificationPermissionCard(user);
     }
+};
+
+window.ensureAppNotificationPermission = function () {
+    return window.requestAppNotificationPermission({ ensureEnabled: true });
 };
 
 window.addEventListener('pageshow', () => updateNotificationPermissionCard(auth.currentUser));

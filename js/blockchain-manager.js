@@ -17,20 +17,13 @@ import {
     CHALLENGES,
     formatChallengeQualificationLabel,
     getDefaultChallengeQualificationPolicy,
-    getAwardedPointsTotal,
-    getChallengeCompletedDays,
-    getChallengeDateRange,
-    getChallengeTimelineState,
-    doesAwardedPointsMeetChallengeRule,
-    normalizeChallengeCompletion,
     normalizeChallengeQualificationPolicy,
-    reconcileChallengeCompletionWithDailyLogs,
     getActiveBscNetwork,
     getActiveGasTokenLabel,
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=227';
+} from './blockchain-config.js?v=228';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -48,12 +41,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=227';
-import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, runTransaction, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=228';
+import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=227';
-import { getKstDateString } from './ui-helpers.js?v=227';
-import { checkRateLimit } from './security.js?v=227';
+import { showToast } from './ui-helpers.js?v=228';
+import { getKstDateString } from './ui-helpers.js?v=228';
+import { checkRateLimit } from './security.js?v=228';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -336,73 +329,6 @@ function getChallengeQualificationPolicy(challenge = null, tier = 'mini') {
 
 function describeChallengeQualification(policyOrTier = 'mini') {
     return formatChallengeQualificationLabel(policyOrTier);
-}
-
-function doesDailyLogQualifyForChallenge(dailyLogData, challenge = null, tier = 'mini') {
-    const policy = getChallengeQualificationPolicy(challenge, tier);
-    const awarded = dailyLogData?.awardedPoints || {};
-    return {
-        policy,
-        totalPoints: getAwardedPointsTotal(awarded),
-        qualified: doesAwardedPointsMeetChallengeRule(awarded, policy)
-    };
-}
-
-function normalizeChallengeProgressDate(dateStr) {
-    const normalized = String(dateStr || '').trim();
-    return /^\d{4}-\d{2}-\d{2}$/.test(normalized) ? normalized : '';
-}
-
-async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
-    const dates = getChallengeDateRange(challenge);
-    if (!uid || dates.length === 0) return {};
-
-    const entries = await Promise.all(dates.map(async (date) => {
-        const logRef = doc(db, 'daily_logs', `${uid}_${date}`);
-        try {
-            const serverSnap = await getDocFromServer(logRef);
-            return [date, serverSnap.exists() ? serverSnap.data() : null];
-        } catch (_) {
-            const cachedSnap = await getDoc(logRef).catch(() => null);
-            return [date, cachedSnap?.exists?.() ? cachedSnap.data() : null];
-        }
-    }));
-
-    return entries.reduce((acc, [date, log]) => {
-        if (log) acc[date] = log;
-        return acc;
-    }, {});
-}
-
-async function fetchChallengeDailyLogsByDateInTransaction(transaction, uid, challenge = {}) {
-    const today = getKstDateString();
-    const dates = getChallengeDateRange(challenge).filter((date) => !today || date <= today);
-    if (!transaction || !uid || dates.length === 0) return {};
-
-    const entries = await Promise.all(dates.map(async (date) => {
-        const logRef = doc(db, 'daily_logs', `${uid}_${date}`);
-        const snap = await transaction.get(logRef);
-        return [date, snap.exists() ? snap.data() : null];
-    }));
-
-    return entries.reduce((acc, [date, log]) => {
-        if (log) acc[date] = log;
-        return acc;
-    }, {});
-}
-
-function hasChallengeCompletionChanged(original = {}, reconciled = {}) {
-    const originalDates = Array.isArray(original?.completedDates)
-        ? [...new Set(original.completedDates.filter(Boolean))]
-        : [];
-    const reconciledDates = Array.isArray(reconciled?.completedDates)
-        ? [...new Set(reconciled.completedDates.filter(Boolean))]
-        : [];
-
-    return getChallengeCompletedDays(reconciled) !== (Number(original?.completedDays) || 0) ||
-        reconciledDates.length !== originalDates.length ||
-        reconciledDates.some((date, index) => date !== originalDates[index]) ||
-        JSON.stringify(reconciled.qualificationPolicy || null) !== JSON.stringify(original?.qualificationPolicy || null);
 }
 
 // HBT 토큰 컨트랙트 ABI (stakeForChallenge용 최소 ABI)
@@ -1518,203 +1444,13 @@ export async function updateChallengeProgress(options = {}) {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
-        const userRef = doc(db, "users", currentUser.uid);
-        const today = getKstDateString();
-        const progressOptions = typeof options === 'string'
-            ? { dateStr: options }
-            : (options && typeof options === 'object' ? options : {});
-        const targetDate = normalizeChallengeProgressDate(progressOptions.dateStr) || today;
-        const targetDailyLogData = progressOptions.dailyLogData && typeof progressOptions.dailyLogData === 'object'
-            ? progressOptions.dailyLogData
-            : null;
-
-        // 통합 챌린지 검증을 위해 트랜잭션 전에 daily_logs 읽기 (다른 컬렉션이므로 트랜잭션 밖)
-        let dailyLogData = null;
-        try {
-            if (targetDailyLogData) {
-                dailyLogData = targetDailyLogData;
-            } else {
-                const logDocId = `${currentUser.uid}_${targetDate}`;
-                const logSnap = await getDoc(doc(db, "daily_logs", logDocId));
-                if (logSnap.exists()) dailyLogData = logSnap.data();
-            }
-        } catch (_) {}
-
-        const toastMessages = [];
-        const settlementLogs = [];
-
-        await runTransaction(db, async (transaction) => {
-            const userSnap = await transaction.get(userRef);
-            const userData = userSnap.data();
-
-            // activeChallenges 수집 (legacy 마이그레이션 포함)
-            let activeChallenges = userData.activeChallenges || {};
-            let hadLegacy = false;
-            if (userData.activeChallenge && userData.activeChallenge.status === 'ongoing') {
-                const legacyTier = CHALLENGES[userData.activeChallenge.challengeId]?.tier || 'master';
-                if (!activeChallenges[legacyTier]) {
-                    activeChallenges[legacyTier] = userData.activeChallenge;
-                    hadLegacy = true;
-                }
-            }
-
-            const tiers = Object.keys(activeChallenges).filter(t => activeChallenges[t]?.status === 'ongoing');
-            if (tiers.length === 0) return;
-
-            const updateData = {};
-            if (hadLegacy) updateData.activeChallenge = null;
-
-            for (const tier of tiers) {
-                const originalChallenge = activeChallenges[tier];
-                let challenge = normalizeChallengeCompletion(originalChallenge);
-                const dailyLogsByDate = await fetchChallengeDailyLogsByDateInTransaction(transaction, currentUser.uid, challenge);
-                if (targetDate && dailyLogData && getChallengeDateRange(challenge).includes(targetDate)) {
-                    dailyLogsByDate[targetDate] = dailyLogData;
-                }
-                const rangeReconciledChallenge = reconcileChallengeCompletionWithDailyLogs(challenge, dailyLogsByDate, tier);
-                if (hasChallengeCompletionChanged(originalChallenge, rangeReconciledChallenge)) {
-                    challenge = rangeReconciledChallenge;
-                    updateData[`activeChallenges.${tier}`] = challenge;
-                }
-                const totalDays = challenge.totalDays || 30;
-                const completedDates = [...(challenge.completedDates || [])];
-                const resolvedChallengeId = CHALLENGE_ID_MAP[challenge.challengeId] || challenge.challengeId;
-                const challengeDef = CHALLENGES[resolvedChallengeId] || {};
-                const { isFinalDay, isPastEnd } = getChallengeTimelineState(challenge, today);
-                const isTargetDateInChallengeRange = getChallengeDateRange(challenge).includes(targetDate);
-                const originalCompletedDates = Array.isArray(originalChallenge?.completedDates)
-                    ? [...new Set(originalChallenge.completedDates.filter(Boolean))]
-                    : [];
-                const originalCompletedDays = Number(originalChallenge?.completedDays) || 0;
-
-                if (
-                    challenge.completedDays !== originalCompletedDays ||
-                    completedDates.length !== originalCompletedDates.length ||
-                    completedDates.some((date, index) => date !== originalCompletedDates[index])
-                ) {
-                    updateData[`activeChallenges.${tier}`] = challenge;
-                }
-
-                // 챌린지 종료일 확인 (endDate 당일 포함 — today >= endDate)
-                if (isTargetDateInChallengeRange && !completedDates.includes(targetDate)) {
-                    const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
-                    if (dailyLogData) {
-                        if (!dailyQualification.qualified) {
-                            console.log(`ℹ️ 챌린지: 오늘 인정 미달 (${dailyQualification.totalPoints}P, 기준: ${describeChallengeQualification(dailyQualification.policy)})`);
-                        } else {
-                            completedDates.push(targetDate);
-                            challenge.completedDates = [...new Set(completedDates)];
-                            challenge.completedDays = getChallengeCompletedDays(challenge);
-                            updateData[`activeChallenges.${tier}`] = challenge;
-
-                            if (!isFinalDay) {
-                                const remain = totalDays - challenge.completedDays;
-                                toastMessages.push(`✅ ${challengeDef.emoji || '🏆'} ${challenge.completedDays}/${totalDays}일 (${remain}일 남음)`);
-                            }
-                        }
-                    } else {
-                        console.log(`ℹ️ 챌린지: 오늘 기록 없음`);
-                    }
-                } else if (completedDates.includes(targetDate)) {
-                    console.log(`ℹ️ ${tier} 챌린지: 오늘 이미 인증 완료`);
-                }
-
-                if (!isFinalDay && !isPastEnd) {
-                    continue;
-                }
-
-                if (isFinalDay || isPastEnd) {
-                    const completedDaysNow = getChallengeCompletedDays(challenge);
-                    const successRate = completedDaysNow / totalDays;
-                    const isFullCompletion = completedDaysNow >= totalDays;
-
-                    if (isFinalDay && !isFullCompletion) {
-                        updateData[`activeChallenges.${tier}`] = challenge;
-                        continue;
-                    }
-
-                    if (isFullCompletion || (isPastEnd && successRate >= 0.8)) {
-                        challenge.status = 'claimable';
-                        updateData[`activeChallenges.${tier}`] = challenge;
-                        const claimLabel = isFullCompletion ? '완료' : '부분 달성 정산 가능';
-                        toastMessages.push(`🎉 ${totalDays}일 챌린지 ${claimLabel}! 내 지갑에서 보상을 수령하세요.`);
-                    } else {
-                        const staked = challenge.hbtStaked || 0;
-                        const stakedOnChain = challenge.stakedOnChain || false;
-
-                        if (stakedOnChain && staked > 0) {
-                            challenge.status = 'expired';
-                            updateData[`activeChallenges.${tier}`] = challenge;
-                            // 온체인 정산은 settleExpiredChallenges에서 CF를 통해 처리
-                            // 여기서는 상태만 'expired'로 마킹하여 settleExpiredChallenges가 처리하도록 함
-                            updateData[`activeChallenges.${tier}`] = challenge;
-                            toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%). 소각 정산 처리 중...`);
-                        } else {
-                            updateData[`activeChallenges.${tier}`] = null;
-                            toastMessages.push(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
-                        }
-                        if (staked > 0 && !stakedOnChain) {
-                            settlementLogs.push({
-                                userId: currentUser.uid,
-                                type: 'challenge_failure',
-                                challengeId: challenge.challengeId,
-                                staked: staked,
-                                burned: staked / 2,
-                                returned: staked / 2,
-                                successRate: successRate,
-                                completedDays: getChallengeCompletedDays(challenge),
-                                timestamp: serverTimestamp(),
-                                status: 'success'
-                            });
-                        }
-                    }
-                    continue;
-                }
-
-                // 중복 카운트 방지
-                if (completedDates.includes(today)) {
-                    console.log(`ℹ️ ${tier} 챌린지: 오늘 이미 인증 완료`);
-                    continue;
-                }
-
-                const dailyQualification = doesDailyLogQualifyForChallenge(dailyLogData, challenge, tier);
-                if (dailyLogData) {
-                    if (!dailyQualification.qualified) {
-                        console.log(`ℹ️ 챌린지: 오늘 인정 미달 (${dailyQualification.totalPoints}P, 기준: ${describeChallengeQualification(dailyQualification.policy)})`);
-                        continue;
-                    }
-                } else {
-                    console.log(`ℹ️ 챌린지: 오늘 기록 없음`);
-                    continue;
-                }
-
-                // 진행 중 - 오늘 날짜 기록
-                completedDates.push(today);
-                challenge.completedDays = completedDates.length;
-                challenge.completedDates = completedDates;
-                updateData[`activeChallenges.${tier}`] = challenge;
-
-                const remain = totalDays - challenge.completedDays;
-                toastMessages.push(`✅ ${challengeDef.emoji || '🏆'} ${challenge.completedDays}/${totalDays}일 (${remain}일 남음)`);
-            }
-
-            if (Object.keys(updateData).length > 0) {
-                transaction.update(userRef, updateData);
-            }
-        });
-
-        // 트랜잭션 완료 후 토스트 표시 & 정산 로그 저장
-        toastMessages.forEach(msg => showToast(msg));
-        for (const log of settlementLogs) {
-            try {
-                await addDoc(collection(db, "blockchain_transactions"), log);
-            } catch (logErr) {
-                console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
-            }
-        }
-
+        // 챌린지 진행 상태는 서버가 daily_logs를 다시 읽어 계산한다. 클라이언트가
+        // activeChallenges를 직접 쓰는 구 경로는 보안 규칙에서 차단된다.
+        await ensureFunctions();
+        const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');
+        const result = await refreshProgressFn({});
         await refreshAssetDisplayAfterChallengeMutation('challenge-progress');
-
+        return result.data || null;
     } catch (error) {
         console.error('⚠️ 챌린지 진행도 업데이트 오류:', error);
     }
@@ -1730,111 +1466,21 @@ export async function settleExpiredChallenges() {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
-        const userRef = doc(db, "users", currentUser.uid);
-        // 캐시 우선 읽기 금지: 캐시의 completedDays가 실제보다 적을 경우
-        // successRate < 0.8로 오판하여 실패 정산이 트리거될 수 있음
-        const userSnap = await getDocFromServer(userRef);
-        const userData = userSnap.data();
-        const today = getKstDateString();
-
-        const activeChallenges = userData.activeChallenges || {};
-        const tiers = Object.keys(activeChallenges).filter(t =>
-            activeChallenges[t]?.status === 'ongoing' || activeChallenges[t]?.status === 'expired'
-        );
-        if (tiers.length === 0) return;
-
-        // 'expired'는 이미 기한 만료 확정, 'ongoing'은 endDate로 판단
-        const expiredTiers = tiers.filter((tier) => {
-            const challenge = normalizeChallengeCompletion(activeChallenges[tier]);
-            return challenge.status === 'expired' || today > challenge.endDate;
-        });
-        if (expiredTiers.length === 0) return;
-
-        const updateData = {};
+        await ensureFunctions();
+        const refreshProgressFn = httpsCallable(functions, 'refreshChallengeProgress');
+        const refreshResult = await refreshProgressFn({});
+        const activeChallenges = refreshResult.data?.activeChallenges || {};
+        const expiredTiers = Object.entries(activeChallenges)
+            .filter(([, challenge]) => challenge?.status === 'expired')
+            .map(([tier]) => tier);
         for (const tier of expiredTiers) {
-            const originalChallenge = activeChallenges[tier];
-            const storedChallenge = normalizeChallengeCompletion(originalChallenge);
-            const dailyLogsByDate = await fetchChallengeDailyLogsByDate(currentUser.uid, storedChallenge);
-            const challenge = reconcileChallengeCompletionWithDailyLogs(storedChallenge, dailyLogsByDate, tier);
-            const totalDays = challenge.totalDays || 30;
-            const normalizedCompletedDays = getChallengeCompletedDays(challenge);
-
-            if (hasChallengeCompletionChanged(originalChallenge, challenge)) {
-                updateData[`activeChallenges.${tier}`] = challenge;
-            }
-
-            const successRate = normalizedCompletedDays / totalDays;
-            const isFullCompletion = normalizedCompletedDays >= totalDays;
-            const isPastEnd = today > challenge.endDate;
-
-            if (isFullCompletion || (isPastEnd && successRate >= 0.8)) {
-                // 성공 → claimable 상태로 전환 (사용자가 수령)
-                challenge.status = 'claimable';
-                updateData[`activeChallenges.${tier}`] = challenge;
-            } else if (!isPastEnd) {
-                updateData[`activeChallenges.${tier}`] = challenge;
-                continue;
-            } else {
-                // 실패 → 온체인 resolveChallenge(user, false) 호출 (50% 소각)
-                const staked = challenge.hbtStaked || 0;
-
-                if (staked > 0) {
-                    // CF를 통해 온체인 소각 처리 (CF가 Firestore 삭제도 처리)
-                    try {
-                        await ensureFunctions();
-                        const settleFn = httpsCallable(functions, 'settleChallengeFailure');
-                        const settleResult = await settleFn({ tier });
-                        if (settleResult.data?.skippedFailure || settleResult.data?.claimable) {
-                            const serverCompletedDays = Number(settleResult.data?.completedDays || normalizedCompletedDays);
-                            updateData[`activeChallenges.${tier}`] = {
-                                ...challenge,
-                                status: 'claimable',
-                                completedDays: serverCompletedDays
-                            };
-                            showToast(`🎉 ${totalDays}일 챌린지가 성공으로 복구됐어요. 내 지갑에서 보상을 수령하세요. (${serverCompletedDays}/${totalDays}일)`);
-                            continue;
-                        }
-                        const refund = settleResult.data?.returned || 0;
-                        const burned = settleResult.data?.burned || 0;
-                        delete updateData[`activeChallenges.${tier}`];
-                        showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).\n${refund} HBT 반환, ${burned} HBT 소각 (온체인)`);
-                    } catch (settleErr) {
-                        console.error('⚠️ 온체인 실패 정산 오류:', settleErr);
-                        showToast(`⚠️ ${totalDays}일 챌린지 정산을 보류했어요. 기록을 다시 확인한 뒤 처리할게요.`);
-                        continue;
-                    }
-                } else {
-                    updateData[`activeChallenges.${tier}`] = deleteField();
-                    showToast(`😢 ${totalDays}일 챌린지 미달성 (${Math.round(successRate*100)}%).`);
-
-                    if (staked > 0) {
-                        try {
-                            await addDoc(collection(db, "blockchain_transactions"), {
-                                userId: currentUser.uid,
-                                type: 'challenge_failure',
-                                challengeId: challenge.challengeId,
-                                staked: staked,
-                                burned: staked / 2,
-                                returned: staked / 2,
-                                successRate: successRate,
-                                completedDays: normalizedCompletedDays,
-                                completedDates: challenge.completedDates || [],
-                                startDate: challenge.startDate || null,
-                                endDate: challenge.endDate || null,
-                                timestamp: serverTimestamp(),
-                                status: 'success'
-                            });
-                        } catch (logErr) {
-                            console.warn('⚠️ 실패 정산 기록 저장 실패:', logErr.message);
-                        }
-                    }
-                }
-            }
+            const settleFn = httpsCallable(functions, 'settleChallengeFailure');
+            await settleFn({ tier });
         }
-
-        if (Object.keys(updateData).length > 0) {
-            await updateDoc(userRef, updateData);
+        if (expiredTiers.length > 0) {
+            await refreshAssetDisplayAfterChallengeMutation('challenge-expiry');
         }
+        return refreshResult.data || null;
     } catch (error) {
         const connectivityIssue = noteFirestoreConnectivityFailure(error, 'settleExpiredChallenges');
         if (connectivityIssue) {
@@ -1924,49 +1570,15 @@ export async function forfeitChallenge(tier) {
 
         if (!confirm(msg)) return false;
 
-        // 온체인 스테이킹이 있는 경우 CF를 통해 소각 처리
-        if (stakedOnChain && staked > 0) {
-            try {
-                showToast('⏳ 온체인 정산 중...');
-                await ensureFunctions();
-                const settleFn = httpsCallable(functions, 'settleChallengeFailure');
-                const settleResult = await settleFn({ tier });
-                const burned = settleResult.data?.burned || 0;
-                const returned = settleResult.data?.returned || 0;
-                showToast(`🏳️ 챌린지 포기.\n${returned} HBT 반환, ${burned} HBT 소각 (온체인)`);
-            } catch (settleErr) {
-                console.error('⚠️ 온체인 포기 정산 오류:', settleErr);
-                showToast('❌ 온체인 정산에 실패했습니다. 다시 시도해주세요.');
-                return false;
-            }
-        } else {
-            const updateData = {};
-            updateData[`activeChallenges.${tier}`] = deleteField();
-            await updateDoc(userRef, updateData);
-
-            // 정산 기록 저장
-            if (staked > 0) {
-                try {
-                    await addDoc(collection(db, "blockchain_transactions"), {
-                        userId: currentUser.uid,
-                        type: 'challenge_failure',
-                        challengeId: challenge.challengeId,
-                        staked: staked,
-                        burned: staked / 2,
-                        returned: staked / 2,
-                        successRate: (challenge.completedDays || 0) / (challenge.totalDays || 1),
-                        completedDays: challenge.completedDays || 0,
-                        timestamp: serverTimestamp(),
-                        status: 'success'
-                    });
-                } catch (logErr) {
-                    console.warn('⚠️ 포기 기록 저장 실패:', logErr.message);
-                }
-            }
-
-            showToast('🏳️ 챌린지를 포기했습니다.');
-        }
-        if (window.updateAssetDisplay) window.updateAssetDisplay(true);
+        await ensureFunctions();
+        const forfeitFn = httpsCallable(functions, 'settleChallengeFailure');
+        const forfeitResult = await forfeitFn({ tier, forceForfeit: true });
+        const burned = Number(forfeitResult.data?.burned || 0);
+        const returned = Number(forfeitResult.data?.returned || 0);
+        showToast(staked > 0
+            ? `🏳️ 챌린지 포기.\n${returned} HBT 반환, ${burned} HBT 소각`
+            : '🏳️ 챌린지를 포기했습니다.');
+        await refreshAssetDisplayAfterChallengeMutation('challenge-forfeit');
         return true;
     } catch (error) {
         console.error('❌ 챌린지 포기 오류:', error);

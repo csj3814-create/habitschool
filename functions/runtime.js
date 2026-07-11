@@ -38,7 +38,22 @@ const {
     getKstIsoWeekId,
     isCompletedRateDecision,
 } = require("./mining-rate-utils");
-const { clampDailyAwardTotal, computeReactionToggle } = require("./points-utils");
+const {
+    calculateServerAwardedPoints,
+    computeReactionToggle,
+    isEvidenceCreatedWithinRewardWindow,
+    getRewardEvidenceClaimId,
+    isAllowedUserMediaUrl,
+    parseFirebaseStorageObjectPath,
+} = require("./points-utils");
+const { syncGalleryPostFromDailyLog } = require("./gallery-posts");
+const { updateGuestActivity } = require("./guest-activity");
+const {
+    normalizeReminderPreference,
+    getKstHour,
+    buildNotificationLedgerId,
+    getReminderTarget,
+} = require("./notification-utils");
 const {
     CHALLENGE_BASE_BONUS_BPS,
     CHALLENGE_DAILY_MIN_POINTS,
@@ -1032,6 +1047,72 @@ async function getActiveFriendIds(userId) {
         .map(friendship => getOtherFriendUid(friendship, userId))
         .filter(Boolean);
 }
+
+exports.getFriendActivityReadiness = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const today = getCurrentKstDateString();
+        const earliest = addDaysToKstDateString(today, -30);
+        const requestedDates = [...new Set((Array.isArray(request.data?.dateStrs) ? request.data.dateStrs : [])
+            .map((value) => String(value || "").trim())
+            .filter((value) => isValidDateString(value) && value >= earliest && value <= today))]
+            .slice(0, 14);
+        if (requestedDates.length === 0) return { items: [] };
+
+        const authorizedFriendIds = new Set(await getActiveFriendIds(uid));
+        const requestedFriendIds = [...new Set((Array.isArray(request.data?.friendIds) ? request.data.friendIds : [])
+            .map((value) => String(value || "").trim())
+            .filter((friendId) => friendId && authorizedFriendIds.has(friendId)))]
+            .slice(0, 20);
+        if (requestedFriendIds.length === 0) return { items: [] };
+
+        const refs = [];
+        const metadata = [];
+        requestedFriendIds.forEach((friendId) => {
+            requestedDates.forEach((date) => {
+                refs.push(db.doc(`daily_logs/${friendId}_${date}`));
+                metadata.push({ friendId, date });
+            });
+        });
+        const profileRefs = requestedFriendIds.map((friendId) => db.doc(`users/${friendId}`));
+        const [snapshots, profileSnapshots] = await Promise.all([
+            refs.length > 0 ? db.getAll(...refs) : [],
+            profileRefs.length > 0 ? db.getAll(...profileRefs) : [],
+        ]);
+        const logsByFriend = new Map(requestedFriendIds.map((friendId) => [friendId, []]));
+        const profilesByFriend = new Map();
+        snapshots.forEach((snapshot, index) => {
+            if (!snapshot.exists) return;
+            const awarded = normalizeAwardMap(snapshot.data()?.awardedPoints || {});
+            logsByFriend.get(metadata[index].friendId)?.push({
+                date: metadata[index].date,
+                awardedPoints: awarded,
+            });
+        });
+        profileSnapshots.forEach((snapshot, index) => {
+            const friendId = requestedFriendIds[index];
+            const profile = snapshot.exists ? (snapshot.data() || {}) : {};
+            const displayName = String(profile.customDisplayName || profile.displayName || "")
+                .trim()
+                .slice(0, 40);
+            profilesByFriend.set(friendId, {
+                displayName,
+                currentStreak: Math.max(0, Math.min(3650, Number(profile.currentStreak || 0) || 0)),
+            });
+        });
+
+        return {
+            items: requestedFriendIds.map((friendId) => ({
+                friendId,
+                ...(profilesByFriend.get(friendId) || { displayName: "", currentStreak: 0 }),
+                logs: logsByFriend.get(friendId) || [],
+            })),
+        };
+    }
+);
 
 function generateAlphaNumericCode(length) {
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -2502,8 +2583,8 @@ exports.analyzeDiet = onCall(
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
 
-        // SSRF 방지: Firebase Storage URL만 허용
-        if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/")) {
+        // SSRF/교차 사용자 방지: 로그인 사용자의 식단 이미지 객체만 허용
+        if (!isAllowedUserMediaUrl(imageUrl, request.auth.uid, "diet_images")) {
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
 
@@ -2791,43 +2872,21 @@ exports.analyzeSleepMind = onCall(
             const contentParts = [locale === "en" ? SLEEP_MIND_ANALYSIS_PROMPT_EN : SLEEP_MIND_ANALYSIS_PROMPT];
 
             if (imageUrl && typeof imageUrl === "string") {
-                // SSRF 방지: Firebase Storage URL 또는 data: URL만 허용
-                if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/") && !imageUrl.startsWith("data:")) {
+                // SSRF/교차 사용자 방지: 로그인 사용자의 수면 이미지 객체만 허용
+                if (!isAllowedUserMediaUrl(imageUrl, request.auth.uid, "sleep_images")) {
                     throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
                 }
                 try {
-                    if (imageUrl.startsWith("data:")) {
-                        const matches = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
-                        if (!matches) {
-                            throw new HttpsError("invalid-argument", "잘못된 data URL 형식입니다.");
-                        }
-                        // MIME 타입 화이트리스트
-                        const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                        if (!allowedMimes.includes(matches[1])) {
-                            throw new HttpsError("invalid-argument", "허용되지 않은 이미지 형식입니다.");
-                        }
-                        // Base64 크기 제한 (5MB)
-                        if (matches[2].length > 5 * 1024 * 1024 * 1.37) {
-                            throw new HttpsError("invalid-argument", "이미지 크기가 너무 큽니다 (최대 5MB).");
-                        }
+                    const imgResponse = await fetch(imageUrl);
+                    if (imgResponse.ok) {
+                        const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+                        const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
                         contentParts.push({
                             inlineData: {
-                                data: matches[2],
-                                mimeType: matches[1]
+                                data: imgBuffer.toString("base64"),
+                                mimeType: contentType
                             }
                         });
-                    } else {
-                        const imgResponse = await fetch(imageUrl);
-                        if (imgResponse.ok) {
-                            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
-                            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
-                            contentParts.push({
-                                inlineData: {
-                                    data: imgBuffer.toString("base64"),
-                                    mimeType: contentType
-                                }
-                            });
-                        }
                     }
                 } catch (imgError) {
                     console.warn("수면 이미지 처리 실패:", imgError.message);
@@ -2949,19 +3008,26 @@ exports.analyzeStepScreenshot = onCall(
             throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
         }
 
-        // SSRF 방지: Firebase Storage URL만 허용
-        if (!imageUrl.startsWith("https://firebasestorage.googleapis.com/")) {
+        // SSRF/교차 사용자 방지: 로그인 사용자의 걸음 캡처 객체만 허용
+        if (!isAllowedUserMediaUrl(imageUrl, request.auth.uid, "step_screenshots")) {
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
 
         try {
-            // 이미지 다운로드
-            const imgResponse = await fetch(imageUrl);
-            if (!imgResponse.ok) {
-                throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+            // URL을 직접 fetch하지 않고 현재 프로젝트의 Storage 객체를 generation에 고정해 읽는다.
+            const objectPath = parseFirebaseStorageObjectPath(imageUrl);
+            const bucket = admin.storage().bucket();
+            const sourceFile = bucket.file(objectPath);
+            const [metadata] = await sourceFile.getMetadata();
+            const objectGeneration = String(metadata?.generation || "").trim();
+            const contentType = String(metadata?.contentType || "").toLowerCase();
+            if (!/^\d+$/.test(objectGeneration)
+                || !(Number(metadata?.size || 0) > 0)
+                || !contentType.startsWith("image/")) {
+                throw new HttpsError("failed-precondition", "유효한 걸음수 이미지가 아닙니다.");
             }
-            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
-            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+            const generationFile = bucket.file(objectPath, { generation: objectGeneration });
+            const [imgBuffer] = await generationFile.download();
             const base64Image = imgBuffer.toString("base64");
 
             // 이미지 SHA-256 해시 계산 (중복 감지용)
@@ -2997,11 +3063,35 @@ exports.analyzeStepScreenshot = onCall(
             }
 
             const analysis = JSON.parse(jsonStr);
+            const verifiedSteps = Number.parseInt(analysis?.steps, 10) || 0;
+            const confidence = String(analysis?.confidence || "").trim().toLowerCase();
+            if (analysis?.notHealthApp === true || verifiedSteps <= 0 || verifiedSteps > 200000) {
+                throw new HttpsError("failed-precondition", "유효한 건강 앱 걸음수 화면을 확인하지 못했습니다.");
+            }
+            if (confidence && !["high", "medium"].includes(confidence)) {
+                throw new HttpsError("failed-precondition", "걸음수 인식 신뢰도가 낮습니다. 더 선명한 화면을 올려주세요.");
+            }
+
+            const contentHash = metadata?.md5Hash
+                ? `md5:${metadata.md5Hash}`
+                : (metadata?.crc32c ? `crc32c:${metadata.crc32c}` : "");
+            const verificationId = `${request.auth.uid}_${imageHash}`;
+            await db.doc(`step_verifications/${verificationId}`).set({
+                userId: request.auth.uid,
+                imageHash,
+                objectPath,
+                objectGeneration,
+                contentHash,
+                steps: verifiedSteps,
+                source: String(analysis?.source || "other").slice(0, 32),
+                verifiedAt: FieldValue.serverTimestamp(),
+            });
 
             return {
                 success: true,
                 analysis: analysis,
                 imageHash: imageHash,
+                verificationId,
                 timestamp: new Date().toISOString()
             };
 
@@ -3019,8 +3109,103 @@ exports.analyzeStepScreenshot = onCall(
 
 /**
  * daily_logs 문서 변경 시 포인트(coins) 자동 정산
- * 클라이언트가 직접 coins를 수정하지 않고, 서버에서 안전하게 처리
+ * Storage 증거를 서버가 확인하고 날짜·카테고리·임계치별 불변 원장으로 정산한다.
  */
+async function verifyDailyRewardMedia(_url, context = {}) {
+    const objectPath = String(context.objectPath || "");
+    if (!objectPath) return false;
+    try {
+        const [metadata] = await admin.storage().bucket().file(objectPath).getMetadata();
+        if (!(Number(metadata?.size || 0) > 0)) return false;
+        if (!isEvidenceCreatedWithinRewardWindow(metadata?.timeCreated, context.logDate, 1)) return false;
+        const objectGeneration = String(metadata?.generation || "").trim();
+        if (!/^\d+$/.test(objectGeneration)) return false;
+        const contentHash = metadata?.md5Hash
+            ? `md5:${metadata.md5Hash}`
+            : (metadata?.crc32c ? `crc32c:${metadata.crc32c}` : "");
+        const contentType = String(metadata?.contentType || "").toLowerCase();
+        const expectsVideo = context.evidenceType === "exercise_strength_video";
+        if (expectsVideo ? !contentType.startsWith("video/") : !contentType.startsWith("image/")) {
+            return false;
+        }
+
+        let verifiedImageHash = null;
+        if (context.evidenceType === "step_screenshot") {
+            const hash = String(context.imageHash || "").toLowerCase();
+            if (!/^[a-f0-9]{64}$/.test(hash)) return false;
+            const verification = await db.doc(`step_verifications/${context.userId}_${hash}`).get();
+            if (!verification.exists) return false;
+            const data = verification.data() || {};
+            if (data.userId !== context.userId
+                || data.imageHash !== hash
+                || data.objectPath !== objectPath
+                || String(data.objectGeneration || "") !== objectGeneration
+                || Number(data.steps || 0) < 8000) {
+                return false;
+            }
+            verifiedImageHash = hash;
+        }
+        return {
+            valid: true,
+            objectGeneration,
+            contentHash,
+            verifiedImageHash,
+        };
+    } catch (error) {
+        const code = String(error?.code || "").toLowerCase();
+        if (code.includes("404") || code.includes("not-found")) return false;
+        throw error;
+    }
+}
+
+function normalizeAwardMap(awarded = {}) {
+    const dietPoints = Math.max(0, Math.min(30, Number(awarded.dietPoints || 0) || 0));
+    const exercisePoints = Math.max(0, Math.min(30, Number(awarded.exercisePoints || 0) || 0));
+    const mindPoints = Math.max(0, Math.min(20, Number(awarded.mindPoints || 0) || 0));
+    return {
+        dietPoints,
+        exercisePoints,
+        mindPoints,
+        diet: dietPoints > 0,
+        exercise: exercisePoints > 0,
+        mind: mindPoints > 0,
+    };
+}
+
+function sameAwardMap(left, right) {
+    const a = normalizeAwardMap(left);
+    const b = normalizeAwardMap(right);
+    return a.dietPoints === b.dietPoints
+        && a.exercisePoints === b.exercisePoints
+        && a.mindPoints === b.mindPoints
+        && a.diet === b.diet
+        && a.exercise === b.exercise
+        && a.mind === b.mind;
+}
+
+function getDailyRewardEvidenceFingerprint(log = {}) {
+    return JSON.stringify({
+        userId: log.userId || "",
+        date: log.date || "",
+        diet: log.diet || null,
+        dietAnalysis: log.dietAnalysis || null,
+        exercise: log.exercise || null,
+        steps: log.steps || null,
+        sleepAndMind: log.sleepAndMind || null,
+    });
+}
+
+function getAwardMapFromLedgerUnits(units = []) {
+    const totals = { dietPoints: 0, exercisePoints: 0, mindPoints: 0 };
+    for (const unit of units) {
+        const pointKey = unit?.category === "diet"
+            ? "dietPoints"
+            : (unit?.category === "exercise" ? "exercisePoints" : (unit?.category === "mind" ? "mindPoints" : ""));
+        if (pointKey) totals[pointKey] += Math.max(0, Number(unit.points || 0) || 0);
+    }
+    return normalizeAwardMap(totals);
+}
+
 exports.awardPoints = onDocumentWritten(
     { document: "daily_logs/{logId}", region: "asia-northeast3" },
     async (event) => {
@@ -3030,38 +3215,198 @@ exports.awardPoints = onDocumentWritten(
         // 삭제된 경우 무시
         if (!after) return;
 
-        const userId = after.userId;
-        if (!userId) return;
-
-        const newAwarded = after.awardedPoints || {};
-        const oldAwarded = before?.awardedPoints || {};
-        const logDate = String(after.date || "").trim();
-        const todayStr = getCurrentKstDateString();
-        const yesterdayStr = addDaysToKstDateString(todayStr, -1);
-        const isRewardEligibleDate = !!logDate && logDate >= yesterdayStr && logDate <= todayStr;
-
-        if (!isRewardEligibleDate) {
-            console.log(`awardPoints skip: ${userId} ${logDate || '(no-date)'} outside reward window`);
+        if (before?.rewardLedgerVersion === 2
+            && sameAwardMap(before.awardedPoints, after.awardedPoints)
+            && getDailyRewardEvidenceFingerprint(before) === getDailyRewardEvidenceFingerprint(after)) {
             return;
         }
 
-        // 방어 심화: 클라이언트가 awardedPoints를 조작해도(룰 우회/admin 경로) 서버가
-        // 정상 상한(diet 30 / exercise 30 / mind 20)으로 클램프해 코인 무한 발행을 차단한다.
-        const newTotal = clampDailyAwardTotal(newAwarded);
-        const oldTotal = clampDailyAwardTotal(oldAwarded);
-        const diff = newTotal - oldTotal;
-
-        if (diff <= 0) return;
-
         try {
+            const logRef = event.data.after.ref;
+            const liveLogSnapshot = await logRef.get();
+            if (!liveLogSnapshot.exists) return;
+            const liveLog = liveLogSnapshot.data() || {};
+            const userId = String(liveLog.userId || "").trim();
+            const logDate = String(liveLog.date || "").trim();
+            if (!userId) return;
+
+            const todayStr = getCurrentKstDateString();
+            const yesterdayStr = addDaysToKstDateString(todayStr, -1);
+            const isRewardEligibleDate = !!logDate && logDate >= yesterdayStr && logDate <= todayStr;
+            if (!isRewardEligibleDate) {
+                console.log(`awardPoints skip: ${userId} ${logDate || '(no-date)'} outside reward window`);
+                return;
+            }
+
+            const calculated = await calculateServerAwardedPoints(liveLog, {
+                isValidMedia: verifyDailyRewardMedia,
+            });
+            const sourceFingerprint = getDailyRewardEvidenceFingerprint(liveLog);
+            const legacy = normalizeAwardMap(liveLog.awardedPoints || {});
             const userRef = db.doc(`users/${userId}`);
-            await userRef.set({ coins: FieldValue.increment(diff) }, { merge: true });
-            console.log(`awardPoints: ${userId} +${diff}P (total: ${newTotal})`);
+            const ledgerRoot = db.doc(`point_ledger/${userId}_${logDate}`);
+            const entriesQuery = ledgerRoot.collection("entries");
+            const evidenceDescriptors = new Map();
+            const evidenceDescriptorByUnitKey = new Map();
+            calculated.ledgerUnits.forEach((unit) => {
+                if (!unit.objectPath) return;
+                const evidenceId = getRewardEvidenceClaimId(userId, unit);
+                if (!evidenceId) return;
+                const descriptor = evidenceDescriptors.get(evidenceId) || {
+                    evidenceId,
+                    unit,
+                    reference: db.doc(`reward_evidence_ledger/${evidenceId}`),
+                };
+                evidenceDescriptors.set(evidenceId, descriptor);
+                evidenceDescriptorByUnitKey.set(unit.key, descriptor);
+            });
+            const descriptorList = [...evidenceDescriptors.values()];
+            const settlement = await db.runTransaction(async (tx) => {
+                const [entriesSnapshot, currentLogSnapshot, ...evidenceSnapshots] = await Promise.all([
+                    tx.get(entriesQuery),
+                    tx.get(logRef),
+                    ...descriptorList.map((descriptor) => tx.get(descriptor.reference)),
+                ]);
+                if (!currentLogSnapshot.exists) {
+                    return { stale: true, canonical: normalizeAwardMap({}), pointsToCredit: 0 };
+                }
+                const currentLog = currentLogSnapshot.data() || {};
+                if (String(currentLog.userId || "").trim() !== userId
+                    || String(currentLog.date || "").trim() !== logDate
+                    || getDailyRewardEvidenceFingerprint(currentLog) !== sourceFingerprint) {
+                    return { stale: true, canonical: normalizeAwardMap(currentLog.awardedPoints || {}), pointsToCredit: 0 };
+                }
+
+                const evidenceSnapshotById = new Map(descriptorList.map((descriptor, index) => [
+                    descriptor.evidenceId,
+                    evidenceSnapshots[index],
+                ]));
+                const seenEvidenceIds = new Set();
+                const eligibleEvidenceIds = new Set();
+                const eligibleUnits = calculated.ledgerUnits.filter((unit) => {
+                    if (!unit.objectPath) return true;
+                    const descriptor = evidenceDescriptorByUnitKey.get(unit.key);
+                    if (!descriptor || seenEvidenceIds.has(descriptor.evidenceId)) return false;
+                    seenEvidenceIds.add(descriptor.evidenceId);
+                    const claimSnapshot = evidenceSnapshotById.get(descriptor.evidenceId);
+                    if (claimSnapshot?.exists) {
+                        const claim = claimSnapshot.data() || {};
+                        if (claim.userId !== userId
+                            || claim.sourceLogId !== event.params.logId
+                            || claim.date !== logDate
+                            || claim.category !== unit.category) {
+                            return false;
+                        }
+                    }
+                    eligibleEvidenceIds.add(descriptor.evidenceId);
+                    return true;
+                });
+                const desired = getAwardMapFromLedgerUnits(eligibleUnits);
+                const totals = { diet: 0, exercise: 0, mind: 0 };
+                entriesSnapshot.docs.forEach((snapshot) => {
+                    const data = snapshot.data() || {};
+                    if (Object.prototype.hasOwnProperty.call(totals, data.category)) {
+                        totals[data.category] += Math.max(0, Number(data.points || 0) || 0);
+                    }
+                });
+
+                let pointsToCredit = 0;
+                for (const category of ["diet", "exercise", "mind"]) {
+                    const pointKey = `${category}Points`;
+                    if (totals[category] <= 0 && legacy[pointKey] > 0) {
+                        const legacyPoints = legacy[pointKey];
+                        tx.create(entriesQuery.doc(`legacy_${category}`), {
+                            userId,
+                            date: logDate,
+                            category,
+                            points: legacyPoints,
+                            threshold: legacyPoints,
+                            source: "legacy_daily_record",
+                            sourceLogId: event.params.logId,
+                            migratedAt: FieldValue.serverTimestamp(),
+                        });
+                        totals[category] = legacyPoints;
+                    }
+
+                    if (desired[pointKey] > totals[category]) {
+                        const incrementPoints = desired[pointKey] - totals[category];
+                        tx.create(entriesQuery.doc(`earned_${category}_${desired[pointKey]}`), {
+                            userId,
+                            date: logDate,
+                            category,
+                            points: incrementPoints,
+                            threshold: desired[pointKey],
+                            evidenceTypes: eligibleUnits
+                                .filter((unit) => unit.category === category)
+                                .map((unit) => unit.evidenceType),
+                            evidenceIds: eligibleUnits
+                                .filter((unit) => unit.category === category)
+                                .map((unit) => evidenceDescriptorByUnitKey.get(unit.key)?.evidenceId)
+                                .filter(Boolean),
+                            source: "daily_record",
+                            sourceLogId: event.params.logId,
+                            createdAt: FieldValue.serverTimestamp(),
+                        });
+                        totals[category] = desired[pointKey];
+                        pointsToCredit += incrementPoints;
+                    }
+                }
+
+                for (const evidenceId of eligibleEvidenceIds) {
+                    const descriptor = evidenceDescriptors.get(evidenceId);
+                    const claimSnapshot = evidenceSnapshotById.get(evidenceId);
+                    if (!descriptor || claimSnapshot?.exists) continue;
+                    const unit = descriptor.unit;
+                    tx.create(descriptor.reference, {
+                        userId,
+                        sourceLogId: event.params.logId,
+                        date: logDate,
+                        category: unit.category,
+                        evidenceType: unit.evidenceType,
+                        objectPath: unit.objectPath,
+                        objectGeneration: unit.objectGeneration,
+                        contentHash: unit.contentHash || null,
+                        verifiedImageHash: unit.verifiedImageHash || null,
+                        createdAt: FieldValue.serverTimestamp(),
+                    });
+                }
+
+                const canonical = normalizeAwardMap({
+                    dietPoints: totals.diet,
+                    exercisePoints: totals.exercise,
+                    mindPoints: totals.mind,
+                });
+                if (!sameAwardMap(currentLog.awardedPoints, canonical) || currentLog.rewardLedgerVersion !== 2) {
+                    tx.set(logRef, {
+                        awardedPoints: canonical,
+                        rewardLedgerVersion: 2,
+                    }, { merge: true });
+                }
+                if (pointsToCredit > 0) {
+                    tx.set(userRef, { coins: FieldValue.increment(pointsToCredit) }, { merge: true });
+                }
+                tx.set(ledgerRoot, {
+                    userId,
+                    date: logDate,
+                    lastSettledAt: FieldValue.serverTimestamp(),
+                    version: 2,
+                }, { merge: true });
+                return { stale: false, canonical, pointsToCredit };
+            });
+
+            if (settlement.stale) return;
+
+            console.log(`awardPoints ledger: ${userId} ${logDate} +${settlement.pointsToCredit}P`);
 
             // 스트릭 계산 및 저장
-            if (logDate) {
+            const canonicalTotal = settlement.canonical.dietPoints
+                + settlement.canonical.exercisePoints
+                + settlement.canonical.mindPoints;
+            if (canonicalTotal > 0) {
                 const streak = await calculateStreak(userId, logDate);
-                await event.data.after.ref.set({ currentStreak: streak }, { merge: true });
+                if (Number(after.currentStreak || 0) !== streak) {
+                    await event.data.after.ref.set({ currentStreak: streak }, { merge: true });
+                }
                 console.log(`streak: ${userId} ${logDate} → ${streak}일`);
 
                 // 추천인 마일스톤 보상
@@ -3073,6 +3418,47 @@ exports.awardPoints = onDocumentWritten(
         } catch (err) {
             console.error("awardPoints 오류:", err);
         }
+    }
+);
+
+function getGalleryProjectionFingerprint(log = null) {
+    if (!log) return "deleted";
+    return JSON.stringify({
+        userId: log.userId || "",
+        userName: log.userName || "",
+        date: log.date || "",
+        timestamp: log.timestamp || null,
+        awardedPoints: log.awardedPoints || null,
+        shareSettings: log.shareSettings || null,
+        diet: log.diet || null,
+        exercise: log.exercise || null,
+        sleepAndMind: log.sleepAndMind || null,
+    });
+}
+
+/** Private daily log -> signed-in, allowlist-only social projection. */
+exports.syncGalleryPostProjection = onDocumentWritten(
+    { document: "daily_logs/{logId}", region: "asia-northeast3", retry: true },
+    async (event) => {
+        const before = event.data?.before?.data() || null;
+        const after = event.data?.after?.data() || null;
+        if (before && after && getGalleryProjectionFingerprint(before) === getGalleryProjectionFingerprint(after)) {
+            return;
+        }
+        const projectId = String(process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "").trim();
+        const allowedStorageBuckets = [...new Set([
+            admin.storage().bucket().name,
+            projectId ? `${projectId}.firebasestorage.app` : "",
+            projectId ? `${projectId}.appspot.com` : "",
+        ].filter(Boolean))];
+        await syncGalleryPostFromDailyLog({
+            db,
+            FieldValue,
+            logId: event.params.logId,
+            before,
+            after,
+            allowedStorageBuckets,
+        });
     }
 );
 
@@ -3141,57 +3527,237 @@ async function notifyFriendsOnStreak(userId, streak, logDate, userName) {
 // 추천인 마일스톤 보상 (3일: 추천인 +500P, 7일: 신규 유저 +300P)
 async function checkReferralMilestone(userId, streak) {
     if (streak !== 3 && streak !== 7) return;
-    const userSnap = await db.doc(`users/${userId}`).get();
-    const userData = userSnap.data();
-    if (!userData || !userData.referredBy) return;
+    const participantRef = db.doc(`users/${userId}`);
+    const result = await db.runTransaction(async (tx) => {
+        const participantSnap = await tx.get(participantRef);
+        if (!participantSnap.exists) return null;
+        const participant = participantSnap.data() || {};
+        const referrerUid = String(participant.referredBy || "").trim();
+        if (!referrerUid) return null;
 
-    if (streak === 3 && !userData.referralDay3BonusGiven) {
-        await db.doc(`users/${userData.referredBy}`).set(
-            { coins: FieldValue.increment(500) }, { merge: true }
-        );
-        await db.doc(`users/${userId}`).set({ referralDay3BonusGiven: true }, { merge: true });
-        console.log(`referral 3-day: ${userId} → referrer ${userData.referredBy} +500P`);
-    }
-    if (streak === 7 && !userData.referralDay7BonusGiven) {
-        await db.doc(`users/${userId}`).set({
-            coins: FieldValue.increment(300),
-            referralDay7BonusGiven: true
+        const recipientUid = streak === 3 ? referrerUid : userId;
+        const points = streak === 3 ? 500 : 300;
+        const flag = streak === 3 ? "referralDay3BonusGiven" : "referralDay7BonusGiven";
+        const ledgerRoot = db.doc(`point_ledger/${recipientUid}_bonuses`);
+        const ledgerEntry = ledgerRoot.collection("entries").doc(`referral_day${streak}_${userId}`);
+        const recipientRef = db.doc(`users/${recipientUid}`);
+        const ledgerSnap = await tx.get(ledgerEntry);
+        const recipientSnap = recipientUid === userId
+            ? participantSnap
+            : await tx.get(recipientRef);
+        if (!recipientSnap.exists) return null;
+
+        if (ledgerSnap.exists || participant[flag] === true) {
+            if (!ledgerSnap.exists) {
+                tx.create(ledgerEntry, {
+                    userId: recipientUid,
+                    category: `referral_day${streak}`,
+                    points,
+                    sourceUserId: userId,
+                    source: "legacy_referral_milestone",
+                    credited: false,
+                    migratedAt: FieldValue.serverTimestamp(),
+                });
+                tx.set(ledgerRoot, {
+                    userId: recipientUid,
+                    type: "bonus",
+                    version: 2,
+                    lastSettledAt: FieldValue.serverTimestamp(),
+                }, { merge: true });
+            }
+            return { credited: false, recipientUid, points };
+        }
+
+        tx.create(ledgerEntry, {
+            userId: recipientUid,
+            category: `referral_day${streak}`,
+            points,
+            sourceUserId: userId,
+            source: "referral_milestone",
+            credited: true,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+        tx.set(ledgerRoot, {
+            userId: recipientUid,
+            type: "bonus",
+            version: 2,
+            lastSettledAt: FieldValue.serverTimestamp(),
         }, { merge: true });
-        console.log(`referral 7-day: ${userId} +300P`);
+        if (recipientUid === userId) {
+            tx.set(participantRef, {
+                coins: FieldValue.increment(points),
+                [flag]: true,
+            }, { merge: true });
+        } else {
+            tx.set(recipientRef, { coins: FieldValue.increment(points) }, { merge: true });
+            tx.set(participantRef, { [flag]: true }, { merge: true });
+        }
+        return { credited: true, recipientUid, points };
+    });
+
+    if (result?.credited) {
+        console.log(`referral ${streak}-day: ${userId} → ${result.recipientUid} +${result.points}P`);
     }
 }
 
-/**
- * 마일스톤 보너스 지급
- * users 문서의 milestones 필드 변경 시 bonusClaimed가 true로 바뀌면 coins 지급
- */
-exports.awardMilestoneBonus = onDocumentWritten(
-    { document: "users/{userId}", region: "asia-northeast3" },
-    async (event) => {
-        const after = event.data?.after?.data();
-        const before = event.data?.before?.data();
+const MILESTONE_DEFINITIONS = Object.freeze([
+    ["streak1", "streak", 1, 5], ["streak3", "streak", 3, 10],
+    ["streak7", "streak", 7, 20], ["streak14", "streak", 14, 30],
+    ["streak30", "streak", 30, 50], ["streak60", "streak", 60, 100],
+    ["diet1", "diet", 1, 5], ["diet3", "diet", 3, 10],
+    ["diet7", "diet", 7, 15], ["diet14", "diet", 14, 25], ["diet30", "diet", 30, 50],
+    ["exercise1", "exercise", 1, 5], ["exercise3", "exercise", 3, 10],
+    ["exercise7", "exercise", 7, 15], ["exercise14", "exercise", 14, 25], ["exercise30", "exercise", 30, 50],
+    ["mind1", "mind", 1, 5], ["mind3", "mind", 3, 10],
+    ["mind7", "mind", 7, 15], ["mind14", "mind", 14, 25], ["mind30", "mind", 30, 50],
+].map(([id, category, target, reward]) => Object.freeze({ id, category, target, reward })));
+const MILESTONE_DEFINITION_BY_ID = new Map(MILESTONE_DEFINITIONS.map((definition) => [definition.id, definition]));
 
-        if (!after || !after.milestones) return;
+function getAwardTotal(awarded = {}) {
+    const normalized = normalizeAwardMap(awarded);
+    return normalized.dietPoints + normalized.exercisePoints + normalized.mindPoints;
+}
 
-        const newMilestones = after.milestones || {};
-        const oldMilestones = before?.milestones || {};
+function calculateCurrentActivityStreak(activeDates, today = getCurrentKstDateString()) {
+    const dates = activeDates instanceof Set ? activeDates : new Set(activeDates || []);
+    let cursor = dates.has(today) ? today : addDaysToKstDateString(today, -1);
+    if (!dates.has(cursor)) return 0;
+    let streak = 0;
+    while (dates.has(cursor) && streak < 400) {
+        streak += 1;
+        cursor = addDaysToKstDateString(cursor, -1);
+    }
+    return streak;
+}
 
-        let totalBonus = 0;
-        for (const [key, val] of Object.entries(newMilestones)) {
-            if (val.bonusClaimed && val.bonusAmount > 0 && !oldMilestones[key]?.bonusClaimed) {
-                totalBonus += val.bonusAmount;
+async function getAuthoritativeMilestoneStats(userId) {
+    const snapshot = await db.collection("daily_logs")
+        .where("userId", "==", userId)
+        .orderBy("date", "desc")
+        .limit(400)
+        .get();
+    const activeDates = new Set();
+    const categoryDates = { diet: new Set(), exercise: new Set(), mind: new Set() };
+    snapshot.docs.forEach((docSnapshot) => {
+        const data = docSnapshot.data() || {};
+        const date = String(data.date || "");
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+        const awarded = normalizeAwardMap(data.awardedPoints || {});
+        if (getAwardTotal(awarded) > 0) activeDates.add(date);
+        if (awarded.dietPoints > 0) categoryDates.diet.add(date);
+        if (awarded.exercisePoints > 0) categoryDates.exercise.add(date);
+        if (awarded.mindPoints > 0) categoryDates.mind.add(date);
+    });
+    return {
+        streak: calculateCurrentActivityStreak(activeDates),
+        diet: categoryDates.diet.size,
+        exercise: categoryDates.exercise.size,
+        mind: categoryDates.mind.size,
+    };
+}
+
+async function refreshMilestoneStateForUser(userId) {
+    const stats = await getAuthoritativeMilestoneStats(userId);
+    const userRef = db.doc(`users/${userId}`);
+    return db.runTransaction(async (tx) => {
+        const userSnapshot = await tx.get(userRef);
+        if (!userSnapshot.exists) throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+        const existing = userSnapshot.data()?.milestones || {};
+        const milestones = {};
+        const newMilestones = [];
+        const today = getCurrentKstDateString();
+        MILESTONE_DEFINITIONS.forEach((definition) => {
+            if (Number(stats[definition.category] || 0) < definition.target) return;
+            const previous = existing[definition.id] || {};
+            milestones[definition.id] = {
+                achieved: true,
+                date: String(previous.date || today),
+                bonusClaimed: previous.bonusClaimed === true,
+                ...(previous.bonusClaimed === true ? { bonusAmount: definition.reward } : {}),
+            };
+            if (!previous.achieved) newMilestones.push(definition.id);
+        });
+        tx.set(userRef, {
+            milestones,
+            currentStreak: stats.streak,
+        }, { merge: true });
+        return { stats, milestones, newMilestones };
+    });
+}
+
+exports.refreshMilestones = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        return refreshMilestoneStateForUser(uid);
+    }
+);
+
+exports.claimMilestoneBonus = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const milestoneId = String(request.data?.milestoneId || "").trim();
+        const definition = MILESTONE_DEFINITION_BY_ID.get(milestoneId);
+        if (!definition) throw new HttpsError("invalid-argument", "유효하지 않은 마일스톤입니다.");
+
+        const refreshed = await refreshMilestoneStateForUser(uid);
+        if (Number(refreshed.stats[definition.category] || 0) < definition.target) {
+            throw new HttpsError("failed-precondition", "아직 달성하지 못한 마일스톤입니다.");
+        }
+
+        const userRef = db.doc(`users/${uid}`);
+        const ledgerRoot = db.doc(`point_ledger/${uid}_milestones`);
+        const ledgerEntry = ledgerRoot.collection("entries").doc(`milestone_${milestoneId}`);
+        let result = null;
+        await db.runTransaction(async (tx) => {
+            const [userSnapshot, ledgerSnapshot] = await Promise.all([
+                tx.get(userRef),
+                tx.get(ledgerEntry),
+            ]);
+            const userData = userSnapshot.data() || {};
+            const milestones = { ...(userData.milestones || {}) };
+            if (ledgerSnapshot.exists || milestones[milestoneId]?.bonusClaimed === true) {
+                throw new HttpsError("already-exists", "이미 보너스를 수령했습니다.");
             }
-        }
-
-        if (totalBonus <= 0) return;
-
-        try {
-            const userRef = db.doc(`users/${event.params.userId}`);
-            await userRef.set({ coins: FieldValue.increment(totalBonus) }, { merge: true });
-            console.log(`awardMilestoneBonus: ${event.params.userId} +${totalBonus}P`);
-        } catch (err) {
-            console.error("awardMilestoneBonus 오류:", err);
-        }
+            milestones[milestoneId] = {
+                achieved: true,
+                date: String(milestones[milestoneId]?.date || getCurrentKstDateString()),
+                bonusClaimed: true,
+                bonusAmount: definition.reward,
+            };
+            tx.create(ledgerEntry, {
+                userId: uid,
+                category: "milestone",
+                milestoneId,
+                points: definition.reward,
+                source: "milestone_bonus",
+                createdAt: FieldValue.serverTimestamp(),
+            });
+            tx.set(ledgerRoot, {
+                userId: uid,
+                type: "milestone",
+                lastSettledAt: FieldValue.serverTimestamp(),
+                version: 2,
+            }, { merge: true });
+            tx.set(userRef, {
+                milestones,
+                coins: FieldValue.increment(definition.reward),
+            }, { merge: true });
+            result = {
+                milestones,
+                balance: Math.max(0, Number(userData.coins || 0)) + definition.reward,
+            };
+        });
+        return {
+            success: true,
+            milestoneId,
+            reward: definition.reward,
+            milestones: result?.milestones || refreshed.milestones,
+            balance: result?.balance ?? null,
+        };
     }
 );
 
@@ -3221,23 +3787,99 @@ exports.toggleReactionOnPost = onCall(
             throw new HttpsError("invalid-argument", "유효하지 않은 리액션 유형입니다.");
         }
 
-        const logRef = db.doc(`daily_logs/${logId}`);
+        const logRef = db.doc(`gallery_posts/${logId}`);
+        const reactionLedgerRef = db.doc(`reaction_point_ledger/${logId}_${uid}`);
         return await db.runTransaction(async (tx) => {
-            const snap = await tx.get(logRef);
+            const [snap, reactionLedgerSnap] = await Promise.all([
+                tx.get(logRef),
+                tx.get(reactionLedgerRef),
+            ]);
             if (!snap.exists) throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
 
             const decision = computeReactionToggle(snap.data() || {}, uid, reactionType);
 
             const update = { reactions: decision.reactions };
-            if (decision.award) {
-                update.reactionPointAwardedUserIds = FieldValue.arrayUnion(uid);
+            if (decision.award && !reactionLedgerSnap.exists) {
                 tx.set(db.doc(`users/${uid}`), { coins: FieldValue.increment(1) }, { merge: true });
                 tx.set(db.doc(`users/${decision.postOwnerId}`), { coins: FieldValue.increment(1) }, { merge: true });
+                tx.create(reactionLedgerRef, {
+                    postId: logId,
+                    reactorUserId: uid,
+                    postOwnerId: decision.postOwnerId,
+                    pointsPerUser: 1,
+                    date: getCurrentKstDateString(),
+                    createdAt: FieldValue.serverTimestamp(),
+                });
                 console.log(`reactionPoints: ${uid} → ${decision.postOwnerId} +1P each (first reaction on post)`);
             }
             tx.set(logRef, update, { merge: true });
 
             return { active: decision.active, count: decision.count };
+        });
+    }
+);
+
+exports.addGalleryComment = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const postId = String(request.data?.postId || "").trim();
+        const text = String(request.data?.text || "")
+            .replace(/[\u0000-\u001f\u007f]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 200);
+        if (!postId || !text) throw new HttpsError("invalid-argument", "댓글 내용이 필요합니다.");
+
+        const userSnapshot = await db.doc(`users/${uid}`).get();
+        const userData = userSnapshot.data() || {};
+        const comment = {
+            id: crypto.randomUUID(),
+            userId: uid,
+            userName: String(userData.customDisplayName || userData.displayName || "회원").slice(0, 80),
+            text,
+            timestamp: Date.now(),
+        };
+        const postRef = db.doc(`gallery_posts/${postId}`);
+        await db.runTransaction(async (tx) => {
+            const postSnapshot = await tx.get(postRef);
+            if (!postSnapshot.exists) {
+                throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
+            }
+            tx.update(postRef, {
+                comments: FieldValue.arrayUnion(comment),
+            });
+        });
+        return { comment };
+    }
+);
+
+exports.deleteGalleryComment = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const postId = String(request.data?.postId || "").trim();
+        const commentId = String(request.data?.commentId || "").trim();
+        const commentIndex = Number.parseInt(request.data?.commentIndex, 10);
+        if (!postId) throw new HttpsError("invalid-argument", "postId가 필요합니다.");
+
+        const postRef = db.doc(`gallery_posts/${postId}`);
+        return db.runTransaction(async (tx) => {
+            const snapshot = await tx.get(postRef);
+            if (!snapshot.exists) throw new HttpsError("not-found", "게시물을 찾을 수 없습니다.");
+            const comments = Array.isArray(snapshot.data()?.comments) ? snapshot.data().comments : [];
+            const targetIndex = commentId
+                ? comments.findIndex((comment) => comment?.id === commentId)
+                : commentIndex;
+            const target = comments[targetIndex];
+            if (!target || target.userId !== uid) {
+                throw new HttpsError("permission-denied", "본인 댓글만 삭제할 수 있습니다.");
+            }
+            const nextComments = comments.filter((_, index) => index !== targetIndex);
+            tx.set(postRef, { comments: nextComments }, { merge: true });
+            return { success: true, comments: nextComments };
         });
     }
 );
@@ -3272,12 +3914,15 @@ exports.processReferralSignup = onCall(
         const userRef = db.doc(`users/${uid}`);
         const referrerRef = db.doc(`users/${referrerUid}`);
         const friendshipRef = db.doc(`friendships/${buildFriendshipId(uid, referrerUid)}`);
+        const signupLedgerRoot = db.doc(`point_ledger/${uid}_bonuses`);
+        const signupLedgerEntry = signupLedgerRoot.collection("entries").doc("referral_signup");
 
         const outcome = await db.runTransaction(async (tx) => {
-            const [userSnap, referrerSnap, friendshipSnap] = await Promise.all([
+            const [userSnap, referrerSnap, friendshipSnap, signupLedgerSnap] = await Promise.all([
                 tx.get(userRef),
                 tx.get(referrerRef),
                 tx.get(friendshipRef),
+                tx.get(signupLedgerEntry),
             ]);
 
             if (!userSnap.exists) {
@@ -3286,7 +3931,7 @@ exports.processReferralSignup = onCall(
             if (!referrerSnap.exists) {
                 throw new HttpsError("not-found", "초대한 사용자를 찾을 수 없습니다.");
             }
-            if (userSnap.data()?.referredBy) {
+            if (userSnap.data()?.referredBy || signupLedgerSnap.exists) {
                 throw new HttpsError("already-exists", "이미 초대 코드를 사용했습니다");
             }
 
@@ -3300,6 +3945,21 @@ exports.processReferralSignup = onCall(
             tx.set(userRef, {
                 referredBy: referrerUid,
                 coins: FieldValue.increment(200),
+            }, { merge: true });
+            tx.create(signupLedgerEntry, {
+                userId: uid,
+                category: "referral_signup",
+                points: 200,
+                referrerUserId: referrerUid,
+                source: "referral_signup",
+                credited: true,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+            tx.set(signupLedgerRoot, {
+                userId: uid,
+                type: "bonus",
+                version: 2,
+                lastSettledAt: FieldValue.serverTimestamp(),
             }, { merge: true });
 
             const { friendshipId } = upsertActiveFriendship(tx, {
@@ -3329,6 +3989,7 @@ exports.processReferralSignup = onCall(
                 bonus: 200,
                 inviterUid: referrerUid,
                 inviterName: referrerName,
+                friendshipId,
                 friendshipStatus: friendshipData?.status === "active" ? "already_active" : "connected",
             };
         });
@@ -3345,6 +4006,66 @@ exports.processReferralSignup = onCall(
     }
 );
 
+async function settleWelcomeBonus(uid) {
+    const userRef = db.doc(`users/${uid}`);
+    const ledgerRoot = db.doc(`point_ledger/${uid}_bonuses`);
+    const ledgerEntry = ledgerRoot.collection("entries").doc("welcome_bonus");
+    const result = await db.runTransaction(async (tx) => {
+            const [userSnap, ledgerSnap] = await Promise.all([
+                tx.get(userRef),
+                tx.get(ledgerEntry),
+            ]);
+            if (!userSnap.exists) {
+                throw new HttpsError("not-found", "사용자 정보를 찾을 수 없습니다.");
+            }
+
+            const userData = userSnap.data() || {};
+            if (ledgerSnap.exists || userData.welcomeBonusGiven === true) {
+                // 구 버전에서 이미 지급된 회원도 원장에 한 번만 이관하되 재지급하지 않는다.
+                if (!ledgerSnap.exists) {
+                    tx.create(ledgerEntry, {
+                        userId: uid,
+                        category: "welcome",
+                        points: 200,
+                        source: "legacy_welcome_bonus",
+                        credited: false,
+                        migratedAt: FieldValue.serverTimestamp(),
+                    });
+                    tx.set(ledgerRoot, {
+                        userId: uid,
+                        type: "bonus",
+                        version: 2,
+                        lastSettledAt: FieldValue.serverTimestamp(),
+                    }, { merge: true });
+                }
+                return { success: false, reason: "already_given" };
+            }
+
+            tx.create(ledgerEntry, {
+                userId: uid,
+                category: "welcome",
+                points: 200,
+                source: "welcome_bonus",
+                credited: true,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+            tx.set(ledgerRoot, {
+                userId: uid,
+                type: "bonus",
+                version: 2,
+                lastSettledAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            tx.set(userRef, {
+                welcomeBonusGiven: true,
+                coins: FieldValue.increment(200)
+            }, { merge: true });
+            return { success: true, bonus: 200 };
+    });
+
+    if (result.success) console.log(`welcome bonus +200P: ${uid}`);
+    return result;
+}
+
 /**
  * 가입 축하 보너스 +200P (온보딩 완료 시 1회만 지급)
  */
@@ -3353,22 +4074,7 @@ exports.awardWelcomeBonus = onCall(
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인 필요");
-
-        const userRef = db.doc(`users/${uid}`);
-        const userSnap = await userRef.get();
-
-        // 이미 지급된 경우 중복 방지
-        if (userSnap.exists && userSnap.data().welcomeBonusGiven) {
-            return { success: false, reason: "already_given" };
-        }
-
-        await userRef.set({
-            welcomeBonusGiven: true,
-            coins: FieldValue.increment(200)
-        }, { merge: true });
-
-        console.log(`welcome bonus +200P: ${uid}`);
-        return { success: true, bonus: 200 };
+        return settleWelcomeBonus(uid);
     }
 );
 
@@ -3996,26 +4702,15 @@ exports.grantWelcomeBonusToAll = onCall(
         const adminDoc = await db.doc(`admins/${uid}`).get();
         if (!adminDoc.exists) throw new HttpsError("permission-denied", "관리자 권한 필요");
 
-        // welcomeBonusGiven 없는 유저 전체 조회
-        const usersSnap = await db.collection("users")
-            .where("welcomeBonusGiven", "==", null)
-            .get()
-            .catch(() => null);
-
         // where != null은 존재하지 않는 필드를 못 잡으므로 전체 조회 후 필터
         const allSnap = await db.collection("users").get();
         const targets = allSnap.docs.filter(d => !d.data().welcomeBonusGiven);
 
         if (targets.length === 0) return { grantedCount: 0, message: "모든 회원이 이미 지급받았습니다" };
 
-        const results = await Promise.allSettled(targets.map(d =>
-            db.doc(`users/${d.id}`).set({
-                welcomeBonusGiven: true,
-                coins: FieldValue.increment(200)
-            }, { merge: true })
-        ));
+        const results = await Promise.allSettled(targets.map(d => settleWelcomeBonus(d.id)));
 
-        const grantedCount = results.filter(r => r.status === "fulfilled").length;
+        const grantedCount = results.filter(r => r.status === "fulfilled" && r.value?.success).length;
         console.log(`grantWelcomeBonusToAll: ${grantedCount}/${targets.length} 지급 완료`);
         return { grantedCount, totalTargets: targets.length };
     }
@@ -4241,6 +4936,82 @@ async function fetchChallengeDailyLogsByDate(uid, challenge = {}) {
         return acc;
     }, {});
 }
+
+async function buildAuthoritativeChallengeProgress(uid, userData = {}) {
+    const activeChallenges = { ...(userData.activeChallenges || {}) };
+    if (userData.activeChallenge && typeof userData.activeChallenge === "object") {
+        const legacyId = CHALLENGE_ID_MAP[userData.activeChallenge.challengeId]
+            || userData.activeChallenge.challengeId;
+        const legacyTier = CHALLENGE_DEFS[legacyId]?.tier || userData.activeChallenge.tier || "master";
+        if (!activeChallenges[legacyTier]) activeChallenges[legacyTier] = userData.activeChallenge;
+    }
+
+    const projections = {};
+    await Promise.all(Object.entries(activeChallenges).map(async ([tier, stored]) => {
+        if (!CHALLENGE_TIER_INDEX.hasOwnProperty(tier) || !stored || typeof stored !== "object") return;
+        if (!["ongoing", "claimable", "expired"].includes(String(stored.status || "ongoing"))) return;
+        const normalized = normalizeChallengeCompletion(stored);
+        const dailyLogsByDate = await fetchChallengeDailyLogsByDate(uid, normalized);
+        const reconciled = reconcileChallengeCompletionWithDailyLogs(normalized, dailyLogsByDate, tier);
+        const totalDays = Math.max(1, Number(reconciled.totalDays || CHALLENGE_DEFS[
+            CHALLENGE_ID_MAP[reconciled.challengeId] || reconciled.challengeId
+        ]?.duration || 1));
+        const completedDays = getChallengeCompletedDays(reconciled);
+        let status = String(stored.status || "ongoing");
+        if (canSettleChallengeAsClaimable(reconciled, completedDays, totalDays)) {
+            status = "claimable";
+        } else if (isChallengePastEnd(reconciled)) {
+            status = "expired";
+        } else if (status === "expired") {
+            status = "ongoing";
+        }
+        projections[tier] = {
+            ...reconciled,
+            tier,
+            totalDays,
+            completedDays,
+            status,
+        };
+    }));
+    return projections;
+}
+
+exports.refreshChallengeProgress = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        const userRef = db.doc(`users/${uid}`);
+        const initialSnapshot = await userRef.get();
+        if (!initialSnapshot.exists) throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+        const sanitizedUserData = await sanitizeUserChallengesForActiveChain(userRef, initialSnapshot.data() || {});
+        const projections = await buildAuthoritativeChallengeProgress(uid, sanitizedUserData);
+
+        const activeChallenges = await db.runTransaction(async (tx) => {
+            const currentSnapshot = await tx.get(userRef);
+            if (!currentSnapshot.exists) throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+            const currentData = currentSnapshot.data() || {};
+            const next = { ...(currentData.activeChallenges || {}) };
+            Object.entries(projections).forEach(([tier, projected]) => {
+                const current = next[tier];
+                const legacy = currentData.activeChallenge;
+                const source = current || legacy;
+                if (!source) return;
+                const sameChallenge = String(source.challengeId || "") === String(projected.challengeId || "")
+                    && String(source.startDate || "") === String(projected.startDate || "");
+                if (!sameChallenge) return;
+                next[tier] = projected;
+            });
+            tx.set(userRef, {
+                activeChallenges: next,
+                activeChallenge: FieldValue.delete(),
+            }, { merge: true });
+            return next;
+        });
+
+        return { success: true, activeChallenges };
+    }
+);
 
 function buildChallengeBonusPolicy({ phase = 1, mse30 = 0 } = {}) {
     const safePhase = Math.max(1, Number(phase) || 1);
@@ -4990,6 +5761,7 @@ exports.settleChallengeFailure = onCall(
         }
 
         const { tier } = request.data;
+        const forceForfeit = request.data?.forceForfeit === true;
         if (!tier || !['mini', 'weekly', 'master'].includes(tier)) {
             throw new HttpsError("invalid-argument", "유효하지 않은 챌린지 티어입니다.");
         }
@@ -5019,7 +5791,7 @@ exports.settleChallengeFailure = onCall(
         const successRate = completedDays / totalDays;
 
         const canClaimInsteadOfFailing = canSettleChallengeAsClaimable(challenge, completedDays, totalDays);
-        if (canClaimInsteadOfFailing || (challenge.status === "claimable" && isChallengePastEnd(challenge))) {
+        if (!forceForfeit && (canClaimInsteadOfFailing || (challenge.status === "claimable" && isChallengePastEnd(challenge)))) {
             const claimableChallenge = {
                 ...challenge,
                 status: "claimable"
@@ -6416,6 +7188,75 @@ async function getTodayLoggedUserIds(todayKST) {
     return new Set(snap.docs.map(d => d.data().userId).filter(Boolean));
 }
 
+async function reserveNotificationDeliveries(targets = [], {
+    dateStr = getTodayKST(),
+    kind = "habit-reminder",
+} = {}) {
+    const uniqueUserIds = [...new Set((targets || []).map((target) => target?.uid).filter(Boolean))];
+    const decisions = await Promise.all(uniqueUserIds.map(async (uid) => {
+        const ledgerId = buildNotificationLedgerId(uid, dateStr, kind);
+        const ledgerRef = db.doc(`notification_delivery_ledger/${ledgerId}`);
+        try {
+            return await db.runTransaction(async (tx) => {
+                const snapshot = await tx.get(ledgerRef);
+                if (snapshot.exists) return false;
+                tx.create(ledgerRef, {
+                    userId: uid,
+                    date: dateStr,
+                    kind,
+                    status: "reserved",
+                    reservedAt: FieldValue.serverTimestamp(),
+                });
+                return true;
+            });
+        } catch (error) {
+            console.warn(`notification ledger reservation skipped (${kind}/${uid}):`, error.message);
+            return false;
+        }
+    }));
+    const reservedUserIds = new Set(uniqueUserIds.filter((_, index) => decisions[index] === true));
+    return (targets || []).filter((target) => reservedUserIds.has(target?.uid));
+}
+
+async function getPersonalizedReminderUsers(currentHourKst) {
+    const snapshot = await db.collection("users")
+        .where("settings.reminderPreference.enabled", "==", true)
+        .select("settings")
+        .get();
+    return snapshot.docs
+        .map((docSnapshot) => ({
+            uid: docSnapshot.id,
+            preference: normalizeReminderPreference(docSnapshot.data() || {}),
+        }))
+        .filter(({ preference }) => preference.enabled && preference.hourKst === currentHourKst);
+}
+
+function buildPersonalizedReminderPayload(locale, category) {
+    const target = getReminderTarget(category);
+    const url = buildLocalizedAppPath(locale, target.tab, { focus: target.focus, source: "habit-reminder" });
+    const english = normalizeLocale(locale) === "en";
+    const copy = {
+        diet: english
+            ? ["Ready for today’s meal record?", "One food photo is enough to keep the habit going."]
+            : ["오늘 식단을 기록할 시간이에요", "음식 사진 한 장이면 건강 습관을 이어갈 수 있어요."],
+        exercise: english
+            ? ["Ready for today’s movement record?", "Add your steps or one workout photo to keep going."]
+            : ["오늘 움직임을 기록할 시간이에요", "걸음수나 운동 사진 하나로 흐름을 이어가세요."],
+        sleep: english
+            ? ["Ready for today’s mind record?", "A sleep capture or five-minute meditation is enough."]
+            : ["오늘 마음을 돌볼 시간이에요", "수면 캡처나 5분 명상 하나면 충분해요."],
+    }[category] || null;
+    return {
+        title: copy?.[0] || (english ? "Ready for today’s record?" : "오늘 기록할 시간이에요"),
+        body: copy?.[1] || (english ? "A small record keeps the habit going." : "작은 기록 하나로 습관을 이어가세요."),
+        tag: "habit-reminder",
+        url,
+        actions: buildNotificationActions([
+            { action: "record-now", title: english ? "Record now" : "지금 기록", url }
+        ]),
+    };
+}
+
 const DIET_PROGRAM_METHOD_IDS = Object.freeze({
     NONE: "none",
     INTERMITTENT_FASTING: "intermittent_fasting"
@@ -6501,14 +7342,23 @@ async function sendDietProgramReminder({
         return 0;
     }
 
-    const targets = await collectPushTargetsForUsers(targetUserIds);
+    let targets = await collectPushTargetsForUsers(targetUserIds);
     if (targets.length === 0) {
         console.log(`${tag}: no push targets`);
         return 0;
     }
 
+    targets = await reserveNotificationDeliveries(targets, {
+        dateStr: todayKST,
+        kind: `diet-program-${tag}`,
+    });
+    if (targets.length === 0) {
+        console.log(`${tag}: already reserved today`);
+        return 0;
+    }
+
     await sendLocalizedMulticast(targets, (locale) => {
-        const reminderUrl = buildLocalizedAppPath(locale, "diet", { focus });
+        const reminderUrl = buildLocalizedAppPath(locale, "diet", { focus, source: tag });
         const en = normalizeLocale(locale) === "en";
         return {
             title: en ? (titleEn || title) : title,
@@ -6737,43 +7587,44 @@ exports.sendReEngagementEmailsV2 = onCall(
     }
 );
 
+exports.refreshGuestActivity = onSchedule(
+    { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
+    async () => {
+        const payload = await updateGuestActivity({ db, FieldValue });
+        console.log("refreshGuestActivity:", {
+            windowDays: payload.windowDays,
+            recordCountBucket: payload.recordCountBucket,
+            activeUserCountBucket: payload.activeUserCountBucket,
+        });
+    }
+);
+
 exports.sendDailyReminder = onSchedule(
-    { schedule: "0 11 * * *", region: "asia-northeast3", timeZone: "UTC" },
+    { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
     async () => {
         const todayKST = getTodayKST();
+        const currentHourKst = getKstHour();
         const loggedIds = await getTodayLoggedUserIds(todayKST);
+        const reminderUsers = (await getPersonalizedReminderUsers(currentHourKst))
+            .filter(({ uid }) => !loggedIds.has(uid));
+        let sentTargetCount = 0;
 
-        const targets = (await collectAllPushTargets())
-            .filter((target) => !loggedIds.has(target.uid));
+        for (const category of ["diet", "exercise", "sleep"]) {
+            const userIds = reminderUsers
+                .filter(({ preference }) => preference.category === category)
+                .map(({ uid }) => uid);
+            if (userIds.length === 0) continue;
+            let targets = await collectPushTargetsForUsers(userIds);
+            targets = await reserveNotificationDeliveries(targets, {
+                dateStr: todayKST,
+                kind: "habit-reminder",
+            });
+            if (targets.length === 0) continue;
+            await sendLocalizedMulticast(targets, (locale) => buildPersonalizedReminderPayload(locale, category));
+            sentTargetCount += targets.length;
+        }
 
-        console.log(`sendDailyReminder: ${targets.length} targets / ${loggedIds.size} logged today`);
-        await sendLocalizedMulticast(targets, (locale) => {
-            const reminderUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload" });
-            if (normalizeLocale(locale) === "en") {
-                return {
-                    title: "Ready to start today’s record?",
-                    body: "Upload one food photo and today’s routine begins.",
-                    tag: "daily-reminder",
-                    url: reminderUrl,
-                    actions: buildNotificationActions([
-                        { action: "record-now", title: "Record now", url: reminderUrl }
-                    ])
-                };
-            }
-            return {
-                title: "오늘 기록을 시작해 볼까요?",
-                body: "식단 사진 한 장부터 올리면 오늘 루틴이 바로 시작돼요.",
-                tag: "daily-reminder",
-                url: reminderUrl,
-                actions: buildNotificationActions([
-                    { action: "record-now", title: "지금 기록", url: reminderUrl }
-                ])
-            };
-        }); /*
-            "🌞 오늘 건강 기록하셨나요?",
-            "식단·운동·수면 기록으로 건강 습관을 이어가세요!",
-            "daily-reminder"
-        ); */
+        console.log(`sendDailyReminder: ${sentTargetCount} targets at ${currentHourKst}:00 KST / ${loggedIds.size} logged today`);
     }
 );
 
@@ -6798,10 +7649,14 @@ exports.sendStreakAlert = onSchedule(
             }
         });
 
-        const targets = await collectPushTargetsForUsers(eligibleUserIds);
+        let targets = await collectPushTargetsForUsers(eligibleUserIds);
+        targets = await reserveNotificationDeliveries(targets, {
+            dateStr: todayKST,
+            kind: "habit-reminder",
+        });
         console.log(`sendStreakAlert: ${targets.length} targets`);
         await sendLocalizedMulticast(targets, (locale) => {
-            const streakUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload" });
+            const streakUrl = buildLocalizedAppPath(locale, "diet", { focus: "upload", source: "streak-alert" });
             if (normalizeLocale(locale) === "en") {
                 return {
                     title: "Time to keep your streak alive",

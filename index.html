@@ -114,7 +114,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=227">
+    <link rel="stylesheet" href="styles.css?v=228">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=228">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -712,7 +713,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=227"></script>
+    <script src="js/webview-detect.js?v=228"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -872,9 +873,9 @@
                     </button>
                 </div>
             </div>
-            <button class="guest-btn"
-                onclick="document.getElementById('guest-welcome-modal').style.display='flex';"
-                aria-label="게스트로 갤러리 둘러보기">👀 로그인 없이 갤러리 둘러보기</button>
+            <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" type="button"
+                onclick="startGuestDemo('gallery')"
+                aria-label="로그인 없이 해빛스쿨 앱 체험하기">🌱 로그인 없이 앱 체험하기</button>
             <a href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
                 💬 카카오톡 채널 문의
@@ -885,20 +886,6 @@
                 <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
             </div>
             <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">로그인 시 <a href="/terms.html" target="_blank" style="color:#bbb;">이용약관</a> 및 <a href="/privacy.html" target="_blank" style="color:#bbb;">개인정보처리방침</a>에 동의하는 것으로 간주합니다.</p>
-        </div>
-
-        <!-- 게스트 환영 모달 -->
-        <div id="guest-welcome-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1100; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
-            <div style="background:#fff; border-radius:20px; padding:32px 24px; max-width:340px; width:100%; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.2); animation:modalFadeIn 0.25s ease;">
-                <div style="font-size:48px; margin-bottom:12px;">🌱</div>
-                <h2 style="font-size:20px; font-weight:800; color:#4E342E; margin-bottom:8px;">해빛스쿨에 오신 걸 환영합니다!</h2>
-                <p style="font-size:14px; color:#666; line-height:1.6; margin-bottom:20px;">식단·운동·체중을 기록하고<br>다른 회원들과 함께 건강한 습관을 만들어요 💪</p>
-                <div style="background:#FFF8E1; border-radius:12px; padding:14px 16px; margin-bottom:20px; text-align:left;">
-                    <p style="font-size:13px; color:#5D4037; line-height:1.6; margin:0;">✅ 갤러리에서 다른 회원 기록 구경<br>✅ 로그인하면 나만의 기록 시작<br>✅ 매일 인증하면 포인트 적립</p>
-                </div>
-                <button onclick="document.getElementById('guest-welcome-modal').style.display='none'; document.getElementById('login-modal').style.display='none'; window._isGuestMode=true; openTab('gallery', false);" style="width:100%; padding:14px; background:linear-gradient(135deg, #FF8C00, #FF6D00); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;">👀 갤러리 둘러보기</button>
-                <button onclick="document.getElementById('guest-welcome-modal').style.display='none';" style="width:100%; padding:12px; background:none; border:1px solid #ddd; border-radius:12px; font-size:14px; color:#888; cursor:pointer;">돌아가기</button>
-            </div>
         </div>
 
         <div id="main-app">
@@ -946,7 +933,7 @@
                                     <h2 class="dashboard-hero-title" id="dashboard-focus-title">하나씩 기록</h2>
                                 </div>
                                 <div class="dashboard-hero-topline-actions">
-                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill">0/65</span>
+                                    <span class="dashboard-hero-pill" id="dashboard-hero-pill" aria-label="풀 루틴 기준 65포인트 중 0포인트">0/65P</span>
                                     <button type="button" id="dashboard-hero-toggle" class="dashboard-panel-toggle" aria-expanded="true" aria-controls="dashboard-hero-body-shell" onclick="toggleDashboardHero()">접기</button>
                                 </div>
                             </div>
@@ -1475,6 +1462,22 @@
                         <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
                         <div class="wallet-minichart-bars" id="minichart-bars"></div>
                     </div>
+                </div>
+
+                <div class="card asset-reward-goal-card" id="asset-reward-goal-card">
+                    <div class="asset-reward-goal-kicker">가장 가까운 보상</div>
+                    <div class="asset-reward-goal-head">
+                        <div>
+                            <h3>🎟️ 첫 2,000P 쿠폰</h3>
+                            <p id="asset-reward-goal-copy">현재 포인트를 확인하고 있어요.</p>
+                        </div>
+                        <strong id="asset-reward-remaining">2,000P 남음</strong>
+                    </div>
+                    <div class="asset-reward-progress" role="progressbar" aria-label="첫 쿠폰까지 포인트" aria-valuemin="0" aria-valuemax="2000" aria-valuenow="0">
+                        <div id="asset-reward-progress-fill"></div>
+                    </div>
+                    <div class="asset-reward-estimate" id="asset-reward-estimate" hidden></div>
+                    <button type="button" class="asset-reward-market-btn" onclick="scrollToRewardMarket()">해빛 마켓 보기</button>
                 </div>
 
                 <!-- 건강 습관 챌린지 섹션 -->
@@ -2524,24 +2527,61 @@
         </div>
     </div>
 
-    <!-- 온보딩 모달 (첫 로그인 시) -->
-    <div id="onboarding-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content onboarding-modal-content">
+    <!-- 첫 로그인: 설명을 읽는 대신 시작할 습관 하나를 고르고 실제 입력으로 이동 -->
+    <div id="onboarding-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+        <div class="modal-content onboarding-modal-content onboarding-habit-sheet">
             <div id="ob-step-1" class="onboarding-step">
-                <div style="font-size:48px; margin-bottom:16px;">🌞</div>
-                <h3 style="color:var(--primary-color); margin:0 0 12px; font-size:20px;">해빛스쿨에 오신 걸 환영합니다!</h3>
-                <p style="font-size:14px; color:#666; margin-bottom:20px; line-height:1.6;">매일 식단·운동·수면을 사진으로 기록하며<br>건강한 습관을 만들어가는 습관학교입니다.</p>
-                <div class="ob-start-tips">
-                    <div class="ob-tip">🥗 식단 사진을 올리면 <strong>AI가 칼로리·영양소</strong>를 분석해요</div>
-                    <div class="ob-tip">🏃 운동과 수면도 사진으로 간편하게 기록해요</div>
-                    <div class="ob-tip">✨ 갤러리에서 다른 사용자들과 함께 응원해요</div>
+                <div class="onboarding-habit-icon" aria-hidden="true">🌞</div>
+                <div class="onboarding-kicker">첫 기록 준비</div>
+                <h3 id="onboarding-title">시작할 습관 하나를 선택해 주세요</h3>
+                <p class="onboarding-habit-desc">선택한 기록 화면으로 바로 이동합니다. 나머지는 나중에 천천히 추가해도 괜찮아요.</p>
+                <div class="onboarding-habit-grid" role="group" aria-label="첫 습관 선택">
+                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="diet" aria-pressed="false" onclick="selectOnboardingHabit('diet')">
+                        <span aria-hidden="true">🥗</span><strong>식단 사진</strong><small>사진 한 장부터</small>
+                    </button>
+                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="exercise" aria-pressed="false" onclick="selectOnboardingHabit('exercise')">
+                        <span aria-hidden="true">🏃</span><strong>운동</strong><small>걸음수나 운동 미디어</small>
+                    </button>
+                    <button type="button" class="onboarding-habit-choice" data-onboarding-habit="sleep" aria-pressed="false" onclick="selectOnboardingHabit('sleep')">
+                        <span aria-hidden="true">🌙</span><strong>마음</strong><small>수면·명상·감사</small>
+                    </button>
                 </div>
-                <div style="background:linear-gradient(135deg,#fff8e1,#fff3cd);border:1.5px solid #ffc107;border-radius:12px;padding:14px 16px;margin-top:16px;text-align:center;">
-                    <div style="font-size:22px;margin-bottom:4px;">🎁</div>
-                    <div style="font-size:15px;font-weight:700;color:#e65100;">가입 축하 포인트 200P 지급!</div>
-                    <div style="font-size:13px;color:#795548;margin-top:4px;">건강한 첫 걸음을 응원합니다 🌱</div>
+                <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong>가입 선물 200P</strong><small>첫 기록 포인트와 별도로 지급돼요.</small></div>
+                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="completeOnboarding()" disabled>선택한 습관으로 시작하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 첫 기록 직후: 행동 포인트·가입 선물·가까운 보상·내일 약속을 한 화면에 연결 -->
+    <div id="first-record-result-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="first-record-result-title">
+        <div class="modal-content first-record-result-sheet">
+            <div class="first-record-result-kicker">첫 기록 완료</div>
+            <h3 id="first-record-result-title">오늘의 작은 습관이 저장됐어요</h3>
+            <dl class="first-record-result-list">
+                <div><dt>이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
+                <div><dt>가입 선물</dt><dd>+200P</dd></div>
+                <div><dt>현재 포인트</dt><dd id="first-record-current-points">0P</dd></div>
+                <div><dt>첫 2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
+            </dl>
+            <div class="first-record-next-actions">
+                <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()">오늘은 마치기</button>
+                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()">하나 더 기록</button>
+            </div>
+            <div class="first-record-reminder-box">
+                <strong>내일 기록을 잊지 않게 알려드릴까요?</strong>
+                <div class="first-record-reminder-fields">
+                    <label>습관
+                        <select id="first-record-reminder-category">
+                            <option value="diet">식단</option>
+                            <option value="exercise">운동</option>
+                            <option value="sleep">마음</option>
+                        </select>
+                    </label>
+                    <label>시간
+                        <input type="time" id="first-record-reminder-time" value="20:00">
+                    </label>
                 </div>
-                <button class="submit-btn" style="margin-top:16px; font-size:16px; width:100%;" onclick="completeOnboarding()">🌞 시작하기!</button>
+                <button type="button" class="first-record-reminder-btn" onclick="enableFirstRecordReminder()">내일 이 시간에 알려주세요</button>
             </div>
         </div>
     </div>
@@ -2568,13 +2608,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=227"></script>
-    <script type="module" src="js/main.js?v=227"></script>
-    <script type="module" src="js/diet-analysis.js?v=227"></script>
-    <script type="module" src="js/metabolic-score.js?v=227"></script>
+    <script type="module" src="js/app.js?v=228"></script>
+    <script type="module" src="js/main.js?v=228"></script>
+    <script type="module" src="js/diet-analysis.js?v=228"></script>
+    <script type="module" src="js/metabolic-score.js?v=228"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=227"></script>
+    <script src="js/pwa-install.js?v=228"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
