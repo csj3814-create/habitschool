@@ -1683,6 +1683,11 @@ async function assertIsolatedChallengeStake(wallet, userWalletAddress, expectedS
 
     const actualRaw = await contract.challengeStakes(userWalletAddress);
     if (actualRaw !== expectedRaw) {
+        // actualRaw === 0 → 이 지갑에 잠긴 예치가 없음(원금이 이미 반환/정산된 상태).
+        // 이는 "티어 섞임"이 아니라 이미 반환된 경우다. 여기서 막지 않고 통과시키면,
+        // 뒤이은 resolveChallengeStake가 NoStakeFound로 되돌아오고, 기존 핸들러가
+        // 원금 재지급 없이(이중지급 없음) 보너스만 정상 정산한다.
+        if (actualRaw === 0n) return;
         console.error("Challenge stake isolation mismatch", {
             userWalletAddress,
             preferredMode,
