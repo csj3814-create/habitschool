@@ -46,7 +46,9 @@ describe('asset HBT visibility and information architecture', () => {
 
         expect(iaSection).toContain("const convertCard = section.querySelector('.wallet-convert-card');");
         expect(iaSection).toContain('assetCard.after(convertCard);');
-        expect(iaSection).toContain("summary.textContent = '챌린지 · 채굴 정보 · 지갑 · 거래 기록 더 보기';");
+        expect(iaSection).toContain("summary.textContent = '채굴 정보 · 지갑 · 거래 기록 더 보기';");
+        // 건강 습관 챌린지는 접힘 밖에 상시 노출(couponCard 바로 아래).
+        expect(iaSection).toContain('if (challengeCard) couponCard.after(challengeCard);');
         expect(iaSection).not.toContain('asset-advanced-hbt');
         expect(iaSection).not.toContain("body.appendChild(section.querySelector('.wallet-convert-card'))");
         expect(iaSection).not.toContain("section.querySelector('.wallet-convert-card'),\n        section.querySelector('.wallet-halving-card')");
