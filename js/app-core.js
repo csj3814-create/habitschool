@@ -13092,14 +13092,14 @@ function updateGalleryPrimaryAction() {
 
     helperEl.style.display = 'block';
     helperEl.textContent = canShare
-        ? '공유할 기록과 공개 범위를 확인해 주세요.'
-        : '오늘 기록 하나를 저장하면 내 공유 카드가 준비돼요.';
-    saveBtn.dataset.mode = canShare ? 'gallery-share' : 'gallery-record';
+        ? '기록 카드 준비 완료. 단톡방에 공유해요.'
+        : '단톡방에서 오늘 기록 이어가기';
+    saveBtn.dataset.mode = 'chat';
     saveBtn.disabled = false;
-    saveBtn.innerText = canShare ? '내 기록 공유하기' : '오늘 기록하기';
-    saveBtn.style.background = '';
-    saveBtn.style.color = '';
-    saveBtn.style.boxShadow = '';
+    saveBtn.innerText = '💬 해빛스쿨 단톡방 참여하기';
+    saveBtn.style.background = '#FEE500';
+    saveBtn.style.color = '#3C1E1E';
+    saveBtn.style.boxShadow = '0 8px 18px rgba(254,229,0,0.28)';
 }
 
 function handleMissionPrimaryAction() {
