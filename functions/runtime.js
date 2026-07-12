@@ -2394,6 +2394,74 @@ exports.adminResettleDailyLogs = onCall(
     }
 );
 
+// 관리자: 과거 daily_logs를 gallery_posts로 투영하는 백필. syncGalleryPostProjection
+// 트리거는 '투영 지문이 바뀔 때만' 동작하므로, 문서를 단순 터치해서는 이미 존재하던
+// 옛 기록이 투영되지 않는다(지문 불변 → 스킵). 여기서는 투영 함수를 직접 호출해
+// 지문 가드를 우회하고 강제 투영한다(공유 설정에 맞는 것만 gallery_posts에 기록됨).
+exports.adminBackfillGalleryPosts = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 2,
+        timeoutSeconds: 540
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const todayStr = getCurrentKstDateString();
+        const dateFrom = String(request.data?.dateFrom || addDaysToKstDateString(todayStr, -1)).trim();
+        const dateTo = String(request.data?.dateTo || todayStr).trim();
+        const maxDocs = Math.max(1, Math.min(50000, Number(request.data?.max) || 20000));
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+            throw new HttpsError("invalid-argument", "날짜 형식이 올바르지 않습니다(YYYY-MM-DD).");
+        }
+
+        const projectId = String(process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "").trim();
+        const allowedStorageBuckets = [...new Set([
+            admin.storage().bucket().name,
+            projectId ? `${projectId}.firebasestorage.app` : "",
+            projectId ? `${projectId}.appspot.com` : "",
+        ].filter(Boolean))];
+
+        const pageSize = 200;
+        const deadline = Date.now() + 480_000;
+        let processed = 0;
+        let projected = 0;
+        let cursor = null;
+        let complete = false;
+        while (processed < maxDocs && Date.now() < deadline) {
+            let q = db.collection("daily_logs")
+                .where("date", ">=", dateFrom)
+                .where("date", "<=", dateTo)
+                .orderBy("date")
+                .limit(pageSize);
+            if (cursor) q = q.startAfter(cursor);
+            const snap = await q.get();
+            if (snap.empty) { complete = true; break; }
+
+            for (const docSnap of snap.docs) {
+                try {
+                    const payload = await syncGalleryPostFromDailyLog({
+                        db,
+                        FieldValue,
+                        logId: docSnap.id,
+                        before: null,
+                        after: docSnap.data(),
+                        allowedStorageBuckets
+                    });
+                    if (payload) projected += 1;
+                } catch (projectErr) {
+                    console.warn(`gallery backfill skip ${docSnap.id}: ${projectErr?.message || projectErr}`);
+                }
+                processed += 1;
+            }
+            cursor = snap.docs[snap.docs.length - 1];
+            if (snap.size < pageSize) { complete = true; break; }
+        }
+
+        console.log(`adminBackfillGalleryPosts: processed ${processed}, projected ${projected} [${dateFrom}~${dateTo}] complete=${complete} by ${adminUid}`);
+        return { success: true, processed, projected, dateFrom, dateTo, complete };
+    }
+);
+
 exports.cleanupExpiredRewardCoupons = onSchedule(
     {
         region: "asia-northeast3",

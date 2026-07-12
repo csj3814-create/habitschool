@@ -820,6 +820,19 @@
             alert(`재정산 실패: ${e.message || e}`);
         }
     };
+    // 과거 daily_logs를 gallery_posts로 강제 투영(갤러리 복원). 콘솔에서 호출:
+    //   adminBackfillGalleryPosts('2026-06-13','2026-07-13')
+    window.adminBackfillGalleryPosts = async function(dateFrom, dateTo, max) {
+        try {
+            const res = await httpsCallable(fns, 'adminBackfillGalleryPosts')({ dateFrom, dateTo, max });
+            console.log('[adminBackfillGalleryPosts]', res.data);
+            alert(`갤러리 투영: ${res.data?.projected}건 투영 / ${res.data?.processed}건 처리 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.complete ? '' : '\n아직 남음 — 같은 명령을 한 번 더 실행하세요.'}`);
+            return res.data;
+        } catch (e) {
+            console.error('[adminBackfillGalleryPosts] 실패:', e);
+            alert(`갤러리 투영 실패: ${e.message || e}`);
+        }
+    };
     window.adminSettleStuckChallenge = async function(tier, uid) {
         try {
             const res = await httpsCallable(fns, 'adminSettleStuckChallenge')({ tier, uid: uid || undefined });
