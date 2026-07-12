@@ -2262,6 +2262,77 @@ exports.adminRefundRewardCoupon = onCall(
     }
 );
 
+// 관리자: 온체인 예치가 남아 있지 않은데 앱에는 '수령 대기'로 갇힌 챌린지를 정리한다.
+// (구 스테이킹 컨트랙트가 지갑당 예치를 합산 저장해, 한 티어를 정산하면 다른 티어 예치도
+//  함께 반환돼 버리는 격리 결함의 뒤처리.) 자금 이동/민팅 없이 앱 레코드만 정리하되,
+// 반드시 온체인 예치가 0인지 재확인한 뒤에만 지운다(잠긴 자금 스트랜딩 방지).
+exports.adminSettleStuckChallenge = onCall(
+    {
+        secrets: [SERVER_MINTER_KEY],
+        region: "asia-northeast3",
+        maxInstances: 3,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const targetUid = String(request.data?.uid || request.auth?.uid || "").trim();
+        const tier = String(request.data?.tier || "").trim();
+        if (!targetUid) throw new HttpsError("invalid-argument", "대상 사용자(uid)가 필요합니다.");
+        if (!["mini", "weekly", "master"].includes(tier)) {
+            throw new HttpsError("invalid-argument", "유효하지 않은 챌린지 티어입니다.");
+        }
+
+        const userRef = db.doc(`users/${targetUid}`);
+        const snap = await userRef.get();
+        if (!snap.exists) throw new HttpsError("not-found", "사용자를 찾을 수 없습니다.");
+        const userData = snap.data() || {};
+        const challenge = (userData.activeChallenges || {})[tier];
+        if (!challenge) return { success: true, alreadyClear: true, tier, uid: targetUid };
+
+        // 온체인 안전 가드: 이 티어(및 지갑)에 잠긴 예치가 조금이라도 있으면 정리 거부.
+        const walletAddress = String(challenge.stakeWalletAddress || "").trim() || getEffectiveWalletAddress(userData);
+        if (walletAddress) {
+            let lockedRaw = 0n;
+            try {
+                const { wallet } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                const staking = getStakingContract(wallet);
+                const tierIndex = CHALLENGE_TIER_INDEX[tier];
+                if (staking && Number.isInteger(tierIndex)) {
+                    const t = readTieredChallengeTuple(await staking.getChallenge(walletAddress, tierIndex));
+                    if (!t.settled) lockedRaw += t.stakedRaw;
+                    lockedRaw += BigInt(await staking.challengeStakes(walletAddress).catch(() => 0n));
+                }
+                lockedRaw += BigInt(await getHabitContract(wallet).challengeStakes(walletAddress).catch(() => 0n));
+            } catch (chainErr) {
+                throw new HttpsError("failed-precondition",
+                    "온체인 예치 확인에 실패해 정리를 중단했습니다: " + (chainErr?.shortMessage || chainErr?.message || "unknown"));
+            }
+            if (lockedRaw > 0n) {
+                throw new HttpsError("failed-precondition",
+                    `이 티어에 온체인 예치(${ethers.formatUnits(lockedRaw, HBT_DECIMALS)} HBT)가 아직 잠겨 있어 정리할 수 없습니다. 온체인 정산이 먼저 필요합니다.`);
+            }
+        }
+
+        // 잠긴 예치 없음(원금 이미 반환/미예치) → 앱 레코드만 정리. 자금 이동/민팅 없음.
+        const now = new Date();
+        await userRef.set({
+            activeChallenges: { [tier]: FieldValue.delete() },
+            stuckChallengeSettled: {
+                [tier]: {
+                    settledByAdminUid: adminUid,
+                    settledAt: now,
+                    clearedChallengeId: String(challenge.challengeId || challenge.id || ""),
+                    note: String(request.data?.note || "admin_settle_stuck_no_onchain_stake").slice(0, 300)
+                }
+            },
+            updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        console.log(`adminSettleStuckChallenge: cleared ${tier} for ${targetUid} by ${adminUid} (no on-chain stake)`);
+        return { success: true, cleared: true, tier, uid: targetUid };
+    }
+);
+
 exports.cleanupExpiredRewardCoupons = onSchedule(
     {
         region: "asia-northeast3",

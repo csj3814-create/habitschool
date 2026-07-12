@@ -805,6 +805,19 @@
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
     const adminRefundRewardCouponCallable = httpsCallable(fns, 'adminRefundRewardCoupon');
     const adminReconcileRewardCouponCallable = httpsCallable(fns, 'adminReconcileRewardCoupon');
+    // 온체인 예치가 0인데 앱에 '수령 대기'로 갇힌 챌린지 정리(자금 이동 없음). 콘솔에서 호출:
+    //   adminSettleStuckChallenge('master')  또는  adminSettleStuckChallenge('master', '<uid>')
+    window.adminSettleStuckChallenge = async function(tier, uid) {
+        try {
+            const res = await httpsCallable(fns, 'adminSettleStuckChallenge')({ tier, uid: uid || undefined });
+            console.log('[adminSettleStuckChallenge]', res.data);
+            alert(res.data?.cleared ? `정리 완료: ${tier}` : `이미 정리됨/대상 없음: ${tier}`);
+            return res.data;
+        } catch (e) {
+            console.error('[adminSettleStuckChallenge] 실패:', e);
+            alert(`정리 실패: ${e.message || e}`);
+        }
+    };
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
     function normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
