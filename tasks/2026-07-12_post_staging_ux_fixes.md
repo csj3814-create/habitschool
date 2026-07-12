@@ -15,9 +15,9 @@
 - [x] 식단 AI 분석 허용 필드·길이 제한 sanitizer 추가
 - [x] `shareSettings.hideDiet` 적용 후에만 `gallery_posts.dietAnalysis` 저장
 - [x] 갤러리 AI 분석 버튼·모달 회귀 테스트
-- [ ] 기존 staging projection 백필 재적용
+- [x] 기존 staging projection 백필 재적용
 - [x] 단위·전체 회귀·Emulator·브라우저 검증
-- [ ] 커밋·`origin/main` 푸시 및 staging 재배포
+- [x] 커밋·`origin/main` 푸시 및 staging 재배포
 
 ## 검증 기록
 
@@ -25,6 +25,10 @@
 - `npm run test:emulator`: Firestore privacy/economy 7개 통과
 - esbuild 브라우저 번들, Functions/백필 스크립트 문법, 영문 동기화, mainnet config 검사 통과
 - 390x844 로컬 브라우저에서 v229 로드, 첫 기록 CTA/알림 제거 DOM, 모바일 가로 넘침 없음 확인
+- `4f9b6a0`을 `origin/main`에 푸시하고 staging `syncGalleryPostProjection` → 최근 30일 백필 → Hosting 순서로 배포
+- 백필: 13건 스캔, 13건 schema v2 upsert, 삭제 0건
+- 배포 후 aggregate 검증: `gallery_posts` 13/13 schema v2, AI 분석 게시물 1건, allowlist·사진 슬롯 결합 위반 0건
+- staging 390x844 브라우저: v229, 신규 CTA, 알림 제거, 공유 설정 `식단·AI 분석`, 게스트 카드 3개, 콘솔 error/warn 0건 확인
 
 ## 리뷰
 
