@@ -2346,40 +2346,51 @@ exports.adminResettleDailyLogs = onCall(
     {
         region: "asia-northeast3",
         maxInstances: 2,
-        timeoutSeconds: 300
+        timeoutSeconds: 540
     },
     async (request) => {
         const adminUid = await assertAdminRequest(request);
         const todayStr = getCurrentKstDateString();
         const dateFrom = String(request.data?.dateFrom || addDaysToKstDateString(todayStr, -1)).trim();
         const dateTo = String(request.data?.dateTo || todayStr).trim();
-        const limit = Math.max(1, Math.min(1000, Number(request.data?.limit) || 500));
+        const maxDocs = Math.max(1, Math.min(50000, Number(request.data?.max) || 20000));
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
             throw new HttpsError("invalid-argument", "날짜 형식이 올바르지 않습니다(YYYY-MM-DD).");
         }
 
-        const snap = await db.collection("daily_logs")
-            .where("date", ">=", dateFrom)
-            .where("date", "<=", dateTo)
-            .limit(limit)
-            .get();
-
+        // 커서(orderBy date + startAfter)로 범위를 끝까지 순회한다. orderBy가 없으면
+        // limit이 임의 500건만 반환하고 재호출해도 진행이 안 되므로 반드시 필요.
+        const pageSize = 300;
+        const deadline = Date.now() + 480_000; // 타임아웃(540s) 전에 안전하게 종료
         let touched = 0;
-        const chunk = 400; // Firestore 배치 상한 500 이하
-        for (let i = 0; i < snap.docs.length; i += chunk) {
+        let cursor = null;
+        let complete = false;
+        while (touched < maxDocs && Date.now() < deadline) {
+            let q = db.collection("daily_logs")
+                .where("date", ">=", dateFrom)
+                .where("date", "<=", dateTo)
+                .orderBy("date")
+                .limit(pageSize);
+            if (cursor) q = q.startAfter(cursor);
+            const snap = await q.get();
+            if (snap.empty) { complete = true; break; }
+
             const batch = db.batch();
-            for (const docSnap of snap.docs.slice(i, i + chunk)) {
+            for (const docSnap of snap.docs) {
                 batch.set(docSnap.ref, {
                     resettleTriggerAt: FieldValue.serverTimestamp(),
                     resettleBy: adminUid
                 }, { merge: true });
-                touched += 1;
             }
             await batch.commit();
+            touched += snap.size;
+            cursor = snap.docs[snap.docs.length - 1];
+            if (snap.size < pageSize) { complete = true; break; }
         }
 
-        console.log(`adminResettleDailyLogs: touched ${touched} logs [${dateFrom}~${dateTo}] by ${adminUid}`);
-        return { success: true, touched, dateFrom, dateTo, reachedLimit: snap.size >= limit };
+        console.log(`adminResettleDailyLogs: touched ${touched} logs [${dateFrom}~${dateTo}] complete=${complete} by ${adminUid}`);
+        // complete=false면 아직 남음 → 같은 인자로 다시 호출하면 이어서 처리(멱등이라 겹쳐도 안전).
+        return { success: true, touched, dateFrom, dateTo, complete };
     }
 );
 
