@@ -5741,6 +5741,29 @@ exports.claimChallengeReward = onCall(
                 }
             } catch (bonusError) {
                 console.error("챌린지 보너스 민팅 오류:", bonusError);
+                // 일일 발행 한도 초과(ExceedsUserDailyCap 0xfeb8983d / ExceedsGlobalDailyCap
+                // 0x6513cf71)는 모호한 500 대신, 예치금 안전·챌린지 유지·재수령 시점을
+                // 명확히 안내한다. 챌린지는 claimable 상태로 남아 다음 날 다시 수령 가능.
+                const capData = String(
+                    bonusError?.data
+                    || bonusError?.error?.data
+                    || bonusError?.info?.error?.data
+                    || ""
+                );
+                const capMsg = String(bonusError?.message || "");
+                const isCapExceeded =
+                    bonusError?.errorName === "ExceedsUserDailyCap"
+                    || bonusError?.errorName === "ExceedsGlobalDailyCap"
+                    || capData.startsWith("0xfeb8983d")
+                    || capData.startsWith("0x6513cf71")
+                    || capMsg.includes("ExceedsUserDailyCap")
+                    || capMsg.includes("ExceedsGlobalDailyCap");
+                if (isCapExceeded) {
+                    throw new HttpsError(
+                        "failed-precondition",
+                        "오늘 HBT 일일 발행 한도를 초과해 보너스를 지금 지급할 수 없어요. 예치금은 안전하고 챌린지는 그대로 유지되니, 한도가 초기화되는 다음 날(한국시간 오전 9시) 이후 다시 수령해 주세요."
+                    );
+                }
                 throw new HttpsError("internal", "챌린지 보너스 지급에 실패했습니다.");
             }
             if (!(bonusPaidHbt > 0)) {
