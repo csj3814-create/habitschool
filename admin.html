@@ -807,6 +807,19 @@
     const adminReconcileRewardCouponCallable = httpsCallable(fns, 'adminReconcileRewardCoupon');
     // 온체인 예치가 0인데 앱에 '수령 대기'로 갇힌 챌린지 정리(자금 이동 없음). 콘솔에서 호출:
     //   adminSettleStuckChallenge('master')  또는  adminSettleStuckChallenge('master', '<uid>')
+    // 보상 창(어제~오늘) daily_logs 재정산 백필(멱등). 콘솔에서 호출:
+    //   adminResettleDailyLogs()  또는  adminResettleDailyLogs('2026-07-12','2026-07-13')
+    window.adminResettleDailyLogs = async function(dateFrom, dateTo, limit) {
+        try {
+            const res = await httpsCallable(fns, 'adminResettleDailyLogs')({ dateFrom, dateTo, limit });
+            console.log('[adminResettleDailyLogs]', res.data);
+            alert(`재정산 트리거: ${res.data?.touched}건 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.reachedLimit ? '\n한도 도달 — 다시 실행해 나머지도 처리하세요.' : ''}`);
+            return res.data;
+        } catch (e) {
+            console.error('[adminResettleDailyLogs] 실패:', e);
+            alert(`재정산 실패: ${e.message || e}`);
+        }
+    };
     window.adminSettleStuckChallenge = async function(tier, uid) {
         try {
             const res = await httpsCallable(fns, 'adminSettleStuckChallenge')({ tier, uid: uid || undefined });

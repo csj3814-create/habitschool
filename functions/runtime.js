@@ -2338,6 +2338,51 @@ exports.adminSettleStuckChallenge = onCall(
     }
 );
 
+// 관리자: 보상 창(어제~오늘) daily_logs를 가볍게 건드려 awardPoints(onDocumentWritten)를
+// 재발동시킨다. 구 awardPoints가 정산 못 한 기록(신 클라가 awardedPoints를 안 쓰기 때문)을
+// 신 서버정산 버전으로 재정산하기 위한 일회성 백필. awardPoints는 point_ledger +
+// rewardLedgerVersion:2로 멱등이라, 이미 정산된 기록은 건너뛰고 이중지급이 없다.
+exports.adminResettleDailyLogs = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 2,
+        timeoutSeconds: 300
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const todayStr = getCurrentKstDateString();
+        const dateFrom = String(request.data?.dateFrom || addDaysToKstDateString(todayStr, -1)).trim();
+        const dateTo = String(request.data?.dateTo || todayStr).trim();
+        const limit = Math.max(1, Math.min(1000, Number(request.data?.limit) || 500));
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(dateTo)) {
+            throw new HttpsError("invalid-argument", "날짜 형식이 올바르지 않습니다(YYYY-MM-DD).");
+        }
+
+        const snap = await db.collection("daily_logs")
+            .where("date", ">=", dateFrom)
+            .where("date", "<=", dateTo)
+            .limit(limit)
+            .get();
+
+        let touched = 0;
+        const chunk = 400; // Firestore 배치 상한 500 이하
+        for (let i = 0; i < snap.docs.length; i += chunk) {
+            const batch = db.batch();
+            for (const docSnap of snap.docs.slice(i, i + chunk)) {
+                batch.set(docSnap.ref, {
+                    resettleTriggerAt: FieldValue.serverTimestamp(),
+                    resettleBy: adminUid
+                }, { merge: true });
+                touched += 1;
+            }
+            await batch.commit();
+        }
+
+        console.log(`adminResettleDailyLogs: touched ${touched} logs [${dateFrom}~${dateTo}] by ${adminUid}`);
+        return { success: true, touched, dateFrom, dateTo, reachedLimit: snap.size >= limit };
+    }
+);
+
 exports.cleanupExpiredRewardCoupons = onSchedule(
     {
         region: "asia-northeast3",

@@ -1601,13 +1601,16 @@ export async function claimChallengeReward(tier) {
     } catch (error) {
         console.error('❌ 보상 수령 오류:', error);
         const code = error?.code;
-        const msg = code === 'failed-precondition'
-            ? '❌ 이미 처리된 챌린지이거나 보상 조건이 맞지 않습니다.'
+        const serverMsg = String(error?.message || '').trim();
+        // 서버가 사용자용 구체 안내를 주는 코드(일일 한도 초과, 조건 미충족 등)는
+        // 하드코딩 문구로 덮지 말고 서버 메시지를 그대로 사용자에게 보여준다.
+        const msg = (serverMsg && (code === 'failed-precondition' || code === 'resource-exhausted'))
+            ? `❌ ${serverMsg}`
             : code === 'internal'
             ? '❌ 온체인 정산에 실패했습니다. 잠시 후 다시 시도해주세요.'
             : code === 'unauthenticated'
             ? '❌ 로그인이 필요합니다.'
-            : `❌ 보상 수령에 실패했습니다. (${code || error?.message || '알 수 없는 오류'})`;
+            : `❌ 보상 수령에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`;
         showToast(msg);
         return false;
     }
