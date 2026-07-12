@@ -1600,7 +1600,9 @@ export async function claimChallengeReward(tier) {
         return true;
     } catch (error) {
         console.error('❌ 보상 수령 오류:', error);
-        const code = error?.code;
+        // Firebase 콜러블 에러 코드는 'functions/failed-precondition'처럼 접두사가 붙어
+        // 올 수 있으므로 벗겨서 비교한다(그래야 서버 안내 메시지 노출 분기가 걸린다).
+        const code = String(error?.code || '').replace(/^functions\//, '');
         const serverMsg = String(error?.message || '').trim();
         // 서버가 사용자용 구체 안내를 주는 코드(일일 한도 초과, 조건 미충족 등)는
         // 하드코딩 문구로 덮지 말고 서버 메시지를 그대로 사용자에게 보여준다.
