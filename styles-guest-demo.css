@@ -79,18 +79,6 @@
     font-size: 12px;
 }
 
-.asset-reward-market-btn {
-    width: 100%;
-    min-height: 44px;
-    margin-top: 14px;
-    border: 0;
-    border-radius: 12px;
-    color: #fff;
-    background: #e76f00;
-    font-weight: 800;
-    cursor: pointer;
-}
-
 .asset-advanced-details {
     margin: 14px 0 24px;
     border: 1px solid #e5e0da;
@@ -111,19 +99,9 @@
     padding: 0 8px 8px;
 }
 
-.asset-advanced-hbt {
-    margin: 0 0 12px;
-    padding: 14px;
-    border-radius: 13px;
-    background: #fff;
-}
-
-.asset-advanced-hbt .wallet-asset-item {
-    min-height: 72px;
-}
-
 @media (prefers-reduced-motion: reduce) {
-    #asset-reward-progress-fill {
+    #asset-reward-progress-fill,
+    .wallet-minichart-bar {
         transition: none;
     }
 }
@@ -257,8 +235,7 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     gap: 14px;
 }
 
-.guest-demo-card,
-.guest-demo-advanced-assets {
+.guest-demo-card {
     position: relative;
     overflow: hidden;
     margin: 0;
@@ -292,8 +269,7 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
 }
 
 .guest-demo-card p,
-.guest-demo-card dd,
-.guest-demo-advanced-assets p {
+.guest-demo-card dd {
     color: #6b5d55;
     font-size: 13px;
     line-height: 1.55;
@@ -527,6 +503,50 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     color: rgba(255, 255, 255, 0.84);
 }
 
+.guest-demo-asset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 14px;
+}
+
+.guest-demo-asset-grid > div {
+    min-width: 0;
+    padding: 12px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.12);
+    text-align: center;
+}
+
+.guest-demo-asset-grid span,
+.guest-demo-asset-grid strong {
+    display: block;
+}
+
+.guest-demo-asset-grid span {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+}
+
+.guest-demo-asset-grid strong {
+    margin-top: 4px;
+    color: #fff;
+    font-size: clamp(17px, 5vw, 21px);
+    white-space: nowrap;
+}
+
+.guest-demo-token-card {
+    border-color: #d8cdfa;
+    background: linear-gradient(180deg, #faf8ff 0%, #f2edff 100%);
+}
+
+.guest-demo-token-card .guest-demo-button-primary {
+    width: 100%;
+    margin-top: 14px;
+    background: linear-gradient(135deg, #6c3bc4, #8a54dd);
+}
+
 .guest-demo-progress-card {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -545,14 +565,6 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     height: 12px;
     margin: 13px 0;
     accent-color: #ff8c00;
-}
-
-.guest-demo-advanced-assets summary {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    font-weight: 800;
-    cursor: pointer;
 }
 
 /* Activation sheets */
@@ -694,6 +706,41 @@ select:focus-visible,
 input:focus-visible {
     outline: 3px solid rgba(29, 110, 220, 0.45);
     outline-offset: 2px;
+}
+
+body.dark-mode .asset-reward-goal-card,
+body.dark-mode .asset-advanced-details {
+    border-color: #3b352f;
+    background: #1e1e2e;
+}
+
+body.dark-mode .asset-reward-goal-head h3,
+body.dark-mode #asset-reward-remaining,
+body.dark-mode .asset-advanced-details > summary {
+    color: #f4e8dc;
+}
+
+body.dark-mode .asset-reward-goal-kicker,
+body.dark-mode .asset-reward-goal-head p,
+body.dark-mode .asset-reward-estimate {
+    color: #cdbba9;
+}
+
+body.dark-mode .asset-reward-progress {
+    background: #3b352f;
+}
+
+body.dark-mode .wallet-convert-card h3 {
+    color: #f3c38a;
+}
+
+body.dark-mode .wallet-convert-desc {
+    color: #d5b88c;
+}
+
+body.dark-mode .wallet-convert-limit,
+body.dark-mode .wallet-convert-limit-reset {
+    color: #b9aa9d;
 }
 
 @media (min-width: 720px) {

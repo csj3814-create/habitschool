@@ -116,8 +116,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=229">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=229">
+    <link rel="stylesheet" href="styles.css?v=230">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=230">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -715,7 +715,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=229"></script>
+    <script src="js/webview-detect.js?v=230"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1453,12 +1453,17 @@
                             <div class="wallet-asset-delta" id="asset-points-delta"></div>
                         </div>
                         <div class="wallet-asset-item">
-                            <div class="wallet-asset-label">💎 현재 HBT</div>
-                            <div class="wallet-asset-value" id="asset-hbt-display">0 HBT</div>
+                            <div class="wallet-asset-label">💎 보유 HBT</div>
+                            <div class="wallet-asset-value" id="asset-hbt-display">확인 중…</div>
+                            <div id="asset-hbt-onchain" class="wallet-onchain-badge">
+                                <span class="dot"></span>
+                                <span id="asset-hbt-onchain-text">활성 네트워크 확인 중</span>
+                            </div>
                             <div class="wallet-asset-delta" id="asset-hbt-delta"></div>
                         </div>
                     </div>
-                    <p class="hbt-disclaimer wallet-asset-note">⚠️ HBT는 앱 내 보상용이며 가치 상승을 보장하지 않습니다.</p>
+                    <p class="wallet-asset-purpose">포인트는 쿠폰으로 쓰고, HBT는 내 지갑에 보유해 건강 챌린지와 해빛 네트워크에 참여해요.</p>
+                    <p class="hbt-disclaimer wallet-asset-note">HBT는 건강 습관과 챌린지 참여에 쓰는 온체인 토큰이며, 가격이나 가치 상승을 보장하지 않습니다.</p>
                     <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
                         <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
@@ -1479,7 +1484,6 @@
                         <div id="asset-reward-progress-fill"></div>
                     </div>
                     <div class="asset-reward-estimate" id="asset-reward-estimate" hidden></div>
-                    <button type="button" class="asset-reward-market-btn" onclick="scrollToRewardMarket()">해빛 마켓 보기</button>
                 </div>
 
                 <!-- 건강 습관 챌린지 섹션 -->
@@ -1558,8 +1562,8 @@
 
                 <!-- 포인트 → HBT 변환 섹션 -->
                 <div class="card wallet-convert-card">
-                    <h3>🔄 포인트 → HBT 변환</h3>
-                    <p class="wallet-convert-desc" id="wallet-convert-desc">100P 단위로 HBT로 바꾸며, 현재 온체인 비율을 불러오고 있어요.</p>
+                    <h3>💎 포인트를 HBT로 전환하기</h3>
+                    <p class="wallet-convert-desc" id="wallet-convert-desc">포인트는 쿠폰에 쓰거나 HBT로 전환해 내 지갑에 보유할 수 있어요. 전환 후 되돌릴 수 없으며, 현재 온체인 비율을 불러오고 있어요.</p>
                     <div class="wallet-convert-rate-badge" id="convert-rate-badge">
                         현재 비율 불러오는 중...
                     </div>
@@ -2594,13 +2598,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=229"></script>
-    <script type="module" src="js/main.js?v=229"></script>
-    <script type="module" src="js/diet-analysis.js?v=229"></script>
-    <script type="module" src="js/metabolic-score.js?v=229"></script>
+    <script type="module" src="js/app.js?v=230"></script>
+    <script type="module" src="js/main.js?v=230"></script>
+    <script type="module" src="js/diet-analysis.js?v=230"></script>
+    <script type="module" src="js/metabolic-score.js?v=230"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=229"></script>
+    <script src="js/pwa-install.js?v=230"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

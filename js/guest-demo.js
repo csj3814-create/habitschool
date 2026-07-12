@@ -463,7 +463,7 @@ function renderCoach(tab) {
         exercise: ['걸음과 운동 미디어를 함께 기록해요', '8,400보 예시와 운동 미디어를 확인해 보세요.'],
         sleep: ['수면과 마음 돌봄을 간단히 남겨요', '수면과 5분 명상 예시를 확인해 보세요.'],
         dashboard: ['오늘 기록과 포인트를 한눈에 봐요', '체험에서 저장한 세 가지 기록이 바로 반영돼요.'],
-        assets: ['포인트가 실제 보상으로 이어져요', '세 기록을 모두 완료하면 첫 2,000P 쿠폰에 도달해요.']
+        assets: ['포인트와 HBT는 서로 다른 보상이에요', '포인트는 쿠폰에, HBT는 보유와 건강 챌린지 참여에 사용할 수 있어요.']
     }[tab];
     if (!copy) return '';
     return `
@@ -633,9 +633,18 @@ function renderAssets(session) {
     return `
         <article class="guest-demo-card guest-demo-balance-card" data-example-record="true">
             ${renderExampleBadge()}
-            <p>현재 예시 포인트</p>
-            <h2>${points.total.toLocaleString('ko-KR')}P</h2>
-            <p>체험에서 모은 포인트 +${points.earned}P</p>
+            <h2>두 가지 예시 자산</h2>
+            <div class="guest-demo-asset-grid">
+                <div><span>예시 포인트</span><strong>${points.total.toLocaleString('ko-KR')}P</strong></div>
+                <div><span>예시 HBT</span><strong>320 HBT</strong></div>
+            </div>
+            <p>포인트는 쿠폰으로 쓰고, HBT는 내 지갑에 보유해 건강 챌린지와 해빛 네트워크에 참여해요.</p>
+        </article>
+        <article class="guest-demo-card guest-demo-token-card" data-example-record="true" data-guest-demo-coach-target>
+            ${renderExampleBadge()}
+            <h2>포인트로 HBT 모으기</h2>
+            <p>로그인하면 포인트 일부를 HBT로 전환해 내 온체인 지갑에 보유할 수 있어요. 전환한 포인트는 되돌릴 수 없어요.</p>
+            ${renderLoginButton('로그인하고 HBT 시작하기', 'open_wallet', 'assets')}
         </article>
         <article class="guest-demo-card guest-demo-coupon-card" data-example-record="true" data-guest-demo-coach-target>
             ${renderExampleBadge()}
@@ -643,12 +652,7 @@ function renderAssets(session) {
             <p>${reached ? '교환 가능한 포인트에 도달했어요.' : `${points.remaining}P만 더 모으면 도달해요.`}</p>
             <progress max="${GUEST_DEMO_POINTS.couponTarget}" value="${points.total}">${points.total}/${GUEST_DEMO_POINTS.couponTarget}</progress>
             ${renderLoginButton(reached ? '로그인하고 쿠폰 교환하기' : '로그인하고 포인트 모으기', reached ? 'redeem_coupon' : 'start_record', 'assets')}
-        </article>
-        <details class="guest-demo-advanced-assets">
-            <summary>고급 자산 기능 보기</summary>
-            <p>HBT 변환과 지갑 기능은 로그인 후 실제 자산 화면에서 사용할 수 있어요.</p>
-            ${renderLoginButton('지갑 기능 확인', 'open_wallet', 'assets', 'guest-demo-link-button')}
-        </details>`;
+        </article>`;
 }
 
 function normalizeUiState(value = {}) {

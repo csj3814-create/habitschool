@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=229';
+} from './blockchain-config.js?v=230';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,12 +41,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=229';
-import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=230';
+import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=229';
-import { getKstDateString } from './ui-helpers.js?v=229';
-import { checkRateLimit } from './security.js?v=229';
+import { showToast } from './ui-helpers.js?v=230';
+import { getKstDateString } from './ui-helpers.js?v=230';
+import { checkRateLimit } from './security.js?v=230';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -90,6 +90,7 @@ let legacyWalletIv = null;
 let legacyWalletExportAvailable = false;
 let legacyWalletPrivateKeyCache = null;
 let legacyWalletRevealed = false;
+let externalFirstWalletInitPromise = null;
 
 const ACTIVE_CHAIN_KEY = getActiveChainKey(APP_ENV);
 const ACTIVE_BSC_NETWORK = getActiveBscNetwork(APP_ENV);
@@ -842,6 +843,22 @@ async function decryptPrivateKey(encryptedData, iv, uid, email) {
     return new TextDecoder().decode(decrypted);
 }
 
+function resolveWalletPersistenceDecision(userData = {}) {
+    const externalAddress = String(userData?.externalWalletAddress || '').trim();
+    const appAddress = String(userData?.walletAddress || '').trim();
+    const hasEncryptedAppWallet = userData?.walletVersion === 2
+        && !!userData?.encryptedKey
+        && !!userData?.walletIv;
+
+    if (externalAddress) {
+        return { action: 'restore', source: 'external' };
+    }
+    if (appAddress || hasEncryptedAppWallet) {
+        return { action: 'restore', source: 'app' };
+    }
+    return { action: 'create', source: 'none' };
+}
+
 /**
  * 사용자 지갑 초기화 (로그인 시 자동 호출)
  * v2: 랜덤 지갑 + 암호화 저장
@@ -849,7 +866,10 @@ async function decryptPrivateKey(encryptedData, iv, uid, email) {
  */
 export async function initializeUserWallet(options = {}) {
     try {
-        const { forceServer = false } = options || {};
+        const {
+            forceServer = false,
+            requireFreshSnapshotForCreate = false
+        } = options || {};
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.warn('⚠️ 로그인되지 않음. 지갑 생성 불가.');
@@ -857,9 +877,17 @@ export async function initializeUserWallet(options = {}) {
         }
 
         const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = forceServer
-            ? await getDocFromServer(userRef).catch(() => getDoc(userRef))
-            : await getDoc(userRef);
+        let userSnap;
+        if (forceServer) {
+            try {
+                userSnap = await getDocFromServer(userRef);
+            } catch (error) {
+                if (requireFreshSnapshotForCreate) throw error;
+                userSnap = await getDoc(userRef);
+            }
+        } else {
+            userSnap = await getDoc(userRef);
+        }
         const userData = userSnap.data();
 
         // Case 1: v2 암호화 지갑이 있는 경우 → 복호화하여 복원
@@ -931,26 +959,66 @@ export async function initializeUserWallet(options = {}) {
         }
 
         // Case 3: 지갑 없음 → 새 v2 지갑 생성
+        if (requireFreshSnapshotForCreate && userSnap.metadata?.fromCache) {
+            console.info('[wallet] creation deferred until a fresh server snapshot is available');
+            return null;
+        }
         console.log('🆕 새 보안 지갑 생성 중...');
-        const newWallet = ethers.Wallet.createRandom();
+        const candidateWallet = ethers.Wallet.createRandom();
         const { encrypted, iv } = await encryptPrivateKey(
-            newWallet.privateKey, currentUser.uid, currentUser.email
+            candidateWallet.privateKey, currentUser.uid, currentUser.email
         );
 
-        userWallet = newWallet;
-        userWalletAddress = newWallet.address;
+        const candidateWalletData = {
+            walletAddress: candidateWallet.address,
+            walletCreatedAt: serverTimestamp(),
+            encryptedKey: encrypted,
+            walletIv: iv,
+            walletVersion: 2
+        };
+        const persistenceResult = await runTransaction(db, async (transaction) => {
+            const latestSnap = await transaction.get(userRef);
+            const latestUserData = latestSnap.data() || {};
+            const decision = resolveWalletPersistenceDecision(latestUserData);
+
+            if (decision.action === 'restore') {
+                return {
+                    created: false,
+                    source: decision.source,
+                    userData: latestUserData
+                };
+            }
+
+            transaction.set(userRef, candidateWalletData, { merge: true });
+            return {
+                created: true,
+                source: 'candidate',
+                userData: {
+                    ...latestUserData,
+                    ...candidateWalletData
+                }
+            };
+        });
+
+        if (!persistenceResult.created) {
+            console.info(`[wallet] concurrent initialization kept the existing ${persistenceResult.source} wallet`);
+            resetExternalFirstWalletRuntimeState();
+            const winnerAddress = await restoreExternalFirstWalletState(
+                currentUser,
+                persistenceResult.userData
+            );
+            refreshWalletUi(winnerAddress);
+            return winnerAddress;
+        }
+
+        resetExternalFirstWalletRuntimeState();
+        userWallet = candidateWallet;
+        userWalletAddress = candidateWallet.address;
 
         // 6자리 초대 코드 생성 (영숫자 대문자), users/{uid}.referralCode에 저장
         // processReferralSignup Cloud Function에서 users 컬렉션 쿼리로 역방향 조회
         let referralCode = '';
 
-        await setDoc(userRef, {
-            walletAddress: userWalletAddress,
-            walletCreatedAt: serverTimestamp(),
-            encryptedKey: encrypted,
-            walletIv: iv,
-            walletVersion: 2
-        }, { merge: true });
         referralCode = await ensureUserReferralCode(userRef, userData).catch((e) => {
             console.warn('⚠️ 초대 코드 보장 실패 (Case 3):', e?.message || e);
             return '';
@@ -1150,6 +1218,12 @@ export async function convertPointsToHBT(pointAmount) {
 
     if (pointAmount % 100 !== 0) {
         showToast('❌ 100P 단위로만 변환 가능합니다.');
+        return false;
+    }
+
+    const walletAddress = await initializeWalletExternalFirst();
+    if (!walletAddress) {
+        showToast('❌ HBT 지갑을 준비하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해주세요.');
         return false;
     }
 
@@ -1883,7 +1957,54 @@ function refreshWalletUi(address = null) {
     syncLegacyWalletExportUi();
 }
 
-export async function initializeWalletExternalFirst(options = {}) {
+function resetExternalFirstWalletRuntimeState() {
+    externalWalletAddress = null;
+    externalWalletProviderType = null;
+    externalWalletChainId = null;
+    externalWalletProvider = null;
+    externalWalletWeb3Provider = null;
+    userWallet = null;
+    userWalletAddress = null;
+}
+
+async function restoreExternalFirstWalletState(currentUser, userData = {}) {
+    updateLegacyWalletExportState(userData);
+
+    if (userData.externalWalletAddress) {
+        externalWalletAddress = userData.externalWalletAddress;
+        externalWalletProviderType = userData.walletProviderType || null;
+        externalWalletChainId = userData.walletChainId || null;
+        await reconnectStoredExternalWallet({
+            preferredType: externalWalletProviderType,
+            expectedAddress: externalWalletAddress
+        });
+    }
+
+    const hasActiveExternalWallet = !!externalWalletAddress && !!externalWalletProvider;
+    if (!hasActiveExternalWallet && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
+        try {
+            const privateKeyHex = await decryptPrivateKey(
+                userData.encryptedKey,
+                userData.walletIv,
+                currentUser.uid,
+                currentUser.email
+            );
+            const wallet = new ethers.Wallet(privateKeyHex);
+            userWallet = wallet;
+            userWalletAddress = wallet.address;
+            console.log('✅ 앱 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
+        } catch (error) {
+            console.error('⚠️ 앱 지갑 복호화 실패:', error);
+            userWalletAddress = userData.walletAddress || null;
+        }
+    } else if (!hasActiveExternalWallet && userData?.walletAddress) {
+        userWalletAddress = userData.walletAddress;
+    }
+
+    return getEffectiveWalletAddress();
+}
+
+async function initializeWalletExternalFirstOnce(options = {}) {
     try {
         const { forceServer = false } = options || {};
         const currentUser = auth.currentUser;
@@ -1892,56 +2013,38 @@ export async function initializeWalletExternalFirst(options = {}) {
             return null;
         }
 
-        externalWalletAddress = null;
-        externalWalletProviderType = null;
-        externalWalletChainId = null;
-        externalWalletProvider = null;
-        externalWalletWeb3Provider = null;
-        userWallet = null;
-        userWalletAddress = null;
+        resetExternalFirstWalletRuntimeState();
 
         const userRef = doc(db, "users", currentUser.uid);
         const userSnap = forceServer
             ? await getDocFromServer(userRef).catch(() => getDoc(userRef))
             : await getDoc(userRef);
         const userData = userSnap.data() || {};
-        updateLegacyWalletExportState(userData);
 
         await ensureUserReferralCode(userRef, userData).catch(() => {});
 
-        if (userData.externalWalletAddress) {
-            externalWalletAddress = userData.externalWalletAddress;
-            externalWalletProviderType = userData.walletProviderType || null;
-            externalWalletChainId = userData.walletChainId || null;
-            await reconnectStoredExternalWallet({
-                preferredType: externalWalletProviderType,
-                expectedAddress: externalWalletAddress
-            });
+        const restoredAddress = await restoreExternalFirstWalletState(currentUser, userData);
+        if (restoredAddress) {
+            refreshWalletUi(restoredAddress);
+            return restoredAddress;
         }
 
-        const hasActiveExternalWallet = !!externalWalletAddress && !!externalWalletProvider;
-        if (!hasActiveExternalWallet && userData?.walletVersion === 2 && userData?.encryptedKey && userData?.walletIv) {
-            try {
-                const privateKeyHex = await decryptPrivateKey(
-                    userData.encryptedKey,
-                    userData.walletIv,
-                    currentUser.uid,
-                    currentUser.email
-                );
-                const wallet = new ethers.Wallet(privateKeyHex);
-                userWallet = wallet;
-                userWalletAddress = wallet.address;
-                console.log('✅ 앱 지갑 복원:', userWalletAddress.substring(0, 10) + '...');
-            } catch (error) {
-                console.error('⚠️ 앱 지갑 복호화 실패:', error);
-                userWalletAddress = userData.walletAddress || null;
-            }
-        } else if (!hasActiveExternalWallet && userData?.walletAddress) {
-            userWalletAddress = userData.walletAddress;
+        // A cached empty snapshot must never authorize creating a replacement wallet.
+        // Re-read from the server so an external or existing app wallet always wins.
+        const freshUserSnap = await getDocFromServer(userRef);
+        const freshUserData = freshUserSnap.data() || {};
+        const freshRestoredAddress = await restoreExternalFirstWalletState(currentUser, freshUserData);
+        if (freshRestoredAddress) {
+            refreshWalletUi(freshRestoredAddress);
+            return freshRestoredAddress;
         }
 
-        refreshWalletUi(getEffectiveWalletAddress());
-        return getEffectiveWalletAddress();
+        const provisionedAddress = await initializeUserWallet({
+            forceServer: true,
+            requireFreshSnapshotForCreate: true
+        });
+        refreshWalletUi(provisionedAddress);
+        return provisionedAddress;
     } catch (error) {
         const connectivityIssue = noteFirestoreConnectivityFailure(error, 'initializeWalletState')
             || isFirestoreConnectivityIssue(error);
@@ -1953,6 +2056,22 @@ export async function initializeWalletExternalFirst(options = {}) {
         }
         refreshWalletUi(null);
         return null;
+    }
+}
+
+export async function initializeWalletExternalFirst(options = {}) {
+    if (externalFirstWalletInitPromise) {
+        return externalFirstWalletInitPromise;
+    }
+
+    const initPromise = initializeWalletExternalFirstOnce(options);
+    externalFirstWalletInitPromise = initPromise;
+    try {
+        return await initPromise;
+    } finally {
+        if (externalFirstWalletInitPromise === initPromise) {
+            externalFirstWalletInitPromise = null;
+        }
     }
 }
 

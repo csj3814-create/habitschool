@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=229';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=229';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=230';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=230';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=229';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=229';
+} from './auth-login-helpers.js?v=230';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=230';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=229';
+} from './exercise-media.js?v=230';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=229';
+} from './health-connect-utils.js?v=230';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,15 +54,15 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=229';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=229';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=229';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=229';
-import { sanitize, compressImage } from './data-manager.js?v=229';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=229';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=229';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=229';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=229';
+} from './habit-groups.js?v=230';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=230';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=230';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=230';
+import { sanitize, compressImage } from './data-manager.js?v=230';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=230';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=230';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=230';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=230';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -72,9 +72,9 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=229';
-import { trackProductEvent } from './product-events.js?v=229';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=229';
+} from './guest-demo.js?v=230';
+import { trackProductEvent } from './product-events.js?v=230';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=230';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -87,7 +87,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=229';
+} from './diet-program.js?v=230';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -99,18 +99,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=229';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=229';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=229';
+} from './meditation-guide.js?v=230';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=230';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=230';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=229';
+} from './social-challenge-readiness.js?v=230';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=229';
+} from './monthly-mvp-reward.js?v=230';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5608,7 +5608,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=229';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=230';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8547,7 +8547,7 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 
     const convertDescEl = document.getElementById('wallet-convert-desc');
     if (convertDescEl) {
-        convertDescEl.textContent = `100P 단위로 HBT로 바꾸며, 현재 비율은 100P = ${formattedPer100} HBT (${phaseLabel})예요.`;
+        convertDescEl.textContent = `포인트는 쿠폰에 쓰거나 HBT로 전환해 내 지갑에 보유할 수 있어요. 전환 후 되돌릴 수 없으며, 현재 비율은 100P = ${formattedPer100} HBT (${phaseLabel})예요.`;
     }
 
     const progressSourceEl = document.getElementById('halving-progress-source-label');
@@ -8564,7 +8564,35 @@ function updateWalletRateCopy(currentPhase, per100Hbt, chainLabel = getActiveOnc
 function updateConvertRateBadge(currentPhase, per100Hbt, chainLabel = getActiveOnchainLabel(APP_ENV)) {
     const rateBadge = document.getElementById('convert-rate-badge');
     if (!rateBadge) return;
-    rateBadge.textContent = `현재 ${eraToLabel(currentPhase)}구간 · 100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
+    rateBadge.textContent = `${chainLabel} · 현재 ${eraToLabel(currentPhase)}구간 · 100P = ${formatPer100HbtDisplay(per100Hbt)} HBT`;
+}
+
+function updateAssetHbtNetworkBadge(chainLabel = getActiveOnchainLabel(APP_ENV)) {
+    const badge = document.getElementById('asset-hbt-onchain');
+    const text = document.getElementById('asset-hbt-onchain-text');
+    if (!badge || !text) return;
+    const isTestnet = getActiveChainKey(APP_ENV) === 'testnet';
+    text.textContent = `${chainLabel} · ${isTestnet ? '테스트용 HBT' : '온체인 HBT'}`;
+    badge.style.display = 'inline-flex';
+}
+
+let _assetHbtDelayedStateTimer = null;
+function markAssetHbtBalanceDelayed({ defer = false } = {}) {
+    const applyState = () => {
+        _assetHbtDelayedStateTimer = null;
+        const display = document.getElementById('asset-hbt-display');
+        if (!display || /\d/.test(String(display.textContent || ''))) return false;
+        display.textContent = '조회 지연';
+        return true;
+    };
+    if (!defer) {
+        if (_assetHbtDelayedStateTimer) clearTimeout(_assetHbtDelayedStateTimer);
+        return applyState();
+    }
+    if (!_assetHbtDelayedStateTimer) {
+        _assetHbtDelayedStateTimer = setTimeout(applyState, 4000);
+    }
+    return true;
 }
 
 function applyAssetWalletSnapshot(userData = {}) {
@@ -9271,12 +9299,7 @@ window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived
         hbtDisplay.innerHTML = formatWalletHbtHtml(nextHbt);
     }
 
-    const onchainBadge = document.getElementById('asset-hbt-onchain');
-    if (onchainBadge) {
-        const onchainText = document.getElementById('asset-hbt-onchain-text');
-        if (onchainText) onchainText.textContent = `온체인 (${getActiveOnchainLabel(APP_ENV)})`;
-        onchainBadge.style.display = 'inline-flex';
-    }
+    updateAssetHbtNetworkBadge();
 
     if (window.updateChallengeSliderBounds) {
         window.updateChallengeSliderBounds(nextHbt);
@@ -9841,6 +9864,7 @@ function refreshAssetOnchainBalance(uid) {
     ).then(onchainData => {
         const val = getFiniteAssetNumber(onchainData?.balanceFormatted, { allowDecimal: true });
         if (val == null) {
+            markAssetHbtBalanceDelayed({ defer: window._blockchainLoaded !== true });
             scheduleAssetRetry(uid, 'onchain-empty');
             return null;
         }
@@ -9854,16 +9878,12 @@ function refreshAssetOnchainBalance(uid) {
         if (hbtEl) hbtEl.innerHTML = formatWalletHbtHtml(val);
         if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
 
-        const onchainBadge = document.getElementById('asset-hbt-onchain');
-        if (onchainBadge) {
-            const onchainText = document.getElementById('asset-hbt-onchain-text');
-            if (onchainText) onchainText.textContent = `온체인(${getActiveOnchainLabel(APP_ENV)})`;
-            onchainBadge.style.display = 'inline-flex';
-        }
+        updateAssetHbtNetworkBadge();
 
         return val;
     }).catch(err => {
         console.warn('온체인 잔액 조회 지연:', err?.message || err);
+        markAssetHbtBalanceDelayed();
         scheduleAssetRetry(uid, 'onchain-error');
         return null;
     }).finally(() => {
@@ -9884,34 +9904,26 @@ function ensureAssetInformationArchitecture() {
     const couponCard = section.querySelector('.reward-coupon-card');
     if (!goalCard || !marketCard || !couponCard) return;
 
+    const assetCard = document.getElementById('wallet-asset-section');
+    const convertCard = section.querySelector('.wallet-convert-card');
+    if (assetCard && convertCard) assetCard.after(convertCard);
     goalCard.after(marketCard, couponCard);
     const details = document.createElement('details');
     details.className = 'asset-advanced-details';
     const summary = document.createElement('summary');
-    summary.textContent = '고급 자산 기능 · 챌린지 · HBT · 지갑';
+    summary.textContent = '챌린지 · 채굴 정보 · 지갑 · 거래 기록 더 보기';
     const body = document.createElement('div');
     body.className = 'asset-advanced-body';
     details.append(summary, body);
     couponCard.after(details);
 
-    const assetCard = document.getElementById('wallet-asset-section');
-    const hbtItem = assetCard?.querySelectorAll('.wallet-asset-item')?.[1] || null;
-    const advancedHbt = document.createElement('div');
-    advancedHbt.className = 'asset-advanced-hbt';
-    if (hbtItem) advancedHbt.appendChild(hbtItem);
-    const disclaimer = assetCard?.querySelector('.hbt-disclaimer');
-    const minichart = assetCard?.querySelector('.wallet-minichart');
-    if (disclaimer) advancedHbt.appendChild(disclaimer);
-    if (minichart) advancedHbt.appendChild(minichart);
-    if (advancedHbt.childElementCount > 0) body.appendChild(advancedHbt);
-
     [
         section.querySelector('.wallet-challenge-card'),
-        section.querySelector('.wallet-convert-card'),
         section.querySelector('.wallet-halving-card'),
         section.querySelector('.wallet-info-card'),
         section.querySelector('.wallet-tx-card'),
     ].filter(Boolean).forEach((node) => body.appendChild(node));
+    updateAssetHbtNetworkBadge();
     section.dataset.rewardLayoutReady = 'true';
 }
 
@@ -9962,13 +9974,6 @@ function updateAssetRewardGoal(coins, logs = null) {
     estimate.hidden = false;
     estimate.textContent = `최근 7일 평균 기준 약 ${Math.ceil(remaining / dailyAverage)}일 · 예상치이며 보장값이 아닙니다.`;
 }
-
-function scrollToRewardMarket() {
-    const market = document.querySelector('#assets .reward-market-card');
-    market?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => market?.querySelector('button')?.focus({ preventScroll: true }), 250);
-}
-window.scrollToRewardMarket = scrollToRewardMarket;
 
 window.updateAssetDisplay = async function (forceRefresh = false) {
     ensureAssetInformationArchitecture();
@@ -10361,17 +10366,14 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                         });
                         if (hbtEl) hbtEl.innerHTML = formatWalletHbtHtml(val);
                         if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
-                        const onchainBadge = document.getElementById('asset-hbt-onchain');
-                        if (onchainBadge) {
-                            const onchainText = document.getElementById('asset-hbt-onchain-text');
-                            if (onchainText) onchainText.textContent = `온체인 (${getActiveOnchainLabel(APP_ENV)})`;
-                            onchainBadge.style.display = 'inline-flex';
-                        }
+                        updateAssetHbtNetworkBadge();
                     } else {
+                        markAssetHbtBalanceDelayed({ defer: window._blockchainLoaded !== true });
                         scheduleAssetRetry(user.uid, 'onchain-empty');
                     }
                 }).catch(err => {
                     console.warn('온체인 잔액 조회 스킵:', err.message);
+                    markAssetHbtBalanceDelayed();
                     scheduleAssetRetry(user.uid, 'onchain-error');
                 });
             }
@@ -10916,6 +10918,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 사용자 문서 응답이 늦거나 비어도 마지막 정상값을 유지한 채 재시도
             // Keep the last good values while the user document is deferred, then retry.
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+            markAssetHbtBalanceDelayed({ defer: true });
             const userDocDeferred = isDeferredAssetSnap(userSnap);
             const settleTxSnap = await _p_settleTx;
             const usedCachedChallengePanel = renderAssetChallengeFromCachedUserData(
@@ -10944,6 +10947,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     } catch (error) {
         console.error('자산 표시 업데이트 오류:', error);
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        markAssetHbtBalanceDelayed({ defer: true });
         scheduleAssetRetry(user.uid, 'asset-display-error');
     }
 };
@@ -12576,14 +12580,19 @@ function openTab(tabName, pushState = true) {
                     ).then(data => {
                         const el = document.getElementById('asset-hbt-display');
                         const val = parseFloat(data?.balanceFormatted);
-                        if (!el || !Number.isFinite(val)) return;
+                        if (!el || !Number.isFinite(val)) {
+                            markAssetHbtBalanceDelayed({ defer: window._blockchainLoaded !== true });
+                            return;
+                        }
                         el.innerHTML = formatWalletHbtHtml(val);
                         writeAssetDisplayCache(user.uid, {
                             hbtBalance: val,
                             hbtTs: Date.now()
                         });
                         if (window.updateChallengeSliderBounds) window.updateChallengeSliderBounds(val);
-                    }).catch(() => {});
+                    }).catch(() => {
+                        markAssetHbtBalanceDelayed();
+                    });
                 }
             });
         }
