@@ -28,6 +28,7 @@
 - PWA: 캐시를 `habitschool-v230`으로 회전했다.
 - 배포: 구현 커밋 `60d9a09`를 `origin/main`에 푸시하고 `https://habitschool-staging.web.app` Hosting에 배포했다.
 - 배포 확인: 390×844에서 HBT 예시 자산·전환 CTA의 가로 넘침이 없고 콘솔 warning/error가 없었다. 배포 소스에서 v230, HBT 상단 배치, 중복 마켓 CTA 제거, 원자적 지갑 생성, `조회 지연` fallback을 재확인했다.
+- 본서버 배포: `habitschool-8497b` Hosting의 `https://habitschool.web.app`에 v230을 배포했다. 390×844 게스트 자산 화면에서 가로 넘침과 콘솔 warning/error가 없었고, 운영 소스의 메인넷 활성화·HBT 주소·원자적 지갑 생성·PWA 캐시를 재확인했다.
 
 ## 리뷰
 
