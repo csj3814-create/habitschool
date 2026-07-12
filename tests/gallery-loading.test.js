@@ -11,7 +11,15 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('const GALLERY_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
-        expect(appSource).toContain("const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v1';");
+        expect(appSource).toContain('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
+        expect(appSource).toContain('const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 2;');
+        expect(appSource).toContain("const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v2';");
+        expect(appSource).toContain("const LEGACY_AUTH_GALLERY_CACHE_PREFIXES = Object.freeze(['habitschool_gallery_cache_v1']);");
+        expect(appSource).toContain('removeLegacyGalleryPersistentCaches(uid);');
+        expect(appSource).toContain('parsed?.schemaVersion !== GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION');
+        expect(appSource).toContain('schemaVersion: GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION');
+        expect(appSource).toContain('Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION');
+        expect(appSource).toContain('if (hasIncompatiblePost) return [];');
         expect(appSource).toContain('function hydrateGalleryFromPersistentCache');
         expect(appSource).toContain('function mergeGalleryLogsForProvisionalCache');
         expect(appSource).toContain('writePersistentGalleryCache');
@@ -20,6 +28,25 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('function rerenderGalleryFeedIfVisible() {');
         expect(appSource).toContain('loadMyFriendships()');
         expect(appSource).not.toContain('await friendsPromise;');
+    });
+
+    it('rejects a mixed v1/v2 persistent feed instead of caching a partial gallery', () => {
+        const appSource = readAppSource();
+        const start = appSource.indexOf('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
+        const end = appSource.indexOf('function readPersistentGalleryCache(', start);
+        expect(start).toBeGreaterThanOrEqual(0);
+        expect(end).toBeGreaterThan(start);
+
+        const normalizePersistedGalleryLogs = Function('cloneDailyLogData', `
+            ${appSource.slice(start, end)}
+            return normalizePersistedGalleryLogs;
+        `)((value) => JSON.parse(JSON.stringify(value)));
+        const v2Post = { id: 'v2', data: { schemaVersion: 2, dietAnalysis: { breakfast: { grade: 'A' } } } };
+        const v1Post = { id: 'v1', data: { schemaVersion: 1 } };
+
+        expect(normalizePersistedGalleryLogs([v2Post])).toHaveLength(1);
+        expect(normalizePersistedGalleryLogs([v2Post, v1Post])).toEqual([]);
+        expect(normalizePersistedGalleryLogs([v2Post, { id: '', data: { schemaVersion: 2 } }])).toEqual([]);
     });
 
     it('loads the authenticated gallery_posts feed through timeout-bounded SDK and REST paths', () => {
@@ -85,6 +112,16 @@ describe('gallery loading hardening', () => {
         expect(functionsSource).toContain('await db.runTransaction(async (tx) => {');
         expect(functionsSource).toContain('tx.update(postRef, {');
         expect(functionsSource).not.toContain('await db.doc(`gallery_posts/${postId}`).set({\n            comments:');
+    });
+
+    it('renders a projected meal analysis with the existing gallery analysis control', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('const hasAi = data.dietAnalysis && data.dietAnalysis[meal];');
+        expect(appSource).toContain('JSON.stringify(data.dietAnalysis[meal])');
+        expect(appSource).toContain('toggleGalleryAiOverlay(this)');
+        expect(appSource).toContain('>분석 확인</button>');
+        expect(appSource).toContain('renderDietAnalysisResult(overlay, analysis);');
     });
 
     it('keeps the gallery chat CTA as direct OpenChat entry without account-link gating', () => {

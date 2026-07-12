@@ -116,8 +116,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=228">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=228">
+    <link rel="stylesheet" href="styles.css?v=229">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=229">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -715,7 +715,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=228"></script>
+    <script src="js/webview-detect.js?v=229"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2138,7 +2138,7 @@
                             <div class="gallery-share-settings-stack">
                                 <div class="gallery-privacy-note" role="note" aria-label="공개 범위 안내">
                                     <span class="gallery-privacy-badge">기본 공유</span>
-                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·운동·마음·포인트는 숨길 수 있어요</span>
+                                    <span class="gallery-privacy-text">기본 공유예요. 이름·날짜·식단·AI 분석·운동·마음·포인트는 숨길 수 있어요</span>
                                 </div>
                                 <button type="button" id="gallery-share-settings-toggle" class="community-inline-btn gallery-share-settings-toggle" aria-expanded="false" aria-controls="gallery-share-settings-shell" onclick="triggerGalleryShareAction()">공유 설정 열기</button>
                                 <div id="gallery-share-settings-shell" class="gallery-share-settings-shell" hidden>
@@ -2158,7 +2158,7 @@
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-diet">
                                                 <input type="checkbox" id="share-hide-diet">
-                                                <span>식단</span>
+                                                <span>식단·AI 분석</span>
                                             </label>
                                             <label class="share-privacy-toggle" for="share-hide-exercise">
                                                 <input type="checkbox" id="share-hide-exercise">
@@ -2554,36 +2554,20 @@
         </div>
     </div>
 
-    <!-- 첫 기록 직후: 행동 포인트·가입 선물·가까운 보상·내일 약속을 한 화면에 연결 -->
+    <!-- 첫 기록 직후: 행동 포인트·가입 선물·가까운 보상을 한 화면에 연결 -->
     <div id="first-record-result-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="first-record-result-title">
         <div class="modal-content first-record-result-sheet">
             <div class="first-record-result-kicker">첫 기록 완료</div>
             <h3 id="first-record-result-title">오늘의 작은 습관이 저장됐어요</h3>
             <dl class="first-record-result-list">
                 <div><dt>이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
-                <div><dt>가입 선물</dt><dd>+200P</dd></div>
+                <div id="first-record-welcome-bonus-row" style="display:none;"><dt>가입 선물</dt><dd>+200P</dd></div>
                 <div><dt>현재 포인트</dt><dd id="first-record-current-points">0P</dd></div>
                 <div><dt>첫 2,000P 쿠폰까지</dt><dd id="first-record-remaining-points">2,000P</dd></div>
             </dl>
             <div class="first-record-next-actions">
                 <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()">오늘은 마치기</button>
-                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()">하나 더 기록</button>
-            </div>
-            <div class="first-record-reminder-box">
-                <strong>내일 기록을 잊지 않게 알려드릴까요?</strong>
-                <div class="first-record-reminder-fields">
-                    <label>습관
-                        <select id="first-record-reminder-category">
-                            <option value="diet">식단</option>
-                            <option value="exercise">운동</option>
-                            <option value="sleep">마음</option>
-                        </select>
-                    </label>
-                    <label>시간
-                        <input type="time" id="first-record-reminder-time" value="20:00">
-                    </label>
-                </div>
-                <button type="button" class="first-record-reminder-btn" onclick="enableFirstRecordReminder()">내일 이 시간에 알려주세요</button>
+                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()">계속 기록하기</button>
             </div>
         </div>
     </div>
@@ -2610,13 +2594,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=228"></script>
-    <script type="module" src="js/main.js?v=228"></script>
-    <script type="module" src="js/diet-analysis.js?v=228"></script>
-    <script type="module" src="js/metabolic-score.js?v=228"></script>
+    <script type="module" src="js/app.js?v=229"></script>
+    <script type="module" src="js/main.js?v=229"></script>
+    <script type="module" src="js/diet-analysis.js?v=229"></script>
+    <script type="module" src="js/metabolic-score.js?v=229"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=228"></script>
+    <script src="js/pwa-install.js?v=229"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

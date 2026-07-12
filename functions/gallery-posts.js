@@ -2,7 +2,7 @@
 
 const { DAILY_POINT_CAPS, isAllowedUserMediaUrl } = require("./points-utils");
 
-const GALLERY_POST_SCHEMA_VERSION = 1;
+const GALLERY_POST_SCHEMA_VERSION = 2;
 const GALLERY_POSTS_COLLECTION = "gallery_posts";
 const SHARE_SETTING_KEYS = Object.freeze([
     "hideIdentity",
@@ -13,6 +13,10 @@ const SHARE_SETTING_KEYS = Object.freeze([
     "hideMind",
 ]);
 const DIET_SLOTS = Object.freeze(["breakfast", "lunch", "dinner", "snack"]);
+const DIET_ANALYSIS_GRADES = Object.freeze(["A", "B", "C", "D", "F"]);
+const DIET_FOOD_CATEGORIES = Object.freeze(["natural", "processed", "ultraprocessed"]);
+const DIET_ANALYSIS_SCORE_KEYS = Object.freeze(["vitamins", "minerals", "fiber", "antioxidants"]);
+const MAX_DIET_ANALYSIS_FOODS = 16;
 const REACTION_TYPES = Object.freeze(["heart", "fire", "clap"]);
 const MAX_MEDIA_ITEMS_PER_KIND = 12;
 
@@ -89,6 +93,70 @@ function normalizeDiet(raw, ownerId, allowedStorageBuckets = null) {
     }
 
     return Object.keys(diet).length > 0 ? diet : null;
+}
+
+function normalizePercent(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    return Math.max(0, Math.min(100, Math.round(numeric)));
+}
+
+function normalizeDietAnalysisEntry(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+
+    const grade = normalizeString(raw.grade, 2).toUpperCase();
+    if (!DIET_ANALYSIS_GRADES.includes(grade)) return null;
+
+    const result = { grade };
+    const foods = [];
+    const rawFoods = Array.isArray(raw.foods) ? raw.foods : [];
+    for (const food of rawFoods) {
+        if (foods.length >= MAX_DIET_ANALYSIS_FOODS) break;
+        if (!food || typeof food !== "object" || Array.isArray(food)) continue;
+        const name = normalizeString(food.name, 80);
+        const category = normalizeString(food.category, 32);
+        if (!name || !DIET_FOOD_CATEGORIES.includes(category)) continue;
+        foods.push({ name, category });
+    }
+    if (foods.length > 0) result.foods = foods;
+
+    if (raw.scores && typeof raw.scores === "object" && !Array.isArray(raw.scores)) {
+        const scores = {};
+        for (const key of DIET_ANALYSIS_SCORE_KEYS) {
+            const value = normalizePercent(raw.scores[key]);
+            if (value !== null) scores[key] = value;
+        }
+        if (Object.keys(scores).length > 0) result.scores = scores;
+    }
+
+    const naturalRatio = normalizePercent(raw.naturalRatio);
+    if (naturalRatio !== null) result.naturalRatio = naturalRatio;
+
+    const summary = normalizeString(raw.summary, 280);
+    const insulinComment = normalizeString(raw.insulinComment, 500);
+    const suggestion = normalizeString(raw.suggestion, 500);
+    if (summary) result.summary = summary;
+    if (insulinComment) result.insulinComment = insulinComment;
+    if (suggestion) result.suggestion = suggestion;
+
+    return result;
+}
+
+/**
+ * Rebuilds the public AI payload from display-only fields. Analysis is shared
+ * only for a meal whose owner-validated image is present in the same post.
+ */
+function normalizeDietAnalysis(raw, diet) {
+    if (!raw || typeof raw !== "object" || !diet) return null;
+    const result = {};
+
+    for (const slot of DIET_SLOTS) {
+        if (!diet[`${slot}Url`]) continue;
+        const analysis = normalizeDietAnalysisEntry(raw[slot]);
+        if (analysis) result[slot] = analysis;
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
 }
 
 function normalizeMediaId(value, fallback) {
@@ -289,6 +357,22 @@ function isValidDateString(value) {
         && parsed.toISOString().slice(0, 10) === candidate;
 }
 
+function getGalleryProjectionFingerprint(log = null) {
+    if (!log) return "deleted";
+    return JSON.stringify({
+        userId: log.userId || "",
+        userName: log.userName || "",
+        date: log.date || "",
+        timestamp: log.timestamp || null,
+        awardedPoints: log.awardedPoints || null,
+        shareSettings: log.shareSettings || null,
+        diet: log.diet || null,
+        dietAnalysis: log.dietAnalysis || null,
+        exercise: log.exercise || null,
+        sleepAndMind: log.sleepAndMind || null,
+    });
+}
+
 /**
  * Builds an allowlist-only gallery document from a private daily log.
  * Returning null means there is no shareable media or meditation completion.
@@ -307,6 +391,7 @@ function buildGalleryPostFromDailyLog({
 
     const shareSettings = normalizeShareSettings(source.shareSettings);
     const diet = shareSettings.hideDiet ? null : normalizeDiet(source.diet, ownerId, allowedStorageBuckets);
+    const dietAnalysis = shareSettings.hideDiet ? null : normalizeDietAnalysis(source.dietAnalysis, diet);
     const exercise = shareSettings.hideExercise ? null : normalizeExercise(source.exercise, ownerId, allowedStorageBuckets);
     const sleepAndMind = shareSettings.hideMind
         ? null
@@ -335,6 +420,7 @@ function buildGalleryPostFromDailyLog({
         post.awardedPoints = normalizeAwardedPoints(source.awardedPoints, shareSettings);
     }
     if (diet) post.diet = diet;
+    if (dietAnalysis) post.dietAnalysis = dietAnalysis;
     if (exercise) post.exercise = exercise;
     if (sleepAndMind) post.sleepAndMind = sleepAndMind;
 
@@ -467,7 +553,9 @@ module.exports = {
     SHARE_SETTING_KEYS,
     normalizeShareSettings,
     normalizeAwardedPoints,
+    normalizeDietAnalysis,
     preserveGalleryEngagement,
+    getGalleryProjectionFingerprint,
     buildGalleryPostFromDailyLog,
     sanitizeDailyLogForGallery: buildGalleryPostFromDailyLog,
     syncGalleryPostFromDailyLog,

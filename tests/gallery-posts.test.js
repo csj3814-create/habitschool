@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 const require = createRequire(import.meta.url);
 const {
     buildGalleryPostFromDailyLog,
+    getGalleryProjectionFingerprint,
+    normalizeDietAnalysis,
     preserveGalleryEngagement,
     syncGalleryPostFromDailyLog,
 } = require('../functions/gallery-posts.js');
@@ -49,7 +51,37 @@ const baseLog = () => ({
         breakfastThumbUrl: MEDIA.breakfastThumb,
         secretNote: 'remove me',
     },
-    dietAnalysis: { breakfast: { raw: 'sensitive AI output' } },
+    dietAnalysis: {
+        breakfast: {
+            foods: [
+                { name: '현미밥', category: 'natural', nutrients: '비공개 영양소 설명' },
+                { name: '김치', category: 'processed', unknownFoodField: 'remove me' },
+            ],
+            scores: {
+                vitamins: 82,
+                minerals: 76,
+                fiber: 91,
+                antioxidants: 68,
+                unknownScore: 100,
+            },
+            grade: 'A',
+            naturalRatio: 88,
+            insulinComment: '통곡물과 채소가 혈당 상승 속도를 낮추는 데 도움이 돼요.',
+            suggestion: '단백질 반찬을 하나 더해 보세요.',
+            summary: '자연식품 비율이 높은 균형 잡힌 한 끼예요.',
+            raw: 'sensitive AI output',
+            unknownAnalysisField: 'remove me',
+        },
+        lunch: {
+            foods: [{ name: '사진 없는 식사', category: 'natural' }],
+            scores: { vitamins: 100, minerals: 100, fiber: 100, antioxidants: 100 },
+            grade: 'A',
+            naturalRatio: 100,
+            insulinComment: 'must not be projected without a matching photo',
+            suggestion: 'must not be projected without a matching photo',
+            summary: 'must not be projected without a matching photo',
+        },
+    },
     exercise: {
         cardioList: [{
             mediaId: 'cardio-1',
@@ -74,7 +106,7 @@ const baseLog = () => ({
 });
 
 describe('gallery post projection', () => {
-    it('projects only allowlisted social fields and strips health, steps, AI, and journal text', () => {
+    it('projects only allowlisted social fields and a bounded public diet analysis view', () => {
         const post = buildGalleryPostFromDailyLog({
             logId: 'user-1_2026-07-10',
             dailyLog: baseLog(),
@@ -82,7 +114,7 @@ describe('gallery post projection', () => {
         });
 
         expect(post).toMatchObject({
-            schemaVersion: 1,
+            schemaVersion: 2,
             sourceLogId: 'user-1_2026-07-10',
             userId: 'user-1',
             userName: '해빛 학생',
@@ -91,6 +123,25 @@ describe('gallery post projection', () => {
             diet: {
                 breakfastUrl: MEDIA.breakfast,
                 breakfastThumbUrl: MEDIA.breakfastThumb,
+            },
+            dietAnalysis: {
+                breakfast: {
+                    foods: [
+                        { name: '현미밥', category: 'natural' },
+                        { name: '김치', category: 'processed' },
+                    ],
+                    scores: {
+                        vitamins: 82,
+                        minerals: 76,
+                        fiber: 91,
+                        antioxidants: 68,
+                    },
+                    grade: 'A',
+                    naturalRatio: 88,
+                    insulinComment: '통곡물과 채소가 혈당 상승 속도를 낮추는 데 도움이 돼요.',
+                    suggestion: '단백질 반찬을 하나 더해 보세요.',
+                    summary: '자연식품 비율이 높은 균형 잡힌 한 끼예요.',
+                },
             },
             exercise: {
                 cardioList: [{
@@ -112,7 +163,9 @@ describe('gallery post projection', () => {
         });
 
         const serialized = JSON.stringify(post);
-        ['metrics', 'steps', 'dietAnalysis', 'aiAnalysis', 'gratitude', 'sleepAnalysis', 'private journal']
+        ['metrics', 'steps', 'aiAnalysis', 'gratitude', 'sleepAnalysis', 'private journal',
+            'nutrients', 'sensitive AI output', 'unknownFoodField', 'unknownScore', 'unknownAnalysisField',
+            'must not be projected without a matching photo']
             .forEach((forbidden) => expect(serialized).not.toContain(forbidden));
     });
 
@@ -133,8 +186,97 @@ describe('gallery post projection', () => {
         expect(post).not.toHaveProperty('timestamp');
         expect(post).not.toHaveProperty('awardedPoints');
         expect(post).not.toHaveProperty('diet');
+        expect(post).not.toHaveProperty('dietAnalysis');
         expect(post).not.toHaveProperty('sleepAndMind');
         expect(post.exercise.cardioList).toHaveLength(1);
+    });
+
+    it('drops analyses for meals without a projected owner photo', () => {
+        const log = baseLog();
+        log.diet.lunchUrl = mediaUrl('diet_images', 'lunch.jpg', 'other-user');
+
+        const post = buildGalleryPostFromDailyLog({ logId: 'log-1', dailyLog: log });
+
+        expect(post.diet).not.toHaveProperty('lunchUrl');
+        expect(post.dietAnalysis).not.toHaveProperty('lunch');
+        expect(post.dietAnalysis).toHaveProperty('breakfast');
+    });
+
+    it('bounds public AI arrays, enums, numbers, and strings while removing unknown keys', () => {
+        const longText = '긴'.repeat(5000);
+        const raw = {
+            breakfast: {
+                foods: Array.from({ length: 40 }, (_, index) => ({
+                    name: `${longText}-${index}`,
+                    category: index === 0 ? 'not-an-allowed-category' : 'natural',
+                    nutrients: longText,
+                    extra: longText,
+                })),
+                scores: {
+                    vitamins: 999,
+                    minerals: -10,
+                    fiber: 72.8,
+                    antioxidants: Number.NaN,
+                    privateScore: 55,
+                },
+                grade: 'A',
+                naturalRatio: 140,
+                insulinComment: longText,
+                suggestion: longText,
+                summary: longText,
+                raw: longText,
+            },
+            lunch: {
+                foods: [{ name: '신뢰할 수 없는 분석', category: 'natural' }],
+                scores: { vitamins: 50, minerals: 50, fiber: 50, antioxidants: 50 },
+                grade: 'S',
+                naturalRatio: 50,
+                insulinComment: longText,
+                suggestion: longText,
+                summary: longText,
+            },
+        };
+        const normalized = normalizeDietAnalysis(raw, {
+            breakfastUrl: MEDIA.breakfast,
+            lunchUrl: mediaUrl('diet_images', 'lunch.jpg'),
+        });
+        const breakfast = normalized.breakfast;
+
+        expect(breakfast.foods.length).toBeGreaterThan(0);
+        expect(breakfast.foods.length).toBeLessThanOrEqual(16);
+        expect(breakfast.foods.every((food) => (
+            ['natural', 'processed', 'ultraprocessed'].includes(food.category)
+            && food.name.length <= 120
+            && Object.keys(food).every((key) => ['name', 'category'].includes(key))
+        ))).toBe(true);
+        expect(breakfast.scores.vitamins).toBe(100);
+        expect(breakfast.scores.minerals).toBe(0);
+        expect(breakfast.scores.fiber).toBeGreaterThanOrEqual(0);
+        expect(breakfast.scores.fiber).toBeLessThanOrEqual(100);
+        expect(Object.keys(breakfast.scores).every((key) => (
+            ['vitamins', 'minerals', 'fiber', 'antioxidants'].includes(key)
+        ))).toBe(true);
+        expect(Object.values(breakfast.scores).every((score) => (
+            Number.isFinite(score) && score >= 0 && score <= 100
+        ))).toBe(true);
+        expect(breakfast.naturalRatio).toBe(100);
+        expect(['A', 'B', 'C', 'D', 'F']).toContain(breakfast.grade);
+        expect(breakfast.insulinComment.length).toBeLessThanOrEqual(500);
+        expect(breakfast.suggestion.length).toBeLessThanOrEqual(500);
+        expect(breakfast.summary.length).toBeLessThanOrEqual(500);
+        expect(JSON.stringify(breakfast)).not.toContain('nutrients');
+        expect(JSON.stringify(breakfast)).not.toContain('privateScore');
+        expect(JSON.stringify(breakfast)).not.toContain('raw');
+        expect(normalized).not.toHaveProperty('lunch');
+    });
+
+    it('changes the projection fingerprint when only diet analysis changes', () => {
+        const before = baseLog();
+        const after = baseLog();
+        after.dietAnalysis.breakfast.summary = '다시 분석한 요약';
+
+        expect(getGalleryProjectionFingerprint(before))
+            .not.toBe(getGalleryProjectionFingerprint(after));
     });
 
     it('returns null when all shareable categories are hidden or empty', () => {

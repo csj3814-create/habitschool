@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=228';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=228';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=229';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=229';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=228';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=228';
+} from './auth-login-helpers.js?v=229';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=229';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -30,14 +30,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=228';
+} from './exercise-media.js?v=229';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=228';
+} from './health-connect-utils.js?v=229';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,15 +54,15 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=228';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=228';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=228';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=228';
-import { sanitize, compressImage } from './data-manager.js?v=228';
-import { getResumableUploadTimeouts } from './upload-performance.js?v=228';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=228';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=228';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=228';
+} from './habit-groups.js?v=229';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=229';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=229';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=229';
+import { sanitize, compressImage } from './data-manager.js?v=229';
+import { getResumableUploadTimeouts } from './upload-performance.js?v=229';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=229';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=229';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=229';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -72,9 +72,9 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=228';
-import { trackProductEvent } from './product-events.js?v=228';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=228';
+} from './guest-demo.js?v=229';
+import { trackProductEvent } from './product-events.js?v=229';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=229';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -87,7 +87,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=228';
+} from './diet-program.js?v=229';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -99,18 +99,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=228';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=228';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=228';
+} from './meditation-guide.js?v=229';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=229';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=229';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=228';
+} from './social-challenge-readiness.js?v=229';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=228';
+} from './monthly-mvp-reward.js?v=229';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -276,7 +276,6 @@ window.prepareGuestOnboarding = prepareGuestOnboarding;
 window.resumeGuestIntentForExistingUser = resumeGuestIntentForExistingUser;
 window.finishFirstRecordResult = finishFirstRecordResult;
 window.continueAfterFirstRecord = continueAfterFirstRecord;
-window.enableFirstRecordReminder = enableFirstRecordReminder;
 window.switchToDefaultMode = switchToDefaultMode;
 window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
@@ -5609,7 +5608,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=228';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=229';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -13692,7 +13691,7 @@ function _renderDashboardHeroState({
         const maxPoints = DASHBOARD_ACTION_POINT_CAPS[type] || 0;
         const isMaxed = maxPoints > 0 && earnedPoints >= maxPoints;
         const hasProgress = earnedPoints > 0;
-        const isVisuallyComplete = isMaxed;
+        const isVisuallyComplete = dailyGoalMet || isMaxed;
         const isFocus = !dailyGoalMet && !hasProgress && type === nextType;
 
         if (!button || !label || !sub) return;
@@ -13702,7 +13701,12 @@ function _renderDashboardHeroState({
         button.classList.toggle('is-focus', isFocus);
         if (score) score.textContent = `${earnedPoints}/${maxPoints}`;
 
-        if (isMaxed) {
+        if (dailyGoalMet) {
+            label.textContent = meta.doneLabel;
+            sub.textContent = isMaxed
+                ? (isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`)
+                : `${isSelectedToday ? '오늘' : selectedDateLabel} 기준 달성 · ${earnedPoints}/${maxPoints}`;
+        } else if (isMaxed) {
             label.textContent = meta.doneLabel;
             sub.textContent = isSelectedToday ? meta.doneSub : `${selectedDateLabel} ${meta.name} 점수를 다 채웠어요`;
         } else if (hasProgress) {
@@ -19293,7 +19297,10 @@ window.shareToPlatform = async function (platform) {
 
 let cachedGalleryLogs = [];
 let galleryCacheAudience = 'unknown'; // 'guest' | 'auth' | 'unknown'
-const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v1';
+const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;
+const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 2;
+const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v2';
+const LEGACY_AUTH_GALLERY_CACHE_PREFIXES = Object.freeze(['habitschool_gallery_cache_v1']);
 const GALLERY_PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const GALLERY_PERSISTENT_CACHE_LIMIT = 60;
 
@@ -19318,21 +19325,42 @@ function getGalleryPersistentCacheKey(audience = 'auth', uid = '') {
     return viewerKey ? `${GALLERY_PERSISTENT_CACHE_PREFIX}_auth_${viewerKey}` : '';
 }
 
+function removeLegacyGalleryPersistentCaches(uid = '') {
+    const viewerKey = String(uid || auth.currentUser?.uid || '');
+    if (!viewerKey) return;
+    try {
+        LEGACY_AUTH_GALLERY_CACHE_PREFIXES.forEach((prefix) => {
+            localStorage.removeItem(`${prefix}_auth_${viewerKey}`);
+        });
+    } catch (_) { }
+}
+
 function normalizePersistedGalleryLogs(logs = []) {
-    return (Array.isArray(logs) ? logs : [])
-        .filter((item) => item?.id && item?.data && typeof item.data === 'object')
-        .slice(0, GALLERY_PERSISTENT_CACHE_LIMIT)
-        .map((item) => ({
-            id: String(item.id),
-            data: cloneDailyLogData(item.data)
-        }));
+    const candidates = (Array.isArray(logs) ? logs : [])
+        .slice(0, GALLERY_PERSISTENT_CACHE_LIMIT);
+    const hasIncompatiblePost = candidates.some((item) => (
+        !item?.id
+        || !item?.data
+        || typeof item.data !== 'object'
+        || Number(item.data.schemaVersion) !== GALLERY_PERSISTED_POST_SCHEMA_VERSION
+    ));
+    if (hasIncompatiblePost) return [];
+    return candidates.map((item) => ({
+        id: String(item.id),
+        data: cloneDailyLogData(item.data)
+    }));
 }
 
 function readPersistentGalleryCache(audience = 'auth', uid = '') {
+    removeLegacyGalleryPersistentCaches(uid);
     const cacheKey = getGalleryPersistentCacheKey(audience, uid);
     if (!cacheKey) return null;
     try {
         const parsed = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (parsed?.schemaVersion !== GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION) {
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
         if (!parsed || (Date.now() - Number(parsed.ts || 0)) > GALLERY_PERSISTENT_CACHE_TTL_MS) return null;
         const logs = normalizePersistedGalleryLogs(parsed.logs || []);
         return logs.length > 0 ? logs : null;
@@ -19348,6 +19376,7 @@ function writePersistentGalleryCache(audience = galleryCacheAudience, uid = auth
     if (!normalizedLogs.length) return false;
     try {
         localStorage.setItem(cacheKey, JSON.stringify({
+            schemaVersion: GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION,
             ts: Date.now(),
             logs: normalizedLogs
         }));
@@ -21288,14 +21317,21 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
         if (localStorage.getItem(storageKey) === 'shown') return false;
     } catch (_) { }
 
+    let userData = null;
     try {
         const userSnapshot = await getDoc(doc(db, 'users', user.uid));
-        if (userSnapshot.data()?.settings?.firstRewardSeenAt) {
+        userData = userSnapshot.exists() ? userSnapshot.data() : {};
+        if (userData?.settings?.firstRewardSeenAt) {
+            try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
+            return false;
+        }
+        if (userData?.settings?.firstRewardPending !== true) {
             try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
             return false;
         }
     } catch (_) {
-        // The result panel is still useful offline; the local marker prevents repetition.
+        // 신규 첫 기록 여부를 확인할 수 없으면 기존 회원에게 잘못 노출하지 않는다.
+        return false;
     }
 
     const normalizedTab = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
@@ -21309,23 +21345,22 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     const earnedEl = document.getElementById('first-record-earned-points');
     const currentEl = document.getElementById('first-record-current-points');
     const remainingEl = document.getElementById('first-record-remaining-points');
-    const categoryEl = document.getElementById('first-record-reminder-category');
-    const timeEl = document.getElementById('first-record-reminder-time');
+    const welcomeBonusRow = document.getElementById('first-record-welcome-bonus-row');
     if (!modal || !earnedEl || !currentEl || !remainingEl) return false;
 
     earnedEl.textContent = `+${Math.max(0, Number(pointsEarned) || 0)}P`;
     currentEl.textContent = `${normalizedCurrentPoints.toLocaleString('ko-KR')}P`;
     const remaining = Math.max(0, 2000 - normalizedCurrentPoints);
     remainingEl.textContent = remaining > 0 ? `${remaining.toLocaleString('ko-KR')}P 남음` : '교환 가능';
-    if (categoryEl) categoryEl.value = normalizedTab;
-    if (timeEl) {
-        const nextHour = new Date(Date.now() + 60 * 60 * 1000).getHours();
-        timeEl.value = `${String(nextHour).padStart(2, '0')}:00`;
+    if (welcomeBonusRow) {
+        welcomeBonusRow.style.display = userData?.welcomeBonusGiven === true ? 'flex' : 'none';
     }
-
     try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
     setDoc(doc(db, 'users', user.uid), {
-        settings: { firstRewardSeenAt: serverTimestamp() }
+        settings: {
+            firstRewardSeenAt: serverTimestamp(),
+            firstRewardPending: deleteField()
+        }
     }, { merge: true }).catch(() => {});
 
     modal.style.display = 'flex';
@@ -21354,38 +21389,6 @@ function continueAfterFirstRecord() {
         entry_point: 'reward_prompt',
         variant: 'demo_v1'
     });
-}
-
-async function enableFirstRecordReminder() {
-    const user = auth.currentUser;
-    if (!user) return;
-    const categoryEl = document.getElementById('first-record-reminder-category');
-    const timeEl = document.getElementById('first-record-reminder-time');
-    const category = ['diet', 'exercise', 'sleep'].includes(categoryEl?.value)
-        ? categoryEl.value
-        : (_firstRecordResultContext?.tab || 'diet');
-    const timeMatch = String(timeEl?.value || '').match(/^([01]\d|2[0-3]):([0-5]\d)$/);
-    const hourKst = timeMatch ? Number(timeMatch[1]) : 20;
-
-    const permissionResult = await window.ensureAppNotificationPermission?.();
-    if (!permissionResult?.connected) return;
-    try {
-        await setDoc(doc(db, 'users', user.uid), {
-            settings: {
-                reminderPreference: {
-                    enabled: true,
-                    category,
-                    hourKst,
-                    updatedAt: new Date().toISOString()
-                }
-            }
-        }, { merge: true });
-        showToast(`🔔 매일 ${String(hourKst).padStart(2, '0')}:00에 알려드릴게요.`);
-        finishFirstRecordResult();
-    } catch (error) {
-        console.warn('첫 기록 알림 설정 실패:', error.message);
-        showToast('알림 시간을 저장하지 못했습니다. 프로필에서 다시 설정해주세요.');
-    }
 }
 
 // 온보딩 스텝 이동
@@ -21417,7 +21420,8 @@ async function completeOnboarding() {
         await setDoc(doc(db, "users", user.uid), {
             onboardingComplete: true,
             settings: {
-                primaryHabit: selectedHabit
+                primaryHabit: selectedHabit,
+                firstRewardPending: true
             }
         }, { merge: true });
     } catch (e) {

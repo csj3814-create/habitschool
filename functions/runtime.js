@@ -46,7 +46,10 @@ const {
     isAllowedUserMediaUrl,
     parseFirebaseStorageObjectPath,
 } = require("./points-utils");
-const { syncGalleryPostFromDailyLog } = require("./gallery-posts");
+const {
+    getGalleryProjectionFingerprint,
+    syncGalleryPostFromDailyLog,
+} = require("./gallery-posts");
 const { updateGuestActivity } = require("./guest-activity");
 const {
     normalizeReminderPreference,
@@ -3420,21 +3423,6 @@ exports.awardPoints = onDocumentWritten(
         }
     }
 );
-
-function getGalleryProjectionFingerprint(log = null) {
-    if (!log) return "deleted";
-    return JSON.stringify({
-        userId: log.userId || "",
-        userName: log.userName || "",
-        date: log.date || "",
-        timestamp: log.timestamp || null,
-        awardedPoints: log.awardedPoints || null,
-        shareSettings: log.shareSettings || null,
-        diet: log.diet || null,
-        exercise: log.exercise || null,
-        sleepAndMind: log.sleepAndMind || null,
-    });
-}
 
 /** Private daily log -> signed-in, allowlist-only social projection. */
 exports.syncGalleryPostProjection = onDocumentWritten(
