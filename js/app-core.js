@@ -9911,14 +9911,17 @@ function ensureAssetInformationArchitecture() {
     const details = document.createElement('details');
     details.className = 'asset-advanced-details';
     const summary = document.createElement('summary');
-    summary.textContent = '챌린지 · 채굴 정보 · 지갑 · 거래 기록 더 보기';
+    summary.textContent = '채굴 정보 · 지갑 · 거래 기록 더 보기';
     const body = document.createElement('div');
     body.className = 'asset-advanced-body';
     details.append(summary, body);
     couponCard.after(details);
 
+    // 건강 습관 챌린지는 접힘 밖에 상시 노출한다(couponCard 바로 아래, details 위).
+    const challengeCard = section.querySelector('.wallet-challenge-card');
+    if (challengeCard) couponCard.after(challengeCard);
+
     [
-        section.querySelector('.wallet-challenge-card'),
         section.querySelector('.wallet-halving-card'),
         section.querySelector('.wallet-info-card'),
         section.querySelector('.wallet-tx-card'),
