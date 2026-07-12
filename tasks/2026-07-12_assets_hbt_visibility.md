@@ -15,7 +15,7 @@
 - [x] 고급 자산 접힘 범위 재정의
 - [x] 모바일·데스크톱·다크모드·접근성 회귀 테스트
 - [x] PWA 캐시 버전 회전과 전체 검증
-- [ ] 커밋·푸시 및 staging 배포
+- [x] 커밋·푸시 및 staging 배포
 
 ## 검증 기록
 
@@ -26,6 +26,8 @@
 - 테스트: `npm test` 70개 파일, 532개 테스트 통과(Emulator 전용 7개 제외).
 - 빌드: esbuild 1.2 MB 번들, 영문 동기화, mainnet 설정, Functions 문법 검사 통과.
 - PWA: 캐시를 `habitschool-v230`으로 회전했다.
+- 배포: 구현 커밋 `60d9a09`를 `origin/main`에 푸시하고 `https://habitschool-staging.web.app` Hosting에 배포했다.
+- 배포 확인: 390×844에서 HBT 예시 자산·전환 CTA의 가로 넘침이 없고 콘솔 warning/error가 없었다. 배포 소스에서 v230, HBT 상단 배치, 중복 마켓 CTA 제거, 원자적 지갑 생성, `조회 지연` fallback을 재확인했다.
 
 ## 리뷰
 
