@@ -804,6 +804,7 @@
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
     const adminRefundRewardCouponCallable = httpsCallable(fns, 'adminRefundRewardCoupon');
+    const adminReconcileRewardCouponCallable = httpsCallable(fns, 'adminReconcileRewardCoupon');
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
     function normalizeEmail(email) {
         return String(email || '').trim().toLowerCase();
@@ -2117,6 +2118,11 @@
             && !row.pointsRefundedAt;
     }
 
+    // 기프티쇼에선 발급됐는데 앱이 pending에 갇힌 건 → 발급완료로 정정 가능(환불과 동일 조건).
+    function canRewardMarketAdminReconcile(row = {}) {
+        return canRewardMarketAdminRefund(row);
+    }
+
     function renderRewardMarketAdminSummary({ pricing = {}, reserve = {}, counts = {}, catalog = [] }) {
         const realIssuance = summarizeRewardMarketRealIssuance({ reserve, pricing, catalog });
         document.getElementById('rm-pricing-mode').textContent = '포인트 정액가';
@@ -2165,6 +2171,9 @@
         const recheckButton = canRewardMarketAdminRecheck(row)
             ? `<button class="btn-view" onclick="adminRewardManualResend('${encodedId}')">쿠폰 재조회</button>`
             : '';
+        const reconcileButton = canRewardMarketAdminReconcile(row)
+            ? `<button class="btn-view" style="color:#1f8b4c;border-color:#1f8b4c;" onclick="adminRewardReconcile('${encodedId}')">발급완료 정정</button>`
+            : '';
         const refundButton = canRewardMarketAdminRefund(row)
             ? `<button class="btn-view" style="color:#c0392b;border-color:#c0392b;" onclick="adminRewardRefund('${encodedId}')">환불 처리</button>`
             : '';
@@ -2179,6 +2188,7 @@
         return `
             <div class="reward-admin-actions">
                 ${recheckButton}
+                ${reconcileButton}
                 ${refundButton}
                 ${couponLink}
                 ${txLink}
@@ -2354,6 +2364,27 @@
         }
     };
 
+    window.adminRewardReconcile = async function(encodedId) {
+        const redemptionId = decodeURIComponent(String(encodedId || ''));
+        const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
+        if (!row) {
+            alert('대상 쿠폰을 찾지 못했습니다.');
+            return;
+        }
+        const orderNo = prompt(`기프티쇼에서 발급·발송이 완료된 건이면, 기프티쇼 주문번호를 입력하면 '발급 완료'로 정정합니다.\n(회원은 이미 문자로 쿠폰을 수령한 상태여야 합니다. 정정 후에는 환불 대상에서 제외됩니다.)\n\n기프티쇼 주문번호:`, '');
+        if (orderNo === null) return;
+        const trimmed = String(orderNo || '').trim();
+        if (!trimmed) { alert('기프티쇼 주문번호를 입력해 주세요.'); return; }
+        try {
+            await adminReconcileRewardCouponCallable({ redemptionId, providerOrderId: trimmed, note: 'admin_reconcile_lost_write' });
+            alert('발급 완료로 정정했습니다.');
+            tabLoaded['reward-market'] = false;
+            await loadRewardMarketAdmin();
+        } catch (e) {
+            alert(`정정 실패: ${e.message || '알 수 없는 오류'}`);
+        }
+    };
+
     window.adminRewardRefund = async function(encodedId) {
         const redemptionId = decodeURIComponent(String(encodedId || ''));
         const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
@@ -2362,6 +2393,10 @@
             return;
         }
         const pts = Number(row.pointCost || row.hbtCost || 0) || 0;
+        // 이중 지급 방지: 기프티쇼에서 실제로 미발송인지 먼저 확인시킨다.
+        if (!confirm('⚠️ 환불 전 확인\n\n기프티쇼(비즈머니 관리자)에서 이 건이 "미발송"인지 반드시 확인하셨나요?\n앱에는 발급 대기로 보여도 기프티쇼에서 이미 발송됐을 수 있고, 그 경우 환불하면 쿠폰+포인트 이중 지급이 됩니다.\n\n이미 발송된 건이라면 취소하고 [발급완료 정정]을 사용하세요.\n미발송이 확인됐으면 확인을 누르세요.')) {
+            return;
+        }
         if (!confirm(`${row.userName || '회원'}님의 "${row.displayName || '쿠폰'}" 발급을 취소하고 ${pts.toLocaleString()}P를 환불합니다.\n사용자에게 안내 알림도 발송됩니다. 진행할까요?`)) {
             return;
         }

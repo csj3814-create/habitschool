@@ -714,6 +714,66 @@ describe('reward market pricing helpers', () => {
         expect(notifs.some((n) => n.postOwnerId === 'hyeong' && n.type === 'reward_refund')).toBe(true);
     });
 
+    it('admin reconcile marks a stuck-but-delivered coupon issued (blocks later refund)', async () => {
+        const db = createFakeFirestore({
+            'users/hyeong': { coins: 0 },
+            'reward_redemptions/stuck-coupon': {
+                userId: 'hyeong',
+                status: 'pending_issue',
+                mode: 'live',
+                pointsCharged: true,
+                pointCost: 2000,
+                displayName: '(ICE)아메리카노',
+            },
+        });
+        const FieldValue = createFakeFieldValue();
+
+        const result = await rewardMarketModule.adminReconcileRewardCoupon({
+            db,
+            FieldValue,
+            HttpsError: FakeHttpsError,
+            adminUid: 'admin-1',
+            redemptionId: 'stuck-coupon',
+            providerOrderId: '20260624607732',
+        });
+
+        expect(result).toMatchObject({ success: true, reconciled: true, providerOrderId: '20260624607732' });
+        const redemption = db.__get('reward_redemptions/stuck-coupon');
+        expect(redemption.status).toBe('issued');
+        expect(redemption.providerOrderId).toBe('20260624607732');
+        expect(redemption.pointsRefundedAt).toBeUndefined(); // 환불 안 됨(이중 지급 방지)
+
+        // 정정 후에는 환불이 거부되어야 한다(status가 issued이므로).
+        await expect(rewardMarketModule.adminRefundRewardCoupon({
+            db,
+            FieldValue,
+            HttpsError: FakeHttpsError,
+            adminUid: 'admin-1',
+            redemptionId: 'stuck-coupon',
+        })).rejects.toThrow();
+        expect(db.__get('users/hyeong').coins).toBe(0);
+    });
+
+    it('admin reconcile refuses an already-refunded coupon', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/refunded-coupon': {
+                userId: 'hyeong',
+                status: 'failed_manual_review',
+                mode: 'live',
+                pointsRefundedAt: new Date('2026-07-01T00:00:00.000Z'),
+                pointCost: 2000,
+            },
+        });
+        await expect(rewardMarketModule.adminReconcileRewardCoupon({
+            db,
+            FieldValue: createFakeFieldValue(),
+            HttpsError: FakeHttpsError,
+            adminUid: 'admin-1',
+            redemptionId: 'refunded-coupon',
+            providerOrderId: '123',
+        })).rejects.toThrow();
+    });
+
     it('admin refund refuses an already-issued coupon (no double payout)', async () => {
         const db = createFakeFirestore({
             'users/hyeong': { coins: 0 },

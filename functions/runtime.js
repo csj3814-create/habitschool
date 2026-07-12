@@ -87,6 +87,7 @@ const {
     deleteRewardCoupon: deleteRewardCouponFlow,
     cleanupExpiredRewardCoupons: cleanupExpiredRewardCouponsFlow,
     adminResendRewardCoupon: adminResendRewardCouponFlow,
+    adminReconcileRewardCoupon: adminReconcileRewardCouponFlow,
     adminRefundRewardCoupon: adminRefundRewardCouponFlow,
     syncRewardMarketOps,
 } = require("./reward-market");
@@ -2051,7 +2052,9 @@ exports.redeemRewardCoupon = onCall(
     {
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 60
+        // lost-write 방지: 기프티쇼 발급이 성공한 뒤 issued 기록 전에 함수가 타임아웃으로
+        // 죽으면 pending_issue에 갇힌다. 창을 넓혀 발급 후 기록까지 완료되도록 한다.
+        timeoutSeconds: 180
     },
     async (request) => {
         if (!request.auth) {
@@ -2204,6 +2207,32 @@ exports.adminResendRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("adminResendRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 재확인 처리 중 문제가 발생했어요.");
+        }
+    }
+);
+
+exports.adminReconcileRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 5,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        try {
+            return await adminReconcileRewardCouponFlow({
+                db,
+                FieldValue,
+                HttpsError,
+                adminUid,
+                redemptionId: request.data?.redemptionId,
+                providerOrderId: request.data?.providerOrderId,
+                note: request.data?.note,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("adminReconcileRewardCoupon error:", error);
+            throw new HttpsError("internal", "발급완료 정정 중 오류가 발생했어요.");
         }
     }
 );

@@ -3286,6 +3286,58 @@ async function adminResendRewardCoupon({
     }
 
     const redemption = serializeRedemptionDoc(redemptionSnap);
+    const rawRedemption = redemptionSnap.data() || {};
+
+    // lost-write 복구: 기프티쇼는 발급 성공했는데 앱이 issued 기록을 놓쳐 pending_issue에
+    // 갇힌 경우, 상태조회(providerTrId 기준)로 실제 쿠폰을 회복해 issued로 확정한다.
+    // 재전송(resend)은 발급된 쿠폰 재전송이라 갇힌 건을 못 고치므로 이걸 먼저 시도한다.
+    if (String(rawRedemption.status || "").trim() === "pending_issue") {
+        const recovered = await queryCouponStatusWithProvider({
+            config,
+            uid: rawRedemption.userId || "",
+            product: {
+                sku: redemption.sku,
+                brandName: redemption.brandName,
+                displayName: redemption.displayName,
+                category: redemption.category,
+                provider: redemption.provider,
+                providerGoodsId: redemption.providerGoodsId,
+                providerGoodsNo: rawRedemption.providerGoodsNo || "",
+                faceValueKrw: redemption.faceValueKrw,
+                deliveryMethod: redemption.deliveryMethod,
+            },
+            rewardName: redemption.displayName,
+            recipientPhone: rawRedemption.recipientPhone || "",
+            providerTrId: rawRedemption.providerTrId || "",
+            providerOrderId: rawRedemption.providerOrderId || "",
+        }).catch(() => null);
+
+        if (isUsableCouponPayload(recovered)) {
+            const recoveredAt = new Date();
+            await redemptionRef.set({
+                status: "issued",
+                pinCode: recovered.pinCode || rawRedemption.pinCode || "",
+                couponImgUrl: recovered.couponImgUrl || recovered.barcodeUrl || rawRedemption.couponImgUrl || "",
+                barcodeUrl: recovered.barcodeUrl || recovered.couponImgUrl || rawRedemption.barcodeUrl || "",
+                providerOrderId: recovered.providerOrderId || rawRedemption.providerOrderId || "",
+                providerResponseCode: recovered.providerResponseCode || rawRedemption.providerResponseCode || "",
+                providerResponseMessage: recovered.providerResponseMessage || "recovered_via_status_lookup",
+                expiresAt: recovered.expiresAt ? new Date(recovered.expiresAt) : (rawRedemption.expiresAt || null),
+                lastManualResendAt: recoveredAt,
+                lastManualResendBy: adminUid,
+                lastManualResendReason: normalizedReason,
+                recoveredViaStatusLookupAt: recoveredAt,
+                updatedAt: recoveredAt,
+            }, { merge: true });
+            const recoveredSnap = await redemptionRef.get();
+            return {
+                ...buildRewardMarketResult(recoveredSnap),
+                recovered: true,
+                manualResendCount: redemption.manualResendCount,
+            };
+        }
+    }
+
     const providerResult = await resendCouponWithProvider({
         config,
         uid: redemptionSnap.data()?.userId || "",
@@ -3340,6 +3392,67 @@ async function adminResendRewardCoupon({
         ...buildRewardMarketResult(updatedSnap),
         manualResendCount: nextManualResendCount,
     };
+}
+
+// 관제탑 수동 정정: 기프티쇼에서는 발급·발송 완료됐는데 앱이 issued 기록을 놓쳐
+// pending_issue에 갇힌 건을, 관리자가 기프티쇼 주문번호를 확인해 issued로 정정한다.
+// (자동 상태조회 복구가 안 될 때의 확실한 폴백. issued가 되면 환불 대상에서 제외되어
+//  이중 지급을 막는다.) 회원은 이미 문자로 쿠폰을 수령한 상태다.
+async function adminReconcileRewardCoupon({
+    db,
+    FieldValue,
+    HttpsError,
+    adminUid,
+    redemptionId = "",
+    providerOrderId = "",
+    note = "",
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    const normalizedOrderId = String(providerOrderId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "정정할 쿠폰을 선택해 주세요.");
+    }
+    if (!normalizedOrderId) {
+        throw new HttpsError("invalid-argument", "기프티쇼 주문번호를 입력해 주세요.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const redemptionSnap = await redemptionRef.get();
+    if (!redemptionSnap.exists) {
+        throw new HttpsError("not-found", "쿠폰 이력을 찾을 수 없어요.");
+    }
+
+    const data = redemptionSnap.data() || {};
+    const status = String(data.status || "").trim();
+    if (!["pending_issue", "failed_manual_review"].includes(status)) {
+        throw new HttpsError("failed-precondition", "발급 대기·실패 상태의 쿠폰만 정정할 수 있어요.");
+    }
+    if (data.pointsRefundedAt) {
+        throw new HttpsError("failed-precondition", "이미 환불된 건은 발급완료로 정정할 수 없어요.");
+    }
+
+    const now = new Date();
+    await redemptionRef.set({
+        status: "issued",
+        providerOrderId: normalizedOrderId,
+        reconciledByAdminAt: now,
+        reconciledByAdminUid: adminUid,
+        reconcileNote: String(note || "").trim().slice(0, 500),
+        providerResponseMessage: "reconciled_by_admin",
+        updatedAt: now,
+    }, { merge: true });
+
+    await db.collection("reward_reserve_ledger").add({
+        redemptionId: normalizedId,
+        userId: String(data.userId || "").trim(),
+        eventType: "admin_reconcile_issued",
+        providerOrderId: normalizedOrderId,
+        adminUid,
+        note: String(note || "").trim().slice(0, 500),
+        createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, reconciled: true, redemptionId: normalizedId, providerOrderId: normalizedOrderId };
 }
 
 // 관제탑 환불 처리: 발급 실패/대기로 갇힌 쿠폰의 차감 포인트를 사용자에게 돌려주고,
@@ -3451,6 +3564,7 @@ module.exports = {
     deleteRewardCoupon,
     cleanupExpiredRewardCoupons,
     adminResendRewardCoupon,
+    adminReconcileRewardCoupon,
     adminRefundRewardCoupon,
     syncRewardMarketOps,
     __test: {
