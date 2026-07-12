@@ -12196,7 +12196,10 @@ function updateContextualSaveBar(tabName = getVisibleTabName(), guideStates = nu
         return;
     }
 
-    if (tabName === 'gallery') {
+    // 갤러리 하단 바는 updateGalleryPrimaryAction(단톡방 버튼)이 소유한다. 다른 흐름이
+    // 늦게 updateContextualSaveBar('sleep' 등)를 호출해도, 지금 보이는 탭이 갤러리면
+    // 기록 저장 바로 덮어쓰지 않는다(전달된 tabName과 무관하게 방어).
+    if (tabName === 'gallery' || getVisibleTabName() === 'gallery') {
         return;
     }
 
