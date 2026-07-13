@@ -7901,6 +7901,54 @@ function getCurrentSleepAnalysisFromUi() {
 // 데이터 로드 generation 카운터 (race condition 방지)
 let _loadDataGeneration = 0;
 
+// 저장 후 서버 정산 확정값 보정.
+// awardPoints 트리거는 비동기이고, 서버는 증거(Storage 검증 미디어·인증 걸음)로 점수를
+// 계산하므로 클라 낙관적 예상값(모든 URL·단순 8000보)과 다를 수 있다. 저장 직후엔 낙관값을
+// 즉시 보여주되, 서버 정산이 끝나면(rewardLedgerVersion===2) 확정값으로 잔액·화면을 갱신한다.
+// 실패/타임아웃 시엔 아무것도 안 바꾸고 낙관값을 유지한다(fail-open).
+const _settlementReconcileInFlight = new Set();
+async function reconcileSettlementAfterSave(uid, docId, dateStr) {
+    if (!uid || !docId || _settlementReconcileInFlight.has(docId)) return;
+    _settlementReconcileInFlight.add(docId);
+    try {
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+            await new Promise((r) => setTimeout(r, 2500));
+            let snap = null;
+            try {
+                snap = await withRejectingTimeout(
+                    getDocFromServer(doc(db, 'daily_logs', docId)),
+                    8000,
+                    'settlement_reconcile_timeout'
+                );
+            } catch (_) {
+                continue; // 조회 실패 → 낙관값 유지, 다음 시도
+            }
+            if (!snap?.exists?.()) return;
+            const data = snap.data() || {};
+            if (data.rewardLedgerVersion !== 2) continue; // 아직 서버 정산 전 → 재시도
+
+            // 잔액을 서버 users.coins로 재동기화(낙관적 과대/과소 보정)
+            try {
+                const userSnap = await getDocFromServer(doc(db, 'users', uid));
+                const coins = Number(userSnap.data()?.coins);
+                if (Number.isFinite(coins)) {
+                    const el = document.getElementById('point-balance');
+                    if (el) el.innerText = coins;
+                    renderSimpleProfilePanel({ coins }).catch(() => {});
+                }
+            } catch (_) {}
+
+            // 그 날짜를 보고 있으면 확정 awardedPoints로 대시보드·기록 화면 재렌더
+            if (String(selectedDateStr) === String(dateStr) && typeof loadDataForSelectedDate === 'function') {
+                loadDataForSelectedDate(dateStr).catch(() => {});
+            }
+            return;
+        }
+    } finally {
+        _settlementReconcileInFlight.delete(docId);
+    }
+}
+
 // 데이터 로드
 async function loadDataForSelectedDate(dateStr) {
     const { todayStr } = getDatesInfo(); // 로컬 확보
@@ -18247,6 +18295,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 document.getElementById('point-balance').innerText = nextDisplayed;
                 renderSimpleProfilePanel({ coins: nextDisplayed }).catch(() => {});
             }
+            // 서버 정산(awardPoints 트리거)은 비동기이고 증거 검증 결과가 낙관적 예상값과
+            // 다를 수 있다. 잠시 후 서버 확정값을 다시 읽어 잔액·대시보드를 보정한다(fail-open).
+            reconcileSettlementAfterSave(user.uid, docId, selectedDateStr);
             const savedTab = ['diet', 'exercise', 'sleep'].includes(getVisibleTabName()) ? getVisibleTabName() : 'dashboard';
             const notificationAttributed = consumeNotificationRecordAttribution(savedTab);
             trackProductEvent('record_saved', {
