@@ -8619,8 +8619,9 @@ function updateAssetHbtNetworkBadge(chainLabel = getActiveOnchainLabel(APP_ENV))
     const badge = document.getElementById('asset-hbt-onchain');
     const text = document.getElementById('asset-hbt-onchain-text');
     if (!badge || !text) return;
+    // 배지가 2줄로 꺾이지 않게 짧게 유지: 메인넷은 체인명만, 테스트넷만 구분 표기.
     const isTestnet = getActiveChainKey(APP_ENV) === 'testnet';
-    text.textContent = `${chainLabel} · ${isTestnet ? '테스트용 HBT' : '온체인 HBT'}`;
+    text.textContent = isTestnet ? `${chainLabel} · 테스트용 HBT` : chainLabel;
     badge.style.display = 'inline-flex';
 }
 

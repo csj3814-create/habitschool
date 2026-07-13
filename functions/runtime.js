@@ -5573,7 +5573,14 @@ exports.startChallenge = onCall(
         // KST 날짜 계산
         const todayStr = getCurrentKstDateString();
         const lastTierSettlement = userData?.lastChallengeSettlementByTier?.[def.tier] || null;
-        const sameTierSettledToday = String(lastTierSettlement?.date || '') === todayStr;
+        const settledTodaySameTier = String(lastTierSettlement?.date || '') === todayStr;
+        // 내일로 미루는 건 '오늘 기록이 직전 같은 티어 챌린지에 이미 카운트된' 경우만
+        // (하루가 두 챌린지에 이중 카운트되는 것 방지). 다음날 정산(마지막 인정일이 어제
+        // 이전, 정산만 오늘)이면 오늘 기록은 미사용이므로 오늘부터 시작해 인정한다.
+        // lastCountedDate가 없는 구 정산 기록은 기존 보수적 동작(내일 시작)을 유지한다.
+        const lastCountedDate = String(lastTierSettlement?.lastCountedDate || '');
+        const sameTierSettledToday = settledTodaySameTier
+            && (lastCountedDate ? lastCountedDate >= todayStr : true);
         const startDate = sameTierSettledToday
             ? addDaysToKstDateString(todayStr, 1)
             : todayStr;
@@ -5921,6 +5928,11 @@ exports.claimChallengeReward = onCall(
             completedDays,
             totalDays,
             successRate,
+            // 직전 챌린지가 실제로 카운트한 마지막 날짜. 다음날 정산(마지막 인정일=어제,
+            // 정산=오늘) 후 재시작 시 오늘부터 카운트할지 판단하는 기준이 된다.
+            lastCountedDate: (Array.isArray(challenge.completedDates) && challenge.completedDates.length
+                ? challenge.completedDates[challenge.completedDates.length - 1]
+                : null),
             settledAt: FieldValue.serverTimestamp()
         };
         if (rewardPoints > 0) updateData.coins = FieldValue.increment(rewardPoints);

@@ -6,7 +6,12 @@ describe('same-day challenge restart flow', () => {
         const runtimeSource = readRepoFile('functions/runtime.js');
 
         expect(runtimeSource).toContain('updateData[`lastChallengeSettlementByTier.${tier}`]');
-        expect(runtimeSource).toContain('const sameTierSettledToday = String(lastTierSettlement?.date || \'\') === todayStr;');
+        // 내일 시작은 '오늘이 직전 챌린지에 실제 카운트된 경우'만. 다음날 정산이면 오늘부터 시작.
+        expect(runtimeSource).toContain("const settledTodaySameTier = String(lastTierSettlement?.date || '') === todayStr;");
+        expect(runtimeSource).toContain("const lastCountedDate = String(lastTierSettlement?.lastCountedDate || '');");
+        expect(runtimeSource).toContain('const sameTierSettledToday = settledTodaySameTier');
+        expect(runtimeSource).toContain('lastCountedDate ? lastCountedDate >= todayStr : true');
+        expect(runtimeSource).toContain('lastCountedDate: (Array.isArray(challenge.completedDates)');
         expect(runtimeSource).toContain('const startDate = sameTierSettledToday');
         expect(runtimeSource).toContain('? addDaysToKstDateString(todayStr, 1)');
         expect(runtimeSource).toContain('if (!sameTierSettledToday && startDate === todayStr)');

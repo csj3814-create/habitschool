@@ -32,7 +32,8 @@ describe('asset HBT visibility and information architecture', () => {
         expect(assetCard).toContain('💎 보유 HBT');
         expect(assetCard).toContain('id="asset-hbt-onchain"');
         expect(assetCard).toContain('id="asset-hbt-onchain-text"');
-        expect(assetCard).toContain('건강 챌린지와 해빛 네트워크에 참여해요');
+        // 안내문은 한 줄로 유지(모바일 2줄 꺾임 방지).
+        expect(assetCard).toContain('HBT는 건강 챌린지 참여에 써요');
         expect(assetCard).toContain('가격이나 가치 상승을 보장하지 않습니다');
         expect(assetCard).not.toContain('>0 HBT<');
     });
@@ -68,7 +69,8 @@ describe('asset HBT visibility and information architecture', () => {
 
     it('states the irreversible conversion and active BSC network without investment promises', () => {
         expect(indexSource).toContain('전환 후 되돌릴 수 없으며');
-        expect(appSource).toContain("isTestnet ? '테스트용 HBT' : '온체인 HBT'");
+        // 배지는 한 줄 유지: 메인넷은 체인명만, 테스트넷만 '테스트용 HBT'로 구분한다.
+        expect(appSource).toContain("isTestnet ? `${chainLabel} · 테스트용 HBT` : chainLabel");
         expect(appSource).toContain('`${chainLabel} · 현재 ${eraToLabel(currentPhase)}구간');
         expect(appSource).toContain('전환 후 되돌릴 수 없으며, 현재 비율은');
         expect(indexSource).not.toMatch(/수익|가격 상승|투자 기회/);
