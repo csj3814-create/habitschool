@@ -5,7 +5,7 @@ describe('video upload resilience', () => {
     it('uses progress-aware resumable upload timeouts instead of a fixed 30 second cancel', () => {
         const source = readAppSource();
 
-        expect(source).toContain("import { getResumableUploadTimeouts } from './upload-performance.js");
+        expect(source).toContain("createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js");
         expect(source).toContain('runResumableUploadWithTimeout(storageRef, fileToUpload');
         expect(source).toContain('idleTimeoutMs: uploadTimeouts.idleTimeoutMs');
         expect(source).toContain('hardTimeoutMs: uploadTimeouts.hardTimeoutMs');
@@ -14,12 +14,13 @@ describe('video upload resilience', () => {
         expect(source).not.toContain('업로드 시간 초과. 네트워크를 확인해주세요.');
     });
 
-    it('does not mark a tracked upload complete when the URL is missing', () => {
+    it('keeps a URL-less pre-upload recoverable for ordered save retry', () => {
         const source = readAppSource();
 
         expect(source).toContain("if (!result?.url) {");
-        expect(source).toContain("setInlineUploadProgress(inputId, { state: 'error', pct: 100 })");
-        expect(source).toContain('_pendingUploads.delete(inputId)');
+        expect(source).toContain('current.needsRetry = true;');
+        expect(source).toContain('저장할 때 순서대로 다시 시도할게요');
+        expect(source).not.toContain("setInlineUploadProgress(inputId, { state: 'error', pct: 100 })");
     });
 
     it('turns a stalled 0 percent pending upload into a delayed background-save state', () => {
@@ -50,18 +51,19 @@ describe('video upload resilience', () => {
         expect(source).toContain('await uploadSamsungImageWithSimplePut(storageRef, fileToUpload, onProgress);');
     });
 
-    it('serializes Samsung simple uploads and recovers URLs after client-side timeouts', () => {
+    it('serializes every browser media upload and recovers URLs after client-side timeouts', () => {
         const source = readAppSource();
 
         expect(source).toContain('const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;');
-        expect(source).toContain('let _samsungSimpleUploadChain = Promise.resolve();');
-        expect(source).toContain('function runSamsungSimpleUploadInSequence(callback)');
-        expect(source).toContain('_samsungSimpleUploadChain = run.catch(() => {});');
+        expect(source).toContain('const _mediaStorageUploadQueue = createSequentialTaskQueue();');
+        expect(source).toContain('function runMediaStorageUploadInSequence(callback');
+        expect(source).toContain('업로드 대기 중 · 앞 파일부터 저장할게요');
         expect(source).toContain('function getDownloadUrlWithTimeout(storageRef, timeoutMs = 10000)');
         expect(source).toContain('async function recoverDownloadUrlAfterPossibleUploadTimeout');
         expect(source).toContain('const recoveredUrl = await recoverDownloadUrlAfterPossibleUploadTimeout(storageRef, {');
         expect(source).toContain('attempts: useSamsungSimpleUpload ? SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS : 1');
-        expect(source).toContain('return runSamsungSimpleUploadInSequence(runUploadAttempts);');
+        expect(source).toContain('return runMediaStorageUploadInSequence(runUploadAttempts, { onProgress });');
+        expect(source).toContain('function createUniqueMediaStoragePath');
     });
 
     it('uses a simpler Samsung Internet exercise video upload path instead of resumable progress that can stall at 1 percent', () => {
@@ -180,15 +182,40 @@ describe('video upload resilience', () => {
         expect(source).toContain('result = uploadResult.result;');
     });
 
-    it('runs independent background media uploads together while serializing document patches', () => {
+    it('runs background media uploads and document patches one item at a time', () => {
         const source = readAppSource();
 
         expect(source).toContain('const applyBackgroundMediaPatchSequentially = ({ job, result, updateGallery = true }) => {');
         expect(source).toContain('baseData: latestCommittedData');
         expect(source).toContain('patchChain = runPatch.catch(() => {});');
         expect(source).toContain('const processBackgroundMediaJob = async (job) => {');
-        expect(source).toContain('const jobResults = await Promise.all(jobs.map((job) => processBackgroundMediaJob(job)));');
+        expect(source).toContain('const jobResults = [];');
+        expect(source).toContain('for (const job of jobs) {');
+        expect(source).toContain('jobResults.push(await processBackgroundMediaJob(job));');
+        expect(source).not.toContain('Promise.all(jobs.map((job) => processBackgroundMediaJob(job)))');
         expect(source).toContain('failed = jobResults.filter((result) => result?.failed).length;');
+    });
+
+    it('fans out multi-selected exercise photos and videos into ordered single-file cards', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('multiple onchange="handleExerciseMediaFiles(this, \'cardio\')"');
+        expect(source).toContain('multiple onchange="handleExerciseMediaFiles(this, \'strength\')"');
+        expect(source).toContain('window.handleExerciseMediaFiles = async function(input, type = \'cardio\')');
+        expect(source).toContain('const selectedFiles = Array.from(input?.files || []);');
+        expect(source).toContain('const block = index === 0 ? currentBlock : addExerciseBlock(normalizedType);');
+        expect(source).toContain('await applyExerciseMediaFileToBlock(block, normalizedType, acceptedFiles[index])');
+        expect(source).toContain('개를 순서대로 업로드할게요.');
+    });
+
+    it('uses the same FIFO queue for original and thumbnail Storage writes', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('async function uploadBlobAndGetUrlInSequence');
+        expect(source).toContain('return runMediaStorageUploadInSequence(async () => {');
+        expect(source).toContain('const thumbUrl = await uploadBlobAndGetUrlInSequence(tr, thumbBlob);');
+        expect(source).toContain('thumbUrl = await uploadBlobAndGetUrlInSequence(tr, thumbBlob);');
+        expect(source).toContain('return await uploadBlobAndGetUrlInSequence(tr, blob, {');
     });
 
     it('treats backed-up background upload failures as deferred retry instead of terminal failure UI', () => {

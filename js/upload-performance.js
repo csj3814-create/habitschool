@@ -31,6 +31,45 @@ function clampNumber(value, min, max) {
     return Math.max(min, Math.min(max, normalized));
 }
 
+function callQueueHook(callback, ...args) {
+    if (typeof callback !== 'function') return;
+    try {
+        callback(...args);
+    } catch (_) {}
+}
+
+export function createSequentialTaskQueue() {
+    let tail = Promise.resolve();
+    let pendingCount = 0;
+
+    return Object.freeze({
+        enqueue(task, { onQueued = null, onStart = null, onSettled = null } = {}) {
+            if (typeof task !== 'function') return Promise.resolve(null);
+
+            pendingCount += 1;
+            if (pendingCount > 1) callQueueHook(onQueued, pendingCount - 1);
+
+            const run = tail
+                .catch(() => {})
+                .then(async () => {
+                    callQueueHook(onStart);
+                    return await task();
+                });
+            const tracked = run.finally(() => {
+                pendingCount = Math.max(0, pendingCount - 1);
+                callQueueHook(onSettled, pendingCount);
+            });
+
+            // A failed task must not block the next queued media item.
+            tail = tracked.catch(() => {});
+            return tracked;
+        },
+        get pendingCount() {
+            return pendingCount;
+        }
+    });
+}
+
 export function shouldFastPathImageCompression(file = null, options = {}) {
     if (!file || typeof file !== 'object') return false;
 

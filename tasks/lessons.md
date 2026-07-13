@@ -1,5 +1,12 @@
 ﻿# 개선 교훈 (Lessons Learned)
 
+## 2026-07-13 (Sequential Multi-Media Uploads)
+
+### 251. One mobile media FIFO must cover originals, thumbnails, and retries
+- Symptom: selecting two exercise photos together could finish with `일부 업로드 실패`, even when each file worked when selected alone. Videos and mixed media had the same risk.
+- Root cause: normal Storage uploads, thumbnail uploads, and background retry jobs used independent concurrent paths; recoverable pre-upload misses were also rendered as terminal red failures.
+- Lesson: fan a multi-select into stable one-file card per file, then serialize every Storage write through one FIFO queue in selection order. Keep recoverable misses in retry state and reserve terminal failure UI for jobs that cannot be saved or durably deferred.
+
 ## 2026-07-08 (Gallery Missing Breakfast Photos)
 
 ### 250. Media credit requires displayable, non-empty storage objects, not just URLs
