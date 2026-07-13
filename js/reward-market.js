@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=235';
+import { auth, db, functions } from './firebase-config.js?v=236';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=235';
+import { showToast } from './ui-helpers.js?v=236';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
