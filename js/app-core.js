@@ -14,30 +14,31 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=237';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=237';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=238';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=238';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=237';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=237';
+} from './auth-login-helpers.js?v=238';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=238';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
+    hasPotentiallyVerifiableStepEvidence,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=237';
+} from './exercise-media.js?v=238';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=237';
+} from './health-connect-utils.js?v=238';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -54,15 +55,15 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=237';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=237';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=237';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=237';
-import { sanitize, compressImage } from './data-manager.js?v=237';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=237';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=237';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=237';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=237';
+} from './habit-groups.js?v=238';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=238';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=238';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=238';
+import { sanitize, compressImage } from './data-manager.js?v=238';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=238';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=238';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=238';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=238';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -72,9 +73,9 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=237';
-import { trackProductEvent } from './product-events.js?v=237';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=237';
+} from './guest-demo.js?v=238';
+import { trackProductEvent } from './product-events.js?v=238';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=238';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -87,7 +88,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=237';
+} from './diet-program.js?v=238';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -99,18 +100,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=237';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=237';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=237';
+} from './meditation-guide.js?v=238';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=238';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=238';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=237';
+} from './social-challenge-readiness.js?v=238';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=237';
+} from './monthly-mvp-reward.js?v=238';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5608,7 +5609,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=237';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=238';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8020,6 +8021,15 @@ async function reconcileSettlementAfterSave(uid, docId, dateStr) {
     }
 }
 
+function reconcileSettlementAfterBackgroundSave(uid, docId, dateStr, attempt = 0) {
+    if (!uid || !docId || attempt >= 5) return;
+    if (_settlementReconcileInFlight.has(docId)) {
+        setTimeout(() => reconcileSettlementAfterBackgroundSave(uid, docId, dateStr, attempt + 1), 2500);
+        return;
+    }
+    reconcileSettlementAfterSave(uid, docId, dateStr).catch(() => {});
+}
+
 // 데이터 로드
 async function loadDataForSelectedDate(dateStr) {
     const { todayStr } = getDatesInfo(); // 로컬 확보
@@ -8155,12 +8165,15 @@ async function loadDataForSelectedDate(dateStr) {
                 } else {
                     addExerciseBlock('strength');
                 }
-                if (awarded.exercise) {
-                    const ep = awarded.exercisePoints || 15;
-                    document.getElementById('quest-exercise').className = 'quest-check done';
-                    document.getElementById('quest-exercise').innerText = `+${ep}P`;
-                }
             } else if (!preserveLocalMediaUi) { addCardioBlock(); addStrengthBlock(); }
+
+            // 로컬 미디어 초안을 보존하더라도 점수는 항상 서버 확정값으로 다시 그린다.
+            const exerciseQuestEl = document.getElementById('quest-exercise');
+            const authoritativeExercisePoints = Number(awarded.exercisePoints || 0);
+            if (exerciseQuestEl) {
+                exerciseQuestEl.className = authoritativeExercisePoints > 0 ? 'quest-check done' : 'quest-check';
+                exerciseQuestEl.innerText = authoritativeExercisePoints > 0 ? `+${authoritativeExercisePoints}P` : '미달성';
+            }
 
             if (data.sleepAndMind) {
                 if (data.sleepAndMind.sleepImageUrl && !(preserveLocalMediaUi && hasLocalMediaDraftForInput('sleep-img', document.getElementById('preview-sleep')))) {
@@ -11116,7 +11129,8 @@ function _getExerciseGuideCounts() {
     return {
         cardioCount,
         strengthCount,
-        stepReady: (_stepData?.count || 0) > 0
+        stepReady: (_stepData?.count || 0) > 0,
+        stepPointReady: hasPotentiallyVerifiableStepEvidence(_stepData)
     };
 }
 
@@ -12133,17 +12147,18 @@ function _getRecordGuideStates() {
         nowMs: Date.now()
     });
 
-    const { cardioCount, strengthCount, stepReady } = _getExerciseGuideCounts();
+    const { cardioCount, strengthCount, stepReady, stepPointReady } = _getExerciseGuideCounts();
     const stepCount = Number(_stepData?.count || 0);
-    const stepPointReady = stepCount >= 8000;
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
     let exerciseStatus = '걸음수, 운동 이미지, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
-    let exerciseHelper = '걸음수는 8천보부터 반영돼요.';
+    let exerciseHelper = '수동 걸음수는 기록용이며, 포인트는 걸음 캡처 인증 시 반영돼요.';
     if (exerciseReadyCount > 0) {
         exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
         exerciseHelper = stepPointReady
-            ? `운동 준비 ${exerciseReadyCount}개 · 저장하면 반영돼요.`
-            : `운동 준비 ${exerciseReadyCount}개 · 8천보부터 반영돼요.`;
+            ? `운동 준비 ${exerciseReadyCount}개 · 인증된 걸음도 포인트에 반영돼요.`
+            : stepReady
+                ? `운동 준비 ${exerciseReadyCount}개 · 수동 걸음수는 기록만 저장돼요.`
+                : `운동 준비 ${exerciseReadyCount}개 · 걸음 캡처 인증 시 포인트가 반영돼요.`;
     }
 
     const sleepReady = _hasPreviewImage('preview-sleep');
@@ -12213,7 +12228,11 @@ function _getRecordGuideStates() {
             exercise: {
                 badge: `${exerciseReadyCount} ready`,
                 status: exerciseStatusEn,
-                helper: stepPointReady ? 'Save to record today’s exercise.' : '8,000+ steps can count toward today’s exercise progress.'
+                helper: stepPointReady
+                    ? 'Verified step evidence can count toward today’s exercise points.'
+                    : stepReady
+                        ? 'Manual steps are saved as a record; points require a verified step screenshot.'
+                        : 'A verified step screenshot can count toward today’s exercise points.'
             },
             sleep: {
                 badge: meditationActive ? 'Running' : `${mindReadyCount} ready`,
@@ -16614,7 +16633,6 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
     const diet = logData.diet || {};
     const exercise = logData.exercise || {};
     const sleepAndMind = logData.sleepAndMind || {};
-    const stepsCount = Number(logData?.steps?.count || 0);
 
     const dietPhotoCount = [
         diet.breakfastUrl,
@@ -16626,7 +16644,7 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
 
     const cardioCredits = (Array.isArray(exercise.cardioList) ? exercise.cardioList : [])
         .filter(item => hasMediaUrl(item?.imageUrl)).length
-        + (stepsCount >= 8000 ? 1 : 0);
+        + (hasPotentiallyVerifiableStepEvidence(logData?.steps) ? 1 : 0);
     let newExerPts = 0;
     if (cardioCredits >= 1) newExerPts += 10;
     if (cardioCredits >= 2) newExerPts += 5;
@@ -18521,6 +18539,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         } else if (backgroundOutboxBackupQueued) {
                             flushOfflineOutbox({ quiet: true }).catch(() => {});
                         }
+                        reconcileSettlementAfterBackgroundSave(user.uid, docId, selectedDateStr);
                         return runPostSaveFollowUps({
                             forceGalleryRefresh: true,
                             dailyLogData: latestCommittedData || getCachedDailyLog(docId) || saveData

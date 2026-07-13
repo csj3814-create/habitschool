@@ -2,6 +2,15 @@ export function normalizeExerciseMediaUrl(value = '') {
     return String(value || '').trim();
 }
 
+export function hasPotentiallyVerifiableStepEvidence(steps = {}) {
+    const count = Number(steps?.count || 0);
+    const screenshotUrl = normalizeExerciseMediaUrl(steps?.screenshotUrl);
+    const imageHash = String(steps?.imageHash || '').trim().toLowerCase();
+    return count >= 8000
+        && /^https:\/\//i.test(screenshotUrl)
+        && /^[a-f0-9]{64}$/.test(imageHash);
+}
+
 export function isLocalExerciseVideoThumb(value = '') {
     return normalizeExerciseMediaUrl(value).startsWith('data:image/');
 }

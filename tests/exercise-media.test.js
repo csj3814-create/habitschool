@@ -4,12 +4,41 @@ import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
+    hasPotentiallyVerifiableStepEvidence,
     isLocalExerciseVideoThumb,
     resolveLegacyStrengthVideoThumbUrl,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
 } from '../js/exercise-media.js';
+
+describe('hasPotentiallyVerifiableStepEvidence', () => {
+    it('does not treat manually entered steps as point evidence', () => {
+        expect(hasPotentiallyVerifiableStepEvidence({ count: 8023, source: 'manual' })).toBe(false);
+    });
+
+    it('allows an 8000+ step screenshot with a sha-256 hash to enter server verification', () => {
+        expect(hasPotentiallyVerifiableStepEvidence({
+            count: 8023,
+            source: 'samsung_screenshot',
+            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
+            imageHash: 'a'.repeat(64)
+        })).toBe(true);
+    });
+
+    it('rejects screenshots below 8000 steps or without a valid hash', () => {
+        expect(hasPotentiallyVerifiableStepEvidence({
+            count: 7999,
+            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
+            imageHash: 'a'.repeat(64)
+        })).toBe(false);
+        expect(hasPotentiallyVerifiableStepEvidence({
+            count: 8023,
+            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
+            imageHash: 'not-a-sha256'
+        })).toBe(false);
+    });
+});
 
 describe('resolveLegacyStrengthVideoThumbUrl', () => {
     it('returns the legacy thumb when the legacy video matches', () => {

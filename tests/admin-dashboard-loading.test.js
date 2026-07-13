@@ -6,15 +6,29 @@ import { describe, expect, it } from 'vitest';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const adminSource = readFileSync(path.resolve(__dirname, '../admin.html'), 'utf8');
+const functionsSource = readFileSync(path.resolve(__dirname, '../functions/runtime.js'), 'utf8');
 
 describe('admin dashboard progressive loading', () => {
+    it('loads the dashboard through one admin callable instead of browser-wide Firestore scans', () => {
+        expect(adminSource).toContain("httpsCallable(fns, 'getAdminDashboardSnapshot')");
+        expect(adminSource).toContain('async function loadAdminDashboardSources()');
+        expect(adminSource).toContain('adminDashboardSourcesInFlight');
+        expect(adminSource).toContain('loadAdminDashboardSourcesOnce()');
+        expect(adminSource).toContain('getAdminDashboardSnapshotCallable({ todayStr })');
+        expect(adminSource).toContain('const [dashboardSources, tokenStatsRead] = await Promise.all');
+        expect(functionsSource).toContain('exports.getAdminDashboardSnapshot = onCall(');
+        expect(functionsSource).toContain('await assertAdminRequest(request);');
+        expect(functionsSource).toContain('db.collection("reports").count().get()');
+        expect(functionsSource).toContain('.where("status", "==", "success")');
+    });
+
     it('bounds dashboard Firestore reads so one slow source cannot hold the full view blank', () => {
         expect(adminSource).toContain('ADMIN_DASHBOARD_CORE_TIMEOUT_MS');
         expect(adminSource).toContain('ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS');
         expect(adminSource).toContain('resolveAdminRead(dailyLogsPromise');
         expect(adminSource).toContain('resolveAdminRead(usersPromise');
-        expect(adminSource).toContain('getData(false, { allowPartial: true })');
-        expect(adminSource).toContain('if (!result.partial) cache = { snap, usersQ };');
+        expect(adminSource).toContain("'admin dashboard snapshot'");
+        expect(adminSource).toContain('if (!data.partial) cache = { snap: data.snap, usersQ: data.usersQ };');
     });
 
     it('renders explicit delayed states instead of false zeroes when admin data is late', () => {
@@ -30,5 +44,10 @@ describe('admin dashboard progressive loading', () => {
         expect(adminSource).toContain('adminTokenStatsCache = null;');
         expect(adminSource).toContain('cache = null;');
         expect(adminSource).not.toContain("if (name === 'members') cache = null;");
+    });
+
+    it('starts every legacy fallback query together instead of waiting through two timeout waves', () => {
+        expect(adminSource).toContain("const dailyLogsPromise = getDocs(query(collection(db, 'daily_logs')");
+        expect(adminSource).toContain('const [snapRead, usersRead, weekRead, reportsRead] = await Promise.all');
     });
 });

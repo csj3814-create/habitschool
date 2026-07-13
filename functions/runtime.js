@@ -4340,6 +4340,144 @@ exports.ensureAdminAccess = onCall(
     }
 );
 
+function addDateKeyDays(dateKey, days) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateKey || ""));
+    if (!match) return "";
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+    date.setUTCDate(date.getUTCDate() + Number(days || 0));
+    return date.toISOString().slice(0, 10);
+}
+
+function toKstDateKey(value) {
+    if (!value) return "";
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const date = value instanceof Date
+        ? value
+        : (typeof value?.toDate === "function" ? value.toDate() : new Date(value));
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Seoul",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).formatToParts(date).reduce((result, part) => {
+        if (part.type !== "literal") result[part.type] = part.value;
+        return result;
+    }, {});
+    return parts.year && parts.month && parts.day ? `${parts.year}-${parts.month}-${parts.day}` : "";
+}
+
+// 관제탑 초기 화면은 브라우저 Firestore WebChannel 대신 Admin SDK 한 호출로 읽는다.
+exports.getAdminDashboardSnapshot = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 30 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const todayStr = String(request.data?.todayStr || "").trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(todayStr)) {
+            throw new HttpsError("invalid-argument", "todayStr 형식이 올바르지 않습니다.");
+        }
+        const ago7str = addDateKeyDays(todayStr, -6);
+
+        const [usersSnap, recentLogsSnap, weekLogsSnap, reportsCountSnap, challengeSnap, monthlyRewardsSnap] = await Promise.all([
+            db.collection("users").select(
+                "customDisplayName", "displayName", "coins", "totalHbtEarned", "hbtBalance", "currentStreak",
+                "activeChallenges", "createdAt", "welcomeBonusGiven", "referredBy",
+                "referralDay3BonusAt", "referralDay3BonusDate", "referralDay3BonusGiven",
+                "referralDay7BonusAt", "referralDay7BonusDate", "referralDay7BonusGiven"
+            ).get(),
+            db.collection("daily_logs").orderBy("date", "desc").limit(500)
+                .select("awardedPoints", "diet", "exercise", "sleepAndMind").get(),
+            db.collection("daily_logs").where("date", ">=", ago7str).where("date", "<=", todayStr)
+                .select("date", "userId", "metrics", "awardedPoints").get(),
+            db.collection("reports").count().get(),
+            db.collection("blockchain_transactions")
+                .where("type", "==", "challenge_settlement")
+                .where("status", "==", "success")
+                .select("status", "date", "updatedAt", "timestamp", "rewardPoints", "challengeId").get(),
+            db.collection("monthly_rewards").orderBy("distributedAt", "desc").limit(24)
+                .select("distributedAt", "winners").get()
+        ]);
+
+        const users = usersSnap.docs.map((docSnap) => {
+            const data = docSnap.data() || {};
+            return {
+                id: docSnap.id,
+                data: {
+                    customDisplayName: data.customDisplayName || "",
+                    displayName: data.displayName || "",
+                    coins: Number(data.coins) || 0,
+                    totalHbtEarned: Number(data.totalHbtEarned ?? data.hbtBalance) || 0,
+                    currentStreak: Number(data.currentStreak) || 0,
+                    activeChallenges: data.activeChallenges || {}
+                }
+            };
+        });
+
+        const recordTypes = { diet: 0, exercise: 0, mind: 0 };
+        recentLogsSnap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const awarded = data.awardedPoints || {};
+            const diet = data.diet || {};
+            const exercise = data.exercise || {};
+            const mind = data.sleepAndMind || {};
+            if ((Number(awarded.dietPoints) || 0) > 0 || !!diet.imageUrl || !!diet.analysis || ["breakfastUrl", "lunchUrl", "dinnerUrl", "snackUrl"].some((key) => !!diet[key])) recordTypes.diet += 1;
+            if ((Number(awarded.exercisePoints) || 0) > 0 || !!exercise.imageUrl || !!exercise.analysis || (exercise.cardioList || []).length > 0 || (exercise.strengthList || []).length > 0) recordTypes.exercise += 1;
+            if ((Number(awarded.mindPoints) || 0) > 0 || !!mind.imageUrl || !!mind.analysis || !!mind.sleepImageUrl || !!mind.meditationDone || !!String(mind.gratitude || "").trim()) recordTypes.mind += 1;
+        });
+
+        const weekLogs = weekLogsSnap.docs.map((docSnap) => {
+            const data = docSnap.data() || {};
+            return {
+                date: String(data.date || ""),
+                userId: String(data.userId || ""),
+                metrics: data.metrics || {},
+                awardedPoints: data.awardedPoints || {}
+            };
+        });
+
+        const bonusPointsMap = {};
+        const addBonus = (dateKey, points) => {
+            const amount = Number(points) || 0;
+            if (!dateKey || dateKey < ago7str || dateKey > todayStr || amount <= 0) return;
+            bonusPointsMap[dateKey] = (bonusPointsMap[dateKey] || 0) + amount;
+        };
+        usersSnap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const createdDate = toKstDateKey(data.createdAt);
+            if (data.welcomeBonusGiven) addBonus(createdDate, 200);
+            if (data.referredBy) addBonus(createdDate, 200);
+            if (data.referralDay3BonusGiven) addBonus(toKstDateKey(data.referralDay3BonusAt || data.referralDay3BonusDate), 500);
+            if (data.referralDay7BonusGiven) addBonus(toKstDateKey(data.referralDay7BonusAt || data.referralDay7BonusDate), 300);
+        });
+
+        const completedChallenges = { mini: 0, weekly: 0, master: 0 };
+        challengeSnap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            if (data.status !== "success") return;
+            addBonus(String(data.date || "") || toKstDateKey(data.updatedAt || data.timestamp), data.rewardPoints);
+            const challengeId = String(data.challengeId || "");
+            if (challengeId.includes("3d")) completedChallenges.mini += 1;
+            else if (challengeId.includes("7d")) completedChallenges.weekly += 1;
+            else if (challengeId.includes("30d")) completedChallenges.master += 1;
+        });
+        monthlyRewardsSnap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const dateKey = toKstDateKey(data.distributedAt);
+            (Array.isArray(data.winners) ? data.winners : []).forEach((winner) => addBonus(dateKey, winner?.reward));
+        });
+
+        return {
+            users,
+            weekLogs,
+            reportsCount: Number(reportsCountSnap.data()?.count || 0),
+            recordTypes,
+            bonusPointsMap,
+            completedChallenges,
+            recentLogCount: recentLogsSnap.size
+        };
+    }
+);
+
 /**
  * 해빛코치 연결 코드 생성 (10분 유효)
  */
