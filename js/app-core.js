@@ -27,7 +27,7 @@ import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
-    hasPotentiallyVerifiableStepEvidence,
+    hasStepPointCredit,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
@@ -7974,9 +7974,9 @@ function getCurrentSleepAnalysisFromUi() {
 let _loadDataGeneration = 0;
 
 // 저장 후 서버 정산 확정값 보정.
-// awardPoints 트리거는 비동기이고, 서버는 증거(Storage 검증 미디어·인증 걸음)로 점수를
-// 계산하므로 클라 낙관적 예상값(모든 URL·단순 8000보)과 다를 수 있다. 저장 직후엔 낙관값을
-// 즉시 보여주되, 서버 정산이 끝나면(rewardLedgerVersion===2) 확정값으로 잔액·화면을 갱신한다.
+// awardPoints 트리거는 비동기이고, 서버는 미디어는 Storage에서 검증하고 8,000보 입력은
+// 유산소 1회로 계산한다. 미디어 검증 결과에 따라 클라 예상값과 다를 수 있어 저장 직후엔 낙관값을
+// 즉시 보여주되, 서버 정산이 끝나면(rewardLedgerVersion===3) 확정값으로 잔액·화면을 갱신한다.
 // 실패/타임아웃 시엔 아무것도 안 바꾸고 낙관값을 유지한다(fail-open).
 const _settlementReconcileInFlight = new Set();
 async function reconcileSettlementAfterSave(uid, docId, dateStr) {
@@ -7997,7 +7997,7 @@ async function reconcileSettlementAfterSave(uid, docId, dateStr) {
             }
             if (!snap?.exists?.()) return;
             const data = snap.data() || {};
-            if (data.rewardLedgerVersion !== 2) continue; // 아직 서버 정산 전 → 재시도
+            if (data.rewardLedgerVersion !== 3) continue; // 아직 서버 정산 전 → 재시도
 
             // 잔액을 서버 users.coins로 재동기화(낙관적 과대/과소 보정)
             try {
@@ -11130,7 +11130,7 @@ function _getExerciseGuideCounts() {
         cardioCount,
         strengthCount,
         stepReady: (_stepData?.count || 0) > 0,
-        stepPointReady: hasPotentiallyVerifiableStepEvidence(_stepData)
+        stepPointReady: hasStepPointCredit(_stepData)
     };
 }
 
@@ -12151,14 +12151,14 @@ function _getRecordGuideStates() {
     const stepCount = Number(_stepData?.count || 0);
     const exerciseReadyCount = cardioCount + strengthCount + (stepReady ? 1 : 0);
     let exerciseStatus = '걸음수, 운동 이미지, 운동 영상 중 하나만 있어도 저장할 수 있어요.';
-    let exerciseHelper = '수동 걸음수는 기록용이며, 포인트는 걸음 캡처 인증 시 반영돼요.';
+    let exerciseHelper = '걸음수는 8,000보부터 유산소 운동 1회로 반영돼요.';
     if (exerciseReadyCount > 0) {
         exerciseStatus = `걸음수 ${stepReady ? `${stepCount.toLocaleString()}보` : '미입력'}, 사진 ${cardioCount}개, 영상 ${strengthCount}개가 준비됐어요.`;
         exerciseHelper = stepPointReady
-            ? `운동 준비 ${exerciseReadyCount}개 · 인증된 걸음도 포인트에 반영돼요.`
+            ? `운동 준비 ${exerciseReadyCount}개 · 저장하면 걸음수도 포인트에 반영돼요.`
             : stepReady
-                ? `운동 준비 ${exerciseReadyCount}개 · 수동 걸음수는 기록만 저장돼요.`
-                : `운동 준비 ${exerciseReadyCount}개 · 걸음 캡처 인증 시 포인트가 반영돼요.`;
+                ? `운동 준비 ${exerciseReadyCount}개 · 8,000보부터 포인트에 반영돼요.`
+                : `운동 준비 ${exerciseReadyCount}개 · 8,000보부터 유산소 1회로 반영돼요.`;
     }
 
     const sleepReady = _hasPreviewImage('preview-sleep');
@@ -12229,10 +12229,10 @@ function _getRecordGuideStates() {
                 badge: `${exerciseReadyCount} ready`,
                 status: exerciseStatusEn,
                 helper: stepPointReady
-                    ? 'Verified step evidence can count toward today’s exercise points.'
+                    ? 'Save to count 8,000+ steps as one cardio activity.'
                     : stepReady
-                        ? 'Manual steps are saved as a record; points require a verified step screenshot.'
-                        : 'A verified step screenshot can count toward today’s exercise points.'
+                        ? 'Steps are saved now and count toward points from 8,000.'
+                        : '8,000+ steps count as one cardio activity.'
             },
             sleep: {
                 badge: meditationActive ? 'Running' : `${mindReadyCount} ready`,
@@ -16644,7 +16644,7 @@ function calculateAwardedPointsFromLogData(logData = {}, previousAwarded = null)
 
     const cardioCredits = (Array.isArray(exercise.cardioList) ? exercise.cardioList : [])
         .filter(item => hasMediaUrl(item?.imageUrl)).length
-        + (hasPotentiallyVerifiableStepEvidence(logData?.steps) ? 1 : 0);
+        + (hasStepPointCredit(logData?.steps) ? 1 : 0);
     let newExerPts = 0;
     if (cardioCredits >= 1) newExerPts += 10;
     if (cardioCredits >= 2) newExerPts += 5;

@@ -2341,7 +2341,7 @@ exports.adminSettleStuckChallenge = onCall(
 // 관리자: 보상 창(어제~오늘) daily_logs를 가볍게 건드려 awardPoints(onDocumentWritten)를
 // 재발동시킨다. 구 awardPoints가 정산 못 한 기록(신 클라가 awardedPoints를 안 쓰기 때문)을
 // 신 서버정산 버전으로 재정산하기 위한 일회성 백필. awardPoints는 point_ledger +
-// rewardLedgerVersion:2로 멱등이라, 이미 정산된 기록은 건너뛰고 이중지급이 없다.
+// rewardLedgerVersion:3으로 멱등이다. v3은 수동 8,000보를 유산소 1회로 인정한다.
 exports.adminResettleDailyLogs = onCall(
     {
         region: "asia-northeast3",
@@ -3447,7 +3447,7 @@ exports.awardPoints = onDocumentWritten(
         // 삭제된 경우 무시
         if (!after) return;
 
-        if (before?.rewardLedgerVersion === 2
+        if (before?.rewardLedgerVersion === 3
             && sameAwardMap(before.awardedPoints, after.awardedPoints)
             && getDailyRewardEvidenceFingerprint(before) === getDailyRewardEvidenceFingerprint(after)) {
             return;
@@ -3608,10 +3608,10 @@ exports.awardPoints = onDocumentWritten(
                     exercisePoints: totals.exercise,
                     mindPoints: totals.mind,
                 });
-                if (!sameAwardMap(currentLog.awardedPoints, canonical) || currentLog.rewardLedgerVersion !== 2) {
+                if (!sameAwardMap(currentLog.awardedPoints, canonical) || currentLog.rewardLedgerVersion !== 3) {
                     tx.set(logRef, {
                         awardedPoints: canonical,
-                        rewardLedgerVersion: 2,
+                        rewardLedgerVersion: 3,
                     }, { merge: true });
                 }
                 if (pointsToCredit > 0) {
@@ -3621,7 +3621,7 @@ exports.awardPoints = onDocumentWritten(
                     userId,
                     date: logDate,
                     lastSettledAt: FieldValue.serverTimestamp(),
-                    version: 2,
+                    version: 3,
                 }, { merge: true });
                 return { stale: false, canonical, pointsToCredit };
             });

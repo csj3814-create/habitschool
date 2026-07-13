@@ -203,6 +203,10 @@ function mediaCandidate(url, folder, evidenceType, imageHash = null) {
     return { url, folder, evidenceType, imageHash: normalizeEvidenceHash(imageHash) };
 }
 
+function stepCountCandidate(count) {
+    return { evidenceType: 'step_count', stepCount: Number(count) };
+}
+
 function getDietCandidates(log) {
     const diet = log && typeof log.diet === 'object' && log.diet ? log.diet : {};
     const analysis = log && typeof log.dietAnalysis === 'object' && log.dietAnalysis ? log.dietAnalysis : {};
@@ -240,14 +244,8 @@ function getCardioCandidates(log) {
     }
 
     const steps = log && typeof log.steps === 'object' && log.steps ? log.steps : {};
-    const stepHash = normalizeEvidenceHash(steps.imageHash);
-    if (Number(steps.count) >= 8000 && stepHash && steps.screenshotUrl) {
-        candidates.push(mediaCandidate(
-            steps.screenshotUrl,
-            'step_screenshots',
-            'step_screenshot',
-            stepHash
-        ));
+    if (Number(steps.count) >= 8000) {
+        candidates.push(stepCountCandidate(steps.count));
     }
 
     return candidates;
@@ -283,7 +281,8 @@ function getStrengthCandidates(log) {
 /**
  * Calculate authoritative daily awards from raw evidence.
  *
- * isValidMedia receives (downloadUrl, context) and must return true (or
+ * A user-entered count of 8,000+ steps is one cardio unit without media.
+ * Other evidence remains media-backed: isValidMedia receives (downloadUrl, context) and must return true (or
  * { valid: true }) only after checking the referenced Storage object. Media
  * evidence fails closed when the verifier is omitted. Verifier errors are
  * allowed to propagate so a transient Storage failure can retry safely.
@@ -297,6 +296,11 @@ async function calculateServerAwardedPoints(log = {}, { isValidMedia } = {}) {
     const ledgerUnits = [];
 
     async function validateCandidate(candidate) {
+        if (candidate?.evidenceType === 'step_count') {
+            return Number.isFinite(candidate.stepCount) && candidate.stepCount >= 8000
+                ? Object.freeze({})
+                : false;
+        }
         if (!verifier || !candidate || typeof candidate.url !== 'string') return false;
         const objectPath = parseFirebaseStorageObjectPath(candidate.url);
         if (!objectPath || !isAllowedUserMediaPath(objectPath, userId, candidate.folder)) return false;

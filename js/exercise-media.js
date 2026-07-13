@@ -2,13 +2,9 @@ export function normalizeExerciseMediaUrl(value = '') {
     return String(value || '').trim();
 }
 
-export function hasPotentiallyVerifiableStepEvidence(steps = {}) {
+export function hasStepPointCredit(steps = {}) {
     const count = Number(steps?.count || 0);
-    const screenshotUrl = normalizeExerciseMediaUrl(steps?.screenshotUrl);
-    const imageHash = String(steps?.imageHash || '').trim().toLowerCase();
-    return count >= 8000
-        && /^https:\/\//i.test(screenshotUrl)
-        && /^[a-f0-9]{64}$/.test(imageHash);
+    return Number.isFinite(count) && count >= 8000;
 }
 
 export function isLocalExerciseVideoThumb(value = '') {

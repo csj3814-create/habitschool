@@ -173,7 +173,7 @@ describe('calculateServerAwardedPoints', () => {
             'mind_reflection',
         ]);
         expect(result.ledgerUnits.reduce((sum, unit) => sum + unit.points, 0)).toBe(80);
-        expect(result.ledgerUnits.find((unit) => unit.key === 'exercise_cardio_2')?.evidenceType).toBe('step_screenshot');
+        expect(result.ledgerUnits.find((unit) => unit.key === 'exercise_cardio_2')?.evidenceType).toBe('step_count');
         expect(verifiedContexts.every((context) => context.objectPath.startsWith(`${context.folder}/${TEST_UID}/`))).toBe(true);
         expect(verifiedContexts.every((context) => context.logDate === '2026-07-11')).toBe(true);
         expect(result.ledgerUnits.filter((unit) => unit.objectPath)
@@ -184,33 +184,38 @@ describe('calculateServerAwardedPoints', () => {
         expect(result.ledgerUnits.every(Object.isFrozen)).toBe(true);
     });
 
-    it('does not award manual or Health Connect step counts without a verified screenshot hash', async () => {
+    it('awards 8000+ entered steps without requiring a screenshot or media verifier', async () => {
         for (const steps of [
-            { count: 12000, source: 'manual' },
+            { count: 8000, source: 'manual' },
             { count: 12000, source: 'health_connect' },
             { count: 12000, source: 'manual', screenshotUrl: storageUrl('step_screenshots', 'no-hash.webp') },
-            {
-                count: 7999,
-                source: 'health_connect',
-                screenshotUrl: storageUrl('step_screenshots', 'under-8k.webp'),
-                imageHash: 'b'.repeat(64),
-            },
         ]) {
-            const result = await calculateServerAwardedPoints({ userId: TEST_UID, steps }, { isValidMedia: acceptMedia });
-            expect(result.awardedPoints.exercisePoints).toBe(0);
+            const result = await calculateServerAwardedPoints({ userId: TEST_UID, steps });
+            expect(result.awardedPoints.exercisePoints).toBe(10);
+            expect(result.ledgerUnits[0].evidenceType).toBe('step_count');
         }
 
-        const verified = await calculateServerAwardedPoints({
+        const belowThreshold = await calculateServerAwardedPoints({
             userId: TEST_UID,
-            steps: {
-                count: 8000,
-                source: 'manual',
-                screenshotUrl: storageUrl('step_screenshots', 'verified.webp'),
-                imageHash: 'c'.repeat(64),
+            steps: { count: 7999, source: 'manual' },
+        });
+        expect(belowThreshold.awardedPoints.exercisePoints).toBe(0);
+    });
+
+    it('awards 15 exercise points for one cardio photo plus 8000+ entered steps', async () => {
+        const result = await calculateServerAwardedPoints({
+            userId: TEST_UID,
+            exercise: {
+                cardioList: [{ imageUrl: storageUrl('exercise_images', 'walk.webp') }],
             },
+            steps: { count: 8023, source: 'manual' },
         }, { isValidMedia: acceptMedia });
-        expect(verified.awardedPoints.exercisePoints).toBe(10);
-        expect(verified.ledgerUnits[0].evidenceType).toBe('step_screenshot');
+
+        expect(result.awardedPoints.exercisePoints).toBe(15);
+        expect(result.ledgerUnits.map((unit) => unit.evidenceType)).toEqual([
+            'exercise_cardio_image',
+            'step_count',
+        ]);
     });
 
     it('rejects malicious, other-user, wrong-folder, and verifier-rejected media', async () => {

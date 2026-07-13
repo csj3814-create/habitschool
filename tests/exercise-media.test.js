@@ -4,7 +4,7 @@ import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
-    hasPotentiallyVerifiableStepEvidence,
+    hasStepPointCredit,
     isLocalExerciseVideoThumb,
     resolveLegacyStrengthVideoThumbUrl,
     resolveStrengthLocalThumbSeed,
@@ -12,31 +12,24 @@ import {
     shouldDeferStrengthThumbUntilUpload
 } from '../js/exercise-media.js';
 
-describe('hasPotentiallyVerifiableStepEvidence', () => {
-    it('does not treat manually entered steps as point evidence', () => {
-        expect(hasPotentiallyVerifiableStepEvidence({ count: 8023, source: 'manual' })).toBe(false);
+describe('hasStepPointCredit', () => {
+    it('treats manually entered 8000+ steps as one cardio credit', () => {
+        expect(hasStepPointCredit({ count: 8000, source: 'manual' })).toBe(true);
+        expect(hasStepPointCredit({ count: 8023, source: 'manual' })).toBe(true);
     });
 
-    it('allows an 8000+ step screenshot with a sha-256 hash to enter server verification', () => {
-        expect(hasPotentiallyVerifiableStepEvidence({
+    it('does not require a screenshot URL or hash', () => {
+        expect(hasStepPointCredit({
             count: 8023,
             source: 'samsung_screenshot',
-            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
-            imageHash: 'a'.repeat(64)
+            screenshotUrl: '',
+            imageHash: ''
         })).toBe(true);
     });
 
-    it('rejects screenshots below 8000 steps or without a valid hash', () => {
-        expect(hasPotentiallyVerifiableStepEvidence({
-            count: 7999,
-            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
-            imageHash: 'a'.repeat(64)
-        })).toBe(false);
-        expect(hasPotentiallyVerifiableStepEvidence({
-            count: 8023,
-            screenshotUrl: 'https://firebasestorage.googleapis.com/step.png',
-            imageHash: 'not-a-sha256'
-        })).toBe(false);
+    it('rejects counts below 8000 or non-numeric counts', () => {
+        expect(hasStepPointCredit({ count: 7999 })).toBe(false);
+        expect(hasStepPointCredit({ count: 'not-a-number' })).toBe(false);
     });
 });
 

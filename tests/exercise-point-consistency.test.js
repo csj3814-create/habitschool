@@ -8,20 +8,20 @@ const __dirname = path.dirname(__filename);
 const appSource = readFileSync(path.resolve(__dirname, '../js/app-core.js'), 'utf8');
 
 describe('exercise point consistency', () => {
-    it('uses potentially verifiable step evidence instead of manual step count for optimistic points', () => {
-        expect(appSource).toContain('+ (hasPotentiallyVerifiableStepEvidence(logData?.steps) ? 1 : 0)');
-        expect(appSource).not.toContain('+ (stepsCount >= 8000 ? 1 : 0)');
+    it('counts 8000+ entered steps as one optimistic cardio credit', () => {
+        expect(appSource).toContain('+ (hasStepPointCredit(logData?.steps) ? 1 : 0)');
     });
 
-    it('explains that manual steps are record-only', () => {
-        expect(appSource).toContain('수동 걸음수는 기록용이며, 포인트는 걸음 캡처 인증 시 반영돼요.');
-        expect(appSource).toContain('수동 걸음수는 기록만 저장돼요.');
-        expect(appSource).toContain('Manual steps are saved as a record; points require a verified step screenshot.');
+    it('explains the 8000-step point rule', () => {
+        expect(appSource).toContain('걸음수는 8,000보부터 유산소 운동 1회로 반영돼요.');
+        expect(appSource).toContain('저장하면 걸음수도 포인트에 반영돼요.');
+        expect(appSource).toContain('8,000+ steps count as one cardio activity.');
     });
 
     it('renders authoritative exercise points even while preserving local media UI', () => {
         expect(appSource).toContain('const authoritativeExercisePoints = Number(awarded.exercisePoints || 0);');
         expect(appSource).toContain("exerciseQuestEl.className = authoritativeExercisePoints > 0 ? 'quest-check done' : 'quest-check';");
+        expect(appSource).toContain('data.rewardLedgerVersion !== 3');
     });
 
     it('reconciles again after background media settlement', () => {
