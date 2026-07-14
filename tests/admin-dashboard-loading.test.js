@@ -8,6 +8,12 @@ const __dirname = path.dirname(__filename);
 const adminSource = readFileSync(path.resolve(__dirname, '../admin.html'), 'utf8');
 const functionsSource = readFileSync(path.resolve(__dirname, '../functions/runtime.js'), 'utf8');
 
+function loadCreateAdminSnapshot() {
+    const match = adminSource.match(/function createAdminSnapshot[\s\S]*?(?=\n\s*let adminDashboardSourcesInFlight)/);
+    if (!match) throw new Error('createAdminSnapshot source not found');
+    return new Function(`${match[0]}; return createAdminSnapshot;`)();
+}
+
 describe('admin dashboard progressive loading', () => {
     it('loads the dashboard through one admin callable instead of browser-wide Firestore scans', () => {
         expect(adminSource).toContain("httpsCallable(fns, 'getAdminDashboardSnapshot')");
@@ -20,6 +26,17 @@ describe('admin dashboard progressive loading', () => {
         expect(functionsSource).toContain('await assertAdminRequest(request);');
         expect(functionsSource).toContain('db.collection("reports").count().get()');
         expect(functionsSource).toContain('.where("status", "==", "success")');
+    });
+
+    it('uses returned row length when a server snapshot has no explicit size override', () => {
+        const createAdminSnapshot = loadCreateAdminSnapshot();
+        expect(createAdminSnapshot([{ id: 'a' }, { id: 'b' }]).size).toBe(2);
+        expect(createAdminSnapshot([{ id: 'a' }], 7).size).toBe(7);
+        expect(createAdminSnapshot(null).size).toBe(0);
+        expect(adminSource).toContain('const hasSizeOverride = sizeOverride !== null && sizeOverride !== undefined;');
+        expect(adminSource).toContain('size: hasSizeOverride && Number.isFinite(Number(sizeOverride))');
+        expect(adminSource).toContain(': safeRows.length');
+        expect(adminSource).not.toContain('size: Number.isFinite(Number(sizeOverride)) ? Number(sizeOverride) : safeRows.length');
     });
 
     it('bounds dashboard Firestore reads so one slow source cannot hold the full view blank', () => {

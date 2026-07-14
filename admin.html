@@ -984,8 +984,11 @@
 
     function createAdminSnapshot(rows = [], sizeOverride = null) {
         const safeRows = Array.isArray(rows) ? rows : [];
+        const hasSizeOverride = sizeOverride !== null && sizeOverride !== undefined;
         return {
-            size: Number.isFinite(Number(sizeOverride)) ? Number(sizeOverride) : safeRows.length,
+            size: hasSizeOverride && Number.isFinite(Number(sizeOverride))
+                ? Number(sizeOverride)
+                : safeRows.length,
             forEach(callback) {
                 safeRows.forEach((row, index) => callback({
                     id: String(row?.id || index),
