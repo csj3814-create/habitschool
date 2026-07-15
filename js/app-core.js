@@ -19994,13 +19994,17 @@ function refreshSortedFiltered() {
         sorted = sorted.filter(item => item.data.userId === galleryUserFilter.userId);
     }
     sorted.sort((a, b) => {
-        const timestampCompare = getGallerySortMillis(b.data) - getGallerySortMillis(a.data);
-        if (timestampCompare !== 0) return timestampCompare;
-
+        // 1순위: 기록 날짜. 피드의 '오늘/어제/2일 전' 섹션이 날짜 기준이므로 날짜가
+        // 먼저여야 섹션 역전이 없다(updatedAt 우선이면 백필·좋아요·댓글로 문서가
+        // 갱신될 때마다 옛 날짜 글이 최신 날짜 글 위로 점프한다).
         const aDate = String(a?.data?.date || '');
         const bDate = String(b?.data?.date || '');
         const dateCompare = bDate.localeCompare(aDate);
         if (dateCompare !== 0) return dateCompare;
+
+        // 2순위: 같은 날짜 안에서는 최근 활동(갱신) 글이 위로.
+        const timestampCompare = getGallerySortMillis(b.data) - getGallerySortMillis(a.data);
+        if (timestampCompare !== 0) return timestampCompare;
 
         const aFr = cachedMyFriends.includes(a.data.userId);
         const bFr = cachedMyFriends.includes(b.data.userId);
