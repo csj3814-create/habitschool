@@ -13606,7 +13606,8 @@ function renderMissionFocusState({
     const tagsEl = document.getElementById('mission-focus-tags');
     if (!kickerEl || !titleEl || !buttonEl) return;
 
-    const dailyGoalMet = isDashboardDailyGoalMet(todayAwarded);
+    const todayPointTotal = getDashboardTodayPointTotal(todayAwarded);
+    const dailyGoalMet = todayPointTotal >= DASHBOARD_DAILY_POINT_GOAL;
     const doneToday = dailyGoalMet ? 3 : ['diet', 'exercise', 'mind'].filter(type => !!todayAwarded[type]).length;
     const remainingToday = dailyGoalMet ? 0 : Math.max(0, 3 - doneToday);
     const nextTab = dailyGoalMet ? 'gallery' : getNextRecordTab(todayAwarded);
@@ -13614,7 +13615,7 @@ function renderMissionFocusState({
 
     if (stripEl) stripEl.style.display = isWeekActive && totalMissions > 0 ? 'none' : 'flex';
 
-    let tags = dailyGoalMet ? [`풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P 달성`] : [`오늘 ${doneToday}/3 기록`];
+    let tags = dailyGoalMet ? [`${getDashboardHeroPillText(todayPointTotal)} 달성`] : [`오늘 ${doneToday}/3 기록`];
 
     if (levelUpLockedToday) {
         kickerEl.textContent = '레벨업 완료';
@@ -13727,6 +13728,13 @@ function isDashboardDailyGoalMet(todayAwarded = {}) {
     return getDashboardTodayPointTotal(todayAwarded) >= DASHBOARD_DAILY_POINT_GOAL;
 }
 
+function getDashboardHeroPillText(todayPointTotal = 0) {
+    const normalizedTotal = Math.max(0, Number(todayPointTotal) || 0);
+    return normalizedTotal >= DASHBOARD_DAILY_POINT_GOAL
+        ? `풀 루틴 ${normalizedTotal}P`
+        : `${normalizedTotal}/${DASHBOARD_DAILY_POINT_GOAL}P`;
+}
+
 function applyDashboardLifecycleState({
     recordedDayCount = 0,
     primaryHabit = 'diet',
@@ -13794,10 +13802,10 @@ function _renderDashboardHeroState({
 
     if (heroPill) {
         heroPill.classList.toggle('is-complete', dailyGoalMet);
-        heroPill.textContent = dailyGoalMet
-            ? `풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P`
-            : `${todayPointTotal}/${DASHBOARD_DAILY_POINT_GOAL}P`;
-        heroPill.setAttribute('aria-label', `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 중 ${todayPointTotal}포인트`);
+        heroPill.textContent = getDashboardHeroPillText(todayPointTotal);
+        heroPill.setAttribute('aria-label', dailyGoalMet
+            ? `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 달성, 오늘 총 ${todayPointTotal}포인트`
+            : `풀 루틴 기준 ${DASHBOARD_DAILY_POINT_GOAL}포인트 중 ${todayPointTotal}포인트`);
     }
 
     if (focusTitle) {

@@ -15,7 +15,8 @@ function readDashboardScoringHelpers() {
         ${source}
         return {
             getDashboardTodayPointTotal,
-            isDashboardDailyGoalMet
+            isDashboardDailyGoalMet,
+            getDashboardHeroPillText
         };
     `)();
 }
@@ -59,6 +60,18 @@ describe('dashboard full-routine completion', () => {
         expect(actionSource).toContain('const isVisuallyComplete = dailyGoalMet || isMaxed;');
         expect(actionSource).toContain("button.classList.toggle('is-complete', isVisuallyComplete);");
         expect(actionSource).toContain("button.classList.toggle('is-progress', !dailyGoalMet && hasProgress && !isMaxed);");
+    });
+
+    it('shows the actual earned total after the full routine threshold is met', () => {
+        const { getDashboardHeroPillText } = readDashboardScoringHelpers();
+
+        expect(getDashboardHeroPillText(64)).toBe('64/65P');
+        expect(getDashboardHeroPillText(65)).toBe('풀 루틴 65P');
+        expect(getDashboardHeroPillText(75)).toBe('풀 루틴 75P');
+        expect(APP_CORE_SOURCE).toContain('heroPill.textContent = getDashboardHeroPillText(todayPointTotal);');
+        expect(APP_CORE_SOURCE).toContain('`${getDashboardHeroPillText(todayPointTotal)} 달성`');
+        expect(APP_CORE_SOURCE).not.toContain('`풀 루틴 ${DASHBOARD_DAILY_POINT_GOAL}P 달성`');
+        expect(APP_CORE_SOURCE).toContain('오늘 총 ${todayPointTotal}포인트');
     });
 
     it('prioritizes full-routine completion copy without hiding the actual category score', () => {
