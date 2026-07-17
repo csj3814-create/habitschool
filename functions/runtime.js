@@ -82,6 +82,7 @@ const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
+    resendRewardCoupon: resendRewardCouponFlow,
     dismissRewardCoupon: dismissRewardCouponFlow,
     markRewardCouponUsed: markRewardCouponUsedFlow,
     deleteRewardCoupon: deleteRewardCouponFlow,
@@ -2179,6 +2180,33 @@ exports.deleteRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("deleteRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 삭제 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+exports.resendRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth?.uid) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+        try {
+            const config = buildRewardMarketConfig(process.env);
+            return await resendRewardCouponFlow({
+                db,
+                HttpsError,
+                uid: request.auth.uid,
+                config,
+                redemptionId: request.data?.redemptionId,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("resendRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 문자 재발송 중 문제가 발생했어요.");
         }
     }
 );

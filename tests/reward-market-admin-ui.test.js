@@ -42,6 +42,23 @@ describe('reward market admin UI copy and actions', () => {
         expect(adminSource).toContain("reason: 'admin_provider_recheck'");
     });
 
+    it('loads issuance rows without waiting for the full dashboard user scan', () => {
+        const loaderStart = adminSource.indexOf('async function loadRewardMarketAdmin()');
+        const loaderEnd = adminSource.indexOf('window.refreshRewardMarketOpsNow', loaderStart);
+        const loader = adminSource.slice(loaderStart, loaderEnd);
+        expect(loader).not.toContain('getData()');
+        expect(loader).toContain("resolveAdminRead(");
+        expect(loader).toContain("'reward redemptions'");
+        expect(loader).toContain('renderRewardMarketAdminRows();');
+    });
+
+    it('offers an explicit existing-coupon MMS resend action', () => {
+        expect(adminSource).toContain('MMS 재발송');
+        expect(adminSource).toContain('window.adminRewardMmsResend = async function');
+        expect(adminSource).toContain('forceSms: true');
+        expect(adminSource).toContain('새 주문이나 포인트 차감은 발생하지 않습니다.');
+    });
+
     it('shows real coupon issuance capacity instead of treating the ops floor as a user block', () => {
         expect(adminSource).toContain('최저 매입가');
         expect(adminSource).toContain('실발급 가능');

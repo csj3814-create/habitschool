@@ -312,6 +312,25 @@ describe('reward market pricing helpers', () => {
         expect(mapped.expiresAt).toBe('2026-05-29T14:59:59.000Z');
     });
 
+    it('normalizes epoch millisecond expiry values before Firestore writes', () => {
+        const epochMs = Date.UTC(2026, 7, 16, 14, 59, 59);
+        const parsed = __test.parseGiftishowDate(String(epochMs));
+        const firestoreDate = __test.toSafeFirestoreDate(parsed);
+
+        expect(parsed).toBe('2026-08-16T14:59:59.000Z');
+        expect(firestoreDate).toEqual(new Date('2026-08-16T14:59:59.000Z'));
+        expect(__test.toSafeFirestoreDate('253402300800000')).toBeNull();
+    });
+
+    it('builds Giftishow MMS resend requests with the required provider user id', () => {
+        const template = __test.buildGiftishowResendTemplate();
+
+        expect(template.api_code).toBe('0203');
+        expect(template.tr_id).toBe('{{trId}}');
+        expect(template.user_id).toBe('{{giftishowUserId}}');
+        expect(template.sms_flag).toBe('{{giftishowSmsFlag}}');
+    });
+
     it('filters the live Giftishow catalog to the two public coffee coupons', () => {
         const giftishowPayload = {
             code: '0000',
@@ -952,5 +971,87 @@ describe('reward market pricing helpers', () => {
         expect(db.__get('users/test-user').coins).toBe(3264);
         expect(db.__get('reward_redemptions/req_test-user_mock-smoke-test').pointsCharged).toBe(false);
         expect(db.__get('reward_reserve_metrics/main').issuedCount).toBe(1);
+    });
+
+    it('rechecks and resends an existing live coupon by MMS without creating a new order', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/live-coupon': {
+                userId: 'test-user',
+                sku: 'mega-ice-americano-60d',
+                brandName: '메가MGC커피',
+                displayName: '(ICE)아메리카노 모바일쿠폰',
+                provider: 'giftishow',
+                providerGoodsId: 'G00005791059',
+                providerTrId: 'existing-transaction',
+                recipientPhone: '01012345678',
+                status: 'pending_issue',
+                mode: 'live',
+                deliveryMethod: 'image',
+                pointsCharged: true,
+                createdAt: new Date('2026-07-17T08:00:00.000Z'),
+            },
+        });
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://bizapi.giftishow.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'auth-token',
+            GIFTISHOW_CALLBACK_NO: '01000000000',
+            GIFTISHOW_USER_ID: 'provider-user',
+            GIFTISHOW_CARD_ID: 'card-id',
+            GIFTISHOW_BANNER_ID: 'banner-id',
+        });
+        const originalFetch = globalThis.fetch;
+        const requests = [];
+        globalThis.fetch = async (url, options) => {
+            requests.push({ url, body: String(options?.body || '') });
+            const isResend = String(url).endsWith('/resend');
+            return {
+                ok: true,
+                status: 200,
+                text: async () => JSON.stringify(isResend
+                    ? { code: '0000', message: 'OK' }
+                    : {
+                        code: '0000',
+                        result: [{
+                            couponInfoList: [{
+                                pinNo: 'test-coupon-pin',
+                                validPrdEndDt: '20260816235959',
+                            }],
+                        }],
+                    }),
+            };
+        };
+
+        try {
+            const result = await rewardMarketModule.resendRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'live-coupon',
+            });
+
+            expect(requests).toHaveLength(2);
+            expect(requests[0].url).toContain('/coupons');
+            expect(requests[1].url).toContain('/resend');
+            expect(requests[1].body).toContain('api_code=0203');
+            expect(requests[1].body).toContain('user_id=provider-user');
+            expect(requests[1].body).toContain('sms_flag=N');
+            expect(result.status).toBe('issued');
+            expect(result.maskedRecipientPhone).toBe('010-****-5678');
+            expect(db.__get('reward_redemptions/live-coupon').userResendDayCount).toBe(1);
+            expect(db.__get('reward_redemptions/live-coupon').pointsCharged).toBe(true);
+            await expect(rewardMarketModule.resendRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'live-coupon',
+            })).rejects.toMatchObject({ code: 'resource-exhausted' });
+            expect(requests).toHaveLength(2);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
     });
 });

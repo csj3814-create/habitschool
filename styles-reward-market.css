@@ -643,6 +643,17 @@
     color: #9f3f35;
 }
 
+.reward-coupon-remove.is-resend {
+    border-color: #f0b35f;
+    background: #fff8eb;
+    color: #a65c00;
+}
+
+.reward-coupon-remove:focus-visible {
+    outline: 2px solid #ffac42;
+    outline-offset: 2px;
+}
+
 .reward-coupon-warning {
     border-radius: 12px;
     background: #fff4f2;

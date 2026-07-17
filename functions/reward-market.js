@@ -7,6 +7,8 @@ const REWARD_PRICING_DOC_ID = "main";
 const REWARD_MARKET_FEED_DOC_ID = "main";
 
 const DEFAULT_REWARD_MARKET_MODE = "mock";
+const REWARD_COUPON_RESEND_COOLDOWN_MS = 5 * 60 * 1000;
+const REWARD_COUPON_RESEND_DAILY_LIMIT = 3;
 const DEFAULT_SETTLEMENT_ASSET = "points";
 const DEFAULT_PRICING_MODE = "phase1_fixed_internal";
 const DEFAULT_DELIVERY_MODE = "app_vault";
@@ -313,6 +315,7 @@ function buildGiftishowResendTemplate() {
         custom_auth_token: "{{giftishowCustomAuthToken}}",
         dev_yn: "{{giftishowDevYn}}",
         tr_id: "{{trId}}",
+        user_id: "{{giftishowUserId}}",
         sms_flag: "{{giftishowSmsFlag}}",
     };
 }
@@ -1441,11 +1444,18 @@ function serializeRedemptionDoc(docSnap) {
         providerTrId: String(data.providerTrId || "").trim(),
         providerResponseCode: String(data.providerResponseCode || "").trim(),
         providerResponseMessage: String(data.providerResponseMessage || "").trim(),
+        providerSendStatusCode: String(data.providerSendStatusCode || "").trim(),
+        providerSendStatusMessage: String(data.providerSendStatusMessage || "").trim(),
+        providerPinStatusCode: String(data.providerPinStatusCode || "").trim(),
+        providerPinStatusMessage: String(data.providerPinStatusMessage || "").trim(),
         errorMessage: String(data.errorMessage || "").trim(),
         manualReviewReason: String(data.manualReviewReason || "").trim(),
         manualResendCount: parseNumber(data.manualResendCount, 0),
         lastManualResendAt: toPlainDate(data.lastManualResendAt, ""),
         lastManualResendReason: String(data.lastManualResendReason || "").trim(),
+        deliveredViaMmsAt: toPlainDate(data.deliveredViaMmsAt, ""),
+        userResendDayCount: parseNumber(data.userResendDayCount, 0),
+        lastUserResendAt: toPlainDate(data.lastUserResendAt, ""),
     };
 }
 
@@ -1474,6 +1484,19 @@ async function findRedemptionByBurnTxHash(db, burnTxHash = "") {
         .limit(1)
         .get();
     return snapshot.empty ? null : snapshot.docs[0];
+}
+
+async function findUnresolvedRewardRedemption({ db, uid, sku, excludeId = "" }) {
+    const snapshot = await db.collection("reward_redemptions")
+        .where("userId", "==", uid)
+        .limit(40)
+        .get();
+    return snapshot.docs
+        .filter((docSnap) => docSnap.id !== excludeId)
+        .filter((docSnap) => String(docSnap.data()?.sku || "").trim() === sku)
+        .filter((docSnap) => ["pending_issue", "failed_manual_review"].includes(String(docSnap.data()?.status || "").trim()))
+        .filter((docSnap) => docSnap.data()?.pointsCharged === true && !docSnap.data()?.pointsRefundedAt)
+        .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt))[0] || null;
 }
 
 async function fetchBizmoneyBalance({ config, context = {} }) {
@@ -1888,6 +1911,14 @@ function resolveGiftishowCouponInfo(payload = {}) {
 
 function parseGiftishowDate(value = "", fallback = "") {
     const raw = String(value || "").trim();
+    if (/^\d{13}$/.test(raw)) {
+        const date = new Date(Number(raw));
+        return Number.isNaN(date.getTime()) ? toPlainDate(fallback, "") : date.toISOString();
+    }
+    if (/^\d{10}$/.test(raw)) {
+        const date = new Date(Number(raw) * 1000);
+        return Number.isNaN(date.getTime()) ? toPlainDate(fallback, "") : date.toISOString();
+    }
     const match = raw.match(/^(\d{4})(\d{2})(\d{2})(?:(\d{2})(\d{2})(\d{2}))?$/);
     if (match) {
         const [, year, month, day, hour = "23", minute = "59", second = "59"] = match;
@@ -1901,6 +1932,15 @@ function parseGiftishowDate(value = "", fallback = "") {
         ).toISOString();
     }
     return toPlainDate(raw, fallback);
+}
+
+function toSafeFirestoreDate(value, fallback = null) {
+    if (value === undefined || value === null || value === "") return fallback;
+    const normalized = typeof value === "string" ? parseGiftishowDate(value, "") : value;
+    const date = normalized instanceof Date ? new Date(normalized.getTime()) : new Date(normalized);
+    const year = date.getUTCFullYear();
+    if (Number.isNaN(date.getTime()) || year < 1 || year > 9999) return fallback;
+    return date;
 }
 
 function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "") {
@@ -1929,6 +1969,10 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         ),
         providerResponseCode: String(merged.code || merged.resCode || merged.sendRstCd || "").trim(),
         providerResponseMessage: String(merged.message || merged.resMsg || merged.sendRstMsg || "").trim(),
+        providerSendStatusCode: String(merged.sendStatusCd || merged.sendStatusCode || merged.sendStatus || "").trim(),
+        providerSendStatusMessage: String(merged.sendStatusNm || merged.sendStatusMessage || "").trim(),
+        providerPinStatusCode: String(merged.pinStatusCd || merged.pinStatusCode || merged.pinStatus || "").trim(),
+        providerPinStatusMessage: String(merged.pinStatusNm || merged.pinStatusMessage || "").trim(),
     };
 }
 
@@ -1987,7 +2031,7 @@ function buildProviderContext({
         giftishowMmsTitle: config.defaultMmsTitle,
         giftishowMmsMsg: config.defaultMmsMessage,
         giftishowDeliveryCode: resolveGiftishowDeliveryCode(product.deliveryMethod),
-        giftishowSmsFlag: "Y",
+        giftishowSmsFlag: "N",
         catalogStart: config.catalogStart,
         catalogSize: config.catalogSize,
     };
@@ -2144,7 +2188,7 @@ async function resendCouponWithProvider({
         userId: uid,
         recipientPhone: redemption.recipientPhone,
         reason,
-        smsFlag: "Y",
+        smsFlag: "N",
     }, context);
 
     const payload = await callGiftishowApi(config, config.resendPath, {
@@ -2153,7 +2197,11 @@ async function resendCouponWithProvider({
         body: config.resendMethod === "GET" ? undefined : body,
     });
 
-    return mapGiftishowOrderPayload(payload, redemption, redemption.recipientPhone);
+    const result = mapGiftishowOrderPayload(payload, redemption, redemption.recipientPhone);
+    if (!isSuccessfulGiftishowCouponResponse(result)) {
+        throw createGiftishowProviderError(result);
+    }
+    return result;
 }
 
 function isUsableCouponPayload(issuedCoupon = {}) {
@@ -2790,8 +2838,7 @@ async function redeemRewardCouponLegacy({
         throw new HttpsError("internal", "쿠폰 이미지나 PIN을 확인하지 못해 수동 확인이 필요해요.");
     }
 
-    const expiresAtDate = issuedCoupon?.expiresAt ? new Date(issuedCoupon.expiresAt) : null;
-    const serializedExpiresAt = expiresAtDate && !Number.isNaN(expiresAtDate.getTime()) ? expiresAtDate : null;
+    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
     const today = getKstDayKey(now);
 
     const batch = db.batch();
@@ -2808,6 +2855,10 @@ async function redeemRewardCouponLegacy({
         providerOrderId: issuedCoupon.providerOrderId,
         providerResponseCode: issuedCoupon.providerResponseCode || "",
         providerResponseMessage: issuedCoupon.providerResponseMessage || "",
+        providerSendStatusCode: issuedCoupon.providerSendStatusCode || "",
+        providerSendStatusMessage: issuedCoupon.providerSendStatusMessage || "",
+        providerPinStatusCode: issuedCoupon.providerPinStatusCode || "",
+        providerPinStatusMessage: issuedCoupon.providerPinStatusMessage || "",
         status: "issued",
         mode: config.mode,
         pricingMode: product.pricingMode || config.pricingMode,
@@ -2970,10 +3021,67 @@ async function redeemRewardCoupon({
     const redemptionRef = db.collection("reward_redemptions").doc(buildRedemptionRequestDocId(uid, normalizedRequestId));
     const existingRedemptionSnap = await redemptionRef.get();
     if (existingRedemptionSnap.exists) {
+        const existingData = existingRedemptionSnap.data() || {};
+        if (
+            config.mode === "live"
+            && String(existingData.status || "").trim() === "pending_issue"
+            && String(existingData.providerTrId || "").trim()
+        ) {
+            const recovered = await queryCouponStatusWithProvider({
+                config,
+                uid,
+                product: { ...product, pointCost: requestedQuotedPointCost, hbtCost: requestedQuotedPointCost },
+                rewardName,
+                recipientPhone: existingData.recipientPhone || normalizedPhone,
+                providerTrId: existingData.providerTrId,
+                providerOrderId: existingData.providerOrderId || "",
+            }).catch(() => null);
+            if (isUsableCouponPayload(recovered)) {
+                const recoveredAt = new Date();
+                await redemptionRef.set({
+                    status: "issued",
+                    pinCode: recovered.pinCode || existingData.pinCode || "",
+                    couponImgUrl: recovered.couponImgUrl || recovered.barcodeUrl || existingData.couponImgUrl || "",
+                    barcodeUrl: recovered.barcodeUrl || recovered.couponImgUrl || existingData.barcodeUrl || "",
+                    providerOrderId: recovered.providerOrderId || existingData.providerOrderId || "",
+                    providerResponseCode: recovered.providerResponseCode || existingData.providerResponseCode || "",
+                    providerResponseMessage: recovered.providerResponseMessage || "recovered_on_idempotent_retry",
+                    providerSendStatusCode: recovered.providerSendStatusCode || existingData.providerSendStatusCode || "",
+                    providerSendStatusMessage: recovered.providerSendStatusMessage || existingData.providerSendStatusMessage || "",
+                    providerPinStatusCode: recovered.providerPinStatusCode || existingData.providerPinStatusCode || "",
+                    providerPinStatusMessage: recovered.providerPinStatusMessage || existingData.providerPinStatusMessage || "",
+                    expiresAt: toSafeFirestoreDate(recovered.expiresAt, existingData.expiresAt || null),
+                    recoveredViaStatusLookupAt: recoveredAt,
+                    updatedAt: recoveredAt,
+                }, { merge: true });
+                const recoveredSnap = await redemptionRef.get();
+                return {
+                    ...buildRewardMarketResult(recoveredSnap),
+                    existing: true,
+                    recovered: true,
+                };
+            }
+        }
         return {
             ...buildRewardMarketResult(existingRedemptionSnap),
             existing: true,
         };
+    }
+
+    if (config.mode === "live") {
+        const unresolvedSnap = await findUnresolvedRewardRedemption({
+            db,
+            uid,
+            sku: normalizedSku,
+            excludeId: redemptionRef.id,
+        });
+        if (unresolvedSnap) {
+            return {
+                ...buildRewardMarketResult(unresolvedSnap),
+                existing: true,
+                unresolved: true,
+            };
+        }
     }
 
     if (!product.redeemable) {
@@ -3178,8 +3286,7 @@ async function redeemRewardCoupon({
         throw new HttpsError("internal", "쿠폰 이미지나 PIN 정보를 확인하지 못해 수동 확인이 필요해요.");
     }
 
-    const expiresAtDate = issuedCoupon?.expiresAt ? new Date(issuedCoupon.expiresAt) : null;
-    const serializedExpiresAt = expiresAtDate && !Number.isNaN(expiresAtDate.getTime()) ? expiresAtDate : null;
+    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
 
     const batch = db.batch();
     batch.set(redemptionRef, {
@@ -3195,6 +3302,10 @@ async function redeemRewardCoupon({
         providerOrderId: issuedCoupon.providerOrderId,
         providerResponseCode: issuedCoupon.providerResponseCode || "",
         providerResponseMessage: issuedCoupon.providerResponseMessage || "",
+        providerSendStatusCode: issuedCoupon.providerSendStatusCode || "",
+        providerSendStatusMessage: issuedCoupon.providerSendStatusMessage || "",
+        providerPinStatusCode: issuedCoupon.providerPinStatusCode || "",
+        providerPinStatusMessage: issuedCoupon.providerPinStatusMessage || "",
         status: "issued",
         mode: config.mode,
         pricingMode: product.pricingMode || config.pricingMode,
@@ -3263,6 +3374,138 @@ async function redeemRewardCoupon({
     return buildRewardMarketResult(finalSnap);
 }
 
+async function resendRewardCoupon({
+    db,
+    HttpsError,
+    uid,
+    config,
+    redemptionId = "",
+}) {
+    const normalizedId = String(redemptionId || "").trim();
+    if (!normalizedId) {
+        throw new HttpsError("invalid-argument", "다시 받을 쿠폰을 선택해 주세요.");
+    }
+    if (config.mode !== "live" || config.manualResendAvailable !== true) {
+        throw new HttpsError("failed-precondition", "문자 재발송을 사용할 수 없는 쿠폰입니다.");
+    }
+
+    const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
+    const reservedAt = new Date();
+    const todayKey = getKstDayKey(reservedAt);
+
+    const reserved = await db.runTransaction(async (transaction) => {
+        const snap = await transaction.get(redemptionRef);
+        if (!snap.exists) {
+            throw new HttpsError("not-found", "쿠폰 이력을 찾을 수 없어요.");
+        }
+        const data = snap.data() || {};
+        if (String(data.userId || "").trim() !== uid) {
+            throw new HttpsError("permission-denied", "본인의 쿠폰만 다시 받을 수 있어요.");
+        }
+        if (String(data.mode || "").trim().toLowerCase() !== "live") {
+            throw new HttpsError("failed-precondition", "실발급 쿠폰만 문자로 다시 받을 수 있어요.");
+        }
+        const status = String(data.status || "").trim();
+        if (["used_completed", "cancelled", "refunded"].includes(status) || data.pointsRefundedAt) {
+            throw new HttpsError("failed-precondition", "사용 완료·취소·환불된 쿠폰은 다시 받을 수 없어요.");
+        }
+        if (!String(data.providerTrId || "").trim() || !normalizeRecipientPhone(data.recipientPhone)) {
+            throw new HttpsError("failed-precondition", "공급사 거래번호나 수신 연락처를 확인할 수 없어요.");
+        }
+
+        const lastReservedMs = Math.max(
+            toTimestampMillis(data.userResendReservedAt),
+            toTimestampMillis(data.lastUserResendAt)
+        );
+        if (lastReservedMs > 0 && reservedAt.getTime() - lastReservedMs < REWARD_COUPON_RESEND_COOLDOWN_MS) {
+            throw new HttpsError("resource-exhausted", "재발송 후 5분 뒤에 다시 시도해 주세요.");
+        }
+        const dayCount = data.userResendDayKey === todayKey
+            ? Math.max(parseNumber(data.userResendDayCount, 0), 0)
+            : 0;
+        if (dayCount >= REWARD_COUPON_RESEND_DAILY_LIMIT) {
+            throw new HttpsError("resource-exhausted", "문자 재발송은 하루 3회까지 가능합니다.");
+        }
+
+        transaction.set(redemptionRef, {
+            userResendDayKey: todayKey,
+            userResendDayCount: dayCount + 1,
+            userResendReservedAt: reservedAt,
+            updatedAt: reservedAt,
+        }, { merge: true });
+
+        return {
+            raw: data,
+            redemption: serializeRedemptionDoc(snap),
+            nextDayCount: dayCount + 1,
+        };
+    });
+
+    const statusResult = await queryCouponStatusWithProvider({
+        config,
+        uid,
+        product: reserved.redemption,
+        rewardName: `${reserved.redemption.brandName} ${reserved.redemption.displayName}`.trim(),
+        recipientPhone: reserved.raw.recipientPhone,
+        providerTrId: reserved.raw.providerTrId,
+        providerOrderId: reserved.raw.providerOrderId || "",
+    }).catch(() => null);
+
+    let resendResult;
+    try {
+        resendResult = await resendCouponWithProvider({
+            config,
+            uid,
+            redemption: reserved.redemption,
+            reason: "user_requested_mms_resend",
+            forceSms: true,
+        });
+    } catch (error) {
+        await redemptionRef.set({
+            lastUserResendFailedAt: new Date(),
+            lastUserResendErrorCode: String(error?.code || "provider_resend_failed").slice(0, 80),
+            updatedAt: new Date(),
+        }, { merge: true });
+        throw new HttpsError("unavailable", "문자 재발송 요청이 지연되고 있어요. 잠시 후 다시 시도해 주세요.");
+    }
+
+    const recovered = isUsableCouponPayload(statusResult) ? statusResult : null;
+    const completedAt = new Date();
+    await redemptionRef.set({
+        status: "issued",
+        pinCode: recovered?.pinCode || reserved.raw.pinCode || "",
+        couponImgUrl: recovered?.couponImgUrl || recovered?.barcodeUrl || reserved.raw.couponImgUrl || "",
+        barcodeUrl: recovered?.barcodeUrl || recovered?.couponImgUrl || reserved.raw.barcodeUrl || "",
+        expiresAt: toSafeFirestoreDate(recovered?.expiresAt, reserved.raw.expiresAt || null),
+        providerOrderId: recovered?.providerOrderId || resendResult?.providerOrderId || reserved.raw.providerOrderId || "",
+        providerResponseCode: resendResult?.providerResponseCode || recovered?.providerResponseCode || "",
+        providerResponseMessage: resendResult?.providerResponseMessage || recovered?.providerResponseMessage || "mms_resend_requested",
+        providerSendStatusCode: resendResult?.providerSendStatusCode || recovered?.providerSendStatusCode || "",
+        providerSendStatusMessage: resendResult?.providerSendStatusMessage || recovered?.providerSendStatusMessage || "",
+        providerPinStatusCode: recovered?.providerPinStatusCode || reserved.raw.providerPinStatusCode || "",
+        providerPinStatusMessage: recovered?.providerPinStatusMessage || reserved.raw.providerPinStatusMessage || "",
+        deliveredViaMmsAt: completedAt,
+        lastUserResendAt: completedAt,
+        userResendReservedAt: completedAt,
+        updatedAt: completedAt,
+    }, { merge: true });
+
+    await db.collection("reward_reserve_ledger").add({
+        redemptionId: normalizedId,
+        userId: uid,
+        eventType: "user_mms_resend",
+        providerResponseCode: resendResult?.providerResponseCode || "",
+        createdAt: completedAt,
+    });
+
+    const updatedSnap = await redemptionRef.get();
+    return {
+        ...buildRewardMarketResult(updatedSnap),
+        maskedRecipientPhone: maskRecipientPhone(reserved.raw.recipientPhone),
+        resendDayCount: reserved.nextDayCount,
+    };
+}
+
 async function adminResendRewardCoupon({
     db,
     FieldValue,
@@ -3291,7 +3534,7 @@ async function adminResendRewardCoupon({
     // lost-write 복구: 기프티쇼는 발급 성공했는데 앱이 issued 기록을 놓쳐 pending_issue에
     // 갇힌 경우, 상태조회(providerTrId 기준)로 실제 쿠폰을 회복해 issued로 확정한다.
     // 재전송(resend)은 발급된 쿠폰 재전송이라 갇힌 건을 못 고치므로 이걸 먼저 시도한다.
-    if (String(rawRedemption.status || "").trim() === "pending_issue") {
+    if (String(rawRedemption.status || "").trim() === "pending_issue" && !forceSms) {
         const recovered = await queryCouponStatusWithProvider({
             config,
             uid: rawRedemption.userId || "",
@@ -3322,7 +3565,11 @@ async function adminResendRewardCoupon({
                 providerOrderId: recovered.providerOrderId || rawRedemption.providerOrderId || "",
                 providerResponseCode: recovered.providerResponseCode || rawRedemption.providerResponseCode || "",
                 providerResponseMessage: recovered.providerResponseMessage || "recovered_via_status_lookup",
-                expiresAt: recovered.expiresAt ? new Date(recovered.expiresAt) : (rawRedemption.expiresAt || null),
+                providerSendStatusCode: recovered.providerSendStatusCode || rawRedemption.providerSendStatusCode || "",
+                providerSendStatusMessage: recovered.providerSendStatusMessage || rawRedemption.providerSendStatusMessage || "",
+                providerPinStatusCode: recovered.providerPinStatusCode || rawRedemption.providerPinStatusCode || "",
+                providerPinStatusMessage: recovered.providerPinStatusMessage || rawRedemption.providerPinStatusMessage || "",
+                expiresAt: toSafeFirestoreDate(recovered.expiresAt, rawRedemption.expiresAt || null),
                 lastManualResendAt: recoveredAt,
                 lastManualResendBy: adminUid,
                 lastManualResendReason: normalizedReason,
@@ -3362,10 +3609,16 @@ async function adminResendRewardCoupon({
         pinCode: providerResult?.pinCode || redemption.pinCode || "",
         couponImgUrl: providerResult?.couponImgUrl || providerResult?.barcodeUrl || redemption.couponImgUrl || redemption.barcodeUrl || "",
         barcodeUrl: providerResult?.barcodeUrl || providerResult?.couponImgUrl || redemption.barcodeUrl || redemption.couponImgUrl || "",
-        expiresAt: providerResult?.expiresAt ? new Date(providerResult.expiresAt) : redemptionSnap.data()?.expiresAt || null,
+        expiresAt: isUsableCouponPayload(providerResult)
+            ? toSafeFirestoreDate(providerResult?.expiresAt, redemptionSnap.data()?.expiresAt || null)
+            : redemptionSnap.data()?.expiresAt || null,
         providerOrderId: providerResult?.providerOrderId || redemption.providerOrderId || "",
         providerResponseCode: providerResult?.providerResponseCode || "",
         providerResponseMessage: providerResult?.providerResponseMessage || "",
+        providerSendStatusCode: providerResult?.providerSendStatusCode || redemption.providerSendStatusCode || "",
+        providerSendStatusMessage: providerResult?.providerSendStatusMessage || redemption.providerSendStatusMessage || "",
+        providerPinStatusCode: providerResult?.providerPinStatusCode || redemption.providerPinStatusCode || "",
+        providerPinStatusMessage: providerResult?.providerPinStatusMessage || redemption.providerPinStatusMessage || "",
         lastManualResendAt: now,
         lastManualResendBy: adminUid,
         lastManualResendReason: normalizedReason,
@@ -3559,6 +3812,7 @@ module.exports = {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon,
+    resendRewardCoupon,
     dismissRewardCoupon,
     markRewardCouponUsed,
     deleteRewardCoupon,
@@ -3581,6 +3835,9 @@ module.exports = {
         resolveCollectionItems,
         mapGiftishowGoodsItem,
         mapGiftishowOrderPayload,
+        parseGiftishowDate,
+        toSafeFirestoreDate,
+        buildGiftishowResendTemplate,
         reconcilePublicRewardCatalog,
         markRewardCatalogProviderUnavailable,
         isSuccessfulGiftishowCouponResponse,

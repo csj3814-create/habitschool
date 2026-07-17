@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=239';
+import { auth, db, functions } from './firebase-config.js?v=240';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=239';
+import { showToast } from './ui-helpers.js?v=240';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -11,6 +11,7 @@ const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-poin
 
 let getRewardMarketSnapshotFn = null;
 let redeemRewardCouponFn = null;
+let resendRewardCouponFn = null;
 let dismissRewardCouponFn = null;
 let markRewardCouponUsedFn = null;
 let deleteRewardCouponFn = null;
@@ -313,6 +314,7 @@ async function ensureRewardMarketFunctions() {
     if (rewardMarketFunctionsReady) return;
     getRewardMarketSnapshotFn = httpsCallable(functions, 'getRewardMarketSnapshot');
     redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon');
+    resendRewardCouponFn = httpsCallable(functions, 'resendRewardCoupon');
     dismissRewardCouponFn = httpsCallable(functions, 'dismissRewardCoupon');
     markRewardCouponUsedFn = httpsCallable(functions, 'markRewardCouponUsed');
     deleteRewardCouponFn = httpsCallable(functions, 'deleteRewardCoupon');
@@ -877,6 +879,15 @@ function canMarkRewardCouponUsedItem(item = {}) {
     return String(item.status || '').trim() === 'issued' && !isRewardCouponExpired(item);
 }
 
+function canResendRewardCouponItem(item = {}) {
+    const status = String(item.status || '').trim();
+    return rewardMarketState.settings.manualResendAvailable !== false
+        && String(item.mode || '').trim().toLowerCase() === 'live'
+        && Boolean(String(item.providerTrId || '').trim())
+        && !isRewardCouponExpired(item)
+        && !['used_completed', 'cancelled', 'refunded'].includes(status);
+}
+
 function canDeleteRewardCouponItem(item = {}) {
     const status = String(item.status || '').trim();
     if (['used_completed', 'failed_manual_review', 'cancelled'].includes(status)) return true;
@@ -923,6 +934,7 @@ function getRewardCouponDismissLabel(item = {}) {
 function getRewardCouponPrimaryStatusLabel(item = {}) {
     if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
     if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
+    if (item.deliveredViaMmsAt && !item.pinCode && !item.couponImgUrl && !item.barcodeUrl) return '문자로 발급됨';
     return buildCouponStatusLabel(item.status);
 }
 
@@ -969,6 +981,9 @@ function renderRewardCouponVault() {
         const markUsedButton = canMarkRewardCouponUsedItem(item)
             ? '<button type="button" class="reward-coupon-remove" onclick="markRewardCouponUsedItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ac\uc6a9 \uc644\ub8cc</button>'
             : '';
+        const resendButton = canResendRewardCouponItem(item)
+            ? '<button type="button" class="reward-coupon-remove is-resend" onclick="resendRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">문자로 다시 받기</button>'
+            : '';
         const deleteButton = canDeleteRewardCouponItem(item)
             ? '<button type="button" class="reward-coupon-remove is-delete" onclick="deleteRewardCouponItem(\'' + encodeURIComponent(String(item.id || '')) + '\')">\uc0ad\uc81c</button>'
             : '';
@@ -978,6 +993,7 @@ function renderRewardCouponVault() {
                     buildRewardBrandIdentity(item, 'reward-coupon-brand') +
                     '<div class="reward-coupon-top-actions">' +
                         '<span class="reward-coupon-status">' + escapeHtml(statusLabel) + '</span>' +
+                        resendButton +
                         markUsedButton +
                         deleteButton +
                     '</div>' +
@@ -1252,6 +1268,36 @@ window.toggleRewardCouponArchiveDetail = function (encodedRedemptionId = '') {
     return true;
 };
 
+window.resendRewardCouponItem = async function (encodedRedemptionId = '') {
+    const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
+    if (!redemptionId) {
+        showToast('다시 받을 쿠폰을 선택해 주세요.');
+        return false;
+    }
+    const item = rewardMarketState.redemptions.find(
+        (entry) => String(entry.id || '') === redemptionId
+    );
+    if (!item || !canResendRewardCouponItem(item)) {
+        showToast('문자로 다시 받을 수 없는 쿠폰입니다.');
+        return false;
+    }
+    const maskedPhone = rewardMarketState.settings.maskedRecipientPhone || '저장된 연락처';
+    if (!window.confirm(`${maskedPhone}로 쿠폰 MMS를 다시 받을까요?`)) return false;
+
+    try {
+        await ensureRewardMarketFunctions();
+        const result = await resendRewardCouponFn({ redemptionId });
+        await loadRewardMarketSnapshot(true);
+        const target = result?.data?.maskedRecipientPhone || maskedPhone;
+        showToast(`${target}로 쿠폰을 다시 보냈어요.`);
+        return true;
+    } catch (error) {
+        console.error('resend reward coupon failed:', error);
+        showToast(error?.message || '문자 재발송을 완료하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        return false;
+    }
+};
+
 window.markRewardCouponUsedItem = async function (encodedRedemptionId = '') {
     const redemptionId = decodeURIComponent(String(encodedRedemptionId || ''));
     if (!redemptionId) {
@@ -1409,4 +1455,3 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
 
 
 window.loadRewardMarketSnapshot = loadRewardMarketSnapshot;
-

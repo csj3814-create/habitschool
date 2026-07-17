@@ -2298,6 +2298,9 @@
         const recheckButton = canRewardMarketAdminRecheck(row)
             ? `<button class="btn-view" onclick="adminRewardManualResend('${encodedId}')">쿠폰 재조회</button>`
             : '';
+        const resendMmsButton = isRewardMarketRealIssueRow(row) && row.providerTrId && !['used_completed', 'cancelled'].includes(String(row.status || '').trim())
+            ? `<button class="btn-view" onclick="adminRewardMmsResend('${encodedId}')">MMS 재발송</button>`
+            : '';
         const reconcileButton = canRewardMarketAdminReconcile(row)
             ? `<button class="btn-view" style="color:#1f8b4c;border-color:#1f8b4c;" onclick="adminRewardReconcile('${encodedId}')">발급완료 정정</button>`
             : '';
@@ -2315,6 +2318,7 @@
         return `
             <div class="reward-admin-actions">
                 ${recheckButton}
+                ${resendMmsButton}
                 ${reconcileButton}
                 ${refundButton}
                 ${couponLink}
@@ -2409,34 +2413,55 @@
         }
 
         try {
-            const { usersQ } = await getData();
             rewardMarketUserNames = {};
-            usersQ.forEach((u) => {
-                const data = u.data();
-                rewardMarketUserNames[u.id] = data.customDisplayName || data.displayName || u.id.slice(0, 8);
-            });
-
             const rewardRef = collection(db, 'reward_redemptions');
-            const [
-                redemptionSnap,
-                reserveSnap,
-                pricingSnap,
-                catalogSnap,
-            ] = await Promise.all([
+            const emptyQuerySnap = { docs: [], size: 0, forEach() {} };
+            const redemptionReadPromise = resolveAdminRead(
                 getDocs(query(rewardRef, orderBy('createdAt', 'desc'), limit(120))),
+                'reward redemptions',
+                emptyQuerySnap,
+                ADMIN_DASHBOARD_CORE_TIMEOUT_MS
+            );
+            const reserveReadPromise = resolveAdminRead(
                 getDoc(doc(db, 'reward_reserve_metrics', 'main')),
+                'reward reserve',
+                null
+            );
+            const pricingReadPromise = resolveAdminRead(
                 getDoc(doc(db, 'reward_market_pricing', 'main')),
+                'reward pricing',
+                null
+            );
+            const catalogReadPromise = resolveAdminRead(
                 getDocs(collection(db, 'reward_catalog')),
-            ]);
+                'reward catalog',
+                emptyQuerySnap
+            );
+
+            const redemptionRead = await redemptionReadPromise;
+            const redemptionSnap = redemptionRead.value || emptyQuerySnap;
 
             rewardMarketRows = redemptionSnap.docs
                 .map((docSnap) => normalizeRewardMarketAdminRow(docSnap))
                 .sort((a, b) => (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0));
             const realRows = rewardMarketRows.filter((row) => isRewardMarketRealIssueRow(row));
+            renderRewardMarketAdminRows();
+            if (redemptionRead.fallback && tbody) {
+                tbody.innerHTML = '<tr><td colspan="7" style="color:#b36b00;">발급 이력 조회가 지연되고 있습니다. 새로고침해 주세요.</td></tr>';
+            }
+
+            const [reserveRead, pricingRead, catalogRead] = await Promise.all([
+                reserveReadPromise,
+                pricingReadPromise,
+                catalogReadPromise,
+            ]);
+            const reserveSnap = reserveRead.value;
+            const pricingSnap = pricingRead.value;
+            const catalogSnap = catalogRead.value || emptyQuerySnap;
 
             renderRewardMarketAdminSummary({
-                pricing: pricingSnap.exists() ? pricingSnap.data() || {} : {},
-                reserve: reserveSnap.exists() ? reserveSnap.data() || {} : {},
+                pricing: pricingSnap?.exists?.() ? pricingSnap.data() || {} : {},
+                reserve: reserveSnap?.exists?.() ? reserveSnap.data() || {} : {},
                 catalog: buildRewardMarketAdminCatalog(catalogSnap),
                 counts: {
                     pending: realRows.filter((row) => row.status === 'pending_issue').length,
@@ -2444,7 +2469,6 @@
                     issued: realRows.filter((row) => row.status === 'issued').length,
                 }
             });
-            renderRewardMarketAdminRows();
         } catch (e) {
             console.error('reward market admin load failed:', e);
             if (tbody) {
@@ -2488,6 +2512,29 @@
             await loadRewardMarketAdmin();
         } catch (e) {
             alert(`쿠폰 재조회 실패: ${e.message || '알 수 없는 오류'}`);
+        }
+    };
+
+    window.adminRewardMmsResend = async function(encodedId) {
+        const redemptionId = decodeURIComponent(String(encodedId || ''));
+        const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
+        if (!row) {
+            alert('대상 쿠폰을 찾지 못했습니다.');
+            return;
+        }
+        if (!confirm('저장된 수신 연락처로 기존 쿠폰 MMS를 다시 보낼까요? 새 주문이나 포인트 차감은 발생하지 않습니다.')) return;
+
+        try {
+            await adminResendRewardCouponCallable({
+                redemptionId,
+                reason: 'admin_requested_mms_resend',
+                forceSms: true,
+            });
+            alert('기존 쿠폰 MMS 재발송을 요청했습니다.');
+            tabLoaded['reward-market'] = false;
+            await loadRewardMarketAdmin();
+        } catch (e) {
+            alert(`MMS 재발송 실패: ${e.message || '알 수 없는 오류'}`);
         }
     };
 

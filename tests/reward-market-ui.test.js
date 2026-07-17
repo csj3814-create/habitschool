@@ -56,6 +56,15 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
     });
 
+    it('offers a rate-limited server-side MMS resend for live coupons', () => {
+        expect(rewardMarketSource).toContain("httpsCallable(functions, 'resendRewardCoupon')");
+        expect(rewardMarketSource).toContain('function canResendRewardCouponItem');
+        expect(rewardMarketSource).toContain('window.resendRewardCouponItem = async function');
+        expect(rewardMarketSource).toContain('문자로 다시 받기');
+        expect(rewardMarketSource).toContain('쿠폰 MMS를 다시 받을까요?');
+        expect(rewardMarketStyles).toContain('.reward-coupon-remove.is-resend');
+    });
+
     it('folds used or expired coupon media until the user expands the archived coupon', () => {
         expect(rewardMarketSource).toContain('expandedArchivedCouponIds: new Set()');
         expect(rewardMarketSource).toContain('function canFoldRewardCouponItem');
