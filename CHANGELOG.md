@@ -2,6 +2,26 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-07-17
+
+### Added
+- Added an owner-only `resendRewardCoupon` callable and a `문자로 다시 받기` action in the coupon vault.
+- Added a separate Giftishow MMS resend action to the reward-market admin console.
+
+### Fixed
+- Normalized Giftishow expiry values supplied as epoch seconds, epoch milliseconds, or provider date strings before Firestore writes.
+- Reconciled idempotent retry requests through the existing provider transaction instead of issuing a second coupon.
+- Blocked unresolved same-user/same-SKU live redemptions from creating another provider order.
+- Added server-side resend reservation, five-minute cooldown, and a KST daily limit of three requests without additional point deduction.
+- Removed the reward-market admin dependency on the full users/daily-log dashboard scan and rendered issuance rows first.
+
+### Verification
+- `npm test` (556 passing; 7 Firestore emulator-only tests skipped in the local run)
+- `npx esbuild js/app.js --bundle --format=esm --platform=browser`
+- `node --check functions/reward-market.js`
+- `node --check functions/runtime.js`
+- PWA cache rotated to v240.
+
 ## 2026-07-10
 
 ### Security
