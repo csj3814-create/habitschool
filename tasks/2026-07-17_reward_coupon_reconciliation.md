@@ -32,3 +32,9 @@
 - 공개 업데이트 노트 v1.0.18에 쿠폰 발급 안정화, 문자 다시 받기, 관제탑 개선을 안내했다.
 - PWA 캐시는 v240으로 회전했다.
 - 검증: 전체 Vitest 556개 통과(Emulator 전용 7개 제외), 영문 동기화, mainnet 설정, Functions 문법, 앱 esbuild 번들 통과.
+
+## Staging 배포 기록 — 2026-07-17
+
+- `habitschool-staging`에 Hosting과 Functions를 함께 배포했다.
+- `resendRewardCoupon` v2 callable 생성, `redeemRewardCoupon`과 `adminResendRewardCoupon` 업데이트를 확인했다.
+- 배포된 `sw.js`의 `habitschool-v240`, 공개 changelog v1.0.18, 클라이언트 재발송 callable 연결을 원격 응답으로 확인했다.
