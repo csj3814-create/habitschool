@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=240';
+import { auth, db, functions } from './firebase-config.js?v=241';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=240';
+import { showToast } from './ui-helpers.js?v=241';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -69,6 +69,7 @@ const rewardMarketState = {
     error: '',
     expandedCouponVisualId: '',
     expandedArchivedCouponIds: new Set(),
+    failedCouponVisualUrls: new Set(),
     phoneEditorOpen: true,
 };
 
@@ -641,7 +642,11 @@ function buildMockBarcodeDataUrl(value = '', options = {}) {
 
 function getRewardCouponVisualSource(item = {}) {
     const couponImageUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
-    if (couponImageUrl) {
+    const isMixedContentUrl = /^http:\/\//i.test(couponImageUrl)
+        && globalThis.location?.protocol === 'https:';
+    if (couponImageUrl
+        && !isMixedContentUrl
+        && !rewardMarketState.failedCouponVisualUrls.has(couponImageUrl)) {
         return {
             url: couponImageUrl,
             className: 'reward-coupon-visual',
@@ -796,7 +801,7 @@ function buildCouponVisual(item = {}) {
 
     const visualMarkup = `
         <div class="${visual.className}">
-            <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
+            <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" data-coupon-visual-url="${escapeHtml(visual.url)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
         </div>
     `;
 
@@ -809,6 +814,19 @@ function buildCouponVisual(item = {}) {
             ${visualMarkup}
         </button>
     `;
+}
+
+function ensureRewardCouponImageFallbackHandling(listEl) {
+    if (!listEl || listEl.dataset.couponImageFallbackReady === 'true') return;
+    listEl.dataset.couponImageFallbackReady = 'true';
+    listEl.addEventListener('error', (event) => {
+        const imageEl = event.target;
+        if (!(imageEl instanceof HTMLImageElement) || !imageEl.classList.contains('reward-coupon-image')) return;
+        const failedUrl = String(imageEl.dataset.couponVisualUrl || imageEl.currentSrc || imageEl.src || '').trim();
+        if (!failedUrl || rewardMarketState.failedCouponVisualUrls.has(failedUrl)) return;
+        rewardMarketState.failedCouponVisualUrls.add(failedUrl);
+        renderRewardCouponVault();
+    }, true);
 }
 
 function buildCouponProductThumb(item = {}) {
@@ -943,6 +961,7 @@ function renderRewardCouponVault() {
     if (!listEl) return;
 
     ensureRewardCouponLightbox();
+    ensureRewardCouponImageFallbackHandling(listEl);
 
     if (rewardMarketState.redemptions.length === 0) {
         listEl.innerHTML = (
@@ -957,6 +976,7 @@ function renderRewardCouponVault() {
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
         const statusLabel = getRewardCouponPrimaryStatusLabel(item);
         const expiresLabel = formatCouponExpiryLabel(item.expiresAt);
+        const expiresTitle = item.expiryEstimated ? '유효기간(상품 기준)' : '유효기간';
         const shouldFoldCoupon = canFoldRewardCouponItem(item);
         const isArchivedExpanded = shouldFoldCoupon && isRewardCouponArchivedExpanded(item);
         const isArchivedCollapsed = shouldFoldCoupon && !isArchivedExpanded;
@@ -1001,7 +1021,7 @@ function renderRewardCouponVault() {
                 detailMarkup +
                 (item.manualReviewReason ? '<div class="reward-coupon-warning">' + escapeHtml(item.manualReviewReason) + '</div>' : '') +
                 '<div class="reward-coupon-footer">' +
-                    '<span>유효기간 ' + escapeHtml(expiresLabel) + '</span>' +
+                    '<span>' + escapeHtml(expiresTitle) + ' ' + escapeHtml(expiresLabel) + '</span>' +
                     '<span>발급 ' + escapeHtml(formatDateLabel(item.issuedAt || item.createdAt, true)) + '</span>' +
                     explorerLink +
                 '</div>' +
@@ -1289,7 +1309,7 @@ window.resendRewardCouponItem = async function (encodedRedemptionId = '') {
         const result = await resendRewardCouponFn({ redemptionId });
         await loadRewardMarketSnapshot(true);
         const target = result?.data?.maskedRecipientPhone || maskedPhone;
-        showToast(`${target}로 쿠폰을 다시 보냈어요.`);
+        showToast(`${target}로 재발송 요청이 접수됐어요. 문자가 오지 않으면 스팸함을 확인하고 5분 뒤 다시 시도해 주세요.`);
         return true;
     } catch (error) {
         console.error('resend reward coupon failed:', error);

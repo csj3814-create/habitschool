@@ -1429,12 +1429,14 @@ function serializeRedemptionDoc(docSnap) {
         deliveryMethod: String(data.deliveryMethod || "pin").trim(),
         deliveryMode: String(data.deliveryMode || DEFAULT_DELIVERY_MODE).trim(),
         fallbackPolicy: String(data.fallbackPolicy || DEFAULT_FALLBACK_POLICY).trim(),
+        validityDays: resolveRewardValidityDays(data),
         pinCode: String(data.pinCode || data.pinNo || "").trim(),
         couponImgUrl: String(data.couponImgUrl || "").trim(),
         barcodeUrl: String(data.barcodeUrl || data.couponImgUrl || "").trim(),
         burnTxHash: String(data.burnTxHash || "").trim(),
         burnExplorerUrl: String(data.burnExplorerUrl || "").trim(),
         expiresAt: toPlainDate(data.expiresAt, ""),
+        expiryEstimated: parseBoolean(data.expiryEstimated, false),
         createdAt: toPlainDate(data.createdAt, ""),
         issuedAt: toPlainDate(data.issuedAt, ""),
         updatedAt: toPlainDate(data.updatedAt, ""),
@@ -1454,6 +1456,7 @@ function serializeRedemptionDoc(docSnap) {
         lastManualResendAt: toPlainDate(data.lastManualResendAt, ""),
         lastManualResendReason: String(data.lastManualResendReason || "").trim(),
         deliveredViaMmsAt: toPlainDate(data.deliveredViaMmsAt, ""),
+        mmsResendRequestedAt: toPlainDate(data.mmsResendRequestedAt, ""),
         userResendDayCount: parseNumber(data.userResendDayCount, 0),
         lastUserResendAt: toPlainDate(data.lastUserResendAt, ""),
     };
@@ -1844,6 +1847,10 @@ async function buildRewardMarketSnapshot({ db, uid, config, userData = {} }) {
     const quotedCatalog = catalog
         .map((item) => quoteCatalogItem(item, pricing, config))
         .map((item) => buildCatalogAvailability(item, policy));
+    const catalogBySku = new Map(quotedCatalog.map((item) => [item.sku, item]));
+    const resolvedRedemptions = redemptions.map((item) => (
+        enrichRedemptionExpiry(item, catalogBySku.get(item.sku) || {})
+    ));
 
     return {
         settings,
@@ -1858,7 +1865,7 @@ async function buildRewardMarketSnapshot({ db, uid, config, userData = {} }) {
         limits: settings.limits,
         pricing,
         catalog: quotedCatalog,
-        redemptions,
+        redemptions: resolvedRedemptions,
         reserve: {
             ...reserve,
             lastBizmoneyBalanceKrw: settings.lastBizmoneyBalanceKrw,
@@ -1943,6 +1950,26 @@ function toSafeFirestoreDate(value, fallback = null) {
     return date;
 }
 
+function buildCatalogExpiryDate(item = {}, baseValue = new Date()) {
+    const numericBase = typeof baseValue === "number" && Number.isFinite(baseValue) ? baseValue : 0;
+    const baseMs = numericBase || toTimestampMillis(baseValue) || Date.now();
+    const validityDays = resolveRewardValidityDays(item);
+    return new Date(baseMs + (validityDays * 24 * 60 * 60 * 1000));
+}
+
+function enrichRedemptionExpiry(redemption = {}, catalogItem = {}) {
+    if (toTimestampMillis(redemption.expiresAt) > 0) return redemption;
+    const baseMs = toTimestampMillis(redemption.issuedAt || redemption.createdAt);
+    if (baseMs <= 0) return redemption;
+    const validityDays = resolveRewardValidityDays({ ...catalogItem, ...redemption });
+    return {
+        ...redemption,
+        validityDays,
+        expiresAt: buildCatalogExpiryDate({ validityDays }, baseMs).toISOString(),
+        expiryEstimated: true,
+    };
+}
+
 function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "") {
     const flattened = unwrapNestedResult(payload);
     const couponInfo = resolveGiftishowCouponInfo(payload);
@@ -1952,6 +1979,15 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         ...couponInfo,
     };
 
+    const providerExpiryRaw = merged.expiresAt
+        || merged.expiredAt
+        || merged.expireDate
+        || merged.validUntil
+        || merged.validPrdEndDt
+        || "";
+    const providerExpiry = toSafeFirestoreDate(parseGiftishowDate(providerExpiryRaw, ""), null);
+    const fallbackExpiry = buildCatalogExpiryDate(product);
+
     return {
         providerOrderId: String(
             merged.orderId || merged.orderNo || merged.id || merged.sendRstCd || ""
@@ -1960,17 +1996,15 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         pinCode: String(merged.pin || merged.pinCode || merged.pinNo || merged.couponNo || merged.couponNumber || "").trim(),
         couponImgUrl: String(merged.couponImgUrl || merged.barcodeUrl || merged.barcodeURL || merged.imageUrl || merged.imgUrl || "").trim(),
         barcodeUrl: String(merged.barcodeUrl || merged.couponImgUrl || merged.barcodeURL || merged.imageUrl || merged.imgUrl || "").trim(),
-        expiresAt: parseGiftishowDate(
-            merged.expiresAt || merged.expiredAt || merged.expireDate || merged.validUntil || merged.validPrdEndDt,
-            new Date(Date.now() + (resolveRewardValidityDays(product) * 24 * 60 * 60 * 1000)).toISOString()
-        ),
+        expiresAt: (providerExpiry || fallbackExpiry).toISOString(),
+        expiryEstimated: !providerExpiry,
         recipientPhone: normalizeRecipientPhone(
             merged.recipientPhone || merged.phone || merged.phoneNumber || merged.recverTelNo || recipientPhone
         ),
-        providerResponseCode: String(merged.code || merged.resCode || merged.sendRstCd || "").trim(),
-        providerResponseMessage: String(merged.message || merged.resMsg || merged.sendRstMsg || "").trim(),
-        providerSendStatusCode: String(merged.sendStatusCd || merged.sendStatusCode || merged.sendStatus || "").trim(),
-        providerSendStatusMessage: String(merged.sendStatusNm || merged.sendStatusMessage || "").trim(),
+        providerResponseCode: String(merged.code || merged.resultCode || merged.resultCd || merged.resCode || "").trim(),
+        providerResponseMessage: String(merged.message || merged.resultMessage || merged.resultMsg || merged.resMsg || "").trim(),
+        providerSendStatusCode: String(merged.sendRstMsg || merged.sendStatusCode || merged.sendStatus || "").trim(),
+        providerSendStatusMessage: String(merged.sendStatusCd || merged.sendStatusNm || merged.sendStatusMessage || "").trim(),
         providerPinStatusCode: String(merged.pinStatusCd || merged.pinStatusCode || merged.pinStatus || "").trim(),
         providerPinStatusMessage: String(merged.pinStatusNm || merged.pinStatusMessage || "").trim(),
     };
@@ -1978,7 +2012,7 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
 
 function isSuccessfulGiftishowCouponResponse(result = {}) {
     const code = String(result.providerResponseCode || "").trim().toUpperCase();
-    return !code || code === "0000" || code === "200";
+    return code === "0000" || code === "200";
 }
 
 function createGiftishowProviderError(result = {}) {
@@ -2838,7 +2872,10 @@ async function redeemRewardCouponLegacy({
         throw new HttpsError("internal", "쿠폰 이미지나 PIN을 확인하지 못해 수동 확인이 필요해요.");
     }
 
-    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
+    const fallbackExpiresAt = buildCatalogExpiryDate(product, now);
+    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, fallbackExpiresAt);
+    const expiryEstimated = Boolean(issuedCoupon?.expiryEstimated)
+        || !toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
     const today = getKstDayKey(now);
 
     const batch = db.batch();
@@ -2874,6 +2911,7 @@ async function redeemRewardCouponLegacy({
         deliveryMethod: issuedCoupon.deliveryMethod || product.deliveryMethod,
         deliveryMode: config.deliveryMode,
         fallbackPolicy: config.fallbackPolicy,
+        validityDays: resolveRewardValidityDays(product),
         pinCode: issuedCoupon.pinCode,
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
@@ -2886,6 +2924,7 @@ async function redeemRewardCouponLegacy({
         network: networkTag,
         issuedAt: FieldValue.serverTimestamp(),
         expiresAt: serializedExpiresAt,
+        expiryEstimated,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
         userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
@@ -3286,7 +3325,10 @@ async function redeemRewardCoupon({
         throw new HttpsError("internal", "쿠폰 이미지나 PIN 정보를 확인하지 못해 수동 확인이 필요해요.");
     }
 
-    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
+    const fallbackExpiresAt = buildCatalogExpiryDate(product, now);
+    const serializedExpiresAt = toSafeFirestoreDate(issuedCoupon?.expiresAt, fallbackExpiresAt);
+    const expiryEstimated = Boolean(issuedCoupon?.expiryEstimated)
+        || !toSafeFirestoreDate(issuedCoupon?.expiresAt, null);
 
     const batch = db.batch();
     batch.set(redemptionRef, {
@@ -3324,6 +3366,7 @@ async function redeemRewardCoupon({
         deliveryMethod: issuedCoupon.deliveryMethod || product.deliveryMethod,
         deliveryMode: config.deliveryMode,
         fallbackPolicy: config.fallbackPolicy,
+        validityDays: resolveRewardValidityDays(product),
         pinCode: issuedCoupon.pinCode,
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
@@ -3334,6 +3377,7 @@ async function redeemRewardCoupon({
         pointsCharged: shouldChargePointsNow,
         issuedAt: FieldValue.serverTimestamp(),
         expiresAt: serializedExpiresAt,
+        expiryEstimated,
         updatedAt: FieldValue.serverTimestamp(),
         userLabel: String(userData.customDisplayName || userData.displayName || "회원").trim(),
     }, { merge: true });
@@ -3471,12 +3515,21 @@ async function resendRewardCoupon({
 
     const recovered = isUsableCouponPayload(statusResult) ? statusResult : null;
     const completedAt = new Date();
+    const fallbackExpiresAt = buildCatalogExpiryDate(
+        reserved.redemption,
+        reserved.raw.issuedAt || reserved.raw.createdAt || completedAt
+    );
+    const recoveredExpiresAt = toSafeFirestoreDate(recovered?.expiresAt, null);
     await redemptionRef.set({
         status: "issued",
         pinCode: recovered?.pinCode || reserved.raw.pinCode || "",
         couponImgUrl: recovered?.couponImgUrl || recovered?.barcodeUrl || reserved.raw.couponImgUrl || "",
         barcodeUrl: recovered?.barcodeUrl || recovered?.couponImgUrl || reserved.raw.barcodeUrl || "",
-        expiresAt: toSafeFirestoreDate(recovered?.expiresAt, reserved.raw.expiresAt || null),
+        expiresAt: recoveredExpiresAt || toSafeFirestoreDate(reserved.raw.expiresAt, fallbackExpiresAt),
+        expiryEstimated: recoveredExpiresAt
+            ? Boolean(recovered?.expiryEstimated)
+            : !toSafeFirestoreDate(reserved.raw.expiresAt, null),
+        validityDays: resolveRewardValidityDays(reserved.redemption),
         providerOrderId: recovered?.providerOrderId || resendResult?.providerOrderId || reserved.raw.providerOrderId || "",
         providerResponseCode: resendResult?.providerResponseCode || recovered?.providerResponseCode || "",
         providerResponseMessage: resendResult?.providerResponseMessage || recovered?.providerResponseMessage || "mms_resend_requested",
@@ -3484,7 +3537,8 @@ async function resendRewardCoupon({
         providerSendStatusMessage: resendResult?.providerSendStatusMessage || recovered?.providerSendStatusMessage || "",
         providerPinStatusCode: recovered?.providerPinStatusCode || reserved.raw.providerPinStatusCode || "",
         providerPinStatusMessage: recovered?.providerPinStatusMessage || reserved.raw.providerPinStatusMessage || "",
-        deliveredViaMmsAt: completedAt,
+        mmsResendRequestedAt: completedAt,
+        deliveredViaMmsAt: null,
         lastUserResendAt: completedAt,
         userResendReservedAt: completedAt,
         updatedAt: completedAt,
@@ -3503,6 +3557,8 @@ async function resendRewardCoupon({
         ...buildRewardMarketResult(updatedSnap),
         maskedRecipientPhone: maskRecipientPhone(reserved.raw.recipientPhone),
         resendDayCount: reserved.nextDayCount,
+        resendRequestAccepted: true,
+        deliveryConfirmed: false,
     };
 }
 
@@ -3557,6 +3613,11 @@ async function adminResendRewardCoupon({
 
         if (isUsableCouponPayload(recovered)) {
             const recoveredAt = new Date();
+            const fallbackExpiresAt = buildCatalogExpiryDate(
+                redemption,
+                rawRedemption.issuedAt || rawRedemption.createdAt || recoveredAt
+            );
+            const recoveredExpiresAt = toSafeFirestoreDate(recovered.expiresAt, null);
             await redemptionRef.set({
                 status: "issued",
                 pinCode: recovered.pinCode || rawRedemption.pinCode || "",
@@ -3569,7 +3630,11 @@ async function adminResendRewardCoupon({
                 providerSendStatusMessage: recovered.providerSendStatusMessage || rawRedemption.providerSendStatusMessage || "",
                 providerPinStatusCode: recovered.providerPinStatusCode || rawRedemption.providerPinStatusCode || "",
                 providerPinStatusMessage: recovered.providerPinStatusMessage || rawRedemption.providerPinStatusMessage || "",
-                expiresAt: toSafeFirestoreDate(recovered.expiresAt, rawRedemption.expiresAt || null),
+                expiresAt: recoveredExpiresAt || toSafeFirestoreDate(rawRedemption.expiresAt, fallbackExpiresAt),
+                expiryEstimated: recoveredExpiresAt
+                    ? Boolean(recovered.expiryEstimated)
+                    : !toSafeFirestoreDate(rawRedemption.expiresAt, null),
+                validityDays: resolveRewardValidityDays(redemption),
                 lastManualResendAt: recoveredAt,
                 lastManualResendBy: adminUid,
                 lastManualResendReason: normalizedReason,
@@ -3623,6 +3688,7 @@ async function adminResendRewardCoupon({
         lastManualResendBy: adminUid,
         lastManualResendReason: normalizedReason,
         manualResendCount: nextManualResendCount,
+        ...(forceSms ? { mmsResendRequestedAt: now, deliveredViaMmsAt: null } : {}),
         updatedAt: now,
     }, { merge: true });
 
@@ -3644,6 +3710,8 @@ async function adminResendRewardCoupon({
     return {
         ...buildRewardMarketResult(updatedSnap),
         manualResendCount: nextManualResendCount,
+        resendRequestAccepted: !!forceSms,
+        deliveryConfirmed: false,
     };
 }
 
@@ -3837,6 +3905,8 @@ module.exports = {
         mapGiftishowOrderPayload,
         parseGiftishowDate,
         toSafeFirestoreDate,
+        buildCatalogExpiryDate,
+        enrichRedemptionExpiry,
         buildGiftishowResendTemplate,
         reconcilePublicRewardCatalog,
         markRewardCatalogProviderUnavailable,

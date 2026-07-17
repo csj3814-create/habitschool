@@ -322,6 +322,35 @@ describe('reward market pricing helpers', () => {
         expect(__test.toSafeFirestoreDate('253402300800000')).toBeNull();
     });
 
+    it('falls back to the catalog validity period when Giftishow omits expiry', () => {
+        const before = Date.now();
+        const mapped = __test.mapGiftishowOrderPayload(
+            { code: '0000', result: { pinNo: 'test-pin' } },
+            { validityDays: 30 },
+            ''
+        );
+        const expiresAtMs = new Date(mapped.expiresAt).getTime();
+
+        expect(mapped.expiryEstimated).toBe(true);
+        expect(expiresAtMs).toBeGreaterThanOrEqual(before + (29 * 24 * 60 * 60 * 1000));
+        expect(expiresAtMs).toBeLessThanOrEqual(Date.now() + (31 * 24 * 60 * 60 * 1000));
+    });
+
+    it('derives an honest display expiry for older issued coupons with no stored expiry', () => {
+        const enriched = __test.enrichRedemptionExpiry({
+            status: 'issued',
+            sku: 'coffee',
+            issuedAt: '2026-07-18T00:00:00.000Z',
+        }, {
+            sku: 'coffee',
+            validityDays: 30,
+        });
+
+        expect(enriched.expiresAt).toBe('2026-08-17T00:00:00.000Z');
+        expect(enriched.expiryEstimated).toBe(true);
+        expect(enriched.validityDays).toBe(30);
+    });
+
     it('builds Giftishow MMS resend requests with the required provider user id', () => {
         const template = __test.buildGiftishowResendTemplate();
 
@@ -446,6 +475,7 @@ describe('reward market pricing helpers', () => {
             providerResponseCode: 'ERR0401',
             providerResponseMessage: 'No products requested',
         })).toBe(false);
+        expect(__test.isSuccessfulGiftishowCouponResponse({})).toBe(false);
     });
 
     it('blocks live redemption when the provider catalog cannot be confirmed', () => {
@@ -1040,8 +1070,12 @@ describe('reward market pricing helpers', () => {
             expect(requests[1].body).toContain('sms_flag=N');
             expect(result.status).toBe('issued');
             expect(result.maskedRecipientPhone).toBe('010-****-5678');
+            expect(result.resendRequestAccepted).toBe(true);
+            expect(result.deliveryConfirmed).toBe(false);
             expect(db.__get('reward_redemptions/live-coupon').userResendDayCount).toBe(1);
             expect(db.__get('reward_redemptions/live-coupon').pointsCharged).toBe(true);
+            expect(db.__get('reward_redemptions/live-coupon').mmsResendRequestedAt).toBeInstanceOf(Date);
+            expect(db.__get('reward_redemptions/live-coupon').deliveredViaMmsAt).toBeNull();
             await expect(rewardMarketModule.resendRewardCoupon({
                 db,
                 HttpsError: FakeHttpsError,

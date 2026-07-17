@@ -62,7 +62,22 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('window.resendRewardCouponItem = async function');
         expect(rewardMarketSource).toContain('문자로 다시 받기');
         expect(rewardMarketSource).toContain('쿠폰 MMS를 다시 받을까요?');
+        expect(rewardMarketSource).toContain('재발송 요청이 접수됐어요.');
+        expect(rewardMarketSource).not.toContain('쿠폰을 다시 보냈어요.');
         expect(rewardMarketStyles).toContain('.reward-coupon-remove.is-resend');
+    });
+
+    it('falls back from blocked or broken provider coupon images to the local PIN barcode', () => {
+        expect(rewardMarketSource).toContain('failedCouponVisualUrls: new Set()');
+        expect(rewardMarketSource).toContain("globalThis.location?.protocol === 'https:'");
+        expect(rewardMarketSource).toContain('ensureRewardCouponImageFallbackHandling');
+        expect(rewardMarketSource).toContain('data-coupon-visual-url');
+        expect(rewardMarketSource).toContain('buildMockBarcodeDataUrl(pinCode');
+    });
+
+    it('labels catalog-derived coupon expiry without showing a blank dash', () => {
+        expect(rewardMarketSource).toContain("item.expiryEstimated ? '유효기간(상품 기준)' : '유효기간'");
+        expect(rewardMarketSource).toContain("escapeHtml(expiresTitle) + ' ' + escapeHtml(expiresLabel)");
     });
 
     it('folds used or expired coupon media until the user expands the archived coupon', () => {
@@ -97,7 +112,7 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain("imageEl.classList.toggle('is-rotated-barcode'");
         expect(rewardMarketSource).toContain('formatCouponExpiryLabel');
         expect(rewardMarketSource).toContain('일 남음');
-        expect(rewardMarketSource).toContain("'<span>유효기간 ' + escapeHtml(expiresLabel) + '</span>'");
+        expect(rewardMarketSource).toContain("'<span>' + escapeHtml(expiresTitle) + ' ' + escapeHtml(expiresLabel) + '</span>'");
         expect(rewardMarketSource).not.toContain('`${expiresLabel}까지`');
     });
 });

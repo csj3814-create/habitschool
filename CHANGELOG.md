@@ -2,6 +2,18 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-07-18
+
+### Fixed
+- Replaced blocked or broken Giftishow coupon images with a locally generated PIN barcode instead of showing broken-image alt text.
+- Derived missing coupon expiry from the catalog validity period and labeled the derived value as product-based in the vault.
+- Stopped treating a successful Giftishow resend API response as proof that the MMS reached the device.
+- Required an explicit Giftishow success code instead of accepting provider responses with a missing code.
+
+### Changed
+- Recorded MMS resend acceptance separately from delivery confirmation and updated the user guidance for spam filtering and delayed delivery.
+- PWA cache rotated to v241.
+
 ## 2026-07-17
 
 ### Added
