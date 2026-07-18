@@ -85,7 +85,8 @@ describe('reward market UI render wiring', () => {
     });
 
     it('labels catalog-derived coupon expiry without showing a blank dash', () => {
-        expect(rewardMarketSource).toContain("item.expiryEstimated ? '유효기간(상품 기준)' : '유효기간'");
+        expect(rewardMarketSource).toContain("const expiresTitle = '유효기간';");
+        expect(rewardMarketSource).not.toContain('유효기간(상품 기준)');
         expect(rewardMarketSource).toContain("escapeHtml(expiresTitle) + ' ' + escapeHtml(expiresLabel)");
     });
 

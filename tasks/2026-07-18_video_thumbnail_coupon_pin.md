@@ -16,3 +16,20 @@
 - 보관함 스냅샷은 기존처럼 먼저 렌더하고 미해결 쿠폰 복구는 백그라운드 순차 실행한다. 동일 세션 중복 조회와 서버 60초 동시 선점을 막았다.
 - 집중 테스트 73개 및 전체 테스트 564개 통과(Emulator 전용 7개 제외). `check:en`, `mainnet:config:check`, Functions 문법, esbuild, `git diff --check` 통과.
 - PWA 런타임/캐시는 v242, 변경 이력은 v1.0.20으로 갱신했다. 실제 적용에는 Hosting과 새 `reconcileRewardCoupon` Function 배포가 함께 필요하다.
+
+## 저장 후 영상 썸네일 재수정 계획
+
+- [x] 저장 완료 시 로컬 영상 프레임이 검은 fallback으로 교체되는 경로를 재현 가능한 코드 흐름으로 확인한다.
+- [x] 화면에 이미 디코딩된 로컬 영상 프레임을 축소 JPEG 썸네일로 캡처해 크기와 관계없이 썸네일 업로드에 사용한다.
+- [x] 썸네일 작업이 끝나기 전에는 저장 완료 렌더가 로컬 영상 프레임을 제거하지 않도록 한다.
+- [x] 대용량 영상·저장 직후·썸네일 지연 조건의 회귀 테스트와 전체 검증을 수행한다.
+- [x] 교정 내용을 lessons에 기록하고 변경 이력·PWA 캐시를 갱신한다.
+
+## 저장 후 영상 썸네일 재수정 검토 결과
+
+- 저장 직후 `thumbUrl`이 비어 있으면 `persistSavedExerciseBlock()`이 정상 로컬 video 프레임을 `hydrateStrengthPreviewFromPersistedVideo()`의 검은 fallback으로 교체하던 것이 직접 원인이었다.
+- 화면에 이미 디코딩된 0.8초 부근 프레임을 최대 720px JPEG로 캡처하고 기존 숨은 video 추출과 경쟁시켜 먼저 성공한 썸네일을 Storage와 daily log에 저장한다.
+- 원본 업로드는 끝났지만 썸네일 Promise가 진행 중인 경우 로컬 object URL 프레임을 유지하고, 영구 썸네일이 도착할 때만 이미지로 교체·revoke한다.
+- 쿠폰 유효기간 제목에서 `(상품 기준)`을 제거했고 `expiryEstimated` 데이터 자체는 유지했다.
+- 전체 테스트 564개 통과(Emulator 전용 7개 제외). 영문 동기화, 메인넷 설정, Functions 문법, esbuild, PWA 버전·오프라인 자산 및 diff 검증 통과.
+- PWA 캐시는 v243, 변경 이력은 v1.0.21로 갱신했다. 이번 재수정은 Hosting 배포만 필요하다.

@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=242';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=242';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=243';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=243';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=242';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=242';
+} from './auth-login-helpers.js?v=243';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=243';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -31,14 +31,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=242';
+} from './exercise-media.js?v=243';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=242';
+} from './health-connect-utils.js?v=243';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -55,15 +55,15 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=242';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=242';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=242';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=242';
-import { sanitize, compressImage } from './data-manager.js?v=242';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=242';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=242';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=242';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=242';
+} from './habit-groups.js?v=243';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=243';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=243';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=243';
+import { sanitize, compressImage } from './data-manager.js?v=243';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=243';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=243';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=243';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=243';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -73,9 +73,9 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=242';
-import { trackProductEvent } from './product-events.js?v=242';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=242';
+} from './guest-demo.js?v=243';
+import { trackProductEvent } from './product-events.js?v=243';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=243';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -88,7 +88,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=242';
+} from './diet-program.js?v=243';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -100,18 +100,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=242';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=242';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=242';
+} from './meditation-guide.js?v=243';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=243';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=243';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=242';
+} from './social-challenge-readiness.js?v=243';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=242';
+} from './monthly-mvp-reward.js?v=243';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5609,7 +5609,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=242';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=243';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6349,20 +6349,112 @@ function clearStrengthPreviewVideo(previewVideo) {
     try { previewVideo.load(); } catch (_) {}
 }
 
+function captureStrengthPreviewFrame(previewVideo) {
+    if (!previewVideo) return Promise.resolve('');
+    return new Promise((resolve) => {
+        let settled = false;
+        let captureScheduled = false;
+        const finish = (value = '') => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            previewVideo.removeEventListener('loadeddata', handleLoadedFrame);
+            previewVideo.removeEventListener('seeked', scheduleCapture);
+            resolve(resolveUsableStrengthLocalThumb(value));
+        };
+        const capture = () => {
+            captureScheduled = false;
+            if (settled || previewVideo.readyState < 2) return;
+            try {
+                const sourceWidth = Math.max(1, Number(previewVideo.videoWidth || 0));
+                const sourceHeight = Math.max(1, Number(previewVideo.videoHeight || 0));
+                if (sourceWidth <= 1 || sourceHeight <= 1) return;
+                const maxWidth = 720;
+                const scale = Math.min(1, maxWidth / sourceWidth);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+                canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+                const context = canvas.getContext('2d');
+                if (!context) return;
+                context.drawImage(previewVideo, 0, 0, canvas.width, canvas.height);
+                finish(canvas.toDataURL('image/jpeg', 0.82));
+            } catch (_) {}
+        };
+        function scheduleCapture() {
+            if (settled || captureScheduled) return;
+            captureScheduled = true;
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(capture);
+            } else {
+                window.setTimeout(capture, 0);
+            }
+        }
+        function handleLoadedFrame() {
+            try {
+                const duration = Number(previewVideo.duration || 0);
+                if (Number.isFinite(duration) && duration > 1 && previewVideo.currentTime < 0.5) {
+                    previewVideo.currentTime = Math.min(0.8, Math.max(0.1, duration - 0.05));
+                    window.setTimeout(scheduleCapture, 700);
+                    return;
+                }
+            } catch (_) {}
+            scheduleCapture();
+        }
+
+        previewVideo.addEventListener('loadeddata', handleLoadedFrame);
+        previewVideo.addEventListener('seeked', scheduleCapture);
+        const timeoutId = window.setTimeout(() => {
+            capture();
+            if (!settled) finish('');
+        }, 8000);
+        if (previewVideo.readyState >= 2) handleLoadedFrame();
+    });
+}
+
 function showLocalStrengthVideoPreview(target, file) {
     const { previewVideo } = getStrengthPreviewElements(target);
     if (!previewVideo || !file || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
-        return false;
+        return null;
     }
 
     clearStrengthPreviewVideo(previewVideo);
     try {
         const objectUrl = URL.createObjectURL(file);
         previewVideo.setAttribute('data-local-preview-object-url', objectUrl);
-        if (showStrengthPreviewVideo(target, objectUrl)) return true;
+        if (showStrengthPreviewVideo(target, objectUrl)) {
+            return captureStrengthPreviewFrame(previewVideo);
+        }
         revokeLocalPreviewObjectUrl(previewVideo);
     } catch (_) {}
-    return false;
+    return null;
+}
+
+function resolveFirstUsableStrengthThumb(...thumbPromises) {
+    const candidates = thumbPromises.filter(Boolean);
+    if (candidates.length === 0) return null;
+    return new Promise((resolve) => {
+        let remaining = candidates.length;
+        let settled = false;
+        candidates.forEach((candidate) => {
+            Promise.resolve(candidate)
+                .then((value) => {
+                    if (settled) return;
+                    const normalizedThumb = resolveUsableStrengthLocalThumb(value);
+                    if (normalizedThumb) {
+                        settled = true;
+                        resolve(normalizedThumb);
+                        return;
+                    }
+                    remaining -= 1;
+                    if (remaining === 0) resolve('');
+                })
+                .catch(() => {
+                    if (settled) return;
+                    remaining -= 1;
+                    if (remaining === 0) resolve('');
+                });
+        });
+    });
 }
 
 function showStrengthPreviewImage(target, src, { localThumb = '', savedThumbUrl = '' } = {}) {
@@ -6526,11 +6618,16 @@ window.previewDynamicVid = function (input) {
 
     // 썸네일 추출/업로드를 기다리는 동안에도 선택한 영상의 실제 프레임을 즉시 보여준다.
     // 특히 대용량 다중 선택은 FIFO 업로드 때문에 썸네일 생성이 늦어질 수 있다.
-    if (!showLocalStrengthVideoPreview(currentBlock || input.parentElement, file)) {
+    const previewFrameThumbPromise = showLocalStrengthVideoPreview(currentBlock || input.parentElement, file);
+    if (!previewFrameThumbPromise) {
         showStrengthPreviewImage(currentBlock || input.parentElement, getVideoPlaceholderDataUrl());
     }
 
-    const localThumbPromise = scheduleStrengthLocalThumbExtraction(file);
+    const scheduledThumbPromise = scheduleStrengthLocalThumbExtraction(file);
+    const localThumbPromise = resolveFirstUsableStrengthThumb(
+        previewFrameThumbPromise,
+        scheduledThumbPromise
+    );
 
     if (auth?.currentUser && input.id) {
         _pendingUploads.delete(input.id);
@@ -16450,6 +16547,7 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
     else block.removeAttribute('data-thumb-url');
 
     const previewImg = block.querySelector('.preview-strength-img');
+    const previewVideo = block.querySelector('.preview-strength-video');
     if (previewImg && thumbUrl && isPersistedStorageUrl(thumbUrl)) {
         showStrengthPreviewImage(block, thumbUrl, { savedThumbUrl: thumbUrl });
     } else if (url) {
@@ -16465,6 +16563,9 @@ function persistSavedExerciseBlock(block, url, thumbUrl) {
             const cachedLocalThumb = readCachedLocalExerciseVideoThumb(url);
             if (cachedLocalThumb.startsWith('data:image/')) {
                 showStrengthPreviewImage(block, cachedLocalThumb, { localThumb: cachedLocalThumb });
+            } else if (keepPendingThumb && previewVideo?.getAttribute('data-local-preview-object-url')) {
+                previewVideo.hidden = false;
+                if (previewImg) previewImg.hidden = true;
             } else {
                 hydrateStrengthPreviewFromPersistedVideo(block, url);
             }

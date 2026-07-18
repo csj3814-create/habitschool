@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=242';
+import { auth, db, functions } from './firebase-config.js?v=243';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=242';
+import { showToast } from './ui-helpers.js?v=243';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -1021,7 +1021,7 @@ function renderRewardCouponVault() {
     listEl.innerHTML = rewardMarketState.redemptions.map((item) => {
         const statusLabel = getRewardCouponPrimaryStatusLabel(item);
         const expiresLabel = formatCouponExpiryLabel(item.expiresAt);
-        const expiresTitle = item.expiryEstimated ? '유효기간(상품 기준)' : '유효기간';
+        const expiresTitle = '유효기간';
         const shouldFoldCoupon = canFoldRewardCouponItem(item);
         const isArchivedExpanded = shouldFoldCoupon && isRewardCouponArchivedExpanded(item);
         const isArchivedCollapsed = shouldFoldCoupon && !isArchivedExpanded;

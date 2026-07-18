@@ -5,6 +5,14 @@ All notable changes to Habitschool are documented here.
 ## 2026-07-18
 
 ### Fixed
+- Captured a persisted JPEG thumbnail from the already decoded exercise-video preview instead of replacing the saved card with a black fallback while deferred thumbnail work finishes.
+- Kept the local video frame visible after save until its thumbnail is ready, including videos larger than 20 MB.
+- Shortened the coupon expiry label by removing the estimated `product basis` suffix so the date and remaining days fit on one line.
+
+### Changed
+- PWA cache rotated to v243.
+
+### Fixed
 - Rendered selected exercise videos from their local video frame immediately instead of leaving large or slow-to-decode files as black placeholders while upload thumbnails are prepared.
 - Added owner-only background reconciliation for coupons that Giftishow issued successfully but remained `pending_issue` after a Firestore finalization failure.
 - Preserved existing point deductions and provider transactions during coupon reconciliation so recovery cannot issue or charge twice.
