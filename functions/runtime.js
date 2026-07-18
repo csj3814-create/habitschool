@@ -82,6 +82,7 @@ const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
+    reconcileRewardCoupon: reconcileRewardCouponFlow,
     resendRewardCoupon: resendRewardCouponFlow,
     dismissRewardCoupon: dismissRewardCouponFlow,
     markRewardCouponUsed: markRewardCouponUsedFlow,
@@ -2207,6 +2208,32 @@ exports.resendRewardCoupon = onCall(
             if (error instanceof HttpsError) throw error;
             console.error("resendRewardCoupon error:", error);
             throw new HttpsError("internal", "쿠폰 문자 재발송 중 문제가 발생했어요.");
+        }
+    }
+);
+
+exports.reconcileRewardCoupon = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 30
+    },
+    async (request) => {
+        if (!request.auth?.uid) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+        try {
+            return await reconcileRewardCouponFlow({
+                db,
+                HttpsError,
+                uid: request.auth.uid,
+                config: buildRewardMarketConfig(process.env),
+                redemptionId: request.data?.redemptionId,
+            });
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("reconcileRewardCoupon error:", error);
+            throw new HttpsError("internal", "쿠폰 발급 정보를 확인하는 중 문제가 발생했어요.");
         }
     }
 );

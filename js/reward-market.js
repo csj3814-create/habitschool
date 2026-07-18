@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=241';
+import { auth, db, functions } from './firebase-config.js?v=242';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=241';
+import { showToast } from './ui-helpers.js?v=242';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -11,6 +11,7 @@ const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-poin
 
 let getRewardMarketSnapshotFn = null;
 let redeemRewardCouponFn = null;
+let reconcileRewardCouponFn = null;
 let resendRewardCouponFn = null;
 let dismissRewardCouponFn = null;
 let markRewardCouponUsedFn = null;
@@ -70,6 +71,8 @@ const rewardMarketState = {
     expandedCouponVisualId: '',
     expandedArchivedCouponIds: new Set(),
     failedCouponVisualUrls: new Set(),
+    reconcilingCouponIds: new Set(),
+    reconcileAttemptedCouponIds: new Set(),
     phoneEditorOpen: true,
 };
 
@@ -315,6 +318,7 @@ async function ensureRewardMarketFunctions() {
     if (rewardMarketFunctionsReady) return;
     getRewardMarketSnapshotFn = httpsCallable(functions, 'getRewardMarketSnapshot');
     redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon');
+    reconcileRewardCouponFn = httpsCallable(functions, 'reconcileRewardCoupon');
     resendRewardCouponFn = httpsCallable(functions, 'resendRewardCoupon');
     dismissRewardCouponFn = httpsCallable(functions, 'dismissRewardCoupon');
     markRewardCouponUsedFn = httpsCallable(functions, 'markRewardCouponUsed');
@@ -950,10 +954,51 @@ function getRewardCouponDismissLabel(item = {}) {
 }
 
 function getRewardCouponPrimaryStatusLabel(item = {}) {
+    if (rewardMarketState.reconcilingCouponIds.has(String(item.id || ''))) return '발급 정보 확인 중';
     if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
     if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
     if (item.deliveredViaMmsAt && !item.pinCode && !item.couponImgUrl && !item.barcodeUrl) return '문자로 발급됨';
     return buildCouponStatusLabel(item.status);
+}
+
+async function reconcilePendingRewardCoupons() {
+    const uid = auth.currentUser?.uid || '';
+    if (!uid || !reconcileRewardCouponFn) return;
+    const candidates = rewardMarketState.redemptions.filter((item) => {
+        const id = String(item.id || '');
+        return id
+            && String(item.status || '').trim() === 'pending_issue'
+            && String(item.mode || '').trim().toLowerCase() === 'live'
+            && Boolean(String(item.providerTrId || '').trim())
+            && !rewardMarketState.reconcileAttemptedCouponIds.has(id);
+    });
+
+    for (const item of candidates) {
+        if (auth.currentUser?.uid !== uid) return;
+        const redemptionId = String(item.id || '');
+        rewardMarketState.reconcileAttemptedCouponIds.add(redemptionId);
+        rewardMarketState.reconcilingCouponIds.add(redemptionId);
+        renderRewardCouponVault();
+        try {
+            const result = await withRewardMarketTimeout(
+                reconcileRewardCouponFn({ redemptionId }),
+                22_000,
+                'reward_coupon_reconcile_timeout'
+            );
+            const recovered = result?.data || null;
+            if (recovered?.id && auth.currentUser?.uid === uid) {
+                rewardMarketState.redemptions = rewardMarketState.redemptions.map((entry) => (
+                    String(entry.id || '') === redemptionId ? recovered : entry
+                ));
+                rewardMarketState.ts = Date.now();
+            }
+        } catch (error) {
+            console.info('reward coupon reconcile deferred:', error?.message || error);
+        } finally {
+            rewardMarketState.reconcilingCouponIds.delete(redemptionId);
+            renderRewardCouponVault();
+        }
+    }
 }
 
 function renderRewardCouponVault() {
@@ -1077,6 +1122,7 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
         && (rewardMarketState.catalog.length > 0 || rewardMarketState.redemptions.length > 0 || rewardMarketState.error)
     ) {
         renderRewardMarketSnapshot();
+        void reconcilePendingRewardCoupons();
         return rewardMarketState;
     }
 
@@ -1109,6 +1155,7 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
     } finally {
         rewardMarketState.isLoading = false;
         renderRewardMarketSnapshot();
+        void reconcilePendingRewardCoupons();
     }
 
     return rewardMarketState;

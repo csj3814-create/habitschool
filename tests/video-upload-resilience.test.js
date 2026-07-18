@@ -105,6 +105,17 @@ describe('video upload resilience', () => {
         expect(source).toContain('showStrengthPreviewImage(block, normalizedThumbUrl, { savedThumbUrl: normalizedThumbUrl });');
     });
 
+    it('shows each selected exercise video frame immediately while thumbnail work is deferred', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('function showLocalStrengthVideoPreview(target, file)');
+        expect(source).toContain("previewVideo.setAttribute('data-local-preview-object-url', objectUrl);");
+        expect(source).toContain('showStrengthPreviewVideo(target, objectUrl)');
+        expect(source).toContain('if (!showLocalStrengthVideoPreview(currentBlock || input.parentElement, file)) {');
+        expect(source).toContain('revokeLocalPreviewObjectUrl(previewVideo);');
+        expect(source).toContain("clearStrengthPreviewVideo(block.querySelector('.preview-strength-video'));");
+    });
+
     it('uses object URLs for local photo previews and releases them after persistence', () => {
         const source = readAppSource();
 

@@ -5,6 +5,16 @@ All notable changes to Habitschool are documented here.
 ## 2026-07-18
 
 ### Fixed
+- Rendered selected exercise videos from their local video frame immediately instead of leaving large or slow-to-decode files as black placeholders while upload thumbnails are prepared.
+- Added owner-only background reconciliation for coupons that Giftishow issued successfully but remained `pending_issue` after a Firestore finalization failure.
+- Preserved existing point deductions and provider transactions during coupon reconciliation so recovery cannot issue or charge twice.
+- Accepted additional Giftishow PIN and barcode response field aliases when restoring coupon details.
+
+### Changed
+- Kept the coupon-vault snapshot fast while reconciling only unresolved coupons in the background.
+- PWA cache rotated to v242.
+
+### Fixed
 - Replaced blocked or broken Giftishow coupon images with a locally generated PIN barcode instead of showing broken-image alt text.
 - Derived missing coupon expiry from the catalog validity period and labeled the derived value as product-based in the vault.
 - Stopped treating a successful Giftishow resend API response as proof that the MMS reached the device.

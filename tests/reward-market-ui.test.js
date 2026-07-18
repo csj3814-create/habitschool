@@ -67,6 +67,15 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketStyles).toContain('.reward-coupon-remove.is-resend');
     });
 
+    it('recovers stuck live coupon details after the fast market snapshot renders', () => {
+        expect(rewardMarketSource).toContain("httpsCallable(functions, 'reconcileRewardCoupon')");
+        expect(rewardMarketSource).toContain('async function reconcilePendingRewardCoupons()');
+        expect(rewardMarketSource).toContain("String(item.status || '').trim() === 'pending_issue'");
+        expect(rewardMarketSource).toContain("return '발급 정보 확인 중';");
+        expect(rewardMarketSource).toContain('void reconcilePendingRewardCoupons();');
+        expect(rewardMarketSource).toContain('reconcileAttemptedCouponIds: new Set()');
+    });
+
     it('falls back from blocked or broken provider coupon images to the local PIN barcode', () => {
         expect(rewardMarketSource).toContain('failedCouponVisualUrls: new Set()');
         expect(rewardMarketSource).toContain("globalThis.location?.protocol === 'https:'");

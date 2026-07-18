@@ -1088,4 +1088,147 @@ describe('reward market pricing helpers', () => {
             globalThis.fetch = originalFetch;
         }
     });
+
+    it('recovers an owner pending coupon from provider status without reissuing or charging points', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/stuck-coupon': {
+                userId: 'test-user',
+                sku: 'mega-ice-americano-60d',
+                brandName: '메가MGC커피',
+                displayName: '(ICE)아메리카노 모바일쿠폰',
+                provider: 'giftishow',
+                providerGoodsId: 'G00005791059',
+                providerTrId: 'existing-transaction',
+                recipientPhone: '01012345678',
+                status: 'pending_issue',
+                mode: 'live',
+                deliveryMethod: 'image',
+                pointsCharged: true,
+                pointCost: 2000,
+                createdAt: new Date('2026-07-17T08:56:26.000Z'),
+            },
+        });
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://bizapi.giftishow.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'auth-token',
+            GIFTISHOW_CALLBACK_NO: '01000000000',
+            GIFTISHOW_USER_ID: 'provider-user',
+            GIFTISHOW_CARD_ID: 'card-id',
+            GIFTISHOW_BANNER_ID: 'banner-id',
+        });
+        const originalFetch = globalThis.fetch;
+        const requests = [];
+        globalThis.fetch = async (url) => {
+            requests.push(String(url));
+            return {
+                ok: true,
+                status: 200,
+                text: async () => JSON.stringify({
+                    code: '0000',
+                    result: [{
+                        couponInfoList: [{
+                            pin_no: '601851605111',
+                            coupon_img_url: 'http://provider.example/coupon.jpg',
+                            validPrdEndDt: '20260816235959',
+                        }],
+                    }],
+                }),
+            };
+        };
+
+        try {
+            const result = await rewardMarketModule.reconcileRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'stuck-coupon',
+                now: new Date('2026-07-18T03:00:00.000Z'),
+            });
+
+            expect(requests).toHaveLength(1);
+            expect(requests[0]).toContain('/coupons');
+            expect(result).toMatchObject({
+                success: true,
+                recovered: true,
+                status: 'issued',
+                pinCode: '601851605111',
+            });
+            expect(db.__get('reward_redemptions/stuck-coupon')).toMatchObject({
+                status: 'issued',
+                pinCode: '601851605111',
+                pointsCharged: true,
+                pointCost: 2000,
+            });
+
+            const second = await rewardMarketModule.reconcileRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'stuck-coupon',
+                now: new Date('2026-07-18T03:02:00.000Z'),
+            });
+            expect(second.recovered).toBe(false);
+            expect(second.pinCode).toBe('601851605111');
+            expect(requests).toHaveLength(1);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    it('keeps a pending coupon intact when provider status has no usable coupon payload', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/still-pending': {
+                userId: 'test-user',
+                sku: 'mega-ice-americano-60d',
+                displayName: '(ICE)아메리카노 모바일쿠폰',
+                providerGoodsId: 'G00005791059',
+                providerTrId: 'pending-transaction',
+                recipientPhone: '01012345678',
+                status: 'pending_issue',
+                mode: 'live',
+                pointsCharged: true,
+                createdAt: new Date('2026-07-17T08:56:26.000Z'),
+            },
+        });
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://bizapi.giftishow.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'auth-token',
+            GIFTISHOW_CALLBACK_NO: '01000000000',
+            GIFTISHOW_USER_ID: 'provider-user',
+            GIFTISHOW_CARD_ID: 'card-id',
+            GIFTISHOW_BANNER_ID: 'banner-id',
+        });
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async () => ({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify({ code: '0000', result: [{}] }),
+        });
+
+        try {
+            const result = await rewardMarketModule.reconcileRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'still-pending',
+                now: new Date('2026-07-18T03:00:00.000Z'),
+            });
+            expect(result.recovered).toBe(false);
+            expect(result.status).toBe('pending_issue');
+            expect(db.__get('reward_redemptions/still-pending')).toMatchObject({
+                status: 'pending_issue',
+                pointsCharged: true,
+            });
+            expect(db.__get('reward_redemptions/still-pending').pinCode).toBeUndefined();
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
 });
