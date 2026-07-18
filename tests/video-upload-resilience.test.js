@@ -113,7 +113,11 @@ describe('video upload resilience', () => {
         expect(source).toContain('showStrengthPreviewVideo(target, objectUrl)');
         expect(source).toContain('function captureStrengthPreviewFrame(previewVideo)');
         expect(source).toContain('function resolveFirstUsableStrengthThumb(...thumbPromises)');
-        expect(source).toContain("canvas.toDataURL('image/jpeg', 0.82)");
+        expect(source).toContain("return canvas.toDataURL('image/jpeg', quality);");
+        expect(source).toContain('function captureBestVideoFrameDataUrl(video, options = {})');
+        expect(source).toContain('getVideoThumbnailCandidateTimes(video)');
+        expect(source).toContain('requestVideoFrameCallback');
+        expect(source).toContain('isRenderableVideoFramePixels(pixels)');
         expect(source).toContain('const previewFrameThumbPromise = showLocalStrengthVideoPreview(currentBlock || input.parentElement, file);');
         expect(source).toContain('uploadOptions.thumbDataUrlPromise = localThumbPromise;');
         expect(source).toContain("keepPendingThumb && previewVideo?.getAttribute('data-local-preview-object-url')");

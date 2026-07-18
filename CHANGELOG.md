@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-07-19
+
+### Fixed
+- Rejected nearly uniform black decoder frames instead of persisting them as successful exercise-video thumbnails on Samsung devices.
+- Sampled several positions across each exercise video and waited for a decoded frame before generating the local and Storage thumbnail.
+- Kept a clear video placeholder instead of falling back to a black video surface when no valid frame can be decoded.
+
+### Changed
+- PWA cache rotated to v244.
+
 ## 2026-07-18
 
 ### Fixed

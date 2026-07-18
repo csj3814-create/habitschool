@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=243';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=243';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=244';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=244';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=243';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=243';
+} from './auth-login-helpers.js?v=244';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=244';
 import {
     buildStrengthExerciseSeed,
     getDeferredStrengthThumbDelayMs,
@@ -31,14 +31,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=243';
+} from './exercise-media.js?v=244';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=243';
+} from './health-connect-utils.js?v=244';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -55,15 +55,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=243';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=243';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=243';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=243';
-import { sanitize, compressImage } from './data-manager.js?v=243';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=243';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=243';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=243';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=243';
+} from './habit-groups.js?v=244';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=244';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=244';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=244';
+import { sanitize, compressImage } from './data-manager.js?v=244';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=244';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=244';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=244';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=244';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=244';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -73,9 +74,9 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=243';
-import { trackProductEvent } from './product-events.js?v=243';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=243';
+} from './guest-demo.js?v=244';
+import { trackProductEvent } from './product-events.js?v=244';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=244';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -88,7 +89,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=243';
+} from './diet-program.js?v=244';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -100,18 +101,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=243';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=243';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=243';
+} from './meditation-guide.js?v=244';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=244';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=244';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=243';
+} from './social-challenge-readiness.js?v=244';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=243';
+} from './monthly-mvp-reward.js?v=244';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5609,7 +5610,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=243';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=244';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6349,66 +6350,110 @@ function clearStrengthPreviewVideo(previewVideo) {
     try { previewVideo.load(); } catch (_) {}
 }
 
-function captureStrengthPreviewFrame(previewVideo) {
-    if (!previewVideo) return Promise.resolve('');
+function waitForVideoEvent(video, eventName, timeoutMs = 1800) {
+    if (!video) return Promise.resolve(false);
     return new Promise((resolve) => {
         let settled = false;
-        let captureScheduled = false;
-        const finish = (value = '') => {
+        const finish = (value) => {
             if (settled) return;
             settled = true;
-            window.clearTimeout(timeoutId);
-            previewVideo.removeEventListener('loadeddata', handleLoadedFrame);
-            previewVideo.removeEventListener('seeked', scheduleCapture);
-            resolve(resolveUsableStrengthLocalThumb(value));
+            clearTimeout(timer);
+            video.removeEventListener(eventName, onSuccess);
+            video.removeEventListener('error', onError);
+            resolve(value);
         };
-        const capture = () => {
-            captureScheduled = false;
-            if (settled || previewVideo.readyState < 2) return;
-            try {
-                const sourceWidth = Math.max(1, Number(previewVideo.videoWidth || 0));
-                const sourceHeight = Math.max(1, Number(previewVideo.videoHeight || 0));
-                if (sourceWidth <= 1 || sourceHeight <= 1) return;
-                const maxWidth = 720;
-                const scale = Math.min(1, maxWidth / sourceWidth);
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(1, Math.round(sourceWidth * scale));
-                canvas.height = Math.max(1, Math.round(sourceHeight * scale));
-                const context = canvas.getContext('2d');
-                if (!context) return;
-                context.drawImage(previewVideo, 0, 0, canvas.width, canvas.height);
-                finish(canvas.toDataURL('image/jpeg', 0.82));
-            } catch (_) {}
-        };
-        function scheduleCapture() {
-            if (settled || captureScheduled) return;
-            captureScheduled = true;
-            if (typeof window.requestAnimationFrame === 'function') {
-                window.requestAnimationFrame(capture);
-            } else {
-                window.setTimeout(capture, 0);
-            }
-        }
-        function handleLoadedFrame() {
-            try {
-                const duration = Number(previewVideo.duration || 0);
-                if (Number.isFinite(duration) && duration > 1 && previewVideo.currentTime < 0.5) {
-                    previewVideo.currentTime = Math.min(0.8, Math.max(0.1, duration - 0.05));
-                    window.setTimeout(scheduleCapture, 700);
-                    return;
-                }
-            } catch (_) {}
-            scheduleCapture();
-        }
-
-        previewVideo.addEventListener('loadeddata', handleLoadedFrame);
-        previewVideo.addEventListener('seeked', scheduleCapture);
-        const timeoutId = window.setTimeout(() => {
-            capture();
-            if (!settled) finish('');
-        }, 8000);
-        if (previewVideo.readyState >= 2) handleLoadedFrame();
+        const onSuccess = () => finish(true);
+        const onError = () => finish(false);
+        const timer = setTimeout(() => finish(false), timeoutMs);
+        video.addEventListener(eventName, onSuccess, { once: true });
+        video.addEventListener('error', onError, { once: true });
     });
+}
+
+function waitForDecodedVideoFrame(video, timeoutMs = 900) {
+    if (!video) return Promise.resolve(false);
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(value);
+        };
+        const timer = setTimeout(() => finish(false), timeoutMs);
+        if (typeof video.requestVideoFrameCallback === 'function') {
+            video.requestVideoFrameCallback(() => finish(true));
+            return;
+        }
+        const run = () => setTimeout(() => finish(video.readyState >= 2), 100);
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(run));
+        } else {
+            run();
+        }
+    });
+}
+
+function captureValidatedVideoFrameDataUrl(video, { maxWidth = 720, quality = 0.82 } = {}) {
+    if (!video || video.readyState < 2) return '';
+    try {
+        const sourceWidth = Math.max(1, Number(video.videoWidth || 0));
+        const sourceHeight = Math.max(1, Number(video.videoHeight || 0));
+        if (sourceWidth <= 1 || sourceHeight <= 1) return '';
+        const scale = Math.min(1, maxWidth / sourceWidth);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+        canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) return '';
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const sampleCanvas = document.createElement('canvas');
+        sampleCanvas.width = 24;
+        sampleCanvas.height = 24;
+        const sampleContext = sampleCanvas.getContext('2d', { willReadFrequently: true });
+        if (!sampleContext) return '';
+        sampleContext.drawImage(canvas, 0, 0, sampleCanvas.width, sampleCanvas.height);
+        const pixels = sampleContext.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height).data;
+        if (!isRenderableVideoFramePixels(pixels)) return '';
+        return canvas.toDataURL('image/jpeg', quality);
+    } catch (_) {
+        return '';
+    }
+}
+
+function getVideoThumbnailCandidateTimes(video) {
+    const duration = Number(video?.duration || 0);
+    if (!Number.isFinite(duration) || duration <= 0) return [0.01, 0.2, 0.8];
+    const lastSafeTime = Math.max(0.01, duration - 0.08);
+    const candidates = [0.15, 0.6, 1.2, 2.2, duration * 0.35, duration * 0.65]
+        .map((time) => Math.max(0.01, Math.min(lastSafeTime, time)));
+    return [...new Set(candidates.map((time) => Math.round(time * 100) / 100))];
+}
+
+async function captureBestVideoFrameDataUrl(video, options = {}) {
+    if (!video) return '';
+    if (video.readyState < 2) {
+        const loaded = await waitForVideoEvent(video, 'loadeddata', 5000);
+        if (!loaded && video.readyState < 2) return '';
+    }
+
+    for (const targetTime of getVideoThumbnailCandidateTimes(video)) {
+        try {
+            if (Math.abs(Number(video.currentTime || 0) - targetTime) > 0.03) {
+                video.currentTime = targetTime;
+                await waitForVideoEvent(video, 'seeked', 1800);
+            }
+            await waitForDecodedVideoFrame(video);
+            const dataUrl = captureValidatedVideoFrameDataUrl(video, options);
+            if (dataUrl) return dataUrl;
+        } catch (_) {}
+    }
+    return '';
+}
+
+function captureStrengthPreviewFrame(previewVideo) {
+    return captureBestVideoFrameDataUrl(previewVideo, { maxWidth: 720, quality: 0.82 });
 }
 
 function showLocalStrengthVideoPreview(target, file) {
@@ -6651,6 +6696,8 @@ window.previewDynamicVid = function (input) {
                 const normalizedThumb = syncPendingStrengthLocalThumb(input.id, thumbDataUrl);
                 if (normalizedThumb) {
                     showStrengthPreviewImage(currentBlock || input.parentElement, normalizedThumb, { localThumb: normalizedThumb });
+                } else {
+                    showStrengthPreviewImage(currentBlock || input.parentElement, getVideoPlaceholderDataUrl());
                 }
             })
             .catch(() => { });
@@ -6738,50 +6785,11 @@ function extractVideoThumbFromFile(file) {
             resolve(val || '');
         };
 
-        // 10초 타임아웃
-        const timer = setTimeout(() => done(''), 10000);
-
-        video.addEventListener('error', () => { clearTimeout(timer); done(''); }, { once: true });
-
-        video.addEventListener('loadeddata', () => {
-            try {
-                const dur = Number.isFinite(video.duration) ? video.duration : 0;
-                video.currentTime = dur > 1 ? 0.8 : 0.01;
-            } catch (_) { clearTimeout(timer); done(''); }
-        }, { once: true });
-
-        video.addEventListener('seeked', () => {
-            try {
-                const w = video.videoWidth || 320;
-                const h = video.videoHeight || 180;
-                const canvas = document.createElement('canvas');
-                canvas.width = w;
-                canvas.height = h;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, w, h);
-
-                // 검은 프레임 감지: 중앙 픽셀이 모두 0이면 재시도
-                const px = ctx.getImageData(w / 2, h / 2, 1, 1).data;
-                if (px[0] === 0 && px[1] === 0 && px[2] === 0) {
-                    const retryTime = Math.min((video.duration || 1) > 2 ? 2 : 0.5, video.duration || 1);
-                    video.currentTime = retryTime;
-                    video.addEventListener('seeked', () => {
-                        try {
-                            ctx.drawImage(video, 0, 0, w, h);
-                            clearTimeout(timer);
-                            done(canvas.toDataURL('image/jpeg', 0.85));
-                        } catch (_) { clearTimeout(timer); done(''); }
-                    }, { once: true });
-                    return;
-                }
-
-                clearTimeout(timer);
-                done(canvas.toDataURL('image/jpeg', 0.85));
-            } catch (_) { clearTimeout(timer); done(''); }
-        }, { once: true });
-
         video.src = objectUrl;
         video.load();
+        captureBestVideoFrameDataUrl(video, { maxWidth: 720, quality: 0.85 })
+            .then(done)
+            .catch(() => done(''));
     });
 }
 
@@ -6809,35 +6817,11 @@ async function extractVideoThumbFromUrl(videoUrl) {
             resolve(val || '');
         };
 
-        // 8초 타임아웃
-        const timer = setTimeout(() => done(''), 8000);
-
-        video.addEventListener('error', () => { clearTimeout(timer); done(''); }, { once: true });
-        video.addEventListener('loadeddata', () => {
-            try {
-                const duration = Number.isFinite(video.duration) ? video.duration : 0;
-                video.currentTime = duration > 1 ? 0.8 : 0.01;
-            } catch (_) {
-                clearTimeout(timer); done('');
-            }
-        }, { once: true });
-
-        video.addEventListener('seeked', () => {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(1, video.videoWidth || 320);
-                canvas.height = Math.max(1, video.videoHeight || 180);
-                canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-                clearTimeout(timer);
-                done(dataUrl);
-            } catch (_) {
-                clearTimeout(timer); done('');
-            }
-        }, { once: true });
-
         video.src = videoUrl;
         video.load();
+        captureBestVideoFrameDataUrl(video, { maxWidth: 720, quality: 0.85 })
+            .then(done)
+            .catch(() => done(''));
     });
 }
 // 갤러리에서 접근 가능하도록 전역 노출
@@ -16497,11 +16481,11 @@ function hydrateStrengthPreviewFromPersistedVideo(block, url) {
                         showStrengthPreviewImage(block, normalizedThumb, { localThumb: normalizedThumb });
                         return;
                     }
-                    showStrengthPreviewVideo(block, url);
+                    showStrengthPreviewImage(block, getVideoPlaceholderDataUrl());
                 });
         })
         .catch(() => {
-            showStrengthPreviewVideo(block, url);
+            showStrengthPreviewImage(block, getVideoPlaceholderDataUrl());
         });
 }
 
@@ -18906,74 +18890,15 @@ async function generateThumbnailBlob(file) {
 
 // 동영상 파일로부터 1:1 정사각형 썸네일 생성 (300x300, JPEG 70%)
 async function generateVideoThumbnailBlob(file) {
-    return new Promise((resolve) => {
-        const objectUrl = URL.createObjectURL(file);
-        const video = document.createElement('video');
-        video.muted = true;
-        video.playsInline = true;
-        video.preload = 'auto';
-        video.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;';
-        document.body.appendChild(video);
-
-        let resolved = false;
-        const done = (blob) => {
-            if (resolved) return;
-            resolved = true;
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
-            video.remove();
-            URL.revokeObjectURL(objectUrl);
-            resolve(blob || null);
-        };
-
-        const timer = setTimeout(() => done(null), 12000);
-
-        const captureFrame = () => {
-            try {
-                const w = video.videoWidth || 320;
-                const h = video.videoHeight || 180;
-                const size = 300;
-                const canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                const ctx = canvas.getContext('2d');
-                // 중앙 기준 정사각형 crop
-                const srcSize = Math.min(w, h);
-                const sx = (w - srcSize) / 2;
-                const sy = (h - srcSize) / 2;
-                ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
-
-                // 검은 프레임 감지
-                const px = ctx.getImageData(size / 2, size / 2, 1, 1).data;
-                if (px[0] === 0 && px[1] === 0 && px[2] === 0 && video.currentTime < 3) {
-                    video.currentTime = Math.min(video.duration || 2, 2);
-                    video.addEventListener('seeked', () => {
-                        try {
-                            ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, size, size);
-                            clearTimeout(timer);
-                            canvas.toBlob((blob) => done(blob), 'image/jpeg', 0.7);
-                        } catch (_) { clearTimeout(timer); done(null); }
-                    }, { once: true });
-                    return;
-                }
-                clearTimeout(timer);
-                canvas.toBlob((blob) => done(blob), 'image/jpeg', 0.7);
-            } catch (_) { clearTimeout(timer); done(null); }
-        };
-
-        video.addEventListener('error', () => { clearTimeout(timer); done(null); }, { once: true });
-        video.addEventListener('loadeddata', () => {
-            try {
-                const dur = Number.isFinite(video.duration) ? video.duration : 0;
-                video.currentTime = dur > 1 ? 0.8 : 0.01;
-            } catch (_) { clearTimeout(timer); done(null); }
-        }, { once: true });
-        video.addEventListener('seeked', captureFrame, { once: true });
-
-        video.src = objectUrl;
-        video.load();
-    });
+    const dataUrl = await extractVideoThumbFromFile(file).catch(() => '');
+    if (!dataUrl) return null;
+    try {
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        return blob?.size ? blob : null;
+    } catch (_) {
+        return null;
+    }
 }
 
 // 이미지 파일 업로드 + 썸네일도 함께 업로드
