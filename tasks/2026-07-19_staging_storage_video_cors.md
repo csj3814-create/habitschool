@@ -65,7 +65,7 @@ gcloud storage buckets update gs://habitschool-staging.firebasestorage.app --cor
 - [x] `app-core.js`의 세 `fetch(data URL)` 경로를 같은 헬퍼로 교체
 - [x] Base64·퍼센트 인코딩·잘못된 입력 단위 테스트 추가
 - [x] CSP `connect-src`, Storage 규칙, 버킷 CORS는 추가 변경하지 않음
-- [ ] staging 재배포 후 운동 탭 미리보기와 콘솔 error 0건 재확인
+- [x] staging 재배포 후 운동 탭 미리보기와 콘솔 error 0건 재확인
 
 ### 예상 수정 파일
 
@@ -80,3 +80,7 @@ gcloud storage buckets update gs://habitschool-staging.firebasestorage.app --cor
 - 전체 테스트: 74개 파일, 590개 테스트 통과. 에뮬레이터 전용 7개는 기본 실행에서 제외.
 - Firestore 에뮬레이터: 1개 파일, 7개 테스트 통과.
 - esbuild 브라우저 번들 통과.
+- staging Hosting 배포 완료. Functions·규칙·CORS는 재배포하지 않음.
+- 로그인된 Chrome 운동 탭에서 data URL 썸네일이 720×405로 정상 표시되고 콘솔 error 0건 확인.
+- 같은 운동 탭을 새로고침한 뒤에도 썸네일 복원과 콘솔 error 0건 확인.
+- 배포된 `app-core.js`에 기존 `fetch(normalized)`·`fetch(dataUrl)`이 없고 공통 변환기 배포를 확인.
