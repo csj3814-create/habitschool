@@ -84,3 +84,11 @@ gcloud storage buckets update gs://habitschool-staging.firebasestorage.app --cor
 - 로그인된 Chrome 운동 탭에서 data URL 썸네일이 720×405로 정상 표시되고 콘솔 error 0건 확인.
 - 같은 운동 탭을 새로고침한 뒤에도 썸네일 복원과 콘솔 error 0건 확인.
 - 배포된 `app-core.js`에 기존 `fetch(normalized)`·`fetch(dataUrl)`이 없고 공통 변환기 배포를 확인.
+
+## 운영 Hosting 반영
+
+- [x] 사용자 확인 후 `habitschool-8497b`의 Hosting 사이트 `habitschool`에 배포
+- [x] 배포된 운영 소스에서 기존 data URL `fetch()` 제거와 공통 변환기 확인
+- [x] 로그인된 운영 Chrome에서 운동 탭 data URL 썸네일 정상 표시 및 콘솔 error 0건 확인
+- [x] 운동 탭 새로고침 후 썸네일 복원 및 콘솔 error 0건 확인
+- Functions, Firestore/Storage 규칙, 버킷 CORS는 재배포하지 않음.
