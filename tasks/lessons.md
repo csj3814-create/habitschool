@@ -1911,3 +1911,9 @@
 - Storage 보안 규칙과 버킷 CORS는 별도 설정이다. `firebase deploy --only storage`가 성공해도 Canvas로 원격 영상 프레임을 읽는 경로에는 버킷의 정확한 웹 출처 CORS가 필요하다.
 - 동영상의 `206 Partial Content`는 정상 Range 응답일 수 있다. 상태 코드만 실패로 보지 말고 `Access-Control-Allow-Origin`, `Content-Range`, `Accept-Ranges`와 브라우저 콘솔을 함께 확인한다.
 - 개발·staging 버킷에 와일드카드를 쓰지 않는다. 환경별 정확한 Hosting 출처와 읽기 메서드만 허용하고, 재현 가능한 JSON과 회귀 테스트를 저장소에 남긴다.
+
+## 2026-07-19 CORS 복구 후 data URL CSP 교훈
+
+- CORS 오류 하나를 해소한 뒤에는 원격 영상 로드만 보지 말고 프레임 추출, 로컬 캐시, 썸네일 업로드, 새로고침 복원까지 후속 파이프라인 전체를 확인한다.
+- 브라우저가 이미 가진 data URL을 Blob으로 바꿀 때 `fetch(data:)`를 사용하면 CSP `connect-src`에 막힐 수 있다. Base64나 퍼센트 인코딩을 로컬에서 직접 해제해 Blob을 만든다.
+- 이 오류를 숨기려고 `connect-src`에 `data:`를 추가하지 않는다. 보안 정책을 넓히기 전에 로컬 데이터에 불필요한 네트워크 API를 사용한 경로가 중복돼 있는지 모두 검색한다.

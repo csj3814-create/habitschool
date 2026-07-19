@@ -25,6 +25,7 @@ import {
 import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=244';
 import {
     buildStrengthExerciseSeed,
+    dataUrlToBlob,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
     hasStepPointCredit,
@@ -6159,18 +6160,6 @@ function buildPersistedExerciseVideoThumbCacheUrl(storageKey = '') {
     const normalizedKey = String(storageKey || '').trim();
     if (!normalizedKey || typeof window === 'undefined') return '';
     return new URL(`/__local_video_thumb__/${encodeURIComponent(normalizedKey)}.jpg`, window.location.origin).href;
-}
-
-async function dataUrlToBlob(dataUrl = '') {
-    const normalized = String(dataUrl || '').trim();
-    if (!normalized.startsWith('data:')) return null;
-    try {
-        const response = await fetch(normalized);
-        if (!response.ok) return null;
-        return await response.blob();
-    } catch (_) {
-        return null;
-    }
 }
 
 async function blobToDataUrl(blob) {
@@ -16490,8 +16479,7 @@ async function uploadDataUrlThumbnail(dataUrl, folder, userId) {
     const normalized = String(dataUrl || '').trim();
     if (!normalized.startsWith('data:image/')) return null;
     try {
-        const response = await fetch(normalized);
-        const blob = await response.blob();
+        const blob = dataUrlToBlob(normalized);
         if (!blob || !blob.size) return null;
         const tp = createUniqueMediaStoragePath(`${folder}_thumbnails`, userId, 'local_thumb.jpg');
         const tr = ref(storage, tp);
@@ -19051,8 +19039,7 @@ async function generateVideoThumbnailBlob(file) {
     const dataUrl = await extractVideoThumbFromFile(file).catch(() => '');
     if (!dataUrl) return null;
     try {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
+        const blob = dataUrlToBlob(dataUrl);
         return blob?.size ? blob : null;
     } catch (_) {
         return null;

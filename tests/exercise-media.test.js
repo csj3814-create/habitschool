@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     buildStrengthExerciseSeed,
+    dataUrlToBlob,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
     hasStepPointCredit,
@@ -11,6 +12,30 @@ import {
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
 } from '../js/exercise-media.js';
+
+describe('dataUrlToBlob', () => {
+    it('decodes a base64 image locally while preserving its MIME type and bytes', async () => {
+        const blob = dataUrlToBlob('data:image/jpeg;base64,/9j/AA==');
+
+        expect(blob).toBeInstanceOf(Blob);
+        expect(blob.type).toBe('image/jpeg');
+        expect(Array.from(new Uint8Array(await blob.arrayBuffer()))).toEqual([255, 216, 255, 0]);
+    });
+
+    it('decodes percent-encoded data without a network request', async () => {
+        const blob = dataUrlToBlob('data:text/plain;charset=utf-8,%ED%95%B4%EB%B9%9B');
+
+        expect(blob).toBeInstanceOf(Blob);
+        expect(blob.type).toBe('text/plain;charset=utf-8');
+        expect(await blob.text()).toBe('해빛');
+    });
+
+    it('returns null for malformed or non-data URLs', () => {
+        expect(dataUrlToBlob('https://example.com/thumb.jpg')).toBeNull();
+        expect(dataUrlToBlob('data:image/jpeg;base64')).toBeNull();
+        expect(dataUrlToBlob('data:image/jpeg;base64,%%%')).toBeNull();
+    });
+});
 
 describe('hasStepPointCredit', () => {
     it('treats manually entered 8000+ steps as one cardio credit', () => {

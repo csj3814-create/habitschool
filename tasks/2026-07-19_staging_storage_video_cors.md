@@ -50,3 +50,33 @@ gcloud storage buckets update gs://habitschool-staging.firebasestorage.app --cor
 - `npm test`: 74개 파일, 585개 테스트 통과. 에뮬레이터 전용 7개는 기본 실행에서 제외.
 - esbuild 브라우저 번들 및 `git diff --check` 통과.
 - 운영 버킷·영상 객체·애플리케이션 코드·Storage 규칙은 변경하지 않음.
+
+## 후속 수정 — data URL 캐시 CSP 오류
+
+### 원인
+
+- CORS 적용 후 원격 영상 프레임 추출이 성공하면서 `data:image/jpeg;base64,...` 썸네일 캐시 경로가 실행됐다.
+- 캐시 저장, 최초 썸네일 업로드, fallback 생성의 세 경로가 data URL을 `fetch()`해 Blob으로 바꿨고, 이 요청은 이미지 표시가 아니라 `connect-src` 적용 대상이라 현재 CSP에서 차단됐다.
+- CSP 허용 범위를 넓힐 문제가 아니라 로컬 값에 불필요한 네트워크 API를 사용한 구현 문제다.
+
+### 최소 변경 설계
+
+- [x] `exercise-media.js`에 네트워크 없는 data URL → Blob 변환 헬퍼 추가
+- [x] `app-core.js`의 세 `fetch(data URL)` 경로를 같은 헬퍼로 교체
+- [x] Base64·퍼센트 인코딩·잘못된 입력 단위 테스트 추가
+- [x] CSP `connect-src`, Storage 규칙, 버킷 CORS는 추가 변경하지 않음
+- [ ] staging 재배포 후 운동 탭 미리보기와 콘솔 error 0건 재확인
+
+### 예상 수정 파일
+
+- `js/exercise-media.js`: data URL을 브라우저 내부에서 직접 Blob으로 변환
+- `js/app-core.js`: 기존 캐시·업로드 경로에서 공통 변환 헬퍼 재사용
+- `tests/exercise-media.test.js`, `tests/video-upload-resilience.test.js`: 실제 변환과 data URL fetch 제거 회귀 검증
+- `tasks/lessons.md`: CORS 해결 뒤 후속 파이프라인까지 검증하는 교훈 추가
+
+### 자동 검증 결과
+
+- 집중 테스트: 2개 파일, 45개 테스트 통과.
+- 전체 테스트: 74개 파일, 590개 테스트 통과. 에뮬레이터 전용 7개는 기본 실행에서 제외.
+- Firestore 에뮬레이터: 1개 파일, 7개 테스트 통과.
+- esbuild 브라우저 번들 통과.

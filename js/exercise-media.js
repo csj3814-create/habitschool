@@ -2,6 +2,34 @@ export function normalizeExerciseMediaUrl(value = '') {
     return String(value || '').trim();
 }
 
+export function dataUrlToBlob(dataUrl = '') {
+    const normalized = String(dataUrl || '').trim();
+    if (!normalized.startsWith('data:')) return null;
+
+    const separatorIndex = normalized.indexOf(',');
+    if (separatorIndex < 5) return null;
+
+    try {
+        const metadataParts = normalized.slice(5, separatorIndex).split(';');
+        const isBase64 = metadataParts.some((part) => part.toLowerCase() === 'base64');
+        const mimeType = metadataParts
+            .filter((part) => part && part.toLowerCase() !== 'base64')
+            .join(';') || 'application/octet-stream';
+        const payload = normalized.slice(separatorIndex + 1);
+
+        if (isBase64) {
+            const decoded = atob(payload);
+            const bytes = Uint8Array.from(decoded, (character) => character.charCodeAt(0));
+            return new Blob([bytes], { type: mimeType });
+        }
+
+        const decoded = decodeURIComponent(payload);
+        return new Blob([new TextEncoder().encode(decoded)], { type: mimeType });
+    } catch (_) {
+        return null;
+    }
+}
+
 export function hasStepPointCredit(steps = {}) {
     const count = Number(steps?.count || 0);
     return Number.isFinite(count) && count >= 8000;

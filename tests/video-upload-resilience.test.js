@@ -1,7 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource } from './source-helpers.js';
+import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('video upload resilience', () => {
+    it('converts local thumbnail data URLs without CSP-blocked fetch requests', () => {
+        const source = readAppSource();
+
+        expect(source).toContain('dataUrlToBlob,');
+        expect(source).toContain('const blob = await dataUrlToBlob(normalizedThumb);');
+        expect(source).toContain('const blob = dataUrlToBlob(normalized);');
+        expect(source).toContain('const blob = dataUrlToBlob(dataUrl);');
+        expect(source).not.toContain('fetch(normalized)');
+        expect(source).not.toContain('fetch(dataUrl)');
+    });
+
+    it('keeps data URLs out of CSP connect-src', () => {
+        const firebaseConfig = JSON.parse(readRepoFile('firebase.json'));
+        const hostingConfigs = Array.isArray(firebaseConfig.hosting)
+            ? firebaseConfig.hosting
+            : [firebaseConfig.hosting];
+        const cspHeader = hostingConfigs
+            .flatMap((hosting) => hosting?.headers || [])
+            .flatMap((entry) => entry.headers || [])
+            .find((header) => header.key === 'Content-Security-Policy')?.value || '';
+        const connectSourcePolicy = cspHeader.match(/(?:^|;)\s*connect-src\s+([^;]+)/)?.[1] || '';
+
+        expect(connectSourcePolicy).not.toMatch(/(?:^|\s)data:(?:\s|$)/);
+    });
+
     it('uses progress-aware resumable upload timeouts instead of a fixed 30 second cancel', () => {
         const source = readAppSource();
 
