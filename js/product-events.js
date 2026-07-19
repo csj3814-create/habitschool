@@ -22,6 +22,63 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
+const KST_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+});
+
+export function getKstDateKey(value) {
+    if (value == null || value === '') return '';
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const parts = Object.fromEntries(KST_DATE_FORMATTER.formatToParts(date)
+        .filter((part) => part.type !== 'literal')
+        .map((part) => [part.type, part.value]));
+    return parts.year && parts.month && parts.day
+        ? `${parts.year}-${parts.month}-${parts.day}`
+        : '';
+}
+
+function dateKeyOrdinal(dateKey = '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey))) return NaN;
+    const [year, month, day] = String(dateKey).split('-').map(Number);
+    return Date.UTC(year, month - 1, day) / 86400000;
+}
+
+export function getKstAccountDay(createdAt, now = new Date()) {
+    const createdKey = getKstDateKey(createdAt);
+    const nowKey = getKstDateKey(now);
+    const createdOrdinal = dateKeyOrdinal(createdKey);
+    const nowOrdinal = dateKeyOrdinal(nowKey);
+    if (!Number.isFinite(createdOrdinal) || !Number.isFinite(nowOrdinal)) return null;
+    const accountDay = nowOrdinal - createdOrdinal + 1;
+    return accountDay >= 1 ? accountDay : null;
+}
+
+export function getRecordCountBucket(count = 0) {
+    const normalized = Math.max(0, Math.floor(Number(count) || 0));
+    if (normalized === 0) return 'zero';
+    if (normalized === 1) return 'one';
+    if (normalized === 2) return 'two';
+    if (normalized === 3) return 'three';
+    return 'four_plus';
+}
+
+export function resolveActivationMilestone({ createdAt, now = new Date(), activeDayCount = 0 } = {}) {
+    const accountDay = getKstAccountDay(createdAt, now);
+    if (!accountDay) return null;
+    const normalizedActiveDays = Math.max(0, Math.floor(Number(activeDayCount) || 0));
+    const recordCountBucket = getRecordCountBucket(normalizedActiveDays);
+    if (accountDay <= 3 && normalizedActiveDays >= 2) {
+        return { eventName: 'day3_activated', recordCountBucket, accountDay };
+    }
+    if (accountDay >= 8 && accountDay <= 14) {
+        return { eventName: 'week2_return', recordCountBucket, accountDay };
+    }
+    return null;
+}
 
 export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
     tab: freezeValues(['dashboard', 'diet', 'exercise', 'sleep', 'profile', 'gallery', 'assets']),

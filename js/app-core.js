@@ -75,7 +75,12 @@ import {
     loadGuestDemoSession,
     normalizeDemoTab
 } from './guest-demo.js?v=244';
-import { trackProductEvent } from './product-events.js?v=244';
+import {
+    getKstAccountDay,
+    getKstDateKey,
+    resolveActivationMilestone,
+    trackProductEvent
+} from './product-events.js?v=244';
 import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=244';
 import {
     DIET_PROGRAM_FASTING_PRESET,
@@ -283,6 +288,7 @@ window.loadGalleryData = loadGalleryData;
 window.goToGalleryRecordAction = goToGalleryRecordAction;
 window.triggerGalleryShareAction = triggerGalleryShareAction;
 window.handleMissionPrimaryAction = handleMissionPrimaryAction;
+window.openWeeklyMissionRecord = openWeeklyMissionRecord;
 window.toggleCommunityRows = toggleCommunityRows;
 window.focusGalleryFeed = focusGalleryFeed;
 window.toggleGalleryHeroGuide = toggleGalleryHeroGuide;
@@ -321,6 +327,7 @@ const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PENDING_GUEST_AUTH_INTENT_KEY = 'habitschool_guest_auth_intent_v1';
 const FIRST_RECORD_RESULT_PREFIX = 'habitschool_first_record_result_v1';
+const PRODUCT_EVENT_SENT_MARKER_PREFIX = 'hs_product_event_sent';
 const GALLERY_HERO_GUIDE_STORAGE_KEY = 'habitschool_gallery_hero_collapsed';
 const DASHBOARD_HERO_COLLAPSE_KEY = 'habitschool_dashboard_hero_collapsed';
 const DASHBOARD_MORE_TOOLS_COLLAPSE_KEY = 'habitschool_dashboard_more_tools_collapsed';
@@ -369,6 +376,7 @@ const GUEST_EVENT_ACTION_MAP = Object.freeze({
 
 let _selectedOnboardingHabit = '';
 let _firstRecordResultContext = null;
+let _pendingWeeklyMissionFocus = false;
 
 function mapGuestEventForAnalytics(name, payload = {}) {
     const common = { variant: 'demo_v1' };
@@ -620,10 +628,15 @@ function resumeGuestIntentForExistingUser() {
     const intent = readPendingGuestAuthIntent();
     if (!intent) return false;
     const targetTab = normalizeDemoTab(intent.tab);
-    openTab(targetTab, false);
-    const didFocus = ['diet', 'exercise', 'sleep'].includes(targetTab)
-        ? focusRecordEntry(targetTab)
-        : true;
+    let didFocus = true;
+    if (targetTab === 'dashboard') {
+        openWeeklyMissionArea(false);
+    } else {
+        openTab(targetTab, false);
+        didFocus = ['diet', 'exercise', 'sleep'].includes(targetTab)
+            ? focusRecordEntry(targetTab)
+            : true;
+    }
     trackProductEvent('resume_intent_result', {
         intent: targetTab === 'assets' ? 'reward' : (targetTab === 'gallery' ? 'gallery' : 'record'),
         status: didFocus ? 'success' : 'error',
@@ -633,6 +646,78 @@ function resumeGuestIntentForExistingUser() {
     clearPendingGuestAuthIntent();
     return didFocus;
 }
+
+function getProductEventSentMarkerKey(uid, eventName) {
+    return `${PRODUCT_EVENT_SENT_MARKER_PREFIX}:${String(uid || 'unknown')}:${String(eventName || 'unknown')}`;
+}
+
+function hasProductEventSentMarker(uid, eventName) {
+    try {
+        return localStorage.getItem(getProductEventSentMarkerKey(uid, eventName)) === '1';
+    } catch (_) {
+        return false;
+    }
+}
+
+function setProductEventSentMarker(uid, eventName) {
+    try {
+        localStorage.setItem(getProductEventSentMarkerKey(uid, eventName), '1');
+    } catch (_) { }
+}
+
+async function trackActivationMilestoneAfterSave({ user, selectedDateStr, saveData, now = new Date() } = {}) {
+    const uid = user?.uid;
+    const createdAt = user?.metadata?.creationTime;
+    if (!uid || !createdAt) return false;
+
+    const accountDay = getKstAccountDay(createdAt, now);
+    const candidateEventName = accountDay && accountDay <= 3
+        ? 'day3_activated'
+        : (accountDay >= 8 && accountDay <= 14 ? 'week2_return' : '');
+    if (!candidateEventName || hasProductEventSentMarker(uid, candidateEventName)) return false;
+
+    const startDate = getKstDateKey(createdAt);
+    const endDate = getKstDateKey(now);
+    if (!startDate || !endDate) return false;
+
+    const snapshot = await getDocs(query(
+        collection(db, 'daily_logs'),
+        where('userId', '==', uid),
+        where('date', '>=', startDate),
+        where('date', '<=', endDate)
+    ));
+    const logsByDate = new Map();
+    snapshot.forEach((entry) => {
+        const data = entry.data();
+        if (data?.date) logsByDate.set(data.date, {
+            date: data.date,
+            awardedPoints: data.awardedPoints || {}
+        });
+    });
+    if (selectedDateStr >= startDate && selectedDateStr <= endDate) {
+        logsByDate.set(selectedDateStr, {
+            date: selectedDateStr,
+            awardedPoints: saveData?.awardedPoints || {}
+        });
+    }
+
+    const milestone = resolveActivationMilestone({
+        createdAt,
+        now,
+        activeDayCount: countActiveDays([...logsByDate.values()])
+    });
+    if (!milestone || milestone.eventName !== candidateEventName) return false;
+    if (auth.currentUser?.uid !== uid || hasProductEventSentMarker(uid, milestone.eventName)) return false;
+
+    const sent = trackProductEvent(milestone.eventName, {
+        entry_point: 'record_prompt',
+        record_count_bucket: milestone.recordCountBucket,
+        variant: 'full'
+    }, { dedupeKey: `${milestone.eventName}:${uid}` });
+    if (sent) setProductEventSentMarker(uid, milestone.eventName);
+    return sent;
+}
+
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
@@ -13324,6 +13409,59 @@ function getNextRecordTab(todayAwarded = {}) {
     return 'gallery';
 }
 
+function missionTypeToRecordTab(type = '') {
+    if (type === 'exercise') return 'exercise';
+    if (type === 'mind' || type === 'sleep') return 'sleep';
+    return type === 'diet' ? 'diet' : '';
+}
+
+function primaryHabitToMissionType(primaryHabit = '') {
+    if (primaryHabit === 'exercise') return 'exercise';
+    if (primaryHabit === 'sleep' || primaryHabit === 'mind') return 'mind';
+    return primaryHabit === 'diet' ? 'diet' : '';
+}
+
+function getNextWeeklyMissionRecordTab(missions = [], todayAwarded = {}) {
+    const missionTypes = [...new Set((Array.isArray(missions) ? missions : [])
+        .map((mission) => mission?.type)
+        .filter((type) => ['diet', 'exercise', 'mind'].includes(type)))];
+    const nextType = missionTypes.find((type) => !todayAwarded?.[type]);
+    return missionTypeToRecordTab(nextType || '');
+}
+
+function focusWeeklyMissionArea() {
+    const missionCard = document.querySelector('#dashboard .mission-card-enhanced');
+    if (!missionCard) return false;
+    missionCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const focusTarget = missionCard.querySelector('.mission-progress-primary-btn:not([disabled])')
+        || missionCard.querySelector('.mission-category-check input:checked')
+        || missionCard.querySelector('.mission-category-check input')
+        || missionCard.querySelector('#btn-save-missions:not([disabled])');
+    window.setTimeout(() => focusTarget?.focus(), 180);
+    return true;
+}
+
+function openWeeklyMissionArea(pushState = false) {
+    _pendingWeeklyMissionFocus = true;
+    openTab('dashboard', pushState);
+    requestAnimationFrame(() => focusWeeklyMissionArea());
+    window.setTimeout(() => focusWeeklyMissionArea(), 220);
+}
+
+function openWeeklyMissionRecord(tab, { trackStart = false } = {}) {
+    const targetTab = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
+    openTab(targetTab);
+    const didFocus = focusRecordEntry(targetTab);
+    if (trackStart) {
+        trackProductEvent('first_record_start', {
+            tab: targetTab,
+            entry_point: 'record_prompt',
+            variant: 'full'
+        }, { once: true, dedupeKey: `weekly-mission:${auth.currentUser?.uid || 'unknown'}` });
+    }
+    return didFocus;
+}
+
 function updateGalleryPrimaryAction() {
     const saveBtn = document.getElementById('saveDataBtn');
     const helperEl = document.getElementById('submit-bar-helper');
@@ -13375,6 +13513,11 @@ function handleMissionPrimaryAction() {
         default:
             openTab('dashboard');
             selectionArea?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.setTimeout(() => {
+                const selectedCategory = selectionArea?.querySelector('.mission-category-check input:checked')
+                    || selectionArea?.querySelector('.mission-category-check input');
+                selectedCategory?.focus();
+            }, 180);
             return;
     }
 }
@@ -13728,10 +13871,10 @@ function renderMissionFocusState({
         buttonEl.style.display = 'none';
     } else if (!isWeekActive || totalMissions === 0) {
         kickerEl.textContent = '이번 주 미션';
-        titleEl.textContent = '이번 주 미션 1~3개 고르기';
+        titleEl.textContent = '건강 목표를 이번 주의 작은 실천으로 골라보세요';
         buttonEl.textContent = '미션 정하기';
         _missionPrimaryActionState = { type: 'setup', tab: 'diet' };
-        tags = ['미션 최대 3개'];
+        tags = ['하나만 선택해도 충분해요'];
         buttonEl.style.display = '';
     } else if (remainingToday > 0) {
         kickerEl.textContent = '이번 주 미션';
@@ -14212,6 +14355,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const categories = ['diet', 'exercise', 'mind'];
             const categoryLabels = { diet: '🥗 식단', exercise: '🏃 운동', mind: '🧘 마음' };
             const diffLabels = { easy: '쉬움', normal: '보통', hard: '도전' };
+            const preferredMissionType = primaryHabitToMissionType(ud.settings?.primaryHabit);
             const customOpen = _customMissionComposerOpen || pendingCustomMissions.length > 0;
 
             categories.forEach(cat => {
@@ -14221,19 +14365,19 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                     <div class="mission-category-block compact">
                         <div class="mission-category-top compact">
                             <label class="mission-category-check" for="chk_preset_${cat}">
-                                <input type="checkbox" id="chk_preset_${cat}" checked>
+                                <input type="checkbox" id="chk_preset_${cat}" ${cat === preferredMissionType ? 'checked' : ''}>
                                 <span class="mission-category-label">${categoryLabels[cat]}</span>
                             </label>
                             <div class="mission-difficulty-tabs compact" data-category="${cat}">
                                 ${Object.keys(catData).map(diff => `
-                                    <button class="diff-tab ${diff === 'normal' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
+                                    <button class="diff-tab ${diff === 'easy' ? 'active' : ''}" data-diff="${diff}" data-cat="${cat}" onclick="selectDifficulty('${cat}','${diff}')">
                                         ${diffLabels[diff]}
                                     </button>
                                 `).join('')}
                             </div>
                         </div>
                         <div class="mission-preview compact" id="preview-${cat}">
-                            <span id="label_preset_${cat}">${catData.normal.text} · ${catData.normal.target}일</span>
+                            <span id="label_preset_${cat}">${catData.easy.text} · ${catData.easy.target}일</span>
                         </div>
                     </div>`;
             });
@@ -14318,6 +14462,10 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const levelUpHtml = allDone && level < 5
                 ? `<button class="submit-btn mission-progress-primary-btn" onclick="levelUp(${level + 1})">🎉 Lv ${level + 1} 승급하기</button>`
                 : '';
+            const nextMissionRecordTab = getNextWeeklyMissionRecordTab(weeklyMissionData.missions, todayAwarded);
+            const recordActionHtml = nextMissionRecordTab
+                ? `<button type="button" class="submit-btn mission-progress-primary-btn" onclick="openWeeklyMissionRecord('${nextMissionRecordTab}')">오늘 실천 기록하기</button>`
+                : '';
 
             progContainer.innerHTML = `
                 <div class="mission-progress-shell">
@@ -14333,6 +14481,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                         ${isAtRisk ? `<div class="mission-warning">남은 ${remainingDays}일 · 미션 먼저 끝내기</div>` : ''}
                     </div>
                     <div class="mission-progress-actions">
+                        ${recordActionHtml}
                         ${levelUpHtml}
                         <button type="button" class="mission-secondary-btn" onclick="resetWeeklyMissions()">미션 다시 정하기</button>
                     </div>
@@ -14378,6 +14527,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             todayAwarded,
         });
         syncDashboardPanels();
+
+        if (_pendingWeeklyMissionFocus) {
+            _pendingWeeklyMissionFocus = false;
+            requestAnimationFrame(() => focusWeeklyMissionArea());
+        }
 
         if (lifecycle !== 'first' && lifecycle !== 'repeat') renderMissionBadges(missionBadges);
 
@@ -14440,11 +14594,11 @@ function initDifficultySelectors(level) {
         const preview = document.getElementById(`preview-${cat}`);
         const label = document.getElementById(`label_preset_${cat}`);
         if (preview && label && levelData[cat]) {
-            const m = levelData[cat].normal;
+            const m = levelData[cat].easy;
             label.textContent = `${m.text} · ${m.target}일`;
         }
         document.querySelectorAll(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab`).forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.diff === 'normal');
+            btn.classList.toggle('active', btn.dataset.diff === 'easy');
         });
     });
 }
@@ -14896,7 +15050,7 @@ async function saveWeeklyMissions() {
             if (checkbox && checkbox.checked) {
                 // 선택된 난이도 찾기
                 const activeTab = document.querySelector(`.mission-difficulty-tabs[data-category="${cat}"] .diff-tab.active`);
-                const diff = activeTab ? activeTab.dataset.diff : 'normal';
+                const diff = activeTab ? activeTab.dataset.diff : 'easy';
                 const m = levelData[cat]?.[diff];
                 if (m) {
                     missions.push({
@@ -14943,7 +15097,9 @@ async function saveWeeklyMissions() {
         _customMissionComposerOpen = false;
         showToast("🎯 이번 주 미션이 시작되었습니다! 화이팅!");
         if (window._invalidateDashboardCache) window._invalidateDashboardCache();
-        renderDashboard();
+        renderDashboard().catch(() => {});
+        const firstMissionTab = missionTypeToRecordTab(missions[0]?.type);
+        if (firstMissionTab) openWeeklyMissionRecord(firstMissionTab, { trackStart: true });
     } catch (error) {
         console.error('미션 저장 오류:', error);
         showToast('⚠️ 미션 저장에 실패했습니다.');
@@ -18542,6 +18698,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 ...(notificationAttributed ? { entry_point: 'notification' } : {}),
                 variant: notificationAttributed ? 'personalized_v1' : 'full'
             });
+            trackActivationMilestoneAfterSave({ user, selectedDateStr, saveData })
+                .catch((error) => console.warn('활성화 이벤트 확인 스킵:', error.message));
 
             if (uploadFailures.length > 0) {
                 showToast(`⚠️ 일부 사진 업로드에 실패했습니다. 나머지 데이터는 저장되었습니다. 사진을 다시 선택 후 저장해주세요.`);
@@ -21585,8 +21743,7 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
     const normalizedTab = ['diet', 'exercise', 'sleep'].includes(tab) ? tab : 'diet';
     const normalizedCurrentPoints = Math.max(0, Number(currentPoints) || 0);
     _firstRecordResultContext = {
-        tab: normalizedTab,
-        nextTab: normalizedTab === 'diet' ? 'exercise' : (normalizedTab === 'exercise' ? 'sleep' : 'diet')
+        tab: normalizedTab
     };
 
     const modal = document.getElementById('first-record-result-modal');
@@ -21628,15 +21785,8 @@ function finishFirstRecordResult() {
 }
 
 function continueAfterFirstRecord() {
-    const nextTab = _firstRecordResultContext?.nextTab || 'diet';
     finishFirstRecordResult();
-    openTab(nextTab);
-    focusRecordEntry(nextTab);
-    trackProductEvent('first_record_start', {
-        tab: nextTab,
-        entry_point: 'reward_prompt',
-        variant: 'demo_v1'
-    });
+    openWeeklyMissionArea(false);
 }
 
 // 온보딩 스텝 이동
@@ -21654,6 +21804,7 @@ async function completeOnboarding() {
     const user = auth.currentUser;
     if (!user) return;
 
+    const pendingGuestIntent = readPendingGuestAuthIntent();
     const selectedHabit = ['diet', 'exercise', 'sleep'].includes(_selectedOnboardingHabit)
         ? _selectedOnboardingHabit
         : prepareGuestOnboarding();
@@ -21661,7 +21812,7 @@ async function completeOnboarding() {
     const startButton = document.getElementById('onboarding-start-btn');
     if (startButton) {
         startButton.disabled = true;
-        startButton.textContent = '첫 기록을 준비하는 중...';
+        startButton.textContent = '이번 주 실천을 준비하는 중...';
     }
 
     try {
@@ -21677,7 +21828,7 @@ async function completeOnboarding() {
         showToast('시작 설정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
         if (startButton) {
             startButton.disabled = false;
-            startButton.textContent = '선택한 습관으로 시작하기';
+            startButton.textContent = '이번 주 실천 고르기';
         }
         return;
     }
@@ -21695,20 +21846,17 @@ async function completeOnboarding() {
     clearPendingSignupOnboardingState();
     clearPendingGuestAuthIntent();
     _selectedOnboardingHabit = '';
-    openTab(selectedHabit, false);
-    focusRecordEntry(selectedHabit);
-    trackProductEvent('first_record_start', {
-        tab: selectedHabit,
-        entry_point: 'onboarding',
-        variant: 'demo_v1'
-    }, { once: true });
-    trackProductEvent('resume_intent_result', {
-        intent: 'record',
-        status: 'success',
-        entry_point: 'onboarding',
-        variant: 'demo_v1'
-    }, { once: true });
-    showToast('🌞 첫 습관을 골랐어요. 바로 한 번 기록해보세요!');
+    if (window._invalidateDashboardCache) window._invalidateDashboardCache();
+    openWeeklyMissionArea(false);
+    if (pendingGuestIntent) {
+        trackProductEvent('resume_intent_result', {
+            intent: 'record',
+            status: 'success',
+            entry_point: 'onboarding',
+            variant: 'demo_v1'
+        }, { once: true, dedupeKey: `onboarding-resume:${user.uid}` });
+    }
+    showToast('🌞 시작할 습관을 골랐어요. 이번 주 작은 실천을 정해보세요!');
     try { updateMetabolicScoreUI(); } catch (e) { /* skip */ }
 };
 

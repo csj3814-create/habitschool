@@ -2,11 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('first record result modal', () => {
-    it('uses the continuing-record CTA copy', () => {
+    it('puts the health-practice meaning before rewards and returns to the weekly mission', () => {
         const html = readRepoFile('index.html');
+        const appSource = readAppSource();
+        const continueStart = appSource.indexOf('function continueAfterFirstRecord()');
+        const continueEnd = appSource.indexOf('// 온보딩 스텝 이동', continueStart);
+        const continueSource = appSource.slice(continueStart, continueEnd);
 
-        expect(html).toContain('onclick="continueAfterFirstRecord()">계속 기록하기</button>');
-        expect(html).not.toContain('>하나 더 기록</button>');
+        const titleIndex = html.indexOf('이번 주 건강 목표를 향한 첫 실천을 완료했습니다.');
+        const rewardIndex = html.indexOf('이번 기록 포인트');
+        expect(titleIndex).toBeGreaterThan(-1);
+        expect(rewardIndex).toBeGreaterThan(titleIndex);
+        expect(html).toContain('onclick="continueAfterFirstRecord()">이번 주 실천 확인하기</button>');
+        expect(continueSource).toContain('openWeeklyMissionArea(false);');
+        expect(continueSource).not.toContain("trackProductEvent('first_record_start'");
     });
 
     it('does not include the first-record reminder prompt or its client handler', () => {

@@ -260,7 +260,39 @@ describe('guest demo action boundary and controller', () => {
             tab: 'diet',
             action: 'select_real_file'
         });
+        expect(createPendingGuestIntent('dashboard', 'start_record')).toEqual({
+            tab: 'dashboard',
+            action: 'start_record'
+        });
         expect(createPendingGuestIntent('diet', 'unknown')).toBeNull();
+    });
+
+    it('routes the general gallery CTA to weekly missions while keeping record-specific tabs', () => {
+        const session = createGuestDemoSession(1000);
+
+        expect(renderGuestDemoTab('gallery', session)).toContain('data-guest-login-tab="dashboard"');
+        expect(renderGuestDemoTab('diet', session)).toContain('data-guest-login-tab="diet"');
+        expect(renderGuestDemoTab('exercise', session)).toContain('data-guest-login-tab="exercise"');
+        expect(renderGuestDemoTab('sleep', session)).toContain('data-guest-login-tab="sleep"');
+    });
+
+    it('does not emit another tab-view event when a stored demo tab is restored', () => {
+        const storage = createMemoryStorage();
+        const firstController = createGuestDemoController({ storage, persistentStorage: null });
+        firstController.start({ now: 1000 });
+
+        const events = [];
+        const restoredController = createGuestDemoController({
+            storage,
+            persistentStorage: null,
+            onEvent: (name, payload) => events.push({ name, payload })
+        });
+        expect(restoredController.restore()).toBeTruthy();
+        expect(restoredController.openTab('gallery', { source: 'restore' })).toBe(true);
+        expect(events).toEqual([]);
+
+        expect(restoredController.openTab('diet', { source: 'navigation' })).toBe(true);
+        expect(events).toEqual([{ name: 'guest_demo_tab_view', payload: { tab: 'diet' } }]);
     });
 
     it('retains demo state after failed login and returns the exact intent after success', () => {

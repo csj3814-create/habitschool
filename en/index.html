@@ -844,7 +844,7 @@
             <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title">해빛스쿨</h1>
             <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
-                병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
+                병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong><br>이루고 싶은 건강 목표를 이번 주의 작은 실천으로 시작해 보세요.
             </p>
             <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
@@ -1026,7 +1026,8 @@
                         <div class="mission-focus-strip" id="mission-focus-strip">
                             <div class="mission-focus-copy">
                                 <div class="mission-focus-kicker" id="mission-focus-kicker">이번 주 미션</div>
-                                <div class="mission-focus-title" id="mission-focus-title">이번 주 미션 1~3개 고르기</div>
+                                <div class="mission-focus-title" id="mission-focus-title">건강 목표를 이번 주의 작은 실천으로 골라보세요</div>
+                                <div class="mission-focus-guide">하나만 골라도 충분해요. 쉬운 행동부터 시작하고, 나중에 다시 바꿀 수 있어요.</div>
                             </div>
                             <button type="button" class="mission-focus-btn" id="mission-focus-btn" onclick="handleMissionPrimaryAction()">이번 주 미션 정하기</button>
                         </div>
@@ -2540,7 +2541,7 @@
                 <div class="onboarding-habit-icon" aria-hidden="true">🌞</div>
                 <div class="onboarding-kicker">첫 기록 준비</div>
                 <h3 id="onboarding-title">시작할 습관 하나를 선택해 주세요</h3>
-                <p class="onboarding-habit-desc">선택한 기록 화면으로 바로 이동합니다. 나머지는 나중에 천천히 추가해도 괜찮아요.</p>
+                <p class="onboarding-habit-desc">선택한 습관에 맞는 이번 주 작은 실천을 고릅니다. 나머지는 나중에 천천히 추가해도 괜찮아요.</p>
                 <div class="onboarding-habit-grid" role="group" aria-label="첫 습관 선택">
                     <button type="button" class="onboarding-habit-choice" data-onboarding-habit="diet" aria-pressed="false" onclick="selectOnboardingHabit('diet')">
                         <span aria-hidden="true">🥗</span><strong>식단 사진</strong><small>사진 한 장부터</small>
@@ -2553,7 +2554,7 @@
                     </button>
                 </div>
                 <div class="onboarding-welcome-gift"><span aria-hidden="true">🎁</span><strong>가입 선물 200P</strong><small>첫 기록 포인트와 별도로 지급돼요.</small></div>
-                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="completeOnboarding()" disabled>선택한 습관으로 시작하기</button>
+                <button class="submit-btn onboarding-start-btn" id="onboarding-start-btn" type="button" onclick="completeOnboarding()" disabled>이번 주 실천 고르기</button>
             </div>
         </div>
     </div>
@@ -2562,7 +2563,7 @@
     <div id="first-record-result-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="first-record-result-title">
         <div class="modal-content first-record-result-sheet">
             <div class="first-record-result-kicker">첫 기록 완료</div>
-            <h3 id="first-record-result-title">오늘의 작은 습관이 저장됐어요</h3>
+            <h3 id="first-record-result-title">이번 주 건강 목표를 향한 첫 실천을 완료했습니다.</h3>
             <dl class="first-record-result-list">
                 <div><dt>이번 기록 포인트</dt><dd id="first-record-earned-points">+0P</dd></div>
                 <div id="first-record-welcome-bonus-row" style="display:none;"><dt>가입 선물</dt><dd>+200P</dd></div>
@@ -2571,7 +2572,7 @@
             </dl>
             <div class="first-record-next-actions">
                 <button type="button" class="first-record-secondary" onclick="finishFirstRecordResult()">오늘은 마치기</button>
-                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()">계속 기록하기</button>
+                <button type="button" class="first-record-primary" onclick="continueAfterFirstRecord()">이번 주 실천 확인하기</button>
             </div>
         </div>
     </div>
@@ -2582,8 +2583,8 @@
             <div class="report-header">
                 <h2>☀️ 해빛스쿨 30일 종합 결과지</h2>
                 <div class="report-meta">
-                    <span id="report-user-name"></span> ·
-                    <span id="report-period"></span>
+                    <div style="max-width:360px; margin:0 auto 8px; line-height:1.5; font-weight:600;">최근 기록에서 식단·운동·마음 실천을 얼마나 이어왔는지 확인해 보세요.</div>
+                    <div><span id="report-user-name"></span> · <span id="report-period"></span></div>
                 </div>
             </div>
             <div class="report-body" id="report-body">

@@ -531,7 +531,7 @@ function renderGallery(session, uiState, activityStats) {
         </nav>
         <div class="guest-demo-gallery-grid">${postsHtml}</div>
         ${lightboxHtml}
-        <div class="guest-demo-primary-cta">${renderLoginButton('내 기록으로 시작하기', 'start_record', 'gallery')}</div>`;
+        <div class="guest-demo-primary-cta">${renderLoginButton('내 기록으로 시작하기', 'start_record', 'dashboard')}</div>`;
 }
 
 function renderDiet(session) {
@@ -763,7 +763,9 @@ export function createGuestDemoController(options = {}) {
         activeCoachTab = visit.firstVisit && !session.coachesDisabled ? session.activeTab : '';
         persist();
         render();
-        emit('guest_demo_tab_view', { tab: session.activeTab });
+        if (String(meta.source || 'app') !== 'restore') {
+            emit('guest_demo_tab_view', { tab: session.activeTab });
+        }
         callbacks.onTabChange({
             tab: session.activeTab,
             firstVisit: visit.firstVisit,

@@ -1,11 +1,10 @@
 /* HabitSchool guest demo and first-value activation surfaces. */
 
 /* 기록 생애주기: 첫 기록 전에는 한 행동만, 초기에는 복잡한 커뮤니티를 접는다. */
-#dashboard[data-lifecycle="first"] .dashboard-extra-stack {
-    display: none;
+#dashboard[data-lifecycle="first"] .dashboard-extra-stack > :not(.mission-card-enhanced) {
+    display: none !important;
 }
 
-#dashboard[data-lifecycle="repeat"] .mission-card-enhanced,
 #dashboard[data-lifecycle="repeat"] .social-challenge-dashboard-card,
 #dashboard[data-lifecycle="repeat"] .dashboard-referral-shortcut,
 #dashboard[data-lifecycle="repeat"] .dashboard-more-tools,

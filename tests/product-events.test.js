@@ -4,8 +4,12 @@ import productEvents, {
     PRODUCT_EVENT_NAMES,
     PRODUCT_EVENT_PARAM_ALLOWLIST,
     buildProductEvent,
+    getKstAccountDay,
+    getKstDateKey,
+    getRecordCountBucket,
     hasProductAnalyticsConsent,
     resetProductEventDedupe,
+    resolveActivationMilestone,
     sanitizeProductEventParams,
     trackProductEvent
 } from '../js/product-events.js';
@@ -48,6 +52,65 @@ describe('product event schema', () => {
             params: { tab: 'gallery', variant: 'demo_v1' }
         });
         expect(buildProductEvent('arbitrary_event', { tab: 'gallery' })).toBeNull();
+    });
+});
+
+describe('activation milestone resolution', () => {
+    const createdAt = '2026-07-01T00:00:00.000Z';
+
+    it('calculates account days from KST calendar boundaries', () => {
+        expect(getKstDateKey('2026-07-18T14:59:59.000Z')).toBe('2026-07-18');
+        expect(getKstDateKey('2026-07-18T15:00:00.000Z')).toBe('2026-07-19');
+        expect(getKstAccountDay('2026-07-18T14:59:59.000Z', '2026-07-18T15:00:00.000Z')).toBe(2);
+        expect(getKstAccountDay(null, '2026-07-18T15:00:00.000Z')).toBeNull();
+    });
+
+    it('emits day3 only after two active dates within account days one through three', () => {
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-01T12:00:00.000Z', activeDayCount: 1 })).toBeNull();
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-03T12:00:00.000Z', activeDayCount: 2 })).toEqual({
+            eventName: 'day3_activated',
+            recordCountBucket: 'two',
+            accountDay: 3
+        });
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-04T12:00:00.000Z', activeDayCount: 2 })).toBeNull();
+    });
+
+    it('emits week2 return only on account days eight through fourteen', () => {
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-07T12:00:00.000Z', activeDayCount: 3 })).toBeNull();
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-08T12:00:00.000Z', activeDayCount: 3 })).toEqual({
+            eventName: 'week2_return',
+            recordCountBucket: 'three',
+            accountDay: 8
+        });
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-14T12:00:00.000Z', activeDayCount: 5 })).toEqual({
+            eventName: 'week2_return',
+            recordCountBucket: 'four_plus',
+            accountDay: 14
+        });
+        expect(resolveActivationMilestone({ createdAt, now: '2026-07-15T12:00:00.000Z', activeDayCount: 5 })).toBeNull();
+    });
+
+    it('uses only the approved record-count buckets', () => {
+        expect([0, 1, 2, 3, 4, 40].map(getRecordCountBucket)).toEqual([
+            'zero', 'one', 'two', 'three', 'four_plus', 'four_plus'
+        ]);
+    });
+
+    it('keeps identifiers, dates, and health values out of activation payloads', () => {
+        expect(sanitizeProductEventParams('day3_activated', {
+            entry_point: 'record_prompt',
+            record_count_bucket: 'two',
+            variant: 'full',
+            uid: 'user-123',
+            date: '2026-07-03',
+            weight: 72.4,
+            glucose: 105,
+            journal: 'private health content'
+        })).toEqual({
+            entry_point: 'record_prompt',
+            record_count_bucket: 'two',
+            variant: 'full'
+        });
     });
 });
 
