@@ -1,0 +1,17 @@
+[
+  {
+    "origin": [
+      "https://habitschool-staging.web.app"
+    ],
+    "method": [
+      "GET",
+      "HEAD"
+    ],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Range",
+      "Accept-Ranges"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]
