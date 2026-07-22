@@ -9,6 +9,7 @@
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://apis.google.com https://cdnjs.cloudflare.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
         img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.googleusercontent.com https://lh3.googleusercontent.com https://www.google.com;
+        media-src 'self' blob: https://firebasestorage.googleapis.com;
         connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:* https://www.gstatic.com https://*.googleapis.com wss://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebaseapp.com https://*.web.app https://firebasestorage.googleapis.com https://*.cloudfunctions.net https://*.run.app https://accounts.google.com https://apis.google.com https://*.binance.org:8545 https://bsc-dataseed.binance.org https://data-seed-prebsc-1-s1.binance.org:8545 https://data-seed-prebsc-2-s1.binance.org:8545;
         frame-src 'self' https://accounts.google.com https://apis.google.com https://*.firebaseapp.com https://*.web.app https://*.googleapis.com;
         font-src 'self' data:;
@@ -157,8 +158,24 @@
         .hc { border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
         .hc-hdr { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 6px; }
         .hc-stats { display: flex; gap: 12px; font-size: 12px; color: #555; margin-bottom: 7px; flex-wrap: wrap; }
-        .hc-imgs { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 4px; }
-        .hc-imgs img { width: 58px; height: 58px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+        .hc-media-list { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 5px; }
+        .hc-media-item { flex: 0 0 68px; min-width: 0; }
+        .admin-media-thumb { width: 64px; height: 64px; padding: 0; border: 1px solid #ddd; border-radius: 7px; overflow: hidden; background: #f7f7f7; cursor: zoom-in; position: relative; display: grid; place-items: center; }
+        .admin-media-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .admin-media-thumb-fallback { font-size: 26px; }
+        .admin-media-video-badge { position: absolute; right: 3px; bottom: 3px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: white; background: rgba(0,0,0,.7); font-size: 10px; }
+        .hc-media-label { margin-top: 3px; overflow: hidden; color: #777; font-size: 10px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+        .hc-analysis-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+        .hc-analysis { border: 1px solid #e6daf0; border-radius: 7px; background: #fbf8fd; }
+        .hc-analysis summary { padding: 7px 9px; cursor: pointer; color: #6A1B9A; font-size: 11px; font-weight: 700; }
+        .hc-analysis-fields { display: flex; flex-direction: column; gap: 5px; padding: 0 9px 9px; }
+        .hc-analysis-field { color: #555; font-size: 11px; line-height: 1.45; word-break: break-word; }
+        .hc-analysis-field strong { color: #333; }
+        .admin-media-lightbox { display: none; position: fixed; inset: 0; z-index: 2000; padding: 24px; background: rgba(0,0,0,.86); align-items: center; justify-content: center; }
+        .admin-media-lightbox-card { width: min(960px, 100%); max-height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .admin-media-lightbox-close { position: absolute; top: 0; right: 0; z-index: 1; width: 42px; height: 42px; border: 0; border-radius: 50%; color: white; background: rgba(0,0,0,.68); cursor: pointer; font-size: 24px; }
+        .admin-media-lightbox img, .admin-media-lightbox video { display: none; max-width: 100%; max-height: calc(100vh - 92px); object-fit: contain; border-radius: 10px; background: #111; }
+        .admin-media-lightbox-caption { color: white; font-size: 13px; font-weight: 600; text-align: center; }
         .fb-note { font-size: 12px; color: #9C27B0; background: #F3E5F5; border-radius: 4px; padding: 6px; margin-top: 7px; }
 
         /* Economy tab inputs */
@@ -271,7 +288,7 @@
         <div class="box">
             <h3>📋 회원 리스트</h3>
             <div class="filter-bar">
-                <input type="text" class="search-inp" id="member-search" placeholder="🔍 이름 검색..." oninput="resetMemberPageAndRender()">
+                <input type="text" class="search-inp" id="member-search" placeholder="🔍 이름 또는 이메일 검색..." oninput="resetMemberPageAndRender()">
                 <button class="chip active" data-f="all" onclick="setFilter('all')">전체</button>
                 <button class="chip" data-f="today" onclick="setFilter('today')">오늘 인증</button>
                 <button class="chip" data-f="alert" onclick="setFilter('alert')">건강 경보</button>
@@ -588,20 +605,32 @@
     </div>
 </div>
 
+<div class="admin-media-lightbox" id="admin-media-lightbox" role="dialog" aria-modal="true" aria-labelledby="admin-media-lightbox-caption" aria-hidden="true">
+    <div class="admin-media-lightbox-card">
+        <button type="button" class="admin-media-lightbox-close" aria-label="확대 보기 닫기" onclick="closeAdminMediaLightbox()">✕</button>
+        <img id="admin-media-lightbox-image" alt="확대된 상세 기록">
+        <video id="admin-media-lightbox-video" controls playsinline></video>
+        <div class="admin-media-lightbox-caption" id="admin-media-lightbox-caption"></div>
+    </div>
+</div>
+
 <script type="module">
     import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
     import {
+        collectAdminDailyLogAnalyses,
+        collectAdminDailyLogMedia,
         filterAdminAssetRows,
+        filterAdminMemberRows,
         filterAdminRowsByName,
         formatAdminDateTime,
         getAdminPaginationState,
         normalizeAdminEmailLog,
         getReEngagementMethodLabel
     } from './js/admin-utils.js';
-    import { escapeHtml, isValidStorageUrl } from './js/security.js';
+    import { escapeHtml, isPersistedStorageUrl } from './js/security.js';
 
     let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
@@ -1355,9 +1384,8 @@
     }
 
     window.renderMembers = function() {
-        const term = (document.getElementById('member-search')?.value||'').toLowerCase();
-        let rows = memberRows.filter(r => {
-            if (term && !r.name.toLowerCase().includes(term)) return false;
+        const term = document.getElementById('member-search')?.value || '';
+        let rows = filterAdminMemberRows(memberRows, term).filter(r => {
             if (memberFilter==='today' && r.date!==todayStr) return false;
             if (memberFilter==='alert' && !r.alert) return false;
             if (memberFilter==='inactive' && (new Date(todayStr)-new Date(r.date))/86400000 < 7) return false;
@@ -2751,10 +2779,112 @@
 
     // ── Detail modal ──────────────────────────────────────────
     window.alertMsg = function(date, msg) { alert(`[발송일: ${date}]\n\n${msg}`); };
-    // '발송됨' 뱃지 클릭: 인라인 onclick 대신 위임 리스너(피드백에 따옴표가 있어도 안전).
+
+    function renderAdminDetailMedia(log) {
+        const mediaItems = collectAdminDailyLogMedia(log)
+            .filter((item) => isPersistedStorageUrl(item.url));
+        if (!mediaItems.length) return '';
+
+        const content = mediaItems.map((item) => {
+            const fullUrl = escapeHtml(item.url);
+            const label = escapeHtml(item.label);
+            const kind = item.kind === 'video' ? 'video' : 'image';
+            const thumbUrl = isPersistedStorageUrl(item.thumbUrl)
+                ? item.thumbUrl
+                : kind === 'image'
+                    ? item.url
+                    : '';
+            const preview = thumbUrl
+                ? `<img src="${escapeHtml(thumbUrl)}" loading="lazy" alt="${label}">`
+                : '<span class="admin-media-thumb-fallback" aria-hidden="true">🎬</span>';
+            const videoBadge = kind === 'video'
+                ? '<span class="admin-media-video-badge" aria-hidden="true">▶</span>'
+                : '';
+            return `<div class="hc-media-item">
+                <button type="button" class="admin-media-thumb" data-media-url="${fullUrl}" data-media-kind="${kind}" data-media-label="${label}" aria-label="${label} 크게 보기">
+                    ${preview}${videoBadge}
+                </button>
+                <div class="hc-media-label" title="${label}">${label}</div>
+            </div>`;
+        }).join('');
+
+        return `<div class="hc-media-list">${content}</div>`;
+    }
+
+    function renderAdminDetailAnalyses(log) {
+        const analyses = collectAdminDailyLogAnalyses(log);
+        if (!analyses.length) return '';
+
+        return `<div class="hc-analysis-list">${analyses.map((item) => {
+            const fields = item.fields.map((field) => `
+                <div class="hc-analysis-field"><strong>${escapeHtml(field.label)}</strong>: ${escapeHtml(field.value)}</div>
+            `).join('');
+            return `<details class="hc-analysis">
+                <summary>✨ ${escapeHtml(item.label)} AI 분석 결과</summary>
+                <div class="hc-analysis-fields">${fields}</div>
+            </details>`;
+        }).join('')}</div>`;
+    }
+
+    window.openAdminMediaLightbox = function(url, kind = 'image', label = '') {
+        if (!isPersistedStorageUrl(url)) return;
+        const lightbox = document.getElementById('admin-media-lightbox');
+        const image = document.getElementById('admin-media-lightbox-image');
+        const video = document.getElementById('admin-media-lightbox-video');
+        const caption = document.getElementById('admin-media-lightbox-caption');
+        if (!lightbox || !image || !video || !caption) return;
+
+        image.style.display = 'none';
+        video.style.display = 'none';
+        if (kind === 'video') {
+            video.src = url;
+            video.style.display = 'block';
+        } else {
+            image.src = url;
+            image.alt = label || '확대된 상세 기록';
+            image.style.display = 'block';
+        }
+        caption.textContent = label;
+        lightbox.style.display = 'flex';
+        lightbox.setAttribute('aria-hidden', 'false');
+        lightbox.querySelector('.admin-media-lightbox-close')?.focus();
+    };
+
+    window.closeAdminMediaLightbox = function() {
+        const lightbox = document.getElementById('admin-media-lightbox');
+        const image = document.getElementById('admin-media-lightbox-image');
+        const video = document.getElementById('admin-media-lightbox-video');
+        if (!lightbox || !image || !video) return;
+        lightbox.style.display = 'none';
+        lightbox.setAttribute('aria-hidden', 'true');
+        image.removeAttribute('src');
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+    };
+
+    // 상세 기록 미디어와 '발송됨' 뱃지는 인라인 URL/메시지 실행 없이 이벤트 위임으로 처리한다.
     document.addEventListener('click', (e) => {
+        const mediaButton = e.target.closest('.admin-media-thumb');
+        if (mediaButton) {
+            const url = mediaButton.dataset.mediaUrl || '';
+            if (isPersistedStorageUrl(url)) {
+                openAdminMediaLightbox(url, mediaButton.dataset.mediaKind || 'image', mediaButton.dataset.mediaLabel || '');
+            }
+            return;
+        }
+        if (e.target.id === 'admin-media-lightbox') {
+            closeAdminMediaLightbox();
+            return;
+        }
         const badge = e.target.closest('.feedback-sent-badge');
         if (badge) alertMsg(badge.dataset.date || '', badge.dataset.msg || '');
+    });
+    document.addEventListener('keydown', (e) => {
+        const lightbox = document.getElementById('admin-media-lightbox');
+        if (e.key === 'Escape' && lightbox?.getAttribute('aria-hidden') === 'false') {
+            closeAdminMediaLightbox();
+        }
     });
 
     window.openDetail = async function(uid) {
@@ -2764,7 +2894,16 @@
         document.getElementById('history-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:#888;">로딩 중...</div>';
         document.getElementById('modal-uid').value = uid;
         try {
-            const { snap, usersQ } = await getData();
+            const ago30 = new Date(todayStr); ago30.setDate(ago30.getDate()-29);
+            const cut = ago30.toISOString().split('T')[0];
+            const detailLogsPromise = getDocs(query(
+                collection(db, 'daily_logs'),
+                where('userId', '==', uid),
+                where('date', '>=', cut),
+                orderBy('date', 'desc'),
+                limit(30)
+            ));
+            const [{ usersQ }, detailLogsSnapshot] = await Promise.all([getData(), detailLogsPromise]);
             const meta = {}; usersQ.forEach(u => { meta[u.id]=u.data(); });
             const m = meta[uid]||{};
             document.getElementById('modal-name').textContent = m.customDisplayName||m.displayName||'알 수 없음';
@@ -2781,9 +2920,7 @@
             const row = memberRows.find((member) => member.uid === uid);
             renderEmailAuditSection(row?.emailLog, { email: row?.email || m.email || '' });
 
-            const ago30 = new Date(todayStr); ago30.setDate(ago30.getDate()-29);
-            const cut = ago30.toISOString().split('T')[0];
-            const logs = []; snap.forEach(d=>{ const r=d.data(); if(r.userId===uid&&r.date>=cut) logs.push(r); }); logs.sort((a,b)=>b.date.localeCompare(a.date));
+            const logs = detailLogsSnapshot.docs.map((recordDoc) => recordDoc.data());
 
             // Trend chart
             const labels=[],bst=[],sys=[];
@@ -2794,14 +2931,16 @@
 
             // History cards
             document.getElementById('history-wrap').innerHTML = logs.map(r => {
-                const imgs=[]; ['breakfast','lunch','dinner','snack'].forEach(k=>{ if(isValidStorageUrl(r.diet?.[`${k}Url`])) imgs.push(`<img src="${r.diet[`${k}Url`]}" loading="lazy" alt="${k}">`); }); if(isValidStorageUrl(r.exercise?.cardioImageUrl)) imgs.push(`<img src="${r.exercise.cardioImageUrl}" loading="lazy" alt="운동">`);
-                const ap=r.awardedPoints||{}, total=(ap.diet||0)+(ap.exercise||0)+(ap.mind||0);
-                return `<div class="hc"><div class="hc-hdr"><span>${r.date}</span><span>${total?`+${total}P`:''}</span></div><div class="hc-stats">${r.metrics?.glucose?`🩸${r.metrics.glucose}`:''}${r.metrics?.bpSystolic?` 💓${r.metrics.bpSystolic}/${r.metrics.bpDiastolic}`:''}${r.metrics?.steps?.count?` 👣${r.metrics.steps.count.toLocaleString()}보`:''}</div>${imgs.length?`<div class="hc-imgs">${imgs.join('')}</div>`:''}${r.adminFeedbackHistory?`<div class="fb-note">💬 ${escapeHtml(r.adminFeedbackHistory)}</div>`:''}</div>`;
+                const total = getAwardedPointsTotal(r.awardedPoints || {});
+                const mediaHtml = renderAdminDetailMedia(r);
+                const analysesHtml = renderAdminDetailAnalyses(r);
+                const stepCount = Number(r.steps?.count || r.metrics?.steps?.count || 0);
+                return `<div class="hc"><div class="hc-hdr"><span>${escapeHtml(r.date)}</span><span>${total?`+${total}P`:''}</span></div><div class="hc-stats">${r.metrics?.glucose?`🩸${escapeHtml(r.metrics.glucose)}`:''}${r.metrics?.bpSystolic?` 💓${escapeHtml(r.metrics.bpSystolic)}/${escapeHtml(r.metrics.bpDiastolic)}`:''}${stepCount?` 👣${stepCount.toLocaleString()}보`:''}</div>${mediaHtml}${analysesHtml}${r.adminFeedbackHistory?`<div class="fb-note">💬 ${escapeHtml(r.adminFeedbackHistory)}</div>`:''}</div>`;
             }).join('') || '<div style="padding:20px;text-align:center;color:#888;">기록 없음</div>';
         } catch(e) { document.getElementById('history-wrap').innerHTML=`<div style="padding:20px;color:red;">${escapeHtml(e.message)}</div>`; }
     };
 
-    window.closeModal = function() { document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
+    window.closeModal = function() { closeAdminMediaLightbox(); document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
     window.quickMsg = function(msg) { document.getElementById('fb-text').value=msg; };
 
     window.sendReEngagement = async function(days) {

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+    collectAdminDailyLogAnalyses,
+    collectAdminDailyLogMedia,
     filterAdminAssetRows,
+    filterAdminMemberRows,
     filterAdminRowsByName,
     getAdminPaginationState,
     normalizeAdminEmailLog,
@@ -27,6 +30,17 @@ describe('admin asset table helpers', () => {
         ]);
     });
 
+    it('matches members by either name or email without changing other admin filters', () => {
+        const members = [
+            { name: '최석재', email: 'Doctor.CSJ@example.com' },
+            { name: '윤효은', email: 'hello@example.net' },
+        ];
+
+        expect(filterAdminMemberRows(members, '  doctor.csj@EXAMPLE  ')).toEqual([members[0]]);
+        expect(filterAdminMemberRows(members, '효은')).toEqual([members[1]]);
+        expect(filterAdminRowsByName(members, 'example')).toEqual([]);
+    });
+
     it('clamps direct page jumps to the available page range', () => {
         expect(getAdminPaginationState(45, 20, 1)).toMatchObject({
             totalPages: 3,
@@ -43,6 +57,92 @@ describe('admin asset table helpers', () => {
             pageIndex: 0,
             start: 0,
         });
+    });
+});
+
+describe('admin daily log detail helpers', () => {
+    const storageUrl = (path) => `https://firebasestorage.googleapis.com/v0/b/demo/o/${encodeURIComponent(path)}?alt=media`;
+
+    it('collects current and legacy record media with thumbnails and removes duplicate originals', () => {
+        const duplicatedExerciseUrl = storageUrl('exercise/run.jpg');
+        const media = collectAdminDailyLogMedia({
+            diet: {
+                breakfastUrl: storageUrl('diet/breakfast.jpg'),
+                breakfastThumbUrl: storageUrl('diet/thumb-breakfast.jpg'),
+            },
+            exercise: {
+                cardioList: [{
+                    imageUrl: duplicatedExerciseUrl,
+                    imageThumbUrl: storageUrl('exercise/thumb-run.jpg'),
+                }],
+                cardioImageUrl: duplicatedExerciseUrl,
+                strengthList: [{
+                    videoUrl: storageUrl('exercise/squat.mp4'),
+                    videoThumbUrl: storageUrl('exercise/thumb-squat.jpg'),
+                }],
+            },
+            steps: { screenshotUrl: storageUrl('steps/today.jpg') },
+            sleepAndMind: {
+                sleepImageUrl: storageUrl('sleep/today.jpg'),
+                sleepImageThumbUrl: storageUrl('sleep/thumb-today.jpg'),
+            },
+        });
+
+        expect(media.map((item) => item.label)).toEqual([
+            '아침 식단',
+            '유산소 1',
+            '근력 운동 1',
+            '걸음수 캡처',
+            '수면·마음 기록',
+        ]);
+        expect(media.find((item) => item.label === '근력 운동 1')).toMatchObject({ kind: 'video' });
+        expect(media.filter((item) => item.url === duplicatedExerciseUrl)).toHaveLength(1);
+    });
+
+    it('returns only allowlisted stored analysis fields and never exposes raw model data', () => {
+        const analyses = collectAdminDailyLogAnalyses({
+            dietAnalysis: {
+                breakfast: {
+                    grade: 'A',
+                    summary: '채소가 충분합니다.',
+                    foods: [{ name: '토마토', category: 'natural' }],
+                    raw: 'do not expose',
+                    prompt: 'private prompt',
+                },
+            },
+            exercise: {
+                cardioList: [{
+                    aiAnalysis: {
+                        intensity: '중강도',
+                        feedback: '꾸준히 이어가세요.',
+                        unknown: 'hidden',
+                    },
+                }],
+            },
+            steps: {
+                screenshotUrl: storageUrl('steps/today.jpg'),
+                count: 9132,
+                distance_km: 6.2,
+                imageHash: 'never expose this hash',
+            },
+            sleepAndMind: {
+                sleepAnalysis: {
+                    grade: 'B',
+                    summary: '수면 시간이 안정적입니다.',
+                    details: { sleepDuration: '7시간 20분' },
+                    raw: 'hidden',
+                },
+            },
+        });
+        const serialized = JSON.stringify(analyses);
+
+        expect(analyses.map((item) => item.kind)).toEqual(['diet', 'exercise', 'sleep', 'steps']);
+        expect(serialized).toContain('채소가 충분합니다.');
+        expect(serialized).toContain('9132보');
+        expect(serialized).not.toContain('do not expose');
+        expect(serialized).not.toContain('private prompt');
+        expect(serialized).not.toContain('never expose this hash');
+        expect(serialized).not.toContain('unknown');
     });
 });
 
