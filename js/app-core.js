@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=245';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=245';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=246';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=246';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=245';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=245';
+} from './auth-login-helpers.js?v=246';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=246';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=245';
+} from './exercise-media.js?v=246';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=245';
+} from './health-connect-utils.js?v=246';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=245';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=245';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=245';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=245';
-import { sanitize, compressImage } from './data-manager.js?v=245';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=245';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=245';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=245';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=245';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=245';
+} from './habit-groups.js?v=246';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=246';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=246';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=246';
+import { sanitize, compressImage } from './data-manager.js?v=246';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=246';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=246';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=246';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=246';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=246';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=245';
+} from './guest-demo.js?v=246';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=245';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=245';
+} from './product-events.js?v=246';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=246';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -95,7 +95,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=245';
+} from './diet-program.js?v=246';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -107,18 +107,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=245';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=245';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=245';
+} from './meditation-guide.js?v=246';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=246';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=246';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=245';
+} from './social-challenge-readiness.js?v=246';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=245';
+} from './monthly-mvp-reward.js?v=246';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -169,7 +169,25 @@ const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS = 900;
 const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
+const SAMSUNG_FILE_PICKER_GUIDE_KO = '삼성 인터넷에서는 사진·영상 선택 창이 뜨면 ‘작업 선택’에서 세 번째 ‘파일’을 눌러 주세요.';
+const SAMSUNG_FILE_PICKER_GUIDE_EN = 'In Samsung Internet, choose the third option, “Files,” when the action picker opens.';
 const GRATITUDE_VOICE_MAX_LENGTH = 500;
+
+function syncSamsungFilePickerGuidance(root = document) {
+    const isSamsungInternet = isSamsungInternetUserAgent(window.navigator?.userAgent || '');
+    const guideText = isEnglishLocale() ? SAMSUNG_FILE_PICKER_GUIDE_EN : SAMSUNG_FILE_PICKER_GUIDE_KO;
+    root.querySelectorAll('[data-samsung-file-picker-guide]').forEach(guide => {
+        guide.textContent = guideText;
+        guide.hidden = !isSamsungInternet;
+    });
+    return isSamsungInternet;
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => syncSamsungFilePickerGuidance(), { once: true });
+} else {
+    syncSamsungFilePickerGuidance();
+}
 
 function isNonGalleryCompatibleImageFile(file = null) {
     if (!file || typeof file !== 'object') return false;
@@ -5696,7 +5714,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=245';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=246';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14344,7 +14362,6 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
             const categories = ['diet', 'exercise', 'mind'];
             const categoryLabels = { diet: '🥗 식단', exercise: '🏃 운동', mind: '🧘 마음' };
             const diffLabels = { easy: '쉬움', normal: '보통', hard: '도전' };
-            const preferredMissionType = primaryHabitToMissionType(ud.settings?.primaryHabit);
             const customOpen = _customMissionComposerOpen || pendingCustomMissions.length > 0;
 
             categories.forEach(cat => {
@@ -14354,7 +14371,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
                     <div class="mission-category-block compact">
                         <div class="mission-category-top compact">
                             <label class="mission-category-check" for="chk_preset_${cat}">
-                                <input type="checkbox" id="chk_preset_${cat}" ${cat === preferredMissionType ? 'checked' : ''}>
+                                <input type="checkbox" id="chk_preset_${cat}" checked>
                                 <span class="mission-category-label">${categoryLabels[cat]}</span>
                             </label>
                             <div class="mission-difficulty-tabs compact" data-category="${cat}">
@@ -15263,7 +15280,7 @@ window.generate30DayReport = async function () {
         let html = '';
 
         // — 요약 카드 —
-        html += `<div class="report-section">
+        html += `<div class="report-section" data-report-section="summary">
             <div class="report-section-title">📋 종합 요약</div>
             <div class="report-summary-grid">
                 <div class="report-stat-card"><div class="report-stat-value">${totalPoints}P</div><div class="report-stat-label">총 획득 포인트</div></div>
@@ -15274,7 +15291,7 @@ window.generate30DayReport = async function () {
         </div>`;
 
         // — 카테고리별 기록 —
-        html += `<div class="report-section">
+        html += `<div class="report-section" data-report-section="category">
             <div class="report-section-title">📊 카테고리별 분석</div>
             <div class="report-category-grid">
                 <div class="report-cat-card diet">
@@ -15302,20 +15319,20 @@ window.generate30DayReport = async function () {
         </div>`;
 
         // — 일별 포인트 그래프 —
-        html += `<div class="report-section">
+        html += `<div class="report-section" data-report-section="points">
             <div class="report-section-title">📈 일별 포인트 추이</div>
             <canvas id="report-chart-points" class="report-canvas"></canvas>
         </div>`;
 
         // — 카테고리별 일별 그래프 —
-        html += `<div class="report-section">
+        html += `<div class="report-section" data-report-section="category-trend">
             <div class="report-section-title">📉 카테고리별 일별 추이</div>
             <canvas id="report-chart-categories" class="report-canvas"></canvas>
         </div>`;
 
         // — 건강 지표 그래프 (데이터 있을 때만) —
         if (weights.length >= 2 || glucoses.length >= 2 || bpSys.length >= 2) {
-            html += `<div class="report-section">
+            html += `<div class="report-section" data-report-section="health">
                 <div class="report-section-title">🏥 건강 지표 변화</div>`;
             if (weights.length >= 2) {
                 const wFirst = weights[0].v, wLast = weights[weights.length - 1].v;
@@ -15339,7 +15356,7 @@ window.generate30DayReport = async function () {
         }
 
         // — 일별 기록 캘린더 히트맵 —
-        html += `<div class="report-section">
+        html += `<div class="report-section" data-report-section="heatmap">
             <div class="report-section-title">🗓️ 일별 기록 히트맵</div>
             <div class="report-heatmap" id="report-heatmap"></div>
             <div class="report-heatmap-legend">
@@ -15393,6 +15410,163 @@ window.generate30DayReport = async function () {
     } catch (e) {
         console.error('30일 결과지 오류:', e);
         document.getElementById('report-body').innerHTML = '<p style="text-align:center; padding:40px; color:#e74c3c;">⚠️ 결과지 생성 중 오류가 발생했습니다.</p>';
+    }
+};
+
+const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
+const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'points']);
+const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'health', 'heatmap']);
+
+function remove30DayReportPrintSheet() {
+    document.getElementById(REPORT_PRINT_SHEET_ID)?.remove();
+    document.documentElement.classList.remove('report-printing');
+    document.body.classList.remove('report-printing');
+}
+
+function cloneReportNodeForPrint(sourceNode) {
+    if (!sourceNode) return null;
+    const clone = sourceNode.cloneNode(true);
+    const sourceCanvases = Array.from(sourceNode.querySelectorAll('canvas'));
+    const clonedCanvases = Array.from(clone.querySelectorAll('canvas'));
+
+    sourceCanvases.forEach((canvas, index) => {
+        const clonedCanvas = clonedCanvases[index];
+        if (!clonedCanvas) return;
+        const image = document.createElement('img');
+        image.className = `${clonedCanvas.className || ''} report-print-chart-image`.trim();
+        image.alt = clonedCanvas.getAttribute('aria-label') || '30일 기록 그래프';
+        try {
+            image.src = canvas.toDataURL('image/png');
+        } catch (error) {
+            console.warn('인쇄용 그래프 스냅샷 생성 실패:', error?.message || error);
+        }
+        clonedCanvas.replaceWith(image);
+    });
+
+    clone.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+    clone.removeAttribute?.('id');
+    return clone;
+}
+
+function createReportPrintHalf(className = '') {
+    const half = document.createElement('section');
+    half.className = `report-print-half ${className}`.trim();
+    const viewport = document.createElement('div');
+    viewport.className = 'report-print-half-viewport';
+    const content = document.createElement('div');
+    content.className = 'report-print-half-content';
+    viewport.appendChild(content);
+    half.appendChild(viewport);
+    return { half, viewport, content };
+}
+
+function appendReportSectionsForPrint(target, reportBody, sectionNames) {
+    const body = document.createElement('div');
+    body.className = 'report-print-panel-body';
+    sectionNames.forEach(sectionName => {
+        const sourceSection = reportBody.querySelector(`[data-report-section="${sectionName}"]`);
+        const sectionClone = cloneReportNodeForPrint(sourceSection);
+        if (sectionClone) body.appendChild(sectionClone);
+    });
+    target.appendChild(body);
+}
+
+function build30DayReportPrintSheet() {
+    const reportContainer = document.getElementById('report-container');
+    const reportHeader = reportContainer?.querySelector('.report-header');
+    const reportBody = reportContainer?.querySelector('#report-body');
+    const requiredSections = [...REPORT_PRINT_TOP_SECTIONS, 'category-trend', 'heatmap'];
+    const hasAllRequiredSections = requiredSections.every(sectionName => (
+        reportBody?.querySelector(`[data-report-section="${sectionName}"]`)
+    ));
+    if (!reportContainer || !reportHeader || !reportBody || !hasAllRequiredSections) return null;
+
+    remove30DayReportPrintSheet();
+    const sheet = document.createElement('div');
+    sheet.id = REPORT_PRINT_SHEET_ID;
+    sheet.className = 'report-print-sheet';
+    sheet.setAttribute('aria-hidden', 'true');
+
+    const top = createReportPrintHalf('report-print-half-top');
+    const topHeader = cloneReportNodeForPrint(reportHeader);
+    if (topHeader) top.content.appendChild(topHeader);
+    appendReportSectionsForPrint(top.content, reportBody, REPORT_PRINT_TOP_SECTIONS);
+
+    const bottom = createReportPrintHalf('report-print-half-bottom');
+    const continuationHeader = document.createElement('div');
+    continuationHeader.className = 'report-print-continuation-header';
+    const continuationTitle = document.createElement('strong');
+    continuationTitle.textContent = reportHeader.querySelector('h2')?.textContent || '해빛스쿨 30일 종합 결과지';
+    const continuationMeta = document.createElement('span');
+    const userName = document.getElementById('report-user-name')?.textContent?.trim() || '';
+    const period = document.getElementById('report-period')?.textContent?.trim() || '';
+    continuationMeta.textContent = [userName, period].filter(Boolean).join(' · ');
+    continuationHeader.append(continuationTitle, continuationMeta);
+    bottom.content.appendChild(continuationHeader);
+    appendReportSectionsForPrint(bottom.content, reportBody, REPORT_PRINT_BOTTOM_SECTIONS);
+
+    sheet.append(top.half, bottom.half);
+    document.body.appendChild(sheet);
+    return sheet;
+}
+
+function fit30DayReportPrintHalf(half) {
+    const viewport = half?.querySelector('.report-print-half-viewport');
+    const content = half?.querySelector('.report-print-half-content');
+    if (!viewport || !content || viewport.clientWidth <= 0 || viewport.clientHeight <= 0) return 1;
+
+    const applyScale = scale => {
+        content.style.width = `${100 / scale}%`;
+        content.style.setProperty('--report-print-scale', String(scale));
+    };
+    let low = 0.2;
+    let high = 1;
+    let best = low;
+    for (let index = 0; index < 12; index++) {
+        const candidate = (low + high) / 2;
+        applyScale(candidate);
+        const fitsHeight = content.scrollHeight * candidate <= viewport.clientHeight + 1;
+        const fitsWidth = content.scrollWidth * candidate <= viewport.clientWidth + 1;
+        if (fitsHeight && fitsWidth) {
+            best = candidate;
+            low = candidate;
+        } else {
+            high = candidate;
+        }
+    }
+    applyScale(best);
+    content.dataset.printScale = best.toFixed(3);
+    return best;
+}
+
+window.print30DayReport = async function () {
+    const sheet = build30DayReportPrintSheet();
+    if (!sheet) {
+        showToast('결과지 분석이 끝난 뒤 인쇄해 주세요.');
+        return false;
+    }
+
+    document.documentElement.classList.add('report-printing');
+    document.body.classList.add('report-printing');
+    if (document.fonts?.ready) {
+        await Promise.race([
+            document.fonts.ready,
+            new Promise(resolve => window.setTimeout(resolve, 800))
+        ]).catch(() => {});
+    }
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    sheet.querySelectorAll('.report-print-half').forEach(half => fit30DayReportPrintHalf(half));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+
+    window.addEventListener('afterprint', remove30DayReportPrintSheet, { once: true });
+    try {
+        window.print();
+        return true;
+    } catch (error) {
+        remove30DayReportPrintSheet();
+        console.error('30일 결과지 인쇄 오류:', error);
+        showToast('인쇄 창을 열지 못했어요. 다시 시도해 주세요.');
+        return false;
     }
 };
 

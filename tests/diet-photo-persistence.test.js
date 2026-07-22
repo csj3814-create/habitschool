@@ -147,6 +147,20 @@ describe('diet photo persistence', () => {
         expect(appSource).not.toContain('samsungSystemPickerFallback');
     });
 
+    it('shows Samsung Internet users how to choose the system Files option without replacing the native picker', () => {
+        const appSource = readAppSource();
+        const indexSource = readRepoFile('index.html');
+
+        expect(indexSource.match(/data-samsung-file-picker-guide/g)).toHaveLength(3);
+        expect(appSource).toContain("const SAMSUNG_FILE_PICKER_GUIDE_KO = '삼성 인터넷에서는 사진·영상 선택 창이 뜨면 ‘작업 선택’에서 세 번째 ‘파일’을 눌러 주세요.';");
+        expect(appSource).toContain('function syncSamsungFilePickerGuidance(root = document)');
+        expect(appSource).toContain("isSamsungInternetUserAgent(window.navigator?.userAgent || '')");
+        expect(appSource).toContain('guide.hidden = !isSamsungInternet;');
+        expect(appSource).toContain("input.removeAttribute('capture');");
+        expect(appSource).toContain('input.click();');
+        expect(appSource).not.toContain('window.showOpenFilePicker');
+    });
+
     it('blocks gallery-incompatible or empty diet image uploads before saving broken URLs', () => {
         const appSource = readAppSource();
         const dataManagerSource = readRepoFile('js/data-manager.js');

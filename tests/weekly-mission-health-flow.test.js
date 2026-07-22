@@ -47,11 +47,13 @@ describe('weekly mission health-practice flow', () => {
         expect(helpers.getNextWeeklyMissionRecordTab([{ type: 'exercise' }], { exercise: true })).toBe('');
     });
 
-    it('defaults only the preferred category to easy without changing active mission data', () => {
+    it('defaults all three categories to easy without changing active mission data', () => {
         const appSource = readAppSource();
 
-        expect(appSource).toContain("const preferredMissionType = primaryHabitToMissionType(ud.settings?.primaryHabit);");
-        expect(appSource).toContain("${cat === preferredMissionType ? 'checked' : ''}");
+        expect(appSource).toContain('const isWeekActive = weeklyMissionData && weeklyMissionData.weekId === currentWeekId');
+        expect(appSource).toContain('} else if (!isWeekActive) {');
+        expect(appSource).toContain('<input type="checkbox" id="chk_preset_${cat}" checked>');
+        expect(appSource).not.toContain("${cat === preferredMissionType ? 'checked' : ''}");
         expect(appSource).toContain("diff === 'easy' ? 'active' : ''");
         expect(appSource).toContain('const m = levelData[cat].easy;');
         expect(appSource).toContain("btn.classList.toggle('active', btn.dataset.diff === 'easy');");

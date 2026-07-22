@@ -132,69 +132,158 @@
 .report-btn-print { background: #FF8C00; color: white; }
 .report-btn-close { background: #eee; color: #333; }
 
-/* ?�쇄 ?��???*/
+/* A4 한 장을 상·하 두 면으로 쓰는 인쇄 전용 시트 */
+.report-print-sheet {
+    position: fixed;
+    left: -10000px;
+    top: 0;
+    z-index: -1;
+    visibility: hidden;
+    pointer-events: none;
+    width: 210mm;
+    height: 296mm;
+    display: grid;
+    grid-template-rows: 148mm 148mm;
+    overflow: hidden;
+    background: #fff;
+    color: #222;
+}
+
+.report-print-half {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    padding: 6mm 8mm;
+    overflow: hidden;
+    background: #fff;
+}
+
+.report-print-half-top {
+    border-bottom: 0.3mm dashed #bdbdbd;
+}
+
+.report-print-half-viewport {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.report-print-half-content {
+    width: 100%;
+    transform: scale(var(--report-print-scale, 1));
+    transform-origin: top left;
+}
+
+.report-print-panel-body {
+    padding: 12px 16px;
+}
+
+.report-print-sheet .report-header {
+    padding: 14px 18px;
+}
+
+.report-print-sheet .report-header h2 {
+    font-size: 17px;
+}
+
+.report-print-sheet .report-section {
+    margin-bottom: 12px;
+}
+
+.report-print-sheet .report-section:last-child {
+    margin-bottom: 0;
+}
+
+.report-print-sheet .report-section-title {
+    margin-bottom: 8px;
+}
+
+.report-print-sheet .report-print-chart-image {
+    display: block;
+    width: 100%;
+    height: 150px;
+    object-fit: fill;
+    margin-top: 6px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+}
+
+.report-print-sheet .hm-cell {
+    height: 26px;
+    aspect-ratio: auto;
+}
+
+.report-print-continuation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #FF8C00 0%, #FFA726 100%);
+    color: #fff;
+}
+
+.report-print-continuation-header strong {
+    font-size: 15px;
+}
+
+.report-print-continuation-header span {
+    font-size: 11px;
+    text-align: right;
+}
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
 @media print {
-    body { 
-        background: white; 
-        padding: 0; 
+    html.report-printing,
+    body.report-printing {
+        width: 210mm !important;
+        height: 296mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block !important;
+        overflow: hidden !important;
+        background: #fff !important;
     }
 
-    /* 결과지 모달???�려?�으�?결과지�??�쇄 */
-    .report-modal {
+    body.report-printing > *:not(#report-print-sheet) {
+        display: none !important;
+    }
+
+    body.report-printing #report-print-sheet {
         position: static !important;
-        background: none !important;
-        padding: 0 !important;
-        overflow: visible !important;
+        left: auto !important;
+        top: auto !important;
+        z-index: auto !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+        display: grid !important;
+        width: 210mm !important;
+        height: 296mm !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        break-after: avoid-page;
+        page-break-after: avoid;
     }
 
-    .report-container {
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        max-width: 100% !important;
+    #report-print-sheet,
+    #report-print-sheet * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
-    .report-actions { display: none !important; }
-
-    .report-canvas {
+    .report-print-half {
         break-inside: avoid;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    .hm-cell {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
-    .report-cat-fill, .report-stat-card, .report-header {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-    
-    .header, 
-    .tab-menu, 
-    .bottom-bar, 
-    .quest-board, 
-    .chat-banner-fixed, 
-    .mission-progress-container,
-    #dashboard,
-    #profile,
-    #assets,
-    #diet,
-    #exercise,
-    #sleep,
-    #gallery { 
-        display: none !important; 
-    }
-
-    .app-container {
-        max-width: 100% !important;
-        padding: 0 !important;
+        page-break-inside: avoid;
     }
 }
 
 /* ==========================
-   AI ?�단 분석 카드
+   AI 식단 분석 카드
    ========================== */
 
 .diet-ai-btn {
@@ -429,7 +518,7 @@
     border: 1px solid #FFE0B2;
 }
 
-/* ?�늘???�단 총평 */
+/* 오늘의 식단 총평 */
 .diet-day-summary {
     display: flex;
     align-items: center;
@@ -463,7 +552,7 @@
 }
 
 /* ==========================
-   ?�?�건�??�수 카드
+   대사 건강 점수 카드
    ========================== */
 
 .metabolic-score-card {
@@ -605,7 +694,7 @@
 }
 
 /* ==========================
-   ?�보??모달
+   온보딩 모달
    ========================== */
 
 .onboarding-modal-content {
@@ -726,7 +815,7 @@
 } */
 
 /* ==========================================
-   ?�동 ??- ?�더 + 추�? 버튼 ?�라??배치
+   운동 헤더 - 제목 + 추가 버튼 인라인 배치
    ========================================== */
 .exercise-header {
     display: flex;
@@ -756,7 +845,7 @@
     transform: scale(0.95);
 }
 
-/* ?�동 블록�?AI 버튼 */
+/* 운동 블록별 AI 버튼 */
 .exercise-ai-btn {
     width: 100%;
     margin-top: 6px;
@@ -769,7 +858,7 @@
 }
 
 /* ==========================================
-   갤러�??�라??미디??+ AI ?�버?�이
+   갤러리 인라인 미디어 + AI 오버레이
    ========================================== */
 .gallery-media-wrapper {
     position: relative;
@@ -778,7 +867,7 @@
     overflow: hidden;
 }
 
-/* ?��?지 ?��? ??wrapper가 그리???�체 ?�비 차�? */
+/* 이미지 확대 시 wrapper가 그리드 전체 너비 차지 */
 .gallery-media-wrapper:has(img.gallery-img-expanded) {
     grid-column: 1 / -1;
 }
@@ -832,7 +921,7 @@
 }
 
 /* ========================================
- * ?�로??CTA 배너
+ * 업로드 CTA 배너
  * ======================================== */
 .upload-cta {
     display: flex;
@@ -892,7 +981,8 @@
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
         "icon text"
-        "icon actions";
+        "icon actions"
+        "guide guide";
     column-gap: 12px;
     row-gap: 10px;
     cursor: default;
@@ -917,6 +1007,33 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.samsung-file-picker-guide {
+    margin: -2px 0 12px;
+    padding: 9px 11px;
+    border: 1px solid #FFD180;
+    border-radius: 10px;
+    background: #FFF8E1;
+    color: #8A4B08;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.samsung-file-picker-guide[hidden] {
+    display: none !important;
+}
+
+.upload-cta-split .samsung-file-picker-guide {
+    grid-area: guide;
+    margin: 0;
+}
+
+body.dark-mode .samsung-file-picker-guide {
+    border-color: rgba(255, 183, 77, 0.35);
+    background: rgba(91, 52, 16, 0.45);
+    color: #FFD180;
 }
 
 .upload-cta-split .upload-cta-btn {
@@ -988,7 +1105,8 @@
         grid-template-columns: 52px minmax(0, 1fr);
         grid-template-areas:
             "icon text"
-            "icon actions";
+            "icon actions"
+            "guide guide";
         column-gap: 10px;
         row-gap: 8px;
         padding: 12px 14px;
@@ -1336,10 +1454,10 @@ body.simple-mode #user-greeting img {
 }
 
 /* ==========================================
-   걸음??카드 & ?�젯 ?��???
+   걸음수 카드 & 위젯 스타일
    ========================================== */
 
-/* Step Ring (?�동 ?? */
+/* Step Ring (운동 링) */
 .step-card { position: relative; }
 .step-display { display: flex; align-items: center; gap: 16px; padding: 10px 0; }
 .step-ring-container { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
@@ -1350,7 +1468,7 @@ body.simple-mode #user-greeting img {
 .step-count { font-size: 22px; font-weight: 700; color: #333; display: block; }
 .step-goal-label { font-size: 11px; color: #999; }
 
-/* Step Right Panel (?�력 + 캡처) */
+/* Step Right Panel (입력 + 캡처) */
 .step-right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .step-input-group { display: flex; gap: 6px; }
 .step-number-input {
@@ -1467,7 +1585,7 @@ body.dark-mode .step-analysis-box { background: #1b3a1b; border-left-color: #66B
 body.dark-mode .step-detail-item { color: #bbb; }
 
 /* ============================================================
-   ?�트�?뱃�? (갤러�?카드)
+   스트릭 배지 (갤러리 카드)
    ============================================================ */
 .streak-badge {
     display: inline-flex;
@@ -1484,7 +1602,7 @@ body.dark-mode .step-detail-item { color: #bbb; }
 }
 
 /* ============================================================
-   친구 초�? 카드 (지�???
+   친구 초대 카드
    ============================================================ */
 .referral-card {
     background: linear-gradient(135deg, #fff8e1, #fff3e0);
