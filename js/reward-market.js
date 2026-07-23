@@ -23,6 +23,8 @@ let rewardMarketRetryTimer = null;
 let rewardMarketRetryUid = '';
 let rewardMarketRetryAttempts = 0;
 let rewardMarketLastSuccessAt = 0;
+// 최신 스냅샷 로드를 식별하는 증가 토큰. 늦게 끝난 옛 로드가 최신 상태를 덮어쓰는 것만 막는다.
+let rewardMarketLoadSequence = 0;
 
 function clearRewardMarketRetry(uid = '') {
     if (uid && rewardMarketRetryUid && rewardMarketRetryUid !== uid) return;
@@ -1179,7 +1181,11 @@ function renderRewardMarketSnapshot() {
 export async function loadRewardMarketSnapshot(forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return null;
-    const isCurrentUserLoad = () => auth.currentUser?.uid === user.uid && rewardMarketState.uid === user.uid;
+    // 이 로드가 아직 최신인지만 본다. 예전처럼 auth.currentUser / state.uid 를 조건에 넣으면
+    // 토큰 갱신 등으로 잠시 어긋날 때 finally가 통째로 건너뛰어 isLoading이 영구히 true로
+    // 남고 화면이 '불러오는 중'에서 멈춘다.
+    const myLoadToken = ++rewardMarketLoadSequence;
+    const isCurrentUserLoad = () => myLoadToken === rewardMarketLoadSequence;
 
     const gridEl = document.getElementById('reward-market-grid');
     if (!gridEl) return null;
@@ -1233,9 +1239,9 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
         }
     } finally {
         if (isCurrentUserLoad()) {
-            if (rewardMarketLastSuccessAt >= loadStartedAt || rewardMarketState.error) {
-                rewardMarketState.isLoading = false;
-            }
+            // 성공/실패와 무관하게 이 로드는 끝났다. 조건부로 두면 어느 분기에서든
+            // 빠져나갈 때 '불러오는 중'이 영구히 남는다.
+            rewardMarketState.isLoading = false;
             renderRewardMarketSnapshot();
             void reconcilePendingRewardCoupons();
         }

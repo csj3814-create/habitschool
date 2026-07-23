@@ -10258,6 +10258,16 @@ function ensureAssetInformationArchitecture() {
     section.dataset.rewardLayoutReady = 'true';
 }
 
+// 자산 전체 재렌더 없이 확인된 잔액만 화면에 반영한다(다른 탭에 있을 때의 경량 복구용).
+function applyKnownCoinBalanceToUi(coins) {
+    if (!Number.isFinite(coins)) return;
+    const pointsDisplay = document.getElementById('asset-points-display');
+    if (pointsDisplay) pointsDisplay.innerHTML = formatWalletPointsHtml(coins);
+    const pointBadge = document.getElementById('point-balance');
+    if (pointBadge) pointBadge.innerText = coins;
+    updateAssetRewardGoal(coins);
+}
+
 function updateAssetRewardGoal(coins, logs = null) {
     const current = Math.max(0, Number(coins) || 0);
     const target = 2000;
@@ -11268,8 +11278,13 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 userDocPromise.then(lateSnap => {
                     if (!lateSnap?.exists?.()) return;
                     if (auth.currentUser?.uid !== user.uid) return;
-                    if (getVisibleTabName() !== 'assets') return;
-                    window.updateAssetDisplay(true).catch(() => {});
+                    if (getVisibleTabName() === 'assets') {
+                        window.updateAssetDisplay(true).catch(() => {});
+                        return;
+                    }
+                    // 다른 탭(보상 마켓 등)에 있어도 잔액만은 반영한다. 예전엔 통째로
+                    // 건너뛰어서 '현재 포인트를 확인하고 있어요'가 영영 남았다.
+                    applyKnownCoinBalanceToUi(Number(lateSnap.data()?.coins));
                 }).catch(() => {});
             }
             const retryScheduled = scheduleAssetRetry(user.uid, 'user-doc-timeout');
@@ -15212,9 +15227,18 @@ window.generate30DayReport = async function () {
 
     try {
         const q = query(collection(db, "daily_logs"), where("userId", "==", user.uid), orderBy("date", "desc"), limit(30));
-        const snapshot = await getDocs(q);
-        let logs = [];
-        snapshot.forEach(d => logs.push(d.data()));
+        const readLogs = async (fromServer) => {
+            const snap = fromServer ? await getDocsFromServer(q) : await getDocs(q);
+            const rows = [];
+            snap.forEach(d => rows.push(d.data()));
+            return rows;
+        };
+        let logs = await readLogs(false);
+        // 결과가 비면 캐시가 비었을 뿐일 수 있다(연결 불안정). 서버에서 한 번 더 확인해야
+        // '기록이 없다'고 잘못 안내하지 않는다. 서버 조회 실패는 아래 catch에서 오류로 처리.
+        if (logs.length < 2) {
+            logs = await readLogs(true);
+        }
         logs.reverse(); // oldest first
 
         if (logs.length < 2) {
@@ -22714,6 +22738,8 @@ let _habitGroupMembershipCache = {
 };
 let _habitGroupMembershipPromise = null;
 let _habitGroupMembershipPromiseUid = '';
+// 직전 가입 내역 로드가 실패했는지. 빈 결과가 '미가입'인지 '못 불러옴'인지 구분한다.
+let _habitGroupMembershipLoadFailed = false;
 let _habitGroupCheckinCache = {
     uid: '',
     dateStr: '',
@@ -23165,11 +23191,16 @@ async function loadMyHabitGroupMemberships(user = auth.currentUser, { forceReloa
                 loadedAt: Date.now(),
                 memberships
             };
+            _habitGroupMembershipLoadFailed = false;
             return memberships;
         })
         .catch(error => {
             logOptionalDataTimeout('habit_group_members_timeout', error);
-            return cacheMatches ? _habitGroupMembershipCache.memberships : [];
+            // 실패를 '미가입'과 구분한다. 빈 배열만 돌려주면 렌더러가 가입 내역이
+            // 초기화된 것처럼 추천 목록을 그려서 사용자가 탈퇴된 줄 안다.
+            if (cacheMatches) return _habitGroupMembershipCache.memberships;
+            _habitGroupMembershipLoadFailed = true;
+            return [];
         })
         .finally(() => {
             if (_habitGroupMembershipPromise === membershipPromise) {
@@ -23919,6 +23950,15 @@ window.retrySocialChallengesCard = function() {
     renderSocialChallenges(user).catch(() => {});
 };
 
+// 소모임 로드 실패 후 사용자가 누르는 재시도. 캐시를 무시하고 다시 읽는다.
+window.refreshHabitGroupsAfterLoadFailure = function () {
+    const user = auth.currentUser;
+    if (!user) return;
+    _habitGroupMembershipLoadFailed = false;
+    _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
+    renderSocialChallenges(user).catch(() => {});
+};
+
 async function renderSocialChallenges(user) {
     if (!user) return;
     if (_renderSocialChallengesPromise && _renderSocialChallengesPromiseUid === user.uid) {
@@ -23995,6 +24035,17 @@ async function renderSocialChallengesInner(user) {
         _communityFocusState.pendingChallenges = 0;
         _communityFocusState.activeChallenges = summary.checkedInCount;
         renderCommunityFocusPanel();
+
+        // 못 불러온 것을 '미가입'으로 그리면 가입 내역이 초기화된 것처럼 보인다.
+        // 이 경우엔 추천 목록 대신 재시도 안내를 띄운다.
+        if (joinedRows.length === 0 && _habitGroupMembershipLoadFailed) {
+            list.innerHTML = buildCommunityEmptyState(
+                '소모임 정보를 불러오지 못했어요',
+                '연결이 불안정해요. 가입한 모임은 그대로 있으니 다시 시도해 주세요.',
+                ['<button type="button" class="community-empty-btn" onclick="refreshHabitGroupsAfterLoadFailure()">다시 시도</button>']
+            );
+            return;
+        }
 
         if (joinedRows.length === 0) {
             list.innerHTML = `
