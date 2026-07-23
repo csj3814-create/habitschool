@@ -75,10 +75,10 @@
 3. 사용자에게 배포 확인 요청
 4. 확인 받은 후에만 `firebase deploy --only hosting,functions`
 
-### Staging Hosting 단축 승인
-- 사용자가 `스테이징` 또는 `staging`이라고 말하면 staging Hosting 배포의 최종 확인으로 간주한다.
-- 필요한 변경을 커밋하고 `origin/main`에 푸시한 뒤 추가 확인 없이 `firebase deploy --project staging --only hosting`까지 즉시 진행한다.
-- 이 단축 승인은 staging Hosting에만 적용하며 운영 배포, Functions, Firestore/Storage 규칙 배포로 확대하지 않는다.
+### Staging 배포 단축 승인
+- 사용자가 `스테이징` 또는 `staging`이라고 말하면 staging Hosting 및 Functions 배포의 최종 확인으로 간주한다.
+- 필요한 변경을 커밋하고 `origin/main`에 푸시한 뒤 추가 확인 없이 `firebase deploy --project staging --only hosting,functions`까지 즉시 진행한다.
+- 이 단축 승인은 staging Hosting 및 Functions에만 적용하며 운영 배포나 Firestore/Storage 규칙·인덱스 배포로 확대하지 않는다.
 
 ### Gemini API
 - `gemini-2.0-flash` 사용 금지
