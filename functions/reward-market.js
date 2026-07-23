@@ -1991,7 +1991,7 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
 
     return {
         providerOrderId: String(
-            merged.orderId || merged.orderNo || merged.id || merged.sendRstCd || ""
+            merged.orderId || merged.orderNo || merged.id || ""
         ).trim(),
         deliveryMethod: String(merged.deliveryMethod || merged.issueMethod || product.deliveryMethod || "pin").trim(),
         pinCode: String(
@@ -2013,8 +2013,8 @@ function mapGiftishowOrderPayload(payload = {}, product = {}, recipientPhone = "
         ),
         providerResponseCode: String(merged.code || merged.resultCode || merged.resultCd || merged.resCode || "").trim(),
         providerResponseMessage: String(merged.message || merged.resultMessage || merged.resultMsg || merged.resMsg || "").trim(),
-        providerSendStatusCode: String(merged.sendRstMsg || merged.sendStatusCode || merged.sendStatus || "").trim(),
-        providerSendStatusMessage: String(merged.sendStatusCd || merged.sendStatusNm || merged.sendStatusMessage || "").trim(),
+        providerSendStatusCode: String(merged.sendRstCd || merged.sendStatusCode || merged.sendStatus || "").trim(),
+        providerSendStatusMessage: String(merged.sendStatusCd || merged.sendStatusNm || merged.sendStatusMessage || merged.sendRstMsg || "").trim(),
         providerPinStatusCode: String(merged.pinStatusCd || merged.pinStatusCode || merged.pinStatus || "").trim(),
         providerPinStatusMessage: String(merged.pinStatusNm || merged.pinStatusMessage || "").trim(),
     };
@@ -3523,30 +3523,32 @@ async function resendRewardCoupon({
         throw new HttpsError("unavailable", "문자 재발송 요청이 지연되고 있어요. 잠시 후 다시 시도해 주세요.");
     }
 
-    const recovered = isUsableCouponPayload(statusResult) ? statusResult : null;
+    const statusEvidence = statusResult || null;
+    const recovered = isUsableCouponPayload(statusEvidence) ? statusEvidence : null;
     const completedAt = new Date();
     const fallbackExpiresAt = buildCatalogExpiryDate(
         reserved.redemption,
         reserved.raw.issuedAt || reserved.raw.createdAt || completedAt
     );
-    const recoveredExpiresAt = toSafeFirestoreDate(recovered?.expiresAt, null);
+    const providerExpiresAt = toSafeFirestoreDate(statusEvidence?.expiresAt, null);
+    const nextStatus = recovered ? "issued" : (String(reserved.raw.status || "").trim() || "pending_issue");
     await redemptionRef.set({
-        status: "issued",
+        status: nextStatus,
         pinCode: recovered?.pinCode || reserved.raw.pinCode || "",
         couponImgUrl: recovered?.couponImgUrl || recovered?.barcodeUrl || reserved.raw.couponImgUrl || "",
         barcodeUrl: recovered?.barcodeUrl || recovered?.couponImgUrl || reserved.raw.barcodeUrl || "",
-        expiresAt: recoveredExpiresAt || toSafeFirestoreDate(reserved.raw.expiresAt, fallbackExpiresAt),
-        expiryEstimated: recoveredExpiresAt
-            ? Boolean(recovered?.expiryEstimated)
+        expiresAt: providerExpiresAt || toSafeFirestoreDate(reserved.raw.expiresAt, fallbackExpiresAt),
+        expiryEstimated: providerExpiresAt
+            ? Boolean(statusEvidence?.expiryEstimated)
             : !toSafeFirestoreDate(reserved.raw.expiresAt, null),
         validityDays: resolveRewardValidityDays(reserved.redemption),
-        providerOrderId: recovered?.providerOrderId || resendResult?.providerOrderId || reserved.raw.providerOrderId || "",
-        providerResponseCode: resendResult?.providerResponseCode || recovered?.providerResponseCode || "",
-        providerResponseMessage: resendResult?.providerResponseMessage || recovered?.providerResponseMessage || "mms_resend_requested",
-        providerSendStatusCode: resendResult?.providerSendStatusCode || recovered?.providerSendStatusCode || "",
-        providerSendStatusMessage: resendResult?.providerSendStatusMessage || recovered?.providerSendStatusMessage || "",
-        providerPinStatusCode: recovered?.providerPinStatusCode || reserved.raw.providerPinStatusCode || "",
-        providerPinStatusMessage: recovered?.providerPinStatusMessage || reserved.raw.providerPinStatusMessage || "",
+        providerOrderId: statusEvidence?.providerOrderId || resendResult?.providerOrderId || reserved.raw.providerOrderId || "",
+        providerResponseCode: resendResult?.providerResponseCode || statusEvidence?.providerResponseCode || "",
+        providerResponseMessage: resendResult?.providerResponseMessage || statusEvidence?.providerResponseMessage || "mms_resend_requested",
+        providerSendStatusCode: statusEvidence?.providerSendStatusCode || resendResult?.providerSendStatusCode || reserved.raw.providerSendStatusCode || "",
+        providerSendStatusMessage: statusEvidence?.providerSendStatusMessage || resendResult?.providerSendStatusMessage || reserved.raw.providerSendStatusMessage || "",
+        providerPinStatusCode: statusEvidence?.providerPinStatusCode || reserved.raw.providerPinStatusCode || "",
+        providerPinStatusMessage: statusEvidence?.providerPinStatusMessage || reserved.raw.providerPinStatusMessage || "",
         mmsResendRequestedAt: completedAt,
         deliveredViaMmsAt: null,
         lastUserResendAt: completedAt,

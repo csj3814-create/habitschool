@@ -4395,6 +4395,63 @@ exports.ensureAdminAccess = onCall(
     }
 );
 
+/**
+ * 회원 앱에 관리자 코멘트를 전달하고 감사 이력을 남긴다.
+ * 오늘 기록이 이미 있을 때만 해당 기록에도 코멘트를 투영한다.
+ */
+exports.submitAdminFeedback = onCall(
+    { region: "asia-northeast3", maxInstances: 10, timeoutSeconds: 30 },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const targetUid = String(request.data?.targetUid || "").trim();
+        const message = String(request.data?.message || "").trim();
+        if (!targetUid) {
+            throw new HttpsError("invalid-argument", "대상 회원을 선택해 주세요.");
+        }
+        if (!message) {
+            throw new HttpsError("invalid-argument", "코멘트를 입력해 주세요.");
+        }
+        if (message.length > 1000) {
+            throw new HttpsError("invalid-argument", "코멘트는 1,000자 이내로 입력해 주세요.");
+        }
+
+        const feedbackDate = getCurrentKstDateString();
+        const userRef = db.doc(`users/${targetUid}`);
+        const dailyLogRef = db.doc(`daily_logs/${targetUid}_${feedbackDate}`);
+        const [userSnap, dailyLogSnap] = await Promise.all([
+            userRef.get(),
+            dailyLogRef.get(),
+        ]);
+        if (!userSnap.exists) {
+            throw new HttpsError("not-found", "대상 회원을 찾을 수 없습니다.");
+        }
+
+        const feedbackRef = db.collection("admin_feedback").doc();
+        const batch = db.batch();
+        batch.set(userRef, {
+            adminFeedback: message,
+            feedbackDate,
+        }, { merge: true });
+        batch.set(feedbackRef, {
+            targetUserId: targetUid,
+            message,
+            feedbackDate,
+            adminUid,
+            createdAt: FieldValue.serverTimestamp(),
+        });
+        if (dailyLogSnap.exists) {
+            batch.set(dailyLogRef, { adminFeedbackHistory: message }, { merge: true });
+        }
+        await batch.commit();
+
+        return {
+            success: true,
+            feedbackDate,
+            historyAttached: dailyLogSnap.exists,
+        };
+    }
+);
+
 function addDateKeyDays(dateKey, days) {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateKey || ""));
     if (!match) return "";
@@ -6442,14 +6499,12 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
 exports.distributeMonthlyMvpReward = onCall(
     { region: "asia-northeast3", maxInstances: 5, timeoutSeconds: 30 },
     async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
-        }
+        const adminUid = await assertAdminRequest(request);
         const { targetMonth } = request.data;
         if (!targetMonth || !/^\d{4}-\d{2}$/.test(targetMonth)) {
             throw new HttpsError("invalid-argument", "유효하지 않은 월 형식입니다. (YYYY-MM)");
         }
-        return distributeMvpRewardForMonth(targetMonth, request.auth.uid);
+        return distributeMvpRewardForMonth(targetMonth, adminUid);
     }
 );
 

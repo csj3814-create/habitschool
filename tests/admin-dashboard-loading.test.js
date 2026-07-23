@@ -15,6 +15,34 @@ function loadCreateAdminSnapshot() {
 }
 
 describe('admin dashboard progressive loading', () => {
+    it('lets the server validate or migrate admin access before any protected admin-doc read', () => {
+        const authStart = adminSource.indexOf('// ── Auth');
+        const authEnd = adminSource.indexOf("document.getElementById('login-btn')", authStart);
+        const authSource = adminSource.slice(authStart, authEnd);
+
+        expect(authSource).toContain('await ensureAdminAccessCallable({})');
+        expect(authSource).not.toContain('hasAdminRecord');
+        expect(authSource).not.toContain("getDoc(doc(db, 'admins'");
+    });
+
+    it('does not mask mining callable errors with a forbidden browser write fallback', () => {
+        const adjustStart = adminSource.indexOf('window.adjustRate = async function()');
+        const adjustEnd = adminSource.indexOf('window.refreshCommunityStats', adjustStart);
+        const adjustSource = adminSource.slice(adjustStart, adjustEnd);
+
+        expect(adjustSource).toContain("httpsCallable(fns, 'adjustMiningRateManual')");
+        expect(adjustSource).toContain("alert('조정 실패: '");
+        expect(adjustSource).not.toContain("setDoc(doc(db, 'mining_rate_history'");
+    });
+
+    it('stores cross-user comments in an admin callable with an audit record', () => {
+        expect(functionsSource).toContain('exports.submitAdminFeedback = onCall(');
+        expect(functionsSource).toContain('const adminUid = await assertAdminRequest(request);');
+        expect(functionsSource).toContain('db.collection("admin_feedback").doc()');
+        expect(functionsSource).toContain('if (dailyLogSnap.exists)');
+        expect(functionsSource).toContain('historyAttached: dailyLogSnap.exists');
+    });
+
     it('loads the dashboard through one admin callable instead of browser-wide Firestore scans', () => {
         expect(adminSource).toContain("httpsCallable(fns, 'getAdminDashboardSnapshot')");
         expect(adminSource).toContain('async function loadAdminDashboardSources()');

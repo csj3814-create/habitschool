@@ -67,6 +67,17 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketStyles).toContain('.reward-coupon-remove.is-resend');
     });
 
+    it('separates provider SMS evidence from an app-stored PIN or barcode', () => {
+        expect(rewardMarketSource).toContain('function hasRewardCouponProviderSmsEvidence');
+        expect(rewardMarketSource).toContain("sendCode === '1000'");
+        expect(rewardMarketSource).toContain("pinCode === '01'");
+        expect(rewardMarketSource).toContain("return '문자 발송 완료 · 문자함 확인';");
+        expect(rewardMarketSource).toContain("return '문자 재발송 요청됨';");
+        expect(rewardMarketSource).toContain("return '발급 정보 확인 필요';");
+        expect(rewardMarketSource).toContain('상품 이미지입니다. 실제 쿠폰 PIN·바코드는 문자함에서 확인해 주세요.');
+        expect(rewardMarketSource).toContain('앱에는 PIN이 보관되지 않아 문자함에서 확인해 주세요.');
+    });
+
     it('recovers stuck live coupon details after the fast market snapshot renders', () => {
         expect(rewardMarketSource).toContain("httpsCallable(functions, 'reconcileRewardCoupon')");
         expect(rewardMarketSource).toContain('async function reconcilePendingRewardCoupons()');

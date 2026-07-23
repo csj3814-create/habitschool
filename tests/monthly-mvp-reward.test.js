@@ -23,4 +23,15 @@ describe('monthly MVP reward helper', () => {
         expect(source).toContain('getPreviousMonthIdFromKstDateString(todayStr)');
         expect(source).not.toContain('today.getUTCDate()');
     });
+
+    it('requires an administrator for manual MVP distribution', () => {
+        const source = readRepoFile('functions/runtime.js');
+        const callableStart = source.indexOf('exports.distributeMonthlyMvpReward = onCall(');
+        const callableEnd = source.indexOf('exports.distributeMonthlyMvpRewardScheduled', callableStart);
+        const callableSource = source.slice(callableStart, callableEnd);
+
+        expect(callableSource).toContain('const adminUid = await assertAdminRequest(request);');
+        expect(callableSource).toContain('distributeMvpRewardForMonth(targetMonth, adminUid)');
+        expect(callableSource).not.toContain('request.auth.uid');
+    });
 });

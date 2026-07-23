@@ -39,7 +39,7 @@ describe('admin member detail UI', () => {
         expect(source).toContain('filterAdminMemberRows(memberRows, term)');
     });
 
-    it('renders persisted media in one reusable enlarged viewer and shows stored analysis only', () => {
+    it('renders persisted media as a wrapped gallery with one reusable keyboard-accessible viewer', () => {
         const source = readRepoFile('admin.html');
         const detailStart = source.indexOf('// ── Detail modal');
         const detailEnd = source.indexOf('window.sendReEngagement', detailStart);
@@ -48,10 +48,31 @@ describe('admin member detail UI', () => {
         expect(source.match(/id="admin-media-lightbox"/g)).toHaveLength(1);
         expect(detailSource).toContain('collectAdminDailyLogMedia(log)');
         expect(detailSource).toContain('collectAdminDailyLogAnalyses(log)');
-        expect(detailSource).toContain("if (!isPersistedStorageUrl(url)) return;");
+        expect(detailSource).toContain("if (!item || !isPersistedStorageUrl(item.url)) return;");
         expect(detailSource).toContain("e.key === 'Escape'");
+        expect(detailSource).toContain("e.key === 'ArrowLeft'");
+        expect(detailSource).toContain("e.key === 'ArrowRight'");
+        expect(detailSource).toContain('admin-media-lightbox-thumbs');
+        expect(detailSource).toContain('data-gallery-index');
+        expect(detailSource).toContain('adminMediaTouchStartX');
         expect(detailSource).toContain('getAwardedPointsTotal(r.awardedPoints || {})');
         expect(detailSource).not.toContain('httpsCallable(');
+        expect(source).toContain('.hc-media-list { display: grid;');
+    });
+
+    it('returns focus before hiding the gallery and sends comments through the admin callable', () => {
+        const source = readRepoFile('admin.html');
+        const closeStart = source.indexOf('window.closeAdminMediaLightbox');
+        const closeEnd = source.indexOf('function stepAdminMediaLightbox', closeStart);
+        const closeSource = source.slice(closeStart, closeEnd);
+        const submitStart = source.indexOf('window.submitFb = async function()');
+        const submitSource = source.slice(submitStart, source.indexOf('</script>', submitStart));
+
+        expect(closeSource.indexOf('focusTarget.focus')).toBeLessThan(closeSource.indexOf("setAttribute('aria-hidden', 'true')"));
+        expect(source).toContain("httpsCallable(fns, 'submitAdminFeedback')");
+        expect(submitSource).toContain('submitAdminFeedbackCallable({ targetUid: uid, message: msg })');
+        expect(submitSource).not.toContain("setDoc(doc(db,'users'");
+        expect(submitSource).not.toContain("setDoc(doc(db,'daily_logs'");
     });
 
     it('loads the selected member records directly instead of relying on the global 500-row cache', () => {

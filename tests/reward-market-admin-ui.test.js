@@ -13,7 +13,8 @@ const adminSource = readFileSync(
 describe('reward market admin UI copy and actions', () => {
     it('uses provider recheck wording instead of vault wording', () => {
         expect(adminSource).toContain('쿠폰 재조회');
-        expect(adminSource).toContain('쿠폰 정보를 다시 조회했습니다.');
+        expect(adminSource).toContain('공급사 문자 발송 완료와 PIN 발행을 확인했습니다.');
+        expect(adminSource).toContain('재조회했지만 PIN·이미지 또는 배송 완료 증빙을 찾지 못했습니다.');
         expect(adminSource).not.toContain('쿠폰 재조회 사유를 입력해 주세요.');
     });
 
@@ -27,6 +28,10 @@ describe('reward market admin UI copy and actions', () => {
         expect(adminSource).toContain('테스트');
         expect(adminSource).toContain('PIN 보관');
         expect(adminSource).toContain('쿠폰 이미지');
+        expect(adminSource).toContain('문자 발송 확인');
+        expect(adminSource).toContain('배송 확인 필요');
+        expect(adminSource).toContain('문자 발송 완료 · 앱 PIN 미보관');
+        expect(adminSource).toContain('MMS 요청됨 · 배송 미확인');
         expect(adminSource).toContain('주문 ${escapeHtml(row.providerOrderId)}');
         expect(adminSource).toContain('TR ${escapeHtml(row.providerTrId)}');
     });

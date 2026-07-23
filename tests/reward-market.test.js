@@ -312,6 +312,29 @@ describe('reward market pricing helpers', () => {
         expect(mapped.expiresAt).toBe('2026-05-29T14:59:59.000Z');
     });
 
+    it('keeps Giftishow send result codes out of the provider order id', () => {
+        const mapped = __test.mapGiftishowOrderPayload({
+            code: '0000',
+            result: [{
+                couponInfoList: [{
+                    sendBasicCd: '2026072000044166341901',
+                    sendRstCd: '1000',
+                    sendRstMsg: 'Success',
+                    sendStatusCd: '발송완료',
+                    pinStatusCd: '01',
+                    pinStatusNm: '발행',
+                    validPrdEndDt: '20260819235959',
+                }],
+            }],
+        }, { validityDays: 30 }, '01012345678');
+
+        expect(mapped.providerOrderId).toBe('');
+        expect(mapped.providerSendStatusCode).toBe('1000');
+        expect(mapped.providerSendStatusMessage).toBe('발송완료');
+        expect(mapped.providerPinStatusCode).toBe('01');
+        expect(mapped.providerPinStatusMessage).toBe('발행');
+    });
+
     it('normalizes epoch millisecond expiry values before Firestore writes', () => {
         const epochMs = Date.UTC(2026, 7, 16, 14, 59, 59);
         const parsed = __test.parseGiftishowDate(String(epochMs));
@@ -1084,6 +1107,82 @@ describe('reward market pricing helpers', () => {
                 redemptionId: 'live-coupon',
             })).rejects.toMatchObject({ code: 'resource-exhausted' });
             expect(requests).toHaveLength(2);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    it('does not promote a pending coupon when status lookup confirms SMS but returns no app payload', async () => {
+        const db = createFakeFirestore({
+            'reward_redemptions/live-coupon-no-payload': {
+                userId: 'test-user',
+                sku: 'mega-ice-americano-60d',
+                brandName: '메가MGC커피',
+                displayName: '(ICE)아메리카노 모바일쿠폰',
+                provider: 'giftishow',
+                providerGoodsId: 'G00005791059',
+                providerTrId: 'existing-transaction-no-payload',
+                recipientPhone: '01012345678',
+                status: 'pending_issue',
+                mode: 'live',
+                deliveryMethod: 'image',
+                pointsCharged: true,
+                createdAt: new Date('2026-07-20T00:00:00.000Z'),
+            },
+        });
+        const config = __test.buildRewardMarketConfig({
+            REWARD_MARKET_MODE: 'live',
+            GIFTISHOW_API_BASE_URL: 'https://bizapi.giftishow.com',
+            GIFTISHOW_CUSTOM_AUTH_CODE: 'auth-code',
+            GIFTISHOW_CUSTOM_AUTH_TOKEN: 'auth-token',
+            GIFTISHOW_CALLBACK_NO: '01000000000',
+            GIFTISHOW_USER_ID: 'provider-user',
+            GIFTISHOW_CARD_ID: 'card-id',
+            GIFTISHOW_BANNER_ID: 'banner-id',
+        });
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async (url) => ({
+            ok: true,
+            status: 200,
+            text: async () => JSON.stringify(String(url).endsWith('/resend')
+                ? { code: '0000', message: 'OK' }
+                : {
+                    code: '0000',
+                    result: [{
+                        couponInfoList: [{
+                            sendRstCd: '1000',
+                            sendRstMsg: 'Success',
+                            sendStatusCd: '발송완료',
+                            pinStatusCd: '01',
+                            pinStatusNm: '발행',
+                            validPrdEndDt: '20260819235959',
+                        }],
+                    }],
+                }),
+        });
+
+        try {
+            const result = await rewardMarketModule.resendRewardCoupon({
+                db,
+                HttpsError: FakeHttpsError,
+                uid: 'test-user',
+                config,
+                redemptionId: 'live-coupon-no-payload',
+            });
+
+            expect(result.status).toBe('pending_issue');
+            expect(result.resendRequestAccepted).toBe(true);
+            expect(result.deliveryConfirmed).toBe(false);
+            const stored = db.__get('reward_redemptions/live-coupon-no-payload');
+            expect(stored.status).toBe('pending_issue');
+            expect(stored.providerOrderId).toBe('');
+            expect(stored.providerSendStatusCode).toBe('1000');
+            expect(stored.providerSendStatusMessage).toBe('발송완료');
+            expect(stored.providerPinStatusCode).toBe('01');
+            expect(stored.providerPinStatusMessage).toBe('발행');
+            expect(stored.pinCode).toBe('');
+            expect(stored.couponImgUrl).toBe('');
+            expect(stored.pointsCharged).toBe(true);
         } finally {
             globalThis.fetch = originalFetch;
         }

@@ -793,6 +793,24 @@ function buildCouponStatusLabel(status = '') {
     }
 }
 
+function hasRewardCouponPayload(item = {}) {
+    return Boolean(
+        String(item.pinCode || '').trim()
+        || String(item.couponImgUrl || '').trim()
+        || String(item.barcodeUrl || '').trim()
+    );
+}
+
+function hasRewardCouponProviderSmsEvidence(item = {}) {
+    const sendCode = String(item.providerSendStatusCode || '').trim().toUpperCase();
+    const sendMessage = String(item.providerSendStatusMessage || '').trim().toLowerCase();
+    const pinCode = String(item.providerPinStatusCode || '').trim().toUpperCase();
+    const pinMessage = String(item.providerPinStatusMessage || '').trim().toLowerCase();
+    const sendConfirmed = sendCode === '1000' || sendMessage.includes('발송완료') || sendMessage.includes('delivered');
+    const pinConfirmed = pinCode === '01' || pinMessage.includes('발행') || pinMessage.includes('issued');
+    return sendConfirmed && pinConfirmed;
+}
+
 function buildCouponVisual(item = {}) {
     const visual = getRewardCouponVisualSource(item);
     if (!visual?.url) {
@@ -803,10 +821,13 @@ function buildCouponVisual(item = {}) {
         `;
     }
 
+    const productNotice = visual.kind === 'product'
+        ? '<div class="reward-coupon-code is-muted">상품 이미지입니다. 실제 쿠폰 PIN·바코드는 문자함에서 확인해 주세요.</div>'
+        : '';
     const visualMarkup = `
         <div class="${visual.className}">
             <img class="reward-coupon-image" src="${escapeHtml(visual.url)}" data-coupon-visual-url="${escapeHtml(visual.url)}" alt="${escapeHtml(item.displayName || 'coupon')}" loading="lazy">
-        </div>
+        </div>${productNotice}
     `;
 
     if (!visual.expandable || !item.id) {
@@ -858,8 +879,17 @@ function buildCouponMedia(item = {}) {
 
 function buildCouponCodeBlock(item = {}) {
     const pinCode = String(item.pinCode || '').trim();
-    if (!pinCode) return '';
-    return `<div class="reward-coupon-code">PIN ${escapeHtml(pinCode)}</div>`;
+    if (pinCode) return `<div class="reward-coupon-code">PIN ${escapeHtml(pinCode)}</div>`;
+    if (hasRewardCouponProviderSmsEvidence(item)) {
+        return '<div class="reward-coupon-code is-muted">문자 발송 완료 · PIN 발행<br>앱에는 PIN이 보관되지 않아 문자함에서 확인해 주세요.</div>';
+    }
+    if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt) {
+        return '<div class="reward-coupon-code is-muted">문자 재발송 요청이 접수됐습니다. 배송 결과는 아직 확인되지 않았어요.</div>';
+    }
+    if (String(item.mode || '').trim().toLowerCase() === 'live' && String(item.status || '').trim() === 'issued') {
+        return '<div class="reward-coupon-code is-muted">앱에 PIN·바코드가 저장되지 않았습니다. 문자함을 확인해 주세요.</div>';
+    }
+    return '';
 }
 
 function buildArchivedCouponSummary(item = {}, { isExpanded = false } = {}) {
@@ -957,7 +987,12 @@ function getRewardCouponPrimaryStatusLabel(item = {}) {
     if (rewardMarketState.reconcilingCouponIds.has(String(item.id || ''))) return '발급 정보 확인 중';
     if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
     if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
+    if (hasRewardCouponProviderSmsEvidence(item) && !hasRewardCouponPayload(item)) return '문자 발송 완료 · 문자함 확인';
     if (item.deliveredViaMmsAt && !item.pinCode && !item.couponImgUrl && !item.barcodeUrl) return '문자로 발급됨';
+    if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자 재발송 요청됨';
+    if (String(item.mode || '').trim().toLowerCase() === 'live'
+        && String(item.status || '').trim() === 'issued'
+        && !hasRewardCouponPayload(item)) return '발급 정보 확인 필요';
     return buildCouponStatusLabel(item.status);
 }
 

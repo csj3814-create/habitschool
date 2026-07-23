@@ -158,9 +158,9 @@
         .hc { border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; }
         .hc-hdr { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 6px; }
         .hc-stats { display: flex; gap: 12px; font-size: 12px; color: #555; margin-bottom: 7px; flex-wrap: wrap; }
-        .hc-media-list { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 5px; }
-        .hc-media-item { flex: 0 0 68px; min-width: 0; }
-        .admin-media-thumb { width: 64px; height: 64px; padding: 0; border: 1px solid #ddd; border-radius: 7px; overflow: hidden; background: #f7f7f7; cursor: zoom-in; position: relative; display: grid; place-items: center; }
+        .hc-media-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; padding-bottom: 5px; }
+        .hc-media-item { min-width: 0; }
+        .admin-media-thumb { width: 100%; aspect-ratio: 1; padding: 0; border: 1px solid #ddd; border-radius: 7px; overflow: hidden; background: #f7f7f7; cursor: zoom-in; position: relative; display: grid; place-items: center; }
         .admin-media-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .admin-media-thumb-fallback { font-size: 26px; }
         .admin-media-video-badge { position: absolute; right: 3px; bottom: 3px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: white; background: rgba(0,0,0,.7); font-size: 10px; }
@@ -172,10 +172,25 @@
         .hc-analysis-field { color: #555; font-size: 11px; line-height: 1.45; word-break: break-word; }
         .hc-analysis-field strong { color: #333; }
         .admin-media-lightbox { display: none; position: fixed; inset: 0; z-index: 2000; padding: 24px; background: rgba(0,0,0,.86); align-items: center; justify-content: center; }
-        .admin-media-lightbox-card { width: min(960px, 100%); max-height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .admin-media-lightbox-card { width: min(1080px, 100%); max-height: 100%; position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
         .admin-media-lightbox-close { position: absolute; top: 0; right: 0; z-index: 1; width: 42px; height: 42px; border: 0; border-radius: 50%; color: white; background: rgba(0,0,0,.68); cursor: pointer; font-size: 24px; }
-        .admin-media-lightbox img, .admin-media-lightbox video { display: none; max-width: 100%; max-height: calc(100vh - 92px); object-fit: contain; border-radius: 10px; background: #111; }
+        .admin-media-lightbox-stage { width: 100%; min-height: 0; display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 10px; }
+        .admin-media-lightbox-viewer { min-width: 0; min-height: 0; display: grid; place-items: center; }
+        .admin-media-lightbox-viewer img, .admin-media-lightbox-viewer video { display: none; max-width: 100%; max-height: calc(100vh - 190px); object-fit: contain; border-radius: 10px; background: #111; }
+        .admin-media-lightbox-nav { width: 44px; height: 64px; border: 0; border-radius: 12px; color: white; background: rgba(255,255,255,.16); cursor: pointer; font-size: 30px; }
+        .admin-media-lightbox-meta { display: flex; align-items: center; justify-content: center; gap: 10px; color: white; text-align: center; }
         .admin-media-lightbox-caption { color: white; font-size: 13px; font-weight: 600; text-align: center; }
+        .admin-media-lightbox-counter { color: #ddd; font-size: 12px; white-space: nowrap; }
+        .admin-media-lightbox-thumbs { width: 100%; display: flex; gap: 7px; overflow-x: auto; padding: 2px 0 5px; scrollbar-width: thin; }
+        .admin-media-lightbox-thumb { flex: 0 0 58px; width: 58px; height: 58px; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; background: #333; color: white; cursor: pointer; display: grid; place-items: center; }
+        .admin-media-lightbox-thumb[aria-current="true"] { border-color: #FFB300; box-shadow: 0 0 0 1px #fff; }
+        .admin-media-lightbox-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        @media (max-width: 600px) {
+            .admin-media-lightbox { padding: 12px; }
+            .admin-media-lightbox-stage { grid-template-columns: 38px minmax(0, 1fr) 38px; gap: 4px; }
+            .admin-media-lightbox-nav { width: 36px; height: 54px; font-size: 24px; }
+            .admin-media-lightbox-viewer img, .admin-media-lightbox-viewer video { max-height: calc(100vh - 176px); }
+        }
         .fb-note { font-size: 12px; color: #9C27B0; background: #F3E5F5; border-radius: 4px; padding: 6px; margin-top: 7px; }
 
         /* Economy tab inputs */
@@ -608,9 +623,19 @@
 <div class="admin-media-lightbox" id="admin-media-lightbox" role="dialog" aria-modal="true" aria-labelledby="admin-media-lightbox-caption" aria-hidden="true">
     <div class="admin-media-lightbox-card">
         <button type="button" class="admin-media-lightbox-close" aria-label="확대 보기 닫기" onclick="closeAdminMediaLightbox()">✕</button>
-        <img id="admin-media-lightbox-image" alt="확대된 상세 기록">
-        <video id="admin-media-lightbox-video" controls playsinline></video>
-        <div class="admin-media-lightbox-caption" id="admin-media-lightbox-caption"></div>
+        <div class="admin-media-lightbox-stage">
+            <button type="button" class="admin-media-lightbox-nav" id="admin-media-lightbox-prev" aria-label="이전 기록">‹</button>
+            <div class="admin-media-lightbox-viewer">
+                <img id="admin-media-lightbox-image" alt="확대된 상세 기록">
+                <video id="admin-media-lightbox-video" controls playsinline></video>
+            </div>
+            <button type="button" class="admin-media-lightbox-nav" id="admin-media-lightbox-next" aria-label="다음 기록">›</button>
+        </div>
+        <div class="admin-media-lightbox-meta">
+            <div class="admin-media-lightbox-caption" id="admin-media-lightbox-caption"></div>
+            <div class="admin-media-lightbox-counter" id="admin-media-lightbox-counter"></div>
+        </div>
+        <div class="admin-media-lightbox-thumbs" id="admin-media-lightbox-thumbs" aria-label="최근 30일 미디어 목록"></div>
     </div>
 </div>
 
@@ -828,10 +853,10 @@
     }
 
     // ── Auth ──────────────────────────────────────────────────
-    const ADMIN_EMAILS = ['csj3814@gmail.com'];
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
     const getAdminDashboardSnapshotCallable = httpsCallable(fns, 'getAdminDashboardSnapshot');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
+    const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
     const adminRefundRewardCouponCallable = httpsCallable(fns, 'adminRefundRewardCoupon');
     const adminReconcileRewardCouponCallable = httpsCallable(fns, 'adminReconcileRewardCoupon');
@@ -875,31 +900,14 @@
         }
     };
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
-    function normalizeEmail(email) {
-        return String(email || '').trim().toLowerCase();
-    }
-    function isKnownAdminEmail(user) {
-        return ADMIN_EMAILS.includes(normalizeEmail(user?.email));
-    }
-    async function hasAdminRecord(user) {
-        try {
-            if ((await getDoc(doc(db, 'admins', user.uid))).exists()) return true;
-            const email = normalizeEmail(user.email);
-            if (email && (await getDoc(doc(db, 'admins', email))).exists()) return true;
-        } catch (_) {}
-        return false;
-    }
     async function ensureAdminAccessForUser(user) {
-        const knownAdmin = isKnownAdminEmail(user);
-        const hasRecord = await hasAdminRecord(user);
-        if (!knownAdmin && !hasRecord) return false;
+        if (!user) return false;
         try {
-            await ensureAdminAccessCallable({});
-            return true;
+            const result = await ensureAdminAccessCallable({});
+            return result.data?.success === true;
         } catch (e) {
-            console.error('관리자 권한 초기화 오류:', e);
-            if (hasRecord) return true;
-            throw e;
+            console.error('관리자 권한 확인 오류:', e);
+            return false;
         }
     }
     async function isAdmin(user) {
@@ -2053,9 +2061,10 @@
         if (!confirm(`마이닝 레이트를 ×${factor}로 조정하시겠습니까?\n사유: ${reason}`)) return;
         try {
             await httpsCallable(fns, 'adjustMiningRateManual')({ factor, reason });
-        } catch(_) {
-            // CF not callable → write directly to history
-            await setDoc(doc(db, 'mining_rate_history', `manual_${Date.now()}`), { adjustmentFactor:factor, reason, timestamp:new Date(), weekId:`manual_${todayStr}` });
+        } catch(e) {
+            console.error('마이닝 레이트 조정 실패:', e);
+            alert('조정 실패: ' + (e.message || e));
+            return;
         }
         alert('✅ 완료되었습니다.'); tabLoaded['economy']=false; loadEconomy();
     };
@@ -2123,6 +2132,10 @@
         const userRemovedTag = row.deletedByUser
             ? ' <span class="badge badge-gray" title="사용자가 보관함에서 삭제(기록은 보존됨)">🗑️ 사용자 삭제</span>'
             : '';
+        if (status === 'issued' && isRealIssue && !hasRewardMarketCouponPayload(row)) {
+            const label = hasRewardMarketProviderSmsEvidence(row) ? '문자 발송 확인' : '배송 확인 필요';
+            return `<span class="badge badge-orange">${label}</span>${userRemovedTag}`;
+        }
         if (status === 'issued') return `<span class="badge badge-green">${isRealIssue ? '실발급 완료' : '테스트 완료'}</span>${userRemovedTag}`;
         if (status === 'pending_issue') return `<span class="badge badge-gray">${isRealIssue ? '실발급 대기' : '테스트 대기'}</span>${userRemovedTag}`;
         if (status === 'failed_manual_review') return `<span class="badge badge-red">${isRealIssue ? '실발급 확인' : '수동 확인'}</span>${userRemovedTag}`;
@@ -2233,11 +2246,17 @@
             providerTrId: data.providerTrId || '',
             providerResponseCode: data.providerResponseCode || '',
             providerResponseMessage: data.providerResponseMessage || '',
+            providerSendStatusCode: data.providerSendStatusCode || '',
+            providerSendStatusMessage: data.providerSendStatusMessage || '',
+            providerPinStatusCode: data.providerPinStatusCode || '',
+            providerPinStatusMessage: data.providerPinStatusMessage || '',
             pinCode: data.pinCode || '',
             couponImgUrl: data.couponImgUrl || data.barcodeUrl || '',
             burnExplorerUrl: data.burnExplorerUrl || '',
             manualReviewReason: data.manualReviewReason || data.errorMessage || '',
             manualResendCount: Number(data.manualResendCount || 0) || 0,
+            mmsResendRequestedAt: toJsDate(data.mmsResendRequestedAt),
+            deliveredViaMmsAt: toJsDate(data.deliveredViaMmsAt),
             recipientPhone: data.recipientPhone || '',
             deletedByUser: !!data.deletedByUserAt,
             hiddenByUser: !!data.hiddenByUserAt,
@@ -2253,11 +2272,24 @@
         const prefix = isRewardMarketRealIssueRow(row) ? '실' : '';
         if (row.couponImgUrl) return `${prefix}쿠폰 이미지`;
         if (row.pinCode) return `${prefix}PIN 보관`;
-        return 'PIN·이미지 없음';
+        if (hasRewardMarketProviderSmsEvidence(row)) return '문자 발송 완료 · 앱 PIN 미보관';
+        if (row.deliveredViaMmsAt) return 'MMS 배송 확인 · 앱 PIN 미보관';
+        if (row.mmsResendRequestedAt) return 'MMS 요청됨 · 배송 미확인';
+        return isRewardMarketRealIssueRow(row) ? '발급 증빙 없음' : 'PIN·이미지 없음';
     }
 
     function hasRewardMarketCouponPayload(row = {}) {
         return !!(String(row.pinCode || '').trim() || String(row.couponImgUrl || '').trim());
+    }
+
+    function hasRewardMarketProviderSmsEvidence(row = {}) {
+        const sendCode = String(row.providerSendStatusCode || '').trim().toUpperCase();
+        const sendMessage = String(row.providerSendStatusMessage || '').trim().toLowerCase();
+        const pinCode = String(row.providerPinStatusCode || '').trim().toUpperCase();
+        const pinMessage = String(row.providerPinStatusMessage || '').trim().toLowerCase();
+        const sendConfirmed = sendCode === '1000' || sendMessage.includes('발송완료') || sendMessage.includes('delivered');
+        const pinConfirmed = pinCode === '01' || pinMessage.includes('발행') || pinMessage.includes('issued');
+        return sendConfirmed && pinConfirmed;
     }
 
     function canRewardMarketAdminRecheck(row = {}) {
@@ -2340,7 +2372,12 @@
             : '';
         // 실발급 실패 사유를 관제탑에 노출(조용한 pending 방지).
         const failReason = String(row.providerResponseMessage || row.manualReviewReason || '').trim();
-        const failTag = (!hasRewardMarketCouponPayload(row) && failReason)
+        const evidenceTag = !hasRewardMarketCouponPayload(row) && hasRewardMarketProviderSmsEvidence(row)
+            ? '<div class="reward-admin-muted" style="color:#e65100;">공급사 문자 발송 완료 · 앱 PIN 미보관</div>'
+            : row.mmsResendRequestedAt && !row.deliveredViaMmsAt
+                ? '<div class="reward-admin-muted" style="color:#e65100;">MMS 재발송 요청 접수 · 배송 결과 미확인</div>'
+                : '';
+        const failTag = (!evidenceTag && !hasRewardMarketCouponPayload(row) && failReason)
             ? `<div class="reward-admin-muted" style="color:#c0392b;" title="${escapeHtml(failReason)}">사유: ${escapeHtml(failReason.slice(0, 60))}</div>`
             : '';
         return `
@@ -2352,6 +2389,7 @@
                 ${couponLink}
                 ${txLink}
                 ${refundedTag}
+                ${evidenceTag}
                 ${failTag}
             </div>
         `;
@@ -2418,6 +2456,10 @@
                     <div class="reward-admin-muted">${escapeHtml(getRewardMarketAdminDeliveryLabel(row))}</div>
                     ${providerOrderLine}
                     ${providerTrLine}
+                    ${row.providerSendStatusMessage ? `<div class="reward-admin-muted">발송 ${escapeHtml(row.providerSendStatusCode || '-')} · ${escapeHtml(row.providerSendStatusMessage)}</div>` : ''}
+                    ${row.providerPinStatusMessage ? `<div class="reward-admin-muted">PIN ${escapeHtml(row.providerPinStatusCode || '-')} · ${escapeHtml(row.providerPinStatusMessage)}</div>` : ''}
+                    ${row.mmsResendRequestedAt ? `<div class="reward-admin-muted">MMS 요청 ${escapeHtml(formatAdminDateTime(row.mmsResendRequestedAt))}</div>` : ''}
+                    ${row.deliveredViaMmsAt ? `<div class="reward-admin-muted">MMS 확인 ${escapeHtml(formatAdminDateTime(row.deliveredViaMmsAt))}</div>` : ''}
                     ${row.manualResendCount ? `<div class="reward-admin-muted">재조회 ${row.manualResendCount}회</div>` : ''}
                 </td>
                 <td>${buildRewardMarketAdminActions(row)}</td>
@@ -2531,11 +2573,18 @@
         }
 
         try {
-            await adminResendRewardCouponCallable({
+            const response = await adminResendRewardCouponCallable({
                 redemptionId,
                 reason: 'admin_provider_recheck',
             });
-            alert('쿠폰 정보를 다시 조회했습니다.');
+            const checked = response.data || {};
+            if (hasRewardMarketCouponPayload(checked)) {
+                alert('쿠폰 PIN 또는 이미지를 다시 확인했습니다.');
+            } else if (hasRewardMarketProviderSmsEvidence(checked)) {
+                alert('공급사 문자 발송 완료와 PIN 발행을 확인했습니다. 앱에 보관할 PIN·이미지는 공급사 응답에 없습니다.');
+            } else {
+                alert('재조회했지만 PIN·이미지 또는 배송 완료 증빙을 찾지 못했습니다.');
+            }
             tabLoaded['reward-market'] = false;
             await loadRewardMarketAdmin();
         } catch (e) {
@@ -2780,13 +2829,25 @@
     // ── Detail modal ──────────────────────────────────────────
     window.alertMsg = function(date, msg) { alert(`[발송일: ${date}]\n\n${msg}`); };
 
+    let adminDetailMediaItems = [];
+    let adminDetailMediaIndex = -1;
+    let adminMediaTrigger = null;
+    let adminMediaTouchStartX = null;
+
     function renderAdminDetailMedia(log) {
         const mediaItems = collectAdminDailyLogMedia(log)
             .filter((item) => isPersistedStorageUrl(item.url));
         if (!mediaItems.length) return '';
 
         const content = mediaItems.map((item) => {
-            const fullUrl = escapeHtml(item.url);
+            const index = adminDetailMediaItems.length;
+            adminDetailMediaItems.push({
+                url: item.url,
+                thumbUrl: isPersistedStorageUrl(item.thumbUrl) ? item.thumbUrl : '',
+                kind: item.kind === 'video' ? 'video' : 'image',
+                label: String(item.label || ''),
+                date: String(log.date || ''),
+            });
             const label = escapeHtml(item.label);
             const kind = item.kind === 'video' ? 'video' : 'image';
             const thumbUrl = isPersistedStorageUrl(item.thumbUrl)
@@ -2801,7 +2862,7 @@
                 ? '<span class="admin-media-video-badge" aria-hidden="true">▶</span>'
                 : '';
             return `<div class="hc-media-item">
-                <button type="button" class="admin-media-thumb" data-media-url="${fullUrl}" data-media-kind="${kind}" data-media-label="${label}" aria-label="${label} 크게 보기">
+                <button type="button" class="admin-media-thumb" data-media-index="${index}" aria-label="${label} 크게 보기">
                     ${preview}${videoBadge}
                 </button>
                 <div class="hc-media-label" title="${label}">${label}</div>
@@ -2826,51 +2887,113 @@
         }).join('')}</div>`;
     }
 
-    window.openAdminMediaLightbox = function(url, kind = 'image', label = '') {
-        if (!isPersistedStorageUrl(url)) return;
+    function stopAdminMediaPlayback() {
+        const image = document.getElementById('admin-media-lightbox-image');
+        const video = document.getElementById('admin-media-lightbox-video');
+        if (!image || !video) return;
+        image.style.display = 'none';
+        image.removeAttribute('src');
+        video.style.display = 'none';
+        video.pause();
+        video.removeAttribute('src');
+        video.removeAttribute('poster');
+        video.load();
+    }
+
+    function renderAdminMediaLightboxThumbs() {
+        const thumbs = document.getElementById('admin-media-lightbox-thumbs');
+        if (!thumbs) return;
+        thumbs.innerHTML = adminDetailMediaItems.map((item, index) => {
+            const previewUrl = item.thumbUrl || (item.kind === 'image' ? item.url : '');
+            const preview = previewUrl
+                ? `<img src="${escapeHtml(previewUrl)}" loading="lazy" alt="">`
+                : '<span aria-hidden="true">🎬</span>';
+            return `<button type="button" class="admin-media-lightbox-thumb" data-gallery-index="${index}" aria-label="${escapeHtml(item.date)} ${escapeHtml(item.label)} 보기" aria-current="false">${preview}</button>`;
+        }).join('');
+    }
+
+    function showAdminMediaAt(index) {
+        if (!adminDetailMediaItems.length) return;
+        const normalizedIndex = (Number(index) + adminDetailMediaItems.length) % adminDetailMediaItems.length;
+        const item = adminDetailMediaItems[normalizedIndex];
+        if (!item || !isPersistedStorageUrl(item.url)) return;
         const lightbox = document.getElementById('admin-media-lightbox');
         const image = document.getElementById('admin-media-lightbox-image');
         const video = document.getElementById('admin-media-lightbox-video');
         const caption = document.getElementById('admin-media-lightbox-caption');
-        if (!lightbox || !image || !video || !caption) return;
+        const counter = document.getElementById('admin-media-lightbox-counter');
+        if (!lightbox || !image || !video || !caption || !counter) return;
 
-        image.style.display = 'none';
-        video.style.display = 'none';
-        if (kind === 'video') {
-            video.src = url;
+        stopAdminMediaPlayback();
+        if (item.kind === 'video') {
+            video.src = item.url;
+            if (item.thumbUrl) video.poster = item.thumbUrl;
             video.style.display = 'block';
         } else {
-            image.src = url;
-            image.alt = label || '확대된 상세 기록';
+            image.src = item.url;
+            image.alt = item.label || '확대된 상세 기록';
             image.style.display = 'block';
         }
-        caption.textContent = label;
+        adminDetailMediaIndex = normalizedIndex;
+        caption.textContent = [item.date, item.label].filter(Boolean).join(' · ');
+        counter.textContent = `${normalizedIndex + 1} / ${adminDetailMediaItems.length}`;
+        document.querySelectorAll('.admin-media-lightbox-thumb').forEach((thumb, thumbIndex) => {
+            thumb.setAttribute('aria-current', thumbIndex === normalizedIndex ? 'true' : 'false');
+        });
+        document.querySelector(`.admin-media-lightbox-thumb[data-gallery-index="${normalizedIndex}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+
+    window.openAdminMediaLightbox = function(index, trigger = null) {
+        const numericIndex = Number(index);
+        if (!Number.isInteger(numericIndex) || !adminDetailMediaItems[numericIndex]) return;
+        const lightbox = document.getElementById('admin-media-lightbox');
+        if (!lightbox) return;
+        adminMediaTrigger = trigger instanceof HTMLElement ? trigger : document.activeElement;
+        renderAdminMediaLightboxThumbs();
         lightbox.style.display = 'flex';
         lightbox.setAttribute('aria-hidden', 'false');
+        showAdminMediaAt(numericIndex);
         lightbox.querySelector('.admin-media-lightbox-close')?.focus();
     };
 
     window.closeAdminMediaLightbox = function() {
         const lightbox = document.getElementById('admin-media-lightbox');
-        const image = document.getElementById('admin-media-lightbox-image');
-        const video = document.getElementById('admin-media-lightbox-video');
-        if (!lightbox || !image || !video) return;
-        lightbox.style.display = 'none';
+        if (!lightbox) return;
+        const focusTarget = adminMediaTrigger instanceof HTMLElement && adminMediaTrigger.isConnected
+            ? adminMediaTrigger
+            : null;
+        if (focusTarget) focusTarget.focus({ preventScroll: true });
+        else if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
         lightbox.setAttribute('aria-hidden', 'true');
-        image.removeAttribute('src');
-        video.pause();
-        video.removeAttribute('src');
-        video.load();
+        lightbox.style.display = 'none';
+        stopAdminMediaPlayback();
+        adminMediaTrigger = null;
+        adminMediaTouchStartX = null;
     };
+
+    function stepAdminMediaLightbox(delta) {
+        if (adminDetailMediaIndex < 0) return;
+        showAdminMediaAt(adminDetailMediaIndex + delta);
+    }
 
     // 상세 기록 미디어와 '발송됨' 뱃지는 인라인 URL/메시지 실행 없이 이벤트 위임으로 처리한다.
     document.addEventListener('click', (e) => {
         const mediaButton = e.target.closest('.admin-media-thumb');
         if (mediaButton) {
-            const url = mediaButton.dataset.mediaUrl || '';
-            if (isPersistedStorageUrl(url)) {
-                openAdminMediaLightbox(url, mediaButton.dataset.mediaKind || 'image', mediaButton.dataset.mediaLabel || '');
-            }
+            openAdminMediaLightbox(Number(mediaButton.dataset.mediaIndex), mediaButton);
+            return;
+        }
+        const galleryThumb = e.target.closest('.admin-media-lightbox-thumb');
+        if (galleryThumb) {
+            showAdminMediaAt(Number(galleryThumb.dataset.galleryIndex));
+            return;
+        }
+        if (e.target.closest('#admin-media-lightbox-prev')) {
+            stepAdminMediaLightbox(-1);
+            return;
+        }
+        if (e.target.closest('#admin-media-lightbox-next')) {
+            stepAdminMediaLightbox(1);
             return;
         }
         if (e.target.id === 'admin-media-lightbox') {
@@ -2882,12 +3005,27 @@
     });
     document.addEventListener('keydown', (e) => {
         const lightbox = document.getElementById('admin-media-lightbox');
-        if (e.key === 'Escape' && lightbox?.getAttribute('aria-hidden') === 'false') {
-            closeAdminMediaLightbox();
-        }
+        if (lightbox?.getAttribute('aria-hidden') !== 'false') return;
+        if (e.key === 'Escape') closeAdminMediaLightbox();
+        else if (e.key === 'ArrowLeft') stepAdminMediaLightbox(-1);
+        else if (e.key === 'ArrowRight') stepAdminMediaLightbox(1);
     });
+    document.getElementById('admin-media-lightbox')?.addEventListener('touchstart', (e) => {
+        adminMediaTouchStartX = e.changedTouches?.[0]?.clientX ?? null;
+    }, { passive: true });
+    document.getElementById('admin-media-lightbox')?.addEventListener('touchend', (e) => {
+        if (adminMediaTouchStartX === null) return;
+        const endX = e.changedTouches?.[0]?.clientX;
+        if (Number.isFinite(endX) && Math.abs(endX - adminMediaTouchStartX) >= 48) {
+            stepAdminMediaLightbox(endX < adminMediaTouchStartX ? 1 : -1);
+        }
+        adminMediaTouchStartX = null;
+    }, { passive: true });
 
     window.openDetail = async function(uid) {
+        closeAdminMediaLightbox();
+        adminDetailMediaItems = [];
+        adminDetailMediaIndex = -1;
         document.getElementById('detail-modal').style.display = 'flex';
         document.getElementById('email-audit-grid').innerHTML = '<div class="email-audit-empty">발송 이력을 불러오는 중...</div>';
         document.getElementById('email-history-list').innerHTML = '';
@@ -2940,7 +3078,7 @@
         } catch(e) { document.getElementById('history-wrap').innerHTML=`<div style="padding:20px;color:red;">${escapeHtml(e.message)}</div>`; }
     };
 
-    window.closeModal = function() { closeAdminMediaLightbox(); document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
+    window.closeModal = function() { closeAdminMediaLightbox(); adminDetailMediaItems = []; adminDetailMediaIndex = -1; document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
     window.quickMsg = function(msg) { document.getElementById('fb-text').value=msg; };
 
     window.sendReEngagement = async function(days) {
@@ -3038,14 +3176,22 @@
 
     window.submitFb = async function() {
         const uid = document.getElementById('modal-uid').value;
-        const msg = document.getElementById('fb-text').value;
+        const msg = document.getElementById('fb-text').value.trim();
         if (!msg) { alert('메시지를 입력하세요.'); return; }
+        const button = document.querySelector('.fb-submit');
+        if (button?.disabled) return;
+        if (button) { button.disabled = true; button.textContent = '전송 중...'; }
         try {
-            await setDoc(doc(db,'users',uid), { adminFeedback:msg, feedbackDate:todayStr }, { merge:true });
-            await setDoc(doc(db,'daily_logs',`${uid}_${todayStr}`), { adminFeedbackHistory:msg }, { merge:true });
-            alert('✅ 환자의 앱에 3일간 노출되며, 기록에 추가됩니다!');
+            const response = await submitAdminFeedbackCallable({ targetUid: uid, message: msg });
+            const historyNotice = response.data?.historyAttached
+                ? '오늘 기록에도 함께 추가됐습니다.'
+                : '오늘 기록이 없어 앱 안내에만 표시됩니다.';
+            alert(`✅ 회원 앱에 3일간 노출됩니다. ${historyNotice}`);
             closeModal(); cache=null; tabLoaded['members']=false; loadMembers();
         } catch(e) { alert('전송 실패: '+e.message); }
+        finally {
+            if (button) { button.disabled = false; button.textContent = '코멘트 전송'; }
+        }
     };
 </script>
 </body>
