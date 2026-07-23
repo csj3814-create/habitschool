@@ -19,7 +19,8 @@ describe('weekly mission health-practice flow', () => {
             'window.saveWeeklyMissions = saveWeeklyMissions;'
         );
 
-        expect(html).toContain('이루고 싶은 건강 목표를 이번 주의 작은 실천으로 시작해 보세요.');
+        // 로그인 화면의 같은 취지 문구는 제거했다(중복). 주간 미션 화면 안내만 유지한다.
+        expect(html).not.toContain('이루고 싶은 건강 목표를 이번 주의 작은 실천으로 시작해 보세요.');
         expect(html).toContain('건강 목표를 이번 주의 작은 실천으로 골라보세요');
         expect(html).toContain('하나만 골라도 충분해요. 쉬운 행동부터 시작하고, 나중에 다시 바꿀 수 있어요.');
         expect(saveMissionSource).toContain('weeklyMissionData: {');

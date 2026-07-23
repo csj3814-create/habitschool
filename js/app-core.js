@@ -8204,8 +8204,11 @@ async function reconcileSettlementAfterSave(uid, docId, dateStr) {
                 }
             } catch (_) {}
 
-            // 그 날짜를 보고 있으면 확정 awardedPoints로 대시보드·기록 화면 재렌더
-            if (String(selectedDateStr) === String(dateStr) && typeof loadDataForSelectedDate === 'function') {
+            // 그 날짜를 보고 있으면 확정 awardedPoints로 대시보드·기록 화면 재렌더.
+            // 선택 날짜는 저장 핸들러의 지역변수가 아니라 날짜 입력에서 읽어야 한다
+            // (예전엔 없는 변수를 참조해 ReferenceError로 보정이 통째로 중단됐다).
+            const visibleDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+            if (visibleDateStr === String(dateStr) && typeof loadDataForSelectedDate === 'function') {
                 loadDataForSelectedDate(dateStr).catch(() => {});
             }
             return;

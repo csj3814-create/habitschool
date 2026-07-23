@@ -2370,11 +2370,32 @@ function canDismissRewardRedemption(data = {}) {
     return status === "pending_issue" && mode !== "live";
 }
 
-function canMarkRewardRedemptionUsed(data = {}, now = new Date()) {
-    const status = String(data.status || "").trim();
-    return status === "issued" && !isRewardRedemptionPastDeleteGrace(data, now);
+// 제휴사가 문자 발송·PIN 발행을 확인해 준 건은 상태가 pending_issue로 남아 있어도
+// 사용자 손에 들어간 쿠폰이다. 상태만 보면 사용 완료·삭제가 영영 불가능해진다.
+function hasRewardRedemptionSmsEvidence(data = {}) {
+    const sendCode = String(data.providerSendStatusCode || "").trim().toUpperCase();
+    const sendMessage = String(data.providerSendStatusMessage || "").trim().toLowerCase();
+    const pinCode = String(data.providerPinStatusCode || "").trim().toUpperCase();
+    const pinMessage = String(data.providerPinStatusMessage || "").trim().toLowerCase();
+    const sendConfirmed = sendCode === "1000" || sendMessage.includes("발송완료") || sendMessage.includes("delivered");
+    const pinConfirmed = pinCode === "01" || pinMessage.includes("발행") || pinMessage.includes("issued");
+    return sendConfirmed && pinConfirmed;
 }
 
+function isRewardRedemptionInUserHands(data = {}) {
+    const status = String(data.status || "").trim();
+    if (status === "issued") return true;
+    if (["cancelled", "refunded", "failed_manual_review"].includes(status)) return false;
+    return hasRewardRedemptionSmsEvidence(data);
+}
+
+function canMarkRewardRedemptionUsed(data = {}, now = new Date()) {
+    const status = String(data.status || "").trim();
+    if (status === "used_completed") return false;
+    return isRewardRedemptionInUserHands(data) && !isRewardRedemptionPastDeleteGrace(data, now);
+}
+
+// 살아 있는 쿠폰은 '사용 완료' 처리 뒤에만 지울 수 있게 유지한다(실수 삭제 방지).
 function canDeleteRewardRedemption(data = {}, now = new Date()) {
     const status = String(data.status || "").trim();
     if (["used_completed", "failed_manual_review", "cancelled"].includes(status)) return true;

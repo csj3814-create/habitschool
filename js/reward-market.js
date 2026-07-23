@@ -963,8 +963,18 @@ function isRewardCouponExpired(item = {}) {
     return expiresAtMs > 0 && expiresAtMs <= Date.now();
 }
 
+// 문자로 실제 발급이 끝난 건은 상태가 pending_issue로 남아 있어도 사용자 손에 있는
+// 쿠폰이다. 상태만 보고 막으면 사용 완료·삭제 버튼이 통째로 사라진다.
+function isRewardCouponInUserHands(item = {}) {
+    const status = String(item.status || '').trim();
+    if (status === 'issued') return true;
+    if (['cancelled', 'refunded', 'failed_manual_review'].includes(status)) return false;
+    return hasRewardCouponProviderSmsEvidence(item) || hasRewardCouponPayload(item);
+}
+
 function canMarkRewardCouponUsedItem(item = {}) {
-    return String(item.status || '').trim() === 'issued' && !isRewardCouponExpired(item);
+    if (String(item.status || '').trim() === 'used_completed') return false;
+    return isRewardCouponInUserHands(item) && !isRewardCouponExpired(item);
 }
 
 function canResendRewardCouponItem(item = {}) {
@@ -976,6 +986,7 @@ function canResendRewardCouponItem(item = {}) {
         && !['used_completed', 'cancelled', 'refunded'].includes(status);
 }
 
+// 살아 있는 쿠폰은 '사용 완료' 처리 뒤에만 삭제 버튼이 나온다(실수 삭제 방지, 서버와 동일 기준).
 function canDeleteRewardCouponItem(item = {}) {
     const status = String(item.status || '').trim();
     if (['used_completed', 'failed_manual_review', 'cancelled'].includes(status)) return true;
