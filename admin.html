@@ -306,11 +306,11 @@
                     <th class="sort" onclick="sortBy('coins')">현재 포인트 ↕</th>
                     <th class="sort" onclick="sortBy('hbt')">누적 HBT ↕</th>
                     <th>온체인 HBT</th>
+                    <th>상세</th>
                     <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
                     <th>미활동 이메일</th>
-                    <th>상세</th>
                 </tr></thead>
                 <tbody id="member-tbody"><tr><td colspan="13">데이터를 불러오는 중...</td></tr></tbody>
             </table>
@@ -1416,11 +1416,11 @@
             <td>Lv.${r.level}</td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td><td>${r.hbt.toLocaleString()}</td>
             <td>${renderMemberOnchainHbtCell(r.uid)}</td>
+            <td><button class="btn-view" onclick="openDetail('${r.uid}')">🔍 상세</button></td>
             <td style="color:${r.glucose>=126?'#C62828':'inherit'};font-weight:${r.glucose>=126?'bold':'normal'};">${r.glucose||'-'}</td>
             <td style="color:${r.sys>=140?'#C62828':'inherit'};">${r.sys||'-'}/${r.dia||'-'}</td>
             <td>${r.msgBadge}</td>
             <td class="member-email-cell">${renderMemberEmailCell(r.emailLog, { email: r.email })}</td>
-            <td><button class="btn-view" onclick="openDetail('${r.uid}')">🔍 상세</button></td>
         </tr>`).join('');
         renderMemberPagination(totalRows);
     };

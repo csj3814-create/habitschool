@@ -19,6 +19,19 @@ describe('30-day report modal stylesheet', () => {
 });
 
 describe('admin member detail UI', () => {
+    it('places the detail column after on-chain HBT and before fasting glucose in both header and rows', () => {
+        const source = readRepoFile('admin.html');
+        const memberBodyIndex = source.indexOf('<tbody id="member-tbody">');
+        const header = source.slice(source.lastIndexOf('<thead><tr>', memberBodyIndex), memberBodyIndex);
+        const rowStart = source.indexOf('tbody.innerHTML = pageRows.map');
+        const row = source.slice(rowStart, source.indexOf('</tr>`).join', rowStart));
+
+        expect(header.indexOf('<th>온체인 HBT</th>')).toBeLessThan(header.indexOf('<th>상세</th>'));
+        expect(header.indexOf('<th>상세</th>')).toBeLessThan(header.indexOf("sortBy('glucose')"));
+        expect(row.indexOf('renderMemberOnchainHbtCell(r.uid)')).toBeLessThan(row.indexOf("openDetail('${r.uid}')"));
+        expect(row.indexOf("openDetail('${r.uid}')")).toBeLessThan(row.indexOf('r.glucose'));
+    });
+
     it('uses the shared email-aware member filter', () => {
         const source = readRepoFile('admin.html');
 
