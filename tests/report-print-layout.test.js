@@ -11,7 +11,18 @@ describe('30-day report A4 two-up print layout', () => {
         expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'points']);");
         expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'health', 'heatmap']);");
         expect(appSource).toContain('window.print30DayReport = async function ()');
-        expect(appSource).toContain("window.addEventListener('afterprint', remove30DayReportPrintSheet, { once: true });");
+        expect(appSource).not.toContain("window.addEventListener('afterprint', remove30DayReportPrintSheet");
+        expect(appSource).toContain('Keep the hidden print sheet alive until');
+    });
+
+    it('keeps the native print snapshot alive and cleans it only when the report closes', () => {
+        const html = readRepoFile('index.html');
+        const appSource = readAppSource();
+
+        expect(html).toContain('onclick="close30DayReport()"');
+        expect(html).not.toContain("document.getElementById('report-modal').style.display='none'");
+        expect(appSource).toContain('window.close30DayReport = function ()');
+        expect(appSource).toMatch(/window\.close30DayReport = function \(\) \{[\s\S]*?remove30DayReportPrintSheet\(\);[\s\S]*?modal\.style\.display = 'none';[\s\S]*?\};/);
     });
 
     it('marks the existing report sections without adding new calculations', () => {
@@ -34,6 +45,7 @@ describe('30-day report A4 two-up print layout', () => {
         expect(css).toContain('body.report-printing > *:not(#report-print-sheet)');
         expect(css).toContain('body.report-printing #report-print-sheet');
         expect(css).toContain('display: block !important;');
+        expect(css).toContain('.report-actions {\n        display: none !important;');
         expect(css).toContain('height: 150px;\n    object-fit: fill;');
         expect(css).toContain('.report-print-sheet .hm-cell {\n    height: 26px;\n    aspect-ratio: auto;');
         expect(css).toContain('page-break-inside: avoid;');

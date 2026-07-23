@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=246';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=246';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=247';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=247';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=246';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=246';
+} from './auth-login-helpers.js?v=247';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=247';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=246';
+} from './exercise-media.js?v=247';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=246';
+} from './health-connect-utils.js?v=247';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=246';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=246';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=246';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=246';
-import { sanitize, compressImage } from './data-manager.js?v=246';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=246';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=246';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=246';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=246';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=246';
+} from './habit-groups.js?v=247';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=247';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=247';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=247';
+import { sanitize, compressImage } from './data-manager.js?v=247';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=247';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=247';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=247';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=247';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=247';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=246';
+} from './guest-demo.js?v=247';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=246';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=246';
+} from './product-events.js?v=247';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=247';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -95,7 +95,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=246';
+} from './diet-program.js?v=247';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -107,18 +107,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=246';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=246';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=246';
+} from './meditation-guide.js?v=247';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=247';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=247';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=246';
+} from './social-challenge-readiness.js?v=247';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=246';
+} from './monthly-mvp-reward.js?v=247';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5714,7 +5714,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=246';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=247';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15423,6 +15423,12 @@ function remove30DayReportPrintSheet() {
     document.body.classList.remove('report-printing');
 }
 
+window.close30DayReport = function () {
+    remove30DayReportPrintSheet();
+    const modal = document.getElementById('report-modal');
+    if (modal) modal.style.display = 'none';
+};
+
 function cloneReportNodeForPrint(sourceNode) {
     if (!sourceNode) return null;
     const clone = sourceNode.cloneNode(true);
@@ -15558,8 +15564,10 @@ window.print30DayReport = async function () {
     sheet.querySelectorAll('.report-print-half').forEach(half => fit30DayReportPrintHalf(half));
     await new Promise(resolve => requestAnimationFrame(resolve));
 
-    window.addEventListener('afterprint', remove30DayReportPrintSheet, { once: true });
     try {
+        // Android/Samsung Internet can fire afterprint before the native print
+        // preview has captured the page. Keep the hidden print sheet alive until
+        // the report is closed or the next print rebuilds it.
         window.print();
         return true;
     } catch (error) {

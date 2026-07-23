@@ -239,6 +239,10 @@
 }
 
 @media print {
+    .report-actions {
+        display: none !important;
+    }
+
     html.report-printing,
     body.report-printing {
         width: 210mm !important;
