@@ -1,10 +1,12 @@
-import { auth, db, functions } from './firebase-config.js?v=247';
+import { auth, db, functions } from './firebase-config.js?v=248';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=247';
+import { showToast } from './ui-helpers.js?v=248';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
+const REWARD_MARKET_RETRY_DELAY_MS = 2000;
+const REWARD_MARKET_MAX_RETRY_ATTEMPTS = 3;
 const DEFAULT_MIN_REDEEM_POINTS = 500;
 const DEFAULT_SETTLEMENT_ASSET = 'points';
 const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-point-redemption';
@@ -17,6 +19,38 @@ let dismissRewardCouponFn = null;
 let markRewardCouponUsedFn = null;
 let deleteRewardCouponFn = null;
 let rewardMarketFunctionsReady = false;
+let rewardMarketRetryTimer = null;
+let rewardMarketRetryUid = '';
+let rewardMarketRetryAttempts = 0;
+let rewardMarketLastSuccessAt = 0;
+
+function clearRewardMarketRetry(uid = '') {
+    if (uid && rewardMarketRetryUid && rewardMarketRetryUid !== uid) return;
+    if (rewardMarketRetryTimer) {
+        clearTimeout(rewardMarketRetryTimer);
+        rewardMarketRetryTimer = null;
+    }
+    rewardMarketRetryUid = uid || '';
+    rewardMarketRetryAttempts = 0;
+}
+
+function scheduleRewardMarketRetry(uid, reason = 'snapshot-incomplete') {
+    if (!uid || auth.currentUser?.uid !== uid) return false;
+    if (rewardMarketRetryUid && rewardMarketRetryUid !== uid) {
+        clearRewardMarketRetry();
+    }
+    rewardMarketRetryUid = uid;
+    if (rewardMarketRetryAttempts >= REWARD_MARKET_MAX_RETRY_ATTEMPTS) return false;
+    if (rewardMarketRetryTimer) return true;
+
+    rewardMarketRetryTimer = setTimeout(() => {
+        rewardMarketRetryTimer = null;
+        if (auth.currentUser?.uid !== uid) return;
+        rewardMarketRetryAttempts += 1;
+        loadRewardMarketSnapshot(true).catch(() => {});
+    }, REWARD_MARKET_RETRY_DELAY_MS);
+    return true;
+}
 
 async function withRewardMarketTimeout(task, timeoutMs, errorMessage = 'reward_market_timeout') {
     let timeoutId = null;
@@ -1145,6 +1179,7 @@ function renderRewardMarketSnapshot() {
 export async function loadRewardMarketSnapshot(forceRefresh = false) {
     const user = auth.currentUser;
     if (!user) return null;
+    const isCurrentUserLoad = () => auth.currentUser?.uid === user.uid && rewardMarketState.uid === user.uid;
 
     const gridEl = document.getElementById('reward-market-grid');
     if (!gridEl) return null;
@@ -1165,6 +1200,8 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
     rewardMarketState.isLoading = true;
     rewardMarketState.error = '';
     renderRewardMarketSnapshot();
+    const loadStartedAt = Date.now();
+    scheduleRewardMarketRetry(user.uid, 'snapshot-pending');
 
     try {
         await ensureRewardMarketFunctions();
@@ -1174,6 +1211,7 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
             'reward_market_snapshot_timeout'
         );
         const data = result?.data || {};
+        if (!isCurrentUserLoad()) return null;
 
         rewardMarketState.catalog = Array.isArray(data.catalog) ? data.catalog : [];
         rewardMarketState.redemptions = Array.isArray(data.redemptions) ? data.redemptions : [];
@@ -1184,13 +1222,23 @@ export async function loadRewardMarketSnapshot(forceRefresh = false) {
         rewardMarketState.phoneEditorOpen = !isValidRecipientPhone(rewardMarketState.settings.savedRecipientPhone || '');
         rewardMarketState.error = '';
         rewardMarketState.ts = Date.now();
+        rewardMarketLastSuccessAt = rewardMarketState.ts;
+        clearRewardMarketRetry(user.uid);
     } catch (error) {
+        if (!isCurrentUserLoad()) return null;
         console.warn('reward market snapshot failed:', error?.message || error);
-        rewardMarketState.error = '보상 마켓 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+        if (rewardMarketLastSuccessAt < loadStartedAt) {
+            rewardMarketState.error = '보상 마켓 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+            scheduleRewardMarketRetry(user.uid, 'snapshot-failed');
+        }
     } finally {
-        rewardMarketState.isLoading = false;
-        renderRewardMarketSnapshot();
-        void reconcilePendingRewardCoupons();
+        if (isCurrentUserLoad()) {
+            if (rewardMarketLastSuccessAt >= loadStartedAt || rewardMarketState.error) {
+                rewardMarketState.isLoading = false;
+            }
+            renderRewardMarketSnapshot();
+            void reconcilePendingRewardCoupons();
+        }
     }
 
     return rewardMarketState;

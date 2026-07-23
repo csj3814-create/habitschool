@@ -42,14 +42,19 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('const ASSET_USER_DOC_TIMEOUT_MS = 5000;');
         expect(appSource).toContain('const ASSET_ONCHAIN_TIMEOUT_MS = 6000;');
         expect(appSource).toContain('const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 600;');
-        expect(appSource).toContain('const ASSET_MAX_RETRY_ATTEMPTS = 5;');
+        expect(appSource).toContain('const ASSET_RETRY_DELAY_MS = 2000;');
+        expect(appSource).toContain('const ASSET_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;');
         expect(appSource).toContain('const DASHBOARD_LOAD_TIMEOUT_MS = 6000;');
         expect(appSource).toContain('function withAssetQueryTimeout');
         expect(appSource).toContain('function logAssetOptionalQueryFailure');
         expect(appSource).toContain('function shouldLogAssetDebug');
         expect(appSource).toContain('globalThis.__HABITSCHOOL_DEBUG_ASSET === true');
-        expect(appSource).toContain('Math.min(nextCount * nextCount, 12)');
+        expect(appSource).toContain('if (_assetRetryTimer) return true;');
+        expect(appSource).toContain('const nextCount = (_assetRetryCounts.get(uid) || 0) + 1;');
+        expect(appSource).toContain('let _assetRetrySignalSequence = 0;');
+        expect(appSource).toContain('if (_assetRetrySignalSequence === retrySignalAtStart) {');
+        expect(appSource).toContain("loadRewardMarketSnapshot(false).catch((error) => {");
         expect(appSource).toContain('function refreshAssetTokenStats(uid = \'\')');
         expect(appSource).toContain('refreshAssetTokenStats(user.uid).catch(() => {});');
         expect(appSource).toContain('let fetchHbtTransferHistory = async () => [];');
@@ -116,7 +121,13 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('asset_onchain_balance_timeout');
         expect(appSource).toContain('asset_token_stats_timeout');
         expect(rewardMarketSource).toContain('const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;');
+        expect(rewardMarketSource).toContain('const REWARD_MARKET_RETRY_DELAY_MS = 2000;');
+        expect(rewardMarketSource).toContain('const REWARD_MARKET_MAX_RETRY_ATTEMPTS = 3;');
         expect(rewardMarketSource).toContain('function withRewardMarketTimeout');
+        expect(rewardMarketSource).toContain('function scheduleRewardMarketRetry');
+        expect(rewardMarketSource).toContain('rewardMarketRetryAttempts += 1;');
+        expect(rewardMarketSource).toContain("scheduleRewardMarketRetry(user.uid, 'snapshot-pending');");
+        expect(rewardMarketSource).toContain('clearRewardMarketRetry(user.uid);');
         expect(rewardMarketSource).toContain('reward_market_snapshot_timeout');
     });
 

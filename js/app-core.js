@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=247';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=247';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=248';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=248';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=247';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=247';
+} from './auth-login-helpers.js?v=248';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=248';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=247';
+} from './exercise-media.js?v=248';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=247';
+} from './health-connect-utils.js?v=248';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=247';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=247';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=247';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=247';
-import { sanitize, compressImage } from './data-manager.js?v=247';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=247';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=247';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=247';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=247';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=247';
+} from './habit-groups.js?v=248';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=248';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=248';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=248';
+import { sanitize, compressImage } from './data-manager.js?v=248';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=248';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=248';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=248';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=248';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=248';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=247';
+} from './guest-demo.js?v=248';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=247';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=247';
+} from './product-events.js?v=248';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=248';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -95,7 +95,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=247';
+} from './diet-program.js?v=248';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -107,18 +107,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=247';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=247';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=247';
+} from './meditation-guide.js?v=248';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=248';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=248';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=247';
+} from './social-challenge-readiness.js?v=248';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=247';
+} from './monthly-mvp-reward.js?v=248';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -793,7 +793,7 @@ const HABIT_GROUP_CACHE_TTL_MS = 60_000;
 const HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT = 4;
 const GALLERY_LOAD_TIMEOUT_MS = 6000;
 const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;
-const GALLERY_RETRY_BASE_DELAY_MS = 2500;
+const GALLERY_RETRY_DELAY_MS = 2000;
 const GALLERY_MAX_RETRY_ATTEMPTS = 3;
 const SOCIAL_CHALLENGE_LOAD_TIMEOUT_MS = 2500;
 const SOCIAL_CHALLENGE_CACHE_TTL_MS = 60_000;
@@ -5714,7 +5714,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=247';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=248';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9237,11 +9237,12 @@ const ASSET_HISTORY_TIMEOUT_MS = 4500;
 const ASSET_USER_DOC_TIMEOUT_MS = 5000;
 const ASSET_ONCHAIN_TIMEOUT_MS = 6000;
 const ASSET_CHALLENGE_LOG_TIMEOUT_MS = 600;
-const ASSET_RETRY_BASE_DELAY_MS = 1200;
-const ASSET_MAX_RETRY_ATTEMPTS = 5;
+const ASSET_RETRY_DELAY_MS = 2000;
+const ASSET_MAX_RETRY_ATTEMPTS = 3;
 const ASSET_OPTIONAL_QUERY_LOG_TTL_MS = 30_000;
 let _assetRetryTimer = null;
 const _assetRetryCounts = new Map();
+let _assetRetrySignalSequence = 0;
 const _assetOptionalQueryLogAt = new Map();
 const _assetChallengeProgressSyncKeys = new Set();
 let _assetTokenStatsPromise = null;
@@ -9736,18 +9737,18 @@ function scheduleAssetRetry(uid, reason = 'unknown') {
         return false;
     }
 
-    if (_assetRetryTimer) clearTimeout(_assetRetryTimer);
-    const nextCount = count + 1;
-    _assetRetryCounts.set(uid, nextCount);
-
-    const delay = ASSET_RETRY_BASE_DELAY_MS * Math.min(nextCount * nextCount, 12);
+    _assetRetrySignalSequence += 1;
+    if (_assetRetryTimer) return true;
     if (shouldLogAssetDebug()) {
-        console.info(`[asset-display] retry scheduled (${reason}) in ${delay}ms`);
+        console.info(`[asset-display] retry scheduled (${reason}) in ${ASSET_RETRY_DELAY_MS}ms`);
     }
     _assetRetryTimer = setTimeout(() => {
+        const nextCount = (_assetRetryCounts.get(uid) || 0) + 1;
+        _assetRetryCounts.set(uid, nextCount);
+        _assetRetryTimer = null;
         if (auth.currentUser?.uid !== uid) return;
         window.updateAssetDisplay(true).catch(() => { });
-    }, delay);
+    }, ASSET_RETRY_DELAY_MS);
     return true;
 }
 
@@ -10309,6 +10310,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     ensureAssetInformationArchitecture();
     const user = auth.currentUser;
     if (!user) return;
+    const retrySignalAtStart = _assetRetrySignalSequence;
 
     const cachedRate = Number(window._currentConversionRate);
     if (cachedRate > 0) {
@@ -10325,6 +10327,9 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     const now = Date.now();
     if (!forceRefresh && _assetCache.uid === user.uid && (now - _assetCache.ts) < ASSET_CACHE_TTL) {
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        loadRewardMarketSnapshot(false).catch((error) => {
+            console.warn('reward market cache-hit refresh skipped:', error?.message || error);
+        });
         return;
     }
 
@@ -10447,7 +10452,6 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         const userSnap = await _p_user;
 
         if (userSnap.exists()) {
-            clearAssetRetry(user.uid);
             const userData = userSnap.data();
 
             const {
@@ -11279,6 +11283,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
         markAssetHbtBalanceDelayed({ defer: true });
         scheduleAssetRetry(user.uid, 'asset-display-error');
+    } finally {
+        if (_assetRetrySignalSequence === retrySignalAtStart) {
+            clearAssetRetry(user.uid);
+        }
     }
 };
 
@@ -20517,6 +20525,7 @@ function cleanupGalleryResources() {
     _galleryLoadingPromise = null;
     _galleryLoadingStartedAt = 0;
     _galleryLoadGeneration += 1;
+    _galleryAuthoritativeLoadPending = false;
     if (_galleryProjectionRefreshTimer) {
         clearTimeout(_galleryProjectionRefreshTimer);
         _galleryProjectionRefreshTimer = null;
@@ -20530,6 +20539,7 @@ let _galleryLoadingStartedAt = 0;
 let _galleryLoadGeneration = 0;
 let _galleryRetryTimer = null;
 const _galleryRetryCounts = new Map();
+let _galleryAuthoritativeLoadPending = false;
 
 function isGalleryTabActive() {
     return !!document.getElementById('gallery')?.classList.contains('active');
@@ -20565,18 +20575,18 @@ function clearGalleryRetry(uid = auth.currentUser?.uid || 'guest') {
 function scheduleGalleryRetry(uid = auth.currentUser?.uid || 'guest', reason = 'unknown') {
     const retryKey = uid || 'guest';
     const count = _galleryRetryCounts.get(retryKey) || 0;
-    if (count >= GALLERY_MAX_RETRY_ATTEMPTS) return;
+    if (count >= GALLERY_MAX_RETRY_ATTEMPTS) return false;
 
-    if (_galleryRetryTimer) clearTimeout(_galleryRetryTimer);
-    const nextCount = count + 1;
-    _galleryRetryCounts.set(retryKey, nextCount);
-    const delay = GALLERY_RETRY_BASE_DELAY_MS * nextCount;
-    console.info(`[gallery] retry scheduled (${reason}) in ${delay}ms`);
+    if (_galleryRetryTimer) return true;
+    console.info(`[gallery] retry scheduled (${reason}) in ${GALLERY_RETRY_DELAY_MS}ms`);
     _galleryRetryTimer = setTimeout(() => {
+        const nextCount = (_galleryRetryCounts.get(retryKey) || 0) + 1;
+        _galleryRetryCounts.set(retryKey, nextCount);
         _galleryRetryTimer = null;
         if (retryKey !== 'guest' && auth.currentUser?.uid !== retryKey) return;
         loadGalleryData(true).catch(() => {});
-    }, delay);
+    }, GALLERY_RETRY_DELAY_MS);
+    return true;
 }
 
 async function loadGalleryData(forceReload = false) {
@@ -20683,6 +20693,7 @@ async function _applyGalleryRestFallback(cutoffStr, audience = 'auth', limitCoun
     galleryHasMore = false;
     sortedFilteredDirty = true;
     writePersistentGalleryCache(audience, auth.currentUser?.uid || '', logsArray);
+    _galleryAuthoritativeLoadPending = false;
     return true;
 }
 
@@ -20739,6 +20750,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
         const shouldFetchFresh = forceReload || !hadCachedLogs || galleryCacheAudience !== expectedGalleryAudience;
 
         if (shouldFetchFresh) {
+            _galleryAuthoritativeLoadPending = true;
             // 캐시가 없을 때만 스켈레톤을 보여주고, 기존 목록이 있으면 그대로 유지한다.
             if (hasRenderableCachedLogs) {
                 renderFeedOnly();
@@ -20812,6 +20824,7 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
                         galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE;
                         sortedFilteredDirty = true;
                         writePersistentGalleryCache('auth', user.uid, logsArray);
+                        _galleryAuthoritativeLoadPending = false;
                         break;
                     } catch (e) {
                         retries++;
@@ -20880,9 +20893,13 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
     renderActivitySummary(myId);
     buildWeeklyBestSection().catch(() => {});
     setupInfiniteScroll();
-    clearGalleryRetry(user?.uid || 'guest');
+    if (!_galleryAuthoritativeLoadPending) {
+        clearGalleryRetry(user?.uid || 'guest');
+    }
     } catch (e) {
         console.error('갤러리 렌더링 중 오류:', e);
+        _galleryAuthoritativeLoadPending = true;
+        scheduleGalleryRetry(user?.uid || 'guest', 'gallery-render-failed');
         if (container) {
             container.innerHTML = '<div style="text-align:center;padding:40px 20px;">' +
                 '<p style="font-size:15px;color:#666;margin-bottom:16px;">갤러리를 불러오는 중 문제가 발생했습니다.<br>잠시 후 다시 시도해주세요.</p>' +

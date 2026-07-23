@@ -7,7 +7,7 @@ describe('gallery loading hardening', () => {
 
         expect(appSource).toContain('const GALLERY_LOAD_TIMEOUT_MS = 6000;');
         expect(appSource).toContain('const GALLERY_LOADING_STALE_RESET_MS = GALLERY_LOAD_TIMEOUT_MS * 2;');
-        expect(appSource).toContain('const GALLERY_RETRY_BASE_DELAY_MS = 2500;');
+        expect(appSource).toContain('const GALLERY_RETRY_DELAY_MS = 2000;');
         expect(appSource).toContain('const GALLERY_MAX_RETRY_ATTEMPTS = 3;');
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
@@ -24,6 +24,11 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('function mergeGalleryLogsForProvisionalCache');
         expect(appSource).toContain('writePersistentGalleryCache');
         expect(appSource).toContain('function scheduleGalleryRetry');
+        expect(appSource).toContain('if (_galleryRetryTimer) return true;');
+        expect(appSource).toContain('const nextCount = (_galleryRetryCounts.get(retryKey) || 0) + 1;');
+        expect(appSource).toContain('let _galleryAuthoritativeLoadPending = false;');
+        expect(appSource).toContain('if (!_galleryAuthoritativeLoadPending) {');
+        expect(appSource).toContain("scheduleGalleryRetry(user?.uid || 'guest', 'gallery-render-failed');");
         expect(appSource).toContain("console.warn('[loadGalleryData] stale gallery load discarded');");
         expect(appSource).toContain('function rerenderGalleryFeedIfVisible() {');
         expect(appSource).toContain('loadMyFriendships()');
