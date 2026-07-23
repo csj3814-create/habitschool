@@ -15464,6 +15464,28 @@ window.close30DayReport = function () {
     if (modal) modal.style.display = 'none';
 };
 
+// 결과지 바깥(어두운 배경)을 눌러도 닫히게 한다. 결과지 내용 클릭은 그대로 통과.
+(function bindReportModalDismiss() {
+    const bind = () => {
+        const modal = document.getElementById('report-modal');
+        if (!modal || modal.dataset.dismissBound === 'true') return;
+        modal.dataset.dismissBound = 'true';
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) window.close30DayReport();
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Escape') return;
+            if (modal.style.display === 'none' || !modal.style.display) return;
+            window.close30DayReport();
+        });
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bind, { once: true });
+    } else {
+        bind();
+    }
+})();
+
 function cloneReportNodeForPrint(sourceNode) {
     if (!sourceNode) return null;
     const clone = sourceNode.cloneNode(true);
