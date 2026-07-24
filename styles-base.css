@@ -332,7 +332,10 @@ body.play-mode .asset-advanced-details,
 body.play-mode #tier-card-weekly,
 body.play-mode #tier-card-master,
 body.play-mode #stake-weekly,
-body.play-mode #stake-master {
+body.play-mode #stake-master,
+/* 이미 시작해 진행 중인 위클리·마스터 링 카드(동적 렌더)도 감춘다. */
+body.play-mode .challenge-ring-card.tier-weekly-bg,
+body.play-mode .challenge-ring-card.tier-master-bg {
     display: none !important;
 }
 /* 보유 HBT 열이 사라지면 포인트 열을 한 칸으로 채운다. */

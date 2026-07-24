@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=254';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=254';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=255';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=255';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=254';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=254';
+} from './auth-login-helpers.js?v=255';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=255';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=254';
+} from './exercise-media.js?v=255';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=254';
+} from './health-connect-utils.js?v=255';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=254';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=254';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=254';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=254';
-import { sanitize, compressImage } from './data-manager.js?v=254';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=254';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=254';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=254';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=254';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=254';
+} from './habit-groups.js?v=255';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=255';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=255';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=255';
+import { sanitize, compressImage } from './data-manager.js?v=255';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=255';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=255';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=255';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=255';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=255';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=254';
+} from './guest-demo.js?v=255';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=254';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=254';
+} from './product-events.js?v=255';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=255';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -95,7 +95,7 @@ import {
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=254';
+} from './diet-program.js?v=255';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -107,18 +107,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=254';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=254';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=254';
+} from './meditation-guide.js?v=255';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=255';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=255';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=254';
+} from './social-challenge-readiness.js?v=255';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=254';
+} from './monthly-mvp-reward.js?v=255';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5714,7 +5714,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=254';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=255';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10068,6 +10068,15 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
     const challengeContainer = document.getElementById('active-challenge-container');
     const challengeInfo = document.getElementById('active-challenge-info');
     const challengeSelection = document.getElementById('challenge-selection');
+
+    // 라이트(플레이) 모드에서는 위클리·마스터(HBT 예치·보너스)를 아예 없는 것으로 본다.
+    // CSS 숨김만으로는 '위클리/마스터만 진행 중'일 때 빈 박스가 남고 미니 시작 UI가
+    // 안 뜨므로, 렌더 입력 자체에서 걸러 로직을 정상화한다.
+    if (_playModeNoBlockchain && activeChallenges && typeof activeChallenges === 'object') {
+        activeChallenges = { ...activeChallenges };
+        delete activeChallenges.weekly;
+        delete activeChallenges.master;
+    }
 
     const activeTiers = ASSET_CHALLENGE_TIER_ORDER.filter(t => {
         const s = activeChallenges[t]?.status;

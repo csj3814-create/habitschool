@@ -46,6 +46,16 @@ describe('play (Google Play lite) mode', () => {
         expect(css).toContain('body.play-mode .asset-advanced-details');
         expect(css).toContain('body.play-mode #tier-card-weekly');
         expect(css).toContain('body.play-mode #tier-card-master');
+        // 진행 중(동적 렌더) 위클리·마스터 링 카드도 숨긴다.
+        expect(css).toContain('body.play-mode .challenge-ring-card.tier-weekly-bg');
+        expect(css).toContain('body.play-mode .challenge-ring-card.tier-master-bg');
+    });
+
+    it('drops weekly/master from the active challenge panel in play mode', () => {
+        const appCore = readRepoFile('js/app-core.js');
+        expect(appCore).toContain('if (_playModeNoBlockchain && activeChallenges');
+        expect(appCore).toContain('delete activeChallenges.weekly;');
+        expect(appCore).toContain('delete activeChallenges.master;');
     });
 
     it('serves /app from the shared index via a hosting rewrite', () => {
