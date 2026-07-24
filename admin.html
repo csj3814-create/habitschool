@@ -888,6 +888,25 @@
             alert(`갤러리 투영 실패: ${e.message || e}`);
         }
     };
+    // 플레이 비공개 테스트 후보 집계. 콘솔에서 호출:
+    //   adminListActiveUserEmails()            // 최근 10일 중 3일 이상
+    //   adminListActiveUserEmails(14, 5)       // 최근 14일 중 5일 이상
+    window.adminListActiveUserEmails = async function(windowDays, minDays) {
+        try {
+            const res = await httpsCallable(fns, 'adminListActiveUserEmails')({ windowDays, minDays });
+            const d = res.data || {};
+            console.log('[adminListActiveUserEmails]', d);
+            console.log('이메일 목록(쉼표 구분):\n' + (d.emails || []).join(', '));
+            alert(`대상 ${d.qualifiedCount}명 (${d.dateFrom}~${d.dateTo}, ${d.windowDays}일 중 ${d.minDays}일 이상)\n`
+                + `이메일 확보 ${d.emailCount}명 / 이메일 없음 ${d.missingEmailCount}명\n`
+                + `(점수 없는 기록까지 포함하면 ${d.qualifiedCountIncludingUnscored}명)\n\n`
+                + `이메일 목록은 콘솔에 출력했습니다.`);
+            return d;
+        } catch (e) {
+            console.error('[adminListActiveUserEmails] 실패:', e);
+            alert(`대상 집계 실패: ${e.message || e}`);
+        }
+    };
     window.adminSettleStuckChallenge = async function(tier, uid) {
         try {
             const res = await httpsCallable(fns, 'adminSettleStuckChallenge')({ tier, uid: uid || undefined });

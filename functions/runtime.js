@@ -28,7 +28,7 @@ const os = require("os");
 const path = require("path");
 const { spawn } = require("child_process");
 const admin = require("firebase-admin");
-const { FieldValue } = require("firebase-admin/firestore");
+const { FieldValue, FieldPath } = require("firebase-admin/firestore");
 const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
@@ -2514,6 +2514,108 @@ exports.adminBackfillGalleryPosts = onCall(
 
         console.log(`adminBackfillGalleryPosts: processed ${processed}, projected ${projected} [${dateFrom}~${dateTo}] complete=${complete} by ${adminUid}`);
         return { success: true, processed, projected, dateFrom, dateTo, complete };
+    }
+);
+
+// 관리자: 최근 N일 중 M일 이상 기록한 사용자(=플레이 비공개 테스트 후보) 집계.
+// 기본은 '최근 10일 중 3일 이상'. 하루로 인정하는 기준은 그날 실제로 점수를 받은 기록.
+// 이메일은 users.email(구글 계정)이라 플레이 콘솔 테스터 등록에 그대로 쓸 수 있다.
+exports.adminListActiveUserEmails = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 2,
+        timeoutSeconds: 300
+    },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const windowDays = Math.max(1, Math.min(60, Number(request.data?.windowDays) || 10));
+        const minDays = Math.max(1, Math.min(windowDays, Number(request.data?.minDays) || 3));
+        const todayStr = getCurrentKstDateString();
+        const dateFrom = addDaysToKstDateString(todayStr, -(windowDays - 1));
+
+        // 기간 내 daily_logs를 커서로 순회하며 사용자별 '기록한 날짜' 집합을 만든다.
+        const scoredDatesByUid = new Map();
+        const anyDatesByUid = new Map();
+        const pageSize = 400;
+        let cursor = null;
+        for (let guard = 0; guard < 200; guard += 1) {
+            let q = db.collection("daily_logs")
+                .where("date", ">=", dateFrom)
+                .where("date", "<=", todayStr)
+                .orderBy("date")
+                .limit(pageSize);
+            if (cursor) q = q.startAfter(cursor);
+            const snap = await q.get();
+            if (snap.empty) break;
+
+            for (const docSnap of snap.docs) {
+                const data = docSnap.data() || {};
+                const uid = String(data.userId || "").trim();
+                const date = String(data.date || "").trim();
+                if (!uid || !date) continue;
+                if (!anyDatesByUid.has(uid)) anyDatesByUid.set(uid, new Set());
+                anyDatesByUid.get(uid).add(date);
+                const ap = data.awardedPoints || {};
+                const total = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
+                if (total > 0) {
+                    if (!scoredDatesByUid.has(uid)) scoredDatesByUid.set(uid, new Set());
+                    scoredDatesByUid.get(uid).add(date);
+                }
+            }
+            cursor = snap.docs[snap.docs.length - 1];
+            if (snap.size < pageSize) break;
+        }
+
+        const qualifiedUids = [...scoredDatesByUid.entries()]
+            .filter(([, dates]) => dates.size >= minDays)
+            .map(([uid]) => uid);
+        // 점수 없이 기록만 남긴 날까지 인정할 경우의 수(참고용, 대상 확대 판단에 쓴다).
+        const qualifiedUidsLoose = [...anyDatesByUid.entries()]
+            .filter(([, dates]) => dates.size >= minDays)
+            .map(([uid]) => uid);
+
+        // 이메일 조회는 10개씩 나눠서(documentId in 쿼리 상한).
+        const recipients = [];
+        const missingEmailUids = [];
+        for (let i = 0; i < qualifiedUids.length; i += 10) {
+            const chunk = qualifiedUids.slice(i, i + 10);
+            const userSnap = await db.collection("users")
+                .where(FieldPath.documentId(), "in", chunk)
+                .get();
+            const foundUids = new Set();
+            userSnap.forEach((userDoc) => {
+                const userData = userDoc.data() || {};
+                const email = String(userData.email || "").trim().toLowerCase();
+                foundUids.add(userDoc.id);
+                if (!email) {
+                    missingEmailUids.push(userDoc.id);
+                    return;
+                }
+                recipients.push({
+                    email,
+                    name: String(userData.name || userData.displayName || "").trim(),
+                    activeDays: scoredDatesByUid.get(userDoc.id)?.size || 0
+                });
+            });
+            chunk.filter((uid) => !foundUids.has(uid)).forEach((uid) => missingEmailUids.push(uid));
+        }
+
+        recipients.sort((a, b) => b.activeDays - a.activeDays);
+        const result = {
+            success: true,
+            windowDays,
+            minDays,
+            dateFrom,
+            dateTo: todayStr,
+            qualifiedCount: qualifiedUids.length,
+            qualifiedCountIncludingUnscored: qualifiedUidsLoose.length,
+            emailCount: recipients.length,
+            missingEmailCount: missingEmailUids.length,
+            emails: recipients.map((item) => item.email),
+            recipients
+        };
+        console.log(`adminListActiveUserEmails: ${result.qualifiedCount} users (>=${minDays}d of ${windowDays}d) by ${adminUid}`);
+        return result;
     }
 );
 
