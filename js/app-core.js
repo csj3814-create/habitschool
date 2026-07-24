@@ -7095,7 +7095,11 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
             resolvePhotoDateValidation(file, dateInput.value)
                 .then((validation) => {
                     if (validation.source === 'exif' && !validation.matches) {
-                        alert(`⚠️ 촬영일(${validation.date})이 선택한 인증 날짜(${dateInput.value})와 달라 업로드할 수 없습니다.`);
+                        // 해외에서는 현지 촬영일과 한국시간 기준 날짜가 다를 수 있어 둘 다 알려준다.
+                        const kstNote = validation.kstDate && validation.kstDate !== validation.date
+                            ? `\n(한국시간 기준 ${validation.kstDate})`
+                            : '';
+                        alert(`⚠️ 촬영일(${validation.date})이 선택한 인증 날짜(${dateInput.value})와 달라 업로드할 수 없습니다.${kstNote}`);
                         resetRejectedUpload();
                         return;
                     }
@@ -7670,6 +7674,30 @@ function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
     };
 }
 
+// EXIF DateTimeOriginal은 '촬영 기기의 현지 시간'이고 시간대 정보를 담지 않는다.
+// 이 값을 KST 기준 선택 날짜와 문자열로 곧장 비교하면, 한국이 아닌 곳(예: 캐나다)에서는
+// 날짜 변경선 차이만큼 최대 하루가 어긋나 보관함 사진이 전부 막힌다.
+// 기기 시간대로 해석해 절대 시각을 만든 뒤 KST로 환산한다(파일 시각 폴백과 같은 기준).
+// 기기의 시간대 설정을 그대로 쓰므로 위치 권한이 필요 없다.
+function convertLocalCaptureToKstParts(dateStr, timeStr) {
+    const [year, month, day] = String(dateStr || '').split('-').map(Number);
+    if (![year, month, day].every(Number.isFinite)) return null;
+    const [hour, minute, second] = String(timeStr || '')
+        .split(':')
+        .map((part) => Number(part));
+    const localDate = new Date(
+        year,
+        month - 1,
+        day,
+        Number.isFinite(hour) && hour < 24 ? hour : 12, // 시각 불명(99:99:99)이면 정오로 본다
+        Number.isFinite(minute) && minute < 60 ? minute : 0,
+        Number.isFinite(second) && second < 60 ? second : 0
+    );
+    const localMs = localDate.getTime();
+    if (!Number.isFinite(localMs)) return null;
+    return getKstDateTimePartsFromTimestamp(localMs);
+}
+
 function getDietFileFallbackDateTime(file) {
     return getKstDateTimePartsFromTimestamp(file?.lastModified || Date.now());
 }
@@ -7710,11 +7738,16 @@ async function resolvePhotoDateValidation(file, selectedDate) {
     const exifReady = await _ensureExif().then(() => typeof EXIF !== 'undefined').catch(() => false);
     const exifInfo = exifReady ? await readDietFileExifDateTime(file) : null;
     if (exifInfo?.date) {
+        // 현지 촬영 시각을 KST로 환산한 날짜도 인정한다. 한국 사용자는 두 값이 같아
+        // 동작이 그대로고, 해외 사용자만 시차로 막히던 문제가 풀린다.
+        const kstParts = convertLocalCaptureToKstParts(exifInfo.date, exifInfo.time);
+        const kstDate = kstParts?.date || '';
         return {
             source: 'exif',
             date: exifInfo.date,
+            kstDate: kstDate || exifInfo.date,
             time: exifInfo.time || '99:99:99',
-            matches: exifInfo.date === selectedDate
+            matches: exifInfo.date === selectedDate || kstDate === selectedDate
         };
     }
 
