@@ -5,7 +5,13 @@ param(
     [string]$PackageName = 'com.habitschool.app',
     [string]$AssetLinksPath = '',
     [switch]$IncludeDebugFingerprint,
-    [switch]$ExactMatch
+    [switch]$ExactMatch,
+    # Play 앱 서명 키처럼 로컬 keystore에서 계산할 수 없는 지문. 기본값은 콘솔의
+    # '앱 서명 키 인증서' SHA-256이며, 이게 빠지면 스토어 설치본이 도메인 검증에
+    # 실패해 주소창이 뜬다. -Mode write 가 이 값을 지우지 않도록 항상 함께 기록한다.
+    [string[]]$AdditionalFingerprints = @(
+        'A3:DE:A4:54:E2:33:70:D7:B9:4A:D6:3F:46:15:ED:EB:85:D0:B0:DB:82:91:AC:59:A3:5E:3C:99:98:17:4A:C8'
+    )
 )
 
 Set-StrictMode -Version Latest
@@ -139,7 +145,8 @@ function Get-KeystoreFingerprint {
 function Get-ExpectedFingerprints {
     param(
         [string]$AndroidProjectDir,
-        [switch]$IncludeDebug
+        [switch]$IncludeDebug,
+        [string[]]$Additional = @()
     )
 
     $fingerprints = New-Object System.Collections.Generic.List[string]
@@ -160,6 +167,12 @@ function Get-ExpectedFingerprints {
         $fingerprints.Add(
             (Get-KeystoreFingerprint -StorePath $debugStorePath -Alias 'androiddebugkey' -StorePassword 'android' -KeyPassword 'android')
         )
+    }
+
+    foreach ($extra in $Additional) {
+        if (-not [string]::IsNullOrWhiteSpace($extra)) {
+            $fingerprints.Add($extra.Trim().ToUpperInvariant())
+        }
     }
 
     if ($fingerprints.Count -eq 0) {
@@ -189,7 +202,7 @@ function Get-CurrentFingerprints {
     return @()
 }
 
-$expectedFingerprints = @(Get-ExpectedFingerprints -AndroidProjectDir $AndroidDir -IncludeDebug:$IncludeDebugFingerprint)
+$expectedFingerprints = @(Get-ExpectedFingerprints -AndroidProjectDir $AndroidDir -IncludeDebug:$IncludeDebugFingerprint -Additional $AdditionalFingerprints)
 
 $payload = @(
     @{
