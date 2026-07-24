@@ -859,6 +859,8 @@ function applySignedInShellUi(user) {
 
     const dateUi = document.getElementById('date-ui');
     if (dateUi) dateUi.style.display = 'flex';
+    // 기기 시간대가 한국이 아니면 날짜 옆에 KST 기준을 표시한다.
+    if (typeof window.updateKstBasisBadge === 'function') window.updateKstBasisBadge();
 
     window._wasLoggedIn = true;
     window._userDisplayName = user?.displayName || '사용자';

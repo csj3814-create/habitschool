@@ -15,7 +15,11 @@ const MESSAGES = {
         'notification.enable': '알림 켜기',
         'toast.aiFailed': 'AI 분석에 실패했습니다. 다시 시도해 주세요.',
         'toast.analysisFailed': '분석 중 오류가 발생했습니다.',
-        'toast.notHealthScreenshot': '건강/만보기 앱 캡처가 아닌 것 같습니다.'
+        'toast.notHealthScreenshot': '건강/만보기 앱 캡처가 아닌 것 같습니다.',
+        'kst.badge': 'KST',
+        'kst.badgeAria': '날짜 기준 안내 (한국시간)',
+        'kst.title': '날짜 기준: 한국시간(KST)',
+        'kst.body': '해빛스쿨의 하루는 한국시간(KST) 기준이에요.\n지금 한국은 {now}입니다.\n\n보상 한도는 한국시간 오전 9시에 초기화돼요.\n사진의 촬영 시각도 한국시간으로 환산해 인정하니, 현지 날짜와 달라 보여도 그대로 올리시면 됩니다.'
     },
     en: {
         'common.save': 'Save',
@@ -29,6 +33,10 @@ const MESSAGES = {
         'toast.aiFailed': 'AI analysis failed. Please try again.',
         'toast.analysisFailed': 'Something went wrong during analysis.',
         'toast.notHealthScreenshot': 'This does not look like a health or step-count screenshot.',
+        'kst.badge': 'KST',
+        'kst.badgeAria': 'About the date basis (Korea time)',
+        'kst.title': 'Dates follow Korea time (KST)',
+        'kst.body': 'A day in Habit School runs on Korea Standard Time (KST, UTC+9).\nIt is now {now} in Korea.\n\nDaily reward limits reset at 9:00 AM KST.\nPhoto capture times are converted to Korea time as well, so go ahead and upload even if the date looks different from your local one.',
         'diet.grade.A': 'Excellent',
         'diet.grade.B': 'Good',
         'diet.grade.C': 'Average',

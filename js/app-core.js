@@ -7674,6 +7674,45 @@ function getKstDateTimePartsFromTimestamp(timestamp = Date.now()) {
     };
 }
 
+// 기기 시간대가 한국(UTC+9)과 다른지. 해외 사용자에게만 날짜 기준을 표시하기 위한 판단이며,
+// 위치 권한 없이 기기 설정만으로 알 수 있다.
+function isDeviceOutsideKoreaTime(now = new Date()) {
+    try {
+        const kstShifted = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+        const localShifted = new Date(now.toLocaleString('en-US'));
+        // 분 단위 차이가 있으면 한국 시간대가 아니다(반올림 오차 방지로 60초 여유).
+        return Math.abs(kstShifted.getTime() - localShifted.getTime()) > 60_000;
+    } catch (_) {
+        return false; // 판단 불가 시엔 기존처럼 아무 표시도 하지 않는다.
+    }
+}
+
+function formatKoreaNowLabel(now = new Date()) {
+    const parts = getKstDateTimePartsFromTimestamp(now.getTime());
+    const timeLabel = String(parts.time || '').slice(0, 5);
+    return `${parts.date} ${timeLabel}`;
+}
+
+// 날짜 입력 옆의 'KST' 배지. 한국 사용자에겐 보이지 않는다.
+function updateKstBasisBadge() {
+    const badge = document.getElementById('kst-basis-badge');
+    if (!badge) return;
+    if (!isDeviceOutsideKoreaTime()) {
+        badge.hidden = true;
+        return;
+    }
+    badge.hidden = false;
+    badge.textContent = t('kst.badge');
+    badge.setAttribute('aria-label', t('kst.badgeAria'));
+    badge.title = t('kst.body', { now: formatKoreaNowLabel() });
+}
+
+window.showKstBasisInfo = function () {
+    alert(`${t('kst.title')}\n\n${t('kst.body', { now: formatKoreaNowLabel() })}`);
+};
+// 로그인 직후(auth.js)와 언어 전환 후 다시 그린다.
+window.updateKstBasisBadge = updateKstBasisBadge;
+
 // EXIF DateTimeOriginal은 '촬영 기기의 현지 시간'이고 시간대 정보를 담지 않는다.
 // 이 값을 KST 기준 선택 날짜와 문자열로 곧장 비교하면, 한국이 아닌 곳(예: 캐나다)에서는
 // 날짜 변경선 차이만큼 최대 하루가 어긋나 보관함 사진이 전부 막힌다.

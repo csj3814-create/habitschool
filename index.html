@@ -895,6 +895,9 @@
                             style="width:24px;height:24px;vertical-align:middle;margin-right:4px;">해빛스쿨</h1>
                     <div class="date-selector-container" id="date-ui" style="display:none;">
                         <input type="date" id="selected-date" class="date-input" aria-label="날짜 선택">
+                        <!-- 기기 시간대가 한국이 아닐 때만 표시된다(app-core에서 제어). -->
+                        <button type="button" id="kst-basis-badge" class="kst-basis-badge" hidden
+                            onclick="showKstBasisInfo()">KST</button>
                     </div>
                     <div class="point-badge" id="point-badge-ui" style="display:none;" role="button" tabindex="0"
                         aria-label="해빛 포인트 정보" onclick="if(window.openTab) openTab('assets')">🅿️ <span
