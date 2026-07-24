@@ -316,6 +316,30 @@ body {
 
 .kst-basis-badge[hidden] { display: none; }
 
+/* ── 구글플레이 라이트 모드(/app): 온체인(HBT·지갑·전환·스테이킹) UI 숨김 ──
+   정책상 스토어 빌드에는 암호화폐 기능이 노출되면 안 된다. JS 게이트로 지갑은
+   아예 안 생기고, 여기서는 남은 UI 흔적을 감춘다. 포인트·쿠폰·기록·갤러리·
+   소모임·미니 챌린지는 그대로 유지된다. */
+.play-only-note { display: none; }
+body.play-mode .play-only-note { display: block; }
+body.play-mode .play-hide-note { display: none; }
+body.play-mode #wallet-asset-hbt-item,
+body.play-mode #wallet-minichart,
+body.play-mode .wallet-asset-purpose:not(.play-only-note),
+body.play-mode .hbt-disclaimer,
+body.play-mode .wallet-convert-card,
+body.play-mode .asset-advanced-details,
+body.play-mode #tier-card-weekly,
+body.play-mode #tier-card-master,
+body.play-mode #stake-weekly,
+body.play-mode #stake-master {
+    display: none !important;
+}
+/* 보유 HBT 열이 사라지면 포인트 열을 한 칸으로 채운다. */
+body.play-mode .wallet-asset-grid {
+    grid-template-columns: 1fr;
+}
+
 .point-badge { 
     background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); 
     border: 1.5px solid #64B5F6; 

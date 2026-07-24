@@ -114,8 +114,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=253">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=253">
+    <link rel="stylesheet" href="styles.css?v=254">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=254">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -713,7 +713,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=253"></script>
+    <script src="js/webview-detect.js?v=254"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1454,7 +1454,7 @@
                             <div class="wallet-asset-value" id="asset-points-display">0P</div>
                             <div class="wallet-asset-delta" id="asset-points-delta"></div>
                         </div>
-                        <div class="wallet-asset-item">
+                        <div class="wallet-asset-item" id="wallet-asset-hbt-item">
                             <div class="wallet-asset-label">💎 보유 HBT</div>
                             <div class="wallet-asset-value" id="asset-hbt-display">확인 중…</div>
                             <div id="asset-hbt-onchain" class="wallet-onchain-badge">
@@ -1466,6 +1466,8 @@
                     </div>
                     <p class="wallet-asset-purpose">포인트는 쿠폰으로, HBT는 건강 챌린지 참여에 써요.</p>
                     <p class="hbt-disclaimer wallet-asset-note">HBT는 가격이나 가치 상승을 보장하지 않습니다.</p>
+                    <!-- 라이트(구글플레이) 빌드 전용 안내. play-mode에서만 노출된다. -->
+                    <p class="wallet-asset-purpose play-only-note">모은 포인트로 쿠폰을 바꿔 보세요.</p>
                     <!-- 7일 HBT 획득 미니차트 -->
                     <div class="wallet-minichart" id="wallet-minichart">
                         <div class="wallet-minichart-label">최근 7일 획득 HBT</div>
@@ -1491,7 +1493,8 @@
                 <!-- 건강 습관 챌린지 섹션 -->
                 <div class="card wallet-challenge-card">
                     <h3 class="wallet-challenge-title">🏆 건강 습관 챌린지</h3>
-                    <p class="wallet-challenge-desc">3일 미니는 식단·운동·마음을 모두 기록하면, 위클리·마스터는 하루 65점 이상이면 1일 인정돼요.</p>
+                    <p class="wallet-challenge-desc play-hide-note">3일 미니는 식단·운동·마음을 모두 기록하면, 위클리·마스터는 하루 65점 이상이면 1일 인정돼요.</p>
+                    <p class="wallet-challenge-desc play-only-note">3일 동안 식단·운동·마음을 모두 기록하면 3일 미니 챌린지를 달성해요.</p>
 
                     <!-- 진행 중인 챌린지 (링 차트) -->
                     <div id="active-challenge-container" class="wallet-challenge-active" style="display: none;">
@@ -2603,13 +2606,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=253"></script>
-    <script type="module" src="js/main.js?v=253"></script>
-    <script type="module" src="js/diet-analysis.js?v=253"></script>
-    <script type="module" src="js/metabolic-score.js?v=253"></script>
+    <script type="module" src="js/app.js?v=254"></script>
+    <script type="module" src="js/main.js?v=254"></script>
+    <script type="module" src="js/diet-analysis.js?v=254"></script>
+    <script type="module" src="js/metabolic-score.js?v=254"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=253"></script>
+    <script src="js/pwa-install.js?v=254"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

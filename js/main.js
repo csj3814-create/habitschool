@@ -5,11 +5,11 @@
  */
 
 // 인증 모듈 (initializeApp에서 직접 호출)
-import { initAuth, setupAuthListener } from './auth.js?v=253';
-import { APP_ENV } from './firebase-config.js?v=253';
-import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=253';
+import { initAuth, setupAuthListener } from './auth.js?v=254';
+import { APP_ENV } from './firebase-config.js?v=254';
+import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=254';
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=253';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=254';
 const CONVERSION_RATE_CACHE_KEY = `hs_conversion_rate_${APP_ENV}`;
 
 function readCachedConversionStats() {
@@ -95,7 +95,14 @@ window._currentConversionRate = cachedConversionStats?.rate || null;
 window._currentConversionPhase = cachedConversionStats?.phase || 1;
 window._currentChallengeBonusPolicy = null;
 
+// 구글플레이 라이트 빌드(/app)에서는 블록체인 모듈을 절대 로드하지 않는다.
+// 지갑 생성·개인키 보관·온체인 호출이 아예 일어나지 않아야 정책(개인 계정 암호화폐
+// 지갑 금지)을 준수한다. app-mode.js의 PLAY_MODE_PATH와 동일 기준.
+window.__HABITSCHOOL_PLAY_MODE = /^\/app(\/|$)/.test(location.pathname)
+    || String(document.referrer || '').startsWith('android-app://com.habitschool.app');
+
 window._loadBlockchainModule = function() {
+    if (window.__HABITSCHOOL_PLAY_MODE) return Promise.reject(new Error('play_mode_no_blockchain'));
     if (window._blockchainLoaded) return Promise.resolve();
     const loadEthers = () => {
         if (typeof ethers !== 'undefined') return Promise.resolve();

@@ -105,11 +105,20 @@
           "source": "/simple/",
           "destination": "/simple",
           "type": 301
+        },
+        {
+          "source": "/app/",
+          "destination": "/app",
+          "type": 301
         }
       ],
       "rewrites": [
         {
           "source": "/simple",
+          "destination": "/index.html"
+        },
+        {
+          "source": "/app",
           "destination": "/index.html"
         },
         {

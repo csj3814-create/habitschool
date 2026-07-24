@@ -2,6 +2,10 @@ const DEFAULT_MODE = 'default';
 const SIMPLE_MODE = 'simple';
 const SIMPLE_MODE_PATH = '/simple';
 const ENGLISH_ENTRY_PATH = '/en';
+// 구글플레이 TWA 전용 경로. 이 경로에서는 온체인(HBT·지갑·전환·스테이킹) 기능을
+// 전부 끈 '라이트' 앱으로 동작한다. 플레이 정책상 개인 계정으로는 암호화폐 지갑을
+// 배포할 수 없어, 스토어 빌드는 이 경로만 열도록 TWA를 구성한다.
+const PLAY_MODE_PATH = '/app';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -23,7 +27,9 @@ export function getRouteContext(pathname = getCurrentPathname()) {
     const path = normalizeAppPath(pathname);
     const isEnglishEntry = path === ENGLISH_ENTRY_PATH || path === `${ENGLISH_ENTRY_PATH}/index.html`;
     const isKoreanSimple = path === SIMPLE_MODE_PATH;
+    const isPlay = path === PLAY_MODE_PATH || path === `${PLAY_MODE_PATH}/index.html`;
     const locale = isEnglishEntry ? ENGLISH_LOCALE : DEFAULT_LOCALE;
+    // play는 전체 탭을 쓰는 default 계열이지만 온체인 UI만 감춘다(simple과 별개).
     const mode = (isEnglishEntry || isKoreanSimple) ? SIMPLE_MODE : DEFAULT_MODE;
     const defaultTab = locale === ENGLISH_LOCALE ? 'diet' : (mode === SIMPLE_MODE ? 'profile' : 'dashboard');
 
@@ -33,9 +39,24 @@ export function getRouteContext(pathname = getCurrentPathname()) {
         mode,
         isEnglish: locale === ENGLISH_LOCALE,
         isSimple: mode === SIMPLE_MODE,
+        isPlay,
         defaultTab,
-        basePath: locale === ENGLISH_LOCALE ? ENGLISH_ENTRY_PATH : (mode === SIMPLE_MODE ? SIMPLE_MODE_PATH : '/')
+        basePath: isPlay ? PLAY_MODE_PATH
+            : (locale === ENGLISH_LOCALE ? ENGLISH_ENTRY_PATH : (mode === SIMPLE_MODE ? SIMPLE_MODE_PATH : '/'))
     };
+}
+
+// 온체인 기능을 꺼야 하는가. TWA는 항상 /app에서 시작하고 해시 라우팅이라 경로가
+// 유지된다. 추가 방어로 안드로이드 TWA referrer도 본다(브라우저에서 /app을 직접 열어도
+// 라이트 모드로 동작하지만, 그건 의도된 동작이다).
+export function isPlayModeActive(pathname = getCurrentPathname()) {
+    if (getRouteContext(pathname).isPlay) return true;
+    try {
+        return typeof document !== 'undefined'
+            && String(document.referrer || '').startsWith('android-app://com.habitschool.app');
+    } catch (_) {
+        return false;
+    }
 }
 
 export function getLocale(pathname = getCurrentPathname()) {
@@ -135,17 +156,20 @@ export function applyAppModeChrome(doc = document) {
     const routeContext = getRouteContext(doc.defaultView?.location?.pathname || window.location.pathname);
     const simpleMode = routeContext.isSimple;
     const englishMode = routeContext.locale === ENGLISH_LOCALE;
+    const playMode = routeContext.isPlay;
 
     doc.documentElement?.classList.toggle('simple-mode', simpleMode);
     doc.documentElement?.classList.toggle('locale-en', englishMode);
     doc.documentElement?.classList.toggle('locale-ko', !englishMode);
+    doc.documentElement?.classList.toggle('play-mode', playMode);
     if (doc.documentElement) doc.documentElement.lang = routeContext.locale;
 
     if (doc.body) {
         doc.body.classList.toggle('simple-mode', simpleMode);
         doc.body.classList.toggle('locale-en', englishMode);
         doc.body.classList.toggle('locale-ko', !englishMode);
-        doc.body.dataset.appMode = simpleMode ? SIMPLE_MODE : DEFAULT_MODE;
+        doc.body.classList.toggle('play-mode', playMode);
+        doc.body.dataset.appMode = playMode ? 'play' : (simpleMode ? SIMPLE_MODE : DEFAULT_MODE);
         doc.body.dataset.locale = routeContext.locale;
     }
 
