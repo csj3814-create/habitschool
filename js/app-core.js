@@ -371,7 +371,10 @@ const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
 const BACKGROUND_MEDIA_PATCH_STORAGE_KEY = 'habitschool-background-media-patches-v1';
 const BACKGROUND_MEDIA_PATCH_MAX_ENTRIES = 24;
-const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;
+// 모바일(WiFi·셀룰러 모두)에서 Firestore 첫 쓰기 ACK가 12초를 넘기는 경우가 잦아
+// 실제로는 곧 저장될 기록도 보관함(outbox)으로 빠지며 불안한 안내가 자주 떴다.
+// 데이터는 손실되지 않지만, ACK 여유를 넉넉히 줘 오탐(백업 안내)을 줄인다.
+const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 25000;
 const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;
 const BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS = 4000;
 const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;
@@ -17832,7 +17835,7 @@ function runBackgroundMediaSyncJobs({
         window.updateAssetDisplay?.(true).catch(() => { });
 
         if (terminalFailed === 0 && deferred > 0) {
-            showToast('📦 업로드 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
+            showToast('✅ 안전하게 저장했어요. 사진·영상은 백그라운드에서 계속 올라가요.');
         } else if (failed === 0) {
             showToast('✅ 백그라운드 업로드가 모두 끝났어요.');
         } else {
@@ -19169,8 +19172,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     upsertGalleryCacheItem(docId, pendingData);
                     refreshGalleryFromCacheIfVisible();
                     showToast(navigator.onLine === false
-                        ? '📦 오프라인 보관함에 임시 저장했어요. 연결되면 자동으로 전송할게요.'
-                        : '📦 저장 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
+                        ? '✅ 안전하게 저장했어요. 연결되면 자동으로 마무리돼요.'
+                        : '✅ 안전하게 저장했어요. 잠시 후 자동으로 마무리돼요.');
                     return;
                 }
             }

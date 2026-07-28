@@ -22,7 +22,7 @@ describe('daily log offline fallback', () => {
         const appSource = readAppSource();
 
         expect(appSource).toContain('daily_log_primary_save_timeout');
-        expect(appSource).toContain('const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 12000;');
+        expect(appSource).toContain('const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 25000;');
         expect(appSource).toContain('const doSetDoc = () => withRejectingTimeout');
         expect(appSource).toContain('DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS');
         expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), getClientWritableDailyLogData(saveData), { merge: true })');

@@ -275,7 +275,7 @@ describe('video upload resilience', () => {
         expect(source).toContain("deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료'");
         expect(source).toContain("console.warn('[background-media] upload deferred to offline outbox:'");
         expect(source).toContain('return { failed: true, deferred: true };');
-        expect(source).toContain('📦 업로드 확인이 지연되어 보관함에 백업했어요. 자동으로 다시 전송할게요.');
+        expect(source).toContain('✅ 안전하게 저장했어요. 사진·영상은 백그라운드에서 계속 올라가요.');
     });
 
     it('suppresses automatic pre-upload failure toasts while deferred save paths retry media uploads', () => {
