@@ -31,13 +31,28 @@ export function getDatesInfo() {
 }
 
 // 토스트 메시지 표시
-export function showToast(message) {
+let _toastDismissTimer = null;
+// durationMs를 0(또는 음수)으로 주면 자동으로 사라지지 않는 '지속 토스트'가 된다.
+// 온체인 보상 수령처럼 오래 걸리는 작업 중 안내를 계속 보여줄 때 사용하고,
+// 완료 시 다시 showToast(결과)를 호출하면 자연스럽게 교체된다.
+export function showToast(message, { durationMs = 3500 } = {}) {
     const toast = document.getElementById("toast");
+    if (!toast) return;
     toast.innerText = translateText(message);
     toast.className = "show";
-    setTimeout(() => { 
-        toast.className = toast.className.replace("show", ""); 
-    }, 3500);
+    if (_toastDismissTimer) { clearTimeout(_toastDismissTimer); _toastDismissTimer = null; }
+    if (durationMs > 0) {
+        _toastDismissTimer = setTimeout(() => {
+            toast.className = toast.className.replace("show", "");
+            _toastDismissTimer = null;
+        }, durationMs);
+    }
+}
+
+export function hideToast() {
+    if (_toastDismissTimer) { clearTimeout(_toastDismissTimer); _toastDismissTimer = null; }
+    const toast = document.getElementById("toast");
+    if (toast) toast.className = toast.className.replace("show", "");
 }
 
 // 라이트박스 열기

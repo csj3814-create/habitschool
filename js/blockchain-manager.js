@@ -44,7 +44,7 @@ const CHALLENGE_ID_MAP = {
 import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=256';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=256';
+import { showToast, hideToast } from './ui-helpers.js?v=256';
 import { getKstDateString } from './ui-helpers.js?v=256';
 import { checkRateLimit } from './security.js?v=256';
 
@@ -1569,15 +1569,31 @@ export async function settleExpiredChallenges() {
  * 챌린지 보상 수령 (Cloud Function 경유)
  * @param {string} tier - 'mini' | 'weekly' | 'master'
  */
+const _challengeClaimInFlight = new Set();
+
 export async function claimChallengeReward(tier) {
+    // 온체인 정산은 30초~1분 걸려 사용자가 카드를 여러 번 누르기 쉽다. 중복 실행 차단
+    // (서버에도 원자적 잠금이 있지만 UI에서도 막아 토스트 겹침·혼란을 없앤다).
+    if (_challengeClaimInFlight.has(tier)) return false;
+    _challengeClaimInFlight.add(tier);
+    // 예치금 반환 + HBT 보너스 발행(온체인 tx 2건)이라 시간이 걸린다. 지속 안내로
+    // 경과 시간을 보여줘 멈춘 것처럼 보이지 않게 하고, 예상 소요를 알린다.
+    let elapsed = 0;
+    const progressTimer = setInterval(() => {
+        elapsed += 1;
+        showToast(`⏳ 블록체인에서 보상을 발행하고 있어요… (${elapsed}초 / 보통 30초~1분)\n창을 닫지 말고 잠시만 기다려 주세요.`, { durationMs: 0 });
+    }, 1000);
+    const stopProgress = () => { clearInterval(progressTimer); };
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) {
+            stopProgress();
+            hideToast();
             showToast('❌ 로그인이 필요합니다.');
             return false;
         }
 
-        showToast('⏳ 보상 수령 중...');
+        showToast('⏳ 보상을 발행하고 있어요… 보통 30초~1분 걸려요.', { durationMs: 0 });
 
         // Cloud Function lazy init
         if (!claimChallengeFunction) {
@@ -1586,6 +1602,7 @@ export async function claimChallengeReward(tier) {
 
         const result = await claimChallengeFunction({ tier });
         const data = result.data;
+        stopProgress();
 
         let resultParts = [];
         if (data.rewardHbt > 0) resultParts.push(`+${data.rewardHbt} HBT`);
@@ -1599,6 +1616,7 @@ export async function claimChallengeReward(tier) {
         if (window.loadDashboard) window.loadDashboard();
         return true;
     } catch (error) {
+        stopProgress();
         console.error('❌ 보상 수령 오류:', error);
         // Firebase 콜러블 에러 코드는 'functions/failed-precondition'처럼 접두사가 붙어
         // 올 수 있으므로 벗겨서 비교한다(그래야 서버 안내 메시지 노출 분기가 걸린다).
@@ -1615,6 +1633,9 @@ export async function claimChallengeReward(tier) {
             : `❌ 보상 수령에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`;
         showToast(msg);
         return false;
+    } finally {
+        stopProgress();
+        _challengeClaimInFlight.delete(tier);
     }
 }
 

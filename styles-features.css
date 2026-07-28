@@ -6382,11 +6382,12 @@ body.dark-mode .shared-import-option.is-suggested {
     font-weight: 600; 
     opacity: 0; 
     transition: opacity 0.3s, visibility 0.3s; 
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25); 
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
     letter-spacing: -0.2px;
+    white-space: pre-line; /* 토스트 메시지의 의도한 줄바꿈(\n)을 표시 */
 }
 
-#toast.show { 
+#toast.show {
     visibility: visible; 
     opacity: 1; 
 }
