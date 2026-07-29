@@ -18560,6 +18560,16 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     enablePendingUploadProgress();
     showToast("저장 중입니다. 새 미디어는 필요하면 백그라운드에서 이어서 올릴게요.");
 
+    // 실패 안전장치: 어떤 후처리가 예기치 않게 멈춰도 저장 버튼이 '저장 중...'에
+    // 영구히 갇히지 않게 한다. 정상 완료 시 finally에서 해제된다(오탐 없음).
+    const saveButtonWatchdog = setTimeout(() => {
+        // 이미 정상 복원됐으면(후처리만 남은 상태) 건드리지 않는다 — 오탐 방지.
+        if (!saveBtn.disabled) return;
+        applySaveButtonLabel(saveBtn, getVisibleTabName());
+        saveBtn.disabled = false;
+        showToast('✅ 기록은 안전하게 저장 중이에요. 잠시 후 자동으로 마무리돼요.');
+    }, 40000);
+
     (async () => {
         // Firestore 타임아웃 헬퍼 (서버 응답 대기 상한선)
         const withTimeout = (promise, ms, fallback) =>
@@ -19185,7 +19195,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             }
             showToast(`⚠️ ${errorMsg}`);
         }
-        finally { applySaveButtonLabel(saveBtn, getVisibleTabName()); saveBtn.disabled = false; }
+        finally { clearTimeout(saveButtonWatchdog); applySaveButtonLabel(saveBtn, getVisibleTabName()); saveBtn.disabled = false; }
     })();
 });
 
@@ -22054,7 +22064,13 @@ async function maybeShowFirstRecordResult({ user, tab, pointsEarned, currentPoin
 
     let userData = null;
     try {
-        const userSnapshot = await getDoc(doc(db, 'users', user.uid));
+        // 타임아웃 필수: 이 읽기는 저장 완료 흐름(버튼 복원·완료 토스트) 앞단에 있어,
+        // Firestore 읽기가 느리면 여기서 멈춰 저장 버튼이 '저장 중...'에 영구히 갇힌다.
+        const userSnapshot = await withAsyncTimeout(
+            getDoc(doc(db, 'users', user.uid)),
+            8000,
+            'first_record_user_read_timeout'
+        );
         userData = userSnapshot.exists() ? userSnapshot.data() : {};
         if (userData?.settings?.firstRewardSeenAt) {
             try { localStorage.setItem(storageKey, 'shown'); } catch (_) { }
