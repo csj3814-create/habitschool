@@ -323,6 +323,47 @@ body {
 .play-only-note { display: none; }
 body.play-mode .play-only-note { display: block; }
 body.play-mode .play-hide-note { display: none; }
+
+/* 앱 버전 스위처 (세그먼트 컨트롤) — 로그인 화면·프로필 공통 */
+.version-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin: 18px auto 0;
+    max-width: 340px;
+}
+.version-switcher button {
+    flex: 1 1 auto;
+    min-width: 70px;
+    padding: 7px 10px;
+    border: 1px solid #E0D6C4;
+    border-radius: 999px;
+    background: #FFFFFF;
+    color: #7A6A50;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.version-switcher button.active {
+    background: #FF8C00;
+    border-color: #FF8C00;
+    color: #FFFFFF;
+    box-shadow: 0 4px 10px rgba(255,140,0,0.25);
+}
+.version-switch-card .version-switcher { margin-top: 4px; }
+body.dark-mode .version-switcher button {
+    background: #2A2A2A;
+    border-color: #444;
+    color: #C9BCA6;
+}
+body.dark-mode .version-switcher button.active {
+    background: #FF8C00;
+    border-color: #FF8C00;
+    color: #FFFFFF;
+}
 body.play-mode #wallet-asset-hbt-item,
 body.play-mode #wallet-minichart,
 body.play-mode .wallet-asset-purpose:not(.play-only-note),

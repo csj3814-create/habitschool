@@ -58,6 +58,27 @@ describe('play (Google Play lite) mode', () => {
         expect(appCore).toContain('delete activeChallenges.master;');
     });
 
+    it('keeps a sticky play context so version switching in the TWA never reveals crypto', () => {
+        const appMode = readRepoFile('js/app-mode.js');
+        expect(appMode).toContain("const PLAY_CONTEXT_KEY = 'hs_play_context';");
+        expect(appMode).toContain('android-app://com.habitschool.app');
+        expect(appMode).toContain('sessionStorage.setItem(PLAY_CONTEXT_KEY');
+        // 블록체인 게이트도 sticky 세션 컨텍스트를 존중한다.
+        const main = readRepoFile('js/main.js');
+        expect(main).toContain("sessionStorage.getItem('hs_play_context') === '1'");
+        const appCore = readRepoFile('js/app-core.js');
+        expect(appCore).toContain("sessionStorage.getItem('hs_play_context') === '1'");
+    });
+
+    it('exposes a version switcher that maps to the four route paths', () => {
+        const appCore = readRepoFile('js/app-core.js');
+        expect(appCore).toContain("const APP_VERSION_PATHS = { ko: '/', simple: '/simple', en: '/en', app: '/app' };");
+        expect(appCore).toContain('window.switchAppVersion = function');
+        const html = readRepoFile('index.html');
+        expect(html).toContain('class="version-switcher"');
+        expect(html).toContain("switchAppVersion('app')");
+    });
+
     it('serves /app from the shared index via a hosting rewrite', () => {
         const firebase = JSON.parse(readRepoFile('firebase.json'));
         const rewrites = firebase.hosting[0].rewrites;

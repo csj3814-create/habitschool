@@ -5725,10 +5725,12 @@ let getCurrentEra = () => 1;
 let fetchTokenStats = async () => null;
 let fetchHbtTransferHistory = async () => [];
 let isBlockchainManagerReady = false;
-// 플레이 라이트 빌드(/app)에서는 블록체인 매니저를 로드하지 않는다(지갑 미생성).
+// 플레이 라이트 빌드에서는 블록체인 매니저를 로드하지 않는다(지갑 미생성).
 // 스텁(no-op)을 그대로 유지하므로 챌린지 진행·전환 등은 호출돼도 아무 일도 안 한다.
+// /app 경로 + TWA 진입(referrer) + 같은 TWA 세션 sticky(sessionStorage)를 모두 본다.
 const _playModeNoBlockchain = /^\/app(\/|$)/.test(location.pathname)
-    || String(document.referrer || '').startsWith('android-app://com.habitschool.app');
+    || String(document.referrer || '').startsWith('android-app://com.habitschool.app')
+    || (() => { try { return sessionStorage.getItem('hs_play_context') === '1'; } catch (_) { return false; } })();
 if (_playModeNoBlockchain) {
     console.log('ℹ️ 라이트 모드: 온체인 기능 비활성화');
 }
@@ -7722,6 +7724,41 @@ window.showKstBasisInfo = function () {
 };
 // 로그인 직후(auth.js)와 언어 전환 후 다시 그린다.
 window.updateKstBasisBadge = updateKstBasisBadge;
+
+// ===== 앱 버전 스위처 (ko / simple / en / app) =====
+// 로그인 화면·프로필에서 버전을 서로 전환한다. 플레이 앱(TWA) 세션에서는 sticky
+// 컨텍스트가 유지돼 어떤 버전을 골라도 온체인이 숨겨진 채로 뜬다(스토어 정책 준수).
+const APP_VERSION_PATHS = { ko: '/', simple: '/simple', en: '/en', app: '/app' };
+function currentAppVersionKey() {
+    const p = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+    if (p === '/app') return 'app';
+    if (p === '/en' || p === '/en/index.html') return 'en';
+    if (p === '/simple') return 'simple';
+    return 'ko';
+}
+window.switchAppVersion = function (version) {
+    const target = APP_VERSION_PATHS[version];
+    if (!target) return;
+    if (version === currentAppVersionKey()) return;
+    window.location.assign(target);
+};
+function renderVersionSwitchers() {
+    const cur = currentAppVersionKey();
+    document.querySelectorAll('.version-switcher').forEach((group) => {
+        group.querySelectorAll('[data-version]').forEach((btn) => {
+            const isActive = btn.getAttribute('data-version') === cur;
+            btn.classList.toggle('active', isActive);
+            if (isActive) btn.setAttribute('aria-current', 'true');
+            else btn.removeAttribute('aria-current');
+        });
+    });
+}
+window.renderVersionSwitchers = renderVersionSwitchers;
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderVersionSwitchers, { once: true });
+} else {
+    renderVersionSwitchers();
+}
 
 // EXIF DateTimeOriginal은 '촬영 기기의 현지 시간'이고 시간대 정보를 담지 않는다.
 // 이 값을 KST 기준 선택 날짜와 문자열로 곧장 비교하면, 한국이 아닌 곳(예: 캐나다)에서는

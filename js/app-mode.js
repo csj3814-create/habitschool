@@ -46,17 +46,36 @@ export function getRouteContext(pathname = getCurrentPathname()) {
     };
 }
 
-// 온체인 기능을 꺼야 하는가. TWA는 항상 /app에서 시작하고 해시 라우팅이라 경로가
-// 유지된다. 추가 방어로 안드로이드 TWA referrer도 본다(브라우저에서 /app을 직접 열어도
-// 라이트 모드로 동작하지만, 그건 의도된 동작이다).
-export function isPlayModeActive(pathname = getCurrentPathname()) {
-    if (getRouteContext(pathname).isPlay) return true;
+const PLAY_CONTEXT_KEY = 'hs_play_context';
+
+// TWA(안드로이드 앱)로 처음 열리면 android-app referrer가 온다. 그 순간 sessionStorage에
+// 표시해 두면, 같은 앱 세션에서 버전 스위처로 어떤 경로(/, /simple, /en)로 이동해도
+// 계속 '플레이 컨텍스트'로 남는다 → 앱 안에서는 절대 온체인이 노출되지 않는다.
+// sessionStorage는 탭/세션 단위라 사용자의 일반 크롬 사용에는 새지 않는다(웹은 영향 없음).
+function markPlayContextIfTwa() {
     try {
-        return typeof document !== 'undefined'
-            && String(document.referrer || '').startsWith('android-app://com.habitschool.app');
+        if (typeof document === 'undefined' || typeof sessionStorage === 'undefined') return;
+        if (String(document.referrer || '').startsWith('android-app://com.habitschool.app')) {
+            sessionStorage.setItem(PLAY_CONTEXT_KEY, '1');
+        }
+    } catch (_) {}
+}
+
+function hasStickyPlayContext() {
+    try {
+        return typeof sessionStorage !== 'undefined' && sessionStorage.getItem(PLAY_CONTEXT_KEY) === '1';
     } catch (_) {
         return false;
     }
+}
+
+// 온체인 기능을 꺼야 하는가. (1) /app 경로, (2) TWA 최초 진입(android-app referrer),
+// (3) 같은 TWA 세션에서 한 번이라도 그랬으면 유지(sticky). 웹에서 /app을 직접 열면
+// 라이트로 보이지만 sticky는 안 걸려, 다른 버전으로 나가면 정상 복귀한다(의도된 동작).
+export function isPlayModeActive(pathname = getCurrentPathname()) {
+    markPlayContextIfTwa();
+    if (getRouteContext(pathname).isPlay) return true;
+    return hasStickyPlayContext();
 }
 
 export function getLocale(pathname = getCurrentPathname()) {
@@ -156,7 +175,8 @@ export function applyAppModeChrome(doc = document) {
     const routeContext = getRouteContext(doc.defaultView?.location?.pathname || window.location.pathname);
     const simpleMode = routeContext.isSimple;
     const englishMode = routeContext.locale === ENGLISH_LOCALE;
-    const playMode = routeContext.isPlay;
+    // sticky 포함: TWA 세션이면 /가 아니어도(예: ko로 전환해도) 라이트 UI 유지.
+    const playMode = routeContext.isPlay || hasStickyPlayContext();
 
     doc.documentElement?.classList.toggle('simple-mode', simpleMode);
     doc.documentElement?.classList.toggle('locale-en', englishMode);
