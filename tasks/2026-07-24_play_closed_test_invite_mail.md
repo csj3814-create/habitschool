@@ -33,13 +33,14 @@
 홈 화면에 추가해야 했지요. 이제 **구글플레이 스토어에 정식 등록**하려 합니다.
 등록되면 이렇게 달라집니다.
 
-- 플레이스토어에서 "해빛스쿨"을 검색해 바로 설치
-- 다른 앱처럼 아이콘으로 실행 (주소창 없는 전체화면)
+- 링크로 바로 설치 (다른 앱처럼 아이콘으로 실행, 주소창 없는 전체화면)
 - 알림 수신이 더 안정적으로 동작
 - 업데이트가 자동으로 반영
 
-기록·포인트·HBT 등 **지금 쓰시던 내용은 그대로**입니다. 같은 계정으로 들어오시면
-데이터가 이어지고, 새로 가입하거나 옮기실 일은 없습니다.
+식단·운동·마음 **기록과 포인트·쿠폰은 앱에서 그대로** 쓰실 수 있습니다. 같은
+구글 계정으로 들어오시면 데이터가 이어지고, 새로 가입하실 일은 없습니다.
+(HBT 전환·지갑 기능은 스토어 정책상 앱에는 넣지 않았고, 지금처럼 **웹**
+`habitschool.web.app`에서 이용하시면 됩니다. 데이터는 앱과 웹이 같습니다.)
 
 ### 그런데 왜 도움이 필요한가요
 
@@ -54,16 +55,19 @@
 
 ### 참여 방법 (3분이면 됩니다)
 
-**1단계 — 테스터 등록**
+**1단계 — 테스터 등록 (opt-in)**
 아래 링크를 **이 메일을 받으신 구글 계정으로** 열어 주세요.
-🔗 {테스터_참여_링크}
+🔗 https://play.google.com/apps/testing/com.habitschool.app
 
 "테스터가 되기(Become a tester)"를 누르면 등록됩니다.
 ※ 반드시 해빛스쿨에 로그인할 때 쓰시는 그 구글 계정이어야 합니다.
+※ 검색으로는 안 나오고, 이 링크로만 참여할 수 있어요(비공개 테스트라서 그렇습니다).
 
 **2단계 — 앱 설치**
-같은 페이지에 뜨는 **플레이스토어 링크**로 들어가 설치해 주세요.
-검색으로는 찾을 수 없고, 이 링크로만 보입니다(비공개 테스트라서 그렇습니다).
+1단계에서 "테스터 되기"를 누른 뒤, 아래 스토어 링크로 설치해 주세요.
+🔗 https://play.google.com/store/apps/details?id=com.habitschool.app
+(테스터로 등록된 계정에서만 설치 버튼이 보입니다. "이런 앱을 찾을 수 없다"고
+나오면 1단계 등록이 아직 반영 전이니 몇 분 뒤 다시 눌러 주세요.)
 
 **3단계 — 평소처럼 사용**
 설치한 앱으로 로그인하시고, 하시던 대로 식단·운동·마음을 기록해 주세요.
@@ -83,8 +87,9 @@
 
 ### 참고
 
-- 테스트 기간에도 **포인트와 HBT는 평소와 똑같이** 적립됩니다.
-- 웹앱도 계속 쓰실 수 있습니다. 둘 중 편한 쪽을 쓰시면 되고, 데이터는 같습니다.
+- 테스트 기간에도 **포인트·쿠폰은 평소와 똑같이** 쌓이고 쓰실 수 있습니다.
+- **HBT 전환·지갑**은 앱에는 없습니다. 필요하시면 **웹**(`habitschool.web.app`)에서
+  그대로 이용하세요. 앱과 웹은 같은 계정·같은 데이터입니다.
 - 부담되시면 언제든 그만두셔도 됩니다. 회신 한 줄이면 됩니다.
 - iPhone을 쓰시는 분은 이번 테스트 대상이 아닙니다(플레이스토어는 안드로이드 전용).
   아이폰은 지금처럼 홈 화면에 추가해 쓰시면 됩니다.
@@ -119,9 +124,13 @@ normally would. Nothing else is required.
 **How to join (about 3 minutes)**
 
 1. **Become a tester** — open this link with the Google account this email was
-   sent to: 🔗 {tester_opt_in_link}, then tap "Become a tester."
-2. **Install** — use the Play Store link on that same page. The app will not
-   appear in search, only through this link, because the test is private.
+   sent to: 🔗 https://play.google.com/apps/testing/com.habitschool.app , then
+   tap "Become a tester." It won't show up in search — only this link works.
+2. **Install** — after opting in, install from:
+   🔗 https://play.google.com/store/apps/details?id=com.habitschool.app
+   (The install button only appears for accounts registered as testers. If it
+   says the app isn't available, your opt-in hasn't propagated yet — retry in a
+   few minutes.)
 3. **Use it as usual** — sign in and keep logging your food, exercise, and mind.
    The most helpful thing is to **keep the app installed for two weeks**.
 
@@ -129,9 +138,11 @@ normally would. Nothing else is required.
 notifications misbehave, or the layout breaks. Mentioning your device and
 Android version helps us fix it much faster.
 
-**Notes.** Points and HBT accrue exactly as usual during the test. The web app
-keeps working, and both share the same data. You can stop any time — just reply.
-This test is Android only; on iPhone, keep using the home-screen web app.
+**Notes.** Points and coupons work exactly as usual during the test. HBT
+conversion and the wallet are not in the app (Play policy); use them on the web
+at habitschool.web.app — the app and web share the same account and data. You
+can stop any time — just reply. This test is Android only; on iPhone, keep using
+the home-screen web app.
 
 A day in Habit School follows Korea time (KST), so dates may differ from your
 local ones — that is expected, and photo capture times are converted for you.
@@ -147,8 +158,11 @@ Contact: csj3814@gmail.com
 
 - [x] 관제탑 콘솔에서 `adminListActiveUserEmails(30, 3)` 실행 → 40명 확인
 - [x] 12명 요건 대비 여유 확인 (40명 대상 → 목표 opt-in 15~18명)
-- [ ] 플레이 콘솔 → 비공개 테스트 → 테스터 목록에 이메일 등록
-- [ ] `{테스터_참여_링크}`를 실제 opt-in URL로 교체
+- [x] 플레이 콘솔 → 비공개 테스트 → 테스터 목록에 40명 등록
+- [x] opt-in 링크 확정: https://play.google.com/apps/testing/com.habitschool.app
+- [x] 설치 링크 확정: https://play.google.com/store/apps/details?id=com.habitschool.app
+- [ ] 검토 통과(앱 상태 '비공개 테스트' 게시 완료) 후 발송
 - [ ] `{이름}` 개인화 (또는 "회원님"으로 일괄 대체)
-- [ ] 본인 계정으로 링크 열어 실제 설치까지 되는지 먼저 확인
-- [ ] 설치본이 주소창 없이 전체화면으로 뜨는지 확인 (assetlinks 검증)
+- [ ] 본인 계정으로 opt-in → 설치까지 되는지 먼저 확인 (대시보드 "참여 테스터" 0→1)
+- [ ] 설치본이 주소창 없이 전체화면으로 뜨는지 확인 (assetlinks)
+- [ ] 라이트 앱 로그인 화면에 의료 면책 문구 표시 확인
