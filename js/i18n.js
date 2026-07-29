@@ -93,7 +93,8 @@ const MESSAGES = {
         'profile.notificationDefault': 'Turn on reminders for check-ins and progress nudges.',
         'profile.notificationDenied': 'Notifications are blocked in your browser settings.',
         'profile.notificationUnsupported': 'This browser does not support push notifications.',
-        'profile.notificationInstallRequired': 'Install Habit School to your home screen first on iPhone/iPad.'
+        'profile.notificationInstallRequired': 'Install Habit School to your home screen first on iPhone/iPad.',
+        'disclaimer.medical': 'Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.'
     }
 };
 
