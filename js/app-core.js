@@ -15199,25 +15199,44 @@ async function saveWeeklyMissions() {
             return;
         }
 
-        // 첫 미션 배지 체크
+        // 첫 미션 배지 체크. 배지는 비필수라, 읽기가 느리거나 실패하면 미션 저장을
+        // 막지 말고 배지만 이번엔 건드리지 않는다(기존 배지 보존).
         const userRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userRef);
-        let existingBadges = [];
-        if (userDoc.exists() && userDoc.data().missionBadges) {
-            existingBadges = userDoc.data().missionBadges;
-        }
-        if (!existingBadges.includes('firstMission')) {
-            existingBadges = [...existingBadges, 'firstMission'];
+        let existingBadges = null;
+        try {
+            const userDoc = await withAsyncTimeout(getDoc(userRef), 8000, 'mission_badge_read_timeout');
+            existingBadges = (userDoc.exists() && Array.isArray(userDoc.data().missionBadges))
+                ? userDoc.data().missionBadges
+                : [];
+        } catch (_) {
+            existingBadges = null; // 읽기 실패 → missionBadges는 이번 쓰기에서 제외
         }
 
-        await setDoc(userRef, {
+        const missionPayload = {
             weeklyMissionData: {
                 weekId: currentWeekId,
                 missions: missions
             },
-            missionBadges: existingBadges,
             missionLevelUpDate: deleteField()
-        }, { merge: true });
+        };
+        if (existingBadges !== null) {
+            missionPayload.missionBadges = existingBadges.includes('firstMission')
+                ? existingBadges
+                : [...existingBadges, 'firstMission'];
+        }
+
+        // 쓰기는 타임아웃 후 1회 재시도(오늘처럼 일시적으로 느린 연결 대비).
+        const writeMissions = () => withRejectingTimeout(
+            setDoc(userRef, missionPayload, { merge: true }),
+            15000,
+            'mission_save_timeout'
+        );
+        try {
+            await writeMissions();
+        } catch (writeErr) {
+            await new Promise(r => setTimeout(r, 1200));
+            await writeMissions();
+        }
 
         pendingCustomMissions = [];
         _customMissionComposerOpen = false;
@@ -15228,7 +15247,7 @@ async function saveWeeklyMissions() {
         if (firstMissionTab) openWeeklyMissionRecord(firstMissionTab, { trackStart: true });
     } catch (error) {
         console.error('미션 저장 오류:', error);
-        showToast('⚠️ 미션 저장에 실패했습니다.');
+        showToast('⚠️ 연결이 불안정해 미션 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
     }
 }
 
