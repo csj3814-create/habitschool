@@ -9,11 +9,81 @@ export const DIET_PROGRAM_METHOD_IDS = Object.freeze({
 });
 
 export const DIET_PROGRAM_FASTING_PRESET = '16_8_1200_2000';
-export const DIET_PROGRAM_EATING_WINDOW = Object.freeze({
-    startMinutes: 12 * 60,
-    warningMinutes: (19 * 60) + 30,
-    endMinutes: 20 * 60
-});
+
+// 식사 창은 사용자가 바꿀 수 있다. 저장 위치는 기존 필드
+// programPreferences.diet.fastingPreset 하나이며, 형식은 레거시 값과 호환되게
+// `{단식h}_{식사h}_{시작HHMM}_{종료HHMM}`을 유지한다(파서는 마지막 두 세그먼트만 신뢰).
+// 이 필드는 firestore.rules에 이미 허용돼 있어 규칙 변경이 필요 없다.
+export const DIET_PROGRAM_WINDOW_STEP_MINUTES = 30;
+export const DIET_PROGRAM_MIN_WINDOW_MINUTES = 4 * 60;
+
+// 메서드별 기본 창. 설정을 한 번도 바꾸지 않은 사용자의 알림 시각이 기존과 완전히
+// 같아지도록 현재 동작(간헐적 단식 12:00·19:30 / 그 외 11:30·17:30)에 맞춘 값이다.
+const FASTING_DEFAULT_WINDOW = Object.freeze({ startMinutes: 12 * 60, endMinutes: 20 * 60 });
+const GENERAL_DEFAULT_WINDOW = Object.freeze({ startMinutes: (11 * 60) + 30, endMinutes: 18 * 60 });
+
+export function getDefaultEatingWindow(methodId = '') {
+    return methodId === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING
+        ? FASTING_DEFAULT_WINDOW
+        : GENERAL_DEFAULT_WINDOW;
+}
+
+export function formatWindowLabel(totalMinutes = 0) {
+    const safe = Math.max(0, Math.min(24 * 60, Math.round(Number(totalMinutes) || 0)));
+    const hour = Math.floor(safe / 60);
+    const minute = safe % 60;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function parseHhmmSegment(segment = '') {
+    const digits = String(segment || '').trim();
+    if (!/^\d{3,4}$/.test(digits)) return null;
+    const padded = digits.padStart(4, '0');
+    const hour = Number(padded.slice(0, 2));
+    const minute = Number(padded.slice(2));
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+    if (hour > 23 || minute > 59) return null;
+    return (hour * 60) + minute;
+}
+
+// 잘못된 값에서도 절대 throw하지 않는다. 실패하면 null을 주고 호출부가 기본값으로 폴백한다.
+export function parseEatingWindowPreset(preset = '') {
+    const parts = String(preset || '').trim().split('_');
+    if (parts.length < 2) return null;
+    const startMinutes = parseHhmmSegment(parts[parts.length - 2]);
+    const endMinutes = parseHhmmSegment(parts[parts.length - 1]);
+    if (startMinutes === null || endMinutes === null) return null;
+    if (endMinutes - startMinutes < DIET_PROGRAM_MIN_WINDOW_MINUTES) return null;
+    return { startMinutes, endMinutes };
+}
+
+// 사용자가 직접 저장한 창은 레거시 센티넬(`16_8_1200_2000`)과 구분되도록 `win_` 형식으로 쓴다.
+// 그래야 비단식 사용자가 12:00~20:00을 고르더라도 '미설정'으로 오해되지 않는다.
+export function buildEatingWindowPreset(startMinutes = 0, endMinutes = 0) {
+    const hhmm = (minutes) => formatWindowLabel(minutes).replace(':', '');
+    return `win_${hhmm(startMinutes)}_${hhmm(endMinutes)}`;
+}
+
+// 안내 문구·단계 판정·알림이 모두 이 함수 하나를 기준으로 움직인다.
+export function resolveEatingWindow(dietPreferences = null, methodId = '') {
+    const resolvedMethodId = methodId
+        || resolveDietProgramMethodId(dietPreferences?.methodId || '');
+    const fallback = getDefaultEatingWindow(resolvedMethodId);
+    const raw = typeof dietPreferences?.fastingPreset === 'string'
+        ? dietPreferences.fastingPreset.trim()
+        : '';
+    // 레거시 고정값은 앱이 항상 써 온 값이라 사용자 선택으로 볼 수 없다 → 메서드 기본 창 사용.
+    // (이 구분이 없으면 기존 비단식 사용자의 알림이 11:30→12:00으로 밀린다.)
+    const parsed = raw && raw !== DIET_PROGRAM_FASTING_PRESET
+        ? parseEatingWindowPreset(raw)
+        : null;
+    const window = parsed || fallback;
+    return {
+        startMinutes: window.startMinutes,
+        warningMinutes: Math.max(window.startMinutes, window.endMinutes - 30),
+        endMinutes: window.endMinutes
+    };
+}
 
 const METHOD_CATALOG = Object.freeze([
     {
@@ -84,15 +154,18 @@ const METHOD_CATALOG = Object.freeze([
     {
         id: DIET_PROGRAM_METHOD_IDS.SWITCH_ON,
         displayOrder: 5,
-        name: '스위치온 다이어트',
+        // 표시명은 일반명사로 둔다. 앱에는 특정 도서의 3주 프로토콜 로직이 없고,
+        // '대사 회복·체질 개선' 같은 효능 주장도 하지 않는다. 내부 ID는 기존 사용자
+        // 데이터·firestore.rules 호환을 위해 switch_on을 유지한다.
+        name: '단기 집중 식단',
         difficultyLabel: '도전',
-        summary: '3주간 대사 회복 및 체질 개선',
-        mealGuide: '3주간 대사 회복 및 체질 개선',
-        dashboardTip: '3주간 대사 회복 및 체질 개선',
+        summary: '짧게 집중해서 식습관을 다시 잡는 방법',
+        mealGuide: '짧게 집중해서 식습관을 다시 잡는 방법',
+        dashboardTip: '짧게 집중해서 식습관을 다시 잡는 방법',
         exerciseSupportTip: '초기엔 가볍게 시작하세요.',
         mindSleepSupportTip: '생활 리듬부터 지켜보세요.',
         reminderPlan: '11:30·17:30',
-        cautionText: ''
+        cautionText: '특정 도서·프로그램과 무관한 해빛스쿨 자체 안내입니다.'
     }
 ]);
 
@@ -154,32 +227,37 @@ function getMealProgressLabel(dailyLog = {}) {
     return slots.filter((slot) => hasMealPhoto(dailyLog, slot)).length;
 }
 
-function getIntermittentFastingPhase(nowMs = Date.now()) {
+function getIntermittentFastingPhase(nowMs = Date.now(), dietPreferences = null) {
     const { totalMinutes } = getKstClock(nowMs);
-    if (totalMinutes < DIET_PROGRAM_EATING_WINDOW.startMinutes) {
+    // 사용자가 설정한 창을 그대로 쓴다. 설정이 없으면 메서드 기본값(12:00~20:00).
+    const window = resolveEatingWindow(dietPreferences, DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING);
+    const startLabel = formatWindowLabel(window.startMinutes);
+    const endLabel = formatWindowLabel(window.endMinutes);
+
+    if (totalMinutes < window.startMinutes) {
         return {
             key: 'fasting',
             label: '공복',
             status: '공복 시간이에요.',
-            helper: '식사 시간은 12:00~20:00예요.'
+            helper: `식사 시간은 ${startLabel}~${endLabel}예요.`
         };
     }
 
-    if (totalMinutes < DIET_PROGRAM_EATING_WINDOW.warningMinutes) {
+    if (totalMinutes < window.warningMinutes) {
         return {
             key: 'eating',
             label: '식사 중',
             status: '지금은 식사 시간이에요.',
-            helper: '20:00 전에 마무리해보세요.'
+            helper: `${endLabel} 전에 마무리해보세요.`
         };
     }
 
-    if (totalMinutes < DIET_PROGRAM_EATING_WINDOW.endMinutes) {
+    if (totalMinutes < window.endMinutes) {
         return {
             key: 'closing',
             label: '마감 임박',
             status: '식사 마감이 가까워졌어요.',
-            helper: '20:00 전에 마무리해보세요.'
+            helper: `${endLabel} 전에 마무리해보세요.`
         };
     }
 
@@ -196,15 +274,16 @@ function buildSelectedMethodGuideState(meta, {
     dateStr = '',
     todayStr = '',
     nowMs = Date.now()
-} = {}) {
+} = {}, dietPreferences = null) {
     if (meta.id === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING) {
         const isToday = !!dateStr && !!todayStr && dateStr === todayStr;
+        const window = resolveEatingWindow(dietPreferences, meta.id);
         const phase = isToday
-            ? getIntermittentFastingPhase(nowMs)
+            ? getIntermittentFastingPhase(nowMs, dietPreferences)
             : {
                 key: 'preset',
                 label: '16:8',
-                status: '식사 시간은 12:00~20:00예요.',
+                status: `식사 시간은 ${formatWindowLabel(window.startMinutes)}~${formatWindowLabel(window.endMinutes)}예요.`,
                 helper: '기록은 자유롭게 남길 수 있어요.'
             };
 
@@ -243,10 +322,16 @@ export function normalizeDietProgramPreferences(rawDietPreferences = null) {
         methodId,
         remindersEnabled: methodId === DIET_PROGRAM_METHOD_IDS.NONE ? false : source.remindersEnabled === true,
         activatedAt: typeof source.activatedAt === 'string' ? source.activatedAt : '',
-        fastingPreset: typeof source.fastingPreset === 'string' && source.fastingPreset.trim()
-            ? source.fastingPreset
-            : DIET_PROGRAM_FASTING_PRESET
+        // 형식이 깨진 값은 메서드 기본 창으로 정규화한다(파싱은 절대 throw하지 않음).
+        fastingPreset: resolveStoredWindowPreset(source.fastingPreset)
     };
+}
+
+function resolveStoredWindowPreset(rawPreset = '') {
+    const raw = typeof rawPreset === 'string' ? rawPreset.trim() : '';
+    if (raw && parseEatingWindowPreset(raw)) return raw;
+    // 레거시 상수는 '사용자가 직접 설정하지 않음'을 뜻하는 센티넬로 남긴다.
+    return DIET_PROGRAM_FASTING_PRESET;
 }
 
 export function normalizeDietProgramEnvelope(rawProgramPreferences = null) {
@@ -265,7 +350,16 @@ export function buildDietProgramGuideState(dietPreferences = null, options = {})
     }
 
     const meta = getDietProgramMethodMeta(normalized.methodId);
-    return buildSelectedMethodGuideState(meta, options);
+    return buildSelectedMethodGuideState(meta, options, normalized);
+}
+
+// 알림 시각은 창에서 파생한다: 시작 알림 = 창 시작, 마감 임박 알림 = 창 종료 − 30분.
+// 카탈로그의 reminderPlan 하드코딩 대신 이 값을 표시한다.
+export function getDietProgramReminderPlanLabel(dietPreferences = null) {
+    const normalized = normalizeDietProgramPreferences(dietPreferences);
+    if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) return '알림 없음';
+    const window = resolveEatingWindow(normalized, normalized.methodId);
+    return `${formatWindowLabel(window.startMinutes)}·${formatWindowLabel(window.warningMinutes)}`;
 }
 
 export function buildDietProgramDashboardSummary(dietPreferences = null, {
@@ -302,7 +396,9 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
         chipLabel: `${meta.name} · ${meta.difficultyLabel}`,
         summaryLine: guideState.status,
         supportTip: '',
-        reminderLine: normalized.remindersEnabled ? meta.reminderPlan : '방법 알림은 현재 꺼져 있어요.'
+        reminderLine: normalized.remindersEnabled
+            ? getDietProgramReminderPlanLabel(normalized)
+            : '방법 알림은 현재 꺼져 있어요.'
     };
 }
 
@@ -339,6 +435,6 @@ export function getDietProgramKstClock(nowMs = Date.now()) {
     return getKstClock(nowMs);
 }
 
-export function getDietProgramIntermittentFastingPhase(nowMs = Date.now()) {
-    return getIntermittentFastingPhase(nowMs);
+export function getDietProgramIntermittentFastingPhase(nowMs = Date.now(), dietPreferences = null) {
+    return getIntermittentFastingPhase(nowMs, dietPreferences);
 }

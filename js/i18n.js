@@ -94,7 +94,32 @@ const MESSAGES = {
         'profile.notificationDenied': 'Notifications are blocked in your browser settings.',
         'profile.notificationUnsupported': 'This browser does not support push notifications.',
         'profile.notificationInstallRequired': 'Install Habit School to your home screen first on iPhone/iPad.',
-        'disclaimer.medical': 'Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.'
+        'disclaimer.medical': 'Habit School helps you build healthy lifestyle habits and does not provide medical advice, diagnosis, or treatment. Its diet analysis, health scores, and other features are for reference only and are not a substitute for professional medical judgment. Always consult a qualified healthcare professional about your health, symptoms, or any diet or exercise plan.',
+        // 식단 방법 이름·설명. 키에는 내부 ID를 그대로 쓴다(표시명과 분리).
+        // 키가 없으면 t()가 한국어 원문으로 폴백한다.
+        'diet.method.brown_rice_green_veggies.name': 'Brown Rice & Greens',
+        'diet.method.brown_rice_green_veggies.summary': 'Whole grains and vegetables as your base',
+        'diet.method.mediterranean.name': 'Mediterranean',
+        'diet.method.mediterranean.summary': 'Olive oil and fish for heart health',
+        'diet.method.low_carb.name': 'Low-Carb High-Protein',
+        'diet.method.low_carb.summary': 'Fewer carbs, more protein for muscle and fullness',
+        'diet.method.intermittent_fasting.name': '16:8 Intermittent Fasting',
+        'diet.method.intermittent_fasting.summary': 'A daily fasting window to support fat loss',
+        'diet.method.switch_on.name': 'Short Focused Plan',
+        'diet.method.switch_on.summary': 'A short, focused reset for your eating habits',
+        'diet.method.switch_on.caution': 'Habit School’s own guidance, unrelated to any specific book or program.',
+        'diet.method.difficulty.기본': 'Basic',
+        'diet.method.difficulty.쉬움': 'Easy',
+        'diet.method.difficulty.보통': 'Moderate',
+        'diet.method.difficulty.도전': 'Challenging',
+        'diet.window.title': 'My eating window',
+        'diet.window.save': 'Save',
+        'diet.window.needMethod': 'Choose a food method first to set your eating window.',
+        'diet.window.helper': 'Guidance and reminders follow the times you set. Reminders: {plan}',
+        'diet.window.saved': '✅ Eating window saved: {start}–{end}.',
+        'diet.window.stepError': 'Please pick times in 30-minute steps.',
+        'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
+        'diet.window.invalid': 'Please check the times again.'
     }
 };
 

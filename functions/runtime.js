@@ -79,6 +79,12 @@ const {
     reconcileChallengeCompletionWithDailyLogs,
 } = require("./challenge-utils");
 const {
+    resolveDietEatingWindow,
+    formatDietWindowLabel,
+    toReminderBucketMinutes,
+    resolveDietReminderKindAt,
+} = require("./diet-window-utils");
+const {
     buildRewardMarketConfig,
     buildRewardMarketSnapshot,
     redeemRewardCoupon: redeemRewardCouponFlow,
@@ -7872,7 +7878,10 @@ function normalizeDietProgramPreference(userData = {}) {
     const normalizedMethodId = methodId || DIET_PROGRAM_METHOD_IDS.NONE;
     return {
         methodId: normalizedMethodId,
-        remindersEnabled: rawDietPreference.remindersEnabled === true
+        remindersEnabled: rawDietPreference.remindersEnabled === true,
+        fastingPreset: typeof rawDietPreference.fastingPreset === "string"
+            ? rawDietPreference.fastingPreset.trim()
+            : ""
     };
 }
 
@@ -7894,7 +7903,8 @@ async function getDailyLogMapForUsers(userIds = [], dateStr = "") {
     return logMap;
 }
 
-async function getDietReminderEligibleUsers({ intermittentFasting = false } = {}) {
+// 알림을 켠 모든 방법 사용자를 한 번에 가져온다(창 계산은 사용자별로 한다).
+async function getDietReminderEligibleUsers() {
     const usersSnap = await db.collection("users")
         .where("programPreferences.diet.remindersEnabled", "==", true)
         .select("programPreferences")
@@ -7905,18 +7915,12 @@ async function getDietReminderEligibleUsers({ intermittentFasting = false } = {}
             uid: snap.id,
             preference: normalizeDietProgramPreference(snap.data() || {})
         }))
-        .filter(({ preference }) => {
-            if (!preference.remindersEnabled) return false;
-            if (intermittentFasting) {
-                return preference.methodId === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING;
-            }
-            return preference.methodId !== DIET_PROGRAM_METHOD_IDS.NONE
-                && preference.methodId !== DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING;
-        });
+        .filter(({ preference }) => preference.remindersEnabled
+            && preference.methodId !== DIET_PROGRAM_METHOD_IDS.NONE);
 }
 
 async function sendDietProgramReminder({
-    intermittentFasting = false,
+    userIds = [],
     slot = "",
     title = "",
     titleEn = "",
@@ -7926,13 +7930,12 @@ async function sendDietProgramReminder({
     focus = "upload"
 } = {}) {
     const todayKST = getTodayKST();
-    const eligibleUsers = await getDietReminderEligibleUsers({ intermittentFasting });
-    if (eligibleUsers.length === 0) {
+    const eligibleUserIds = [...new Set((userIds || []).filter(Boolean))];
+    if (eligibleUserIds.length === 0) {
         console.log(`${tag}: no eligible users`);
         return 0;
     }
 
-    const eligibleUserIds = eligibleUsers.map((entry) => entry.uid);
     const logMap = await getDailyLogMapForUsers(eligibleUserIds, todayKST);
     const targetUserIds = eligibleUserIds.filter((uid) => {
         if (!slot) return true;
@@ -8289,56 +8292,77 @@ exports.sendStreakAlert = onSchedule(
     }
 );
 
-exports.sendDietProgramLunchReminder = onSchedule(
-    { schedule: "30 2 * * *", region: "asia-northeast3", timeZone: "UTC" },
-    async () => sendDietProgramReminder({
-        slot: "lunch",
-        title: "점심 전에 식단 방법을 떠올려볼까요?",
-        titleEn: "Quick meal-method check before lunch",
-        body: "선택한 식단 방법에 맞춰 이번 식사를 준비해보세요.",
-        bodyEn: "Use your selected food method to prepare this meal.",
-        tag: "diet-program-pre-lunch",
-        focus: "lunch"
-    })
-);
+// 식단 방법 알림 — 고정 시각 cron 4개를 대체한다.
+// 30분마다 돌면서 각 사용자가 설정한 식사 창에 맞춰 보낸다(시작 / 종료 30분 전).
+// 창을 설정하지 않은 사용자는 메서드 기본값이 적용되어 기존과 같은 시각에 받는다
+// (간헐적 단식 12:00·19:30, 그 외 11:30·17:30).
+exports.sendDietProgramWindowReminders = onSchedule(
+    { schedule: "0,30 * * * *", region: "asia-northeast3", timeZone: "UTC" },
+    async () => {
+        const nowKst = new Date(Date.now() + (9 * 60 * 60 * 1000));
+        const nowMinutes = (nowKst.getUTCHours() * 60) + nowKst.getUTCMinutes();
+        // 30분 버킷으로 정렬(스케줄 지연으로 :01, :31에 실행돼도 매칭되게).
+        const bucketMinutes = toReminderBucketMinutes(nowMinutes);
 
-exports.sendDietProgramDinnerReminder = onSchedule(
-    { schedule: "30 8 * * *", region: "asia-northeast3", timeZone: "UTC" },
-    async () => sendDietProgramReminder({
-        slot: "dinner",
-        title: "저녁 전에 식단 방법을 한번 더 체크해볼까요?",
-        titleEn: "One more meal-method check before dinner",
-        body: "오늘 저녁도 선택한 식단 방법 흐름에 맞춰 준비해보세요.",
-        bodyEn: "Keep tonight’s dinner aligned with the food method you chose.",
-        tag: "diet-program-pre-dinner",
-        focus: "dinner"
-    })
-);
+        const eligibleUsers = await getDietReminderEligibleUsers();
+        if (eligibleUsers.length === 0) {
+            console.log(`diet-program-window[${bucketMinutes}]: no eligible users`);
+            return;
+        }
 
-exports.sendDietProgramFastingStartReminder = onSchedule(
-    { schedule: "0 3 * * *", region: "asia-northeast3", timeZone: "UTC" },
-    async () => sendDietProgramReminder({
-        intermittentFasting: true,
-        title: "간헐적 단식 식사 시간이 열렸어요",
-        titleEn: "Your intermittent-fasting eating window is open",
-        body: "12:00부터 20:00까지 식사할 수 있어요. 첫 식사는 단백질과 채소부터 시작해보세요.",
-        bodyEn: "You can eat from 12:00 to 20:00. Try starting with protein and vegetables.",
-        tag: "diet-program-fasting-start",
-        focus: "lunch"
-    })
-);
+        const startUsers = [];
+        const closeUsers = [];
+        eligibleUsers.forEach((entry) => {
+            const kind = resolveDietReminderKindAt(entry.preference, bucketMinutes);
+            if (kind === "start") startUsers.push(entry);
+            else if (kind === "close") closeUsers.push(entry);
+        });
 
-exports.sendDietProgramFastingClosingReminder = onSchedule(
-    { schedule: "30 10 * * *", region: "asia-northeast3", timeZone: "UTC" },
-    async () => sendDietProgramReminder({
-        intermittentFasting: true,
-        title: "오늘 식사 창 마감이 가까워졌어요",
-        titleEn: "Your eating window is closing soon",
-        body: "지금은 19:30이에요. 20:00 전에 식사를 마무리해보세요.",
-        bodyEn: "It is 19:30 now. Try to finish eating before 20:00.",
-        tag: "diet-program-fasting-close",
-        focus: "dinner"
-    })
+        if (startUsers.length === 0 && closeUsers.length === 0) {
+            console.log(`diet-program-window[${bucketMinutes}]: nothing scheduled`);
+            return;
+        }
+
+        // 창 값이 사용자마다 다르므로 본문 시각도 사용자별로 만든다 → 같은 창끼리 묶어 발송.
+        const groupByWindow = (entries) => {
+            const groups = new Map();
+            entries.forEach((entry) => {
+                const window = resolveDietEatingWindow(entry.preference);
+                const key = `${window.startMinutes}_${window.endMinutes}`;
+                if (!groups.has(key)) groups.set(key, { window, uids: [] });
+                groups.get(key).uids.push(entry.uid);
+            });
+            return [...groups.values()];
+        };
+
+        for (const { window, uids } of groupByWindow(startUsers)) {
+            const startLabel = formatDietWindowLabel(window.startMinutes);
+            const endLabel = formatDietWindowLabel(window.endMinutes);
+            await sendDietProgramReminder({
+                userIds: uids,
+                title: "식사 시간이 열렸어요",
+                titleEn: "Your eating window is open",
+                body: `${startLabel}부터 ${endLabel}까지 식사할 수 있어요. 첫 식사는 단백질과 채소부터 시작해보세요.`,
+                bodyEn: `You can eat from ${startLabel} to ${endLabel}. Try starting with protein and vegetables.`,
+                tag: "diet-program-window-start",
+                focus: "lunch"
+            });
+        }
+
+        for (const { window, uids } of groupByWindow(closeUsers)) {
+            const endLabel = formatDietWindowLabel(window.endMinutes);
+            await sendDietProgramReminder({
+                userIds: uids,
+                slot: "dinner",
+                title: "오늘 식사 마감이 가까워졌어요",
+                titleEn: "Your eating window is closing soon",
+                body: `${endLabel} 전에 식사를 마무리해보세요.`,
+                bodyEn: `Try to finish eating before ${endLabel}.`,
+                tag: "diet-program-window-close",
+                focus: "dinner"
+            });
+        }
+    }
 );
 
 /**

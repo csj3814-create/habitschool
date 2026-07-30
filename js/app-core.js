@@ -86,14 +86,20 @@ import { addCalendarDays, calculateActivityStreak, countActiveDays } from './act
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
+    DIET_PROGRAM_MIN_WINDOW_MINUTES,
+    DIET_PROGRAM_WINDOW_STEP_MINUTES,
     buildDietProgramDashboardSummary,
     buildDietProgramGuideState,
+    buildEatingWindowPreset,
+    formatWindowLabel,
     getDietProgramAnalysisTip,
     getDietProgramMethodMeta,
+    getDietProgramReminderPlanLabel,
     getDietProgramReminderToggleCopy,
     isDietProgramMethodActive,
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
+    resolveEatingWindow,
     normalizeDietProgramPreferences
 } from './diet-program.js?v=262';
 import {
@@ -740,11 +746,12 @@ async function trackActivationMilestoneAfterSave({ user, selectedDateStr, saveDa
     return sent;
 }
 
+// 슬롯 라벨은 시간(아침·점심)이 아니라 순서로 표기한다 — index.html의 '① 첫 번째 식사'와 일치.
 const DIET_CATEGORY_LABELS = {
     breakfast: '첫 식사',
     lunch: '두 번째 식사',
     dinner: '세 번째 식사',
-    snack: '간식'
+    snack: '네 번째 식사'
 };
 let _shareSettingsDraft = getDefaultShareSettings();
 let _shareSettingsPersistTimer = null;
@@ -1194,6 +1201,26 @@ function renderDietProgramDashboardSummary() {
     };
 }
 
+// 식단 방법 표시 문구의 로케일 처리. 한국어에서는 t()가 키를 그대로 반환하므로
+// 원문(카탈로그 값)으로 폴백한다 → /en에서만 영어로 바뀐다.
+function localizeDietMethodText(methodId = '', field = 'name', fallback = '') {
+    const key = `diet.method.${methodId}.${field}`;
+    const translated = t(key);
+    return translated && translated !== key ? translated : fallback;
+}
+
+function localizeDietDifficulty(label = '') {
+    const key = `diet.method.difficulty.${label}`;
+    const translated = t(key);
+    return translated && translated !== key ? translated : label;
+}
+
+function localizeDietWindowCopy(key = '', params = {}, fallback = '') {
+    const fullKey = `diet.window.${key}`;
+    const translated = t(fullKey, params);
+    return translated && translated !== fullKey ? translated : fallback;
+}
+
 function renderDietProgramProfileCard() {
     const nameEl = document.getElementById('diet-program-current-name');
     const summaryEl = document.getElementById('diet-program-current-summary');
@@ -1209,36 +1236,71 @@ function renderDietProgramProfileCard() {
     const hasMethod = isDietProgramMethodActive(dietPreferences);
 
     nameEl.textContent = hasMethod
-        ? `${meta.name} · ${meta.difficultyLabel}`
+        ? `${localizeDietMethodText(meta.id, 'name', meta.name)} · ${localizeDietDifficulty(meta.difficultyLabel)}`
         : '식단 방법을 골라보세요.';
     summaryEl.textContent = hasMethod
-        ? meta.summary
+        ? localizeDietMethodText(meta.id, 'summary', meta.summary)
         : '가이드가 바뀌어요.';
     supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';
     supportEl.hidden = hasMethod || !supportEl.textContent;
     helperEl.textContent = getDietProgramReminderToggleCopy(dietPreferences, pushState);
     selectBtn.textContent = hasMethod ? '방법 바꾸기' : '방법 선택';
     setDietProgramToggleChecked(toggleEl, hasMethod && dietPreferences.remindersEnabled, !hasMethod);
+    renderDietEatingWindowControls(dietPreferences, hasMethod);
+}
+
+// '내 식사 시간대' 입력. 방법을 고르지 않았으면 비활성화하고, 알림 시각도 함께 보여준다.
+function renderDietEatingWindowControls(dietPreferences = null, hasMethod = false) {
+    const row = document.getElementById('diet-eating-window-row');
+    const startEl = document.getElementById('diet-eating-window-start');
+    const endEl = document.getElementById('diet-eating-window-end');
+    const saveBtn = document.getElementById('diet-eating-window-save');
+    const helperEl = document.getElementById('diet-eating-window-helper');
+    if (!row || !startEl || !endEl || !saveBtn || !helperEl) return;
+
+    const window_ = resolveEatingWindow(dietPreferences, dietPreferences?.methodId || '');
+    // 사용자가 입력 중인 값을 덮어쓰지 않는다(포커스가 있으면 그대로 둔다).
+    if (document.activeElement !== startEl) startEl.value = formatWindowLabel(window_.startMinutes);
+    if (document.activeElement !== endEl) endEl.value = formatWindowLabel(window_.endMinutes);
+
+    startEl.disabled = !hasMethod;
+    endEl.disabled = !hasMethod;
+    saveBtn.disabled = !hasMethod;
+
+    const headEl = document.getElementById('diet-eating-window-head');
+    if (headEl) headEl.textContent = `🍽️ ${localizeDietWindowCopy('title', {}, '내 식사 시간대')}`;
+    saveBtn.textContent = localizeDietWindowCopy('save', {}, '저장');
+
+    const plan = getDietProgramReminderPlanLabel(dietPreferences);
+    helperEl.textContent = hasMethod
+        ? localizeDietWindowCopy('helper', { plan }, `설정한 시간에 맞춰 안내와 알림이 와요. 알림: ${plan}`)
+        : localizeDietWindowCopy('needMethod', {}, '식단 방법을 먼저 고르면 시간대를 설정할 수 있어요.');
 }
 
 function renderDietProgramSelectorList() {
     const listEl = document.getElementById('diet-program-selector-list');
     if (!listEl) return;
 
-    const currentMethodId = getCurrentDietProgramPreferences().methodId;
+    const currentPreferences = getCurrentDietProgramPreferences();
+    const currentMethodId = currentPreferences.methodId;
     listEl.innerHTML = listDietProgramMethods().map((method) => {
         const isSelected = currentMethodId === method.id;
+        // 알림 시각은 사용자가 설정한 식사 창에서 파생한다(카탈로그 하드코딩을 쓰지 않는다).
+        const reminderLabel = getDietProgramReminderPlanLabel({
+            ...currentPreferences,
+            methodId: method.id
+        });
         return `
             <button type="button" class="diet-program-option${isSelected ? ' is-selected' : ''}" data-method-id="${method.id}">
                 <div class="diet-program-option-topline">
-                    <div class="diet-program-option-name">${escapeHtml(method.name)}</div>
+                    <div class="diet-program-option-name">${escapeHtml(localizeDietMethodText(method.id, 'name', method.name))}</div>
                     <div class="diet-program-option-badges">
-                        <span class="diet-program-option-badge is-difficulty">${escapeHtml(method.difficultyLabel)}</span>
-                        <span class="diet-program-option-badge is-reminder">${escapeHtml(method.reminderPlan)}</span>
+                        <span class="diet-program-option-badge is-difficulty">${escapeHtml(localizeDietDifficulty(method.difficultyLabel))}</span>
+                        <span class="diet-program-option-badge is-reminder">${escapeHtml(reminderLabel)}</span>
                     </div>
                 </div>
-                <p class="diet-program-option-guide">${escapeHtml(method.mealGuide || method.summary)}</p>
-                ${method.cautionText ? `<p class="diet-program-option-caution">${escapeHtml(method.cautionText)}</p>` : ''}
+                <p class="diet-program-option-guide">${escapeHtml(localizeDietMethodText(method.id, 'summary', method.mealGuide || method.summary))}</p>
+                ${method.cautionText ? `<p class="diet-program-option-caution">${escapeHtml(localizeDietMethodText(method.id, 'caution', method.cautionText))}</p>` : ''}
             </button>
         `;
     }).join('');
@@ -1326,7 +1388,7 @@ window.closeDietProgramConsentModal = function () {
     setDietProgramConsentBusy(false);
 };
 
-async function persistDietProgramSelection(methodId, remindersEnabled) {
+async function persistDietProgramSelection(methodId, remindersEnabled, { fastingPreset = null } = {}) {
     const user = auth.currentUser;
     if (!user?.uid) {
         showToast('로그인이 필요해요.');
@@ -1334,11 +1396,13 @@ async function persistDietProgramSelection(methodId, remindersEnabled) {
     }
 
     const currentUserData = getDietProgramUserData();
+    // 방법을 바꿔도 사용자가 설정한 식사 시간대는 유지한다(생활 패턴은 방법과 별개).
+    const currentPreset = getCurrentDietProgramPreferences()?.fastingPreset || DIET_PROGRAM_FASTING_PRESET;
     const nextDietPreferences = normalizeDietProgramPreferences({
         methodId,
         remindersEnabled: methodId === DIET_PROGRAM_METHOD_IDS.NONE ? false : remindersEnabled,
         activatedAt: new Date().toISOString(),
-        fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        fastingPreset: fastingPreset || currentPreset
     });
 
     const userRef = doc(db, 'users', user.uid);
@@ -1486,6 +1550,62 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
     } finally {
         _dietProgramPendingSelection = null;
         setDietProgramConsentBusy(false);
+    }
+};
+
+// 프로필의 '내 식사 시간대' 저장. 안내 문구·단식 단계 판정·푸시 알림이 이 값을 따른다.
+function parseTimeInputToMinutes(value = '') {
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || '').trim());
+    if (!match) return null;
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    if (hour > 23 || minute > 59) return null;
+    return (hour * 60) + minute;
+}
+
+window.saveDietEatingWindow = async function (startValue = '', endValue = '') {
+    const startMinutes = parseTimeInputToMinutes(startValue);
+    const endMinutes = parseTimeInputToMinutes(endValue);
+    if (startMinutes === null || endMinutes === null) {
+        showToast(localizeDietWindowCopy('invalid', {}, '시간을 다시 확인해 주세요.'));
+        return false;
+    }
+    if (startMinutes % DIET_PROGRAM_WINDOW_STEP_MINUTES !== 0
+        || endMinutes % DIET_PROGRAM_WINDOW_STEP_MINUTES !== 0) {
+        // 서버 알림 스케줄이 30분 버킷으로 돌기 때문에 30분 단위만 받는다.
+        showToast(localizeDietWindowCopy('stepError', {}, '식사 시간은 30분 단위로 골라 주세요.'));
+        return false;
+    }
+    const minHours = DIET_PROGRAM_MIN_WINDOW_MINUTES / 60;
+    if (endMinutes - startMinutes < DIET_PROGRAM_MIN_WINDOW_MINUTES) {
+        showToast(localizeDietWindowCopy('minError', { hours: minHours },
+            `식사 시간대는 최소 ${minHours}시간 이상으로 설정해 주세요.`));
+        return false;
+    }
+
+    const currentPreferences = getCurrentDietProgramPreferences();
+    if (!isDietProgramMethodActive(currentPreferences)) {
+        showToast('먼저 식단 방법을 선택해 주세요.');
+        return false;
+    }
+
+    try {
+        const saved = await persistDietProgramSelection(
+            currentPreferences.methodId,
+            currentPreferences.remindersEnabled === true,
+            { fastingPreset: buildEatingWindowPreset(startMinutes, endMinutes) }
+        );
+        if (!saved) return false;
+        renderDietProgramProfileCard();
+        const start = formatWindowLabel(startMinutes);
+        const end = formatWindowLabel(endMinutes);
+        showToast(localizeDietWindowCopy('saved', { start, end },
+            `✅ 식사 시간대를 ${start}~${end}로 저장했어요.`));
+        return true;
+    } catch (error) {
+        console.error('식사 시간대 저장 실패:', error);
+        showToast('⚠️ 연결이 불안정해 식사 시간대를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        return false;
     }
 };
 

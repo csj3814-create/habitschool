@@ -2033,6 +2033,79 @@ body.dark-mode .step-detail-item { color: #bbb; }
     cursor: pointer;
 }
 
+/* 내 식사 시간대 설정 — 안내 문구·단식 단계 판정·푸시 알림이 이 값을 따른다. */
+.diet-eating-window-row {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(49, 64, 35, 0.12);
+}
+
+.diet-eating-window-head {
+    font-size: 13px;
+    font-weight: 800;
+    color: #314023;
+    margin-bottom: 8px;
+}
+
+.diet-eating-window-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.diet-eating-window-inputs input[type="time"] {
+    flex: 1 1 96px;
+    min-width: 96px;
+    padding: 8px 10px;
+    border: 1px solid #CBD8BC;
+    border-radius: 10px;
+    background: #FFFFFF;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #314023;
+    outline: none;
+}
+
+.diet-eating-window-inputs input[type="time"]:disabled {
+    background: #F3F3F3;
+    color: #AAAAAA;
+    border-color: #E0E0E0;
+}
+
+.diet-eating-window-sep {
+    flex: none;
+    font-size: 13px;
+    font-weight: 700;
+    color: #7A8B68;
+}
+
+#diet-eating-window-save {
+    flex: none;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 10px;
+    background: #5B8C3E;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#diet-eating-window-save:disabled {
+    background: #C7CFC0;
+    cursor: default;
+}
+
+.diet-eating-window-helper {
+    margin: 8px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #6C7A5C;
+}
+
 .profile-diet-program-toggle-copy {
     display: flex;
     flex-direction: column;

@@ -5,10 +5,14 @@ import {
     DIET_PROGRAM_METHOD_IDS,
     buildDietProgramDashboardSummary,
     buildDietProgramGuideState,
+    buildEatingWindowPreset,
     getDietProgramAnalysisTip,
     getDietProgramIntermittentFastingPhase,
+    getDietProgramReminderPlanLabel,
     listDietProgramMethods,
-    normalizeDietProgramPreferences
+    normalizeDietProgramPreferences,
+    parseEatingWindowPreset,
+    resolveEatingWindow
 } from '../js/diet-program.js';
 
 const APP_SOURCE = readAppSource({ includeEntrypoint: true });
@@ -33,7 +37,13 @@ describe('diet program helpers', () => {
         expect(methods[2].mealGuide).toBe('당질은 줄이고 단백질로 근육과 포만감');
         expect(methods[3].name).toBe('16:8 간헐적 단식');
         expect(methods[3].mealGuide).toBe('공복 시간 확보로 체지방 감량 도모');
-        expect(methods[4].mealGuide).toBe('3주간 대사 회복 및 체질 개선');
+        // switch_on은 표시명을 일반명사로 바꿨다(타인 브랜드명·효능 주장 제거).
+        // 내부 ID는 기존 데이터·rules 호환을 위해 유지한다.
+        expect(methods[4].id).toBe(DIET_PROGRAM_METHOD_IDS.SWITCH_ON);
+        expect(methods[4].name).toBe('단기 집중 식단');
+        expect(methods[4].mealGuide).toBe('짧게 집중해서 식습관을 다시 잡는 방법');
+        expect(methods[4].cautionText).toContain('특정 도서·프로그램과 무관');
+        expect(methods.map((method) => method.name).join(' ')).not.toContain('스위치온');
     });
 
     it('maps removed high-protein selections onto low-carb high-protein copy', () => {
@@ -112,7 +122,7 @@ describe('diet program helpers', () => {
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
             methodId: DIET_PROGRAM_METHOD_IDS.SWITCH_ON
-        })).toBe('식단 팁 · 3주간 대사 회복 및 체질 개선');
+        })).toBe('식단 팁 · 짧게 집중해서 식습관을 다시 잡는 방법');
     });
 
     it('removes dynamic photo-prepared copy from the selected diet guide box', () => {
@@ -137,6 +147,67 @@ describe('diet program helpers', () => {
         expect(guide.helper).toBe('통곡물과 채소 중심의 기초 건강식');
         expect(guide.status).not.toContain('준비됨');
         expect(guide.helper).not.toContain('준비됨');
+    });
+
+    it('keeps existing users on their current reminder times when they never set a window', () => {
+        // 기존 사용자는 메서드와 무관하게 fastingPreset='16_8_1200_2000'이 저장돼 있다.
+        // 이 레거시 값을 '미설정' 센티넬로 취급해야 비단식 사용자의 알림이 11:30→12:00으로 밀리지 않는다.
+        const fasting = resolveEatingWindow({
+            methodId: DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING,
+            fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        });
+        expect([fasting.startMinutes, fasting.warningMinutes, fasting.endMinutes]).toEqual([720, 1170, 1200]);
+
+        const general = resolveEatingWindow({
+            methodId: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
+            fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        });
+        expect([general.startMinutes, general.warningMinutes, general.endMinutes]).toEqual([690, 1050, 1080]);
+
+        expect(getDietProgramReminderPlanLabel({
+            methodId: DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING,
+            remindersEnabled: true,
+            fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        })).toBe('12:00·19:30');
+        expect(getDietProgramReminderPlanLabel({
+            methodId: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
+            remindersEnabled: true,
+            fastingPreset: DIET_PROGRAM_FASTING_PRESET
+        })).toBe('11:30·17:30');
+    });
+
+    it('honors a user-set eating window in phase, copy and reminder times', () => {
+        const preset = buildEatingWindowPreset(630, 1110); // 10:30~18:30
+        expect(preset).toBe('win_1030_1830');
+        expect(parseEatingWindowPreset(preset)).toEqual({ startMinutes: 630, endMinutes: 1110 });
+
+        const prefs = { methodId: DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING, remindersEnabled: true, fastingPreset: preset };
+        expect(getDietProgramReminderPlanLabel(prefs)).toBe('10:30·18:00');
+
+        // 10:00 KST → 공복, 10:35 KST → 식사 중, 18:05 KST → 마감 임박
+        expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 1, 0), prefs).key).toBe('fasting');
+        expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 1, 35), prefs).key).toBe('eating');
+        expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 9, 5), prefs).key).toBe('closing');
+        expect(getDietProgramIntermittentFastingPhase(Date.UTC(2026, 3, 20, 1, 0), prefs).helper)
+            .toBe('식사 시간은 10:30~18:30예요.');
+    });
+
+    it('lets a non-fasting method pick 12:00~20:00 without being read as unset', () => {
+        // 사용자가 명시로 고른 값은 `win_` 형식이라 레거시 센티넬과 충돌하지 않는다.
+        const window = resolveEatingWindow({
+            methodId: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
+            fastingPreset: buildEatingWindowPreset(720, 1200)
+        });
+        expect([window.startMinutes, window.endMinutes]).toEqual([720, 1200]);
+    });
+
+    it('falls back to the sentinel preset for malformed or too-short windows', () => {
+        expect(parseEatingWindowPreset('garbage')).toBeNull();
+        expect(parseEatingWindowPreset('win_1200_1300')).toBeNull(); // 4시간 미만
+        expect(normalizeDietProgramPreferences({
+            methodId: DIET_PROGRAM_METHOD_IDS.LOW_CARB,
+            fastingPreset: 'garbage'
+        }).fastingPreset).toBe(DIET_PROGRAM_FASTING_PRESET);
     });
 
     it('keeps the compact profile card to one method line instead of repeating the same copy', () => {

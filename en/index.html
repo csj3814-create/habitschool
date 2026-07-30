@@ -1468,6 +1468,19 @@
                                 <span class="profile-diet-program-toggle-ui" aria-hidden="true"></span>
                             </span>
                         </label>
+                        <!-- 내 식사 시간대: 안내 문구·단식 단계 판정·푸시 알림이 이 값을 따른다.
+                             서버 알림 스케줄이 30분 버킷이라 step=1800(30분)으로 제한한다. -->
+                        <div class="diet-eating-window-row" id="diet-eating-window-row">
+                            <div class="diet-eating-window-head" id="diet-eating-window-head">🍽️ 내 식사 시간대</div>
+                            <div class="diet-eating-window-inputs">
+                                <input type="time" id="diet-eating-window-start" step="1800" aria-label="식사 시작 시간">
+                                <span class="diet-eating-window-sep" aria-hidden="true">~</span>
+                                <input type="time" id="diet-eating-window-end" step="1800" aria-label="식사 종료 시간">
+                                <button type="button" id="diet-eating-window-save"
+                                    onclick="saveDietEatingWindow(document.getElementById('diet-eating-window-start').value, document.getElementById('diet-eating-window-end').value)">저장</button>
+                            </div>
+                            <p class="diet-eating-window-helper" id="diet-eating-window-helper">설정한 시간에 맞춰 안내와 알림이 와요.</p>
+                        </div>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
