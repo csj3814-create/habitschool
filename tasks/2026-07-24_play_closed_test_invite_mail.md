@@ -55,19 +55,17 @@
 
 ### 참여 방법 (3분이면 됩니다)
 
-**1단계 — 테스터 등록 (opt-in)**
-아래 링크를 **이 메일을 받으신 구글 계정으로** 열어 주세요.
+**1단계 — 아래 링크 하나만 열어 주세요 (안드로이드 폰에서)**
 🔗 https://play.google.com/apps/testing/com.habitschool.app
+※ 반드시 **해빛스쿨에 로그인할 때 쓰시는 그 구글 계정**으로 열어 주세요.
 
-"테스터가 되기(Become a tester)"를 누르면 등록됩니다.
-※ 반드시 해빛스쿨에 로그인할 때 쓰시는 그 구글 계정이어야 합니다.
-※ 검색으로는 안 나오고, 이 링크로만 참여할 수 있어요(비공개 테스트라서 그렇습니다).
-
-**2단계 — 앱 설치**
-1단계에서 "테스터 되기"를 누른 뒤, 아래 스토어 링크로 설치해 주세요.
-🔗 https://play.google.com/store/apps/details?id=com.habitschool.app
-(테스터로 등록된 계정에서만 설치 버튼이 보입니다. "이런 앱을 찾을 수 없다"고
-나오면 1단계 등록이 아직 반영 전이니 몇 분 뒤 다시 눌러 주세요.)
+**2단계 — "테스터 되기" → "Google Play에서 다운로드"**
+- 링크를 열면 "테스터가 되기(Become a tester)" 버튼이 있어요. 누르면 등록됩니다.
+- 등록되면 화면에 **"You are a tester(테스터입니다)"** 로 바뀌고,
+  그 안내 문구에 파란색 **"download it on Google Play(Google Play에서 다운로드)"**
+  링크가 보입니다. **그 파란 링크를 눌러 설치**해 주세요.
+- (참고: 스토어에서 검색으로는 안 나옵니다. 반드시 이 링크로만 설치돼요.
+  설치 버튼이 바로 안 뜨면 등록 반영에 몇 분 걸릴 수 있으니 잠시 후 다시 눌러 주세요.)
 
 **3단계 — 평소처럼 사용**
 설치한 앱으로 로그인하시고, 하시던 대로 식단·운동·마음을 기록해 주세요.
@@ -123,14 +121,14 @@ normally would. Nothing else is required.
 
 **How to join (about 3 minutes)**
 
-1. **Become a tester** — open this link with the Google account this email was
-   sent to: 🔗 https://play.google.com/apps/testing/com.habitschool.app , then
-   tap "Become a tester." It won't show up in search — only this link works.
-2. **Install** — after opting in, install from:
-   🔗 https://play.google.com/store/apps/details?id=com.habitschool.app
-   (The install button only appears for accounts registered as testers. If it
-   says the app isn't available, your opt-in hasn't propagated yet — retry in a
-   few minutes.)
+1. **Open this one link on your Android phone**, using the Google account this
+   email was sent to:
+   🔗 https://play.google.com/apps/testing/com.habitschool.app
+2. **Tap "Become a tester," then "Download it on Google Play."**
+   Once you opt in, the page shows "You are a tester" and a blue
+   **"download it on Google Play"** link in the text — tap that to install.
+   (Search won't find it; only this link works. If the install button doesn't
+   appear right away, opt-in may take a few minutes — retry shortly.)
 3. **Use it as usual** — sign in and keep logging your food, exercise, and mind.
    The most helpful thing is to **keep the app installed for two weeks**.
 
