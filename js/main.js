@@ -104,7 +104,9 @@ try {
         sessionStorage.setItem('hs_play_context', '1');
     }
 } catch (_) {}
-window.__HABITSCHOOL_PLAY_MODE = /^\/app(\/|$)/.test(location.pathname)
+// index.html head의 동기 게이트가 이미 확정했으면 그 값을 유지한다(덮어쓰지 않는다).
+window.__HABITSCHOOL_PLAY_MODE = window.__HABITSCHOOL_PLAY_MODE === true
+    || /^\/app(\/|$)/.test(location.pathname)
     || String(document.referrer || '').startsWith('android-app://com.habitschool.app')
     || (() => { try { return sessionStorage.getItem('hs_play_context') === '1'; } catch (_) { return false; } })();
 

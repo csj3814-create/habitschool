@@ -5728,7 +5728,8 @@ let isBlockchainManagerReady = false;
 // 플레이 라이트 빌드에서는 블록체인 매니저를 로드하지 않는다(지갑 미생성).
 // 스텁(no-op)을 그대로 유지하므로 챌린지 진행·전환 등은 호출돼도 아무 일도 안 한다.
 // /app 경로 + TWA 진입(referrer) + 같은 TWA 세션 sticky(sessionStorage)를 모두 본다.
-const _playModeNoBlockchain = /^\/app(\/|$)/.test(location.pathname)
+const _playModeNoBlockchain = window.__HABITSCHOOL_PLAY_MODE === true
+    || /^\/app(\/|$)/.test(location.pathname)
     || String(document.referrer || '').startsWith('android-app://com.habitschool.app')
     || (() => { try { return sessionStorage.getItem('hs_play_context') === '1'; } catch (_) { return false; } })();
 if (_playModeNoBlockchain) {

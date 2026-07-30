@@ -321,8 +321,8 @@ body {
    아예 안 생기고, 여기서는 남은 UI 흔적을 감춘다. 포인트·쿠폰·기록·갤러리·
    소모임·미니 챌린지는 그대로 유지된다. */
 .play-only-note { display: none; }
-body.play-mode .play-only-note { display: block; }
-body.play-mode .play-hide-note { display: none; }
+.play-mode .play-only-note { display: block; }
+.play-mode .play-hide-note { display: none; }
 
 /* 앱 버전 스위처 (세그먼트 컨트롤) — 로그인 화면·프로필 공통 */
 .version-switcher {
@@ -364,23 +364,23 @@ body.dark-mode .version-switcher button.active {
     border-color: #FF8C00;
     color: #FFFFFF;
 }
-body.play-mode #wallet-asset-hbt-item,
-body.play-mode #wallet-minichart,
-body.play-mode .wallet-asset-purpose:not(.play-only-note),
-body.play-mode .hbt-disclaimer,
-body.play-mode .wallet-convert-card,
-body.play-mode .asset-advanced-details,
-body.play-mode #tier-card-weekly,
-body.play-mode #tier-card-master,
-body.play-mode #stake-weekly,
-body.play-mode #stake-master,
+.play-mode #wallet-asset-hbt-item,
+.play-mode #wallet-minichart,
+.play-mode .wallet-asset-purpose:not(.play-only-note),
+.play-mode .hbt-disclaimer,
+.play-mode .wallet-convert-card,
+.play-mode .asset-advanced-details,
+.play-mode #tier-card-weekly,
+.play-mode #tier-card-master,
+.play-mode #stake-weekly,
+.play-mode #stake-master,
 /* 이미 시작해 진행 중인 위클리·마스터 링 카드(동적 렌더)도 감춘다. */
-body.play-mode .challenge-ring-card.tier-weekly-bg,
-body.play-mode .challenge-ring-card.tier-master-bg {
+.play-mode .challenge-ring-card.tier-weekly-bg,
+.play-mode .challenge-ring-card.tier-master-bg {
     display: none !important;
 }
 /* 보유 HBT 열이 사라지면 포인트 열을 한 칸으로 채운다. */
-body.play-mode .wallet-asset-grid {
+.play-mode .wallet-asset-grid {
     grid-template-columns: 1fr;
 }
 

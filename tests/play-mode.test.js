@@ -39,16 +39,32 @@ describe('play (Google Play lite) mode', () => {
         expect(appCore).toContain('if (!_playModeNoBlockchain) import(BLOCKCHAIN_MANAGER_MODULE_PATH)');
     });
 
-    it('hides on-chain UI via the play-mode body class', () => {
+    it('hides on-chain UI from the play-mode class on html or body', () => {
         const css = readRepoFile('styles-base.css');
-        expect(css).toContain('body.play-mode #wallet-asset-hbt-item');
-        expect(css).toContain('body.play-mode .wallet-convert-card');
-        expect(css).toContain('body.play-mode .asset-advanced-details');
-        expect(css).toContain('body.play-mode #tier-card-weekly');
-        expect(css).toContain('body.play-mode #tier-card-master');
+        // html.play-mode(첫 페인트)와 body.play-mode(모듈 로드 후) 모두 매칭돼야 한다.
+        expect(css).toContain('.play-mode #wallet-asset-hbt-item');
+        expect(css).toContain('.play-mode #wallet-minichart');
+        expect(css).toContain('.play-mode .wallet-convert-card');
+        expect(css).toContain('.play-mode .asset-advanced-details');
+        expect(css).toContain('.play-mode #tier-card-weekly');
+        expect(css).toContain('.play-mode #tier-card-master');
         // 진행 중(동적 렌더) 위클리·마스터 링 카드도 숨긴다.
-        expect(css).toContain('body.play-mode .challenge-ring-card.tier-weekly-bg');
-        expect(css).toContain('body.play-mode .challenge-ring-card.tier-master-bg');
+        expect(css).toContain('.play-mode .challenge-ring-card.tier-weekly-bg');
+        expect(css).toContain('.play-mode .challenge-ring-card.tier-master-bg');
+        expect(css).not.toContain('body.play-mode ');
+    });
+
+    it('decides play mode synchronously in head, before first paint', () => {
+        // 판정이 모듈 로드 후로 밀리면 캐시된 HBT 값이 먼저 그려져 온체인이 순간 노출된다.
+        const html = readRepoFile('index.html');
+        const head = html.slice(0, html.indexOf('</head>'));
+        expect(head).toContain("document.documentElement.classList.add('play-mode')");
+        expect(head).toContain('android-app://com.habitschool.app');
+        expect(head).toContain("sessionStorage.setItem('hs_play_context', '1')");
+        expect(head).toContain('window.__HABITSCHOOL_PLAY_MODE = true');
+        // JS 게이트는 head가 확정한 값을 덮어쓰지 않는다.
+        expect(readRepoFile('js/main.js')).toContain('window.__HABITSCHOOL_PLAY_MODE === true');
+        expect(readRepoFile('js/app-core.js')).toContain('const _playModeNoBlockchain = window.__HABITSCHOOL_PLAY_MODE === true');
     });
 
     it('drops weekly/master from the active challenge panel in play mode', () => {

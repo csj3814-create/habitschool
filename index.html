@@ -19,6 +19,23 @@
             document.documentElement.classList.add('locale-ko');
         }
     })();
+    // 구글플레이(TWA) 라이트 컨텍스트를 '첫 페인트 전'에 확정한다.
+    // 이 판정이 모듈 로드 후로 밀리면, 그 사이 자산 탭이 캐시된 HBT 값으로 먼저 그려져
+    // 온체인 정보가 순간 노출된다(스토어 정책 위반). 그래서 head에서 동기로 처리한다.
+    (function() {
+        try {
+            var isPlayPath = /^\/app(\/|$)/.test(location.pathname);
+            var fromTwa = String(document.referrer || '').indexOf('android-app://com.habitschool.app') === 0;
+            var sticky = false;
+            try { sticky = sessionStorage.getItem('hs_play_context') === '1'; } catch (_) {}
+            if (isPlayPath || fromTwa || sticky) {
+                // sessionStorage는 TWA 세션 단위라 사용자의 일반 크롬 사용에는 새지 않는다.
+                try { sessionStorage.setItem('hs_play_context', '1'); } catch (_) {}
+                document.documentElement.classList.add('play-mode');
+                window.__HABITSCHOOL_PLAY_MODE = true;
+            }
+        } catch (_) {}
+    })();
     // 서비스 워커 강제 업데이트 (구버전 SW 인증 경로 차단 문제 해결)
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {
