@@ -165,7 +165,7 @@ const METHOD_CATALOG = Object.freeze([
         exerciseSupportTip: '초기엔 가볍게 시작하세요.',
         mindSleepSupportTip: '생활 리듬부터 지켜보세요.',
         reminderPlan: '11:30·17:30',
-        cautionText: '특정 도서·프로그램과 무관한 해빛스쿨 자체 안내입니다.'
+        cautionText: ''
     }
 ]);
 
@@ -398,7 +398,7 @@ export function buildDietProgramDashboardSummary(dietPreferences = null, {
         supportTip: '',
         reminderLine: normalized.remindersEnabled
             ? getDietProgramReminderPlanLabel(normalized)
-            : '방법 알림은 현재 꺼져 있어요.'
+            : '식사 시간대 알림이 꺼져 있어요.'
     };
 }
 
@@ -413,18 +413,18 @@ export function getDietProgramAnalysisTip(dietPreferences = null) {
 export function getDietProgramReminderToggleCopy(dietPreferences = null, pushState = {}) {
     const normalized = normalizeDietProgramPreferences(dietPreferences);
     if (normalized.methodId === DIET_PROGRAM_METHOD_IDS.NONE) {
-        return '식단 방법을 먼저 선택하면 방법 알림을 켤 수 있어요.';
+        return '식단 방법을 먼저 선택하면 알림을 켤 수 있어요.';
     }
 
     if (normalized.remindersEnabled && !pushState.connected) {
-        return '방법 알림은 켜져 있지만 이 기기 알림은 꺼져 있어요.';
+        return '식사 시간대 알림은 켜져 있지만 이 기기 알림이 꺼져 있어요.';
     }
 
     if (normalized.remindersEnabled) {
         return '선택한 식단 방법에 맞춘 알림을 이 기기에서 받고 있어요.';
     }
 
-    return '방법 선택은 유지되고, 알림은 필요할 때만 따로 켤 수 있어요.';
+    return '식단 방법은 그대로 두고, 알림만 필요할 때 켤 수 있어요.';
 }
 
 export function isDietProgramMethodActive(dietPreferences = null) {

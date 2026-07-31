@@ -42,7 +42,6 @@ describe('diet program helpers', () => {
         expect(methods[4].id).toBe(DIET_PROGRAM_METHOD_IDS.SWITCH_ON);
         expect(methods[4].name).toBe('단기 집중 식단');
         expect(methods[4].mealGuide).toBe('짧게 집중해서 식습관을 다시 잡는 방법');
-        expect(methods[4].cautionText).toContain('특정 도서·프로그램과 무관');
         expect(methods.map((method) => method.name).join(' ')).not.toContain('스위치온');
     });
 

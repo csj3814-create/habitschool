@@ -1192,7 +1192,7 @@ function renderDietProgramDashboardSummary() {
     shell.style.cursor = 'pointer';
     shell.tabIndex = 0;
     shell.setAttribute('role', 'button');
-    shell.setAttribute('aria-label', summary.active ? '식단 방법 바꾸기' : '식단 방법 고르기');
+    shell.setAttribute('aria-label', summary.active ? '식단 방법 변경' : '식단 방법 선택');
     shell.onclick = openSelector;
     shell.onkeydown = (event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -1244,7 +1244,7 @@ function renderDietProgramProfileCard() {
     supportEl.textContent = hasMethod ? '' : '알림은 따로 켤 수 있어요.';
     supportEl.hidden = hasMethod || !supportEl.textContent;
     helperEl.textContent = getDietProgramReminderToggleCopy(dietPreferences, pushState);
-    selectBtn.textContent = hasMethod ? '방법 바꾸기' : '방법 선택';
+    selectBtn.textContent = hasMethod ? '식단 방법 변경' : '식단 방법 선택';
     setDietProgramToggleChecked(toggleEl, hasMethod && dietPreferences.remindersEnabled, !hasMethod);
     renderDietEatingWindowControls(dietPreferences, hasMethod);
 }
@@ -1326,7 +1326,7 @@ function renderDietProgramConsentModal() {
     const pushState = window.getAppPushPermissionState?.() || { connected: false, action: 'enable' };
 
     titleEl.textContent = `${meta.name} 알림을 함께 켤까요?`;
-    copyEl.textContent = '네를 누르면 방법 알림을 바로 켜요.';
+    copyEl.textContent = '네를 누르면 식사 시간대 알림을 바로 켜요.';
     if (pushState.action === 'guide') {
         noteEl.textContent = '네를 누르면 설정 안내를 바로 열어요.';
     } else if (pushState.action === 'install') {
@@ -1334,7 +1334,7 @@ function renderDietProgramConsentModal() {
     } else if (pushState.action === 'unsupported') {
         noteEl.textContent = '이 브라우저에서는 기기 알림 연결이 안 될 수 있어요.';
     } else {
-        noteEl.textContent = '아니오를 눌러도 방법 선택은 저장돼요.';
+        noteEl.textContent = '아니오를 눌러도 식단 방법은 저장돼요.';
     }
     secondaryBtn.textContent = '아니오';
     primaryBtn.textContent = '네';
@@ -1531,11 +1531,11 @@ window.confirmDietProgramSelectionWithNotifications = async function () {
         if (connected) {
             showToast(`${getDietProgramMethodMeta(pending.methodId).name} 알림까지 함께 켰어요.`);
         } else if (result?.action === 'guide') {
-            showToast('방법 알림은 켰어요. 브라우저 설정에서 기기 알림을 허용해 주세요.');
+            showToast('식사 시간대 알림을 켰어요. 브라우저 설정에서 기기 알림을 허용해 주세요.');
         } else if (result?.action === 'install') {
-            showToast('방법 알림은 켰어요. 홈 화면 앱으로 설치한 뒤 기기 알림을 연결해 주세요.');
+            showToast('식사 시간대 알림을 켰어요. 홈 화면 앱으로 설치한 뒤 기기 알림을 연결해 주세요.');
         } else if (result?.action === 'unsupported') {
-            showToast('방법 알림은 켰어요. 이 브라우저에서는 기기 알림 연결이 어려울 수 있어요.');
+            showToast('식사 시간대 알림을 켰어요. 이 브라우저에서는 기기 알림 연결이 어려울 수 있어요.');
         } else {
             showToast('방법 알림은 켰어요.');
         }

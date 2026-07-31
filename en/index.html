@@ -1449,7 +1449,7 @@
                                 <div id="diet-program-current-name" class="profile-diet-program-name">식단 방법을 골라보세요.</div>
                             </div>
                             <button type="button" id="diet-program-select-btn" class="profile-notification-btn is-secondary">
-                                방법 선택
+                                식단 방법 선택
                             </button>
                         </div>
                         <p id="diet-program-current-summary" class="profile-diet-program-summary">
@@ -1460,8 +1460,8 @@
                         </p>
                         <label class="profile-diet-program-toggle-row" for="diet-program-reminders-toggle">
                             <span class="profile-diet-program-toggle-copy">
-                                <strong>방법 알림 받기</strong>
-                                <span id="diet-program-reminders-helper">식단 방법을 먼저 선택하면 방법 알림을 켤 수 있어요.</span>
+                                <strong>식사 시간대 알림 받기</strong>
+                                <span id="diet-program-reminders-helper">식단 방법을 먼저 선택하면 알림을 켤 수 있어요.</span>
                             </span>
                             <span class="profile-diet-program-toggle-shell">
                                 <input type="checkbox" id="diet-program-reminders-toggle">
@@ -2492,10 +2492,10 @@
     <div class="modal-overlay" id="diet-program-consent-modal" onclick="if(event.target===this)closeDietProgramConsentModal()">
         <div class="modal-content diet-program-consent-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="closeDietProgramConsentModal()">×</button>
-            <div class="diet-program-modal-badge">방법 알림 안내</div>
+            <div class="diet-program-modal-badge">식사 시간대 알림 안내</div>
             <h3 id="diet-program-consent-title" class="diet-program-modal-title">알림을 함께 켤까요?</h3>
-            <p id="diet-program-consent-copy" class="diet-program-modal-copy">네를 누르면 방법 알림을 바로 켜요.</p>
-            <div id="diet-program-consent-note" class="diet-program-consent-note">아니오를 눌러도 방법 선택은 저장돼요.</div>
+            <p id="diet-program-consent-copy" class="diet-program-modal-copy">네를 누르면 식사 시간대 알림을 바로 켜요.</p>
+            <div id="diet-program-consent-note" class="diet-program-consent-note">아니오를 눌러도 식단 방법은 저장돼요.</div>
             <div class="diet-program-consent-actions">
                 <button type="button" id="diet-program-consent-secondary" class="wallet-modal-btn cancel" onclick="confirmDietProgramSelectionWithoutNotifications()">아니오</button>
                 <button type="button" id="diet-program-consent-primary" class="wallet-modal-btn confirm" onclick="confirmDietProgramSelectionWithNotifications()">네</button>

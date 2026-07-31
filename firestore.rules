@@ -298,7 +298,13 @@ service cloud.firestore {
     // ===== Daily Logs Collection =====
     match /daily_logs/{logId} {
       // 개인 건강 원문은 소유자와 관리자만 읽는다.
-      allow read: if isOwner(resource.data.userId) || isAdmin();
+      // 문서가 없는 날짜(아직 기록 전)를 읽으면 resource가 null이라
+      // resource.data.userId 접근이 평가 오류 → permission-denied가 되어
+      // 앱에 "데이터 로드 오류"가 떴다. 없는 문서는 문서 ID(`{uid}_{date}`)로
+      // 소유자를 판정해 빈 결과를 돌려준다(타인 기록 존재 여부는 여전히 알 수 없다).
+      allow read: if isAdmin()
+          || (resource != null && isOwner(resource.data.userId))
+          || (resource == null && isSignedIn() && logId.split('_')[0] == request.auth.uid);
       
       allow create: if isSignedIn() 
                     && isValidDailyLog()
@@ -327,7 +333,11 @@ service cloud.firestore {
 
       // 소유자 전용 민감 필드 보관소 (gratitude 등). 부모와 하위문서 모두 비공개다.
       match /private/{privId} {
-        allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+        // 부모와 같은 이유로 없는 문서도 소유자면 읽을 수 있어야 한다(빈 결과 반환).
+        allow read: if isSignedIn() && (
+              (resource != null && resource.data.userId == request.auth.uid)
+              || (resource == null && logId.split('_')[0] == request.auth.uid)
+            );
         allow write: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       }
     }

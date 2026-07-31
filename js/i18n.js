@@ -107,7 +107,6 @@ const MESSAGES = {
         'diet.method.intermittent_fasting.summary': 'A daily fasting window to support fat loss',
         'diet.method.switch_on.name': 'Short Focused Plan',
         'diet.method.switch_on.summary': 'A short, focused reset for your eating habits',
-        'diet.method.switch_on.caution': 'Habit School’s own guidance, unrelated to any specific book or program.',
         'diet.method.difficulty.기본': 'Basic',
         'diet.method.difficulty.쉬움': 'Easy',
         'diet.method.difficulty.보통': 'Moderate',
