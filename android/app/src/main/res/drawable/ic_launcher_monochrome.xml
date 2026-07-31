@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13+ 테마 아이콘용 단색 레이어. 시스템이 알파만 읽어 색을 입힌다. -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="fill"
+    android:src="@mipmap/ic_launcher_monochrome" />

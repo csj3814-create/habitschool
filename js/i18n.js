@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=266';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=267';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -102,9 +102,9 @@ const MESSAGES = {
         'diet.method.mediterranean.name': 'Mediterranean',
         'diet.method.mediterranean.summary': 'Olive oil and fish for heart health',
         'diet.method.low_carb.name': 'Low-Carb High-Protein',
-        'diet.method.low_carb.summary': 'Fewer carbs, more protein for muscle and fullness',
+        'diet.method.low_carb.summary': 'Less rice and bread, more protein on your plate',
         'diet.method.intermittent_fasting.name': '16:8 Intermittent Fasting',
-        'diet.method.intermittent_fasting.summary': 'A daily fasting window to support fat loss',
+        'diet.method.intermittent_fasting.summary': 'Eat within an 8-hour window and keep the rest of the day clear',
         'diet.method.switch_on.name': 'Two Weeks Without Ultra-Processed Food',
         'diet.method.switch_on.summary': 'Cut snacks, processed meat and sweet drinks; fill up on protein and vegetables',
         'diet.method.difficulty.기본': 'Basic',

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  어댑티브 아이콘 전경 레이어.
+
+  이전에는 512px 앱 아이콘을 inset + gravity="center"로 얹었는데, center는 크기를
+  조정하지 않는다. 그래서 108dp 캔버스보다 훨씬 큰 비트맵이 그대로 그려져 가운데
+  얼굴만 확대돼 보였다(광선과 글자가 잘림). inset 값을 아무리 바꿔도 표시 창만
+  좁아질 뿐 원인이 그대로라 같은 증상이 반복됐다.
+
+  지금은 icons/generate_app_icons.py가 안전 영역(72dp) 안에 여백까지 넣어 그린
+  432px 전경 전용 이미지를 만들고, 여기서는 gravity="fill"로 캔버스에 맞춰 늘린다.
+  화면 밀도와 무관하게 항상 같은 비율로 보인다.
+-->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="fill"
+    android:src="@mipmap/ic_launcher_foreground_actual" />

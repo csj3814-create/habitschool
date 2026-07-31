@@ -34,9 +34,9 @@ describe('diet program helpers', () => {
         expect(methods[0].name).toBe('현미밥 채소 식단');
         expect(methods[0].mealGuide).toBe('통곡물과 채소 중심의 기초 건강식');
         expect(methods[2].name).toBe('저탄수 고단백 식단');
-        expect(methods[2].mealGuide).toBe('당질은 줄이고 단백질로 근육과 포만감');
+        expect(methods[2].mealGuide).toBe('밥·빵은 줄이고 단백질 반찬으로 배 채우기');
         expect(methods[3].name).toBe('16:8 간헐적 단식');
-        expect(methods[3].mealGuide).toBe('공복 시간 확보로 체지방 감량 도모');
+        expect(methods[3].mealGuide).toBe('하루 8시간 안에만 먹고 나머지 시간은 비우기');
         // switch_on은 표시명을 일반명사로 바꿨다(타인 브랜드명·효능 주장 제거).
         // 내부 ID는 기존 데이터·rules 호환을 위해 유지한다.
         expect(methods[4].id).toBe(DIET_PROGRAM_METHOD_IDS.SWITCH_ON);
@@ -95,7 +95,7 @@ describe('diet program helpers', () => {
         });
 
         expect(staticGuide.badge).toBe('16:8');
-        expect(staticGuide.status).toBe('공복 시간 확보로 체지방 감량 도모');
+        expect(staticGuide.status).toBe('하루 8시간 안에만 먹고 나머지 시간은 비우기');
     });
 
     it('builds dashboard and analysis copy for selected methods', () => {
@@ -116,7 +116,7 @@ describe('diet program helpers', () => {
         expect(summary.methodId).toBe(DIET_PROGRAM_METHOD_IDS.LOW_CARB);
         expect(summary.chipLabel).toContain('저탄수 고단백 식단');
         expect(summary.chipLabel).toContain('보통');
-        expect(summary.summaryLine).toBe('당질은 줄이고 단백질로 근육과 포만감');
+        expect(summary.summaryLine).toBe('밥·빵은 줄이고 단백질 반찬으로 배 채우기');
         expect(summary.supportTip).toBe('');
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
