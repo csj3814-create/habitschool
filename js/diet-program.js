@@ -16,6 +16,20 @@ export const DIET_PROGRAM_FASTING_PRESET = '16_8_1200_2000';
 // 이 필드는 firestore.rules에 이미 허용돼 있어 규칙 변경이 필요 없다.
 export const DIET_PROGRAM_WINDOW_STEP_MINUTES = 30;
 export const DIET_PROGRAM_MIN_WINDOW_MINUTES = 4 * 60;
+// 16:8은 식사 창이 8시간으로 고정이다. 종료 시각은 시작에서 자동 계산하고
+// 사용자가 따로 고르지 않는다(그래야 이름과 실제 동작이 어긋나지 않는다).
+export const DIET_PROGRAM_FASTING_EATING_MINUTES = 8 * 60;
+export const DIET_PROGRAM_FASTING_MAX_START_MINUTES = (24 * 60) - DIET_PROGRAM_FASTING_EATING_MINUTES;
+
+export function isFixedEatingWindowMethod(methodId = '') {
+    return methodId === DIET_PROGRAM_METHOD_IDS.INTERMITTENT_FASTING;
+}
+
+// 16:8에서 시작 시각으로부터 창을 만든다(자정을 넘지 않도록 시작을 제한).
+export function buildFixedFastingWindow(startMinutes = 0) {
+    const start = Math.max(0, Math.min(DIET_PROGRAM_FASTING_MAX_START_MINUTES, Math.round(Number(startMinutes) || 0)));
+    return { startMinutes: start, endMinutes: start + DIET_PROGRAM_FASTING_EATING_MINUTES };
+}
 
 // 메서드별 기본 창. 설정을 한 번도 바꾸지 않은 사용자의 알림 시각이 기존과 완전히
 // 같아지도록 현재 동작(간헐적 단식 12:00·19:30 / 그 외 11:30·17:30)에 맞춘 값이다.
@@ -77,7 +91,12 @@ export function resolveEatingWindow(dietPreferences = null, methodId = '') {
     const parsed = raw && raw !== DIET_PROGRAM_FASTING_PRESET
         ? parseEatingWindowPreset(raw)
         : null;
-    const window = parsed || fallback;
+    const stored = parsed || fallback;
+    // 16:8은 창 길이가 8시간으로 고정 → 저장값이 달라도 시작 기준으로 다시 맞춘다.
+    // (다른 방법에서 긴 창을 설정한 뒤 단식으로 바꿔도 16:8이 깨지지 않는다.)
+    const window = isFixedEatingWindowMethod(resolvedMethodId)
+        ? buildFixedFastingWindow(stored.startMinutes)
+        : stored;
     return {
         startMinutes: window.startMinutes,
         warningMinutes: Math.max(window.startMinutes, window.endMinutes - 30),

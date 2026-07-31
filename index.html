@@ -1471,7 +1471,7 @@
                         <div class="diet-eating-window-row" id="diet-eating-window-row">
                             <div class="diet-eating-window-head" id="diet-eating-window-head">🍽️ 내 식사 시간대</div>
                             <div class="diet-eating-window-inputs">
-                                <input type="time" id="diet-eating-window-start" step="1800" aria-label="식사 시작 시간">
+                                <input type="time" id="diet-eating-window-start" step="1800" aria-label="식사 시작 시간" oninput="syncDietEatingWindowEnd()">
                                 <span class="diet-eating-window-sep" aria-hidden="true">~</span>
                                 <input type="time" id="diet-eating-window-end" step="1800" aria-label="식사 종료 시간">
                                 <button type="button" id="diet-eating-window-save"

@@ -20,6 +20,10 @@ const GENERAL_DEFAULT_WINDOW = Object.freeze({ startMinutes: (11 * 60) + 30, end
 const MIN_WINDOW_MINUTES = 4 * 60;
 const CLOSING_LEAD_MINUTES = 30;
 const REMINDER_BUCKET_MINUTES = 30;
+// 16:8은 식사 창이 8시간 고정. 클라이언트(js/diet-program.js)와 같은 규칙이어야
+// 화면 안내와 실제 알림 시각이 어긋나지 않는다.
+const FASTING_EATING_MINUTES = 8 * 60;
+const FASTING_MAX_START_MINUTES = (24 * 60) - FASTING_EATING_MINUTES;
 
 function parseHhmmSegment(segment = "") {
     const digits = String(segment || "").trim();
@@ -49,11 +53,20 @@ function getDefaultEatingWindow(methodId = "") {
         : GENERAL_DEFAULT_WINDOW;
 }
 
+function buildFixedFastingWindow(startMinutes = 0) {
+    const start = Math.max(0, Math.min(FASTING_MAX_START_MINUTES, Math.round(Number(startMinutes) || 0)));
+    return { startMinutes: start, endMinutes: start + FASTING_EATING_MINUTES };
+}
+
 function resolveDietEatingWindow(preference = {}) {
     const fallback = getDefaultEatingWindow(preference?.methodId);
     const raw = typeof preference?.fastingPreset === "string" ? preference.fastingPreset.trim() : "";
     const parsed = raw && raw !== LEGACY_WINDOW_PRESET ? parseEatingWindowPreset(raw) : null;
-    const window = parsed || fallback;
+    const stored = parsed || fallback;
+    // 16:8은 창 길이 고정 → 저장값과 무관하게 시작 기준으로 8시간을 다시 계산한다.
+    const window = preference?.methodId === INTERMITTENT_FASTING_METHOD_ID
+        ? buildFixedFastingWindow(stored.startMinutes)
+        : stored;
     return {
         startMinutes: window.startMinutes,
         warningMinutes: Math.max(window.startMinutes, window.endMinutes - CLOSING_LEAD_MINUTES),
@@ -86,6 +99,8 @@ module.exports = {
     LEGACY_WINDOW_PRESET,
     MIN_WINDOW_MINUTES,
     REMINDER_BUCKET_MINUTES,
+    FASTING_EATING_MINUTES,
+    buildFixedFastingWindow,
     parseEatingWindowPreset,
     getDefaultEatingWindow,
     resolveDietEatingWindow,

@@ -66,6 +66,23 @@ describe('diet eating window (server)', () => {
         expect(resolveDietReminderKindAt(prefs, 1110)).toBe('');       // 종료 시각엔 보내지 않음
     });
 
+    it('keeps the 16:8 window fixed at 8 hours regardless of the stored end', () => {
+        // 다른 방법에서 긴 창(08:00~23:30)을 저장한 뒤 단식으로 바꿔도 16:8이 깨지면 안 된다.
+        const window = resolveDietEatingWindow({ ...FASTING, fastingPreset: 'win_0800_2330' });
+        expect([window.startMinutes, window.endMinutes]).toEqual([480, 960]); // 08:00~16:00
+        expect(window.warningMinutes).toBe(930); // 15:30
+
+        // 비단식 방법은 저장한 창을 그대로 쓴다.
+        const general = resolveDietEatingWindow({ ...GENERAL, fastingPreset: 'win_0800_2330' });
+        expect([general.startMinutes, general.endMinutes]).toEqual([480, 1410]);
+    });
+
+    it('pulls a too-late fasting start back so the window never crosses midnight', () => {
+        // 19:00 시작이면 8시간 뒤는 27:00 → 시작을 16:00으로 당겨 16:00~24:00으로 만든다.
+        const window = resolveDietEatingWindow({ ...FASTING, fastingPreset: 'win_1900_2330' });
+        expect([window.startMinutes, window.endMinutes]).toEqual([960, 1440]);
+    });
+
     it('keeps default users on the legacy reminder buckets', () => {
         const fasting = { ...FASTING, fastingPreset: LEGACY_WINDOW_PRESET };
         expect(resolveDietReminderKindAt(fasting, 720)).toBe('start');   // 12:00

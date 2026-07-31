@@ -86,17 +86,20 @@ import { addCalendarDays, calculateActivityStreak, countActiveDays } from './act
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
+    DIET_PROGRAM_FASTING_MAX_START_MINUTES,
     DIET_PROGRAM_MIN_WINDOW_MINUTES,
     DIET_PROGRAM_WINDOW_STEP_MINUTES,
     buildDietProgramDashboardSummary,
     buildDietProgramGuideState,
     buildEatingWindowPreset,
+    buildFixedFastingWindow,
     formatWindowLabel,
     getDietProgramAnalysisTip,
     getDietProgramMethodMeta,
     getDietProgramReminderPlanLabel,
     getDietProgramReminderToggleCopy,
     isDietProgramMethodActive,
+    isFixedEatingWindowMethod,
     listDietProgramMethods,
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
@@ -1258,13 +1261,18 @@ function renderDietEatingWindowControls(dietPreferences = null, hasMethod = fals
     const helperEl = document.getElementById('diet-eating-window-helper');
     if (!row || !startEl || !endEl || !saveBtn || !helperEl) return;
 
-    const window_ = resolveEatingWindow(dietPreferences, dietPreferences?.methodId || '');
+    const methodId = dietPreferences?.methodId || '';
+    const fixedWindow = isFixedEatingWindowMethod(methodId);
+    const window_ = resolveEatingWindow(dietPreferences, methodId);
     // 사용자가 입력 중인 값을 덮어쓰지 않는다(포커스가 있으면 그대로 둔다).
     if (document.activeElement !== startEl) startEl.value = formatWindowLabel(window_.startMinutes);
-    if (document.activeElement !== endEl) endEl.value = formatWindowLabel(window_.endMinutes);
+    endEl.value = formatWindowLabel(window_.endMinutes);
 
     startEl.disabled = !hasMethod;
-    endEl.disabled = !hasMethod;
+    // 16:8은 창이 8시간 고정이라 종료는 사용자가 고르지 않고 자동 계산한다.
+    endEl.disabled = !hasMethod || fixedWindow;
+    endEl.readOnly = fixedWindow;
+    startEl.max = fixedWindow ? formatWindowLabel(DIET_PROGRAM_FASTING_MAX_START_MINUTES) : '';
     saveBtn.disabled = !hasMethod;
 
     const headEl = document.getElementById('diet-eating-window-head');
@@ -1272,10 +1280,31 @@ function renderDietEatingWindowControls(dietPreferences = null, hasMethod = fals
     saveBtn.textContent = localizeDietWindowCopy('save', {}, '저장');
 
     const plan = getDietProgramReminderPlanLabel(dietPreferences);
-    helperEl.textContent = hasMethod
-        ? localizeDietWindowCopy('helper', { plan }, `설정한 시간에 맞춰 안내와 알림이 와요. 알림: ${plan}`)
-        : localizeDietWindowCopy('needMethod', {}, '식단 방법을 먼저 고르면 시간대를 설정할 수 있어요.');
+    if (!hasMethod) {
+        helperEl.textContent = localizeDietWindowCopy('needMethod', {}, '식단 방법을 먼저 고르면 시간대를 설정할 수 있어요.');
+        return;
+    }
+    // 안내는 방법에 따라 의미가 다르다. 단식은 '이 시간에만 먹는' 규칙이고,
+    // 다른 방법은 알림 시각일 뿐이라 부담되게 읽히지 않아야 한다.
+    helperEl.textContent = fixedWindow
+        ? localizeDietWindowCopy('helperFasting', { plan },
+            `이 시간에만 식사해요. 시작 시각을 고르면 8시간 뒤로 자동 설정돼요. 알림: ${plan}`)
+        : localizeDietWindowCopy('helperGeneral', { plan },
+            `이 시간에 맞춰 알림을 보내드려요. 알림: ${plan}`);
 }
+
+// 16:8에서 시작 시각을 바꾸면 종료 시각을 즉시 따라오게 한다(저장 전에도 결과가 보이도록).
+window.syncDietEatingWindowEnd = function () {
+    const startEl = document.getElementById('diet-eating-window-start');
+    const endEl = document.getElementById('diet-eating-window-end');
+    if (!startEl || !endEl) return;
+    if (!isFixedEatingWindowMethod(getCurrentDietProgramPreferences()?.methodId || '')) return;
+    const startMinutes = parseTimeInputToMinutes(startEl.value);
+    if (startMinutes === null) return;
+    const fixed = buildFixedFastingWindow(startMinutes);
+    startEl.value = formatWindowLabel(fixed.startMinutes);
+    endEl.value = formatWindowLabel(fixed.endMinutes);
+};
 
 function renderDietProgramSelectorList() {
     const listEl = document.getElementById('diet-program-selector-list');
@@ -1564,8 +1593,13 @@ function parseTimeInputToMinutes(value = '') {
 }
 
 window.saveDietEatingWindow = async function (startValue = '', endValue = '') {
-    const startMinutes = parseTimeInputToMinutes(startValue);
-    const endMinutes = parseTimeInputToMinutes(endValue);
+    const rawStartMinutes = parseTimeInputToMinutes(startValue);
+    // 16:8은 종료를 입력받지 않고 시작에서 8시간 뒤로 계산한다.
+    // 시작이 너무 늦으면(16:00 초과) 창이 자정을 넘으므로 시작 자체를 당겨 맞춘다.
+    const fixedWindow = isFixedEatingWindowMethod(getCurrentDietProgramPreferences()?.methodId || '');
+    const fixed = fixedWindow && rawStartMinutes !== null ? buildFixedFastingWindow(rawStartMinutes) : null;
+    const startMinutes = fixed ? fixed.startMinutes : rawStartMinutes;
+    const endMinutes = fixed ? fixed.endMinutes : parseTimeInputToMinutes(endValue);
     if (startMinutes === null || endMinutes === null) {
         showToast(localizeDietWindowCopy('invalid', {}, '시간을 다시 확인해 주세요.'));
         return false;
