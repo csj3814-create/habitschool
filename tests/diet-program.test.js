@@ -40,8 +40,8 @@ describe('diet program helpers', () => {
         // switch_on은 표시명을 일반명사로 바꿨다(타인 브랜드명·효능 주장 제거).
         // 내부 ID는 기존 데이터·rules 호환을 위해 유지한다.
         expect(methods[4].id).toBe(DIET_PROGRAM_METHOD_IDS.SWITCH_ON);
-        expect(methods[4].name).toBe('단기 집중 식단');
-        expect(methods[4].mealGuide).toBe('짧게 집중해서 식습관을 다시 잡는 방법');
+        expect(methods[4].name).toBe('2주 초가공식품 끊기');
+        expect(methods[4].mealGuide).toBe('과자·가공육·달콤한 음료를 멈추고 단백질과 채소로 채우기');
         expect(methods.map((method) => method.name).join(' ')).not.toContain('스위치온');
     });
 
@@ -121,7 +121,7 @@ describe('diet program helpers', () => {
         expect(summary.reminderLine).toBeTruthy();
         expect(getDietProgramAnalysisTip({
             methodId: DIET_PROGRAM_METHOD_IDS.SWITCH_ON
-        })).toBe('식단 팁 · 짧게 집중해서 식습관을 다시 잡는 방법');
+        })).toBe('식단 팁 · 과자·가공육·달콤한 음료를 멈추고 단백질과 채소로 채우기');
     });
 
     it('removes dynamic photo-prepared copy from the selected diet guide box', () => {

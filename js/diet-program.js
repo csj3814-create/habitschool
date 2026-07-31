@@ -173,14 +173,14 @@ const METHOD_CATALOG = Object.freeze([
     {
         id: DIET_PROGRAM_METHOD_IDS.SWITCH_ON,
         displayOrder: 5,
-        // 표시명은 일반명사로 둔다. 앱에는 특정 도서의 3주 프로토콜 로직이 없고,
-        // '대사 회복·체질 개선' 같은 효능 주장도 하지 않는다. 내부 ID는 기존 사용자
-        // 데이터·firestore.rules 호환을 위해 switch_on을 유지한다.
-        name: '단기 집중 식단',
+        // 다른 방법들처럼 '이름만 봐도 무엇을 하는지' 알 수 있게 둔다.
+        // 특정 도서의 3주 프로토콜 로직은 앱에 없고, 효능 주장도 하지 않는다.
+        // 내부 ID는 기존 사용자 데이터·firestore.rules 호환을 위해 switch_on을 유지한다.
+        name: '2주 초가공식품 끊기',
         difficultyLabel: '도전',
-        summary: '짧게 집중해서 식습관을 다시 잡는 방법',
-        mealGuide: '짧게 집중해서 식습관을 다시 잡는 방법',
-        dashboardTip: '짧게 집중해서 식습관을 다시 잡는 방법',
+        summary: '과자·가공육·달콤한 음료를 멈추고 단백질과 채소로 채우기',
+        mealGuide: '과자·가공육·달콤한 음료를 멈추고 단백질과 채소로 채우기',
+        dashboardTip: '과자·가공육·달콤한 음료를 멈추고 단백질과 채소로 채우기',
         exerciseSupportTip: '초기엔 가볍게 시작하세요.',
         mindSleepSupportTip: '생활 리듬부터 지켜보세요.',
         reminderPlan: '11:30·17:30',
