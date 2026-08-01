@@ -964,11 +964,28 @@ async function runFfmpeg(args = []) {
     });
 }
 
+// 이 위로 큰 영상은 썸네일을 만들지 않는다. 컨테이너 tmpfs는 메모리를 쓰기 때문에
+// 큰 파일을 받으면 그것만으로 한도를 넘긴다. 이 경우 카드에는 플레이스홀더가 나간다.
+const SHARE_VIDEO_THUMB_MAX_BYTES = 60 * 1024 * 1024;
+
 async function generateShareVideoThumbDataUrl(storagePath = "") {
     const normalizedPath = String(storagePath || "").trim();
     if (!normalizedPath || !ffmpegPath) return "";
 
     const bucket = admin.storage().bucket();
+
+    try {
+        const [metadata] = await bucket.file(normalizedPath).getMetadata();
+        const byteSize = Number(metadata?.size || 0);
+        if (byteSize > SHARE_VIDEO_THUMB_MAX_BYTES) {
+            console.warn("[prepareShareMediaAssets] skip oversized video:", normalizedPath, byteSize);
+            return "";
+        }
+    } catch (error) {
+        console.warn("[prepareShareMediaAssets] video metadata failed:", normalizedPath, error?.message || error);
+        return "";
+    }
+
     const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "share-video-thumb-"));
     const inputPath = path.join(tempDir, "input-video");
     const outputPath = path.join(tempDir, "thumb.jpg");
@@ -4744,7 +4761,9 @@ exports.generateChatbotLinkCode = onCall(
 );
 
 exports.prepareShareMediaAssets = onCall(
-    { region: "asia-northeast3" },
+    // 256MiB에서는 영상 썸네일 생성(영상 다운로드 + ffmpeg)이 한도를 넘겨 컨테이너가
+    // 죽고, 같은 요청에 실려 있던 사진들까지 통째로 실패했다.
+    { region: "asia-northeast3", memory: "512MiB", timeoutSeconds: 120 },
     async (request) => {
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
@@ -4753,15 +4772,23 @@ exports.prepareShareMediaAssets = onCall(
         if (!rawItems.length) return { items: [] };
 
         const normalizedItems = rawItems.map((item, index) => normalizeShareMediaRequestItem(item, index));
-        const items = await Promise.all(normalizedItems.map(async (item) => {
-            const src = await loadShareMediaDataUrl(item.candidateUrls);
-            return {
+        // 순차 처리한다. 동시에 받으면 원본 여러 장의 버퍼와 base64 문자열이 함께
+        // 살아 있어 메모리가 몇 배로 튄다. 한 항목이 실패해도 나머지는 살린다.
+        const items = [];
+        for (const item of normalizedItems) {
+            let src = "";
+            try {
+                src = await loadShareMediaDataUrl(item.candidateUrls);
+            } catch (error) {
+                console.warn("[prepareShareMediaAssets] item failed:", item.category, error?.message || error);
+            }
+            items.push({
                 category: item.category,
                 type: item.type,
                 src,
                 prepared: !!src,
-            };
-        }));
+            });
+        }
 
         return { items };
     }
