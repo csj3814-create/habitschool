@@ -131,8 +131,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=268">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=268">
+    <link rel="stylesheet" href="styles.css?v=269">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=269">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -730,7 +730,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=268"></script>
+    <script src="js/webview-detect.js?v=269"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -861,6 +861,15 @@
             <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
                 병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
             </p>
+            <!--
+              초대 링크(?ref=)로 들어온 비로그인 방문자에게만 보인다(auth.js가 제어).
+              초대한 사람 이름은 싣지 않는다. 이름을 보여주려면 비로그인도 부를 수 있는
+              공개 API가 필요한데, 6자리 코드를 훑어 남의 표시 이름을 긁을 수 있게 된다.
+            -->
+            <div id="invite-landing-banner" class="invite-landing-banner" hidden>
+                <div class="invite-landing-title" data-i18n="invite.landingTitle">🎁 친구가 초대했어요</div>
+                <p class="invite-landing-desc" data-i18n="invite.landingDesc">시작하면 초대한 친구와 바로 이어지고, 가입 보너스 포인트도 받아요. 먼저 가입 없이 둘러봐도 됩니다.</p>
+            </div>
             <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
                     <path fill="#FFC107"
@@ -2670,13 +2679,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=268"></script>
-    <script type="module" src="js/main.js?v=268"></script>
-    <script type="module" src="js/diet-analysis.js?v=268"></script>
-    <script type="module" src="js/metabolic-score.js?v=268"></script>
+    <script type="module" src="js/app.js?v=269"></script>
+    <script type="module" src="js/main.js?v=269"></script>
+    <script type="module" src="js/diet-analysis.js?v=269"></script>
+    <script type="module" src="js/metabolic-score.js?v=269"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=268"></script>
+    <script src="js/pwa-install.js?v=269"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

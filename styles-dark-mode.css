@@ -68,6 +68,14 @@ body.dark-mode #login-modal {
     background: linear-gradient(160deg, #1F1A14 0%, #1D1B20 40%, #1A1518 100%);
 }
 
+body.dark-mode .invite-landing-banner {
+    background: linear-gradient(135deg, #2B2318, #241E16);
+    border-color: #4A3A22;
+}
+
+body.dark-mode .invite-landing-title { color: #FFCC80; }
+body.dark-mode .invite-landing-desc { color: #D8C6A8; }
+
 body.dark-mode .google-btn {
     background-color: #2B2830;
     color: var(--text-color);

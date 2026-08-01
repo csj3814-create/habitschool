@@ -161,8 +161,39 @@ body {
     letter-spacing: -0.5px;
 }
 
-.google-btn { 
-    background-color: var(--white); 
+/* 초대 링크로 들어온 비로그인 방문자에게만 보이는 안내 (auth.js가 hidden 제어) */
+.invite-landing-banner {
+    width: 100%;
+    max-width: 340px;
+    margin: -22px 0 26px;
+    padding: 14px 18px;
+    box-sizing: border-box;
+    background: linear-gradient(135deg, #FFF6E5, #FFEFD3);
+    border: 1px solid #FFD9A0;
+    border-radius: var(--radius-lg, 16px);
+    text-align: left;
+}
+
+.invite-landing-banner[hidden] {
+    display: none;
+}
+
+.invite-landing-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #8A5200;
+    margin-bottom: 6px;
+}
+
+.invite-landing-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #7A5A2E;
+}
+
+.google-btn {
+    background-color: var(--white);
     color: var(--text-color); 
     border: 1px solid var(--gray-200); 
     padding: 14px 28px; 

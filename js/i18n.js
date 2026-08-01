@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=268';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=269';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -119,7 +119,9 @@ const MESSAGES = {
         'diet.window.saved': '✅ Eating window saved: {start}–{end}.',
         'diet.window.stepError': 'Please pick times in 30-minute steps.',
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
-        'diet.window.invalid': 'Please check the times again.'
+        'diet.window.invalid': 'Please check the times again.',
+        'invite.landingTitle': '🎁 A friend invited you',
+        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus a sign-up bonus. You can also look around first without an account.'
     }
 };
 

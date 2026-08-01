@@ -18,7 +18,9 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'record_saved',
     'first_reward_view',
     'day3_activated',
-    'week2_return'
+    'week2_return',
+    'share_card_sent',
+    'invite_link_landing'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -109,7 +111,20 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
         'resume_prompt',
         'notification',
         'onboarding',
-        'direct'
+        'direct',
+        'share_card',
+        'share_modal',
+        'invite_link'
+    ]),
+    // 공유가 실제로 어느 경로로 나갔는지. 어떤 경로가 실제 유입을 만드는지 봐야
+    // 다음 개선(카드 성취 수치, 초대 보상, 동적 OG)의 효과를 전후로 비교할 수 있다.
+    share_method: freezeValues([
+        'web_share_files',
+        'web_share_text',
+        'platform_modal',
+        'clipboard',
+        'download',
+        'unavailable'
     ]),
     status: freezeValues(['success', 'cancelled', 'error', 'skipped', 'unavailable', 'empty', 'expired', 'deferred']),
     variant: freezeValues(['control', 'demo_v1', 'demo_v2', 'personalized_v1', 'full']),
@@ -204,6 +219,21 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         entry_point: values.entry_point,
         record_count_bucket: values.record_count_bucket,
         variant: values.variant
+    }),
+    share_card_sent: schema({
+        share_method: values.share_method,
+        status: values.status,
+        entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode,
+        variant: values.variant
+    }),
+    // status로 로그인 상태를 구분한다. success = 이미 회원, empty = 아직 비회원.
+    invite_link_landing: schema({
+        status: values.status,
+        entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode
     })
 });
 

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=268';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=269';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=268';
-import { getDatesInfo } from './ui-helpers.js?v=268';
-import { escapeHtml } from './security.js?v=268';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=268';
+import { showToast } from './ui-helpers.js?v=269';
+import { getDatesInfo } from './ui-helpers.js?v=269';
+import { escapeHtml } from './security.js?v=269';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=269';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,11 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=268';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=268';
+} from './auth-login-helpers.js?v=269';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=269';
+import { trackProductEvent } from './product-events.js?v=269';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=268';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=269';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -460,6 +461,8 @@ async function applySignedInUserUi(user, userData = {}) {
     }
 
     const referralCode = normalizeInviteRefCode(userData.referralCode);
+    // 공유 카드가 프로필 화면을 그리기 전에도 초대 코드를 실을 수 있게 전역에 둔다.
+    window.__HABITSCHOOL_REFERRAL_CODE = referralCode;
     const referralUrl = referralCode ? `${APP_ORIGIN}?ref=${referralCode}` : '';
     const profileLinkBox = document.getElementById('profile-invite-link-box');
     const profileLinkEl = document.getElementById('profile-invite-link');
@@ -624,6 +627,30 @@ async function maybeHandleInviteLinkAfterAuth(user, userData = {}, options = {})
 const _refCode = getInviteRefFromUrl();
 if (_refCode) {
     persistPendingInviteRef(_refCode);
+}
+
+// 초대 링크로 들어왔는지는 URL을 정리한 뒤에도 알아야 하므로 따로 기억한다.
+const _arrivedViaInviteLink = !!_refCode;
+let _inviteLandingTracked = false;
+
+function trackInviteLinkLanding(isSignedIn) {
+    if (!_arrivedViaInviteLink || _inviteLandingTracked) return;
+    _inviteLandingTracked = true;
+    // status로 회원/비회원 유입을 나눈다. 자유 텍스트나 코드 자체는 보내지 않는다.
+    trackProductEvent('invite_link_landing', {
+        status: isSignedIn ? 'success' : 'empty',
+        entry_point: 'invite_link',
+        locale: isEnglishLocale() ? 'en' : 'ko',
+        app_mode: getAppModeFromPath(window.location.pathname) === 'simple' ? 'simple' : 'default'
+    });
+}
+
+// 초대 링크로 들어온 비로그인 방문자에게만 안내를 띄운다. 이미 회원이면
+// 기존 친구 연결 흐름이 처리하므로 배너는 필요 없다.
+function applyInviteLandingBanner(isSignedIn) {
+    const banner = document.getElementById('invite-landing-banner');
+    if (!banner) return;
+    banner.hidden = !(_arrivedViaInviteLink && !isSignedIn);
 }
 
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';
@@ -1110,6 +1137,9 @@ function handleSignedOutAuthState(callbacks) {
         return;
     }
 
+    applyInviteLandingBanner(false);
+    trackInviteLinkLanding(false);
+
     if (isEnglishLocale()) {
         setEnglishAuthShellState('signed-out');
     } else {
@@ -1161,6 +1191,8 @@ export function setupAuthListener(callbacks) {
                 || null;
             applySignedInShellUi(user);
             applyCachedSignedInPointBalance(user.uid);
+            applyInviteLandingBanner(true);
+            trackInviteLinkLanding(true);
 
             // 즉시 대시보드 열기(renderDashboard가 자체 데이터 로딩 수행)
             const params = new URLSearchParams(window.location.search);

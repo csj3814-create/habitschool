@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=268';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=268';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=269';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=269';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=268';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=268';
+} from './auth-login-helpers.js?v=269';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=269';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=268';
+} from './exercise-media.js?v=269';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=268';
+} from './health-connect-utils.js?v=269';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=268';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=268';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=268';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=268';
-import { sanitize, compressImage } from './data-manager.js?v=268';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=268';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=268';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=268';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=268';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=268';
+} from './habit-groups.js?v=269';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=269';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=269';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=269';
+import { sanitize, compressImage } from './data-manager.js?v=269';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=269';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=269';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=269';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=269';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=269';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=268';
+} from './guest-demo.js?v=269';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=268';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=268';
+} from './product-events.js?v=269';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=269';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=268';
+} from './diet-program.js?v=269';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=268';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=268';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=268';
+} from './meditation-guide.js?v=269';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=269';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=269';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=268';
+} from './social-challenge-readiness.js?v=269';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=268';
+} from './monthly-mvp-reward.js?v=269';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5885,7 +5885,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=268';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=269';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19501,8 +19501,34 @@ let latestShareText = '';
 let latestShareCaption = '';
 const thumbUrlCache = new Map();
 
+// 로그인하면 auth.js가 초대 코드를 전역과 프로필 DOM에 채워 둔다. 공유 시점에
+// 서버를 다시 부르지 않고 그 값을 읽는다. 프로필 화면을 아직 안 그린 상태에서도
+// 공유가 가능해야 하므로 전역을 먼저 본다.
+function getMyReferralCode() {
+    const fromGlobal = String(window.__HABITSCHOOL_REFERRAL_CODE || '').trim().toUpperCase();
+    if (/^[A-Z0-9]{6}$/.test(fromGlobal)) return fromGlobal;
+    return String(readSimpleProfileReferralDomState()?.code || '').trim().toUpperCase();
+}
+
+// 공유 카드가 나가는 주소에 내 초대 코드를 실어 보낸다. 코드가 없으면(비로그인,
+// 아직 발급 전) 예전처럼 맨 주소로 나간다 — 공유 자체가 막히면 안 된다.
+// ?ref=는 반드시 해시 앞에 와야 한다. auth.js가 location.search에서 읽는다.
 function getShareTargetUrl() {
-    return `${APP_ORIGIN}/#gallery`;
+    const code = getMyReferralCode();
+    if (!/^[A-Z0-9]{6}$/.test(code)) return `${APP_ORIGIN}/#gallery`;
+    return `${APP_ORIGIN}/?ref=${code}#gallery`;
+}
+
+// 공유가 실제로 어느 경로로 나갔는지 남긴다. 어떤 경로가 유입을 만드는지 알아야
+// 다음 개선(카드 성취 수치, 초대 보상, 동적 OG)의 효과를 전후로 비교할 수 있다.
+function trackShareCardSent(shareMethod, status = 'success', entryPoint = 'share_card') {
+    trackProductEvent('share_card_sent', {
+        share_method: shareMethod,
+        status,
+        entry_point: entryPoint,
+        locale: isEnglishLocale() ? 'en' : 'ko',
+        app_mode: isSimpleMode() ? 'simple' : 'default'
+    });
 }
 
 function buildShareCaption() {
@@ -19510,7 +19536,13 @@ function buildShareCaption() {
 }
 
 function buildShareCopyText() {
-    return `${buildShareCaption()}\n\n👇 갤러리 구경가기 (가입 없이 가능)\n${getShareTargetUrl()}`;
+    // 받는 사람에게 눌러야 할 이유를 준다. 초대 링크로 들어오면 친구로 이어지고
+    // 가입 보너스도 붙으므로 그 사실을 그대로 적는다.
+    const hasInvite = /[?&]ref=/.test(getShareTargetUrl());
+    const invitation = hasInvite
+        ? '👇 이 링크로 시작하면 저와 친구로 이어지고 가입 보너스도 받아요\n(가입 없이 구경만 해도 됩니다)'
+        : '👇 갤러리 구경가기 (가입 없이 가능)';
+    return `${buildShareCaption()}\n\n${invitation}\n${getShareTargetUrl()}`;
 }
 
 function isVideoUrl(url) {
@@ -20075,14 +20107,19 @@ window.shareMyCard = async function () {
         if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
             try {
                 await navigator.share(shareData);
+                trackShareCardSent('web_share_files');
                 showToast('✅ 공유 완료!');
                 return;
             } catch (shareErr) {
-                if (shareErr.name === 'AbortError') return;
+                if (shareErr.name === 'AbortError') {
+                    trackShareCardSent('web_share_files', 'cancelled');
+                    return;
+                }
                 console.warn('시스템 공유 실패, 모달 표시:', shareErr);
             }
         }
         // PC 또는 모바일 Web Share 실패 시 모달 표시
+        trackShareCardSent('platform_modal', 'deferred');
         openSharePlatformModal();
     } catch (err) {
         console.error('공유 카드 생성 오류:', err);
@@ -20108,14 +20145,17 @@ window.shareViaSystem = async function () {
     try {
         if (navigator.canShare && navigator.canShare(shareData)) {
             await navigator.share(shareData);
+            trackShareCardSent('web_share_files', 'success', 'share_modal');
             closeSharePlatformModal();
         } else {
             // 파일 공유 미지원 시 텍스트만 공유 시도
             const textShareData = { title: '해빛스쿨 인증', text: latestShareText };
             if (navigator.share) {
                 await navigator.share(textShareData);
+                trackShareCardSent('web_share_text', 'success', 'share_modal');
                 closeSharePlatformModal();
             } else {
+                trackShareCardSent('unavailable', 'unavailable', 'share_modal');
                 showToast('이 브라우저는 시스템 공유를 지원하지 않습니다.\n이미지 저장 또는 링크 복사를 이용해주세요.');
             }
         }
@@ -20170,10 +20210,12 @@ async function copyTextToClipboard(text, successMessage = '✅ 복사되었습�
 
 window.copyShareCaption = function () {
     const text = latestShareText || buildShareCopyText();
+    trackShareCardSent('clipboard', 'success', 'share_modal');
     copyTextToClipboard(text, '✅ 캡션이 복사되었습니다!');
 };
 
 window.copyShareLink = function () {
+    trackShareCardSent('clipboard', 'success', 'share_modal');
     copyTextToClipboard(getShareTargetUrl(), '✅ 링크가 복사되었습니다!');
 };
 
@@ -20188,12 +20230,14 @@ async function shareFileToAppsOrFallback(platform) {
     if (isMobile && navigator.canShare && navigator.canShare(shareData)) {
         try {
             await navigator.share(shareData);
+            trackShareCardSent('web_share_files', 'success', 'share_modal');
             closeSharePlatformModal();
             return true;
         } catch (_) { }
     }
 
     // PC에서는 이미지 저장 + 캡션 복사 + 플랫폼 열기
+    trackShareCardSent('download', 'success', 'share_modal');
     window.downloadShareImage(true);
     await copyTextToClipboard(latestShareText || buildShareCopyText(), '✅ 캡션이 복사되었습니다!', false);
 

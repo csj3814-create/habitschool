@@ -25,7 +25,9 @@ const EXPECTED_EVENT_NAMES = [
     'record_saved',
     'first_reward_view',
     'day3_activated',
-    'week2_return'
+    'week2_return',
+    'share_card_sent',
+    'invite_link_landing'
 ];
 
 afterEach(() => {
@@ -34,7 +36,7 @@ afterEach(() => {
 });
 
 describe('product event schema', () => {
-    it('exposes exactly the eleven approved event names', () => {
+    it('exposes exactly the approved event names', () => {
         expect(PRODUCT_EVENT_NAMES).toEqual(EXPECTED_EVENT_NAMES);
         expect(Object.keys(PRODUCT_EVENT_PARAM_ALLOWLIST)).toEqual(EXPECTED_EVENT_NAMES);
         expect(Object.isFrozen(PRODUCT_EVENT_NAMES)).toBe(true);
@@ -52,6 +54,49 @@ describe('product event schema', () => {
             params: { tab: 'gallery', variant: 'demo_v1' }
         });
         expect(buildProductEvent('arbitrary_event', { tab: 'gallery' })).toBeNull();
+    });
+
+    // 공유 확산 계측. 초대 코드나 링크 같은 식별자는 절대 실리면 안 되고,
+    // 열거된 경로 값만 통과해야 한다.
+    it('keeps share and invite events to enumerated dimensions only', () => {
+        expect(buildProductEvent('share_card_sent', {
+            share_method: 'web_share_files',
+            status: 'success',
+            entry_point: 'share_card',
+            locale: 'ko',
+            app_mode: 'default'
+        })).toEqual({
+            name: 'share_card_sent',
+            params: {
+                share_method: 'web_share_files',
+                status: 'success',
+                entry_point: 'share_card',
+                locale: 'ko',
+                app_mode: 'default'
+            }
+        });
+
+        expect(sanitizeProductEventParams('share_card_sent', {
+            share_method: 'carrier_pigeon',
+            referral_code: 'AB12CD',
+            share_url: 'https://habitschool.web.app/?ref=AB12CD',
+            status: 'success'
+        })).toEqual({ status: 'success' });
+
+        expect(buildProductEvent('invite_link_landing', {
+            status: 'empty',
+            entry_point: 'invite_link',
+            locale: 'ko',
+            app_mode: 'default'
+        })).toEqual({
+            name: 'invite_link_landing',
+            params: {
+                status: 'empty',
+                entry_point: 'invite_link',
+                locale: 'ko',
+                app_mode: 'default'
+            }
+        });
     });
 });
 
