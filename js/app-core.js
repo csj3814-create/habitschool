@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=272';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=272';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=273';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=273';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=272';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=272';
+} from './auth-login-helpers.js?v=273';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=273';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=272';
+} from './exercise-media.js?v=273';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=272';
+} from './health-connect-utils.js?v=273';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=272';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=272';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=272';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=272';
-import { sanitize, compressImage } from './data-manager.js?v=272';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=272';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=272';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=272';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=272';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=272';
+} from './habit-groups.js?v=273';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=273';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=273';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=273';
+import { sanitize, compressImage } from './data-manager.js?v=273';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=273';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=273';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=273';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=273';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=273';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=272';
+} from './guest-demo.js?v=273';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=272';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=272';
+} from './product-events.js?v=273';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=273';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=272';
+} from './diet-program.js?v=273';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=272';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=272';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=272';
+} from './meditation-guide.js?v=273';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=273';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=273';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=272';
+} from './social-challenge-readiness.js?v=273';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=272';
+} from './monthly-mvp-reward.js?v=273';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -5979,7 +5979,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=272';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=273';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19636,25 +19636,40 @@ function getShareAfterSavePromptKey(uid = '') {
     return `${SHARE_AFTER_SAVE_PROMPT_KEY_PREFIX}${uid}`;
 }
 
-// 하루에 한 번만 띄운다. 조르면 오히려 공유를 피하게 된다.
-function hasShownShareAfterSaveToday(uid = '') {
-    if (!uid) return true;
+// 저녁이라 띄웠는데 그 뒤에 운동을 마저 채워 풀 루틴이 되는 경우가 있다.
+// 그때 카드가 비로소 완성되므로 그 하루에 한해 한 번 더 권한다.
+// 저장 형식: `${KST날짜}|${사유}`
+function readShareAfterSavePromptMark(uid = '') {
+    if (!uid) return null;
     try {
-        return localStorage.getItem(getShareAfterSavePromptKey(uid)) === getKstDateString();
+        const raw = String(localStorage.getItem(getShareAfterSavePromptKey(uid)) || '');
+        if (!raw) return null;
+        const [dateStr, reason = ''] = raw.split('|');
+        return { dateStr, reason };
     } catch (_) {
-        return false;
+        return null;
     }
 }
 
-function markShareAfterSaveShown(uid = '') {
+function canShowShareAfterSaveFor(uid = '', reason = '') {
+    if (!uid || !reason) return false;
+    const mark = readShareAfterSavePromptMark(uid);
+    if (!mark || mark.dateStr !== getKstDateString()) return true;
+    // 저녁 유도를 이미 봤어도, 풀 루틴을 채운 순간은 한 번 더 권할 값어치가 있다.
+    return mark.reason === SHARE_PROMPT_REASON_EVENING && reason === SHARE_PROMPT_REASON_FULL_ROUTINE;
+}
+
+function markShareAfterSaveShown(uid = '', reason = '') {
     if (!uid) return;
     try {
-        localStorage.setItem(getShareAfterSavePromptKey(uid), getKstDateString());
+        localStorage.setItem(getShareAfterSavePromptKey(uid), `${getKstDateString()}|${reason}`);
     } catch (_) { }
 }
 
 // 저녁 이 시각부터는 그날의 마지막 저장으로 본다.
 const SHARE_AFTER_SAVE_EVENING_HOUR = 20;
+const SHARE_PROMPT_REASON_EVENING = 'evening';
+const SHARE_PROMPT_REASON_FULL_ROUTINE = 'full_routine';
 
 function getKstHour(now = new Date()) {
     try {
@@ -19669,13 +19684,15 @@ function getKstHour(now = new Date()) {
 }
 
 // 하루의 첫 저장 카드는 아직 반쪽이다. 하루가 다 담겼을 때 권해야 보여 줄 게 있다.
-// 두 가지 중 하나면 '다 담겼다'로 본다.
+// 두 가지 중 하나면 '다 담겼다'로 보고, 어느 쪽이었는지 사유를 돌려준다.
 //   - 풀 루틴(65P)을 채웠다 — 시간과 무관하게 카드가 완성됐다
 //   - 저녁 8시 이후다 — 더 채울 일이 남았을 가능성이 낮다
-function isShareWorthyDayRecord(savedLog = null, now = new Date()) {
-    if (getSharePoints(savedLog) >= DASHBOARD_DAILY_POINT_GOAL) return true;
+// 사유는 노출 횟수 제한에도 쓰인다(저녁 → 풀 루틴 순서면 한 번 더 허용).
+function resolveShareWorthyReason(savedLog = null, now = new Date()) {
+    if (getSharePoints(savedLog) >= DASHBOARD_DAILY_POINT_GOAL) return SHARE_PROMPT_REASON_FULL_ROUTINE;
     const kstHour = getKstHour(now);
-    return Number.isFinite(kstHour) && kstHour >= SHARE_AFTER_SAVE_EVENING_HOUR;
+    if (Number.isFinite(kstHour) && kstHour >= SHARE_AFTER_SAVE_EVENING_HOUR) return SHARE_PROMPT_REASON_EVENING;
+    return '';
 }
 
 function maybeShowShareAfterSave({
@@ -19689,16 +19706,18 @@ function maybeShowShareAfterSave({
     // 첫 기록 결과 모달이 뜬 순간은 이미 다른 안내가 차지했다.
     if (firstResultShown) return false;
     if (!dateStr || dateStr !== getKstDateString()) return false;
-    if (hasShownShareAfterSaveToday(user.uid)) return false;
     // 보여 줄 사진이 없으면 카드가 플레이스홀더뿐이라 공유할 이유가 없다.
     if (!collectShareCardMedia(savedLog, getDefaultShareSettings()).length) return false;
     // 아침에 식단 한 장만 올린 상태로 권하면 빈 카드를 내보내게 된다.
-    if (!isShareWorthyDayRecord(savedLog)) return false;
+    const reason = resolveShareWorthyReason(savedLog);
+    if (!reason) return false;
+    if (!canShowShareAfterSaveFor(user.uid, reason)) return false;
 
     const sheet = document.getElementById('share-after-save-sheet');
     if (!sheet) return false;
 
-    markShareAfterSaveShown(user.uid);
+    markShareAfterSaveShown(user.uid, reason);
+    applyShareAfterSaveCopy(reason);
     sheet.style.display = 'flex';
     setTimeout(() => sheet.querySelector('.share-after-save-primary')?.focus(), 0);
     trackProductEvent('share_prompt_shown', {
@@ -19708,6 +19727,28 @@ function maybeShowShareAfterSave({
         app_mode: isSimpleMode() ? 'simple' : 'default'
     });
     return true;
+}
+
+// 저녁 유도를 이미 본 사람에게 같은 문구를 또 띄우면 조르는 것으로 읽힌다.
+// 풀 루틴을 채운 두 번째 유도는 그 성취를 앞세운다.
+function applyShareAfterSaveCopy(reason = '') {
+    const kickerEl = document.getElementById('share-after-save-kicker');
+    const titleEl = document.getElementById('share-after-save-title');
+    if (!kickerEl || !titleEl) return;
+
+    const isFullRoutine = reason === SHARE_PROMPT_REASON_FULL_ROUTINE;
+    const kickerKey = isFullRoutine ? 'sharePrompt.kickerFull' : 'sharePrompt.kicker';
+    const titleKey = isFullRoutine ? 'sharePrompt.titleFull' : 'sharePrompt.title';
+    // data-i18n도 같이 바꿔야 나중에 로케일이 바뀌어도 같은 쪽 문구가 유지된다.
+    kickerEl.setAttribute('data-i18n', kickerKey);
+    titleEl.setAttribute('data-i18n', titleKey);
+    // 한국어 문구는 MESSAGES에 없다(영문 키만 둔다). 원문을 직접 넣는다.
+    kickerEl.textContent = isEnglishLocale()
+        ? t(kickerKey)
+        : (isFullRoutine ? '풀 루틴 달성' : '오늘 하루 정리');
+    titleEl.textContent = isEnglishLocale()
+        ? t(titleKey)
+        : (isFullRoutine ? '오늘 식단·운동·마음을 다 채웠어요' : '오늘 하루가 카드 한 장에 담겼어요');
 }
 
 function hideShareAfterSaveSheet() {
