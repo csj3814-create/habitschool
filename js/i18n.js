@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=271';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=272';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -122,8 +122,8 @@ const MESSAGES = {
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
         'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus a sign-up bonus. You can also look around first without an account.',
-        'sharePrompt.kicker': 'Saved',
-        'sharePrompt.title': 'Today’s record is ready as a card',
+        'sharePrompt.kicker': 'Today, wrapped up',
+        'sharePrompt.title': 'Your whole day fits on one card',
         'sharePrompt.desc': 'The card carries a join QR code, so whoever sees it can come straight in.',
         'sharePrompt.later': 'Later',
         'sharePrompt.share': 'Share'

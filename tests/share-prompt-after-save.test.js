@@ -34,8 +34,28 @@ describe('share prompt right after saving', () => {
         expect(promptFn).toContain('if (hasShownShareAfterSaveToday(user.uid)) return false;');
         // 사진이 없으면 카드가 플레이스홀더뿐이다.
         expect(promptFn).toContain('if (!collectShareCardMedia(savedLog, getDefaultShareSettings()).length) return false;');
+        // 하루의 첫 저장 카드는 반쪽이다. 하루가 다 담겼을 때만 권한다.
+        expect(promptFn).toContain('if (!isShareWorthyDayRecord(savedLog)) return false;');
         // 하루 한 번 제한은 KST 날짜 기준이어야 자정 경계가 기기 시간대와 어긋나지 않는다.
         expect(appSource).toContain("localStorage.getItem(getShareAfterSavePromptKey(uid)) === getKstDateString()");
+    });
+
+    // 아침에 식단 한 장 올린 카드를 내보내라고 권하면 보여 줄 게 없다.
+    // 하루가 다 담긴 시점 — 풀 루틴을 채웠거나, 더 채울 일이 없는 저녁 — 에만 권한다.
+    it('waits until the day is actually full before asking', () => {
+        const appSource = readAppSource();
+        const gateFn = appSource
+            .split('function isShareWorthyDayRecord(')[1]
+            ?.split('function maybeShowShareAfterSave(')[0] || '';
+
+        expect(gateFn).not.toBe('');
+        expect(gateFn).toContain('if (getSharePoints(savedLog) >= DASHBOARD_DAILY_POINT_GOAL) return true;');
+        expect(gateFn).toContain('return Number.isFinite(kstHour) && kstHour >= SHARE_AFTER_SAVE_EVENING_HOUR;');
+        expect(appSource).toContain('const SHARE_AFTER_SAVE_EVENING_HOUR = 20;');
+        expect(appSource).toContain('const DASHBOARD_DAILY_POINT_GOAL = 65;');
+        // 저녁 판정은 기기 로컬 시간이 아니라 KST여야 한다. 해외 사용자의 저녁이
+        // 한국의 저녁과 다르면 앱의 하루 경계와 어긋난다.
+        expect(appSource).toContain("timeZone: 'Asia/Seoul',\n            hour: '2-digit',\n            hour12: false");
     });
 
     it('attributes shares that started from the prompt', () => {
