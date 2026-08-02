@@ -131,8 +131,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=270">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=270">
+    <link rel="stylesheet" href="styles.css?v=271">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=271">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -730,7 +730,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=270"></script>
+    <script src="js/webview-detect.js?v=271"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2665,6 +2665,26 @@
         </div>
     </div>
 
+    <!--
+      저장 직후 공유 유도. 갤러리 탭까지 찾아 들어가지 않아도 한 번의 탭으로
+      공유 시트까지 가게 한다. 노출 조건은 app-core의 maybeShowShareAfterSave 참고
+      (사진이 있는 오늘 기록, 업로드 실패 없음, 하루 한 번).
+    -->
+    <div id="share-after-save-sheet" class="share-after-save-overlay" style="display:none;" role="dialog" aria-modal="true"
+        aria-labelledby="share-after-save-title">
+        <div class="share-after-save-card">
+            <div class="share-after-save-kicker" data-i18n="sharePrompt.kicker">저장 완료</div>
+            <h3 id="share-after-save-title" data-i18n="sharePrompt.title">오늘 기록을 카드 한 장으로 만들어 뒀어요</h3>
+            <p class="share-after-save-desc" data-i18n="sharePrompt.desc">카드에 참여 QR이 들어 있어서, 받은 사람이 바로 들어올 수 있어요.</p>
+            <div class="share-after-save-actions">
+                <button type="button" class="share-after-save-secondary" onclick="dismissShareAfterSave()"
+                    data-i18n="sharePrompt.later">나중에</button>
+                <button type="button" class="share-after-save-primary" onclick="acceptShareAfterSave()"
+                    data-i18n="sharePrompt.share">공유하기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 30일 종합 결과지 모달 -->
     <div id="report-modal" class="report-modal" style="display:none;">
         <div class="report-container" id="report-container">
@@ -2687,13 +2707,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=270"></script>
-    <script type="module" src="js/main.js?v=270"></script>
-    <script type="module" src="js/diet-analysis.js?v=270"></script>
-    <script type="module" src="js/metabolic-score.js?v=270"></script>
+    <script type="module" src="js/app.js?v=271"></script>
+    <script type="module" src="js/main.js?v=271"></script>
+    <script type="module" src="js/diet-analysis.js?v=271"></script>
+    <script type="module" src="js/metabolic-score.js?v=271"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=270"></script>
+    <script src="js/pwa-install.js?v=271"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=270';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=271';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -121,7 +121,12 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
-        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus a sign-up bonus. You can also look around first without an account.'
+        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus a sign-up bonus. You can also look around first without an account.',
+        'sharePrompt.kicker': 'Saved',
+        'sharePrompt.title': 'Today’s record is ready as a card',
+        'sharePrompt.desc': 'The card carries a join QR code, so whoever sees it can come straight in.',
+        'sharePrompt.later': 'Later',
+        'sharePrompt.share': 'Share'
     }
 };
 

@@ -1147,6 +1147,22 @@ body.dark-mode .btn-share-action {
     background: linear-gradient(135deg, #CC6600 0%, #B35A00 50%, #994D00 100%);
     box-shadow: 0 3px 12px rgba(204,102,0,0.25);
 }
+body.dark-mode .share-after-save-card {
+    background: linear-gradient(150deg, #241E16 0%, #2B2318 100%);
+    border-color: #5C4A2E;
+}
+body.dark-mode .share-after-save-kicker { color: #FFB74D; }
+body.dark-mode .share-after-save-card h3 { color: var(--text-color); }
+body.dark-mode .share-after-save-desc { color: #D8C6A8; }
+body.dark-mode .share-after-save-secondary {
+    background: rgba(43, 40, 48, 0.9);
+    color: #FFB74D;
+    border-color: #5C4A2E;
+}
+body.dark-mode .share-after-save-primary {
+    background: linear-gradient(135deg, #CC6600 0%, #B35A00 50%, #994D00 100%);
+}
+
 body.dark-mode .btn-share-link {
     background: rgba(43, 40, 48, 0.9);
     color: #FFB74D;

@@ -4064,6 +4064,96 @@ textarea {
     box-shadow: 0 2px 6px rgba(255, 109, 0, 0.2);
 }
 
+/* 저장 직후 공유 유도 시트. 아래에서 올라오고, 조르지 않게 가볍게 둔다. */
+.share-after-save-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(28, 20, 12, 0.42);
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.share-after-save-card {
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(150deg, #FFFAF2 0%, #FFF4E4 100%);
+    border: 1px solid rgba(245, 191, 112, 0.6);
+    border-radius: 22px;
+    padding: 20px 20px 18px;
+    box-shadow: 0 -6px 28px rgba(120, 74, 20, 0.22);
+    animation: shareAfterSaveRise 0.22s ease-out;
+}
+
+@keyframes shareAfterSaveRise {
+    from { transform: translateY(18px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .share-after-save-card { animation: none; }
+}
+
+.share-after-save-kicker {
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #B76400;
+    margin-bottom: 6px;
+}
+
+.share-after-save-card h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+    font-weight: 800;
+    color: #2F261D;
+    line-height: 1.45;
+}
+
+.share-after-save-desc {
+    margin: 0 0 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #7A5A2E;
+}
+
+.share-after-save-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.share-after-save-secondary,
+.share-after-save-primary {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.3px;
+    transition: transform 0.12s;
+}
+
+.share-after-save-secondary {
+    background: rgba(255, 255, 255, 0.9);
+    color: #8A6336;
+    border: 1px solid rgba(245, 191, 112, 0.7);
+}
+
+.share-after-save-primary {
+    background: linear-gradient(135deg, #FF8C00 0%, #FF6D00 50%, #FF3D00 100%);
+    color: #FFFFFF;
+    border: none;
+    box-shadow: 0 3px 12px rgba(255, 109, 0, 0.3);
+    flex: 1.4;
+}
+
+.share-after-save-secondary:active,
+.share-after-save-primary:active { transform: scale(0.97); }
+
 /* 이미지만 보내지는 공유 시트를 대비한 보조 경로. 주 버튼보다 약하게 둔다. */
 .btn-share-link {
     display: block;

@@ -27,7 +27,8 @@ const EXPECTED_EVENT_NAMES = [
     'day3_activated',
     'week2_return',
     'share_card_sent',
-    'invite_link_landing'
+    'invite_link_landing',
+    'share_prompt_shown'
 ];
 
 afterEach(() => {

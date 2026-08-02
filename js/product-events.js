@@ -20,7 +20,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'day3_activated',
     'week2_return',
     'share_card_sent',
-    'invite_link_landing'
+    'invite_link_landing',
+    'share_prompt_shown'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -231,6 +232,14 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     // status로 로그인 상태를 구분한다. success = 이미 회원, empty = 아직 비회원.
     invite_link_landing: schema({
         status: values.status,
+        entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode
+    }),
+    // 저장 직후 공유 유도가 실제로 노출된 횟수. 전환율의 분모가 된다.
+    // 분자는 entry_point가 record_prompt인 share_card_sent다.
+    share_prompt_shown: schema({
+        tab: values.tab,
         entry_point: values.entry_point,
         locale: values.locale,
         app_mode: values.app_mode
