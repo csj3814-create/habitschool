@@ -1147,6 +1147,12 @@ body.dark-mode .btn-share-action {
     background: linear-gradient(135deg, #CC6600 0%, #B35A00 50%, #994D00 100%);
     box-shadow: 0 3px 12px rgba(204,102,0,0.25);
 }
+body.dark-mode .btn-share-link {
+    background: rgba(43, 40, 48, 0.9);
+    color: #FFB74D;
+    border-color: #5C4A2E;
+}
+body.dark-mode .btn-share-link:active { background: rgba(58, 53, 64, 0.95); }
 
 /* ?�번 �??�기 기록 ?�크모드 */
 body.dark-mode #weekly-best-container {

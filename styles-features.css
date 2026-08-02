@@ -4059,9 +4059,32 @@ textarea {
     width: min(100%, 320px);
 }
 
-.btn-share-action:active { 
-    transform: scale(0.97); 
-    box-shadow: 0 2px 6px rgba(255, 109, 0, 0.2); 
+.btn-share-action:active {
+    transform: scale(0.97);
+    box-shadow: 0 2px 6px rgba(255, 109, 0, 0.2);
+}
+
+/* 이미지만 보내지는 공유 시트를 대비한 보조 경로. 주 버튼보다 약하게 둔다. */
+.btn-share-link {
+    display: block;
+    width: min(100%, 320px);
+    margin: -2px auto 12px;
+    padding: 9px 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #B35A00;
+    border: 1px solid rgba(255, 140, 0, 0.45);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s;
+}
+
+.btn-share-link:active {
+    transform: scale(0.97);
+    background: rgba(255, 244, 230, 0.95);
 }
 
 /* 갤러�??�터 */

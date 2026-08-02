@@ -35,6 +35,29 @@ describe('share link carries the inviter referral code', () => {
         expect(markup).not.toContain('invite-landing-inviter-name');
     });
 
+    // 안드로이드 공유 시트는 이미지와 텍스트를 함께 넘겨도 텍스트를 버리는 경우가
+    // 많아 카톡에는 사진만 도착한다. 그래서 링크를 이미지 안에 QR로 굽는다.
+    it('burns the entry link into the card so an image-only share still carries it', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('async function drawSharePosterEntryFooter(');
+        expect(appSource).toContain('const qrCanvas = await createShareQrCanvas(getShareTargetUrl(), SHARE_QR_DRAW_SIZE);');
+        // QR을 만든 크기와 그리는 크기가 다르면 모듈 경계가 소수점에 걸려
+        // 두께가 들쭉날쭉해지고 스캔이 실패한다. 같은 상수를 써야 한다.
+        expect(appSource).toContain('const SHARE_QR_DRAW_SIZE = 128;');
+        expect(appSource).toContain('ctx.drawImage(qrCanvas, 52 + QR_PAD, FOOTER_TOP + QR_PAD, SHARE_QR_DRAW_SIZE, SHARE_QR_DRAW_SIZE);');
+        // 보간이 켜져 있으면 모듈 경계가 번진다.
+        expect(appSource).toContain('ctx.imageSmoothingEnabled = false;');
+        // QR을 못 만들어도 카드는 나가야 하고, 주소는 글자로라도 남아야 한다.
+        expect(appSource).toContain("ctx.fillText(qrCanvas ? 'QR을 찍으면 바로 참여할 수 있어요' : '아래 주소로 참여하세요', textX, FOOTER_TOP + 40);");
+        // 사진 타일이 푸터를 덮지 않도록 높이를 줄여 뒀다.
+        expect(appSource).toContain("{ x: 52, y: 234, w: 976, h: 654 }");
+        // 초대 코드가 늦게 채워지면 캐시된 카드가 코드 없는 QR을 물고 있게 된다.
+        // 공유 주소를 렌더 키에 넣어 코드가 붙은 뒤 다시 굽게 한다.
+        const renderKeyBody = appSource.split('function buildShareRenderKey(')[1]?.split('\n}')[0] || '';
+        expect(renderKeyBody).toContain('getShareTargetUrl()');
+    });
+
     it('records how each share actually left the app', () => {
         const appSource = readAppSource();
 
