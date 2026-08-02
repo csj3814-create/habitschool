@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=275';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=275';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=276';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=276';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=275';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=275';
+} from './auth-login-helpers.js?v=276';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=276';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=275';
+} from './exercise-media.js?v=276';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=275';
+} from './health-connect-utils.js?v=276';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=275';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=275';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=275';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=275';
-import { sanitize, compressImage } from './data-manager.js?v=275';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=275';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=275';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=275';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=275';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=275';
+} from './habit-groups.js?v=276';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=276';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=276';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=276';
+import { sanitize, compressImage } from './data-manager.js?v=276';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=276';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=276';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=276';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=276';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=276';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=275';
+} from './guest-demo.js?v=276';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=275';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=275';
+} from './product-events.js?v=276';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=276';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=275';
+} from './diet-program.js?v=276';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=275';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=275';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=275';
+} from './meditation-guide.js?v=276';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=276';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=276';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=275';
+} from './social-challenge-readiness.js?v=276';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=275';
+} from './monthly-mvp-reward.js?v=276';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3592,20 +3592,6 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     return deduped;
 }
 
-function getShareCategoryTags(latest, settings = getDefaultShareSettings()) {
-    if (!latest) return [];
-    const tags = [];
-    const hasDietMedia = !!collectShareCardMedia({ diet: latest.diet }, { ...getDefaultShareSettings(), hideDiet: false, hideExercise: true, hideMind: true }).length;
-    const hasExerciseMedia = !!collectShareCardMedia({ exercise: latest.exercise }, { ...getDefaultShareSettings(), hideDiet: true, hideExercise: false, hideMind: true }).length;
-    const hasMindMedia = !!collectShareCardMedia({ sleepAndMind: latest.sleepAndMind }, { ...getDefaultShareSettings(), hideDiet: true, hideExercise: true, hideMind: false }).length;
-
-    if (!settings.hideDiet && (hasDietMedia || latest.diet)) tags.push('식단');
-    if (!settings.hideExercise && (hasExerciseMedia || latest.exercise)) tags.push('운동');
-    if (!settings.hideMind && (hasMindMedia || latest.sleepAndMind?.gratitudeJournal || latest.sleepAndMind?.meditationDone)) tags.push('마음');
-    if ((latest.currentStreak || 0) > 0) tags.push(`${latest.currentStreak}일 연속`);
-    return tags.slice(0, 4);
-}
-
 function getSharePoints(latest) {
     let points = (latest?.awardedPoints?.dietPoints || 0)
         + (latest?.awardedPoints?.exercisePoints || 0)
@@ -3616,22 +3602,6 @@ function getSharePoints(latest) {
         if (latest.awardedPoints.mind) points += 5;
     }
     return points;
-}
-
-function buildShareSubtitle(latest, tags = []) {
-    if (!latest) return '오늘 기록한 흐름을 한 장으로 정리했어요.';
-    if (tags.length) {
-        const categoryTags = tags.filter(tag => !tag.includes('연속'));
-        if (categoryTags.length) {
-            return `오늘 ${categoryTags.join('·')} 흐름을 담았어요.`;
-        }
-    }
-    return '오늘 해빛 흐름을 담았어요.';
-}
-
-function buildShareTagRow(tags = []) {
-    if (!tags.length) return '';
-    return tags.map(tag => `<span class="share-tag">${escapeHtml(tag)}</span>`).join('');
 }
 
 function buildShareMediaSignature(mediaItems = [], maxCount = 4) {
@@ -4130,78 +4100,82 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
             drawPosterPlaceholderTile(ctx, frame, item?.category || '기록');
         }
 
-        drawCanvasChip(ctx, frame.x + 14, frame.y + frame.h - 48, item?.category || '기록', {
-            padX: 12,
-            height: 32,
-            radius: 16,
-            font: '800 14px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
-        });
+        // 타일마다 붙이던 식단·운동·마음 라벨은 뺐다. 14px이라 대화창 크기에서는
+        // 5px로 뭉개지고, 무엇을 찍었는지는 사진을 보면 안다.
+        // (사진을 못 불러온 자리에는 drawPosterPlaceholderTile이 이름을 크게 넣는다.)
         ctx.restore();
     }
 }
 
-// 카드에 실을 성취 숫자. 반드시 이 날짜 기록(latest)에 들어 있는 값만 쓴다.
-// 주간 완주율도 후보였지만, 그 값을 구할 수 있는 건 갤러리 캐시뿐인데 갤러리는
-// '공유된 기록'만 담아서 비공개로 기록한 날이 빠진다. 공개되는 카드에 실제보다
-// 낮은 숫자를 박는 건 없는 것보다 나쁘다.
-function collectSharePosterStats(latest = null, settings = getDefaultShareSettings()) {
-    const stats = [];
-    if (!latest) return stats;
+// 카드는 1080px로 만들지만 카톡 대화창에서는 350px 안팎으로 보인다(약 1/3).
+// 그 크기에서 30px 아래 글자는 뭉개져 노이즈가 된다. 그래서 성취를 세 칸으로
+// 나눠 34px씩 쓰던 걸 그만두고, 하나만 골라 아주 크게 넣는다.
+//
+// 값은 반드시 이 날짜 기록(latest)에 들어 있는 것만 쓴다. 주간 완주율도 후보였지만
+// 그 값을 구할 수 있는 건 갤러리 캐시뿐인데, 갤러리는 '공유된 기록'만 담아서
+// 비공개로 기록한 날이 빠진다. 공개 카드에 실제보다 낮은 숫자를 박는 건 없는 것보다 나쁘다.
+function buildSharePosterHeadline(latest = null, settings = getDefaultShareSettings()) {
+    if (!latest) return { hero: '', badge: '' };
 
     const streak = Math.max(0, Number(latest.currentStreak) || 0);
-    if (streak > 0) stats.push({ value: `${streak}일`, label: '연속 기록' });
-
     const awarded = latest.awardedPoints || {};
     const doneCount = ['diet', 'exercise', 'mind'].filter((key) => awarded[key]).length;
-    if (doneCount > 0) stats.push({ value: `${doneCount}/3`, label: '오늘 채운 항목' });
+    const points = settings.hidePoints ? 0 : getSharePoints(latest);
+    const isFullRoutine = points >= DASHBOARD_DAILY_POINT_GOAL;
 
-    if (!settings.hidePoints) {
-        const points = getSharePoints(latest);
-        if (points > 0) stats.push({ value: `${points}P`, label: '오늘 획득' });
+    // 연속 기록이 가장 자랑할 만한 숫자다. 하루치 점수는 내일이면 사라지지만
+    // 연속일은 쌓아 온 시간이라, 보는 사람에게도 가장 크게 읽힌다.
+    let hero = '';
+    const used = new Set();
+    if (streak >= 2) {
+        hero = `${streak}일 연속`;
+        used.add('streak');
+    } else if (isFullRoutine) {
+        hero = '풀 루틴 달성';
+        used.add('full');
+    } else if (doneCount > 0) {
+        hero = `${doneCount}/3 완료`;
+        used.add('done');
+    } else if (points > 0) {
+        hero = `${points}P 획득`;
+        used.add('points');
     }
 
-    return stats.slice(0, 3);
+    // 나머지는 배지 한 줄로 압축한다. 히어로가 이미 말한 건 반복하지 않는다.
+    const badgeParts = [];
+    if (isFullRoutine && !used.has('full')) badgeParts.push('풀 루틴');
+    else if (doneCount > 0 && !used.has('done') && !isFullRoutine) badgeParts.push(`${doneCount}/3`);
+    if (points > 0 && !used.has('points')) badgeParts.push(`${points}P`);
+
+    return { hero, badge: badgeParts.join(' · ') };
 }
 
-function drawSharePosterStatBand(ctx, latest = null, settings = getDefaultShareSettings()) {
-    const stats = collectSharePosterStats(latest, settings);
-    if (!stats.length) return;
-
-    const VALUE_FONT = '900 34px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    const LABEL_FONT = '800 14px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+function drawSharePosterHeadline(ctx, latest = null, settings = getDefaultShareSettings(), size = 1080) {
+    const { hero, badge } = buildSharePosterHeadline(latest, settings);
+    if (!hero) return;
 
     ctx.save();
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
 
-    let x = 58;
-    stats.forEach((stat, index) => {
-        ctx.font = VALUE_FONT;
-        const valueWidth = ctx.measureText(stat.value).width;
-        ctx.font = LABEL_FONT;
-        const labelWidth = ctx.measureText(stat.label).width;
-        const cellWidth = Math.max(valueWidth, labelWidth);
+    ctx.font = '900 96px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    // 크림톤은 그대로 두되 이 숫자만 진하게 뺀다. 작아지면 저대비가 가장 먼저 사라진다.
+    ctx.fillStyle = '#E65100';
+    ctx.fillText(hero, 58, 196);
+    const heroWidth = ctx.measureText(hero).width;
 
-        ctx.font = VALUE_FONT;
-        ctx.fillStyle = '#b76400';
-        ctx.fillText(stat.value, x, 200);
-        ctx.font = LABEL_FONT;
-        ctx.fillStyle = '#8a6336';
-        ctx.fillText(stat.label, x, 222);
-
-        x += cellWidth;
-        if (index < stats.length - 1) {
-            // 칸 사이 옅은 구분선. 숫자가 서로 붙어 읽히는 걸 막는다.
-            const dividerX = x + 21;
-            ctx.strokeStyle = 'rgba(183, 100, 0, 0.22)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(dividerX, 178);
-            ctx.lineTo(dividerX, 224);
-            ctx.stroke();
-            x += 42;
+    if (badge) {
+        ctx.font = '900 30px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        const badgeWidth = ctx.measureText(badge).width;
+        const pillWidth = badgeWidth + 40;
+        const pillX = 58 + heroWidth + 26;
+        // 히어로가 길면(세 자리 연속일 등) 배지를 통째로 뺀다. 겹쳐 그리느니 없는 게 낫다.
+        if (pillX + pillWidth <= size - 58) {
+            fillRoundRectCanvas(ctx, pillX, 140, pillWidth, 52, 26, '#FFE8C4');
+            ctx.fillStyle = '#8a4a00';
+            ctx.fillText(badge, pillX + 20, 175);
         }
-    });
+    }
 
     ctx.restore();
 }
@@ -4268,7 +4242,6 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
     const FOOTER_TOP = 900;
     const QR_PAD = 8;
     const QR_BOX = SHARE_QR_DRAW_SIZE + (QR_PAD * 2);
-    const inviteCode = getMyReferralCode();
     const qrCanvas = await createShareQrCanvas(getShareTargetUrl(), SHARE_QR_DRAW_SIZE);
 
     let textX = 58;
@@ -4284,28 +4257,21 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
         textX = 52 + QR_BOX + 26;
     }
 
+    // 두 줄만 남긴다. 예전엔 여기에 '초대코드 XXXXXX'(18px)와
+    // '좋은 습관, 같이 이어가요'(21px)가 더 있었는데, 대화창 크기에서는 6~7px로
+    // 뭉개졌다. 초대 코드는 QR이 이미 담고 있고, 이미지 속 코드를 손으로 옮겨
+    // 적는 사람은 없다.
     ctx.save();
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
 
     ctx.fillStyle = '#8a6336';
-    ctx.font = '800 19px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.fillText(qrCanvas ? 'QR을 찍으면 바로 참여할 수 있어요' : '아래 주소로 참여하세요', textX, FOOTER_TOP + 40);
+    ctx.font = '800 24px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillText(qrCanvas ? 'QR 찍고 바로 참여' : '아래 주소로 참여하세요', textX, FOOTER_TOP + 46);
 
     ctx.fillStyle = '#b76400';
-    ctx.font = '900 27px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.fillText(getShareTargetDisplayHost(), textX, FOOTER_TOP + 78);
-
-    if (inviteCode) {
-        ctx.fillStyle = '#8a6336';
-        ctx.font = '700 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-        ctx.fillText(`초대코드 ${inviteCode}`, textX, FOOTER_TOP + 112);
-    }
-
-    ctx.fillStyle = '#8a6336';
-    ctx.font = '900 21px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText('좋은 습관, 같이 이어가요', 1006, FOOTER_TOP + 78);
+    ctx.font = '900 32px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillText(getShareTargetDisplayHost(), textX, FOOTER_TOP + 92);
 
     ctx.restore();
 }
@@ -4342,41 +4308,31 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     fillRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(255, 252, 245, 0.9)');
     strokeRoundRectCanvas(ctx, cardX, cardY, cardSize, cardSize, 48, 'rgba(245, 191, 112, 0.55)', 3);
 
-    const displayName = settings.hideIdentity ? '오늘의 해빛 루틴' : `${getUserDisplayName()}의 해빛 루틴`;
-    const tags = getShareCategoryTags(latest, settings);
-    const subtitle = buildShareSubtitle(latest, tags);
+    const displayName = settings.hideIdentity ? '오늘의 해빛 루틴' : getUserDisplayName();
 
-    let chipX = 58;
-    chipX += drawCanvasChip(ctx, chipX, 50, 'HABIT SCHOOL', {
-        padX: 12,
-        height: 30,
-        radius: 15,
-        font: '900 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
-        color: '#b76400'
-    }) + 12;
-    if (!settings.hideDate) {
-        chipX += drawCanvasChip(ctx, chipX, 50, `📅 ${String(latest?.date || '').replace(/-/g, '.')}`, {
-            padX: 12,
-            height: 30,
-            radius: 15,
-            font: '800 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
-        }) + 12;
-    }
+    // 이름과 날짜만 남긴다. 예전 헤더에는 'HABIT SCHOOL' 칩과 날짜 칩이 13px로 있었는데,
+    // 대화창 크기로 줄면 4px가 되어 아무도 못 읽는다. 브랜드는 아래 QR 띠가 말해 준다.
     ctx.save();
-    ctx.font = '900 38px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.textBaseline = 'top';
-    drawCanvasTextLines(ctx, displayName, 58, 92, 780, 44, 2, '#2f261d');
-    ctx.font = '700 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    drawCanvasTextLines(ctx, subtitle, 58, 142, 760, 22, 2, '#725f4d');
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.font = '800 36px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillStyle = '#8a6336';
+    ctx.fillText(displayName, 58, 88);
+
+    if (!settings.hideDate) {
+        ctx.textAlign = 'right';
+        ctx.font = '700 26px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        ctx.fillStyle = '#a89078';
+        ctx.fillText(String(latest?.date || '').replace(/-/g, '.'), size - 58, 86);
+    }
     ctx.restore();
 
-    // 예전엔 여기에 식단·운동·마음 태그 칩이 있었다. 그건 아래 사진 타일마다 이미
-    // 붙어 있는 정보라 중복이었고, 정작 자랑거리인 숫자는 오른쪽 위 작은 칩 하나뿐이었다.
-    // SNS에서 눈에 띄는 건 "무엇을 기록했나"가 아니라 "얼마나 해냈나"다.
-    drawSharePosterStatBand(ctx, latest, settings);
+    // 성취는 하나만 크게. 부제("오늘 식단·운동·마음 흐름을 담았어요")는 18px이라
+    // 대화창에서 6px로 뭉개지는 데다 정보도 없어 뺐다.
+    drawSharePosterHeadline(ctx, latest, settings, size);
 
-    // 아래 QR 띠 자리를 남긴다(예전 694에서 줄였다).
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 234, w: 976, h: 654 });
+    // 헤더에서 아낀 만큼 사진을 키운다. 사진이 이 카드의 알맹이다.
+    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 224, w: 976, h: 664 });
 
     await drawSharePosterEntryFooter(ctx, size);
 
@@ -6030,7 +5986,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=275';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=276';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
