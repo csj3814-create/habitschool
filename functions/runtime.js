@@ -4810,6 +4810,57 @@ exports.ensureReferralCode = onCall(
     }
 );
 
+// 초대 보상(친구 3일 달성 시 +500P)은 이미 지급되고 있는데, 초대한 사람이 그걸
+// 볼 방법이 없었다. 몇 명이 들어왔는지도, 500P가 왜 들어왔는지도 알 수 없어
+// 보상이 있으나 마나였다. Firestore 규칙상 남의 user 문서를 클라이언트가 못 읽으므로
+// 서버에서 집계해 준다.
+//
+// 사람 이름이나 uid는 돌려주지 않는다. 화면에 필요한 건 숫자뿐이고, 초대받은 사람이
+// 아직 친구 수락 전일 수도 있어 신원을 넘기면 과한 노출이 된다.
+const INVITE_STATUS_SCAN_LIMIT = 500;
+
+exports.getMyInviteStatus = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        const uid = request.auth?.uid;
+        if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+
+        const [inviteeSnap, ledgerSnap] = await Promise.all([
+            db.collection("users")
+                .where("referredBy", "==", uid)
+                .select("referralDay3BonusGiven")
+                .limit(INVITE_STATUS_SCAN_LIMIT)
+                .get(),
+            // 실제로 적립된 금액은 원장이 진실이다. 인원수 × 500으로 추정하지 않는다.
+            db.doc(`point_ledger/${uid}_bonuses`)
+                .collection("entries")
+                .where("category", "==", "referral_day3")
+                .limit(INVITE_STATUS_SCAN_LIMIT)
+                .get(),
+        ]);
+
+        let milestoneCount = 0;
+        inviteeSnap.forEach((doc) => {
+            if (doc.data()?.referralDay3BonusGiven === true) milestoneCount += 1;
+        });
+
+        let earnedPoints = 0;
+        ledgerSnap.forEach((doc) => {
+            const entry = doc.data() || {};
+            if (entry.credited === true) earnedPoints += Number(entry.points || 0);
+        });
+
+        const invitedCount = inviteeSnap.size;
+        return {
+            invitedCount,
+            milestoneCount,
+            // 아직 3일을 못 채운 사람 — "조금만 더" 안내에 쓴다.
+            pendingCount: Math.max(0, invitedCount - milestoneCount),
+            earnedPoints,
+        };
+    }
+);
+
 exports.acceptInviteLinkFriendship = onCall(
     { region: "asia-northeast3" },
     async (request) => {

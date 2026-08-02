@@ -3050,6 +3050,53 @@ body.dark-mode .step-detail-item { color: #bbb; }
 
 .rr-emoji { font-size: 16px; }
 
+/* 초대 현황. 지급되고 있으나 보이지 않던 보상을 숫자로 보여 준다. */
+.referral-status {
+    margin: -6px 0 14px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 179, 0, 0.45);
+    border-radius: 14px;
+}
+
+.referral-status[hidden] { display: none; }
+
+.referral-status-row {
+    display: flex;
+    gap: 8px;
+}
+
+.referral-status-cell {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.referral-status-value {
+    font-size: 19px;
+    font-weight: 900;
+    color: #E65100;
+    letter-spacing: -0.5px;
+}
+
+.referral-status-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8a6336;
+}
+
+.referral-status-note {
+    margin: 10px 0 0;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #7a5a00;
+    text-align: center;
+}
+
+.referral-status-note:empty { display: none; }
+
 .referral-link-box {
     display: flex;
     gap: 6px;

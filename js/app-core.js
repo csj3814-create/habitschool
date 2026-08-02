@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=273';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=273';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=274';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=274';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=273';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=273';
+} from './auth-login-helpers.js?v=274';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=274';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=273';
+} from './exercise-media.js?v=274';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=273';
+} from './health-connect-utils.js?v=274';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=273';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=273';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=273';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=273';
-import { sanitize, compressImage } from './data-manager.js?v=273';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=273';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=273';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=273';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=273';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=273';
+} from './habit-groups.js?v=274';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=274';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=274';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=274';
+import { sanitize, compressImage } from './data-manager.js?v=274';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=274';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=274';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=274';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=274';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=274';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=273';
+} from './guest-demo.js?v=274';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=273';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=273';
+} from './product-events.js?v=274';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=274';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=273';
+} from './diet-program.js?v=274';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=273';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=273';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=273';
+} from './meditation-guide.js?v=274';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=274';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=274';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=273';
+} from './social-challenge-readiness.js?v=274';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=273';
+} from './monthly-mvp-reward.js?v=274';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -821,6 +821,7 @@ const CHATBOT_CONNECT_FETCH_RETRY_DELAYS_MS = [1200, 3000];
 const CHATBOT_CONNECT_AUTO_RETRY_DELAYS_MS = [1500, 4000, 9000];
 const _seenChallengeNotificationIdsByUid = new Map();
 const prepareShareMediaAssetsFn = httpsCallable(functions, 'prepareShareMediaAssets');
+const getMyInviteStatusFn = httpsCallable(functions, 'getMyInviteStatus');
 let _chatbotLinkFallbackExpanded = false;
 let _chatbotConnectToken = '';
 let _chatbotConnectInfo = null;
@@ -5979,7 +5980,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=273';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=274';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -13372,6 +13373,9 @@ function openTab(tabName, pushState = true) {
             maybeHandleChatbotConnect().catch(error => {
                 console.warn('챗봇 연결 처리 실패:', error.message);
             });
+            refreshInviteStatus().catch(error => {
+                console.warn('초대 현황 로드 실패:', error.message);
+            });
         }
     } else if (resolvedTabName === 'gallery') {
         submitBar.style.display = 'block';
@@ -19622,6 +19626,76 @@ function getShareTargetUrl() {
     const code = getMyReferralCode();
     if (!/^[A-Z0-9]{6}$/.test(code)) return `${APP_ORIGIN}/#gallery`;
     return `${APP_ORIGIN}/?ref=${code}#gallery`;
+}
+
+// 초대 보상(친구 3일 달성 시 +500P)은 진작 지급되고 있었는데, 초대한 사람이
+// 볼 방법이 없어 500P가 들어와도 왜 들어왔는지 알 수 없었다. 숫자로 보여 준다.
+// 한 화면 여는 동안 여러 번 부르지 않도록 짧게 캐시한다.
+const INVITE_STATUS_CACHE_MS = 60_000;
+let _inviteStatusCache = { at: 0, data: null };
+
+function renderInviteStatus(status = null) {
+    const box = document.getElementById('profile-invite-status');
+    if (!box) return;
+    if (!status) {
+        box.hidden = true;
+        return;
+    }
+
+    const invited = Math.max(0, Number(status.invitedCount) || 0);
+    const milestone = Math.max(0, Number(status.milestoneCount) || 0);
+    const pending = Math.max(0, Number(status.pendingCount) || 0);
+    const earned = Math.max(0, Number(status.earnedPoints) || 0);
+
+    // 아직 아무도 안 들어온 사람에게 0을 세 개 보여 주면 실패처럼 읽힌다.
+    if (invited === 0) {
+        box.hidden = true;
+        return;
+    }
+
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    };
+    setText('invite-status-invited', `${invited.toLocaleString('ko-KR')}명`);
+    setText('invite-status-milestone', `${milestone.toLocaleString('ko-KR')}명`);
+    setText('invite-status-points', `${earned.toLocaleString('ko-KR')}P`);
+
+    const noteEl = document.getElementById('invite-status-note');
+    if (noteEl) {
+        noteEl.textContent = pending > 0
+            ? `${pending.toLocaleString('ko-KR')}명이 아직 3일을 채우는 중이에요. 다 채우면 한 명당 500P가 들어와요.`
+            : '';
+    }
+    box.hidden = false;
+}
+
+async function refreshInviteStatus({ force = false } = {}) {
+    if (!auth.currentUser) {
+        renderInviteStatus(null);
+        return null;
+    }
+    if (!force && _inviteStatusCache.data && Date.now() - _inviteStatusCache.at < INVITE_STATUS_CACHE_MS) {
+        renderInviteStatus(_inviteStatusCache.data);
+        return _inviteStatusCache.data;
+    }
+
+    try {
+        // 프로필 화면을 여는 흐름을 막지 않도록 시간 제한을 둔다. 실패하면 그냥 감춘다.
+        const result = await withAsyncTimeout(
+            getMyInviteStatusFn({}),
+            8000,
+            'invite_status_timeout'
+        );
+        const data = result?.data || null;
+        _inviteStatusCache = { at: Date.now(), data };
+        renderInviteStatus(data);
+        return data;
+    } catch (error) {
+        logOptionalDataTimeout('invite status load failed', error);
+        renderInviteStatus(_inviteStatusCache.data);
+        return null;
+    }
 }
 
 // 저장 직후 공유 유도. 공유 카드는 갤러리 탭 안에만 있어서, 가장 공유하고 싶은

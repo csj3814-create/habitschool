@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=273';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=274';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -121,12 +121,12 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
-        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus a sign-up bonus. You can also look around first without an account.',
+        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus 200P to begin with. Keep it going for 7 days and another 300P lands. You can also look around first without an account.',
         'sharePrompt.kicker': 'Today, wrapped up',
         'sharePrompt.title': 'Your whole day fits on one card',
         'sharePrompt.kickerFull': 'Full routine done',
         'sharePrompt.titleFull': 'You covered food, movement and mind today',
-        'sharePrompt.desc': 'The card carries a join QR code, so whoever sees it can come straight in.',
+        'sharePrompt.desc': 'The card carries a join QR code. When a friend joins and records for 3 days, 500P comes back to you.',
         'sharePrompt.later': 'Later',
         'sharePrompt.share': 'Share'
     }
