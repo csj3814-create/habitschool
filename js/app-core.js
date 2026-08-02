@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=274';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=274';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=275';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=275';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=274';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=274';
+} from './auth-login-helpers.js?v=275';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=275';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=274';
+} from './exercise-media.js?v=275';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=274';
+} from './health-connect-utils.js?v=275';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=274';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=274';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=274';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=274';
-import { sanitize, compressImage } from './data-manager.js?v=274';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=274';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=274';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=274';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=274';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=274';
+} from './habit-groups.js?v=275';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=275';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=275';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=275';
+import { sanitize, compressImage } from './data-manager.js?v=275';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=275';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=275';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=275';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=275';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=275';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=274';
+} from './guest-demo.js?v=275';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=274';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=274';
+} from './product-events.js?v=275';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=275';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=274';
+} from './diet-program.js?v=275';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=274';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=274';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=274';
+} from './meditation-guide.js?v=275';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=275';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=275';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=274';
+} from './social-challenge-readiness.js?v=275';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=274';
+} from './monthly-mvp-reward.js?v=275';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4140,6 +4140,72 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
     }
 }
 
+// 카드에 실을 성취 숫자. 반드시 이 날짜 기록(latest)에 들어 있는 값만 쓴다.
+// 주간 완주율도 후보였지만, 그 값을 구할 수 있는 건 갤러리 캐시뿐인데 갤러리는
+// '공유된 기록'만 담아서 비공개로 기록한 날이 빠진다. 공개되는 카드에 실제보다
+// 낮은 숫자를 박는 건 없는 것보다 나쁘다.
+function collectSharePosterStats(latest = null, settings = getDefaultShareSettings()) {
+    const stats = [];
+    if (!latest) return stats;
+
+    const streak = Math.max(0, Number(latest.currentStreak) || 0);
+    if (streak > 0) stats.push({ value: `${streak}일`, label: '연속 기록' });
+
+    const awarded = latest.awardedPoints || {};
+    const doneCount = ['diet', 'exercise', 'mind'].filter((key) => awarded[key]).length;
+    if (doneCount > 0) stats.push({ value: `${doneCount}/3`, label: '오늘 채운 항목' });
+
+    if (!settings.hidePoints) {
+        const points = getSharePoints(latest);
+        if (points > 0) stats.push({ value: `${points}P`, label: '오늘 획득' });
+    }
+
+    return stats.slice(0, 3);
+}
+
+function drawSharePosterStatBand(ctx, latest = null, settings = getDefaultShareSettings()) {
+    const stats = collectSharePosterStats(latest, settings);
+    if (!stats.length) return;
+
+    const VALUE_FONT = '900 34px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    const LABEL_FONT = '800 14px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    let x = 58;
+    stats.forEach((stat, index) => {
+        ctx.font = VALUE_FONT;
+        const valueWidth = ctx.measureText(stat.value).width;
+        ctx.font = LABEL_FONT;
+        const labelWidth = ctx.measureText(stat.label).width;
+        const cellWidth = Math.max(valueWidth, labelWidth);
+
+        ctx.font = VALUE_FONT;
+        ctx.fillStyle = '#b76400';
+        ctx.fillText(stat.value, x, 200);
+        ctx.font = LABEL_FONT;
+        ctx.fillStyle = '#8a6336';
+        ctx.fillText(stat.label, x, 222);
+
+        x += cellWidth;
+        if (index < stats.length - 1) {
+            // 칸 사이 옅은 구분선. 숫자가 서로 붙어 읽히는 걸 막는다.
+            const dividerX = x + 21;
+            ctx.strokeStyle = 'rgba(183, 100, 0, 0.22)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(dividerX, 178);
+            ctx.lineTo(dividerX, 224);
+            ctx.stroke();
+            x += 42;
+        }
+    });
+
+    ctx.restore();
+}
+
 // 안드로이드 공유 시트는 이미지와 텍스트를 함께 넘겨도 텍스트를 버리는 경우가 많다.
 // 카카오톡에는 사진 한 장만 도착하고 링크는 사라진다. 그래서 들어올 길을 이미지
 // 안에 QR로 굽는다. 이미지가 어디로 퍼지든 링크가 같이 간다.
@@ -4296,34 +4362,18 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
             font: '800 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
         }) + 12;
     }
-    if (!settings.hidePoints) {
-        drawCanvasChip(ctx, size - 150, 50, `Ⓟ ${getSharePoints(latest)}P`, {
-            padX: 12,
-            height: 30,
-            radius: 15,
-            font: '900 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
-        });
-    }
-
     ctx.save();
     ctx.font = '900 38px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.textBaseline = 'top';
-    drawCanvasTextLines(ctx, displayName, 58, 98, 780, 44, 2, '#2f261d');
+    drawCanvasTextLines(ctx, displayName, 58, 92, 780, 44, 2, '#2f261d');
     ctx.font = '700 18px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    drawCanvasTextLines(ctx, subtitle, 58, 150, 760, 22, 2, '#725f4d');
+    drawCanvasTextLines(ctx, subtitle, 58, 142, 760, 22, 2, '#725f4d');
     ctx.restore();
 
-    let tagX = 58;
-    tags.slice(0, 4).forEach((tag) => {
-        const width = drawCanvasChip(ctx, tagX, 192, tag, {
-            padX: 11,
-            height: 28,
-            radius: 14,
-            font: '800 13px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
-            background: 'rgba(255,255,255,0.9)'
-        });
-        tagX += width + 8;
-    });
+    // 예전엔 여기에 식단·운동·마음 태그 칩이 있었다. 그건 아래 사진 타일마다 이미
+    // 붙어 있는 정보라 중복이었고, 정작 자랑거리인 숫자는 오른쪽 위 작은 칩 하나뿐이었다.
+    // SNS에서 눈에 띄는 건 "무엇을 기록했나"가 아니라 "얼마나 해냈나"다.
+    drawSharePosterStatBand(ctx, latest, settings);
 
     // 아래 QR 띠 자리를 남긴다(예전 694에서 줄였다).
     await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 234, w: 976, h: 654 });
@@ -5980,7 +6030,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=274';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=275';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
