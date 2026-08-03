@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=277';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=277';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=278';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=278';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=277';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=277';
+} from './auth-login-helpers.js?v=278';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=278';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=277';
+} from './exercise-media.js?v=278';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=277';
+} from './health-connect-utils.js?v=278';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=277';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=277';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=277';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=277';
-import { sanitize, compressImage } from './data-manager.js?v=277';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=277';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=277';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=277';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=277';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=277';
+} from './habit-groups.js?v=278';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=278';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=278';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=278';
+import { sanitize, compressImage } from './data-manager.js?v=278';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=278';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=278';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=278';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=278';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=278';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=277';
+} from './guest-demo.js?v=278';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=277';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=277';
+} from './product-events.js?v=278';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=278';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=277';
+} from './diet-program.js?v=278';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=277';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=277';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=277';
+} from './meditation-guide.js?v=278';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=278';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=278';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=277';
+} from './social-challenge-readiness.js?v=278';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=277';
+} from './monthly-mvp-reward.js?v=278';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -4277,13 +4277,32 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
 
+    // 카드를 받은 사람에게는 '포인트'가 아직 아무 의미가 없다. 포인트로 무엇이
+    // 되는지(기프티콘)까지 말해야 누를 이유가 생긴다.
     ctx.fillStyle = '#8a6336';
-    ctx.font = '800 24px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.fillText(qrCanvas ? '함께 기록하고 포인트 받기' : '아래 주소로 함께 시작해요', textX, FOOTER_TOP + 46);
+    ctx.font = '800 27px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    const leadLine = qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요';
+    ctx.fillText(leadLine, textX, FOOTER_TOP + 44);
+    const leadWidth = ctx.measureText(leadLine).width;
 
     ctx.fillStyle = '#b76400';
     ctx.font = '900 32px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.fillText(getShareTargetDisplayHost(), textX, FOOTER_TOP + 92);
+
+    // 가입 보너스는 초대 링크(?ref=)로 들어왔을 때만 붙으므로, QR에 코드가 실렸을
+    // 때만 약속한다. 웰컴 보너스가 따로 더 있어 200P는 실제보다 적게 말하는 쪽이다.
+    if (/[?&]ref=/.test(getShareTargetUrl())) {
+        const pillText = '지금 시작 +200P';
+        ctx.font = '900 30px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        const pillWidth = ctx.measureText(pillText).width + 40;
+        const pillX = textX + leadWidth + 28;
+        // 자리가 모자라면 넣지 않는다. 겹쳐 그리느니 없는 게 낫다.
+        if (pillX + pillWidth <= size - 52) {
+            fillRoundRectCanvas(ctx, pillX, FOOTER_TOP + 20, pillWidth, 52, 26, '#FFE8C4');
+            ctx.fillStyle = '#8a4a00';
+            ctx.fillText(pillText, pillX + 20, FOOTER_TOP + 47);
+        }
+    }
 
     ctx.restore();
 }
@@ -5998,7 +6017,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=277';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=278';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

@@ -74,6 +74,19 @@ describe('share card readability at chat-thumbnail size', () => {
         expect(appSource).toContain('{ x: 52, y: 200, w: 976, h: 688 }');
     });
 
+    // 카드를 받은 사람에게 '포인트'는 아직 아무 의미가 없다. 포인트로 무엇이
+    // 되는지와, 지금 시작하면 얼마를 받는지까지 말해야 누를 이유가 생긴다.
+    it('tells the stranger what joining is actually worth', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("const leadLine = qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요';");
+        expect(appSource).toContain("const pillText = '지금 시작 +200P';");
+        // 가입 보너스는 초대 링크로 들어왔을 때만 붙는다. 코드가 없으면 약속하지 않는다.
+        expect(appSource).toContain("if (/[?&]ref=/.test(getShareTargetUrl())) {");
+        // 자리가 모자라면 겹쳐 그리지 않고 뺀다.
+        expect(appSource).toContain('if (pillX + pillWidth <= size - 52) {');
+    });
+
     // 정돈형 그리드가 칸을 정사각형으로 강제하는 바람에, 짧은 쪽(세로)에 맞춰
     // 한 변이 정해지고 왼쪽부터 붙어서 976 너비 중 312px이 오른쪽에 그냥 비어 있었다.
     it('fills the whole photo area instead of leaving a column of empty cream', () => {
