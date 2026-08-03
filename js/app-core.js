@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=278';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=278';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=279';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=279';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=278';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=278';
+} from './auth-login-helpers.js?v=279';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=279';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=278';
+} from './exercise-media.js?v=279';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=278';
+} from './health-connect-utils.js?v=279';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=278';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=278';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=278';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=278';
-import { sanitize, compressImage } from './data-manager.js?v=278';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=278';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=278';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=278';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=278';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=278';
+} from './habit-groups.js?v=279';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=279';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=279';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=279';
+import { sanitize, compressImage } from './data-manager.js?v=279';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=279';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=279';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=279';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=279';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=279';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=278';
+} from './guest-demo.js?v=279';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=278';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=278';
+} from './product-events.js?v=279';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=279';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=278';
+} from './diet-program.js?v=279';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=278';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=278';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=278';
+} from './meditation-guide.js?v=279';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=279';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=279';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=278';
+} from './social-challenge-readiness.js?v=279';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=278';
+} from './monthly-mvp-reward.js?v=279';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3956,38 +3956,50 @@ function getShareTemplateFrames(template, count, bounds) {
     const gap = 10;
     if (safeCount <= 0) return [];
 
-    if (normalizeShareTemplate(template) === 'overlap') {
-        const size = Math.min(bounds.w * 0.42, bounds.h * 0.46);
-        const left = bounds.x + 34;
-        const right = bounds.x + bounds.w - size - 34;
-        const top = bounds.y + 28;
-        const bottom = bounds.y + bounds.h - size - 18;
-        const frames = [
-            { x: left + 4, y: top + 6, w: size, h: size, rotate: -0.06 },
-            { x: right - 4, y: top + 18, w: size, h: size, rotate: 0.06 },
-            { x: left - 6, y: bottom - 10, w: size, h: size, rotate: -0.05 },
-            { x: right + 6, y: bottom + 2, w: size, h: size, rotate: 0.05 }
-        ];
-        return frames.slice(0, safeCount);
-    }
+    // 겹침형·포커스형도 정돈형과 같은 병을 앓고 있었다. min()으로 짧은 쪽에 맞춰
+    // 크기를 정하는 바람에 사진이 차지하는 면적이 겹침형 60%, 포커스형 55%였다.
+    // 특히 포커스형은 '대표 사진 한 장을 키운다'는 게 존재 이유인데 그 한 장이
+    // 가로의 44%밖에 안 됐다.
+    //
+    // 두 템플릿 모두 대표 사진이 사진 영역 전체를 채우고, 나머지를 그 위에 얹는다.
+    // 차이는 얹는 방식이다 — 포커스형은 가지런한 줄, 겹침형은 기울여 흩뿌린 느낌.
+    if (normalizeShareTemplate(template) === 'spotlight' || normalizeShareTemplate(template) === 'overlap') {
+        const isOverlap = normalizeShareTemplate(template) === 'overlap';
+        const hero = { x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h, rotate: 0 };
+        if (safeCount === 1) return [hero];
 
-    if (normalizeShareTemplate(template) === 'spotlight') {
-        if (safeCount === 1) {
-            const size = Math.min(bounds.w, bounds.h);
-            return [{ x: bounds.x + ((bounds.w - size) / 2), y: bounds.y + ((bounds.h - size) / 2), w: size, h: size, rotate: 0 }];
+        const extras = safeCount - 1;
+        const thumbSize = isOverlap ? 190 : 158;
+        const inset = 26;
+        const frames = [hero];
+
+        if (isOverlap) {
+            // 오른쪽 아래에서 왼쪽으로 겹쳐 쌓는다. 사진을 툭툭 던져 놓은 느낌.
+            const step = thumbSize - 46;
+            for (let i = 0; i < extras; i++) {
+                frames.push({
+                    x: bounds.x + bounds.w - inset - thumbSize - (step * i),
+                    y: bounds.y + bounds.h - inset - thumbSize - ((i % 2) * 18),
+                    w: thumbSize,
+                    h: thumbSize,
+                    rotate: (i % 2 === 0 ? 0.055 : -0.05)
+                });
+            }
+            return frames;
         }
 
-        const big = Math.min(bounds.w * 0.76, bounds.h * 0.62);
-        const small = Math.min((bounds.w - gap) / 2, bounds.h - big - gap);
-        const bigX = bounds.x + ((bounds.w - big) / 2);
-        const bottomY = bounds.y + big + gap;
-        const frames = [
-            { x: bigX, y: bounds.y, w: big, h: big, rotate: 0 },
-            { x: bounds.x, y: bottomY, w: small, h: small, rotate: 0 },
-            { x: bounds.x + bounds.w - small, y: bottomY, w: small, h: small, rotate: 0 },
-            { x: bounds.x + ((bounds.w - small) / 2), y: bottomY, w: small, h: small, rotate: 0 }
-        ];
-        return frames.slice(0, safeCount);
+        // 포커스형: 왼쪽 아래에 가지런한 한 줄.
+        const gapThumb = 14;
+        for (let i = 0; i < extras; i++) {
+            frames.push({
+                x: bounds.x + inset + ((thumbSize + gapThumb) * i),
+                y: bounds.y + bounds.h - inset - thumbSize,
+                w: thumbSize,
+                h: thumbSize,
+                rotate: 0
+            });
+        }
+        return frames;
     }
 
     // 정돈형은 칸을 정사각형으로 강제하지 않는다. 예전에는 짧은 쪽(세로)에 맞춰
@@ -6017,7 +6029,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=278';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=279';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

@@ -145,6 +145,24 @@ describe('share card grid geometry', () => {
         expect(Math.max(...frames.map((f) => f.y + f.h))).toBe(bounds.y + bounds.h);
     });
 
+    // 겹침형·포커스형도 같은 병을 앓고 있었다. min()으로 짧은 쪽에 맞춰 크기를 정해
+    // 사진이 차지하는 면적이 각각 60%, 55%였다. 특히 포커스형은 '한 장을 키운다'가
+    // 존재 이유인데 그 한 장이 가로의 44%였다.
+    it('lets the hero photo own the frame in the other two templates', () => {
+        const appSource = readAppSource();
+        const framesFn = appSource
+            .split('function getShareTemplateFrames(')[1]
+            ?.split('function drawPosterPlaceholderTile(')[0] || '';
+
+        expect(framesFn).toContain('const hero = { x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h, rotate: 0 };');
+        // 짧은 쪽에 맞춰 줄이던 옛 계산은 사라진다.
+        expect(framesFn).not.toContain('const size = Math.min(bounds.w * 0.42, bounds.h * 0.46);');
+        expect(framesFn).not.toContain('const big = Math.min(bounds.w * 0.76, bounds.h * 0.62);');
+        // 두 템플릿의 차이는 대표 사진 위에 나머지를 얹는 방식이다.
+        expect(framesFn).toContain('rotate: (i % 2 === 0 ? 0.055 : -0.05)');
+        expect(framesFn).toContain('// 포커스형: 왼쪽 아래에 가지런한 한 줄.');
+    });
+
     it('covers the area apart from the gaps between cells', () => {
         const painted = gridFrames(4).reduce((sum, f) => sum + (f.w * f.h), 0);
         const area = bounds.w * bounds.h;
