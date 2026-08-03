@@ -11,8 +11,8 @@ describe('share card readability at chat-thumbnail size', () => {
 
         expect(appSource).toContain('function buildSharePosterHeadline(');
         expect(appSource).toContain('drawSharePosterHeadline(ctx, latest, settings, size);');
-        // 히어로는 96px. 대화창 크기로 줄여도 31px이라 확실히 읽힌다.
-        expect(appSource).toContain("ctx.font = '900 96px \"Pretendard\", \"Apple SD Gothic Neo\", \"Malgun Gothic\", sans-serif';");
+        // 히어로는 72px. 대화창 크기로 줄여도 24px이라 읽히면서, 사진 자리를 뺏지 않는다.
+        expect(appSource).toContain("ctx.font = '900 72px \"Pretendard\", \"Apple SD Gothic Neo\", \"Malgun Gothic\", sans-serif';");
         // 세 칸으로 나눠 34px씩 쓰던 방식은 사라진다.
         expect(appSource).not.toContain('function collectSharePosterStats(');
         expect(appSource).not.toContain('function drawSharePosterStatBand(');
@@ -70,7 +70,74 @@ describe('share card readability at chat-thumbnail size', () => {
     it('grows the photos with the space the text gave back', () => {
         const appSource = readAppSource();
 
-        // 사진이 이 카드의 알맹이다. 654 -> 664, 시작도 234 -> 224로 올렸다.
-        expect(appSource).toContain('{ x: 52, y: 224, w: 976, h: 664 }');
+        // 사진이 이 카드의 알맹이다. 텍스트에서 아낀 만큼 계속 넘겨줬다.
+        expect(appSource).toContain('{ x: 52, y: 200, w: 976, h: 688 }');
+    });
+
+    // 정돈형 그리드가 칸을 정사각형으로 강제하는 바람에, 짧은 쪽(세로)에 맞춰
+    // 한 변이 정해지고 왼쪽부터 붙어서 976 너비 중 312px이 오른쪽에 그냥 비어 있었다.
+    it('fills the whole photo area instead of leaving a column of empty cream', () => {
+        const appSource = readAppSource();
+        const framesFn = appSource
+            .split('function getShareTemplateFrames(')[1]
+            ?.split('function drawPosterPlaceholderTile(')[0] || '';
+
+        expect(framesFn).not.toBe('');
+        expect(framesFn).toContain('const colWidth = (bounds.w - gap) / 2;');
+        expect(framesFn).toContain('const rowHeight = (bounds.h - gap) / 2;');
+        // 정사각형으로 묶어 두던 계산은 사라진다.
+        expect(framesFn).not.toContain('const size = Math.min((bounds.w - gap) / 2, (bounds.h - gap) / 2);');
+        expect(framesFn).not.toContain('const size = Math.min((bounds.w - gap) / 2, bounds.h);');
+        // 3장일 때도 빈 칸이 남지 않도록 왼쪽 한 장을 크게 세운다.
+        expect(framesFn).toContain('if (safeCount === 3) {');
+    });
+});
+
+// 실제 계산이 프레임을 남김없이 채우는지는 문자열 검사로 알 수 없어 직접 재현해 확인한다.
+describe('share card grid geometry', () => {
+    const gap = 10;
+    const bounds = { x: 52, y: 200, w: 976, h: 688 };
+
+    const gridFrames = (count) => {
+        const colWidth = (bounds.w - gap) / 2;
+        const rowHeight = (bounds.h - gap) / 2;
+        if (count === 1) return [{ x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h }];
+        if (count === 2) {
+            return [
+                { x: bounds.x, y: bounds.y, w: colWidth, h: bounds.h },
+                { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: bounds.h }
+            ];
+        }
+        if (count === 3) {
+            return [
+                { x: bounds.x, y: bounds.y, w: colWidth, h: bounds.h },
+                { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight },
+                { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight }
+            ];
+        }
+        return [
+            { x: bounds.x, y: bounds.y, w: colWidth, h: rowHeight },
+            { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight },
+            { x: bounds.x, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight },
+            { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight }
+        ];
+    };
+
+    it.each([1, 2, 3, 4])('reaches both edges with %i photo(s)', (count) => {
+        const frames = gridFrames(count);
+        expect(frames).toHaveLength(count);
+        expect(Math.min(...frames.map((f) => f.x))).toBe(bounds.x);
+        expect(Math.max(...frames.map((f) => f.x + f.w))).toBe(bounds.x + bounds.w);
+        expect(Math.min(...frames.map((f) => f.y))).toBe(bounds.y);
+        expect(Math.max(...frames.map((f) => f.y + f.h))).toBe(bounds.y + bounds.h);
+    });
+
+    it('covers the area apart from the gaps between cells', () => {
+        const painted = gridFrames(4).reduce((sum, f) => sum + (f.w * f.h), 0);
+        const area = bounds.w * bounds.h;
+        // 칸 사이 10px 간격만 빠지므로 97% 이상이 사진이어야 한다.
+        expect(painted / area).toBeGreaterThan(0.97);
+        // 예전 정사각형 배치는 같은 자리에서 약 65%밖에 쓰지 못했다.
+        expect(painted / area).toBeGreaterThan((327 * 327 * 4) / area);
     });
 });

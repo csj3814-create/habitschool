@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=276';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=276';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=277';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=277';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=276';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=276';
+} from './auth-login-helpers.js?v=277';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=277';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=276';
+} from './exercise-media.js?v=277';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=276';
+} from './health-connect-utils.js?v=277';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=276';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=276';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=276';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=276';
-import { sanitize, compressImage } from './data-manager.js?v=276';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=276';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=276';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=276';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=276';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=276';
+} from './habit-groups.js?v=277';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=277';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=277';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=277';
+import { sanitize, compressImage } from './data-manager.js?v=277';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=277';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=277';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=277';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=277';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=277';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=276';
+} from './guest-demo.js?v=277';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=276';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=276';
+} from './product-events.js?v=277';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=277';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=276';
+} from './diet-program.js?v=277';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=276';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=276';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=276';
+} from './meditation-guide.js?v=277';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=277';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=277';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=276';
+} from './social-challenge-readiness.js?v=277';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=276';
+} from './monthly-mvp-reward.js?v=277';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3990,29 +3990,39 @@ function getShareTemplateFrames(template, count, bounds) {
         return frames.slice(0, safeCount);
     }
 
+    // 정돈형은 칸을 정사각형으로 강제하지 않는다. 예전에는 짧은 쪽(세로)에 맞춰
+    // 한 변을 정하고 왼쪽부터 붙여서, 976 너비 중 312px이 오른쪽에 그냥 비었다.
+    // 사진은 어차피 가운데를 잘라 채우므로, 칸이 직사각형이어도 보기에 문제가 없고
+    // 같은 자리에서 사진이 훨씬 커진다.
     if (safeCount === 1) {
-        const size = Math.min(bounds.w, bounds.h);
-        return [{ x: bounds.x + ((bounds.w - size) / 2), y: bounds.y + ((bounds.h - size) / 2), w: size, h: size, rotate: 0 }];
+        return [{ x: bounds.x, y: bounds.y, w: bounds.w, h: bounds.h, rotate: 0 }];
     }
 
+    const colWidth = (bounds.w - gap) / 2;
+    const rowHeight = (bounds.h - gap) / 2;
+
     if (safeCount === 2) {
-        const size = Math.min((bounds.w - gap) / 2, bounds.h);
-        const top = bounds.y + ((bounds.h - size) / 2);
         return [
-            { x: bounds.x, y: top, w: size, h: size, rotate: 0 },
-            { x: bounds.x + size + gap, y: top, w: size, h: size, rotate: 0 }
+            { x: bounds.x, y: bounds.y, w: colWidth, h: bounds.h, rotate: 0 },
+            { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: bounds.h, rotate: 0 }
         ];
     }
 
-    const size = Math.min((bounds.w - gap) / 2, (bounds.h - gap) / 2);
-    const row1 = bounds.y + ((bounds.h - ((size * 2) + gap)) / 2);
-    const row2 = row1 + size + gap;
+    if (safeCount === 3) {
+        // 왼쪽 한 장을 크게 세우고 오른쪽에 두 장을 쌓는다. 3장일 때 빈 칸이 남지 않는다.
+        return [
+            { x: bounds.x, y: bounds.y, w: colWidth, h: bounds.h, rotate: 0 },
+            { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
+            { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 }
+        ];
+    }
+
     return [
-        { x: bounds.x, y: row1, w: size, h: size, rotate: 0 },
-        { x: bounds.x + size + gap, y: row1, w: size, h: size, rotate: 0 },
-        { x: bounds.x, y: row2, w: size, h: size, rotate: 0 },
-        { x: bounds.x + size + gap, y: row2, w: size, h: size, rotate: 0 }
-    ].slice(0, safeCount);
+        { x: bounds.x, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
+        { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
+        { x: bounds.x, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 },
+        { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 }
+    ];
 }
 
 function drawPosterPlaceholderTile(ctx, frame, label) {
@@ -4158,22 +4168,24 @@ function drawSharePosterHeadline(ctx, latest = null, settings = getDefaultShareS
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
 
-    ctx.font = '900 96px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    // 72px면 대화창 크기(약 1/3)에서도 24px이라 충분히 읽힌다. 96px은 읽히긴 했지만
+    // 카드를 혼자 다 차지해서 정작 알맹이인 사진이 밀렸다.
+    ctx.font = '900 72px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     // 크림톤은 그대로 두되 이 숫자만 진하게 뺀다. 작아지면 저대비가 가장 먼저 사라진다.
     ctx.fillStyle = '#E65100';
-    ctx.fillText(hero, 58, 196);
+    ctx.fillText(hero, 58, 168);
     const heroWidth = ctx.measureText(hero).width;
 
     if (badge) {
-        ctx.font = '900 30px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        ctx.font = '900 28px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
         const badgeWidth = ctx.measureText(badge).width;
-        const pillWidth = badgeWidth + 40;
-        const pillX = 58 + heroWidth + 26;
+        const pillWidth = badgeWidth + 36;
+        const pillX = 58 + heroWidth + 22;
         // 히어로가 길면(세 자리 연속일 등) 배지를 통째로 뺀다. 겹쳐 그리느니 없는 게 낫다.
         if (pillX + pillWidth <= size - 58) {
-            fillRoundRectCanvas(ctx, pillX, 140, pillWidth, 52, 26, '#FFE8C4');
+            fillRoundRectCanvas(ctx, pillX, 124, pillWidth, 48, 24, '#FFE8C4');
             ctx.fillStyle = '#8a4a00';
-            ctx.fillText(badge, pillX + 20, 175);
+            ctx.fillText(badge, pillX + 18, 156);
         }
     }
 
@@ -4267,7 +4279,7 @@ async function drawSharePosterEntryFooter(ctx, size = 1080) {
 
     ctx.fillStyle = '#8a6336';
     ctx.font = '800 24px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.fillText(qrCanvas ? 'QR 찍고 바로 참여' : '아래 주소로 참여하세요', textX, FOOTER_TOP + 46);
+    ctx.fillText(qrCanvas ? '함께 기록하고 포인트 받기' : '아래 주소로 함께 시작해요', textX, FOOTER_TOP + 46);
 
     ctx.fillStyle = '#b76400';
     ctx.font = '900 32px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
@@ -4317,13 +4329,13 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     ctx.textAlign = 'left';
     ctx.font = '800 36px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     ctx.fillStyle = '#8a6336';
-    ctx.fillText(displayName, 58, 88);
+    ctx.fillText(displayName, 58, 80);
 
     if (!settings.hideDate) {
         ctx.textAlign = 'right';
         ctx.font = '700 26px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
         ctx.fillStyle = '#a89078';
-        ctx.fillText(String(latest?.date || '').replace(/-/g, '.'), size - 58, 86);
+        ctx.fillText(String(latest?.date || '').replace(/-/g, '.'), size - 58, 78);
     }
     ctx.restore();
 
@@ -4332,7 +4344,7 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     drawSharePosterHeadline(ctx, latest, settings, size);
 
     // 헤더에서 아낀 만큼 사진을 키운다. 사진이 이 카드의 알맹이다.
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 224, w: 976, h: 664 });
+    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 200, w: 976, h: 688 });
 
     await drawSharePosterEntryFooter(ctx, size);
 
@@ -5986,7 +5998,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=276';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=277';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

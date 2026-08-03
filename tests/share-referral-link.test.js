@@ -49,9 +49,9 @@ describe('share link carries the inviter referral code', () => {
         // 보간이 켜져 있으면 모듈 경계가 번진다.
         expect(appSource).toContain('ctx.imageSmoothingEnabled = false;');
         // QR을 못 만들어도 카드는 나가야 하고, 주소는 글자로라도 남아야 한다.
-        expect(appSource).toContain("ctx.fillText(qrCanvas ? 'QR 찍고 바로 참여' : '아래 주소로 참여하세요', textX, FOOTER_TOP + 46);");
+        expect(appSource).toContain("ctx.fillText(qrCanvas ? '함께 기록하고 포인트 받기' : '아래 주소로 함께 시작해요', textX, FOOTER_TOP + 46);");
         // 사진 타일이 푸터를 덮지 않도록 높이를 줄여 뒀다.
-        expect(appSource).toContain("{ x: 52, y: 224, w: 976, h: 664 }");
+        expect(appSource).toContain("{ x: 52, y: 200, w: 976, h: 688 }");
         // 초대 코드가 늦게 채워지면 캐시된 카드가 코드 없는 QR을 물고 있게 된다.
         // 공유 주소를 렌더 키에 넣어 코드가 붙은 뒤 다시 굽게 한다.
         const renderKeyBody = appSource.split('function buildShareRenderKey(')[1]?.split('\n}')[0] || '';
