@@ -114,6 +114,13 @@
       ],
       "rewrites": [
         {
+          "source": "/c/**",
+          "function": {
+            "functionId": "shareCardPreview",
+            "region": "asia-northeast3"
+          }
+        },
+        {
           "source": "/simple",
           "destination": "/index.html"
         },

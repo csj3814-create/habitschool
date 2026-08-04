@@ -18,7 +18,7 @@
  *   - 포인트 잔액은 Firestore에서 서버가 검증
  */
 
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
@@ -4858,6 +4858,150 @@ exports.getMyInviteStatus = onCall(
             pendingCount: Math.max(0, invitedCount - milestoneCount),
             earnedPoints,
         };
+    }
+);
+
+// ===== 공유 카드 링크 미리보기 (동적 OG) =====
+//
+// 카톡·페북 크롤러는 자바스크립트를 실행하지 않으므로, 앱 주소를 붙여넣으면
+// index.html에 박힌 고정 og:image(브랜드 이미지)만 보인다. 열 명이 각자 다른
+// 카드를 공유해도 미리보기가 전부 똑같아서 두 번째부터는 아무도 안 누른다.
+//
+// 카드 PNG는 브라우저 캔버스에서 만들어지므로 서버가 다시 그릴 필요는 없다.
+// 클라이언트가 만든 그 이미지를 Storage에 올려 두고, 이 함수가 크롤러에게
+// og:image로 가리켜 준다. 사람은 앱으로 넘긴다.
+const SHARE_CARD_TTL_DAYS = 30;
+
+function escapeHtmlAttribute(value = "") {
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function buildShareCardHtml({ imageUrl = "", targetUrl = "", title = "", description = "" }) {
+    const safeImage = escapeHtmlAttribute(imageUrl);
+    const safeTarget = escapeHtmlAttribute(targetUrl);
+    const safeTitle = escapeHtmlAttribute(title);
+    const safeDesc = escapeHtmlAttribute(description);
+    // 크롤러는 meta만 읽고 끝낸다. 사람 브라우저는 곧바로 앱으로 넘어간다.
+    return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${safeTitle}</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="${safeTitle}">
+<meta property="og:description" content="${safeDesc}">
+<meta property="og:image" content="${safeImage}">
+<meta property="og:image:width" content="1080">
+<meta property="og:image:height" content="1080">
+<meta property="og:url" content="${safeTarget}">
+<meta property="og:site_name" content="해빛스쿨">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${safeTitle}">
+<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:image" content="${safeImage}">
+<link rel="canonical" href="${safeTarget}">
+<meta http-equiv="refresh" content="0; url=${safeTarget}">
+</head>
+<body>
+<p><a href="${safeTarget}">해빛스쿨로 이동합니다.</a></p>
+<script>location.replace(${JSON.stringify(targetUrl)});</script>
+</body>
+</html>`;
+}
+
+exports.shareCardPreview = onRequest(
+    { region: "asia-northeast3", cors: false },
+    async (req, res) => {
+        const token = String(req.path || "").split("/").filter(Boolean).pop() || "";
+        const fallbackUrl = `${APP_BASE_URL}/#gallery`;
+
+        // 토큰이 이상하거나 카드가 없어졌으면 조용히 앱으로 보낸다. 실패 화면을
+        // 보여 줄 이유가 없다.
+        if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) {
+            res.redirect(302, fallbackUrl);
+            return;
+        }
+
+        try {
+            const snap = await db.doc(`share_cards/${token}`).get();
+            if (!snap.exists) {
+                res.redirect(302, fallbackUrl);
+                return;
+            }
+
+            const card = snap.data() || {};
+            const expiresAtMs = card.expiresAt?.toMillis ? card.expiresAt.toMillis() : 0;
+            if (expiresAtMs && expiresAtMs < Date.now()) {
+                res.redirect(302, fallbackUrl);
+                return;
+            }
+
+            const refCode = String(card.refCode || "").trim().toUpperCase();
+            const targetUrl = /^[A-Z0-9]{6}$/.test(refCode)
+                ? `${APP_BASE_URL}/?ref=${refCode}#gallery`
+                : fallbackUrl;
+
+            const html = buildShareCardHtml({
+                imageUrl: String(card.imageUrl || ""),
+                targetUrl,
+                title: "해빛스쿨 - 오늘의 습관 기록",
+                description: "사진 찍고 포인트 모아 기프티콘. 함께 시작해요.",
+            });
+
+            // 크롤러가 다시 물어볼 때를 위해 잠깐 캐시하되, 만료 뒤에는 사라져야 하므로 짧게 둔다.
+            res.set("Cache-Control", "public, max-age=600, s-maxage=600");
+            res.status(200).send(html);
+        } catch (error) {
+            console.warn("[shareCardPreview] failed:", token, error?.message || error);
+            res.redirect(302, fallbackUrl);
+        }
+    }
+);
+
+// 공유한 카드가 영원히 남지는 않게 한다. 카톡에 보낸 이미지가 계정을 지운 뒤에도
+// 열리면 곤란하고, 저장 비용도 계속 쌓인다.
+exports.cleanupExpiredShareCards = onSchedule(
+    {
+        region: "asia-northeast3",
+        schedule: "40 3 * * *",
+        timeZone: "Asia/Seoul",
+        timeoutSeconds: 300,
+        memory: "256MiB"
+    },
+    async () => {
+        const now = new Date();
+        const expired = await db.collection("share_cards")
+            .where("expiresAt", "<=", now)
+            .limit(400)
+            .get();
+
+        if (expired.empty) {
+            console.log("cleanupExpiredShareCards: nothing to remove");
+            return;
+        }
+
+        const bucket = admin.storage().bucket();
+        let removedFiles = 0;
+        for (const doc of expired.docs) {
+            const storagePath = String(doc.data()?.storagePath || "").trim();
+            if (storagePath) {
+                try {
+                    await bucket.file(storagePath).delete({ ignoreNotFound: true });
+                    removedFiles += 1;
+                } catch (error) {
+                    console.warn("[cleanupExpiredShareCards] file delete failed:", storagePath, error?.message || error);
+                }
+            }
+            await doc.ref.delete().catch(() => {});
+        }
+
+        console.log(`cleanupExpiredShareCards: removed ${expired.size} cards (${removedFiles} files)`);
     }
 );
 

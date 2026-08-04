@@ -343,6 +343,20 @@ service cloud.firestore {
     }
 
     // ===== Signed-in Gallery Projection =====
+    // ===== 공유 카드 토큰 =====
+    // 미리보기 함수는 관리자 권한으로 읽으므로 클라이언트 읽기는 열지 않는다.
+    // 토큰만 알면 남의 카드 정보를 훑을 수 있게 되면 안 된다.
+    match /share_cards/{token} {
+      allow read: if false;
+      allow create: if isSignedIn()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.keys().hasOnly([
+                         'userId', 'storagePath', 'imageUrl', 'refCode', 'createdAt', 'expiresAt'
+                       ]);
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     match /gallery_posts/{postId} {
       allow read: if isSignedIn();
       allow create, update, delete: if false;

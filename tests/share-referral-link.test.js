@@ -51,11 +51,13 @@ describe('share link carries the inviter referral code', () => {
         // QR을 못 만들어도 카드는 나가야 하고, 주소는 글자로라도 남아야 한다.
         expect(appSource).toContain("const leadLine = qrCanvas ? '사진 찍고 포인트 모아 기프티콘' : '아래 주소로 함께 시작해요';");
         // 사진 타일이 푸터를 덮지 않도록 높이를 줄여 뒀다.
-        expect(appSource).toContain("{ x: 52, y: 200, w: 976, h: 688 }");
+        expect(appSource).toContain("{ x: 52, y: 206, w: 976, h: 682 }");
         // 초대 코드가 늦게 채워지면 캐시된 카드가 코드 없는 QR을 물고 있게 된다.
-        // 공유 주소를 렌더 키에 넣어 코드가 붙은 뒤 다시 굽게 한다.
+        // 코드를 렌더 키에 넣어 코드가 붙은 뒤 다시 굽게 한다. 주소를 넣으면 안 된다 —
+        // 주소에는 빌드마다 새로 생기는 미리보기 토큰이 들어 있어 캐시가 늘 빗나간다.
         const renderKeyBody = appSource.split('function buildShareRenderKey(')[1]?.split('\n}')[0] || '';
-        expect(renderKeyBody).toContain('getShareTargetUrl()');
+        expect(renderKeyBody).toContain('getMyReferralCode()');
+        expect(renderKeyBody).not.toContain('getShareTargetUrl()');
     });
 
     it('records how each share actually left the app', () => {

@@ -51,7 +51,7 @@ describe('share card readability at chat-thumbnail size', () => {
         expect(appSource).not.toContain("ctx.fillText('좋은 습관, 같이 이어가요'");
         // 헤더 칩(13px) 대신 이름과 날짜를 그대로 크게 쓴다.
         expect(appSource).not.toContain("drawCanvasChip(ctx, chipX, 50, 'HABIT SCHOOL'");
-        expect(appSource).toContain("ctx.font = '800 36px \"Pretendard\", \"Apple SD Gothic Neo\", \"Malgun Gothic\", sans-serif';");
+        expect(appSource).toContain("ctx.fillText('습관학교 해빛스쿨', 58, 82);");
     });
 
     it('keeps the card intact when there is nothing to boast about', () => {
@@ -71,7 +71,7 @@ describe('share card readability at chat-thumbnail size', () => {
         const appSource = readAppSource();
 
         // 사진이 이 카드의 알맹이다. 텍스트에서 아낀 만큼 계속 넘겨줬다.
-        expect(appSource).toContain('{ x: 52, y: 200, w: 976, h: 688 }');
+        expect(appSource).toContain('{ x: 52, y: 206, w: 976, h: 682 }');
     });
 
     // 카드를 받은 사람에게 '포인트'는 아직 아무 의미가 없다. 포인트로 무엇이
@@ -109,7 +109,7 @@ describe('share card readability at chat-thumbnail size', () => {
 // 실제 계산이 프레임을 남김없이 채우는지는 문자열 검사로 알 수 없어 직접 재현해 확인한다.
 describe('share card grid geometry', () => {
     const gap = 10;
-    const bounds = { x: 52, y: 200, w: 976, h: 688 };
+    const bounds = { x: 52, y: 206, w: 976, h: 682 };
 
     const gridFrames = (count) => {
         const colWidth = (bounds.w - gap) / 2;

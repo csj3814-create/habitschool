@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=279';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=279';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=280';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=280';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=279';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=279';
+} from './auth-login-helpers.js?v=280';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=280';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=279';
+} from './exercise-media.js?v=280';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=279';
+} from './health-connect-utils.js?v=280';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=279';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=279';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=279';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=279';
-import { sanitize, compressImage } from './data-manager.js?v=279';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=279';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=279';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=279';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=279';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=279';
+} from './habit-groups.js?v=280';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=280';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=280';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=280';
+import { sanitize, compressImage } from './data-manager.js?v=280';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=280';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=280';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=280';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=280';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=280';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=279';
+} from './guest-demo.js?v=280';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=279';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=279';
+} from './product-events.js?v=280';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=280';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=279';
+} from './diet-program.js?v=280';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=279';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=279';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=279';
+} from './meditation-guide.js?v=280';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=280';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=280';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=279';
+} from './social-challenge-readiness.js?v=280';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=279';
+} from './monthly-mvp-reward.js?v=280';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3842,7 +3842,9 @@ function buildShareRenderKey(latest, settings, template, preparedMedia = []) {
         String(getSharePoints(latest)),
         // 초대 코드는 로그인 직후 조금 늦게 채워질 수 있다. 카드 하단 QR·주소가
         // 그 값을 쓰므로 키에 넣어, 코드가 붙은 뒤 카드를 다시 굽게 한다.
-        getShareTargetUrl()
+        // 주소 대신 코드를 쓴다 — 주소에는 빌드마다 새로 생기는 토큰이 들어 있어,
+        // 그대로 넣으면 키가 매번 달라져 캐시가 영원히 빗나간다.
+        getMyReferralCode()
     ].join('::');
 }
 
@@ -4185,7 +4187,7 @@ function drawSharePosterHeadline(ctx, latest = null, settings = getDefaultShareS
     ctx.font = '900 72px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
     // 크림톤은 그대로 두되 이 숫자만 진하게 뺀다. 작아지면 저대비가 가장 먼저 사라진다.
     ctx.fillStyle = '#E65100';
-    ctx.fillText(hero, 58, 168);
+    ctx.fillText(hero, 58, 178);
     const heroWidth = ctx.measureText(hero).width;
 
     if (badge) {
@@ -4195,9 +4197,9 @@ function drawSharePosterHeadline(ctx, latest = null, settings = getDefaultShareS
         const pillX = 58 + heroWidth + 22;
         // 히어로가 길면(세 자리 연속일 등) 배지를 통째로 뺀다. 겹쳐 그리느니 없는 게 낫다.
         if (pillX + pillWidth <= size - 58) {
-            fillRoundRectCanvas(ctx, pillX, 124, pillWidth, 48, 24, '#FFE8C4');
+            fillRoundRectCanvas(ctx, pillX, 134, pillWidth, 48, 24, '#FFE8C4');
             ctx.fillStyle = '#8a4a00';
-            ctx.fillText(badge, pillX + 18, 156);
+            ctx.fillText(badge, pillX + 18, 166);
         }
     }
 
@@ -4353,21 +4355,26 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
 
     const displayName = settings.hideIdentity ? '오늘의 해빛 루틴' : getUserDisplayName();
 
-    // 이름과 날짜만 남긴다. 예전 헤더에는 'HABIT SCHOOL' 칩과 날짜 칩이 13px로 있었는데,
-    // 대화창 크기로 줄면 4px가 되어 아무도 못 읽는다. 브랜드는 아래 QR 띠가 말해 준다.
+    // 왼쪽에 브랜드, 오른쪽에 날짜와 이름을 세로로 쌓는다. 예전 헤더에는
+    // 'HABIT SCHOOL' 칩이 13px로 있었는데 대화창 크기로 줄면 4px라 아무도 못 읽었다.
+    // 카드를 처음 보는 사람이 이게 어디 것인지 알 수 있어야 한다.
     ctx.save();
     ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left';
-    ctx.font = '800 36px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-    ctx.fillStyle = '#8a6336';
-    ctx.fillText(displayName, 58, 80);
 
+    ctx.textAlign = 'left';
+    ctx.font = '900 42px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillStyle = '#8a6336';
+    ctx.fillText('습관학교 해빛스쿨', 58, 82);
+
+    ctx.textAlign = 'right';
     if (!settings.hideDate) {
-        ctx.textAlign = 'right';
-        ctx.font = '700 26px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+        ctx.font = '700 24px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
         ctx.fillStyle = '#a89078';
-        ctx.fillText(String(latest?.date || '').replace(/-/g, '.'), size - 58, 78);
+        ctx.fillText(String(latest?.date || '').replace(/-/g, '.'), size - 58, 60);
     }
+    ctx.font = '800 34px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+    ctx.fillStyle = '#8a6336';
+    ctx.fillText(displayName, size - 58, 100);
     ctx.restore();
 
     // 성취는 하나만 크게. 부제("오늘 식단·운동·마음 흐름을 담았어요")는 18px이라
@@ -4375,7 +4382,7 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     drawSharePosterHeadline(ctx, latest, settings, size);
 
     // 헤더에서 아낀 만큼 사진을 키운다. 사진이 이 카드의 알맹이다.
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 200, w: 976, h: 688 });
+    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 206, w: 976, h: 682 });
 
     await drawSharePosterEntryFooter(ctx, size);
 
@@ -6029,7 +6036,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=279';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=280';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19668,13 +19675,72 @@ function getMyReferralCode() {
     return String(readSimpleProfileReferralDomState()?.code || '').trim().toUpperCase();
 }
 
-// 공유 카드가 나가는 주소에 내 초대 코드를 실어 보낸다. 코드가 없으면(비로그인,
-// 아직 발급 전) 예전처럼 맨 주소로 나간다 — 공유 자체가 막히면 안 된다.
+// 카톡·페북 크롤러는 자바스크립트를 실행하지 않아서, 앱 주소를 붙여넣으면
+// index.html의 고정 og:image(브랜드 이미지)만 미리보기로 뜬다. 열 명이 각자 다른
+// 카드를 공유해도 미리보기가 전부 같아서 두 번째부터는 아무도 안 누른다.
+//
+// 그래서 카드마다 짧은 주소(/c/{토큰})를 만들고, 그 주소가 카드 이미지를 og:image로
+// 가리키게 한다. 토큰은 카드를 그리기 전에 정해야 QR에 그 주소를 새길 수 있다.
+const SHARE_CARD_TTL_DAYS = 30;
+let _shareCardToken = '';
+
+function createShareCardToken() {
+    const bytes = new Uint8Array(16);
+    (window.crypto || window.msCrypto).getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function ensureShareCardToken() {
+    if (!_shareCardToken) _shareCardToken = createShareCardToken();
+    return _shareCardToken;
+}
+
+// 공유 카드가 나가는 주소. 로그인해서 초대 코드가 있으면 미리보기가 붙는 짧은
+// 주소로 내보내고, 코드가 없으면(비로그인, 아직 발급 전) 예전처럼 맨 주소로 나간다
+// — 공유 자체가 막히면 안 된다.
 // ?ref=는 반드시 해시 앞에 와야 한다. auth.js가 location.search에서 읽는다.
 function getShareTargetUrl() {
     const code = getMyReferralCode();
     if (!/^[A-Z0-9]{6}$/.test(code)) return `${APP_ORIGIN}/#gallery`;
-    return `${APP_ORIGIN}/?ref=${code}#gallery`;
+    if (!auth.currentUser) return `${APP_ORIGIN}/?ref=${code}#gallery`;
+    return `${APP_ORIGIN}/c/${ensureShareCardToken()}`;
+}
+
+// 카드가 실제로 앱 밖으로 나갈 때만 올린다. 카드를 만들 때마다 올리면 보지도 않을
+// 이미지가 쌓인다. 같은 토큰으로 한 번만 올리고, 실패해도 공유는 그대로 진행한다.
+let _publishedShareCardToken = '';
+
+async function publishShareCardForPreview() {
+    const user = auth.currentUser;
+    const token = _shareCardToken;
+    const code = getMyReferralCode();
+    if (!user || !token || !latestShareBlob) return false;
+    if (!/^[A-Z0-9]{6}$/.test(code)) return false;
+    if (_publishedShareCardToken === token) return true;
+
+    try {
+        const storagePath = `share_cards/${user.uid}/${token}.png`;
+        const fileRef = ref(storage, storagePath);
+        await uploadBytes(fileRef, latestShareBlob, { contentType: 'image/png' });
+        const imageUrl = await getDownloadURL(fileRef);
+
+        const expiresAt = new Date(Date.now() + (SHARE_CARD_TTL_DAYS * 24 * 60 * 60 * 1000));
+        await setDoc(doc(db, 'share_cards', token), {
+            userId: user.uid,
+            storagePath,
+            imageUrl,
+            refCode: code,
+            createdAt: serverTimestamp(),
+            expiresAt
+        });
+
+        _publishedShareCardToken = token;
+        return true;
+    } catch (error) {
+        // 미리보기가 안 붙어도 링크 자체는 살아 있다(함수가 앱으로 넘긴다).
+        console.warn('공유 카드 미리보기 등록 실패:', error?.message || error);
+        return false;
+    }
 }
 
 // 초대 보상(친구 3일 달성 시 +500P)은 진작 지급되고 있었는데, 초대한 사람이
@@ -20495,6 +20561,7 @@ window.shareMyCard = async function () {
             // 안드로이드 공유 시트는 파일과 텍스트를 함께 넘겨도 텍스트를 버리는
             // 경우가 많다(카톡에 사진만 도착한다). 공유창이 열리기 전에 링크를
             // 미리 복사해 둔다 — 창이 뜬 뒤에는 사용자 조작 권한이 풀려 복사가 막힌다.
+            await publishShareCardForPreview();
             const linkCopied = await copyTextToClipboard(getShareTargetUrl(), '', false).catch(() => false);
             try {
                 await navigator.share(shareData);
@@ -20528,6 +20595,8 @@ window.shareViaSystem = async function () {
         showToast('먼저 공유 이미지를 생성해주세요.');
         return;
     }
+
+    await publishShareCardForPreview();
 
     const shareData = {
         title: '해빛스쿨 인증',
@@ -20609,7 +20678,10 @@ window.copyShareCaption = function () {
 
 window.copyShareLink = function () {
     trackShareCardSent('clipboard', 'success', 'share_modal');
-    copyTextToClipboard(getShareTargetUrl(), '✅ 링크가 복사되었습니다!');
+    // 링크만 보내는 경우에도 미리보기가 붙어야 한다.
+    publishShareCardForPreview().finally(() => {
+        copyTextToClipboard(getShareTargetUrl(), '✅ 링크가 복사되었습니다!');
+    });
 };
 
 async function shareFileToAppsOrFallback(platform) {
@@ -21763,6 +21835,9 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
             return;
         }
 
+        // 카드 내용이 바뀌면 미리보기도 새 주소여야 한다. 카톡은 링크 미리보기를
+        // 캐시하므로 같은 주소로 이미지를 갈아끼우면 예전 미리보기가 남는다.
+        _shareCardToken = createShareCardToken();
         const asset = await createSharePosterAsset(user, latest, settings, template, preparedMedia);
         if (buildToken !== _shareCardBuildToken) return;
 

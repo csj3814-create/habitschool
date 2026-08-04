@@ -1,0 +1,88 @@
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { readAppSource, readFunctionsSource, readRepoFile } from './source-helpers.js';
+
+const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const hostingConfig = () => {
+    const config = JSON.parse(readFileSync(resolve(ROOT_DIR, 'firebase.json'), 'utf8'));
+    return Array.isArray(config.hosting) ? config.hosting[0] : config.hosting;
+};
+
+// 카톡·페북 크롤러는 자바스크립트를 실행하지 않는다. 앱 주소를 붙여넣으면
+// index.html에 박힌 고정 og:image만 읽어 가므로, 열 명이 각자 다른 카드를 공유해도
+// 미리보기가 전부 똑같았다. 카드마다 짧은 주소를 만들어 그 카드를 가리키게 한다.
+describe('share card link preview', () => {
+    it('serves crawler metadata from a route of its own', () => {
+        const functionsSource = readFunctionsSource();
+        const rewrites = hostingConfig().rewrites || [];
+
+        expect(functionsSource).toContain('exports.shareCardPreview = onRequest(');
+        expect(functionsSource).toContain('<meta property="og:image" content="${safeImage}">');
+        // 사람은 앱으로 넘어가야 하고, 초대 귀속이 끊기면 안 된다.
+        expect(functionsSource).toContain('`${APP_BASE_URL}/?ref=${refCode}#gallery`');
+        // 리라이트가 없으면 /c/... 는 그냥 index.html이 되어 고정 미리보기로 돌아간다.
+        const shareRewrite = rewrites.find((entry) => entry.source === '/c/**');
+        expect(shareRewrite?.function?.functionId).toBe('shareCardPreview');
+    });
+
+    it('never renders crawler-supplied values straight into the page', () => {
+        const functionsSource = readFunctionsSource();
+
+        expect(functionsSource).toContain('function escapeHtmlAttribute(');
+        expect(functionsSource).toContain('const safeImage = escapeHtmlAttribute(imageUrl);');
+        expect(functionsSource).toContain('const safeTarget = escapeHtmlAttribute(targetUrl);');
+        // 토큰은 경로에서 그대로 오므로 형식을 통과한 것만 조회한다.
+        expect(functionsSource).toContain('if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) {');
+    });
+
+    it('keeps shared cards out of reach once they expire', () => {
+        const functionsSource = readFunctionsSource();
+
+        // 만료된 카드는 미리보기도 막고, 파일과 문서를 모두 지운다.
+        expect(functionsSource).toContain('if (expiresAtMs && expiresAtMs < Date.now()) {');
+        expect(functionsSource).toContain('exports.cleanupExpiredShareCards = onSchedule(');
+        expect(functionsSource).toContain('await bucket.file(storagePath).delete({ ignoreNotFound: true });');
+    });
+
+    it('opens the image to crawlers without opening anything else', () => {
+        const storageRules = readRepoFile('storage.rules');
+        const firestoreRules = readRepoFile('firestore.rules');
+
+        // 크롤러는 로그인하지 않으므로 이미지 읽기는 공개여야 한다.
+        expect(storageRules).toContain('match /share_cards/{userId}/{fileName} {');
+        expect(storageRules).toContain('allow read: if true;');
+        // 쓰기는 본인만. 남의 경로에 카드를 심을 수 있으면 안 된다.
+        expect(storageRules).toContain('&& request.auth.uid == userId');
+        // 토큰 문서는 클라이언트가 읽지 못한다. 토큰만 알면 남의 카드 정보를
+        // 훑을 수 있게 되면 안 된다(미리보기 함수는 관리자 권한으로 읽는다).
+        expect(firestoreRules).toContain('match /share_cards/{token} {');
+        expect(firestoreRules).toContain('allow read: if false;');
+        expect(firestoreRules).toContain("request.resource.data.userId == request.auth.uid");
+    });
+
+    it('mints a fresh token per card because chat apps cache previews', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain('function createShareCardToken()');
+        expect(appSource).toContain('_shareCardToken = createShareCardToken();');
+        expect(appSource).toContain('return `${APP_ORIGIN}/c/${ensureShareCardToken()}`;');
+        // 로그인 전이거나 코드가 없으면 예전 주소로 나간다. 공유가 막히면 안 된다.
+        expect(appSource).toContain('if (!auth.currentUser) return `${APP_ORIGIN}/?ref=${code}#gallery`;');
+    });
+
+    it('uploads only when the card actually leaves the app', () => {
+        const appSource = readAppSource();
+        const publishFn = appSource
+            .split('async function publishShareCardForPreview() {')[1]
+            ?.split('\n}')[0] || '';
+
+        expect(publishFn).not.toBe('');
+        // 카드를 만들 때마다 올리면 보지도 않을 이미지가 쌓인다.
+        expect(publishFn).toContain('if (_publishedShareCardToken === token) return true;');
+        // 미리보기 등록이 실패해도 공유 자체는 진행돼야 한다.
+        expect(publishFn).toContain('return false;');
+        expect(appSource).toContain('await publishShareCardForPreview();');
+    });
+});
