@@ -52,11 +52,17 @@ describe('admin can jump straight to one member\'s gallery', () => {
             ?.split('\n}')[0] || '';
 
         expect(pullFn).not.toBe('');
-        expect(pullFn).toContain('await _loadMoreGalleryFromFirestore().catch(() => {});');
-        // 더 안 늘어나면 멈춘다. 서버가 빈 페이지를 주면 무한히 돈다.
-        expect(pullFn).toContain('if (cachedGalleryLogs.length <= before) return;');
-        // 필터를 푸는 순간 당겨오기도 멈춰야 한다.
-        expect(pullFn).toContain('if (!galleryUserFilter || !galleryHasMore) return;');
+        // 전체 피드를 페이지 단위로 더 당기는 방식은 못 쓴다. 첫 화면이 로컬 캐시나
+        // REST 폴백에서 그려지면 커서가 없어서 한 장도 못 가져온다.
+        expect(pullFn).not.toContain('_loadMoreGalleryFromFirestore');
+        expect(pullFn).toContain("where('userId', '==', targetId),");
+        // orderBy를 빼야 복합 색인 없이 돈다. 정렬은 어차피 클라이언트에서 다시 한다.
+        expect(pullFn).not.toContain('orderBy');
+        expect(appSource).toContain('const GALLERY_USER_FILTER_FETCH_LIMIT = 200;');
+        // 기다리는 사이 필터가 바뀌었으면 결과를 버린다.
+        expect(pullFn).toContain('if (galleryUserFilter?.userId !== targetId) return;');
+        // 한 사람 것만 모은 목록이라 전체 피드 캐시로 저장하면 안 된다.
+        expect(pullFn).not.toContain('writePersistentGalleryCache');
         expect(appSource).toContain('loadRestOfGalleryForUserFilter();');
     });
 
@@ -68,8 +74,12 @@ describe('admin can jump straight to one member\'s gallery', () => {
         expect(appSource).toContain("'gallery-hero',");
         expect(appSource).toContain("'my-share-container',");
         expect(appSource).toContain("'weekly-best-container'");
-        expect(appSource).toContain('applyGalleryFilterChrome(true);');
-        expect(appSource).toContain('applyGalleryFilterChrome(false);');
+        // 가리기는 반드시 렌더가 끝난 뒤에 한다. 먼저 가려 두면 위쪽 렌더들이
+        // 자기 display를 다시 설정하면서 도로 되살린다(그래서 필터 중엔 보이고,
+        // 전체보기에서는 가려진 값이 '원래 값'으로 복원돼 영영 사라졌다).
+        expect(appSource).toContain('applyGalleryFilterChrome(!!galleryUserFilter);');
+        expect(appSource).not.toContain('applyGalleryFilterChrome(true);');
+        expect(appSource).not.toContain('applyGalleryFilterChrome(false);');
         // 섹션마다 원래 표시 상태가 달라서, 되돌릴 때 무조건 보이게 하면 안 된다.
         expect(appSource).toContain('el.dataset.preFilterDisplay = el.style.display');
     });
