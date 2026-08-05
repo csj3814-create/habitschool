@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=284';
+} from './blockchain-config.js?v=285';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,12 +41,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=284';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=285';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=284';
-import { getKstDateString } from './ui-helpers.js?v=284';
-import { checkRateLimit } from './security.js?v=284';
+import { showToast, hideToast } from './ui-helpers.js?v=285';
+import { getKstDateString } from './ui-helpers.js?v=285';
+import { checkRateLimit } from './security.js?v=285';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -2191,6 +2191,34 @@ export async function copyLegacyWalletPrivateKey() {
     }
 }
 
+// 온체인 챌린지 시작은 승인·전송·확정까지 수십 초가 걸린다. 기본 토스트는 3.5초
+// 뒤 사라져서 그 사이 화면에 아무 표시도 남지 않았고, 사용자는 실패한 줄 알고 다시
+// 눌렀다. 진행 중 안내는 사라지지 않게 띄우고, 끝날 때 우리가 직접 걷는다.
+let _challengeProgressText = '';
+
+function showChallengeProgress(message) {
+    _challengeProgressText = message;
+    showToast(message, { durationMs: 0 });
+}
+
+// 흐름이 끝났는데 화면에 아직 '진행 중' 안내가 떠 있으면(= 종료 메시지를 못 띄운
+// 경로로 빠져나왔으면) 그것만 걷어낸다. 실패 안내가 떠 있으면 건드리지 않는다.
+function clearChallengeProgressIfStale() {
+    if (!_challengeProgressText) return;
+    const toast = document.getElementById('toast');
+    if (toast && toast.innerText === _challengeProgressText) hideToast();
+    _challengeProgressText = '';
+}
+
+// 진행 중에는 챌린지 시작 버튼을 눌리지 않게 한다. 잠금 메시지를 보여 주는 것보다
+// 애초에 못 누르게 하는 편이 헷갈리지 않는다.
+function setChallengeButtonsBusy(busy) {
+    document.querySelectorAll('[onclick^="startChallenge30D("]').forEach((el) => {
+        el.style.pointerEvents = busy ? 'none' : '';
+        el.style.opacity = busy ? '0.55' : '';
+    });
+}
+
 export async function startChallenge30DWithConnectedWallet(challengeId) {
     let startLockKey = null;
     try {
@@ -2237,7 +2265,8 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             }
         }
 
-        showToast(`⏳ ${duration}일 챌린지 시작 중...`);
+        showChallengeProgress(`⏳ ${duration}일 챌린지 시작 중...`);
+        setChallengeButtonsBusy(true);
 
         let stakeApprovalTxHash = null;
         let stakeWalletAddress = null;
@@ -2266,7 +2295,7 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
             const ethBalance = await connectedWallet.provider.getBalance(connectedWallet.address);
             const minGas = ethers.utils.parseEther("0.001");
             if (ethBalance.lt(minGas)) {
-                showToast('⛽ 가스 부족 → 자동 충전 중...');
+                showChallengeProgress('⛽ 가스 부족 → 자동 충전 중...');
                 await ensureFunctions();
                 if (!prefundWalletFunction) {
                     showToast('❌ 가스 충전 함수를 불러오지 못했어요.');
@@ -2282,11 +2311,11 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
                 }
             }
 
-            showToast('🔐 HBT 예치 권한 확인 중...');
+            showChallengeProgress('🔐 HBT 예치 권한 확인 중...');
             try {
                 const allowance = await erc20Contract.allowance(connectedWallet.address, ACTIVE_STAKING_ADDRESS);
                 if (allowance.lt(rawAmount)) {
-                    showToast('⏳ HBT 예치 권한 승인 중...');
+                    showChallengeProgress('⏳ HBT 예치 권한 승인 중... 지갑에서 승인해 주세요.');
                     const approveTx = await erc20Contract.approve(ACTIVE_STAKING_ADDRESS, rawAmount);
                     const approvalReceipt = await approveTx.wait();
                     stakeApprovalTxHash = approvalReceipt.transactionHash;
@@ -2343,6 +2372,8 @@ export async function startChallenge30DWithConnectedWallet(challengeId) {
         showToast(`❌ 오류: ${msg}`);
         return false;
     } finally {
+        setChallengeButtonsBusy(false);
+        clearChallengeProgressIfStale();
         if (startLockKey) challengeStartInFlight.delete(startLockKey);
     }
 }
