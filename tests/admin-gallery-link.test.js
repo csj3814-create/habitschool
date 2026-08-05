@@ -23,6 +23,9 @@ describe('admin can jump straight to one member\'s gallery', () => {
         // 갤러리 데이터가 도착하는 경로가 여러 갈래라, 한 렌더 함수에 걸어 두면
         // 그 함수를 안 타는 경로에서 조용히 놓친다. 직접 확인하며 기다린다.
         expect(applyFn).toContain('startGalleryUserFilterPoll();');
+        // 글이 오기를 기다리는 동안 전체 피드가 보이면 안 된다. 필터부터 걸고
+        // 이름만 나중에 채운다.
+        expect(applyFn).toContain("window.setGalleryUserFilter(_pendingGalleryUserFilter, '불러오는 중…');");
         expect(appSource).toContain('const GALLERY_USER_FILTER_TIMEOUT_MS = 15000;');
         // 기록이 하나도 없는 회원이면 영원히 돌지 않게 끊는다. 이때 필터를 안 걸면
         // 전체 피드가 보여서 어느 회원을 보러 온 건지 알 수 없다. 글이 없다는 사실
