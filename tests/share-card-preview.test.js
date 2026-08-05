@@ -92,6 +92,22 @@ describe('share card link preview', () => {
         expect(authSource).toContain("url.searchParams.delete('card');");
     });
 
+    // 카드를 얹었더니 로그인 화면 내용이 화면보다 길어졌는데, position:fixed +
+    // justify-content:center 조합이라 넘치는 만큼 위아래가 잘려 나갔다.
+    // 로고와 시작 버튼이 화면 밖으로 사라졌다.
+    it('scrolls the sign-in screen instead of cutting it off', () => {
+        const styles = readRepoFile('styles-base.css');
+        const loginBlock = styles.split('#login-modal { ')[1].split('\n}')[0];
+
+        expect(loginBlock).toContain('overflow-y: auto;');
+        // justify-content:center는 넘칠 때 위쪽을 잘라 스크롤로도 닿지 못하게 만든다.
+        expect(loginBlock).not.toContain('justify-content: center;');
+        // auto 마진 가운데 정렬은 공간이 모자라면 잘리는 대신 스크롤된다.
+        expect(styles).toContain('#login-modal::before,');
+        expect(styles).toContain('#login-modal::after {');
+        expect(styles).toContain('margin: auto;');
+    });
+
     // 로그인 전 방문자가 부르는 유일한 카드 API다. 토큰을 이미 아는 사람에게
     // 이미지 주소만 준다 — 초대한 사람이 누구인지는 나가면 안 된다.
     it('hands a logged-out visitor the image and nothing else', () => {

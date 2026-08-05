@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=282';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=283';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -121,7 +121,7 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
-        'invite.landingDesc': 'Start here and you will be connected with the friend who invited you, plus 200P to begin with. Keep it going for 7 days and another 300P lands. You can also look around first without an account.',
+        'invite.landingDesc': 'Start here to connect with your friend and get 200P. You can look around without an account first.',
         'sharePrompt.kicker': 'Today, wrapped up',
         'sharePrompt.title': 'Your whole day fits on one card',
         'sharePrompt.kickerFull': 'Full routine done',
