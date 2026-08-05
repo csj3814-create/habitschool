@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=283';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=283';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=284';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=284';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=283';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=283';
+} from './auth-login-helpers.js?v=284';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=284';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=283';
+} from './exercise-media.js?v=284';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=283';
+} from './health-connect-utils.js?v=284';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=283';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=283';
-import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=283';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=283';
-import { sanitize, compressImage } from './data-manager.js?v=283';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=283';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=283';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=283';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=283';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=283';
+} from './habit-groups.js?v=284';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=284';
+import { getDatesInfo, showToast, getKstDateString } from './ui-helpers.js?v=284';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=284';
+import { sanitize, compressImage } from './data-manager.js?v=284';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=284';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=284';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=284';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=284';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=284';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=283';
+} from './guest-demo.js?v=284';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=283';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=283';
+} from './product-events.js?v=284';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=284';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=283';
+} from './diet-program.js?v=284';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=283';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=283';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=283';
+} from './meditation-guide.js?v=284';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=284';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=284';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=283';
+} from './social-challenge-readiness.js?v=284';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=283';
+} from './monthly-mvp-reward.js?v=284';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6036,7 +6036,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=283';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=284';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11713,6 +11713,11 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             // 사용자 문서 응답이 늦거나 비어도 마지막 정상값을 유지한 채 재시도
             // Keep the last good values while the user document is deferred, then retry.
             if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+            // 마켓·쿠폰은 사용자 문서와 별개 소스다. 성공 분기에만 호출이 있어서
+            // 문서가 늦으면 아예 시작되지 않았고, '불러오는 중' 문구가 영영 남았다.
+            loadRewardMarketSnapshot(false).catch((error) => {
+                console.warn('reward market deferred-branch load skipped:', error?.message || error);
+            });
             markAssetHbtBalanceDelayed({ defer: true });
             const userDocDeferred = isDeferredAssetSnap(userSnap);
             const settleTxSnap = await _p_settleTx;
@@ -11748,6 +11753,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         console.error('자산 표시 업데이트 오류:', error);
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
         markAssetHbtBalanceDelayed({ defer: true });
+        // 자산 조회가 통째로 실패해도 마켓·쿠폰은 별개로 뜰 수 있어야 한다.
+        loadRewardMarketSnapshot(false).catch(() => {});
         scheduleAssetRetry(user.uid, 'asset-display-error');
     } finally {
         if (_assetRetrySignalSequence === retrySignalAtStart) {
@@ -24816,9 +24823,49 @@ window.openHabitGroupRecordTab = function(groupId) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
+// 소모임 조회가 늦거나 실패하면 '다시 확인 중' 화면이 남는데, 예전에는 자동
+// 재시도가 없어서 사용자가 버튼을 누르거나 탭을 나갔다 와야 다시 시도됐다.
+// 자산 탭이 쓰는 방식과 같게(2초 간격, 최대 3회) 스스로 다시 붙게 한다.
+const SOCIAL_RETRY_DELAY_MS = 2000;
+const SOCIAL_MAX_RETRY_ATTEMPTS = 3;
+let _socialRetryTimer = null;
+const _socialRetryCounts = new Map();
+
+function clearSocialRetry(uid = '') {
+    if (_socialRetryTimer) {
+        clearTimeout(_socialRetryTimer);
+        _socialRetryTimer = null;
+    }
+    if (uid) _socialRetryCounts.delete(uid);
+}
+
+function scheduleSocialRetry(uid, reason = 'unknown') {
+    if (!uid || auth.currentUser?.uid !== uid) return false;
+
+    const count = _socialRetryCounts.get(uid) || 0;
+    if (count >= SOCIAL_MAX_RETRY_ATTEMPTS) return false;
+    // 이미 예약돼 있으면 겹쳐 걸지 않는다. 누락 신호가 여러 개 와도 재시도는 한 번이다.
+    if (_socialRetryTimer) return true;
+
+    _socialRetryTimer = setTimeout(() => {
+        _socialRetryTimer = null;
+        _socialRetryCounts.set(uid, (_socialRetryCounts.get(uid) || 0) + 1);
+        if (auth.currentUser?.uid !== uid) return;
+        // 캐시가 비어 있어서 실패한 것이므로 캐시를 무시하고 다시 읽는다.
+        _habitGroupMembershipLoadFailed = false;
+        _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
+        renderSocialChallenges(auth.currentUser).catch(() => {});
+    }, SOCIAL_RETRY_DELAY_MS);
+
+    logOptionalDataTimeout(`social_retry_scheduled:${reason}`);
+    return true;
+}
+
 window.retrySocialChallengesCard = function() {
     const user = auth.currentUser;
     if (!user) return;
+    // 손으로 누른 재시도는 카운터를 되돌린다. 자동 재시도가 다시 붙을 수 있어야 한다.
+    clearSocialRetry(user.uid);
     renderSocialChallenges(user).catch(() => {});
 };
 
@@ -24826,6 +24873,7 @@ window.retrySocialChallengesCard = function() {
 window.refreshHabitGroupsAfterLoadFailure = function () {
     const user = auth.currentUser;
     if (!user) return;
+    clearSocialRetry(user.uid);
     _habitGroupMembershipLoadFailed = false;
     _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
     renderSocialChallenges(user).catch(() => {});
@@ -24931,6 +24979,7 @@ async function renderSocialChallengesInner(user) {
                 <div style="margin:10px 0 8px;font-size:12px;font-weight:800;color:#7A4E12;">추천 소모임</div>
                 ${buildCommunityExpandableRows('habit-group-recommendations', recommendedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             `;
+            clearSocialRetry(auth.currentUser?.uid || '');
             return;
         }
 
@@ -24941,12 +24990,16 @@ async function renderSocialChallengesInner(user) {
             ${buildCommunityExpandableRows('habit-groups-joined', joinedRows, HABIT_GROUP_DASHBOARD_VISIBLE_LIMIT)}
             ${buildHabitGroupRecommendationSection(recommendedRows, { canJoinMore })}
         `;
+        clearSocialRetry(auth.currentUser?.uid || '');
     } catch (e) {
         logOptionalDataTimeout('habit_groups_render_deferred', e);
         setSocialChallengeHeadAction('retry');
+        // 스스로 다시 시도한다. 버튼은 그래도 남겨 둔다 — 재시도가 다 소진된 뒤에는
+        // 그것만이 남은 길이다.
+        const retryScheduled = scheduleSocialRetry(auth.currentUser?.uid || '', 'habit_groups_render_deferred');
         list.innerHTML = buildCommunityEmptyState(
-            '소모임 상태를 다시 확인 중이에요',
-            '잠시 후 다시 불러오면 이어서 확인할 수 있어요.',
+            retryScheduled ? '소모임 상태를 확인하고 있어요' : '소모임 상태를 다시 확인 중이에요',
+            retryScheduled ? '잠시만 기다려 주세요. 곧 다시 불러옵니다.' : '잠시 후 다시 불러오면 이어서 확인할 수 있어요.',
             ['<button type="button" class="community-empty-btn" onclick="retrySocialChallengesCard()">다시 불러오기</button>']
         );
         card.style.display = 'block';
