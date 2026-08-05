@@ -24,15 +24,20 @@ describe('admin can jump straight to one member\'s gallery', () => {
         // 그 함수를 안 타는 경로에서 조용히 놓친다. 직접 확인하며 기다린다.
         expect(applyFn).toContain('startGalleryUserFilterPoll();');
         expect(appSource).toContain('const GALLERY_USER_FILTER_TIMEOUT_MS = 15000;');
-        // 기록이 하나도 없는 회원이면 영원히 돌지 않게 끊고 알려 준다.
-        expect(appSource).toContain("showToast('이 회원의 갤러리 기록을 찾지 못했어요.');");
+        // 기록이 하나도 없는 회원이면 영원히 돌지 않게 끊는다. 이때 필터를 안 걸면
+        // 전체 피드가 보여서 어느 회원을 보러 온 건지 알 수 없다. 글이 없다는 사실
+        // 자체가 보러 온 정보이므로, 걸어서 빈 화면을 보여 준다.
+        expect(appSource).toContain("window.setGalleryUserFilter(userId, '선택한 회원');");
+        expect(appSource).toContain("showToast('이 회원은 아직 갤러리에 올린 기록이 없어요.');");
+        // 두 경로 모두 주소를 정리한다.
+        expect(appSource).toContain('function clearGalleryUserFilterFromUrl()');
         // 이름은 URL이 아니라 이미 받아 온 데이터에서 꺼낸다.
         expect(applyFn).toContain("String(match.data.userName || '회원').trim()");
         // 적용되면 스스로 비운다. 안 그러면 setGalleryUserFilter가 부르는 렌더에서
         // 무한히 되풀이된다.
         expect(applyFn).toContain("_pendingGalleryUserFilter = '';");
         // 주소도 정리한다. 새로고침마다 필터가 되살아나면 빠져나오기 어렵다.
-        expect(applyFn).toContain("url.searchParams.delete('galleryUser');");
+        expect(applyFn).toContain('clearGalleryUserFilterFromUrl();');
     });
 
     it('only accepts a uid-shaped value from the URL', () => {
