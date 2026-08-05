@@ -71,17 +71,21 @@ describe('admin can jump straight to one member\'s gallery', () => {
     it('hides the whole-feed sections while a member filter is on', () => {
         const appSource = readAppSource();
 
-        expect(appSource).toContain("'gallery-hero',");
-        expect(appSource).toContain("'my-share-container',");
-        expect(appSource).toContain("'weekly-best-container'");
         // 가리기는 반드시 렌더가 끝난 뒤에 한다. 먼저 가려 두면 위쪽 렌더들이
         // 자기 display를 다시 설정하면서 도로 되살린다(그래서 필터 중엔 보이고,
         // 전체보기에서는 가려진 값이 '원래 값'으로 복원돼 영영 사라졌다).
         expect(appSource).toContain('applyGalleryFilterChrome(!!galleryUserFilter);');
         expect(appSource).not.toContain('applyGalleryFilterChrome(true);');
         expect(appSource).not.toContain('applyGalleryFilterChrome(false);');
-        // 섹션마다 원래 표시 상태가 달라서, 되돌릴 때 무조건 보이게 하면 안 된다.
-        expect(appSource).toContain('el.dataset.preFilterDisplay = el.style.display');
+        // 인라인 style.display로는 못 가린다. 주간 순위와 공유 카드는 비동기라
+        // 가린 뒤에 응답이 도착해 자기 display를 다시 쓴다. 클래스로 덮어야 한다.
+        expect(appSource).toContain("document.body.classList.toggle(GALLERY_FILTER_BODY_CLASS, !!isFiltered);");
+        expect(appSource).not.toContain('preFilterDisplay');
+
+        const css = readRepoFile('styles-features.css');
+        expect(css).toContain('body.gallery-user-filtered #weekly-best-container');
+        expect(css).toContain('body.gallery-user-filtered #my-share-container');
+        expect(css).toContain('display: none !important;');
     });
 
     it('only accepts a uid-shaped value from the URL', () => {

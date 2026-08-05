@@ -6579,3 +6579,11 @@ body.dark-mode .shared-import-option.is-suggested {
     color: var(--text-secondary); 
 }
 
+/* 한 회원만 보는 중에는 전체 기준 섹션을 감춘다. 주간 순위·공유 카드는 비동기로
+   그려져서 JS가 인라인으로 가려 봐야 나중에 도로 살아난다. 여기서 덮는다. */
+body.gallery-user-filtered #gallery-hero,
+body.gallery-user-filtered #my-share-container,
+body.gallery-user-filtered #gallery-activity-summary,
+body.gallery-user-filtered #weekly-best-container {
+    display: none !important;
+}
