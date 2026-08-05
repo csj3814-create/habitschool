@@ -4907,9 +4907,28 @@ function buildShareCardHtml({ imageUrl = "", targetUrl = "", title = "", descrip
 <meta name="twitter:image" content="${safeImage}">
 <link rel="canonical" href="${safeTarget}">
 <meta http-equiv="refresh" content="0; url=${safeTarget}">
+<style>
+:root { color-scheme: light; }
+body {
+  margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+  background: linear-gradient(160deg, #FFF6EA 0%, #FFFAF3 52%, #EEF8F0 100%);
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: #8a6336; text-align: center; padding: 24px;
+}
+.mark { font-size: 30px; font-weight: 900; color: #E65100; letter-spacing: -0.5px; }
+.msg { font-size: 15px; font-weight: 700; color: #a89078; }
+.go {
+  margin-top: 6px; padding: 12px 22px; border-radius: 999px;
+  background: linear-gradient(135deg, #FF8C00 0%, #FF6D00 100%);
+  color: #fff; font-weight: 800; font-size: 15px; text-decoration: none;
+}
+</style>
 </head>
 <body>
-<p><a href="${safeTarget}">해빛스쿨로 이동합니다.</a></p>
+<div class="mark">습관학교 해빛스쿨</div>
+<div class="msg">잠시 후 이동합니다…</div>
+<a class="go" href="${safeTarget}">바로 열기</a>
 <script>location.replace(${JSON.stringify(targetUrl)});</script>
 </body>
 </html>`;

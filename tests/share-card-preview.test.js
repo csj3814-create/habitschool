@@ -50,9 +50,12 @@ describe('share card link preview', () => {
         const storageRules = readRepoFile('storage.rules');
         const firestoreRules = readRepoFile('firestore.rules');
 
-        // 크롤러는 로그인하지 않으므로 이미지 읽기는 공개여야 한다.
+        // 크롤러는 getDownloadURL이 발급한 토큰 URL로 가져가고 그 토큰은 규칙과
+        // 무관하게 열린다. 경로까지 공개하면 남의 uid를 아는 사람이 파일을 훑을 수 있다.
         expect(storageRules).toContain('match /share_cards/{userId}/{fileName} {');
-        expect(storageRules).toContain('allow read: if true;');
+        const shareCardBlock = storageRules.split('match /share_cards/{userId}/{fileName} {')[1].split('}')[0];
+        expect(shareCardBlock).toContain('allow read: if request.auth != null && request.auth.uid == userId;');
+        expect(shareCardBlock).not.toContain('allow read: if true;');
         // 쓰기는 본인만. 남의 경로에 카드를 심을 수 있으면 안 된다.
         expect(storageRules).toContain('&& request.auth.uid == userId');
         // 토큰 문서는 클라이언트가 읽지 못한다. 토큰만 알면 남의 카드 정보를
