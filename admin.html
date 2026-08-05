@@ -565,7 +565,16 @@
                 <h2 id="modal-name">-</h2>
                 <p id="modal-sub">-</p>
             </div>
-            <button class="close-btn" onclick="closeModal()">✕</button>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <!--
+                  이 회원 기록만 갤러리에서 보기. 예전에는 갤러리에 들어가 카드를
+                  찾아 이름을 눌러야 했다. uid만 주소에 싣고 이름은 싣지 않는다 —
+                  이름은 앱이 이미 받아 온 데이터에서 찾는다.
+                -->
+                <a id="modal-gallery-link" class="btn" href="#" target="_blank" rel="noopener"
+                   style="text-decoration:none;white-space:nowrap;">🖼️ 갤러리에서 보기</a>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
         </div>
         <div class="modal-body">
             <div style="overflow-y:auto;padding-right:4px;">
@@ -3063,6 +3072,8 @@
             const [{ usersQ }, detailLogsSnapshot] = await Promise.all([getData(), detailLogsPromise]);
             const meta = {}; usersQ.forEach(u => { meta[u.id]=u.data(); });
             const m = meta[uid]||{};
+            const galleryLink = document.getElementById('modal-gallery-link');
+            if (galleryLink) galleryLink.href = `/?galleryUser=${encodeURIComponent(uid)}#gallery`;
             document.getElementById('modal-name').textContent = m.customDisplayName||m.displayName||'알 수 없음';
             document.getElementById('modal-sub').textContent = `Lv.${m.missionLevel||1} · 🔥${m.currentStreak||0}일 · ${(m.coins||0).toLocaleString()}P`;
             const hp = m.healthProfile||{};
