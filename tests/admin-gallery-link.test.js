@@ -40,6 +40,37 @@ describe('admin can jump straight to one member\'s gallery', () => {
         expect(applyFn).toContain('clearGalleryUserFilterFromUrl();');
     });
 
+    // 필터는 그 시점에 받아 둔 목록만 거른다. 첫 화면은 8건뿐이라 어제·오늘치만
+    // 나오고, 그 사람의 지난 기록은 아직 도착하지도 않은 상태였다.
+    it('pulls the remaining pages so the filtered view is not just today', () => {
+        const appSource = readAppSource();
+        const pullFn = appSource
+            .split('async function loadRestOfGalleryForUserFilter() {')[1]
+            ?.split('\n}')[0] || '';
+
+        expect(pullFn).not.toBe('');
+        expect(pullFn).toContain('await _loadMoreGalleryFromFirestore().catch(() => {});');
+        // 더 안 늘어나면 멈춘다. 서버가 빈 페이지를 주면 무한히 돈다.
+        expect(pullFn).toContain('if (cachedGalleryLogs.length <= before) return;');
+        // 필터를 푸는 순간 당겨오기도 멈춰야 한다.
+        expect(pullFn).toContain('if (!galleryUserFilter || !galleryHasMore) return;');
+        expect(appSource).toContain('loadRestOfGalleryForUserFilter();');
+    });
+
+    // 한 사람만 보는 화면에서 전체 기준 섹션은 읽을 이유가 없다. 특히 공유 카드는
+    // '내' 카드라 남의 기록을 보는 중에 뜨면 엉뚱하다.
+    it('hides the whole-feed sections while a member filter is on', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("'gallery-hero',");
+        expect(appSource).toContain("'my-share-container',");
+        expect(appSource).toContain("'weekly-best-container'");
+        expect(appSource).toContain('applyGalleryFilterChrome(true);');
+        expect(appSource).toContain('applyGalleryFilterChrome(false);');
+        // 섹션마다 원래 표시 상태가 달라서, 되돌릴 때 무조건 보이게 하면 안 된다.
+        expect(appSource).toContain('el.dataset.preFilterDisplay = el.style.display');
+    });
+
     it('only accepts a uid-shaped value from the URL', () => {
         const appSource = readAppSource();
 
