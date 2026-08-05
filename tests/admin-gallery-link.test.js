@@ -20,8 +20,12 @@ describe('admin can jump straight to one member\'s gallery', () => {
             ?.split('\n}')[0] || '';
 
         expect(applyFn).not.toBe('');
-        // 데이터가 아직이면 다음 렌더에서 다시 시도한다.
-        expect(applyFn).toContain('if (!match) return;');
+        // 갤러리 데이터가 도착하는 경로가 여러 갈래라, 한 렌더 함수에 걸어 두면
+        // 그 함수를 안 타는 경로에서 조용히 놓친다. 직접 확인하며 기다린다.
+        expect(applyFn).toContain('startGalleryUserFilterPoll();');
+        expect(appSource).toContain('const GALLERY_USER_FILTER_TIMEOUT_MS = 15000;');
+        // 기록이 하나도 없는 회원이면 영원히 돌지 않게 끊고 알려 준다.
+        expect(appSource).toContain("showToast('이 회원의 갤러리 기록을 찾지 못했어요.');");
         // 이름은 URL이 아니라 이미 받아 온 데이터에서 꺼낸다.
         expect(applyFn).toContain("String(match.data.userName || '회원').trim()");
         // 적용되면 스스로 비운다. 안 그러면 setGalleryUserFilter가 부르는 렌더에서
