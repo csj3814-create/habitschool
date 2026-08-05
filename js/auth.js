@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=281';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=282';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=281';
-import { getDatesInfo } from './ui-helpers.js?v=281';
-import { escapeHtml } from './security.js?v=281';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=281';
+import { showToast } from './ui-helpers.js?v=282';
+import { getDatesInfo } from './ui-helpers.js?v=282';
+import { escapeHtml } from './security.js?v=282';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=282';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=281';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=281';
-import { trackProductEvent } from './product-events.js?v=281';
+} from './auth-login-helpers.js?v=282';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=282';
+import { trackProductEvent } from './product-events.js?v=282';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=281';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=282';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -488,8 +488,9 @@ function clearPendingInviteRef() {
 
 function clearInviteRefFromUrl() {
     const url = new URL(window.location.href);
-    if (!url.searchParams.has('ref')) return;
+    if (!url.searchParams.has('ref') && !url.searchParams.has('card')) return;
     url.searchParams.delete('ref');
+    url.searchParams.delete('card');
     window.history.replaceState({}, '', url.toString());
 }
 
@@ -650,7 +651,37 @@ function trackInviteLinkLanding(isSignedIn) {
 function applyInviteLandingBanner(isSignedIn) {
     const banner = document.getElementById('invite-landing-banner');
     if (!banner) return;
-    banner.hidden = !(_arrivedViaInviteLink && !isSignedIn);
+    const shouldShow = _arrivedViaInviteLink && !isSignedIn;
+    banner.hidden = !shouldShow;
+    if (shouldShow) showInvitedCardOnLanding();
+}
+
+// 카톡에서 카드를 보고 눌러 들어왔는데 로그인 화면만 덩그러니 나오면, 방금 본
+// 그 카드와의 연결이 끊긴다. 미리보기 함수가 주소에 실어 준 토큰으로 같은
+// 이미지를 한 번 더 보여 준다. 토큰은 방문자가 이미 들고 있던 값이다.
+let _invitedCardRequested = false;
+
+async function showInvitedCardOnLanding() {
+    if (_invitedCardRequested) return;
+    const cardEl = document.getElementById('invite-landing-card');
+    if (!cardEl) return;
+
+    const token = String(new URLSearchParams(window.location.search).get('card') || '').trim();
+    if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return;
+    _invitedCardRequested = true;
+
+    try {
+        const fn = httpsCallable(functions, 'getSharedCardImage');
+        const result = await fn({ token });
+        const imageUrl = String(result?.data?.imageUrl || '').trim();
+        if (!imageUrl) return;
+        // 이미지가 실제로 뜨는 걸 확인한 뒤에 보인다. 깨진 아이콘이 뜨느니 없는 게 낫다.
+        cardEl.onload = () => { cardEl.hidden = false; };
+        cardEl.onerror = () => { cardEl.hidden = true; };
+        cardEl.src = imageUrl;
+    } catch (error) {
+        console.warn('초대 카드 미리보기 로드 실패:', error?.message || error);
+    }
 }
 
 const CHATBOT_CONNECT_PENDING_KEY = 'pendingChatbotConnectToken';

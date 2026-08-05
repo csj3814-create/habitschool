@@ -4819,6 +4819,31 @@ exports.ensureReferralCode = onCall(
 // 아직 친구 수락 전일 수도 있어 신원을 넘기면 과한 노출이 된다.
 const INVITE_STATUS_SCAN_LIMIT = 500;
 
+exports.getSharedCardImage = onCall(
+    { region: "asia-northeast3" },
+    async (request) => {
+        // 로그인 전 방문자가 부르는 유일한 카드 API다. 토큰을 이미 아는 사람에게
+        // 그 카드 이미지 주소만 돌려준다. 초대한 사람이 누구인지, 다른 기록이
+        // 무엇인지는 여기서 절대 나가지 않는다.
+        const token = String(request.data?.token || "").trim();
+        if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return { imageUrl: "" };
+
+        try {
+            const snap = await db.doc(`share_cards/${token}`).get();
+            if (!snap.exists) return { imageUrl: "" };
+
+            const card = snap.data() || {};
+            const expiresAtMs = card.expiresAt?.toMillis ? card.expiresAt.toMillis() : 0;
+            if (expiresAtMs && expiresAtMs < Date.now()) return { imageUrl: "" };
+
+            return { imageUrl: String(card.imageUrl || "") };
+        } catch (error) {
+            console.warn("[getSharedCardImage] failed:", token, error?.message || error);
+            return { imageUrl: "" };
+        }
+    }
+);
+
 exports.getMyInviteStatus = onCall(
     { region: "asia-northeast3" },
     async (request) => {
@@ -4962,8 +4987,10 @@ exports.shareCardPreview = onRequest(
             }
 
             const refCode = String(card.refCode || "").trim().toUpperCase();
+            // 랜딩에서 '방금 본 그 카드'를 다시 보여주려면 어느 카드였는지 알아야 한다.
+            // 토큰은 방문자가 이미 주소로 들고 있던 값이라 새로 노출되는 정보가 없다.
             const targetUrl = /^[A-Z0-9]{6}$/.test(refCode)
-                ? `${APP_BASE_URL}/?ref=${refCode}#gallery`
+                ? `${APP_BASE_URL}/?ref=${refCode}&card=${encodeURIComponent(token)}#gallery`
                 : fallbackUrl;
 
             const html = buildShareCardHtml({

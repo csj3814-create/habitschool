@@ -27,7 +27,8 @@ describe('share link carries the inviter referral code', () => {
         const markup = readRepoFile('index.html');
 
         expect(markup).toContain('id="invite-landing-banner"');
-        expect(authSource).toContain('banner.hidden = !(_arrivedViaInviteLink && !isSignedIn);');
+        expect(authSource).toContain('const shouldShow = _arrivedViaInviteLink && !isSignedIn;');
+        expect(authSource).toContain('banner.hidden = !shouldShow;');
         expect(authSource).toContain('applyInviteLandingBanner(false);');
         expect(authSource).toContain('applyInviteLandingBanner(true);');
         // 초대한 사람 이름은 싣지 않는다. 이름을 보여주려면 비로그인이 부를 수 있는

@@ -21,7 +21,7 @@ describe('share card link preview', () => {
         expect(functionsSource).toContain('exports.shareCardPreview = onRequest(');
         expect(functionsSource).toContain('<meta property="og:image" content="${safeImage}">');
         // 사람은 앱으로 넘어가야 하고, 초대 귀속이 끊기면 안 된다.
-        expect(functionsSource).toContain('`${APP_BASE_URL}/?ref=${refCode}#gallery`');
+        expect(functionsSource).toContain('`${APP_BASE_URL}/?ref=${refCode}&card=${encodeURIComponent(token)}#gallery`');
         // 리라이트가 없으면 /c/... 는 그냥 index.html이 되어 고정 미리보기로 돌아간다.
         const shareRewrite = rewrites.find((entry) => entry.source === '/c/**');
         expect(shareRewrite?.function?.functionId).toBe('shareCardPreview');
@@ -73,6 +73,40 @@ describe('share card link preview', () => {
         expect(appSource).toContain('return `${APP_ORIGIN}/c/${ensureShareCardToken()}`;');
         // 로그인 전이거나 코드가 없으면 예전 주소로 나간다. 공유가 막히면 안 된다.
         expect(appSource).toContain('if (!auth.currentUser) return `${APP_ORIGIN}/?ref=${code}#gallery`;');
+    });
+
+    // 카톡에서 카드를 보고 눌러 들어왔는데 로그인 화면만 나오면 방금 본 카드와의
+    // 연결이 끊긴다. 같은 카드를 랜딩에서 한 번 더 보여 준다.
+    it('carries the card through to the landing the visitor lands on', () => {
+        const functionsSource = readFunctionsSource();
+        const authSource = readRepoFile('js/auth.js');
+        const markup = readRepoFile('index.html');
+
+        expect(functionsSource).toContain('`${APP_BASE_URL}/?ref=${refCode}&card=${encodeURIComponent(token)}#gallery`');
+        expect(markup).toContain('id="invite-landing-card"');
+        expect(authSource).toContain('if (shouldShow) showInvitedCardOnLanding();');
+        // 깨진 이미지 아이콘이 뜨느니 아무것도 없는 편이 낫다.
+        expect(authSource).toContain('cardEl.onload = () => { cardEl.hidden = false; };');
+        expect(authSource).toContain('cardEl.onerror = () => { cardEl.hidden = true; };');
+        // 주소를 정리할 때 card도 같이 지운다.
+        expect(authSource).toContain("url.searchParams.delete('card');");
+    });
+
+    // 로그인 전 방문자가 부르는 유일한 카드 API다. 토큰을 이미 아는 사람에게
+    // 이미지 주소만 준다 — 초대한 사람이 누구인지는 나가면 안 된다.
+    it('hands a logged-out visitor the image and nothing else', () => {
+        const functionsSource = readFunctionsSource();
+        const lookupFn = functionsSource
+            .split('exports.getSharedCardImage = onCall(')[1]
+            ?.split('exports.getMyInviteStatus')[0] || '';
+
+        expect(lookupFn).not.toBe('');
+        expect(lookupFn).toContain('if (!/^[A-Za-z0-9_-]{16,64}$/.test(token)) return { imageUrl: "" };');
+        expect(lookupFn).toContain('if (expiresAtMs && expiresAtMs < Date.now()) return { imageUrl: "" };');
+        // 돌려주는 건 imageUrl 하나뿐이어야 한다.
+        expect(lookupFn).not.toContain('refCode');
+        expect(lookupFn).not.toContain('userId');
+        expect(lookupFn).not.toContain('storagePath');
     });
 
     it('uploads only when the card actually leaves the app', () => {

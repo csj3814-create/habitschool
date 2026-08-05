@@ -178,6 +178,22 @@ body {
     display: none;
 }
 
+/* 방금 카톡에서 본 그 카드를 랜딩에서 한 번 더 보여 준다. 로그인 화면만 덩그러니
+   나오면 방금 본 카드와의 연결이 끊긴다. */
+.invite-landing-card {
+    display: block;
+    width: 100%;
+    max-width: 240px;
+    margin: 10px auto 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 179, 0, 0.4);
+    box-shadow: 0 4px 16px rgba(120, 74, 20, 0.14);
+}
+
+.invite-landing-card[hidden] {
+    display: none;
+}
+
 .invite-landing-title {
     font-size: 15px;
     font-weight: 800;
