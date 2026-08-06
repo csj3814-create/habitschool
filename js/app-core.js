@@ -353,6 +353,10 @@ const SHARE_MEDIA_MAX_COUNT = 9;
 // 응답 크기도 같이 부푼다. 나눠 보내면 컨테이너 하나가 지는 짐은 예전과 같고,
 // 조각들이 동시에 처리돼 걸리는 시간도 거의 그대로다.
 const SHARE_MEDIA_REQUEST_CHUNK = 5;
+// 배포 직후 첫 요청은 컨테이너가 새로 뜨느라 느리다. 그 한 번을 놓치면 카드가
+// 회색 칸으로 굳어 버리므로, 조금 기다렸다가 스스로 다시 시도한다.
+const SHARE_MEDIA_RETRY_COOLDOWN_MS = 6000;
+const SHARE_MEDIA_MAX_RETRIES = 2;
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PENDING_GUEST_AUTH_INTENT_KEY = 'habitschool_guest_auth_intent_v1';
 const FIRST_RECORD_RESULT_PREFIX = 'habitschool_first_record_result_v1';
@@ -763,6 +767,11 @@ let _shareSettingsExpanded = false;
 let _shareCardBuildToken = 0;
 let _latestPreparedShareMedia = [];
 let _latestPreparedShareSignature = '';
+// 자리표시자가 섞인 결과인지, 언제 다시 시도해도 되는지.
+let _latestPreparedShareIncomplete = false;
+let _latestPreparedShareRetryAt = 0;
+let _shareMediaRetryTimer = null;
+let _shareMediaRetryCount = 0;
 let _shareCardRefreshTimer = null;
 let _shareCardRefreshNeedsForceMedia = false;
 let _shareTemplate = 'grid';
@@ -3806,25 +3815,57 @@ async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettin
     const mediaItems = collectShareCardMedia(latest, settings);
     const signature = buildShareMediaSignature(mediaItems);
 
-    if (!forceRefresh && signature && signature === _latestPreparedShareSignature && _latestPreparedShareMedia.length) {
+    // 자리표시자로 끝난 결과는 '완성된 답'이 아니다. 예전에는 이것까지 그대로 캐시에
+    // 넣고 시그니처가 같으면 무조건 돌려줬다. 그래서 서버가 한 번 느렸던 순간
+    // (배포 직후 콜드 스타트가 12초 제한을 넘긴다) 나온 회색 칸이 새로고침 전까지
+    // 세션 내내 그대로 남았다. 다시 시도할 길이 아예 없었다.
+    const cacheUsable = signature
+        && signature === _latestPreparedShareSignature
+        && _latestPreparedShareMedia.length
+        && (!_latestPreparedShareIncomplete || Date.now() < _latestPreparedShareRetryAt);
+    if (!forceRefresh && cacheUsable) {
         return _latestPreparedShareMedia;
     }
 
     const prepared = await prepareShareMediaItems(mediaItems);
+    const incomplete = prepared.some(item => !item?.prepared);
     _latestPreparedShareMedia = prepared;
     _latestPreparedShareSignature = signature;
+    _latestPreparedShareIncomplete = incomplete;
+    // 곧바로 또 부르면 느린 서버를 더 때릴 뿐이다. 잠깐 쉬었다가 다시 해 본다.
+    // 콜드 스타트였다면 그사이 컨테이너가 살아나 두 번째 시도는 몇 초 만에 끝난다.
+    _latestPreparedShareRetryAt = incomplete ? Date.now() + SHARE_MEDIA_RETRY_COOLDOWN_MS : 0;
     return prepared;
+}
+
+// 자리표시자가 남았으면 한 번은 스스로 다시 시도한다. 사용자가 새로고침해야만
+// 사진이 나오는 상태로 두지 않는다.
+function scheduleShareMediaRetryIfIncomplete() {
+    if (!_latestPreparedShareIncomplete) return;
+    if (_shareMediaRetryTimer) return;
+    if (_shareMediaRetryCount >= SHARE_MEDIA_MAX_RETRIES) return;
+    _shareMediaRetryCount += 1;
+    _shareMediaRetryTimer = setTimeout(() => {
+        _shareMediaRetryTimer = null;
+        const user = auth.currentUser;
+        if (!user || !document.getElementById('gallery')?.classList.contains('active')) return;
+        buildShareCardAsync(user.uid, user, null, { forceMediaRefresh: true }).catch(() => { });
+    }, SHARE_MEDIA_RETRY_COOLDOWN_MS);
 }
 
 function invalidatePreparedShareMediaCache() {
     _latestPreparedShareMedia = [];
     _latestPreparedShareSignature = '';
     _latestShareRenderKey = '';
+    _latestPreparedShareIncomplete = false;
+    _latestPreparedShareRetryAt = 0;
 }
 
 function scheduleShareCardRefresh({ forceMediaRefresh = false } = {}) {
     if (forceMediaRefresh) {
         _shareCardRefreshNeedsForceMedia = true;
+        // 사진이 실제로 바뀌었으니 자동 재시도 횟수도 새로 센다.
+        _shareMediaRetryCount = 0;
         invalidatePreparedShareMediaCache();
     }
 
@@ -22114,6 +22155,7 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
             template
         });
         updateGalleryPrimaryAction();
+        scheduleShareMediaRetryIfIncomplete();
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';

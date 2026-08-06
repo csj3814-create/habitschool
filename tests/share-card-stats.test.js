@@ -142,6 +142,29 @@ describe('share card holds every photo of the day', () => {
         expect(appSource).toContain('return Array.from({ length: chunk.length }, (_, index) => items[index] || null);');
         expect(appSource).toContain('return Array.from({ length: chunk.length }, () => null);');
     });
+
+    // 증상: 배포 직후 갤러리를 열면 운동 썸네일만 나오고 식단·마음은 회색 칸이었다.
+    // 새로고침하기 전까지 그대로였다.
+    //
+    // 원인: 새 컨테이너가 뜨는 첫 요청이 12초 제한을 넘겨 그 묶음이 통째로
+    // 자리표시자가 됐는데, 그 결과를 '완성된 답'으로 캐시에 넣어 버렸다.
+    // 시그니처가 같으면 무조건 캐시를 돌려주므로 다시 시도할 길이 없었다.
+    // (운동 근력 썸네일만 멀쩡했던 건 그것만 로컬 캐시에서 읽어 서버를 안 타서다.)
+    it('does not let one slow moment freeze the card into grey boxes', () => {
+        const appSource = readAppSource();
+
+        // 자리표시자가 섞였는지 기억해 두고,
+        expect(appSource).toContain('const incomplete = prepared.some(item => !item?.prepared);');
+        expect(appSource).toContain('_latestPreparedShareIncomplete = incomplete;');
+        // 그 경우에는 캐시를 최종 답으로 쓰지 않는다.
+        expect(appSource).toContain('&& (!_latestPreparedShareIncomplete || Date.now() < _latestPreparedShareRetryAt);');
+        // 사용자가 새로고침하지 않아도 스스로 한 번은 다시 굽는다.
+        expect(appSource).toContain('function scheduleShareMediaRetryIfIncomplete() {');
+        expect(appSource).toContain('scheduleShareMediaRetryIfIncomplete();');
+        // 다만 무한정 반복하지는 않는다 — 느린 서버를 더 때리기만 한다.
+        expect(appSource).toContain('const SHARE_MEDIA_MAX_RETRIES = 2;');
+        expect(appSource).toContain('if (_shareMediaRetryCount >= SHARE_MEDIA_MAX_RETRIES) return;');
+    });
 });
 
 // 카드는 캔버스로 구운 그림 한 장이라 사진마다 붙일 DOM이 없다. 어디를 눌렀는지는
