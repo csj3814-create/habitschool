@@ -345,6 +345,81 @@ describe('reward market pricing helpers', () => {
         expect(__test.toSafeFirestoreDate('253402300800000')).toBeNull();
     });
 
+    // 2026-08-05 스테이징 장애: 기간지정 상품의 limitDay가 종료일(YYYYMMDD)로 내려왔는데
+    // 그걸 일수로 읽어 만료일이 20,260,904일 뒤로 계산됐다. Firestore Timestamp 범위를
+    // 넘겨 batch.commit()이 통째로 실패했고, 기프티쇼 발급은 이미 끝난 뒤라 쿠폰이
+    // pending_issue에 갇혀 PIN·바코드가 보관함에 저장되지 않았다.
+    it('reads a Giftishow end-date in the limitDay field as remaining days, not as a day count', () => {
+        const now = new Date('2026-08-05T09:30:52.213Z');
+        const days = __test.resolveGiftishowValidityDays({
+            limitDay: '20260904',
+            validPrdTypeCd: '02',
+        }, now);
+
+        // 2026-09-04 23:59:59 KST까지 남은 기간. 하루 남짓 올림해도 31일이면 충분하고,
+        // 핵심은 20,260,904일이 아니라는 것이다.
+        expect(days).toBe(31);
+        expect(days).toBeLessThanOrEqual(__test.REWARD_VALIDITY_DAYS_MAX);
+    });
+
+    it('keeps a poisoned validity period from ever reaching a Firestore write', () => {
+        const now = new Date('2026-08-05T09:30:52.213Z');
+        const poisoned = { validityDays: 20260904 };
+
+        expect(__test.resolveRewardValidityDays(poisoned)).toBe(30);
+
+        const expiry = __test.buildCatalogExpiryDate(poisoned, now);
+        expect(expiry.getUTCFullYear()).toBeLessThanOrEqual(9999);
+        expect(__test.toSafeFirestoreDate(expiry)).toEqual(expiry);
+
+        // fallback 자리로 들어와도 막혀야 한다. 이 검증이 없어서 오염된 값이 commit까지 갔다.
+        const outOfRange = new Date(now.getTime() + (20260904 * 24 * 60 * 60 * 1000));
+        expect(__test.toSafeFirestoreDate('', outOfRange)).toBeNull();
+        expect(__test.toSafeFirestoreDate(outOfRange, null)).toBeNull();
+    });
+
+    it('still treats a real day count in limitDay as days', () => {
+        expect(__test.resolveGiftishowValidityDays({ limitDay: 30, validPrdTypeCd: '01' })).toBe(30);
+        expect(__test.resolveGiftishowValidityDays({ validPrdDay: 60, validPrdTypeCd: '01' })).toBe(60);
+        expect(__test.resolveGiftishowValidityDays({ validPrdDay: 60, validPrdTypeCd: '02' })).toBe(0);
+    });
+
+    it('mirrors the supplier coupon image once and reuses the stored copy afterwards', async () => {
+        const calls = [];
+        const mirrorCouponImage = async ({ sourceUrl, uid, redemptionId }) => {
+            calls.push({ sourceUrl, uid, redemptionId });
+            return 'https://firebasestorage.googleapis.com/v0/b/bucket/o/reward_coupons%2Fu1%2Fr1.jpg?alt=media&token=t';
+        };
+
+        const mirrored = await __test.withMirroredCouponImage(
+            { couponImgUrl: 'http://provider.example/coupon.jpg' },
+            { mirrorCouponImage, uid: 'u1', redemptionId: 'r1' }
+        );
+        expect(mirrored.couponImageStorageUrl).toContain('firebasestorage.googleapis.com');
+        expect(calls).toHaveLength(1);
+
+        const reused = await __test.withMirroredCouponImage(
+            { couponImgUrl: 'http://provider.example/coupon.jpg' },
+            { mirrorCouponImage, uid: 'u1', redemptionId: 'r1', existingMirrorUrl: 'https://cdn.example/kept.jpg' }
+        );
+        expect(reused.couponImageStorageUrl).toBe('https://cdn.example/kept.jpg');
+        expect(calls).toHaveLength(1);
+    });
+
+    it('never lets a failed image mirror block coupon issuance', async () => {
+        const mirrorCouponImage = async () => { throw new Error('storage_unavailable'); };
+        const payload = { pinCode: '123456789012', couponImgUrl: 'http://provider.example/coupon.jpg' };
+
+        const result = await __test.withMirroredCouponImage(payload, {
+            mirrorCouponImage,
+            uid: 'u1',
+            redemptionId: 'r1',
+        });
+
+        expect(result.pinCode).toBe('123456789012');
+        expect(result.couponImageStorageUrl).toBeUndefined();
+    });
+
     it('falls back to the catalog validity period when Giftishow omits expiry', () => {
         const before = Date.now();
         const mapped = __test.mapGiftishowOrderPayload(

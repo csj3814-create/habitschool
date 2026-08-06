@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=293';
+import { auth, db, functions } from './firebase-config.js?v=294';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=293';
+import { showToast } from './ui-helpers.js?v=294';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -681,14 +681,25 @@ function buildMockBarcodeDataUrl(value = '', options = {}) {
 }
 
 function getRewardCouponVisualSource(item = {}) {
-    const couponImageUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
-    const isMixedContentUrl = /^http:\/\//i.test(couponImageUrl)
+    // 공급사 원본은 http:// 로 올 수 있어 HTTPS 앱에서 막힌다. 발급·복구 시 Storage로 옮겨 둔
+    // HTTPS 사본이 있으면 그걸 먼저 쓰고, 없을 때만 공급사 주소를 그대로 시도한다.
+    const mirroredImageUrl = String(item.couponImageStorageUrl || '').trim();
+    const providerImageUrl = String(item.couponImgUrl || item.barcodeUrl || '').trim();
+    const isMixedContentUrl = /^http:\/\//i.test(providerImageUrl)
         && globalThis.location?.protocol === 'https:';
-    if (couponImageUrl
-        && !isMixedContentUrl
-        && !rewardMarketState.failedCouponVisualUrls.has(couponImageUrl)) {
+    const couponImageUrl = !rewardMarketState.failedCouponVisualUrls.has(mirroredImageUrl)
+        ? mirroredImageUrl
+        : '';
+    const usableCouponImageUrl = couponImageUrl
+        || (providerImageUrl
+            && !isMixedContentUrl
+            && !rewardMarketState.failedCouponVisualUrls.has(providerImageUrl)
+            ? providerImageUrl
+            : '');
+
+    if (usableCouponImageUrl) {
         return {
-            url: couponImageUrl,
+            url: usableCouponImageUrl,
             className: 'reward-coupon-visual',
             expandable: true,
             kind: 'coupon',
@@ -832,6 +843,7 @@ function buildCouponStatusLabel(status = '') {
 function hasRewardCouponPayload(item = {}) {
     return Boolean(
         String(item.pinCode || '').trim()
+        || String(item.couponImageStorageUrl || '').trim()
         || String(item.couponImgUrl || '').trim()
         || String(item.barcodeUrl || '').trim()
     );
@@ -916,6 +928,11 @@ function buildCouponMedia(item = {}) {
 function buildCouponCodeBlock(item = {}) {
     const pinCode = String(item.pinCode || '').trim();
     if (pinCode) return `<div class="reward-coupon-code">PIN ${escapeHtml(pinCode)}</div>`;
+
+    // 공급사 쿠폰 이미지가 화면에 떠 있으면 바코드는 이미 보이는 상태다. 그 위에 다시
+    // "문자함에서 확인해 주세요"를 얹으면 눈앞의 쿠폰을 못 쓰는 것처럼 읽힌다.
+    if (getRewardCouponVisualSource(item)?.kind === 'coupon') return '';
+
     if (hasRewardCouponProviderSmsEvidence(item)) {
         return '<div class="reward-coupon-code is-muted">문자 발송 완료 · PIN 발행<br>앱에는 PIN이 보관되지 않아 문자함에서 확인해 주세요.</div>';
     }
@@ -1035,7 +1052,7 @@ function getRewardCouponPrimaryStatusLabel(item = {}) {
     if (isRewardCouponExpired(item)) return '\uae30\uac04 \ub9cc\ub8cc';
     if (String(item.status || '').trim() === 'used_completed') return '\uc0ac\uc6a9 \uc644\ub8cc';
     if (hasRewardCouponProviderSmsEvidence(item) && !hasRewardCouponPayload(item)) return '문자 발송 완료 · 문자함 확인';
-    if (item.deliveredViaMmsAt && !item.pinCode && !item.couponImgUrl && !item.barcodeUrl) return '문자로 발급됨';
+    if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자로 발급됨';
     if (item.mmsResendRequestedAt && !item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자 재발송 요청됨';
     if (String(item.mode || '').trim().toLowerCase() === 'live'
         && String(item.status || '').trim() === 'issued'

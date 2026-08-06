@@ -2,6 +2,21 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-06
+
+### Fixed
+- Stopped reading a Giftishow fixed-end-date `limitDay` (`YYYYMMDD`) as a day count, which produced an expiry far outside the Firestore timestamp range and failed the entire redemption write after the coupon had already been issued and delivered.
+- Clamped every reward validity period to a sane range so a poisoned catalog value can no longer reach a Firestore write from any read path.
+- Validated the fallback date in `toSafeFirestoreDate` as strictly as the primary value.
+
+### Added
+- Mirrored the supplier coupon image into Firebase Storage at issuance and recovery, and served the HTTPS copy in the vault so the gifticon renders instead of being blocked as mixed content.
+- Logged the field names (never the values) of a Giftishow status response that returns no PIN or image, so a stuck coupon is diagnosable without exposing coupon data.
+
+### Changed
+- Suppressed the "check your text messages" note when a real coupon image is already on screen.
+- PWA cache rotated to v294.
+
 ## 2026-07-19
 
 ### Fixed

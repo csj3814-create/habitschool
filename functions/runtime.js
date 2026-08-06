@@ -2078,6 +2078,75 @@ exports.getRewardMarketSnapshot = onCall(
     }
 );
 
+const REWARD_COUPON_MIRROR_MAX_BYTES = 5 * 1024 * 1024;
+const REWARD_COUPON_MIRROR_TIMEOUT_MS = 10000;
+
+function resolveCouponImageExtension(contentType = "", sourceUrl = "") {
+    const normalized = String(contentType || "").toLowerCase();
+    if (normalized.includes("png")) return "png";
+    if (normalized.includes("gif")) return "gif";
+    if (normalized.includes("webp")) return "webp";
+    if (normalized.includes("jpeg") || normalized.includes("jpg")) return "jpg";
+    const match = String(sourceUrl || "").split("?")[0].match(/\.(png|gif|webp|jpe?g)$/i);
+    if (!match) return "jpg";
+    return match[1].toLowerCase() === "jpeg" ? "jpg" : match[1].toLowerCase();
+}
+
+// 공급사 쿠폰 이미지를 우리 Storage로 옮겨 HTTPS로 서빙한다. 공급사는 http:// 주소를 줄 수
+// 있어 HTTPS 앱에서 mixed content로 막히고, 공급사 URL 자체도 언젠가 만료된다.
+// 반환 URL에 실린 토큰이 곧 열람 권한이므로 storage.rules는 이 경로를 직접 열지 않는다
+// (share_cards와 같은 방식).
+async function mirrorRewardCouponImage({ sourceUrl = "", uid = "", redemptionId = "" }) {
+    const normalizedSource = String(sourceUrl || "").trim();
+    const normalizedUid = String(uid || "").trim();
+    const normalizedRedemptionId = String(redemptionId || "").trim();
+    if (!normalizedSource || !normalizedUid || !normalizedRedemptionId) return "";
+    if (!/^https?:\/\//i.test(normalizedSource)) return "";
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REWARD_COUPON_MIRROR_TIMEOUT_MS);
+    let contentType = "";
+    let buffer = null;
+    try {
+        const response = await fetch(normalizedSource, { signal: controller.signal, redirect: "follow" });
+        if (!response.ok) {
+            throw new Error(`coupon_image_fetch_failed_${response.status}`);
+        }
+
+        contentType = String(response.headers.get("content-type") || "").split(";")[0].trim();
+        if (contentType && !contentType.startsWith("image/")) {
+            throw new Error("coupon_image_unexpected_content_type");
+        }
+        const declaredSize = Number(response.headers.get("content-length") || 0);
+        if (declaredSize > REWARD_COUPON_MIRROR_MAX_BYTES) {
+            throw new Error("coupon_image_too_large");
+        }
+
+        buffer = Buffer.from(await response.arrayBuffer());
+    } finally {
+        clearTimeout(timer);
+    }
+
+    if (!buffer?.length) throw new Error("coupon_image_empty");
+    if (buffer.length > REWARD_COUPON_MIRROR_MAX_BYTES) throw new Error("coupon_image_too_large");
+
+    const extension = resolveCouponImageExtension(contentType, normalizedSource);
+    const storagePath = `reward_coupons/${normalizedUid}/${normalizedRedemptionId}.${extension}`;
+    const downloadToken = crypto.randomUUID();
+    const bucket = admin.storage().bucket();
+    await bucket.file(storagePath).save(buffer, {
+        resumable: false,
+        contentType: contentType || `image/${extension === "jpg" ? "jpeg" : extension}`,
+        metadata: {
+            cacheControl: "private, max-age=31536000",
+            metadata: { firebaseStorageDownloadTokens: downloadToken },
+        },
+    });
+
+    return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/`
+        + `${encodeURIComponent(storagePath)}?alt=media&token=${downloadToken}`;
+}
+
 exports.redeemRewardCoupon = onCall(
     {
         region: "asia-northeast3",
@@ -2113,6 +2182,7 @@ exports.redeemRewardCoupon = onCall(
                 quotedPointCost: request.data?.quotedPointCost,
                 clientRequestId: request.data?.clientRequestId,
                 authPhoneNumber: request.auth.token?.phone_number,
+                mirrorCouponImage: mirrorRewardCouponImage,
             });
 
             return {
@@ -2226,6 +2296,7 @@ exports.resendRewardCoupon = onCall(
                 uid: request.auth.uid,
                 config,
                 redemptionId: request.data?.redemptionId,
+                mirrorCouponImage: mirrorRewardCouponImage,
             });
         } catch (error) {
             if (error instanceof HttpsError) throw error;
@@ -2252,6 +2323,7 @@ exports.reconcileRewardCoupon = onCall(
                 uid: request.auth.uid,
                 config: buildRewardMarketConfig(process.env),
                 redemptionId: request.data?.redemptionId,
+                mirrorCouponImage: mirrorRewardCouponImage,
             });
         } catch (error) {
             if (error instanceof HttpsError) throw error;
@@ -2279,7 +2351,8 @@ exports.adminResendRewardCoupon = onCall(
                 config,
                 redemptionId: request.data?.redemptionId,
                 reason: request.data?.reason,
-                forceSms: request.data?.forceSms === true
+                forceSms: request.data?.forceSms === true,
+                mirrorCouponImage: mirrorRewardCouponImage
             });
 
             return {

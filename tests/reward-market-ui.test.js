@@ -95,6 +95,22 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain('buildMockBarcodeDataUrl(pinCode');
     });
 
+    // 공급사가 http:// 쿠폰 이미지를 주면 HTTPS 앱이 mixed content로 막아 기프티콘이 아예
+    // 안 보였다. 발급·복구 때 Storage로 옮겨 둔 HTTPS 사본을 먼저 쓴다.
+    it('prefers the mirrored HTTPS coupon image over the provider original', () => {
+        expect(rewardMarketSource).toContain("String(item.couponImageStorageUrl || '').trim()");
+        expect(rewardMarketSource).toContain('const mirroredImageUrl');
+        expect(rewardMarketSource).toMatch(
+            /const usableCouponImageUrl = couponImageUrl\s*\|\|\s*\(providerImageUrl/
+        );
+        expect(rewardMarketSource).toContain("String(item.couponImageStorageUrl || '').trim()\n        || String(item.couponImgUrl || '').trim()");
+    });
+
+    it('drops the "check your text messages" note once a real coupon image is on screen', () => {
+        expect(rewardMarketSource).toContain("if (getRewardCouponVisualSource(item)?.kind === 'coupon') return '';");
+        expect(rewardMarketSource).toContain("if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자로 발급됨';");
+    });
+
     it('labels catalog-derived coupon expiry without showing a blank dash', () => {
         expect(rewardMarketSource).toContain("const expiresTitle = '유효기간';");
         expect(rewardMarketSource).not.toContain('유효기간(상품 기준)');

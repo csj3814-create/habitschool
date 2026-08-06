@@ -35,6 +35,9 @@ const GIFTISHOW_PUBLIC_CATALOG_FETCH_SIZE = 3000;
 const GIFTISHOW_CATALOG_CACHE_MS = 15 * 60 * 1000;
 const REWARD_COUPON_DELETE_GRACE_DAYS = 30;
 const REWARD_COUPON_DELETE_GRACE_MS = REWARD_COUPON_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000;
+const REWARD_VALIDITY_DAYS_MAX = 3650;
+const REWARD_COUPON_MIRROR_MAX_BYTES = 5 * 1024 * 1024;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
     ["baseUrl", "GIFTISHOW_API_BASE_URL"],
     ["customAuthCode", "GIFTISHOW_CUSTOM_AUTH_CODE"],
@@ -517,11 +520,20 @@ function resolveRewardAssetUrl(...candidates) {
     return "";
 }
 
+// 공급사는 "일수" 자리에 종료일(YYYYMMDD)을 넣어 보내는 상품이 있다. 20260904를 일수로
+// 믿으면 만료일이 서기 5만 년으로 튀고, Firestore Timestamp 범위를 넘겨 발급 기록 커밋이
+// 통째로 실패한다. 일수로 볼 수 없는 값은 후보에서 아예 뺀다.
+function toRewardValidityDayCount(value) {
+    const days = Math.floor(parseNumber(value, 0));
+    if (!(days > 0)) return 0;
+    return days <= REWARD_VALIDITY_DAYS_MAX ? days : 0;
+}
+
 function resolveRewardValidityDays(item = {}, fallbackDays = 30) {
     const directValue = Math.max(
-        parseNumber(item.validityDays, 0),
-        parseNumber(item.validityPeriodDays, 0),
-        parseNumber(item.expireDays, 0)
+        toRewardValidityDayCount(item.validityDays),
+        toRewardValidityDayCount(item.validityPeriodDays),
+        toRewardValidityDayCount(item.expireDays)
     );
     if (directValue > 0) return directValue;
 
@@ -534,12 +546,16 @@ function resolveRewardValidityDays(item = {}, fallbackDays = 30) {
     for (const label of labels) {
         const match = String(label || "").match(/(\d+)\s*일/);
         if (match) {
-            const parsedDays = parseNumber(match[1], 0);
+            const parsedDays = toRewardValidityDayCount(match[1]);
             if (parsedDays > 0) return parsedDays;
         }
     }
 
-    return Math.max(parseNumber(fallbackDays, 30), 1);
+    return clampNumber(
+        Math.floor(parseNumber(fallbackDays, 30)) || 30,
+        1,
+        REWARD_VALIDITY_DAYS_MAX
+    );
 }
 
 function normalizeRewardCatalogItem(item = {}, fallbackSku = "") {
@@ -635,6 +651,35 @@ function resolveCollectionItems(payload = null) {
     return [];
 }
 
+// 기프티쇼 상품의 유효기간 자리에는 일수와 종료일이 섞여 온다. `validPrdTypeCd === "01"`은
+// 일수형이지만 기간지정 상품은 같은 필드에 `YYYYMMDD` 종료일을 넣어 보낸다. 종료일이면
+// 남은 일수로 환산하고, 둘 다 아니면 0을 돌려 카탈로그 기본값을 쓰게 한다.
+function daysUntilGiftishowEndDate(value, now = new Date()) {
+    const raw = String(value || "").trim();
+    if (!/^\d{8}$|^\d{14}$/.test(raw)) return 0;
+    const endMs = toTimestampMillis(parseGiftishowDate(raw, ""));
+    if (!(endMs > 0)) return 0;
+    const days = Math.ceil((endMs - now.getTime()) / DAY_MS);
+    if (!(days > 0)) return 0;
+    return Math.min(days, REWARD_VALIDITY_DAYS_MAX);
+}
+
+function resolveGiftishowValidityDays(raw = {}, now = new Date()) {
+    const isDayCountType = String(raw.validPrdTypeCd || "").trim() === "01";
+    const dayCount = Math.max(
+        toRewardValidityDayCount(raw.limitDay),
+        toRewardValidityDayCount(raw.limitday),
+        isDayCountType ? toRewardValidityDayCount(raw.validPrdDay) : 0
+    );
+    if (dayCount > 0) return dayCount;
+
+    for (const candidate of [raw.validPrdEndDt, raw.limitDay, raw.limitday, raw.validPrdDay]) {
+        const remainingDays = daysUntilGiftishowEndDate(candidate, now);
+        if (remainingDays > 0) return remainingDays;
+    }
+    return 0;
+}
+
 function mapGiftishowGoodsItem(raw = {}, index = 0) {
     const brandName = String(raw.brandName || raw.brandNm || raw.brand || "").trim();
     const displayName = String(raw.goodsName || raw.goodsNm || raw.name || raw.productName || "").trim();
@@ -686,11 +731,7 @@ function mapGiftishowGoodsItem(raw = {}, index = 0) {
                 : stockYn
                     ? !["N", "NO", "FALSE", "0", "SOLDOUT"].includes(stockYn)
                     : stockQuantity !== 0;
-    const validityDays = Math.max(
-        parseNumber(raw.limitDay, 0),
-        parseNumber(raw.limitday, 0),
-        String(raw.validPrdTypeCd || "").trim() === "01" ? parseNumber(raw.validPrdDay, 0) : 0
-    );
+    const validityDays = resolveGiftishowValidityDays(raw);
 
     return normalizeRewardCatalogItem({
         sku: providerGoodsId || `${brandName}-${displayName}-${index + 1}`,
@@ -1434,6 +1475,7 @@ function serializeRedemptionDoc(docSnap) {
         pinCode: String(data.pinCode || data.pinNo || "").trim(),
         couponImgUrl: String(data.couponImgUrl || "").trim(),
         barcodeUrl: String(data.barcodeUrl || data.couponImgUrl || "").trim(),
+        couponImageStorageUrl: String(data.couponImageStorageUrl || "").trim(),
         burnTxHash: String(data.burnTxHash || "").trim(),
         burnExplorerUrl: String(data.burnExplorerUrl || "").trim(),
         expiresAt: toPlainDate(data.expiresAt, ""),
@@ -1942,13 +1984,27 @@ function parseGiftishowDate(value = "", fallback = "") {
     return toPlainDate(raw, fallback);
 }
 
-function toSafeFirestoreDate(value, fallback = null) {
-    if (value === undefined || value === null || value === "") return fallback;
+function isFirestoreSafeDate(value) {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) return false;
+    const year = value.getUTCFullYear();
+    return year >= 1 && year <= 9999;
+}
+
+function toFirestoreSafeDateOrNull(value) {
+    if (value === undefined || value === null || value === "") return null;
+    if (value?.toDate instanceof Function) {
+        const converted = value.toDate();
+        return isFirestoreSafeDate(converted) ? converted : null;
+    }
     const normalized = typeof value === "string" ? parseGiftishowDate(value, "") : value;
     const date = normalized instanceof Date ? new Date(normalized.getTime()) : new Date(normalized);
-    const year = date.getUTCFullYear();
-    if (Number.isNaN(date.getTime()) || year < 1 || year > 9999) return fallback;
-    return date;
+    return isFirestoreSafeDate(date) ? date : null;
+}
+
+// fallback도 같은 기준으로 검증한다. 검증하지 않으면 오염된 카탈로그 유효기간이 fallback을
+// 타고 그대로 commit까지 내려가 발급 기록 전체를 실패시킨다.
+function toSafeFirestoreDate(value, fallback = null) {
+    return toFirestoreSafeDateOrNull(value) ?? toFirestoreSafeDateOrNull(fallback);
 }
 
 function buildCatalogExpiryDate(item = {}, baseValue = new Date()) {
@@ -2177,6 +2233,15 @@ async function queryCouponStatusWithProvider({
     if (!isSuccessfulGiftishowCouponResponse(result)) {
         throw createGiftishowProviderError(result);
     }
+    if (!isUsableCouponPayload(result)) {
+        // 상태조회가 성공했는데도 PIN·이미지가 비어 있으면 보관함이 계속 "문자함 확인"에
+        // 머문다. 값은 절대 남기지 않고 어떤 필드가 왔는지만 남겨, 공급사 응답에 PIN이
+        // 아예 없는 것인지 우리가 못 읽은 것인지 다음 조회에서 구분할 수 있게 한다.
+        console.warn(
+            "giftishow coupon status returned no usable payload; couponInfo fields:",
+            Object.keys(resolveGiftishowCouponInfo(payload) || {}).sort().join(",") || "(none)"
+        );
+    }
     return result;
 }
 
@@ -2250,6 +2315,52 @@ async function resendCouponWithProvider({
 
 function isUsableCouponPayload(issuedCoupon = {}) {
     return Boolean(String(issuedCoupon.pinCode || "").trim() || String(issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "").trim());
+}
+
+// 공급사는 쿠폰 이미지를 http:// 주소로 내려줄 수 있고, 그 주소는 HTTPS 앱에서 mixed content로
+// 막힌다. 게다가 공급사 URL은 언젠가 만료된다. 발급 시점에 우리 Storage로 받아 두고 HTTPS
+// 사본을 보관함에 쓴다. 미러링이 실패해도 발급 자체는 막지 않는다.
+async function resolveCouponImageMirrorUrl({
+    mirrorCouponImage,
+    uid,
+    redemptionId,
+    sourceUrl = "",
+    existingMirrorUrl = "",
+}) {
+    const alreadyMirrored = String(existingMirrorUrl || "").trim();
+    if (alreadyMirrored) return alreadyMirrored;
+
+    const normalizedSource = String(sourceUrl || "").trim();
+    if (!normalizedSource || typeof mirrorCouponImage !== "function") return "";
+
+    try {
+        const mirrored = await mirrorCouponImage({
+            sourceUrl: normalizedSource,
+            uid,
+            redemptionId,
+        });
+        return String(mirrored || "").trim();
+    } catch (error) {
+        console.warn("reward coupon image mirror failed:", error?.message || error);
+        return "";
+    }
+}
+
+async function withMirroredCouponImage(payload, {
+    mirrorCouponImage,
+    uid,
+    redemptionId,
+    existingMirrorUrl = "",
+} = {}) {
+    if (!payload) return payload;
+    const couponImageStorageUrl = await resolveCouponImageMirrorUrl({
+        mirrorCouponImage,
+        uid,
+        redemptionId,
+        sourceUrl: payload.couponImgUrl || payload.barcodeUrl || "",
+        existingMirrorUrl,
+    });
+    return couponImageStorageUrl ? { ...payload, couponImageStorageUrl } : payload;
 }
 
 async function recoverMissingCouponPayload({
@@ -2643,6 +2754,7 @@ async function redeemRewardCouponLegacy({
     quotedHbtCost = 0,
     verifyBurnTx = null,
     authPhoneNumber = "",
+    mirrorCouponImage = null,
 }) {
     const normalizedSku = normalizeSku(sku);
     if (!normalizedSku) {
@@ -2878,6 +2990,11 @@ async function redeemRewardCouponLegacy({
         recipientPhone: normalizedPhone,
         providerTrId,
     });
+    issuedCoupon = await withMirroredCouponImage(issuedCoupon, {
+        mirrorCouponImage,
+        uid,
+        redemptionId: redemptionRef.id,
+    });
 
     if (!isUsableCouponPayload(issuedCoupon)) {
         await redemptionRef.set(buildManualReviewDoc({
@@ -2946,6 +3063,7 @@ async function redeemRewardCouponLegacy({
         pinCode: issuedCoupon.pinCode,
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
+        couponImageStorageUrl: issuedCoupon.couponImageStorageUrl || "",
         healthGuide: product.healthGuide,
         productImageUrl: product.productImageUrl || "",
         brandLogoUrl: product.brandLogoUrl || "",
@@ -3025,6 +3143,7 @@ async function redeemRewardCoupon({
     quotedPointCost = 0,
     clientRequestId = "",
     authPhoneNumber = "",
+    mirrorCouponImage = null,
 }) {
     const normalizedSku = normalizeSku(sku);
     if (!normalizedSku) {
@@ -3108,11 +3227,19 @@ async function redeemRewardCoupon({
             }).catch(() => null);
             if (isUsableCouponPayload(recovered)) {
                 const recoveredAt = new Date();
+                const mirroredRecovered = await withMirroredCouponImage(recovered, {
+                    mirrorCouponImage,
+                    uid,
+                    redemptionId: redemptionRef.id,
+                    existingMirrorUrl: existingData.couponImageStorageUrl || "",
+                });
                 await redemptionRef.set({
                     status: "issued",
                     pinCode: recovered.pinCode || existingData.pinCode || "",
                     couponImgUrl: recovered.couponImgUrl || recovered.barcodeUrl || existingData.couponImgUrl || "",
                     barcodeUrl: recovered.barcodeUrl || recovered.couponImgUrl || existingData.barcodeUrl || "",
+                    couponImageStorageUrl: mirroredRecovered.couponImageStorageUrl
+                        || existingData.couponImageStorageUrl || "",
                     providerOrderId: recovered.providerOrderId || existingData.providerOrderId || "",
                     providerResponseCode: recovered.providerResponseCode || existingData.providerResponseCode || "",
                     providerResponseMessage: recovered.providerResponseMessage || "recovered_on_idempotent_retry",
@@ -3333,6 +3460,11 @@ async function redeemRewardCoupon({
         recipientPhone: normalizedPhone,
         providerTrId,
     });
+    issuedCoupon = await withMirroredCouponImage(issuedCoupon, {
+        mirrorCouponImage,
+        uid,
+        redemptionId: redemptionRef.id,
+    });
 
     if (!isUsableCouponPayload(issuedCoupon)) {
         await redemptionRef.set(buildManualReviewDoc({
@@ -3401,6 +3533,7 @@ async function redeemRewardCoupon({
         pinCode: issuedCoupon.pinCode,
         couponImgUrl: issuedCoupon.couponImgUrl || issuedCoupon.barcodeUrl || "",
         barcodeUrl: issuedCoupon.barcodeUrl || issuedCoupon.couponImgUrl || "",
+        couponImageStorageUrl: issuedCoupon.couponImageStorageUrl || "",
         healthGuide: product.healthGuide,
         productImageUrl: product.productImageUrl || "",
         brandLogoUrl: product.brandLogoUrl || "",
@@ -3455,6 +3588,7 @@ async function resendRewardCoupon({
     uid,
     config,
     redemptionId = "",
+    mirrorCouponImage = null,
 }) {
     const normalizedId = String(redemptionId || "").trim();
     if (!normalizedId) {
@@ -3553,11 +3687,21 @@ async function resendRewardCoupon({
     );
     const providerExpiresAt = toSafeFirestoreDate(statusEvidence?.expiresAt, null);
     const nextStatus = recovered ? "issued" : (String(reserved.raw.status || "").trim() || "pending_issue");
+    const mirroredRecovered = recovered
+        ? await withMirroredCouponImage(recovered, {
+            mirrorCouponImage,
+            uid,
+            redemptionId: normalizedId,
+            existingMirrorUrl: reserved.raw.couponImageStorageUrl || "",
+        })
+        : null;
     await redemptionRef.set({
         status: nextStatus,
         pinCode: recovered?.pinCode || reserved.raw.pinCode || "",
         couponImgUrl: recovered?.couponImgUrl || recovered?.barcodeUrl || reserved.raw.couponImgUrl || "",
         barcodeUrl: recovered?.barcodeUrl || recovered?.couponImgUrl || reserved.raw.barcodeUrl || "",
+        couponImageStorageUrl: mirroredRecovered?.couponImageStorageUrl
+            || reserved.raw.couponImageStorageUrl || "",
         expiresAt: providerExpiresAt || toSafeFirestoreDate(reserved.raw.expiresAt, fallbackExpiresAt),
         expiryEstimated: providerExpiresAt
             ? Boolean(statusEvidence?.expiryEstimated)
@@ -3602,6 +3746,7 @@ async function reconcileRewardCoupon({
     config,
     redemptionId = "",
     now = new Date(),
+    mirrorCouponImage = null,
 }) {
     const normalizedId = String(redemptionId || "").trim();
     if (!normalizedId) {
@@ -3683,11 +3828,19 @@ async function reconcileRewardCoupon({
         reserved.raw.issuedAt || reserved.raw.createdAt || completedAt
     );
     const recoveredExpiresAt = toSafeFirestoreDate(recovered.expiresAt, null);
+    const mirroredRecovered = await withMirroredCouponImage(recovered, {
+        mirrorCouponImage,
+        uid,
+        redemptionId: normalizedId,
+        existingMirrorUrl: reserved.raw.couponImageStorageUrl || "",
+    });
     await redemptionRef.set({
         status: "issued",
         pinCode: recovered.pinCode || reserved.raw.pinCode || "",
         couponImgUrl: recovered.couponImgUrl || recovered.barcodeUrl || reserved.raw.couponImgUrl || "",
         barcodeUrl: recovered.barcodeUrl || recovered.couponImgUrl || reserved.raw.barcodeUrl || "",
+        couponImageStorageUrl: mirroredRecovered.couponImageStorageUrl
+            || reserved.raw.couponImageStorageUrl || "",
         expiresAt: recoveredExpiresAt || toSafeFirestoreDate(reserved.raw.expiresAt, fallbackExpiresAt),
         expiryEstimated: recoveredExpiresAt
             ? Boolean(recovered.expiryEstimated)
@@ -3733,6 +3886,7 @@ async function adminResendRewardCoupon({
     redemptionId,
     reason = "",
     forceSms = false,
+    mirrorCouponImage = null,
 }) {
     const normalizedId = String(redemptionId || "").trim();
     const normalizedReason = String(reason || "").trim() || "manual_resend";
@@ -3780,11 +3934,19 @@ async function adminResendRewardCoupon({
                 rawRedemption.issuedAt || rawRedemption.createdAt || recoveredAt
             );
             const recoveredExpiresAt = toSafeFirestoreDate(recovered.expiresAt, null);
+            const mirroredRecovered = await withMirroredCouponImage(recovered, {
+                mirrorCouponImage,
+                uid: String(rawRedemption.userId || "").trim(),
+                redemptionId: normalizedId,
+                existingMirrorUrl: rawRedemption.couponImageStorageUrl || "",
+            });
             await redemptionRef.set({
                 status: "issued",
                 pinCode: recovered.pinCode || rawRedemption.pinCode || "",
                 couponImgUrl: recovered.couponImgUrl || recovered.barcodeUrl || rawRedemption.couponImgUrl || "",
                 barcodeUrl: recovered.barcodeUrl || recovered.couponImgUrl || rawRedemption.barcodeUrl || "",
+                couponImageStorageUrl: mirroredRecovered.couponImageStorageUrl
+                    || rawRedemption.couponImageStorageUrl || "",
                 providerOrderId: recovered.providerOrderId || rawRedemption.providerOrderId || "",
                 providerResponseCode: recovered.providerResponseCode || rawRedemption.providerResponseCode || "",
                 providerResponseMessage: recovered.providerResponseMessage || "recovered_via_status_lookup",
@@ -3831,11 +3993,22 @@ async function adminResendRewardCoupon({
             ? "cancelled"
             : redemption.status || "failed_manual_review";
 
+    const mirroredResendResult = isUsableCouponPayload(providerResult)
+        ? await withMirroredCouponImage(providerResult, {
+            mirrorCouponImage,
+            uid: String(rawRedemption.userId || "").trim(),
+            redemptionId: normalizedId,
+            existingMirrorUrl: rawRedemption.couponImageStorageUrl || "",
+        })
+        : null;
+
     await redemptionRef.set({
         status: nextStatus,
         pinCode: providerResult?.pinCode || redemption.pinCode || "",
         couponImgUrl: providerResult?.couponImgUrl || providerResult?.barcodeUrl || redemption.couponImgUrl || redemption.barcodeUrl || "",
         barcodeUrl: providerResult?.barcodeUrl || providerResult?.couponImgUrl || redemption.barcodeUrl || redemption.couponImgUrl || "",
+        couponImageStorageUrl: mirroredResendResult?.couponImageStorageUrl
+            || rawRedemption.couponImageStorageUrl || "",
         expiresAt: isUsableCouponPayload(providerResult)
             ? toSafeFirestoreDate(providerResult?.expiresAt, redemptionSnap.data()?.expiresAt || null)
             : redemptionSnap.data()?.expiresAt || null,
@@ -4068,6 +4241,13 @@ module.exports = {
         mapGiftishowOrderPayload,
         parseGiftishowDate,
         toSafeFirestoreDate,
+        resolveGiftishowValidityDays,
+        daysUntilGiftishowEndDate,
+        toRewardValidityDayCount,
+        resolveCouponImageMirrorUrl,
+        withMirroredCouponImage,
+        REWARD_VALIDITY_DAYS_MAX,
+        REWARD_COUPON_MIRROR_MAX_BYTES,
         buildCatalogExpiryDate,
         enrichRedemptionExpiry,
         buildGiftishowResendTemplate,
