@@ -217,23 +217,6 @@ body.dark-mode .share-tag {
     border-color: #5C4A2E;
     color: #E8CFA6;
 }
-body.dark-mode .share-empty-state {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255, 183, 77, 0.22);
-}
-body.dark-mode .share-empty-state strong { color: #FFF0D4; }
-body.dark-mode .share-empty-state span { color: #C7B79C; }
-body.dark-mode .share-media-thumb {
-    background: linear-gradient(145deg, #46331F 0%, #332716 100%);
-    border-color: #5C4A2E;
-}
-body.dark-mode .share-media-chip {
-    background: rgba(34, 25, 16, 0.84);
-    color: #FFD28D;
-}
-body.dark-mode .share-media-play-badge {
-    background: rgba(12, 10, 8, 0.7);
-}
 
 /* 갤러�?*/
 body.dark-mode .gallery-card { border-bottom-color: var(--border-color); }

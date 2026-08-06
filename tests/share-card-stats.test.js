@@ -121,12 +121,13 @@ describe('share card holds every photo of the day', () => {
         expect(appSource).not.toContain('preparedMedia.slice(0, 4)');
         expect(appSource).not.toContain('buildShareMediaSignature(preparedMedia, 4)');
         expect(appSource).not.toContain('items.slice(0, 4)');
+        // 옛 DOM 버전 buildShareImageGrid가 사라져서 이제 4를 기본값으로 든 상한은
+        // 어디에도 남아 있지 않다. 되살아나면 여기서 걸린다.
+        expect(appSource).not.toContain('maxCount = 4');
         // 시그니처가 4장에서 잘리면 다섯 번째 사진은 아예 받아오지도 않는다.
         // ensurePreparedShareMedia가 인자 없이 부르므로 기본값이 곧 실질 상한이다.
         expect(appSource).toContain('function buildShareMediaSignature(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {');
         expect(appSource).toContain('async function prepareShareMediaItems(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {');
-        // (호출되지 않는 옛 DOM 버전 buildShareImageGrid에는 아직 4가 남아 있다.
-        //  살아 있는 캔버스 경로와 섞이지 않도록 여기서는 실제 경로만 확인한다.)
     });
 
     // 서버는 메모리 때문에 한 요청 안에서 순차로 처리한다. 아홉 장을 한 번에

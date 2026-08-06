@@ -281,14 +281,6 @@ async function _ensureExif() {
         'sha512-xsoiisGNT6Dw2Le1Cocn5305Uje1pOYeSzrpO3RD9K+JTpVH9KqSXksXqur8cobTEKJcFz0COYq4723mzo88/Q=='
     );
 }
-async function _ensureHtml2Canvas() {
-    if (typeof html2canvas !== 'undefined') return;
-    // html2canvas v1.4.1 — SRI
-    await _loadScript(
-        'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-        'sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=='
-    );
-}
 async function _ensureKakao() {
     if (window.Kakao && Kakao.isInitialized()) return;
     // Kakao SDK: 1st-party CDN, SRI 미지원 (CORS 헤더 없음)
@@ -20684,25 +20676,6 @@ function createCanvasBlob(canvas, type = 'image/png', quality) {
     });
 }
 
-function toSafeAttr(value) {
-    return String(value || '').replace(/"/g, '&quot;');
-}
-
-window.handleSharePreviewImageError = function (img) {
-    if (!img) return;
-    const nextSrc = img.dataset.nextSrc || '';
-    const placeholderSrc = img.dataset.placeholderSrc || createImagePlaceholderBase64('해빛 기록');
-
-    if (nextSrc && img.src !== nextSrc) {
-        img.dataset.nextSrc = '';
-        img.src = nextSrc;
-        return;
-    }
-
-    img.onerror = null;
-    img.src = placeholderSrc;
-};
-
 window.handleShareRenderPreviewError = function (img) {
     const emptyState = document.getElementById('share-render-empty');
     if (img) {
@@ -20715,43 +20688,6 @@ window.handleShareRenderPreviewError = function (img) {
         emptyState.style.display = 'flex';
     }
 };
-
-function buildShareImageGrid(mediaItems, maxCount = 4) {
-    const items = Array.isArray(mediaItems) ? mediaItems.slice(0, maxCount) : [];
-    if (!items.length) {
-        return `
-            <div class="share-empty-state">
-                <strong>오늘 기록을 저장하면 카드가 완성돼요</strong>
-                <span>사진이 없어도 기록 흐름은 바로 공유할 수 있어요.</span>
-            </div>
-        `;
-    }
-
-    const countClass = `share-media-count-${Math.min(items.length, 4)}`;
-    const html = items.map((item, index) => {
-        const mediaType = item.type || (isVideoUrl(item.originalUrl || item.src || '') ? 'video' : 'image');
-        const mediaSrc = item.previewUrl || item.src || item.originalUrl || '';
-        const fallbackSrc = mediaType === 'video'
-            ? createVideoPlaceholderBase64()
-            : createImagePlaceholderBase64(item.category || '해빛 기록');
-        const safeSrc = toSafeAttr(mediaSrc || fallbackSrc);
-        const safeFallback = toSafeAttr(fallbackSrc);
-        const safeNextSrc = toSafeAttr(item.originalUrl && item.originalUrl !== mediaSrc ? item.originalUrl : '');
-        const safeOriginal = toSafeAttr(item.originalUrl || mediaSrc);
-        const safeCategory = escapeHtml(item.category || '기록');
-        const imageMarkup = `<img src="${safeSrc}" alt="해빛 인증 사진 ${index + 1}" loading="eager" decoding="sync" crossorigin="anonymous" data-next-src="${safeNextSrc}" data-placeholder-src="${safeFallback}" onerror="window.handleSharePreviewImageError(this)">`;
-
-        return `
-            <div class="share-media-thumb" data-media-type="${mediaType}" data-media-src="${safeOriginal}">
-                ${imageMarkup}
-                <span class="share-media-chip">${safeCategory}</span>
-                ${mediaType === 'video' ? '<span class="share-media-play-badge">▶</span>' : ''}
-            </div>
-        `;
-    }).join('');
-
-    return `<div class="share-media-layout ${countClass}">${html}</div>`;
-}
 
 async function waitForImagesInElement(root) {
     if (!root) return;
@@ -20831,41 +20767,6 @@ async function prewarmThumbCache(logItems) {
     await Promise.all(workers);
 }
 
-async function prepareShareThumbsForCapture() {
-    const captureArea = document.getElementById('capture-area');
-    if (!captureArea) return;
-
-    const user = auth.currentUser;
-    const latest = user ? getCurrentShareLog(user.uid)?.data || null : null;
-    if (latest && user) {
-        const settings = getCurrentShareSettings();
-        const preparedMedia = await ensurePreparedShareMedia(latest, settings);
-        renderShareCardState(user, latest, settings, { preparedMedia });
-    }
-
-    await waitForImagesInElement(captureArea);
-}
-
-// 이미지를 1:1 정사각형으로 크롭하여 base64 반환
-function cropToSquareBase64(src) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-            const size = Math.min(img.width, img.height);
-            const sx = (img.width - size) / 2;
-            const sy = (img.height - size) / 2;
-            const canvas = document.createElement('canvas');
-            canvas.width = size; canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-            resolve(canvas.toDataURL('image/jpeg', 0.85));
-        };
-        img.onerror = () => resolve(src); // 실패 시 원본 반환
-        img.src = src;
-    });
-}
-
 function openSharePlatformModal() {
     const modal = document.getElementById('share-platform-modal');
     if (modal) modal.style.display = 'flex';
@@ -20874,55 +20775,6 @@ function openSharePlatformModal() {
 window.closeSharePlatformModal = function () {
     const modal = document.getElementById('share-platform-modal');
     if (modal) modal.style.display = 'none';
-};
-
-async function createSquareShareBlob() {
-    await _ensureHtml2Canvas();
-    const captureArea = document.getElementById('capture-area');
-    await waitForImagesInElement(captureArea);
-    const width = captureArea.offsetWidth;
-    const height = captureArea.offsetHeight;
-
-    const sourceCanvas = await html2canvas(captureArea, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: null,
-        allowTaint: false,
-        logging: false,
-        imageTimeout: 7000,
-        removeContainer: true,
-        foreignObjectRendering: false,
-        width,
-        height
-    });
-
-    // 1:1 정사각형 출력 유지
-    const size = Math.max(sourceCanvas.width, sourceCanvas.height);
-    const squareCanvas = document.createElement('canvas');
-    squareCanvas.width = size;
-    squareCanvas.height = size;
-    const ctx = squareCanvas.getContext('2d');
-
-    const grd = ctx.createLinearGradient(0, 0, size, size);
-    grd.addColorStop(0, '#FFF8E1');
-    grd.addColorStop(0.5, '#FFE5BF');
-    grd.addColorStop(1, '#FFD59C');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, size, size);
-
-    const offsetX = (size - sourceCanvas.width) / 2;
-    const offsetY = (size - sourceCanvas.height) / 2;
-    ctx.drawImage(sourceCanvas, offsetX, offsetY);
-
-    return await new Promise((resolve, reject) => {
-        squareCanvas.toBlob((blob) => {
-            if (!blob) {
-                reject(new Error('Blob 생성 실패'));
-                return;
-            }
-            resolve(blob);
-        }, 'image/png');
-    });
 };
 
 window.shareMyCard = async function () {
