@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=299';
+import { auth, db, functions } from './firebase-config.js?v=300';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=299';
+import { showToast } from './ui-helpers.js?v=300';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -941,7 +941,10 @@ function buildCouponProductThumb(item = {}) {
 
 function buildCouponMedia(item = {}) {
     const visual = getRewardCouponVisualSource(item);
-    if (visual?.kind === 'product') {
+    // 공급사 쿠폰 이미지에는 상품 사진과 상품명이 이미 들어 있다. 그 위에 상품 썸네일을
+    // 또 얹으면 같은 커피 사진이 두 번 나온다. 상품 썸네일은 PIN 바코드만 있어서 무슨
+    // 상품인지 알 수 없을 때만 필요하다.
+    if (visual?.kind === 'product' || visual?.kind === 'coupon') {
         return buildCouponVisual(item);
     }
     const productThumb = buildCouponProductThumb(item);

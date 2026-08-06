@@ -24,7 +24,8 @@ All notable changes to Habitschool are documented here.
 - Returned the post-charge point balance from the redemption and applied it immediately, so the header no longer shows the pre-purchase number until a refresh.
 - Made the admin reconcile order number optional, rejected a coupon PIN typed in its place, and recorded whether the evidence was a provider confirmation or an admin attestation.
 - Dropped the invented countdown: measured redemption is preflight 755ms + provider 348ms + mirror 432ms, so the UI now stays quiet for five seconds and only then reports elapsed time.
-- PWA cache rotated to v299.
+- Dropped the product thumbnail when the supplier gifticon image is on screen, since that image already carries the product photo and name.
+- PWA cache rotated to v300.
 
 ## 2026-07-19
 

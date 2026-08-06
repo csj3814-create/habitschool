@@ -106,6 +106,16 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain("String(item.couponImageStorageUrl || '').trim()\n        || String(item.couponImgUrl || '').trim()");
     });
 
+    // 공급사 쿠폰 이미지에 이미 상품 사진과 상품명이 들어 있어서, 상품 썸네일까지 얹으면
+    // 같은 커피 사진이 두 번 나왔다. 썸네일은 PIN 바코드만 있을 때만 상품을 알려 준다.
+    it('drops the product thumbnail when the real gifticon image is shown', () => {
+        expect(rewardMarketSource).toContain(
+            "if (visual?.kind === 'product' || visual?.kind === 'coupon') {"
+        );
+        expect(rewardMarketSource).toContain('function buildCouponProductThumb');
+        expect(rewardMarketSource).toContain('reward-coupon-product-thumb');
+    });
+
     it('drops the "check your text messages" note once a real coupon image is on screen', () => {
         expect(rewardMarketSource).toContain("if (getRewardCouponVisualSource(item)?.kind === 'coupon') return '';");
         expect(rewardMarketSource).toContain("if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자로 발급됨';");
