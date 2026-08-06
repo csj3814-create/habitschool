@@ -1,15 +1,18 @@
-import { auth, db, functions } from './firebase-config.js?v=298';
+import { auth, db, functions } from './firebase-config.js?v=299';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=298';
+import { showToast } from './ui-helpers.js?v=299';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
 const REWARD_MARKET_RETRY_DELAY_MS = 2000;
 const REWARD_MARKET_MAX_RETRY_ATTEMPTS = 3;
 const REWARD_REDEMPTION_TIMEOUT_MS = 180_000;
-const REWARD_REDEMPTION_EXPECTED_MS = 90_000;
-const REWARD_REDEMPTION_TICK_MS = 5_000;
+// 실측(2026-08-06 스테이징): preflight 755ms + 공급사 주문 348ms + 이미지 미러 432ms.
+// 대부분 3초 안에 끝나므로 남은 시간을 예고하지 않는다. 예고할 만큼 안다고 믿을 근거가 없다.
+// 드물게 늘어질 때만 경과 시간을 알려 주고, 그 전에는 버튼 잠금만으로 충분하다.
+const REWARD_REDEMPTION_PROGRESS_DELAY_MS = 5_000;
+const REWARD_REDEMPTION_TICK_MS = 10_000;
 const DEFAULT_MIN_REDEEM_POINTS = 500;
 const DEFAULT_SETTLEMENT_ASSET = 'points';
 const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-point-redemption';
@@ -1363,9 +1366,8 @@ function shouldClearPendingRewardRequest(error = null) {
     ].includes(code);
 }
 
-// 공급사 발급은 콜드 스타트가 겹치면 1분을 넘긴다. 그동안 화면이 멈춘 것처럼 보이면
-// 사용자는 실패로 읽고 같은 교환을 다시 누른다. 남은 시간을 계속 보여 주고, 진행 중에는
-// 같은 상품의 버튼을 아예 막는다.
+// 발급은 보통 3초 안에 끝난다. 그동안은 버튼 잠금만으로 충분하고, 남은 시간을 예고하면
+// 짧은 대기를 긴 대기처럼 보이게 만든다. 드물게 늘어질 때만 경과 시간을 알려 준다.
 function isRewardRedemptionInFlight(sku = '') {
     if (!rewardMarketState.redeemingSku) return false;
     if (!sku) return true;
@@ -1375,16 +1377,9 @@ function isRewardRedemptionInFlight(sku = '') {
 function renderRewardRedemptionProgress() {
     const startedAt = rewardMarketState.redeemingStartedAt;
     if (!startedAt) return;
-    const elapsedMs = Date.now() - startedAt;
-    const remainingSec = Math.max(
-        0,
-        Math.ceil((REWARD_REDEMPTION_EXPECTED_MS - elapsedMs) / 1000)
-    );
+    const elapsedSec = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
     const name = rewardMarketState.redeemingName || '쿠폰';
-    const detail = remainingSec > 0
-        ? '약 ' + remainingSec + '초 남았어요'
-        : '조금만 더 기다려 주세요';
-    showToast(name + ' 발급 중이에요 · ' + detail + '. 창을 닫거나 다시 누르지 말아 주세요.');
+    showToast(name + ' 발급 중이에요 · ' + elapsedSec + '초째. 다시 누르지 말아 주세요.');
 }
 
 function startRewardRedemptionProgress(sku = '', displayName = '') {
@@ -1393,15 +1388,20 @@ function startRewardRedemptionProgress(sku = '', displayName = '') {
     rewardMarketState.redeemingName = String(displayName || '');
     rewardMarketState.redeemingStartedAt = Date.now();
     renderRewardMarketSnapshot();
-    renderRewardRedemptionProgress();
-    rewardMarketState.redeemingTimer = setInterval(
-        renderRewardRedemptionProgress,
-        REWARD_REDEMPTION_TICK_MS
-    );
+    // 첫 몇 초는 아무 말도 하지 않는다. 대부분 그 안에 끝난다.
+    rewardMarketState.redeemingTimer = setTimeout(() => {
+        renderRewardRedemptionProgress();
+        rewardMarketState.redeemingTimer = setInterval(
+            renderRewardRedemptionProgress,
+            REWARD_REDEMPTION_TICK_MS
+        );
+    }, REWARD_REDEMPTION_PROGRESS_DELAY_MS);
 }
 
 function stopRewardRedemptionProgress() {
+    // 첫 타이머는 setTimeout, 이후는 setInterval이라 둘 다 해제한다.
     if (rewardMarketState.redeemingTimer) {
+        clearTimeout(rewardMarketState.redeemingTimer);
         clearInterval(rewardMarketState.redeemingTimer);
     }
     rewardMarketState.redeemingTimer = null;

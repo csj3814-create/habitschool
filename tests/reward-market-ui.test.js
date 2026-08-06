@@ -133,8 +133,16 @@ describe('reward market UI render wiring', () => {
         );
         expect(rewardMarketSource).toContain('function startRewardRedemptionProgress');
         expect(rewardMarketSource).toContain('function stopRewardRedemptionProgress');
-        expect(rewardMarketSource).toContain("'약 ' + remainingSec + '초 남았어요'");
         expect(rewardMarketSource).toContain('redeemingSku:');
+    });
+
+    // 실측 3초짜리 작업에 "약 90초 남았어요"를 띄우면 짧은 대기가 긴 대기로 읽힌다.
+    // 남은 시간은 알 수 없으므로 예고하지 않고, 늦어질 때만 경과 시간을 말한다.
+    it('does not promise a countdown it cannot know', () => {
+        expect(rewardMarketSource).not.toContain('REWARD_REDEMPTION_EXPECTED_MS');
+        expect(rewardMarketSource).not.toContain('초 남았어요');
+        expect(rewardMarketSource).toContain('const REWARD_REDEMPTION_PROGRESS_DELAY_MS = 5_000;');
+        expect(rewardMarketSource).toContain("elapsedSec + '초째. 다시 누르지 말아 주세요.'");
     });
 
     it('blocks a repeat press while the same coupon is still being issued', () => {

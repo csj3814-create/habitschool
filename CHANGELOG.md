@@ -20,10 +20,11 @@ All notable changes to Habitschool are documented here.
 - Bounded the unresolved-redemption block to one hour so an unrecoverable order cannot lock a member out of a product forever; stale ones are logged for ops instead.
 - Ran the five independent preflight reads concurrently instead of serially, so a cold start no longer stacks the Giftishow catalog and bizmoney round trips on top of each other.
 - Gave the redemption callable the same 180s window as the function, so a slow-but-working issuance no longer surfaces as deadline-exceeded.
-- Showed remaining time during issuance and locked the button, and logged preflight, provider, and mirror durations.
+- Locked the redeem button while an issuance is in flight, and logged preflight, provider, and mirror durations.
 - Returned the post-charge point balance from the redemption and applied it immediately, so the header no longer shows the pre-purchase number until a refresh.
 - Made the admin reconcile order number optional, rejected a coupon PIN typed in its place, and recorded whether the evidence was a provider confirmation or an admin attestation.
-- PWA cache rotated to v298.
+- Dropped the invented countdown: measured redemption is preflight 755ms + provider 348ms + mirror 432ms, so the UI now stays quiet for five seconds and only then reports elapsed time.
+- PWA cache rotated to v299.
 
 ## 2026-07-19
 
