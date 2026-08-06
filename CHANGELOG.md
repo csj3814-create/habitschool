@@ -21,7 +21,9 @@ All notable changes to Habitschool are documented here.
 - Ran the five independent preflight reads concurrently instead of serially, so a cold start no longer stacks the Giftishow catalog and bizmoney round trips on top of each other.
 - Gave the redemption callable the same 180s window as the function, so a slow-but-working issuance no longer surfaces as deadline-exceeded.
 - Showed remaining time during issuance and locked the button, and logged preflight, provider, and mirror durations.
-- PWA cache rotated to v297.
+- Returned the post-charge point balance from the redemption and applied it immediately, so the header no longer shows the pre-purchase number until a refresh.
+- Made the admin reconcile order number optional, rejected a coupon PIN typed in its place, and recorded whether the evidence was a provider confirmation or an admin attestation.
+- PWA cache rotated to v298.
 
 ## 2026-07-19
 

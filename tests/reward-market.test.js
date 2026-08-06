@@ -431,6 +431,28 @@ describe('reward market pricing helpers', () => {
         })).toEqual([]);
     });
 
+    // 문자에는 주문번호가 없어서 관리자가 쿠폰 PIN을 대신 입력했고, 그대로 저장됐다.
+    // 검증 없는 자유 입력은 근거도 못 되고 PIN을 엉뚱한 필드에 남긴다.
+    it('refuses a coupon PIN typed in place of a provider order number', () => {
+        expect(() => __test.assertReconcilableProviderOrderId(
+            FakeHttpsError,
+            '607448295774',
+            { pinCode: '607448295774' }
+        )).toThrow(/PIN/);
+        expect(() => __test.assertReconcilableProviderOrderId(
+            FakeHttpsError,
+            '6074-4829-5774',
+            { pinCode: '607448295774' }
+        )).toThrow(/PIN/);
+    });
+
+    it('accepts a blank order number and a real one, but not a malformed one', () => {
+        expect(__test.assertReconcilableProviderOrderId(FakeHttpsError, '', {})).toBe('');
+        expect(__test.assertReconcilableProviderOrderId(FakeHttpsError, '20260718642338', {})).toBe('20260718642338');
+        expect(() => __test.assertReconcilableProviderOrderId(FakeHttpsError, '12', {})).toThrow(/형식/);
+        expect(() => __test.assertReconcilableProviderOrderId(FakeHttpsError, '주문 없음', {})).toThrow(/형식/);
+    });
+
     it('mirrors the supplier coupon image once and reuses the stored copy afterwards', async () => {
         const calls = [];
         const mirrorCouponImage = async ({ sourceUrl, uid, redemptionId }) => {

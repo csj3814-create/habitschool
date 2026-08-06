@@ -3374,6 +3374,9 @@ async function redeemRewardCoupon({
     const reserveLedgerRef = createReserveLedgerRef(db);
     const shouldChargePointsNow = shouldChargePointsImmediately(config);
     let existingResult = null;
+    // 차감 후 잔액을 응답에 실어 준다. 앱이 자산 전체를 다시 조회할 때까지 기다리면
+    // 교환이 끝난 화면에 예전 포인트가 그대로 남아, 차감된 줄 모르고 또 교환하게 된다.
+    let pointBalanceAfterCharge = null;
     await db.runTransaction(async (transaction) => {
         const [freshRedemptionSnap, freshUserSnap] = await Promise.all([
             transaction.get(redemptionRef),
@@ -3432,6 +3435,9 @@ async function redeemRewardCoupon({
         }, { merge: true });
 
         const userUpdate = {};
+        pointBalanceAfterCharge = shouldChargePointsNow
+            ? Math.max(0, currentPoints - requestedQuotedPointCost)
+            : currentPoints;
         if (shouldChargePointsNow) {
             userUpdate.coins = FieldValue.increment(-requestedQuotedPointCost);
         }
@@ -3629,7 +3635,10 @@ async function redeemRewardCoupon({
     await batch.commit();
 
     const finalSnap = await redemptionRef.get();
-    return buildRewardMarketResult(finalSnap);
+    return {
+        ...buildRewardMarketResult(finalSnap),
+        pointBalance: pointBalanceAfterCharge,
+    };
 }
 
 async function resendRewardCoupon({
@@ -4100,10 +4109,33 @@ async function adminResendRewardCoupon({
     };
 }
 
+// 주문번호는 "관리자가 공급사에서 확인했다"는 근거로 받는 값이지, 우리가 검증할 수 있는
+// 키가 아니었다. 그런데 문자에는 주문번호가 없어서 답할 수 없는 질문이었고, 실제로 PIN을
+// 대신 입력해 쿠폰 PIN이 주문번호 자리에 저장되는 일이 생겼다. 근거는 공급사가 이미 확인해
+// 준 발송·발행 상태에서 찾고, 주문번호는 있을 때만 받는다.
+function assertReconcilableProviderOrderId(HttpsError, orderId = "", data = {}) {
+    const normalized = String(orderId || "").trim();
+    if (!normalized) return "";
+
+    const pinCode = String(data.pinCode || data.pinNo || "").trim();
+    if (pinCode && normalized.replace(/\D/g, "") === pinCode.replace(/\D/g, "")) {
+        throw new HttpsError(
+            "invalid-argument",
+            "쿠폰 PIN은 주문번호가 아니에요. 주문번호를 모르면 비워 두세요."
+        );
+    }
+    if (!/^[A-Za-z0-9_-]{6,64}$/.test(normalized)) {
+        throw new HttpsError(
+            "invalid-argument",
+            "주문번호 형식이 아니에요. 확인이 어려우면 비워 두세요."
+        );
+    }
+    return normalized;
+}
+
 // 관제탑 수동 정정: 기프티쇼에서는 발급·발송 완료됐는데 앱이 issued 기록을 놓쳐
-// pending_issue에 갇힌 건을, 관리자가 기프티쇼 주문번호를 확인해 issued로 정정한다.
-// (자동 상태조회 복구가 안 될 때의 확실한 폴백. issued가 되면 환불 대상에서 제외되어
-//  이중 지급을 막는다.) 회원은 이미 문자로 쿠폰을 수령한 상태다.
+// pending_issue에 갇힌 건을 issued로 정정한다. (자동 상태조회 복구가 안 될 때의 폴백.
+// issued가 되면 환불 대상에서 제외되어 이중 지급을 막는다.)
 async function adminReconcileRewardCoupon({
     db,
     FieldValue,
@@ -4114,12 +4146,8 @@ async function adminReconcileRewardCoupon({
     note = "",
 }) {
     const normalizedId = String(redemptionId || "").trim();
-    const normalizedOrderId = String(providerOrderId || "").trim();
     if (!normalizedId) {
         throw new HttpsError("invalid-argument", "정정할 쿠폰을 선택해 주세요.");
-    }
-    if (!normalizedOrderId) {
-        throw new HttpsError("invalid-argument", "기프티쇼 주문번호를 입력해 주세요.");
     }
 
     const redemptionRef = db.collection("reward_redemptions").doc(normalizedId);
@@ -4137,13 +4165,24 @@ async function adminReconcileRewardCoupon({
         throw new HttpsError("failed-precondition", "이미 환불된 건은 발급완료로 정정할 수 없어요.");
     }
 
+    const normalizedOrderId = assertReconcilableProviderOrderId(HttpsError, providerOrderId, data);
+    const providerConfirmed = hasRewardRedemptionSmsEvidence(data);
+    if (!providerConfirmed && !normalizedOrderId) {
+        throw new HttpsError(
+            "failed-precondition",
+            "공급사 발송·발행 확인이 없는 건이에요. 먼저 쿠폰 재조회로 확인하거나, 공급사에서 확인한 주문번호를 입력해 주세요."
+        );
+    }
+
     const now = new Date();
     await redemptionRef.set({
         status: "issued",
-        providerOrderId: normalizedOrderId,
+        // 주문번호는 알 때만 덮어쓴다. 빈 값으로 기존 기록을 지우지 않는다.
+        ...(normalizedOrderId ? { providerOrderId: normalizedOrderId } : {}),
         reconciledByAdminAt: now,
         reconciledByAdminUid: adminUid,
         reconcileNote: String(note || "").trim().slice(0, 500),
+        reconcileEvidence: providerConfirmed ? "provider_send_pin_confirmed" : "admin_order_no",
         providerResponseMessage: "reconciled_by_admin",
         updatedAt: now,
     }, { merge: true });
@@ -4152,13 +4191,20 @@ async function adminReconcileRewardCoupon({
         redemptionId: normalizedId,
         userId: String(data.userId || "").trim(),
         eventType: "admin_reconcile_issued",
-        providerOrderId: normalizedOrderId,
+        providerOrderId: normalizedOrderId || String(data.providerOrderId || "").trim(),
+        reconcileEvidence: providerConfirmed ? "provider_send_pin_confirmed" : "admin_order_no",
         adminUid,
         note: String(note || "").trim().slice(0, 500),
         createdAt: FieldValue.serverTimestamp(),
     });
 
-    return { success: true, reconciled: true, redemptionId: normalizedId, providerOrderId: normalizedOrderId };
+    return {
+        success: true,
+        reconciled: true,
+        redemptionId: normalizedId,
+        providerOrderId: normalizedOrderId,
+        providerConfirmed,
+    };
 }
 
 // 관제탑 환불 처리: 발급 실패/대기로 갇힌 쿠폰의 차감 포인트를 사용자에게 돌려주고,
@@ -4297,6 +4343,8 @@ module.exports = {
         resolveCouponImageMirrorUrl,
         withMirroredCouponImage,
         findUnresolvedRewardRedemptions,
+        assertReconcilableProviderOrderId,
+        hasRewardRedemptionSmsEvidence,
         REWARD_UNRESOLVED_BLOCK_WINDOW_MS,
         REWARD_VALIDITY_DAYS_MAX,
         REWARD_COUPON_MIRROR_MAX_BYTES,

@@ -2650,10 +2650,11 @@
             alert('대상 쿠폰을 찾지 못했습니다.');
             return;
         }
-        const orderNo = prompt(`기프티쇼에서 발급·발송이 완료된 건이면, 기프티쇼 주문번호를 입력하면 '발급 완료'로 정정합니다.\n(회원은 이미 문자로 쿠폰을 수령한 상태여야 합니다. 정정 후에는 환불 대상에서 제외됩니다.)\n\n기프티쇼 주문번호:`, '');
+        // 문자에는 주문번호가 없다. 공급사가 발송·PIN 발행을 확인해 준 건이면 그 자체가
+        // 근거이므로 비워 두면 되고, 주문번호는 기프티쇼 비즈에서 확인한 경우에만 받는다.
+        const orderNo = prompt(`'발급 완료'로 정정합니다. 정정 후에는 환불 대상에서 제외됩니다.\n\n공급사 발송·PIN 발행이 확인된 건이면 비워 두고 확인을 누르세요.\n기프티쇼 비즈에서 주문번호를 확인한 경우에만 입력하세요. (문자에는 주문번호가 없습니다. 쿠폰 PIN은 주문번호가 아닙니다.)\n\n기프티쇼 주문번호(선택):`, '');
         if (orderNo === null) return;
         const trimmed = String(orderNo || '').trim();
-        if (!trimmed) { alert('기프티쇼 주문번호를 입력해 주세요.'); return; }
         try {
             await adminReconcileRewardCouponCallable({ redemptionId, providerOrderId: trimmed, note: 'admin_reconcile_lost_write' });
             alert('발급 완료로 정정했습니다.');

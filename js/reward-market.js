@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=297';
+import { auth, db, functions } from './firebase-config.js?v=298';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=297';
+import { showToast } from './ui-helpers.js?v=298';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -1411,6 +1411,15 @@ function stopRewardRedemptionProgress() {
     renderRewardMarketSnapshot();
 }
 
+function applyRedeemedPointBalance(result = {}) {
+    const balance = Number(result?.pointBalance);
+    if (!Number.isFinite(balance) || balance < 0) return;
+    // 잔액의 표시 원본은 #asset-points-display다. getDisplayedPointsBalance()도 여기서
+    // 읽으므로, 이 한 곳만 갱신하면 헤더 배지와 교환 가능 판정이 함께 맞춰진다.
+    window.applyKnownCoinBalanceToUi?.(balance);
+    renderRewardMarketSnapshot();
+}
+
 // deadline-exceeded는 서버가 실패했다는 뜻이 아니라 클라이언트가 먼저 기다리기를 그만뒀다는
 // 뜻이다. 그대로 보여 주면 사용자가 실패로 읽고 다시 누른다.
 function buildRewardRedemptionErrorLabel(error = null) {
@@ -1725,6 +1734,9 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
 
         clearPendingRewardRequest(user.uid);
         stopRewardRedemptionProgress();
+        // 서버가 알려준 차감 후 잔액을 먼저 반영한다. 자산 전체 재조회를 기다리면 교환이
+        // 끝난 화면에 예전 포인트가 그대로 남아, 차감된 줄 모르고 또 교환하게 된다.
+        applyRedeemedPointBalance(result);
         showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));
         await Promise.allSettled([
             loadRewardMarketSnapshot(true),
