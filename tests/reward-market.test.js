@@ -384,6 +384,53 @@ describe('reward market pricing helpers', () => {
         expect(__test.resolveGiftishowValidityDays({ validPrdDay: 60, validPrdTypeCd: '02' })).toBe(0);
     });
 
+    // 회수 불가능한 미해결 건이 같은 상품의 교환을 영구히 막으면, 회원은 관리자가
+    // 정정하거나 환불할 때까지 그 상품을 살 수 없다. 진행 중인 주문은 길어야 몇 분이므로
+    // 차단은 1시간까지만 유지한다.
+    it('stops blocking a product once its unresolved order is older than an hour', () => {
+        const now = new Date('2026-08-06T02:00:00.000Z');
+        const buildDoc = (id, createdAt) => ({
+            id,
+            data: () => ({
+                sku: 'coffee',
+                status: 'pending_issue',
+                pointsCharged: true,
+                createdAt,
+            }),
+        });
+
+        const fresh = __test.findUnresolvedRewardRedemptions({
+            snapshot: { docs: [buildDoc('recent', new Date(now.getTime() - (10 * 60 * 1000)))] },
+            sku: 'coffee',
+        });
+        expect(fresh).toHaveLength(1);
+
+        const stale = buildDoc('stale', new Date(now.getTime() - (90 * 60 * 1000)));
+        const staleMatches = __test.findUnresolvedRewardRedemptions({
+            snapshot: { docs: [stale] },
+            sku: 'coffee',
+        });
+        expect(staleMatches).toHaveLength(1);
+        expect(now.getTime() - staleMatches[0].data().createdAt.getTime())
+            .toBeGreaterThan(__test.REWARD_UNRESOLVED_BLOCK_WINDOW_MS);
+    });
+
+    it('does not treat an already issued coupon as a reason to block the next one', () => {
+        const issued = {
+            id: 'issued-1',
+            data: () => ({ sku: 'coffee', status: 'issued', pointsCharged: true }),
+        };
+        const used = {
+            id: 'used-1',
+            data: () => ({ sku: 'coffee', status: 'used_completed', pointsCharged: true }),
+        };
+
+        expect(__test.findUnresolvedRewardRedemptions({
+            snapshot: { docs: [issued, used] },
+            sku: 'coffee',
+        })).toEqual([]);
+    });
+
     it('mirrors the supplier coupon image once and reuses the stored copy afterwards', async () => {
         const calls = [];
         const mirrorCouponImage = async ({ sourceUrl, uid, redemptionId }) => {

@@ -36,6 +36,7 @@ const GIFTISHOW_CATALOG_CACHE_MS = 15 * 60 * 1000;
 const REWARD_COUPON_DELETE_GRACE_DAYS = 30;
 const REWARD_COUPON_DELETE_GRACE_MS = REWARD_COUPON_DELETE_GRACE_DAYS * 24 * 60 * 60 * 1000;
 const REWARD_VALIDITY_DAYS_MAX = 3650;
+const REWARD_UNRESOLVED_BLOCK_WINDOW_MS = 60 * 60 * 1000;
 const REWARD_COUPON_MIRROR_MAX_BYTES = 5 * 1024 * 1024;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const GIFTISHOW_REQUIRED_ENV_KEYS = Object.freeze([
@@ -1532,17 +1533,44 @@ async function findRedemptionByBurnTxHash(db, burnTxHash = "") {
     return snapshot.empty ? null : snapshot.docs[0];
 }
 
-async function findUnresolvedRewardRedemption({ db, uid, sku, excludeId = "" }) {
-    const snapshot = await db.collection("reward_redemptions")
-        .where("userId", "==", uid)
-        .limit(40)
-        .get();
+// 같은 상품의 미해결 건은 새 주문을 막는다. 공급사 주문이 아직 진행 중일 수 있어
+// 이중 주문·이중 차감을 만들기 때문이다. 다만 진행 중인 주문은 길어야 몇 분이고,
+// 끝내 회수되지 않는 건은 운영이 정정하거나 환불하기 전까지 남는다. 무기한으로 막으면
+// 회원이 그 상품을 영영 교환할 수 없으므로 차단은 1시간까지만 유지한다.
+function findUnresolvedRewardRedemptions({ snapshot, sku, excludeId = "" }) {
     return snapshot.docs
         .filter((docSnap) => docSnap.id !== excludeId)
         .filter((docSnap) => String(docSnap.data()?.sku || "").trim() === sku)
         .filter((docSnap) => ["pending_issue", "failed_manual_review"].includes(String(docSnap.data()?.status || "").trim()))
         .filter((docSnap) => docSnap.data()?.pointsCharged === true && !docSnap.data()?.pointsRefundedAt)
-        .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt))[0] || null;
+        .sort((a, b) => toTimestampMillis(b.data()?.createdAt) - toTimestampMillis(a.data()?.createdAt));
+}
+
+async function findUnresolvedRewardRedemption({ db, uid, sku, excludeId = "", now = new Date() }) {
+    const snapshot = await db.collection("reward_redemptions")
+        .where("userId", "==", uid)
+        .limit(40)
+        .get();
+    const unresolved = findUnresolvedRewardRedemptions({ snapshot, sku, excludeId });
+    if (unresolved.length === 0) return null;
+
+    const nowMs = toTimestampMillis(now) || Date.now();
+    const blocking = unresolved.find((docSnap) => {
+        const createdAtMs = toTimestampMillis(docSnap.data()?.createdAt);
+        if (!createdAtMs) return true;
+        return (nowMs - createdAtMs) < REWARD_UNRESOLVED_BLOCK_WINDOW_MS;
+    }) || null;
+
+    if (!blocking) {
+        // 창을 넘긴 건은 더 이상 막지 않되, 회원이 이미 낸 포인트가 걸려 있으므로
+        // 조용히 흘려보내지 않고 운영이 찾을 수 있게 남긴다.
+        console.warn(
+            "stale unresolved reward redemption no longer blocks new orders:",
+            `sku=${sku}`,
+            `staleIds=${unresolved.map((docSnap) => docSnap.id).join("|")}`
+        );
+    }
+    return blocking;
 }
 
 async function fetchBizmoneyBalance({ config, context = {} }) {
@@ -3271,6 +3299,7 @@ async function redeemRewardCoupon({
             uid,
             sku: normalizedSku,
             excludeId: redemptionRef.id,
+            now,
         });
         if (unresolvedSnap) {
             // 같은 상품의 미해결 건이 있으면 이중 차감을 막기 위해 새 발급을 하지 않는다.
@@ -4255,6 +4284,8 @@ module.exports = {
         toRewardValidityDayCount,
         resolveCouponImageMirrorUrl,
         withMirroredCouponImage,
+        findUnresolvedRewardRedemptions,
+        REWARD_UNRESOLVED_BLOCK_WINDOW_MS,
         REWARD_VALIDITY_DAYS_MAX,
         REWARD_COUPON_MIRROR_MAX_BYTES,
         buildCatalogExpiryDate,
