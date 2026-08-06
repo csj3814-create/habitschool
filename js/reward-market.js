@@ -1,7 +1,7 @@
-import { auth, db, functions } from './firebase-config.js?v=294';
+import { auth, db, functions } from './firebase-config.js?v=295';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=294';
+import { showToast } from './ui-helpers.js?v=295';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
@@ -1339,6 +1339,25 @@ function shouldClearPendingRewardRequest(error = null) {
     ].includes(code);
 }
 
+// 서버는 새로 발급하지 않고 기존 건을 돌려주기도 한다. 같은 상품의 미해결 건이 있으면
+// 이중 차감을 막으려고 발급을 건너뛰는데, 이때도 "보관함에 도착했어요"라고 말하면
+// 사용자는 포인트도 그대로고 쿠폰도 없는 화면 앞에서 무엇이 잘못됐는지 알 수 없다.
+function buildRewardRedemptionResultLabel(result = {}) {
+    if (result?.unresolved === true) {
+        return '이전 교환 건이 아직 확인 중이라 새로 교환하지 않았어요. 보관함의 해당 쿠폰을 먼저 확인해 주세요.';
+    }
+    if (result?.recovered === true) {
+        return '이전에 발급된 쿠폰을 보관함에서 되찾았어요.';
+    }
+    if (result?.existing === true) {
+        return '이미 처리된 교환이에요. 보관함을 확인해 주세요.';
+    }
+    if (result?.status === 'failed_manual_review') {
+        return '수동 확인 대상으로 접수됐어요.';
+    }
+    return '쿠폰이 보관함에 도착했어요.';
+}
+
 function resolveRewardRequestId(user, item = {}) {
     const pending = readPendingRewardRequest(user?.uid || '');
     const requiredCost = getRewardCostValue(item);
@@ -1618,10 +1637,7 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         }
 
         clearPendingRewardRequest(user.uid);
-        const statusLabel = result?.status === 'failed_manual_review'
-            ? '수동 확인 대상으로 접수됐어요.'
-            : '쿠폰이 보관함에 도착했어요.';
-        showToast(item.displayName + ' ' + statusLabel);
+        showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));
         await Promise.allSettled([
             loadRewardMarketSnapshot(true),
             window.updateAssetDisplay?.(true),

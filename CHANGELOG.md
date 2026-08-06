@@ -15,7 +15,9 @@ All notable changes to Habitschool are documented here.
 
 ### Changed
 - Suppressed the "check your text messages" note when a real coupon image is already on screen.
-- PWA cache rotated to v294.
+- Stopped telling the member a coupon arrived when the server skipped issuance and returned an existing record; the toast now names what actually happened (unresolved, recovered, or already processed).
+- Logged which redemption blocks a new one, so ops can find the record to reconcile or refund.
+- PWA cache rotated to v295.
 
 ## 2026-07-19
 

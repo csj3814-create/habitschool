@@ -111,6 +111,19 @@ describe('reward market UI render wiring', () => {
         expect(rewardMarketSource).toContain("if (item.deliveredViaMmsAt && !hasRewardCouponPayload(item)) return '문자로 발급됨';");
     });
 
+    // 서버가 이중 차감을 막으려고 발급을 건너뛰고 기존 건을 돌려줄 때도 "도착했어요"라고
+    // 말해서, 포인트도 그대로고 쿠폰도 없는 화면이 성공처럼 보였다.
+    it('never claims a coupon arrived when the server returned an existing record', () => {
+        expect(rewardMarketSource).toContain('function buildRewardRedemptionResultLabel');
+        expect(rewardMarketSource).toContain("if (result?.unresolved === true)");
+        expect(rewardMarketSource).toContain("if (result?.recovered === true)");
+        expect(rewardMarketSource).toContain("if (result?.existing === true)");
+        expect(rewardMarketSource).toContain("showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));");
+        expect(rewardMarketSource).not.toMatch(
+            /const statusLabel = result\?\.status === 'failed_manual_review'/
+        );
+    });
+
     it('labels catalog-derived coupon expiry without showing a blank dash', () => {
         expect(rewardMarketSource).toContain("const expiresTitle = '유효기간';");
         expect(rewardMarketSource).not.toContain('유효기간(상품 기준)');

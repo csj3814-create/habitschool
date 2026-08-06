@@ -3273,6 +3273,15 @@ async function redeemRewardCoupon({
             excludeId: redemptionRef.id,
         });
         if (unresolvedSnap) {
+            // 같은 상품의 미해결 건이 있으면 이중 차감을 막기 위해 새 발급을 하지 않는다.
+            // 다만 사용자 화면에는 "도착했어요"로 보이면 안 되므로, 어느 건이 막고 있는지
+            // 남겨 운영에서 정정·환불 대상을 바로 찾을 수 있게 한다.
+            console.info(
+                "reward redemption blocked by unresolved redemption:",
+                `sku=${normalizedSku}`,
+                `blockingId=${unresolvedSnap.id}`,
+                `blockingStatus=${String(unresolvedSnap.data()?.status || "").trim()}`
+            );
             return {
                 ...buildRewardMarketResult(unresolvedSnap),
                 existing: true,
