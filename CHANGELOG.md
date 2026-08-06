@@ -4,6 +4,24 @@ All notable changes to Habitschool are documented here.
 
 ## 2026-08-06
 
+### Added
+- Raised the gallery share card from four photos to nine, and generalized the tidy (정돈형) layout into per-row column plans (5→[2,3], 6→[3,3], 7→[3,4], 8→[4,4], 9→[3,3,3]) so every row spans the full width and only the 10px gaps go unpainted.
+- Split the overlap (겹침형) and focus (포커스형) thumbnail strips into two rows past five extras, sizing them from the available width and a height band so they shrink instead of overflowing. Five extras or fewer render byte-identically to before.
+- Made tapping a small photo in the overlap and focus layouts promote it to the hero, swapping it with the current hero so a second tap restores the original order. The card is a single canvas with no element per photo, so the tap is resolved by hit-testing the drawn frame coordinates topmost-first, unrotating the point for the tilted overlap tiles.
+- Held the chosen order as photo keys (`category|originalUrl`, the key `collectShareCardMedia` already dedupes on) rather than positions, so hiding a category cannot repoint the selection at the wrong photo.
+
+### Fixed
+- Stopped four of the six hardcoded photo caps from silently defeating the new limit: the media signature in `ensurePreparedShareMedia` and the render key both truncated at four, so adding a fifth photo produced an identical cache key and never rebuilt the card.
+- Stopped `drawPosterMediaTiles` from overwriting `frame.x`/`frame.y` in place while drawing rotated tiles, which destroyed the coordinates needed to resolve a tap.
+- Stopped a single slow preparation from freezing the card into placeholders for the rest of the session. A cold container after a functions deploy exceeded the 12s client timeout, and the resulting all-placeholder batch was cached as though it were the answer, with no path to retry. An incomplete result is now remembered as incomplete and rebuilt once after a six second wait, at most twice.
+- Bounded the share media callable's response so it cannot exceed the 10MB callable limit: the server returns whole originals base64-encoded, which four items could already overflow and nine would have made routine. Per-item size now scales with batch size and the response stops filling at 6MB, costing a few placeholders instead of every photo.
+
+### Changed
+- Chunked the share media request at five items in parallel instead of stretching the timeout, keeping per-container memory identical to the previous four-item requests. `shareMyCard` caps the whole build at 14s, so raising the inner limit would only move the failure to the share button.
+- Sized the tile corner radius and matte inset to the tile, so two-row thumbnails are not swallowed by a fixed 34px radius. Tiles above 155px are unchanged.
+- Removed the DOM/html2canvas share card that the canvas implementation replaced (`buildShareImageGrid`, `prepareShareThumbsForCapture`, `createSquareShareBlob`, `_ensureHtml2Canvas`, and the `.share-media-*` styles), all of which had no callers and still carried the old four-photo cap.
+- PWA cache rotated to v301.
+
 ### Fixed
 - Stopped reading a Giftishow fixed-end-date `limitDay` (`YYYYMMDD`) as a day count, which produced an expiry far outside the Firestore timestamp range and failed the entire redemption write after the coupon had already been issued and delivered.
 - Clamped every reward validity period to a sane range so a poisoned catalog value can no longer reach a Firestore write from any read path.
