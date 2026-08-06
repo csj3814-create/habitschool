@@ -124,6 +124,27 @@ describe('reward market UI render wiring', () => {
         );
     });
 
+    // 공급사 발급이 70초를 넘기면 클라이언트 기본 timeout이 먼저 끊어 deadline-exceeded를
+    // 띄웠고, 실제로는 발급되고 있는 교환을 사용자가 실패로 읽고 반복해서 눌렀다.
+    it('waits as long as the server does and shows progress while a coupon is issued', () => {
+        expect(rewardMarketSource).toContain('const REWARD_REDEMPTION_TIMEOUT_MS = 180_000;');
+        expect(rewardMarketSource).toMatch(
+            /httpsCallable\(functions, 'redeemRewardCoupon', \{\s*timeout: REWARD_REDEMPTION_TIMEOUT_MS,/
+        );
+        expect(rewardMarketSource).toContain('function startRewardRedemptionProgress');
+        expect(rewardMarketSource).toContain('function stopRewardRedemptionProgress');
+        expect(rewardMarketSource).toContain("'약 ' + remainingSec + '초 남았어요'");
+        expect(rewardMarketSource).toContain('redeemingSku:');
+    });
+
+    it('blocks a repeat press while the same coupon is still being issued', () => {
+        expect(rewardMarketSource).toContain('function isRewardRedemptionInFlight');
+        expect(rewardMarketSource).toContain("if (isRewardRedemptionInFlight(item.sku)) {");
+        expect(rewardMarketSource).toContain("label = '발급 중…';");
+        expect(rewardMarketSource).toContain("if (isRewardRedemptionInFlight()) {");
+        expect(rewardMarketSource).toContain("code === 'functions/deadline-exceeded'");
+    });
+
     it('labels catalog-derived coupon expiry without showing a blank dash', () => {
         expect(rewardMarketSource).toContain("const expiresTitle = '유효기간';");
         expect(rewardMarketSource).not.toContain('유효기간(상품 기준)');

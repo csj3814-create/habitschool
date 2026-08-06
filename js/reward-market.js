@@ -1,12 +1,15 @@
-import { auth, db, functions } from './firebase-config.js?v=296';
+import { auth, db, functions } from './firebase-config.js?v=297';
 import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=296';
+import { showToast } from './ui-helpers.js?v=297';
 
 const REWARD_MARKET_CACHE_TTL = 30_000;
 const REWARD_MARKET_SNAPSHOT_TIMEOUT_MS = 7000;
 const REWARD_MARKET_RETRY_DELAY_MS = 2000;
 const REWARD_MARKET_MAX_RETRY_ATTEMPTS = 3;
+const REWARD_REDEMPTION_TIMEOUT_MS = 180_000;
+const REWARD_REDEMPTION_EXPECTED_MS = 90_000;
+const REWARD_REDEMPTION_TICK_MS = 5_000;
 const DEFAULT_MIN_REDEEM_POINTS = 500;
 const DEFAULT_SETTLEMENT_ASSET = 'points';
 const PENDING_REWARD_MARKET_REQUEST_KEY_PREFIX = 'habitschool:reward-market-point-redemption';
@@ -109,6 +112,10 @@ const rewardMarketState = {
     failedCouponVisualUrls: new Set(),
     reconcilingCouponIds: new Set(),
     reconcileAttemptedCouponIds: new Set(),
+    redeemingSku: '',
+    redeemingName: '',
+    redeemingStartedAt: 0,
+    redeemingTimer: null,
     phoneEditorOpen: true,
 };
 
@@ -353,7 +360,12 @@ function normalizeRewardMarketSettings(settings = {}) {
 async function ensureRewardMarketFunctions() {
     if (rewardMarketFunctionsReady) return;
     getRewardMarketSnapshotFn = httpsCallable(functions, 'getRewardMarketSnapshot');
-    redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon');
+    // 발급은 공급사 왕복이 걸려 있어 기본 70초 안에 못 끝날 수 있다. 서버 함수는 180초까지
+    // 일하는데 클라이언트가 먼저 deadline-exceeded로 포기하면, 실제로는 발급되고 있는 교환을
+    // 실패로 보여 주게 되고 사용자가 같은 교환을 반복해서 누른다. 서버와 같은 창을 준다.
+    redeemRewardCouponFn = httpsCallable(functions, 'redeemRewardCoupon', {
+        timeout: REWARD_REDEMPTION_TIMEOUT_MS,
+    });
     reconcileRewardCouponFn = httpsCallable(functions, 'reconcileRewardCoupon');
     resendRewardCouponFn = httpsCallable(functions, 'resendRewardCoupon');
     dismissRewardCouponFn = httpsCallable(functions, 'dismissRewardCoupon');
@@ -459,6 +471,12 @@ function buildRewardMarketAction(item = {}) {
         label = '연락처 필요';
         disabled = true;
         helper = '실발급 전에 수령 연락처를 저장해 주세요.';
+    }
+
+    if (isRewardRedemptionInFlight(item.sku)) {
+        label = '발급 중…';
+        disabled = true;
+        helper = '공급사 확인이 끝나면 보관함에 들어와요. 다시 누르지 말아 주세요.';
     }
 
     const encodedSku = encodeURIComponent(String(item.sku || ''));
@@ -580,6 +598,12 @@ function buildRewardMarketActionView(item = {}) {
         label = '연락처 필요';
         disabled = true;
         helper = '실발급 전에 연락처를 저장해 주세요.';
+    }
+
+    if (isRewardRedemptionInFlight(item.sku)) {
+        label = '발급 중…';
+        disabled = true;
+        helper = '공급사 확인이 끝나면 보관함에 들어와요. 다시 누르지 말아 주세요.';
     }
 
     const encodedSku = encodeURIComponent(String(item.sku || ''));
@@ -1339,6 +1363,64 @@ function shouldClearPendingRewardRequest(error = null) {
     ].includes(code);
 }
 
+// 공급사 발급은 콜드 스타트가 겹치면 1분을 넘긴다. 그동안 화면이 멈춘 것처럼 보이면
+// 사용자는 실패로 읽고 같은 교환을 다시 누른다. 남은 시간을 계속 보여 주고, 진행 중에는
+// 같은 상품의 버튼을 아예 막는다.
+function isRewardRedemptionInFlight(sku = '') {
+    if (!rewardMarketState.redeemingSku) return false;
+    if (!sku) return true;
+    return rewardMarketState.redeemingSku === String(sku || '');
+}
+
+function renderRewardRedemptionProgress() {
+    const startedAt = rewardMarketState.redeemingStartedAt;
+    if (!startedAt) return;
+    const elapsedMs = Date.now() - startedAt;
+    const remainingSec = Math.max(
+        0,
+        Math.ceil((REWARD_REDEMPTION_EXPECTED_MS - elapsedMs) / 1000)
+    );
+    const name = rewardMarketState.redeemingName || '쿠폰';
+    const detail = remainingSec > 0
+        ? '약 ' + remainingSec + '초 남았어요'
+        : '조금만 더 기다려 주세요';
+    showToast(name + ' 발급 중이에요 · ' + detail + '. 창을 닫거나 다시 누르지 말아 주세요.');
+}
+
+function startRewardRedemptionProgress(sku = '', displayName = '') {
+    stopRewardRedemptionProgress();
+    rewardMarketState.redeemingSku = String(sku || '');
+    rewardMarketState.redeemingName = String(displayName || '');
+    rewardMarketState.redeemingStartedAt = Date.now();
+    renderRewardMarketSnapshot();
+    renderRewardRedemptionProgress();
+    rewardMarketState.redeemingTimer = setInterval(
+        renderRewardRedemptionProgress,
+        REWARD_REDEMPTION_TICK_MS
+    );
+}
+
+function stopRewardRedemptionProgress() {
+    if (rewardMarketState.redeemingTimer) {
+        clearInterval(rewardMarketState.redeemingTimer);
+    }
+    rewardMarketState.redeemingTimer = null;
+    rewardMarketState.redeemingSku = '';
+    rewardMarketState.redeemingName = '';
+    rewardMarketState.redeemingStartedAt = 0;
+    renderRewardMarketSnapshot();
+}
+
+// deadline-exceeded는 서버가 실패했다는 뜻이 아니라 클라이언트가 먼저 기다리기를 그만뒀다는
+// 뜻이다. 그대로 보여 주면 사용자가 실패로 읽고 다시 누른다.
+function buildRewardRedemptionErrorLabel(error = null) {
+    const code = String(error?.code || '').trim();
+    if (code === 'functions/deadline-exceeded' || code === 'deadline-exceeded') {
+        return '발급이 예상보다 오래 걸리고 있어요. 다시 누르지 마시고 잠시 뒤 보관함을 확인해 주세요.';
+    }
+    return error?.message || '쿠폰 교환 중 오류가 발생했어요.';
+}
+
 // 서버는 새로 발급하지 않고 기존 건을 돌려주기도 한다. 같은 상품의 미해결 건이 있으면
 // 이중 차감을 막으려고 발급을 건너뛰는데, 이때도 "보관함에 도착했어요"라고 말하면
 // 사용자는 포인트도 그대로고 쿠폰도 없는 화면 앞에서 무엇이 잘못됐는지 알 수 없다.
@@ -1601,6 +1683,11 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         return false;
     }
 
+    if (isRewardRedemptionInFlight()) {
+        renderRewardRedemptionProgress();
+        return false;
+    }
+
     const sku = decodeURIComponent(String(encodedSku || ''));
     const item = rewardMarketState.catalog.find((entry) => String(entry.sku || '') === sku);
     if (!item) {
@@ -1627,8 +1714,8 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         pointCost: requiredCost,
     });
 
+    startRewardRedemptionProgress(sku, item.displayName);
     try {
-        showToast(item.displayName + ' 교환을 준비하고 있어요.');
         const result = rewardMarketState.settings.mode === 'live'
             ? await redeemRewardCouponLive(item, clientRequestId)
             : await redeemRewardCouponMock(item, clientRequestId);
@@ -1637,6 +1724,7 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         }
 
         clearPendingRewardRequest(user.uid);
+        stopRewardRedemptionProgress();
         showToast(item.displayName + ' ' + buildRewardRedemptionResultLabel(result));
         await Promise.allSettled([
             loadRewardMarketSnapshot(true),
@@ -1645,10 +1733,11 @@ window.requestRewardMarketRedemption = async function (encodedSku = '') {
         return true;
     } catch (error) {
         console.error('reward market redemption failed:', error);
+        stopRewardRedemptionProgress();
         if (shouldClearPendingRewardRequest(error)) {
             clearPendingRewardRequest(user.uid);
         }
-        showToast(error?.message || '쿠폰 교환 중 오류가 발생했어요.');
+        showToast(buildRewardRedemptionErrorLabel(error));
         return false;
     }
 };

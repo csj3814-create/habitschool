@@ -18,7 +18,10 @@ All notable changes to Habitschool are documented here.
 - Stopped telling the member a coupon arrived when the server skipped issuance and returned an existing record; the toast now names what actually happened (unresolved, recovered, or already processed).
 - Logged which redemption blocks a new one, so ops can find the record to reconcile or refund.
 - Bounded the unresolved-redemption block to one hour so an unrecoverable order cannot lock a member out of a product forever; stale ones are logged for ops instead.
-- PWA cache rotated to v296.
+- Ran the five independent preflight reads concurrently instead of serially, so a cold start no longer stacks the Giftishow catalog and bizmoney round trips on top of each other.
+- Gave the redemption callable the same 180s window as the function, so a slow-but-working issuance no longer surfaces as deadline-exceeded.
+- Showed remaining time during issuance and locked the button, and logged preflight, provider, and mirror durations.
+- PWA cache rotated to v297.
 
 ## 2026-07-19
 

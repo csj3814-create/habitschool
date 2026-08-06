@@ -3184,10 +3184,19 @@ async function redeemRewardCoupon({
     }
 
     const now = new Date();
-    const pricing = await ensurePublishedPricing({ db, config, now });
-    const reserveSummary = await loadRewardReserveSummary({ db, config });
-    const bizmoney = await syncBizmoneyMetrics({ db, config, now, context: { userId: uid } });
-    const usage = await loadIssuanceUsage({ db, now });
+    // 발급 전 준비 조회는 서로 의존하지 않는다. 직렬로 기다리면 공급사 카탈로그(최대 3000건)
+    // 왕복과 비즈머니 조회가 그대로 더해져 콜드 스타트에서 1분을 넘기고, 클라이언트가
+    // deadline-exceeded로 먼저 포기해 사용자가 같은 교환을 반복해 누르게 된다.
+    const preflightStartedAt = Date.now();
+    const [pricing, reserveSummary, bizmoney, usage, catalog] = await Promise.all([
+        ensurePublishedPricing({ db, config, now }),
+        loadRewardReserveSummary({ db, config }),
+        syncBizmoneyMetrics({ db, config, now, context: { userId: uid } }),
+        loadIssuanceUsage({ db, now }),
+        loadRewardCatalog({ db, config }),
+    ]);
+    console.info(`reward redemption preflight took ${Date.now() - preflightStartedAt}ms`);
+
     const policy = buildIssuancePolicy({
         config,
         pricing,
@@ -3196,7 +3205,6 @@ async function redeemRewardCoupon({
         bizmoney,
     });
 
-    const catalog = await loadRewardCatalog({ db, config });
     const quotedCatalog = catalog
         .map((item) => quoteCatalogItem(item, pricing, config))
         .map((item) => buildCatalogAvailability(item, policy));
@@ -3443,6 +3451,7 @@ async function redeemRewardCoupon({
     }
 
     let issuedCoupon = null;
+    const providerStartedAt = Date.now();
     try {
         issuedCoupon = await issueCouponWithProvider({
             config,
@@ -3452,6 +3461,7 @@ async function redeemRewardCoupon({
             recipientPhone: normalizedPhone,
             providerTrId,
         });
+        console.info(`reward redemption provider order took ${Date.now() - providerStartedAt}ms`);
     } catch (error) {
         const recoveredCoupon = await queryCouponStatusWithProvider({
             config,
@@ -3498,11 +3508,13 @@ async function redeemRewardCoupon({
         recipientPhone: normalizedPhone,
         providerTrId,
     });
+    const mirrorStartedAt = Date.now();
     issuedCoupon = await withMirroredCouponImage(issuedCoupon, {
         mirrorCouponImage,
         uid,
         redemptionId: redemptionRef.id,
     });
+    console.info(`reward coupon image mirror took ${Date.now() - mirrorStartedAt}ms`);
 
     if (!isUsableCouponPayload(issuedCoupon)) {
         await redemptionRef.set(buildManualReviewDoc({
