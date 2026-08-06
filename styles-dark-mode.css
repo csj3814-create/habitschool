@@ -1143,6 +1143,9 @@ body.dark-mode .share-card-capture {
     border-color: #5C4A2E;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
+body.dark-mode .share-hero-hint {
+    color: #D9B98C;
+}
 body.dark-mode .btn-share-action {
     background: linear-gradient(135deg, #CC6600 0%, #B35A00 50%, #994D00 100%);
     box-shadow: 0 3px 12px rgba(204,102,0,0.25);

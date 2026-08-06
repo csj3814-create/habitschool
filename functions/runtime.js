@@ -967,6 +967,15 @@ async function runFfmpeg(args = []) {
 // 이 위로 큰 영상은 썸네일을 만들지 않는다. 컨테이너 tmpfs는 메모리를 쓰기 때문에
 // 큰 파일을 받으면 그것만으로 한도를 넘긴다. 이 경우 카드에는 플레이스홀더가 나간다.
 const SHARE_VIDEO_THUMB_MAX_BYTES = 60 * 1024 * 1024;
+// 한 요청이 받을 수 있는 항목 수. 클라이언트가 나눠 보내므로 실제로는 이보다 적게 오지만,
+// 서버가 스스로도 선을 그어 둔다.
+const SHARE_MEDIA_MAX_ITEMS = 9;
+// 원본을 base64로 실어 보내면 6MB 사진 한 장이 8MB 문자열이 된다. 콜러블 응답은
+// 10MB에서 잘리므로, 몇 장만 모여도 응답 전체가 죽고 사진이 하나도 안 나온다.
+// 담은 양이 이 선을 넘으면 나머지는 빈 값으로 돌려보낸다 — 클라이언트가 그 자리에
+// 자리표시자를 그리므로, 카드 전체를 잃는 것보다 낫다.
+const SHARE_MEDIA_RESPONSE_BUDGET_BYTES = 6 * 1024 * 1024;
+const SHARE_MEDIA_ITEM_MAX_BYTES = 6 * 1024 * 1024;
 
 async function generateShareVideoThumbDataUrl(storagePath = "") {
     const normalizedPath = String(storagePath || "").trim();
@@ -1025,7 +1034,7 @@ async function generateShareVideoThumbDataUrl(storagePath = "") {
     return "";
 }
 
-async function loadShareMediaDataUrl(candidateUrls = []) {
+async function loadShareMediaDataUrl(candidateUrls = [], maxBytes = SHARE_MEDIA_ITEM_MAX_BYTES) {
     const bucket = admin.storage().bucket();
     let videoStoragePath = "";
 
@@ -1044,7 +1053,7 @@ async function loadShareMediaDataUrl(candidateUrls = []) {
             if (!contentType.startsWith("image/")) continue;
 
             const byteSize = Number(metadata?.size || 0);
-            if (byteSize > 6 * 1024 * 1024) {
+            if (byteSize > maxBytes) {
                 console.warn("[prepareShareMediaAssets] skip oversized media:", storagePath, byteSize);
                 continue;
             }
@@ -4841,19 +4850,28 @@ exports.prepareShareMediaAssets = onCall(
         const uid = request.auth?.uid;
         if (!uid) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
 
-        const rawItems = Array.isArray(request.data?.items) ? request.data.items.slice(0, 4) : [];
+        const rawItems = Array.isArray(request.data?.items) ? request.data.items.slice(0, SHARE_MEDIA_MAX_ITEMS) : [];
         if (!rawItems.length) return { items: [] };
 
         const normalizedItems = rawItems.map((item, index) => normalizeShareMediaRequestItem(item, index));
+        // 장수가 늘면 한 장에 허용하는 크기를 줄인다. 카드에서 한 칸은 아무리 커야
+        // 976px이라 6MB 원본은 어차피 낭비다.
+        const itemMaxBytes = Math.max(768 * 1024, Math.floor(SHARE_MEDIA_ITEM_MAX_BYTES / normalizedItems.length));
         // 순차 처리한다. 동시에 받으면 원본 여러 장의 버퍼와 base64 문자열이 함께
         // 살아 있어 메모리가 몇 배로 튄다. 한 항목이 실패해도 나머지는 살린다.
         const items = [];
+        let responseBytes = 0;
         for (const item of normalizedItems) {
             let src = "";
-            try {
-                src = await loadShareMediaDataUrl(item.candidateUrls);
-            } catch (error) {
-                console.warn("[prepareShareMediaAssets] item failed:", item.category, error?.message || error);
+            if (responseBytes >= SHARE_MEDIA_RESPONSE_BUDGET_BYTES) {
+                console.warn("[prepareShareMediaAssets] response budget reached, skipping:", item.category);
+            } else {
+                try {
+                    src = await loadShareMediaDataUrl(item.candidateUrls, itemMaxBytes);
+                    responseBytes += src.length;
+                } catch (error) {
+                    console.warn("[prepareShareMediaAssets] item failed:", item.category, error?.message || error);
+                }
             }
             items.push({
                 category: item.category,

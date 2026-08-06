@@ -352,6 +352,15 @@ window.loadMyFriendships = loadMyFriendships;
 const SHARE_SETTING_KEYS = ['hideIdentity', 'hideDate', 'hideDiet', 'hideExercise', 'hidePoints', 'hideMind'];
 const SHARE_TEMPLATE_STORAGE_KEY = 'habitschool_share_template';
 const SHARE_TEMPLATE_OPTIONS = ['grid', 'overlap', 'spotlight'];
+// 예전에는 앞에서 4장만 담았다. 식단 네 끼에 운동·마음까지 기록한 날은 뒤쪽이
+// 통째로 잘려 나갔고, 잘렸다는 사실조차 카드에 드러나지 않았다.
+// 상한을 9로 올린다 — 정돈형 3x3까지가 카톡 대화창(약 1/3 축소)에서 무엇을
+// 찍었는지 알아볼 수 있는 한계다. 그 이상은 사진이 아니라 얼룩이 된다.
+const SHARE_MEDIA_MAX_COUNT = 9;
+// 서버는 메모리 때문에 항목을 순차로 처리한다. 9장을 한 번에 보내면 처리 시간도
+// 응답 크기도 같이 부푼다. 나눠 보내면 컨테이너 하나가 지는 짐은 예전과 같고,
+// 조각들이 동시에 처리돼 걸리는 시간도 거의 그대로다.
+const SHARE_MEDIA_REQUEST_CHUNK = 5;
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
 const PENDING_GUEST_AUTH_INTENT_KEY = 'habitschool_guest_auth_intent_v1';
 const FIRST_RECORD_RESULT_PREFIX = 'habitschool_first_record_result_v1';
@@ -765,6 +774,15 @@ let _latestPreparedShareSignature = '';
 let _shareCardRefreshTimer = null;
 let _shareCardRefreshNeedsForceMedia = false;
 let _shareTemplate = 'grid';
+// 사용자가 작은 사진을 눌러 대표 사진을 바꾼 결과. 인덱스가 아니라 사진의 키 순서로
+// 들고 있는다 — 식단·운동·마음 공개 설정을 껐다 켜면 인덱스는 바로 어긋난다.
+// 누를 때마다 자리를 맞바꾸므로 한 쌍만 기억해서는 두 번째 클릭을 표현할 수 없다.
+let _shareMediaOrder = { date: '', keys: [] };
+// 마지막으로 그린 칸의 캔버스 좌표. 카드는 그림 한 장이라 사진마다 붙일 DOM이 없고,
+// 어디를 눌렀는지는 이 좌표와 직접 비교해서만 알 수 있다.
+let _latestShareFrames = [];
+let _latestShareFrameKeys = [];
+let _latestShareFramesTemplate = '';
 let _latestShareRenderKey = '';
 let _latestSharePreviewDataUrl = '';
 let _guideCollapseStateUid = '';
@@ -3584,12 +3602,36 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     const deduped = [];
     const seen = new Set();
     for (const item of items) {
-        const key = `${item.category}|${item.originalUrl}`;
+        const key = getShareMediaKey(item);
         if (seen.has(key)) continue;
         seen.add(key);
         deduped.push(item);
     }
     return deduped;
+}
+
+// 사진 한 장을 가리키는 이름표. collectShareCardMedia가 이 키로 중복을 걸러 내므로
+// 한 카드 안에서 유일하다는 게 보장된다.
+function getShareMediaKey(item) {
+    return `${item?.category || ''}|${String(item?.originalUrl || '').trim()}`;
+}
+
+// 사용자가 고른 순서를 자연 순서(식단→운동→마음) 위에 덧씌운다.
+// _latestPreparedShareMedia는 시그니처로 캐시되므로 그 배열을 직접 흔들지 않고,
+// 카드를 굽기 직전에 한 번만 다시 늘어놓는다.
+function applyShareMediaOrder(media = [], latest = null) {
+    if (!Array.isArray(media) || media.length < 2) return media;
+    if (!_shareMediaOrder.keys.length || _shareMediaOrder.date !== (latest?.date || '')) return media;
+
+    const remaining = media.slice();
+    const ordered = [];
+    _shareMediaOrder.keys.forEach(key => {
+        const index = remaining.findIndex(item => getShareMediaKey(item) === key);
+        if (index === -1) return;
+        ordered.push(remaining.splice(index, 1)[0]);
+    });
+    // 고른 뒤에 새로 올라온 사진은 뒤에 붙는다. 사라진 사진은 조용히 빠진다.
+    return ordered.concat(remaining);
 }
 
 function getSharePoints(latest) {
@@ -3604,7 +3646,7 @@ function getSharePoints(latest) {
     return points;
 }
 
-function buildShareMediaSignature(mediaItems = [], maxCount = 4) {
+function buildShareMediaSignature(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {
     return mediaItems
         .slice(0, maxCount)
         .map(item => {
@@ -3622,7 +3664,7 @@ function buildShareMediaSignature(mediaItems = [], maxCount = 4) {
         .join('||');
 }
 
-function buildSharePlaceholderMedia(mediaItems = [], maxCount = 4) {
+function buildSharePlaceholderMedia(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {
     return mediaItems.slice(0, maxCount).map((item, index) => {
         const label = item.category || `기록 ${index + 1}`;
         const placeholder = item.type === 'video'
@@ -3660,13 +3702,11 @@ function logOptionalDataTimeout(label, error = null) {
     console.info(`[optional-data] ${label}; keeping cached/fallback UI`, error?.message || error || '');
 }
 
-async function requestPreparedShareMediaAssets(items = []) {
-    if (!auth.currentUser || !Array.isArray(items) || !items.length) return [];
-
+async function requestPreparedShareMediaChunk(chunk = []) {
     try {
         const result = await withAsyncTimeout(
             prepareShareMediaAssetsFn({
-                items: items.slice(0, 4).map(item => ({
+                items: chunk.map(item => ({
                     category: item.category || '기록',
                     type: item.type || 'image',
                     candidateUrls: Array.isArray(item.candidateUrls)
@@ -3677,14 +3717,32 @@ async function requestPreparedShareMediaAssets(items = []) {
             12000,
             '공유 이미지를 준비하는 시간이 초과되었어요.'
         );
-        return Array.isArray(result?.data?.items) ? result.data.items : [];
+        const items = Array.isArray(result?.data?.items) ? result.data.items : [];
+        // 조각이 통째로 실패하면 빈 배열이 온다. 그대로 이어 붙이면 뒤 조각의 응답이
+        // 앞으로 당겨져 식단 자리에 마음 사진이 들어간다. 길이를 반드시 맞춰 돌려준다.
+        return Array.from({ length: chunk.length }, (_, index) => items[index] || null);
     } catch (error) {
         console.warn('공유 미디어 서버 준비 실패:', error);
-        return [];
+        return Array.from({ length: chunk.length }, () => null);
     }
 }
 
-async function prepareShareMediaItems(mediaItems = [], maxCount = 4) {
+async function requestPreparedShareMediaAssets(items = []) {
+    if (!auth.currentUser || !Array.isArray(items) || !items.length) return [];
+
+    const pending = items.slice(0, SHARE_MEDIA_MAX_COUNT);
+    const chunks = [];
+    for (let index = 0; index < pending.length; index += SHARE_MEDIA_REQUEST_CHUNK) {
+        chunks.push(pending.slice(index, index + SHARE_MEDIA_REQUEST_CHUNK));
+    }
+
+    // 조각들은 동시에 보낸다. 서버는 조각 안에서만 순차로 처리하므로 컨테이너 하나가
+    // 안고 있는 버퍼는 예전 4장짜리 요청과 다르지 않고, 걸리는 시간은 한 조각 값이다.
+    const chunkResults = await Promise.all(chunks.map(chunk => requestPreparedShareMediaChunk(chunk)));
+    return chunkResults.flat();
+}
+
+async function prepareShareMediaItems(mediaItems = [], maxCount = SHARE_MEDIA_MAX_COUNT) {
     const items = mediaItems.slice(0, maxCount).map((item, index) => ({
         ...item,
         placeholderSrc: item.type === 'video'
@@ -3837,7 +3895,10 @@ function buildShareRenderKey(latest, settings, template, preparedMedia = []) {
         latest?.userId || '',
         normalizeShareTemplate(template),
         JSON.stringify(normalizeShareSettings(settings)),
-        buildShareMediaSignature(preparedMedia, 4),
+        buildShareMediaSignature(preparedMedia, SHARE_MEDIA_MAX_COUNT),
+        // 대표 사진을 바꾸면 순서만 달라진다. 시그니처가 순서를 따라가긴 하지만,
+        // 카드가 다시 구워지는 근거를 우연에 맡기지 않는다.
+        _shareMediaOrder.keys.join('>'),
         String(latest?.currentStreak || 0),
         String(getSharePoints(latest)),
         // 초대 코드는 로그인 직후 조금 늦게 채워질 수 있다. 카드 하단 QR·주소가
@@ -3953,8 +4014,40 @@ function drawCanvasChip(ctx, x, y, text, options = {}) {
     return width;
 }
 
+// 5장부터는 손으로 자리를 잡지 않고 행 단위로 나눈다. 각 행이 가로 폭 전체를
+// 채우므로 칸 수가 적은 행은 칸이 더 넓어질 뿐, 빈 크림색 자리가 남지 않는다.
+// 사진 영역이 가로로 긴(976x682, 1.43:1) 걸 감안해 칸이 정사각형에 가깝도록 골랐다.
+const SHARE_GRID_ROW_PLANS = {
+    5: [2, 3],
+    6: [3, 3],
+    7: [3, 4],
+    8: [4, 4],
+    9: [3, 3, 3]
+};
+
+// 겹침형·포커스형에서 대표 사진 위에 얹을 작은 사진의 크기와 줄 수를 정한다.
+// 다섯 장까지는 예전 그대로 한 줄이고 크기도 그대로다(오늘의 카드는 하나도 안 변한다).
+// 여섯 장부터 두 줄로 나눈다 — 한 줄로 계속 밀어 넣으면 여덟 장째에 108px까지
+// 줄어, 카톡 대화창에서 36px짜리 얼룩이 된다.
+function getShareThumbMetrics(extras, bounds, baseSize, gapThumb, bandRatio, minSize, overlapRatio = 0) {
+    const inset = 26;
+    const rows = extras >= 6 ? 2 : 1;
+    const perRow = Math.ceil(extras / rows);
+    const availableWidth = bounds.w - (inset * 2);
+    // 겹침형은 사진끼리 포개지므로 같은 장수라도 자리를 덜 쓴다. 나란히 놓는
+    // 포커스형 계산을 그대로 쓰면 다섯 장째부터 공연히 작아진다.
+    const widthFit = overlapRatio > 0
+        ? availableWidth / (1 + ((1 - overlapRatio) * (perRow - 1)))
+        : (availableWidth - (gapThumb * (perRow - 1))) / perRow;
+    const heightFit = rows === 1
+        ? baseSize
+        : ((bounds.h * bandRatio) - gapThumb) / rows;
+    const size = Math.max(minSize, Math.min(baseSize, widthFit, heightFit));
+    return { rows, perRow, inset, size, gapThumb };
+}
+
 function getShareTemplateFrames(template, count, bounds) {
-    const safeCount = Math.max(0, Math.min(count || 0, 4));
+    const safeCount = Math.max(0, Math.min(count || 0, SHARE_MEDIA_MAX_COUNT));
     const gap = 10;
     if (safeCount <= 0) return [];
 
@@ -3971,17 +4064,29 @@ function getShareTemplateFrames(template, count, bounds) {
         if (safeCount === 1) return [hero];
 
         const extras = safeCount - 1;
-        const thumbSize = isOverlap ? 190 : 158;
-        const inset = 26;
+        const metrics = isOverlap
+            ? getShareThumbMetrics(extras, bounds, 190, 14, 0.42, 110, 46 / 190)
+            : getShareThumbMetrics(extras, bounds, 158, 14, 0.40, 100);
+        const thumbSize = metrics.size;
+        const inset = metrics.inset;
         const frames = [hero];
+        // 아래에서 위로 쌓는다. 마지막 줄이 항상 사진 영역 바닥에 붙어 있어야
+        // 대표 사진을 가리는 띠가 한 덩어리로 보인다.
+        const rowTop = (rowIndex) => bounds.y + bounds.h - inset - thumbSize
+            - ((metrics.rows - 1 - rowIndex) * (thumbSize + metrics.gapThumb));
 
         if (isOverlap) {
             // 오른쪽 아래에서 왼쪽으로 겹쳐 쌓는다. 사진을 툭툭 던져 놓은 느낌.
-            const step = thumbSize - 46;
+            // 겹치는 양과 흔들림은 크기에 비례시킨다. 190px 때 정확히 예전 값(46, 18)이 되고,
+            // 사진이 작아져도 겹친 정도가 그대로 보인다.
+            const step = thumbSize - (thumbSize * (46 / 190));
+            const jitter = thumbSize * (18 / 190);
             for (let i = 0; i < extras; i++) {
+                const rowIndex = Math.floor(i / metrics.perRow);
+                const column = i % metrics.perRow;
                 frames.push({
-                    x: bounds.x + bounds.w - inset - thumbSize - (step * i),
-                    y: bounds.y + bounds.h - inset - thumbSize - ((i % 2) * 18),
+                    x: bounds.x + bounds.w - inset - thumbSize - (step * column),
+                    y: rowTop(rowIndex) - ((i % 2) * jitter),
                     w: thumbSize,
                     h: thumbSize,
                     rotate: (i % 2 === 0 ? 0.055 : -0.05)
@@ -3990,12 +4095,14 @@ function getShareTemplateFrames(template, count, bounds) {
             return frames;
         }
 
-        // 포커스형: 왼쪽 아래에 가지런한 한 줄.
-        const gapThumb = 14;
+        // 포커스형: 왼쪽 아래에 가지런한 줄. 여섯 장부터는 두 줄이 된다.
+        const gapThumb = metrics.gapThumb;
         for (let i = 0; i < extras; i++) {
+            const rowIndex = Math.floor(i / metrics.perRow);
+            const column = i % metrics.perRow;
             frames.push({
-                x: bounds.x + inset + ((thumbSize + gapThumb) * i),
-                y: bounds.y + bounds.h - inset - thumbSize,
+                x: bounds.x + inset + ((thumbSize + gapThumb) * column),
+                y: rowTop(rowIndex),
                 w: thumbSize,
                 h: thumbSize,
                 rotate: 0
@@ -4031,17 +4138,38 @@ function getShareTemplateFrames(template, count, bounds) {
         ];
     }
 
-    return [
-        { x: bounds.x, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
-        { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
-        { x: bounds.x, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 },
-        { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 }
-    ];
+    if (safeCount === 4) {
+        return [
+            { x: bounds.x, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
+            { x: bounds.x + colWidth + gap, y: bounds.y, w: colWidth, h: rowHeight, rotate: 0 },
+            { x: bounds.x, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 },
+            { x: bounds.x + colWidth + gap, y: bounds.y + rowHeight + gap, w: colWidth, h: rowHeight, rotate: 0 }
+        ];
+    }
+
+    // 5장 이상: 행마다 칸 수를 달리해 가로 폭을 남김없이 쓴다.
+    const rowPlan = SHARE_GRID_ROW_PLANS[safeCount] || SHARE_GRID_ROW_PLANS[SHARE_MEDIA_MAX_COUNT];
+    const planRowHeight = (bounds.h - (gap * (rowPlan.length - 1))) / rowPlan.length;
+    const planFrames = [];
+    rowPlan.forEach((cols, rowIndex) => {
+        const cellWidth = (bounds.w - (gap * (cols - 1))) / cols;
+        const y = bounds.y + (rowIndex * (planRowHeight + gap));
+        for (let i = 0; i < cols; i++) {
+            planFrames.push({
+                x: bounds.x + (i * (cellWidth + gap)),
+                y,
+                w: cellWidth,
+                h: planRowHeight,
+                rotate: 0
+            });
+        }
+    });
+    return planFrames;
 }
 
-function drawPosterPlaceholderTile(ctx, frame, label) {
-    fillRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, 34, 'rgba(255,255,255,0.86)');
-    strokeRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, 34, 'rgba(255,181,110,0.38)', 2);
+function drawPosterPlaceholderTile(ctx, frame, label, radius = 34) {
+    fillRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.86)');
+    strokeRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,181,110,0.38)', 2);
     ctx.save();
     ctx.fillStyle = '#ffb14d';
     const iconSize = Math.min(frame.w, frame.h) * 0.26;
@@ -4076,7 +4204,7 @@ async function loadCanvasImageSource(src) {
 }
 
 async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
-    const media = Array.isArray(preparedMedia) ? preparedMedia.slice(0, 4) : [];
+    const media = Array.isArray(preparedMedia) ? preparedMedia.slice(0, SHARE_MEDIA_MAX_COUNT) : [];
     const frames = getShareTemplateFrames(template, media.length, bounds);
     if (!frames.length) {
         fillRoundRectCanvas(ctx, bounds.x, bounds.y, bounds.w, bounds.h, 38, 'rgba(255,255,255,0.7)');
@@ -4088,40 +4216,53 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
         ctx.font = '600 22px "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
         ctx.fillText('식단 · 운동 · 마음 흐름을 한 장에 담아드릴게요.', bounds.x + 38, bounds.y + 116);
         ctx.restore();
-        return;
+        return { frames: [], media: [] };
     }
 
     for (let index = 0; index < frames.length; index++) {
         const item = media[index];
         const frame = frames[index];
-        const radius = 34;
+        // 모서리와 흰 테두리를 칸 크기에 맞춘다. 34px 고정으로 두면 두 줄로 나뉜
+        // 작은 사진에서 둥근 모서리가 사진을 통째로 먹는다.
+        // (칸이 155px보다 크면 예전과 똑같은 34/6이 나온다 — 오늘 카드는 안 변한다.)
+        const minSide = Math.min(frame.w, frame.h);
+        const radius = Math.min(34, minSide * 0.22);
+        const pad = Math.max(3, Math.min(6, minSide * 0.038));
         ctx.save();
+        // 회전한 칸은 중심을 원점으로 옮겨 그린다. 예전에는 frame.x/y를 제자리에서
+        // 덮어썼는데, 그러면 그린 뒤에 프레임 좌표가 사라져 클릭 판정에 쓸 수 없다.
+        const drawX = frame.rotate ? -(frame.w / 2) : frame.x;
+        const drawY = frame.rotate ? -(frame.h / 2) : frame.y;
         if (frame.rotate) {
             ctx.translate(frame.x + (frame.w / 2), frame.y + (frame.h / 2));
             ctx.rotate(frame.rotate);
-            frame.x = -(frame.w / 2);
-            frame.y = -(frame.h / 2);
         }
 
-        fillRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.96)');
-        strokeRoundRectCanvas(ctx, frame.x, frame.y, frame.w, frame.h, radius, 'rgba(255,255,255,0.92)', 3);
+        fillRoundRectCanvas(ctx, drawX, drawY, frame.w, frame.h, radius, 'rgba(255,255,255,0.96)');
+        strokeRoundRectCanvas(ctx, drawX, drawY, frame.w, frame.h, radius, 'rgba(255,255,255,0.92)', 3);
 
         try {
             const img = await loadCanvasImageSource(item?.src || '');
             ctx.save();
-            roundRectPath(ctx, frame.x + 6, frame.y + 6, frame.w - 12, frame.h - 12, radius - 8);
+            const innerWidth = frame.w - (pad * 2);
+            const innerHeight = frame.h - (pad * 2);
+            roundRectPath(ctx, drawX + pad, drawY + pad, innerWidth, innerHeight, Math.max(0, radius - pad - 2));
             ctx.clip();
             const sourceWidth = img.width || 1;
             const sourceHeight = img.height || 1;
-            const scale = Math.max((frame.w - 12) / sourceWidth, (frame.h - 12) / sourceHeight);
+            const scale = Math.max(innerWidth / sourceWidth, innerHeight / sourceHeight);
             const drawWidth = sourceWidth * scale;
             const drawHeight = sourceHeight * scale;
-            const drawX = frame.x + 6 + (((frame.w - 12) - drawWidth) / 2);
-            const drawY = frame.y + 6 + (((frame.h - 12) - drawHeight) / 2);
-            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+            ctx.drawImage(
+                img,
+                drawX + pad + ((innerWidth - drawWidth) / 2),
+                drawY + pad + ((innerHeight - drawHeight) / 2),
+                drawWidth,
+                drawHeight
+            );
             ctx.restore();
         } catch (_) {
-            drawPosterPlaceholderTile(ctx, frame, item?.category || '기록');
+            drawPosterPlaceholderTile(ctx, { ...frame, x: drawX, y: drawY }, item?.category || '기록', radius);
         }
 
         // 타일마다 붙이던 식단·운동·마음 라벨은 뺐다. 14px이라 대화창 크기에서는
@@ -4129,6 +4270,8 @@ async function drawPosterMediaTiles(ctx, preparedMedia, template, bounds) {
         // (사진을 못 불러온 자리에는 drawPosterPlaceholderTile이 이름을 크게 넣는다.)
         ctx.restore();
     }
+
+    return { frames, media };
 }
 
 // 카드는 1080px로 만들지만 카톡 대화창에서는 350px 안팎으로 보인다(약 1/3).
@@ -4382,13 +4525,15 @@ async function createSharePosterAsset(user, latest, settings, template, prepared
     drawSharePosterHeadline(ctx, latest, settings, size);
 
     // 헤더에서 아낀 만큼 사진을 키운다. 사진이 이 카드의 알맹이다.
-    await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 206, w: 976, h: 682 });
+    const drawn = await drawPosterMediaTiles(ctx, preparedMedia, template, { x: 52, y: 206, w: 976, h: 682 });
 
     await drawSharePosterEntryFooter(ctx, size);
 
     const blob = await createCanvasBlob(canvas, 'image/png');
     return {
-        blob
+        blob,
+        frames: drawn?.frames || [],
+        frameKeys: (drawn?.media || []).map(getShareMediaKey)
     };
 }
 
@@ -4419,12 +4564,15 @@ function renderShareCardState(user, latest, overrideSettings = null, options = {
     if (latest && user && options.previewDataUrl) {
         previewImage.alt = '공유용 정사각형 이미지 미리보기';
         setPreviewMode(true, options.previewDataUrl);
+        bindSharePreviewListeners();
+        updateShareHeroHint();
         shareButton.innerText = '공유하기';
         shareButton.onclick = () => window.shareMyCard && window.shareMyCard();
         return;
     }
 
     setPreviewMode(false);
+    updateShareHeroHint();
 
     if (latest && user) {
         const titleEl = emptyState.querySelector('.share-empty-title');
@@ -4500,6 +4648,96 @@ function bindShareSettingListeners() {
         element.addEventListener('change', handleShareSettingsChange);
     });
     updateShareSettingsSummary(_shareSettingsDraft);
+}
+
+// 미리보기 <img>에서 누른 지점을 1080x1080 캔버스 좌표로 옮긴다.
+// 지금은 정사각형 그림이 정사각형 상자에 들어가 cover가 아무것도 자르지 않지만,
+// 나중에 상자 비율이 바뀌어도 조용히 어긋나지 않도록 제대로 계산해 둔다.
+function mapSharePreviewPointToCanvas(img, clientX, clientY, canvasSize = 1080) {
+    const rect = img?.getBoundingClientRect?.();
+    if (!rect?.width || !rect?.height) return null;
+    const scale = Math.max(rect.width / canvasSize, rect.height / canvasSize);
+    const offsetX = (rect.width - (canvasSize * scale)) / 2;
+    const offsetY = (rect.height - (canvasSize * scale)) / 2;
+    const x = ((clientX - rect.left) - offsetX) / scale;
+    const y = ((clientY - rect.top) - offsetY) / scale;
+    if (x < 0 || y < 0 || x > canvasSize || y > canvasSize) return null;
+    return { x, y };
+}
+
+// 겹침형은 나중에 그린 사진이 위에 있다. 위에 있는 것부터 봐야 눈에 보이는 사진이
+// 잡힌다. 기울어진 칸은 누른 점을 같은 각도만큼 거꾸로 돌려 놓고 사각형 검사를 한다.
+function hitTestShareFrames(frames = [], point = null) {
+    if (!point || !Array.isArray(frames)) return -1;
+    for (let i = frames.length - 1; i >= 0; i--) {
+        const frame = frames[i];
+        if (!frame) continue;
+        let dx = point.x - (frame.x + (frame.w / 2));
+        let dy = point.y - (frame.y + (frame.h / 2));
+        if (frame.rotate) {
+            const cos = Math.cos(-frame.rotate);
+            const sin = Math.sin(-frame.rotate);
+            const rotatedX = (dx * cos) - (dy * sin);
+            const rotatedY = (dx * sin) + (dy * cos);
+            dx = rotatedX;
+            dy = rotatedY;
+        }
+        if (Math.abs(dx) <= frame.w / 2 && Math.abs(dy) <= frame.h / 2) return i;
+    }
+    return -1;
+}
+
+// 정돈형에는 대표 사진이라는 자리가 없다. 눌러도 바꿀 것이 없으므로 아예 재지 않는다.
+function isShareHeroSwapAvailable() {
+    return _latestShareFramesTemplate !== 'grid' && _latestShareFrames.length >= 2;
+}
+
+function findShareSwapTargetIndex(event) {
+    if (!isShareHeroSwapAvailable()) return -1;
+    const point = mapSharePreviewPointToCanvas(event.currentTarget, event.clientX, event.clientY);
+    const index = hitTestShareFrames(_latestShareFrames, point);
+    // 0번은 이미 대표 사진이다.
+    return index > 0 ? index : -1;
+}
+
+function handleSharePreviewClick(event) {
+    const index = findShareSwapTargetIndex(event);
+    if (index < 0) return;
+
+    const user = auth.currentUser;
+    if (!user) return;
+    const keys = _latestShareFrameKeys.slice();
+    if (!keys[0] || !keys[index]) return;
+
+    // 누른 사진과 지금 대표 사진이 자리를 맞바꾼다. 나머지는 그대로 있어서
+    // 연달아 눌러 비교하기 좋고, 한 번 더 누르면 원래대로 돌아온다.
+    [keys[0], keys[index]] = [keys[index], keys[0]];
+    _shareMediaOrder = { date: getCurrentShareLog(user.uid)?.data?.date || '', keys };
+    showToast('대표 사진을 바꿨어요.');
+    buildShareCardAsync(user.uid, user).catch(() => { });
+}
+
+function handleSharePreviewPointerMove(event) {
+    const target = event.currentTarget;
+    const nextCursor = findShareSwapTargetIndex(event) >= 0 ? 'pointer' : '';
+    if (target.style.cursor !== nextCursor) target.style.cursor = nextCursor;
+}
+
+function updateShareHeroHint() {
+    const hint = document.getElementById('share-hero-hint');
+    const preview = document.getElementById('share-render-preview');
+    const available = isShareHeroSwapAvailable();
+    if (hint) hint.hidden = !available;
+    if (preview && !available) preview.style.cursor = '';
+}
+
+function bindSharePreviewListeners() {
+    const preview = document.getElementById('share-render-preview');
+    if (!preview || preview.dataset.sharePreviewBound === 'true') return;
+    preview.dataset.sharePreviewBound = 'true';
+    preview.addEventListener('click', handleSharePreviewClick);
+    preview.addEventListener('pointermove', handleSharePreviewPointerMove);
+    preview.addEventListener('pointerleave', () => { preview.style.cursor = ''; });
 }
 
 function handleShareTemplateChange(template) {
@@ -21966,6 +22204,10 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
             _latestPreparedShareMedia = [];
             _latestPreparedShareSignature = '';
             _latestShareRenderKey = '';
+            _latestShareFrames = [];
+            _latestShareFrameKeys = [];
+            _latestShareFramesTemplate = '';
+            _shareMediaOrder = { date: '', keys: [] };
             replaceSharePreviewUrl(null);
             latestShareBlob = null;
             latestShareFile = null;
@@ -21980,7 +22222,8 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
 
         const buildToken = ++_shareCardBuildToken;
         renderShareCardState(user, latest, settings, { template });
-        const preparedMedia = await ensurePreparedShareMedia(latest, settings, forceMediaRefresh);
+        const naturalMedia = await ensurePreparedShareMedia(latest, settings, forceMediaRefresh);
+        const preparedMedia = applyShareMediaOrder(naturalMedia, latest);
         const renderKey = buildShareRenderKey(latest, settings, template, preparedMedia);
 
         if (renderKey === _latestShareRenderKey && latestShareBlob && _latestSharePreviewDataUrl) {
@@ -22000,6 +22243,10 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
         const asset = await createSharePosterAsset(user, latest, settings, template, preparedMedia);
         if (buildToken !== _shareCardBuildToken) return;
 
+        // 밀려난 빌드가 이긴 빌드의 좌표를 덮어쓰지 않도록 토큰 검사 뒤에 넣는다.
+        _latestShareFrames = asset.frames;
+        _latestShareFrameKeys = asset.frameKeys;
+        _latestShareFramesTemplate = template;
         _latestShareRenderKey = renderKey;
         latestShareBlob = asset.blob;
         latestShareFile = new File([asset.blob], `haebit_cert_${Date.now()}.png`, { type: 'image/png' });
