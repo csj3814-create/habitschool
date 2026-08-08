@@ -772,6 +772,8 @@ let _latestPreparedShareIncomplete = false;
 let _latestPreparedShareRetryAt = 0;
 let _shareMediaRetryTimer = null;
 let _shareMediaRetryCount = 0;
+// 썸네일 백필을 이미 시도한 자리. 실패해도 한 세션에 한 번만 건드린다.
+const _shareThumbBackfillTried = new Set();
 let _shareCardRefreshTimer = null;
 let _shareCardRefreshNeedsForceMedia = false;
 let _shareTemplate = 'grid';
@@ -3546,7 +3548,9 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     if (!latest) return [];
 
     const items = [];
-    const addMedia = (previewUrl, originalUrl, category, type = null) => {
+    // backfill: 썸네일이 없을 때 나중에 만들어 채워 넣을 자리.
+    // { field: 'diet.dinnerThumbUrl', folder: 'diet_images' } 형태.
+    const addMedia = (previewUrl, originalUrl, category, type = null, backfill = null) => {
         const normalizedPreviewUrl = String(previewUrl || '').trim();
         const normalizedOriginalUrl = String(originalUrl || '').trim();
         const primaryUrl = normalizedPreviewUrl || normalizedOriginalUrl;
@@ -3559,13 +3563,18 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
             src: normalizedPreviewUrl || normalizedOriginalUrl || primaryUrl,
             type: resolvedType,
             category,
-            candidateUrls
+            candidateUrls,
+            hasThumb: !!normalizedPreviewUrl,
+            backfill
         });
     };
 
     if (latest.diet && !settings.hideDiet) {
         ['breakfast', 'lunch', 'dinner', 'snack'].forEach(meal => {
-            addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], '식단');
+            addMedia(latest.diet[`${meal}ThumbUrl`], latest.diet[`${meal}Url`], '식단', null, {
+                field: `diet.${meal}ThumbUrl`,
+                folder: 'diet_images'
+            });
         });
     }
 
@@ -3597,7 +3606,10 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     }
 
     if (!settings.hideMind) {
-        addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, '마음');
+        addMedia(latest.sleepAndMind?.sleepImageThumbUrl, latest.sleepAndMind?.sleepImageUrl, '마음', null, {
+            field: 'sleepAndMind.sleepImageThumbUrl',
+            folder: 'sleep_images'
+        });
     }
 
     const deduped = [];
@@ -3774,6 +3786,21 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = SHARE_MEDIA_MA
             }
         }
 
+        // 사진은 브라우저가 직접 불러올 수 있다. Storage가 CORS를 주므로 crossOrigin으로
+        // 받으면 캔버스가 오염되지 않고, 서버가 원본을 내려받아 base64로 실어 보낼 이유가
+        // 없어진다. 그 왕복이 지금까지 회색 칸 사고의 원인이었고, 같은 사진을 앱을 열
+        // 때마다 다시 받아왔다. 직접 불러오면 브라우저 HTTP 캐시가 두 번째부터 공짜다.
+        const imageUrl = candidates.find(candidate => /^https?:/i.test(candidate) && !isVideoUrl(candidate));
+        if (imageUrl) {
+            try {
+                await loadCanvasImageSource(imageUrl);
+                return { ...item, src: imageUrl, prepared: true };
+            } catch (_) {
+                // CORS가 막히거나(예: 캐시에 CORS 없는 응답이 남아 있는 경우) 파일이
+                // 없으면 아래 서버 경로로 넘어간다.
+            }
+        }
+
         return null;
     }));
 
@@ -3809,6 +3836,60 @@ async function prepareShareMediaItems(mediaItems = [], maxCount = SHARE_MEDIA_MA
             prepared: false
         };
     });
+}
+
+// 'diet.dinnerThumbUrl' -> { diet: { dinnerThumbUrl: value } }
+function buildNestedFieldPatch(path, value) {
+    const parts = String(path || '').split('.').filter(Boolean);
+    if (!parts.length) return null;
+    const patch = {};
+    let cursor = patch;
+    parts.forEach((key, index) => {
+        if (index === parts.length - 1) cursor[key] = value;
+        else cursor = (cursor[key] = {});
+    });
+    return patch;
+}
+
+// 업로드할 때 썸네일 생성이 실패하면 그 사진은 원본만 남았고, 되살릴 길이 없었다.
+// 카드를 그리느라 어차피 원본을 디코드해 둔 참이니, 그 이미지로 썸네일을 만들어
+// 채워 넣는다. 다음부터 그 사진은 1.6MB가 아니라 20KB로 열린다.
+async function backfillMissingShareThumbnails(latest, preparedMedia = []) {
+    const user = auth.currentUser;
+    if (!user || !latest) return;
+    const shareLog = getCurrentShareLog(user.uid);
+    if (!shareLog?.id) return;
+
+    for (const item of preparedMedia) {
+        const field = item?.backfill?.field;
+        if (!field || item.hasThumb || !item.prepared) continue;
+        if (_shareThumbBackfillTried.has(field)) continue;
+        const image = _shareImageCache.get(item.src);
+        if (!image) continue;
+
+        _shareThumbBackfillTried.add(field);
+        try {
+            const blob = await createSquareThumbBlobFromImage(image);
+            if (!blob?.size) continue;
+            const thumbPath = `${item.backfill.folder}_thumbnails/${user.uid}/${Date.now()}_backfill_thumb.jpg`;
+            const thumbRef = ref(storage, thumbPath);
+            await uploadBytes(thumbRef, blob);
+            const thumbUrl = await getDownloadURL(thumbRef);
+
+            const patch = buildNestedFieldPatch(field, thumbUrl);
+            if (!patch) continue;
+            await setDoc(doc(db, 'daily_logs', shareLog.id), patch, { merge: true });
+
+            // 캐시에도 반영해야 다음 카드가 원본 대신 썸네일을 쓴다.
+            const cached = cachedGalleryLogs.find(entry => entry.id === shareLog.id);
+            const [group, key] = field.split('.');
+            if (cached?.data?.[group]) cached.data[group][key] = thumbUrl;
+            if (latest?.[group]) latest[group][key] = thumbUrl;
+            console.info('[share] 썸네일 백필 완료:', field);
+        } catch (error) {
+            console.warn('썸네일 백필 실패:', field, error?.message || error);
+        }
+    }
 }
 
 async function ensurePreparedShareMedia(latest, settings = getDefaultShareSettings(), forceRefresh = false) {
@@ -3859,6 +3940,7 @@ function invalidatePreparedShareMediaCache() {
     _latestShareRenderKey = '';
     _latestPreparedShareIncomplete = false;
     _latestPreparedShareRetryAt = 0;
+    _shareImageCache.clear();
 }
 
 function scheduleShareCardRefresh({ forceMediaRefresh = false } = {}) {
@@ -4227,10 +4309,34 @@ function drawPosterPlaceholderTile(ctx, frame, label, radius = 34) {
     ctx.restore();
 }
 
-async function loadCanvasImageSource(src) {
+// 디코드한 이미지를 들고 있는다. 준비 단계에서 한 번, 카드를 그릴 때 또 한 번
+// 디코드하던 것을 한 번으로 줄인다. 카드 한 장에 쓰는 사진 수만큼만 남긴다.
+const _shareImageCache = new Map();
+
+function cacheShareImage(src, image) {
+    if (!src) return image;
+    if (_shareImageCache.size >= SHARE_MEDIA_MAX_COUNT * 2) {
+        const oldest = _shareImageCache.keys().next().value;
+        _shareImageCache.delete(oldest);
+    }
+    _shareImageCache.set(src, image);
+    return image;
+}
+
+// Storage 사진은 crossOrigin으로 불러야 캔버스가 오염되지 않는다. 오염되면
+// toBlob이 던져 카드를 아예 못 만든다.
+// crossOrigin을 걸고 로드가 성공했다는 것 자체가 CORS 응답을 받았다는 뜻이므로,
+// 성공하면 그 이미지는 캔버스에 그려도 안전하다.
+async function loadCanvasImageSource(src, { crossOrigin = true } = {}) {
+    const cached = _shareImageCache.get(src);
+    if (cached) return cached;
+
     return await new Promise((resolve, reject) => {
         const image = new Image();
-        image.onload = () => resolve(image);
+        if (crossOrigin && /^https?:/i.test(src)) {
+            image.crossOrigin = 'anonymous';
+        }
+        image.onload = () => resolve(cacheShareImage(src, image));
         image.onerror = reject;
         image.src = src;
     });
@@ -20491,23 +20597,35 @@ async function resolveThumbUrl(originalUrl, sourceFolder, thumbFolder) {
 }
 
 // 이미지 파일로부터 1:1 정사각형 썸네일 생성 (300x300, JPEG 60%)
+// 이미 디코드된 이미지에서 정사각형 썸네일을 만든다. 파일에서 만들 때와
+// 나중에 백필할 때가 같은 결과여야 하므로 계산을 한 곳에 둔다.
+function createSquareThumbBlobFromImage(img, size = 300, quality = 0.6) {
+    return new Promise((resolve) => {
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            // 중앙 기준 정사각형 crop
+            const srcSize = Math.min(img.width, img.height);
+            const sx = (img.width - srcSize) / 2;
+            const sy = (img.height - srcSize) / 2;
+            ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, size, size);
+            canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+        } catch (_) {
+            // 오염된 캔버스 등 — 만들지 못하면 조용히 넘긴다.
+            resolve(null);
+        }
+    });
+}
+
 async function generateThumbnailBlob(file) {
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                const size = 300; // 출력 크기 300x300
-                const canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                const ctx = canvas.getContext('2d');
-                // 중앙 기준 정사각형 crop
-                const srcSize = Math.min(img.width, img.height);
-                const sx = (img.width - srcSize) / 2;
-                const sy = (img.height - srcSize) / 2;
-                ctx.drawImage(img, sx, sy, srcSize, srcSize, 0, 0, size, size);
-                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
+                createSquareThumbBlobFromImage(img).then(resolve);
             };
             img.onerror = () => resolve(null);
             img.src = e.target.result;
@@ -20538,19 +20656,22 @@ async function uploadImageWithThumb(file, folderName, userId) {
         const url = await uploadFileAndGetUrl(file, folderName, userId);
         if (!url) return { url: null, thumbUrl: null };
 
-        // 썸네일 생성 & 업로드
+        // 썸네일 생성 & 업로드.
+        // 한 번 놓치면 그 사진은 영원히 원본만 남는다 — 되살릴 경로가 없었다.
+        // 큰 사진 디코드는 기기 사정으로 한 번 실패했다가 다음엔 되는 일이 잦으므로
+        // 두 번까지 해 본다. (그래도 없으면 나중에 백필이 채운다.)
         let thumbUrl = null;
-        try {
-            const thumbBlob = await generateThumbnailBlob(file);
-            if (thumbBlob) {
-                const timestamp = Date.now();
-                const thumbPath = `${folderName}_thumbnails/${userId}/${timestamp}_thumb.jpg`;
+        for (let attempt = 0; attempt < 2 && !thumbUrl; attempt++) {
+            try {
+                const thumbBlob = await generateThumbnailBlob(file);
+                if (!thumbBlob) continue;
+                const thumbPath = `${folderName}_thumbnails/${userId}/${Date.now()}_thumb.jpg`;
                 const thumbRef = ref(storage, thumbPath);
                 await uploadBytes(thumbRef, thumbBlob);
                 thumbUrl = await getDownloadURL(thumbRef);
+            } catch (e) {
+                console.warn(`썸네일 생성/업로드 실패 (${attempt + 1}차, 원본은 성공):`, e.message);
             }
-        } catch (e) {
-            console.warn('썸네일 생성/업로드 실패 (원본은 성공):', e.message);
         }
 
         return { url, thumbUrl };
@@ -22156,6 +22277,8 @@ async function buildShareCardAsync(myId, user, overrideSettings = null, options 
         });
         updateGalleryPrimaryAction();
         scheduleShareMediaRetryIfIncomplete();
+        // 카드를 다 그린 뒤에 조용히 채운다. 카드가 뜨는 시간을 늦추지 않는다.
+        backfillMissingShareThumbnails(latest, preparedMedia).catch(() => { });
     } catch (e) {
         console.warn('공유 카드 로드 실패:', e.message);
         document.getElementById('my-share-container').style.display = 'none';

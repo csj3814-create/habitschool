@@ -43,6 +43,43 @@ describe('share card media preparation', () => {
     // 썸네일이 아직 안 올라간 사진은 원본으로 오는데, 1.63MB짜리가 그 선에 걸려
     // 통째로 버려졌다. 크기 때문에 버리는 것은 시간이 지나도 낫지 않으므로
     // 자동 재시도로도 구할 수 없었다.
+    // 서버가 있었던 유일한 이유는 캔버스 오염이었다. Storage가 CORS를 주므로
+    // crossOrigin으로 직접 불러오면 오염되지 않고, 왕복 자체가 없어진다.
+    // 실측: 4장 기준 서버 경유 3,980ms에 base64 2.6MB, 직접 로드 2,328ms에
+    // 두 번째부터는 브라우저 HTTP 캐시라 사실상 0.
+    it('draws photos straight from storage instead of round-tripping the server', () => {
+        const appSource = readAppSource();
+
+        // crossOrigin을 걸고 로드에 성공했다는 것 자체가 CORS 응답을 받았다는 뜻이다.
+        expect(appSource).toContain("image.crossOrigin = 'anonymous';");
+        expect(appSource).toContain('async function loadCanvasImageSource(src, { crossOrigin = true } = {}) {');
+        // 사진이면 서버에 보내기 전에 직접 불러본다.
+        expect(appSource).toContain('const imageUrl = candidates.find(candidate => /^https?:/i.test(candidate) && !isVideoUrl(candidate));');
+        expect(appSource).toContain('return { ...item, src: imageUrl, prepared: true };');
+        // 막히면 조용히 기존 서버 경로로 넘어간다 — 서버는 fallback으로 남는다.
+        expect(appSource).toContain('const pendingIndexes = [];');
+        // 준비 때와 그릴 때 두 번 디코드하지 않는다.
+        expect(appSource).toContain('const _shareImageCache = new Map();');
+    });
+
+    // 업로드 때 썸네일 생성이 한 번 실패하면 그 사진은 영원히 원본만 남았다.
+    // 갤러리도 카드도 1.6MB를 매번 내려받게 된다.
+    it('repairs a thumbnail that never got made', () => {
+        const appSource = readAppSource();
+
+        // 업로드 시 한 번 더 시도하고,
+        expect(appSource).toContain('for (let attempt = 0; attempt < 2 && !thumbUrl; attempt++) {');
+        // 이미 놓친 사진은 카드를 그리며 디코드해 둔 이미지로 만들어 채운다.
+        expect(appSource).toContain('async function backfillMissingShareThumbnails(latest, preparedMedia = []) {');
+        expect(appSource).toContain('backfillMissingShareThumbnails(latest, preparedMedia).catch(() => { });');
+        // 파일에서 만들 때와 백필할 때가 같은 결과여야 한다.
+        expect(appSource).toContain('function createSquareThumbBlobFromImage(img, size = 300, quality = 0.6) {');
+        // 한 세션에 한 자리당 한 번만 시도한다.
+        expect(appSource).toContain('if (_shareThumbBackfillTried.has(field)) continue;');
+        // 캐시도 갱신해야 다음 카드가 원본 대신 썸네일을 쓴다.
+        expect(appSource).toContain("const [group, key] = field.split('.');");
+    });
+
     it('does not throw away a photo just because its thumbnail is missing', () => {
         const functionsSource = readFunctionsSource();
 
