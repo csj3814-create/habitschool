@@ -2,6 +2,20 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-09
+
+### Fixed
+- Stopped the share media callable from discarding a photo whose size exceeded a per-item limit that had been scaled by batch size (6MB / 5 items = 1.2MB). A 1.63MB original cleared that easily, so a photo visible in the gallery feed rendered as a placeholder on the card and stayed one — being too large is not a condition the automatic retry could improve. The limit is a flat 6MB again.
+- Checked the callable's response budget before committing an item's bytes rather than after, so the item that broke the ceiling is the one dropped instead of always being let through.
+
+### Changed
+- Loaded share card photos directly in the browser with `crossOrigin="anonymous"` instead of routing them through `prepareShareMediaAssets`. Storage already serves CORS, so the canvas is not tainted and `toBlob` works; the round trip existed only to avoid tainting. Measured on one real day: four photos took 3,980ms and 2.6MB of base64 through the server versus 2,328ms direct, and a second open is 35ms with zero function calls because the images are ordinary cacheable HTTP requests. The callable remains as a fallback when the CORS load fails, and strength video thumbnails still use it since they need ffmpeg.
+- Cached decoded images for the life of a card build so preparation and drawing no longer decode the same photo twice.
+
+### Added
+- Retried thumbnail generation once on upload. It is a decode plus a canvas, which fails on a large photo on a loaded device, and the failure was previously caught, logged, and dropped — original saved, thumbnail field left empty, with no retry and no way back.
+- Backfilled thumbnails that were never created, building them from the image the card already decoded and writing them back to the daily log. Verified in production: a 1,707,469 byte original now has a 7,771 byte thumbnail. Covers the fixed fields (four meals, mind photo); cardio and strength entries live in arrays and would require rewriting the whole array, so they are left for later.
+
 ## 2026-08-06
 
 ### Added
