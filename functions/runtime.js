@@ -972,9 +972,11 @@ const SHARE_VIDEO_THUMB_MAX_BYTES = 60 * 1024 * 1024;
 const SHARE_MEDIA_MAX_ITEMS = 9;
 // 원본을 base64로 실어 보내면 6MB 사진 한 장이 8MB 문자열이 된다. 콜러블 응답은
 // 10MB에서 잘리므로, 몇 장만 모여도 응답 전체가 죽고 사진이 하나도 안 나온다.
-// 담은 양이 이 선을 넘으면 나머지는 빈 값으로 돌려보낸다 — 클라이언트가 그 자리에
-// 자리표시자를 그리므로, 카드 전체를 잃는 것보다 낫다.
-const SHARE_MEDIA_RESPONSE_BUDGET_BYTES = 6 * 1024 * 1024;
+// 자리가 없으면 그 장만 빈 값으로 돌려보낸다 — 클라이언트가 그 자리에 자리표시자를
+// 그리므로, 카드 전체를 잃는 것보다 낫다.
+// 한 장 최대 6MB는 base64로 8MB가 되므로 예산도 8MB로 둔다. 가장 큰 한 장이
+// 예산을 정확히 채우고, 응답은 10MB 한도 안에 남는다.
+const SHARE_MEDIA_RESPONSE_BUDGET_BYTES = 8 * 1024 * 1024;
 const SHARE_MEDIA_ITEM_MAX_BYTES = 6 * 1024 * 1024;
 
 async function generateShareVideoThumbDataUrl(storagePath = "") {
@@ -4854,25 +4856,28 @@ exports.prepareShareMediaAssets = onCall(
         if (!rawItems.length) return { items: [] };
 
         const normalizedItems = rawItems.map((item, index) => normalizeShareMediaRequestItem(item, index));
-        // 장수가 늘면 한 장에 허용하는 크기를 줄인다. 카드에서 한 칸은 아무리 커야
-        // 976px이라 6MB 원본은 어차피 낭비다.
-        const itemMaxBytes = Math.max(768 * 1024, Math.floor(SHARE_MEDIA_ITEM_MAX_BYTES / normalizedItems.length));
         // 순차 처리한다. 동시에 받으면 원본 여러 장의 버퍼와 base64 문자열이 함께
         // 살아 있어 메모리가 몇 배로 튄다. 한 항목이 실패해도 나머지는 살린다.
         const items = [];
         let responseBytes = 0;
         for (const item of normalizedItems) {
             let src = "";
-            if (responseBytes >= SHARE_MEDIA_RESPONSE_BUDGET_BYTES) {
-                console.warn("[prepareShareMediaAssets] response budget reached, skipping:", item.category);
-            } else {
-                try {
-                    src = await loadShareMediaDataUrl(item.candidateUrls, itemMaxBytes);
-                    responseBytes += src.length;
-                } catch (error) {
-                    console.warn("[prepareShareMediaAssets] item failed:", item.category, error?.message || error);
-                }
+            try {
+                // 장수에 따라 한 장의 허용 크기를 줄인 적이 있는데, 그게 사진을 통째로
+                // 버렸다. 썸네일이 아직 안 올라간 사진은 원본으로 오는데 그게 1.6MB만
+                // 돼도 잘려 나가, 갤러리에는 멀쩡히 보이는 사진이 카드에서만 회색 칸이
+                // 됐다. 줄여서 담을 수단이 없다면 버리는 것보다 그냥 담는 게 낫다.
+                src = await loadShareMediaDataUrl(item.candidateUrls, SHARE_MEDIA_ITEM_MAX_BYTES);
+            } catch (error) {
+                console.warn("[prepareShareMediaAssets] item failed:", item.category, error?.message || error);
             }
+            // 담은 뒤에 한도를 넘었는지 보면 이미 늦다 — 그 한 장이 응답을 한도 밖으로
+            // 밀어낸 뒤다. 넣기 전에 들어갈 자리가 있는지 보고, 없으면 이 장만 뺀다.
+            if (src && (responseBytes + src.length) > SHARE_MEDIA_RESPONSE_BUDGET_BYTES) {
+                console.warn("[prepareShareMediaAssets] response budget reached, dropping:", item.category, src.length);
+                src = "";
+            }
+            responseBytes += src.length;
             items.push({
                 category: item.category,
                 type: item.type,

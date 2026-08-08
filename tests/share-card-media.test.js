@@ -35,4 +35,25 @@ describe('share card media preparation', () => {
         expect(functionsSource).toContain('for (const item of normalizedItems) {');
         expect(functionsSource).toContain('[prepareShareMediaAssets] item failed:');
     });
+
+    // 증상: 갤러리 피드에는 멀쩡히 보이는 식단 사진이 공유 카드에서만 회색 칸이었다.
+    // 10분을 기다려도 그대로였다.
+    //
+    // 원인: 장수에 따라 한 장에 허용하는 크기를 줄였다(6MB / 5장 = 1.2MB).
+    // 썸네일이 아직 안 올라간 사진은 원본으로 오는데, 1.63MB짜리가 그 선에 걸려
+    // 통째로 버려졌다. 크기 때문에 버리는 것은 시간이 지나도 낫지 않으므로
+    // 자동 재시도로도 구할 수 없었다.
+    it('does not throw away a photo just because its thumbnail is missing', () => {
+        const functionsSource = readFunctionsSource();
+
+        // 장수로 나눈 한도는 사라진다. 줄여 담을 수단이 없으면 그냥 담는다.
+        expect(functionsSource).not.toContain('Math.floor(SHARE_MEDIA_ITEM_MAX_BYTES / normalizedItems.length)');
+        expect(functionsSource).toContain('src = await loadShareMediaDataUrl(item.candidateUrls, SHARE_MEDIA_ITEM_MAX_BYTES);');
+
+        // 응답 한도는 담기 전에 확인해야 한다. 담은 뒤에 재면 이미 넘긴 뒤다.
+        expect(functionsSource).toContain('if (src && (responseBytes + src.length) > SHARE_MEDIA_RESPONSE_BUDGET_BYTES) {');
+        expect(functionsSource).not.toContain('if (responseBytes >= SHARE_MEDIA_RESPONSE_BUDGET_BYTES) {');
+        // 가장 큰 한 장(6MB)이 base64로 8MB가 되므로 예산도 8MB여야 한 장이 통째로 들어간다.
+        expect(functionsSource).toContain('const SHARE_MEDIA_RESPONSE_BUDGET_BYTES = 8 * 1024 * 1024;');
+    });
 });
