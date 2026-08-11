@@ -131,7 +131,9 @@ html.guest-demo-active.guest-auth-prompt-open #login-modal {
     display: flex !important;
 }
 
-html.guest-demo-active #date-ui,
+/* 날짜 상자는 체험에서도 보여 준다. 실제 앱에서 가장 먼저 보이는 것 중 하나이고,
+   감추면 기록이 하루 단위라는 것도 함께 감춰진다.
+   (누르지는 못하게 막는다 — 체험 데이터는 하루치뿐이라 날짜를 옮기면 빈 화면이 된다.) */
 html.guest-demo-active #submit-bar,
 html.guest-demo-active #chat-banner {
     display: none !important;
