@@ -6693,3 +6693,48 @@ body.gallery-user-filtered #weekly-best-container {
 }
 
 .legacy-wallet-qr-desc strong { color: #C62828; }
+
+/* ===== 로그인 화면: 휴대폰에서 스크롤 줄이기 =====
+   동의 체크박스가 들어오면서 세로가 길어졌다. 문구를 지우는 대신 여백을 조인다.
+   의료 면책 고지는 구글플레이 건강 앱 정책상 문구를 줄일 수 없어 여백만 줄인다. */
+@media (max-width: 480px) {
+    #login-modal > img {
+        width: 60px !important;
+        height: 60px !important;
+        margin-bottom: 6px !important;
+    }
+
+    #login-modal .login-title {
+        margin-bottom: 6px;
+    }
+
+    #login-modal > p:not(.medical-disclaimer):not(.consent-note) {
+        margin-bottom: 18px !important;
+        font-size: 14px !important;
+        line-height: 1.5 !important;
+    }
+
+    .consent-box {
+        padding: 12px 13px;
+        margin-bottom: 12px;
+    }
+
+    .consent-row { padding: 5px 0; }
+    .consent-text { font-size: 12.5px; }
+    .consent-note { font-size: 11px; margin-top: 6px; }
+
+    #login-modal .medical-disclaimer {
+        margin-top: 14px !important;
+        font-size: 11px !important;
+        line-height: 1.5 !important;
+    }
+
+    .version-switcher { margin-top: 12px; }
+}
+
+/* 지갑 내보내기 모달도 휴대폰에서 한 화면에 가깝게 */
+@media (max-width: 480px) {
+    .legacy-wallet-qr-canvas { padding: 8px; }
+    .legacy-wallet-qr-box { padding: 10px; margin-top: 10px; }
+    .legacy-wallet-qr-desc { margin-top: 8px; }
+}

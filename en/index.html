@@ -905,10 +905,7 @@
                         건강정보(혈액검사·체성분) 수집·이용에 동의합니다
                     </span>
                 </label>
-                <p class="consent-note">
-                    선택 항목에 동의하지 않아도 가입과 대부분의 기능을 이용할 수 있어요.
-                    동의하지 않으면 혈액검사 판독과 체성분 기록 기능만 사용할 수 없습니다.
-                </p>
+                <p class="consent-note">선택은 거부해도 가입됩니다. 혈액검사·체성분 기능만 잠깁니다.</p>
             </div>
             <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인" disabled>
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
@@ -957,12 +954,7 @@
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
                 💬 카카오톡 채널 문의
             </a>
-            <div style="margin-top:12px;">
-                <a href="/terms.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">📜 이용약관</a>
-                <span style="font-size:11px; color:#ddd;"> | </span>
-                <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
-            </div>
-            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">동의 내역은 가입 시각과 함께 기록되며, 언제든지 프로필에서 철회할 수 있습니다.</p>
+
         </div>
 
         <div id="main-app">
@@ -2982,19 +2974,9 @@
         <div class="wallet-modal legacy-wallet-modal">
             <div class="wallet-modal-title">🔐 기존 앱 지갑 내보내기</div>
             <div class="wallet-modal-body">
-                <div class="wallet-modal-summary">
-                    <div class="wallet-modal-row">
-                        <span>용도</span>
-                        <span class="highlight">외부 지갑 이전</span>
-                    </div>
-                    <div class="wallet-modal-row">
-                        <span>지원 지갑</span>
-                        <span>MetaMask / Trust Wallet</span>
-                    </div>
-                </div>
+                <!-- 휴대폰에서 스크롤이 길어져 용도/지원지갑 표는 뺐다. 제목이 이미 말한다. -->
                 <div class="legacy-wallet-warning">
-                    <strong>주의</strong>
-                    <p>개인키를 가진 사람은 지갑을 완전히 가져갈 수 있어요. 혼자 있는 곳에서만 확인하고, 메모나 채팅에 남기지 마세요.</p>
+                    <p>개인키를 가진 사람은 지갑을 가져갈 수 있어요. 혼자 있는 곳에서만 확인하세요.</p>
                 </div>
                 <div class="legacy-wallet-secret-box">
                     <label for="legacy-wallet-private-key">개인키</label>
@@ -3005,36 +2987,17 @@
                     <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>복사</button>
                 </div>
                 <!--
-                  개인키는 66자라 손으로 옮겨 적다 보면 틀리기 쉽다. 한 글자만 달라도
-                  다른 지갑이 되고, 틀렸다는 것도 가져오기를 해 봐야 안다.
-                  QR로 읽으면 그 단계가 통째로 사라진다.
-                  키가 화면에 떠 있을 때만 그린다.
+                  개인키 66자를 손으로 옮겨 적으면 한 글자만 틀려도 다른 지갑이 된다.
+                  QR로 읽으면 그 단계가 없어진다. 키가 화면에 떠 있을 때만 그린다.
+
+                  다만 메타마스크 스캐너는 지갑 주소를 기대해서 개인키 QR을 거부한다
+                  (실제 확인: Trust Wallet 성공, MetaMask 오류). 그래서 한 줄로 갈라 적는다.
                 -->
                 <div class="legacy-wallet-qr-box" id="legacy-wallet-qr-box" hidden>
-                    <div class="legacy-wallet-qr-title">📷 Trust Wallet에서 QR로 가져오기</div>
                     <div class="legacy-wallet-qr-canvas" id="legacy-wallet-qr"></div>
                     <p class="legacy-wallet-qr-desc">
-                        Trust Wallet의 개인키 입력란에서 카메라(QR) 버튼을 누르고 이 코드를 비추세요.
-                        <strong>이 화면은 캡처하거나 남에게 보이지 마세요.</strong>
+                        <strong>Trust Wallet</strong>은 이 QR을, <strong>MetaMask</strong>는 위 <strong>복사</strong> 버튼을 쓰세요.
                     </p>
-                </div>
-                <div class="legacy-wallet-import-guide">
-                    <strong>Trust Wallet에서 가져오기</strong>
-                    <ol>
-                        <li>Trust Wallet에서 지갑 가져오기를 열고 개인키 입력을 선택합니다.</li>
-                        <li>카메라(QR) 버튼으로 위 코드를 비추거나, 복사한 키를 붙여넣습니다.</li>
-                    </ol>
-                    <!--
-                      메타마스크 스캐너는 주소(또는 ethereum: 주소)를 기대해서 개인키 QR을
-                      "계정 주소나 연락처 주소와 연계되어 있지 않다"며 거부한다.
-                      되지도 않는 길을 안내하면 사용자는 자기가 잘못한 줄 안다.
-                    -->
-                    <strong style="display:block; margin-top:12px;">MetaMask에서 가져오기</strong>
-                    <ol>
-                        <li><strong>QR 대신 복사를 쓰세요.</strong> MetaMask의 QR 스캐너는 지갑 주소만 인식해서, 개인키 QR은 읽지 못한다는 오류가 납니다.</li>
-                        <li>위 <strong>복사</strong> 버튼을 누른 뒤, 계정 가져오기 → 개인키 입력란에 붙여넣습니다.</li>
-                    </ol>
-                    <p style="margin-top:10px;">가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</p>
                 </div>
             </div>
             <div class="wallet-modal-actions">

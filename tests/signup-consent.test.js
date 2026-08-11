@@ -86,17 +86,16 @@ describe('account deletion warns about losing the tokens', () => {
     // "이 QR 코드는 계정 주소나 연락처 주소와 연계되어 있지 않습니다"로 거부했다.
     // 메타마스크 스캐너가 주소를 기대하기 때문이다.
     // 되지도 않는 길을 안내하면 사용자는 자기가 잘못한 줄 안다.
-    it('points the QR at the wallet that can actually read it', () => {
-        const qrBox = html.split('id="legacy-wallet-qr-box"')[1]?.split('</div>\n                <div class="legacy-wallet-import-guide">')[0] || '';
-        expect(qrBox).not.toBe('');
-        expect(qrBox).toContain('Trust Wallet');
-        // QR 안내에서 메타마스크를 빼야 한다.
-        expect(qrBox).not.toContain('MetaMask');
+    it('points each wallet at the method that works for it', () => {
+        // 한 줄 안에 두 갈래가 다 있어야 한다 — 트러스트는 QR, 메타마스크는 복사.
+        const desc = html.split('class="legacy-wallet-qr-desc"')[1]?.split('</p>')[0] || '';
+        expect(desc).not.toBe('');
+        expect(desc).toContain('Trust Wallet');
+        expect(desc).toContain('MetaMask');
+        expect(desc).toContain('복사');
 
-        // 메타마스크에는 복사·붙여넣기를 안내한다.
-        const guide = html.split('class="legacy-wallet-import-guide"')[1]?.split('</div>')[0] || '';
-        expect(guide).toContain('MetaMask에서 가져오기');
-        expect(guide).toContain('QR 대신 복사를 쓰세요');
+        // 예전의 긴 '가져오기 순서' 목록은 사라진다. 휴대폰에서 너무 길었다.
+        expect(html).not.toContain('legacy-wallet-import-guide');
     });
 
     it('requires an explicit acknowledgement, not just an OK', () => {
