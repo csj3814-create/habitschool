@@ -6652,3 +6652,44 @@ body.gallery-user-filtered #weekly-best-container {
     cursor: pointer;
     padding: 2px 4px;
 }
+
+/* ===== 개인키 QR (외부 지갑 가져오기용) ===== */
+.legacy-wallet-qr-box {
+    margin-top: 12px;
+    padding: 14px;
+    background: #FFFDF7;
+    border: 1px solid #EFC98F;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.legacy-wallet-qr-box[hidden] { display: none !important; }
+
+.legacy-wallet-qr-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #8a6336;
+    margin-bottom: 10px;
+}
+
+.legacy-wallet-qr-canvas {
+    display: inline-flex;
+    padding: 10px;
+    background: #fff;
+    border-radius: 10px;
+    line-height: 0;
+}
+
+.legacy-wallet-qr-canvas img,
+.legacy-wallet-qr-canvas canvas {
+    display: block;
+}
+
+.legacy-wallet-qr-desc {
+    margin: 10px 0 0;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #8a7a66;
+}
+
+.legacy-wallet-qr-desc strong { color: #C62828; }

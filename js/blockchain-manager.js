@@ -472,9 +472,55 @@ function updateLegacyWalletExportState(userData = {}) {
     legacyWalletExportAvailable = !!(userData?.walletVersion === 2 && legacyWalletEncryptedKey && legacyWalletIv);
 }
 
+/**
+ * 개인키 QR을 그린다.
+ * 66자를 손으로 옮겨 적으면 한 글자만 틀려도 다른 지갑이 되고, 틀렸다는 것도
+ * 가져오기를 해 봐야 안다. 카메라로 읽으면 그 단계가 없어진다.
+ *
+ * 화면에 떠 있는 동안만 존재해야 하므로 DOM에만 그리고 어디에도 저장하지 않는다.
+ * 모달이 닫히면 resetLegacyWalletExportSession이 지운다.
+ */
+function renderLegacyWalletPrivateKeyQr(privateKeyHex) {
+    const box = document.getElementById('legacy-wallet-qr-box');
+    const holder = document.getElementById('legacy-wallet-qr');
+    if (!box || !holder) return;
+
+    holder.innerHTML = '';
+    const key = String(privateKeyHex || '').trim();
+    if (!key) {
+        box.hidden = true;
+        return;
+    }
+
+    if (typeof window.QRCode !== 'function') {
+        // QR을 못 그려도 개인키 텍스트는 이미 떠 있다. 내보내기를 막지는 않는다.
+        box.hidden = true;
+        console.warn('QRCode 라이브러리가 없어 개인키 QR을 건너뜁니다.');
+        return;
+    }
+
+    try {
+        new window.QRCode(holder, {
+            text: key,
+            width: 180,
+            height: 180,
+            colorDark: '#1A1A1A',
+            colorLight: '#FFFFFF',
+            // 66자는 넉넉히 들어가고, M이면 화면에서 읽기 좋은 밀도가 나온다.
+            correctLevel: window.QRCode.CorrectLevel.M
+        });
+        box.hidden = false;
+    } catch (error) {
+        holder.innerHTML = '';
+        box.hidden = true;
+        console.warn('개인키 QR 생성 실패:', error?.message || error);
+    }
+}
+
 function resetLegacyWalletExportSession() {
     legacyWalletPrivateKeyCache = null;
     legacyWalletRevealed = false;
+    renderLegacyWalletPrivateKeyQr('');
 
     const secretEl = document.getElementById('legacy-wallet-private-key');
     const revealBtn = document.getElementById('legacy-wallet-reveal-btn');
@@ -2169,6 +2215,7 @@ export async function revealLegacyWalletPrivateKey() {
         if (copyBtn) {
             copyBtn.disabled = !legacyWalletPrivateKeyCache;
         }
+        renderLegacyWalletPrivateKeyQr(legacyWalletPrivateKeyCache);
     } catch (error) {
         console.error('기존 앱 지갑 개인키 표시 실패:', error);
         showToast(error.message || '개인키를 표시할 수 없어요.');

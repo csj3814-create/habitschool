@@ -1303,3 +1303,12 @@ body.dark-mode .sensitive-gate {
 body.dark-mode .sensitive-gate-title { color: #FFD28D; }
 body.dark-mode .sensitive-gate-desc { color: #C0BCC6; }
 body.dark-mode .sensitive-revoke-btn { color: #9C9086; }
+
+/* 개인키 QR */
+body.dark-mode .legacy-wallet-qr-box {
+    background: rgba(255,255,255,0.04);
+    border-color: #5C4A2E;
+}
+body.dark-mode .legacy-wallet-qr-title { color: #FFD28D; }
+body.dark-mode .legacy-wallet-qr-desc { color: #C0BCC6; }
+body.dark-mode .legacy-wallet-qr-desc strong { color: #EF9A9A; }

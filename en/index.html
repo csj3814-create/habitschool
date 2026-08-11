@@ -3004,11 +3004,25 @@
                     <button type="button" class="wallet-link-btn primary" id="legacy-wallet-reveal-btn" onclick="revealLegacyWalletPrivateKey()">1회 보기</button>
                     <button type="button" class="wallet-link-btn" id="legacy-wallet-copy-btn" onclick="copyLegacyWalletPrivateKey()" disabled>복사</button>
                 </div>
+                <!--
+                  개인키는 66자라 손으로 옮겨 적다 보면 틀리기 쉽다. 한 글자만 달라도
+                  다른 지갑이 되고, 틀렸다는 것도 가져오기를 해 봐야 안다.
+                  QR로 읽으면 그 단계가 통째로 사라진다.
+                  키가 화면에 떠 있을 때만 그린다.
+                -->
+                <div class="legacy-wallet-qr-box" id="legacy-wallet-qr-box" hidden>
+                    <div class="legacy-wallet-qr-title">📷 QR로 가져오기</div>
+                    <div class="legacy-wallet-qr-canvas" id="legacy-wallet-qr"></div>
+                    <p class="legacy-wallet-qr-desc">
+                        MetaMask·Trust Wallet의 개인키 입력란에서 카메라(QR) 버튼을 누르고 이 코드를 비추세요.
+                        <strong>이 화면은 캡처하거나 남에게 보이지 마세요.</strong>
+                    </p>
+                </div>
                 <div class="legacy-wallet-import-guide">
                     <strong>가져오기 순서</strong>
                     <ol>
                         <li>MetaMask 또는 Trust Wallet에서 기존 지갑 가져오기를 엽니다.</li>
-                        <li>개인키 입력을 선택하고, 여기서 복사한 키를 붙여넣습니다.</li>
+                        <li>개인키 입력을 선택하고, 카메라(QR) 버튼으로 위 코드를 비추거나 복사한 키를 붙여넣습니다.</li>
                         <li>가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</li>
                     </ol>
                 </div>
