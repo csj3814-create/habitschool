@@ -2,8 +2,19 @@
 let deferredInstallPrompt = null;
 const INSTALL_STATE_STORAGE_KEY = 'habitschool_pwa_installed';
 const APP_SERVICE_WORKER_PATH = '/sw.js';
-const INSTALL_BUTTON_LABEL = '홈 화면에 앱 설치';
-const INSTALL_READY_HELPER_TEXT = '설치하면 앱처럼 바로 열 수 있어요.';
+// 설치 버튼은 자바스크립트가 그리는 자리라 data-i18n이 닿지 않는다.
+// 문구를 세 파일에 흩어 두면 한쪽만 번역되므로 여기서 한 번에 정한다.
+window.getInstallButtonLabel = function () {
+    return document.documentElement.classList.contains('locale-en')
+        ? 'Add to home screen'
+        : '홈 화면에 앱 설치';
+};
+
+window.getInstallHelperText = function () {
+    return document.documentElement.classList.contains('locale-en')
+        ? 'Install it to open Habit School like an app.'
+        : '설치하면 앱처럼 바로 열 수 있어요.';
+};
 const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
 const CHROME_ANDROID_PACKAGE_NAME = 'com.android.chrome';
 let cachedInstalledAppState = readStoredInstallState();
@@ -143,7 +154,7 @@ function getManualInstallInstructions() {
                 '',
                 '1. 현재 페이지를 Safari로 열어주세요.',
                 '2. Safari 하단의 공유 버튼을 누르세요.',
-                `3. "${INSTALL_BUTTON_LABEL}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`
+                `3. "${window.getInstallButtonLabel()}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`
             ].join('\n');
         }
 
@@ -151,7 +162,7 @@ function getManualInstallInstructions() {
             '설치 방법',
             '',
             '1. Safari 하단의 공유 버튼을 누르세요.',
-            `2. "${INSTALL_BUTTON_LABEL}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`,
+            `2. "${window.getInstallButtonLabel()}" 항목이 없으면 "홈 화면에 추가"를 선택하세요.`,
             '3. 추가가 끝나면 홈 화면의 해빛스쿨 아이콘으로 바로 열 수 있어요.'
         ].join('\n');
     }
@@ -162,7 +173,7 @@ function getManualInstallInstructions() {
             '',
             '1. 현재 인앱 브라우저 메뉴를 여세요.',
             '2. "기본 브라우저로 열기" 또는 "외부 브라우저에서 열기"를 누르세요.',
-            `3. 기본 브라우저에서 열린 뒤 메뉴의 "${INSTALL_BUTTON_LABEL}" 또는 "앱 설치"를 선택하세요.`
+            `3. 기본 브라우저에서 열린 뒤 메뉴의 "${window.getInstallButtonLabel()}" 또는 "앱 설치"를 선택하세요.`
         ].join('\n');
     }
 
@@ -171,7 +182,7 @@ function getManualInstallInstructions() {
             '삼성 인터넷 설치 안내',
             '',
             '삼성 인터넷은 주소창 설치 아이콘을 브라우저가 조건에 맞을 때만 보여줘요.',
-            `브라우저 메뉴에서 "${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+            `브라우저 메뉴에서 "${window.getInstallButtonLabel()}" 또는 "현재 페이지 추가"를 선택해주세요.`,
             '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도할 수 있어요.'
         ].join('\n');
     }
@@ -181,7 +192,7 @@ function getManualInstallInstructions() {
             '설치 방법',
             '',
             '1. 잠시 후 브라우저 설치 창이 뜨면 "설치"를 눌러주세요.',
-            `2. 창이 안 뜨면 주소창 오른쪽 설치 아이콘 또는 메뉴의 "${INSTALL_BUTTON_LABEL}"를 선택하세요.`,
+            `2. 창이 안 뜨면 주소창 오른쪽 설치 아이콘 또는 메뉴의 "${window.getInstallButtonLabel()}"를 선택하세요.`,
             '3. 메뉴 이름이 짧게 "앱 설치"로 보일 수도 있어요.'
         ].join('\n');
     }
@@ -189,7 +200,7 @@ function getManualInstallInstructions() {
     return [
         '설치 방법',
         '',
-        `브라우저 메뉴에서 "${INSTALL_BUTTON_LABEL}" 또는 "앱 설치"를 찾아 실행해주세요.`
+        `브라우저 메뉴에서 "${window.getInstallButtonLabel()}" 또는 "앱 설치"를 찾아 실행해주세요.`
     ].join('\n');
 }
 
@@ -201,15 +212,15 @@ function getInstallCopy() {
     if (deferredInstallPrompt) {
         return {
             visible: true,
-            buttonLabel: INSTALL_BUTTON_LABEL,
-            helperText: INSTALL_READY_HELPER_TEXT
+            buttonLabel: window.getInstallButtonLabel(),
+            helperText: window.getInstallHelperText()
         };
     }
 
     if (isIOSInstallDevice()) {
         return {
             visible: true,
-            buttonLabel: INSTALL_BUTTON_LABEL,
+            buttonLabel: window.getInstallButtonLabel(),
             helperText: isSafariBrowser()
                 ? '홈 화면 앱으로 설치하면 바로 열 수 있어요.'
                 : 'Safari로 열면 설치할 수 있어요.'
@@ -219,7 +230,7 @@ function getInstallCopy() {
     if (isLikelyInstallWebView()) {
         return {
             visible: true,
-            buttonLabel: INSTALL_BUTTON_LABEL,
+            buttonLabel: window.getInstallButtonLabel(),
             helperText: '기본 브라우저로 열면 설치할 수 있어요.'
         };
     }
@@ -227,15 +238,15 @@ function getInstallCopy() {
     if (isSamsungInternetBrowser()) {
         return {
             visible: true,
-            buttonLabel: INSTALL_BUTTON_LABEL,
+            buttonLabel: window.getInstallButtonLabel(),
             helperText: '삼성 인터넷은 메뉴에서 설치해야 해요.'
         };
     }
 
     return {
         visible: true,
-        buttonLabel: INSTALL_BUTTON_LABEL,
-        helperText: INSTALL_READY_HELPER_TEXT
+        buttonLabel: window.getInstallButtonLabel(),
+        helperText: window.getInstallHelperText()
     };
 }
 
@@ -390,7 +401,7 @@ function showSamsungInstallFallback() {
 
     [
         '브라우저 메뉴를 열어주세요.',
-        `주소창 설치 아이콘이 없으면 "${INSTALL_BUTTON_LABEL}" 또는 "현재 페이지 추가"를 선택해주세요.`,
+        `주소창 설치 아이콘이 없으면 "${window.getInstallButtonLabel()}" 또는 "현재 페이지 추가"를 선택해주세요.`,
         '설치 메뉴가 보이지 않으면 Chrome에서 열어 설치를 시도해주세요.'
     ].forEach((text) => {
         const item = document.createElement('li');

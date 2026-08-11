@@ -2162,7 +2162,7 @@ function getPushPermissionUiState(user = auth.currentUser) {
         return {
             status: 'iPhone과 iPad에서는 홈 화면 앱으로 설치한 뒤 알림을 켤 수 있어요.',
             helper: '먼저 해빛스쿨을 홈 화면 앱으로 설치한 뒤, 설치된 앱에서 이 버튼을 눌러 알림을 켜주세요.',
-            buttonLabel: '홈 화면에 앱 설치',
+            buttonLabel: window.getInstallButtonLabel?.() || '홈 화면에 앱 설치',
             buttonMode: 'secondary',
             disabled: false,
             action: 'install'

@@ -1834,7 +1834,7 @@ function applyDashboardInstallCta() {
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '홈 화면에 앱 설치';
+    saveBtn.innerText = installState.buttonLabel || window.getInstallButtonLabel?.() || '홈 화면에 앱 설치';
     return true;
 }
 
@@ -1867,7 +1867,7 @@ function applySimpleProfileInstallCta() {
     saveBtn.classList.add('install-mode');
     saveBtn.dataset.mode = 'install';
     saveBtn.disabled = false;
-    saveBtn.innerText = installState.buttonLabel || '홈 화면에 앱 설치';
+    saveBtn.innerText = installState.buttonLabel || window.getInstallButtonLabel?.() || '홈 화면에 앱 설치';
     return true;
 }
 

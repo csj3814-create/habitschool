@@ -15,10 +15,17 @@ describe('PWA-only pivot guardrails', () => {
         const appSource = readAppSource();
         const pwaInstallSource = readRepoFile('js/pwa-install.js');
 
-        expect(pwaInstallSource).toContain("const INSTALL_BUTTON_LABEL = '홈 화면에 앱 설치';");
-        expect(pwaInstallSource).toContain('buttonLabel: INSTALL_BUTTON_LABEL');
-        expect(appSource).toContain("installState.buttonLabel || '홈 화면에 앱 설치'");
+        // 문구는 그대로 'PWA 설치'다. 다만 영어 앱에서 이 버튼만 한국어로 남아 있어,
+        // 상수를 로케일을 보는 함수로 바꿨다(자바스크립트가 그리는 자리라 data-i18n이 닿지 않는다).
+        expect(pwaInstallSource).toContain("window.getInstallButtonLabel = function ()");
+        expect(pwaInstallSource).toContain("'홈 화면에 앱 설치'");
+        expect(pwaInstallSource).toContain("'Add to home screen'");
+        expect(pwaInstallSource).toContain('buttonLabel: window.getInstallButtonLabel()');
+        expect(appSource).toContain("installState.buttonLabel || window.getInstallButtonLabel?.() || '홈 화면에 앱 설치'");
+        // 네이티브 앱 문구로 돌아가지 않는다.
         expect(pwaInstallSource).not.toContain("buttonLabel: '해빛스쿨 앱 설치'");
+        // pwa-install.js 는 일반 스크립트로 로드된다. export 를 쓰면 그 자리에서 깨진다.
+        expect(pwaInstallSource).not.toMatch(/^export /m);
     });
 
     it('stops exposing direct APK hosting paths from firebase hosting config', () => {
