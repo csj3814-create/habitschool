@@ -873,7 +873,44 @@
                 <img id="invite-landing-card" class="invite-landing-card" alt="초대한 친구가 공유한 기록 카드" hidden>
                 <p class="invite-landing-desc" data-i18n="invite.landingDesc">시작하면 친구와 이어지고 <strong>200P</strong>를 받아요. 가입 없이 둘러봐도 됩니다.</p>
             </div>
-            <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인">
+            <!--
+              개인정보 보호법은 "로그인하면 동의한 것으로 본다"를 동의로 인정하지 않는다.
+              필수와 선택을 나누고, 건강정보는 제23조 민감정보라 별도로 받아야 한다.
+              선택을 거부해도 나머지 서비스는 그대로 쓸 수 있어야 한다.
+            -->
+            <div class="consent-box" id="signup-consent-box">
+                <label class="consent-row">
+                    <input type="checkbox" id="consent-all">
+                    <span class="consent-text consent-all-text">전체 동의</span>
+                </label>
+                <div class="consent-divider"></div>
+                <label class="consent-row">
+                    <input type="checkbox" id="consent-terms" data-consent-required="true">
+                    <span class="consent-text">
+                        <span class="consent-tag required">필수</span>
+                        <a href="/terms.html" target="_blank" rel="noopener">이용약관</a>에 동의합니다
+                    </span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="consent-privacy" data-consent-required="true">
+                    <span class="consent-text">
+                        <span class="consent-tag required">필수</span>
+                        <a href="/privacy.html" target="_blank" rel="noopener">개인정보 수집·이용</a>에 동의합니다
+                    </span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="consent-sensitive">
+                    <span class="consent-text">
+                        <span class="consent-tag optional">선택</span>
+                        건강정보(혈액검사·체성분) 수집·이용에 동의합니다
+                    </span>
+                </label>
+                <p class="consent-note">
+                    선택 항목에 동의하지 않아도 가입과 대부분의 기능을 이용할 수 있어요.
+                    동의하지 않으면 혈액검사 판독과 체성분 기록 기능만 사용할 수 없습니다.
+                </p>
+            </div>
+            <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인" disabled>
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">
                     <path fill="#FFC107"
                         d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -925,7 +962,7 @@
                 <span style="font-size:11px; color:#ddd;"> | </span>
                 <a href="/privacy.html" target="_blank" rel="noopener" style="font-size:11px; color:#aaa; text-decoration:none;">🔒 개인정보처리방침</a>
             </div>
-            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">로그인 시 <a href="/terms.html" target="_blank" style="color:#bbb;">이용약관</a> 및 <a href="/privacy.html" target="_blank" style="color:#bbb;">개인정보처리방침</a>에 동의하는 것으로 간주합니다.</p>
+            <p style="font-size:10px; color:#ccc; margin-top:8px; line-height:1.4;">동의 내역은 가입 시각과 함께 기록되며, 언제든지 프로필에서 철회할 수 있습니다.</p>
         </div>
 
         <div id="main-app">
@@ -1209,7 +1246,7 @@
                 <div id="metabolic-score-container" style="display:none;"></div>
 
                 <!-- 1. 나의 기초 대사 프로필 (인바디) -->
-                <div class="card metrics-card">
+                <div class="card metrics-card" data-sensitive-card="체성분">
                     <h3>🧬 나의 기초 대사 프로필 (인바디)
                         <span id="prof-last-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
@@ -1254,7 +1291,7 @@
                 </div>
 
                 <!-- 3. 현재 복용 중인 약물 -->
-                <div class="card">
+                <div class="card" data-sensitive-card="복용 약물">
                     <h3>💊 현재 복용 중인 약물</h3>
                     <div
                         style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; font-size: 14px;">
@@ -1269,7 +1306,7 @@
                 </div>
 
                 <!-- 4. 혈액검사 결과지 업로드 -->
-                <div class="card card-blood-test" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
+                <div class="card card-blood-test" data-sensitive-card="혈액검사" style="border:2px solid #E53935; background:linear-gradient(to right, #FFF5F5, #FFEBEE);">
                     <h3 style="color:#C62828;">🩸 혈액검사 결과지 분석
                         <span id="blood-test-date" style="font-size:12px; font-weight:400; color:#888;"></span>
                     </h3>
@@ -2891,6 +2928,56 @@
     </div>
 
     <!-- ===== 기존 앱 지갑 내보내기 모달 ===== -->
+    <!--
+      계정을 지우면 앱 지갑의 개인키(users/{uid}에 암호화 보관)도 함께 사라진다.
+      체인 위의 HBT는 그대로 남지만 서명할 키가 없어 영영 꺼낼 수 없다.
+      되돌릴 수 없는 손실이므로 잔액을 눈앞에 보여주고, 먼저 내보낼 길을 안내한다.
+    -->
+    <div id="delete-account-modal" class="wallet-modal-overlay" style="display:none;" onclick="if(event.target===this)closeDeleteAccountModal()">
+        <div class="wallet-modal">
+            <div class="wallet-modal-title">🗑️ 계정을 삭제하기 전에</div>
+            <div class="wallet-modal-body">
+                <div class="delete-token-warning" id="delete-token-warning">
+                    <div class="delete-token-warning-head">⚠️ 보유하신 HBT 토큰에 다시는 접근할 수 없습니다</div>
+                    <div class="wallet-modal-summary">
+                        <div class="wallet-modal-row">
+                            <span>앱 지갑 주소</span>
+                            <strong id="delete-wallet-address">확인 중…</strong>
+                        </div>
+                        <div class="wallet-modal-row">
+                            <span>보유 HBT</span>
+                            <strong id="delete-wallet-balance">확인 중…</strong>
+                        </div>
+                    </div>
+                    <p class="delete-token-desc">
+                        앱 지갑의 개인키는 회원 정보와 함께 저장돼 있어, 계정을 지우면 같이 사라집니다.
+                        토큰은 블록체인에 그대로 남지만 <strong>서명할 키가 없어 꺼낼 수 없습니다.</strong>
+                        같은 이메일로 다시 가입해도 새 지갑이 만들어지므로 복구되지 않습니다.
+                    </p>
+                    <button type="button" class="wallet-modal-btn confirm" id="delete-export-key-btn"
+                        onclick="exportWalletBeforeDelete()">🔐 먼저 개인키 내보내기</button>
+                    <p class="delete-token-desc" style="margin-top:8px;">
+                        내보낸 개인키를 외부 지갑에 등록하면 탈퇴 후에도 토큰을 계속 쓸 수 있습니다.
+                    </p>
+                </div>
+
+                <label class="consent-row" style="margin-top:14px;">
+                    <input type="checkbox" id="delete-ack-tokens">
+                    <span class="consent-text">토큰에 다시 접근할 수 없게 된다는 점을 이해했습니다</span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="delete-ack-data">
+                    <span class="consent-text">기록·사진·건강정보가 영구 삭제되며 복구할 수 없음을 이해했습니다</span>
+                </label>
+            </div>
+            <div class="wallet-modal-actions">
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeDeleteAccountModal()">취소</button>
+                <button type="button" class="wallet-modal-btn confirm delete-confirm-btn" id="delete-confirm-btn" disabled
+                    onclick="confirmDeleteAccount()">영구 삭제</button>
+            </div>
+        </div>
+    </div>
+
     <div id="legacy-wallet-export-modal" class="wallet-modal-overlay" style="display:none;" onclick="if(event.target===this)closeLegacyWalletExportModal()">
         <div class="wallet-modal legacy-wallet-modal">
             <div class="wallet-modal-title">🔐 기존 앱 지갑 내보내기</div>

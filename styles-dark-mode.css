@@ -1272,3 +1272,34 @@ body.dark-mode .diet-analysis-card div[style*="font-size:13px"] { color: #C0BCC6
     .record-flow-card p {
         font-size: 9px;
     }
+
+/* 가입 동의 박스 */
+body.dark-mode .consent-box {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #5C4A2E;
+}
+body.dark-mode .consent-text { color: #D8D4DC; }
+body.dark-mode .consent-all-text { color: #FFF0D4; }
+body.dark-mode .consent-divider { background: #4A3C28; }
+body.dark-mode .consent-note { color: #A09AAA; }
+body.dark-mode .consent-text a { color: #FFB74D; }
+body.dark-mode .consent-tag.required { background: #4A3210; color: #FFCC80; }
+body.dark-mode .consent-tag.optional { background: #22331F; color: #A5D6A7; }
+
+/* 계정 삭제 전 토큰 고지 */
+body.dark-mode .delete-token-warning {
+    background: rgba(198, 40, 40, 0.12);
+    border-color: #5C2E2E;
+}
+body.dark-mode .delete-token-warning-head { color: #EF9A9A; }
+body.dark-mode .delete-token-desc { color: #C0BCC6; }
+body.dark-mode .delete-token-desc strong { color: #EF9A9A; }
+
+/* 민감정보 동의 게이트 */
+body.dark-mode .sensitive-gate {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: #5C4A2E;
+}
+body.dark-mode .sensitive-gate-title { color: #FFD28D; }
+body.dark-mode .sensitive-gate-desc { color: #C0BCC6; }
+body.dark-mode .sensitive-revoke-btn { color: #9C9086; }

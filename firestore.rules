@@ -220,7 +220,7 @@ service cloud.firestore {
                     'programPreferences', 'rewardRecipientPhone',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
-                    'chatbotConnectLastKakaoDisplayName']);
+                    'chatbotConnectLastKakaoDisplayName', 'consents']);
     }
 
     function isAllowedUserCreate() {
@@ -236,7 +236,7 @@ service cloud.firestore {
         'onboardingComplete', 'friends', 'programPreferences', 'rewardRecipientPhone',
         'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
         'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
-        'chatbotConnectLastKakaoDisplayName'
+        'chatbotConnectLastKakaoDisplayName', 'consents'
       ]);
     }
     

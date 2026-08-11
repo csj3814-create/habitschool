@@ -14062,6 +14062,12 @@ window.hideFeedback = function () {
 window.saveHealthProfile = async function () {
     const user = auth.currentUser;
     if (!user) return;
+    // 화면을 가리는 것만으로는 동의를 지킨 것이 아니다. 저장 직전에 다시 본다.
+    if (!window.hasSensitiveDataConsent?.()) {
+        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        window.applySensitiveConsentGate?.();
+        return;
+    }
     const smm = document.getElementById('prof-smm').value;
     const fat = document.getElementById('prof-fat').value;
     const visceral = document.getElementById('prof-visceral').value;
@@ -14221,6 +14227,14 @@ async function uploadBloodTestPhoto(inputEl) {
 
     const user = auth.currentUser;
     if (!user) { showToast('⚠️ 로그인이 필요합니다.'); return; }
+
+    // 혈액검사 결과지는 민감정보다. 업로드도 AI 판독도 동의 없이는 시작하지 않는다.
+    if (!window.hasSensitiveDataConsent?.()) {
+        showToast('건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요.');
+        inputEl.value = '';
+        window.applySensitiveConsentGate?.();
+        return;
+    }
 
     if (!isValidFileType(file, ['image/jpeg', 'image/png', 'image/webp', 'image/heic'])) {
         showToast('⚠️ 이미지 파일만 업로드할 수 있습니다.');

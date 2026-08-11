@@ -1,7 +1,7 @@
 // 인증 관리 모듈
 import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=301';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, deleteUser, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { doc, getDoc, getDocFromServer, setDoc, collection, query, where, getDocs, deleteDoc, deleteField, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { showToast } from './ui-helpers.js?v=301';
 import { getDatesInfo } from './ui-helpers.js?v=301';
@@ -250,11 +250,13 @@ function setGoogleLoginPendingUi(loginBtn, isPending) {
         return;
     }
 
-    loginBtn.disabled = false;
     loginBtn.removeAttribute('aria-busy');
     if (loginBtn.dataset.originalHtml) {
         loginBtn.innerHTML = loginBtn.dataset.originalHtml;
     }
+    // 대기 상태가 풀렸다고 무조건 열면 안 된다. 필수 동의를 안 했으면 잠긴 채로
+    // 둬야 하므로, 열고 닫는 판단은 동의 상태에 맡긴다.
+    syncSignupConsentState();
 }
 
 function clearPendingGoogleLoginResetTimer() {
@@ -1291,7 +1293,12 @@ export function setupAuthListener(callbacks) {
                     displayName: user.displayName || '사용자',
                     locale: getLocale()
                 };
-                if (isNewUser) updateData.createdAt = serverTimestamp();
+                if (isNewUser) {
+                    updateData.createdAt = serverTimestamp();
+                    // 동의는 받은 사실만으로는 증명이 안 된다. 무엇에, 언제,
+                    // 어느 문서 버전에 동의했는지 남겨야 나중에 확인할 수 있다.
+                    updateData.consents = buildSignupConsentRecord();
+                }
                 await setDoc(userRef, updateData, { merge: true }).catch(() => {});
                 const ud = {
                     ...resolvedUserData,
@@ -1317,6 +1324,12 @@ export function setupAuthListener(callbacks) {
                         syncCurrentPushState(user).catch(() => {});
                     }, 400);
                 }
+
+                // 건강정보(민감정보) 동의 상태를 화면에 반영한다.
+                // 기존 가입자는 consents가 아예 없으므로 동의하지 않은 것으로 본다 —
+                // 받은 적 없는 동의를 있다고 보면 안 된다.
+                window._sensitiveConsentAgreed = ud?.consents?.sensitive?.agreed === true;
+                window.applySensitiveConsentGate?.();
 
                 await applySignedInUserUi(user, ud);
                 updateEnglishProfilePanel(user, ud);
@@ -1422,6 +1435,233 @@ window.logoutAndReset = async function () {
 };
 
 // 계정 삭제(Firestore 데이터 + Storage 파일 + Auth 계정)
+// 동의 문서가 실질적으로 바뀌면 이 값을 올린다. 그래야 어느 판본에 동의했는지
+// 구분되고, 재동의를 받아야 하는 이용자를 골라낼 수 있다.
+const CONSENT_DOC_VERSION = '2026-08-09';
+
+function readConsentCheckbox(id) {
+    return document.getElementById(id)?.checked === true;
+}
+
+function buildSignupConsentRecord() {
+    const at = new Date().toISOString();
+    const entry = (agreed) => ({ agreed, at: agreed ? at : null, version: CONSENT_DOC_VERSION });
+    return {
+        terms: entry(readConsentCheckbox('consent-terms')),
+        privacy: entry(readConsentCheckbox('consent-privacy')),
+        // 건강정보는 개인정보 보호법 제23조 민감정보라 따로 받는다.
+        sensitive: entry(readConsentCheckbox('consent-sensitive'))
+    };
+}
+
+// 필수 항목을 다 체크해야 로그인 버튼이 열린다.
+function syncSignupConsentState() {
+    const box = document.getElementById('signup-consent-box');
+    if (!box) return;
+    const required = [...box.querySelectorAll('input[data-consent-required="true"]')];
+    const all = [...box.querySelectorAll('input[type="checkbox"]')].filter(el => el.id !== 'consent-all');
+    const allBox = document.getElementById('consent-all');
+    const loginBtn = document.getElementById('loginBtn');
+
+    if (allBox) allBox.checked = all.length > 0 && all.every(el => el.checked);
+    const ready = required.every(el => el.checked);
+    if (loginBtn) {
+        loginBtn.disabled = !ready;
+        loginBtn.title = ready ? '' : '필수 항목에 동의해야 시작할 수 있어요.';
+    }
+}
+
+function bindSignupConsentListeners() {
+    const box = document.getElementById('signup-consent-box');
+    if (!box || box.dataset.consentBound === 'true') return;
+    box.dataset.consentBound = 'true';
+
+    const allBox = document.getElementById('consent-all');
+    if (allBox) {
+        allBox.addEventListener('change', () => {
+            box.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id !== 'consent-all') el.checked = allBox.checked;
+            });
+            syncSignupConsentState();
+        });
+    }
+    box.querySelectorAll('input[type="checkbox"]').forEach(el => {
+        if (el.id === 'consent-all') return;
+        el.addEventListener('change', syncSignupConsentState);
+    });
+    syncSignupConsentState();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindSignupConsentListeners);
+} else {
+    bindSignupConsentListeners();
+}
+
+// 건강정보 동의 상태. 화면 여러 곳에서 봐야 해서 전역에 둔다.
+window._sensitiveConsentAgreed = false;
+
+window.hasSensitiveDataConsent = function () {
+    return window._sensitiveConsentAgreed === true;
+};
+
+function buildSensitiveGateElement(label) {
+    const gate = document.createElement('div');
+    gate.className = 'sensitive-gate';
+    gate.innerHTML = `
+        <div class="sensitive-gate-title">🔒 건강정보 동의가 필요해요</div>
+        <div class="sensitive-gate-desc">
+            ${escapeHtml(label)} 정보는 개인정보 보호법상 <strong>민감정보</strong>라
+            따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
+            동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
+        </div>
+        <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
+    `;
+    return gate;
+}
+
+function buildSensitiveRevokeRow() {
+    const row = document.createElement('div');
+    row.className = 'sensitive-revoke-row';
+    row.innerHTML = '<button type="button" class="sensitive-revoke-btn" onclick="revokeSensitiveConsent()">건강정보 동의 철회</button>';
+    return row;
+}
+
+/**
+ * 동의가 없으면 건강정보 카드의 입력 수단을 감추고 안내로 바꾼다.
+ * 동의를 받았으면 철회 버튼을 붙여 언제든 되돌릴 수 있게 한다.
+ */
+window.applySensitiveConsentGate = function () {
+    const agreed = window.hasSensitiveDataConsent();
+    document.querySelectorAll('[data-sensitive-card]').forEach((card) => {
+        const label = card.getAttribute('data-sensitive-card') || '건강';
+        let gate = card.querySelector(':scope > .sensitive-gate');
+        if (!gate) {
+            gate = buildSensitiveGateElement(label);
+            card.appendChild(gate);
+        }
+        let revoke = card.querySelector(':scope > .sensitive-revoke-row');
+        if (!revoke) {
+            revoke = buildSensitiveRevokeRow();
+            card.appendChild(revoke);
+        }
+        card.classList.toggle('is-locked', !agreed);
+        gate.hidden = agreed;
+        revoke.hidden = !agreed;
+    });
+};
+
+async function writeSensitiveConsent(agreed) {
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('로그인이 필요합니다.');
+        return false;
+    }
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            consents: {
+                sensitive: {
+                    agreed,
+                    at: agreed ? new Date().toISOString() : null,
+                    version: CONSENT_DOC_VERSION
+                }
+            }
+        }, { merge: true });
+        window._sensitiveConsentAgreed = agreed;
+        window.applySensitiveConsentGate();
+        return true;
+    } catch (error) {
+        console.error('건강정보 동의 저장 실패:', error);
+        showToast('동의 상태를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        return false;
+    }
+}
+
+window.grantSensitiveConsent = async function () {
+    const ok = await writeSensitiveConsent(true);
+    if (ok) showToast('건강정보 기능을 사용할 수 있어요.');
+};
+
+window.revokeSensitiveConsent = async function () {
+    if (!confirm('건강정보 동의를 철회하시겠습니까?\n\n체성분·약물·혈액검사 기능을 더 이상 사용할 수 없게 됩니다.\n이미 저장된 기록은 프로필에서 따로 삭제할 수 있습니다.')) {
+        return;
+    }
+    const ok = await writeSensitiveConsent(false);
+    if (ok) showToast('건강정보 동의를 철회했어요.');
+};
+
+window.closeDeleteAccountModal = function () {
+    const modal = document.getElementById('delete-account-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+// 개인키를 먼저 빼두면 탈퇴 후에도 토큰을 계속 쓸 수 있다.
+// 지갑 화면의 기존 내보내기 모달을 그대로 연다.
+window.exportWalletBeforeDelete = function () {
+    if (typeof window.openLegacyWalletExportModal !== 'function') {
+        showToast('지갑 탭에서 개인키를 먼저 내보내 주세요.');
+        return;
+    }
+    window.closeDeleteAccountModal();
+    window.openLegacyWalletExportModal();
+};
+
+function syncDeleteAckState() {
+    const tokens = document.getElementById('delete-ack-tokens');
+    const data = document.getElementById('delete-ack-data');
+    const btn = document.getElementById('delete-confirm-btn');
+    if (!btn) return;
+    // 지갑이 없으면 토큰 확인란은 뜻이 없으므로 데이터 확인만 요구한다.
+    const tokenOk = !tokens || tokens.disabled || tokens.checked;
+    btn.disabled = !(tokenOk && data?.checked);
+}
+
+/**
+ * 삭제 전에 지갑 주소와 잔액을 보여 준다.
+ * 숫자를 눈으로 봐야 무엇을 잃는지 실감할 수 있다.
+ */
+async function fillDeleteWalletSummary() {
+    const addressEl = document.getElementById('delete-wallet-address');
+    const balanceEl = document.getElementById('delete-wallet-balance');
+    const warningEl = document.getElementById('delete-token-warning');
+    const tokensAck = document.getElementById('delete-ack-tokens');
+
+    let address = '';
+    try {
+        address = window.getWalletAddress?.() || '';
+    } catch (_) { }
+
+    if (!address) {
+        // 지갑이 없으면 잃을 토큰도 없다. 겁줄 이유가 없으므로 경고를 감춘다.
+        if (warningEl) warningEl.style.display = 'none';
+        if (tokensAck) {
+            tokensAck.checked = true;
+            tokensAck.disabled = true;
+            tokensAck.closest('.consent-row')?.style.setProperty('display', 'none');
+        }
+        syncDeleteAckState();
+        return;
+    }
+
+    if (warningEl) warningEl.style.display = 'block';
+    if (addressEl) addressEl.textContent = `${address.slice(0, 6)}…${address.slice(-4)}`;
+
+    if (balanceEl) {
+        balanceEl.textContent = '확인 중…';
+        try {
+            const balance = await window.fetchOnchainBalance?.();
+            const amount = parseFloat(balance?.balanceFormatted);
+            balanceEl.textContent = Number.isFinite(amount)
+                ? `${amount.toLocaleString()} HBT`
+                : '조회 실패 (잔액이 있을 수 있음)';
+        } catch (_) {
+            // 잔액을 못 읽어도 삭제를 막지는 않는다. 다만 모른다고 말한다.
+            balanceEl.textContent = '조회 실패 (잔액이 있을 수 있음)';
+        }
+    }
+    syncDeleteAckState();
+}
+
 window.deleteAccountAndData = async function () {
     const user = auth.currentUser;
     if (!user) {
@@ -1429,12 +1669,33 @@ window.deleteAccountAndData = async function () {
         return;
     }
 
-    if (!confirm('정말로 계정을 삭제하시겠습니까?\n\n모든 데이터(식단, 운동, 수면 기록, 사진, 건강 프로필 등)가 영구 삭제되며 복구할 수 없습니다.')) {
+    const modal = document.getElementById('delete-account-modal');
+    if (!modal) {
+        showToast('삭제 화면을 열지 못했어요. 새로고침 후 다시 시도해 주세요.');
         return;
     }
-    if (!confirm('마지막 확인입니다.\n\n삭제된 데이터는 절대 복구할 수 없습니다.\n정말 삭제하시겠습니까?')) {
+
+    ['delete-ack-tokens', 'delete-ack-data'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.checked = false; el.disabled = false; }
+        el?.closest('.consent-row')?.style.removeProperty('display');
+        if (el && !el.dataset.deleteAckBound) {
+            el.dataset.deleteAckBound = 'true';
+            el.addEventListener('change', syncDeleteAckState);
+        }
+    });
+    syncDeleteAckState();
+    modal.style.display = 'flex';
+    fillDeleteWalletSummary().catch(() => { });
+};
+
+window.confirmDeleteAccount = async function () {
+    const user = auth.currentUser;
+    if (!user) {
+        showToast('로그인이 필요합니다.');
         return;
     }
+    window.closeDeleteAccountModal();
 
     const deleteBtn = document.getElementById('delete-account-btn');
     if (deleteBtn) {
@@ -1443,90 +1704,22 @@ window.deleteAccountAndData = async function () {
     }
 
     try {
-        const uid = user.uid;
+        // 삭제는 서버가 한다. 클라이언트로는 애초에 끝낼 수 없는 일이었다 —
+        // 웹 SDK에는 Storage 폴더 삭제가 없어 사진이 한 장도 지워지지 않았고,
+        // 남의 게시물에 남긴 내 댓글·반응은 보안 규칙상 손댈 수 없다.
+        const deleteMyAccountFn = httpsCallable(functions, 'deleteMyAccount');
+        const result = await deleteMyAccountFn({});
+        console.info('[deleteAccount] 서버 처리 결과:', result?.data);
 
-        // 1. daily_logs 삭제(userId 기반)
-        const logsQuery = query(collection(db, 'daily_logs'), where('userId', '==', uid));
-        const logsSnap = await getDocs(logsQuery);
-        const batch1 = writeBatch(db);
-        let count = 0;
-        for (const docSnap of logsSnap.docs) {
-            batch1.delete(docSnap.ref);
-            count++;
-            if (count >= 500) break; // Firestore batch limit
-        }
-        if (count > 0) await batch1.commit();
+        // 서버가 인증 계정까지 지운다. 토큰이 이미 죽었으므로 signOut은 실패해도 넘어간다.
+        try { await signOut(auth); } catch (_) { }
 
-        // 남은 문서가 있으면 추가 삭제
-        if (logsSnap.docs.length > 500) {
-            const batch2 = writeBatch(db);
-            for (let i = 500; i < logsSnap.docs.length; i++) {
-                batch2.delete(logsSnap.docs[i].ref);
-            }
-            await batch2.commit();
-        }
-
-        // 2. users/{uid}/inbodyHistory 서브컬렉션 삭제
-        const inbodySnap = await getDocs(collection(db, 'users', uid, 'inbodyHistory'));
-        if (!inbodySnap.empty) {
-            const batchInbody = writeBatch(db);
-            inbodySnap.docs.forEach(d => batchInbody.delete(d.ref));
-            await batchInbody.commit();
-        }
-
-        // 3. users/{uid}/bloodTests 서브컬렉션 삭제
-        const bloodSnap = await getDocs(collection(db, 'users', uid, 'bloodTests'));
-        if (!bloodSnap.empty) {
-            const batchBlood = writeBatch(db);
-            bloodSnap.docs.forEach(d => batchBlood.delete(d.ref));
-            await batchBlood.commit();
-        }
-
-        // 4. users/{uid}/pushTokens 서브컬렉션 삭제
-        const pushTokenSnap = await getDocs(collection(db, 'users', uid, PUSH_TOKEN_SUBCOLLECTION));
-        if (!pushTokenSnap.empty) {
-            const batchPushTokens = writeBatch(db);
-            pushTokenSnap.docs.forEach(d => batchPushTokens.delete(d.ref));
-            await batchPushTokens.commit();
-        }
-
-        // 5. users/{uid} 메인 문서 삭제
-        await deleteDoc(doc(db, 'users', uid));
-
-        // 6. Storage 파일 삭제(Firebase Storage 클라이언트에서 폴더 삭제 불가, 개별 삭제 시도)
-        try {
-            const { storage } = await import('./firebase-config.js');
-            const { ref, listAll, deleteObject } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
-            const userStorageRef = ref(storage, `uploads/${uid}`);
-            const fileList = await listAll(userStorageRef);
-            await Promise.all(fileList.items.map(item => deleteObject(item)));
-        } catch (storageErr) {
-            console.warn('Storage 파일 삭제 일부 실패 (계속 진행):', storageErr.message);
-        }
-
-        // 7. Firebase Auth 계정 삭제(재인증이 필요할 수 있음)
-        try {
-            await deleteUser(user);
-        } catch (authErr) {
-            if (authErr.code === 'auth/requires-recent-login') {
-                showToast('보안을 위해 다시 로그인해주세요.');
-                const provider = new GoogleAuthProvider();
-                await reauthenticateWithPopup(user, provider);
-                await deleteUser(user);
-            } else {
-                throw authErr;
-            }
-        }
-
-        // 로컬 데이터 정리
         localStorage.clear();
-
         showToast('계정이 완전히 삭제되었습니다.');
         setTimeout(() => location.reload(), 1500);
-
     } catch (err) {
         console.error('계정 삭제 오류:', err);
-        showToast('계정 삭제 중 오류가 발생했습니다: ' + err.message);
+        showToast('계정 삭제 중 오류가 발생했습니다: ' + (err?.message || err));
         if (deleteBtn) {
             deleteBtn.disabled = false;
             deleteBtn.textContent = '계정 삭제';
