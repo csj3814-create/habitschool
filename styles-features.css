@@ -6489,6 +6489,8 @@ body.gallery-user-filtered #weekly-best-container {
 /* ===== 가입 동의 (개인정보 보호법 제22조·제23조) ===== */
 .consent-box {
     width: min(100%, 340px);
+    /* 패딩이 폭에 더해지면 시작 버튼보다 넓어져 어긋나 보인다. */
+    box-sizing: border-box;
     margin: 0 auto 14px;
     padding: 14px 16px;
     background: rgba(255, 255, 255, 0.9);
@@ -6694,47 +6696,107 @@ body.gallery-user-filtered #weekly-best-container {
 
 .legacy-wallet-qr-desc strong { color: #C62828; }
 
-/* ===== 로그인 화면: 휴대폰에서 스크롤 줄이기 =====
+/* ===== 로그인 화면: 휴대폰 한 화면에 담기 =====
    동의 체크박스가 들어오면서 세로가 길어졌다. 문구를 지우는 대신 여백을 조인다.
-   의료 면책 고지는 구글플레이 건강 앱 정책상 문구를 줄일 수 없어 여백만 줄인다. */
-@media (max-width: 480px) {
+   브라우저 주소창이 차지하는 만큼 실제 뷰포트는 더 짧으므로 넉넉히 줄인다.
+   의료 면책 고지는 구글플레이 건강 앱 정책상 문구를 줄일 수 없어 여백만 줄인다.
+   기준을 600px로 잡은 이유: 안드로이드 기기는 CSS 폭이 412~480px로 제각각이라
+   480px에 맞추면 일부 기기에서 규칙이 아예 안 걸린다. */
+@media (max-width: 600px) {
+    #login-modal {
+        padding: 14px 16px;
+    }
+
     #login-modal > img {
-        width: 60px !important;
-        height: 60px !important;
-        margin-bottom: 6px !important;
+        width: 48px !important;
+        height: 48px !important;
+        margin-bottom: 4px !important;
     }
 
     #login-modal .login-title {
-        margin-bottom: 6px;
+        font-size: 24px;
+        margin-bottom: 4px;
     }
 
+    /* 소개 문구 3줄은 브랜드 메시지라 지우지 않고 작게 줄인다. */
     #login-modal > p:not(.medical-disclaimer):not(.consent-note) {
-        margin-bottom: 18px !important;
-        font-size: 14px !important;
-        line-height: 1.5 !important;
+        margin-bottom: 14px !important;
+        font-size: 13px !important;
+        line-height: 1.45 !important;
     }
 
+    /* 좌우도 좁힌다. 시작 버튼과 폭을 맞추면 화면이 한결 정돈돼 보인다. */
     .consent-box {
-        padding: 12px 13px;
-        margin-bottom: 12px;
+        width: min(100%, 300px);
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        border-radius: 12px;
     }
 
-    .consent-row { padding: 5px 0; }
-    .consent-text { font-size: 12.5px; }
-    .consent-note { font-size: 11px; margin-top: 6px; }
+    .consent-row { padding: 3px 0; gap: 7px; }
+    .consent-row input[type="checkbox"] { width: 16px; height: 16px; }
+    .consent-text { font-size: 12px; line-height: 1.4; }
+    .consent-all-text { font-size: 13px; }
+    .consent-divider { margin: 4px 0; }
+    .consent-tag { font-size: 10px; padding: 0 5px; margin-right: 4px; }
+    .consent-note { font-size: 10.5px; line-height: 1.45; margin-top: 5px; }
+
+    #login-modal .google-btn {
+        margin-top: 4px;
+        padding: 12px 24px;
+        width: min(100%, 300px);
+    }
 
     #login-modal .medical-disclaimer {
-        margin-top: 14px !important;
-        font-size: 11px !important;
-        line-height: 1.5 !important;
+        margin-top: 10px !important;
+        font-size: 10.5px !important;
+        line-height: 1.45 !important;
     }
 
-    .version-switcher { margin-top: 12px; }
+    .version-switcher { margin-top: 10px; }
+    .guest-demo-entry-btn { margin-top: 10px; }
 }
 
 /* 지갑 내보내기 모달도 휴대폰에서 한 화면에 가깝게 */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
     .legacy-wallet-qr-canvas { padding: 8px; }
     .legacy-wallet-qr-box { padding: 10px; margin-top: 10px; }
     .legacy-wallet-qr-desc { margin-top: 8px; }
+}
+
+/* 세로가 짧은 기기(아이폰 SE, 주소창까지 뜬 갤럭시 S 등).
+   기능을 감추는 대신 한 단계 더 조인다 — 버튼을 숨기면 그 기능을 쓸 길이 없어진다. */
+@media (max-width: 600px) and (max-height: 660px) {
+    #login-modal { padding: 10px 16px; }
+
+    #login-modal > img {
+        width: 40px !important;
+        height: 40px !important;
+        margin-bottom: 2px !important;
+    }
+
+    #login-modal .login-title { font-size: 21px; margin-bottom: 2px; }
+
+    #login-modal > p:not(.medical-disclaimer):not(.consent-note) {
+        margin-bottom: 10px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+    }
+
+    .consent-box { padding: 8px 11px; margin-bottom: 8px; }
+    .consent-row { padding: 2px 0; }
+    .consent-text { font-size: 11.5px; }
+    .consent-note { font-size: 10px; margin-top: 4px; }
+
+    #login-modal .google-btn { margin-top: 2px; padding: 10px 22px; }
+
+    #login-modal .medical-disclaimer {
+        margin-top: 8px !important;
+        font-size: 10px !important;
+        line-height: 1.4 !important;
+    }
+
+    .version-switcher { margin-top: 8px; }
+    .version-switcher button { padding: 5px 10px; font-size: 11px; }
+    .guest-demo-entry-btn { margin-top: 8px; }
 }
