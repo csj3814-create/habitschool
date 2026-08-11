@@ -492,25 +492,43 @@ function renderGallery(session, uiState, activityStats) {
         : 'all';
     const visiblePosts = model.posts.filter((post) => filter === 'all' || post.category === filter);
     const statsCopy = formatGuestActivityStats(activityStats);
+    // 체험 화면이 실제 갤러리와 너무 달라 보이면, 둘러본 사람이 실제 앱을 상상할 수
+    // 없다. 그래서 전용 마크업 대신 실제 카드와 같은 클래스를 쓴다 — 스타일을 베껴
+    // 두 벌로 관리하면 실제 갤러리를 고칠 때마다 체험 화면만 옛 모습으로 남는다.
     const postsHtml = visiblePosts.map((post) => {
         const reacted = uiState.reactedPostIds.includes(post.id);
+        const heart = post.reactions + (reacted ? 1 : 0);
         return `
-            <article class="guest-demo-card guest-demo-gallery-card" data-example-record="true" data-category="${post.category}">
-                <header>
-                    ${renderExampleBadge()}
-                    <span>${model.dayLabel}</span>
-                    <strong>${post.author}</strong>
-                </header>
-                <button type="button" class="guest-demo-media-button" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_VIEW_MEDIA}" data-demo-media="${post.id}" aria-label="${post.categoryLabel} 예시 사진 크게 보기">
-                    <img src="${post.image}" alt="${post.categoryLabel} 예시 기록" loading="lazy" decoding="async">
-                </button>
-                <div class="guest-demo-card-body">
-                    <strong>${post.categoryLabel} · +${post.points}P</strong>
-                    <p>${post.summary}</p>
-                    <button type="button" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_REACT}" data-demo-post="${post.id}" aria-pressed="${reacted}">해빛 ${post.reactions + (reacted ? 1 : 0)}</button>
-                    ${renderLoginButton('댓글 남기기', 'post_comment', 'gallery', 'guest-demo-link-button')}
+            <div class="gallery-card guest-demo-gallery-card" data-example-record="true" data-category="${post.category}">
+                <div class="gallery-header">
+                    <div class="gallery-avatar">${post.author.slice(0, 1)}</div>
+                    <div class="gallery-header-info">
+                        <div class="gallery-name-row">
+                            <span class="gallery-name">${post.author}</span>
+                            ${renderExampleBadge()}
+                        </div>
+                        <div class="gallery-status-row">
+                            <span class="gallery-date">${model.dayLabel}</span>
+                        </div>
+                    </div>
                 </div>
-            </article>`;
+                <div class="gallery-post-meta">
+                    <span class="gallery-point-badge">${post.points}P</span>
+                    <div class="gallery-type-tags"><span class="gallery-type-chip">${post.categoryLabel}</span></div>
+                </div>
+                <div class="gallery-photos">
+                    <button type="button" class="guest-demo-media-button" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_VIEW_MEDIA}" data-demo-media="${post.id}" aria-label="${post.categoryLabel} 예시 사진 크게 보기">
+                        <img src="${post.image}" alt="${post.categoryLabel} 예시 기록" loading="lazy" decoding="async">
+                    </button>
+                </div>
+                <p class="gallery-mind-text">${post.summary}</p>
+                <div class="gallery-actions">
+                    <button class="action-btn ${reacted ? 'active' : ''}" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_REACT}" data-demo-post="${post.id}" aria-pressed="${reacted}"><span class="action-icon">❤️</span><span class="action-label">좋아요</span><span class="action-count">${heart}</span></button>
+                    <button class="action-btn" data-guest-login-action="react" data-guest-login-tab="gallery"><span class="action-icon">🔥</span><span class="action-label">격려</span></button>
+                    <button class="action-btn" data-guest-login-action="react" data-guest-login-tab="gallery"><span class="action-icon">👏</span><span class="action-label">응원</span></button>
+                    <button class="action-btn comment-btn" data-guest-login-action="post_comment" data-guest-login-tab="gallery"><span class="action-icon">💬</span><span class="action-label">댓글</span></button>
+                </div>
+            </div>`;
     }).join('');
 
     const selectedPost = model.posts.find((post) => post.id === uiState.selectedMediaId);
@@ -524,12 +542,12 @@ function renderGallery(session, uiState, activityStats) {
     return `
         ${statsCopy ? `<p class="guest-demo-activity-signal">${statsCopy}</p>` : ''}
         <nav class="guest-demo-filter" aria-label="예시 갤러리 필터" data-guest-demo-coach-target>
-            ${renderButton('전체', DEMO_ACTIONS.GALLERY_FILTER_ALL)}
-            ${renderButton('식단', DEMO_ACTIONS.GALLERY_FILTER_DIET)}
-            ${renderButton('운동', DEMO_ACTIONS.GALLERY_FILTER_EXERCISE)}
-            ${renderButton('마음', DEMO_ACTIONS.GALLERY_FILTER_SLEEP)}
+            ${renderButton('전체보기', DEMO_ACTIONS.GALLERY_FILTER_ALL)}
+            ${renderButton('🥗 식단', DEMO_ACTIONS.GALLERY_FILTER_DIET)}
+            ${renderButton('🏃 운동', DEMO_ACTIONS.GALLERY_FILTER_EXERCISE)}
+            ${renderButton('🧘 마음', DEMO_ACTIONS.GALLERY_FILTER_SLEEP)}
         </nav>
-        <div class="guest-demo-gallery-grid">${postsHtml}</div>
+        <div class="guest-demo-gallery-feed">${postsHtml}</div>
         ${lightboxHtml}
         <div class="guest-demo-primary-cta">${renderLoginButton('내 기록으로 시작하기', 'start_record', 'dashboard')}</div>`;
 }

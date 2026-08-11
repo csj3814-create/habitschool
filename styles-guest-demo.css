@@ -414,31 +414,22 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     padding-inline: 4px;
 }
 
-.guest-demo-gallery-grid,
 .guest-demo-progress-grid {
     display: grid;
     gap: 12px;
 }
 
-.guest-demo-gallery-card {
-    padding: 0;
+/* 체험 갤러리는 실제 피드와 같은 .gallery-card를 쓴다. 한 줄로 쌓아 실제와 같은
+   흐름을 만들고, 카드 자체 모양은 실제 갤러리 CSS가 그대로 그린다. */
+.guest-demo-gallery-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
-.guest-demo-gallery-card header {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2px 9px;
-    align-items: center;
-    padding: 13px 14px;
-}
-
-.guest-demo-gallery-card header .guest-demo-example-badge {
-    grid-row: 1 / span 2;
-}
-
-.guest-demo-gallery-card header span:not(.guest-demo-example-badge) {
-    color: #6f625b;
-    font-size: 11px;
+/* 예시라는 표시만 덧댄다. 실제 카드에는 없는 요소다. */
+.guest-demo-gallery-card .gallery-name-row .guest-demo-example-badge {
+    margin-left: 6px;
 }
 
 .guest-demo-media-button {
@@ -447,10 +438,20 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     border: 0;
     background: transparent;
     cursor: zoom-in;
+    display: block;
 }
 
 .guest-demo-gallery-card .guest-demo-media-button img {
+    width: 100%;
+    display: block;
     border-radius: 0;
+}
+
+/* 실제 피드의 사진 영역은 3열 고정이다. 하루치 기록이 여러 장이라 그게 맞지만,
+   체험 카드는 한 장씩만 있어 그대로 두면 1/3만 차고 옆이 빈다.
+   체험에서만 한 장이 폭을 채우게 한다. */
+.guest-demo-gallery-card .gallery-photos {
+    grid-template-columns: 1fr;
 }
 
 .guest-demo-card-body {
@@ -758,12 +759,6 @@ body.dark-mode .wallet-convert-desc {
 body.dark-mode .wallet-convert-limit,
 body.dark-mode .wallet-convert-limit-reset {
     color: #b9aa9d;
-}
-
-@media (min-width: 720px) {
-    .guest-demo-gallery-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
