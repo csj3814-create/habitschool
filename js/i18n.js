@@ -126,8 +126,8 @@ const MESSAGES = {
         'consent.all': 'Agree to all',
         'consent.required': 'Required',
         'consent.optional': 'Optional',
-        'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service</a>',
-        'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()">Collection and use of personal data</a>',
+        'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Terms of Service</a>',
+        'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Collection and use of personal data</a>',
         'consent.sensitive': 'Health data (blood test, body composition)',
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
@@ -382,7 +382,12 @@ export function applyDomTranslations(doc = document) {
     // 값은 이 파일 안의 상수뿐이라(사용자 입력이 아니다) innerHTML로 넣어도 안전하다.
     doc.querySelectorAll('[data-i18n-html]').forEach((el) => {
         const key = el.getAttribute('data-i18n-html');
-        if (key) el.innerHTML = t(key);
+        if (!key) return;
+        const html = t(key);
+        // 같은 값을 다시 넣으면 안쪽 링크가 통째로 새로 만들어진다. 누르는 도중에
+        // 그러면 클릭이 사라진 요소에 남는다.
+        if (el.innerHTML === html) return;
+        el.innerHTML = html;
     });
     doc.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
         const key = el.getAttribute('data-i18n-placeholder');

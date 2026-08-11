@@ -378,7 +378,9 @@ html.locale-en body {
     background: linear-gradient(135deg, #F7FFF9, #FFFFFF);
 }
 
-html.locale-en.signed-in .app-container {
+/* 폭 제한이 signed-in 에만 걸려 있어, 로그아웃하는 순간 제한이 풀리며 좌우로 퍼졌다.
+   소개 페이지가 아니면 로그인 여부와 상관없이 같은 폭을 유지한다. */
+html.locale-en:not(.en-landing) .app-container {
     max-width: 430px;
     background: linear-gradient(180deg, #FFFDF7 0%, #F4FFF8 45%, #F8FFFB 100%);
 }

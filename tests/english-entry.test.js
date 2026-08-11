@@ -151,10 +151,21 @@ describe('English sign-in screen carries no Korean', () => {
         expect(indexSource).toContain('data-i18n-placeholder="mind.gratitudePlaceholder"');
     });
 
-    // 링크가 label 안에 있으면 label이 클릭을 가져가 새 창이 열리지 않는다.
+    // 링크가 label 안에 있으면 브라우저에 따라 label이 클릭을 가져가, 체크박스만
+    // 토글되고 문서는 열리지 않는다. 전파만 끊는 걸로는 부족해서 직접 연다.
     it('lets the consent links open instead of only ticking the box', () => {
-        expect(indexSource).toContain('rel="noopener" onclick="event.stopPropagation()"');
-        expect(i18n).toContain('onclick="event.stopPropagation()"');
+        const auth = readRepoFile('js/auth.js');
+        expect(indexSource).toContain('onclick="openConsentDoc(event, this)"');
+        expect(i18n).toContain('onclick="openConsentDoc(event, this)"');
+        expect(auth).toContain('window.openConsentDoc = function (event, anchor) {');
+        expect(auth).toContain("window.open(anchor.href, '_blank', 'noopener');");
+        expect(auth).toContain('event.preventDefault();');
+    });
+
+    // 같은 값을 다시 innerHTML 에 넣으면 안쪽 링크가 새 요소로 갈린다.
+    // 누르는 도중에 그러면 클릭이 사라진 요소에 남는다.
+    it('does not rebuild the consent markup when nothing changed', () => {
+        expect(i18n).toContain('if (el.innerHTML === html) return;');
     });
 
     // 체험 모드 문구가 전부 한국어라, 영어판에서 눌리면 한글 화면이 나온다.

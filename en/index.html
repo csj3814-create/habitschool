@@ -896,14 +896,14 @@
                     <input type="checkbox" id="consent-terms" data-consent-required="true">
                     <span class="consent-text">
                         <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">이용약관</a> 동의</span>
+                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">이용약관</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="consent-privacy" data-consent-required="true">
                     <span class="consent-text">
                         <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">개인정보 수집·이용</a> 동의</span>
+                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">개인정보 수집·이용</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">

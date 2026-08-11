@@ -1403,12 +1403,14 @@ export function setupAuthListener(callbacks) {
 
             const bootstrapBlockchainWallet = () => {
                 if (!window._loadBlockchainModule) return;
+                // 라이트(플레이) 모드에서는 온체인 기능이 꺼져 있어 이 로더가 거절한다.
+                // 그건 오류가 아니라 정상 상태인데, catch가 없어 콘솔에 붉은 줄로 쌓였다.
                 window._loadBlockchainModule().then(() => {
                     import(BLOCKCHAIN_MANAGER_MODULE_PATH).then(mod => {
                         const initWallet = mod.initializeWalletExternalFirst || mod.initializeUserWallet;
                         initWallet?.().catch(() => {});
                     }).catch(() => {});
-                });
+                }).catch(() => {});
             };
 
             setTimeout(bootstrapBlockchainWallet, 1200);
@@ -1428,7 +1430,7 @@ export function setupAuthListener(callbacks) {
                                 }).catch(() => {});
                             }).catch(() => {});
                         }).catch(() => {});
-                    });
+                    }).catch(() => {});
                 }
             }, 10000);
 
@@ -1505,6 +1507,16 @@ window.updateLoginButtonForVersion = function (version) {
         note.textContent = label ? `선택한 버전: ${label} · 시작하면 이 버전으로 열려요` : '';
         note.hidden = !label;
     }
+};
+
+// 동의 문구 안의 약관·방침 링크.
+// 링크가 <label> 안에 있어 브라우저에 따라 라벨이 클릭을 가져가 버리고,
+// 그러면 체크박스만 토글되고 문서는 열리지 않는다. 여기서 직접 연다.
+window.openConsentDoc = function (event, anchor) {
+    if (!anchor?.href) return;
+    event.preventDefault();
+    event.stopPropagation();
+    window.open(anchor.href, '_blank', 'noopener');
 };
 
 window.highlightMissingConsents = function () {
