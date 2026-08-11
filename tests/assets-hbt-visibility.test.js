@@ -101,16 +101,43 @@ describe('asset HBT visibility and information architecture', () => {
     });
 });
 
-describe('guest asset demo token visibility', () => {
-    it('shows example HBT and its conversion path without hiding it as an advanced feature', () => {
+// 예전에는 체험 자산 탭에도 HBT를 실었고, 이 테스트가 "고급 기능으로 숨기지 말 것"을
+// 지키고 있었다. 그 의도는 로그인 뒤 자산 탭에 그대로 살아 있다(위 describe 블록).
+//
+// 체험에서만 뺀 이유는 다르다. 구글플레이는 앱 안의 암호화폐 표현을 따로 심사하는데,
+// 로그인도 하지 않은 첫 화면에서 토큰부터 보여 줄 이유가 없다.
+describe('guest asset demo keeps the token out of the pre-login view', () => {
+    it('shows points and the coupon goal, not the onchain token', () => {
         const html = renderGuestDemoTab('assets', createGuestDemoSession());
 
-        expect(html).toContain('두 가지 예시 자산');
-        expect(html).toContain('예시 HBT');
-        expect(html).toContain('포인트로 HBT 모으기');
-        expect(html).toContain('로그인하고 HBT 시작하기');
-        expect(html).toContain('data-guest-login-action="open_wallet"');
+        expect(html).toContain('예시 포인트');
+        expect(html).toContain('커피 쿠폰');
+        // 체험에는 토큰이 등장하지 않는다.
+        expect(html).not.toContain('HBT');
+        expect(html).not.toContain('온체인');
+        expect(html).not.toContain('지갑');
+        // 숨긴 게 아니라 뺀 것이다 — 접어 두면 여전히 앱 안에 있는 셈이다.
         expect(html).not.toContain('고급 자산 기능');
         expect(html).not.toContain('<details');
+    });
+
+    // 체험 포인트는 쿠폰에 닿는 순간을 보여주려고 미리 채워 둔 값이라 실제 지급액이 아니다.
+    // 2,000P를 받는다고 오해하면 가입 직후 200P를 보고 속았다고 느낀다.
+    it('says plainly what a real signup actually grants', () => {
+        const html = renderGuestDemoTab('assets', createGuestDemoSession());
+
+        expect(html).toContain('예시');
+        expect(html).toContain('200P');
+        expect(html).toMatch(/실제로 가입하면/);
+    });
+
+    // 실제 지급액은 서버가 한 번만, 200P로 준다. 위 안내 문구가 이 값과 어긋나면 안 된다.
+    it('matches the welcome bonus the server actually credits', () => {
+        const functionsSource = readRepoFile('functions/runtime.js');
+
+        expect(functionsSource).toContain('coins: FieldValue.increment(200)');
+        expect(functionsSource).toContain('return { success: true, bonus: 200 };');
+        // 중복 지급 방지 — 원장과 플래그 두 겹으로 막는다.
+        expect(functionsSource).toContain('if (ledgerSnap.exists || userData.welcomeBonusGiven === true) {');
     });
 });

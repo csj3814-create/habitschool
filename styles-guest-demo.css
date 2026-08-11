@@ -447,12 +447,8 @@ html.guest-demo-active .content-section > :not(.guest-demo-host) {
     border-radius: 0;
 }
 
-/* 실제 피드의 사진 영역은 3열 고정이다. 하루치 기록이 여러 장이라 그게 맞지만,
-   체험 카드는 한 장씩만 있어 그대로 두면 1/3만 차고 옆이 빈다.
-   체험에서만 한 장이 폭을 채우게 한다. */
-.guest-demo-gallery-card .gallery-photos {
-    grid-template-columns: 1fr;
-}
+/* 사진 영역은 실제와 같은 3열을 그대로 쓴다. 하루치 세 장이 1x3으로 놓인다.
+   카테고리로 걸러 한두 장만 남으면 실제 갤러리에서 필터를 걸었을 때와 같은 모습이 된다. */
 
 .guest-demo-card-body {
     padding: 14px;
@@ -769,4 +765,115 @@ body.dark-mode .wallet-convert-limit-reset {
         animation: none !important;
         transition: none !important;
     }
+}
+
+/* 체험 숫자를 실제 지급액으로 오해하지 않도록 붙이는 한 줄 */
+.guest-demo-real-bonus-note {
+    margin: 10px 2px 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #8a7a66;
+    text-align: center;
+}
+
+.guest-demo-real-bonus-note strong { color: #B35A00; }
+
+/* 체험 헤더의 날짜 상자는 보여주되 누를 수 없다 (체험 데이터는 하루치뿐) */
+.guest-demo-active #date-ui .date-input:disabled {
+    opacity: 1;
+    color: #4CAF50;
+    -webkit-text-fill-color: #4CAF50;
+    cursor: default;
+}
+
+/* ===== 체험 순서 안내 ===== */
+.guest-demo-steps {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, #FFF6E5, #FFEFD8);
+    border: 1px solid #F0D6A8;
+    border-radius: 14px;
+}
+
+.guest-demo-steps.is-complete {
+    background: linear-gradient(135deg, #EAF7EE, #DFF2E6);
+    border-color: #B8DFC6;
+}
+
+.guest-demo-steps-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.guest-demo-steps-head strong {
+    font-size: 14px;
+    color: #8a5a1e;
+    line-height: 1.4;
+}
+
+.guest-demo-steps.is-complete .guest-demo-steps-head strong { color: #2E7D4F; }
+
+.guest-demo-steps-count {
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 800;
+    color: #B35A00;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 999px;
+    padding: 2px 9px;
+}
+
+.guest-demo-steps p {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #7a6a58;
+}
+
+.guest-demo-steps-dots {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.guest-demo-steps-dots li {
+    flex: 1 1 0;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(179, 90, 0, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guest-demo-steps-dots li span { display: none; }
+.guest-demo-steps-dots li.is-done { background: #EFA14A; }
+.guest-demo-steps-dots li.is-active { background: #B35A00; }
+
+.guest-demo-steps-jump {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: #fff;
+    border: 0;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.guest-demo-steps-jump:active { transform: scale(0.98); }
+
+/* 예시 커피 쿠폰 이미지 */
+.guest-demo-coupon-image {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 10px auto;
+    border-radius: 12px;
 }

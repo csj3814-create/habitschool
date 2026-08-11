@@ -466,7 +466,19 @@ function updateGuestDemoChrome(session = null) {
         pointBadge.setAttribute('aria-label', points ? `예시 포인트 ${points.total}P` : '해빛 포인트');
     }
     if (pointBalance && points) pointBalance.textContent = String(points.total);
-    if (dateUi) dateUi.style.display = 'none';
+    // 예전에는 날짜 상자를 감췄다. 그러면 헤더가 실제 앱과 달라 보이고, 기록이
+    // 날짜 단위라는 것도 드러나지 않는다. 오늘 날짜를 넣되 바꾸지는 못하게 둔다 —
+    // 체험 데이터는 하루치뿐이라 날짜를 옮기면 빈 화면이 나온다.
+    if (dateUi) {
+        dateUi.style.display = points ? 'flex' : 'none';
+        const dateInput = document.getElementById('selected-date');
+        if (dateInput && points) {
+            dateInput.value = getKstDateString();
+            dateInput.readOnly = true;
+            dateInput.disabled = true;
+            dateInput.setAttribute('aria-label', '체험 날짜 (오늘)');
+        }
+    }
 }
 
 function ensureGuestDemoHost(tab) {

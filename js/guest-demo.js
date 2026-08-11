@@ -41,6 +41,7 @@ export const GUEST_DEMO_POINTS = Object.freeze({
 });
 
 export const DEMO_ACTIONS = Object.freeze({
+    COUPON_REDEEM: 'coupon_redeemed',
     DIET_SELECT_SAMPLE: 'diet_sample_selected',
     DIET_VIEW_AI: 'diet_ai_result_viewed',
     DIET_SAVE: 'diet_saved',
@@ -105,7 +106,13 @@ const ACTION_DEFINITIONS = Object.freeze({
     [DEMO_ACTIONS.GALLERY_FILTER_SLEEP]: Object.freeze({ tab: 'gallery', requires: [], persist: false }),
     [DEMO_ACTIONS.GALLERY_VIEW_MEDIA]: Object.freeze({ tab: 'gallery', requires: [], persist: false }),
     [DEMO_ACTIONS.GALLERY_CLOSE_MEDIA]: Object.freeze({ tab: 'gallery', requires: [], persist: false }),
-    [DEMO_ACTIONS.GALLERY_REACT]: Object.freeze({ tab: 'gallery', requires: [], persist: false })
+    [DEMO_ACTIONS.GALLERY_REACT]: Object.freeze({ tab: 'gallery', requires: [], persist: false }),
+    // 쿠폰 교환은 세 기록을 다 남겨 포인트가 목표에 닿아야 눌린다.
+    // 순서를 건너뛰고 마지막만 눌러 보는 걸 막아, 실제 흐름을 그대로 겪게 한다.
+    [DEMO_ACTIONS.COUPON_REDEEM]: Object.freeze({
+        tab: 'assets',
+        requires: [DEMO_ACTIONS.DIET_SAVE, DEMO_ACTIONS.EXERCISE_SAVE, DEMO_ACTIONS.SLEEP_SAVE]
+    })
 });
 
 const PERSISTED_ACTION_SET = new Set(
@@ -129,6 +136,7 @@ function deepFreeze(value) {
 export const GUEST_DEMO_MODELS = deepFreeze({
     gallery: {
         dayLabel: '체험 1일차',
+        author: '해빛 예시',
         posts: [
             {
                 id: 'sample-a',
@@ -214,6 +222,45 @@ export function createPendingGuestIntent(tab = 'gallery', action = 'start_record
         tab: normalizeDemoTab(tab),
         action: normalizedAction
     };
+}
+
+/**
+ * 체험은 "둘러보기"보다 "한 바퀴 돌아보기"일 때 이해가 빠르다.
+ * 기록 세 개를 남기고 → 내 기록에서 합계를 보고 → 갤러리에서 남들 것을 보고 →
+ * 자산에서 쿠폰으로 바꾸는 흐름이 이 앱의 실제 사용 주기다.
+ * 각 단계는 이미 있는 completedActions / visitedTabs로 판정한다.
+ */
+export const GUEST_DEMO_STEPS = Object.freeze([
+    { id: 'diet', tab: 'diet', label: '식단 사진 등록하기', hint: '예시 사진을 고르고 저장까지 눌러 보세요.' },
+    { id: 'exercise', tab: 'exercise', label: '운동 기록 남기기', hint: '걸음 수와 운동 예시를 확인하고 저장해 보세요.' },
+    { id: 'sleep', tab: 'sleep', label: '마음 기록 남기기', hint: '수면과 명상 예시를 확인하고 저장해 보세요.' },
+    { id: 'dashboard', tab: 'dashboard', label: '내 기록 확인하기', hint: '방금 남긴 세 기록과 포인트가 모여 있어요.' },
+    { id: 'gallery', tab: 'gallery', label: '갤러리 둘러보기', hint: '다른 사람의 기록에 반응을 남길 수 있어요.' },
+    { id: 'assets', tab: 'assets', label: '커피 쿠폰 교환하기', hint: '모은 포인트로 쿠폰을 바꿔 보세요.' }
+]);
+
+export function isGuestDemoStepDone(stepId, session) {
+    const done = session?.completedActions || [];
+    const visited = session?.visitedTabs || [];
+    switch (stepId) {
+        case 'diet': return done.includes(DEMO_ACTIONS.DIET_SAVE);
+        case 'exercise': return done.includes(DEMO_ACTIONS.EXERCISE_SAVE);
+        case 'sleep': return done.includes(DEMO_ACTIONS.SLEEP_SAVE);
+        case 'dashboard': return visited.includes('dashboard');
+        case 'gallery': return visited.includes('gallery');
+        case 'assets': return done.includes(DEMO_ACTIONS.COUPON_REDEEM);
+        default: return false;
+    }
+}
+
+// 아직 못 한 첫 단계가 지금 할 일이다. 전부 마쳤으면 null.
+export function getGuestDemoCurrentStep(session) {
+    return GUEST_DEMO_STEPS.find((step) => !isGuestDemoStepDone(step.id, session)) || null;
+}
+
+export function getGuestDemoStepProgress(session) {
+    const doneCount = GUEST_DEMO_STEPS.filter((step) => isGuestDemoStepDone(step.id, session)).length;
+    return { done: doneCount, total: GUEST_DEMO_STEPS.length, complete: doneCount === GUEST_DEMO_STEPS.length };
 }
 
 export function createGuestDemoSession(now = Date.now()) {
@@ -456,6 +503,45 @@ function renderExampleBadge() {
     return '<span class="guest-demo-example-badge">예시 기록</span>';
 }
 
+function renderStepGuide(session, currentTab) {
+    const progress = getGuestDemoStepProgress(session);
+    const step = getGuestDemoCurrentStep(session);
+
+    if (progress.complete) {
+        return `
+            <div class="guest-demo-steps is-complete" role="status">
+                <div class="guest-demo-steps-head">
+                    <strong>한 바퀴 다 둘러봤어요</strong>
+                    <span class="guest-demo-steps-count">${progress.done}/${progress.total}</span>
+                </div>
+                <p>기록하고 · 모으고 · 바꾸는 흐름이 실제 앱에서도 그대로예요.</p>
+                ${renderLoginButton('내 기록으로 시작하기', 'start_record', 'dashboard')}
+            </div>`;
+    }
+
+    // 지금 할 일이 다른 탭이면 그 탭으로 데려다 주는 버튼을 준다.
+    const jump = step.tab === currentTab
+        ? ''
+        : `<button type="button" class="guest-demo-steps-jump" data-guest-demo-goto="${step.tab}">${step.label} 하러 가기</button>`;
+
+    const dots = GUEST_DEMO_STEPS.map((item) => {
+        const done = isGuestDemoStepDone(item.id, session);
+        const active = item.id === step.id;
+        return `<li class="${done ? 'is-done' : ''}${active ? ' is-active' : ''}" title="${item.label}"><span>${done ? '✓' : ''}</span></li>`;
+    }).join('');
+
+    return `
+        <div class="guest-demo-steps" role="status" aria-label="체험 진행 안내">
+            <div class="guest-demo-steps-head">
+                <strong>${step.tab === currentTab ? '지금 해볼 것' : '다음 순서'} · ${step.label}</strong>
+                <span class="guest-demo-steps-count">${progress.done}/${progress.total}</span>
+            </div>
+            <p>${step.hint}</p>
+            <ol class="guest-demo-steps-dots" aria-hidden="true">${dots}</ol>
+            ${jump}
+        </div>`;
+}
+
 function renderCoach(tab) {
     const copy = {
         gallery: ['다른 기록의 모습을 살펴보세요', '필터와 사진 확대, 반응을 체험할 수 있어요.'],
@@ -463,7 +549,7 @@ function renderCoach(tab) {
         exercise: ['걸음과 운동 미디어를 함께 기록해요', '8,400보 예시와 운동 미디어를 확인해 보세요.'],
         sleep: ['수면과 마음 돌봄을 간단히 남겨요', '수면과 5분 명상 예시를 확인해 보세요.'],
         dashboard: ['오늘 기록과 포인트를 한눈에 봐요', '체험에서 저장한 세 가지 기록이 바로 반영돼요.'],
-        assets: ['포인트와 HBT는 서로 다른 보상이에요', '포인트는 쿠폰에, HBT는 보유와 건강 챌린지 참여에 사용할 수 있어요.']
+        assets: ['기록하면 포인트가 쌓여요', '모은 포인트로 커피 쿠폰 같은 리워드를 교환할 수 있어요.']
     }[tab];
     if (!copy) return '';
     return `
@@ -495,16 +581,27 @@ function renderGallery(session, uiState, activityStats) {
     // 체험 화면이 실제 갤러리와 너무 달라 보이면, 둘러본 사람이 실제 앱을 상상할 수
     // 없다. 그래서 전용 마크업 대신 실제 카드와 같은 클래스를 쓴다 — 스타일을 베껴
     // 두 벌로 관리하면 실제 갤러리를 고칠 때마다 체험 화면만 옛 모습으로 남는다.
-    const postsHtml = visiblePosts.map((post) => {
-        const reacted = uiState.reactedPostIds.includes(post.id);
-        const heart = post.reactions + (reacted ? 1 : 0);
-        return `
-            <div class="gallery-card guest-demo-gallery-card" data-example-record="true" data-category="${post.category}">
+    //
+    // 실제 피드의 한 카드는 '한 사람의 하루'다. 식단·운동·마음을 각각 다른 사람의
+    // 카드로 쪼개 놓으면 실제와 다른 인상을 준다. 세 기록을 한 카드에 모아
+    // 사진 3장을 실제와 같은 3열로 보여 준다.
+    const reactedAll = uiState.reactedPostIds.includes(model.posts[0]?.id);
+    const heartCount = (model.posts[0]?.reactions || 0) + (reactedAll ? 1 : 0);
+    const totalPoints = visiblePosts.reduce((sum, post) => sum + post.points, 0);
+    const photosHtml = visiblePosts.map((post) => `
+                    <button type="button" class="guest-demo-media-button" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_VIEW_MEDIA}" data-demo-media="${post.id}" aria-label="${post.categoryLabel} 예시 사진 크게 보기">
+                        <img src="${post.image}" alt="${post.categoryLabel} 예시 기록" loading="lazy" decoding="async">
+                    </button>`).join('');
+    const chipsHtml = visiblePosts.map((post) => `<span class="gallery-type-chip">${post.categoryLabel}</span>`).join('');
+    const summaryHtml = visiblePosts.map((post) => post.summary).join(' · ');
+
+    const postsHtml = visiblePosts.length === 0 ? '' : `
+            <div class="gallery-card guest-demo-gallery-card" data-example-record="true">
                 <div class="gallery-header">
-                    <div class="gallery-avatar">${post.author.slice(0, 1)}</div>
+                    <div class="gallery-avatar">${model.author.slice(0, 1)}</div>
                     <div class="gallery-header-info">
                         <div class="gallery-name-row">
-                            <span class="gallery-name">${post.author}</span>
+                            <span class="gallery-name">${model.author}</span>
                             ${renderExampleBadge()}
                         </div>
                         <div class="gallery-status-row">
@@ -513,23 +610,18 @@ function renderGallery(session, uiState, activityStats) {
                     </div>
                 </div>
                 <div class="gallery-post-meta">
-                    <span class="gallery-point-badge">${post.points}P</span>
-                    <div class="gallery-type-tags"><span class="gallery-type-chip">${post.categoryLabel}</span></div>
+                    <span class="gallery-point-badge">${totalPoints}P</span>
+                    <div class="gallery-type-tags">${chipsHtml}</div>
                 </div>
-                <div class="gallery-photos">
-                    <button type="button" class="guest-demo-media-button" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_VIEW_MEDIA}" data-demo-media="${post.id}" aria-label="${post.categoryLabel} 예시 사진 크게 보기">
-                        <img src="${post.image}" alt="${post.categoryLabel} 예시 기록" loading="lazy" decoding="async">
-                    </button>
-                </div>
-                <p class="gallery-mind-text">${post.summary}</p>
+                <div class="gallery-photos">${photosHtml}</div>
+                <p class="gallery-mind-text">${summaryHtml}</p>
                 <div class="gallery-actions">
-                    <button class="action-btn ${reacted ? 'active' : ''}" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_REACT}" data-demo-post="${post.id}" aria-pressed="${reacted}"><span class="action-icon">❤️</span><span class="action-label">좋아요</span><span class="action-count">${heart}</span></button>
+                    <button class="action-btn ${reactedAll ? 'active' : ''}" data-guest-demo-action="${DEMO_ACTIONS.GALLERY_REACT}" data-demo-post="${model.posts[0]?.id}" aria-pressed="${reactedAll}"><span class="action-icon">❤️</span><span class="action-label">좋아요</span><span class="action-count">${heartCount}</span></button>
                     <button class="action-btn" data-guest-login-action="react" data-guest-login-tab="gallery"><span class="action-icon">🔥</span><span class="action-label">격려</span></button>
                     <button class="action-btn" data-guest-login-action="react" data-guest-login-tab="gallery"><span class="action-icon">👏</span><span class="action-label">응원</span></button>
                     <button class="action-btn comment-btn" data-guest-login-action="post_comment" data-guest-login-tab="gallery"><span class="action-icon">💬</span><span class="action-label">댓글</span></button>
                 </div>
             </div>`;
-    }).join('');
 
     const selectedPost = model.posts.find((post) => post.id === uiState.selectedMediaId);
     const lightboxHtml = selectedPost ? `
@@ -645,32 +737,69 @@ function renderDashboard(session) {
         <div class="guest-demo-primary-cta">${renderLoginButton('내 기록으로 시작하기', 'start_record', 'dashboard')}</div>`;
 }
 
+// 쿠폰 그림은 인라인 SVG로 그린다.
+// 데모 이미지는 로컬 webp 세 개만 허용하는 규칙(isAllowedGuestDemoImage)이 있는데,
+// 그건 체험 화면이 임의의 원격 이미지를 불러오지 못하게 하려는 것이다.
+// 파일을 하나 더 늘려 그 규칙을 느슨하게 만드는 대신, 마크업으로 직접 그린다.
+function renderCoffeeCouponArt() {
+    return `
+        <svg class="guest-demo-coupon-image" viewBox="0 0 320 150" role="img" aria-label="예시 커피 쿠폰">
+            <rect x="1" y="1" width="318" height="148" rx="16" fill="#FFF6E5" stroke="#E8C89A" stroke-width="2"/>
+            <line x1="196" y1="14" x2="196" y2="136" stroke="#E0BE8C" stroke-width="2" stroke-dasharray="6 7" stroke-linecap="round"/>
+            <circle cx="196" cy="1" r="9" fill="#FFFDF7"/>
+            <circle cx="196" cy="149" r="9" fill="#FFFDF7"/>
+            <g transform="translate(48 30)">
+                <ellipse cx="46" cy="84" rx="40" ry="6" fill="#E4CFB2" opacity="0.5"/>
+                <path d="M12 26h68v32a26 26 0 0 1-26 26H38a26 26 0 0 1-26-26z" fill="#FFFFFF" stroke="#C9A87C" stroke-width="2.5" stroke-linejoin="round"/>
+                <path d="M80 33h9a13 13 0 0 1 0 26h-9" fill="none" stroke="#C9A87C" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M12 26h68v8a8 8 0 0 1-8 8H20a8 8 0 0 1-8-8z" fill="#6F4B2E"/>
+                <path d="M32 14c0-6 6-6 6-12" fill="none" stroke="#C9A87C" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+                <path d="M46 12c0-7 6-7 6-14" fill="none" stroke="#C9A87C" stroke-width="2.5" stroke-linecap="round" opacity="0.55"/>
+                <path d="M60 14c0-6 6-6 6-12" fill="none" stroke="#C9A87C" stroke-width="2.5" stroke-linecap="round" opacity="0.7"/>
+            </g>
+            <text x="222" y="50" font-size="13" font-weight="800" fill="#8A6336">아메리카노</text>
+            <text x="222" y="74" font-size="21" font-weight="900" fill="#B35A00">2,000P</text>
+            <rect x="222" y="88" width="70" height="21" rx="10" fill="#FFE3BE" stroke="#E8C89A"/>
+            <text x="257" y="103" text-anchor="middle" font-size="11" font-weight="800" fill="#8A6336">예시 쿠폰</text>
+            <text x="222" y="126" font-size="10" fill="#A08767">교환은 로그인 후</text>
+        </svg>`;
+}
+
 function renderAssets(session) {
     const points = getGuestDemoPoints(session);
     const reached = points.remaining === 0;
+    const redeemed = session.completedActions.includes(DEMO_ACTIONS.COUPON_REDEEM);
+    // 체험에는 HBT(온체인 토큰)를 싣지 않는다. 구글플레이는 앱 안의 암호화폐 표현을
+    // 별도로 심사하는데, 로그인도 하지 않은 첫 화면에서 토큰부터 보여 줄 이유가 없다.
+    // 로그인 뒤 자산 탭에는 그대로 있다.
     return `
         <article class="guest-demo-card guest-demo-balance-card" data-example-record="true">
             ${renderExampleBadge()}
-            <h2>두 가지 예시 자산</h2>
+            <h2>예시 포인트</h2>
             <div class="guest-demo-asset-grid">
-                <div><span>예시 포인트</span><strong>${points.total.toLocaleString('ko-KR')}P</strong></div>
-                <div><span>예시 HBT</span><strong>320 HBT</strong></div>
+                <div><span>모은 포인트</span><strong>${points.total.toLocaleString('ko-KR')}P</strong></div>
             </div>
-            <p>포인트는 쿠폰으로 쓰고, HBT는 내 지갑에 보유해 건강 챌린지와 해빛 네트워크에 참여해요.</p>
-        </article>
-        <article class="guest-demo-card guest-demo-token-card" data-example-record="true" data-guest-demo-coach-target>
-            ${renderExampleBadge()}
-            <h2>포인트로 HBT 모으기</h2>
-            <p>로그인하면 포인트 일부를 HBT로 전환해 내 온체인 지갑에 보유할 수 있어요. 전환한 포인트는 되돌릴 수 없어요.</p>
-            ${renderLoginButton('로그인하고 HBT 시작하기', 'open_wallet', 'assets')}
+            <p>기록할 때마다 포인트가 쌓이고, 모인 포인트로 쿠폰을 교환해요.</p>
         </article>
         <article class="guest-demo-card guest-demo-coupon-card" data-example-record="true" data-guest-demo-coach-target>
             ${renderExampleBadge()}
-            <h2>첫 2,000P 커피 쿠폰</h2>
-            <p>${reached ? '교환 가능한 포인트에 도달했어요.' : `${points.remaining}P만 더 모으면 도달해요.`}</p>
-            <progress max="${GUEST_DEMO_POINTS.couponTarget}" value="${points.total}">${points.total}/${GUEST_DEMO_POINTS.couponTarget}</progress>
-            ${renderLoginButton(reached ? '로그인하고 쿠폰 교환하기' : '로그인하고 포인트 모으기', reached ? 'redeem_coupon' : 'start_record', 'assets')}
-        </article>`;
+            <h2>첫 ${GUEST_DEMO_POINTS.couponTarget.toLocaleString('ko-KR')}P 커피 쿠폰</h2>
+            ${renderCoffeeCouponArt()}
+            ${redeemed
+                ? `<p class="guest-demo-complete" role="status">예시 쿠폰 교환 완료 · 실제 교환은 로그인 후에 할 수 있어요</p>
+                   ${renderLoginButton('로그인하고 진짜 쿠폰 받기', 'redeem_coupon', 'assets')}`
+                : `<p>${reached ? '교환 가능한 포인트에 도달했어요.' : `${points.remaining}P만 더 모으면 도달해요.`}</p>
+                   <progress max="${GUEST_DEMO_POINTS.couponTarget}" value="${points.total}">${points.total}/${GUEST_DEMO_POINTS.couponTarget}</progress>
+                   ${reached
+                        ? renderButton('쿠폰 교환하기', DEMO_ACTIONS.COUPON_REDEEM, 'guest-demo-button guest-demo-button-primary')
+                        : renderLoginButton('로그인하고 포인트 모으기', 'start_record', 'assets')}`}
+        </article>
+        <!--
+          위 숫자는 쿠폰에 닿는 순간을 보여 주려고 미리 채워 둔 예시다.
+          실제 가입 보너스는 200P이므로(functions/runtime.js welcome bonus),
+          체험 숫자를 실제로 받는 금액으로 오해하지 않도록 여기서 분명히 적는다.
+        -->
+        <p class="guest-demo-real-bonus-note">위 포인트는 사용법을 보여주기 위한 예시예요. 실제로 가입하면 <strong>200P</strong>로 시작합니다.</p>`;
 }
 
 function normalizeUiState(value = {}) {
@@ -712,6 +841,7 @@ export function renderGuestDemoTab(tab, session, options = {}) {
                 <strong>체험 모드</strong>
                 <span>모든 기록과 반응은 사용법을 위한 예시입니다</span>
             </div>
+            ${renderStepGuide(normalizedSession, normalizedTab)}
             ${shouldShowCoach ? renderCoach(normalizedTab) : ''}
             <div class="guest-demo-content">${content}</div>
         </section>`;
@@ -927,6 +1057,13 @@ export function createGuestDemoController(options = {}) {
             const command = commandElement.dataset?.guestDemoCommand;
             if (command === 'dismiss-coach') dismissCoach();
             if (command === 'disable-coaches') disableCoaches();
+            return;
+        }
+
+        // 단계 안내의 "하러 가기" — 다음 순서 탭으로 데려다 준다.
+        const gotoElement = closestDataElement(event.target, '[data-guest-demo-goto]');
+        if (gotoElement) {
+            openTab(gotoElement.dataset?.guestDemoGoto, { source: 'step-guide' });
             return;
         }
 

@@ -15,8 +15,11 @@ import {
     createPendingGuestIntent,
     disableGuestDemoCoaches,
     formatGuestActivityStats,
+    GUEST_DEMO_STEPS,
     getGuestDemoCategoryProgress,
+    getGuestDemoCurrentStep,
     getGuestDemoPoints,
+    getGuestDemoStepProgress,
     isAllowedGuestDemoImage,
     loadGuestDemoSession,
     normalizeGuestActivityStats,
@@ -371,5 +374,93 @@ describe('guest demo action boundary and controller', () => {
 
         expect(controller.openTab('profile')).toBe(false);
         expect(controller.getSession().activeTab).toBe('gallery');
+    });
+});
+
+// 체험은 기능을 나열하는 곳이 아니라 한 바퀴를 돌아보는 곳이다.
+// 기록 셋 → 내 기록 → 갤러리 → 쿠폰 교환이 실제 사용 주기이고,
+// 그 순서대로 안내가 따라와야 둘러본 사람이 앱을 이해한다.
+describe('guest demo guided tour', () => {
+    const advance = (session, action) => applyGuestDemoAction(session, action).session;
+
+    it('walks the six steps in the order the app is actually used', () => {
+        expect(GUEST_DEMO_STEPS.map((step) => step.id)).toEqual([
+            'diet', 'exercise', 'sleep', 'dashboard', 'gallery', 'assets'
+        ]);
+
+        let session = createGuestDemoSession();
+        expect(getGuestDemoCurrentStep(session).id).toBe('diet');
+        expect(getGuestDemoStepProgress(session)).toMatchObject({ done: 0, total: 6, complete: false });
+
+        session = visitGuestDemoTab(session, 'diet').session;
+        session = advance(session, DEMO_ACTIONS.DIET_SELECT_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.DIET_VIEW_AI);
+        session = advance(session, DEMO_ACTIONS.DIET_SAVE);
+        expect(getGuestDemoCurrentStep(session).id).toBe('exercise');
+
+        session = visitGuestDemoTab(session, 'exercise').session;
+        session = advance(session, DEMO_ACTIONS.EXERCISE_REVIEW_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.EXERCISE_SAVE);
+        expect(getGuestDemoCurrentStep(session).id).toBe('sleep');
+
+        session = visitGuestDemoTab(session, 'sleep').session;
+        session = advance(session, DEMO_ACTIONS.SLEEP_REVIEW_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.SLEEP_SAVE);
+        expect(getGuestDemoCurrentStep(session).id).toBe('dashboard');
+
+        session = visitGuestDemoTab(session, 'dashboard').session;
+        expect(getGuestDemoCurrentStep(session).id).toBe('gallery');
+
+        session = visitGuestDemoTab(session, 'gallery').session;
+        expect(getGuestDemoCurrentStep(session).id).toBe('assets');
+
+        // 세 기록을 다 남겼으므로 포인트가 쿠폰 목표에 정확히 닿는다.
+        expect(getGuestDemoPoints(session).remaining).toBe(0);
+
+        session = visitGuestDemoTab(session, 'assets').session;
+        session = advance(session, DEMO_ACTIONS.COUPON_REDEEM);
+        expect(getGuestDemoCurrentStep(session)).toBeNull();
+        expect(getGuestDemoStepProgress(session)).toMatchObject({ done: 6, complete: true });
+    });
+
+    // 마지막만 눌러 보고 끝내면 흐름을 겪지 않은 것이라, 앞 기록이 없으면 막는다.
+    it('will not let the coupon be redeemed before the records exist', () => {
+        const session = visitGuestDemoTab(createGuestDemoSession(), 'assets').session;
+        const result = applyGuestDemoAction(session, DEMO_ACTIONS.COUPON_REDEEM);
+
+        expect(result.accepted).toBe(false);
+        expect(result.missingRequirements).toContain(DEMO_ACTIONS.DIET_SAVE);
+        expect(result.session.completedActions).not.toContain(DEMO_ACTIONS.COUPON_REDEEM);
+    });
+
+    it('offers a way to the next step and shows the coupon before redeeming it', () => {
+        let session = createGuestDemoSession();
+        // 갤러리에 있는데 다음 순서가 식단이면 데려다 주는 버튼이 있어야 한다.
+        const galleryHtml = renderGuestDemoTab('gallery', session);
+        expect(galleryHtml).toContain('data-guest-demo-goto="diet"');
+        expect(galleryHtml).toContain('식단 사진 등록하기');
+
+        // 마무리 안내는 여섯 단계를 다 마쳐야 나오므로 탭 방문까지 포함한다.
+        ['diet', 'exercise', 'sleep', 'dashboard', 'gallery', 'assets'].forEach((tab) => {
+            session = visitGuestDemoTab(session, tab).session;
+        });
+        session = advance(session, DEMO_ACTIONS.DIET_SELECT_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.DIET_VIEW_AI);
+        session = advance(session, DEMO_ACTIONS.DIET_SAVE);
+        session = advance(session, DEMO_ACTIONS.EXERCISE_REVIEW_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.EXERCISE_SAVE);
+        session = advance(session, DEMO_ACTIONS.SLEEP_REVIEW_SAMPLE);
+        session = advance(session, DEMO_ACTIONS.SLEEP_SAVE);
+
+        const before = renderGuestDemoTab('assets', session);
+        expect(before).toContain('예시 커피 쿠폰');
+        expect(before).toContain('쿠폰 교환하기');
+
+        session = advance(session, DEMO_ACTIONS.COUPON_REDEEM);
+        const after = renderGuestDemoTab('assets', session);
+        expect(after).toContain('예시 쿠폰 교환 완료');
+        expect(after).toContain('로그인하고 진짜 쿠폰 받기');
+        // 다 돌면 마무리 안내로 바뀐다.
+        expect(after).toContain('한 바퀴 다 둘러봤어요');
     });
 });
