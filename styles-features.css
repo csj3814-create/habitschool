@@ -6755,6 +6755,17 @@ body.gallery-user-filtered #weekly-best-container {
 
     .version-switcher { margin-top: 10px; }
     .guest-demo-entry-btn { margin-top: 10px; }
+
+    /* 초대 링크로 들어오면 배너가 하나 더 붙는다. 시작 버튼·동의 박스와 폭을 맞추고
+       여백을 조여, 배너가 뜬 상태에서도 한 화면에 들어오게 한다. */
+    .invite-landing-banner {
+        width: min(100%, 300px);
+        margin: -6px auto 10px;
+        padding: 9px 12px;
+    }
+
+    .invite-landing-title { font-size: 14px; }
+    .invite-landing-desc { font-size: 12px; line-height: 1.45; margin: 4px 0 0; }
 }
 
 /* 지갑 내보내기 모달도 휴대폰에서 한 화면에 가깝게 */
@@ -6799,4 +6810,16 @@ body.gallery-user-filtered #weekly-best-container {
     .version-switcher { margin-top: 8px; }
     .version-switcher button { padding: 5px 10px; font-size: 11px; }
     .guest-demo-entry-btn { margin-top: 8px; }
+
+    .invite-landing-banner { margin: -4px auto 8px; padding: 7px 11px; }
+    .invite-landing-title { font-size: 13px; }
+    .invite-landing-desc { font-size: 11.5px; margin: 3px 0 0; }
+
+    /* 초대 배너가 뜬 짧은 화면에서만 소개 문구를 접는다.
+       배너가 이미 "왜 여기 왔는지"를 말하고 있어 같은 자리에서 두 번 말하는 셈이고,
+       기능이 아니라 중복된 브랜드 문구라 접어도 할 수 있는 일이 줄지 않는다.
+       배너가 없으면(일반 방문) 그대로 보인다. */
+    #login-modal:has(#invite-landing-banner:not([hidden])) > p:not(.medical-disclaimer):not(.consent-note) {
+        display: none;
+    }
 }

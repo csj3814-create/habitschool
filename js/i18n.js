@@ -121,7 +121,7 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
-        'invite.landingDesc': 'Start here to connect with your friend and get 200P. You can look around without an account first.',
+        'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
         'sharePrompt.kicker': 'Today, wrapped up',
         'sharePrompt.title': 'Your whole day fits on one card',
         'sharePrompt.kickerFull': 'Full routine done',
