@@ -6865,3 +6865,24 @@ body.gallery-user-filtered #weekly-best-container {
 @media (prefers-reduced-motion: reduce) {
     .consent-box.shake { animation: none; }
 }
+
+/* 로그인 전 고른 버전 안내 — 버튼이 어디로 데려갈지 알려 준다 */
+.login-version-note {
+    margin: 8px 0 0;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #B35A00;
+}
+
+.login-version-note[hidden] { display: none !important; }
+
+/* 영어판에는 체험 모드를 노출하지 않는다.
+   체험 문구가 전부 한국어라, 눌러 보면 한글 화면이 나온다. */
+html.locale-en .guest-demo-entry-btn {
+    display: none !important;
+}
+
+/* 카카오톡 채널은 한국어 상담 창구라 영어판에서는 감춘다 */
+html.locale-en .kakao-channel-link {
+    display: none !important;
+}

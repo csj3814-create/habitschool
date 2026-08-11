@@ -8445,18 +8445,45 @@ function currentAppVersionKey() {
     if (p === '/simple') return 'simple';
     return 'ko';
 }
+const PENDING_APP_VERSION_KEY = 'habitschool_pending_app_version';
+
+// 로그인 전에는 버전을 '고르기만' 한다.
+// 예전에는 누르는 즉시 이동해서, 남아 있던 체험 세션이 복원돼 체험 화면으로 떨어졌다.
+// 이제는 표시만 바꿔 두고, '구글로 시작하기'를 누른 뒤 그 버전의 앱으로 들어간다.
+window.getPendingAppVersion = function () {
+    try {
+        const value = localStorage.getItem(PENDING_APP_VERSION_KEY);
+        return APP_VERSION_PATHS[value] ? value : '';
+    } catch (_) {
+        return '';
+    }
+};
+
+window.clearPendingAppVersion = function () {
+    try { localStorage.removeItem(PENDING_APP_VERSION_KEY); } catch (_) { }
+};
+
 window.switchAppVersion = function (version) {
     const target = APP_VERSION_PATHS[version];
     if (!target) return;
-    if (version === currentAppVersionKey()) return;
-    // 로그인 전에 버전을 바꾸면 남아 있던 체험 세션이 복원돼 체험 화면으로 떨어진다.
-    // 그 전에 필수 동의부터 받는다. 막기만 하고 이유를 안 보여 주면 고장으로 보이므로
-    // 체크 안 한 항목을 빨갛게 짚어 준다.
-    if (!auth.currentUser && window.highlightMissingConsents?.()) return;
-    window.location.assign(target);
+
+    // 로그인한 뒤에는 예전처럼 바로 옮겨 간다.
+    if (auth.currentUser) {
+        if (version === currentAppVersionKey()) return;
+        window.location.assign(target);
+        return;
+    }
+
+    // 로그인 전이라면 필수 동의부터. 막기만 하고 이유를 안 보여 주면 고장으로 보인다.
+    if (window.highlightMissingConsents?.()) return;
+
+    try { localStorage.setItem(PENDING_APP_VERSION_KEY, version); } catch (_) { }
+    renderVersionSwitchers();
+    window.updateLoginButtonForVersion?.(version);
 };
 function renderVersionSwitchers() {
-    const cur = currentAppVersionKey();
+    // 로그인 전에는 '지금 주소'가 아니라 '고른 버전'을 활성으로 보여 준다.
+    const cur = (!auth.currentUser && window.getPendingAppVersion?.()) || currentAppVersionKey();
     document.querySelectorAll('.version-switcher').forEach((group) => {
         group.querySelectorAll('[data-version]').forEach((btn) => {
             const isActive = btn.getAttribute('data-version') === cur;

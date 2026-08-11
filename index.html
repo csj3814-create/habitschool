@@ -789,7 +789,7 @@
                             <span class="en-google-mark" aria-hidden="true">G</span>
                             Start with Google
                         </a>
-                        <a class="en-secondary-cta" href="https://www.youtube.com/watch?v=gBSyaStmtQI" target="_blank" rel="noopener">Watch the first lesson</a>
+                        <a class="en-secondary-cta" href="https://www.youtube.com/watch?v=kusU9zROdhc&amp;cc_load_policy=1&amp;cc_lang_pref=en&amp;hl=en" target="_blank" rel="noopener">Watch the first lesson</a>
                     </div>
                     <p class="en-hero-note">Free to start. Your Korean and English Habit School records stay in the same account.</p>
                 </div>
@@ -866,7 +866,7 @@
         <div id="login-modal" role="dialog" aria-label="로그인">
             <img src="icons/icon-192.svg" alt="해빛스쿨 로고" style="width: 80px; height: 80px; margin-bottom: 10px;">
             <h1 class="login-title">해빛스쿨</h1>
-            <p style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
+            <p class="login-tagline" data-i18n-html="login.tagline" style="color: #666; margin-bottom: 40px; line-height: 1.6; font-size: 15px;">
                 병원과 의사는 큰 위기만 막을 뿐,<br>건강 유지는 환자 본인의 몫입니다.<br><strong>즐겁게 좋은 습관을 만드는 방법!</strong>
             </p>
             <!--
@@ -894,14 +894,14 @@
                     <input type="checkbox" id="consent-terms" data-consent-required="true">
                     <span class="consent-text">
                         <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener">이용약관</a> 동의</span>
+                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">이용약관</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="consent-privacy" data-consent-required="true">
                     <span class="consent-text">
                         <span class="consent-tag required" data-i18n="consent.required">필수</span>
-                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener">개인정보 수집·이용</a> 동의</span>
+                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener" onclick="event.stopPropagation()">개인정보 수집·이용</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">
@@ -926,6 +926,7 @@
                 </svg>
                 구글로 시작하기
             </button>
+            <p class="login-version-note" id="login-version-note" hidden></p>
             <!-- 앱 버전 스위처 (ko / simple / en / app) -->
             <div class="version-switcher" role="group" aria-label="앱 버전 선택">
                 <button type="button" data-version="ko" onclick="switchAppVersion('ko')">기본형</button>
@@ -956,7 +957,7 @@
             <button class="guest-btn guest-demo-entry-btn" id="guest-demo-entry-btn" type="button"
                 onclick="startGuestDemo('diet')"
                 aria-label="로그인 없이 해빛스쿨 앱 체험하기">🌱 로그인 없이 앱 체험하기</button>
-            <a href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
+            <a class="kakao-channel-link" href="https://pf.kakao.com/_QDZZX" target="_blank" rel="noopener"
                 style="display:inline-block; margin-top:16px; padding:8px 16px; background:#FEE500; color:#191919; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none;">
                 💬 카카오톡 채널 문의
             </a>
@@ -2241,7 +2242,7 @@
                             <button type="button" class="meditation-journal-voice-btn" id="gratitude-voice-btn" onclick="toggleGratitudeVoiceInput()" aria-pressed="false">음성 입력</button>
                         </div>
                         <p class="meditation-journal-status" id="gratitude-voice-status" hidden></p>
-                        <textarea id="gratitude-journal" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
+                        <textarea id="gratitude-journal" data-i18n-placeholder="mind.gratitudePlaceholder" placeholder="명상 뒤 떠오른 감사 3가지를 적어보세요."></textarea>
                     </div>
                 </div>
             </div>

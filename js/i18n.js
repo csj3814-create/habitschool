@@ -121,11 +121,13 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
+        'mind.gratitudePlaceholder': 'Write down three things you felt grateful for after meditating.',
+        'login.tagline': 'Doctors handle the emergencies.<br>Staying well is yours to keep.<br><strong>A gentler way to build good habits.</strong>',
         'consent.all': 'Agree to all',
         'consent.required': 'Required',
         'consent.optional': 'Optional',
-        'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener">Terms of Service</a>',
-        'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener">Collection and use of personal data</a>',
+        'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener" onclick="event.stopPropagation()">Terms of Service</a>',
+        'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener" onclick="event.stopPropagation()">Collection and use of personal data</a>',
         'consent.sensitive': 'Health data (blood test, body composition)',
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
@@ -175,6 +177,12 @@ const ENGLISH_TEXT_REPLACEMENTS = new Map([
 const SELECTOR_TEXTS = [
     ['.skip-to-content', 'Skip to main content'],
     ['#loginBtn', 'Start with Google'],
+    // 로그인 화면이 /en 에서도 뜨게 되면서, 여기 한국어가 그대로 보였다.
+    ['#login-modal .login-title', 'Habit School'],
+    ['.version-switcher [data-version="ko"]', 'Full'],
+    ['.version-switcher [data-version="simple"]', 'Simple'],
+    ['.version-switcher [data-version="en"]', 'English'],
+    ['.version-switcher [data-version="app"]', 'Lite'],
     ['#simple-mode-default-btn', '한국어'],
     ['button[onclick*="openTab(\'diet\')"]', '🥗 Food'],
     ['button[onclick*="openTab(\'exercise\')"]', '🏃 Exercise'],
@@ -243,6 +251,12 @@ const SELECTOR_TEXTS = [
 ];
 
 const SELECTOR_ATTRS = [
+    // 화면에 보이는 글자는 다 영어인데 스크린리더가 읽는 값만 한국어로 남아 있었다.
+    ['#login-modal > img', 'alt', 'Habit School logo'],
+    ['#invite-landing-card', 'alt', 'Record card shared by the friend who invited you'],
+    ['#loginBtn', 'aria-label', 'Sign in with Google'],
+    ['.version-switcher', 'aria-label', 'App version'],
+    ['#guest-demo-entry-btn', 'aria-label', 'Try Habit School without signing in'],
     ['#selected-date', 'aria-label', 'Date'],
     ['#weight', 'placeholder', 'Weight (kg)'],
     ['#glucose', 'placeholder', 'Fasting glucose (mg/dL)'],

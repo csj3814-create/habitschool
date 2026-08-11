@@ -1216,6 +1216,18 @@ export function setupAuthListener(callbacks) {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            // 로그인 전에 고른 앱 버전(기본형·심플·라이트·English)이 있으면 그 주소로 옮긴다.
+            // 화면을 더 그리기 전에 처리해야 잠깐 다른 버전이 비쳤다가 바뀌는 일이 없다.
+            const pendingVersion = window.getPendingAppVersion?.();
+            if (pendingVersion) {
+                const targetPath = { ko: '/', simple: '/simple', en: '/en', app: '/app' }[pendingVersion];
+                const here = String(location.pathname || '/').replace(/\/+$/, '') || '/';
+                window.clearPendingAppVersion?.();
+                if (targetPath && targetPath !== here && !(targetPath === '/en' && here === '/en/index.html')) {
+                    location.replace(targetPath);
+                    return;
+                }
+            }
             clearPendingGoogleLoginResetTimer();
             clearMediaPickerSignedOutRecoveryTimer();
             if (window._isPopupLogin) {
@@ -1470,12 +1482,31 @@ function syncSignupConsentState() {
     const ready = required.every(el => el.checked);
     if (loginBtn) {
         loginBtn.disabled = !ready;
-        loginBtn.title = ready ? '' : '필수 항목에 동의해야 시작할 수 있어요.';
+        loginBtn.title = ready
+            ? ''
+            : (document.documentElement.classList.contains('locale-en')
+                ? 'Please agree to the required items first.'
+                : '필수 항목에 동의해야 시작할 수 있어요.');
     }
 }
 
 // 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
 // 아무 반응 없이 막으면 고장으로 보인다. 무엇을 해야 하는지 그 자리에서 알린다.
+const APP_VERSION_LABELS = { ko: '기본형', simple: '심플', en: 'English', app: '라이트' };
+
+// 버전을 고르면 시작 버튼이 어디로 데려갈지 말해 준다.
+// 누르는 즉시 이동하지 않으므로, 무엇이 선택됐는지 버튼이 알려 줘야 한다.
+window.updateLoginButtonForVersion = function (version) {
+    const btn = document.getElementById('loginBtn');
+    if (!btn) return;
+    const label = APP_VERSION_LABELS[version];
+    const note = document.getElementById('login-version-note');
+    if (note) {
+        note.textContent = label ? `선택한 버전: ${label} · 시작하면 이 버전으로 열려요` : '';
+        note.hidden = !label;
+    }
+};
+
 window.highlightMissingConsents = function () {
     const box = document.getElementById('signup-consent-box');
     if (!box) return false;

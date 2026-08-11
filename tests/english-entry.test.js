@@ -41,7 +41,11 @@ describe('English /en entry', () => {
         expect(withoutAllowedKoreanSwitch).not.toMatch(/[\u3131-\u318E\uAC00-\uD7A3]/);
         expect(landing).toContain('Better habits, one day at a time.');
         expect(landing).toContain('Start with Google');
-        expect(landing).toContain('gBSyaStmtQI');
+        // 한국어 원본 영상에 영어 자막을 달아 쓰기로 했다.
+        // cc_load_policy=1 + cc_lang_pref=en 이라야 자막이 켜진 채로 열린다.
+        expect(landing).toContain('kusU9zROdhc');
+        expect(landing).toContain('cc_load_policy=1');
+        expect(landing).toContain('cc_lang_pref=en');
         expect(landing).toContain('Doctors0');
     });
 
@@ -119,5 +123,44 @@ describe('English landing has its own address', () => {
         expect(landing).toContain('<a class="en-google-cta" href="/en">');
         // 소개 페이지에서 바로 로그인시키면 동의를 건너뛴다.
         expect(landing).not.toContain('startEnglishGoogleSignIn');
+    });
+});
+
+// /en 이 로그인 화면을 쓰게 되면서, 한국어로만 있던 문구들이 그대로 노출됐다.
+// 화면 글자뿐 아니라 스크린리더가 읽는 값(alt/aria-label/placeholder)도 번역돼야 한다.
+describe('English sign-in screen carries no Korean', () => {
+    const i18n = readRepoFile('js/i18n.js');
+    const indexSource = readRepoFile('index.html');
+
+    it('translates the words the visitor reads', () => {
+        expect(i18n).toContain("['#login-modal .login-title', 'Habit School']");
+        expect(i18n).toContain("'login.tagline'");
+        expect(i18n).toContain("'consent.all': 'Agree to all'");
+        expect(i18n).toContain("'consent.note'");
+        // 버전 버튼도 한국어였다.
+        ['ko', 'simple', 'en', 'app'].forEach((version) => {
+            expect(i18n).toContain(`['.version-switcher [data-version="${version}"]'`);
+        });
+    });
+
+    it('translates the words only a screen reader reads', () => {
+        expect(i18n).toContain("['#loginBtn', 'aria-label', 'Sign in with Google']");
+        expect(i18n).toContain("['#login-modal > img', 'alt', 'Habit School logo']");
+        expect(i18n).toContain("['.version-switcher', 'aria-label', 'App version']");
+        expect(i18n).toContain("'mind.gratitudePlaceholder'");
+        expect(indexSource).toContain('data-i18n-placeholder="mind.gratitudePlaceholder"');
+    });
+
+    // 링크가 label 안에 있으면 label이 클릭을 가져가 새 창이 열리지 않는다.
+    it('lets the consent links open instead of only ticking the box', () => {
+        expect(indexSource).toContain('rel="noopener" onclick="event.stopPropagation()"');
+        expect(i18n).toContain('onclick="event.stopPropagation()"');
+    });
+
+    // 체험 모드 문구가 전부 한국어라, 영어판에서 눌리면 한글 화면이 나온다.
+    it('keeps the Korean-only demo out of the English screen', () => {
+        const styles = readRepoFile('styles-features.css');
+        expect(styles).toContain('html.locale-en .guest-demo-entry-btn');
+        expect(styles).toContain('html.locale-en .kakao-channel-link');
     });
 });
