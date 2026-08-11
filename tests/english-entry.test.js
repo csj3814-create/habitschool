@@ -79,3 +79,45 @@ describe('English /en entry', () => {
         expect(sw).toContain("'./icons/og-image-en.png'");
     });
 });
+
+// 예전에는 /en 이 로그아웃 상태일 때만 소개 페이지를 보여 줬다. 그래서
+//  - 소개 페이지를 가리킬 안정적인 주소가 없었고(외국 포털 유입에 필요하다),
+//  - 영어 사용자는 한글판과 달리 동의 체크박스가 있는 로그인 화면을 볼 수 없었다.
+describe('English landing has its own address', () => {
+    const indexSource = readRepoFile('index.html');
+    const appMode = readRepoFile('js/app-mode.js');
+    const enStyles = readRepoFile('styles-en.css');
+    const firebaseConfig = JSON.parse(readRepoFile('firebase.json'));
+
+    it('routes /en/welcome to the entry document', () => {
+        const rewrites = firebaseConfig.hosting[0].rewrites.map((r) => r.source);
+        expect(rewrites).toContain('/en/welcome');
+        const redirects = firebaseConfig.hosting[0].redirects.map((r) => r.source);
+        expect(redirects).toContain('/en/welcome/');
+    });
+
+    it('shows the landing by address rather than by being signed out', () => {
+        expect(appMode).toContain("const ENGLISH_LANDING_PATH = '/en/welcome';");
+        expect(appMode).toContain("doc.documentElement?.classList.toggle('en-landing', routeContext.isEnglishLanding);");
+        expect(enStyles).toContain('html.en-landing .english-public-page');
+        expect(enStyles).toContain('html:not(.en-landing) .english-public-page');
+        // 로그인 여부로 랜딩을 가르던 규칙은 사라진다.
+        expect(enStyles).not.toContain('html.locale-en.signed-out .english-public-page');
+        expect(enStyles).not.toContain('html.locale-en.signed-out .app-container');
+    });
+
+    it('decides the landing before first paint so it does not flash the app', () => {
+        expect(indexSource).toContain("normalizedPath === '/en/welcome'");
+        expect(indexSource).toContain("document.documentElement.classList.add('en-landing');");
+    });
+
+    it('sends the landing CTA to the screen that carries the consent boxes', () => {
+        const landing = indexSource.slice(
+            indexSource.indexOf('id="english-public-page"'),
+            indexSource.indexOf('</section>', indexSource.indexOf('en-hero-actions'))
+        );
+        expect(landing).toContain('<a class="en-google-cta" href="/en">');
+        // 소개 페이지에서 바로 로그인시키면 동의를 건너뛴다.
+        expect(landing).not.toContain('startEnglishGoogleSignIn');
+    });
+});

@@ -82,6 +82,11 @@
           "type": 301
         },
         {
+          "source": "/en/welcome/",
+          "destination": "/en/welcome",
+          "type": 301
+        },
+        {
           "source": "/en/privacy/",
           "destination": "/en/privacy",
           "type": 301
@@ -130,6 +135,10 @@
         },
         {
           "source": "/en",
+          "destination": "/en/index.html"
+        },
+        {
+          "source": "/en/welcome",
           "destination": "/en/index.html"
         },
         {

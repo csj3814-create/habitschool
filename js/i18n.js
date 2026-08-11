@@ -121,6 +121,13 @@ const MESSAGES = {
         'diet.window.minError': 'Please set an eating window of at least {hours} hours.',
         'diet.window.invalid': 'Please check the times again.',
         'invite.landingTitle': '🎁 A friend invited you',
+        'consent.all': 'Agree to all',
+        'consent.required': 'Required',
+        'consent.optional': 'Optional',
+        'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener">Terms of Service</a>',
+        'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener">Collection and use of personal data</a>',
+        'consent.sensitive': 'Health data (blood test, body composition)',
+        'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',
         'sharePrompt.kicker': 'Today, wrapped up',
         'sharePrompt.title': 'Your whole day fits on one card',
@@ -340,6 +347,12 @@ export function applyDomTranslations(doc = document) {
     doc.querySelectorAll('[data-i18n]').forEach((el) => {
         const key = el.getAttribute('data-i18n');
         if (key) el.textContent = t(key);
+    });
+    // 동의 문구처럼 안에 링크가 있는 곳은 textContent로 갈아끼우면 링크가 사라진다.
+    // 값은 이 파일 안의 상수뿐이라(사용자 입력이 아니다) innerHTML로 넣어도 안전하다.
+    doc.querySelectorAll('[data-i18n-html]').forEach((el) => {
+        const key = el.getAttribute('data-i18n-html');
+        if (key) el.innerHTML = t(key);
     });
     doc.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
         const key = el.getAttribute('data-i18n-placeholder');

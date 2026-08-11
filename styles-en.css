@@ -23,15 +23,18 @@ html.locale-en.locale-loading body {
     display: none;
 }
 
-html.locale-en.signed-out .english-public-page {
+/* 랜딩은 이제 로그인 여부가 아니라 주소로 정해진다.
+   /en 은 한글판과 같은 앱 로그인 화면이고, /en/welcome 이 소개 페이지다.
+   외국 포털에서 들어오는 링크는 /en/welcome 을 쓴다. */
+html.en-landing .english-public-page {
     display: block;
 }
 
-html.locale-en.signed-out .app-container {
+html.en-landing .app-container {
     display: none;
 }
 
-html.locale-en.signed-in .english-public-page {
+html:not(.en-landing) .english-public-page {
     display: none;
 }
 

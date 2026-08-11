@@ -52,10 +52,13 @@ function setEnglishAuthShellState(state = 'pending') {
     root.classList.toggle('signed-out', signedOut);
     root.classList.toggle('auth-pending', !signedIn && !signedOut);
 
+    // 랜딩은 로그인 여부가 아니라 주소로 정해진다(/en/welcome).
+    // /en 은 한글판과 같은 로그인 화면을 띄운다 — 동의 체크박스가 거기 있다.
+    const isLanding = root.classList.contains('en-landing');
     const landing = document.getElementById('english-public-page');
-    if (landing) landing.hidden = !signedOut;
+    if (landing) landing.hidden = !isLanding;
     const loginModal = document.getElementById('login-modal');
-    if (loginModal) loginModal.style.display = 'none';
+    if (loginModal) loginModal.style.display = (!isLanding && signedOut) ? 'flex' : 'none';
     applyDomTranslations();
 }
 

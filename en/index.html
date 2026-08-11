@@ -14,8 +14,13 @@
         if (normalizedPath === '/simple') {
             document.documentElement.classList.add('simple-mode');
         }
-        if (normalizedPath === '/en' || normalizedPath === '/en/index.html') {
+        if (normalizedPath === '/en' || normalizedPath === '/en/index.html' || normalizedPath === '/en/welcome') {
             document.documentElement.classList.add('simple-mode', 'locale-en', 'auth-pending', 'locale-loading');
+            // 소개 페이지인지 첫 페인트 전에 정한다. 모듈 로드 뒤로 밀면 로그인 화면이
+            // 잠깐 비쳤다가 랜딩으로 바뀌어 깜빡인다.
+            if (normalizedPath === '/en/welcome') {
+                document.documentElement.classList.add('en-landing');
+            }
             document.documentElement.lang = 'en';
         } else {
             document.documentElement.classList.add('locale-ko');
@@ -761,7 +766,7 @@
 
     <section id="english-public-page" class="english-public-page" aria-label="Habit School English introduction" hidden>
         <header class="en-public-header">
-            <a class="en-public-brand" href="/en" aria-label="Habit School English home">
+            <a class="en-public-brand" href="/en/welcome" aria-label="Habit School English home">
                 <img src="icons/icon-192.svg" alt="" width="32" height="32">
                 <span>Habit School</span>
             </a>
@@ -779,10 +784,13 @@
                     <h1>Start with one small habit today. Your body remembers what you repeat.</h1>
                     <p class="en-hero-body">Habit School helps you record food, movement, sleep, meditation, and gratitude in one gentle daily rhythm.</p>
                     <div class="en-hero-actions">
-                        <button type="button" class="en-google-cta" onclick="window.startEnglishGoogleSignIn?.()">
+                        <!-- Sends people to /en, where the consent checkboxes are.
+                             Signing in straight from here would skip them.
+                             (Comment kept in English: this section is asserted to be Korean-free.) -->
+                        <a class="en-google-cta" href="/en">
                             <span class="en-google-mark" aria-hidden="true">G</span>
                             Start with Google
-                        </button>
+                        </a>
                         <a class="en-secondary-cta" href="https://www.youtube.com/watch?v=gBSyaStmtQI" target="_blank" rel="noopener">Watch the first lesson</a>
                     </div>
                     <p class="en-hero-note">Free to start. Your Korean and English Habit School records stay in the same account.</p>
@@ -881,31 +889,31 @@
             <div class="consent-box" id="signup-consent-box">
                 <label class="consent-row">
                     <input type="checkbox" id="consent-all">
-                    <span class="consent-text consent-all-text">전체 동의</span>
+                    <span class="consent-text consent-all-text" data-i18n="consent.all">전체 동의</span>
                 </label>
                 <div class="consent-divider"></div>
                 <label class="consent-row">
                     <input type="checkbox" id="consent-terms" data-consent-required="true">
                     <span class="consent-text">
-                        <span class="consent-tag required">필수</span>
-                        <a href="/terms.html" target="_blank" rel="noopener">이용약관</a> 동의
+                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
+                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener">이용약관</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="consent-privacy" data-consent-required="true">
                     <span class="consent-text">
-                        <span class="consent-tag required">필수</span>
-                        <a href="/privacy.html" target="_blank" rel="noopener">개인정보 수집·이용</a> 동의
+                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
+                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener">개인정보 수집·이용</a> 동의</span>
                     </span>
                 </label>
                 <label class="consent-row">
                     <input type="checkbox" id="consent-sensitive">
                     <span class="consent-text">
-                        <span class="consent-tag optional">선택</span>
-                        건강정보(혈액검사·체성분) 동의
+                        <span class="consent-tag optional" data-i18n="consent.optional">선택</span>
+                        <span data-i18n="consent.sensitive">건강정보(혈액검사·체성분) 동의</span>
                     </span>
                 </label>
-                <p class="consent-note">선택은 거부해도 가입됩니다. 혈액검사·체성분 기능만 잠깁니다.</p>
+                <p class="consent-note" data-i18n="consent.note">선택은 거부해도 가입됩니다. 혈액검사·체성분 기능만 잠깁니다.</p>
             </div>
             <button class="google-btn" id="loginBtn" aria-label="구글 계정으로 로그인" disabled>
                 <svg class="google-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" aria-hidden="true">

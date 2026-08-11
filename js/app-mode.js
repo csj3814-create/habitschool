@@ -2,6 +2,11 @@ const DEFAULT_MODE = 'default';
 const SIMPLE_MODE = 'simple';
 const SIMPLE_MODE_PATH = '/simple';
 const ENGLISH_ENTRY_PATH = '/en';
+// 영어 소개(랜딩) 페이지. 앱 로그인 화면(/en)과 주소를 나눠 둔다 —
+// 외국 포털·검색에서 들어오는 링크는 여기를 가리키고, /en 은 한글판과 같은
+// 로그인 화면이 된다. 예전에는 /en 이 로그아웃 상태일 때만 랜딩을 보여 줘서,
+// 소개 페이지를 가리킬 안정적인 주소가 없었다.
+const ENGLISH_LANDING_PATH = '/en/welcome';
 // 구글플레이 TWA 전용 경로. 이 경로에서는 온체인(HBT·지갑·전환·스테이킹) 기능을
 // 전부 끈 '라이트' 앱으로 동작한다. 플레이 정책상 개인 계정으로는 암호화폐 지갑을
 // 배포할 수 없어, 스토어 빌드는 이 경로만 열도록 TWA를 구성한다.
@@ -25,7 +30,10 @@ export function normalizeAppPath(pathname = '/') {
 
 export function getRouteContext(pathname = getCurrentPathname()) {
     const path = normalizeAppPath(pathname);
-    const isEnglishEntry = path === ENGLISH_ENTRY_PATH || path === `${ENGLISH_ENTRY_PATH}/index.html`;
+    const isEnglishLanding = path === ENGLISH_LANDING_PATH;
+    const isEnglishEntry = path === ENGLISH_ENTRY_PATH
+        || path === `${ENGLISH_ENTRY_PATH}/index.html`
+        || isEnglishLanding;
     const isKoreanSimple = path === SIMPLE_MODE_PATH;
     const isPlay = path === PLAY_MODE_PATH || path === `${PLAY_MODE_PATH}/index.html`;
     const locale = isEnglishEntry ? ENGLISH_LOCALE : DEFAULT_LOCALE;
@@ -38,6 +46,7 @@ export function getRouteContext(pathname = getCurrentPathname()) {
         locale,
         mode,
         isEnglish: locale === ENGLISH_LOCALE,
+        isEnglishLanding,
         isSimple: mode === SIMPLE_MODE,
         isPlay,
         defaultTab,
@@ -180,6 +189,7 @@ export function applyAppModeChrome(doc = document) {
 
     doc.documentElement?.classList.toggle('simple-mode', simpleMode);
     doc.documentElement?.classList.toggle('locale-en', englishMode);
+    doc.documentElement?.classList.toggle('en-landing', routeContext.isEnglishLanding);
     doc.documentElement?.classList.toggle('locale-ko', !englishMode);
     doc.documentElement?.classList.toggle('play-mode', playMode);
     if (doc.documentElement) doc.documentElement.lang = routeContext.locale;
