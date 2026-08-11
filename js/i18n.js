@@ -179,10 +179,6 @@ const SELECTOR_TEXTS = [
     ['#loginBtn', 'Start with Google'],
     // 로그인 화면이 /en 에서도 뜨게 되면서, 여기 한국어가 그대로 보였다.
     ['#login-modal .login-title', 'Habit School'],
-    ['.version-switcher [data-version="ko"]', 'Full'],
-    ['.version-switcher [data-version="simple"]', 'Simple'],
-    ['.version-switcher [data-version="en"]', 'English'],
-    ['.version-switcher [data-version="app"]', 'Lite'],
     ['#simple-mode-default-btn', '한국어'],
     ['button[onclick*="openTab(\'diet\')"]', '🥗 Food'],
     ['button[onclick*="openTab(\'exercise\')"]', '🏃 Exercise'],
@@ -248,6 +244,17 @@ const SELECTOR_TEXTS = [
     ['.meditation-common-note', 'Sit comfortably. Do not force it. Stop if you feel dizzy.'],
     ['.meditation-journal-label', 'Three-line gratitude journal after meditation'],
     ['#gratitude-voice-btn', 'Voice input']
+];
+
+// 화면에 같은 요소가 여러 벌 있는 곳(버전 스위처는 로그인 화면과 프로필 탭에 하나씩).
+// setText 는 첫 번째만 바꾸므로, 전부 바꿔야 하는 선택자는 여기 둔다.
+// (기본 목록을 통째로 querySelectorAll 로 바꾸면 '#diet .card h3' 같은 선택자가
+//  의도치 않은 요소까지 덮어쓴다.)
+const SELECTOR_TEXTS_ALL = [
+    ['.version-switcher [data-version="ko"]', 'Full'],
+    ['.version-switcher [data-version="simple"]', 'Simple'],
+    ['.version-switcher [data-version="en"]', 'English'],
+    ['.version-switcher [data-version="app"]', 'Lite']
 ];
 
 const SELECTOR_ATTRS = [
@@ -324,6 +331,14 @@ function setText(doc, selector, value) {
     el.textContent = value;
 }
 
+function setTextAll(doc, selector, value) {
+    doc.querySelectorAll(selector).forEach((el) => {
+        if (el.dataset.i18nLocked === 'true') return;
+        if (String(el.textContent || '').trim() === value) return;
+        el.textContent = value;
+    });
+}
+
 function setAttr(doc, selector, attr, value) {
     const el = doc.querySelector(selector);
     if (!el) return;
@@ -356,6 +371,7 @@ export function applyDomTranslations(doc = document) {
     if (!isEnglishLocale()) return;
 
     SELECTOR_TEXTS.forEach(([selector, value]) => setText(doc, selector, value));
+    SELECTOR_TEXTS_ALL.forEach(([selector, value]) => setTextAll(doc, selector, value));
     SELECTOR_ATTRS.forEach(([selector, attr, value]) => setAttr(doc, selector, attr, value));
 
     doc.querySelectorAll('[data-i18n]').forEach((el) => {
