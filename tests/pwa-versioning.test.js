@@ -119,6 +119,9 @@ describe('PWA asset versioning', () => {
         expect(headerSources).toContain('/manifest-en.json');
         expect(headerSources).toContain('/en');
         expect(headerSources).toContain('/styles.css');
+        // styles.css만 no-store였던 탓에, 버전을 올리지 않은 CSS 변경은 브라우저가
+        // 캐시된 옛 파일을 계속 썼다. 나머지 스타일시트도 같은 규칙을 받아야 한다.
+        expect(headerSources).toContain('/styles-*.css');
         expect(headerSources).toContain('/js/**');
         expect(headerSources).toContain('/sw.js');
         expect(headerSources).toContain('/firebase-messaging-sw.js');
