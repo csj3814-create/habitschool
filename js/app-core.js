@@ -8449,6 +8449,10 @@ window.switchAppVersion = function (version) {
     const target = APP_VERSION_PATHS[version];
     if (!target) return;
     if (version === currentAppVersionKey()) return;
+    // 로그인 전에 버전을 바꾸면 남아 있던 체험 세션이 복원돼 체험 화면으로 떨어진다.
+    // 그 전에 필수 동의부터 받는다. 막기만 하고 이유를 안 보여 주면 고장으로 보이므로
+    // 체크 안 한 항목을 빨갛게 짚어 준다.
+    if (!auth.currentUser && window.highlightMissingConsents?.()) return;
     window.location.assign(target);
 };
 function renderVersionSwitchers() {

@@ -6823,3 +6823,45 @@ body.gallery-user-filtered #weekly-best-container {
         display: none;
     }
 }
+
+/* ===== 필수 동의 미체크 표시 =====
+   막기만 하고 이유를 안 보여 주면 버튼이 고장 난 것처럼 보인다. */
+.consent-box.needs-consent {
+    border-color: #E53935;
+    box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.12);
+}
+
+.consent-row.is-missing input[type="checkbox"] {
+    outline: 2px solid #E53935;
+    outline-offset: 2px;
+    border-radius: 4px;
+    accent-color: #E53935;
+}
+
+.consent-row.is-missing .consent-text {
+    color: #C62828;
+    font-weight: 700;
+}
+
+.consent-box.needs-consent::after {
+    content: '필수 항목에 동의해야 시작할 수 있어요';
+    display: block;
+    margin-top: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #C62828;
+}
+
+@keyframes consentShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+}
+
+.consent-box.shake { animation: consentShake 0.36s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+    .consent-box.shake { animation: none; }
+}

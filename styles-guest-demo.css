@@ -788,88 +788,124 @@ body.dark-mode .wallet-convert-limit-reset {
     cursor: default;
 }
 
-/* ===== 체험 순서 안내 ===== */
+/* ===== 체험 순서 안내 =====
+   ol/li로 점을 찍었더니 브라우저 기본 목록 번호가 그대로 보였다.
+   순서는 막대 하나로 충분하고, 지금 할 일이 제목처럼 커야 눈에 든다. */
 .guest-demo-steps {
-    margin-bottom: 12px;
-    padding: 12px 14px;
-    background: linear-gradient(135deg, #FFF6E5, #FFEFD8);
-    border: 1px solid #F0D6A8;
-    border-radius: 14px;
+    position: relative;
+    margin-bottom: 14px;
+    padding: 14px 16px 15px;
+    background: #FFFFFF;
+    border: 1px solid #F0DCBB;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(180, 130, 60, 0.10);
+    overflow: hidden;
+}
+
+/* 지금 이 탭에서 할 일이면 왼쪽에 색 띠를 세워 강조한다. */
+.guest-demo-steps.is-here::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, #FFA726, #F57C00);
 }
 
 .guest-demo-steps.is-complete {
-    background: linear-gradient(135deg, #EAF7EE, #DFF2E6);
-    border-color: #B8DFC6;
+    border-color: #BFE3CB;
+    box-shadow: 0 6px 18px rgba(60, 140, 90, 0.12);
 }
 
-.guest-demo-steps-head {
+.guest-demo-steps-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    margin-bottom: 7px;
 }
 
-.guest-demo-steps-head strong {
-    font-size: 14px;
-    color: #8a5a1e;
-    line-height: 1.4;
+.guest-demo-steps-badge {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #FFF1DC;
+    color: #B35A00;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
 }
 
-.guest-demo-steps.is-complete .guest-demo-steps-head strong { color: #2E7D4F; }
+.guest-demo-steps.is-complete .guest-demo-steps-badge {
+    background: #E4F5EA;
+    color: #2E7D4F;
+}
 
 .guest-demo-steps-count {
     flex: 0 0 auto;
     font-size: 12px;
     font-weight: 800;
-    color: #B35A00;
-    background: rgba(255, 255, 255, 0.75);
-    border-radius: 999px;
-    padding: 2px 9px;
+    color: #A98C68;
+    font-variant-numeric: tabular-nums;
 }
 
-.guest-demo-steps p {
-    margin: 6px 0 0;
+.guest-demo-steps-title {
+    display: block;
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1.35;
+    color: #4A3520;
+}
+
+.guest-demo-steps.is-complete .guest-demo-steps-title { color: #2E7D4F; }
+
+.guest-demo-steps-hint {
+    margin: 5px 0 0;
     font-size: 12.5px;
     line-height: 1.55;
-    color: #7a6a58;
+    color: #8B7A66;
 }
 
-.guest-demo-steps-dots {
-    display: flex;
-    gap: 6px;
-    margin: 10px 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.guest-demo-steps-dots li {
-    flex: 1 1 0;
+.guest-demo-steps-bar {
+    margin-top: 11px;
     height: 6px;
     border-radius: 999px;
-    background: rgba(179, 90, 0, 0.16);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: #F3E6D2;
+    overflow: hidden;
 }
 
-.guest-demo-steps-dots li span { display: none; }
-.guest-demo-steps-dots li.is-done { background: #EFA14A; }
-.guest-demo-steps-dots li.is-active { background: #B35A00; }
+.guest-demo-steps-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #FFB74D, #F57C00);
+    transition: width 0.35s ease;
+}
+
+.guest-demo-steps.is-complete .guest-demo-steps-bar i {
+    background: linear-gradient(90deg, #81C784, #4CAF50);
+}
 
 .guest-demo-steps-jump {
-    margin-top: 10px;
+    margin-top: 12px;
     width: 100%;
-    padding: 10px 16px;
+    padding: 11px 16px;
     background: linear-gradient(135deg, #FF9800, #F57C00);
     color: #fff;
     border: 0;
-    border-radius: 10px;
-    font-size: 13px;
+    border-radius: 12px;
+    font-size: 13.5px;
     font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 4px 12px rgba(245, 124, 0, 0.28);
 }
 
 .guest-demo-steps-jump:active { transform: scale(0.98); }
+
+.guest-demo-steps .guest-demo-button-primary { margin-top: 12px; width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+    .guest-demo-steps-bar i { transition: none; }
+}
 
 /* 예시 커피 쿠폰 이미지 */
 .guest-demo-coupon-image {

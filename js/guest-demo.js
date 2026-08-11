@@ -506,38 +506,38 @@ function renderExampleBadge() {
 function renderStepGuide(session, currentTab) {
     const progress = getGuestDemoStepProgress(session);
     const step = getGuestDemoCurrentStep(session);
+    const pct = Math.round((progress.done / progress.total) * 100);
 
     if (progress.complete) {
         return `
             <div class="guest-demo-steps is-complete" role="status">
-                <div class="guest-demo-steps-head">
-                    <strong>한 바퀴 다 둘러봤어요</strong>
+                <div class="guest-demo-steps-top">
+                    <span class="guest-demo-steps-badge">🎉 완주</span>
                     <span class="guest-demo-steps-count">${progress.done}/${progress.total}</span>
                 </div>
-                <p>기록하고 · 모으고 · 바꾸는 흐름이 실제 앱에서도 그대로예요.</p>
+                <strong class="guest-demo-steps-title">한 바퀴 다 둘러봤어요</strong>
+                <p class="guest-demo-steps-hint">기록하고 · 모으고 · 바꾸는 흐름이 실제 앱에서도 그대로예요.</p>
+                <div class="guest-demo-steps-bar"><i style="width:100%"></i></div>
                 ${renderLoginButton('내 기록으로 시작하기', 'start_record', 'dashboard')}
             </div>`;
     }
 
-    // 지금 할 일이 다른 탭이면 그 탭으로 데려다 주는 버튼을 준다.
-    const jump = step.tab === currentTab
+    const here = step.tab === currentTab;
+    const jump = here
         ? ''
-        : `<button type="button" class="guest-demo-steps-jump" data-guest-demo-goto="${step.tab}">${step.label} 하러 가기</button>`;
-
-    const dots = GUEST_DEMO_STEPS.map((item) => {
-        const done = isGuestDemoStepDone(item.id, session);
-        const active = item.id === step.id;
-        return `<li class="${done ? 'is-done' : ''}${active ? ' is-active' : ''}" title="${item.label}"><span>${done ? '✓' : ''}</span></li>`;
-    }).join('');
+        : `<button type="button" class="guest-demo-steps-jump" data-guest-demo-goto="${step.tab}">${step.label} 하러 가기 →</button>`;
 
     return `
-        <div class="guest-demo-steps" role="status" aria-label="체험 진행 안내">
-            <div class="guest-demo-steps-head">
-                <strong>${step.tab === currentTab ? '지금 해볼 것' : '다음 순서'} · ${step.label}</strong>
+        <div class="guest-demo-steps${here ? ' is-here' : ''}" role="status" aria-label="체험 진행 안내">
+            <div class="guest-demo-steps-top">
+                <span class="guest-demo-steps-badge">${here ? '지금 해볼 것' : '다음 순서'}</span>
                 <span class="guest-demo-steps-count">${progress.done}/${progress.total}</span>
             </div>
-            <p>${step.hint}</p>
-            <ol class="guest-demo-steps-dots" aria-hidden="true">${dots}</ol>
+            <strong class="guest-demo-steps-title">${step.label}</strong>
+            <p class="guest-demo-steps-hint">${step.hint}</p>
+            <div class="guest-demo-steps-bar" role="progressbar" aria-valuenow="${progress.done}" aria-valuemin="0" aria-valuemax="${progress.total}">
+                <i style="width:${pct}%"></i>
+            </div>
             ${jump}
         </div>`;
 }

@@ -1471,6 +1471,36 @@ function syncSignupConsentState() {
     }
 }
 
+// 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
+// 아무 반응 없이 막으면 고장으로 보인다. 무엇을 해야 하는지 그 자리에서 알린다.
+window.highlightMissingConsents = function () {
+    const box = document.getElementById('signup-consent-box');
+    if (!box) return false;
+    const missing = [...box.querySelectorAll('input[data-consent-required="true"]')].filter(el => !el.checked);
+    if (!missing.length) return false;
+
+    box.classList.add('needs-consent');
+    missing.forEach(el => el.closest('.consent-row')?.classList.add('is-missing'));
+    // 애니메이션을 다시 태우려면 클래스를 한 번 떼야 한다.
+    box.classList.remove('shake');
+    void box.offsetWidth;
+    box.classList.add('shake');
+
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    missing[0]?.focus({ preventScroll: true });
+
+    // 체크하면 표시를 지운다.
+    missing.forEach(el => {
+        el.addEventListener('change', () => {
+            if (el.checked) el.closest('.consent-row')?.classList.remove('is-missing');
+            if (![...box.querySelectorAll('input[data-consent-required="true"]')].some(x => !x.checked)) {
+                box.classList.remove('needs-consent', 'shake');
+            }
+        }, { once: true });
+    });
+    return true;
+};
+
 function bindSignupConsentListeners() {
     const box = document.getElementById('signup-consent-box');
     if (!box || box.dataset.consentBound === 'true') return;
