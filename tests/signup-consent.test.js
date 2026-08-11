@@ -82,6 +82,23 @@ describe('account deletion warns about losing the tokens', () => {
         expect(auth).toContain('window.openLegacyWalletExportModal()');
     });
 
+    // 실제로 해 보니 Trust Wallet은 개인키 QR을 읽어 지갑을 열었고, MetaMask는
+    // "이 QR 코드는 계정 주소나 연락처 주소와 연계되어 있지 않습니다"로 거부했다.
+    // 메타마스크 스캐너가 주소를 기대하기 때문이다.
+    // 되지도 않는 길을 안내하면 사용자는 자기가 잘못한 줄 안다.
+    it('points the QR at the wallet that can actually read it', () => {
+        const qrBox = html.split('id="legacy-wallet-qr-box"')[1]?.split('</div>\n                <div class="legacy-wallet-import-guide">')[0] || '';
+        expect(qrBox).not.toBe('');
+        expect(qrBox).toContain('Trust Wallet');
+        // QR 안내에서 메타마스크를 빼야 한다.
+        expect(qrBox).not.toContain('MetaMask');
+
+        // 메타마스크에는 복사·붙여넣기를 안내한다.
+        const guide = html.split('class="legacy-wallet-import-guide"')[1]?.split('</div>')[0] || '';
+        expect(guide).toContain('MetaMask에서 가져오기');
+        expect(guide).toContain('QR 대신 복사를 쓰세요');
+    });
+
     it('requires an explicit acknowledgement, not just an OK', () => {
         expect(html).toContain('id="delete-ack-tokens"');
         expect(html).toContain('id="delete-ack-data"');

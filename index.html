@@ -3009,20 +3009,30 @@
                   키가 화면에 떠 있을 때만 그린다.
                 -->
                 <div class="legacy-wallet-qr-box" id="legacy-wallet-qr-box" hidden>
-                    <div class="legacy-wallet-qr-title">📷 QR로 가져오기</div>
+                    <div class="legacy-wallet-qr-title">📷 Trust Wallet에서 QR로 가져오기</div>
                     <div class="legacy-wallet-qr-canvas" id="legacy-wallet-qr"></div>
                     <p class="legacy-wallet-qr-desc">
-                        MetaMask·Trust Wallet의 개인키 입력란에서 카메라(QR) 버튼을 누르고 이 코드를 비추세요.
+                        Trust Wallet의 개인키 입력란에서 카메라(QR) 버튼을 누르고 이 코드를 비추세요.
                         <strong>이 화면은 캡처하거나 남에게 보이지 마세요.</strong>
                     </p>
                 </div>
                 <div class="legacy-wallet-import-guide">
-                    <strong>가져오기 순서</strong>
+                    <strong>Trust Wallet에서 가져오기</strong>
                     <ol>
-                        <li>MetaMask 또는 Trust Wallet에서 기존 지갑 가져오기를 엽니다.</li>
-                        <li>개인키 입력을 선택하고, 카메라(QR) 버튼으로 위 코드를 비추거나 복사한 키를 붙여넣습니다.</li>
-                        <li>가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</li>
+                        <li>Trust Wallet에서 지갑 가져오기를 열고 개인키 입력을 선택합니다.</li>
+                        <li>카메라(QR) 버튼으로 위 코드를 비추거나, 복사한 키를 붙여넣습니다.</li>
                     </ol>
+                    <!--
+                      메타마스크 스캐너는 주소(또는 ethereum: 주소)를 기대해서 개인키 QR을
+                      "계정 주소나 연락처 주소와 연계되어 있지 않다"며 거부한다.
+                      되지도 않는 길을 안내하면 사용자는 자기가 잘못한 줄 안다.
+                    -->
+                    <strong style="display:block; margin-top:12px;">MetaMask에서 가져오기</strong>
+                    <ol>
+                        <li><strong>QR 대신 복사를 쓰세요.</strong> MetaMask의 QR 스캐너는 지갑 주소만 인식해서, 개인키 QR은 읽지 못한다는 오류가 납니다.</li>
+                        <li>위 <strong>복사</strong> 버튼을 누른 뒤, 계정 가져오기 → 개인키 입력란에 붙여넣습니다.</li>
+                    </ol>
+                    <p style="margin-top:10px;">가져오기가 끝나면 외부 지갑에서 같은 주소를 보관용으로 사용할 수 있어요.</p>
                 </div>
             </div>
             <div class="wallet-modal-actions">
