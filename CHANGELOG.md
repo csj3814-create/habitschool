@@ -2,6 +2,24 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12 (3)
+
+### Fixed
+- Rewrote the terms of use and privacy policy against what the code actually does. Three statements were false. The policy said personal information is never given to third parties, but redeeming a coupon sends the recipient's phone number to the delivery vendor (`reward-market.js`, `phone_no`). It said everything is destroyed without delay on account deletion, but `blockchain_transactions` and `reward_redemptions` are deliberately retained (`account-deletion.js`, `RETAINED_COLLECTIONS`). The terms barred anyone under 18, and nothing in the codebase ever checked an age.
+- Set the age floor at 14 — the threshold the Personal Information Protection Act actually uses — and made it a required checkbox at sign-up recorded as `consents.age14`, so the document describes a rule the code enforces rather than one it merely asserts.
+
+### Added
+- Disclosed everything the policy had omitted: sensitive-information consent under Article 23 and what declining it costs, the encrypted wallet private key and wallet address, per-device push tokens, step-count screenshots, blood test images, the Gemini API and Google Analytics as processors, and the overseas transfer that follows from running on Google infrastructure.
+- Warned in both documents that account deletion erases the stored wallet key and that blockchain records cannot be deleted at all — the app already said this at the point of deletion, but neither document did.
+- Added terms articles for the wallet and private key (Article 7) and for coupon redemption (Article 8), covering refunds, validity, and re-delivery.
+- Added `tests/policy-documents-match-code.test.js`, which reads `RETAINED_COLLECTIONS` and the vendor payload out of the source and fails if the documents stop naming them. The documents drifted from the code once; this is what notices next time.
+
+### Changed
+- Rotated the cache to v304. The English policy pages are precached by the service worker, so they need the rotation to refresh.
+
+### Still open
+- Four blanks are marked `[[…]]` in the policy and cannot be invented: the operator's full name for the privacy officer field, the coupon vendor's legal entity name, the Firestore/Storage and Gemini processing regions, and the retention period pending a read of the E-Commerce Act on whether those records are covered at all.
+
 ## 2026-08-12 (2)
 
 ### Fixed

@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=303';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=304';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -128,6 +128,7 @@ const MESSAGES = {
         'consent.optional': 'Optional',
         'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Terms of Service</a>',
         'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Collection and use of personal data</a>',
+        'consent.age': 'I am 14 years of age or older',
         'consent.sensitive': 'Health data (blood test, body composition)',
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',

@@ -15,88 +15,209 @@
         h1 { font-size: 26px; margin-bottom: 8px; color: #222; }
         .date { font-size: 13px; color: #777; margin-bottom: 32px; }
         h2 { font-size: 18px; margin: 28px 0 12px; color: #333; border-left: 4px solid #FF9800; padding-left: 12px; }
+        h3 { font-size: 15px; margin: 18px 0 6px; color: #444; }
         p, li { font-size: 15px; color: #555; margin-bottom: 8px; }
         ul { padding-left: 20px; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 14px; }
+        th, td { border: 1px solid #e5e5e5; padding: 8px 10px; text-align: left; vertical-align: top; color: #555; }
+        th { background: #FAFAFA; color: #333; font-weight: 600; }
+        .wrap { overflow-x: auto; }
         .contact { background: #FFF8E1; padding: 16px; border-radius: 8px; margin-top: 24px; }
         .contact p { margin-bottom: 4px; }
+        .callout { background: #FFF3E0; border-left: 4px solid #FF9800; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+        .callout p:last-child { margin-bottom: 0; }
         a { color: #FF9800; }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Privacy Policy</h1>
-    <p class="date">Effective date: March 13, 2026</p>
+    <p class="date">Effective date: August 12, 2026</p>
 
-    <p>Habit School (the “Service”) values users’ personal information and complies with applicable laws and regulations related to personal information protection. This Privacy Policy explains what personal information the Service collects, why it is collected, how long it is retained, and the rights available to users.</p>
+    <p>Habit School (the “Service”) complies with the Personal Information Protection Act of the Republic of Korea and other applicable laws. This policy describes only the data the Service actually collects, stores, and transmits.</p>
 
     <h2>1. Personal information we collect</h2>
-    <p>The Service collects the following personal information.</p>
+
+    <h3>a. Required, collected automatically at Google sign-in</h3>
     <ul>
-        <li><strong>Required items:</strong> Google account email address, display name, and profile photo URL, collected automatically during Google sign-in.</li>
-        <li><strong>Optional items:</strong> weight, blood glucose, blood pressure, body composition data such as muscle mass, body fat percentage, and visceral fat; food photos; exercise photos/videos; sleep record photos; gratitude journal text.</li>
-        <li><strong>Automatically collected items:</strong> service usage records and access logs.</li>
+        <li>Google account email address, display name, profile photo URL</li>
+        <li>An internal unique identifier (UID)</li>
     </ul>
 
-    <h2>2. Purpose of collection and use</h2>
+    <h3>b. Entered or uploaded by the user (optional)</h3>
     <ul>
-        <li>Providing health habit records and statistics.</li>
-        <li>Accumulating and managing points and HBT coins.</li>
-        <li>Providing AI food and exercise analysis services.</li>
-        <li>Operating gallery/community features.</li>
-        <li>Running weekly missions and challenges.</li>
-        <li>Improving the Service and responding to errors.</li>
+        <li>Meal photos, exercise photos and videos, sleep record photos, step-count screenshots</li>
+        <li>Text the user writes, such as gratitude journal entries</li>
+        <li>Records shared to the gallery, and comments and reactions left on other users’ posts</li>
+        <li>A nickname used for public display when posting anonymously</li>
     </ul>
 
-    <h2>3. Retention and use period</h2>
-    <p>Users’ personal information is retained while they use the Service and is deleted without delay after account deletion. If retention is required under applicable law, the information may be stored for the period required by law.</p>
+    <h3>c. Sensitive information (separate consent)</h3>
+    <p>The following qualifies as sensitive information under Article 23 of the Personal Information Protection Act, and we obtain <strong>separate consent, distinct from the other items</strong>, at sign-up. Declining does not prevent registration or use of the core features; only the corresponding features are locked.</p>
     <ul>
-        <li>Service usage records: deleted after account deletion.</li>
-        <li>Uploaded photos/videos: deleted after account deletion.</li>
+        <li>Weight, blood glucose, blood pressure</li>
+        <li>Body composition (muscle mass, body fat, visceral fat) and its history</li>
+        <li>Blood test report images and the analysis derived from them</li>
     </ul>
 
-    <h2>4. Third-party provision</h2>
-    <p>The Service does not provide users’ personal information to third parties without the user’s consent, except in the following cases.</p>
+    <h3>d. Collected when redeeming a coupon</h3>
     <ul>
-        <li>When the user has given prior consent.</li>
-        <li>When required by law or regulation.</li>
+        <li>Recipient mobile phone number, used solely to deliver the mobile coupon</li>
     </ul>
 
-    <h2>5. Entrustment of personal information processing</h2>
-    <p>The Service entrusts processing of personal information to the following providers for stable operation.</p>
+    <h3>e. Blockchain wallet data</h3>
     <ul>
-        <li><strong>Google Firebase:</strong> data storage, authentication, file hosting.</li>
-        <li><strong>Google Cloud:</strong> AI analysis, including food and exercise photo analysis.</li>
+        <li>Wallet address</li>
+        <li>Encrypted wallet private key and its encryption initialization vector (IV)</li>
     </ul>
 
-    <h2>6. User rights and how to exercise them</h2>
-    <p>Users may exercise the following rights at any time.</p>
+    <h3>f. Collected automatically</h3>
     <ul>
-        <li>Request access to, correction of, or deletion of personal information.</li>
-        <li>Request suspension of personal information processing.</li>
-        <li>Delete their account directly from the profile screen.</li>
-    </ul>
-    <p>Requests may be made through the contact information below and will be handled without delay.</p>
-
-    <h2>7. Security measures</h2>
-    <p>The Service takes the following measures to protect personal information.</p>
-    <ul>
-        <li>Encrypted transmission through HTTPS.</li>
-        <li>Access control through Firebase Security Rules.</li>
-        <li>User-level data isolation so users can modify only their own data.</li>
-        <li>Application of Content Security Policy (CSP).</li>
+        <li>Service usage records, access logs, error logs</li>
+        <li>Per-device push token, if push notifications are enabled</li>
+        <li>Usage statistics and cookies via Google Analytics</li>
     </ul>
 
-    <h2>8. Cookies and automatic collection tools</h2>
-    <p>The Service uses Google Analytics to collect service usage statistics. Users may refuse cookie storage through browser settings, but some Service functions may be limited.</p>
+    <h2>2. Why we collect and use it</h2>
+    <ul>
+        <li>Identifying members and handling sign-in</li>
+        <li>Storing, retrieving, and summarizing health habit records</li>
+        <li>Providing AI analysis of meals, exercise, and blood test results</li>
+        <li>Operating the gallery (community), friends, and group features</li>
+        <li>Awarding and managing points, and running weekly missions and challenges</li>
+        <li>Exchanging points for mobile coupons and delivering them</li>
+        <li>Issuing and displaying blockchain token rewards</li>
+        <li>Sending push notifications</li>
+        <li>Improving the service, responding to errors, and preventing abuse</li>
+    </ul>
 
-    <h2>9. Changes to this Privacy Policy</h2>
-    <p>If this Policy changes, the Service will notify users of the changes through notices in the Service.</p>
+    <h2>3. Provision to third parties</h2>
+    <p>We do not provide personal information to third parties without the user’s consent, except as follows.</p>
+    <div class="wrap">
+        <table>
+            <tr><th>Recipient</th><th>Items provided</th><th>Purpose</th><th>Retention</th></tr>
+            <tr>
+                <td>Mobile coupon delivery agency<br>(Giftishow / [[legal entity name — to be filled in]])</td>
+                <td>Recipient mobile phone number, redeemed product code, order identifier</td>
+                <td>Delivering and re-delivering the mobile coupon the user redeemed with points, and checking its status</td>
+                <td>Per the recipient’s policy and applicable law</td>
+            </tr>
+        </table>
+    </div>
+    <p>This transfer occurs only when the user actively requests a coupon redemption. If no coupon is redeemed, no phone number is transmitted.</p>
+    <p>We may also provide information where a law specifically requires it, or where an investigative authority requests it through the procedures and methods prescribed by law.</p>
+
+    <h2>4. Processing entrusted to others</h2>
+    <div class="wrap">
+        <table>
+            <tr><th>Processor</th><th>Entrusted work</th></tr>
+            <tr><td>Google LLC (Firebase)</td><td>Authentication, database storage, photo and video file storage, server-side functions, push notification delivery</td></tr>
+            <tr><td>Google LLC (Gemini API)</td><td>AI analysis of meal and exercise photos and blood test reports</td></tr>
+            <tr><td>Google LLC (Google Analytics)</td><td>Usage statistics</td></tr>
+        </table>
+    </div>
+    <p>Our agreements with processors include terms requiring personal information to be handled safely, and we oversee their compliance.</p>
+
+    <h2>5. Transfer of personal information overseas</h2>
+    <p>The Service runs on Google LLC cloud infrastructure, so personal information may be processed on servers outside the Republic of Korea.</p>
+    <div class="wrap">
+        <table>
+            <tr><th>Transferee</th><th>Country</th><th>Items</th><th>Time and method</th><th>Purpose and retention</th></tr>
+            <tr>
+                <td>Google LLC</td>
+                <td>[[confirm Firestore/Storage region — to be filled in]]</td>
+                <td>All items listed in section 1</td>
+                <td>Transmitted over the network as the service is used</td>
+                <td>Purposes in section 2 / until account deletion or termination of the processing agreement</td>
+            </tr>
+            <tr>
+                <td>Google LLC (Gemini API)</td>
+                <td>[[confirm Gemini API processing country — to be filled in]]</td>
+                <td>Meal and exercise photos and blood test report images submitted for analysis</td>
+                <td>Transmitted over the network when the user requests an analysis</td>
+                <td>Generating the AI analysis / until the analysis completes</td>
+            </tr>
+        </table>
+    </div>
+    <p>Users may refuse the overseas transfer. Because the Service’s storage and analysis features depend on this infrastructure, refusing will limit use of the Service.</p>
+
+    <h2>6. How long we keep it</h2>
+    <p>As a rule, personal information is retained while the account is active and destroyed without delay upon account deletion.</p>
+
+    <h3>a. Deleted when you delete your account</h3>
+    <ul>
+        <li>Member record and its subcollections (body composition history, blood test records, push tokens)</li>
+        <li>Daily logs, gallery posts, share cards</li>
+        <li>Every uploaded photo and video file, including thumbnails</li>
+        <li>Notifications, reaction point ledger entries, group membership and check-in records</li>
+        <li>Comments and reactions left on other users’ posts</li>
+        <li>The authentication account itself</li>
+    </ul>
+
+    <h3>b. Retained after account deletion</h3>
+    <div class="callout">
+        <p>The following may constitute records of the supply of goods or services, and are kept after deletion so that statutory retention duties are not breached. The number of retained records is reported to the user when the account is deleted.</p>
+        <ul style="margin-bottom:0">
+            <li>Blockchain transaction records (<code>blockchain_transactions</code>)</li>
+            <li>Point redemption records (<code>reward_redemptions</code>)</li>
+        </ul>
+    </div>
+    <p>Retention period: [[confirm applicability and duration under the E-Commerce Act, Article 6 — to be filled in]]</p>
+
+    <h3>c. What cannot be deleted</h3>
+    <div class="callout">
+        <p><strong>Transactions recorded on the blockchain cannot be deleted by the Service.</strong> Records on a public blockchain cannot be reversed or erased; this is a property of the blockchain itself, not a limitation of the Service. The wallet address and its transaction history remain on the blockchain after account deletion.</p>
+        <p>In addition, <strong>deleting your account erases the encrypted wallet private key we hold, after which the tokens in that wallet can no longer be accessed.</strong> Please export and store your private key separately before deleting your account.</p>
+    </div>
+
+    <h2>7. How we destroy personal information</h2>
+    <ul>
+        <li>Information held as electronic files is permanently deleted by a method that prevents recovery.</li>
+        <li>Deletion runs automatically on the server when an account deletion is requested, and the result is reported back to the user.</li>
+    </ul>
+
+    <h2>8. Your rights and how to exercise them</h2>
+    <p>You may exercise the following rights at any time.</p>
+    <ul>
+        <li>Request access to your personal information</li>
+        <li>Request correction of errors</li>
+        <li>Request deletion</li>
+        <li>Request suspension of processing</li>
+        <li>Withdraw consent — sensitive information consent can be withdrawn at any time in the app’s settings, which locks the corresponding features</li>
+        <li>Delete your account, directly from the Profile tab in the app</li>
+    </ul>
+    <p>Requests may be made through the contact below and are handled without delay.</p>
+
+    <h2>9. Children under 14</h2>
+    <p>The Service does not accept registrations from children under the age of 14. We confirm that the user is 14 or older at sign-up, and if we learn that a user is under 14 we delete the account and the personal information collected without delay.</p>
+
+    <h2>10. Security measures</h2>
+    <ul>
+        <li>Encryption in transit via HTTPS</li>
+        <li>Wallet private keys stored under AES-GCM encryption</li>
+        <li>Access control and per-user data isolation through Firebase Security Rules</li>
+        <li>Permission separation so a user can read and write only their own data</li>
+        <li>Content Security Policy (CSP)</li>
+    </ul>
+
+    <h2>11. Cookies and automatic collection</h2>
+    <p>The Service collects usage statistics through Google Analytics, which uses cookies. You may refuse cookies in your browser settings, though some features may then be limited.</p>
+
+    <h2>12. Changes to this policy</h2>
+    <p>If this policy changes, the change and its effective date will be announced within the Service. For changes unfavourable to users, we give at least 30 days’ notice before the effective date.</p>
 
     <div class="contact">
-        <h2 style="border: none; padding: 0; margin: 0 0 8px;">10. Personal information protection contact</h2>
-        <p><strong>Service name:</strong> Habit School (HaBit School)</p>
+        <h2 style="border: none; padding: 0; margin: 0 0 8px;">13. Privacy officer and contact</h2>
+        <p><strong>Service:</strong> Habit School (해빛스쿨)</p>
+        <p><strong>Operated by:</strong> an individual (no business registration)</p>
+        <p><strong>Privacy officer:</strong> [[operator’s full name — to be filled in]]</p>
         <p><strong>Email:</strong> habitschool0@gmail.com</p>
         <p><strong>Website:</strong> <a href="https://habitschool.web.app">https://habitschool.web.app</a></p>
+        <p style="margin-top:12px">For advice about a privacy infringement, you may contact the following Korean authorities.</p>
+        <p>Korea Internet &amp; Security Agency, Privacy Infringement Report Center (privacy.kisa.or.kr / 118)</p>
+        <p>Personal Information Dispute Mediation Committee (kopico.go.kr / 1833-6972)</p>
+        <p>Supreme Prosecutors’ Office, Cyber Investigation Division (spo.go.kr / 1301)</p>
+        <p>National Police Agency, Cyber Bureau (ecrm.police.go.kr / 182)</p>
     </div>
 </div>
 </body>
