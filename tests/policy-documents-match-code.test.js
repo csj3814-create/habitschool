@@ -141,10 +141,22 @@ describe('the documents stay in step with each other', () => {
         expect(readRepoFile('js/auth.js')).toContain("const CONSENT_DOC_VERSION = '2026-08-12';");
     });
 
-    it('leaves the unfillable blanks visible instead of inventing them', () => {
+    it('names the operator and the coupon vendor', () => {
+        expect(KO_PRIVACY).toContain('개인정보 보호책임자:</strong> 최석재');
+        expect(KO_PRIVACY).toContain('KT기프티쇼');
+        expect(EN_PRIVACY).toContain('최석재');
+        expect(EN_PRIVACY).toContain('KT Giftishow');
+    });
+
+    it('still shows the blanks nobody has resolved yet', () => {
         // 지어내면 안 되는 항목은 눈에 띄게 남긴다. 조용히 비워두면 빠뜨린다.
-        expect(KO_PRIVACY).toContain('[[운영자 성명 — 채워야 함]]');
-        expect(KO_PRIVACY).toContain('[[운영 법인명 — 채워야 함]]');
-        expect(EN_PRIVACY).toContain('to be filled in');
+        // 남은 둘: 국외 이전 리전, 그리고 보존기간(전자상거래법 적용 여부 검토 필요).
+        const koBlanks = KO_PRIVACY.match(/\[\[[^\]]+\]\]/g) || [];
+        expect(koBlanks).toHaveLength(3);
+        expect(koBlanks.join(' ')).toContain('리전');
+        expect(koBlanks.join(' ')).toContain('Gemini API 처리 국가');
+        expect(koBlanks.join(' ')).toContain('전자상거래법');
+        // 한글판과 영문판이 같은 개수만큼 비어 있어야 한쪽만 채우고 잊는 일이 없다.
+        expect(EN_PRIVACY.match(/\[\[[^\]]+\]\]/g) || []).toHaveLength(koBlanks.length);
     });
 });
