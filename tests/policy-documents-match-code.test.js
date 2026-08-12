@@ -141,21 +141,35 @@ describe('the documents stay in step with each other', () => {
         expect(readRepoFile('js/auth.js')).toContain("const CONSENT_DOC_VERSION = '2026-08-12';");
     });
 
-    it('names the operator and the coupon vendor', () => {
+    it('names the operator and the coupon vendor by their registered names', () => {
         expect(KO_PRIVACY).toContain('개인정보 보호책임자:</strong> 최석재');
-        expect(KO_PRIVACY).toContain('KT기프티쇼');
-        expect(EN_PRIVACY).toContain('최석재');
-        expect(EN_PRIVACY).toContain('KT Giftishow');
+        expect(KO_PRIVACY).toContain('케이티알파 주식회사');
+        expect(EN_PRIVACY).toContain('최석재 (Choi Sukjae)');
+        expect(EN_PRIVACY).toContain('KT Alpha Co., Ltd.');
+    });
+
+    it('says the records live in Korea, because they do', () => {
+        // firestore:databases:get 으로 확인: asia-northeast3(서울). 리전을 옮기면
+        // 이 문장이 거짓이 되므로 여기서 잡는다.
+        expect(KO_PRIVACY).toContain('asia-northeast3');
+        expect(KO_PRIVACY).toContain('국외 이전 아님');
+        expect(EN_PRIVACY).toContain('asia-northeast3');
+        expect(EN_PRIVACY).toContain('not an overseas transfer');
+    });
+
+    it('singles out the AI analysis as the one thing that does leave', () => {
+        expect(KO_PRIVACY).toContain('AI 분석 기능을 사용하지 않으면 국외로 전송되는 개인정보가 없으며');
+        expect(EN_PRIVACY).toContain('no personal information is sent abroad');
     });
 
     it('still shows the blanks nobody has resolved yet', () => {
         // 지어내면 안 되는 항목은 눈에 띄게 남긴다. 조용히 비워두면 빠뜨린다.
-        // 남은 둘: 국외 이전 리전, 그리고 보존기간(전자상거래법 적용 여부 검토 필요).
+        // 남은 둘: Gemini API 등급(유료/무료에 따라 학습·사람 검토 여부가 갈린다),
+        // 그리고 보존 근거.
         const koBlanks = KO_PRIVACY.match(/\[\[[^\]]+\]\]/g) || [];
-        expect(koBlanks).toHaveLength(3);
-        expect(koBlanks.join(' ')).toContain('리전');
-        expect(koBlanks.join(' ')).toContain('Gemini API 처리 국가');
-        expect(koBlanks.join(' ')).toContain('전자상거래법');
+        expect(koBlanks).toHaveLength(2);
+        expect(koBlanks.join(' ')).toContain('Gemini API 유료/무료 등급');
+        expect(koBlanks.join(' ')).toContain('보존 근거');
         // 한글판과 영문판이 같은 개수만큼 비어 있어야 한쪽만 채우고 잊는 일이 없다.
         expect(EN_PRIVACY.match(/\[\[[^\]]+\]\]/g) || []).toHaveLength(koBlanks.length);
     });
