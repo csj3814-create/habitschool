@@ -43,25 +43,42 @@ describe('the coupon phone number is disclosed as a third-party provision', () =
 describe('what deletion keeps is written down', () => {
     const deletionSource = readRepoFile('functions/account-deletion.js');
 
-    it('the retained collections are the ones the documents name', () => {
-        const retained = deletionSource
+    const retainedNames = () => {
+        const block = deletionSource
             .split('const RETAINED_COLLECTIONS = Object.freeze([')[1]
             .split(']);')[0];
-        const names = [...retained.matchAll(/\["([a-z_]+)"/g)].map((m) => m[1]);
-        expect(names).toEqual(['blockchain_transactions', 'reward_redemptions']);
+        return [...block.matchAll(/\["([a-z_]+)"/g)].map((m) => m[1]);
+    };
 
-        // 컬렉션 이름 그대로 적어둬야 나중에 대조가 된다.
-        for (const name of names) {
-            expect(KO_PRIVACY).toContain(name);
-            expect(EN_PRIVACY).toContain(name);
-        }
+    it('keeps nothing, because no retention basis was found', () => {
+        // 현금 결제가 없어 전자상거래법상 결제·재화 공급 기록의 보존 대상이 아니라고
+        // 정리했다. 남길 근거가 없으면 남기지 않는다.
+        expect(retainedNames()).toEqual([]);
     });
 
-    it('stops promising that everything is erased', () => {
-        expect(KO_PRIVACY).toContain('탈퇴 후에도 보존하는 항목');
-        expect(KO_TERMS).toContain('탈퇴 후에도 보관됩니다');
-        expect(EN_PRIVACY).toContain('Retained after account deletion');
-        expect(EN_TERMS).toContain('are retained after deletion');
+    it('deletes the two collections it used to hold back', () => {
+        const owned = deletionSource
+            .split('const OWNED_QUERIES = Object.freeze([')[1]
+            .split(']);')[0];
+        expect(owned).toContain('["blockchain_transactions", "userId"]');
+        expect(owned).toContain('["reward_redemptions", "userId"]');
+    });
+
+    it('says so in the documents, without hedging', () => {
+        expect(KO_PRIVACY).toContain('회원 탈퇴 시 예외 없이 지체 없이 파기합니다');
+        expect(KO_PRIVACY).toContain('탈퇴 후 보관하는 개인정보가 없습니다');
+        expect(KO_TERMS).toContain('서비스가 탈퇴 후 보관하는 개인정보는 없습니다');
+        expect(EN_PRIVACY).toContain('destroyed without delay and without exception');
+        expect(EN_TERMS).toContain('keeps no personal information after deletion');
+    });
+
+    it('would fail loudly if anything were put back on the retained list', () => {
+        // 나중에 보존 대상이 생기면 방침에도 그 이름이 적혀야 한다. 코드만 고치고
+        // 문서를 잊는 것이 애초에 이 사달의 원인이었다.
+        for (const name of retainedNames()) {
+            expect(KO_PRIVACY, `${name} must be disclosed`).toContain(name);
+            expect(EN_PRIVACY, `${name} must be disclosed`).toContain(name);
+        }
     });
 
     it('warns that blockchain records and the wallet key cannot be recovered', () => {
@@ -162,15 +179,19 @@ describe('the documents stay in step with each other', () => {
         expect(EN_PRIVACY).toContain('no personal information is sent abroad');
     });
 
-    it('still shows the blanks nobody has resolved yet', () => {
-        // 지어내면 안 되는 항목은 눈에 띄게 남긴다. 조용히 비워두면 빠뜨린다.
-        // 남은 둘: Gemini API 등급(유료/무료에 따라 학습·사람 검토 여부가 갈린다),
-        // 그리고 보존 근거.
-        const koBlanks = KO_PRIVACY.match(/\[\[[^\]]+\]\]/g) || [];
-        expect(koBlanks).toHaveLength(2);
-        expect(koBlanks.join(' ')).toContain('Gemini API 유료/무료 등급');
-        expect(koBlanks.join(' ')).toContain('보존 근거');
-        // 한글판과 영문판이 같은 개수만큼 비어 있어야 한쪽만 채우고 잊는 일이 없다.
-        expect(EN_PRIVACY.match(/\[\[[^\]]+\]\]/g) || []).toHaveLength(koBlanks.length);
+    it('states the Gemini tier, since it decides who may read the images', () => {
+        // 유료 등급에서는 학습에 쓰지 않고 사람이 읽지 않는다. 무료였다면 혈액검사
+        // 결과지가 학습에 쓰이고 검토자가 읽을 수 있어, 방침 문구가 완전히 달라진다.
+        expect(KO_PRIVACY).toContain('유료 등급으로 이용합니다');
+        expect(KO_PRIVACY).toContain('사람인 검토자가 내용을 읽지 않습니다');
+        expect(EN_PRIVACY).toContain('on a <strong>paid tier.</strong>');
+        expect(EN_PRIVACY).toContain('human reviewers do not read the content');
+    });
+
+    it('has no blanks left in either language', () => {
+        expect(KO_PRIVACY.match(/\[\[[^\]]+\]\]/g) || []).toEqual([]);
+        expect(EN_PRIVACY.match(/\[\[[^\]]+\]\]/g) || []).toEqual([]);
+        expect(KO_TERMS.match(/\[\[[^\]]+\]\]/g) || []).toEqual([]);
+        expect(EN_TERMS.match(/\[\[[^\]]+\]\]/g) || []).toEqual([]);
     });
 });

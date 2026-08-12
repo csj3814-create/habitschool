@@ -46,18 +46,23 @@ const OWNED_QUERIES = Object.freeze([
     ["share_cards", "userId"],
     ["habit_group_members", "uid"],
     ["habit_group_checkins", "uid"],
+    // 아래 둘은 전자상거래법상 보존 대상일까 봐 남겨두고 있었다. 이 서비스에는
+    // 현금 결제가 없고 사업자 등록도 없어 그 의무의 적용 대상이 아니라고 정리했다.
+    // 남길 근거가 없으면 남기지 않는다 — 탈퇴는 탈퇴여야 한다.
+    // (블록체인에 기록된 거래 자체는 어차피 지울 수 없다. 여기서 지우는 것은
+    //  우리가 들고 있던 사본뿐이고, 그 점은 약관과 방침에 적혀 있다.)
+    ["blockchain_transactions", "userId"],
+    ["reward_redemptions", "userId"],
 ]);
 
 const REACTION_TYPES = Object.freeze(["heart", "fire", "clap"]);
 
-// 법령상 보존 의무가 있을 수 있는 기록은 지우지 않는다.
-// 대금 결제·재화 공급 기록은 전자상거래법상 5년 보존 대상으로 볼 여지가 있어,
-// 임의로 지우면 그쪽 의무를 어길 수 있다. 무엇을 남겼는지는 호출자에게 돌려준다.
-// 보존 대상이 아니라고 법률 검토가 끝나면 이 목록을 비우고 OWNED_QUERIES로 옮기면 된다.
-const RETAINED_COLLECTIONS = Object.freeze([
-    ["blockchain_transactions", "userId"],
-    ["reward_redemptions", "userId"],
-]);
+// 지금은 비어 있다. 예전에는 blockchain_transactions 와 reward_redemptions 를
+// 전자상거래법상 보존 대상일까 봐 남겼는데, 검토 결과 남길 근거가 없어 OWNED_QUERIES 로
+// 옮겼다. 앞으로 법령상 보존 의무가 확인된 컬렉션이 생기면 여기에 적는다.
+// 개인정보처리방침에도 같은 내용이 적혀 있어야 한다 —
+// tests/policy-documents-match-code.test.js 가 그 일치를 지킨다.
+const RETAINED_COLLECTIONS = Object.freeze([]);
 
 const QUERY_PAGE_SIZE = 300;
 const BATCH_SIZE = 400;

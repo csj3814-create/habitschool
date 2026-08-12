@@ -88,11 +88,19 @@ describe('account deletion actually deletes', () => {
         expect(source).toContain('recursiveDelete(getDb().collection("users").doc(uid))');
     });
 
-    it('says what it kept instead of quietly keeping it', () => {
-        expect(source).toContain('const RETAINED_COLLECTIONS');
-        expect(source).toContain('blockchain_transactions');
-        expect(source).toContain('reward_redemptions');
-        // 남긴 건수를 세어 호출자에게 돌려준다.
+    it('keeps nothing back', () => {
+        // 예전에는 이 둘을 전자상거래법상 보존 대상일까 봐 남겼다. 현금 결제가 없어
+        // 적용 대상이 아니라고 정리했고, 남길 근거가 없으면 남기지 않는다.
+        expect(source).toContain('const RETAINED_COLLECTIONS = Object.freeze([]);');
+        const owned = source.split('const OWNED_QUERIES = Object.freeze([')[1].split(']);')[0];
+        expect(owned).toContain('["blockchain_transactions", "userId"]');
+        expect(owned).toContain('["reward_redemptions", "userId"]');
+    });
+
+    it('still reports anything it does keep, if that ever comes back', () => {
+        // 목록은 비었지만 세는 코드는 남겨둔다. 나중에 보존 대상이 생겼을 때
+        // 조용히 남기는 일이 없도록.
+        expect(source).toContain('for (const [collectionName, field] of RETAINED_COLLECTIONS)');
         expect(source).toContain('report.retained[collectionName] = snap.data().count;');
     });
 

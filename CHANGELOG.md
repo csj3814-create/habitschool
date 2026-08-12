@@ -2,6 +2,20 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12 (4)
+
+### Changed
+- Account deletion now deletes everything. `blockchain_transactions` and `reward_redemptions` had been held back in case they were records the E-Commerce Act requires preserving; the Service takes no cash payment and has no business registration, so that duty does not attach, and there is no other basis for keeping them. Both moved from `RETAINED_COLLECTIONS` to `OWNED_QUERIES`, and the retained list is now empty. The counting code stays so that anything added back in future is reported rather than quietly kept.
+- Confirmed the Gemini API runs on a paid tier (Tier 1), which settles a question that materially changes what the policy has to say: on the paid tier Google does not train on submitted images or responses and human reviewers do not read them, whereas on the unpaid tier both would apply — to blood test reports among everything else. The policy states the tier and what follows from it.
+- Corrected the overseas transfer disclosure after checking rather than assuming. `firestore:databases:get` reports `asia-northeast3`, so records and photos are stored in Seoul and never leave the country. Only images sent to the Gemini API cross a border, and the policy now says exactly that — including that declining AI analysis means nothing is transferred at all, while every other feature keeps working.
+- Named the coupon vendor by its registered entity, 케이티알파 주식회사, and filled in the operator and privacy officer.
+
+### Removed
+- The "retained after deletion" sections in all four documents, and the retention-period blank that went with them. The privacy policy and terms now say without hedging that deletion leaves nothing behind.
+
+### Changed
+- Rotated the cache to v305.
+
 ## 2026-08-12 (3)
 
 ### Fixed
