@@ -2,6 +2,18 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12 (6)
+
+### Fixed
+- Gave the redirect sign-in path a same-origin `authDomain`, which is what was breaking Google sign-in in the installed app on Samsung Internet. That combination is the only one that uses `signInWithRedirect` (forced back in April because popups fail there). `signInWithRedirect` parks intermediate state in the `authDomain`'s storage, and when `authDomain` is a different origin — `habitschool-*.firebaseapp.com` — that storage is third-party, which current browsers partition or block. `getRedirectResult` then comes back empty and the button gives up at "로그인 확인 중...". Popup users are untouched and keep `firebaseapp.com`, which they need: for popups the `authDomain` has to stay outside the PWA scope or Android opens the popup inside the app. The two requirements are opposites, and the mode is known from userAgent and display-mode before `initializeApp` runs, so the domain is chosen there.
+- Stopped the service worker from touching `/__/` paths. It is network-first, so the auth handler still worked, but the response was being written into the cache — and those URLs carry per-attempt state, so a stale copy could be served back into a later sign-in.
+
+### Verified
+- `https://habitschool-staging.web.app/__/auth/handler` returns the Firebase handler, not the app shell, so Hosting serves it from our own domain and the rewrites do not swallow it.
+
+### Changed
+- Rotated the cache to v307.
+
 ## 2026-08-12 (5)
 
 ### Fixed

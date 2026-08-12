@@ -80,7 +80,7 @@ if (!isLocalEnv) {
     });
 }
 
-const CACHE_NAME = 'habitschool-v306';
+const CACHE_NAME = 'habitschool-v307';
 const SHARE_TARGET_CACHE_NAME = 'habitschool-share-target-v1';
 const SHARE_TARGET_ACTION_PATH = '/share-target';
 const SHARE_TARGET_MANIFEST_URL = new URL('/__share_target__/shared/manifest.json', self.location.origin).href;
@@ -163,48 +163,48 @@ async function handleSharedTarget(request) {
 
 const STATIC_ASSETS = [
     './',
-    './styles.css?v=306',
-    './styles-base.css?v=306',
-    './styles-en.css?v=306',
-    './styles-features.css?v=306',
-    './styles-reward-market.css?v=306',
-    './styles-dashboard.css?v=306',
-    './styles-dark-mode.css?v=306',
-    './styles-reports.css?v=306',
-    './styles-guest-demo.css?v=306',
-    './js/main.js?v=306',
-    './js/app.js?v=306',
-    './js/app-core.js?v=306',
-    './js/auth.js?v=306',
-    './js/i18n.js?v=306',
-    './js/app-mode.js?v=306',
-    './js/auth-login-helpers.js?v=306',
-    './js/blockchain-config.js?v=306',
-    './js/blockchain-manager.js?v=306',
-    './js/challenge-claim.js?v=306',
-    './js/data-manager.js?v=306',
-    './js/diet-program.js?v=306',
-    './js/diet-analysis.js?v=306',
-    './js/exercise-media.js?v=306',
-    './js/firebase-config.js?v=306',
-    './js/friendship-utils.js?v=306',
-    './js/habit-groups.js?v=306',
-    './js/health-connect-utils.js?v=306',
-    './js/metabolic-score.js?v=306',
-    './js/milestone-helpers.js?v=306',
-    './js/monthly-mvp-reward.js?v=306',
-    './js/meditation-guide.js?v=306',
-    './js/reward-market.js?v=306',
-    './js/guest-demo.js?v=306',
-    './js/product-events.js?v=306',
-    './js/activity-days.js?v=306',
-    './js/pwa-install.js?v=306',
-    './js/security.js?v=306',
-    './js/social-challenge-readiness.js?v=306',
-    './js/ui-helpers.js?v=306',
-    './js/upload-performance.js?v=306',
-    './js/video-thumbnail-quality.js?v=306',
-    './js/webview-detect.js?v=306',
+    './styles.css?v=307',
+    './styles-base.css?v=307',
+    './styles-en.css?v=307',
+    './styles-features.css?v=307',
+    './styles-reward-market.css?v=307',
+    './styles-dashboard.css?v=307',
+    './styles-dark-mode.css?v=307',
+    './styles-reports.css?v=307',
+    './styles-guest-demo.css?v=307',
+    './js/main.js?v=307',
+    './js/app.js?v=307',
+    './js/app-core.js?v=307',
+    './js/auth.js?v=307',
+    './js/i18n.js?v=307',
+    './js/app-mode.js?v=307',
+    './js/auth-login-helpers.js?v=307',
+    './js/blockchain-config.js?v=307',
+    './js/blockchain-manager.js?v=307',
+    './js/challenge-claim.js?v=307',
+    './js/data-manager.js?v=307',
+    './js/diet-program.js?v=307',
+    './js/diet-analysis.js?v=307',
+    './js/exercise-media.js?v=307',
+    './js/firebase-config.js?v=307',
+    './js/friendship-utils.js?v=307',
+    './js/habit-groups.js?v=307',
+    './js/health-connect-utils.js?v=307',
+    './js/metabolic-score.js?v=307',
+    './js/milestone-helpers.js?v=307',
+    './js/monthly-mvp-reward.js?v=307',
+    './js/meditation-guide.js?v=307',
+    './js/reward-market.js?v=307',
+    './js/guest-demo.js?v=307',
+    './js/product-events.js?v=307',
+    './js/activity-days.js?v=307',
+    './js/pwa-install.js?v=307',
+    './js/security.js?v=307',
+    './js/social-challenge-readiness.js?v=307',
+    './js/ui-helpers.js?v=307',
+    './js/upload-performance.js?v=307',
+    './js/video-thumbnail-quality.js?v=307',
+    './js/webview-detect.js?v=307',
     './manifest.json',
     './manifest-en.json',
     './en/index.html',
@@ -267,6 +267,13 @@ self.addEventListener('fetch', (event) => {
     const requestUrl = new URL(request.url);
 
     if (!request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    // Firebase 예약 경로(/__/auth/handler 등)는 손대지 않는다. 리디렉트 로그인이
+    // 이 경로로 오가는데, 응답을 캐시에 넣어 두면 그때그때 다른 상태를 담은 페이지에
+    // 지난 응답을 돌려주게 된다. 그냥 네트워크에 맡긴다.
+    if (requestUrl.pathname.startsWith('/__/')) {
         return;
     }
 

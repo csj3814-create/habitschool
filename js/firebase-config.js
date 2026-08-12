@@ -4,11 +4,13 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=307";
 
-// authDomain은 항상 firebaseapp.com 사용
+// 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
 // → firebaseapp.com은 PWA scope 밖이므로 안전
 // → signInWithPopup은 postMessage 기반이므로 크로스오리진 문제 없음
+// 리디렉트 로그인은 사정이 정반대라 아래 resolveAuthDomain 이 앱 도메인으로 바꾼다.
 const PROD_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDICPw7HTmu5znaRCYC93-zTux4dYYN9eI",
     authDomain: "habitschool-8497b.firebaseapp.com",
@@ -73,7 +75,35 @@ let _pendingFirestoreReconnectReason = '';
 const _firestoreReconnectLastScheduledAtByReason = new Map();
 const _firestoreReconnectProbeLogAt = new Map();
 
-const firebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
+// 리디렉트 로그인만 authDomain 을 앱과 같은 출처로 맞춘다.
+//
+// signInWithRedirect 는 구글을 다녀오는 사이 중간 상태를 authDomain 쪽 저장소에
+// 맡긴다. 그 authDomain 이 앱과 다른 출처면(firebaseapp.com) 브라우저에게는
+// 서드파티 저장소이고, 요즘 브라우저는 그것을 분리·차단한다. 그러면 돌아왔을 때
+// getRedirectResult 가 빈손으로 오고, 로그인은 "확인 중..." 에서 조용히 끝난다.
+// 앱과 같은 출처로 두면 서드파티 저장소를 아예 거치지 않는다.
+// (Firebase Hosting 이 /__/auth/ 핸들러를 우리 도메인에서도 그대로 서빙한다.)
+//
+// 팝업 방식은 반대다. 위 주석대로 authDomain 이 PWA scope 안에 있으면 안드로이드가
+// 팝업을 PWA 안에서 열어 버려 곤란해진다. 그래서 팝업 쪽은 firebaseapp.com 을 그대로 둔다.
+// 어느 쪽을 쓸지는 userAgent 와 standalone 여부만으로 정해지고 둘 다 지금 알 수 있으므로,
+// 초기화 시점에 authDomain 을 고를 수 있다.
+function resolveAuthDomain(baseConfig) {
+    if (IS_LOCAL_ENV || typeof window === 'undefined') return baseConfig.authDomain;
+    const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const willUseRedirect = shouldForceGoogleRedirectLogin({
+        userAgent: navigator.userAgent || navigator.vendor || '',
+        isStandalone
+    });
+    return willUseRedirect ? window.location.hostname : baseConfig.authDomain;
+}
+
+const baseFirebaseConfig = IS_PROD_ENV ? PROD_FIREBASE_CONFIG : STAGING_FIREBASE_CONFIG;
+const firebaseConfig = {
+    ...baseFirebaseConfig,
+    authDomain: resolveAuthDomain(baseFirebaseConfig)
+};
 
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
