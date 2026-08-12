@@ -2,6 +2,17 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-13 (2)
+
+### Fixed
+- Stopped telling members their reward failed when it had been paid. The `claimChallengeReward` callable is declared with `timeoutSeconds: 300`, but `httpsCallable` defaults to waiting 70 seconds — so an on-chain mint that ran long left the client giving up while the server carried on and credited the reward. `deadline-exceeded` was then reported as "보상 수령에 실패했습니다", to someone who had just received 30,000 HBT. The client now waits the full 300 seconds the server is allowed, so it hears the real answer.
+- Treated a client-side timeout as unfinished rather than failed, as a backstop for the same case. `deadline-exceeded` means this client stopped waiting, not that the server failed, so the message now says the mint is still in progress and the screen goes and checks instead of asserting an outcome.
+- Refreshed the asset screen after a claim more than once (immediately, then at 15s and 45s). The mint can land after the call returns, which is why the transaction history read as empty right after claiming and only showed the 30,000 HBT after leaving and reopening the app.
+
+### Changed
+- Made the waiting message stop promising "보통 30초~1분" once ninety seconds have passed. Past that point the useful thing to say is that it is still minting and the reward arrives whether or not the window stays open.
+- Rotated the cache to v309.
+
 ## 2026-08-13
 
 ### Fixed

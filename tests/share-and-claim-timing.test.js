@@ -58,7 +58,7 @@ describe('challenge reward can be claimed without the blockchain module', () => 
 
     it('needs nothing but the callable', () => {
         // 온체인 서명이 없다. 서버 호출 하나가 전부라 라이트 모드에서도 된다.
-        expect(claimSource).toContain("httpsCallable(functions, 'claimChallengeReward')");
+        expect(claimSource).toContain("httpsCallable(functions, 'claimChallengeReward', {");
         // 주석에는 이름이 나올 수 있으니 import 만 본다 — 중요한 건 무엇에 의존하느냐다.
         const imports = claimSource
             .split(/\r?\n/)
@@ -71,13 +71,13 @@ describe('challenge reward can be claimed without the blockchain module', () => 
 
     it('is wired up before any module loading, so the button always answers', () => {
         expect(mainSource).toContain('window.claimChallengeReward = (tier) => import(');
-        expect(mainSource).toContain('challenge-claim.js?v=308');
+        expect(mainSource).toContain('challenge-claim.js?v=309');
         // 모듈 로드가 실패해도 조용히 끝나지 않게 기록은 남긴다.
         expect(mainSource).toContain("console.error('보상 수령 모듈 로드 실패:', error);");
     });
 
     it('keeps one implementation rather than two', () => {
-        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=308';");
+        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=309';");
         expect(managerSource).not.toContain('export async function claimChallengeReward(tier) {');
     });
 
@@ -90,10 +90,10 @@ describe('challenge reward can be claimed without the blockchain module', () => 
 
     it('only touches the asset screen when there is one', () => {
         // 라이트 모드에는 자산 탭이 없다.
-        expect(claimSource).toContain('if (window.updateAssetDisplay) {');
+        expect(claimSource).toContain('if (!window.updateAssetDisplay) return Promise.resolve();');
     });
 
     it('is precached like the other modules', () => {
-        expect(readRepoFile('sw.js')).toContain("'./js/challenge-claim.js?v=308'");
+        expect(readRepoFile('sw.js')).toContain("'./js/challenge-claim.js?v=309'");
     });
 });
