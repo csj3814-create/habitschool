@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=301';
+} from './blockchain-config.js?v=302';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,12 +41,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=301';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=302';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=301';
-import { getKstDateString } from './ui-helpers.js?v=301';
-import { checkRateLimit } from './security.js?v=301';
+import { showToast, hideToast } from './ui-helpers.js?v=302';
+import { getKstDateString } from './ui-helpers.js?v=302';
+import { checkRateLimit } from './security.js?v=302';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -1617,73 +1617,10 @@ export async function settleExpiredChallenges() {
  */
 const _challengeClaimInFlight = new Set();
 
-export async function claimChallengeReward(tier) {
-    // 온체인 정산은 30초~1분 걸려 사용자가 카드를 여러 번 누르기 쉽다. 중복 실행 차단
-    // (서버에도 원자적 잠금이 있지만 UI에서도 막아 토스트 겹침·혼란을 없앤다).
-    if (_challengeClaimInFlight.has(tier)) return false;
-    _challengeClaimInFlight.add(tier);
-    // 예치금 반환 + HBT 보너스 발행(온체인 tx 2건)이라 시간이 걸린다. 지속 안내로
-    // 경과 시간을 보여줘 멈춘 것처럼 보이지 않게 하고, 예상 소요를 알린다.
-    let elapsed = 0;
-    const progressTimer = setInterval(() => {
-        elapsed += 1;
-        showToast(`⏳ 블록체인에서 보상을 발행하고 있어요… (${elapsed}초 / 보통 30초~1분)\n창을 닫지 말고 잠시만 기다려 주세요.`, { durationMs: 0 });
-    }, 1000);
-    const stopProgress = () => { clearInterval(progressTimer); };
-    try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) {
-            stopProgress();
-            hideToast();
-            showToast('❌ 로그인이 필요합니다.');
-            return false;
-        }
-
-        showToast('⏳ 보상을 발행하고 있어요… 보통 30초~1분 걸려요.', { durationMs: 0 });
-
-        // Cloud Function lazy init
-        if (!claimChallengeFunction) {
-            claimChallengeFunction = httpsCallable(functions, 'claimChallengeReward');
-        }
-
-        const result = await claimChallengeFunction({ tier });
-        const data = result.data;
-        stopProgress();
-
-        let resultParts = [];
-        if (data.rewardHbt > 0) resultParts.push(`+${data.rewardHbt} HBT`);
-        if (data.rewardPoints > 0) resultParts.push(`+${data.rewardPoints}P`);
-        const policySuffix = data.bonusRateLabel ? ` (보너스 ${data.bonusRateLabel})` : '';
-        showToast(`🎉 보상 수령 완료! ${resultParts.join(' ')}${policySuffix}`);
-
-        window.applyOptimisticChallengeSettlement?.(data);
-        await refreshAssetDisplayAfterChallengeMutation('challenge-claim');
-        // 챌린지 카드 UI 갱신 (카드가 그대로 남아 재시도 방지)
-        if (window.loadDashboard) window.loadDashboard();
-        return true;
-    } catch (error) {
-        stopProgress();
-        console.error('❌ 보상 수령 오류:', error);
-        // Firebase 콜러블 에러 코드는 'functions/failed-precondition'처럼 접두사가 붙어
-        // 올 수 있으므로 벗겨서 비교한다(그래야 서버 안내 메시지 노출 분기가 걸린다).
-        const code = String(error?.code || '').replace(/^functions\//, '');
-        const serverMsg = String(error?.message || '').trim();
-        // 서버가 사용자용 구체 안내를 주는 코드(일일 한도 초과, 조건 미충족 등)는
-        // 하드코딩 문구로 덮지 말고 서버 메시지를 그대로 사용자에게 보여준다.
-        const msg = (serverMsg && (code === 'failed-precondition' || code === 'resource-exhausted'))
-            ? `❌ ${serverMsg}`
-            : code === 'internal'
-            ? '❌ 온체인 정산에 실패했습니다. 잠시 후 다시 시도해주세요.'
-            : code === 'unauthenticated'
-            ? '❌ 로그인이 필요합니다.'
-            : `❌ 보상 수령에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`;
-        showToast(msg);
-        return false;
-    } finally {
-        stopProgress();
-        _challengeClaimInFlight.delete(tier);
-    }
-}
+// 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
+// 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
+// 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
+export { claimChallengeReward } from './challenge-claim.js?v=302';
 
 /**
  * 챌린지 포기

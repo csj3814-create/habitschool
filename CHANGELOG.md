@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12
+
+### Fixed
+- Waited for the points the server awards before building the share card. Points are not a value the client knows: the client writes `daily_logs`, and the `awardPoints` Firestore trigger fills `awardedPoints` afterwards. The share prompt was raised 900ms after the save and read the local cache, so a member who finished a full day and tapped "share" got a card stamped with the score from before that day counted. The card now polls the server copy (five attempts, 700ms apart), refreshes the daily-log, gallery, and prepared-media caches from what it reads, and shares anyway if the points never arrive — refusing to share would be worse than an out-of-date number.
+- Recorded which day the prompt was raised for, rather than reading today's date again when the share finally runs. Across a midnight boundary those differ.
+- Made the 3-day challenge reward claimable in the Lite version. `claimChallengeReward` lived in `blockchain-manager.js`, and `main.js` only assigned `window.claimChallengeReward` once that module had loaded — but Lite (play) mode never loads it, so the button's `onclick` called `undefined` and failed silently. The claim is one `httpsCallable` with no signing and no chain access, so it moved to its own `js/challenge-claim.js`, which `main.js` now imports lazily in every mode and `blockchain-manager.js` re-exports. One implementation, two entry points.
+
+### Changed
+- Rotated the cache to v302 so the above actually reaches installed clients.
+
 ## 2026-08-09
 
 ### Fixed
