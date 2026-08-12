@@ -2,6 +2,21 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12 (5)
+
+### Fixed
+- Stopped recording "did not agree" for people who plainly did. Redirect sign-in sends the page to Google and brings back a fresh load, so every consent checkbox is cleared by the time `onAuthStateChanged` fires — which is exactly when a new member's consent record is written from those checkboxes. Anyone who signed up in redirect mode got a record saying they agreed to nothing. The selection is now snapshotted to `localStorage` before the redirect leaves and resolved from there when the page comes back empty, so the stored record reflects what was actually ticked.
+- Restored the checkboxes on the way back, so the start button is not left locked behind consents the member already gave. This is the visible half of the same defect: the screen appears to return to the login prompt with nothing checked.
+
+### Added
+- Remembered consent per browser, version-stamped. Someone who has already agreed is not asked again on the next sign-in — the box is hidden and the required items stay satisfied, while an optional refusal of health-data consent is preserved as a refusal. Raising `CONSENT_DOC_VERSION` invalidates the record and asks again, which is what should happen when the documents change.
+
+### Changed
+- Rotated the cache to v306.
+
+### Still open
+- The reported sign-in failure is not yet root-caused. These fixes remove the dead end it leaves behind, and correct a consent record that was wrong regardless, but whether `getRedirectResult` is returning a user on the affected device is still unknown and needs the console from that device.
+
 ## 2026-08-12 (4)
 
 ### Changed

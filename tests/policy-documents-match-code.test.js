@@ -98,7 +98,9 @@ describe('the age rule is one the code can keep', () => {
         for (const [name, source] of [['index.html', indexSource], ['en/index.html', enIndexSource]]) {
             expect(source, name).toContain('<input type="checkbox" id="consent-age" data-consent-required="true">');
         }
-        expect(authSource).toContain("age14: entry(readConsentCheckbox('consent-age'))");
+        // 기록은 화면을 직접 읽지 않는다 — 리디렉트를 다녀오면 화면이 비어 있기 때문이다.
+        // 자세한 내용은 tests/consent-survives-redirect.test.js 참고.
+        expect(authSource).toContain("age14: entry(selection['consent-age'] === true)");
     });
 
     it('is recorded with the rest of the consents', () => {
@@ -129,7 +131,7 @@ describe('the age rule is one the code can keep', () => {
 
 describe('sensitive health data is handled as a separate consent', () => {
     it('the code takes it separately', () => {
-        expect(readRepoFile('js/auth.js')).toContain("sensitive: entry(readConsentCheckbox('consent-sensitive'))");
+        expect(readRepoFile('js/auth.js')).toContain("sensitive: entry(selection['consent-sensitive'] === true)");
     });
 
     it('and the policy says so, naming the article it comes from', () => {

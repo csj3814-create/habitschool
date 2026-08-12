@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=305';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=306';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=305';
-import { getDatesInfo } from './ui-helpers.js?v=305';
-import { escapeHtml } from './security.js?v=305';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=305';
+import { showToast } from './ui-helpers.js?v=306';
+import { getDatesInfo } from './ui-helpers.js?v=306';
+import { escapeHtml } from './security.js?v=306';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=306';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=305';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=305';
-import { trackProductEvent } from './product-events.js?v=305';
+} from './auth-login-helpers.js?v=306';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=306';
+import { trackProductEvent } from './product-events.js?v=306';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=305';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=306';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -806,6 +806,8 @@ export function initAuth() {
             return;
         }
         window._isPopupLogin = true;
+        // 리디렉트로 페이지가 날아가기 전에 선택을 붙잡아 둔다.
+        persistConsentSelectionSnapshot();
         setGoogleLoginPendingUi(loginBtn, true);
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
@@ -1319,6 +1321,9 @@ export function setupAuthListener(callbacks) {
                     updateData.consents = buildSignupConsentRecord();
                 }
                 await setDoc(userRef, updateData, { merge: true }).catch(() => {});
+                // 로그인이 끝났으니 이 브라우저는 다시 묻지 않는다. 임시 스냅샷은 역할이 끝났다.
+                rememberAcceptedConsent();
+                clearConsentSelectionSnapshot();
                 const ud = {
                     ...resolvedUserData,
                     ...updateData
@@ -1460,21 +1465,93 @@ window.logoutAndReset = async function () {
 // 구분되고, 재동의를 받아야 하는 이용자를 골라낼 수 있다.
 const CONSENT_DOC_VERSION = '2026-08-12';
 
+// 리디렉트 로그인은 구글을 다녀오면서 페이지를 통째로 새로 띄운다. 그러면 체크박스가
+// 전부 풀린 상태로 돌아오는데, 하필 그 시점에 신규 회원의 동의 기록이 만들어진다.
+// 그대로 두면 분명히 동의하고 가입한 사람의 기록에 '동의 안 함'이 박힌다.
+// 그래서 로그인을 시작할 때 선택을 저장해 두고, 돌아왔을 때 그것으로 복원한다.
+const CONSENT_SELECTION_KEY = 'habitschool-consent-selection';
+const CONSENT_ACCEPTED_KEY = 'habitschool-consent-accepted';
+const CONSENT_IDS = ['consent-terms', 'consent-privacy', 'consent-age', 'consent-sensitive'];
+
 function readConsentCheckbox(id) {
     return document.getElementById(id)?.checked === true;
+}
+
+function readStoredJson(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+        return null;
+    }
+}
+
+function collectConsentSelection() {
+    const selection = {};
+    CONSENT_IDS.forEach((id) => { selection[id] = readConsentCheckbox(id); });
+    return selection;
+}
+
+// 로그인을 시작하는 순간 호출한다. 리디렉트로 페이지가 날아가도 선택이 남는다.
+function persistConsentSelectionSnapshot() {
+    try {
+        localStorage.setItem(CONSENT_SELECTION_KEY, JSON.stringify({
+            version: CONSENT_DOC_VERSION,
+            selection: collectConsentSelection()
+        }));
+    } catch (_) {}
+}
+
+function readConsentSelectionSnapshot() {
+    const stored = readStoredJson(CONSENT_SELECTION_KEY);
+    if (!stored || stored.version !== CONSENT_DOC_VERSION) return null;
+    return stored.selection || null;
+}
+
+function clearConsentSelectionSnapshot() {
+    try {
+        localStorage.removeItem(CONSENT_SELECTION_KEY);
+    } catch (_) {}
+}
+
+// 화면에 하나라도 체크돼 있으면 그것이 방금 한 선택이다. 전부 비어 있다면 리디렉트를
+// 다녀오며 화면이 초기화된 경우이므로 저장해 둔 선택을 쓴다.
+function resolveConsentSelection() {
+    const live = collectConsentSelection();
+    if (Object.values(live).some(Boolean)) return live;
+    return readConsentSelectionSnapshot() || live;
+}
+
+// 이 브라우저가 이미 동의를 마쳤다는 표시. 문서 버전이 올라가면 다시 받아야 하므로
+// 버전을 함께 적는다.
+function rememberAcceptedConsent() {
+    try {
+        localStorage.setItem(CONSENT_ACCEPTED_KEY, JSON.stringify({
+            version: CONSENT_DOC_VERSION,
+            at: new Date().toISOString(),
+            sensitive: resolveConsentSelection()['consent-sensitive'] === true
+        }));
+    } catch (_) {}
+}
+
+function readAcceptedConsent() {
+    const stored = readStoredJson(CONSENT_ACCEPTED_KEY);
+    if (!stored || stored.version !== CONSENT_DOC_VERSION) return null;
+    return stored;
 }
 
 function buildSignupConsentRecord() {
     const at = new Date().toISOString();
     const entry = (agreed) => ({ agreed, at: agreed ? at : null, version: CONSENT_DOC_VERSION });
+    const selection = resolveConsentSelection();
     return {
-        terms: entry(readConsentCheckbox('consent-terms')),
-        privacy: entry(readConsentCheckbox('consent-privacy')),
+        terms: entry(selection['consent-terms'] === true),
+        privacy: entry(selection['consent-privacy'] === true),
         // 만 14세 미만은 법정대리인 동의가 필요해(개인정보 보호법 제22조의2) 아예 받지 않는다.
         // 약관에 나이 기준만 적어두고 확인하지 않으면 지킬 수 없는 약속이 된다.
-        age14: entry(readConsentCheckbox('consent-age')),
+        age14: entry(selection['consent-age'] === true),
         // 건강정보는 개인정보 보호법 제23조 민감정보라 따로 받는다.
-        sensitive: entry(readConsentCheckbox('consent-sensitive'))
+        sensitive: entry(selection['consent-sensitive'] === true)
     };
 }
 
@@ -1554,10 +1631,42 @@ window.highlightMissingConsents = function () {
     return true;
 };
 
+// 두 가지를 복원한다.
+//  1) 이미 동의를 마친 브라우저라면 다시 묻지 않는다. 체크된 상태로 두고 상자를 감춘다.
+//  2) 리디렉트를 다녀오는 중이라면 떠나기 직전의 선택을 되살린다. 이게 없으면
+//     돌아온 화면에서 체크가 전부 풀려 시작 버튼이 잠긴 채로 멈춰 보인다.
+function restoreConsentSelection() {
+    const box = document.getElementById('signup-consent-box');
+    if (!box) return;
+
+    const accepted = readAcceptedConsent();
+    if (accepted) {
+        box.querySelectorAll('input[data-consent-required="true"]').forEach((el) => { el.checked = true; });
+        const sensitiveBox = document.getElementById('consent-sensitive');
+        if (sensitiveBox) sensitiveBox.checked = accepted.sensitive === true;
+        // 감추되 DOM에는 남긴다. 다른 코드가 이 체크박스들을 그대로 읽기 때문에
+        // 없애 버리면 동의 기록이 빈 채로 만들어진다.
+        box.hidden = true;
+        box.setAttribute('aria-hidden', 'true');
+        syncSignupConsentState();
+        return;
+    }
+
+    const snapshot = readConsentSelectionSnapshot();
+    if (!snapshot) return;
+    Object.entries(snapshot).forEach(([id, checked]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = checked === true;
+    });
+    syncSignupConsentState();
+}
+
 function bindSignupConsentListeners() {
     const box = document.getElementById('signup-consent-box');
     if (!box || box.dataset.consentBound === 'true') return;
     box.dataset.consentBound = 'true';
+
+    restoreConsentSelection();
 
     const allBox = document.getElementById('consent-all');
     if (allBox) {
