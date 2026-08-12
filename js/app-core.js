@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=302';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=302';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=303';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=303';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=302';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=302';
+} from './auth-login-helpers.js?v=303';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=303';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=302';
+} from './exercise-media.js?v=303';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=302';
+} from './health-connect-utils.js?v=303';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=302';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=302';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=302';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=302';
-import { sanitize, compressImage } from './data-manager.js?v=302';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=302';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=302';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=302';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=302';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=302';
+} from './habit-groups.js?v=303';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=303';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=303';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=303';
+import { sanitize, compressImage } from './data-manager.js?v=303';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=303';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=303';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=303';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=303';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=303';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=302';
+} from './guest-demo.js?v=303';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=302';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=302';
+} from './product-events.js?v=303';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=303';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=302';
+} from './diet-program.js?v=303';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=302';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=302';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=302';
+} from './meditation-guide.js?v=303';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=303';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=303';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=302';
+} from './social-challenge-readiness.js?v=303';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=302';
+} from './monthly-mvp-reward.js?v=303';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -383,12 +383,18 @@ const SHARED_IMPORT_CATEGORY_LABELS = {
 const OFFLINE_OUTBOX_STORAGE_KEY = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_CACHE_NAME = 'habitschool-offline-outbox-v1';
 const OFFLINE_OUTBOX_MAX_ENTRIES = 12;
+// 보관함에 넣고 "잠시 후 자동으로 마무리돼요"라고 말했으면 실제로 마무리해야 한다.
+// online/focus/visibilitychange 만으로는 화면을 계속 보고 있는 사람에게 한 번도 걸리지
+// 않는다. 그래서 큐에 넣은 즉시 직접 재시도를 예약한다.
+const OFFLINE_OUTBOX_RETRY_DELAYS_MS = [4000, 10000, 25000, 60000, 120000];
 const BACKGROUND_MEDIA_PATCH_STORAGE_KEY = 'habitschool-background-media-patches-v1';
 const BACKGROUND_MEDIA_PATCH_MAX_ENTRIES = 24;
 // 모바일(WiFi·셀룰러 모두)에서 Firestore 첫 쓰기 ACK가 12초를 넘기는 경우가 잦아
 // 실제로는 곧 저장될 기록도 보관함(outbox)으로 빠지며 불안한 안내가 자주 떴다.
 // 데이터는 손실되지 않지만, ACK 여유를 넉넉히 줘 오탐(백업 안내)을 줄인다.
 const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 25000;
+// 첫 시도용. 멈춘 스트림을 빨리 알아채기 위한 값이지 회선 속도를 재는 값이 아니다.
+const DAILY_LOG_PRIMARY_SAVE_STALL_TIMEOUT_MS = 12000;
 const BACKGROUND_MEDIA_PATCH_TIMEOUT_MS = 8000;
 const BACKGROUND_MEDIA_PATCH_RETRY_DELAY_MS = 4000;
 const STATIC_IMAGE_SAVE_UPLOAD_WAIT_MS = 6500;
@@ -6425,7 +6431,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=302';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=303';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -19489,9 +19495,65 @@ async function flushOfflineOutbox({ quiet = false } = {}) {
     return _offlineOutboxFlushPromise;
 }
 
+let _offlineOutboxRetryTimer = null;
+let _offlineOutboxRetryAttempt = 0;
+
+function cancelOfflineOutboxRetry() {
+    if (_offlineOutboxRetryTimer) {
+        clearTimeout(_offlineOutboxRetryTimer);
+        _offlineOutboxRetryTimer = null;
+    }
+    _offlineOutboxRetryAttempt = 0;
+}
+
+// 보관함이 빌 때까지 스스로 다시 시도한다. 성공하면 타이머를 걷고, 실패하면 간격을
+// 늘려 다음을 잡는다. 마지막 간격까지 가면 거기서 멈춘다 — 그때는 화면을 다시 볼 때
+// 걸리는 focus/visibilitychange 가 받아준다.
+function scheduleOfflineOutboxFlush(reason = 'queued') {
+    if (_offlineOutboxRetryTimer) return;
+    if (_offlineOutboxRetryAttempt >= OFFLINE_OUTBOX_RETRY_DELAYS_MS.length) return;
+
+    const delayMs = OFFLINE_OUTBOX_RETRY_DELAYS_MS[_offlineOutboxRetryAttempt];
+    _offlineOutboxRetryAttempt += 1;
+    _offlineOutboxRetryTimer = setTimeout(async () => {
+        _offlineOutboxRetryTimer = null;
+        if (!auth.currentUser?.uid) return;
+        if (navigator.onLine === false) {
+            // 오프라인이면 재시도해봐야 소용없다. online 이벤트가 깨워줄 것이고,
+            // 시도 횟수는 되돌려 온라인 복귀 후 다시 처음부터 밀어붙이게 한다.
+            _offlineOutboxRetryAttempt = Math.max(0, _offlineOutboxRetryAttempt - 1);
+            return;
+        }
+        // 스트림이 죽어 있으면 보관함 재전송도 같은 곳에서 막힌다. 먼저 연결을 되살린다.
+        await forceFirestoreReconnect(`offline-outbox-${reason}`).catch(() => false);
+        const flushed = await flushOfflineOutbox({ quiet: true }).catch(() => 0);
+        if (hasPendingOfflineOutboxEntries()) {
+            scheduleOfflineOutboxFlush(reason);
+        } else {
+            cancelOfflineOutboxRetry();
+            if (flushed > 0) showToast('✅ 저장을 마무리했어요. 갤러리에도 올라갔어요.');
+        }
+    }, delayMs);
+}
+
+function hasPendingOfflineOutboxEntries() {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return false;
+    return readOfflineOutboxEntries().some((entry) => String(entry?.userId || '').trim() === uid);
+}
+
+// 로그인 직후 한 번. 새로고침해도 보관함을 아무도 비워주지 않아서, 사용자가 저장을
+// 다시 누르는 것 말고는 밀린 기록이 올라갈 길이 없었다.
+window.resumePendingOfflineSaves = function resumePendingOfflineSaves() {
+    if (!hasPendingOfflineOutboxEntries()) return;
+    cancelOfflineOutboxRetry();
+    scheduleOfflineOutboxFlush('app-start');
+};
+
 window.flushOfflineOutbox = flushOfflineOutbox;
 window.flushBackgroundMediaPatchQueue = flushBackgroundMediaPatchQueue;
 window.addEventListener('online', () => {
+    cancelOfflineOutboxRetry();
     flushOfflineOutbox({ quiet: true }).catch(() => {});
     flushBackgroundMediaPatchQueue({ quiet: true }).catch(() => {});
 });
@@ -19944,19 +20006,25 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
 
             // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.
             // 타임아웃을 성공처럼 처리하면 로컬 점수만 오른 뒤 새로고침 때 기록이 사라질 수 있다.
-            const doSetDoc = () => withRejectingTimeout(
+            const doSetDoc = (timeoutMs = DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS) => withRejectingTimeout(
                 setDoc(doc(db, "daily_logs", docId), getClientWritableDailyLogData(saveData), { merge: true }),
-                DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS,
+                timeoutMs,
                 'daily_log_primary_save_timeout'
             );
             try {
-                await doSetDoc();
+                // 첫 시도는 짧게 끊는다. 연결이 멀쩡하면 쓰기는 1초 안에 ACK되므로,
+                // 여기서 오래 기다리는 건 이미 멈춘 스트림뿐이다. 25초를 두 번 다 쓰면
+                // 사용자는 아무 답도 없이 50초를 기다린다.
+                await doSetDoc(DAILY_LOG_PRIMARY_SAVE_STALL_TIMEOUT_MS);
                 primarySaveAcknowledged = true;
             } catch (e) {
                 if (isOfflineSaveCandidateError(e)) {
-                    // 연결 안정화 대기 후 1회 재시도. 재시도도 실패하면 바깥 catch에서 오프라인 보관함에 저장한다.
+                    // 죽은 스트림에 두 번째 시도를 그대로 보내면 똑같이 타임아웃난다.
+                    // 연결을 껐다 켜서 스트림을 다시 세운 뒤에 재시도한다.
+                    await forceFirestoreReconnect('daily-log-primary-save').catch(() => false);
                     await new Promise(r => setTimeout(r, 1500));
-                    await doSetDoc();
+                    // 재시도는 넉넉하게 — 진짜 느린 회선을 성급하게 포기하지 않는다.
+                    await doSetDoc(DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS);
                     primarySaveAcknowledged = true;
                 } else { throw e; }
             }
@@ -20164,6 +20232,10 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     updateDailyLogCache(docId, pendingData);
                     upsertGalleryCacheItem(docId, pendingData);
                     refreshGalleryFromCacheIfVisible();
+                    // 약속했으면 지켜야 한다 — 이 예약이 없으면 '잠시 후'는 영영 오지 않고,
+                    // 사용자가 새로고침하고 저장을 다시 누르는 수밖에 없었다.
+                    cancelOfflineOutboxRetry();
+                    scheduleOfflineOutboxFlush('primary-save-failed');
                     showToast(navigator.onLine === false
                         ? '✅ 안전하게 저장했어요. 연결되면 자동으로 마무리돼요.'
                         : '✅ 안전하게 저장했어요. 잠시 후 자동으로 마무리돼요.');

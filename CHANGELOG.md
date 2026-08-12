@@ -2,6 +2,17 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-12 (2)
+
+### Fixed
+- Rebuilt the Firestore connection when it stalls, instead of calling a no-op. The reconnect probe called `enableNetwork(db)` on a client whose network had never been disabled — that resolves immediately and rebuilds nothing, so a stalled WebChannel stream stayed stalled and a page reload was the only cure. It now bounces the connection (`disableNetwork` then `enableNetwork`) once a plain probe has already failed, which tears the streams down, re-establishes them, and re-sends the mutations queued behind them.
+- Stopped sending the daily-log save retry down the same dead stream. The first attempt now times out at 12s rather than 25s — a healthy write is acknowledged in well under a second, so a long wait on the first attempt only ever means a stalled stream — then forces a reconnect before retrying with the full 25s budget. Worst case falls from ~51s to ~38.5s, which also brings the whole failure path inside the 40s save-button watchdog so its toast no longer interleaves.
+- Made "안전하게 저장했어요. 잠시 후 자동으로 마무리돼요." true. The offline outbox was only flushed on `online`, `focus`, and `visibilitychange`, none of which fire for someone who stays on the page, so nothing ever finished the save: photos appeared in the diet/exercise/mind tabs but the gallery stayed empty, and the only way through was to reload and press save again. Queueing now schedules its own retry (4s, 10s, 25s, 60s, 120s), reviving the connection first since the replay jams in the same place, and confirms with a toast when it lands.
+- Resumed pending saves after sign-in. A queued entry survived a reload but nothing picked it up, which is the other half of why pressing save again was required.
+
+### Changed
+- Rotated the cache to v303.
+
 ## 2026-08-12
 
 ### Fixed

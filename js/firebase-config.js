@@ -1,7 +1,7 @@
 // Firebase 설정 및 초기화
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { connectFirestoreEmulator, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
@@ -65,6 +65,7 @@ const FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS = 15_000;
 let _firestoreReconnectTimers = [];
 let _firestoreReconnectSequence = 0;
 let _firestoreReconnectProbePromise = null;
+let _firestoreReconnectProbeFailures = 0;
 let _firestoreReconnectHooksBound = false;
 let _firestoreInternalErrorGuardBound = false;
 let _firestoreInternalAssertionLastLoggedAt = 0;
@@ -149,6 +150,15 @@ async function runFirestoreReconnectProbe(reason = '') {
 
     _firestoreReconnectProbePromise = (async () => {
         try {
+            // enableNetwork 하나만으로는 아무것도 복구하지 못한다. 네트워크를 끈 적이
+            // 없으면 그것은 즉시 resolve하는 no-op이고, 멈춘 WebChannel 스트림은 그대로
+            // 남는다. 새로고침만이 유일한 해결책이었던 이유가 이것이다.
+            // 스트림을 실제로 헐고 다시 세우려면 껐다가 켜야 한다. 그래야 로컬 큐에
+            // 쌓인 쓰기도 다시 전송된다.
+            if (_firestoreReconnectProbeFailures > 0) {
+                logFirestoreReconnectProbe('bouncing connection', reason);
+                await disableNetwork(db).catch(() => {});
+            }
             await enableNetwork(db).catch(() => {});
 
             const currentUid = auth.currentUser?.uid;
@@ -162,10 +172,13 @@ async function runFirestoreReconnectProbe(reason = '') {
             }
 
             _pendingFirestoreReconnectReason = '';
+            _firestoreReconnectProbeFailures = 0;
             clearFirestoreReconnectTimers();
             logFirestoreReconnectProbe('succeeded', reason);
             return true;
         } catch (error) {
+            // 다음 시도는 그냥 찔러보는 데 그치지 않고 연결을 껐다 켠다.
+            _firestoreReconnectProbeFailures += 1;
             logFirestoreReconnectProbe('still pending', reason, error);
             return false;
         } finally {
@@ -252,6 +265,16 @@ export function scheduleFirestoreReconnect(reason = 'firestore-connectivity', { 
         }, delayMs);
         _firestoreReconnectTimers.push(timerId);
     });
+}
+
+// 쓰기가 서버 ACK를 못 받고 타임아웃났다는 건 스트림이 죽었다는 가장 확실한 신호다.
+// 그때는 재시도 전에 연결을 확실히 헐고 다시 세운다 — 같은 죽은 스트림으로 두 번째
+// 시도를 보내봐야 똑같이 25초를 버릴 뿐이다.
+export async function forceFirestoreReconnect(reason = 'write-timeout') {
+    if (IS_LOCAL_ENV || typeof window === 'undefined') return false;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+    _firestoreReconnectProbeFailures = Math.max(1, _firestoreReconnectProbeFailures);
+    return runFirestoreReconnectProbe(reason);
 }
 
 export function noteFirestoreConnectivityFailure(error = null, context = '') {

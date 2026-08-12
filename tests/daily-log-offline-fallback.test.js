@@ -23,11 +23,13 @@ describe('daily log offline fallback', () => {
 
         expect(appSource).toContain('daily_log_primary_save_timeout');
         expect(appSource).toContain('const DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS = 25000;');
-        expect(appSource).toContain('const doSetDoc = () => withRejectingTimeout');
+        // 시도마다 상한이 다르다(첫 시도는 멈춤 감지용으로 짧게). 상한을 넘기면
+        // 여전히 reject 이고, 여전히 acknowledged 로 치지 않는다 — 그게 이 테스트의 요지다.
+        expect(appSource).toContain('const doSetDoc = (timeoutMs = DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS) => withRejectingTimeout');
         expect(appSource).toContain('DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS');
         expect(appSource).toContain('setDoc(doc(db, "daily_logs", docId), getClientWritableDailyLogData(saveData), { merge: true })');
         expect(appSource).toContain('let primarySaveAcknowledged = false;');
-        expect(appSource).toContain('await doSetDoc();\n                primarySaveAcknowledged = true;');
+        expect(appSource).toContain('await doSetDoc(DAILY_LOG_PRIMARY_SAVE_STALL_TIMEOUT_MS);\n                primarySaveAcknowledged = true;');
         expect(appSource).toContain('if (primarySaveAcknowledged && latestSaveData && docId)');
         expect(appSource).toContain('if (isOfflineSaveCandidateError(e))');
         expect(appSource).toContain('if (latestSaveData && docId && isOfflineSaveCandidateError(e))');
