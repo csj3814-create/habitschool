@@ -23,7 +23,7 @@ import {
     getActiveHbtTokenAddress,
     getActiveStakingAddress,
     getActiveChainKey
-} from './blockchain-config.js?v=307';
+} from './blockchain-config.js?v=308';
 
 // 구버전 챌린지 ID → 신규 통합 ID 매핑 (인라인 정의 — SW 캐시 미스매치 방지)
 const CHALLENGE_ID_MAP = {
@@ -41,12 +41,12 @@ const CHALLENGE_ID_MAP = {
     'challenge-all-30d': 'challenge-30d'
 };
 
-import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=307';
+import { auth, db, functions, FIREBASE_REGION, APP_ENV, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue } from './firebase-config.js?v=308';
 import { doc, updateDoc, setDoc, getDoc, getDocFromServer, getDocsFromServer, runTransaction, collection, addDoc, serverTimestamp, increment, deleteField, query, where, orderBy, limit } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=307';
-import { getKstDateString } from './ui-helpers.js?v=307';
-import { checkRateLimit } from './security.js?v=307';
+import { showToast, hideToast } from './ui-helpers.js?v=308';
+import { getKstDateString } from './ui-helpers.js?v=308';
+import { checkRateLimit } from './security.js?v=308';
 
 // Cloud Function 참조 (lazy 초기화 — import 실패해도 모듈 로드에 영향 없음)
 let mintHBTFunction = null;
@@ -1593,12 +1593,24 @@ export async function settleExpiredChallenges() {
         const expiredTiers = Object.entries(activeChallenges)
             .filter(([, challenge]) => challenge?.status === 'expired')
             .map(([tier]) => tier);
+        const claimableTiers = Object.entries(activeChallenges)
+            .filter(([, challenge]) => challenge?.status === 'claimable')
+            .map(([tier]) => tier);
         for (const tier of expiredTiers) {
             const settleFn = httpsCallable(functions, 'settleChallengeFailure');
             await settleFn({ tier });
         }
-        if (expiredTiers.length > 0) {
-            await refreshAssetDisplayAfterChallengeMutation('challenge-expiry');
+        // 성공해서 claimable 이 된 챌린지도 화면을 고쳐야 한다.
+        //
+        // 방금 부른 refreshChallengeProgress 가 서버의 completedDates 를 다시 계산한다.
+        // 그런데 예전에는 실패(expired)가 있을 때만 화면을 새로 그렸다. 마지막 날을 채워
+        // 완주한 경우에는 expiredTiers 가 비어 있으니 아무것도 다시 그리지 않았고,
+        // "완료된 챌린지가 있습니다" 토스트는 뜨는데 자산 탭은 29/30 그대로였다.
+        // 서버만 고치고 화면은 두고 온 셈이라, 앱을 나갔다 들어와 다시 읽어야 100%가 됐다.
+        if (expiredTiers.length > 0 || claimableTiers.length > 0) {
+            await refreshAssetDisplayAfterChallengeMutation(
+                expiredTiers.length > 0 ? 'challenge-expiry' : 'challenge-claimable'
+            );
         }
         return refreshResult.data || null;
     } catch (error) {
@@ -1620,7 +1632,7 @@ const _challengeClaimInFlight = new Set();
 // 보상 수령은 Cloud Function 하나를 부르는 게 전부라 온체인 코드가 필요 없다.
 // 구현은 challenge-claim.js 에 있다 — 그래야 블록체인 모듈을 안 싣는 라이트 모드에서도
 // 같은 동작을 쓸 수 있다. 여기서는 이름만 이어 준다.
-export { claimChallengeReward } from './challenge-claim.js?v=307';
+export { claimChallengeReward } from './challenge-claim.js?v=308';
 
 /**
  * 챌린지 포기

@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=307';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=307';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=308';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=308';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=307';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=307';
+} from './auth-login-helpers.js?v=308';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=308';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=307';
+} from './exercise-media.js?v=308';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=307';
+} from './health-connect-utils.js?v=308';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=307';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=307';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=307';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=307';
-import { sanitize, compressImage } from './data-manager.js?v=307';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=307';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=307';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=307';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=307';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=307';
+} from './habit-groups.js?v=308';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=308';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=308';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=308';
+import { sanitize, compressImage } from './data-manager.js?v=308';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=308';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=308';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=308';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=308';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=308';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=307';
+} from './guest-demo.js?v=308';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=307';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=307';
+} from './product-events.js?v=308';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=308';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=307';
+} from './diet-program.js?v=308';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=307';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=307';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=307';
+} from './meditation-guide.js?v=308';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=308';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=308';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=307';
+} from './social-challenge-readiness.js?v=308';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=307';
+} from './monthly-mvp-reward.js?v=308';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6431,7 +6431,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=307';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=308';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11039,7 +11039,15 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             const circumference = 2 * Math.PI * radius;
             const dashOffset = circumference - (circumference * Math.min(progressPct, 100) / 100);
             const completedText = `${completed}/${totalDays}일 완료`;
-            const progressDetailText = `${progressPct}% · 남은 ${remain}일`;
+            // 기간이 끝났는데 아직 ongoing 이면, 저장된 일수는 마지막 날을 아직 안 센
+            // 값일 수 있다. 서버 재계산이 곧 도착하므로 그 숫자를 확정처럼 보여주면
+            // 방금까지처럼 29/30 을 보고 "왜 안 늘지" 하게 된다. 확정 전임을 밝힌다.
+            const isAwaitingSettlement = ch.status === 'ongoing'
+                && !!String(ch.endDate || '').trim()
+                && String(ch.endDate) <= todayStr;
+            const progressDetailText = isAwaitingSettlement
+                ? '정산 확인 중…'
+                : `${progressPct}% · 남은 ${remain}일`;
 
             if (isClaimable) {
                 const titleSuffix = isFullCompletion ? '성공!' : '정산 가능';
@@ -13961,6 +13969,10 @@ function openTab(tabName, pushState = true) {
             // 블록체인 모듈은 백그라운드 로드 → 완료 후 HBT 잔액만 갱신
             const load = window._loadBlockchainModule || (() => Promise.resolve());
             load().then(async () => {
+                // 챌린지 정산부터 건다. 지갑과 무관한 서버 호출인데 지갑 초기화(최대 6초)
+                // 뒤로 미뤄 두면, 그 동안 자산 탭이 어제 기준 진행도를 그대로 보여준다.
+                // 어제 마지막 날을 채워 완주한 사람에게는 그게 29/30 으로 보인다.
+                if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
                 if (window.initializeUserWallet) {
                     await withAsyncTimeout(
                         window.initializeUserWallet(),
@@ -13968,7 +13980,6 @@ function openTab(tabName, pushState = true) {
                         'asset_wallet_init_timeout'
                     ).catch(() => {});
                 }
-                if (window.settleExpiredChallenges) window.settleExpiredChallenges().catch(() => {});
                 // blockchain 모듈 로드 직후에는 항상 한 번 더 온체인 잔액을 보강 조회
                 if (window.fetchOnchainBalance) {
                     withAsyncTimeout(

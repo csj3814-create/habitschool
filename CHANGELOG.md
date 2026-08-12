@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-13
+
+### Fixed
+- Redrew the asset screen when a challenge is completed, not only when one fails. `settleExpiredChallenges` calls `refreshChallengeProgress`, which recomputes progress on the server — but it only refreshed the display when `expiredTiers` was non-empty. Finishing a challenge on its last day leaves that list empty, so the server was corrected and the screen was left behind: the "완료된 챌린지가 있습니다" toast appeared while the asset tab still read 29/30. Reloading did not help because the same visit that corrected the server never redrew; only a later visit, reading the already-corrected document, showed 30/30.
+- Started the settlement before wallet initialisation rather than after it on the asset tab. `initializeUserWallet` is allowed up to six seconds, and the challenge recompute — an ordinary callable that has nothing to do with the wallet — was queued behind it, so yesterday's progress stood as fact for that whole window.
+
+### Changed
+- Stopped presenting a day count as final when it is known to be provisional. A challenge whose end date has passed while its status is still `ongoing` has not had its last day counted yet, so the card now shows "정산 확인 중…" in place of "97% · 남은 1일". The count itself stays visible; only the false certainty goes.
+- Rotated the cache to v308.
+
 ## 2026-08-12 (6)
 
 ### Fixed
