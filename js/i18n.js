@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=310';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=311';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -135,7 +135,7 @@ const MESSAGES = {
         'reconsent.change1': '<strong>The minimum age is now 14.</strong> The terms previously said 18, but nothing ever checked it.',
         'reconsent.change2': '<strong>Redeeming a coupon sends your mobile number to the delivery agency (KT Alpha).</strong> Nothing is sent if you do not redeem one.',
         'reconsent.change3': '<strong>Deleting your account now really does delete everything.</strong> Some records used to be kept; there was no basis for keeping them, so they go too.',
-        'reconsent.change4': '<strong>Your records and photos are stored on servers in Seoul, Republic of Korea.</strong> Only photos you submit for AI analysis leave the country.',
+        'reconsent.change4': '<strong>Your photos and videos are stored on servers in the United States.</strong> Text — logs and figures — stays in Korea, but we want to be clear that the media you upload is held abroad.',
         'reconsent.note': 'You can decline the optional item and carry on. Only the blood test and body composition features are locked.',
         'reconsent.later': 'Log out',
         'reconsent.agree': 'Agree and continue',

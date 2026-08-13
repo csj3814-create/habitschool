@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-13 (4)
+
+### Fixed
+- Corrected the storage location in the privacy policy, which was wrong. It said records and photos are stored in Seoul and that this is not an overseas transfer. Firestore is indeed `asia-northeast3`, and that much was verified — but the Storage bucket is `us-central1`, and I had assumed it matched rather than checking. So every uploaded photo and video, **including blood test report images**, sits in the United States while the policy told members nothing left the country. Section 5 now lists the two stores separately, marks Firebase Storage as an overseas transfer, and names the sensitive item inside it explicitly.
+- Removed the claim that declining AI analysis means nothing is transferred abroad. The photo store itself is abroad, so uploading anything is already a transfer. The refusal clause now says plainly that refusing means the upload features cannot be used, while text-only use stays available and stays in Korea.
+- Fixed the same false sentence in the re-consent notice, where it would have been shown to every existing member at the moment of collecting their agreement.
+
+### Changed
+- Rotated the cache to v311.
+
 ## 2026-08-13 (3)
 
 ### Added

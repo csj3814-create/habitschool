@@ -167,18 +167,33 @@ describe('the documents stay in step with each other', () => {
         expect(EN_PRIVACY).toContain('KT Alpha Co., Ltd.');
     });
 
-    it('says the records live in Korea, because they do', () => {
-        // firestore:databases:get 으로 확인: asia-northeast3(서울). 리전을 옮기면
-        // 이 문장이 거짓이 되므로 여기서 잡는다.
+    // 확인된 사실:
+    //   Firestore  asia-northeast3 (서울)      — firestore:databases:get
+    //   Storage    us-central1     (미국)      — Cloud Storage 버킷 목록
+    // 한동안 방침에 "기록과 사진은 서울에 저장, 국외 이전 아님"이라고 적혀 있었다.
+    // Firestore 만 확인하고 Storage 는 같은 리전이겠거니 하고 적은 결과였고,
+    // 그래서 혈액검사 결과지가 미국에 있는데 국외 이전이 아니라고 말하고 있었다.
+    it('places each store where it actually is', () => {
         expect(KO_PRIVACY).toContain('asia-northeast3');
-        expect(KO_PRIVACY).toContain('국외 이전 아님');
+        expect(KO_PRIVACY).toContain('us-central1');
         expect(EN_PRIVACY).toContain('asia-northeast3');
-        expect(EN_PRIVACY).toContain('not an overseas transfer');
+        expect(EN_PRIVACY).toContain('us-central1');
     });
 
-    it('singles out the AI analysis as the one thing that does leave', () => {
-        expect(KO_PRIVACY).toContain('AI 분석 기능을 사용하지 않으면 국외로 전송되는 개인정보가 없으며');
-        expect(EN_PRIVACY).toContain('no personal information is sent abroad');
+    it('calls the photo store an overseas transfer, because it is one', () => {
+        expect(KO_PRIVACY).toContain('(Firebase Storage) — <strong>국외 이전</strong>');
+        expect(EN_PRIVACY).toContain('(Firebase Storage) — <strong>overseas transfer</strong>');
+        // 민감정보가 그 안에 있다는 사실을 흐리지 않는다.
+        expect(KO_PRIVACY).toContain('<strong>혈액검사 결과지 이미지</strong>');
+        expect(EN_PRIVACY).toContain('<strong>blood test report images</strong>');
+    });
+
+    it('never again claims that nothing leaves the country', () => {
+        // 사진 저장소 자체가 국외다. AI 분석을 안 써도 국외로 나간다.
+        expect(KO_PRIVACY).not.toContain('국외로 전송되는 개인정보가 없으며');
+        expect(EN_PRIVACY).not.toContain('no personal information is sent abroad');
+        // 재동의 화면은 동의를 받는 자리다. 거기에 틀린 문장이 있으면 더 나쁘다.
+        expect(readRepoFile('index.html')).not.toContain('기록과 사진은 대한민국(서울) 서버에 저장됩니다');
     });
 
     it('states the Gemini tier, since it decides who may read the images', () => {

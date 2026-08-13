@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=310';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=311';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=310';
-import { getDatesInfo } from './ui-helpers.js?v=310';
-import { escapeHtml } from './security.js?v=310';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=310';
+import { showToast } from './ui-helpers.js?v=311';
+import { getDatesInfo } from './ui-helpers.js?v=311';
+import { escapeHtml } from './security.js?v=311';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=311';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=310';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=310';
-import { trackProductEvent } from './product-events.js?v=310';
+} from './auth-login-helpers.js?v=311';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=311';
+import { trackProductEvent } from './product-events.js?v=311';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=310';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=311';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
