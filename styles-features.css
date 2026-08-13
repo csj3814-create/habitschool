@@ -6555,6 +6555,76 @@ body.gallery-user-filtered #weekly-best-container {
     color: #8a7a66;
 }
 
+/* ===== 약관 개정 재동의 ===== */
+.reconsent-content {
+    max-width: 420px;
+    width: calc(100vw - 32px);
+    /* 바뀐 내용이 길어질 수 있다. 화면을 넘기면 동의 버튼에 닿지 못한다. */
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    text-align: left;
+}
+
+.reconsent-badge {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #FFE9CC;
+    color: #B35A00;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.reconsent-title {
+    margin: 0 0 8px;
+    font-size: 18px;
+    line-height: 1.4;
+    color: #2f261d;
+}
+
+.reconsent-copy {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #6b5c4a;
+}
+
+.reconsent-changes {
+    margin: 0 0 16px;
+    padding: 12px 14px 12px 30px;
+    background: #FFF8F0;
+    border-radius: 12px;
+    border: 1px solid #F0DFC4;
+}
+
+.reconsent-changes li {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #4a4038;
+}
+
+.reconsent-changes li:last-child { margin-bottom: 0; }
+.reconsent-changes strong { color: #2f261d; }
+
+.reconsent-content .consent-box {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.reconsent-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.reconsent-actions .wallet-modal-btn { flex: 1; }
+
+.reconsent-actions .wallet-modal-btn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .google-btn[disabled] {
     opacity: 0.45;
     cursor: not-allowed;

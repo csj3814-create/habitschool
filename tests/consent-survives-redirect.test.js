@@ -30,16 +30,18 @@ describe('a consent choice survives the trip to Google and back', () => {
         // 다녀온 것이다.
         expect(AUTH).toContain('if (Object.values(live).some(Boolean)) return live;');
         expect(AUTH).toContain('return readConsentSelectionSnapshot() || live;');
+        // 기록 만들기는 가입과 개정 재동의가 함께 쓰는 buildConsentRecordFromSelection
+        // 으로 뽑았다. 가입 경로는 여전히 스냅샷으로 되살린 선택을 넘긴다.
         const record = AUTH.split('function buildSignupConsentRecord() {')[1].split('\n}')[0];
-        expect(record).toContain('const selection = resolveConsentSelection();');
+        expect(record).toContain('buildConsentRecordFromSelection(resolveConsentSelection())');
         // DOM 을 직접 읽으면 리디렉트 뒤에 전부 false 가 된다.
         expect(record).not.toContain('readConsentCheckbox(');
     });
 
     it('records every consent from the same resolved selection', () => {
-        const record = AUTH.split('function buildSignupConsentRecord() {')[1].split('\n}')[0];
+        const builder = AUTH.split('function buildConsentRecordFromSelection(selection = {}) {')[1].split('\n}')[0];
         for (const key of ['consent-terms', 'consent-privacy', 'consent-age', 'consent-sensitive']) {
-            expect(record).toContain(`selection['${key}'] === true`);
+            expect(builder).toContain(`selection['${key}'] === true`);
         }
     });
 
@@ -58,7 +60,8 @@ describe('a consent choice survives the trip to Google and back', () => {
 
 describe('someone who already agreed is not asked again', () => {
     it('remembers acceptance once the sign-in completes', () => {
-        expect(AUTH).toContain('function rememberAcceptedConsent()');
+        // 재동의 화면에서 부를 때는 그 화면의 선택을 넘긴다(인자 없으면 로그인 화면 기준).
+        expect(AUTH).toContain('function rememberAcceptedConsent(selection = null)');
         expect(AUTH).toContain('rememberAcceptedConsent();');
         // 역할이 끝난 임시 스냅샷은 치운다.
         expect(AUTH).toContain('clearConsentSelectionSnapshot();');

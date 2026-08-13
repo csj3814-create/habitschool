@@ -105,7 +105,7 @@ describe('the age rule is one the code can keep', () => {
 
     it('is recorded with the rest of the consents', () => {
         const record = authSource
-            .split('function buildSignupConsentRecord() {')[1]
+            .split('function buildConsentRecordFromSelection(selection = {}) {')[1]
             .split('\n}')[0];
         expect(record).toContain('terms:');
         expect(record).toContain('privacy:');

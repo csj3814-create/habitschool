@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=309';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=310';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -129,6 +129,16 @@ const MESSAGES = {
         'consent.terms': '<a href="/en/terms" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Terms of Service</a>',
         'consent.privacy': '<a href="/en/privacy" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">Collection and use of personal data</a>',
         'consent.age': 'I am 14 years of age or older',
+        'reconsent.badge': 'Updated terms',
+        'reconsent.title': 'Our Terms and Privacy Policy have changed',
+        'reconsent.copy': 'Please agree to the updated documents to keep using Habit School. Here is what changed.',
+        'reconsent.change1': '<strong>The minimum age is now 14.</strong> The terms previously said 18, but nothing ever checked it.',
+        'reconsent.change2': '<strong>Redeeming a coupon sends your mobile number to the delivery agency (KT Alpha).</strong> Nothing is sent if you do not redeem one.',
+        'reconsent.change3': '<strong>Deleting your account now really does delete everything.</strong> Some records used to be kept; there was no basis for keeping them, so they go too.',
+        'reconsent.change4': '<strong>Your records and photos are stored on servers in Seoul, Republic of Korea.</strong> Only photos you submit for AI analysis leave the country.',
+        'reconsent.note': 'You can decline the optional item and carry on. Only the blood test and body composition features are locked.',
+        'reconsent.later': 'Log out',
+        'reconsent.agree': 'Agree and continue',
         'consent.sensitive': 'Health data (blood test, body composition)',
         'consent.note': 'Optional items can be declined. Only blood test and body composition features are locked.',
         'invite.landingDesc': 'Start here to connect with your friend and get 200P.',

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=309';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=310';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=309';
-import { getDatesInfo } from './ui-helpers.js?v=309';
-import { escapeHtml } from './security.js?v=309';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=309';
+import { showToast } from './ui-helpers.js?v=310';
+import { getDatesInfo } from './ui-helpers.js?v=310';
+import { escapeHtml } from './security.js?v=310';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=310';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=309';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=309';
-import { trackProductEvent } from './product-events.js?v=309';
+} from './auth-login-helpers.js?v=310';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=310';
+import { trackProductEvent } from './product-events.js?v=310';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=309';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=310';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1324,6 +1324,13 @@ export function setupAuthListener(callbacks) {
                 // 로그인이 끝났으니 이 브라우저는 다시 묻지 않는다. 임시 스냅샷은 역할이 끝났다.
                 rememberAcceptedConsent();
                 clearConsentSelectionSnapshot();
+                // 방금 가입한 사람은 이미 현재 문서에 동의했다. 기존 회원만 확인한다.
+                if (!isNewUser && needsConsentRefresh({ ...resolvedUserData, ...updateData })) {
+                    setTimeout(() => {
+                        if (auth.currentUser?.uid !== user.uid) return;
+                        openReconsentModal(user, { ...resolvedUserData, ...updateData });
+                    }, 900);
+                }
                 const ud = {
                     ...resolvedUserData,
                     ...updateData
@@ -1524,12 +1531,14 @@ function resolveConsentSelection() {
 
 // 이 브라우저가 이미 동의를 마쳤다는 표시. 문서 버전이 올라가면 다시 받아야 하므로
 // 버전을 함께 적는다.
-function rememberAcceptedConsent() {
+// 재동의 화면에서 부를 때는 그 화면의 선택을 넘긴다. 인자가 없으면 로그인 화면 기준.
+function rememberAcceptedConsent(selection = null) {
+    const resolved = selection || resolveConsentSelection();
     try {
         localStorage.setItem(CONSENT_ACCEPTED_KEY, JSON.stringify({
             version: CONSENT_DOC_VERSION,
             at: new Date().toISOString(),
-            sensitive: resolveConsentSelection()['consent-sensitive'] === true
+            sensitive: resolved['consent-sensitive'] === true
         }));
     } catch (_) {}
 }
@@ -1540,10 +1549,10 @@ function readAcceptedConsent() {
     return stored;
 }
 
-function buildSignupConsentRecord() {
+// 가입 때든 개정 재동의 때든 같은 모양으로 남겨야 한다. 두 벌로 만들면 언젠가 갈라진다.
+function buildConsentRecordFromSelection(selection = {}) {
     const at = new Date().toISOString();
     const entry = (agreed) => ({ agreed, at: agreed ? at : null, version: CONSENT_DOC_VERSION });
-    const selection = resolveConsentSelection();
     return {
         terms: entry(selection['consent-terms'] === true),
         privacy: entry(selection['consent-privacy'] === true),
@@ -1554,6 +1563,123 @@ function buildSignupConsentRecord() {
         sensitive: entry(selection['consent-sensitive'] === true)
     };
 }
+
+function buildSignupConsentRecord() {
+    return buildConsentRecordFromSelection(resolveConsentSelection());
+}
+
+// ===== 약관 개정 재동의 =====
+//
+// 문서가 바뀌면 기존 회원은 새 문서에 동의한 적이 없는 상태가 된다. 버전만 올리고
+// 넘어가면 "동의를 받았다"고 말할 근거가 그 사람들에게는 없다. 필수 항목의 동의 버전이
+// 현재 문서와 다르면 로그인 후 한 번 다시 받는다.
+const RECONSENT_REQUIRED_KEYS = ['terms', 'privacy', 'age14'];
+const RECONSENT_ID_BY_KEY = {
+    'consent-terms': 'reconsent-terms',
+    'consent-privacy': 'reconsent-privacy',
+    'consent-age': 'reconsent-age',
+    'consent-sensitive': 'reconsent-sensitive'
+};
+let _reconsentUser = null;
+
+function needsConsentRefresh(userData = {}) {
+    const consents = userData?.consents;
+    if (!consents || typeof consents !== 'object') return true;
+    return RECONSENT_REQUIRED_KEYS.some((key) => {
+        const entry = consents[key];
+        return !entry || entry.agreed !== true || entry.version !== CONSENT_DOC_VERSION;
+    });
+}
+
+function collectReconsentSelection() {
+    const selection = {};
+    Object.entries(RECONSENT_ID_BY_KEY).forEach(([key, id]) => {
+        selection[key] = document.getElementById(id)?.checked === true;
+    });
+    return selection;
+}
+
+function syncReconsentState() {
+    const box = document.getElementById('reconsent-box');
+    const submit = document.getElementById('reconsent-submit');
+    if (!box || !submit) return;
+    const all = [...box.querySelectorAll('input[type="checkbox"]')].filter(el => el.id !== 'reconsent-all');
+    const required = [...box.querySelectorAll('input[data-consent-required="true"]')];
+    const allBox = document.getElementById('reconsent-all');
+    if (allBox) allBox.checked = all.length > 0 && all.every(el => el.checked);
+    submit.disabled = !required.every(el => el.checked);
+}
+
+function bindReconsentListeners() {
+    const box = document.getElementById('reconsent-box');
+    if (!box || box.dataset.consentBound === 'true') return;
+    box.dataset.consentBound = 'true';
+    const allBox = document.getElementById('reconsent-all');
+    if (allBox) {
+        allBox.addEventListener('change', () => {
+            box.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id !== 'reconsent-all') el.checked = allBox.checked;
+            });
+            syncReconsentState();
+        });
+    }
+    box.querySelectorAll('input[type="checkbox"]').forEach(el => {
+        if (el.id === 'reconsent-all') return;
+        el.addEventListener('change', syncReconsentState);
+    });
+}
+
+function openReconsentModal(user, userData = {}) {
+    const modal = document.getElementById('reconsent-modal');
+    if (!modal || modal.style.display === 'flex') return;
+    _reconsentUser = user;
+    bindReconsentListeners();
+    // 건강정보는 이미 받아 둔 선택이 있으면 그대로 되살린다. 개정을 빌미로 거부를
+    // 동의로 바꾸면 안 된다.
+    const sensitiveBox = document.getElementById('reconsent-sensitive');
+    if (sensitiveBox) sensitiveBox.checked = userData?.consents?.sensitive?.agreed === true;
+    ['reconsent-terms', 'reconsent-privacy', 'reconsent-age', 'reconsent-all'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = false;
+    });
+    syncReconsentState();
+    modal.style.display = 'flex';
+}
+
+function closeReconsentModal() {
+    const modal = document.getElementById('reconsent-modal');
+    if (modal) modal.style.display = 'none';
+    _reconsentUser = null;
+}
+
+window.submitReconsent = async function submitReconsent() {
+    const user = _reconsentUser || auth.currentUser;
+    if (!user?.uid) return;
+    const submit = document.getElementById('reconsent-submit');
+    if (submit) submit.disabled = true;
+
+    const record = buildConsentRecordFromSelection(collectReconsentSelection());
+    try {
+        await setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true });
+    } catch (error) {
+        console.error('재동의 저장 실패:', error);
+        showToast('⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        if (submit) submit.disabled = false;
+        return;
+    }
+
+    window._sensitiveConsentAgreed = record.sensitive.agreed === true;
+    window.applySensitiveConsentGate?.();
+    rememberAcceptedConsent(collectReconsentSelection());
+    closeReconsentModal();
+    showToast('✅ 동의해 주셔서 감사합니다.');
+};
+
+// 동의하지 않으면 계속 이용할 수 없다. 강제로 붙잡아 두는 대신 로그아웃으로 보낸다.
+window.declineReconsent = function declineReconsent() {
+    closeReconsentModal();
+    window.logoutAndReset?.();
+};
 
 // 필수 항목을 다 체크해야 로그인 버튼이 열린다.
 function syncSignupConsentState() {
@@ -1684,10 +1810,17 @@ function bindSignupConsentListeners() {
     syncSignupConsentState();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindSignupConsentListeners);
-} else {
+function bindConsentUi() {
     bindSignupConsentListeners();
+    // 재동의 상자도 여기서 함께 묶는다. 모달을 여는 쪽에서만 묶으면, 다른 경로로
+    // 화면에 뜬 순간 체크박스가 아무 반응도 하지 않는 상자가 된다.
+    bindReconsentListeners();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindConsentUi);
+} else {
+    bindConsentUi();
 }
 
 // 건강정보 동의 상태. 화면 여러 곳에서 봐야 해서 전역에 둔다.

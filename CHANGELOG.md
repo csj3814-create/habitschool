@@ -2,6 +2,17 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-13 (3)
+
+### Added
+- Asked existing members to agree to the revised documents. Raising `CONSENT_DOC_VERSION` marked the old agreements as stale but never collected new ones, and only new signups were recording `age14` — so for everyone already registered there was no record of consent to the revised terms at all. A member whose required consents are missing or stamped with an older version now gets a one-time notice after signing in, listing what changed (age floor of 14, the phone number passed to the coupon vendor, deletion now leaving nothing behind, and records living in Seoul) with links to the full documents.
+- Kept an earlier refusal of health-data consent as a refusal. The optional box is restored from the member's existing choice rather than defaulted to agreed — a revision is not an opportunity to quietly upgrade a "no". Required boxes always start clear.
+
+### Changed
+- Extracted `buildConsentRecordFromSelection` so signup and re-consent write the same record shape. Two copies of a legal record is exactly the thing that drifts.
+- Bound the re-consent checkboxes at load rather than when the modal opens. Binding only in the open path leaves a box that renders but does not respond if it is ever shown another way — which is how it behaved the first time it was exercised.
+- Rotated the cache to v310.
+
 ## 2026-08-13 (2)
 
 ### Fixed

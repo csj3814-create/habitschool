@@ -138,8 +138,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=309">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=309">
+    <link rel="stylesheet" href="styles.css?v=310">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=310">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -737,7 +737,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=309"></script>
+    <script src="js/webview-detect.js?v=310"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2594,6 +2594,65 @@
         </div>
     </div>
 
+    <!-- 약관·방침이 바뀌면 기존 회원에게도 다시 받는다. 밖을 눌러 닫히지 않는다 —
+         동의 없이 계속 쓰게 두면 동의를 받았다고 말할 근거가 없어진다. -->
+    <div class="modal-overlay" id="reconsent-modal" role="dialog" aria-modal="true" aria-labelledby="reconsent-title">
+        <div class="modal-content reconsent-content">
+            <div class="reconsent-badge" data-i18n="reconsent.badge">약관 개정 안내</div>
+            <h3 id="reconsent-title" class="reconsent-title" data-i18n="reconsent.title">약관과 개인정보처리방침이 바뀌었어요</h3>
+            <p class="reconsent-copy" data-i18n="reconsent.copy">계속 이용하시려면 바뀐 내용에 동의해 주세요. 무엇이 달라졌는지 먼저 알려드릴게요.</p>
+
+            <ul class="reconsent-changes">
+                <li data-i18n-html="reconsent.change1"><strong>가입 연령을 만 14세 이상으로 정했습니다.</strong> 이전에는 만 18세로 적혀 있었지만 실제로 확인하지 않았습니다.</li>
+                <li data-i18n-html="reconsent.change2"><strong>쿠폰을 교환하면 휴대전화번호가 발송 대행사(케이티알파)로 전달됩니다.</strong> 교환하지 않으면 전달되지 않습니다.</li>
+                <li data-i18n-html="reconsent.change3"><strong>탈퇴하면 이제 정말로 모두 지웁니다.</strong> 예전에는 일부 기록을 남겼는데, 남길 근거가 없어 함께 지우도록 바꿨습니다.</li>
+                <li data-i18n-html="reconsent.change4"><strong>기록과 사진은 대한민국(서울) 서버에 저장됩니다.</strong> AI 분석을 요청한 사진만 국외로 전송됩니다.</li>
+            </ul>
+
+            <div class="consent-box" id="reconsent-box">
+                <label class="consent-row">
+                    <input type="checkbox" id="reconsent-all">
+                    <span class="consent-text consent-all-text" data-i18n="consent.all">전체 동의</span>
+                </label>
+                <div class="consent-divider"></div>
+                <label class="consent-row">
+                    <input type="checkbox" id="reconsent-terms" data-consent-required="true">
+                    <span class="consent-text">
+                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
+                        <span data-i18n-html="consent.terms"><a href="/terms.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">이용약관</a> 동의</span>
+                    </span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="reconsent-privacy" data-consent-required="true">
+                    <span class="consent-text">
+                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
+                        <span data-i18n-html="consent.privacy"><a href="/privacy.html" target="_blank" rel="noopener" onclick="openConsentDoc(event, this)">개인정보 수집·이용</a> 동의</span>
+                    </span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="reconsent-age" data-consent-required="true">
+                    <span class="consent-text">
+                        <span class="consent-tag required" data-i18n="consent.required">필수</span>
+                        <span data-i18n="consent.age">만 14세 이상입니다</span>
+                    </span>
+                </label>
+                <label class="consent-row">
+                    <input type="checkbox" id="reconsent-sensitive">
+                    <span class="consent-text">
+                        <span class="consent-tag optional" data-i18n="consent.optional">선택</span>
+                        <span data-i18n="consent.sensitive">건강정보(혈액검사·체성분) 동의</span>
+                    </span>
+                </label>
+                <p class="consent-note" data-i18n="reconsent.note">선택은 거부해도 계속 이용할 수 있어요. 혈액검사·체성분 기능만 잠깁니다.</p>
+            </div>
+
+            <div class="reconsent-actions">
+                <button type="button" class="wallet-modal-btn cancel" onclick="declineReconsent()" data-i18n="reconsent.later">로그아웃</button>
+                <button type="button" id="reconsent-submit" class="wallet-modal-btn confirm" onclick="submitReconsent()" disabled data-i18n="reconsent.agree">동의하고 계속하기</button>
+            </div>
+        </div>
+    </div>
+
     <div id="lightbox-modal" role="dialog" aria-label="이미지 확대 보기" tabindex="-1" onclick="this.style.display='none'">
         <button id="lightbox-prev" class="lightbox-nav lightbox-prev" aria-label="이전 이미지">‹</button>
         <img id="lightbox-img" src="" crossorigin="anonymous" onclick="event.stopPropagation()" alt="확대된 이미지">
@@ -2783,13 +2842,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=309"></script>
-    <script type="module" src="js/main.js?v=309"></script>
-    <script type="module" src="js/diet-analysis.js?v=309"></script>
-    <script type="module" src="js/metabolic-score.js?v=309"></script>
+    <script type="module" src="js/app.js?v=310"></script>
+    <script type="module" src="js/main.js?v=310"></script>
+    <script type="module" src="js/diet-analysis.js?v=310"></script>
+    <script type="module" src="js/metabolic-score.js?v=310"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=309"></script>
+    <script src="js/pwa-install.js?v=310"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
