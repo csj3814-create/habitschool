@@ -2,6 +2,15 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-14
+
+### Changed
+- Shortened the re-consent notice to one line per change so it no longer scrolls on a phone. A consent screen that scrolls can hide the items and the button below the fold, which makes "they read it and agreed" harder to claim. Measured at 412×640: 583px tall with the button reachable and no internal scroll. The overflow guard stays as a safety net in case a future line pushes it over.
+- Folded the health-data consent notice away until it is wanted. For someone who has decided not to use those features, the explanation was occupying a large block of the profile screen on every visit. It is now a `<details>` that starts closed, with the feature name in the collapsed line so it can be judged without opening — 45px collapsed against 189px before.
+
+### Fixed
+- Corrected a hex colour containing a Devanagari digit (`#b99a६d`), which browsers drop silently, and added a test that scans declaration values for `#` tokens that are not valid hex.
+
 ## 2026-08-13 (4)
 
 ### Fixed

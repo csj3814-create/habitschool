@@ -6676,18 +6676,41 @@ body.gallery-user-filtered #weekly-best-container {
 
 .sensitive-gate {
     margin-top: 10px;
-    padding: 16px;
+    padding: 0;
     background: #FFFBF3;
     border: 1px dashed #E8C89A;
     border-radius: 12px;
     text-align: center;
 }
 
-.sensitive-gate-title {
-    font-size: 14px;
+/* 접힌 상태는 한 줄이면 된다. 열어야 설명과 버튼이 나온다. */
+.sensitive-gate-summary {
+    list-style: none;
+    padding: 12px 14px;
+    font-size: 13px;
     font-weight: 800;
     color: #8a6336;
-    margin-bottom: 6px;
+    cursor: pointer;
+    /* 접힘 표시는 직접 그린다 — 기본 삼각형이 브라우저마다 위치가 달라진다. */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.sensitive-gate-summary::-webkit-details-marker { display: none; }
+
+.sensitive-gate-summary::after {
+    content: '▾';
+    font-size: 11px;
+    color: #b99a6d;
+    transition: transform 0.15s ease;
+}
+
+.sensitive-gate[open] .sensitive-gate-summary::after { transform: rotate(180deg); }
+
+.sensitive-gate-body {
+    padding: 0 16px 16px;
 }
 
 .sensitive-gate-desc {

@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=311';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=312';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -131,11 +131,11 @@ const MESSAGES = {
         'consent.age': 'I am 14 years of age or older',
         'reconsent.badge': 'Updated terms',
         'reconsent.title': 'Our Terms and Privacy Policy have changed',
-        'reconsent.copy': 'Please agree to the updated documents to keep using Habit School. Here is what changed.',
-        'reconsent.change1': '<strong>The minimum age is now 14.</strong> The terms previously said 18, but nothing ever checked it.',
-        'reconsent.change2': '<strong>Redeeming a coupon sends your mobile number to the delivery agency (KT Alpha).</strong> Nothing is sent if you do not redeem one.',
-        'reconsent.change3': '<strong>Deleting your account now really does delete everything.</strong> Some records used to be kept; there was no basis for keeping them, so they go too.',
-        'reconsent.change4': '<strong>Your photos and videos are stored on servers in the United States.</strong> Text — logs and figures — stays in Korea, but we want to be clear that the media you upload is held abroad.',
+        'reconsent.copy': 'Please agree to the points below to keep using Habit School.',
+        'reconsent.change1': '<strong>The minimum age is now 14</strong> (previously stated as 18).',
+        'reconsent.change2': '<strong>Redeeming a coupon sends your mobile number</strong> to the delivery agency (KT Alpha).',
+        'reconsent.change3': '<strong>Deleting your account now erases everything</strong>, with nothing kept back.',
+        'reconsent.change4': '<strong>Photos and videos are stored in the United States</strong>; logs and figures stay in Korea.',
         'reconsent.note': 'You can decline the optional item and carry on. Only the blood test and body composition features are locked.',
         'reconsent.later': 'Log out',
         'reconsent.agree': 'Agree and continue',

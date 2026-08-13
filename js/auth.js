@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=311';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=312';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=311';
-import { getDatesInfo } from './ui-helpers.js?v=311';
-import { escapeHtml } from './security.js?v=311';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=311';
+import { showToast } from './ui-helpers.js?v=312';
+import { getDatesInfo } from './ui-helpers.js?v=312';
+import { escapeHtml } from './security.js?v=312';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=312';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=311';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=311';
-import { trackProductEvent } from './product-events.js?v=311';
+} from './auth-login-helpers.js?v=312';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=312';
+import { trackProductEvent } from './product-events.js?v=312';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=311';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=312';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1830,17 +1830,22 @@ window.hasSensitiveDataConsent = function () {
     return window._sensitiveConsentAgreed === true;
 };
 
+// 동의하지 않은 사람에게는 이 안내가 매번 화면을 크게 차지한다. 쓰지 않기로 한
+// 기능의 설명이 프로필의 절반을 먹을 이유가 없어서 접어 둔다. <details> 를 쓰면
+// 열고 닫는 동작·키보드·스크린리더가 브라우저 기본으로 따라온다.
 function buildSensitiveGateElement(label) {
-    const gate = document.createElement('div');
+    const gate = document.createElement('details');
     gate.className = 'sensitive-gate';
     gate.innerHTML = `
-        <div class="sensitive-gate-title">🔒 건강정보 동의가 필요해요</div>
-        <div class="sensitive-gate-desc">
-            ${escapeHtml(label)} 정보는 개인정보 보호법상 <strong>민감정보</strong>라
-            따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
-            동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
+        <summary class="sensitive-gate-summary">🔒 ${escapeHtml(label)} 기능은 건강정보 동의가 필요해요</summary>
+        <div class="sensitive-gate-body">
+            <div class="sensitive-gate-desc">
+                ${escapeHtml(label)} 정보는 개인정보 보호법상 <strong>민감정보</strong>라
+                따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
+                동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
+            </div>
+            <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
         </div>
-        <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
     `;
     return gate;
 }
