@@ -74,10 +74,37 @@ describe('share card media preparation', () => {
         expect(appSource).toContain('backfillMissingShareThumbnails(latest, preparedMedia).catch(() => { });');
         // 파일에서 만들 때와 백필할 때가 같은 결과여야 한다.
         expect(appSource).toContain('function createSquareThumbBlobFromImage(img, size = 300, quality = 0.6) {');
-        // 한 세션에 한 자리당 한 번만 시도한다.
-        expect(appSource).toContain('if (_shareThumbBackfillTried.has(field)) continue;');
+        // 한 세션에 한 자리당 한 번만 시도한다. 배열 항목은 field가 전부 같아서
+        // 그것만으로 표시하면 첫 장만 채워지고 나머지는 조용히 넘어간다.
+        expect(appSource).toContain('_shareThumbBackfillTried.has(triedKey)');
+        expect(appSource).toContain('`${item.backfill.list}|${item.backfill.matchValue}|${field}`');
         // 캐시도 갱신해야 다음 카드가 원본 대신 썸네일을 쓴다.
         expect(appSource).toContain("const [group, key] = field.split('.');");
+    });
+
+    it('운동 사진·영상도 백필 대상에 들어간다', () => {
+        const appSource = readAppSource();
+        // 식단·마음만 backfill 인자를 받고 운동은 빠져 있었다. 그래서 유산소·근력은
+        // 썸네일이 없어도 되살릴 길이 없었다.
+        expect(appSource).toContain("list: 'cardioList'");
+        expect(appSource).toContain("list: 'strengthList'");
+        expect(appSource).toContain("field: 'imageThumbUrl'");
+        expect(appSource).toContain("field: 'videoThumbUrl'");
+        // 레거시 단일 필드도 점 경로로 챙긴다.
+        expect(appSource).toContain("field: 'exercise.cardioImageThumbUrl'");
+        expect(appSource).toContain("field: 'exercise.strengthVideoThumbUrl'");
+    });
+
+    it('배열 항목은 인덱스가 아니라 원본 URL로 찾아 고친다', () => {
+        const appSource = readAppSource();
+        // 'exercise.cardioList[0].imageThumbUrl' 은 점 경로로 표현할 수 없다.
+        // 인덱스를 객체 키처럼 넣으면 배열이 맵으로 바뀌어 문서가 망가진다.
+        expect(appSource).toContain('async function applyArrayThumbBackfill(');
+        // 방금 읽은 문서를 바탕으로 써야 그 사이의 변경을 덮지 않는다.
+        expect(appSource).toContain('const snapshot = await getDoc(docRef);');
+        expect(appSource).toContain('entry?.[backfill.matchField] !== matchValue');
+        // 그 사이 채워졌으면 건드리지 않는다.
+        expect(appSource).toContain('if (hasMediaUrl(entry?.[field])) return entry;');
     });
 
     it('does not throw away a photo just because its thumbnail is missing', () => {

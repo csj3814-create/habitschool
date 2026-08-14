@@ -14,32 +14,33 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=322';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=322';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=323';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=323';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=322';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=322';
+} from './auth-login-helpers.js?v=323';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=323';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
     getDeferredStrengthThumbDelayMs,
     getStrengthThumbSaveWaitMs,
+    getCardioThumbSaveWaitMs,
     hasStepPointCredit,
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=322';
+} from './exercise-media.js?v=323';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=322';
+} from './health-connect-utils.js?v=323';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +57,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=322';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=322';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=322';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=322';
-import { sanitize, compressImage } from './data-manager.js?v=322';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=322';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=322';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=322';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=322';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=322';
+} from './habit-groups.js?v=323';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=323';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=323';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=323';
+import { sanitize, compressImage } from './data-manager.js?v=323';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=323';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=323';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=323';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=323';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=323';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +76,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=322';
+} from './guest-demo.js?v=323';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=322';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=322';
+} from './product-events.js?v=323';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=323';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +105,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=322';
+} from './diet-program.js?v=323';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +117,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=322';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=322';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=322';
+} from './meditation-guide.js?v=323';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=323';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=323';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=322';
+} from './social-challenge-readiness.js?v=323';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=322';
+} from './monthly-mvp-reward.js?v=323';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3599,10 +3600,19 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
     if (latest.exercise && !settings.hideExercise) {
         if (latest.exercise.cardioList?.length) {
             latest.exercise.cardioList.forEach(item => {
-                addMedia(item.imageThumbUrl, item.imageUrl, '운동');
+                addMedia(item.imageThumbUrl, item.imageUrl, '운동', null, {
+                    list: 'cardioList',
+                    matchField: 'imageUrl',
+                    matchValue: item.imageUrl,
+                    field: 'imageThumbUrl',
+                    folder: 'exercise_images'
+                });
             });
         } else {
-            addMedia(latest.exercise.cardioImageThumbUrl, latest.exercise.cardioImageUrl, '운동');
+            addMedia(latest.exercise.cardioImageThumbUrl, latest.exercise.cardioImageUrl, '운동', null, {
+                field: 'exercise.cardioImageThumbUrl',
+                folder: 'exercise_images'
+            });
         }
 
         if (latest.exercise.strengthList?.length) {
@@ -3610,7 +3620,13 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
                 const resolvedItem = buildStrengthExerciseSeed(latest.exercise, item);
                 if (!resolvedItem?.videoUrl) return;
                 const localThumb = findLocalExerciseVideoThumb(resolvedItem.videoUrl);
-                addMedia(localThumb || resolveStrengthVideoThumbUrl(latest.exercise, resolvedItem), resolvedItem.videoUrl, '운동', 'image');
+                addMedia(localThumb || resolveStrengthVideoThumbUrl(latest.exercise, resolvedItem), resolvedItem.videoUrl, '운동', 'image', {
+                    list: 'strengthList',
+                    matchField: 'videoUrl',
+                    matchValue: resolvedItem.videoUrl,
+                    field: 'videoThumbUrl',
+                    folder: 'exercise_videos'
+                });
             });
         } else {
             const localThumb = findLocalExerciseVideoThumb(latest.exercise.strengthVideoUrl);
@@ -3618,7 +3634,11 @@ function collectShareCardMedia(latest, settings = getDefaultShareSettings()) {
                 localThumb || latest.exercise.strengthVideoThumbUrl,
                 latest.exercise.strengthVideoUrl,
                 '운동',
-                'image'
+                'image',
+                {
+                    field: 'exercise.strengthVideoThumbUrl',
+                    folder: 'exercise_videos'
+                }
             );
         }
     }
@@ -3871,6 +3891,59 @@ function buildNestedFieldPatch(path, value) {
 
 // 업로드할 때 썸네일 생성이 실패하면 그 사진은 원본만 남았고, 되살릴 길이 없었다.
 // 카드를 그리느라 어차피 원본을 디코드해 둔 참이니, 그 이미지로 썸네일을 만들어
+// 식단·마음처럼 'diet.dinnerThumbUrl' 한 줄로 가리킬 수 있는 자리.
+async function applyNestedThumbBackfill(docId, field, thumbUrl, latest) {
+    const patch = buildNestedFieldPatch(field, thumbUrl);
+    if (!patch) return false;
+    await setDoc(doc(db, 'daily_logs', docId), patch, { merge: true });
+
+    // 캐시에도 반영해야 다음 카드가 원본 대신 썸네일을 쓴다.
+    const cached = cachedGalleryLogs.find(entry => entry.id === docId);
+    const [group, key] = field.split('.');
+    if (cached?.data?.[group]) cached.data[group][key] = thumbUrl;
+    if (latest?.[group]) latest[group][key] = thumbUrl;
+    return true;
+}
+
+// 운동은 배열이라 'exercise.cardioList[0].imageThumbUrl' 을 점 경로로 쓸 수 없다.
+// 인덱스를 객체 키처럼 넣으면 배열이 맵으로 바뀌어 문서가 망가진다. 그래서 배열을
+// 통째로 다시 쓰되, 그 사이 다른 곳에서 바꿨을 수 있으니 방금 읽은 문서를 바탕으로
+// 한다. 항목은 인덱스가 아니라 원본 URL로 찾는다 — 순서는 바뀔 수 있다.
+async function applyArrayThumbBackfill(docId, backfill, thumbUrl, latest) {
+    const { list, matchValue, field } = backfill;
+    if (!list || !matchValue || !field) return false;
+
+    const docRef = doc(db, 'daily_logs', docId);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return false;
+
+    const exercise = snapshot.data()?.exercise;
+    const items = Array.isArray(exercise?.[list]) ? exercise[list] : null;
+    if (!items) return false;
+
+    let changed = false;
+    const nextItems = items.map((entry) => {
+        if (entry?.[backfill.matchField] !== matchValue) return entry;
+        if (hasMediaUrl(entry?.[field])) return entry;   // 그 사이 채워졌으면 건드리지 않는다
+        changed = true;
+        return { ...entry, [field]: thumbUrl };
+    });
+    if (!changed) return false;
+
+    await setDoc(docRef, { exercise: { ...exercise, [list]: nextItems } }, { merge: true });
+
+    const syncList = (target) => {
+        const arr = target?.exercise?.[list];
+        if (!Array.isArray(arr)) return;
+        arr.forEach((entry) => {
+            if (entry?.[backfill.matchField] === matchValue) entry[field] = thumbUrl;
+        });
+    };
+    syncList(cachedGalleryLogs.find(entry => entry.id === docId)?.data);
+    syncList(latest);
+    return true;
+}
+
 // 채워 넣는다. 다음부터 그 사진은 1.6MB가 아니라 20KB로 열린다.
 async function backfillMissingShareThumbnails(latest, preparedMedia = []) {
     const user = auth.currentUser;
@@ -3881,11 +3954,16 @@ async function backfillMissingShareThumbnails(latest, preparedMedia = []) {
     for (const item of preparedMedia) {
         const field = item?.backfill?.field;
         if (!field || item.hasThumb || !item.prepared) continue;
-        if (_shareThumbBackfillTried.has(field)) continue;
+        // 배열 항목은 field가 'imageThumbUrl' 로 전부 같다. 그것만으로 표시하면
+        // 유산소 사진 중 첫 장만 채워지고 나머지는 조용히 건너뛴다.
+        const triedKey = item.backfill.list
+            ? `${item.backfill.list}|${item.backfill.matchValue}|${field}`
+            : field;
+        if (_shareThumbBackfillTried.has(triedKey)) continue;
         const image = _shareImageCache.get(item.src);
         if (!image) continue;
 
-        _shareThumbBackfillTried.add(field);
+        _shareThumbBackfillTried.add(triedKey);
         try {
             const blob = await createSquareThumbBlobFromImage(image);
             if (!blob?.size) continue;
@@ -3894,15 +3972,10 @@ async function backfillMissingShareThumbnails(latest, preparedMedia = []) {
             await uploadBytes(thumbRef, blob);
             const thumbUrl = await getDownloadURL(thumbRef);
 
-            const patch = buildNestedFieldPatch(field, thumbUrl);
-            if (!patch) continue;
-            await setDoc(doc(db, 'daily_logs', shareLog.id), patch, { merge: true });
-
-            // 캐시에도 반영해야 다음 카드가 원본 대신 썸네일을 쓴다.
-            const cached = cachedGalleryLogs.find(entry => entry.id === shareLog.id);
-            const [group, key] = field.split('.');
-            if (cached?.data?.[group]) cached.data[group][key] = thumbUrl;
-            if (latest?.[group]) latest[group][key] = thumbUrl;
+            const applied = item.backfill.list
+                ? await applyArrayThumbBackfill(shareLog.id, item.backfill, thumbUrl, latest)
+                : await applyNestedThumbBackfill(shareLog.id, field, thumbUrl, latest);
+            if (!applied) continue;
             console.info('[share] 썸네일 백필 완료:', field);
         } catch (error) {
             console.warn('썸네일 백필 실패:', field, error?.message || error);
@@ -6431,7 +6504,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=322';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=323';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17882,9 +17955,15 @@ function getStrengthThumbWaitMsForBlock(block = null, pendingSnapshot = null) {
     return getStrengthThumbSaveWaitMs(localThumbSeed);
 }
 
-function getStrengthThumbWaitMsForJob(job = {}, pendingSnapshot = null) {
-    if (job?.kind !== 'strength') return 0;
-    return getStrengthThumbWaitMsForBlock(document.getElementById(job.blockId), pendingSnapshot);
+// 근력만 기다리고 유산소는 0을 돌려주고 있었다. 그래서 유산소는 썸네일이 늦으면
+// imageThumbUrl: null 이 그대로 굳었고, 나중에 완성된 썸네일은 Storage에만 남았다.
+// 저장된 것의 24.2%(유산소) 대 10.8%(근력)라는 차이가 이 한 줄이었다.
+function getMediaThumbWaitMsForJob(job = {}, pendingSnapshot = null) {
+    if (job?.kind === 'strength') {
+        return getStrengthThumbWaitMsForBlock(document.getElementById(job.blockId), pendingSnapshot);
+    }
+    if (job?.kind === 'cardio') return getCardioThumbSaveWaitMs();
+    return 0;
 }
 
 function shouldPreservePendingOriginal(pendingEntry = null, normalizedUrl = '') {
@@ -18663,9 +18742,12 @@ async function finalizeBackgroundMediaUploadResult(job = {}, result = null, pend
     let nextResult = result;
     let nextPendingSnapshot = pendingSnapshot;
 
-    if (job.kind === 'strength' && nextResult?.url && !nextResult.thumbUrl && nextPendingSnapshot?.thumbPromise) {
+    // 종류는 getMediaThumbWaitMsForJob이 판단한다. 여기서 다시 근력만 통과시키면
+    // 유산소는 대기 시간을 받아도 이 문을 못 넘는다.
+    if (nextResult?.url && !nextResult.thumbUrl && nextPendingSnapshot?.thumbPromise
+        && getMediaThumbWaitMsForJob(job, nextPendingSnapshot) > 0) {
         const thumbResult = await resolvePendingUploadResult(job.inputId, {
-            waitForThumbMs: getStrengthThumbWaitMsForJob(job, nextPendingSnapshot)
+            waitForThumbMs: getMediaThumbWaitMsForJob(job, nextPendingSnapshot)
         });
         if (thumbResult?.url) nextResult = thumbResult;
         nextPendingSnapshot = getPendingUploadSnapshot(job.inputId) || nextPendingSnapshot;
@@ -18680,7 +18762,7 @@ async function finalizeBackgroundMediaUploadResult(job = {}, result = null, pend
 async function resolveBackgroundMediaUploadWithRetries({ userId, job } = {}) {
     let pendingSnapshot = getPendingUploadSnapshot(job?.inputId);
     let result = await resolvePendingUploadResult(job?.inputId, {
-        waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)
+        waitForThumbMs: getMediaThumbWaitMsForJob(job, pendingSnapshot)
     });
     pendingSnapshot = getPendingUploadSnapshot(job?.inputId) || pendingSnapshot;
 

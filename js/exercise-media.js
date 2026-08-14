@@ -51,6 +51,16 @@ export function getStrengthThumbSaveWaitMs(localThumbSeed = '') {
     return isLocalExerciseVideoThumb(localThumbSeed) ? 2200 : 3600;
 }
 
+// 유산소 사진에는 프레임 추출이 없어 생성 자체는 빠르다. 남는 건 원본과 같은 큐를
+// 쓰는 업로드 시간이라 근력보다 짧게 잡는다.
+//
+// 기다림은 썸네일이 아직 안 끝났을 때만 발생한다. 대부분은 이미 끝나 있어
+// 그냥 지나가고, 늦은 경우에만 이만큼 붙는다 — 그 늦은 경우가 지금까지
+// imageThumbUrl: null 로 굳어 버리던 자리다.
+export function getCardioThumbSaveWaitMs() {
+    return 2500;
+}
+
 const STRENGTH_THUMB_UPLOAD_FIRST_SIZE_BYTES = 20 * 1024 * 1024;
 
 export function shouldDeferStrengthThumbUntilUpload(fileSize = 0) {

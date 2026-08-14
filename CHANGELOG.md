@@ -2,6 +2,15 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (8)
+
+### Fixed
+- Made cardio photos wait for their thumbnail before writing the record. `getStrengthThumbWaitMsForJob` returned 0 for anything that was not a strength video, and `finalizeBackgroundMediaUploadResult` gated on `job.kind === 'strength'` a second time, so a cardio save wrote `imageThumbUrl: null` the moment the original landed. The thumbnail then finished uploading, reached Storage, updated the in-memory entry and the preview — and never reached Firestore. The stored data carries the shape of that one condition: 24.2% of cardio photos have no thumbnail against 10.8% of strength videos, and strength is the half that waits. Both gates now ask `getMediaThumbWaitMsForJob`, which answers for the kind it is given. The wait only happens when the thumbnail is genuinely still in flight, which is the minority of saves.
+- Extended the share-card thumbnail repair to exercise media, which had been excluded since it was written. Diet and sleep passed a `backfill` descriptor and exercise passed nothing, so a cardio photo or strength video that lost its thumbnail had no way back. The obstacle was real — `exercise.cardioList[0].imageThumbUrl` cannot be expressed as a dotted path, and writing the index as an object key would convert the array to a map and corrupt the document — so array items now go through `applyArrayThumbBackfill`, which re-reads the document, matches the item by its original URL rather than its position, skips it if something else filled it in first, and rewrites just that list. The per-session guard is keyed by list and URL too; keyed by field name alone, only the first cardio photo of the day would ever have been repaired.
+
+### Changed
+- Established that the 430 orphaned thumbnails must be regenerated, not re-linked, and did not write the linking script. 95% of originals do have a thumbnail file sitting in Storage, which made re-linking look like the cheap option, but the paths share no token — `{ms}_{seq}_{name}` is assigned independently for each upload. Checking the rule against the 1,837 pairs that are already correctly recorded: 77% of filenames do not even parse, the naming having changed over time, and among those that do the sequence gap is 1 for only 83.3%, with 2, 3 and 4 all present. Time proximity is worse — median 7.6s, 95th percentile 48.7s, longest 12 minutes. Roughly one in six items would have been given a different photo's thumbnail, which is a worse outcome than the blank it replaces. `scripts/validate-thumb-pairing-rule.js` keeps the check. The client-side repair above regenerates from the original instead, which is unambiguous, and reaches each record as its owner opens that day's share card.
+
 ## 2026-08-15 (7)
 
 ### Fixed

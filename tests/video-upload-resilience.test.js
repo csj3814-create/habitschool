@@ -346,11 +346,25 @@ describe('video upload resilience', () => {
 
         expect(source).toContain('getStrengthThumbSaveWaitMs');
         expect(source).toContain('function getStrengthThumbWaitMsForBlock(block = null, pendingSnapshot = null)');
-        expect(source).toContain('function getStrengthThumbWaitMsForJob(job = {}, pendingSnapshot = null)');
+        expect(source).toContain('function getMediaThumbWaitMsForJob(job = {}, pendingSnapshot = null)');
         expect(source).toContain('return resolvePendingUploadResult(job.inputId, { waitForThumbMs });');
-        expect(source).toContain('waitForThumbMs: getStrengthThumbWaitMsForJob(job, pendingSnapshot)');
+        expect(source).toContain('waitForThumbMs: getMediaThumbWaitMsForJob(job, pendingSnapshot)');
         expect(source).toContain('const thumbResult = await resolvePendingUploadResult(fileInput?.id, {');
         expect(source).toContain('waitForThumbMs: getStrengthThumbWaitMsForBlock(block, pendingSnapshot)');
+    });
+
+    it('유산소 사진도 썸네일을 기다린 뒤에 쓴다', () => {
+        const source = readAppSource();
+
+        // 근력만 기다리고 유산소는 0을 돌려주고 있었다. 그래서 썸네일이 늦으면
+        // imageThumbUrl: null 이 그대로 굳었고, 완성된 썸네일은 Storage에만 남았다.
+        // 저장된 것의 24.2%(유산소) 대 10.8%(근력)가 이 차이였다.
+        expect(source).toContain("if (job?.kind === 'cardio') return getCardioThumbSaveWaitMs();");
+        expect(source).toContain('getCardioThumbSaveWaitMs,');
+
+        // 대기 시간을 받아도 다시 근력만 통과시키는 문이 있으면 소용이 없다.
+        expect(source).not.toContain("if (job.kind === 'strength' && nextResult?.url && !nextResult.thumbUrl");
+        expect(source).toContain('&& getMediaThumbWaitMsForJob(job, nextPendingSnapshot) > 0) {');
     });
 
     it('does not show a hard save failure after the primary daily log write already succeeded', () => {
