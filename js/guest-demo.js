@@ -230,13 +230,15 @@ export function createPendingGuestIntent(tab = 'gallery', action = 'start_record
  * 자산에서 쿠폰으로 바꾸는 흐름이 이 앱의 실제 사용 주기다.
  * 각 단계는 이미 있는 completedActions / visitedTabs로 판정한다.
  */
+// hint 는 무엇을 하는지가 아니라 무엇을 누르는지 말한다. "저장까지 눌러 보세요" 보다
+// "👆 표시된 버튼을 누르세요" 가 헤매지 않는다. 실제 버튼에도 같은 표시가 붙는다.
 export const GUEST_DEMO_STEPS = Object.freeze([
-    { id: 'diet', tab: 'diet', label: '식단 사진 등록하기', hint: '예시 사진을 고르고 저장까지 눌러 보세요.' },
-    { id: 'exercise', tab: 'exercise', label: '운동 기록 남기기', hint: '걸음 수와 운동 예시를 확인하고 저장해 보세요.' },
-    { id: 'sleep', tab: 'sleep', label: '마음 기록 남기기', hint: '수면과 명상 예시를 확인하고 저장해 보세요.' },
-    { id: 'dashboard', tab: 'dashboard', label: '내 기록 확인하기', hint: '방금 남긴 세 기록과 포인트가 모여 있어요.' },
-    { id: 'gallery', tab: 'gallery', label: '갤러리 둘러보기', hint: '다른 사람의 기록에 반응을 남길 수 있어요.' },
-    { id: 'assets', tab: 'assets', label: '커피 쿠폰 교환하기', hint: '모은 포인트로 쿠폰을 바꿔 보세요.' }
+    { id: 'diet', tab: 'diet', label: '식단 사진 등록하기', hint: '👆 표시된 버튼을 차례로 누르면 돼요. 사진 고르기 → AI 분석 → 저장.' },
+    { id: 'exercise', tab: 'exercise', label: '운동 기록 남기기', hint: '👆 표시된 버튼을 누르세요. 예시 확인 후 저장까지 두 번이면 끝나요.' },
+    { id: 'sleep', tab: 'sleep', label: '마음 기록 남기기', hint: '👆 표시된 버튼을 누르세요. 수면·명상 예시를 보고 저장하면 돼요.' },
+    { id: 'dashboard', tab: 'dashboard', label: '내 기록 확인하기', hint: '이 화면을 보는 것만으로 끝나요. 방금 남긴 세 기록과 포인트가 모여 있어요.' },
+    { id: 'gallery', tab: 'gallery', label: '갤러리 둘러보기', hint: '이 화면을 보는 것만으로 끝나요. 사진을 눌러 크게 보거나 ❤️ 를 눌러도 좋아요.' },
+    { id: 'assets', tab: 'assets', label: '커피 쿠폰 교환하기', hint: '👆 표시된 교환 버튼을 누르면 마지막 단계예요.' }
 ]);
 
 export function isGuestDemoStepDone(stepId, session) {
@@ -563,8 +565,29 @@ function renderCoach(tab) {
         </aside>`;
 }
 
+// 지금 눌러야 할 버튼 하나. 안내 문구로 "저장까지 눌러 보세요" 라고 말하는 것보다,
+// 그 버튼 자체를 가리키는 편이 확실하다. 렌더 중에 이 값을 두고 버튼이 자기 차례인지 본다.
+let _demoNextAction = null;
+
+// 다음에 눌러야 할 행동을 고른다. 아직 못 한 것 중, 선행 조건이 이미 충족된 첫 번째.
+export function getGuestDemoNextAction(session) {
+    const done = new Set(session?.completedActions || []);
+    for (const [action, definition] of Object.entries(ACTION_DEFINITIONS)) {
+        if (definition.persist === false) continue;
+        if (done.has(action)) continue;
+        const requires = definition.requires || [];
+        if (requires.every((required) => done.has(required))) return action;
+    }
+    return null;
+}
+
 function renderButton(label, action, className = 'guest-demo-button') {
-    return `<button type="button" class="${className}" data-guest-demo-action="${action}">${label}</button>`;
+    const isNext = action && action === _demoNextAction;
+    const cls = isNext ? `${className} is-next-action` : className;
+    // aria-current 로 스크린리더에게도 "지금 이것" 이라고 알린다.
+    const current = isNext ? ' aria-current="step"' : '';
+    const cue = isNext ? '<span class="guest-demo-next-cue" aria-hidden="true">👆</span>' : '';
+    return `<button type="button" class="${cls}" data-guest-demo-action="${action}"${current}>${cue}${label}</button>`;
 }
 
 function renderLoginButton(label, action, tab, className = 'guest-demo-button guest-demo-button-primary') {
@@ -826,6 +849,8 @@ export function renderGuestDemoTab(tab, session, options = {}) {
     const normalizedTab = normalizeDemoTab(tab, normalizedSession.activeTab);
     const uiState = normalizeUiState(options.uiState);
     const shouldShowCoach = options.showCoach === true && !normalizedSession.coachesDisabled;
+    // 이번 렌더에서 어떤 버튼이 '지금 누를 것'인지 정해 둔다. renderButton 이 읽는다.
+    _demoNextAction = getGuestDemoNextAction(normalizedSession);
     const content = {
         gallery: () => renderGallery(normalizedSession, uiState, options.activityStats),
         diet: () => renderDiet(normalizedSession),

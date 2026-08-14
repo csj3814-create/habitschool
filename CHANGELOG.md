@@ -2,6 +2,12 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (3)
+
+### Changed
+- Folded the three health-data cards — body composition, current medications, blood test — behind one shared notice instead of three. They are all unlocked by the same optional consent, so someone who has declined was reading the same paragraph three times down the profile screen. Collapsed the group is a 45px line naming all three; consenting opens all of it, 1092px, with a single revoke button at the end rather than one per card.
+- Pointed the guest tour at the button to press. The hints described the goal ("save it too") without saying which control does that, so each step began with a hunt. The next action is now computed from the prerequisite graph, exactly one button carries a 👆 cue and a pulsing ring, and the hint refers to that cue. Steps completed by looking rather than pressing — my records, gallery — say so plainly and mark nothing. The cue is `aria-current="step"` for screen readers, and the animation drops under `prefers-reduced-motion`.
+
 ## 2026-08-15 (2)
 
 ### Fixed

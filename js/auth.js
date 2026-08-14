@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=316';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=317';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=316';
-import { getDatesInfo } from './ui-helpers.js?v=316';
-import { escapeHtml } from './security.js?v=316';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=316';
+import { showToast } from './ui-helpers.js?v=317';
+import { getDatesInfo } from './ui-helpers.js?v=317';
+import { escapeHtml } from './security.js?v=317';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=317';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=316';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=316';
-import { trackProductEvent } from './product-events.js?v=316';
+} from './auth-login-helpers.js?v=317';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=317';
+import { trackProductEvent } from './product-events.js?v=317';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=316';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=317';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1877,7 +1877,33 @@ function buildSensitiveRevokeRow() {
  */
 window.applySensitiveConsentGate = function () {
     const agreed = window.hasSensitiveDataConsent();
+
+    // 세 카드를 하나로 묶어 안내도 한 번만 띄운다. 동의하면 묶음이 통째로 열린다.
+    const group = document.getElementById('sensitive-consent-group');
+    const groupGate = document.getElementById('sensitive-group-gate');
+    const groupCards = document.getElementById('sensitive-consent-cards');
+    if (group && groupGate && groupCards) {
+        groupGate.hidden = agreed;
+        groupCards.hidden = !agreed;
+        // 동의 뒤 다시 들어왔을 때 접힌 안내가 열린 채로 남지 않게 한다.
+        if (agreed) groupGate.open = false;
+
+        // 철회 버튼은 묶음 끝에 하나만. 카드마다 붙으면 세 번 나온다.
+        let revoke = group.querySelector(':scope > .sensitive-revoke-row');
+        if (!revoke) {
+            revoke = buildSensitiveRevokeRow();
+            group.appendChild(revoke);
+        }
+        revoke.hidden = !agreed;
+    }
+
+    // 묶음 밖에 남아 있는 민감정보 카드가 있으면 예전 방식으로 각자 처리한다.
     document.querySelectorAll('[data-sensitive-card]').forEach((card) => {
+        if (groupCards && groupCards.contains(card)) {
+            // 묶음이 통째로 여닫히므로 카드별 잠금 표시는 필요 없다.
+            card.classList.remove('is-locked');
+            return;
+        }
         const label = card.getAttribute('data-sensitive-card') || '건강';
         let gate = card.querySelector(':scope > .sensitive-gate');
         if (!gate) {
