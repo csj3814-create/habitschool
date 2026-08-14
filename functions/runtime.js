@@ -7165,11 +7165,22 @@ exports.migrateHbtToCoins = onCall(
             throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
         }
 
-        // 관리자 확인 (본인 UID만 허용)
-        const adminUids = ['YOUR_ADMIN_UID']; // 필요 시 수정
-        const isAdmin = adminUids.includes(request.auth.uid);
-        // 관리자가 아닌 경우 본인 계정만 마이그레이션
-        const targetUid = isAdmin ? (request.data?.targetUid || null) : request.auth.uid;
+        // 남의 계정을 대상으로 삼는 건 관리자만 할 수 있다.
+        //
+        // 예전에는 여기에 하드코딩된 목록(['YOUR_ADMIN_UID'])이 있었다. 채워진 적이
+        // 없어서 결과적으로는 아무도 관리자가 아니었고 그래서 무해했지만, 누군가
+        // 채워 넣는 순간 admins/{uid} 컬렉션과 어긋나는 두 번째 관리자 명단이 생긴다.
+        // 잔액을 포인트로 바꾸는 함수라 그 어긋남은 값비싸다. 쓰던 것을 쓴다.
+        const requestedTargetUid = String(request.data?.targetUid || "").trim();
+        let targetUid = request.auth.uid;
+        if (requestedTargetUid && requestedTargetUid !== request.auth.uid) {
+            await assertAdminRequest(request);
+            targetUid = requestedTargetUid;
+        } else if (requestedTargetUid === "" && request.data?.allUsers === true) {
+            // 전체 대상은 관리자만. targetUid 를 비워 두는 것이 예전의 '전체' 신호였다.
+            await assertAdminRequest(request);
+            targetUid = null;
+        }
 
         const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
         const habitContract = getHabitContract(provider);
@@ -7236,8 +7247,8 @@ exports.migrateHbtToCoins = onCall(
             // 특정 유저만 마이그레이션
             const result = await migrateUser(targetUid);
             results.push(result);
-        } else if (isAdmin) {
-            // 전체 유저 마이그레이션
+        } else {
+            // targetUid 가 비어 있는 경로는 위에서 이미 관리자만 통과시켰다.
             const usersSnap = await db.collection("users").where("hbtBalance", ">", 0).get();
             for (const doc of usersSnap.docs) {
                 const result = await migrateUser(doc.id);
