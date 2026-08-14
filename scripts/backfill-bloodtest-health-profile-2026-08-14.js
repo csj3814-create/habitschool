@@ -20,7 +20,14 @@
  *   node scripts/backfill-bloodtest-health-profile-2026-08-14.js --project=habitschool-8497b --apply
  */
 
-const admin = require("firebase-admin");
+// firebase-admin 은 functions/ 아래에만 설치돼 있다. 루트에서 실행해도 찾도록 한다.
+const path = require("path");
+let admin;
+try {
+    admin = require("firebase-admin");
+} catch (_) {
+    admin = require(path.join(__dirname, "..", "functions", "node_modules", "firebase-admin"));
+}
 
 const args = process.argv.slice(2);
 const projectId = (args.find((a) => a.startsWith("--project=")) || "").split("=")[1] || "";
