@@ -2,6 +2,20 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15
+
+### Added
+- A blood test analysis quality panel in the admin control tower, answering whether the feature is working without exposing anyone's results. It reports counts and distributions only — how many analyses ran, average metrics extracted, how many are missing a unit, a reference range or a valid status, how many lack a summary or advice, the grade distribution, and metric keys the model invented outside the prompt. No member's values and no uids cross the wire, because "is this working" does not require reading someone's cholesterol. An individual-record view would be a new processing purpose and would need the policy and an access log first.
+- `healthProfile.latestBloodTestDate`, so a reflected measurement carries the date it was actually taken.
+
+### Fixed
+- Stopped treating an old health check report as a current measurement. People upload reports from years back — among the seven on file, one is from 2021 and one from 2023, and the model had been reading those dates correctly all along while the app ignored them. A result whose printed test date is more than a year old, or missing, no longer feeds `healthProfile`, so a triglyceride reading from 2021 cannot drive today's metabolic score. The analysis is still stored and still shown in history; it just stops claiming to be current.
+
+### Changed
+- Applied the same freshness rule in the backfill, which now reports who was skipped for staleness and still clears the stray dotted fields for them.
+- Built the `analyzeBloodTest` fallback write from the same patch object rather than re-listing the fields by hand, so the two paths cannot drift apart.
+- Rotated the cache to v315.
+
 ## 2026-08-14 (2)
 
 ### Fixed

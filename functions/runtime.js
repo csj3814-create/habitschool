@@ -5705,6 +5705,119 @@ const BLOOD_TEST_ANALYSIS_PROMPT = `당신은 임상병리 전문의 AI입니다
   "testDate": "2026-03-01"
 }`;
 
+// 혈액검사 분석이 잘 돌고 있는지 관제탑에서 보기 위한 집계.
+//
+// 개수와 분포만 돌려준다. 어느 회원의 혈당이 얼마인지는 나가지 않는다 — 혈액검사
+// 결과는 민감정보이고, "기능이 잘 도는가"는 그 내용 없이도 답할 수 있는 질문이다.
+// 회원 개인의 결과를 열람하는 화면이 필요해지면 그때는 처리 목적을 방침에 넣고
+// 열람 기록을 남기는 것이 먼저다.
+const BLOOD_TEST_PROMPT_FIELDS = Object.freeze([
+    "glucose", "hba1c", "triglyceride", "totalCholesterol", "hdl", "ldl",
+    "ast", "alt", "ggt", "creatinine", "gfr", "uricAcid",
+    "hemoglobin", "vitaminD", "tsh", "bpSystolic", "bpDiastolic", "bmi"
+]);
+const BLOOD_TEST_VALID_STATUSES = Object.freeze(["normal", "borderline", "abnormal"]);
+// 이 기간을 넘은 검사는 '최신 수치'로 쓰지 않는다. 5년 전 중성지방으로 오늘의
+// 대사건강 점수를 매기면 틀린 조언을 하게 된다.
+const BLOOD_TEST_FRESH_DAYS = 365;
+
+function bloodTestAgeInDays(testDate, analyzedAt) {
+    const raw = String(testDate || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+    const taken = Date.parse(`${raw}T00:00:00Z`);
+    if (!Number.isFinite(taken)) return null;
+    const reference = analyzedAt instanceof Date ? analyzedAt.getTime() : Date.now();
+    return Math.floor((reference - taken) / (24 * 60 * 60 * 1000));
+}
+
+exports.getBloodTestQualityStats = onCall(
+    {
+        region: "asia-northeast3",
+        maxInstances: 3,
+        timeoutSeconds: 120
+    },
+    async (request) => {
+        await assertAdminRequest(request);
+        try {
+            const snap = await db.collectionGroup("bloodTests").get();
+
+            const stats = {
+                total: snap.size,
+                withSummary: 0,
+                withAdvice: 0,
+                withGrade: 0,
+                gradeCounts: {},
+                metricCountBuckets: { "0": 0, "1-4": 0, "5-9": 0, "10+": 0 },
+                totalMetrics: 0,
+                missingUnit: 0,
+                missingReference: 0,
+                invalidStatus: 0,
+                unknownMetricKeys: {},
+                testDateMissing: 0,
+                testDateFresh: 0,
+                testDateStale: 0,
+                oldestTestDays: null,
+                monthlyCounts: {},
+            };
+
+            snap.forEach((doc) => {
+                const d = doc.data() || {};
+                if (String(d.summary || "").trim()) stats.withSummary += 1;
+                if (String(d.advice || "").trim()) stats.withAdvice += 1;
+
+                const grade = String(d.overallGrade || "").trim();
+                if (grade) {
+                    stats.withGrade += 1;
+                    stats.gradeCounts[grade] = (stats.gradeCounts[grade] || 0) + 1;
+                }
+
+                const metrics = d.metrics || {};
+                let present = 0;
+                for (const [key, metric] of Object.entries(metrics)) {
+                    if (!metric || metric.value == null) continue;
+                    present += 1;
+                    if (!String(metric.unit || "").trim()) stats.missingUnit += 1;
+                    if (!String(metric.reference || "").trim()) stats.missingReference += 1;
+                    if (!BLOOD_TEST_VALID_STATUSES.includes(String(metric.status || ""))) stats.invalidStatus += 1;
+                    if (!BLOOD_TEST_PROMPT_FIELDS.includes(key)) {
+                        stats.unknownMetricKeys[key] = (stats.unknownMetricKeys[key] || 0) + 1;
+                    }
+                }
+                stats.totalMetrics += present;
+                const bucket = present === 0 ? "0" : present < 5 ? "1-4" : present < 10 ? "5-9" : "10+";
+                stats.metricCountBuckets[bucket] += 1;
+
+                const analyzedAt = d.analyzedAt?.toDate ? d.analyzedAt.toDate() : null;
+                const ageDays = bloodTestAgeInDays(d.testDate, analyzedAt);
+                if (ageDays === null) stats.testDateMissing += 1;
+                else if (ageDays <= BLOOD_TEST_FRESH_DAYS) stats.testDateFresh += 1;
+                else {
+                    stats.testDateStale += 1;
+                    if (stats.oldestTestDays === null || ageDays > stats.oldestTestDays) {
+                        stats.oldestTestDays = ageDays;
+                    }
+                }
+
+                // 문서 id 가 분석일(YYYY-MM-DD)이라 월별 추이를 여기서 낸다.
+                const month = String(doc.id || "").slice(0, 7);
+                if (/^\d{4}-\d{2}$/.test(month)) {
+                    stats.monthlyCounts[month] = (stats.monthlyCounts[month] || 0) + 1;
+                }
+            });
+
+            stats.avgMetricsPerTest = stats.total > 0
+                ? Math.round((stats.totalMetrics / stats.total) * 10) / 10
+                : 0;
+            stats.freshDays = BLOOD_TEST_FRESH_DAYS;
+
+            return { success: true, stats };
+        } catch (error) {
+            console.error("getBloodTestQualityStats error:", error);
+            throw new HttpsError("internal", "혈액검사 품질 통계를 불러오지 못했습니다.");
+        }
+    }
+);
+
 exports.analyzeBloodTest = onCall(
     {
         secrets: [GEMINI_API_KEY],
@@ -5792,22 +5905,35 @@ exports.analyzeBloodTest = onCall(
             // metabolic-score 가 읽는 profile.hba1c 는 영영 비어 있게 된다. 실제로
             // 그렇게 동작하고 있었다 — 혈액검사를 올려도 대사건강 점수의 인슐린 항목이
             // "건강 지표 기록 필요" 로 남았다. 경로로 해석하는 것은 update() 뿐이다.
+            //
+            // 오래된 결과지도 올라온다. 실제로 5년 전 검사지가 올라와 있었다. 결과지에
+            // 적힌 검사일이 1년을 넘으면 '최신 수치'로 쓰지 않는다 — 없는 것보다
+            // 5년 전 값으로 오늘의 건강 점수를 매기는 쪽이 나쁘다. 분석 결과 자체는
+            // 이력으로 그대로 남는다.
             const metrics = analysis.metrics || {};
+            const ageDays = bloodTestAgeInDays(analysis.testDate, new Date());
+            const freshEnough = ageDays !== null && ageDays <= BLOOD_TEST_FRESH_DAYS;
             const profileUpdate = {};
-            if (metrics.glucose?.value) profileUpdate['healthProfile.latestGlucose'] = metrics.glucose.value;
-            if (metrics.hba1c?.value) profileUpdate['healthProfile.hba1c'] = String(metrics.hba1c.value);
-            if (metrics.triglyceride?.value) profileUpdate['healthProfile.latestTriglyceride'] = metrics.triglyceride.value;
+            if (freshEnough) {
+                if (metrics.glucose?.value) profileUpdate['healthProfile.latestGlucose'] = metrics.glucose.value;
+                if (metrics.hba1c?.value) profileUpdate['healthProfile.hba1c'] = String(metrics.hba1c.value);
+                if (metrics.triglyceride?.value) profileUpdate['healthProfile.latestTriglyceride'] = metrics.triglyceride.value;
+                if (Object.keys(profileUpdate).length > 0) {
+                    profileUpdate['healthProfile.latestBloodTestDate'] = String(analysis.testDate || '').trim();
+                }
+            } else {
+                console.info("[analyzeBloodTest] profile not updated (test too old or undated):", uid, analysis.testDate || "(none)");
+            }
             if (Object.keys(profileUpdate).length > 0) {
                 // 회원 문서가 없을 리는 없지만, update() 는 없으면 던지므로 그때만 set 으로 만든다.
+                // 필드를 손으로 다시 나열하면 위쪽이 바뀔 때 조용히 갈라지므로 같은 패치에서 만든다.
                 await db.doc(`users/${uid}`).update(profileUpdate).catch(async (error) => {
                     if (error?.code !== 5 && error?.code !== "not-found") throw error;
-                    await db.doc(`users/${uid}`).set({
-                        healthProfile: {
-                            ...(metrics.glucose?.value ? { latestGlucose: metrics.glucose.value } : {}),
-                            ...(metrics.hba1c?.value ? { hba1c: String(metrics.hba1c.value) } : {}),
-                            ...(metrics.triglyceride?.value ? { latestTriglyceride: metrics.triglyceride.value } : {})
-                        }
-                    }, { merge: true });
+                    const nested = {};
+                    for (const [dottedPath, value] of Object.entries(profileUpdate)) {
+                        nested[dottedPath.slice("healthProfile.".length)] = value;
+                    }
+                    await db.doc(`users/${uid}`).set({ healthProfile: nested }, { merge: true });
                 });
             }
 

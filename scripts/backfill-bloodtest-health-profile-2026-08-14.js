@@ -59,7 +59,7 @@ async function main() {
     const snap = await db.collectionGroup("bloodTests").get();
     console.log(`[backfill] bloodTests 문서 ${snap.size}건 발견`);
 
-    /** uid -> { docId, metrics } (가장 최근 것만) */
+    /** uid -> { docId, metrics, testDate } (가장 최근 것만) */
     const latestByUid = new Map();
     snap.forEach((doc) => {
         const uid = doc.ref.parent.parent?.id;
@@ -67,7 +67,12 @@ async function main() {
         const prev = latestByUid.get(uid);
         // 문서 id 가 날짜(YYYY-MM-DD)라 문자열 비교로 최신을 고를 수 있다.
         if (!prev || doc.id > prev.docId) {
-            latestByUid.set(uid, { docId: doc.id, metrics: doc.data()?.metrics || {} });
+            const d = doc.data() || {};
+            latestByUid.set(uid, {
+                docId: doc.id,
+                metrics: d.metrics || {},
+                testDate: String(d.testDate || "").trim(),
+            });
         }
     });
 
@@ -76,8 +81,20 @@ async function main() {
     let updated = 0;
     let skipped = 0;
     let strayCleared = 0;
+    let staleSkipped = 0;
 
-    for (const [uid, { docId, metrics }] of latestByUid) {
+    // 결과지에 적힌 검사일이 이만큼을 넘으면 '최신 수치'로 쓰지 않는다.
+    // 실제로 5년 전 검사지가 올라와 있었다. 5년 전 중성지방으로 오늘의 대사건강
+    // 점수를 매기면 틀린 조언을 하게 된다. 서버의 BLOOD_TEST_FRESH_DAYS 와 같은 값.
+    const FRESH_DAYS = 365;
+    const ageInDays = (testDate) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(testDate)) return null;
+        const taken = Date.parse(`${testDate}T00:00:00Z`);
+        if (!Number.isFinite(taken)) return null;
+        return Math.floor((Date.now() - taken) / (24 * 60 * 60 * 1000));
+    };
+
+    for (const [uid, { docId, metrics, testDate }] of latestByUid) {
         const userRef = db.doc(`users/${uid}`);
         const userSnap = await userRef.get();
         if (!userSnap.exists) {
@@ -95,10 +112,20 @@ async function main() {
         const pairs = [];   // [경로(string|FieldPath), 값] 을 번갈아 넘긴다
         const preview = [];
 
+        const days = ageInDays(testDate);
+        const fresh = days !== null && days <= FRESH_DAYS;
+        if (!fresh) {
+            staleSkipped += 1;
+            preview.push(days === null
+                ? '검사일 없음 → 수치 반영 안 함'
+                : `검사일 ${testDate} (${days}일 전) → 수치 반영 안 함`);
+        }
+
         for (const [strayKey, nestedKey, read] of FIELD_MAP) {
             const value = read(metrics);
             // 이미 값이 있으면 덮지 않는다. 사용자가 직접 입력했을 수 있다.
-            if (value !== undefined && profile[nestedKey] === undefined) {
+            // 오래된 검사는 값을 넣지 않되, 잘못 만들어진 필드 정리는 그대로 한다.
+            if (fresh && value !== undefined && profile[nestedKey] === undefined) {
                 pairs.push(`healthProfile.${nestedKey}`, value);
                 preview.push(`${nestedKey}=${JSON.stringify(value)}`);
             }
@@ -111,12 +138,19 @@ async function main() {
         }
 
         if (pairs.length === 0) {
-            console.log(`  - ${uid}: 고칠 것 없음 (최근 검사 ${docId})`);
+            const why = preview.length ? ` — ${preview.join(", ")}` : '';
+            console.log(`  - ${uid}: 고칠 것 없음 (분석 ${docId})${why}`);
             skipped += 1;
             continue;
         }
 
-        console.log(`  - ${uid}: ${preview.join(", ")}  (최근 검사 ${docId})`);
+        // 검사일도 함께 남긴다. 언제 검사한 수치인지 모르면 다음 사람이 또 같은 것을 묻는다.
+        if (fresh) {
+            pairs.push('healthProfile.latestBloodTestDate', testDate);
+            preview.push(`latestBloodTestDate="${testDate}"`);
+        }
+
+        console.log(`  - ${uid}: ${preview.join(", ")}  (분석 ${docId})`);
 
         if (apply) {
             // update() 여야 점 표기가 경로로 해석된다. 이 백필이 존재하는 이유가 그것이다.
@@ -125,7 +159,7 @@ async function main() {
         }
     }
 
-    console.log(`[backfill] 완료 — 수정 ${apply ? updated : "(dry-run)"}건, 건너뜀 ${skipped}건, 잘못된 필드 ${strayCleared}개 발견`);
+    console.log(`[backfill] 완료 — 수정 ${apply ? updated : "(dry-run)"}건, 건너뜀 ${skipped}건, 잘못된 필드 ${strayCleared}개 발견, 오래된 검사라 수치 미반영 ${staleSkipped}명`);
     if (!apply) console.log("[backfill] 실제로 쓰려면 --apply 를 붙여 다시 실행한다.");
 }
 

@@ -54,7 +54,8 @@ describe('a blood test result reaches the profile it feeds', () => {
 
     it('still writes the nested shape if the member document is missing', () => {
         expect(RUNTIME).toContain('if (error?.code !== 5 && error?.code !== "not-found") throw error;');
-        expect(RUNTIME).toContain('healthProfile: {');
+        // 폴백은 같은 패치에서 모양을 만든다 — 손으로 다시 나열하면 갈라진다.
+        expect(RUNTIME).toContain('await db.doc(`users/${uid}`).set({ healthProfile: nested }, { merge: true });');
     });
 
     it('files the result under the Korean date, like the rest of the app', () => {
@@ -77,7 +78,9 @@ describe('a blood test result reaches the profile it feeds', () => {
     it('has a backfill for the results that never made it', () => {
         const script = readRepoFile('scripts/backfill-bloodtest-health-profile-2026-08-14.js');
         expect(script).toContain('collectionGroup("bloodTests")');
-        expect(script).toContain('await userRef.update(patch);');
+        // 중첩 경로와 리터럴 필드명이 같은 문자열이라, 객체 하나로는 구분되지 않는다.
+        // varargs 형태여야 FieldPath 를 섞어 넘길 수 있다.
+        expect(script).toContain('await userRef.update(...pairs);');
         // 사용자가 직접 넣은 값을 덮지 않는다.
         expect(script).toContain('profile[nestedKey] === undefined');
         // 실수로 쓰는 것을 막는다.

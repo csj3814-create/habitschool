@@ -520,6 +520,29 @@
 
     <!-- Tab 5: 초대 & 시스템 -->
     <div id="tab-system" class="tab-panel">
+        <!-- 혈액검사 분석 품질. 개수와 분포만 본다 — 누구의 혈당이 얼마인지는
+             여기 오지 않는다. 민감정보라 '기능이 도는가'와 '그 사람 수치가 뭔가'를
+             섞지 않는다. -->
+        <div class="box" style="margin-bottom:16px;">
+            <h3>🩸 혈액검사 분석 품질</h3>
+            <p style="font-size:13px;color:#666;margin:0 0 12px;">
+                개인 수치는 표시하지 않습니다. 분석이 제대로 도는지만 봅니다.
+            </p>
+            <div class="cards" id="bloodtest-quality-cards">
+                <div class="card"><div class="lbl">누적 분석</div><div class="val" id="bt-total">-</div></div>
+                <div class="card"><div class="lbl">건당 추출 수치</div><div class="val" id="bt-avg-metrics">-</div></div>
+                <div class="card danger"><div class="lbl">단위 누락</div><div class="val" id="bt-missing-unit">-</div></div>
+                <div class="card danger"><div class="lbl">기준범위 누락</div><div class="val" id="bt-missing-ref">-</div></div>
+                <div class="card danger"><div class="lbl">상태판정 이상</div><div class="val" id="bt-invalid-status">-</div></div>
+                <div class="card danger"><div class="lbl">소견 없음</div><div class="val" id="bt-no-summary">-</div></div>
+                <div class="card danger"><div class="lbl">조언 없음</div><div class="val" id="bt-no-advice">-</div></div>
+                <div class="card"><div class="lbl">검사일 1년 이내</div><div class="val" id="bt-fresh">-</div></div>
+                <div class="card danger"><div class="lbl">1년 초과 (점수 미반영)</div><div class="val" id="bt-stale">-</div></div>
+                <div class="card danger"><div class="lbl">검사일 없음</div><div class="val" id="bt-nodate">-</div></div>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:#555;" id="bt-detail">로딩 중...</div>
+            <button class="btn" style="margin-top:10px;" onclick="loadBloodTestQuality()">다시 불러오기</button>
+        </div>
         <div class="two-col">
             <div class="box">
                 <h3>🎁 초대 리더보드 (TOP 10)</h3>
@@ -864,6 +887,7 @@
     // ── Auth ──────────────────────────────────────────────────
     const ensureAdminAccessCallable = httpsCallable(fns, 'ensureAdminAccess');
     const getAdminDashboardSnapshotCallable = httpsCallable(fns, 'getAdminDashboardSnapshot');
+    const getBloodTestQualityStatsCallable = httpsCallable(fns, 'getBloodTestQualityStats');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
@@ -2747,8 +2771,66 @@
 
     // ── Tab 5: System ─────────────────────────────────────────
     async function loadSystem() {
-        await Promise.all([loadReferralsV2(), loadAdmins()]);
+        await Promise.all([loadReferralsV2(), loadAdmins(), loadBloodTestQuality()]);
     }
+
+    // 혈액검사 분석 품질. 서버가 집계만 돌려주므로 여기서 개인 수치를 볼 일이 없다.
+    window.loadBloodTestQuality = async function loadBloodTestQuality() {
+        const detail = document.getElementById('bt-detail');
+        const set = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = String(value);
+        };
+        try {
+            if (detail) detail.textContent = '불러오는 중...';
+            const res = await getBloodTestQualityStatsCallable({});
+            const s = res.data?.stats;
+            if (!s) throw new Error('빈 응답');
+
+            set('bt-total', s.total);
+            set('bt-avg-metrics', s.avgMetricsPerTest);
+            set('bt-missing-unit', s.missingUnit);
+            set('bt-missing-ref', s.missingReference);
+            set('bt-invalid-status', s.invalidStatus);
+            set('bt-no-summary', s.total - s.withSummary);
+            set('bt-no-advice', s.total - s.withAdvice);
+            set('bt-fresh', s.testDateFresh);
+            set('bt-stale', s.testDateStale);
+            set('bt-nodate', s.testDateMissing);
+
+            const grades = Object.entries(s.gradeCounts || {})
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([g, n]) => `${g} ${n}건`)
+                .join(' · ') || '없음';
+            const buckets = Object.entries(s.metricCountBuckets || {})
+                .map(([k, n]) => `${k}개: ${n}건`)
+                .join(' · ');
+            const unknown = Object.entries(s.unknownMetricKeys || {})
+                .map(([k, n]) => `${k}(${n})`)
+                .join(', ');
+            const months = Object.entries(s.monthlyCounts || {})
+                .sort(([a], [b]) => b.localeCompare(a))
+                .slice(0, 6)
+                .map(([m, n]) => `${m} ${n}건`)
+                .join(' · ') || '없음';
+
+            const lines = [
+                `등급 분포 — ${grades}`,
+                `추출 수치 분포 — ${buckets}`,
+                `최근 분석 — ${months}`
+            ];
+            if (s.testDateStale > 0) {
+                lines.push(`가장 오래된 검사지는 ${s.oldestTestDays}일 전 것입니다. ${s.freshDays}일을 넘는 검사는 건강 점수에 반영하지 않습니다.`);
+            }
+            if (unknown) {
+                lines.push(`프롬프트에 없는 항목이 나왔습니다 — ${unknown}. 모델이 예상 밖 필드를 만들고 있다는 뜻입니다.`);
+            }
+            if (detail) detail.innerHTML = lines.map(l => `<div style="margin-bottom:4px;">${l}</div>`).join('');
+        } catch (error) {
+            console.error('혈액검사 품질 통계 실패:', error);
+            if (detail) detail.textContent = `불러오지 못했습니다: ${error?.message || error}`;
+        }
+    };
 
     async function loadReferrals() {
         const tbody = document.getElementById('referral-tbody');
