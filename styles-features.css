@@ -6658,6 +6658,23 @@ body.gallery-user-filtered #weekly-best-container {
     cursor: not-allowed;
 }
 
+/* 이 카드는 폭이 420px로 고정이라, 조이는 기준이 화면 폭이면 안 된다.
+   동의 줄을 좁히는 규칙이 max-width: 600px 안에 있어서, 폭은 넓고 세로만
+   짧은 화면(창을 줄인 브라우저, 가로로 눕힌 폰)에서는 줄이 다시 커지면서
+   동의 버튼이 카드 밖으로 밀려났다. 높이로 판단한다. */
+@media (max-height: 700px) {
+    .reconsent-content { padding: 18px; }
+    .reconsent-content .reconsent-badge { margin-bottom: 4px; }
+    .reconsent-content .reconsent-title { margin-bottom: 4px; font-size: 16px; }
+    .reconsent-content .reconsent-copy { margin-bottom: 7px; }
+    .reconsent-content .reconsent-changes { margin-bottom: 8px; padding: 8px 12px 8px 26px; }
+    .reconsent-content .reconsent-changes li { margin-bottom: 5px; font-size: 12px; }
+    .reconsent-content .consent-box { margin-bottom: 10px; }
+    .reconsent-content .consent-row { padding: 2px 0; }
+    .reconsent-content .consent-text { font-size: 12px; line-height: 1.4; }
+    .reconsent-content .consent-note { font-size: 10.5px; line-height: 1.45; margin-top: 4px; }
+}
+
 .google-btn[disabled] {
     opacity: 0.45;
     cursor: not-allowed;

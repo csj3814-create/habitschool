@@ -2,6 +2,17 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (6)
+
+### Changed
+- Narrowed the KakaoTalk disclosure to what the relay can actually collect. Yesterday's text was written against an assumption about the bot that turned out to be wrong: the group-chat path is a MessengerBot script on a phone forwarding to `/api/messengerbot`, not the official Kakao openbuilder, and it forwards **only messages beginning with `!`**. There is no stable sender identifier on that path either — the sender arrives as a display nickname. So the policy named an identifier that cannot be obtained and described a passive collection of speakers that will never happen. It now lists what the relay does forward: the command text, the display nickname, and the room name, gathered only when someone types a `!` command.
+- Replaced "we do not collect message contents" with "messages that do not start with `!` are never sent to our server". The first is a promise about what we discard after receiving it; the second is a fact about what never leaves the phone. `CONSENT_DOC_VERSION` stays at 2026-08-15 — this removes collection items rather than adding them, and the 08-15 documents had only ever reached staging, so nobody agreed to the wider text and nobody is asked twice.
+
+### Fixed
+- Stopped the re-consent card from pushing its own agree button out of view. The rules that tighten consent rows live in `@media (max-width: 600px)`, but this card is a fixed 420px modal, so its density was keyed to viewport width while its ceiling is keyed to height. On a screen that is wide but short — a resized desktop window, a phone held sideways — the rows returned to full size against an unchanged ceiling and the content ran 669px inside a 592px card. The tightening is now keyed to `max-height: 700px`, where it belongs: 497px at 640×640 and 550px at 360×600, both fitting without scrolling, and tall screens untouched at 608px. Below roughly 580px the card still scrolls, with the button reachable.
+- Corrected the previous entry's claim that the notice fits "on a 640px-tall screen". That measurement was taken at 360×640 and did not hold at 640×640, which is where the overflow above was found.
+- Aligned the asset stamps that release (5) left behind. `styles.css`, `js/main.js` and the other module entrypoints were still pointing at `?v=319` while `index.html` and the service worker had moved on, so returning members would have kept the cached stylesheet and never received the layout fix. Caught by `pwa-versioning`, which the previous release was committed without re-running.
+
 ## 2026-08-15 (5)
 
 ### Added
