@@ -88,34 +88,39 @@ async function main() {
         const data = userSnap.data() || {};
         const profile = data.healthProfile || {};
 
-        const patch = {};
+        // 중첩 경로 'healthProfile.hba1c' 와, 지워야 할 리터럴 필드명 'healthProfile.hba1c'
+        // 는 문자열로 완전히 같다. 하나의 객체에 담으면 뒤엣것이 앞엣것을 덮어써서,
+        // 값을 넣으려던 자리를 그대로 지워 버린다(첫 dry-run 에서 이게 드러났다).
+        // 리터럴 필드명은 한 조각짜리 FieldPath 로 지정해야 구분된다.
+        const pairs = [];   // [경로(string|FieldPath), 값] 을 번갈아 넘긴다
+        const preview = [];
+
         for (const [strayKey, nestedKey, read] of FIELD_MAP) {
             const value = read(metrics);
             // 이미 값이 있으면 덮지 않는다. 사용자가 직접 입력했을 수 있다.
             if (value !== undefined && profile[nestedKey] === undefined) {
-                patch[`healthProfile.${nestedKey}`] = value;
+                pairs.push(`healthProfile.${nestedKey}`, value);
+                preview.push(`${nestedKey}=${JSON.stringify(value)}`);
             }
             // 점 든 최상위 필드가 실제로 만들어져 있으면 치운다.
             if (Object.prototype.hasOwnProperty.call(data, strayKey)) {
-                patch[strayKey] = admin.firestore.FieldValue.delete();
+                pairs.push(new admin.firestore.FieldPath(strayKey), admin.firestore.FieldValue.delete());
+                preview.push(`DELETE "${strayKey}"`);
                 strayCleared += 1;
             }
         }
 
-        if (Object.keys(patch).length === 0) {
+        if (pairs.length === 0) {
             console.log(`  - ${uid}: 고칠 것 없음 (최근 검사 ${docId})`);
             skipped += 1;
             continue;
         }
 
-        const preview = Object.entries(patch)
-            .map(([k, v]) => `${k}=${v && v.constructor && v.constructor.name === "FieldTransform" ? "DELETE" : v}`)
-            .join(", ");
-        console.log(`  - ${uid}: ${preview}  (최근 검사 ${docId})`);
+        console.log(`  - ${uid}: ${preview.join(", ")}  (최근 검사 ${docId})`);
 
         if (apply) {
             // update() 여야 점 표기가 경로로 해석된다. 이 백필이 존재하는 이유가 그것이다.
-            await userRef.update(patch);
+            await userRef.update(...pairs);
             updated += 1;
         }
     }
