@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=315';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=316';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=315';
-import { getDatesInfo } from './ui-helpers.js?v=315';
-import { escapeHtml } from './security.js?v=315';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=315';
+import { showToast } from './ui-helpers.js?v=316';
+import { getDatesInfo } from './ui-helpers.js?v=316';
+import { escapeHtml } from './security.js?v=316';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=316';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=315';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=315';
-import { trackProductEvent } from './product-events.js?v=315';
+} from './auth-login-helpers.js?v=316';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=316';
+import { trackProductEvent } from './product-events.js?v=316';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=315';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=316';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1320,7 +1320,16 @@ export function setupAuthListener(callbacks) {
                     // 어느 문서 버전에 동의했는지 남겨야 나중에 확인할 수 있다.
                     updateData.consents = buildSignupConsentRecord();
                 }
-                await setDoc(userRef, updateData, { merge: true }).catch(() => {});
+                // 이 쓰기를 통째로 삼키면 안 된다. 여기에 신규 회원의 동의 기록이 실려
+                // 있는데, Firestore 규칙에 consents 가 없던 동안 계속 거부됐고 아무도
+                // 몰랐다. 562명 중 동의 기록을 가진 사람이 0명이 되고서야 드러났다.
+                // 로그인 자체는 막지 않되, 실패했다는 사실은 남긴다.
+                await setDoc(userRef, updateData, { merge: true }).catch((error) => {
+                    console.error('회원 문서 저장 실패:', error?.code || '', error?.message || error);
+                    if (updateData.consents) {
+                        console.error('동의 기록이 저장되지 않았습니다. Firestore 규칙에 consents 가 있는지 확인하세요.');
+                    }
+                });
                 // 로그인이 끝났으니 이 브라우저는 다시 묻지 않는다. 임시 스냅샷은 역할이 끝났다.
                 rememberAcceptedConsent();
                 clearConsentSelectionSnapshot();
@@ -1663,7 +1672,12 @@ window.submitReconsent = async function submitReconsent() {
         await setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true });
     } catch (error) {
         console.error('재동의 저장 실패:', error);
-        showToast('⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        // 코드를 감추면 "잠시 후 다시" 를 영원히 누르게 된다. permission-denied 는
+        // 기다린다고 풀리지 않는다 — 규칙을 고쳐야 하는 상황이고, 그렇게 말해야 한다.
+        const code = String(error?.code || '').replace(/^firestore\//, '');
+        showToast(code === 'permission-denied'
+            ? '⚠️ 동의를 저장할 권한이 없어요. 잠시 후에도 같으면 문의해 주세요. (permission-denied)'
+            : `⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.${code ? ` (${code})` : ''}`);
         if (submit) submit.disabled = false;
         return;
     }
