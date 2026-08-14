@@ -136,7 +136,7 @@ const MESSAGES = {
         'reconsent.change2': '<strong>Redeeming a coupon sends your mobile number</strong> to the delivery agency (KT Alpha).',
         'reconsent.change3': '<strong>Deleting your account now erases everything</strong>, with nothing kept back.',
         'reconsent.change4': '<strong>Photos and videos are stored in the United States</strong>; logs and figures stay in Korea.',
-        'reconsent.change5': '<strong>Linking a Habit Coach group chat</strong> collects only your nickname and sender id — never message contents.',
+        'reconsent.change5': '<strong>Habit Coach chat</strong> forwards only ! commands — ordinary conversation is never sent.',
         'reconsent.note': 'You can decline the optional item and carry on. Only the blood test and body composition features are locked.',
         'reconsent.later': 'Log out',
         'reconsent.agree': 'Agree and continue',
