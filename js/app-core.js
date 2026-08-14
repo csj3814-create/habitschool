@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=313';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=313';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=314';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=314';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=313';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=313';
+} from './auth-login-helpers.js?v=314';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=314';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=313';
+} from './exercise-media.js?v=314';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=313';
+} from './health-connect-utils.js?v=314';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=313';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=313';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=313';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=313';
-import { sanitize, compressImage } from './data-manager.js?v=313';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=313';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=313';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=313';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=313';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=313';
+} from './habit-groups.js?v=314';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=314';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=314';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=314';
+import { sanitize, compressImage } from './data-manager.js?v=314';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=314';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=314';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=314';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=314';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=314';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=313';
+} from './guest-demo.js?v=314';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=313';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=313';
+} from './product-events.js?v=314';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=314';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=313';
+} from './diet-program.js?v=314';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=313';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=313';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=313';
+} from './meditation-guide.js?v=314';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=314';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=314';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=313';
+} from './social-challenge-readiness.js?v=314';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=313';
+} from './monthly-mvp-reward.js?v=314';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6431,7 +6431,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=313';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=314';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14369,6 +14369,8 @@ async function loadBloodTestHistory() {
         const records = [];
         snapshot.forEach(d => records.push({ id: d.id, ...d.data() }));
 
+        // 이력에 등급과 숫자 셋만 남기면, 정작 이 기능을 만든 이유인 소견과 조언이
+        // 화면을 벗어나는 순간 사라진다. 저장은 이미 돼 있으니 펼쳐 볼 수 있게 한다.
         const rowsHtml = records.map(r => {
             const grade = r.overallGrade || '-';
             const gradeColors = { 'A': '#2E7D32', 'B': '#558B2F', 'C': '#F9A825', 'D': '#EF6C00', 'F': '#C62828' };
@@ -14377,13 +14379,24 @@ async function loadBloodTestHistory() {
             const gl = metrics.glucose?.value || '-';
             const tg = metrics.triglyceride?.value || '-';
             const hba1c = metrics.hba1c?.value || '-';
+            const summary = String(r.summary || '').trim();
+            const advice = String(r.advice || '').trim();
+            const detailHtml = (summary || advice)
+                ? `<tr class="blood-test-detail-row"><td colspan="5" style="padding:0;">
+                        <details class="blood-test-detail">
+                            <summary>소견·조언 보기</summary>
+                            ${summary ? `<p class="blood-test-detail-summary">${escapeHtml(summary)}</p>` : ''}
+                            ${advice ? `<p class="blood-test-detail-advice">💬 ${escapeHtml(advice)}</p>` : ''}
+                        </details>
+                   </td></tr>`
+                : '';
             return `<tr>
-                <td style="font-size:12px; color:#888;">${r.id || '-'}</td>
-                <td style="font-weight:700; color:${color};">${grade}</td>
-                <td>${gl}</td>
-                <td>${tg}</td>
-                <td>${hba1c}</td>
-            </tr>`;
+                <td style="font-size:12px; color:#888;">${escapeHtml(String(r.id || '-'))}</td>
+                <td style="font-weight:700; color:${color};">${escapeHtml(String(grade))}</td>
+                <td>${escapeHtml(String(gl))}</td>
+                <td>${escapeHtml(String(tg))}</td>
+                <td>${escapeHtml(String(hba1c))}</td>
+            </tr>${detailHtml}`;
         }).join('');
 
         container.innerHTML = `
