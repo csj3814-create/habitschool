@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=323';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=323';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=324';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=324';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=323';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=323';
+} from './auth-login-helpers.js?v=324';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=324';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=323';
+} from './exercise-media.js?v=324';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=323';
+} from './health-connect-utils.js?v=324';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,16 +57,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=323';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=323';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=323';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=323';
-import { sanitize, compressImage } from './data-manager.js?v=323';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=323';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=323';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=323';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=323';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=323';
+} from './habit-groups.js?v=324';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=324';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=324';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=324';
+import { sanitize, compressImage } from './data-manager.js?v=324';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=324';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=324';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=324';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=324';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=324';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -76,14 +76,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=323';
+} from './guest-demo.js?v=324';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=323';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=323';
+} from './product-events.js?v=324';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=324';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -105,7 +105,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=323';
+} from './diet-program.js?v=324';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -117,18 +117,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=323';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=323';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=323';
+} from './meditation-guide.js?v=324';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=324';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=324';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=323';
+} from './social-challenge-readiness.js?v=324';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=323';
+} from './monthly-mvp-reward.js?v=324';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3930,7 +3930,10 @@ async function applyArrayThumbBackfill(docId, backfill, thumbUrl, latest) {
     });
     if (!changed) return false;
 
-    await setDoc(docRef, { exercise: { ...exercise, [list]: nextItems } }, { merge: true });
+    // exercise 전체를 펼쳐 쓰면 방금 읽은 값으로 나머지 필드까지 되쓰게 되고,
+    // 그 사이 다른 곳에서 바뀐 것이 있으면 옛 값으로 되돌린다. 중첩 맵은 merge가
+    // 키 단위로 합쳐지므로 이 배열 하나만 넘기면 나머지는 그대로 남는다.
+    await setDoc(docRef, { exercise: { [list]: nextItems } }, { merge: true });
 
     const syncList = (target) => {
         const arr = target?.exercise?.[list];
@@ -6504,7 +6507,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=323';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=324';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

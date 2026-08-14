@@ -5,11 +5,11 @@
  */
 
 // 인증 모듈 (initializeApp에서 직접 호출)
-import { initAuth, setupAuthListener } from './auth.js?v=323';
-import { APP_ENV } from './firebase-config.js?v=323';
-import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=323';
+import { initAuth, setupAuthListener } from './auth.js?v=324';
+import { APP_ENV } from './firebase-config.js?v=324';
+import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=324';
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=323';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=324';
 const CONVERSION_RATE_CACHE_KEY = `hs_conversion_rate_${APP_ENV}`;
 
 function readCachedConversionStats() {
@@ -92,7 +92,7 @@ window.initializeUserWallet = async () => null;
 // 보상 수령은 서버 호출뿐이라 블록체인 모듈 없이도 된다.
 // 라이트 모드는 그 모듈을 아예 안 싣기 때문에, 여기서 미리 걸어 두지 않으면
 // 완주한 챌린지의 '탭하여 보상 수령'이 undefined 를 불러 아무 일도 일어나지 않는다.
-window.claimChallengeReward = (tier) => import('./challenge-claim.js?v=323')
+window.claimChallengeReward = (tier) => import('./challenge-claim.js?v=324')
     .then(mod => mod.claimChallengeReward(tier))
     .catch(error => {
         console.error('보상 수령 모듈 로드 실패:', error);
