@@ -6708,6 +6708,8 @@ body.gallery-user-filtered #weekly-best-container {
 
 .sensitive-gate {
     margin-top: 10px;
+    /* 다음 카드와 붙어 있으면 한 덩어리로 보인다. 한 줄 띄운다. */
+    margin-bottom: 18px;
     padding: 0;
     background: #FFFBF3;
     border: 1px dashed #E8C89A;
@@ -6716,30 +6718,49 @@ body.gallery-user-filtered #weekly-best-container {
 }
 
 /* 접힌 상태는 한 줄이면 된다. 열어야 설명과 버튼이 나온다. */
+
 .sensitive-gate-summary {
     list-style: none;
-    padding: 12px 14px;
+    padding: 13px 14px;
     font-size: 13px;
     font-weight: 800;
     color: #8a6336;
     cursor: pointer;
-    /* 접힘 표시는 직접 그린다 — 기본 삼각형이 브라우저마다 위치가 달라진다. */
+    /* 문구는 왼쪽, 펼침 화살표는 오른쪽 끝. 가운데 정렬이면 눌러서 펼치는
+       줄이라는 신호가 없어 그냥 안내문으로 읽힌다. */
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
+    justify-content: space-between;
+    gap: 10px;
+    text-align: left;
 }
 
 .sensitive-gate-summary::-webkit-details-marker { display: none; }
 
 .sensitive-gate-summary::after {
-    content: '▾';
-    font-size: 11px;
-    color: #b99a6d;
+    content: '⌄';
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #F6E7D0;
+    color: #8a6336;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1;
+    /* 글리프가 아래로 치우쳐 있어 원 안에서 위로 올려 맞춘다. */
+    padding-bottom: 4px;
     transition: transform 0.15s ease;
 }
 
-.sensitive-gate[open] .sensitive-gate-summary::after { transform: rotate(180deg); }
+.sensitive-gate[open] .sensitive-gate-summary::after {
+    transform: rotate(180deg);
+    padding-bottom: 0;
+    padding-top: 4px;
+}
 
 .sensitive-gate-body {
     padding: 0 16px 16px;

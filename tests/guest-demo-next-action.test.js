@@ -85,6 +85,23 @@ describe('the guidance says what to press, not what to accomplish', () => {
         expect(html).toContain('aria-current="step"');
     });
 
+    it('puts the cue after the label, at the right edge of the button', () => {
+        // 글자 왼쪽에 작게 붙이면 아이콘 장식으로 읽힌다.
+        const session = createGuestDemoSession();
+        const html = renderGuestDemoTab('diet', session);
+        const labelAt = html.indexOf('예시 사진 선택');
+        const cueAt = html.indexOf('guest-demo-next-cue');
+        expect(labelAt).toBeGreaterThan(-1);
+        expect(cueAt).toBeGreaterThan(labelAt);
+    });
+
+    it('drops the coach box buttons that had nothing left to turn off', () => {
+        const session = createGuestDemoSession();
+        const html = renderGuestDemoTab('diet', session, { showCoach: true });
+        expect(html).not.toContain('안내 닫기');
+        expect(html).not.toContain('전체 안내 끄기');
+    });
+
     it('drops the animation for reduced-motion', () => {
         const css = readCss();
         expect(css).toContain('@media (prefers-reduced-motion: reduce)');

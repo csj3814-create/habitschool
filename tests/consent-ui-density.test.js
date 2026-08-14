@@ -71,7 +71,20 @@ describe('the health-data gate is folded away until it is wanted', () => {
 
     it('draws its own marker rather than trusting the default triangle', () => {
         expect(CSS).toContain('.sensitive-gate-summary::-webkit-details-marker { display: none; }');
-        expect(CSS).toContain('.sensitive-gate[open] .sensitive-gate-summary::after { transform: rotate(180deg); }');
+        expect(CSS).toContain('.sensitive-gate[open] .sensitive-gate-summary::after {');
+        expect(CSS).toContain('transform: rotate(180deg);');
+    });
+
+    it('puts the arrow at the right edge, so the line reads as expandable', () => {
+        // 가운데 정렬이면 눌러서 펼치는 줄이 아니라 그냥 안내문으로 읽힌다.
+        const rule = CSS.split('.sensitive-gate-summary {')[1].split('}')[0];
+        expect(rule).toContain('justify-content: space-between;');
+        expect(rule).toContain('text-align: left;');
+    });
+
+    it('leaves a gap before the next card', () => {
+        const rule = CSS.split('.sensitive-gate {')[1].split('}')[0];
+        expect(rule).toContain('margin-bottom: 18px;');
     });
 
     it('has no stray characters in its colours', () => {

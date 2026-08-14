@@ -554,14 +554,12 @@ function renderCoach(tab) {
         assets: ['기록하면 포인트가 쌓여요', '모은 포인트로 커피 쿠폰 같은 리워드를 교환할 수 있어요.']
     }[tab];
     if (!copy) return '';
+    // 단계 안내가 무엇을 할지 이미 말해 주므로 닫기·끄기 버튼은 없앴다. 끌 것이 있어야
+    // 끄는 버튼이 의미가 있는데, 지금은 이 문장이 방해가 아니라 설명이다.
     return `
         <aside class="guest-demo-coach" data-guest-demo-coach="${tab}" aria-label="${copy[0]}">
             <strong>${copy[0]}</strong>
             <p>${copy[1]}</p>
-            <div class="guest-demo-coach-actions">
-                <button type="button" data-guest-demo-command="dismiss-coach">안내 닫기</button>
-                <button type="button" data-guest-demo-command="disable-coaches">전체 안내 끄기</button>
-            </div>
         </aside>`;
 }
 
@@ -586,8 +584,10 @@ function renderButton(label, action, className = 'guest-demo-button') {
     const cls = isNext ? `${className} is-next-action` : className;
     // aria-current 로 스크린리더에게도 "지금 이것" 이라고 알린다.
     const current = isNext ? ' aria-current="step"' : '';
-    const cue = isNext ? '<span class="guest-demo-next-cue" aria-hidden="true">👆</span>' : '';
-    return `<button type="button" class="${cls}" data-guest-demo-action="${action}"${current}>${cue}${label}</button>`;
+    // 손가락은 글자 왼쪽이 아니라 버튼 오른쪽 끝에 크게 둔다. 왼쪽에 작게 붙이면
+    // 아이콘 장식으로 읽히고, 오른쪽에서 크게 흔들려야 "여길 누르라"로 읽힌다.
+    const cue = isNext ? '<span class="guest-demo-next-cue" aria-hidden="true">👈</span>' : '';
+    return `<button type="button" class="${cls}" data-guest-demo-action="${action}"${current}>${label}${cue}</button>`;
 }
 
 function renderLoginButton(label, action, tab, className = 'guest-demo-button guest-demo-button-primary') {
@@ -1086,9 +1086,18 @@ export function createGuestDemoController(options = {}) {
         }
 
         // 단계 안내의 "하러 가기" — 다음 순서 탭으로 데려다 준다.
+        //
+        // 앱의 openTab 을 거쳐야 한다. 상단 탭 버튼의 활성 표시와 밑줄은 그쪽에서만
+        // 바뀌기 때문에, 여기서 내부 openTab 만 부르면 화면은 운동 탭인데 위쪽 표시는
+        // 식단에 머무는 상태가 된다.
         const gotoElement = closestDataElement(event.target, '[data-guest-demo-goto]');
         if (gotoElement) {
-            openTab(gotoElement.dataset?.guestDemoGoto, { source: 'step-guide' });
+            const target = gotoElement.dataset?.guestDemoGoto;
+            if (typeof window !== 'undefined' && typeof window.openTab === 'function') {
+                window.openTab(target);
+            } else {
+                openTab(target, { source: 'step-guide' });
+            }
             return;
         }
 

@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (4)
+
+### Fixed
+- Kept the tab bar in step with the guest tour. Pressing "운동 기록 남기러 가기" moved the screen to the exercise tab while the tab buttons and underline stayed on food, because the active state is set inside the app's `openTab` and the tour was calling the demo controller's own `openTab` directly, skipping it. The jump now goes through the app's switch, with the internal one kept as a fallback.
+
+### Changed
+- Made the health-data notice read as something you open. The arrow was a small centred glyph that looked like punctuation; it is now a filled circle at the right edge with the text left-aligned, and the row has an 18px gap beneath it so it stops reading as part of the card below.
+- Moved the tour's cue to the right edge of the button and enlarged it to 22px, where it nudges sideways instead of sitting to the left of the label looking like an icon. The button's pulse is faster and wider. Both stop under `prefers-reduced-motion`.
+- Removed the coach box's "안내 닫기" and "전체 안내 끄기" buttons. The step guide already says what to do, so the remaining sentence is explanation rather than interruption, and a dismiss control for it was clutter.
+
 ## 2026-08-15 (3)
 
 ### Changed
