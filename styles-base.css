@@ -25,7 +25,16 @@
  * 22. ?�쇄 ?��???
  */
 
-:root { 
+/* [hidden]{display:none} 은 브라우저 기본 스타일이라, 클래스에 걸린 display 선언에
+   언제나 진다. 그래서 el.hidden = true 가 조용히 아무 일도 하지 않는 자리가 생긴다 —
+   근력 영상 미리보기가 그랬다. hidden = true 로 감춘 <video> 가 계속 깔린 채
+   자기 배경(#0d1117)을 썸네일 위에 칠해, 정상적으로 받아온 썸네일이 검은 상자로 보였다.
+
+   이 파일 곳곳의 .foo[hidden] 규칙들은 그때그때 한 곳씩 때운 자국이다.
+   원인을 한 번에 막아, 다음 사람이 같은 자리를 다시 밟지 않게 한다. */
+[hidden] { display: none !important; }
+
+:root {
     /* 기본 ?�상 */
     --primary-color: #FF8C00; 
     --secondary-color: #4CAF50; 

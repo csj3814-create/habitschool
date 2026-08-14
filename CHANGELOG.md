@@ -2,6 +2,15 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (7)
+
+### Fixed
+- Made `hidden` actually hide things. `[hidden] { display: none }` is a browser default, so any author rule that sets `display` on the same element beats it — and then `el.hidden = true` silently does nothing. The strength-video preview was the visible casualty: the `<video>` stays laid out over the `<img>` (both `position: absolute; inset: 0`, video later in the DOM) and paints its own `#0d1117` background, so a thumbnail that had downloaded correctly showed as a black box. An audit found the same trap on 8 classes, and the ~20 one-off `.foo[hidden] { display: none }` rules scattered through the stylesheets turn out to be this bug being patched one site at a time without ever being named. A single `[hidden] { display: none !important; }` now covers all of them; no existing rule tried to make a hidden element visible, so nothing is displaced.
+- Gave the strength thumbnail an `onerror`. Its `<video>` sibling has had `onerror = fallbackToImage` all along; the image path had none, so a dead thumbnail URL produced the same silent black box with no fallback, no retry, and nothing in the console. It now falls back to the placeholder and logs the URL. This was not the cause of the reported bug — the images were loading fine, HTTP 200 at 720px — but it was the reason the failure would have been just as invisible if they hadn't been.
+
+### Added
+- Added `scripts/count-missing-exercise-thumbs.js`, read-only, to size the separate backfill question. Across 2,547 daily logs: 315 of 1,302 cardio photos (24.2%) and 103 of 953 strength videos (10.8%) have no stored thumbnail, plus 12 legacy single-field records — 430 items over 38 members. The month-by-month split matters more than the total: 26 items in the first half of August alone, so thumbnail generation is still failing now and a backfill on its own would be mopping while the tap runs. Not yet fixed; the black-box report turned out to be a separate, unrelated defect.
+
 ## 2026-08-15 (6)
 
 ### Changed
