@@ -72,8 +72,44 @@
 ### 배포 순서
 1. `git add` + `git commit`
 2. `git push origin main`
-3. **사용자에게 확인 요청** ← 이 단계 없이 firebase deploy 절대 금지
-4. 확인 받은 후에만 `firebase deploy --only hosting,functions`
+3. **배포 대상 확인** — 아래 "무엇을 배포해야 하는가" 참조
+4. **사용자에게 확인 요청** ← 이 단계 없이 firebase deploy 절대 금지
+5. 확인 받은 후에만 `firebase deploy --only hosting,functions`
+
+### 무엇을 배포해야 하는가 (배포 전 매번 확인)
+
+지난 배포 이후 바뀐 파일로 대상을 정한다. 코드만 올리고 규칙을 두고 오면
+새 필드 쓰기가 전부 `permission-denied` 로 조용히 거부된다.
+
+```bash
+git diff --name-only <마지막_배포_커밋>..HEAD -- functions/ firestore.rules storage.rules firestore.indexes.json
+```
+
+| 바뀐 파일 | 배포 대상 |
+|---|---|
+| `js/`, `*.html`, `*.css` | `--only hosting` |
+| `functions/` | `--only functions` |
+| **`firestore.rules`** | **`--only firestore:rules`** ← 별도 승인 필요 |
+| `storage.rules` | `--only storage` ← 별도 승인 필요 |
+| `firestore.indexes.json` | `--only firestore:indexes` ← 별도 승인 필요 |
+
+**파일에 적는 것과 배포하는 것은 다른 일이다.** `firestore.rules` 에 필드를 추가한
+커밋이 배포 범위에 들어 있으면, hosting/functions 만 올리고 끝내지 말고 규칙 배포
+승인을 따로 받는다.
+
+배포된 규칙이 파일과 같은지는 이렇게 확인한다 (서비스 계정 자격증명 필요):
+
+```
+firebaserules.googleapis.com/v1/projects/{project}/releases/cloud.firestore
+→ rulesetName → /v1/{rulesetName} 의 source.files[].content 를 로컬 파일과 비교
+```
+
+> 2026-08-15: `consents` 를 화이트리스트에 넣은 커밋(08-11)이 배포되지 않아,
+> 그 뒤 나흘간 모든 동의 기록 쓰기가 `permission-denied` 로 거부됐다.
+> 전체 회원 562명 중 동의 기록을 가진 사람이 0명이었다.
+> 가입 경로의 쓰기가 `.catch(() => {})` 로 감싸여 있어 거부가 성공처럼 보였고,
+> 재동의 화면이 실패를 보고하기 전까지 아무 신호도 없었다.
+> **오류를 삼키는 catch 는 이런 종류의 침묵을 만든다. 최소한 로그는 남길 것.**
 
 ### Staging 배포 단축 승인
 - 사용자가 `스테이징` 또는 `staging`이라고 말하면 staging Hosting 및 Functions 배포의 최종 확인으로 간주한다.
@@ -90,9 +126,13 @@
 - 이미 top-level에서 import된 모듈을 재사용할 것
 
 ### 새 기능 추가 시 인프라 체크
-- 새 Storage 경로 → `storage.rules`에 규칙 추가
-- 새 Firestore 필드 → `firestore.rules` 화이트리스트에 추가
+- 새 Storage 경로 → `storage.rules`에 규칙 추가 **+ 배포**
+- 새 Firestore 필드 → `firestore.rules` 화이트리스트에 추가 **+ 배포**
 - 새 Cloud Function → 배포 후 실행 로그 확인
+- **규칙 파일 수정은 절반이다.** 배포해야 적용된다. 위 "무엇을 배포해야 하는가" 참조.
+- 새 필드를 쓰는 코드는 **쓰기 성공 여부를 확인할 수 있어야 한다.** 첫 저장 뒤
+  콘솔이나 Firestore에서 실제로 들어갔는지 한 번 본다 — 규칙이 막고 있어도
+  화면은 멀쩡해 보인다.
 
 ### 작업 완료 검증
 - 면밀하게 분석 후 배포 — 단순하게 생각해서 실수하지 말 것
