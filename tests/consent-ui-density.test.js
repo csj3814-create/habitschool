@@ -15,8 +15,8 @@ describe('the re-consent notice fits without scrolling', () => {
         .split('</li>')
         .filter((chunk) => chunk.includes('<li'));
 
-    it('still lists all four changes', () => {
-        expect(bullets).toHaveLength(4);
+    it('still lists every change', () => {
+        expect(bullets).toHaveLength(5);
     });
 
     it('keeps each one to a single short line', () => {

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=318';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=319';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=318';
-import { getDatesInfo } from './ui-helpers.js?v=318';
-import { escapeHtml } from './security.js?v=318';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=318';
+import { showToast } from './ui-helpers.js?v=319';
+import { getDatesInfo } from './ui-helpers.js?v=319';
+import { escapeHtml } from './security.js?v=319';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=319';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=318';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=318';
-import { trackProductEvent } from './product-events.js?v=318';
+} from './auth-login-helpers.js?v=319';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=319';
+import { trackProductEvent } from './product-events.js?v=319';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=318';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=319';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1479,7 +1479,7 @@ window.logoutAndReset = async function () {
 // 계정 삭제(Firestore 데이터 + Storage 파일 + Auth 계정)
 // 동의 문서가 실질적으로 바뀌면 이 값을 올린다. 그래야 어느 판본에 동의했는지
 // 구분되고, 재동의를 받아야 하는 이용자를 골라낼 수 있다.
-const CONSENT_DOC_VERSION = '2026-08-12';
+const CONSENT_DOC_VERSION = '2026-08-15';
 
 // 리디렉트 로그인은 구글을 다녀오면서 페이지를 통째로 새로 띄운다. 그러면 체크박스가
 // 전부 풀린 상태로 돌아오는데, 하필 그 시점에 신규 회원의 동의 기록이 만들어진다.

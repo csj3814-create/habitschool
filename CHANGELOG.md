@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (5)
+
+### Added
+- Disclosed the KakaoTalk group-chat linking that the new connection flow will use: the sender identifier Kakao provides, the display nickname, and the time of the last message — stated alongside the fact that **message contents are not collected**, only who spoke and when. The identifier and nickname are used solely to link the accounts and are deleted once linked or after 30 days, rather than waiting for account deletion, and the whole thing is optional.
+- Added the same line to the re-consent notice, since that is what members are being asked to agree to right now.
+
+### Changed
+- Moved the effective date to 2026-08-15 across all four documents and raised `CONSENT_DOC_VERSION` to match, because the collection items changed materially. Anyone who already agreed to the 08-12 version will be asked once more.
+- Tightened the re-consent spacing so the fifth line still fits without scrolling: 590px against a 592px ceiling on a 640px-tall screen, with the button reachable.
+
 ## 2026-08-15 (4)
 
 ### Fixed

@@ -6599,7 +6599,7 @@ body.gallery-user-filtered #weekly-best-container {
 
 .reconsent-badge {
     display: inline-block;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     padding: 4px 10px;
     border-radius: 999px;
     background: #FFE9CC;
@@ -6609,31 +6609,32 @@ body.gallery-user-filtered #weekly-best-container {
 }
 
 .reconsent-title {
-    margin: 0 0 8px;
-    font-size: 18px;
-    line-height: 1.4;
+    margin: 0 0 6px;
+    font-size: 17px;
+    line-height: 1.35;
     color: #2f261d;
 }
 
 .reconsent-copy {
-    margin: 0 0 14px;
+    margin: 0 0 10px;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: #6b5c4a;
 }
 
 .reconsent-changes {
-    margin: 0 0 16px;
-    padding: 12px 14px 12px 30px;
+    /* 항목이 늘면 다시 스크롤이 생긴다. 여백을 조여 다섯 줄이 들어가게 맞췄다. */
+    margin: 0 0 12px;
+    padding: 10px 12px 10px 26px;
     background: #FFF8F0;
     border-radius: 12px;
     border: 1px solid #F0DFC4;
 }
 
 .reconsent-changes li {
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     font-size: 12.5px;
-    line-height: 1.6;
+    line-height: 1.5;
     color: #4a4038;
 }
 

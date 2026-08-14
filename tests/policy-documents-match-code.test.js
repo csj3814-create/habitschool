@@ -149,15 +149,15 @@ describe('sensitive health data is handled as a separate consent', () => {
 
 describe('the documents stay in step with each other', () => {
     it('carries one effective date across all four', () => {
-        expect(KO_PRIVACY).toContain('시행일: 2026년 8월 12일');
-        expect(KO_TERMS).toContain('시행일: 2026년 8월 12일');
-        expect(EN_PRIVACY).toContain('Effective date: August 12, 2026');
-        expect(EN_TERMS).toContain('Effective date: August 12, 2026');
+        expect(KO_PRIVACY).toContain('시행일: 2026년 8월 15일');
+        expect(KO_TERMS).toContain('시행일: 2026년 8월 15일');
+        expect(EN_PRIVACY).toContain('Effective date: August 15, 2026');
+        expect(EN_TERMS).toContain('Effective date: August 15, 2026');
     });
 
     it('matches the consent version recorded against each signup', () => {
         // 문서가 바뀌면 기록된 동의 버전도 바뀌어야 누가 어느 판에 동의했는지 알 수 있다.
-        expect(readRepoFile('js/auth.js')).toContain("const CONSENT_DOC_VERSION = '2026-08-12';");
+        expect(readRepoFile('js/auth.js')).toContain("const CONSENT_DOC_VERSION = '2026-08-15';");
     });
 
     it('names the operator and the coupon vendor by their registered names', () => {
