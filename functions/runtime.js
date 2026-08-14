@@ -5727,6 +5727,16 @@ exports.analyzeBloodTest = onCall(
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
 
+        // 혈액검사 결과는 개인정보 보호법 제23조 민감정보다. 게이트가 화면에만 있으면
+        // 콜러블을 직접 부르는 것으로 동의 없이 분석·저장이 된다. 서버에서 확인한다.
+        const consentSnap = await db.doc(`users/${request.auth.uid}`).get();
+        if (consentSnap.data()?.consents?.sensitive?.agreed !== true) {
+            throw new HttpsError(
+                "failed-precondition",
+                "건강정보 동의가 필요해요. 프로필에서 동의한 뒤 사용해 주세요."
+            );
+        }
+
         try {
             const imgResponse = await fetch(imageUrl);
             if (!imgResponse.ok) {
@@ -5764,23 +5774,41 @@ exports.analyzeBloodTest = onCall(
 
             const analysis = JSON.parse(jsonStr);
 
-            // Firestore에 결과 저장
+            // Firestore에 결과 저장.
+            // 날짜는 앱 전체와 같은 한국시간 기준이어야 한다. toISOString() 은 UTC라
+            // 한국시간 0~9시에 올린 검사가 어제 문서로 들어갔다.
             const uid = request.auth.uid;
-            const dateStr = new Date().toISOString().slice(0, 10);
+            const dateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
             await db.doc(`users/${uid}/bloodTests/${dateStr}`).set({
                 ...analysis,
                 imageUrl,
                 analyzedAt: FieldValue.serverTimestamp()
-            });
+            }, { merge: true });
 
-            // healthProfile에 주요 수치 자동 반영
+            // healthProfile에 주요 수치 자동 반영.
+            //
+            // set() 은 점 표기를 경로로 해석하지 않는다. 'healthProfile.hba1c' 를 그대로
+            // 넘기면 중첩 필드가 아니라 이름에 점이 든 최상위 필드가 만들어지고,
+            // metabolic-score 가 읽는 profile.hba1c 는 영영 비어 있게 된다. 실제로
+            // 그렇게 동작하고 있었다 — 혈액검사를 올려도 대사건강 점수의 인슐린 항목이
+            // "건강 지표 기록 필요" 로 남았다. 경로로 해석하는 것은 update() 뿐이다.
             const metrics = analysis.metrics || {};
             const profileUpdate = {};
             if (metrics.glucose?.value) profileUpdate['healthProfile.latestGlucose'] = metrics.glucose.value;
             if (metrics.hba1c?.value) profileUpdate['healthProfile.hba1c'] = String(metrics.hba1c.value);
             if (metrics.triglyceride?.value) profileUpdate['healthProfile.latestTriglyceride'] = metrics.triglyceride.value;
             if (Object.keys(profileUpdate).length > 0) {
-                await db.doc(`users/${uid}`).set(profileUpdate, { merge: true });
+                // 회원 문서가 없을 리는 없지만, update() 는 없으면 던지므로 그때만 set 으로 만든다.
+                await db.doc(`users/${uid}`).update(profileUpdate).catch(async (error) => {
+                    if (error?.code !== 5 && error?.code !== "not-found") throw error;
+                    await db.doc(`users/${uid}`).set({
+                        healthProfile: {
+                            ...(metrics.glucose?.value ? { latestGlucose: metrics.glucose.value } : {}),
+                            ...(metrics.hba1c?.value ? { hba1c: String(metrics.hba1c.value) } : {}),
+                            ...(metrics.triglyceride?.value ? { latestTriglyceride: metrics.triglyceride.value } : {})
+                        }
+                    }, { merge: true });
+                });
             }
 
             return {

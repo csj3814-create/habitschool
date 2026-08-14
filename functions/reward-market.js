@@ -3729,11 +3729,25 @@ async function resendRewardCoupon({
             forceSms: true,
         });
     } catch (error) {
+        const status = Number(error?.status || 0);
+        // 발송사가 요청을 거절한 것(4xx)과 아직 못 닿은 것(타임아웃·5xx·네트워크)은 다르다.
+        // 거절인데 "잠시 후 다시 시도해 주세요"라고 하면, 영영 성공하지 않을 일을
+        // 계속 누르게 만든다. 이미 사용한 쿠폰을 다시 받으려 할 때가 그렇다.
+        const refusedByProvider = status >= 400 && status < 500;
         await redemptionRef.set({
             lastUserResendFailedAt: new Date(),
-            lastUserResendErrorCode: String(error?.code || "provider_resend_failed").slice(0, 80),
+            lastUserResendErrorCode: String(error?.code || (status ? `provider_http_${status}` : "provider_resend_failed")).slice(0, 80),
+            lastUserResendErrorMessage: String(error?.message || "").slice(0, 200),
+            lastUserResendRefused: refusedByProvider,
             updatedAt: new Date(),
         }, { merge: true });
+
+        if (refusedByProvider) {
+            throw new HttpsError(
+                "failed-precondition",
+                "발송사에서 이 쿠폰의 재발송을 거절했어요. 이미 사용했거나 기간이 지난 쿠폰일 수 있어요. 계속 문제가 있으면 문의해 주세요."
+            );
+        }
         throw new HttpsError("unavailable", "문자 재발송 요청이 지연되고 있어요. 잠시 후 다시 시도해 주세요.");
     }
 

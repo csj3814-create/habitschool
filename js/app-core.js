@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=312';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=312';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=313';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=313';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=312';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=312';
+} from './auth-login-helpers.js?v=313';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=313';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -32,14 +32,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=312';
+} from './exercise-media.js?v=313';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=312';
+} from './health-connect-utils.js?v=313';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -56,16 +56,16 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=312';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=312';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=312';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=312';
-import { sanitize, compressImage } from './data-manager.js?v=312';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=312';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=312';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=312';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=312';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=312';
+} from './habit-groups.js?v=313';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=313';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=313';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=313';
+import { sanitize, compressImage } from './data-manager.js?v=313';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=313';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=313';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=313';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=313';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=313';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -75,14 +75,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=312';
+} from './guest-demo.js?v=313';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=312';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=312';
+} from './product-events.js?v=313';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=313';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -104,7 +104,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=312';
+} from './diet-program.js?v=313';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -116,18 +116,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=312';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=312';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=312';
+} from './meditation-guide.js?v=313';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=313';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=313';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=312';
+} from './social-challenge-readiness.js?v=313';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=312';
+} from './monthly-mvp-reward.js?v=313';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6431,7 +6431,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=312';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=313';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -18153,7 +18153,8 @@ function renderBackgroundUploadProgressTracker() {
         title: tracker.done
             ? (failedCount === 0
                 ? (deferredCount > 0 ? '업로드 재시도 예약됨' : '업로드 완료')
-                : '일부 업로드 실패')
+                // 한 장 올렸는데 '일부 실패'라고 하면 뭐가 남았다는 건지 알 수 없다.
+                : (tracker.jobs.length === 1 ? '업로드 실패' : `업로드 ${failedCount}건 실패`))
             : retryingJob
                 ? `업로드 재시도 중 (${Number(retryingJob.retryAttempt || 1)}/${BACKGROUND_MEDIA_UPLOAD_RETRY_ATTEMPTS})`
             : `업로드 ${finishedCount}/${tracker.jobs.length}`,
@@ -18365,23 +18366,96 @@ function findPersistedBackgroundMediaUrl(logData = {}, job = {}) {
     return '';
 }
 
+// 확인 결과는 세 가지다. 예전에는 셋을 전부 null 로 뭉뚱그렸고, 부르는 쪽은 그걸
+// '저장 실패'로 읽었다. 그래서 사진은 멀쩡히 올라갔는데도 "일부 업로드 실패"가 떴다.
+//  persisted — 서버에서 읽어 확인했고 저장돼 있다
+//  absent    — 서버에서 읽어 확인했고 저장돼 있지 않다
+//  unknown   — 읽지 못했다. 저장 여부를 모른다 (실패가 아니다)
+const BACKGROUND_MEDIA_VERIFY_TIMEOUT_MS = 8000;
+
 async function verifyBackgroundMediaPersisted({ userId, docId, job, result } = {}) {
-    if (!userId || !docId || !job || !result?.url) return null;
+    if (!userId || !docId || !job || !result?.url) return { status: 'unknown' };
     const docRef = doc(db, 'daily_logs', docId);
+
     let snapshot = null;
+    let fromServer = true;
     try {
         snapshot = await withRejectingTimeout(
             getDocFromServer(docRef),
-            8000,
+            BACKGROUND_MEDIA_VERIFY_TIMEOUT_MS,
             'background_media_verify_timeout'
         );
-    } catch (_) {
+    } catch (error) {
+        noteFirestoreConnectivityFailure(error, 'background-media verify');
+        // 캐시는 방금 쓴 값을 아직 모를 수 있다. 여기서 없다고 나와도 없다고 단정하지 않는다.
+        fromServer = false;
         snapshot = await getDoc(docRef).catch(() => null);
     }
-    if (!snapshot?.exists?.()) return null;
+
+    if (!snapshot?.exists?.()) {
+        // 서버에서 확실히 읽었는데 문서가 없으면 정말 없는 것이다.
+        return fromServer && snapshot ? { status: 'absent' } : { status: 'unknown' };
+    }
+
     const persistedData = snapshot.data() || {};
     const persistedUrl = findPersistedBackgroundMediaUrl(persistedData, job);
-    return persistedUrl === result.url ? persistedData : null;
+    if (persistedUrl === result.url) return { status: 'persisted', data: persistedData };
+    return fromServer ? { status: 'absent' } : { status: 'unknown' };
+}
+
+// 저장할 조각을 만드는 일과 그것을 쓰는 일을 나눈다. 확인이 불발돼 큐에 다시 넣을
+// 때도 같은 조각이 필요한데, 여기서 두 벌로 만들면 조용히 달라진다.
+function buildBackgroundMediaPatch(job, result, baseData = null, docId = '') {
+    if (!job || !result?.url) return null;
+    const nextData = cloneDailyLogData(baseData || getCachedDailyLog(docId) || {});
+
+    if (job.kind === 'diet') {
+        nextData.diet = {
+            ...(nextData.diet || {}),
+            [`${job.slot}Url`]: result.url,
+            [`${job.slot}ThumbUrl`]: result.thumbUrl || null
+        };
+    } else if (job.kind === 'sleep') {
+        nextData.sleepAndMind = {
+            ...(nextData.sleepAndMind || {}),
+            sleepImageUrl: result.url,
+            sleepImageThumbUrl: result.thumbUrl || null
+        };
+    } else if (job.kind === 'cardio') {
+        if (_removedExerciseMediaIds.cardio.has(job.mediaId)) return null;
+        nextData.exercise = {
+            ...(nextData.exercise || {}),
+            cardioList: upsertExerciseItem('cardio', nextData?.exercise?.cardioList || [], {
+                mediaId: job.mediaId,
+                imageUrl: result.url,
+                imageThumbUrl: result.thumbUrl || null,
+                aiAnalysis: job.aiAnalysis || null
+            })
+        };
+    } else if (job.kind === 'strength') {
+        if (_removedExerciseMediaIds.strength.has(job.mediaId)) return null;
+        nextData.exercise = {
+            ...(nextData.exercise || {}),
+            strengthList: upsertExerciseItem('strength', nextData?.exercise?.strengthList || [], {
+                mediaId: job.mediaId,
+                videoUrl: result.url,
+                videoThumbUrl: result.thumbUrl || null,
+                aiAnalysis: job.aiAnalysis || null
+            })
+        };
+    } else {
+        return null;
+    }
+
+    const { awarded } = getEffectiveAwardedPointResult(nextData, nextData.awardedPoints || {}, nextData.date || '');
+    nextData.awardedPoints = awarded;
+
+    const patchBody = {};
+    if (job.kind === 'diet') patchBody.diet = nextData.diet;
+    else if (job.kind === 'sleep') patchBody.sleepAndMind = nextData.sleepAndMind;
+    else patchBody.exercise = nextData.exercise;
+
+    return { patchBody, nextData };
 }
 
 async function applyBackgroundMediaPatch({ userId, docId, job, result, updateGallery = true, baseData = null }) {
@@ -18713,14 +18787,14 @@ function runBackgroundMediaSyncJobs({
                 }
                 return { failed: false };
             } catch (error) {
-                const persistedData = await verifyBackgroundMediaPersisted({
+                const verification = await verifyBackgroundMediaPersisted({
                     userId,
                     docId,
                     job,
                     result
-                }).catch(() => null);
-                if (persistedData) {
-                    latestCommittedData = cloneDailyLogData(persistedData);
+                }).catch(() => ({ status: 'unknown' }));
+                if (verification.status === 'persisted') {
+                    latestCommittedData = cloneDailyLogData(verification.data);
                     console.info('[background-media] recovered completed save after follow-up error:', job.kind, job.inputId);
                     updateBackgroundUploadProgressTracker(job.inputId, {
                         transferPct: 100,
@@ -18731,6 +18805,32 @@ function runBackgroundMediaSyncJobs({
                         failed: false
                     });
                     return { failed: false };
+                } else if (verification.status === 'unknown') {
+                    // 저장됐는지 확인하지 못했을 뿐이다. 사진은 이미 Storage 에 올라가 있고
+                    // 반영이 안 됐다면 패치 큐가 다시 시도한다. 모르는 것을 실패라고
+                    // 말하면, 실제로는 저장된 사람에게 실패했다고 알리게 된다.
+                    console.warn('[background-media] save state unverified, deferring:', job.kind, job.inputId, error?.message || error);
+                    const rebuilt = buildBackgroundMediaPatch(job, result, null, docId);
+                    if (rebuilt) {
+                        queueBackgroundMediaPatchRetry({
+                            userId,
+                            docId,
+                            job,
+                            patchBody: rebuilt.patchBody,
+                            committedData: rebuilt.nextData
+                        });
+                        scheduleBackgroundMediaPatchFlush('background_media_verify_unknown');
+                    }
+                    updateBackgroundUploadProgressTracker(job.inputId, {
+                        transferPct: 100,
+                        syncPct: 100,
+                        retrying: false,
+                        retryAttempt: 0,
+                        finished: false,
+                        failed: false,
+                        deferred: true
+                    });
+                    return { failed: true, deferred: true };
                 } else if (deferFailuresToOutbox && isBackgroundJobBackedByOutbox(job, deferredFailureInputIds)) {
                     console.warn('[background-media] upload deferred to offline outbox:', job.kind, job.inputId, error?.message || error);
                     updateBackgroundUploadProgressTracker(job.inputId, {

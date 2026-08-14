@@ -369,7 +369,10 @@ describe('video upload resilience', () => {
         expect(source).toContain('function findPersistedBackgroundMediaUrl(logData = {}, job = {})');
         expect(source).toContain('async function verifyBackgroundMediaPersisted');
         expect(source).toContain('getDocFromServer(docRef)');
-        expect(source).toContain('const persistedData = await verifyBackgroundMediaPersisted');
+        // 확인 결과를 persisted / absent / unknown 으로 나눴다. 예전에는 셋을 다 null 로
+        // 뭉뚱그려서, '확인 못 함'이 '저장 실패'로 보고됐다.
+        expect(source).toContain('const verification = await verifyBackgroundMediaPersisted');
+        expect(source).toContain("if (verification.status === 'persisted')");
         expect(source).toContain("console.info('[background-media] recovered completed save after follow-up error:'");
         expect(source).toContain('finished: true');
         expect(source).toContain('failed: false');

@@ -2,6 +2,21 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-14 (2)
+
+### Fixed
+- Stopped reporting an unverified save as a failed upload. When a follow-up step threw, the recovery path asked `verifyBackgroundMediaPersisted` whether the media had landed — and that function returned `null` for three different situations: confirmed absent, unreadable, and readable only from a cache that may not yet know about the write. The caller read all three as failure, so a photo that had uploaded fine showed "일부 업로드 실패" at 100%. It now reports `persisted` / `absent` / `unknown`, only says `absent` when the server itself answered, and treats `unknown` as deferred — re-queueing the patch instead of declaring a failure.
+- Made the blood test result reach the profile it feeds. `analyzeBloodTest` wrote `{'healthProfile.hba1c': …}` through `set()`, which does not read dots as paths — it created a top-level field whose name contains a dot, while the nested `healthProfile.hba1c` that `metabolic-score` reads stayed empty. Anyone who uploaded a blood test still saw "건강 지표 기록 필요" on the insulin row. It now uses `update()`, which does interpret paths, and falls back to writing the nested shape if the member document is missing.
+- Filed blood test results under the Korean date instead of the UTC one, so a test uploaded between midnight and 9am no longer lands on the previous day, and added `{merge: true}` so a second analysis on the same day no longer erases the first.
+- Told a refused coupon resend apart from one that never reached the vendor. Any provider error produced "문자 재발송 요청이 지연되고 있어요. 잠시 후 다시 시도해 주세요." — including a 4xx refusal, which will never succeed no matter how many times it is retried, as happens with an already-used coupon. A 4xx now says the vendor refused and why it might have, while timeouts and 5xx keep the delay wording.
+
+### Added
+- Server-side sensitive-consent check on `analyzeBloodTest`. The gate existed only on screen, so calling the callable directly would analyse and store a blood test with no consent recorded — for Article 23 data.
+- `scripts/backfill-bloodtest-health-profile-2026-08-14.js`, which walks the `bloodTests` collection group and moves each member's latest metrics into `healthProfile`, clearing the dotted top-level fields the old code created. It refuses to run without `--dry-run` or `--apply`, and never overwrites a value the member entered themselves.
+
+### Changed
+- Rotated the cache to v313.
+
 ## 2026-08-14
 
 ### Changed
