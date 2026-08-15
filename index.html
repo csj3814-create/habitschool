@@ -1365,14 +1365,14 @@
                             <p>연결 코드를 만들어 <strong>해빛스쿨 단톡방</strong>에 붙여넣으면 이어집니다.</p>
                         </div>
                     </div>
-                    <div id="chatbot-link-status" class="chatbot-link-status">연결 코드를 만들어 단톡방에 붙여넣어 주세요.</div>
-                    <button type="button" class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">연결 코드 만들기</button>
+                    <div id="chatbot-link-status" class="chatbot-link-status" style="display:none;"></div>
                     <div id="chatbot-link-code-box" class="chatbot-link-code-box" style="display:none;">
                         <div class="chatbot-link-code-label">단톡방에 그대로 붙여넣으세요</div>
                         <strong id="chatbot-link-command" class="chatbot-link-command">-</strong>
                         <div class="chatbot-link-meta" id="chatbot-link-expiry">만료 시간: -</div>
                         <button type="button" class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">복사하기</button>
                     </div>
+                    <button type="button" id="chatbot-link-generate" class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">연결 코드 만들기</button>
                     <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">1:1 채팅으로 연결하기</button>
                     <div id="chatbot-link-fallback-panel" class="chatbot-link-fallback-panel" style="display:none;">
                         <div class="chatbot-link-fallback-copy">단톡방을 쓰기 어려우면 카카오톡 1:1 채팅에서 연결할 수 있어요.</div>

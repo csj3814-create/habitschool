@@ -1873,6 +1873,20 @@ body.dark-mode .step-detail-item { color: #bbb; }
     margin: 0;
 }
 
+/* Demoted once a code exists: copying it is the action that matters then. */
+.chatbot-link-generate--secondary {
+    width: 100%;
+    margin: 10px 0 0;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid #efd7bd;
+    background: transparent;
+    color: #8f5717;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .chatbot-link-copy-btn {
     width: 100%;
     margin-top: 10px;

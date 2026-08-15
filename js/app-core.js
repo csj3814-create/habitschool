@@ -5866,6 +5866,7 @@ function renderChatbotLinkStatus(userData = {}) {
     const expiryEl = document.getElementById('chatbot-link-expiry');
     const lastUsedEl = document.getElementById('chatbot-link-last-used');
     const copyBtn = document.querySelector('.chatbot-link-copy-btn');
+    const generateBtn = document.getElementById('chatbot-link-generate');
     if (!statusEl || !codeBox || !commandEl || !expiryEl || !lastUsedEl) return;
 
     const code = String(userData.chatbotLinkCode || '').trim().toUpperCase();
@@ -5877,15 +5878,26 @@ function renderChatbotLinkStatus(userData = {}) {
     const pendingNoticeHtml = buildPendingChatbotConnectNotice();
 
     if (isActive) {
-        statusEl.innerHTML = `아래 문구를 복사해 <strong>해빛스쿨 단톡방</strong>에 붙여넣어 주세요.${pendingNoticeHtml}`;
         codeBox.style.display = 'block';
         commandEl.textContent = buildChatbotLinkCommand(code);
-        expiryEl.textContent = `${formatDateTimeForUi(expiresAt)}까지 쓸 수 있어요`;
+        // The code lives 10 minutes, so the date adds nothing the member needs.
+        expiryEl.textContent = `${expiresAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 쓸 수 있어요`;
     } else {
-        statusEl.innerHTML = `연결 코드를 만들어 <strong>해빛스쿨 단톡방</strong>에 붙여넣으면 이어집니다.${pendingNoticeHtml}`;
         codeBox.style.display = 'none';
         commandEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
+    }
+
+    // The card header already explains the flow. This line is only for something
+    // that needs saying right now, so it stays hidden when there is nothing.
+    statusEl.innerHTML = pendingNoticeHtml || '';
+    statusEl.style.display = pendingNoticeHtml ? 'block' : 'none';
+
+    // Once a code exists the main action is copying it, not making another one.
+    if (generateBtn) {
+        generateBtn.textContent = isActive ? '새 코드 만들기' : '연결 코드 만들기';
+        generateBtn.classList.toggle('submit-btn', !isActive);
+        generateBtn.classList.toggle('chatbot-link-generate--secondary', isActive);
     }
 
     if (copyBtn) copyBtn.disabled = !isActive;
@@ -5894,14 +5906,17 @@ function renderChatbotLinkStatus(userData = {}) {
         setChatbotLinkFallbackExpanded(false);
     }
 
-    if (connectLastLinkedAt && (!codeLastUsedAt || connectLastLinkedAt.getTime() >= codeLastUsedAt.getTime())) {
-        lastUsedEl.textContent = connectLastKakaoName
-            ? `최근 !연결 완료: ${formatDateTimeForUi(connectLastLinkedAt)} · ${connectLastKakaoName}`
-            : `최근 !연결 완료: ${formatDateTimeForUi(connectLastLinkedAt)}`;
-    } else if (codeLastUsedAt) {
-        lastUsedEl.textContent = `최근 등록 코드 연결: ${formatDateTimeForUi(codeLastUsedAt)}`;
+    // Which mechanism was used is the member's business only in that it worked.
+    const usedConnect = connectLastLinkedAt
+        && (!codeLastUsedAt || connectLastLinkedAt.getTime() >= codeLastUsedAt.getTime());
+    const lastLinkedAt = usedConnect ? connectLastLinkedAt : codeLastUsedAt;
+
+    if (lastLinkedAt) {
+        lastUsedEl.textContent = (usedConnect && connectLastKakaoName)
+            ? `최근 연결: ${formatDateTimeForUi(lastLinkedAt)} · ${connectLastKakaoName}`
+            : `최근 연결: ${formatDateTimeForUi(lastLinkedAt)}`;
     } else {
-        lastUsedEl.textContent = '최근 !연결 / 등록 코드 이력은 아직 없어요.';
+        lastUsedEl.textContent = '아직 연결한 적이 없어요.';
     }
 }
 
