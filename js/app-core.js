@@ -5585,7 +5585,7 @@ function setChatbotLinkFallbackExpanded(force) {
     const panel = document.getElementById('chatbot-link-fallback-panel');
     const toggle = document.getElementById('chatbot-link-fallback-toggle');
     if (panel) panel.style.display = _chatbotLinkFallbackExpanded ? 'block' : 'none';
-    if (toggle) toggle.textContent = _chatbotLinkFallbackExpanded ? '등록 코드 접기' : '등록 코드로 연결하기';
+    if (toggle) toggle.textContent = _chatbotLinkFallbackExpanded ? '1:1 연결 접기' : '1:1 채팅으로 연결하기';
 }
 
 function toggleChatbotLinkFallback() {
@@ -5851,15 +5851,22 @@ function dismissPendingChatbotConnect() {
     showToast('보류된 해빛코치 연결을 정리했어요.');
 }
 
+// The chatbot accepts `!연결 <코드>` in the group chat, so the member should be
+// handed the whole line rather than a bare code they have to assemble.
+function buildChatbotLinkCommand(code) {
+    const normalized = String(code || '').trim().toUpperCase();
+    return normalized ? `!연결 ${normalized}` : '';
+}
+
 function renderChatbotLinkStatus(userData = {}) {
     const statusEl = document.getElementById('chatbot-link-status');
     const fallbackToggle = document.getElementById('chatbot-link-fallback-toggle');
     const codeBox = document.getElementById('chatbot-link-code-box');
-    const codeEl = document.getElementById('chatbot-link-code');
+    const commandEl = document.getElementById('chatbot-link-command');
     const expiryEl = document.getElementById('chatbot-link-expiry');
     const lastUsedEl = document.getElementById('chatbot-link-last-used');
     const copyBtn = document.querySelector('.chatbot-link-copy-btn');
-    if (!statusEl || !codeBox || !codeEl || !expiryEl || !lastUsedEl) return;
+    if (!statusEl || !codeBox || !commandEl || !expiryEl || !lastUsedEl) return;
 
     const code = String(userData.chatbotLinkCode || '').trim().toUpperCase();
     const expiresAt = toDateSafe(userData.chatbotLinkCodeExpiresAt);
@@ -5870,14 +5877,14 @@ function renderChatbotLinkStatus(userData = {}) {
     const pendingNoticeHtml = buildPendingChatbotConnectNotice();
 
     if (isActive) {
-        statusEl.innerHTML = `<strong>!연결</strong>이 기본이에요. 어려울 때만 아래 등록 코드를 사용하세요.${pendingNoticeHtml}`;
+        statusEl.innerHTML = `아래 문구를 복사해 <strong>해빛스쿨 단톡방</strong>에 붙여넣어 주세요.${pendingNoticeHtml}`;
         codeBox.style.display = 'block';
-        codeEl.textContent = code;
-        expiryEl.textContent = `만료 시간: ${formatDateTimeForUi(expiresAt)}`;
+        commandEl.textContent = buildChatbotLinkCommand(code);
+        expiryEl.textContent = `${formatDateTimeForUi(expiresAt)}까지 쓸 수 있어요`;
     } else {
-        statusEl.innerHTML = `카카오톡 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 연결돼요.${pendingNoticeHtml}`;
+        statusEl.innerHTML = `연결 코드를 만들어 <strong>해빛스쿨 단톡방</strong>에 붙여넣으면 이어집니다.${pendingNoticeHtml}`;
         codeBox.style.display = 'none';
-        codeEl.textContent = '-';
+        commandEl.textContent = '-';
         expiryEl.textContent = '만료 시간: -';
     }
 
@@ -6440,31 +6447,28 @@ async function generateChatbotLinkCode() {
     try {
         const fn = httpsCallable(functions, 'generateChatbotLinkCode');
         const result = await fn();
-        setChatbotLinkFallbackExpanded(true);
+        // The code box sits at the top level now, so leave the 1:1 fallback closed.
         renderChatbotLinkStatus({
             chatbotLinkCode: result.data?.code,
             chatbotLinkCodeExpiresAt: result.data?.expiresAt
         });
-        showToast(`카카오 등록 코드 ${result.data?.code || ''} 가 생성됐어요. 버튼 연결이 어려우면 카카오톡에서 !등록 코드 로 입력해 주세요.`);
+        showToast('연결 코드를 만들었어요. 복사해서 단톡방에 붙여넣어 주세요.');
     } catch (error) {
         console.error('generate chatbot link code error:', error);
-        showToast(`⚠️ ${error.message || '카카오 등록 코드 생성에 실패했습니다.'}`);
+        showToast(`⚠️ ${error.message || '연결 코드 생성에 실패했습니다.'}`);
     }
 }
 
 async function copyChatbotLinkCode() {
-    const code = document.getElementById('chatbot-link-code')?.textContent?.trim();
-    if (!code || code === '-') {
-        showToast('먼저 보조 등록 코드를 만들어 주세요.');
+    // Copies the whole `!연결 <코드>` line: the member pastes it into the group
+    // chat as-is, with nothing left to type or assemble.
+    const command = document.getElementById('chatbot-link-command')?.textContent?.trim();
+    if (!command || command === '-') {
+        showToast('먼저 연결 코드를 만들어 주세요.');
         return;
     }
 
-    try {
-        await navigator.clipboard.writeText(code);
-        showToast('카카오 등록 코드를 복사했어요.');
-    } catch (_) {
-        showToast('코드 복사에 실패했어요. 길게 눌러 직접 복사해 주세요.');
-    }
+    await copyTextToClipboard(command, '복사했어요. 해빛스쿨 단톡방에 붙여넣어 주세요.');
 }
 
 // ========== 닉네임 변경 ==========

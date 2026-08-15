@@ -1364,43 +1364,39 @@
                     <div class="chatbot-link-head">
                         <div>
                             <h3>🤖 해빛코치 계정 연결</h3>
-                            <p>카카오톡 해빛코치 1:1 채팅에서 <strong>!연결</strong>만 입력하면 바로 이어집니다.</p>
+                            <p>연결 코드를 만들어 <strong>해빛스쿨 단톡방</strong>에 붙여넣으면 이어집니다.</p>
                         </div>
                     </div>
-                    <div class="chatbot-link-steps">
-                        <button type="button" class="chatbot-link-step chatbot-link-step--kakao" onclick="openChatbotKakaoChat()">
-                            <span class="chatbot-link-step-no">1</span>
-                            <div class="chatbot-link-step-copy">
-                                <strong>카카오톡 1:1 채팅</strong>
-                                <small>탭하면 해빛코치 1:1 채팅이 바로 열려요</small>
-                            </div>
-                            <span class="chatbot-link-step-cta">열기</span>
-                        </button>
-                        <div class="chatbot-link-step">
-                            <span class="chatbot-link-step-no">2</span>
-                            <div>
-                                <strong>앱에서 연결 완료</strong>
-                                <small>현재 로그인 계정으로 바로 연결</small>
-                            </div>
-                        </div>
+                    <div id="chatbot-link-status" class="chatbot-link-status">연결 코드를 만들어 단톡방에 붙여넣어 주세요.</div>
+                    <button type="button" class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">연결 코드 만들기</button>
+                    <div id="chatbot-link-code-box" class="chatbot-link-code-box" style="display:none;">
+                        <div class="chatbot-link-code-label">단톡방에 그대로 붙여넣으세요</div>
+                        <strong id="chatbot-link-command" class="chatbot-link-command">-</strong>
+                        <div class="chatbot-link-meta" id="chatbot-link-expiry">만료 시간: -</div>
+                        <button type="button" class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">복사하기</button>
                     </div>
-                    <div id="chatbot-link-status" class="chatbot-link-status"><strong>!연결</strong>이 기본 연결이에요. 버튼 연결이 어려울 때만 아래 등록 코드를 써요.</div>
-                    <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">등록 코드로 연결하기</button>
+                    <button type="button" id="chatbot-link-fallback-toggle" class="chatbot-link-fallback-toggle" onclick="toggleChatbotLinkFallback()">1:1 채팅으로 연결하기</button>
                     <div id="chatbot-link-fallback-panel" class="chatbot-link-fallback-panel" style="display:none;">
-                        <div class="chatbot-link-fallback-copy">버튼 연결이 어려울 때만 보조 등록 코드를 만들어 사용하세요.</div>
-                        <div id="chatbot-link-code-box" class="chatbot-link-code-box" style="display:none;">
-                            <div class="chatbot-link-code-row">
-                                <span class="chatbot-link-code-label">카카오 등록 코드</span>
-                                <strong id="chatbot-link-code" class="chatbot-link-code-value">-</strong>
+                        <div class="chatbot-link-fallback-copy">단톡방을 쓰기 어려우면 카카오톡 1:1 채팅에서 연결할 수 있어요.</div>
+                        <div class="chatbot-link-steps">
+                            <button type="button" class="chatbot-link-step chatbot-link-step--kakao" onclick="openChatbotKakaoChat()">
+                                <span class="chatbot-link-step-no">1</span>
+                                <div class="chatbot-link-step-copy">
+                                    <strong>카카오톡 1:1 채팅</strong>
+                                    <small>탭하면 해빛코치 1:1 채팅이 바로 열려요</small>
+                                </div>
+                                <span class="chatbot-link-step-cta">열기</span>
+                            </button>
+                            <div class="chatbot-link-step">
+                                <span class="chatbot-link-step-no">2</span>
+                                <div>
+                                    <strong>!연결 입력 후 버튼 누르기</strong>
+                                    <small>현재 로그인 계정으로 바로 연결</small>
+                                </div>
                             </div>
-                            <div class="chatbot-link-meta" id="chatbot-link-expiry">만료 시간: -</div>
-                        </div>
-                        <div class="chatbot-link-actions">
-                            <button class="submit-btn chatbot-link-primary" onclick="generateChatbotLinkCode()">등록 코드 만들기</button>
-                            <button class="chatbot-link-copy-btn" onclick="copyChatbotLinkCode()">코드 복사</button>
                         </div>
                     </div>
-                    <div class="chatbot-link-foot" id="chatbot-link-last-used">최근 !연결 / 등록 코드 이력은 아직 없어요.</div>
+                    <div class="chatbot-link-foot" id="chatbot-link-last-used">최근 연결 이력은 아직 없어요.</div>
                 </div>
 
                 <!-- 6. 친구 요청 -->

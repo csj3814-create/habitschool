@@ -1844,6 +1844,24 @@ body.dark-mode .step-detail-item { color: #bbb; }
     color: #ff8c00;
 }
 
+/* The full `!연결 <코드>` line the member pastes into the group chat. */
+.chatbot-link-command {
+    display: block;
+    margin: 6px 0 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px dashed #f0c79a;
+    background: #fffaf3;
+    color: #d2691e;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-align: center;
+    word-break: break-all;
+    user-select: all;
+    -webkit-user-select: all;
+}
+
 .chatbot-link-actions {
     display: flex;
     gap: 8px;
@@ -1851,19 +1869,20 @@ body.dark-mode .step-detail-item { color: #bbb; }
 }
 
 .chatbot-link-primary {
-    flex: 1;
+    width: 100%;
     margin: 0;
 }
 
 .chatbot-link-copy-btn {
-    flex-shrink: 0;
-    padding: 10px 14px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid #f0d0b0;
     background: #fff;
     color: #9a5b1a;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     cursor: pointer;
 }
 
