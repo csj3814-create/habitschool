@@ -5975,16 +5975,19 @@ function renderProfileFriendRequests() {
     const activeFriendCount = getActiveFriendIds().length;
     card.style.display = 'block';
 
-    const summaryHtml = `
-        <div class="friend-request-summary">
-            <span class="friend-request-chip">활성 친구 ${activeFriendCount}명</span>
-            <span class="friend-request-chip">받은 요청 ${incoming.length}건</span>
-            <span class="friend-request-chip">보낸 요청 ${outgoing.length}건</span>
-        </div>
-    `;
+    // A chip reading "0건" is not information; it is a slot that trains people to
+    // stop reading the row. Only counts that need acting on earn a chip.
+    const chips = [`<span class="friend-request-chip">친구 ${activeFriendCount}명</span>`];
+    if (incoming.length > 0) {
+        chips.push(`<span class="friend-request-chip friend-request-chip--action">받은 요청 ${incoming.length}건</span>`);
+    }
+    if (outgoing.length > 0) {
+        chips.push(`<span class="friend-request-chip">보낸 요청 ${outgoing.length}건</span>`);
+    }
+    const summaryHtml = `<div class="friend-request-summary">${chips.join('')}</div>`;
 
     if (incoming.length === 0 && outgoing.length === 0) {
-        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">아직 처리할 친구 요청이 없어요. 친구에게 초대 링크를 보내면 신규 가입도, 기존 회원 연결도 바로 이어져요.</div>`;
+        list.innerHTML = `${summaryHtml}<div class="friend-request-empty">처리할 친구 요청이 없어요.</div>`;
         return;
     }
 
