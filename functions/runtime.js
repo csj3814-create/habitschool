@@ -4965,10 +4965,17 @@ exports.getMyInviteStatus = onCall(
             if (doc.data()?.referralDay3BonusGiven === true) milestoneCount += 1;
         });
 
+        // credited는 이중지급을 막는 표식이지 표시 필터가 아니다. 지급 여부는
+        // checkReferralMilestone이 ledgerSnap.exists로 이미 막는다.
+        //
+        // 원장이 생기기 전에 지급된 보상은 credited:false + legacy_referral_milestone로
+        // 백필돼 있다. 그 돈은 옛 코드가 users.coins를 실제로 올려 주고 나갔다.
+        // 그것까지 빼면 이미 받은 사람에게 0P가 보이는데, 이 화면은 바로 그
+        // "500P가 왜 들어왔는지 모르겠다"를 없애려고 만든 화면이다.
         let earnedPoints = 0;
         ledgerSnap.forEach((doc) => {
             const entry = doc.data() || {};
-            if (entry.credited === true) earnedPoints += Number(entry.points || 0);
+            earnedPoints += Number(entry.points || 0);
         });
 
         const invitedCount = inviteeSnap.size;

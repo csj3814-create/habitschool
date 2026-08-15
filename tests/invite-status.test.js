@@ -27,8 +27,14 @@ describe('invite status for the person doing the inviting', () => {
         expect(statusFn).not.toBe('');
         // 인원수 × 500으로 추정하면 이월/예외 지급과 어긋난다. 원장이 진실이다.
         expect(statusFn).toContain('.where("category", "==", "referral_day3")');
-        expect(statusFn).toContain('if (entry.credited === true) earnedPoints += Number(entry.points || 0);');
         expect(statusFn).not.toContain('milestoneCount * 500');
+
+        // credited로 거르지 않는다. 그 표식은 이중지급을 막으려고 붙인 것이고
+        // 지급 여부는 checkReferralMilestone이 ledgerSnap.exists로 막는다.
+        // 원장 도입 전 지급분은 credited:false로 백필돼 있는데(옛 코드가 coins를
+        // 실제로 올리고 나간 돈이다), 그걸 빼면 이미 받은 사람에게 0P가 보인다.
+        expect(statusFn).toContain('earnedPoints += Number(entry.points || 0);');
+        expect(statusFn).not.toContain('if (entry.credited === true)');
         // 이름이나 uid는 돌려주지 않는다. 화면에 필요한 건 숫자뿐이다.
         expect(statusFn).not.toContain('displayName');
         expect(statusFn).not.toContain('email');
