@@ -3442,6 +3442,21 @@ window.handleAppEntryDeepLink = async function({ initialTab = getVisibleTabName(
         return true;
     }
 
+    // The chatbot's `!공유` sends people here instead of rendering its own card.
+    // Landing on the gallery alone is not enough: the share card sits below the
+    // fold, so someone arriving from a chat room would have to hunt for it.
+    if (params.focus === 'share') {
+        if (getVisibleTabName() !== 'gallery') window.openTab?.('gallery', false);
+        requestAnimationFrame(() => {
+            focusElementWithHighlight(
+                document.querySelector('.btn-share-action')
+                || document.getElementById('share-render-preview')
+            );
+        });
+        clearAppEntryDeepLinkParams('gallery');
+        return true;
+    }
+
     if (params.focus === 'record' && ['exercise', 'sleep'].includes(params.tab || initialTab)) {
         const targetTab = params.tab || initialTab;
         if (getVisibleTabName() !== targetTab) window.openTab?.(targetTab, false);
