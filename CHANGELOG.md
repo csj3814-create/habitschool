@@ -2,6 +2,12 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-15 (9)
+
+### Changed
+- Removed "the name of the chat room the command came from" from the collection list. No such value reaches us. MessengerBot R v0.7.29a puts the Android notification title in `room`, and in the production open chat that title is the speaker's own nickname, so every participant reports a different value and none of them names a room. The nickname is already disclosed on its own line, so the list is now complete rather than shortened. Reported from the bot repo, verified against `routes/messengerbot.js` before editing — removing an item from a privacy policy is the direction that under-discloses, so it is the direction to check hardest.
+- Struck the room-name filter from `tasks/habitchatbot-linking-prompt.md`, which I had written as a prerequisite for the whole linking feature. It cannot be built: `isGroupChat` is false for open-chat traffic and the legacy `response()` API in that version exposes no stable channel id. The leaked-code risk it was meant to cover is handled instead by what the code itself does — ten-minute expiry, single use, redaction from logs, and never echoing the code back into the room. Room separation is an operating agreement between the two rooms, not something the code can enforce. The note stays in the file rather than being deleted, since the reasoning is what stops the next person reaching for the same non-existent filter.
+
 ## 2026-08-15 (8)
 
 ### Fixed
