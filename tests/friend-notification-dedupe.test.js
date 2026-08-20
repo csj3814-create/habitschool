@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAppSource } from './source-helpers.js';
+import { readAppSource, readFunctionsSource } from './source-helpers.js';
 
 describe('friend connection notification dedupe', () => {
     it('deduplicates friend_connected toasts by notification document id as well as timestamp', () => {
@@ -22,5 +22,31 @@ describe('friend connection notification dedupe', () => {
         expect(appSource).toContain('writeChallengeNotificationSeenState(uid, {');
         expect(appSource).toContain("showToast(`🤝 ${data.fromUserName || '친구'}님과 연결됐어요!`);");
         expect(appSource).not.toContain('let hasNew = false;');
+    });
+});
+
+describe('친구 연결 알림이 상대 이름을 보여준다', () => {
+    // 알림은 초대·추천한 쪽이 받는다. 그런데 담기는 이름이 받는 사람 자신이라
+    // "최석재님과 이제 함께 기록할 수 있어요" 를 최석재 본인이 받았다.
+    it('추천 가입·초대 링크 모두 상대 이름을 싣는다', () => {
+        const source = readFunctionsSource();
+
+        // 자기 이름을 싣던 형태가 다시 나타나면 안 된다.
+        expect(source).not.toContain('friendName: outcome.inviterName');
+
+        // 세 경로 모두 받는 사람이 아닌 상대의 이름을 쓴다.
+        const sent = source.match(/friendName: outcome\.\w+/g) || [];
+        expect(sent.length).toBeGreaterThanOrEqual(3);
+        sent.forEach((line) => {
+            expect(['friendName: outcome.inviteeName', 'friendName: outcome.responderName'])
+                .toContain(line);
+        });
+    });
+
+    it('상대 이름이 반환값에 실려 나온다', () => {
+        const source = readFunctionsSource();
+        // 추천 가입 경로는 가입한 사람, 초대 링크 경로는 링크를 쓴 사람.
+        expect(source).toContain('inviteeName,');
+        expect(source).toContain('inviteeName: userName,');
     });
 });

@@ -11,9 +11,10 @@
  * blockchain-manager 는 이 함수를 그대로 부른다(구현이 두 벌이 되지 않게).
  */
 
-import { auth, functions } from './firebase-config.js?v=325';
+import { auth, functions } from './firebase-config.js?v=326';
+import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=326';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=325';
+import { showToast, hideToast } from './ui-helpers.js?v=326';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
@@ -141,5 +142,108 @@ export async function claimChallengeReward(tier) {
     } finally {
         stopProgress();
         _claimInFlight.delete(tier);
+    }
+}
+
+// ── 무료 챌린지 시작 ───────────────────────────────────────────────────────────
+//
+// 보상 수령과 같은 이유로 여기에 있다. 무료 티어(3일 미니)의 시작은 Cloud Function
+// 하나를 부르는 게 전부다 — 예치가 0이라 blockchain-manager 의 온체인 분기를 아예
+// 타지 않는다. 그런데 window.startChallenge30D 는 main.js 에서 '블록체인 모듈 로딩
+// 중입니다' 를 띄우는 자리표시자로 시작하고, 라이트 모드는 그 모듈을 영영 안 싣는다.
+// 그래서 라이트에서 3일 미니 챌린지를 누르면 오지 않을 '잠시 후'를 기다리라는 말만
+// 나왔다. 유료 티어는 라이트에서 CSS로 감춰져 있어(styles-base.css 의 .play-mode)
+// 여기로 오는 것은 무료뿐이다.
+
+let startChallengeFunction = null;
+const _startInFlight = new Set();
+
+export function resolveChallengeDefinition(challengeId) {
+    const resolvedId = CHALLENGE_ID_MAP[challengeId] || challengeId;
+    return { resolvedId, def: CHALLENGES[resolvedId] || null };
+}
+
+export function isFreeChallenge(challengeId) {
+    const { def } = resolveChallengeDefinition(challengeId);
+    return !!def && Number(def.hbtStake || 0) === 0;
+}
+
+export async function startFreeChallenge(challengeId) {
+    const { resolvedId, def } = resolveChallengeDefinition(challengeId);
+    if (!def) {
+        showToast('❌ 알 수 없는 챌린지입니다.');
+        return false;
+    }
+    if (Number(def.hbtStake || 0) > 0) {
+        // 예치가 필요한 티어를 여기로 보내면 예치 없이 시작되는 것처럼 보인다.
+        // 조용히 실패하지 말고 부른 쪽이 알아채게 한다.
+        console.error('[challenge] 유료 티어는 무료 시작 경로로 처리할 수 없습니다:', resolvedId);
+        showToast('❌ 이 챌린지는 이 화면에서 시작할 수 없어요.');
+        return false;
+    }
+
+    const tier = def.tier || 'mini';
+    if (_startInFlight.has(tier)) {
+        showToast('⏳ 챌린지를 준비 중이에요. 잠시만 기다려 주세요.');
+        return false;
+    }
+    _startInFlight.add(tier);
+
+    try {
+        if (!auth.currentUser) {
+            showToast('❌ 로그인이 필요합니다.');
+            return false;
+        }
+
+        showToast(`⏳ ${def.duration || 3}일 챌린지 시작 중...`, { durationMs: 0 });
+
+        if (!startChallengeFunction) {
+            startChallengeFunction = httpsCallable(functions, 'startChallenge');
+        }
+        const result = await startChallengeFunction({
+            challengeId: resolvedId,
+            hbtAmount: 0,
+            stakeFlowVersion: 2
+        });
+        const data = result.data || {};
+
+        const duration = data.duration || def.duration || 3;
+        const qualification = data.qualificationLabel
+            || formatChallengeQualificationLabel(data.qualificationPolicy || tier);
+        const todayCredit = !data.deferredStart && data.initialCompletedDays > 0
+            ? '\n📌 오늘 인증분 1일 반영!'
+            : '';
+        const deferred = data.deferredStart && data.startDate
+            ? `\n📅 오늘은 대기일이에요. ${data.startDate}부터 1일차로 시작해요.`
+            : '';
+        hideToast();
+        showToast(`✅ ${duration}일 챌린지 시작!\n${qualification}${todayCredit}${deferred}\n${duration}일 동안 매일 인증하면 ${def.rewardPoints}P 보상!`);
+
+        window.applyOptimisticChallengeStart?.({
+            ...data,
+            challengeId: resolvedId,
+            tier,
+            hbtStaked: 0
+        });
+        // 자산 화면은 라이트 모드에 없다. 있을 때만 갱신한다.
+        if (window.updateAssetDisplay) {
+            await Promise.resolve(window.updateAssetDisplay(true)).catch(() => {});
+        }
+        if (window.loadDashboard) window.loadDashboard();
+        return true;
+    } catch (error) {
+        console.error('❌ 챌린지 시작 오류:', error);
+        const code = String(error?.code || '').replace(/^functions\//, '');
+        const serverMsg = String(error?.message || '').trim();
+        hideToast();
+        // 서버가 사용자용 구체 안내를 주는 코드는 하드코딩 문구로 덮지 않는다.
+        showToast((serverMsg && (code === 'failed-precondition' || code === 'resource-exhausted'))
+            ? `❌ ${serverMsg}`
+            : code === 'unauthenticated'
+            ? '❌ 로그인이 필요합니다.'
+            : `❌ 챌린지 시작에 실패했습니다. (${code || serverMsg || '알 수 없는 오류'})`);
+        return false;
+    } finally {
+        _startInFlight.delete(tier);
     }
 }

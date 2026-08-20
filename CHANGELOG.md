@@ -2,6 +2,15 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-20
+
+### Fixed
+- Let the free 3-day challenge start in the Lite app. `window.startChallenge30D` begins life in main.js as a placeholder that alerts "블록체인 모듈 로딩 중입니다", and the real one only replaces it once blockchain-manager loads. Lite never loads that module by design, so the placeholder was permanent and the mini challenge told people to wait for something that would never arrive. The start needs no chain at all — `challenge-3d` has `hbtStake: 0`, so the on-chain branch is skipped entirely and one callable is all that remains. It now sits in challenge-claim.js beside the claim, which was split out for exactly this reason and had the fix applied only to itself. `blockchain-config.js` is safe to import there: it has no imports of its own and holds only constants, so no wallet, key, or on-chain call comes with it. A paid tier arriving on this path is refused loudly rather than started without its stake, though Lite hides those cards anyway.
+- Stopped the friend-connected push from naming its own recipient. Two of the three call sites sent `friendName: outcome.inviterName` to the inviter, so whoever invited or referred someone was told "최석재님과 이제 함께 기록할 수 있어요" about themselves. The accept-request path had it right all along and shows the shape the other two should have had. Both now carry the other party — the member who signed up, or the one who used the link.
+
+### Notes
+- Looked into the slow video upload and did not change it, because nothing in the upload path is misbehaving. The timeouts are generous (5 minutes hard, 90 seconds idle for a 7MB clip), so nothing is being cancelled and re-sent, and thumbnail extraction is deferred behind `requestIdleCallback` rather than blocking the start. What stands out instead is that **video is never compressed**: images go through `compressImage`, video is sent exactly as recorded, up to a 100MB ceiling. A 7MB clip on a congested LTE uplink is simply a lot of bytes. Firebase's resumable upload does send it as five serial chunks (256KB doubling to 4MB) plus a create request where the Samsung path uses a single PUT, but that is worth a fraction of a second, not the difference being reported. Making the file smaller is the lever with the certain payoff, and that needs a decision on approach before building. Upload sizes could not be measured directly — the service account key was revoked on 08-15.
+
 ## 2026-08-15 (9)
 
 ### Changed

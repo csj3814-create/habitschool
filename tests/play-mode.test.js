@@ -106,3 +106,47 @@ describe('play (Google Play lite) mode', () => {
         expect(manifest).toContain('https://habitschool.web.app/app');
     });
 });
+
+describe('라이트 모드에서 무료 챌린지 시작', () => {
+    const importLinesOf = (source) => source
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith('import '))
+        .join('\n');
+
+    it('시작 버튼이 오지 않을 "잠시 후"를 기다리게 하지 않는다', () => {
+        const main = readRepoFile('js/main.js');
+        // 라이트는 blockchain-manager 를 영영 안 싣는다. 자리표시자로 두면
+        // 3일 미니 챌린지를 눌러도 알림만 뜨고 아무 일도 일어나지 않는다.
+        expect(main).toContain("window.startChallenge30D = (challengeId) => import('./challenge-claim.js");
+        expect(main).toContain('mod.isFreeChallenge(challengeId)');
+        expect(main).toContain('mod.startFreeChallenge(challengeId)');
+    });
+
+    it('무료 시작 경로가 지갑 코드를 끌어오지 않는다', () => {
+        const claim = readRepoFile('js/challenge-claim.js');
+        expect(claim).toContain('export async function startFreeChallenge(');
+        expect(claim).toContain("httpsCallable(functions, 'startChallenge')");
+
+        // 검사 대상은 실제 import 줄뿐이다 — 설명 주석에도 같은 낱말이 나온다.
+        const imports = importLinesOf(claim);
+        expect(imports.length).toBeGreaterThan(0);
+        expect(imports).not.toContain('blockchain-manager');
+        expect(imports).not.toContain('ethers');
+        // 설정 파일은 import 가 하나도 없는 순수 상수라 라이트에서도 안전하다.
+        expect(imports).toContain('blockchain-config.js');
+        expect(importLinesOf(readRepoFile('js/blockchain-config.js'))).toBe('');
+    });
+
+    it('예치가 필요한 티어는 무료 경로로 시작되지 않는다', () => {
+        const claim = readRepoFile('js/challenge-claim.js');
+        // 유료를 여기로 흘리면 예치 없이 시작된 것처럼 보인다. 조용히 넘기지 않는다.
+        expect(claim).toContain('if (Number(def.hbtStake || 0) > 0)');
+    });
+
+    it('라이트에서 유료 티어 카드는 감춰져 있다', () => {
+        const css = readRepoFile('styles-base.css');
+        expect(css).toContain('.play-mode #tier-card-weekly');
+        expect(css).toContain('.play-mode #tier-card-master');
+    });
+});

@@ -4470,6 +4470,8 @@ exports.processReferralSignup = onCall(
                 bonus: 200,
                 inviterUid: referrerUid,
                 inviterName: referrerName,
+                // 알림은 추천인이 받는다. 담을 이름은 상대(가입한 사람)여야 한다.
+                inviteeName,
                 friendshipId,
                 friendshipStatus: friendshipData?.status === "active" ? "already_active" : "connected",
             };
@@ -4477,7 +4479,7 @@ exports.processReferralSignup = onCall(
 
         if (outcome.friendshipStatus === "connected") {
             await sendPushToUsers([referrerUid], buildFriendConnectedPushPayload({
-                friendName: outcome.inviterName,
+                friendName: outcome.inviteeName,
                 friendshipId: outcome.friendshipId
             }));
         }
@@ -5279,13 +5281,15 @@ exports.acceptInviteLinkFriendship = onCall(
                     : "connected",
                 inviterUid,
                 inviterName,
+                // 알림은 초대자가 받는다. 담을 이름은 상대(링크를 쓴 사람)여야 한다.
+                inviteeName: userName,
                 friendshipId,
             };
         });
 
         if (outcome.status === "connected" || outcome.status === "pending_promoted") {
             await sendPushToUsers([inviterUid], buildFriendConnectedPushPayload({
-                friendName: outcome.inviterName,
+                friendName: outcome.inviteeName,
                 friendshipId: outcome.friendshipId
             }));
         }
