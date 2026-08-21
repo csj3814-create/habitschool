@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-20 (2)
+
+### Added
+- Re-encode exercise video before uploading it. Photos went through `compressImage` and video went up exactly as recorded, so a phone's 1080p default bitrate turned a 10-second hyperlapse into 7MB — which on a congested LTE uplink is the whole complaint. The original now plays into a `MediaRecorder` at 1.2Mbps, with no dependency and no demuxer, which CSP rules out anyway. It costs playback time: a 10-second clip takes about 10 seconds, still less than sending 7MB over a slow link. Measured on worst-case noise footage, 4.82MB became 1.46MB with the duration intact; real footage compresses further. Anything under 2MB is left alone, since the wait would buy little.
+- Refused to produce webm. Only `video/mp4` output is accepted, and where mp4 recording is unavailable the original is uploaded untouched. iOS Safari cannot play webm, and it is the same browser that cannot compress at all, so a webm store would have meant Android uploads that iPhone friends could not open — trading upload time for broken playback.
+
+### Fixed
+- Discarded a re-encode that comes back shorter than the source. The first implementation drew each frame onto a canvas so it could downscale, and canvas frames only flow while the page is actually painting. Leaving the app mid-transcode produced a 0-second file — which, being tiny, sailed through the "did it get smaller" check and would have replaced a member's recording with an empty one. Capturing the video element's own stream survives the page being hidden, verified side by side: 0.0s from the canvas route against 5.0s from the stream, under identical conditions. The duration check stays regardless, because size alone rates a truncated file as the best possible result.
+- Added the new module to the service worker's pre-cache list, without which it would have failed to load offline. Caught by `pwa-offline-assets`, which walks the import graph rather than trusting the list to be kept up to date by hand.
+
 ## 2026-08-20
 
 ### Fixed

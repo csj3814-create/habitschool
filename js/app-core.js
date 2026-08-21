@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=326';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=326';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=327';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=327';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=326';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=326';
+} from './auth-login-helpers.js?v=327';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=327';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=326';
+} from './exercise-media.js?v=327';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=326';
+} from './health-connect-utils.js?v=327';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,16 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=326';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=326';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=326';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=326';
-import { sanitize, compressImage } from './data-manager.js?v=326';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=326';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=326';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=326';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=326';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=326';
+} from './habit-groups.js?v=327';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=327';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=327';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=327';
+import { sanitize, compressImage } from './data-manager.js?v=327';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=327';
+import { compressExerciseVideo } from './video-compress.js?v=327';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=327';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=327';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=327';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=327';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -76,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=326';
+} from './guest-demo.js?v=327';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=326';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=326';
+} from './product-events.js?v=327';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=327';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -105,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=326';
+} from './diet-program.js?v=327';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -117,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=326';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=326';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=326';
+} from './meditation-guide.js?v=327';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=327';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=327';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=326';
+} from './social-challenge-readiness.js?v=327';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=326';
+} from './monthly-mvp-reward.js?v=327';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6544,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=326';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=327';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17418,6 +17419,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     const isVideoUpload = isExerciseVideoUploadCandidate(file, normalizedFolderName);
     const originalSize = Number(file.size || 0);
     const suppressFailureToast = options?.suppressFailureToast === true;
+    const onProgressHook = typeof options?.onProgress === 'function' ? options.onProgress : null;
 
     if (!isValidFileType(file) && !(isExerciseVideoFolder && isVideoUpload)) {
         showToast('⚠️ 지원하지 않는 파일 형식입니다. (이미지 또는 동영상만 가능)');
@@ -17431,6 +17433,21 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
     let fileToUpload = file;
     if (!isVideoUpload && String(file.type || '').startsWith('image/')) {
         fileToUpload = await compressImage(file);
+    }
+    // 사진만 압축을 지나고 영상은 촬영된 그대로 올라갔다. 1080p 기본 비트레이트면
+    // 10초 하이퍼랩스가 7MB 라, 느린 회선에서는 그 자체가 병목이다.
+    // 재인코딩은 재생 속도로 걸리므로 진행률을 그동안 보여 준다.
+    // 못 하는 기기이거나 줄지 않으면 null 이 오고, 그때는 원본을 그대로 쓴다.
+    if (isVideoUpload) {
+        const compressedVideo = await compressExerciseVideo(fileToUpload, {
+            onProgress: (pct) => {
+                if (!onProgressHook) return;
+                try {
+                    onProgressHook({ pct, message: '영상을 가볍게 만드는 중… ' + pct + '%' });
+                } catch (_) {}
+            }
+        });
+        if (compressedVideo) fileToUpload = compressedVideo;
     }
     if (!fileToUpload) {
         if (!suppressFailureToast) showToast('⚠️ 사진을 처리하지 못했어요. JPG 또는 PNG로 다시 선택해주세요.');
@@ -17457,7 +17474,7 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
 
     const storagePath = createUniqueMediaStoragePath(folderName, userId, fileToUpload.name);
     const storageRef = ref(storage, storagePath);
-    const onProgress = typeof options?.onProgress === 'function' ? options.onProgress : null;
+    const onProgress = onProgressHook;
     const videoContentType = isVideo ? getExerciseVideoContentType(fileToUpload) : '';
     const uploadTimeouts = getResumableUploadTimeouts(isVideo
         ? { type: videoContentType, size: fileToUpload.size }
