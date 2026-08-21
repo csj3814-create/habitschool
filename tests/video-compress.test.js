@@ -144,3 +144,52 @@ describe('해상도에 맞는 비트레이트', () => {
         expect(getTargetBitrate(0, 0)).toBe(getTargetBitrate(640, 480));
     });
 });
+
+describe('결과 용량으로 비트레이트를 정한다', () => {
+    it('길이가 길어도 업로드 용량이 목표 근처에 머문다', async () => {
+        // 해상도만 보고 정했더니 40초 4K 가 12MB 로 나왔고, 느린 회선에서 그건
+        // 다시 2분짜리 업로드였다. 압축의 목적이 업로드 시간 단축이므로
+        // 길이가 얼마든 결과가 일정 범위에 들어와야 한다.
+        const { getTargetBitrate, TARGET_UPLOAD_BYTES } = await import('../js/video-compress.js');
+        const bytesFor = (w, h, sec) => (getTargetBitrate(w, h, sec * 1000) * sec) / 8;
+
+        for (const [w, h] of [[1280, 720], [1920, 1080], [3840, 2160]]) {
+            const out = bytesFor(w, h, 40);
+            expect(out).toBeLessThanOrEqual(TARGET_UPLOAD_BYTES * 1.15);
+        }
+    });
+
+    it('짧은 영상에서 화질을 과하게 깎지 않는다', async () => {
+        const { getTargetBitrate } = await import('../js/video-compress.js');
+        // 10초짜리를 목표 용량에 맞추면 비트레이트가 치솟는다. 상한으로 묶는다.
+        expect(getTargetBitrate(3840, 2160, 10000)).toBeLessThanOrEqual(2500000);
+        expect(getTargetBitrate(1280, 720, 10000)).toBeLessThanOrEqual(1200000);
+    });
+
+    it('아주 긴 영상에서도 하한 아래로 내려가지 않는다', async () => {
+        const { getTargetBitrate } = await import('../js/video-compress.js');
+        // 못 볼 영상을 만드느니 용량을 포기한다.
+        expect(getTargetBitrate(1280, 720, 10 * 60 * 1000)).toBeGreaterThanOrEqual(500000);
+    });
+
+    it('길이를 모르면 화질 쪽에 선다', async () => {
+        const { getTargetBitrate } = await import('../js/video-compress.js');
+        expect(getTargetBitrate(1920, 1080, 0)).toBe(getTargetBitrate(1920, 1080, 1));
+    });
+});
+
+describe('압축 진행률이 전송률을 밀어 올리지 않는다', () => {
+    it('압축은 숫자가 아니라 글로 알린다', () => {
+        const app = readRepoFile('js/app-core.js');
+        // entry.progress 는 Math.max 로 기록된다. 압축이 100 을 쓰면 전송률이
+        // 거기 박혀, 그 뒤 실제 업로드가 화면에 나타나지 않고 89% 에서 멈춘 것처럼 보인다.
+        expect(app).toContain('onProgressHook({ pct: 0, message: `영상을 줄이는 중… ${pct}%` })');
+        expect(app).not.toContain("onProgressHook({ pct, message: '영상을 가볍게 만드는 중");
+    });
+
+    it('전송률 기록이 여전히 Math.max 라는 전제를 지킨다', () => {
+        const app = readRepoFile('js/app-core.js');
+        // 이 전제가 바뀌면 위 회피가 필요 없어지거나, 반대로 다른 곳이 깨진다.
+        expect(app).toContain('entry.progress = Math.max(entry.progress || 0, pct);');
+    });
+});

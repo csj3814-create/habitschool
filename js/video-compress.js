@@ -22,19 +22,34 @@
 
 const MB = 1024 * 1024;
 
-// 이보다 작으면 재인코딩에 드는 시간이 아깝다. 원본을 그대로 보낸다.
-export const VIDEO_COMPRESS_MIN_BYTES = 2 * MB;
+// 재인코딩이 만들어 낼 크기(TARGET_UPLOAD_BYTES)보다 이미 작으면 줄일 게 없다.
+// 그런 파일에 재생 시간만큼을 쓰는 건 손해다. 원본을 그대로 보낸다.
+export const VIDEO_COMPRESS_MIN_BYTES = 4 * MB;
 
-// 비트레이트는 해상도를 따라간다.
+// 비트레이트는 "올린 뒤의 용량"에서 거꾸로 정한다.
 //
-// 캔버스 축소를 버렸으므로 출력 해상도는 원본 그대로다. 그래서 4K 원본에
-// 1080p용 비트레이트를 주면 화면이 뭉개진다. 200MB짜리 영상은 대개 크기 때문이
-// 아니라 해상도 때문에 크므로, 이 구분이 없으면 용량은 줄지만 못 볼 영상이 된다.
-export function getTargetBitrate(width = 0, height = 0) {
+// 해상도만 보고 정했더니 40초 4K 영상이 12MB 로 나왔고, 느린 회선에서 그건 다시
+// 2분짜리 업로드다. 압축의 목적이 업로드 시간을 줄이는 것이므로, 길이가 얼마든
+// 결과 용량이 일정 범위 안에 들어오게 잡는 편이 목적에 맞다.
+//
+// 다만 한없이 낮추면 못 볼 영상이 되므로 위아래로 묶는다. 해상도가 높을수록
+// 같은 비트레이트에서 더 뭉개지니 하한을 조금 올려 준다.
+export const TARGET_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+export function getTargetBitrate(width = 0, height = 0, durationMs = 0) {
     const pixels = Math.max(0, Number(width) || 0) * Math.max(0, Number(height) || 0);
-    if (pixels > 1920 * 1080) return 2500000;   // 4K 등
-    if (pixels > 1280 * 720) return 1200000;    // 1080p
-    return 800000;                              // 720p 이하
+    const ceiling = pixels > 1920 * 1080 ? 2500000
+        : pixels > 1280 * 720 ? 1600000
+        : 1200000;
+    const floor = pixels > 1920 * 1080 ? 900000
+        : pixels > 1280 * 720 ? 700000
+        : 500000;
+
+    const seconds = Math.max(0, Number(durationMs) || 0) / 1000;
+    if (!seconds) return ceiling;   // 길이를 모르면 화질 쪽에 선다.
+
+    const fitted = (TARGET_UPLOAD_BYTES * 8) / seconds;
+    return Math.round(Math.min(ceiling, Math.max(floor, fitted)));
 }
 
 // 재인코딩은 재생 속도로 걸린다. 길이가 곧 기다리는 시간이라, 여기서 끊지 않으면
@@ -204,7 +219,7 @@ export async function compressExerciseVideo(file, {
         const chunks = [];
         const recorder = new window.MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: getTargetBitrate(video.videoWidth, video.videoHeight)
+            videoBitsPerSecond: getTargetBitrate(video.videoWidth, video.videoHeight, durationMs)
         });
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size) chunks.push(event.data);

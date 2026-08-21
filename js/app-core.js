@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=328';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=328';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=329';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=329';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=328';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=328';
+} from './auth-login-helpers.js?v=329';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=329';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=328';
+} from './exercise-media.js?v=329';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=328';
+} from './health-connect-utils.js?v=329';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=328';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=328';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=328';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=328';
-import { sanitize, compressImage } from './data-manager.js?v=328';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=328';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=328';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=328';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=328';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=328';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=328';
+} from './habit-groups.js?v=329';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=329';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=329';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=329';
+import { sanitize, compressImage } from './data-manager.js?v=329';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=329';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=329';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=329';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=329';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=329';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=329';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=328';
+} from './guest-demo.js?v=329';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=328';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=328';
+} from './product-events.js?v=329';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=329';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=328';
+} from './diet-program.js?v=329';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=328';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=328';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=328';
+} from './meditation-guide.js?v=329';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=329';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=329';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=328';
+} from './social-challenge-readiness.js?v=329';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=328';
+} from './monthly-mvp-reward.js?v=329';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=328';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=329';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17473,8 +17473,12 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
         const compressedVideo = await compressExerciseVideo(fileToUpload, {
             onProgress: (pct) => {
                 if (!onProgressHook) return;
+                // pct 를 그대로 넘기면 안 된다. 이 값은 전송률과 같은 칸에 들어가고
+                // Math.max 로 기록되므로, 압축이 끝나며 100 을 쓰는 순간 전송률이
+                // 100 에 박힌다. 그 뒤 실제 업로드는 화면에 전혀 나타나지 않고
+                // 막대가 멈춘 것처럼 보인다(89%). 진행은 글로만 알린다.
                 try {
-                    onProgressHook({ pct, message: '영상을 가볍게 만드는 중… ' + pct + '%' });
+                    onProgressHook({ pct: 0, message: `영상을 줄이는 중… ${pct}%` });
                 } catch (_) {}
             }
         });

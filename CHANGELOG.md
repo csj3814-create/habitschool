@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-20 (4)
+
+### Fixed
+- Stopped the progress bar from freezing at 89% for the whole upload. Compression reported its percentage through the same channel as transfer progress, and that value is recorded with `Math.max` — so finishing compression wrote 100 into the transfer figure before a single byte had been sent, and it could never come back down. `transfer 100 / sync 6` is exactly 89%, and the bar sat there for the entire real upload while the work went on invisibly. Compression now reports through the message line only and leaves the transfer figure at zero, so the bar reads 0 during compression and then actually moves 0→100 as the file goes up. I introduced this in the previous release; it is the same class of thing this session has been fixing elsewhere — a number that says one thing while another is happening.
+- Set the encoder bitrate from the target upload size rather than resolution alone. Choosing by resolution meant a 40-second 4K clip came out at 12.5MB, which on a slow uplink is another two-minute upload — the compression had traded one wait for a shorter version of the same wait. Bitrate is now derived from a 4MB target and clamped for quality, so a 40-second clip lands near 4MB whatever its resolution, roughly three times faster to send than before. Beyond about a minute the quality floor wins and files grow again: three minutes still produces 10–19MB, which is the honest limit of holding both size and watchability.
+- Raised the compression threshold from 2MB to 4MB, matching the target size. Re-encoding a file already smaller than the result costs playback time and returns nothing.
+
+### Notes
+- Re-encoding runs at playback speed and cannot go faster by this route; a 40-second clip costs 40 seconds or more, since decode and encode share the phone. Getting below that needs WebCodecs with an MP4 demuxer, which is a much larger change. What this release removes is the second wait after it, not the first.
+
 ## 2026-08-20 (3)
 
 ### Changed
