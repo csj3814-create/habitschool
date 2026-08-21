@@ -19,9 +19,13 @@ describe('어떤 파일을 재인코딩할지 고르기', () => {
         expect(shouldCompressVideoFile({ type: 'video/mp4', size: VIDEO_COMPRESS_MIN_BYTES })).toBe(false);
     });
 
-    it('큰 영상만 대상으로 삼는다', () => {
-        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 7 * 1024 * 1024 })).toBe(true);
-        expect(shouldCompressVideoFile({ type: 'video/quicktime', size: 7 * 1024 * 1024 })).toBe(true);
+    it('확실히 큰 영상만 대상으로 삼는다', () => {
+        // 7MB 짜리는 이론상 줄이는 게 이득이지만, 재인코딩은 재생 속도로 걸려
+        // 체감으로는 "왜 바로 안 올라가지"가 된다. 그게 이 기능을 못 쓰게 만든
+        // 실제 불만이었으므로, 그 정도 크기는 그냥 올린다.
+        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 7 * 1024 * 1024 })).toBe(false);
+        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 40 * 1024 * 1024 })).toBe(true);
+        expect(shouldCompressVideoFile({ type: 'video/quicktime', size: 200 * 1024 * 1024 })).toBe(true);
     });
 
     it('영상이 아닌 것은 건드리지 않는다', () => {

@@ -2,6 +2,11 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-20 (5)
+
+### Changed
+- Raised the compression threshold to 15MB, so ordinary clips upload straight away and only genuinely large files are re-encoded. Re-encoding runs at playback speed and no amount of accurate progress reporting removes that wait; a 7MB ten-second clip is a theoretical win on a slow uplink and still reads as "why isn't this uploading" in the hand, which is what made the feature unusable. Above 15MB the arithmetic stops being close — a 200MB file becomes about 4MB — and the wait buys something obvious. The consequence is that a 7MB hyperlapse goes back to being sent as recorded, which was the original complaint about slow uploads; that trade is deliberate, since the compression wait was the worse of the two.
+
 ## 2026-08-20 (4)
 
 ### Fixed
