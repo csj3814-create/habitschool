@@ -202,6 +202,25 @@ const content = document.getElementById('content');
 const MEDALS = ['🥇', '🥈', '🥉'];
 const REWARDS = ['5,000P', '2,000P', '500P'];
 
+// 서버 functions/mvp-score.js 와 같은 기준.
+// 이 화면은 지난 달들을 함께 보여주므로 두 식이 공존한다. 달마다 그 달의 기준으로 적는다.
+const MVP_POINTS_FORMULA_START_MONTH = '2026-09';
+const usesMvpPointsFormula = (month) => String(month || '') >= MVP_POINTS_FORMULA_START_MONTH;
+
+function formatMvpStat(u, month) {
+    const points = Number(u?.points);
+    const head = (usesMvpPointsFormula(month) && Number.isFinite(points))
+        ? `${points.toLocaleString()}P`
+        : `${Number(u?.days) || 0}일`;
+    return `${head}·💬${Number(u?.comments) || 0}·❤️${Number(u?.reactions) || 0}`;
+}
+
+function mvpFormulaNote(month) {
+    return usesMvpPointsFormula(month)
+        ? 'MVP 점수 = 활동 포인트 + 댓글×11 + 리액션×4 (사회 점수는 활동 포인트의 30%까지)'
+        : 'MVP 점수 = 기록×10 + 댓글×3 + 리액션×1';
+}
+
 function renderMonthCard(monthId, data) {
     const card = document.createElement('div');
     card.className = 'month-card';
@@ -242,12 +261,12 @@ function renderMonthCard(monthId, data) {
                         <div class="mvp-item rank-${i + 1}">
                             <span class="mvp-medal">${MEDALS[i]}</span>
                             <span class="mvp-name">${u.name}</span>
-                            <span class="mvp-days">${u.days}일·💬${u.comments}·❤️${u.reactions}</span>
+                            <span class="mvp-days">${formatMvpStat(u, data.month)}</span>
                             <span class="mvp-reward">${REWARDS[i]}</span>
                         </div>
                     `).join('')}
                 </div>
-                <div class="mvp-score-info">MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+                <div class="mvp-score-info">${mvpFormulaNote(data.month)}</div>
             ` : ''}
         </div>
     `;

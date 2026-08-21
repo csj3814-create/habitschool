@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-21
+
+### Fixed
+- The monthly MVP ranking had been counting zero comments and zero reactions all month. Reaction writes moved to `gallery_posts` when the old path was closed off — a signed-in client could forge other people's UIDs into `daily_logs.reactions` and mint coins — but the three aggregation sites kept reading the old location. August showed "0 reactions" on screen against 494 actual ones, and the MVP score collapsed to `days x 10` alone, which put six people on exactly 210 points. The medals were being handed out in Firestore scan order, and 5,000P with them. The score now reads from where the data actually lives, and the three copies of the formula are one shared module so the screen and the payout cannot drift apart again.
+- Gave the ranking a deterministic tie-break. Sorting on score alone left equal scores in whatever order the scan returned, so the medals could change between hourly runs. Ties now resolve by activity points, then days, comments, reactions, and finally user id — the same input produces the same ranking every time.
+
+### Changed
+- From September the MVP score is based on activity points rather than days recorded. Recording every day no longer distinguishes anyone: 21-day perfect attendance was reached by six people in August, while their activity points ranged from 690 to 1,390. Points already grade the depth of a record — meal photos, cardio and strength, sleep and gratitude, 10 to 80 a day — and among August's most consistent members every single one had a different total. Comments and reactions still count, weighted to keep the share of the score they had before, but the social part is capped at 30% of a member's own activity points: a reaction is one tap, and one member left 356 of August's 494, which without a cap would have been half their score. August and earlier keep the old formula, so past months and the rewards already paid for them are unchanged.
+- The weekly gallery list now uses the same basis, from the first full week of September. Its ceiling is seven days rather than thirty, so it saturated harder — ten members were tied at five days this week, and the top two at the same score.
+
 ## 2026-08-20 (5)
 
 ### Changed

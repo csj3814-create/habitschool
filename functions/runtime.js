@@ -50,6 +50,12 @@ const {
     getGalleryProjectionFingerprint,
     syncGalleryPostFromDailyLog,
 } = require("./gallery-posts");
+const {
+    sumActivityPoints,
+    computeMvpScore,
+    rankUsers,
+    collectSocialCounts,
+} = require("./mvp-score");
 const { updateGuestActivity } = require("./guest-activity");
 const {
     normalizeReminderPreference,
@@ -448,26 +454,9 @@ function toDateFromValue(value) {
     return null;
 }
 
-function getUniqueReactionUserIds(logData = {}) {
-    const uniqueUserIds = new Set();
-    const reactions = logData?.reactions || {};
-    ["heart", "fire", "clap"].forEach((type) => {
-        const userIds = Array.isArray(reactions[type]) ? reactions[type] : [];
-        userIds.forEach((uid) => {
-            if (uid) uniqueUserIds.add(uid);
-        });
-    });
-    return [...uniqueUserIds];
-}
-
-function getUniqueCommentUserIds(logData = {}) {
-    const uniqueUserIds = new Set();
-    const comments = Array.isArray(logData?.comments) ? logData.comments : [];
-    comments.forEach((comment) => {
-        if (comment?.userId) uniqueUserIds.add(comment.userId);
-    });
-    return [...uniqueUserIds];
-}
+// getUniqueReactionUserIds / getUniqueCommentUserIds 는 mvp-score.js 로 옮겼다.
+// 같은 헬퍼가 두 벌 있으면 한쪽만 고치는 사고가 난다 — 실제로 이 파일의 집계가
+// daily_logs 를 계속 읽는 동안 리액션 쓰기는 gallery_posts 로 옮겨가 있었다.
 
 function isPendingFriendshipExpired(friendshipData) {
     if (!friendshipData || friendshipData.status !== "pending") return false;
@@ -7057,44 +7046,32 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
         return { alreadyDistributed: false, winners: [] };
     }
 
+    const dailyLogs = [];
     const userStats = {};
+    const touch = (uid, name) => {
+        if (!userStats[uid]) {
+            userStats[uid] = { days: 0, points: 0, comments: 0, reactions: 0, name: name || "익명" };
+        }
+        return userStats[uid];
+    };
+
     snap.forEach(doc => {
         const log = doc.data();
-        if (log.userId) {
-            if (!userStats[log.userId]) {
-                userStats[log.userId] = { days: 0, comments: 0, reactions: 0, name: log.userName || '익명' };
-            }
-            userStats[log.userId].days++;
-        }
-        if (log.comments && Array.isArray(log.comments)) {
-            getUniqueCommentUserIds(log).forEach((commenterUid) => {
-                const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
-                if (!userStats[commenterUid]) {
-                    userStats[commenterUid] = {
-                        days: 0, comments: 0, reactions: 0,
-                        name: commentEntry.userName || "익명"
-                    };
-                }
-                userStats[commenterUid].comments++;
-            });
-        }
-        if (log.reactions) {
-            getUniqueReactionUserIds(log).forEach((reactorUid) => {
-                if (!userStats[reactorUid]) userStats[reactorUid] = { days: 0, comments: 0, reactions: 0, name: "회원" };
-                userStats[reactorUid].reactions++;
-            });
-        }
+        dailyLogs.push({ id: doc.id, data: log });
+        if (!log.userId) return;
+        const stat = touch(log.userId, log.userName);
+        if (log.userName) stat.name = log.userName;
+        stat.days++;
+        stat.points += sumActivityPoints(log.awardedPoints);
     });
 
-    Object.values(userStats).forEach(u => {
-        u.score = (u.days * 10) + (u.comments * 3) + (u.reactions * 1);
-    });
+    // 댓글·리액션은 daily_logs 가 아니라 gallery_posts 에 쌓인다. 여기서 옛 소스만
+    // 읽는 바람에 8월 내내 사회항이 0이었고 순위가 days*10 으로 붕괴했다.
+    const social = await collectSocialCounts(db, dailyLogs);
+    for (const [uid, count] of social.comments) touch(uid, "익명").comments = count;
+    for (const [uid, count] of social.reactions) touch(uid, "회원").reactions = count;
 
-    const ranked = Object.entries(userStats)
-        .map(([userId, stat]) => ({ userId, ...stat }))
-        .filter(u => u.days > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
+    const ranked = rankUsers(userStats, targetMonth, 3);
 
     if (ranked.length === 0) {
         return { alreadyDistributed: false, winners: [] };
@@ -7114,6 +7091,9 @@ async function distributeMvpRewardForMonth(targetMonth, distributedBy) {
             userId: winner.userId,
             name: winner.name,
             days: winner.days,
+            // 지급 근거를 나중에 검산할 수 있어야 한다. 활동 포인트가 빠져 있으면
+            // "왜 이 사람이 1위였나"를 원본 로그까지 되짚어야 답할 수 있다.
+            points: winner.points,
             comments: winner.comments,
             reactions: winner.reactions,
             score: winner.score,
@@ -7850,45 +7830,36 @@ async function computeCommunityStatsLogic() {
         .where("date", "<=", monthEnd)
         .get();
 
+    const dailyLogs = [];
     const userStats = {};
     const userDates = {};
+    const touch = (uid, name) => {
+        if (!userStats[uid]) {
+            userStats[uid] = { days: 0, points: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: name || "익명" };
+        }
+        return userStats[uid];
+    };
+
     snap.forEach(d => {
         const log = d.data();
+        dailyLogs.push({ id: d.id, data: log });
         if (!log.userId) return;
         const uid = log.userId;
-        if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || "익명" };
-        userStats[uid].days++;
-        if (log.userName) userStats[uid].name = log.userName;
-        if (log.awardedPoints?.diet) userStats[uid].diet++;
-        if (log.awardedPoints?.exercise) userStats[uid].exercise++;
-        if (log.awardedPoints?.mind) userStats[uid].mind++;
+        const stat = touch(uid, log.userName);
+        stat.days++;
+        stat.points += sumActivityPoints(log.awardedPoints);
+        if (log.userName) stat.name = log.userName;
+        if (log.awardedPoints?.diet) stat.diet++;
+        if (log.awardedPoints?.exercise) stat.exercise++;
+        if (log.awardedPoints?.mind) stat.mind++;
         if (!userDates[uid]) userDates[uid] = new Set();
         userDates[uid].add(log.date);
-
-        if (log.comments && Array.isArray(log.comments)) {
-            getUniqueCommentUserIds(log).forEach((commenterUid) => {
-                const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
-                if (!userStats[commenterUid]) {
-                    userStats[commenterUid] = {
-                        days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
-                        name: commentEntry.userName || "익명"
-                    };
-                }
-                userStats[commenterUid].comments++;
-            });
-        }
-        if (log.reactions) {
-            getUniqueReactionUserIds(log).forEach((reactorUid) => {
-                if (!userStats[reactorUid]) {
-                    userStats[reactorUid] = {
-                        days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
-                        name: "회원"
-                    };
-                }
-                userStats[reactorUid].reactions++;
-            });
-        }
     });
+
+    // 댓글·리액션의 실제 저장 위치는 gallery_posts 다. daily_logs 만 읽으면 0이 된다.
+    const social = await collectSocialCounts(db, dailyLogs);
+    for (const [uid, count] of social.comments) touch(uid, "익명").comments = count;
+    for (const [uid, count] of social.reactions) touch(uid, "회원").reactions = count;
 
     let bestStreak = 0, bestStreakName = "";
     Object.entries(userDates).forEach(([uid, dates]) => {
@@ -7908,12 +7879,7 @@ async function computeCommunityStatsLogic() {
     const exerciseKing = pick("exercise");
     const mindKing = pick("mind");
 
-    Object.values(userStats).forEach(u => { u.score = u.days * 10 + u.comments * 3 + u.reactions; });
-    const ranked = Object.entries(userStats)
-        .map(([userId, s]) => ({ userId, ...s }))
-        .filter(u => u.days > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3);
+    const ranked = rankUsers(userStats, `${year}-${month}`, 3);
 
     const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
     const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
@@ -7945,7 +7911,7 @@ async function computeCommunityStatsLogic() {
         dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
         exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
         mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
-        ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
+        ranked: ranked.map(r => ({ name: r.name, days: r.days, points: r.points, comments: r.comments, reactions: r.reactions, score: r.score })),
         updatedAt: FieldValue.serverTimestamp()
     };
 
@@ -8000,44 +7966,36 @@ exports.backfillCommunityStatsArchive = onCall(
             .where("date", "<=", monthEnd)
             .get();
 
+        const dailyLogs = [];
         const userStats = {};
         const userDates = {};
+        const touch = (uid, name) => {
+            if (!userStats[uid]) {
+                userStats[uid] = { days: 0, points: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: name || "익명" };
+            }
+            return userStats[uid];
+        };
+
         snap.forEach(d => {
             const log = d.data();
+            dailyLogs.push({ id: d.id, data: log });
             if (!log.userId) return;
             const uid = log.userId;
-            if (!userStats[uid]) userStats[uid] = { days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0, name: log.userName || "익명" };
-            userStats[uid].days++;
-            if (log.userName) userStats[uid].name = log.userName;
-            if (log.awardedPoints?.diet) userStats[uid].diet++;
-            if (log.awardedPoints?.exercise) userStats[uid].exercise++;
-            if (log.awardedPoints?.mind) userStats[uid].mind++;
+            const stat = touch(uid, log.userName);
+            stat.days++;
+            stat.points += sumActivityPoints(log.awardedPoints);
+            if (log.userName) stat.name = log.userName;
+            if (log.awardedPoints?.diet) stat.diet++;
+            if (log.awardedPoints?.exercise) stat.exercise++;
+            if (log.awardedPoints?.mind) stat.mind++;
             if (!userDates[uid]) userDates[uid] = new Set();
             userDates[uid].add(log.date);
-            if (log.comments && Array.isArray(log.comments)) {
-                getUniqueCommentUserIds(log).forEach((commenterUid) => {
-                    const commentEntry = log.comments.find((comment) => comment?.userId === commenterUid) || {};
-                    if (!userStats[commenterUid]) {
-                        userStats[commenterUid] = {
-                            days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
-                            name: commentEntry.userName || "익명"
-                        };
-                    }
-                    userStats[commenterUid].comments++;
-                });
-            }
-            if (log.reactions) {
-                getUniqueReactionUserIds(log).forEach((reactorUid) => {
-                    if (!userStats[reactorUid]) {
-                        userStats[reactorUid] = {
-                            days: 0, comments: 0, reactions: 0, diet: 0, exercise: 0, mind: 0,
-                            name: "회원"
-                        };
-                    }
-                    userStats[reactorUid].reactions++;
-                });
-            }
         });
+
+        // 댓글·리액션의 실제 저장 위치는 gallery_posts 다. daily_logs 만 읽으면 0이 된다.
+        const social = await collectSocialCounts(db, dailyLogs);
+        for (const [uid, count] of social.comments) touch(uid, "익명").comments = count;
+        for (const [uid, count] of social.reactions) touch(uid, "회원").reactions = count;
 
         let bestStreak = 0, bestStreakName = "";
         Object.entries(userDates).forEach(([uid, dates]) => {
@@ -8057,12 +8015,7 @@ exports.backfillCommunityStatsArchive = onCall(
         const exerciseKing = pick("exercise");
         const mindKing = pick("mind");
 
-        Object.values(userStats).forEach(u => { u.score = u.days * 10 + u.comments * 3 + u.reactions; });
-        const ranked = Object.entries(userStats)
-            .map(([userId, s]) => ({ userId, ...s }))
-            .filter(u => u.days > 0)
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 3);
+        const ranked = rankUsers(userStats, targetMonth, 3);
 
         const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
         const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
@@ -8093,7 +8046,7 @@ exports.backfillCommunityStatsArchive = onCall(
             dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
             exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
             mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
-            ranked: ranked.map(r => ({ name: r.name, days: r.days, comments: r.comments, reactions: r.reactions, score: r.score })),
+            ranked: ranked.map(r => ({ name: r.name, days: r.days, points: r.points, comments: r.comments, reactions: r.reactions, score: r.score })),
             updatedAt: FieldValue.serverTimestamp()
         };
 

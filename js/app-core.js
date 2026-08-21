@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=330';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=330';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=331';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=331';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=330';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=330';
+} from './auth-login-helpers.js?v=331';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=331';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=330';
+} from './exercise-media.js?v=331';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=330';
+} from './health-connect-utils.js?v=331';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=330';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=330';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=330';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=330';
-import { sanitize, compressImage } from './data-manager.js?v=330';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=330';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=330';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=330';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=330';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=330';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=330';
+} from './habit-groups.js?v=331';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=331';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=331';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=331';
+import { sanitize, compressImage } from './data-manager.js?v=331';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=331';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=331';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=331';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=331';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=331';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=331';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=330';
+} from './guest-demo.js?v=331';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=330';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=330';
+} from './product-events.js?v=331';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=331';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=330';
+} from './diet-program.js?v=331';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=330';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=330';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=330';
+} from './meditation-guide.js?v=331';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=331';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=331';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=330';
+} from './social-challenge-readiness.js?v=331';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=330';
+} from './monthly-mvp-reward.js?v=331';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=330';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=331';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -15899,6 +15899,50 @@ function renderMissionBadges(earnedBadges) {
     });
 }
 
+// 서버 functions/mvp-score.js 와 같은 기준. 한쪽만 바꾸면 화면과 지급이 갈라진다.
+const MVP_POINTS_FORMULA_START_MONTH = '2026-09';
+const MVP_COMMENT_WEIGHT = 11;
+const MVP_REACTION_WEIGHT = 4;
+const MVP_SOCIAL_CAP_RATIO = 0.30;
+
+function usesMvpPointsFormula(month) {
+    return String(month || '') >= MVP_POINTS_FORMULA_START_MONTH;
+}
+
+function sumActivityPoints(awarded) {
+    const a = awarded && typeof awarded === 'object' ? awarded : {};
+    return (Number(a.dietPoints) || 0) + (Number(a.exercisePoints) || 0) + (Number(a.mindPoints) || 0);
+}
+
+// 사회 점수에 상한을 두는 이유: 리액션은 한 번 탭이면 끝이라 상한이 없으면
+// 기록 없이 연타만으로 1위가 된다. 상한을 자기 활동 포인트에 비례시키면
+// 기록을 쌓지 않는 한 상한도 안 커진다.
+function mvpScoreFromPoints(points, comments, reactions) {
+    const social = (Number(comments) || 0) * MVP_COMMENT_WEIGHT
+        + (Number(reactions) || 0) * MVP_REACTION_WEIGHT;
+    const base = Number(points) || 0;
+    return base + Math.min(social, Math.floor(base * MVP_SOCIAL_CAP_RATIO));
+}
+
+// 순위 근거를 한 줄로 보여준다. 예전에는 맨 앞이 "21일"이라 1·2·3위가 전부 같아
+// 보였다 — 실제로 8월에는 21일 만점이 6명이었다.
+// 지난달 아카이브에는 points 가 없으므로 그때는 옛 표기로 떨어뜨린다.
+function formatMvpStat(u, month) {
+    const points = Number(u?.points);
+    const comments = Number(u?.comments) || 0;
+    const reactions = Number(u?.reactions) || 0;
+    const head = (usesMvpPointsFormula(month) && Number.isFinite(points))
+        ? `${points.toLocaleString()}P`
+        : `${Number(u?.days) || 0}일`;
+    return `${head}·💬${comments}·❤️${reactions}`;
+}
+
+function mvpFormulaNote(month) {
+    return usesMvpPointsFormula(month)
+        ? '💰 자동 지급 · MVP 점수 = 활동 포인트 + 댓글×11 + 리액션×4 (사회 점수는 활동 포인트의 30%까지)'
+        : '💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1';
+}
+
 // 커뮤니티 월간 현황 렌더링 — 서버에서 미리 계산된 meta/communityStats 문서 1개만 읽음
 function renderGroupChallengeFromData(s) {
     const section = document.getElementById('group-challenge-section');
@@ -15930,12 +15974,12 @@ function renderGroupChallengeFromData(s) {
                 <div class="mvp-ranking-item rank-${i + 1}">
                     <span class="mvp-medal">${medals[i]}</span>
                     <span class="mvp-name">${u.name}</span>
-                    <span class="mvp-days">${u.days}일·💬${u.comments}·❤️${u.reactions}</span>
+                    <span class="mvp-days">${formatMvpStat(u, s.month)}</span>
                     <span class="mvp-reward">${rewardAmounts[i]}</span>
                 </div>
             `).join('')}
         </div>
-        <div class="mvp-reward-info">💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        <div class="mvp-reward-info">${mvpFormulaNote(s.month)}</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
         <div class="community-history-btn-wrap">
             <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
@@ -16108,12 +16152,12 @@ async function renderGroupChallenge() {
                 <div class="mvp-ranking-item rank-${i + 1}">
                     <span class="mvp-medal">${medals[i]}</span>
                     <span class="mvp-name">${u.name}</span>
-                    <span class="mvp-days">${u.days}일·💬${u.comments}·❤️${u.reactions}</span>
+                    <span class="mvp-days">${formatMvpStat(u, s.month)}</span>
                     <span class="mvp-reward">${rewardAmounts[i]}</span>
                 </div>
             `).join('')}
         </div>
-        <div class="mvp-reward-info">💰 자동 지급 · MVP 점수 = 기록×10 + 댓글×3 + 리액션×1</div>
+        <div class="mvp-reward-info">${mvpFormulaNote(s.month)}</div>
         ${s.updatedAt?.toDate ? `<div class="community-updated-at">📊 이번 달 집계 · 매시간 업데이트 (${s.updatedAt.toDate().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' })})</div>` : ''}
         <div class="community-history-btn-wrap">
             <a href="community-history.html" class="community-history-btn">지난 커뮤니티 현황 보기 →</a>
@@ -22014,6 +22058,7 @@ async function buildWeeklyBestSection() {
             userMap[uid] = {
                 name: item.data.userName || '익명',
                 days: new Set(),
+                points: 0,
                 reactions: 0,
                 comments: 0,
                 streak: item.data.currentStreak || 0,
@@ -22023,6 +22068,7 @@ async function buildWeeklyBestSection() {
         }
         const u = userMap[uid];
         u.days.add(item.data.date);
+        u.points += sumActivityPoints(item.data.awardedPoints);
         const rxCount = getUniqueReactionCount(item.data);
         const commentCount = getUniqueCommentCount(item.data);
         u.reactions += rxCount;
@@ -22034,10 +22080,23 @@ async function buildWeeklyBestSection() {
         if ((item.data.currentStreak || 0) > u.streak) u.streak = item.data.currentStreak;
     });
 
+    // 주간도 일수가 천장(7일)에 붙어서 변별이 안 됐다 — 실측(2026-08-17 주)에서
+    // 5일 만점이 10명, 1·2위가 74점 동점이었다. 활동 포인트는 같은 구간을 P140~310 으로 가른다.
+    // 월간과 같은 시점부터 바뀌도록 그 주의 월요일로 판정한다.
+    const weeklyUsesPoints = mondayStr >= '2026-09-01';
     const ranked = Object.values(userMap)
-        .map(u => ({ ...u, daysCount: u.days.size, score: u.days.size * 10 + u.reactions * 2 + u.comments * 3 }))
+        .map(u => ({
+            ...u,
+            daysCount: u.days.size,
+            score: weeklyUsesPoints
+                ? mvpScoreFromPoints(u.points, u.comments, u.reactions)
+                : u.days.size * 10 + u.reactions * 2 + u.comments * 3
+        }))
         .filter(u => u.score > 0)
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => b.score - a.score
+            || b.points - a.points
+            || b.daysCount - a.daysCount
+            || String(a.name).localeCompare(String(b.name)))
         .slice(0, 3);
 
     if (ranked.length === 0) {
@@ -22087,7 +22146,7 @@ async function buildWeeklyBestSection() {
                     <span class="best-name">${name}</span>
                     ${streakHtml}
                 </span>
-                <span class="best-stats">📅 ${u.daysCount}일 · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
+                <span class="best-stats">${weeklyUsesPoints ? `⚡ ${u.points.toLocaleString()}P` : `📅 ${u.daysCount}일`} · ❤️ ${u.reactions} · 💬 ${u.comments}</span>
             </div>
             <span class="best-score">${u.score}점</span>
         </div>`;
@@ -24438,7 +24497,7 @@ function renderGroupChallengeFromDataLegacy(s) {
                             <div class="mvp-ranking-item rank-${i + 1}">
                                 <span class="mvp-medal">${medals[i]}</span>
                                 <span class="mvp-name">${u.name}</span>
-                                <span class="mvp-days">${u.days}일 · 💬${u.comments} · ✨${u.reactions}</span>
+                                <span class="mvp-days">${formatMvpStat(u, s.month)}</span>
                                 <span class="mvp-reward">${rewardAmounts[i]}</span>
                             </div>
                         `).join('')}
