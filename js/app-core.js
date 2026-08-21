@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=327';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=327';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=328';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=328';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=327';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=327';
+} from './auth-login-helpers.js?v=328';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=328';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=327';
+} from './exercise-media.js?v=328';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=327';
+} from './health-connect-utils.js?v=328';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=327';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=327';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=327';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=327';
-import { sanitize, compressImage } from './data-manager.js?v=327';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=327';
-import { compressExerciseVideo } from './video-compress.js?v=327';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=327';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=327';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=327';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=327';
+} from './habit-groups.js?v=328';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=328';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=328';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=328';
+import { sanitize, compressImage } from './data-manager.js?v=328';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=328';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=328';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=328';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=328';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=328';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=328';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=327';
+} from './guest-demo.js?v=328';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=327';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=327';
+} from './product-events.js?v=328';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=328';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=327';
+} from './diet-program.js?v=328';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=327';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=327';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=327';
+} from './meditation-guide.js?v=328';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=328';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=328';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=327';
+} from './social-challenge-readiness.js?v=328';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=327';
+} from './monthly-mvp-reward.js?v=328';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=327';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=328';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6957,18 +6957,42 @@ window.handleExerciseMediaFiles = async function(input, type = 'cardio') {
     const selectedFiles = Array.from(input?.files || []);
     if (!input || selectedFiles.length === 0) return 0;
 
+    // 폰에서 재인코딩할 수 있으면 원본 용량 한도를 넓게 잡는다. 올라가는 건 압축본이고
+    // 그 크기는 원본이 아니라 길이로 정해진다. 못 하는 기기(아이폰)에서 넓히면 큰 파일이
+    // 그대로 올라가 오히려 나빠지므로, 한도는 압축 가능 여부를 보고 정한다.
+    const canCompress = canCompressVideoInBrowser();
+    const videoSizeLimit = canCompress ? MAX_VID_SIZE_WITH_COMPRESSION : MAX_VID_SIZE;
     const acceptedFiles = selectedFiles.filter((file) => {
         if (!(file instanceof File)) return false;
         if (normalizedType === 'strength') {
-            return isAcceptedExerciseVideoFile(file) && Number(file.size || 0) <= MAX_VID_SIZE;
+            return isAcceptedExerciseVideoFile(file) && Number(file.size || 0) <= videoSizeLimit;
         }
         return isAcceptedDietImageFile(file) && Number(file.size || 0) <= MAX_IMG_SIZE;
     });
     const rejectedCount = selectedFiles.length - acceptedFiles.length;
     if (rejectedCount > 0) {
+        const limitLabel = Math.round(videoSizeLimit / (1024 * 1024));
         showToast(normalizedType === 'strength'
-            ? `⚠️ 지원하지 않거나 100MB를 넘는 영상 ${rejectedCount}개를 제외했어요.`
+            ? `⚠️ 지원하지 않거나 ${limitLabel}MB를 넘는 영상 ${rejectedCount}개를 제외했어요.`
             : `⚠️ 지원하지 않거나 20MB를 넘는 사진 ${rejectedCount}개를 제외했어요.`);
+    }
+
+    // 재인코딩은 재생 속도로 걸린다. 길이가 곧 기다리는 시간이라, 여기서 끊지 않으면
+    // 10분짜리를 고른 사람은 10분을 기다린 뒤에야 결과를 본다. 용량 오류로 나중에
+    // 튕기는 대신, 고른 자리에서 왜 안 되는지 말해 준다.
+    if (normalizedType === 'strength' && canCompress && acceptedFiles.length) {
+        const tooLong = [];
+        for (let i = acceptedFiles.length - 1; i >= 0; i--) {
+            const probed = await probeVideoFile(acceptedFiles[i]);
+            if (probed && probed.durationMs > MAX_VIDEO_DURATION_MS) {
+                tooLong.push(acceptedFiles[i].name);
+                acceptedFiles.splice(i, 1);
+            }
+        }
+        if (tooLong.length) {
+            const limitMin = Math.round(MAX_VIDEO_DURATION_MS / 60000);
+            showToast(`⚠️ ${limitMin}분이 넘는 영상 ${tooLong.length}개를 제외했어요. 짧게 잘라서 올려 주세요.`);
+        }
     }
     if (acceptedFiles.length === 0) return 0;
 
@@ -7567,8 +7591,15 @@ window.addStrengthBlockWithFile = function(event) {
 window.previewDynamicVid = function (input) {
     const file = getSelectedMediaFile(input);
     if (!file) return;
-    if (file.size > MAX_VID_SIZE) clearSelectedMediaFile(input);
-    if (file.size > MAX_VID_SIZE) { alert("100MB 이하만 가능!"); input.value = ""; return; }
+    // 위 선택 경로와 같은 기준을 쓴다. 한쪽만 넓히면 어디로 골랐느냐에 따라
+    // 되기도 하고 안 되기도 하는 상태가 된다.
+    const previewSizeLimit = canCompressVideoInBrowser() ? MAX_VID_SIZE_WITH_COMPRESSION : MAX_VID_SIZE;
+    if (file.size > previewSizeLimit) {
+        clearSelectedMediaFile(input);
+        alert(`${Math.round(previewSizeLimit / (1024 * 1024))}MB 이하만 가능!`);
+        input.value = "";
+        return;
+    }
 
     // 동영상 파일의 수정 날짜 확인 (촬영 당일만 허용)
     const fileDate = new Date(file.lastModified);
@@ -17468,6 +17499,12 @@ async function uploadFileAndGetUrl(file, folderName, userId, options = {}) {
         return null;
     }
     if (fileToUpload.size > maxBytes) {
+        // 여기까지 큰 채로 왔다면 재인코딩이 안 됐거나 실패한 것이다. 선택 시점에는
+        // 더 큰 파일도 받아 줬으므로, 용량만 말하면 왜 갑자기 거절됐는지 알 수 없다.
+        if (isVideo && Number(file.size || 0) > maxBytes) {
+            showToast(`⚠️ 이 영상은 폰에서 줄이지 못해 그대로 올려야 하는데, 너무 큽니다.\n(최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB) 짧게 잘라서 올려 주세요.`);
+            return null;
+        }
         showToast(`⚠️ 파일이 너무 큽니다. (최대 ${maxLabel}MB, 현재 ${fileSizeMB.toFixed(1)}MB)`);
         return null;
     }

@@ -25,8 +25,21 @@ const MB = 1024 * 1024;
 // 이보다 작으면 재인코딩에 드는 시간이 아깝다. 원본을 그대로 보낸다.
 export const VIDEO_COMPRESS_MIN_BYTES = 2 * MB;
 
-// 운동 인증용 영상이라 이 정도면 충분하다.
-const TARGET_BITS_PER_SECOND = 1200000;
+// 비트레이트는 해상도를 따라간다.
+//
+// 캔버스 축소를 버렸으므로 출력 해상도는 원본 그대로다. 그래서 4K 원본에
+// 1080p용 비트레이트를 주면 화면이 뭉개진다. 200MB짜리 영상은 대개 크기 때문이
+// 아니라 해상도 때문에 크므로, 이 구분이 없으면 용량은 줄지만 못 볼 영상이 된다.
+export function getTargetBitrate(width = 0, height = 0) {
+    const pixels = Math.max(0, Number(width) || 0) * Math.max(0, Number(height) || 0);
+    if (pixels > 1920 * 1080) return 2500000;   // 4K 등
+    if (pixels > 1280 * 720) return 1200000;    // 1080p
+    return 800000;                              // 720p 이하
+}
+
+// 재인코딩은 재생 속도로 걸린다. 길이가 곧 기다리는 시간이라, 여기서 끊지 않으면
+// 10분짜리를 고른 사람은 10분을 기다리게 된다.
+export const MAX_VIDEO_DURATION_MS = 3 * 60 * 1000;
 
 // 재인코딩 결과가 이만큼도 못 줄이면 굳이 바꿀 이유가 없다. 화질만 잃는다.
 const MIN_USEFUL_RATIO = 0.85;
@@ -108,6 +121,24 @@ function loadVideoElement(file) {
     });
 }
 
+// 고르는 시점에 길이를 알아야 "너무 긴 영상"이라고 바로 말해 줄 수 있다.
+// 압축 안에서 걸러 버리면 나중에 용량 오류로 나와, 왜 거절됐는지 알 수 없다.
+export async function probeVideoFile(file) {
+    if (!file || typeof document === 'undefined') return null;
+    try {
+        const { video, cleanup } = await loadVideoElement(file);
+        const info = {
+            durationMs: Number.isFinite(video.duration) ? video.duration * 1000 : 0,
+            width: video.videoWidth,
+            height: video.videoHeight
+        };
+        cleanup();
+        return info;
+    } catch (_) {
+        return null;
+    }
+}
+
 // 재인코딩 결과가 실제로 재생 가능한 영상인지 확인한다.
 //
 // 크기만 보면 잘린 파일이 "가장 많이 줄어든" 결과로 통과한다. 그대로 두면
@@ -173,7 +204,7 @@ export async function compressExerciseVideo(file, {
         const chunks = [];
         const recorder = new window.MediaRecorder(stream, {
             mimeType,
-            videoBitsPerSecond: TARGET_BITS_PER_SECOND
+            videoBitsPerSecond: getTargetBitrate(video.videoWidth, video.videoHeight)
         });
         recorder.ondataavailable = (event) => {
             if (event.data && event.data.size) chunks.push(event.data);

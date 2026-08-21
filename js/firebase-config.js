@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=327";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=328";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -326,7 +326,13 @@ if (!IS_LOCAL_ENV) {
 
 // 상수
 export const MAX_IMG_SIZE = 20 * 1024 * 1024;  // 20MB
-export const MAX_VID_SIZE = 100 * 1024 * 1024; // 100MB
+export const MAX_VID_SIZE = 100 * 1024 * 1024; // 100MB — 압축 없이 그대로 올릴 때의 한계
+
+// 폰에서 재인코딩할 수 있으면 원본이 커도 된다. 올라가는 건 압축본이고, 그 크기는
+// 원본 용량이 아니라 길이 × 비트레이트로 정해지기 때문이다. 40초짜리 200MB 하이퍼랩스도
+// 압축하면 10MB 남짓이다. 대신 이 한도는 재인코딩이 실제로 도는 기기에서만 쓴다 —
+// 아이폰처럼 압축을 못 하는 곳에서 이걸 적용하면 200MB가 그대로 올라가 더 나빠진다.
+export const MAX_VID_SIZE_WITH_COMPRESSION = 600 * 1024 * 1024; // 600MB
 
 // 마일스톤 뱃지 정의
 // Legacy BADGES (backward compat)

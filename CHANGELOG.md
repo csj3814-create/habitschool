@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-20 (3)
+
+### Changed
+- Raised the video size limit from 100MB to 600MB, but only where the phone can actually re-encode. What gets uploaded is the compressed file, and its size comes from duration and bitrate rather than from the original, so a 40-second 200MB hyperlapse lands at roughly 6MB from a 1080p source or 12MB from 4K. Applying the wider limit everywhere would have made things worse rather than better: iOS Safari has no `HTMLVideoElement.captureStream`, so on an iPhone the 200MB file would have gone up untouched. The limit now follows `canCompressVideoInBrowser()`, and both selection paths — the multi-file picker and the single-file preview — read the same value, since widening one alone would mean the same file is accepted or refused depending on how it was chosen.
+- Set the encoder bitrate from the source resolution: 800kbps up to 720p, 1.2Mbps up to 1080p, 2.5Mbps above that. Dropping the canvas downscale meant output resolution follows the input, and a 200MB file is usually large because it is 4K rather than because it is long. A flat 1.2Mbps would have shrunk it correctly and left it unwatchable.
+
+### Added
+- Capped video length at 3 minutes, checked when the file is picked. Re-encoding runs at playback speed, so length is the wait, and without a cap someone choosing a 10-minute clip waits ten minutes before seeing any result. Refusing at selection also says why: left to the size check further down, the same file would come back as a size error after the picker had already accepted it.
+- Explained the size rejection that can still happen. A file large enough to need compression, on a device that then fails to compress it, is refused at upload with a message saying the phone could not shrink it — rather than a bare size limit the member was told moments earlier did not apply.
+
 ## 2026-08-20 (2)
 
 ### Added

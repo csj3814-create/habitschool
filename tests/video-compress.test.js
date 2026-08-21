@@ -109,9 +109,38 @@ describe('업로드 경로에 붙어 있다', () => {
     const app = readRepoFile('js/app-core.js');
 
     it('영상 업로드 직전에 재인코딩을 시도한다', () => {
-        expect(app).toContain("import { compressExerciseVideo } from './video-compress.js");
+        expect(app).toMatch(/import \{[^}]*compressExerciseVideo[^}]*\} from '\.\/video-compress\.js/);
         expect(app).toContain('const compressedVideo = await compressExerciseVideo(fileToUpload');
         // null 은 실패가 아니라 "원본을 쓰라"는 뜻이다.
         expect(app).toContain('if (compressedVideo) fileToUpload = compressedVideo;');
+    });
+
+    it('용량 한도가 압축 가능 여부를 따른다', () => {
+        // 못 하는 기기에서 한도만 넓히면 큰 파일이 그대로 올라가 더 나빠진다.
+        expect(app).toContain('const canCompress = canCompressVideoInBrowser();');
+        expect(app).toContain('canCompress ? MAX_VID_SIZE_WITH_COMPRESSION : MAX_VID_SIZE');
+        // 고르는 경로가 둘이라 한쪽만 넓히면 방법에 따라 되고 안 되고가 갈린다.
+        expect(app).toContain('canCompressVideoInBrowser() ? MAX_VID_SIZE_WITH_COMPRESSION : MAX_VID_SIZE');
+    });
+
+    it('너무 긴 영상은 고른 자리에서 거절한다', () => {
+        // 재인코딩은 재생 속도로 걸린다. 나중에 용량 오류로 튕기면 왜인지 알 수 없다.
+        expect(app).toContain('probed.durationMs > MAX_VIDEO_DURATION_MS');
+        expect(app).toContain('분이 넘는 영상');
+    });
+});
+
+describe('해상도에 맞는 비트레이트', () => {
+    it('4K 에 1080p 용 비트레이트를 주지 않는다', async () => {
+        // 캔버스 축소를 버려 출력 해상도는 원본을 따른다. 200MB 짜리는 대개 용량이
+        // 아니라 해상도 때문에 크므로, 구분이 없으면 용량은 줄되 못 볼 영상이 된다.
+        const { getTargetBitrate } = await import('../js/video-compress.js');
+        expect(getTargetBitrate(3840, 2160)).toBeGreaterThan(getTargetBitrate(1920, 1080));
+        expect(getTargetBitrate(1920, 1080)).toBeGreaterThan(getTargetBitrate(1280, 720));
+    });
+
+    it('알 수 없는 크기는 가장 낮은 값으로 떨어진다', async () => {
+        const { getTargetBitrate } = await import('../js/video-compress.js');
+        expect(getTargetBitrate(0, 0)).toBe(getTargetBitrate(640, 480));
     });
 });
