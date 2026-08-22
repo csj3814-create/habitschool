@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=331';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=331';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=332';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=332';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=331';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=331';
+} from './auth-login-helpers.js?v=332';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=332';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=331';
+} from './exercise-media.js?v=332';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=331';
+} from './health-connect-utils.js?v=332';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=331';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=331';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=331';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=331';
-import { sanitize, compressImage } from './data-manager.js?v=331';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=331';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=331';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=331';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=331';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=331';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=331';
+} from './habit-groups.js?v=332';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=332';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=332';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=332';
+import { sanitize, compressImage } from './data-manager.js?v=332';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=332';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=332';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=332';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=332';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=332';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=332';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=331';
+} from './guest-demo.js?v=332';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=331';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=331';
+} from './product-events.js?v=332';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=332';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=331';
+} from './diet-program.js?v=332';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=331';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=331';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=331';
+} from './meditation-guide.js?v=332';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=332';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=332';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=331';
+} from './social-challenge-readiness.js?v=332';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=331';
+} from './monthly-mvp-reward.js?v=332';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=331';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=332';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -21718,11 +21718,20 @@ const GALLERY_PERSISTENT_CACHE_LIMIT = 60;
 // 무한 스크롤 관련 변수
 let galleryDisplayCount = 0;
 const INITIAL_LOAD = 8;        // 초기 로드: 8개 (빠른 첫 화면)
-const LOAD_MORE = 6;           // 추가 로드: 6개씩
+const LOAD_MORE = 12;          // 추가 로드: 12개씩
 const FIRESTORE_PAGE_SIZE = 30; // Firestore 페이지당 건수 (빠른 초기 로딩)
 const MAX_CACHE_SIZE = 300;    // 캐시 최대 크기 (메모리 관리)
+// 바닥에 닿기 한참 전에 미리 불러온다. 100px 였을 때는 조금만 빨리 내려도
+// 스피너를 먼저 보게 됐고, 6개씩 붙이느라 30개짜리 캐시 하나를 소진하는 데
+// 옵저버가 다섯 번 왕복했다.
+const GALLERY_PRELOAD_MARGIN = '1000px';
+// 한 번의 트리거에서 이어 붙일 수 있는 페이지 수 상한. 예전에는 이 자리가
+// 무한 재귀라, 로드가 실패해도 galleryHasMore 가 true 로 남아 같은 실패를
+// 끝없이 반복하며 Firestore 를 두드렸다.
+const GALLERY_MAX_CHAINED_PAGES = 5;
 let galleryIntersectionObserver = null;
 let isLoadingMore = false;
+let galleryLoadFailed = false;
 // Firestore 커서 페이지네이션 상태
 let galleryLastDoc = null;   // 마지막으로 가져온 Firestore 문서 (startAfter 커서)
 let galleryHasMore = false;  // Firestore에 더 가져올 데이터가 있는지
@@ -21956,16 +21965,43 @@ function setupInfiniteScroll() {
 
     galleryIntersectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
-            if (entry.isIntersecting && !isLoadingMore) {
+            if (entry.isIntersecting && !isLoadingMore && !galleryLoadFailed) {
                 loadMoreGalleryItems();
             }
         });
     }, {
-        rootMargin: '100px' // 하단 100px 전에 미리 로드
+        rootMargin: GALLERY_PRELOAD_MARGIN
     });
 
     galleryIntersectionObserver.observe(sentinel);
 }
+
+// 로딩이 한 번 헛돌면 sentinel 이 화면에 들어온 채로 남는다. IntersectionObserver 는
+// "들어오는 순간"에만 콜백을 주므로, 그 자리에서 아무리 스크롤해도 다시 안 불린다.
+// 탭을 나갔다 와야 풀리던 정체가 이것이었다. 매번 옵저버를 다시 붙여 교차 판정을
+// 새로 시키면, 아직 sentinel 이 보이는 상태면 곧바로 다음 장을 이어서 부른다.
+function _rearmGalleryObserver() {
+    const sentinel = document.getElementById('gallery-sentinel');
+    if (!sentinel || sentinel.style.display === 'none') return;
+    if (galleryLoadFailed) return;
+    setupInfiniteScroll();
+}
+
+function _setGalleryLoadFailed(failed) {
+    galleryLoadFailed = !!failed;
+    const spinner = document.getElementById('gallery-sentinel-spinner');
+    const retry = document.getElementById('gallery-load-retry');
+    if (spinner) spinner.style.display = failed ? 'none' : '';
+    if (retry) retry.style.display = failed ? 'block' : 'none';
+}
+
+// 더보기 버튼. 자동 로딩이 실패했을 때만 노출된다.
+window.retryGalleryLoad = function () {
+    _setGalleryLoadFailed(false);
+    const sentinel = document.getElementById('gallery-sentinel');
+    if (sentinel) sentinel.style.display = 'block';
+    loadMoreGalleryItems();
+};
 
 // 빈 상태 HTML (필터별 맞춤 메시지)
 function getEmptyStateHtml(filter) {
@@ -22254,10 +22290,13 @@ function refreshSortedFiltered() {
 }
 
 // Firestore에서 다음 페이지 가져오기 (커서 기반)
+// 성공하면 true, 실패하면 false. 예전에는 실패를 catch 로 삼키고 아무것도 돌려주지
+// 않아서, 호출한 쪽이 "가져올 게 없다"와 "가져오지 못했다"를 구분할 수 없었다.
+// galleryHasMore 는 true 로 남고 화면에는 점 세 개만 계속 돌았다.
 async function _loadMoreGalleryFromFirestore() {
     const user = auth.currentUser;
-    if (!user || !galleryHasMore || !galleryLastDoc) return;
-    if (cachedGalleryLogs.length >= MAX_CACHE_SIZE) { galleryHasMore = false; return; }
+    if (!user || !galleryHasMore || !galleryLastDoc) return true;
+    if (cachedGalleryLogs.length >= MAX_CACHE_SIZE) { galleryHasMore = false; return true; }
     try {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 30);
@@ -22276,8 +22315,10 @@ async function _loadMoreGalleryFromFirestore() {
         }
         galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE && cachedGalleryLogs.length < MAX_CACHE_SIZE;
         sortedFilteredDirty = true;
+        return true;
     } catch (e) {
         console.error('[갤러리] 추가 로드 실패:', e);
+        return false;
     }
 }
 
@@ -22298,57 +22339,57 @@ function _reconnectGalleryObserver() {
 // 추가 아이템 로드 함수 (추가분만 append - 전체 재렌더 X)
 async function loadMoreGalleryItems() {
     if (isLoadingMore) return;
-
-    refreshSortedFiltered();
     const sentinel = document.getElementById('gallery-sentinel');
+    if (!sentinel) return;
 
-    if (galleryDisplayCount >= sortedFilteredCache.length) {
-        // 렌더링할 캐시 소진 — Firestore에서 더 가져오기 시도
-        if (galleryHasMore) {
-            isLoadingMore = true;
-            sentinel.style.display = 'block';
-            await _loadMoreGalleryFromFirestore();
-            refreshSortedFiltered();
-            isLoadingMore = false;
-            // 유저 필터 등으로 여전히 표시할 항목이 없어도 galleryHasMore이면 계속 시도
-            if (galleryDisplayCount >= sortedFilteredCache.length) {
-                if (galleryHasMore) {
-                    loadMoreGalleryItems(); // 다음 페이지도 시도
-                } else {
-                    sentinel.style.display = 'none';
-                    _disconnectGalleryObserver();
-                }
-            } else {
-                loadMoreGalleryItems(); // 새 데이터로 이어서 렌더링
-            }
-        } else {
-            sentinel.style.display = 'none';
-            _disconnectGalleryObserver();
-        }
-        return;
-    }
-
+    // try/finally 로 감싼다. 예전에는 게시물 하나가 렌더 중에 예외를 던지면
+    // isLoadingMore 가 true 로 굳어서, 이후 모든 호출이 첫 줄에서 튕기고
+    // 피드가 영영 멈췄다. "가끔 멈춘다"의 정체가 이것이다.
     isLoadingMore = true;
+    try {
+        refreshSortedFiltered();
 
-    // 추가분만 append (전체 재렌더 X)
-    const container = document.getElementById('gallery-container');
-    const myId = auth.currentUser ? auth.currentUser.uid : "";
-    const start = galleryDisplayCount;
-    const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
+        // 캐시가 남아 있으면 붙이고, 모자라면 다음 장을 받아 온다.
+        // 유저 필터 때문에 한 장을 통째로 걸러낼 수 있어서 여러 장을 이어 받되,
+        // 무한 재귀 대신 상한 있는 루프로 돈다.
+        for (let page = 0; page < GALLERY_MAX_CHAINED_PAGES; page++) {
+            if (galleryDisplayCount < sortedFilteredCache.length) {
+                const container = document.getElementById('gallery-container');
+                const myId = auth.currentUser ? auth.currentUser.uid : "";
+                const start = galleryDisplayCount;
+                const end = Math.min(start + LOAD_MORE, sortedFilteredCache.length);
+                for (let i = start; i < end; i++) {
+                    appendGalleryFeedItem(container, sortedFilteredCache[i], i, myId);
+                }
+                galleryDisplayCount = end;
+                break;
+            }
 
-    for (let i = start; i < end; i++) {
-        appendGalleryFeedItem(container, sortedFilteredCache[i], i, myId);
+            if (!galleryHasMore) break;
+
+            sentinel.style.display = 'block';
+            const ok = await _loadMoreGalleryFromFirestore();
+            if (!ok) {
+                // 실패는 조용히 넘기지 않는다. 점 세 개를 다시 불러오기 버튼으로
+                // 바꿔서, 왜 멈췄는지 보이고 눌러서 복구할 수 있게 한다.
+                _setGalleryLoadFailed(true);
+                return;
+            }
+            refreshSortedFiltered();
+        }
+
+        const exhausted = galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore;
+        sentinel.style.display = exhausted ? 'none' : 'block';
+        if (exhausted) _disconnectGalleryObserver();
+    } catch (e) {
+        console.error('[갤러리] 추가 렌더 실패:', e);
+        _setGalleryLoadFailed(true);
+    } finally {
+        isLoadingMore = false;
     }
 
-    galleryDisplayCount = end;
-    isLoadingMore = false;
-
-    if (galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore) {
-        sentinel.style.display = 'none';
-        _disconnectGalleryObserver();
-    } else {
-        sentinel.style.display = 'block';
-    }
+    // 아직 sentinel 이 보이면 옵저버를 다시 붙여 교차 판정을 새로 받는다.
+    _rearmGalleryObserver();
 }
 
 // 아이템이 표시되어야 하는지 판단 (HTML 생성 없이 빠르게)
@@ -22369,6 +22410,7 @@ function cleanupGalleryResources() {
     sortedFilteredDirty = true;
     galleryDisplayCount = 0;
     isLoadingMore = false;
+    _setGalleryLoadFailed(false);
     _galleryLoadingPromise = null;
     _galleryLoadingStartedAt = 0;
     _galleryLoadGeneration += 1;
@@ -22725,7 +22767,10 @@ async function _loadGalleryDataInner(forceReload = false, loadGeneration = _gall
     galleryDisplayCount = end;
 
     const sentinel = document.getElementById('gallery-sentinel');
-    if (galleryDisplayCount >= sortedFilteredCache.length) {
+    // galleryHasMore 를 같이 봐야 한다. 캐시만 보고 숨기면, 필터가 이번 장을
+    // 통째로 걸러냈을 때 Firestore 에 남은 게 있어도 sentinel 이 사라져
+    // 무한 스크롤이 아예 시작되지 않는다.
+    if (galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore) {
         sentinel.style.display = 'none';
     } else {
         sentinel.style.display = 'block';
@@ -23423,6 +23468,8 @@ function renderFeedOnly() {
     container.innerHTML = '';
     const myId = auth.currentUser ? auth.currentUser.uid : "";
     const sentinel = document.getElementById('gallery-sentinel');
+    // 필터를 바꾸면 이전 실패는 무효다. 버튼을 남겨두면 새 필터에서도 막힌 것처럼 보인다.
+    _setGalleryLoadFailed(false);
 
     refreshSortedFiltered();
     renderGalleryHeroStats(myId);

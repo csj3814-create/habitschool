@@ -2,6 +2,16 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-23
+
+### Fixed
+- Stopped the gallery feed from stalling partway down. Three separate faults each left it unable to recover on its own. The loading flag was set before appending posts and cleared after, with nothing in between to guarantee the clear — one post that threw while rendering locked the flag on, and every later attempt returned at the guard on the first line. `IntersectionObserver` only reports the moment an element crosses into view, so once a load came back empty and the page stopped growing, the sentinel sat on screen and never fired again; scrolling in place did nothing and only leaving the tab and returning cleared it. And a failed fetch was swallowed by a `catch` that logged and returned nothing, so the caller could not tell "nothing left to load" from "could not load it", left `galleryHasMore` set, and recursed into the same failure without limit. The flag is now released in a `finally`, the observer is re-armed after each load so a sentinel still in view immediately asks for the next page, the fetch reports success or failure, and the retry chain is bounded.
+- Kept the sentinel visible when a filter happens to exclude an entire page of results. It was hidden on local cache exhaustion alone, so with more posts still waiting in Firestore the infinite scroll never started at all.
+
+### Changed
+- The feed now starts loading about 1000px before the bottom rather than 100px, and appends 12 posts at a time rather than 6. At the old settings a page of 30 cached posts took five observer round-trips to display, and anyone scrolling at a normal pace saw the spinner before the next posts arrived.
+- When a load genuinely fails, the three loading dots are replaced by a retry button. A permanent "load more" button would add a tap to the normal case, but a network failure needs some way out other than reopening the tab.
+
 ## 2026-08-21
 
 ### Fixed

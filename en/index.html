@@ -138,8 +138,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=331">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=331">
+    <link rel="stylesheet" href="styles.css?v=332">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=332">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -737,7 +737,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=331"></script>
+    <script src="js/webview-detect.js?v=332"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2446,12 +2446,19 @@
                 </div>
 
                 <div id="gallery-container" role="feed" aria-label="해빛 갤러리 피드"></div>
-                <div id="gallery-sentinel" style="height: 20px; text-align: center; padding: 20px; display: none;"
-                    aria-hidden="true">
-                    <div class="loading-spinner">
+                <div id="gallery-sentinel" style="text-align: center; padding: 20px; display: none;">
+                    <div class="loading-spinner" id="gallery-sentinel-spinner" aria-hidden="true">
                         <span class="loading-dot"></span>
                         <span class="loading-dot"></span>
                         <span class="loading-dot"></span>
+                    </div>
+                    <!-- 자동 로딩이 실패했을 때만 보인다. 무한 스크롤이 정상일 때
+                         상시 노출하면 정상 동작에서도 손이 한 번 더 가게 된다. -->
+                    <div id="gallery-load-retry" style="display: none;">
+                        <p class="gallery-load-retry-msg">기록을 더 불러오지 못했어요.</p>
+                        <button type="button" class="gallery-load-retry-btn" onclick="retryGalleryLoad()">
+                            ↻ 다시 불러오기
+                        </button>
                     </div>
                 </div>
                 </section>
@@ -2866,13 +2873,13 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=331"></script>
-    <script type="module" src="js/main.js?v=331"></script>
-    <script type="module" src="js/diet-analysis.js?v=331"></script>
-    <script type="module" src="js/metabolic-score.js?v=331"></script>
+    <script type="module" src="js/app.js?v=332"></script>
+    <script type="module" src="js/main.js?v=332"></script>
+    <script type="module" src="js/diet-analysis.js?v=332"></script>
+    <script type="module" src="js/metabolic-score.js?v=332"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=331"></script>
+    <script src="js/pwa-install.js?v=332"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

@@ -7050,3 +7050,46 @@ html.locale-en .guest-demo-entry-btn {
 html.locale-en .kakao-channel-link {
     display: none !important;
 }
+
+/* 갤러리 추가 로딩 실패 시에만 나오는 재시도. 자동 로딩이 정상일 때는
+   스피너만 보이고 이 블록은 숨어 있다.
+   다크모드는 이 프로젝트 방식대로 body.dark-mode 로 받는다
+   (prefers-color-scheme 아님 — styles-dark-mode.css 참고). */
+.gallery-load-retry-msg {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #888;
+}
+
+.gallery-load-retry-btn {
+    padding: 10px 22px;
+    border: 1px solid #ffc9a3;
+    border-radius: 999px;
+    background: #fff6ef;
+    color: #e8720c;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.gallery-load-retry-btn:hover,
+.gallery-load-retry-btn:active {
+    background: #ffe9d8;
+}
+
+body.dark-mode .gallery-load-retry-msg {
+    color: var(--text-color, #9a9a9a);
+    opacity: 0.7;
+}
+
+body.dark-mode .gallery-load-retry-btn {
+    border-color: var(--border-color, #6b4a2f);
+    background: transparent;
+    color: var(--primary-color, #FFB74D);
+}
+
+body.dark-mode .gallery-load-retry-btn:hover,
+body.dark-mode .gallery-load-retry-btn:active {
+    background: rgba(255, 183, 77, 0.12);
+}
