@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=333';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=333';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=334';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=334';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=333';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=333';
+} from './auth-login-helpers.js?v=334';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=334';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=333';
+} from './exercise-media.js?v=334';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=333';
+} from './health-connect-utils.js?v=334';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=333';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=333';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=333';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=333';
-import { sanitize, compressImage } from './data-manager.js?v=333';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=333';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=333';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=333';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=333';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=333';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=333';
+} from './habit-groups.js?v=334';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=334';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=334';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=334';
+import { sanitize, compressImage } from './data-manager.js?v=334';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=334';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=334';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=334';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=334';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=334';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=334';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=333';
+} from './guest-demo.js?v=334';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=333';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=333';
+} from './product-events.js?v=334';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=334';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=333';
+} from './diet-program.js?v=334';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=333';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=333';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=333';
+} from './meditation-guide.js?v=334';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=334';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=334';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=333';
+} from './social-challenge-readiness.js?v=334';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=333';
+} from './monthly-mvp-reward.js?v=334';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=333';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=334';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9489,6 +9489,17 @@ async function loadDataForSelectedDate(dateStr) {
 
 let galleryFilter = 'all';
 let galleryUserFilter = null; // { userId, userName } | null
+// 유저 필터가 끌어온 문서들. 전체 피드 캐시에 섞여 들어가지만 전체 피드의
+// 상한 계산에서는 빼야 한다.
+let galleryUserFilterInjectedIds = new Set();
+
+function getGlobalGalleryCacheSize() {
+    if (galleryUserFilterInjectedIds.size === 0) return cachedGalleryLogs.length;
+    return cachedGalleryLogs.reduce(
+        (count, item) => count + (galleryUserFilterInjectedIds.has(item.id) ? 0 : 1),
+        0
+    );
+}
 window.setGalleryFilter = function (filter, btnElement) {
     galleryFilter = filter;
     sortedFilteredDirty = true;  // 필터 변경 시 캐시 무효화
@@ -9613,8 +9624,13 @@ function applyGalleryFilterChrome(isFiltered) {
 // 보였다. 전체 피드를 페이지 단위로 계속 당겨 오는 방법은 못 쓴다 — 첫 화면이
 // 로컬 캐시나 REST 폴백에서 그려진 경우 커서(galleryLastDoc)가 없어서 한 장도
 // 더 못 가져온다. 그래서 그 사람 글만 곧바로 조회한다.
-// orderBy 없이 userId 하나로만 거른다. 단일 필드는 색인이 자동이라 복합 색인을
-// 새로 배포할 필요가 없고, 정렬은 어차피 sortedFilteredCache에서 다시 한다.
+// 정렬은 어차피 sortedFilteredCache에서 다시 하지만, limit 에 걸렸을 때 무엇이
+// 잘리는지는 여기서 정해진다. orderBy 를 안 주면 Firestore 는 문서 ID 오름차순으로
+// 준다. 문서 ID 가 `{uid}_{날짜}` 라서 한 사람 안에서는 그게 곧 날짜 오름차순이고,
+// 200개를 넘긴 사람은 '가장 오래된 200개'만 받게 된다 — 최근 기록이 통째로
+// 사라지는, 이 화면에서 제일 나쁜 방향의 잘림이다.
+// documentId() 내림차순은 equality 필터와 함께 자동 색인으로 동작한다(복합 색인
+// 배포 불필요). updatedAt 정렬은 복합 색인이 필요해서 쓰지 않는다.
 const GALLERY_USER_FILTER_FETCH_LIMIT = 200;
 
 async function loadRestOfGalleryForUserFilter() {
@@ -9625,6 +9641,7 @@ async function loadRestOfGalleryForUserFilter() {
         snapshot = await getDocs(query(
             collection(db, 'gallery_posts'),
             where('userId', '==', targetId),
+            orderBy(documentId(), 'desc'),
             limit(GALLERY_USER_FILTER_FETCH_LIMIT)
         ));
     } catch (e) {
@@ -9643,6 +9660,9 @@ async function loadRestOfGalleryForUserFilter() {
     if (added.length === 0) return;
     // 이 목록은 한 사람 것만 모은 거라 전체 피드 캐시로는 저장하지 않는다.
     cachedGalleryLogs = [...cachedGalleryLogs, ...added];
+    // 전체 피드의 300개 상한에는 포함시키지 않는다. 그냥 합치면 글 많은 회원을
+    // 한 번 필터링한 것만으로 전체 피드가 그만큼 일찍 끊긴다.
+    added.forEach((item) => galleryUserFilterInjectedIds.add(item.id));
     sortedFilteredDirty = true;
     renderFeedOnly();
 }
@@ -22322,7 +22342,7 @@ function refreshSortedFiltered() {
 async function _loadMoreGalleryFromFirestore() {
     const user = auth.currentUser;
     if (!user || !galleryHasMore || !galleryLastDoc) return true;
-    if (cachedGalleryLogs.length >= MAX_CACHE_SIZE) { galleryHasMore = false; return true; }
+    if (getGlobalGalleryCacheSize() >= MAX_CACHE_SIZE) { galleryHasMore = false; return true; }
     try {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 30);
@@ -22435,6 +22455,7 @@ function cleanupGalleryResources() {
     sortedFilteredCache = [];
     sortedFilteredDirty = true;
     galleryDisplayCount = 0;
+    galleryUserFilterInjectedIds = new Set();
     isLoadingMore = false;
     _setGalleryLoadFailed(false);
     _galleryLoadingPromise = null;

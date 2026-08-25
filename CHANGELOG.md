@@ -2,6 +2,12 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-26
+
+### Fixed
+- Filtering the gallery to one member fetched their posts oldest-first, so anyone past the 200-post fetch limit would have lost their recent records from the view and kept only the earliest ones. No query ordering was given, and Firestore then falls back to document id order — the ids are `{uid}_{date}`, so within one member that is the same as ascending by date. Ordering by document id descending fixes the direction and still needs no composite index, unlike ordering by a field. Nobody has crossed 200 posts yet; the most prolific member is at 74 after 73 days.
+- Posts pulled in by that filter no longer count against the main feed's 300-post ceiling. Opening one prolific member's records used up a quarter of the ceiling, and the main feed then ran out that much sooner once the filter was cleared.
+
 ## 2026-08-25
 
 ### Fixed

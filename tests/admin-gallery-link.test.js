@@ -56,8 +56,13 @@ describe('admin can jump straight to one member\'s gallery', () => {
         // REST 폴백에서 그려지면 커서가 없어서 한 장도 못 가져온다.
         expect(pullFn).not.toContain('_loadMoreGalleryFromFirestore');
         expect(pullFn).toContain("where('userId', '==', targetId),");
-        // orderBy를 빼야 복합 색인 없이 돈다. 정렬은 어차피 클라이언트에서 다시 한다.
-        expect(pullFn).not.toContain('orderBy');
+        // 필드 정렬은 (userId, 그 필드) 복합 색인을 배포해야 돈다. documentId() 정렬은
+        // equality 필터와 함께 자동 색인으로 동작해서 배포가 필요 없다.
+        expect(pullFn).not.toContain("orderBy('updatedAt'");
+        expect(pullFn).not.toContain("orderBy('date'");
+        // 그렇다고 정렬을 아예 빼면 문서 ID 오름차순(= 날짜 오름차순)으로 와서,
+        // limit 에 걸린 회원은 '가장 오래된 200개'만 받고 최근 기록이 잘린다.
+        expect(pullFn).toContain("orderBy(documentId(), 'desc')");
         expect(appSource).toContain('const GALLERY_USER_FILTER_FETCH_LIMIT = 200;');
         // 기다리는 사이 필터가 바뀌었으면 결과를 버린다.
         expect(pullFn).toContain('if (galleryUserFilter?.userId !== targetId) return;');
