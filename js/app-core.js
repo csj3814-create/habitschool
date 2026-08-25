@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=332';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=332';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=333';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=333';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=332';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=332';
+} from './auth-login-helpers.js?v=333';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=333';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=332';
+} from './exercise-media.js?v=333';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=332';
+} from './health-connect-utils.js?v=333';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=332';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=332';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=332';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=332';
-import { sanitize, compressImage } from './data-manager.js?v=332';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=332';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=332';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=332';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=332';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=332';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=332';
+} from './habit-groups.js?v=333';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=333';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=333';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=333';
+import { sanitize, compressImage } from './data-manager.js?v=333';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=333';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=333';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=333';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=333';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=333';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=333';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=332';
+} from './guest-demo.js?v=333';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=332';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=332';
+} from './product-events.js?v=333';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=333';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=332';
+} from './diet-program.js?v=333';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=332';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=332';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=332';
+} from './meditation-guide.js?v=333';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=333';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=333';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=332';
+} from './social-challenge-readiness.js?v=333';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=332';
+} from './monthly-mvp-reward.js?v=333';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=332';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=333';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10432,6 +10432,21 @@ function formatWalletHbtHtml(value = 0) {
     return `${text} <span class="wallet-asset-unit">HBT</span>`;
 }
 
+// 잔액을 이미 아는 상태에서 자산 재조회를 건너뛰더라도, '가장 가까운 보상'
+// 진행바가 HTML 초기 문구로 남아 있으면 안 된다. 성공 경로와 같은 우선순위로
+// 잔액을 찾아 진행바만 맞춘다.
+function ensureAssetRewardGoalRendered(uid) {
+    const cached = readAssetDisplayCache(uid);
+    const dashboardData = typeof _loadDashboardFromLS === 'function' ? _loadDashboardFromLS(uid) : null;
+    const coins = getFiniteAssetNumber(cached?.coins)
+        ?? getFiniteAssetNumber(dashboardData?.ud?.coins)
+        ?? parseDisplayedAssetNumber('asset-points-display')
+        ?? parseDisplayedAssetNumber('point-balance');
+    if (coins == null) return false;
+    updateAssetRewardGoal(coins);
+    return true;
+}
+
 function parseDisplayedAssetNumber(elementId, { allowDecimal = false } = {}) {
     const raw = String(document.getElementById(elementId)?.textContent || '').trim();
     if (!raw) return null;
@@ -10509,14 +10524,12 @@ function applyCachedAssetDisplay(uid) {
     }
     if (pointsValue == null && hbtValue == null && !hasWalletSnapshot) return null;
 
-    const pointsDisplay = document.getElementById('asset-points-display');
-    if (pointsDisplay && pointsValue != null) {
-        pointsDisplay.innerHTML = formatWalletPointsHtml(pointsValue);
-    }
-
-    const pointBadge = document.getElementById('point-balance');
-    if (pointBadge && pointsValue != null) {
-        pointBadge.textContent = String(pointsValue);
+    // 포인트 숫자와 '가장 가까운 보상' 진행바는 같은 잔액에서 나온다. 여기서
+    // 숫자만 칠하고 진행바를 빼먹는 바람에, 1,835P 를 가진 화면에 HTML 초기값인
+    // '현재 포인트를 확인하고 있어요 / 2,000P 남음'이 그대로 남아 있었다.
+    // 잔액을 아는 곳은 반드시 이 한 함수를 거친다.
+    if (pointsValue != null) {
+        applyKnownCoinBalanceToUi(pointsValue);
     }
 
     const hbtDisplay = document.getElementById('asset-hbt-display');
@@ -10555,6 +10568,7 @@ function applyCachedPointBalanceFromStorage(uid = auth.currentUser?.uid || '') {
     const simpleProfilePoints = document.getElementById('simple-profile-points');
     if (simpleProfilePoints) simpleProfilePoints.textContent = `${Number(pointsValue || 0).toLocaleString()}P`;
 
+    updateAssetRewardGoal(pointsValue);
     return pointsValue;
 }
 
@@ -10754,6 +10768,7 @@ function applyPointBalanceSnapshot(pointsValue, uid = auth.currentUser?.uid || '
     const simpleProfilePoints = document.getElementById('simple-profile-points');
     if (simpleProfilePoints) simpleProfilePoints.textContent = `${parsedPoints.toLocaleString()}P`;
 
+    updateAssetRewardGoal(parsedPoints);
     return nextCache;
 }
 
@@ -10789,6 +10804,9 @@ window.applyOptimisticConversionResult = function ({ pointsUsed = 0, hbtReceived
     if (pointBadge) {
         pointBadge.textContent = String(nextPoints);
     }
+
+    // 변환으로 포인트가 줄면 '첫 쿠폰까지 남은 포인트'도 같이 늘어야 한다.
+    updateAssetRewardGoal(nextPoints);
 
     const hbtDisplay = document.getElementById('asset-hbt-display');
     if (hbtDisplay) {
@@ -11526,6 +11544,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
     const now = Date.now();
     if (!forceRefresh && _assetCache.uid === user.uid && (now - _assetCache.ts) < ASSET_CACHE_TTL) {
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
+        // 여기서 그냥 돌아가면 아래 updateAssetRewardGoal 호출까지 못 간다.
+        // 포인트 숫자는 이전 렌더가 남긴 값이 보이는데 진행바만 초기 문구로
+        // 남는 조합이 여기서 나온다.
+        ensureAssetRewardGoalRendered(user.uid);
         loadRewardMarketSnapshot(false).catch((error) => {
             console.warn('reward market cache-hit refresh skipped:', error?.message || error);
         });
@@ -12457,6 +12479,10 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 console.warn('reward market deferred-branch load skipped:', error?.message || error);
             });
             markAssetHbtBalanceDelayed({ defer: true });
+            // 사용자 문서를 못 받아도 잔액은 캐시로 알고 있을 수 있다. 그때까지
+            // 진행바를 '확인하고 있어요'로 두면, 포인트 숫자는 보이는데 그 아래
+            // 카드만 영영 초기 상태로 남는다.
+            ensureAssetRewardGoalRendered(user.uid);
             const userDocDeferred = isDeferredAssetSnap(userSnap);
             const settleTxSnap = await _p_settleTx;
             const usedCachedChallengePanel = renderAssetChallengeFromCachedUserData(

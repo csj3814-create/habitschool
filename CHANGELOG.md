@@ -2,6 +2,12 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-25
+
+### Fixed
+- The "closest reward" card on the assets tab kept saying it was still checking your points, with an empty bar and the full 2,000P shown as remaining, while the balance right above it read 1,835P. The number and the bar were written by different code: five places put the point balance on screen and only one of them also updated the bar. Whenever the balance arrived from cache — the 30-second in-memory one, or the localStorage copy painted before the server answers — the card was left with the placeholder text compiled into the page, which is why the figure was the untouched 2,000P rather than the 165P the arithmetic gives. Every path that knows the balance now updates both, and the two paths that skip the asset refresh entirely fill the bar from the last known balance instead of leaving it blank.
+- Converting points to HBT now updates the remaining figure too. It was reading as though the spent points were still there.
+
 ## 2026-08-23
 
 ### Fixed
