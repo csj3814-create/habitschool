@@ -129,3 +129,57 @@ describe('Firestore 페이지 로드', () => {
         expect(catchBlock).toContain('return false');
     });
 });
+
+describe('피드 깊이와 끝 표시', () => {
+    it('상한을 300에서 올렸다 — 300은 최근 3주밖에 못 덮었다', () => {
+        const m = app.match(/const MAX_CACHE_SIZE = (\d+)/);
+        expect(m).not.toBeNull();
+        expect(Number(m[1])).toBeGreaterThan(300);
+    });
+
+    // 주간 순위는 최근 7일만 보면 된다. 피드 상한을 같이 쓰면 깊이를 늘릴 때마다
+    // 갤러리를 열 때마다 그만큼 더 읽는다.
+    it('주간 순위가 피드 상한을 같이 쓰지 않는다', () => {
+        expect(app).toContain('const WEEKLY_BEST_FETCH_LIMIT');
+        const weekly = sliceFn(app, 'async function buildWeeklyBestSection()');
+        expect(weekly).toContain('limit(WEEKLY_BEST_FETCH_LIMIT)');
+        expect(weekly).not.toContain('limit(MAX_CACHE_SIZE)');
+    });
+
+    it('REST 폴백도 피드 상한을 따라가지 않는다', () => {
+        expect(app).toContain('const GALLERY_REST_FALLBACK_LIMIT');
+        expect(app).not.toContain('limitCount = MAX_CACHE_SIZE');
+    });
+
+    it('상한 계산이 한 군데 기준을 쓴다', () => {
+        expect(app).not.toContain('cachedGalleryLogs.length < MAX_CACHE_SIZE');
+        expect(app).not.toContain('cachedGalleryLogs.length >= MAX_CACHE_SIZE');
+    });
+
+    it('끝났을 때 안내를 띄운다', () => {
+        expect(html).toContain('id="gallery-feed-end"');
+        const loadMore2 = sliceFn(app, 'async function loadMoreGalleryItems()');
+        expect(loadMore2).toContain('_setGalleryFeedEnd(');
+        expect(sliceFn(app, 'function renderFeedOnly()')).toContain('_setGalleryFeedEnd(');
+    });
+
+    // "여기까지가 전부"와 "여기까지만 보여준다"는 다른 말이다.
+    it('상한에 걸린 것과 정말 더 없는 것을 구분한다', () => {
+        expect(app).toContain('galleryReachedCap');
+        const fn = sliceFn(app, 'function _setGalleryFeedEnd(show)');
+        expect(fn).toContain('galleryReachedCap');
+        expect(fn).toContain('galleryUserFilter');
+        expect(fn).toContain('여기까지가 전체 기록이에요');
+        expect(fn).toContain('여기까지가 최근 기록이에요');
+    });
+
+    it('글이 하나도 없으면 끝 안내 대신 빈 상태를 쓴다', () => {
+        const loadMore2 = sliceFn(app, 'async function loadMoreGalleryItems()');
+        expect(loadMore2).toContain('sortedFilteredCache.length > 0');
+    });
+
+    it('다시 불러오기와 정리에서 끝 안내를 지운다', () => {
+        expect(app.slice(app.indexOf('window.retryGalleryLoad ='))).toContain('_setGalleryFeedEnd(false)');
+        expect(sliceFn(app, 'function cleanupGalleryResources()')).toContain('_setGalleryFeedEnd(false)');
+    });
+});

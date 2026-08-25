@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=334';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=334';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=335';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=335';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=334';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=334';
+} from './auth-login-helpers.js?v=335';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=335';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=334';
+} from './exercise-media.js?v=335';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=334';
+} from './health-connect-utils.js?v=335';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=334';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=334';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=334';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=334';
-import { sanitize, compressImage } from './data-manager.js?v=334';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=334';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=334';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=334';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=334';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=334';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=334';
+} from './habit-groups.js?v=335';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=335';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=335';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=335';
+import { sanitize, compressImage } from './data-manager.js?v=335';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=335';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=335';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=335';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=335';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=335';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=335';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=334';
+} from './guest-demo.js?v=335';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=334';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=334';
+} from './product-events.js?v=335';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=335';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=334';
+} from './diet-program.js?v=335';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=334';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=334';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=334';
+} from './meditation-guide.js?v=335';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=335';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=335';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=334';
+} from './social-challenge-readiness.js?v=335';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=334';
+} from './monthly-mvp-reward.js?v=335';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6545,7 +6545,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=334';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=335';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9492,6 +9492,8 @@ let galleryUserFilter = null; // { userId, userName } | null
 // 유저 필터가 끌어온 문서들. 전체 피드 캐시에 섞여 들어가지만 전체 피드의
 // 상한 계산에서는 빼야 한다.
 let galleryUserFilterInjectedIds = new Set();
+// 피드가 끝난 이유. 상한에 걸린 것과 정말 더 없는 것을 구분해서 안내한다.
+let galleryReachedCap = false;
 
 function getGlobalGalleryCacheSize() {
     if (galleryUserFilterInjectedIds.size === 0) return cachedGalleryLogs.length;
@@ -21766,7 +21768,16 @@ let galleryDisplayCount = 0;
 const INITIAL_LOAD = 8;        // 초기 로드: 8개 (빠른 첫 화면)
 const LOAD_MORE = 12;          // 추가 로드: 12개씩
 const FIRESTORE_PAGE_SIZE = 30; // Firestore 페이지당 건수 (빠른 초기 로딩)
-const MAX_CACHE_SIZE = 300;    // 캐시 최대 크기 (메모리 관리)
+// 피드가 거슬러 올라갈 수 있는 최대 글 수. 300은 최근 21일치밖에 못 덮어서,
+// 두 달 전 기록은 아무리 내려도 닿지 않았다(전체 1,265건이 73일에 걸쳐 있다).
+// 900이면 대략 7~8주다. 무제한으로 두지 않는 이유는 서버가 아니라 브라우저다 —
+// 가상 스크롤이 없어서 끝까지 내리면 카드와 이미지가 그대로 DOM에 쌓인다.
+const MAX_CACHE_SIZE = 900;
+// 주간 순위는 최근 7일만 보면 된다. 위 상수를 같이 쓰면 피드 깊이를 늘릴 때마다
+// 주간 순위도 덩달아 900건씩 읽는다 — 서로 상관없는 두 값이다.
+const WEEKLY_BEST_FETCH_LIMIT = 300;
+// REST 폴백은 피드 첫 화면을 되살리는 용도라 깊이를 따라갈 필요가 없다.
+const GALLERY_REST_FALLBACK_LIMIT = 300;
 // 바닥에 닿기 한참 전에 미리 불러온다. 100px 였을 때는 조금만 빨리 내려도
 // 스피너를 먼저 보게 됐고, 6개씩 붙이느라 30개짜리 캐시 하나를 소진하는 데
 // 옵저버가 다섯 번 왕복했다.
@@ -22033,6 +22044,25 @@ function _rearmGalleryObserver() {
     setupInfiniteScroll();
 }
 
+// 피드가 끝났음을 알린다. 상한에 걸린 것과 정말 더 없는 것을 구분해서 적는다 —
+// "여기까지가 전부"와 "여기까지만 보여준다"는 사용자에게 전혀 다른 말이다.
+function _setGalleryFeedEnd(show) {
+    const box = document.getElementById('gallery-feed-end');
+    const text = document.getElementById('gallery-feed-end-text');
+    if (!box) return;
+    if (!show) { box.style.display = 'none'; return; }
+    if (text) {
+        if (galleryUserFilter) {
+            text.textContent = '이 회원의 기록을 모두 봤어요.';
+        } else if (galleryReachedCap) {
+            text.textContent = '여기까지가 최근 기록이에요. 더 예전 기록은 회원 이름을 눌러서 볼 수 있어요.';
+        } else {
+            text.textContent = '여기까지가 전체 기록이에요.';
+        }
+    }
+    box.style.display = 'block';
+}
+
 function _setGalleryLoadFailed(failed) {
     galleryLoadFailed = !!failed;
     const spinner = document.getElementById('gallery-sentinel-spinner');
@@ -22044,6 +22074,7 @@ function _setGalleryLoadFailed(failed) {
 // 더보기 버튼. 자동 로딩이 실패했을 때만 노출된다.
 window.retryGalleryLoad = function () {
     _setGalleryLoadFailed(false);
+    _setGalleryFeedEnd(false);
     const sentinel = document.getElementById('gallery-sentinel');
     if (sentinel) sentinel.style.display = 'block';
     loadMoreGalleryItems();
@@ -22114,7 +22145,7 @@ async function buildWeeklyBestSection() {
         const weekSnap = await getDocs(query(
             collection(db, 'gallery_posts'),
             orderBy('updatedAt', 'desc'),
-            limit(MAX_CACHE_SIZE)
+            limit(WEEKLY_BEST_FETCH_LIMIT)
         ));
         weekSnap.forEach(d => weekLogs.push({ id: d.id, data: d.data() }));
         const mondayStartMs = Date.parse(`${mondayStr}T00:00:00+09:00`);
@@ -22342,7 +22373,11 @@ function refreshSortedFiltered() {
 async function _loadMoreGalleryFromFirestore() {
     const user = auth.currentUser;
     if (!user || !galleryHasMore || !galleryLastDoc) return true;
-    if (getGlobalGalleryCacheSize() >= MAX_CACHE_SIZE) { galleryHasMore = false; return true; }
+    if (getGlobalGalleryCacheSize() >= MAX_CACHE_SIZE) {
+        galleryHasMore = false;
+        galleryReachedCap = true;
+        return true;
+    }
     try {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - 30);
@@ -22359,7 +22394,9 @@ async function _loadMoreGalleryFromFirestore() {
             galleryLastDoc = snapshot.docs[snapshot.docs.length - 1] || galleryLastDoc;
             writePersistentGalleryCache('auth', user.uid, cachedGalleryLogs);
         }
-        galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE && cachedGalleryLogs.length < MAX_CACHE_SIZE;
+        galleryHasMore = snapshot.size >= FIRESTORE_PAGE_SIZE && getGlobalGalleryCacheSize() < MAX_CACHE_SIZE;
+        // 왜 끝났는지 구분해 둔다. '더 없음'과 '여기까지만 보여줌'은 다른 말이다.
+        if (!galleryHasMore) galleryReachedCap = getGlobalGalleryCacheSize() >= MAX_CACHE_SIZE;
         sortedFilteredDirty = true;
         return true;
     } catch (e) {
@@ -22426,6 +22463,7 @@ async function loadMoreGalleryItems() {
 
         const exhausted = galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore;
         sentinel.style.display = exhausted ? 'none' : 'block';
+        _setGalleryFeedEnd(exhausted && sortedFilteredCache.length > 0);
         if (exhausted) _disconnectGalleryObserver();
     } catch (e) {
         console.error('[갤러리] 추가 렌더 실패:', e);
@@ -22456,8 +22494,10 @@ function cleanupGalleryResources() {
     sortedFilteredDirty = true;
     galleryDisplayCount = 0;
     galleryUserFilterInjectedIds = new Set();
+    galleryReachedCap = false;
     isLoadingMore = false;
     _setGalleryLoadFailed(false);
+    _setGalleryFeedEnd(false);
     _galleryLoadingPromise = null;
     _galleryLoadingStartedAt = 0;
     _galleryLoadGeneration += 1;
@@ -22617,7 +22657,7 @@ async function _fetchGalleryViaRest(cutoffStr, limitCount) {
     return logsArray;
 }
 
-async function _applyGalleryRestFallback(cutoffStr, audience = 'auth', limitCount = MAX_CACHE_SIZE) {
+async function _applyGalleryRestFallback(cutoffStr, audience = 'auth', limitCount = GALLERY_REST_FALLBACK_LIMIT) {
     const logsArray = await withAsyncTimeout(
         _fetchGalleryViaRest(cutoffStr, limitCount),
         GALLERY_LOAD_TIMEOUT_MS,
@@ -23539,6 +23579,7 @@ function renderFeedOnly() {
     galleryDisplayCount = end;
 
     const noMoreToShow = galleryDisplayCount >= sortedFilteredCache.length && !galleryHasMore;
+    _setGalleryFeedEnd(noMoreToShow && sortedFilteredCache.length > 0);
     if (noMoreToShow || sortedFilteredCache.length === 0) {
         sentinel.style.display = 'none';
         _disconnectGalleryObserver();

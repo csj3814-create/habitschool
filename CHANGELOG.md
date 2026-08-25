@@ -2,6 +2,15 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-26 (2)
+
+### Changed
+- The gallery feed now reaches back 900 posts instead of 300. Three hundred covered only the last three weeks — records from two months ago could not be reached by scrolling at all, with 1,265 posts spread over 73 days. It is not unlimited because the constraint is the browser rather than the server: there is no virtual scrolling, so cards and their images accumulate in the page as you scroll. Reading every post in the collection costs well under a dollar a month in Firestore reads; the images are fetched lazily either way, so the old ceiling was withholding access rather than saving anything.
+- The end of the feed now says so instead of stopping silently, which read as a loading failure. It distinguishes the three cases: everything has been shown, the 900 ceiling was reached and older records are still reachable through a member's own records, or a filtered member's records are fully shown.
+
+### Fixed
+- The weekly ranking no longer shares the feed's depth limit. It only needs the last seven days, and would otherwise have started reading 900 documents every time the gallery opened. The REST fallback was similarly decoupled.
+
 ## 2026-08-26
 
 ### Fixed

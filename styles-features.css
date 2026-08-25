@@ -7093,3 +7093,17 @@ body.dark-mode .gallery-load-retry-btn:hover,
 body.dark-mode .gallery-load-retry-btn:active {
     background: rgba(255, 183, 77, 0.12);
 }
+
+/* 피드 끝 안내. 아무 말 없이 멈추면 로딩이 고장난 것처럼 보인다. */
+#gallery-feed-end {
+    padding: 24px 20px 32px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #999;
+}
+
+body.dark-mode #gallery-feed-end {
+    color: var(--text-color, #9a9a9a);
+    opacity: 0.6;
+}
