@@ -41,17 +41,42 @@ function callQueueHook(callback, ...args) {
 export function createSequentialTaskQueue() {
     let tail = Promise.resolve();
     let pendingCount = 0;
+    // 아직 시작하지 못한 작업들. 앞이 하나 끝나면 이 목록의 순번이 전부 바뀐다.
+    const waiting = [];
+
+    // 큐가 한 칸 줄면 뒤에 선 항목들에게 새 순번을 알린다. 이걸 안 하면 세 번째
+    // 파일은 자기 차례가 올 때까지 처음 받은 문구를 그대로 달고 서 있게 되고,
+    // 진행 이벤트가 없는 업로드(삼성 인터넷의 단순 PUT)가 앞에 있으면 화면이
+    // 몇 분 동안 한 글자도 바뀌지 않아 멈춘 것처럼 보인다.
+    const notifyWaiting = () => {
+        for (let i = 0; i < waiting.length; i += 1) {
+            const ahead = i + 1;
+            // 순번이 그대로인 항목까지 다시 알리면 같은 문구를 계속 덮어써서
+            // 화면만 흔들린다. 바뀐 것만 보낸다.
+            if (waiting[i].lastAhead === ahead) continue;
+            waiting[i].lastAhead = ahead;
+            callQueueHook(waiting[i].onQueued, ahead);
+        }
+    };
 
     return Object.freeze({
         enqueue(task, { onQueued = null, onStart = null, onSettled = null } = {}) {
             if (typeof task !== 'function') return Promise.resolve(null);
 
             pendingCount += 1;
-            if (pendingCount > 1) callQueueHook(onQueued, pendingCount - 1);
+            const waiter = { onQueued, lastAhead: 0 };
+            if (pendingCount > 1) {
+                waiting.push(waiter);
+                waiter.lastAhead = waiting.length;
+                callQueueHook(onQueued, waiter.lastAhead);
+            }
 
             const run = tail
                 .catch(() => {})
                 .then(async () => {
+                    const at = waiting.indexOf(waiter);
+                    if (at >= 0) waiting.splice(at, 1);
+                    notifyWaiting();
                     callQueueHook(onStart);
                     return await task();
                 });

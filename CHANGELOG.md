@@ -2,6 +2,12 @@
 
 All notable changes to Habitschool are documented here.
 
+## 2026-08-26 (3)
+
+### Fixed
+- Uploading several exercise videos on Samsung Internet left the later ones sitting at "업로드 대기 중 · 앞 파일부터 저장할게요" with an empty bar, for long enough that people reported it as frozen. Nothing was actually stuck. Samsung Internet uses a plain `uploadBytes` transport because the resumable one stalls there, and `uploadBytes` reports no byte progress at all — it goes from 0% to 100% in one step, which for a large video is minutes of a motionless bar. Meanwhile the queued files behind it were told their position exactly once, when they were added, and never again, so their text could not change either. Between the two, the whole screen sat still with no way to tell it apart from a failure.
+- Queued uploads now show how many files are ahead, and the number counts down as the queue drains. The upload in flight shows elapsed seconds and an indeterminate bar rather than a percentage, since there is no real percentage to report and inventing one would be worse than saying nothing.
+
 ## 2026-08-26 (2)
 
 ### Changed

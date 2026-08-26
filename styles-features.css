@@ -7107,3 +7107,22 @@ body.dark-mode #gallery-feed-end {
     color: var(--text-color, #9a9a9a);
     opacity: 0.6;
 }
+
+/* 바이트 진행 이벤트가 없는 전송(삼성 인터넷 단순 PUT)용. 퍼센트를 지어내지 않고
+   막대만 왕복시킨다 — 0%로 굳은 막대는 실패와 구분이 안 된다. */
+.upload-progress-status__fill.is-indeterminate {
+    width: 40%;
+    transition: none;
+    animation: upload-progress-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes upload-progress-sweep {
+    0%   { transform: translateX(-110%); }
+    100% { transform: translateX(260%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .upload-progress-status__fill.is-indeterminate {
+        animation-duration: 2.6s;
+    }
+}

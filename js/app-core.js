@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=335';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=335';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=336';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=336';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=335';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=335';
+} from './auth-login-helpers.js?v=336';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=336';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=335';
+} from './exercise-media.js?v=336';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=335';
+} from './health-connect-utils.js?v=336';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,17 +57,17 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=335';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=335';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=335';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=335';
-import { sanitize, compressImage } from './data-manager.js?v=335';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=335';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=335';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=335';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=335';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=335';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=335';
+} from './habit-groups.js?v=336';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=336';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=336';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=336';
+import { sanitize, compressImage } from './data-manager.js?v=336';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=336';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=336';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=336';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=336';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=336';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=336';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -77,14 +77,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=335';
+} from './guest-demo.js?v=336';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=335';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=335';
+} from './product-events.js?v=336';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=336';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -106,7 +106,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=335';
+} from './diet-program.js?v=336';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -118,18 +118,18 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=335';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=335';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=335';
+} from './meditation-guide.js?v=336';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=336';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=336';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=335';
+} from './social-challenge-readiness.js?v=336';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=335';
+} from './monthly-mvp-reward.js?v=336';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -179,6 +179,7 @@ const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_DELAY_MS = 900;
 const SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL = '영상 업로드 중이에요. 저장하면 자동으로 이어갈게요.';
+const SAMSUNG_VIDEO_UPLOAD_HEARTBEAT_MS = 1000;
 const EXERCISE_VIDEO_FALLBACK_MESSAGE = '\uc601\uc0c1 \uc120\ud0dd\uc744 \ucc98\ub9ac\ud558\uc9c0 \ubabb\ud588\uc5b4\uc694. \ub2e4\uc2dc \ub204\ub974\uba74 \uc77c\ubc18 \uc120\ud0dd\ucc3d\uc744 \uc5f4\uc5b4\uc694.';
 const SAMSUNG_FILE_PICKER_GUIDE_KO = '삼성 인터넷에서는 사진·영상 선택 창이 뜨면 ‘작업 선택’에서 세 번째 ‘파일’을 눌러 주세요.';
 const SAMSUNG_FILE_PICKER_GUIDE_EN = 'In Samsung Internet, choose the third option, “Files,” when the action picker opens.';
@@ -6545,7 +6546,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=335';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=336';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17350,9 +17351,13 @@ let _mediaStoragePathSequence = 0;
 
 function runMediaStorageUploadInSequence(callback, { onProgress = null } = {}) {
     return _mediaStorageUploadQueue.enqueue(callback, {
-        onQueued: () => scheduleSimpleUploadProgress(onProgress, {
+        // 앞에 몇 개 남았는지 보여주고, 큐가 줄 때마다 갱신된다. 숫자가 줄어드는
+        // 것만으로도 "돌아가고는 있다"가 전달된다.
+        onQueued: (ahead) => scheduleSimpleUploadProgress(onProgress, {
             pct: 0,
-            message: '업로드 대기 중 · 앞 파일부터 저장할게요'
+            message: Number(ahead) > 1
+                ? `업로드 대기 중 · 앞에 ${Number(ahead)}개 남았어요`
+                : '업로드 대기 중 · 앞 파일부터 저장할게요'
         }),
         onStart: () => scheduleSimpleUploadProgress(onProgress, { pct: 0, message: '' })
     });
@@ -17446,17 +17451,33 @@ async function uploadSamsungVideoWithSimplePut(storageRef, file, {
     contentType = 'video/mp4',
     timeoutMs = 5 * 60 * 1000
 } = {}) {
+    // 삼성 인터넷에서는 resumable 전송이 멈춰 보여서 단순 uploadBytes 를 쓴다.
+    // 대신 바이트 진행 이벤트가 아예 없다 — 0%에서 100%로 한 번에 뛴다.
+    // 큰 영상은 그 사이가 몇 분이라, 경과 시간이라도 흐르지 않으면 얼어 붙은
+    // 화면과 구분이 안 된다. 가짜 퍼센트를 그리는 대신 초를 센다.
+    const startedAt = Date.now();
+    const tick = () => scheduleSimpleUploadProgress(onProgress, {
+        pct: 0,
+        indeterminate: true,
+        message: `${SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL} · ${Math.round((Date.now() - startedAt) / 1000)}초째`
+    });
     scheduleSimpleUploadProgress(onProgress, {
         pct: 0,
+        indeterminate: true,
         message: SAMSUNG_VIDEO_UPLOAD_SIMPLE_PROGRESS_LABEL
     });
-    await withRejectingTimeout(
-        uploadBytes(storageRef, file, {
-            contentType: String(contentType || 'video/mp4').trim() || 'video/mp4'
-        }),
-        timeoutMs,
-        'samsung_video_upload_timeout'
-    );
+    const heartbeat = setInterval(tick, SAMSUNG_VIDEO_UPLOAD_HEARTBEAT_MS);
+    try {
+        await withRejectingTimeout(
+            uploadBytes(storageRef, file, {
+                contentType: String(contentType || 'video/mp4').trim() || 'video/mp4'
+            }),
+            timeoutMs,
+            'samsung_video_upload_timeout'
+        );
+    } finally {
+        clearInterval(heartbeat);
+    }
     onProgress?.(100);
 }
 
@@ -17763,7 +17784,7 @@ function setThumbPendingState(inputId, { visible = false, label = '썸네일 제
     host.classList.remove('has-thumb-pending');
 }
 
-function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '' } = {}) {
+function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '', indeterminate = false } = {}) {
     const els = getInlineUploadProgressEls(inputId);
     if (!els) return;
 
@@ -17782,7 +17803,13 @@ function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, messag
     els.statusEl.classList.toggle('is-error', state === 'error');
     els.labelEl.textContent = label;
     els.percentEl.textContent = state === 'error' || message ? '' : `${normalizedPct}%`;
-    els.fillEl.style.width = `${state === 'error' ? 100 : Math.max(normalizedPct, normalizedPct > 0 ? 6 : 0)}%`;
+    // 진행 이벤트가 없는 전송은 퍼센트를 지어내지 않고 막대만 움직인다.
+    // 0%로 굳은 막대는 실패와 구분이 안 된다.
+    const useIndeterminate = indeterminate === true && state === 'uploading' && normalizedPct <= 0;
+    els.fillEl.classList.toggle('is-indeterminate', useIndeterminate);
+    els.fillEl.style.width = useIndeterminate
+        ? ''
+        : `${state === 'error' ? 100 : Math.max(normalizedPct, normalizedPct > 0 ? 6 : 0)}%`;
 }
 
 function hideInlineUploadProgress(inputId) {
@@ -17794,6 +17821,7 @@ function hideInlineUploadProgress(inputId) {
     els.statusEl.classList.remove('is-complete', 'is-error');
     els.labelEl.textContent = '';
     els.percentEl.textContent = '';
+    els.fillEl.classList.remove('is-indeterminate');
     els.fillEl.style.width = '0%';
 }
 
@@ -17910,12 +17938,14 @@ function normalizeUploadProgressPayload(payload) {
     if (payload && typeof payload === 'object') {
         return {
             pct: Math.round(Number(payload.pct ?? payload.progress ?? 0) || 0),
-            message: String(payload.message || '').trim()
+            message: String(payload.message || '').trim(),
+            indeterminate: payload.indeterminate === true
         };
     }
     return {
         pct: Math.round(Number(payload) || 0),
-        message: ''
+        message: '',
+        indeterminate: false
     };
 }
 
@@ -17923,13 +17953,13 @@ function updatePendingUploadProgress(inputId, progressPayload) {
     if (!inputId) return;
     const entry = _pendingUploads.get(inputId);
     if (!entry) return;
-    const { pct, message } = normalizeUploadProgressPayload(progressPayload);
+    const { pct, message, indeterminate } = normalizeUploadProgressPayload(progressPayload);
     entry.progress = Math.max(entry.progress || 0, pct);
     entry.progressMessage = message;
     if (entry.progress > 0 || message) {
         clearPendingUploadDelayTimer(entry);
     }
-    setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress, message });
+    setInlineUploadProgress(inputId, { state: 'uploading', pct: entry.progress, message, indeterminate });
     if (entry.reportProgress && entry.progress > 0 && entry.progress < 100 && !message) {
         updateSaveButtonUploadProgress(entry.progress);
     }

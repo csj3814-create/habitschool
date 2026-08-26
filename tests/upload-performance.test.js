@@ -136,3 +136,56 @@ describe('getResumableUploadTimeouts', () => {
         expect(timeouts.idleTimeoutMs).toBe(3 * 60 * 1000);
     });
 });
+
+describe('대기 순번 알림', () => {
+    // 삼성 인터넷 제보: 영상 세 개를 고르면 뒤의 파일이
+    // '업로드 대기 중 · 앞 파일부터 저장할게요' 에서 멈춘 것처럼 보였다.
+    // 앞의 업로드가 진행 이벤트를 전혀 주지 않는 단순 PUT 이라, 순번마저
+    // 갱신되지 않으면 화면이 몇 분 동안 한 글자도 안 바뀐다.
+    it('큐가 줄어들 때마다 남은 항목에 새 순번을 알린다', async () => {
+        const queue = createSequentialTaskQueue();
+        const seen = { B: [], C: [] };
+        const gate = [];
+        const hold = () => new Promise((resolve) => gate.push(resolve));
+        // enqueue 는 다음 마이크로태스크에서야 task 를 실행한다.
+        const untilGate = async (n) => { while (gate.length < n) await Promise.resolve(); };
+
+        const a = queue.enqueue(hold, { onQueued: () => {} });
+        const b = queue.enqueue(hold, { onQueued: (ahead) => seen.B.push(ahead) });
+        const c = queue.enqueue(hold, { onQueued: (ahead) => seen.C.push(ahead) });
+
+        // 처음 줄 섰을 때: B 앞에 1개, C 앞에 2개
+        expect(seen.B).toEqual([1]);
+        expect(seen.C).toEqual([2]);
+
+        await untilGate(1);
+        gate.shift()();            // A 끝 → B 시작
+        await a;
+        await untilGate(1);
+        expect(seen.C).toEqual([2, 1]);   // C 의 순번이 줄어야 한다
+
+        gate.shift()();
+        await b;
+        await untilGate(1);
+        gate.shift()();
+        await c;
+    });
+
+    it('앞이 실패해도 뒤 항목의 순번은 갱신된다', async () => {
+        const queue = createSequentialTaskQueue();
+        const ahead = [];
+        const failing = queue.enqueue(async () => { throw new Error('boom'); });
+        const next = queue.enqueue(async () => 'ok', { onQueued: (n) => ahead.push(n) });
+
+        await expect(failing).rejects.toThrow('boom');
+        await expect(next).resolves.toBe('ok');
+        expect(ahead[0]).toBe(1);
+    });
+
+    it('혼자면 대기 알림을 보내지 않는다', async () => {
+        const queue = createSequentialTaskQueue();
+        const ahead = [];
+        await queue.enqueue(async () => 'only', { onQueued: (n) => ahead.push(n) });
+        expect(ahead).toEqual([]);
+    });
+});

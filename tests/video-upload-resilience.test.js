@@ -404,3 +404,54 @@ describe('video upload resilience', () => {
         expect(source).toContain('const url = await getVerifiedDownloadUrlWithTimeout(storageRef, timeoutMs);');
     });
 });
+
+describe('삼성 인터넷 영상 업로드 피드백', () => {
+    const app = readRepoFile('js/app-core.js');
+    const sliceFn = (source, header) => {
+        const start = source.indexOf(header);
+        if (start < 0) return '';
+        const bodyStart = source.indexOf(') {', start);
+        if (bodyStart < 0) return '';
+        let depth = 0;
+        for (let i = bodyStart + 2; i < source.length; i += 1) {
+            if (source[i] === '{') depth += 1;
+            else if (source[i] === '}') { depth -= 1; if (depth === 0) return source.slice(start, i + 1); }
+        }
+        return '';
+    };
+
+    // 제보: 영상 여러 개를 올리면 뒤의 파일이 '업로드 대기 중' 에서 멈춘 것처럼 보인다.
+    // 앞의 전송이 진행 이벤트를 안 주는 단순 PUT 이라 화면이 통째로 정지한다.
+    it('대기 문구가 남은 순번을 받는다', () => {
+        const fn = sliceFn(app, 'function runMediaStorageUploadInSequence(callback');
+        expect(fn).toContain('onQueued: (ahead)');
+        expect(fn).toContain('앞에 ${Number(ahead)}개 남았어요');
+        // 순번이 1이면 기존 문구를 유지한다
+        expect(fn).toContain('업로드 대기 중 · 앞 파일부터 저장할게요');
+    });
+
+    // uploadBytes 는 바이트 진행을 전혀 주지 않는다. 0% 막대가 몇 분 동안
+    // 그대로면 실패와 구분이 안 된다.
+    it('진행 이벤트가 없는 전송에 경과 시간을 흘린다', () => {
+        const fn = sliceFn(app, 'async function uploadSamsungVideoWithSimplePut(storageRef, file');
+        expect(fn).toContain('setInterval');
+        expect(fn).toContain('초째');
+        expect(fn).toContain('indeterminate: true');
+        // 타이머는 반드시 정리한다
+        expect(fn).toContain('finally');
+        expect(fn).toContain('clearInterval(heartbeat)');
+    });
+
+    it('가짜 퍼센트를 그리지 않는다', () => {
+        const fn = sliceFn(app, 'async function uploadSamsungVideoWithSimplePut(storageRef, file');
+        // 하트비트는 pct 0 을 유지하고 막대만 애니메이션으로 움직인다
+        expect(fn).not.toMatch(/pct:\s*[1-9]/);
+    });
+
+    it('막대가 0%로 굳지 않도록 indeterminate 를 UI 까지 전달한다', () => {
+        expect(sliceFn(app, 'function normalizeUploadProgressPayload(payload')).toContain('indeterminate');
+        expect(sliceFn(app, 'function updatePendingUploadProgress(inputId')).toContain('indeterminate');
+        expect(app).toContain("classList.toggle('is-indeterminate'");
+        expect(readRepoFile('styles-features.css')).toContain('.upload-progress-status__fill.is-indeterminate');
+    });
+});
