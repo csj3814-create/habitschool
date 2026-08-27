@@ -99,7 +99,11 @@
 
 ### Remaining external blockers
 
-- A dedicated reviewer Google account has not been created/documented in the repo.
+- ~~A dedicated reviewer Google account has not been created/documented in the repo.~~
+  **2026-08-27 정정: 틀린 기록이었다.** Play Console 앱 콘텐츠의 「로그인 세부정보」
+  (= App access)는 2026-03-13 에 이미 등록돼 있었다. 자격증명은 커밋하지 않는 값이라
+  저장소에 흔적이 없었을 뿐인데, 그것을 "만들어지지 않았다"로 단정해 적었다.
+  현황은 [2026-08-26 문서](2026-08-26_play_store_listing_and_reviewer_access.md) 참조.
 - Play Console form inputs still need to be entered manually.
 - Store listing screenshots / short description / full description still need a final owner review before submission.
 
