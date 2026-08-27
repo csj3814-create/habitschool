@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=336';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=337';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';
@@ -16,6 +16,10 @@ const MESSAGES = {
         'toast.aiFailed': 'AI 분석에 실패했습니다. 다시 시도해 주세요.',
         'toast.analysisFailed': '분석 중 오류가 발생했습니다.',
         'toast.notHealthScreenshot': '건강/만보기 앱 캡처가 아닌 것 같습니다.',
+        'analysis.signedOut': '로그인이 풀렸어요. 다시 로그인한 뒤 시도해 주세요.',
+        'analysis.tooSlow': '분석이 오래 걸리고 있어요. 잠시 후 다시 시도해 주세요.',
+        'analysis.busy': '요청이 몰려 있어요. 잠시 후 다시 시도해 주세요.',
+        'analysis.offline': '연결이 끊겼어요. 네트워크를 확인한 뒤 다시 시도해 주세요.',
         'kst.badge': 'KST',
         'kst.badgeAria': '날짜 기준 안내 (한국시간)',
         'kst.title': '날짜 기준: 한국시간(KST)',
@@ -33,6 +37,10 @@ const MESSAGES = {
         'toast.aiFailed': 'AI analysis failed. Please try again.',
         'toast.analysisFailed': 'Something went wrong during analysis.',
         'toast.notHealthScreenshot': 'This does not look like a health or step-count screenshot.',
+        'analysis.signedOut': 'Your session expired. Sign in again and retry.',
+        'analysis.tooSlow': 'The analysis is taking too long. Please try again shortly.',
+        'analysis.busy': 'Too many requests right now. Please try again shortly.',
+        'analysis.offline': 'Connection lost. Check your network and try again.',
         'kst.badge': 'KST',
         'kst.badgeAria': 'About the date basis (Korea time)',
         'kst.title': 'Dates follow Korea time (KST)',

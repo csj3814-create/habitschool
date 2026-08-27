@@ -2,11 +2,11 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=336';
+import { auth, functions } from './firebase-config.js?v=337';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=336';
-import { escapeHtml } from './security.js?v=336';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=336';
+import { showToast } from './ui-helpers.js?v=337';
+import { escapeHtml } from './security.js?v=337';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=337';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
@@ -22,6 +22,24 @@ function requireSignedIn(messageKey = 'auth.loginRequired') {
     if (auth.currentUser) return true;
     showToast(isEnglishLocale() ? t(messageKey) : '로그인이 필요합니다.');
     return false;
+}
+
+// 아는 실패는 사람 말로, 모르는 실패는 코드를 붙여서 내보낸다.
+// 여기서 코드를 삼키면 "분석이 실패했대요"만 제보로 돌아오고, 토큰 만료인지
+// 타임아웃인지 서버 오류인지 영영 가릴 수 없다.
+const ANALYSIS_ERROR_KEYS = {
+    'unauthenticated': 'analysis.signedOut',
+    'deadline-exceeded': 'analysis.tooSlow',
+    'resource-exhausted': 'analysis.busy',
+    'unavailable': 'analysis.offline'
+};
+
+function analysisFailureMessage(error, fallback) {
+    // Firebase callable 오류 코드는 'functions/deadline-exceeded' 형태로 온다.
+    const code = String(error?.code || '').replace(/^functions\//, '').trim();
+    const known = ANALYSIS_ERROR_KEYS[code];
+    if (known) return t(known);
+    return code ? `${fallback} (${code})` : fallback;
 }
 
 export async function requestSharedTargetClassification(imageUrl, context = {}) {
@@ -51,7 +69,10 @@ export async function requestSleepMindAnalysis(imageUrl, textData, analysisType)
         return result.data.analysis;
     } catch (error) {
         console.error('Sleep/mind analysis error:', error);
-        showToast(isEnglishLocale() ? t('toast.analysisFailed') : '수면/마음 분석 중 오류가 발생했습니다.');
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.analysisFailed') : '수면/마음 분석 중 오류가 발생했습니다.'
+        ));
         return null;
     }
 }
@@ -65,7 +86,10 @@ export async function requestDietAnalysis(imageUrl) {
         return result.data.analysis;
     } catch (error) {
         console.error('Diet analysis error:', error);
-        showToast(isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.');
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.'
+        ));
         return null;
     }
 }
@@ -315,7 +339,10 @@ export async function requestBloodTestAnalysis(imageUrl) {
         return result.data.analysis;
     } catch (error) {
         console.error('Blood test analysis error:', error);
-        showToast(isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 사진이 선명한지 확인해 주세요.');
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 사진이 선명한지 확인해 주세요.'
+        ));
         return null;
     }
 }
@@ -404,7 +431,10 @@ export async function requestStepScreenshotAnalysis(imageUrl) {
         return null;
     } catch (error) {
         console.error('Step screenshot analysis error:', error);
-        showToast(isEnglishLocale() ? t('toast.aiFailed') : '분석 실패. 다시 시도해 주세요.');
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : '분석 실패. 다시 시도해 주세요.'
+        ));
         return null;
     }
 }
