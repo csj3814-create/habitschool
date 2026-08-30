@@ -25256,6 +25256,13 @@ function invalidateHabitGroupCaches() {
     _habitGroupCheckinCache.loadedAt = 0;
     _habitGroupProgressCache.loadedAt = 0;
     _habitGroupLeaderPendingReviewCache.loadedAt = 0;
+    // loadedAt 만 지우면 절반이다. 진행 중인 조회 promise 는 그대로 남아 있고,
+    // 방금 승인한 직후의 재조회가 그 promise 를 그대로 돌려받으면 승인 전 목록이
+    // 다시 그려진다. 컨펌한 카드가 되살아나 새로고침해야 사라지던 원인이다.
+    _habitGroupMembershipPromise = null;
+    _habitGroupMembershipPromiseUid = '';
+    _habitGroupLeaderPendingReviewPromise = null;
+    _habitGroupLeaderPendingReviewPromiseKey = '';
 }
 
 async function loadMyHabitGroupMemberships(user = auth.currentUser, { forceReload = false } = {}) {
@@ -25490,7 +25497,11 @@ async function loadHabitGroupPendingReviewsForLeader(user = auth.currentUser, le
         })
         .catch(error => {
             logOptionalDataTimeout('habit_group_pending_reviews_timeout', error);
-            return cacheMatches ? _habitGroupLeaderPendingReviewCache.items : [];
+            // 무효화된 캐시로는 되돌아가지 않는다. loadedAt 이 0 이라는 것은 방금
+            // 컨펌해서 이 목록이 틀렸다고 표시해 둔 것인데, 조회가 실패했다고
+            // 그것을 되살리면 처리한 카드가 화면에 다시 나타난다.
+            const fallbackUsable = cacheMatches && _habitGroupLeaderPendingReviewCache.loadedAt > 0;
+            return fallbackUsable ? _habitGroupLeaderPendingReviewCache.items : [];
         })
         .finally(() => {
             if (_habitGroupLeaderPendingReviewPromise === pendingReviewPromise) {
