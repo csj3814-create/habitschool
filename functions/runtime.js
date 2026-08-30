@@ -3296,10 +3296,13 @@ const SLEEP_MIND_ANALYSIS_PROMPT = `당신은 수면 건강 전문가이자 마�
   "summary": "한줄 총평",
   "details": {
     "sleepDuration": "수면 시간 (예: '7시간 30분') 또는 null",
+    "sleepHours": 7.5,
     "sleepQuality": "수면 품질 설명 또는 null",
     "emotionTone": "감정 톤 (긍정적/중립/부정적) 또는 null",
     "stressLevel": "스트레스 수준 (낮음/보통/높음) 또는 null"
   },
+※ sleepHours 는 총 수면 시간을 **숫자(시간 단위)**로만 적으세요. 7시간 30분이면 7.5입니다.
+   수면 사진이 아니면 null 로 두세요. 건강습관 점수의 수면 항목 계산에 쓰입니다.
   "tip": "실천 가능한 개선 팁 1가지",
   "feedback": "격려 및 분석 코멘트 (2~3문장)"
 }
@@ -3316,10 +3319,13 @@ Return only valid JSON with the exact same schema:
   "summary": "short overall summary",
   "details": {
     "sleepDuration": "sleep duration such as 7h 30m, or null",
+    "sleepHours": 7.5,
     "sleepQuality": "short sleep quality note, or null",
     "emotionTone": "positive/neutral/negative, or null",
     "stressLevel": "low/medium/high, or null"
   },
+
+Set "sleepHours" to the total sleep time as a plain number of hours (7h 30m becomes 7.5), or null when the input is not a sleep screenshot. It feeds the sleep component of the health habit score.
   "tip": "one practical improvement",
   "feedback": "2-3 encouraging analysis sentences"
 }

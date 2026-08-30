@@ -671,6 +671,34 @@
     color: #aaa;
 }
 
+/* 건강습관 점수(LE8) — 생활습관 / 대사지표 묶음 머리글.
+   객관성 수준이 다른 두 묶음을 눈으로도 구분되게 한다. */
+.le8-group-head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 12px 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #555;
+}
+.le8-group-head .le8-group-sub {
+    font-weight: 400;
+    font-size: 11px;
+    color: #999;
+}
+.le8-group-head .le8-group-score {
+    margin-left: auto;
+    font-weight: 700;
+    color: #666;
+}
+.le8-footnote {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.5;
+}
+
 .ms-partial-note {
     font-size: 11px;
     color: #777;
