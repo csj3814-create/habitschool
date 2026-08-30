@@ -102,6 +102,7 @@ service cloud.firestore {
             'sleepImageUrl',
             'sleepImageThumbUrl',
             'sleepAnalysis',
+            'sleepHours',
             'meditationDone',
             'meditationMethodId',
             'meditationDurationSec',
@@ -111,6 +112,7 @@ service cloud.firestore {
           && (!('sleepImageUrl' in sleepAndMind) || sleepAndMind.sleepImageUrl == null || sleepAndMind.sleepImageUrl is string)
           && (!('sleepImageThumbUrl' in sleepAndMind) || sleepAndMind.sleepImageThumbUrl == null || sleepAndMind.sleepImageThumbUrl is string)
           && (!('sleepAnalysis' in sleepAndMind) || sleepAndMind.sleepAnalysis == null || sleepAndMind.sleepAnalysis is map)
+          && (!('sleepHours' in sleepAndMind) || sleepAndMind.sleepHours == null || (sleepAndMind.sleepHours is number && sleepAndMind.sleepHours >= 0 && sleepAndMind.sleepHours <= 24))
           && (!('meditationDone' in sleepAndMind) || sleepAndMind.meditationDone is bool)
           && (!('meditationMethodId' in sleepAndMind) || (
                 sleepAndMind.meditationMethodId == null ||

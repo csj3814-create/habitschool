@@ -243,6 +243,99 @@ describe('수면', () => {
     });
 });
 
+describe('수면 — 직접 입력', () => {
+    const manual = (h, days = 2) => Array.from({ length: days }, () =>
+        log({ sleepAndMind: { sleepHours: h } }));
+
+    it('AI 분석 없이 직접 입력만으로 계산된다', () => {
+        // AI 분석 버튼은 선택 동작이다. 사진만 올린 사용자도 점수를 받아야 한다.
+        const r = calculateLE8Score({}, manual(7.5));
+        expect(r.behaviors.sleep.missing).toBeUndefined();
+        expect(r.behaviors.sleep.score).toBe(100);
+    });
+
+    it('직접 입력값이 AI 분석값보다 우선한다', () => {
+        const logs = Array.from({ length: 2 }, () => log({
+            sleepAndMind: {
+                sleepHours: 8,
+                sleepAnalysis: { details: { sleepHours: 4 } }
+            }
+        }));
+        expect(calculateLE8Score({}, logs).behaviors.sleep.avgHours).toBe(8);
+    });
+
+    it('직접 입력만 쓴 경우 추정 표시를 달지 않는다', () => {
+        expect(calculateLE8Score({}, manual(8)).behaviors.sleep.proxy).toBe(false);
+    });
+
+    it('AI 분석으로 채워진 경우는 추정으로 표시한다', () => {
+        expect(calculateLE8Score({}, sleepLogs(8)).behaviors.sleep.proxy).toBe(true);
+    });
+
+    it('직접 입력과 AI 분석을 섞어 쓸 수 있다', () => {
+        const logs = [
+            log({ sleepAndMind: { sleepHours: 8 } }),
+            log({ sleepAndMind: { sleepAnalysis: { details: { sleepHours: 8 } } } })
+        ];
+        expect(calculateLE8Score({}, logs).behaviors.sleep.score).toBe(100);
+    });
+});
+
+describe('식단 — 간식 가중치', () => {
+    it('간식은 정식 끼니의 절반만 반영된다', () => {
+        // 정식 3끼 A + 간식 1끼 F
+        // 가중 없으면 (100*3+0)/4 = 75, 간식 0.5 가중이면 300/3.5 = 85.7 → 86
+        const logs = [log({ dietAnalysis: {
+            breakfast: { grade: 'A' }, lunch: { grade: 'A' },
+            dinner: { grade: 'A' }, snack: { grade: 'F' }
+        } })];
+        expect(calculateLE8Score({}, logs).behaviors.diet.score).toBe(86);
+    });
+
+    it('간식만 잘 먹어도 정식 끼니를 뒤집지는 못한다', () => {
+        // 정식 3끼 F + 간식 1끼 A → 100*0.5/3.5 = 14.3 → 14
+        const logs = [log({ dietAnalysis: {
+            breakfast: { grade: 'F' }, lunch: { grade: 'F' },
+            dinner: { grade: 'F' }, snack: { grade: 'A' }
+        } })];
+        expect(calculateLE8Score({}, logs).behaviors.diet.score).toBe(14);
+    });
+
+    it('간식도 끼니 수에는 포함된다', () => {
+        const logs = [log({ dietAnalysis: {
+            breakfast: { grade: 'A' }, lunch: { grade: 'A' }, snack: { grade: 'A' }
+        } })];
+        expect(calculateLE8Score({}, logs).behaviors.diet.mealCount).toBe(3);
+        expect(calculateLE8Score({}, logs).behaviors.diet.score).toBe(100);
+    });
+});
+
+describe('혈중지질 — 직접 입력', () => {
+    it('혈액검사가 없으면 직접 입력한 콜레스테롤을 쓴다', () => {
+        const r = calculateLE8Score({ totalCholesterol: 185, hdl: 60 }, []);
+        expect(r.factors.lipids.nonHdl).toBe(125);
+        expect(r.factors.lipids.score).toBe(100);
+    });
+
+    it('혈액검사 결과지가 직접 입력값보다 우선한다', () => {
+        const r = calculateLE8Score(
+            { totalCholesterol: 300, hdl: 40 },
+            [], {},
+            { totalCholesterol: { value: 185 }, hdl: { value: 60 } }
+        );
+        expect(r.factors.lipids.nonHdl).toBe(125);
+    });
+
+    it('직접 입력에도 약물 감점이 적용된다', () => {
+        const r = calculateLE8Score({ totalCholesterol: 185, hdl: 60, meds: ['고지혈증약'] }, []);
+        expect(r.factors.lipids.score).toBe(80);
+    });
+
+    it('둘 다 없으면 여전히 결측이다', () => {
+        expect(calculateLE8Score({}, []).factors.lipids.missing).toBe(true);
+    });
+});
+
 describe('parseSleepDuration', () => {
     it('여러 표기를 시간 단위로 바꾼다', () => {
         expect(parseSleepDuration('7시간 30분')).toBeCloseTo(7.5);

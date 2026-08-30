@@ -20,6 +20,12 @@
 /** 식단: AI 등급 5단계가 LE8 식단 5분위와 그대로 대응한다. */
 const DIET_GRADE_POINTS = { A: 100, B: 80, C: 50, D: 25, F: 0 };
 
+/**
+ * 끼니별 가중치. 간식을 정식 한 끼와 똑같이 세면, 잘 차린 세 끼에 과자 한 장을
+ * 정직하게 기록한 사람이 손해를 본다. 기록할수록 불리한 점수는 습관 앱에 해롭다.
+ */
+const SLOT_WEIGHTS = { breakfast: 1, lunch: 1, dinner: 1, snack: 0.5 };
+
 /** 니코틴 노출 */
 const NICOTINE_POINTS = {
     never: 100,
@@ -89,26 +95,31 @@ function latestFromLogs(recentLogs, field) {
  * 여기서는 등급 평균만 쓴다. 표본이 너무 적으면 점수를 만들지 않는다.
  */
 function calcDietScore(recentLogs) {
-    const grades = [];
+    let weightedSum = 0;
+    let weightTotal = 0;
+    let mealCount = 0;
     let dietDays = 0;
+
     (recentLogs || []).forEach(log => {
         const analysis = log && log.dietAnalysis;
         if (!analysis) return;
         let dayHadGrade = false;
-        Object.values(analysis).forEach(a => {
-            if (a && DIET_GRADE_POINTS[a.grade] !== undefined) {
-                grades.push(DIET_GRADE_POINTS[a.grade]);
-                dayHadGrade = true;
-            }
+        Object.entries(analysis).forEach(([slot, a]) => {
+            if (!a || DIET_GRADE_POINTS[a.grade] === undefined) return;
+            const weight = SLOT_WEIGHTS[slot] !== undefined ? SLOT_WEIGHTS[slot] : 1;
+            weightedSum += DIET_GRADE_POINTS[a.grade] * weight;
+            weightTotal += weight;
+            mealCount++;
+            dayHadGrade = true;
         });
         if (dayHadGrade) dietDays++;
     });
 
-    if (grades.length < 3) {
+    if (mealCount < 3 || weightTotal === 0) {
         return missing('🥗 식단 사진 3끼 이상 필요');
     }
 
-    const score = Math.round(grades.reduce((a, b) => a + b, 0) / grades.length);
+    const score = Math.round(weightedSum / weightTotal);
 
     let detail;
     if (score >= 80) detail = '우수 — 자연식품 위주 식사가 잘 유지되고 있습니다';
@@ -117,9 +128,9 @@ function calcDietScore(recentLogs) {
 
     return {
         score,
-        detail: `${detail} (최근 ${dietDays}일 ${grades.length}끼 분석)`,
+        detail: `${detail} (최근 ${dietDays}일 ${mealCount}끼 분석)`,
         proxy: true,
-        mealCount: grades.length
+        mealCount
     };
 }
 
@@ -220,18 +231,30 @@ function calcNicotineScore(profile) {
  */
 function calcSleepScore(recentLogs) {
     const hours = [];
+    let usedManual = false;
+
     (recentLogs || []).forEach(log => {
-        const analysis = (log && log.sleepAndMind && log.sleepAndMind.sleepAnalysis) || null;
-        const details = analysis && analysis.details;
-        if (!details) return;
-        const h = num(details.sleepHours) !== null
-            ? num(details.sleepHours)
-            : parseSleepDuration(details.sleepDuration);
+        const sam = (log && log.sleepAndMind) || null;
+        if (!sam) return;
+
+        // 직접 입력한 수면 시간이 먼저다. AI 분석은 '🤖 AI 분석' 버튼을 눌러야만
+        // 생기는 선택 동작이라, 그것에만 기대면 사진을 올려도 점수가 안 나온다.
+        let h = num(sam.sleepHours);
+        if (h !== null) {
+            usedManual = true;
+        } else {
+            const details = sam.sleepAnalysis && sam.sleepAnalysis.details;
+            if (details) {
+                h = num(details.sleepHours) !== null
+                    ? num(details.sleepHours)
+                    : parseSleepDuration(details.sleepDuration);
+            }
+        }
         if (h !== null && h > 0 && h < 24) hours.push(h);
     });
 
     if (hours.length < 2) {
-        return missing('🌙 수면 기록 2일 이상 필요');
+        return missing('🌙 수면 시간 2일 이상 필요');
     }
 
     const avg = hours.reduce((a, b) => a + b, 0) / hours.length;
@@ -252,7 +275,7 @@ function calcSleepScore(recentLogs) {
     return {
         score,
         detail: `${detail} (평균 ${avg.toFixed(1)}시간, ${hours.length}일)`,
-        proxy: true,
+        proxy: !usedManual,
         avgHours: Math.round(avg * 10) / 10
     };
 }
@@ -325,9 +348,11 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
  * non-HDL = 총콜레스테롤 − HDL. 총콜레스테롤이 없으면 LDL + 30으로 근사한다.
  */
 function calcLipidScore(profile, bloodTest) {
-    const total = labValue(bloodTest, 'totalCholesterol');
-    const hdl = labValue(bloodTest, 'hdl');
-    const ldl = labValue(bloodTest, 'ldl');
+    // 혈액검사 결과지가 있으면 그쪽이 먼저. 없으면 직접 입력한 값을 쓴다 —
+    // 콜레스테롤은 가정용 기기로 잴 수 없어 검사지 업로드만 길로 두면 영영 빈칸이다.
+    const total = labValue(bloodTest, 'totalCholesterol') ?? num(profile && profile.totalCholesterol);
+    const hdl = labValue(bloodTest, 'hdl') ?? num(profile && profile.hdl);
+    const ldl = labValue(bloodTest, 'ldl') ?? num(profile && profile.ldl);
 
     let nonHdl = null;
     let approximated = false;
@@ -338,7 +363,7 @@ function calcLipidScore(profile, bloodTest) {
         approximated = true;
     }
 
-    if (nonHdl === null) return missing('🩸 혈액검사(콜레스테롤) 필요');
+    if (nonHdl === null) return missing('🩸 콜레스테롤 수치 필요');
 
     let score;
     if (nonHdl < 130) score = 100;
@@ -483,7 +508,7 @@ export function calculateLE8Score(profile = {}, recentLogs = [], latestMetrics =
         availableCount: available.length,
         neededBehaviors: Math.max(0, MIN_BEHAVIORS - availBehaviors.length),
         neededFactors: Math.max(0, MIN_FACTORS - availFactors.length),
-        insights: generateInsights(behaviors, factors, total)
+        insights: generateInsights(behaviors, factors)
     };
 }
 
@@ -494,8 +519,18 @@ export function getLevel(total) {
     return { key: 'low', label: '낮음', color: '#C62828' };
 }
 
+/**
+ * 구간이 무슨 뜻인지. 숫자만 보여주면 90점이 좋은 건지 나쁜 건지 알 수 없다.
+ * 개인의 발병 확률이 아니라 '습관이 어느 구간에 있는지'만 말한다.
+ */
+const LEVEL_MEANING = {
+    high: '국제 기준(LE8)에서 상위 구간입니다. 대규모 코호트 연구에서 이 구간을 유지한 사람들은 대사질환과 암을 포함한 만성질환 없이 지낸 기간이 뚜렷하게 길었습니다. 지금의 습관을 유지하는 것이 최선의 예방입니다.',
+    moderate: '중간 구간입니다. 대부분의 사람이 여기에 있고, 개선 여지가 가장 큰 구간이기도 합니다. 아래에서 가장 낮은 항목 하나만 올려도 총점이 눈에 띄게 움직입니다.',
+    low: '개선이 필요한 구간입니다. 한꺼번에 다 바꾸려 하기보다 아래 항목 중 가장 낮은 것 하나를 골라 시작하는 편이 오래 갑니다.'
+};
+
 /** 가장 개선 여지가 큰 항목부터 최대 3개를 짚는다. */
-function generateInsights(behaviors, factors, total) {
+function generateInsights(behaviors, factors) {
     const labels = {
         diet: '식단', activity: '신체활동', nicotine: '금연', sleep: '수면',
         bmi: '체중(BMI)', lipids: '혈중지질', glucose: '혈당', bp: '혈압'
@@ -511,11 +546,9 @@ function generateInsights(behaviors, factors, total) {
         bp: '나트륨 줄이기와 규칙적 유산소 운동이 혈압을 낮춥니다.'
     };
 
+    // 구간 의의는 LEVEL_MEANING 이 카드 위쪽에서 이미 말한다. 여기서 또 하면
+    // 같은 문장이 한 화면에 두 번 나온다. 여기는 '무엇을 올릴지'만 다룬다.
     const insights = [];
-
-    if (total !== null && total >= 80) {
-        insights.push('✅ 우수 구간입니다. 지금의 습관을 유지하는 것이 최선의 예방입니다.');
-    }
 
     const all = Object.entries({ ...behaviors, ...factors })
         .filter(([, c]) => !c.missing && c.score < 100)
@@ -605,6 +638,24 @@ export function renderLE8ScoreCard(container, scoreData) {
 
     const insightsHtml = (insights || []).map(i => `<div class="ms-insight-item">${i}</div>`).join('');
 
+    // 구간 눈금자 — 0~50~80~100 중 내가 어디인지 한눈에 보이게 한다.
+    const meaningHtml = sufficient
+        ? `<div class="le8-meaning">
+               <div class="le8-scale">
+                   <div class="le8-scale-bar">
+                       <span class="le8-scale-seg le8-seg-low"></span>
+                       <span class="le8-scale-seg le8-seg-mid"></span>
+                       <span class="le8-scale-seg le8-seg-high"></span>
+                       <span class="le8-scale-marker" style="left:${Math.min(100, Math.max(0, total))}%;"></span>
+                   </div>
+                   <div class="le8-scale-labels">
+                       <span>낮음 0~49</span><span>보통 50~79</span><span>우수 80~100</span>
+                   </div>
+               </div>
+               <p class="le8-meaning-text"><strong style="color:${color};">${level.label}</strong> — ${LEVEL_MEANING[level.key]}</p>
+           </div>`
+        : '';
+
     container.innerHTML = `
         <div class="metabolic-score-card">
             <h3>🌿 나의 건강습관 점수
@@ -628,6 +679,7 @@ export function renderLE8ScoreCard(container, scoreData) {
                 </div>
             </div>
             ${partialNote}
+            ${meaningHtml}
             ${insightsHtml ? `<div class="ms-insights">${insightsHtml}</div>` : ''}
             <div class="le8-footnote">
                 <strong>*</strong> 식단·신체활동·수면은 사진과 기록에서 <strong>추정</strong>한 값이라

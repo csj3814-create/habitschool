@@ -869,6 +869,11 @@ body.dark-mode .le8-group-head { color: #C0BCC6; }
 body.dark-mode .le8-group-head .le8-group-sub { color: #6D6878; }
 body.dark-mode .le8-group-head .le8-group-score { color: #C0BCC6; }
 body.dark-mode .le8-footnote { color: #6D6878; }
+body.dark-mode .le8-meaning { background: rgba(255, 255, 255, 0.05); }
+body.dark-mode .le8-meaning-text { color: #C0BCC6; }
+body.dark-mode .le8-scale-labels { color: #6D6878; }
+body.dark-mode .le8-scale-marker { background: #F0EDF4; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5); }
+
 
 body.dark-mode .ms-partial-note {
     background: rgba(0,0,0,0.25);

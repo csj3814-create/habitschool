@@ -136,8 +136,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=339">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=339">
+    <link rel="stylesheet" href="styles.css?v=340">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=340">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -735,7 +735,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=339"></script>
+    <script src="js/webview-detect.js?v=340"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1294,6 +1294,30 @@
                     <label style="font-size:14px;">
                         <input type="checkbox" id="prof-secondhand"> 집이나 직장에서 간접흡연에 노출됩니다
                     </label>
+                    <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
+                        onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
+                </div>
+
+                <!-- 0-1. 콜레스테롤 — 가정용 기기로 잴 수 없어 검사지 업로드만 두면 영영 빈칸이다.
+                     건강검진 결과지를 손에 들고 옮겨 적을 수 있게 직접 입력을 연다. -->
+                <div class="card" data-sensitive-card="콜레스테롤">
+                    <h3>🧈 콜레스테롤</h3>
+                    <p style="font-size:12px; color:#888; margin:-8px 0 12px;">
+                        건강검진 결과지의 값을 옮겨 적으세요. 아래 혈액검사 결과지를 올리면 자동으로 채워집니다.
+                    </p>
+                    <div class="input-grid" style="gap:8px;">
+                        <div class="inbody-field">
+                            <label for="prof-total-chol" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">총콜레스테롤 (mg/dL)</label>
+                            <input type="number" id="prof-total-chol" placeholder="예: 185" step="1" min="50" max="500">
+                        </div>
+                        <div class="inbody-field">
+                            <label for="prof-hdl" style="font-size:12px; color:#555; margin-bottom:2px; display:block;">HDL 콜레스테롤 (mg/dL)</label>
+                            <input type="number" id="prof-hdl" placeholder="예: 55" step="1" min="10" max="150">
+                        </div>
+                    </div>
+                    <p style="font-size:11px; color:#999; margin:10px 0 0; line-height:1.5;">
+                        건강습관 점수는 이 둘의 차(non-HDL)를 씁니다. 총콜레스테롤이 없으면 LDL로 대신 추정합니다.
+                    </p>
                     <button class="submit-btn" style="margin-top: 15px; background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%); font-size:15px;"
                         onclick="saveHealthProfile()">🧬 저장하고 점수 갱신</button>
                 </div>
@@ -2260,6 +2284,17 @@
                     </label>
                     <button class="diet-ai-btn" id="ai-btn-sleep" onclick="analyzeSleepData()" style="display:none;">🤖 AI 분석</button>
                     <div id="sleep-analysis-result" class="diet-analysis-result" style="display:none;"></div>
+                    <!-- 캡처를 올려도 AI 분석 버튼을 누르지 않으면 시간이 기록되지 않는다.
+                         건강습관 점수의 수면 항목은 '몇 시간 잤는지'가 있어야 계산된다. -->
+                    <div style="margin-top:14px;">
+                        <label for="sleep-hours" style="font-size:13px; color:#555; display:block; margin-bottom:4px;">
+                            🌙 어젯밤 수면 시간 (시간)
+                        </label>
+                        <input type="number" id="sleep-hours" placeholder="예: 7.5" step="0.1" min="0" max="24">
+                        <p style="font-size:11px; color:#999; margin:6px 0 0; line-height:1.5;">
+                            건강습관 점수의 수면 항목에 쓰입니다. 캡처를 올리고 AI 분석을 돌리면 자동으로 채워지기도 합니다.
+                        </p>
+                    </div>
                 </div>
                 <div class="card">
                     <h3 id="meditation-card-title">🧘 오늘의 명상</h3>
@@ -2915,14 +2950,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=339"></script>
-    <script type="module" src="js/main.js?v=339"></script>
-    <script type="module" src="js/diet-analysis.js?v=339"></script>
-    <script type="module" src="js/metabolic-score.js?v=339"></script>
-    <script type="module" src="js/le8-score.js?v=339"></script>
+    <script type="module" src="js/app.js?v=340"></script>
+    <script type="module" src="js/main.js?v=340"></script>
+    <script type="module" src="js/diet-analysis.js?v=340"></script>
+    <script type="module" src="js/metabolic-score.js?v=340"></script>
+    <script type="module" src="js/le8-score.js?v=340"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=339"></script>
+    <script src="js/pwa-install.js?v=340"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

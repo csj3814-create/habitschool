@@ -692,6 +692,50 @@
     font-weight: 700;
     color: #666;
 }
+/* 점수 구간 눈금자 — 숫자만으로는 91점이 좋은 건지 알 수 없다. */
+.le8-meaning {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 10px;
+}
+.le8-scale-bar {
+    position: relative;
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.le8-scale-seg { display: block; height: 100%; }
+.le8-seg-low { width: 50%; background: #EF9A9A; }
+.le8-seg-mid { width: 30%; background: #FFE082; }
+.le8-seg-high { width: 20%; background: #A5D6A7; }
+.le8-scale-marker {
+    position: absolute;
+    top: -4px;
+    width: 4px;
+    height: 16px;
+    margin-left: -2px;
+    border-radius: 2px;
+    background: #333;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+.le8-scale-labels {
+    display: flex;
+    margin-top: 6px;
+    font-size: 10px;
+    color: #999;
+}
+.le8-scale-labels span:nth-child(1) { width: 50%; }
+.le8-scale-labels span:nth-child(2) { width: 30%; text-align: center; }
+.le8-scale-labels span:nth-child(3) { width: 20%; text-align: right; }
+.le8-meaning-text {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #555;
+}
+
 .le8-footnote {
     margin-top: 12px;
     font-size: 11px;
