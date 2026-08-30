@@ -102,3 +102,22 @@ AHA **Life's Essential 8 (LE8)** 방식을 도입했다. 기존 대사건강 점
 `focusId`/`tab` 은 문자열이라 누가 입력칸 id 를 바꾸면 클릭이 조용히 아무것도 안 하게
 된다. `tests/le8-score.test.js` 가 모든 목적지가 `index.html` 에 실제로 존재하는지,
 탭 id 가 진짜 `content-section` 인지 확인한다.
+
+---
+
+## 운영 배포 완료 (2026-08-31)
+
+`hosting` + `functions` + `firestore:rules` 전부 운영 반영. 캐시 버전 341.
+
+**규칙 배포 실사용 확인됨** — 사용자가 운영에서 수면 시간을 저장했고 값이 들어갔다.
+`sleepAndMind.sleepHours` 쓰기가 통과한다는 뜻이므로, 이 작업에서 유일하게 남아 있던
+`permission-denied` 위험은 닫혔다.
+
+배포 과정에서 `--only hosting,functions` 가 hosting 을 누락시키는 문제를 겪었다.
+자세한 내용은 `tasks/lessons.md` 의 "functions 배포가 hosting 을 삼킨다" 참조.
+
+### 아직 확인 안 된 것
+
+- **Gemini 가 `details.sleepHours` 를 숫자로 채워 주는지** — 수면 사진에 AI 분석을
+  돌렸을 때만 드러난다. 다만 이제 직접 입력이 주 경로라 점수 계산이 여기에 의존하지
+  않는다. AI 값은 빈 입력칸을 자동으로 채워 주는 편의 기능으로만 쓰인다.
