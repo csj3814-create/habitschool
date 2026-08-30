@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { calculateLE8Score, getLevel, parseSleepDuration } from '../js/le8-score.js';
+import { readRepoFile } from './source-helpers.js';
 
 // ── 테스트 데이터 헬퍼 ───────────────────────────────────────────────────
 // 키를 100cm로 두면 BMI = 체중이 되어 경계값을 직관적으로 쓸 수 있다.
@@ -465,6 +466,70 @@ describe('총점 가드', () => {
         const r = calculateLE8Score({ ...profile, smokingStatus: 'current' }, logs);
         expect(r.behaviorScore).toBe(50);  // 금연 0 + 수면 100
         expect(r.factorScore).toBe(100);   // BMI 100 + 혈압 100
+    });
+});
+
+describe('빈 항목이 목적지를 알려준다', () => {
+    it('모든 결측 항목이 탭과 입력칸을 함께 들고 있다', () => {
+        // 무엇이 없는지만 알려주고 어디에 넣는지 안 알려주면 앱을 뒤져야 한다.
+        const r = calculateLE8Score();
+        const all = { ...r.behaviors, ...r.factors };
+        Object.entries(all).forEach(([key, c]) => {
+            expect(c.missing, `${key} 는 이 입력으로 결측이어야 한다`).toBe(true);
+            expect(c.tab, `${key} 에 탭이 없다`).toBeTruthy();
+            expect(c.focusId, `${key} 에 입력칸 id가 없다`).toBeTruthy();
+        });
+    });
+
+    it('항목마다 실제 화면 위치로 보낸다', () => {
+        const r = calculateLE8Score();
+        const at = (g, k) => `${r[g][k].tab}/${r[g][k].focusId}`;
+        expect(at('behaviors', 'diet')).toBe('diet/txt-breakfast');
+        expect(at('behaviors', 'activity')).toBe('exercise/step-card');
+        expect(at('behaviors', 'nicotine')).toBe('profile/smoking-status-group');
+        expect(at('behaviors', 'sleep')).toBe('sleep/sleep-hours');
+        expect(at('factors', 'lipids')).toBe('profile/prof-total-chol');
+        expect(at('factors', 'glucose')).toBe('diet/glucose');
+        expect(at('factors', 'bp')).toBe('diet/bp-systolic');
+    });
+
+    it('BMI는 무엇이 없느냐에 따라 다른 곳으로 보낸다', () => {
+        // 키는 프로필에, 체중은 기록 화면에 있다. 한 곳으로 몰면 헛걸음이 된다.
+        const noHeight = calculateLE8Score({}, [log({ metrics: { weight: 70 } })]);
+        expect(noHeight.factors.bmi.focusId).toBe('prof-height');
+        expect(noHeight.factors.bmi.tab).toBe('profile');
+
+        const noWeight = calculateLE8Score({ heightCm: 170 }, []);
+        expect(noWeight.factors.bmi.focusId).toBe('weight');
+        expect(noWeight.factors.bmi.tab).toBe('diet');
+    });
+
+    it('채워진 항목에는 목적지를 달지 않는다', () => {
+        const r = calculateLE8Score({ smokingStatus: 'never' }, []);
+        expect(r.behaviors.nicotine.missing).toBeUndefined();
+        expect(r.behaviors.nicotine.tab).toBeUndefined();
+    });
+});
+
+describe('목적지가 실제 화면에 존재한다', () => {
+    // focusId 와 tab 은 문자열이다. 누가 입력칸 id 를 바꾸면 클릭이 조용히 아무것도
+    // 하지 않게 된다 — 화면은 멀쩡해 보이고 사용자만 헛걸음한다. 여기서 잡는다.
+    const html = readRepoFile('index.html');
+    const r = calculateLE8Score();
+    const targets = Object.entries({ ...r.behaviors, ...r.factors })
+        .filter(([, c]) => c.missing);
+
+    // BMI 는 키가 없을 때와 체중이 없을 때 목적지가 다르다. 둘 다 확인한다.
+    const bmiWeightTarget = calculateLE8Score({ heightCm: 170 }, []).factors.bmi;
+
+    [...targets, ['bmi(체중)', bmiWeightTarget]].forEach(([key, c]) => {
+        it(`${key} 의 입력칸 ${c.focusId} 가 index.html 에 있다`, () => {
+            expect(html).toContain(`id="${c.focusId}"`);
+        });
+
+        it(`${key} 의 탭 ${c.tab} 이 실제 화면 구획이다`, () => {
+            expect(html).toMatch(new RegExp(`<div id="${c.tab}"[^>]*class="content-section`));
+        });
     });
 });
 

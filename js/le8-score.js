@@ -73,8 +73,12 @@ function applyMedPenalty(score, penalized) {
     return penalized ? Math.max(0, score - MED_PENALTY) : score;
 }
 
-function missing(label) {
-    return { score: 0, detail: '데이터 없음', missing: true, missingLabel: label };
+/**
+ * 빈 항목은 라벨만으로 끝내지 않고 '어느 탭 어느 칸'인지까지 들고 다닌다.
+ * 무엇이 없는지 알려주면서 어디에 넣는지 안 알려주면 사용자가 앱을 뒤져야 한다.
+ */
+function missing(label, tab, focusId) {
+    return { score: 0, detail: '데이터 없음', missing: true, missingLabel: label, tab, focusId };
 }
 
 /** 최근 로그에서 가장 마지막으로 기록된 지표 값을 찾는다 (뒤에서부터). */
@@ -116,7 +120,7 @@ function calcDietScore(recentLogs) {
     });
 
     if (mealCount < 3 || weightTotal === 0) {
-        return missing('🥗 식단 사진 3끼 이상 필요');
+        return missing('🥗 식단 사진 3끼 이상 필요', 'diet', 'txt-breakfast');
     }
 
     const score = Math.round(weightedSum / weightTotal);
@@ -144,7 +148,7 @@ function calcDietScore(recentLogs) {
  */
 function calcActivityScore(recentLogs) {
     if (!Array.isArray(recentLogs) || recentLogs.length === 0) {
-        return missing('🏃 운동·걸음수 기록 필요');
+        return missing('🏃 운동·걸음수 기록 필요', 'exercise', 'step-card');
     }
 
     let weeklyMinutes = 0;
@@ -177,7 +181,7 @@ function calcActivityScore(recentLogs) {
     // 걸음수도 운동 기록도 전혀 없으면 "안 움직였다"가 아니라 "모른다"이다.
     // 0점을 주면 걸음수를 연동하지 않은 사용자의 총점이 부당하게 깎인다.
     if (!hasSignal) {
-        return missing('🏃 운동·걸음수 기록 필요');
+        return missing('🏃 운동·걸음수 기록 필요', 'exercise', 'step-card');
     }
 
     weeklyMinutes = Math.round(weeklyMinutes);
@@ -209,7 +213,7 @@ function calcActivityScore(recentLogs) {
 function calcNicotineScore(profile) {
     const status = profile && profile.smokingStatus;
     if (!status || NICOTINE_POINTS[status] === undefined) {
-        return missing('🚭 흡연 상태 입력 필요');
+        return missing('🚭 흡연 상태 입력 필요', 'profile', 'smoking-status-group');
     }
 
     const base = NICOTINE_POINTS[status];
@@ -254,7 +258,7 @@ function calcSleepScore(recentLogs) {
     });
 
     if (hours.length < 2) {
-        return missing('🌙 수면 시간 2일 이상 필요');
+        return missing('🌙 수면 시간 2일 이상 필요', 'sleep', 'sleep-hours');
     }
 
     const avg = hours.reduce((a, b) => a + b, 0) / hours.length;
@@ -317,8 +321,8 @@ function calcBmiScore(profile, recentLogs, latestMetrics) {
     const height = num(profile && profile.heightCm);
     const weight = latestFromLogs(recentLogs, 'weight') ?? num(latestMetrics && latestMetrics.weight);
 
-    if (height === null) return missing('📏 키 입력 필요');
-    if (weight === null) return missing('⚖️ 체중 기록 필요');
+    if (height === null) return missing('📏 키 입력 필요', 'profile', 'prof-height');
+    if (weight === null) return missing('⚖️ 체중 기록 필요', 'diet', 'weight');
 
     const bmi = weight / Math.pow(height / 100, 2);
 
@@ -363,7 +367,7 @@ function calcLipidScore(profile, bloodTest) {
         approximated = true;
     }
 
-    if (nonHdl === null) return missing('🩸 콜레스테롤 수치 필요');
+    if (nonHdl === null) return missing('🩸 콜레스테롤 수치 필요', 'profile', 'prof-total-chol');
 
     let score;
     if (nonHdl < 130) score = 100;
@@ -392,7 +396,7 @@ function calcGlucoseScore(profile, recentLogs, latestMetrics, bloodTest) {
         ?? num(latestMetrics && latestMetrics.glucose)
         ?? labValue(bloodTest, 'glucose');
 
-    if (hba1c === null && fpg === null) return missing('🩸 혈당 기록 필요');
+    if (hba1c === null && fpg === null) return missing('🩸 혈당 기록 필요', 'diet', 'glucose');
 
     const onDiabetesMed = hasMed(profile, '당뇨약');
     const diabetic = onDiabetesMed
@@ -428,7 +432,7 @@ function calcBpScore(profile, recentLogs, latestMetrics) {
     const sbp = latestFromLogs(recentLogs, 'bpSystolic') ?? num(latestMetrics && latestMetrics.bpSystolic);
     const dbp = latestFromLogs(recentLogs, 'bpDiastolic') ?? num(latestMetrics && latestMetrics.bpDiastolic);
 
-    if (sbp === null || dbp === null) return missing('🩺 혈압 기록 필요');
+    if (sbp === null || dbp === null) return missing('🩺 혈압 기록 필요', 'diet', 'bp-systolic');
 
     // 나쁜 구간부터 따진다 — 수축기와 이완기 중 나쁜 쪽이 등급을 정한다.
     let score;
@@ -568,10 +572,18 @@ function renderRows(group, labelMap) {
     return Object.entries(group).map(([key, data]) => {
         const label = labelMap[key];
         if (data.missing) {
-            return `<div class="ms-area-item ms-area-missing">
+            // 목적지를 아는 항목은 눌러서 바로 그 칸으로 갈 수 있게 한다.
+            const clickable = data.tab && data.focusId;
+            const attrs = clickable
+                ? ` class="ms-area-item ms-area-missing le8-area-actionable" role="button" tabindex="0"`
+                  + ` aria-label="${escapeAttr(label)} — ${escapeAttr(data.missingLabel)}. 입력하러 가기"`
+                  + ` onclick="window.focusLE8Field &amp;&amp; window.focusLE8Field('${data.tab}','${data.focusId}')"`
+                  + ` onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.focusLE8Field&amp;&amp;window.focusLE8Field('${data.tab}','${data.focusId}')}"`
+                : ` class="ms-area-item ms-area-missing"`;
+            return `<div${attrs}>
                 <span class="ms-area-icon">${labelMap[key + '_icon'] || '•'}</span>
                 <span class="ms-area-label">${label}</span>
-                <span class="ms-area-need">${data.missingLabel}</span>
+                <span class="ms-area-need">${data.missingLabel}${clickable ? ' <span class="le8-go">›</span>' : ''}</span>
             </div>`;
         }
         const proxy = data.proxy ? '<span style="color:#aaa;" aria-hidden="true">*</span>' : '';
@@ -692,8 +704,41 @@ export function renderLE8ScoreCard(container, scoreData) {
     container.style.display = 'block';
 }
 
+/**
+ * 빈 항목에서 해당 입력칸으로 데려가 붉게 표시한다.
+ * 탭 전환이 DOM을 다시 그리므로 한 프레임 기다린 뒤 대상을 찾는다.
+ */
+function focusLE8Field(tab, focusId) {
+    if (tab && typeof window.openTab === 'function') {
+        try { window.openTab(tab); } catch (_) { /* 탭 전환 실패해도 강조는 시도한다 */ }
+    }
+
+    setTimeout(() => {
+        const el = document.getElementById(focusId);
+        if (!el) return;
+
+        // 입력칸이면 그 칸을, 아니면 그 칸이 속한 카드를 통째로 표시한다.
+        const isField = typeof el.matches === 'function' && el.matches('input, select, textarea');
+        const marked = isField ? el : (el.closest('.card') || el);
+
+        marked.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // 같은 항목을 두 번 눌렀을 때도 애니메이션이 다시 돌게 한다.
+        marked.classList.remove('le8-needs-input');
+        void marked.offsetWidth;
+        marked.classList.add('le8-needs-input');
+
+        if (isField) {
+            try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
+        }
+
+        window.setTimeout(() => marked.classList.remove('le8-needs-input'), 4000);
+    }, 250);
+}
+
 // 전역 노출
 if (typeof window !== 'undefined') {
     window.calculateLE8Score = calculateLE8Score;
     window.renderLE8ScoreCard = renderLE8ScoreCard;
+    window.focusLE8Field = focusLE8Field;
 }

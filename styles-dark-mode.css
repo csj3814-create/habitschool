@@ -870,6 +870,11 @@ body.dark-mode .le8-group-head .le8-group-sub { color: #6D6878; }
 body.dark-mode .le8-group-head .le8-group-score { color: #C0BCC6; }
 body.dark-mode .le8-footnote { color: #6D6878; }
 body.dark-mode .le8-meaning { background: rgba(255, 255, 255, 0.05); }
+body.dark-mode .le8-area-actionable:hover,
+body.dark-mode .le8-area-actionable:focus-visible { background: rgba(239, 154, 154, 0.12); }
+body.dark-mode .le8-needs-input { border-color: #EF9A9A !important; }
+body.dark-mode .card.le8-needs-input { border: 2px solid #EF9A9A !important; }
+
 body.dark-mode .le8-meaning-text { color: #C0BCC6; }
 body.dark-mode .le8-scale-labels { color: #6D6878; }
 body.dark-mode .le8-scale-marker { background: #F0EDF4; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5); }
