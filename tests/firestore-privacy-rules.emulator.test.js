@@ -189,6 +189,26 @@ describe.skipIf(!shouldRun)('Firestore privacy and economy boundaries', () => {
         }));
     });
 
+    it('accepts a typed sleep duration but rejects impossible values', async () => {
+        // sleepAndMind 는 healthProfile 과 달리 키 화이트리스트가 엄격하다.
+        // 규칙에 sleepHours 를 넣지 않으면 수면 시간 쓰기가 통째로 거부된다.
+        const ownerDb = testEnv.authenticatedContext('owner').firestore();
+        const logRef = doc(ownerDb, 'daily_logs/owner_2026-07-11');
+
+        await assertSucceeds(updateDoc(logRef, { sleepAndMind: { sleepHours: 7.5 } }));
+        await assertSucceeds(updateDoc(logRef, { sleepAndMind: { sleepHours: 0 } }));
+        await assertSucceeds(updateDoc(logRef, { sleepAndMind: { sleepHours: 24 } }));
+        await assertSucceeds(updateDoc(logRef, { sleepAndMind: { sleepHours: null } }));
+
+        // 범위를 벗어나거나 타입이 틀리면 막는다.
+        await assertFails(updateDoc(logRef, { sleepAndMind: { sleepHours: 25 } }));
+        await assertFails(updateDoc(logRef, { sleepAndMind: { sleepHours: -1 } }));
+        await assertFails(updateDoc(logRef, { sleepAndMind: { sleepHours: '7시간' } }));
+
+        // 화이트리스트에 없는 키는 여전히 거부되어야 한다.
+        await assertFails(updateDoc(logRef, { sleepAndMind: { sleepMinutes: 450 } }));
+    });
+
     it('lets only participants read their reaction reward ledger entry', async () => {
         const ownerDb = testEnv.authenticatedContext('owner').firestore();
         const outsiderDb = testEnv.authenticatedContext('outsider').firestore();
