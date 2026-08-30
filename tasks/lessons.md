@@ -2084,3 +2084,21 @@
   `healthProfile` 이 맵 통째로 허용돼 있고 하위 키 검증이 없었다(`sleepAnalysis` 도
   `is map` 뿐). **규칙 변경도 배포도 불필요했다.** CLAUDE.md 의 `consents` 사고 때문에
   규칙을 의심하는 건 옳지만, 의심의 결론은 "고친다"가 아니라 "읽어서 확인한다"이다.
+
+## 2026-08-31 functions 배포가 hosting 을 삼킨다
+
+- **`--only hosting,functions` 에서 functions 가 429(할당량)로 재시도에 들어가면
+  hosting 이 통째로 누락된다.** 스테이징과 운영에서 각각 한 번씩, 두 번 다 재현됐다.
+  배포 로그 끝은 `Successful update operation.` 으로 도배되고 `Deploy complete!` 도
+  뜨는데, 정작 hosting 은 올라가지 않았다. **함수 성공 메시지가 hosting 성공을
+  뜻하지 않는다.**
+- **증상:** 배포 직후 `curl` 로 보면 스탬프가 이전 버전(v338)이고 새 JS 파일은 404.
+  404 인데 본문이 21KB 로 돌아온다 — SPA 폴백 페이지다. HTTP 코드를 봐야 안다.
+- **대응:** functions 가 들어가는 배포는 **hosting 을 따로 한 번 더 올린다.**
+  `--only hosting` 단독 실행은 429 와 무관하게 잘 붙었다. 그리고 배포 뒤에는 항상
+  캐시 버스터를 붙여 스탬프와 신규 파일 HTTP 코드를 확인한다.
+- **로그를 `tail` 로만 보면 놓친다.** functions 가 수십 줄을 쏟아내 hosting 줄이
+  밀려난다. `grep -E "hosting|cloud.firestore|Deploy complete"` 로 뽑아 본다.
+- 2026-08-21 자 "스탬프를 나란히 찍는다", 2026-08-27 자 "캐시 버스터를 붙인다"에
+  이어 같은 자리에서 세 번째다. 이제는 **배포 성공 여부를 로그가 아니라 curl 로
+  판정한다**를 기본값으로 둔다.
