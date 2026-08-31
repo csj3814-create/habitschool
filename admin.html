@@ -970,8 +970,7 @@
                 const errs = (v.consoleEntries || []);
                 const errHtml = errs.length
                     ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#C62828;">직전 오류 ${errs.length}건</summary>
-                       <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;background:#FAFAFA;border:1px solid #eee;border-radius:6px;padding:8px;margin:6px 0 0;">${bugEsc(errs.map(e => `[${e.level}] ${e.text}`).join('
-'))}</pre></details>`
+                       <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;background:#FAFAFA;border:1px solid #eee;border-radius:6px;padding:8px;margin:6px 0 0;">${bugEsc(errs.map(e => `[${e.level}] ${e.text}`).join('\n'))}</pre></details>`
                     : '<div style="font-size:12px;color:#bbb;margin-top:6px;">직전 오류 없음</div>';
                 const shot = v.screenshotUrl
                     ? `<a href="${bugEsc(v.screenshotUrl)}" target="_blank" rel="noopener" style="font-size:12px;">스크린샷 열기</a>`
