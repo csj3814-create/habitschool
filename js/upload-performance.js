@@ -125,6 +125,27 @@ export function getDeferredVideoThumbDelayMs(fileSize = 0) {
     return 0;
 }
 
+/**
+ * 사전 업로드 표시에서 "몇 초째" 안내를 언제 끄고 언제 다시 켤지 정한다.
+ *
+ * 퍼센트가 오르는 중이면 셀 필요가 없다. 할 말이 있는 동안(압축 진행률, 대기 순번)에도
+ * 셀 필요가 없다. 문제는 그 말이 **끊겼을 때**다. 운동영상은 전송 전에 폰에서 재인코딩을
+ * 하는데, 그동안은 "영상을 줄이는 중… N%" 가 계속 오다가 압축이 끝나는 순간 뚝 끊기고
+ * 퍼센트 0 만 남는다. 그 자리에서 다시 켜지 않으면 화면은 '업로드 준비 중 0%' 인 채로
+ * 몇 분을 서 있고, 그건 실패한 화면과 구분되지 않는다.
+ *
+ * @param {{progress?: number, message?: string, ticking?: boolean}} state
+ * @returns {{ticker: 'cancel'|'arm', render: boolean}}
+ *   ticker 'arm' 은 "돌고 있지 않으면 걸어라"는 뜻이다(이미 돌고 있으면 그대로 둔다).
+ *   render false 는 이미 초를 세고 있으니 그 문구를 0% 로 덮지 말라는 뜻이다.
+ */
+export function resolveUploadNoticeAction({ progress = 0, message = '', ticking = false } = {}) {
+    const pct = Math.max(0, Number(progress) || 0);
+    const hasMessage = String(message || '').trim().length > 0;
+    if (pct > 0 || hasMessage) return { ticker: 'cancel', render: true };
+    return { ticker: 'arm', render: ticking !== true };
+}
+
 export function getResumableUploadTimeouts(file = null) {
     const type = String(file?.type || '').trim().toLowerCase();
     const size = Math.max(0, Number(file?.size || 0));

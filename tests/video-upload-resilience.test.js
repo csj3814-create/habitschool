@@ -30,7 +30,10 @@ describe('video upload resilience', () => {
     it('uses progress-aware resumable upload timeouts instead of a fixed 30 second cancel', () => {
         const source = readAppSource();
 
-        expect(source).toContain("createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js");
+        // 무엇을 함께 들여오는지가 아니라, 이 둘을 공유 모듈에서 들여온다는 사실만 본다.
+        expect(source).toContain('createSequentialTaskQueue');
+        expect(source).toContain('getResumableUploadTimeouts');
+        expect(source).toContain("} from './upload-performance.js");
         expect(source).toContain('runResumableUploadWithTimeout(storageRef, fileToUpload');
         expect(source).toContain('idleTimeoutMs: uploadTimeouts.idleTimeoutMs');
         expect(source).toContain('hardTimeoutMs: uploadTimeouts.hardTimeoutMs');
