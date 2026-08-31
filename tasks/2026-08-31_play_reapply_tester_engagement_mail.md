@@ -181,5 +181,14 @@ Contact: csj38141@gmail.com
 - 소모임 컨펌 카드 잔류 (2026-08-30 수정, 앱에는 아직 안 올라감)
 - 인바디 저장 버튼 / 안내 접기 (2026-08-30 수정, 동일)
 
-**웹은 이미 배포됐지만 트랙의 AAB 는 versionCode 5 (8/27) 그대로다.**
+**웹은 이미 배포됐지만 트랙의 AAB 는 versionCode 5 (8/27) 그대로였다.**
 네이티브 변경이 없어도 새 versionCode 를 올리면 "업데이트를 냈다"는 기록이 남는다.
+
+### 2026-08-31 versionCode 6 빌드 완료
+
+- `android/app/build/outputs/bundle/release/app-release.aab` (versionCode 6 / 1.0.3)
+- targetSdk 36 · 서명 SHA-256 이 기존 릴리즈 지문과 일치 확인
+- **키스토어 경로가 문서와 달랐다.** `해빛스쿨 - Google Play package` 폴더가
+  `해빛스쿨apk` 로 바뀌어 있어 `android/signing/` 이 비어 있었다. 거기서 복사해 넣었다
+  (gitignored).
+- 아직 트랙에 업로드하지 않았다. 심사 기간 중 새 AAB 업로드는 요건에 영향이 없다.
