@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=348">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=348">
+    <link rel="stylesheet" href="styles.css?v=349">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=349">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -741,7 +741,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=348"></script>
+    <script src="js/webview-detect.js?v=349"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1374,11 +1374,13 @@
                      세 번 나오며 프로필의 절반을 차지한다. 안내는 하나로 묶는다. -->
                 <div id="sensitive-consent-group">
                     <details class="sensitive-gate" id="sensitive-group-gate">
-                        <summary class="sensitive-gate-summary">🔒 건강정보 기능은 동의가 필요해요 (체성분 · 복용 약물 · 혈액검사)</summary>
+                        <summary class="sensitive-gate-summary">🔒 건강정보 기능은 동의가 필요해요 (키·흡연 · 콜레스테롤 · 체성분 · 복용 약물 · 혈액검사)</summary>
                         <div class="sensitive-gate-body">
                             <div class="sensitive-gate-desc">
-                                체성분·복용 약물·혈액검사는 개인정보 보호법상 <strong>민감정보</strong>라
+                                키·흡연 상태, 콜레스테롤, 체성분, 복용 약물, 혈액검사는
+                                개인정보 보호법상 <strong>민감정보</strong>라
                                 따로 동의를 받은 뒤에만 저장할 수 있어요.<br>
+                                건강습관 점수의 금연·체중·혈중지질 항목도 이 값을 씁니다.<br>
                                 동의하지 않아도 식단·운동·마음 기록은 그대로 사용할 수 있습니다.
                             </div>
                             <button type="button" class="sensitive-gate-btn" onclick="grantSensitiveConsent()">동의하고 사용하기</button>
@@ -3098,14 +3100,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=348"></script>
-    <script type="module" src="js/main.js?v=348"></script>
-    <script type="module" src="js/diet-analysis.js?v=348"></script>
-    <script type="module" src="js/metabolic-score.js?v=348"></script>
-    <script type="module" src="js/le8-score.js?v=348"></script>
+    <script type="module" src="js/app.js?v=349"></script>
+    <script type="module" src="js/main.js?v=349"></script>
+    <script type="module" src="js/diet-analysis.js?v=349"></script>
+    <script type="module" src="js/metabolic-score.js?v=349"></script>
+    <script type="module" src="js/le8-score.js?v=349"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=348"></script>
+    <script src="js/pwa-install.js?v=349"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

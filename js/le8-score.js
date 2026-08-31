@@ -717,6 +717,11 @@ function focusLE8Field(tab, focusId) {
         const el = document.getElementById(focusId);
         if (!el) return;
 
+        // 화면에 없는 칸으로는 데려갈 수 없다. 감춰진 요소는 스크롤도 포커스도 받지
+        // 않아서, 그대로 두면 "눌렀는데 아무 일도 없다"로 끝난다. 감춘 쪽(건강정보
+        // 동의)이 왜 막혔는지 대신 말하게 한다.
+        if (el.offsetParent === null && window.revealSensitiveField?.(el)) return;
+
         // 입력칸이면 그 칸을, 아니면 그 칸이 속한 카드를 통째로 표시한다.
         const isField = typeof el.matches === 'function' && el.matches('input, select, textarea');
         const marked = isField ? el : (el.closest('.card') || el);

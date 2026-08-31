@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=348';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=349';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=348';
-import { getDatesInfo } from './ui-helpers.js?v=348';
-import { escapeHtml } from './security.js?v=348';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=348';
+import { showToast } from './ui-helpers.js?v=349';
+import { getDatesInfo } from './ui-helpers.js?v=349';
+import { escapeHtml } from './security.js?v=349';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=349';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=348';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=348';
-import { trackProductEvent } from './product-events.js?v=348';
+} from './auth-login-helpers.js?v=349';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=349';
+import { trackProductEvent } from './product-events.js?v=349';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=348';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=349';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1929,6 +1929,38 @@ window.applySensitiveConsentGate = function () {
         gate.hidden = agreed;
         revoke.hidden = !agreed;
     });
+};
+
+/**
+ * 감춰진 입력칸 대신, 그 칸을 여는 동의 안내를 펼쳐 보여준다.
+ *
+ * 건강습관 점수의 빈 항목(흡연·키·콜레스테롤)은 눌러서 해당 입력칸으로 갈 수 있는데,
+ * 동의 전에는 그 칸이 통째로 hidden 이라 데려가도 화면이 그대로다. 스크롤도 포커스도
+ * 감춰진 요소에는 아무 일을 하지 않으므로, 사용자에게는 "눌러도 입력이 안 되는" 앱이 된다.
+ * 막은 쪽이 왜 막혔는지 말해야 한다.
+ *
+ * @param {Element} el 데려가려던 입력칸
+ * @returns {boolean} 동의 안내로 대신 안내했으면 true
+ */
+window.revealSensitiveField = function (el) {
+    const cards = document.getElementById('sensitive-consent-cards');
+    const gate = document.getElementById('sensitive-group-gate');
+    if (!el || !cards || !gate) return false;
+    // 이 칸이 동의로 잠긴 묶음 안에 있고, 실제로 잠겨 있을 때만 우리 일이다.
+    if (!cards.contains(el) || !cards.hidden) return false;
+
+    gate.hidden = false;
+    gate.open = true;
+    gate.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // 같은 항목을 두 번 눌렀을 때도 표시가 다시 돌게 한다.
+    gate.classList.remove('le8-needs-input');
+    void gate.offsetWidth;
+    gate.classList.add('le8-needs-input');
+    window.setTimeout(() => gate.classList.remove('le8-needs-input'), 4000);
+
+    showToast('🔒 건강정보 동의를 하면 입력칸이 열려요.');
+    return true;
 };
 
 async function writeSensitiveConsent(agreed) {
