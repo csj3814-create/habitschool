@@ -804,7 +804,8 @@ body.simple-mode .step-input-group {
 .bug-report-fab {
     position: fixed;
     right: 14px;
-    bottom: 96px;
+    /* 하단 저장 바(103px)와 토스트(~118px) 위로 띄운다. 그 아래에 두면 배지가 가린다. */
+    bottom: 150px;
     z-index: 900;
     width: 46px;
     height: 46px;
@@ -824,7 +825,7 @@ html.auth-pending .bug-report-fab { display: none; }
 .bug-report-version {
     position: fixed;
     right: 14px;
-    bottom: 80px;
+    bottom: 134px;
     z-index: 900;
     width: 46px;
     text-align: center;
