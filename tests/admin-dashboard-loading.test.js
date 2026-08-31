@@ -31,7 +31,7 @@ describe('admin dashboard progressive loading', () => {
         const adjustSource = adminSource.slice(adjustStart, adjustEnd);
 
         expect(adjustSource).toContain("httpsCallable(fns, 'adjustMiningRateManual')");
-        expect(adjustSource).toContain("alert('조정 실패: '");
+        expect(adjustSource).toContain("adminToast('조정 실패: '");
         expect(adjustSource).not.toContain("setDoc(doc(db, 'mining_rate_history'");
     });
 

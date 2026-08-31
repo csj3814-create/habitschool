@@ -50,6 +50,21 @@
         .card.danger .val { color: var(--danger); }
         .card.green .val { color: #2E7D32; }
 
+        /* 알림 토스트 — 브라우저 대화상자는 확인을 누를 때까지 페이지 전체를 멈춰 세운다.
+           관제탑은 한 자리에서 여러 건을 연달아 처리하는 화면이라, 매번 대화상자를
+           닫아야 다음 일을 할 수 있다는 것 자체가 작업 비용이다. */
+        /* 회원 모달(1000)·미디어 뷰어(2000)·로그인 덮개(9999) 어느 것보다 위. 알림이
+           무언가에 가려지면 알린 적이 없는 것과 같다. */
+        .toast-host { position: fixed; top: 16px; right: 16px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; max-width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+        .toast { pointer-events: auto; background: #263238; color: #fff; padding: 12px 14px; border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); font-size: 13px; line-height: 1.55; white-space: pre-line; word-break: break-word; cursor: pointer; border-left: 4px solid #90A4AE; animation: toast-in 0.18s ease-out; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.warn { border-left-color: #FFA000; }
+        .toast.error { border-left-color: var(--danger); }
+        /* 등장 효과는 장식이다. 투명도로 넣으면 애니메이션이 돌지 않는 상황
+           (숨겨진 탭, 절전 등)에서 알림이 아예 안 보이는 상태로 굳는다. 위치만 움직인다. */
+        @keyframes toast-in { from { transform: translateY(-6px); } to { transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
         /* Tables */
         .box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
         .box h3 { margin: 0 0 15px; font-size: 15px; color: #555; }
@@ -685,6 +700,9 @@
     </div>
 </div>
 
+<!-- 알림이 쌓이는 자리. 여러 건을 연달아 처리하면 결과도 연달아 나온다. -->
+<div class="toast-host" id="toast-host" aria-live="polite"></div>
+
 <script type="module">
     import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -702,6 +720,35 @@
         getReEngagementMethodLabel
     } from './js/admin-utils.js';
     import { escapeHtml, isPersistedStorageUrl } from './js/security.js';
+
+    /**
+     * 화면 안 알림. 브라우저 대화상자를 대신한다.
+     *
+     * 대화상자는 확인을 누를 때까지 페이지를 멈춰 세우고, 자동화 도구에서는 아예
+     * 화면을 잠가 버린다. 관제탑에서 알림은 "결과를 알려주는 것"이지 "동의를 받는 것"이
+     * 아니므로 멈춰 세울 이유가 없다. 물어봐야 하는 자리(confirm)는 그대로 둔다.
+     *
+     * @param {string} message 보여줄 글. 줄바꿈은 그대로 유지된다.
+     * @param {'info'|'success'|'warn'|'error'} type 왼쪽 띠 색
+     */
+    window.adminToast = function (message, type = 'info') {
+        const text = String(message ?? '');
+        const host = document.getElementById('toast-host');
+        // 알림 자리를 찾지 못했다고 알림을 삼키면 안 된다. 최소한 콘솔에는 남긴다.
+        if (!host) { console.log(`[toast:${type}]`, text); return; }
+
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.textContent = text;
+        el.setAttribute('role', type === 'error' ? 'alert' : 'status');
+        el.title = '눌러서 닫기';
+        el.onclick = () => el.remove();
+        host.appendChild(el);
+
+        // 읽는 데 걸리는 시간은 글 길이를 따라간다. 한 줄짜리 "완료"와 열 줄짜리
+        // 집계 결과가 같은 시간만 떠 있으면 둘 중 하나는 잘못된 것이다.
+        setTimeout(() => el.remove(), Math.min(15000, 3200 + text.length * 55));
+    };
 
     let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
@@ -915,11 +962,11 @@
         try {
             const res = await httpsCallable(fns, 'adminResettleDailyLogs')({ dateFrom, dateTo, limit });
             console.log('[adminResettleDailyLogs]', res.data);
-            alert(`재정산 트리거: ${res.data?.touched}건 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.reachedLimit ? '\n한도 도달 — 다시 실행해 나머지도 처리하세요.' : ''}`);
+            adminToast(`재정산 트리거: ${res.data?.touched}건 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.reachedLimit ? '\n한도 도달 — 다시 실행해 나머지도 처리하세요.' : ''}`, 'info');
             return res.data;
         } catch (e) {
             console.error('[adminResettleDailyLogs] 실패:', e);
-            alert(`재정산 실패: ${e.message || e}`);
+            adminToast(`재정산 실패: ${e.message || e}`, 'error');
         }
     };
     // 과거 daily_logs를 gallery_posts로 강제 투영(갤러리 복원). 콘솔에서 호출:
@@ -928,11 +975,11 @@
         try {
             const res = await httpsCallable(fns, 'adminBackfillGalleryPosts')({ dateFrom, dateTo, max });
             console.log('[adminBackfillGalleryPosts]', res.data);
-            alert(`갤러리 투영: ${res.data?.projected}건 투영 / ${res.data?.processed}건 처리 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.complete ? '' : '\n아직 남음 — 같은 명령을 한 번 더 실행하세요.'}`);
+            adminToast(`갤러리 투영: ${res.data?.projected}건 투영 / ${res.data?.processed}건 처리 (${res.data?.dateFrom}~${res.data?.dateTo})${res.data?.complete ? '' : '\n아직 남음 — 같은 명령을 한 번 더 실행하세요.'}`, 'info');
             return res.data;
         } catch (e) {
             console.error('[adminBackfillGalleryPosts] 실패:', e);
-            alert(`갤러리 투영 실패: ${e.message || e}`);
+            adminToast(`갤러리 투영 실패: ${e.message || e}`, 'error');
         }
     };
     // 오류 제보를 화면에 그린다. 이 목록은 앞으로 2주 동안 매일 보게 되므로
@@ -1024,7 +1071,7 @@
             await renderBugReports();
         } catch (e) {
             console.error('[setBugReportStatus] 실패:', e);
-            alert('상태를 바꾸지 못했습니다: ' + (e.code || e.message || e));
+            adminToast('상태를 바꾸지 못했습니다: ' + (e.code || e.message || e), 'error');
         }
     };
 
@@ -1034,10 +1081,10 @@
         if (!item) return;
         try {
             await navigator.clipboard.writeText(JSON.stringify(item, null, 2));
-            alert('제보 JSON을 복사했습니다.');
+            adminToast('제보 JSON을 복사했습니다.', 'success');
         } catch (_) {
             console.log(JSON.stringify(item, null, 2));
-            alert('클립보드를 쓸 수 없어 콘솔에 출력했습니다.');
+            adminToast('클립보드를 쓸 수 없어 콘솔에 출력했습니다.', 'error');
         }
     };
 
@@ -1073,11 +1120,11 @@
             console.table(rows);
             console.log('[adminListBugReports] 전체 JSON:');
             snap.forEach(d => console.log(d.id, JSON.stringify(d.data(), null, 2)));
-            alert(`오류 제보 ${rows.length}건을 콘솔에 출력했습니다.`);
+            adminToast(`오류 제보 ${rows.length}건을 콘솔에 출력했습니다.`, 'success');
             return rows;
         } catch (e) {
             console.error('[adminListBugReports] 실패:', e);
-            alert(`제보 조회 실패: ${e.message || e}`);
+            adminToast(`제보 조회 실패: ${e.message || e}`, 'error');
         }
     };
     // 플레이 비공개 테스트 후보 집계. 콘솔에서 호출:
@@ -1089,25 +1136,25 @@
             const d = res.data || {};
             console.log('[adminListActiveUserEmails]', d);
             console.log('이메일 목록(쉼표 구분):\n' + (d.emails || []).join(', '));
-            alert(`대상 ${d.qualifiedCount}명 (${d.dateFrom}~${d.dateTo}, ${d.windowDays}일 중 ${d.minDays}일 이상)\n`
+            adminToast(`대상 ${d.qualifiedCount}명 (${d.dateFrom}~${d.dateTo}, ${d.windowDays}일 중 ${d.minDays}일 이상)\n`
                 + `이메일 확보 ${d.emailCount}명 / 이메일 없음 ${d.missingEmailCount}명\n`
                 + `(점수 없는 기록까지 포함하면 ${d.qualifiedCountIncludingUnscored}명)\n\n`
-                + `이메일 목록은 콘솔에 출력했습니다.`);
+                + `이메일 목록은 콘솔에 출력했습니다.`, 'success');
             return d;
         } catch (e) {
             console.error('[adminListActiveUserEmails] 실패:', e);
-            alert(`대상 집계 실패: ${e.message || e}`);
+            adminToast(`대상 집계 실패: ${e.message || e}`, 'error');
         }
     };
     window.adminSettleStuckChallenge = async function(tier, uid) {
         try {
             const res = await httpsCallable(fns, 'adminSettleStuckChallenge')({ tier, uid: uid || undefined });
             console.log('[adminSettleStuckChallenge]', res.data);
-            alert(res.data?.cleared ? `정리 완료: ${tier}` : `이미 정리됨/대상 없음: ${tier}`);
+            adminToast(res.data?.cleared ? `정리 완료: ${tier}` : `이미 정리됨/대상 없음: ${tier}`, 'info');
             return res.data;
         } catch (e) {
             console.error('[adminSettleStuckChallenge] 실패:', e);
-            alert(`정리 실패: ${e.message || e}`);
+            adminToast(`정리 실패: ${e.message || e}`, 'error');
         }
     };
     const refreshRewardMarketOpsNowCallable = httpsCallable(fns, 'refreshRewardMarketOpsNow');
@@ -2267,24 +2314,24 @@
     window.adjustRate = async function() {
         const factor = parseFloat(document.getElementById('rate-val').value);
         const reason = document.getElementById('rate-reason').value.trim();
-        if (!factor||factor<=0||factor>5) { alert('유효한 계수를 입력하세요 (0.01 ~ 5.0)'); return; }
-        if (!reason) { alert('조정 사유를 입력하세요.'); return; }
+        if (!factor||factor<=0||factor>5) { adminToast('유효한 계수를 입력하세요 (0.01 ~ 5.0)', 'warn'); return; }
+        if (!reason) { adminToast('조정 사유를 입력하세요.', 'warn'); return; }
         if (!confirm(`마이닝 레이트를 ×${factor}로 조정하시겠습니까?\n사유: ${reason}`)) return;
         try {
             await httpsCallable(fns, 'adjustMiningRateManual')({ factor, reason });
         } catch(e) {
             console.error('마이닝 레이트 조정 실패:', e);
-            alert('조정 실패: ' + (e.message || e));
+            adminToast('조정 실패: ' + (e.message || e), 'error');
             return;
         }
-        alert('✅ 완료되었습니다.'); tabLoaded['economy']=false; loadEconomy();
+        adminToast('✅ 완료되었습니다.', 'success'); tabLoaded['economy']=false; loadEconomy();
     };
 
     window.refreshCommunityStats = async function() {
         try {
             await httpsCallable(fns, 'refreshCommunityStats')({});
-            alert('✅ 커뮤니티 통계가 갱신되었습니다.');
-        } catch(e) { alert('오류: ' + e.message); }
+            adminToast('✅ 커뮤니티 통계가 갱신되었습니다.', 'success');
+        } catch(e) { adminToast('오류: ' + e.message, 'error'); }
     };
 
     window.backfillStats = async function() {
@@ -2302,13 +2349,13 @@
 
     window.distributeMvpForMonth = async function() {
         const targetMonth = document.getElementById('mvp-custom-month').value;
-        if (!targetMonth) { alert('월을 선택해 주세요.'); return; }
+        if (!targetMonth) { adminToast('월을 선택해 주세요.', 'warn'); return; }
         if (!confirm(`${targetMonth} MVP 보상을 배포하시겠습니까?\n(이미 지급된 경우 중복 지급되지 않습니다)`)) return;
         try {
             await httpsCallable(fns, 'distributeMonthlyMvpReward')({ targetMonth });
-            alert(`✅ ${targetMonth} MVP 보상이 배포되었습니다.`);
+            adminToast(`✅ ${targetMonth} MVP 보상이 배포되었습니다.`, 'success');
             tabLoaded['economy'] = false; loadEconomy();
-        } catch(e) { alert('오류: ' + e.message); }
+        } catch(e) { adminToast('오류: ' + e.message, 'error'); }
     };
 
     window.distributeMvp = async function() {
@@ -2321,10 +2368,10 @@
         if (!confirm(`${prevMonth} MVP 보상을 배포하시겠습니까?`)) return;
         try {
             await httpsCallable(fns, 'distributeMonthlyMvpReward')({ targetMonth: prevMonth });
-            alert('✅ MVP 보상이 배포되었습니다.');
+            adminToast('✅ MVP 보상이 배포되었습니다.', 'success');
             tabLoaded['economy']=false; loadEconomy();
         }
-        catch(e) { alert('오류: ' + e.message); }
+        catch(e) { adminToast('오류: ' + e.message, 'error'); }
     };
 
     // ── Tab 4: Moderation ─────────────────────────────────────
@@ -2771,7 +2818,7 @@
             await loadRewardMarketAdmin();
         } catch (e) {
             if (resultEl) resultEl.textContent = `오류: ${e.message || '운영 상태 갱신 실패'}`;
-            alert(`보상 마켓 운영 상태 갱신 실패: ${e.message || '알 수 없는 오류'}`);
+            adminToast(`보상 마켓 운영 상태 갱신 실패: ${e.message || '알 수 없는 오류'}`, 'error');
         }
     };
 
@@ -2779,7 +2826,7 @@
         const redemptionId = decodeURIComponent(String(encodedId || ''));
         const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
         if (!row) {
-            alert('대상 쿠폰을 찾지 못했습니다.');
+            adminToast('대상 쿠폰을 찾지 못했습니다.', 'warn');
             return;
         }
 
@@ -2790,16 +2837,16 @@
             });
             const checked = response.data || {};
             if (hasRewardMarketCouponPayload(checked)) {
-                alert('쿠폰 PIN 또는 이미지를 다시 확인했습니다.');
+                adminToast('쿠폰 PIN 또는 이미지를 다시 확인했습니다.', 'success');
             } else if (hasRewardMarketProviderSmsEvidence(checked)) {
-                alert('공급사 문자 발송 완료와 PIN 발행을 확인했습니다. 앱에 보관할 PIN·이미지는 공급사 응답에 없습니다.');
+                adminToast('공급사 문자 발송 완료와 PIN 발행을 확인했습니다. 앱에 보관할 PIN·이미지는 공급사 응답에 없습니다.', 'warn');
             } else {
-                alert('재조회했지만 PIN·이미지 또는 배송 완료 증빙을 찾지 못했습니다.');
+                adminToast('재조회했지만 PIN·이미지 또는 배송 완료 증빙을 찾지 못했습니다.', 'warn');
             }
             tabLoaded['reward-market'] = false;
             await loadRewardMarketAdmin();
         } catch (e) {
-            alert(`쿠폰 재조회 실패: ${e.message || '알 수 없는 오류'}`);
+            adminToast(`쿠폰 재조회 실패: ${e.message || '알 수 없는 오류'}`, 'error');
         }
     };
 
@@ -2807,7 +2854,7 @@
         const redemptionId = decodeURIComponent(String(encodedId || ''));
         const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
         if (!row) {
-            alert('대상 쿠폰을 찾지 못했습니다.');
+            adminToast('대상 쿠폰을 찾지 못했습니다.', 'warn');
             return;
         }
         if (!confirm('저장된 수신 연락처로 기존 쿠폰 MMS를 다시 보낼까요? 새 주문이나 포인트 차감은 발생하지 않습니다.')) return;
@@ -2818,11 +2865,11 @@
                 reason: 'admin_requested_mms_resend',
                 forceSms: true,
             });
-            alert('기존 쿠폰 MMS 재발송을 요청했습니다.');
+            adminToast('기존 쿠폰 MMS 재발송을 요청했습니다.', 'success');
             tabLoaded['reward-market'] = false;
             await loadRewardMarketAdmin();
         } catch (e) {
-            alert(`MMS 재발송 실패: ${e.message || '알 수 없는 오류'}`);
+            adminToast(`MMS 재발송 실패: ${e.message || '알 수 없는 오류'}`, 'error');
         }
     };
 
@@ -2830,7 +2877,7 @@
         const redemptionId = decodeURIComponent(String(encodedId || ''));
         const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
         if (!row) {
-            alert('대상 쿠폰을 찾지 못했습니다.');
+            adminToast('대상 쿠폰을 찾지 못했습니다.', 'warn');
             return;
         }
         // 문자에는 주문번호가 없다. 공급사가 발송·PIN 발행을 확인해 준 건이면 그 자체가
@@ -2840,11 +2887,11 @@
         const trimmed = String(orderNo || '').trim();
         try {
             await adminReconcileRewardCouponCallable({ redemptionId, providerOrderId: trimmed, note: 'admin_reconcile_lost_write' });
-            alert('발급 완료로 정정했습니다.');
+            adminToast('발급 완료로 정정했습니다.', 'success');
             tabLoaded['reward-market'] = false;
             await loadRewardMarketAdmin();
         } catch (e) {
-            alert(`정정 실패: ${e.message || '알 수 없는 오류'}`);
+            adminToast(`정정 실패: ${e.message || '알 수 없는 오류'}`, 'error');
         }
     };
 
@@ -2852,7 +2899,7 @@
         const redemptionId = decodeURIComponent(String(encodedId || ''));
         const row = rewardMarketRows.find((entry) => entry.id === redemptionId);
         if (!row) {
-            alert('대상 쿠폰을 찾지 못했습니다.');
+            adminToast('대상 쿠폰을 찾지 못했습니다.', 'warn');
             return;
         }
         const pts = Number(row.pointCost || row.hbtCost || 0) || 0;
@@ -2868,11 +2915,11 @@
                 redemptionId,
                 note: 'admin_refund_issue_failed',
             });
-            alert(`환불 완료: ${(result?.data?.pointCost ?? pts).toLocaleString()}P를 돌려주고 사용자에게 안내했습니다.`);
+            adminToast(`환불 완료: ${(result?.data?.pointCost ?? pts).toLocaleString()}P를 돌려주고 사용자에게 안내했습니다.`, 'success');
             tabLoaded['reward-market'] = false;
             await loadRewardMarketAdmin();
         } catch (e) {
-            alert(`환불 처리 실패: ${e.message || '알 수 없는 오류'}`);
+            adminToast(`환불 처리 실패: ${e.message || '알 수 없는 오류'}`, 'error');
         }
     };
 
@@ -2904,7 +2951,7 @@
 
     window.resolveReport = async function(id) {
         if (!confirm('신고를 처리 완료하고 삭제하시겠습니까?')) return;
-        try { await deleteDoc(doc(db,'reports',id)); await loadReports(); } catch(e) { alert('실패: '+e.message); }
+        try { await deleteDoc(doc(db,'reports',id)); await loadReports(); } catch(e) { adminToast('실패: '+e.message, 'error'); }
     };
 
     window.deletePost = async function(docId, reportId) {
@@ -2912,8 +2959,8 @@
         try {
             await deleteDoc(doc(db,'daily_logs',docId));
             if (reportId) await deleteDoc(doc(db,'reports',reportId));
-            alert('✅ 게시물이 삭제되었습니다.'); await loadReports();
-        } catch(e) { alert('삭제 실패: '+e.message); }
+            adminToast('✅ 게시물이 삭제되었습니다.', 'success'); await loadReports();
+        } catch(e) { adminToast('삭제 실패: '+e.message, 'error'); }
     };
 
     async function loadBlockStats() {
@@ -3085,19 +3132,19 @@
 
     window.addAdmin = async function() {
         const email = document.getElementById('new-admin-email').value.trim();
-        if (!email||!email.includes('@')) { alert('유효한 이메일을 입력하세요.'); return; }
+        if (!email||!email.includes('@')) { adminToast('유효한 이메일을 입력하세요.', 'warn'); return; }
         if (!confirm(`"${email}"을(를) 관리자로 추가하시겠습니까?`)) return;
-        try { await setDoc(doc(db,'admins',email),{ email, addedAt:new Date().toISOString() }); document.getElementById('new-admin-email').value=''; await loadAdmins(); alert('✅ 추가되었습니다.'); }
-        catch(e) { alert('실패: '+e.message); }
+        try { await setDoc(doc(db,'admins',email),{ email, addedAt:new Date().toISOString() }); document.getElementById('new-admin-email').value=''; await loadAdmins(); adminToast('✅ 추가되었습니다.', 'success'); }
+        catch(e) { adminToast('실패: '+e.message, 'error'); }
     };
 
     window.removeAdmin = async function(id) {
         if (!confirm(`"${id}" 관리자를 제거하시겠습니까?`)) return;
-        try { await deleteDoc(doc(db,'admins',id)); await loadAdmins(); } catch(e) { alert('실패: '+e.message); }
+        try { await deleteDoc(doc(db,'admins',id)); await loadAdmins(); } catch(e) { adminToast('실패: '+e.message, 'error'); }
     };
 
     // ── Detail modal ──────────────────────────────────────────
-    window.alertMsg = function(date, msg) { alert(`[발송일: ${date}]\n\n${msg}`); };
+    window.alertMsg = function(date, msg) { adminToast(`[발송일: ${date}]\n\n${msg}`, 'info'); };
 
     let adminDetailMediaItems = [];
     let adminDetailMediaIndex = -1;
@@ -3363,7 +3410,7 @@
             const { count, targets } = preview.data;
             btn.disabled = false;
             btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
-            if (count === 0) { alert('대상 회원이 없습니다.'); return; }
+            if (count === 0) { adminToast('대상 회원이 없습니다.', 'warn'); return; }
             const names = targets.slice(0, 10).map(t => `• ${t.name} (${t.email})`).join('\n');
             const more = count > 10 ? `\n... 외 ${count - 10}명` : '';
             if (!confirm(`📧 ${days}일+ 미활동 대상 ${count}명:\n\n${names}${more}\n\n이메일을 발송하시겠습니까?`)) return;
@@ -3373,9 +3420,9 @@
             const { sentCount, errors } = result.data;
             cache = null;
             await loadMembers();
-            alert(`✅ ${sentCount}명에게 이메일을 발송했습니다.${errors?.length ? `\n\n실패 ${errors.length}건` : ''}`);
+            adminToast(`✅ ${sentCount}명에게 이메일을 발송했습니다.${errors?.length ? `\n\n실패 ${errors.length}건` : ''}`, 'success');
         } catch(e) {
-            alert('오류: ' + e.message);
+            adminToast('오류: ' + e.message, 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = days === 3 ? '📧 3일 미활동 발송' : '📧 7일+ 미활동 발송';
@@ -3385,7 +3432,7 @@
     window.sendBroadcast = async function() {
         const title = document.getElementById('broadcast-title').value.trim();
         const body = document.getElementById('broadcast-body').value.trim();
-        if (!title || !body) { alert('제목과 내용을 모두 입력하세요.'); return; }
+        if (!title || !body) { adminToast('제목과 내용을 모두 입력하세요.', 'warn'); return; }
         if (!confirm(`전체 회원에게 푸시 알림을 발송합니다.\n\n제목: ${title}\n내용: ${body}\n\n진행하시겠습니까?`)) return;
         const btn = document.getElementById('broadcast-btn');
         const result = document.getElementById('broadcast-result');
@@ -3408,21 +3455,21 @@
         const uid = document.getElementById('modal-uid').value;
         const amount = parseInt(document.getElementById('coin-amount').value);
         const reason = document.getElementById('coin-reason').value.trim();
-        if (!uid) { alert('회원을 선택하세요.'); return; }
-        if (!amount || isNaN(amount)) { alert('포인트 값을 입력하세요.'); return; }
-        if (!reason) { alert('사유를 입력하세요.'); return; }
+        if (!uid) { adminToast('회원을 선택하세요.', 'warn'); return; }
+        if (!amount || isNaN(amount)) { adminToast('포인트 값을 입력하세요.', 'warn'); return; }
+        if (!reason) { adminToast('사유를 입력하세요.', 'warn'); return; }
         const label = amount > 0 ? `+${amount}P 지급` : `${amount}P 차감`;
         if (!confirm(`${document.getElementById('modal-name').textContent}에게\n${label} (사유: ${reason})\n\n진행하시겠습니까?`)) return;
         try {
             const fn = httpsCallable(fns, 'adjustUserCoins');
             await fn({ targetUid: uid, amount, reason });
-            alert(`✅ ${label} 완료`);
+            adminToast(`✅ ${label} 완료`, 'success');
             document.getElementById('coin-amount').value = '';
             document.getElementById('coin-reason').value = '';
             // 모달 코인 표시 갱신
             const snap = await getDoc(doc(db, 'users', uid));
             if (snap.exists()) document.getElementById('p-coins').textContent = (snap.data().coins || 0).toLocaleString();
-        } catch(e) { alert('오류: ' + e.message); }
+        } catch(e) { adminToast('오류: ' + e.message, 'error'); }
     };
 
     window.grantWelcomeBonusToAll = async function() {
@@ -3449,7 +3496,7 @@
     window.submitFb = async function() {
         const uid = document.getElementById('modal-uid').value;
         const msg = document.getElementById('fb-text').value.trim();
-        if (!msg) { alert('메시지를 입력하세요.'); return; }
+        if (!msg) { adminToast('메시지를 입력하세요.', 'warn'); return; }
         const button = document.querySelector('.fb-submit');
         if (button?.disabled) return;
         if (button) { button.disabled = true; button.textContent = '전송 중...'; }
@@ -3458,9 +3505,9 @@
             const historyNotice = response.data?.historyAttached
                 ? '오늘 기록에도 함께 추가됐습니다.'
                 : '오늘 기록이 없어 앱 안내에만 표시됩니다.';
-            alert(`✅ 회원 앱에 3일간 노출됩니다. ${historyNotice}`);
+            adminToast(`✅ 회원 앱에 3일간 노출됩니다. ${historyNotice}`, 'success');
             closeModal(); cache=null; tabLoaded['members']=false; loadMembers();
-        } catch(e) { alert('전송 실패: '+e.message); }
+        } catch(e) { adminToast('전송 실패: '+e.message, 'error'); }
         finally {
             if (button) { button.disabled = false; button.textContent = '코멘트 전송'; }
         }
