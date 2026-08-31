@@ -64,7 +64,7 @@ import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLoc
 import { sanitize, compressImage } from './data-manager.js?v=345';
 import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=345';
 import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=345';
-import { installBugReportCollectors, submitBugReport } from './bug-report.js?v=345';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=345';
 import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=345';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=345';
 import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=345';
@@ -338,6 +338,14 @@ window.__getPendingUploadSnapshot = function () {
         return [];
     }
 };
+
+// 아이콘 아래 버전 배지. 제보 스크린샷에 함께 찍혀 어느 배포에서 난 일인지 바로 안다.
+(function paintAssetVersionBadge() {
+    const el = document.getElementById('bug-report-version');
+    if (!el) return;
+    const v = readAssetVersion();
+    el.textContent = v ? `v${v}` : '';
+})();
 
 window.openBugReportModal = function () {
     const modal = document.getElementById('bug-report-modal');

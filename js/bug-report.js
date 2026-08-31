@@ -20,8 +20,16 @@ import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/fir
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 import { showToast } from './ui-helpers.js?v=345';
 
-// 자산 버전. import 경로와 함께 올라가므로 여기 값만 보면 어느 배포인지 알 수 있다.
-const ASSET_VERSION = '345';
+// 자산 버전은 실제로 로드된 스크립트 주소에서 읽는다. 여기에 숫자를 또 적어 두면
+// 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.
+export function readAssetVersion() {
+    try {
+        const src = document.querySelector('script[src*="js/app.js?v="]')?.src || '';
+        return src.match(/v=(\d+)/)?.[1] || null;
+    } catch (_) {
+        return null;
+    }
+}
 
 const CONSOLE_BUFFER_LIMIT = 25;
 const MAX_MESSAGE_LENGTH = 2000;
@@ -111,7 +119,7 @@ export function collectDeviceContext() {
         isAndroidApp: String(document.referrer || '').startsWith('android-app://'),
         path: window.location?.pathname || null,
         activeTab: document.querySelector('.content-section.active')?.id || null,
-        assetVersion: ASSET_VERSION,
+        assetVersion: readAssetVersion(),
         appEnv: APP_ENV,
         screen: {
             width: window.screen?.width ?? null,

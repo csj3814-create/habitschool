@@ -820,3 +820,17 @@ body.simple-mode .step-input-group {
 .bug-report-fab:active { transform: scale(0.94); }
 /* 로그인 전에는 보낼 수 없으므로 감춘다. */
 html.auth-pending .bug-report-fab { display: none; }
+
+.bug-report-version {
+    position: fixed;
+    right: 14px;
+    bottom: 80px;
+    z-index: 900;
+    width: 46px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1;
+    color: #90A4AE;
+    pointer-events: none;
+}
+html.auth-pending .bug-report-version { display: none; }

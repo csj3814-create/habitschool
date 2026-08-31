@@ -33,6 +33,18 @@ describe('bug report carries what a person cannot type', () => {
         expect(MODULE).toContain('assetVersion');
     });
 
+    it('reads the asset version off the loaded script instead of hardcoding it', () => {
+        // 숫자를 파일 안에 또 적어 두면 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.
+        expect(MODULE).toContain('export function readAssetVersion()');
+        expect(MODULE).toContain('assetVersion: readAssetVersion()');
+        expect(MODULE).not.toMatch(/ASSET_VERSION\s*=\s*'/);
+    });
+
+    it('shows that version under the report button', () => {
+        expect(HTML).toContain('id="bug-report-version"');
+        expect(APP).toContain('paintAssetVersionBadge');
+    });
+
     it('still files the report when only the screenshot upload fails', () => {
         expect(MODULE).toContain('screenshotError');
         const at = MODULE.indexOf('if (screenshotFile)');
