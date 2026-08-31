@@ -921,6 +921,45 @@
             alert(`갤러리 투영 실패: ${e.message || e}`);
         }
     };
+    // 오류 제보 조회. 콘솔에서 호출:
+    //   adminListBugReports()        // 최근 20건
+    //   adminListBugReports(50)      // 최근 50건
+    //
+    // 제보에는 기기 정보와 직전 콘솔 오류가 함께 담긴다. 분석에 붙여 넣을 수 있게
+    // JSON 도 같이 찍는다 — "안 돼요" 한 줄만 받던 것을 없애려고 만든 기능이다.
+    window.adminListBugReports = async function(max) {
+        try {
+            const snap = await getDocs(query(
+                collection(db, 'bug_reports'),
+                orderBy('createdAt', 'desc'),
+                limit(Number(max) || 20)
+            ));
+            const rows = [];
+            snap.forEach(d => {
+                const v = d.data() || {};
+                rows.push({
+                    id: d.id,
+                    when: v.createdAt?.toDate?.()?.toLocaleString('ko-KR') || '-',
+                    who: v.email || v.uid || '-',
+                    message: v.message || '',
+                    mode: v.device?.displayMode || '-',
+                    app: v.device?.isAndroidApp ? '앱' : '웹',
+                    ver: v.device?.assetVersion || '-',
+                    tab: v.device?.activeTab || '-',
+                    errors: (v.consoleEntries || []).length,
+                    shot: v.screenshotUrl || (v.screenshotError ? `실패(${v.screenshotError})` : '-')
+                });
+            });
+            console.table(rows);
+            console.log('[adminListBugReports] 전체 JSON:');
+            snap.forEach(d => console.log(d.id, JSON.stringify(d.data(), null, 2)));
+            alert(`오류 제보 ${rows.length}건을 콘솔에 출력했습니다.`);
+            return rows;
+        } catch (e) {
+            console.error('[adminListBugReports] 실패:', e);
+            alert(`제보 조회 실패: ${e.message || e}`);
+        }
+    };
     // 플레이 비공개 테스트 후보 집계. 콘솔에서 호출:
     //   adminListActiveUserEmails()            // 최근 10일 중 3일 이상
     //   adminListActiveUserEmails(14, 5)       // 최근 14일 중 5일 이상
