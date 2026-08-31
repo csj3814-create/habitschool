@@ -15,10 +15,10 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, APP_ENV } from './firebase-config.js?v=347';
+import { auth, db, storage, APP_ENV } from './firebase-config.js?v=348';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { showToast } from './ui-helpers.js?v=347';
+import { showToast } from './ui-helpers.js?v=348';
 
 // 자산 버전은 실제로 로드된 스크립트 주소에서 읽는다. 여기에 숫자를 또 적어 두면
 // 배포 때 한쪽만 올라가 제보에 틀린 버전이 실린다.

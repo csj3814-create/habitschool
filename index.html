@@ -12,6 +12,10 @@
         if (normalizedPath === '/simple') {
             document.documentElement.classList.add('simple-mode');
         }
+        if (normalizedPath === '/welcome') {
+            // 한국어 소개 페이지. 영어와 같은 방식으로 첫 페인트 전에 정한다.
+            document.documentElement.classList.add('ko-landing');
+        }
         if (normalizedPath === '/en' || normalizedPath === '/en/index.html' || normalizedPath === '/en/welcome') {
             document.documentElement.classList.add('simple-mode', 'locale-en', 'auth-pending', 'locale-loading');
             // 소개 페이지인지 첫 페인트 전에 정한다. 모듈 로드 뒤로 밀면 로그인 화면이
@@ -136,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=347">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=347">
+    <link rel="stylesheet" href="styles.css?v=348">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=348">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -735,7 +739,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=347"></script>
+    <script src="js/webview-detect.js?v=348"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -761,6 +765,94 @@
 </head>
 
 <body>
+
+    <!--
+      한국어 소개 페이지(/welcome). 유튜브 설명란 링크가 도착하는 곳이다.
+      그전에는 한국어 방문자가 곧바로 로그인 화면을 만났고, 그 화면은 무엇을 얻는지
+      말하지 않는다. 영어에는 /en/welcome 이 있는데 실제 사용자는 전부 한국어다.
+    -->
+    <!-- hidden 속성을 쓰지 않는다. 영어 랜딩은 auth.js 가 그 속성을 벗겨 주지만
+         한국어에는 그 경로가 없다. 숨기는 일은 CSS(html:not(.ko-landing))가 한다.
+         styles.css 는 head 의 blocking link 라 첫 페인트 전에 적용된다. -->
+    <section id="korean-public-page" class="ko-public-page" aria-label="해빛스쿨 소개">
+        <header class="ko-public-header">
+            <a class="ko-public-brand" href="/welcome" aria-label="해빛스쿨 홈">
+                <img src="icons/icon-192.svg" alt="" width="32" height="32">
+                <span>해빛스쿨</span>
+            </a>
+            <nav class="ko-public-nav" aria-label="소개 페이지 메뉴">
+                <a href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">유튜브</a>
+                <a href="/privacy.html">개인정보</a>
+                <a class="ko-public-login" href="/">로그인</a>
+            </nav>
+        </header>
+
+        <main class="ko-public-main">
+            <section class="ko-hero">
+                <p class="ko-hero-eyebrow">건강검진 결과지, 서랍에 그대로 있지 않으세요?</p>
+                <h1>그 숫자들이 무슨 뜻인지<br>사진 한 장으로 알려드립니다.</h1>
+                <p class="ko-hero-body">
+                    매년 검사는 받는데, 종이에 적힌 수치는 읽지 못한 채 넘어갑니다.
+                    이미 가지고 계신 그 결과지를 찍어 올리면 항목별로 풀어 설명해 드립니다.
+                </p>
+                <div class="ko-hero-actions">
+                    <a class="ko-cta-primary" href="/">구글로 3초 만에 시작하기</a>
+                    <a class="ko-cta-secondary" href="/?guest=1">로그인 없이 먼저 둘러보기</a>
+                </div>
+                <p class="ko-hero-note">무료입니다. 설치 없이 웹에서 바로 쓰실 수 있습니다.</p>
+            </section>
+
+            <section class="ko-value" aria-label="해빛스쿨에서 얻는 것">
+                <article class="ko-value-card">
+                    <div class="ko-value-icon" aria-hidden="true">🩸</div>
+                    <h2>혈액검사 결과지 해석</h2>
+                    <p>결과지를 찍어 올리면 항목별로 지금 어떤 상태인지, 무엇부터 챙기면
+                        되는지 알려드립니다. 다음 검진 때 비교할 수 있게 기록으로 남습니다.</p>
+                </article>
+                <article class="ko-value-card">
+                    <div class="ko-value-icon" aria-hidden="true">🧬</div>
+                    <h2>대사건강 점수</h2>
+                    <p>체성분·혈압·혈당과 생활습관을 묶어 100점으로 요약합니다.
+                        어디가 발목을 잡고 있는지 숫자 하나로 보입니다.</p>
+                </article>
+                <article class="ko-value-card">
+                    <div class="ko-value-icon" aria-hidden="true">🥗</div>
+                    <h2>AI 식단 분석</h2>
+                    <p>먹은 것을 찍으면 초가공식품을 가려내고 영양 균형을 매깁니다.
+                        무엇을 줄여야 할지 다음 끼니부터 알 수 있습니다.</p>
+                </article>
+            </section>
+
+            <section class="ko-trust" aria-label="누가 만들었나">
+                <p class="ko-trust-line">
+                    병원과 의사는 큰 위기만 막을 뿐, <strong>건강 유지는 본인의 몫</strong>입니다.
+                    그 몫을 혼자 감당하지 않도록 만든 앱입니다.
+                </p>
+                <a class="ko-trust-link" href="https://www.youtube.com/@Doctors0" target="_blank" rel="noopener">
+                    유튜브 채널 Doctors0에서 만든 서비스입니다 →
+                </a>
+                <p class="ko-disclaimer">
+                    해빛스쿨은 건강한 생활 습관 형성을 돕는 앱이며, 의학적 진단이나 치료를
+                    제공하지 않습니다. 건강 상태나 증상에 대해서는 반드시 의료 전문가와
+                    상담하세요.
+                </p>
+            </section>
+
+            <section class="ko-final" aria-label="시작하기">
+                <h2>오늘 한 끼만 찍어보세요</h2>
+                <p>기록 하나부터 시작합니다. 계속할지는 그다음에 정하셔도 됩니다.</p>
+                <a class="ko-cta-primary" href="/">구글로 시작하기</a>
+            </section>
+        </main>
+
+        <footer class="ko-public-footer">
+            <a href="/terms.html">이용약관</a>
+            <span aria-hidden="true">·</span>
+            <a href="/privacy.html">개인정보처리방침</a>
+            <span aria-hidden="true">·</span>
+            <a href="/changelog.html">업데이트 노트</a>
+        </footer>
+    </section>
 
     <section id="english-public-page" class="english-public-page" aria-label="Habit School English introduction" hidden>
         <header class="en-public-header">
@@ -3004,14 +3096,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=347"></script>
-    <script type="module" src="js/main.js?v=347"></script>
-    <script type="module" src="js/diet-analysis.js?v=347"></script>
-    <script type="module" src="js/metabolic-score.js?v=347"></script>
-    <script type="module" src="js/le8-score.js?v=347"></script>
+    <script type="module" src="js/app.js?v=348"></script>
+    <script type="module" src="js/main.js?v=348"></script>
+    <script type="module" src="js/diet-analysis.js?v=348"></script>
+    <script type="module" src="js/metabolic-score.js?v=348"></script>
+    <script type="module" src="js/le8-score.js?v=348"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=347"></script>
+    <script src="js/pwa-install.js?v=348"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

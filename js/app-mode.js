@@ -7,6 +7,8 @@ const ENGLISH_ENTRY_PATH = '/en';
 // 로그인 화면이 된다. 예전에는 /en 이 로그아웃 상태일 때만 랜딩을 보여 줘서,
 // 소개 페이지를 가리킬 안정적인 주소가 없었다.
 const ENGLISH_LANDING_PATH = '/en/welcome';
+// 한국어 소개 페이지. 유튜브 설명란 링크가 도착하는 곳이고, 로그인 화면 앞에 선다.
+const KOREAN_LANDING_PATH = '/welcome';
 // 구글플레이 TWA 전용 경로. 이 경로에서는 온체인(HBT·지갑·전환·스테이킹) 기능을
 // 전부 끈 '라이트' 앱으로 동작한다. 플레이 정책상 개인 계정으로는 암호화폐 지갑을
 // 배포할 수 없어, 스토어 빌드는 이 경로만 열도록 TWA를 구성한다.
@@ -35,6 +37,7 @@ export function getRouteContext(pathname = getCurrentPathname()) {
         || path === `${ENGLISH_ENTRY_PATH}/index.html`
         || isEnglishLanding;
     const isKoreanSimple = path === SIMPLE_MODE_PATH;
+    const isKoreanLanding = path === KOREAN_LANDING_PATH;
     const isPlay = path === PLAY_MODE_PATH || path === `${PLAY_MODE_PATH}/index.html`;
     const locale = isEnglishEntry ? ENGLISH_LOCALE : DEFAULT_LOCALE;
     // play는 전체 탭을 쓰는 default 계열이지만 온체인 UI만 감춘다(simple과 별개).
@@ -47,6 +50,7 @@ export function getRouteContext(pathname = getCurrentPathname()) {
         mode,
         isEnglish: locale === ENGLISH_LOCALE,
         isEnglishLanding,
+        isKoreanLanding,
         isSimple: mode === SIMPLE_MODE,
         isPlay,
         defaultTab,
