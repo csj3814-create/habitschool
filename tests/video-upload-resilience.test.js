@@ -53,7 +53,9 @@ describe('video upload resilience', () => {
 
         expect(source).toContain('const INLINE_UPLOAD_STALLED_MS = 8000;');
         expect(source).toContain('function schedulePendingUploadStalledNotice');
-        expect(source).toContain('업로드가 지연돼요. 저장하면 자동으로 이어갈게요.');
+        // 8초에 "지연"이라고 단정하지 않는다. 느린 회선에서는 그때가 정상 진행 중이다.
+        expect(source).toContain('업로드 중이에요 · ${seconds}초째 · 저장하면 자동으로 이어갑니다');
+        expect(source).not.toContain('업로드가 지연돼요');
         expect(source).toContain("els.percentEl.textContent = state === 'error' || message ? '' : `${normalizedPct}%`;");
         expect(source).toContain('schedulePendingUploadStalledNotice(inputId, entry);');
         expect(source).toContain('clearPendingUploadDelayTimer(current);');

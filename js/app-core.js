@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=344';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=344';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=345';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=345';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=344';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=344';
+} from './auth-login-helpers.js?v=345';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=345';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=344';
+} from './exercise-media.js?v=345';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=344';
+} from './health-connect-utils.js?v=345';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,18 +57,18 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=344';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=344';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=344';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=344';
-import { sanitize, compressImage } from './data-manager.js?v=344';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=344';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=344';
-import { installBugReportCollectors, submitBugReport } from './bug-report.js?v=344';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=344';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=344';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=344';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=344';
+} from './habit-groups.js?v=345';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=345';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=345';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=345';
+import { sanitize, compressImage } from './data-manager.js?v=345';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=345';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=345';
+import { installBugReportCollectors, submitBugReport } from './bug-report.js?v=345';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=345';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=345';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=345';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=345';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -78,14 +78,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=344';
+} from './guest-demo.js?v=345';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=344';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=344';
+} from './product-events.js?v=345';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=345';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -107,7 +107,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=344';
+} from './diet-program.js?v=345';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -119,19 +119,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=344';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=344';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=344';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=344';
+} from './meditation-guide.js?v=345';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=345';
+import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=345';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=345';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=344';
+} from './social-challenge-readiness.js?v=345';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=344';
+} from './monthly-mvp-reward.js?v=345';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -176,6 +176,8 @@ const EXERCISE_LIBRARY_VIDEO_COMPAT_TYPES = Object.freeze([
 ]);
 const MEDIA_PICKER_FALLBACK_CLEANUP_DELAY_MS = 1800;
 const INLINE_UPLOAD_STALLED_MS = 8000;
+// 안내를 띄운 뒤에는 이 간격으로 경과 시간을 갱신한다.
+const INLINE_UPLOAD_TICK_MS = 5000;
 const SAMSUNG_IMAGE_UPLOAD_SIMPLE_TIMEOUT_MS = 45 * 1000;
 const SAMSUNG_SIMPLE_UPLOAD_RETRY_ATTEMPTS = 1;
 const SAMSUNG_SIMPLE_UPLOAD_RECOVERY_ATTEMPTS = 3;
@@ -318,6 +320,24 @@ window.toggleCommunityRows = toggleCommunityRows;
 window.focusGalleryFeed = focusGalleryFeed;
 // 오류 제보. 수집기는 앱이 뜨자마자 붙여야 그 전에 난 오류도 버퍼에 남는다.
 installBugReportCollectors();
+
+// 제보 시점에 돌고 있던 업로드. 콘솔 오류가 비어 있는 제보(=예외 없이 안 끝나는
+// 경우)에서 유일하게 남는 단서다.
+window.__getPendingUploadSnapshot = function () {
+    try {
+        return [..._pendingUploads.entries()].map(([inputId, entry]) => ({
+            inputId,
+            progress: Number(entry?.progress || 0),
+            message: String(entry?.progressMessage || ''),
+            done: !!entry?.done,
+            needsRetry: !!entry?.needsRetry,
+            delayed: !!entry?.delayed,
+            elapsedMs: entry?.startedAt ? Date.now() - entry.startedAt : null
+        }));
+    } catch (_) {
+        return [];
+    }
+};
 
 window.openBugReportModal = function () {
     const modal = document.getElementById('bug-report-modal');
@@ -6590,7 +6610,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=344';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=345';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -17812,16 +17832,31 @@ function clearPendingUploadDelayTimer(entry) {
 
 function schedulePendingUploadStalledNotice(inputId, entry) {
     if (!inputId || !entry || entry.delayTimer) return;
-    entry.delayTimer = setTimeout(() => {
+    // 8초는 느린 회선에서 첫 진행 이벤트가 오기에도 짧다. 그 시점에 "지연돼요"라고
+    // 단정하면, 실제로는 올라가는 중인 업로드를 멈춘 것으로 읽게 만든다. 제보 두 건이
+    // 모두 그 상태에서 왔다(1.25Mbps, 콘솔 오류 없음 — 실패가 아니라 안 끝난 것).
+    // 그래서 단정하지 않고, 몇 초째인지를 계속 갱신해 "돌아가고는 있다"를 보여 준다.
+    const tick = () => {
         const current = _pendingUploads.get(inputId);
-        if (!current || current.done || Number(current.progress || 0) > 0) return;
+        if (!current || current.done || Number(current.progress || 0) > 0) {
+            clearPendingUploadDelayTimer(current || entry);
+            return;
+        }
         current.delayed = true;
+        const seconds = current.startedAt
+            ? Math.max(1, Math.round((Date.now() - current.startedAt) / 1000))
+            : null;
         setInlineUploadProgress(inputId, {
             state: 'uploading',
             pct: 0,
-            message: '업로드가 지연돼요. 저장하면 자동으로 이어갈게요.'
+            indeterminate: true,
+            message: seconds
+                ? `업로드 중이에요 · ${seconds}초째 · 저장하면 자동으로 이어갑니다`
+                : '업로드 중이에요 · 저장하면 자동으로 이어갑니다'
         });
-    }, INLINE_UPLOAD_STALLED_MS);
+        current.delayTimer = setTimeout(tick, INLINE_UPLOAD_TICK_MS);
+    };
+    entry.delayTimer = setTimeout(tick, INLINE_UPLOAD_STALLED_MS);
 }
 
 function getInlineUploadProgressEls(inputId) {
@@ -17947,6 +17982,7 @@ function beginTrackedPendingUpload(inputId, uploadSource) {
         progress: 0,
         progressMessage: '',
         reportProgress: false,
+        startedAt: Date.now(),
         delayed: false,
         needsRetry: false,
         delayTimer: 0
