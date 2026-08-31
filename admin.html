@@ -686,7 +686,7 @@
 </div>
 
 <script type="module">
-    import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, getDocs, query, orderBy, limit, doc, setDoc, where, getDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
     import { auth, db, functions as fns, APP_ENV } from './js/firebase-config.js';
@@ -972,22 +972,29 @@
                     ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#C62828;">직전 오류 ${errs.length}건</summary>
                        <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;background:#FAFAFA;border:1px solid #eee;border-radius:6px;padding:8px;margin:6px 0 0;">${bugEsc(errs.map(e => `[${e.level}] ${e.text}`).join('\n'))}</pre></details>`
                     : '<div style="font-size:12px;color:#bbb;margin-top:6px;">직전 오류 없음</div>';
+                const done = (v.status || 'open') === 'done';
                 const shot = v.screenshotUrl
                     ? `<a href="${bugEsc(v.screenshotUrl)}" target="_blank" rel="noopener" style="font-size:12px;">스크린샷 열기</a>`
                     : (v.screenshotError ? `<span style="font-size:12px;color:#E53935;">첨부 실패 (${bugEsc(v.screenshotError)})</span>` : '');
-                return `<div style="border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff;">
+                const resolved = v.resolvedAt?.toDate?.()?.toLocaleString('ko-KR') || '';
+                return `<div style="border:1px solid ${done ? '#C8E6C9' : '#eee'};border-radius:10px;padding:12px;margin-bottom:10px;background:${done ? '#F6FBF6' : '#fff'};${done ? 'opacity:0.75;' : ''}">
                     <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#777;">
-                        <span><strong style="color:#333;">${bugEsc(v.email || v.uid)}</strong> · ${bugEsc(when)}</span>
+                        <span>${done ? '<span style="color:#2E7D32;font-weight:700;">✔ 처리됨</span> · ' : ''}<strong style="color:#333;">${bugEsc(v.email || v.uid)}</strong> · ${bugEsc(when)}${done && resolved ? ` · ${bugEsc(resolved)} ${bugEsc(v.resolvedBy || '')}` : ''}</span>
                         <span>${where} · v${bugEsc(dev.assetVersion)} · ${bugEsc(dev.activeTab || '-')} · ${bugEsc(dev.appEnv || '-')}</span>
                     </div>
                     <div style="margin:8px 0;font-size:14px;color:#222;white-space:pre-wrap;">${bugEsc(v.message)}</div>
                     <div style="font-size:11px;color:#999;word-break:break-all;">${bugEsc(dev.userAgent)}</div>
                     <div style="font-size:11px;color:#999;">${bugEsc(dev.screen?.viewportWidth)}×${bugEsc(dev.screen?.viewportHeight)} · ${bugEsc(dev.connection?.effectiveType || '-')} · ${dev.online === false ? '오프라인' : '온라인'}</div>
                     ${errHtml}
-                    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;">
+                    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                         ${shot}
                         <button type="button" onclick="copyBugReport('${bugEsc(v.id)}')"
                             style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">JSON 복사</button>
+                        ${done
+                            ? `<button type="button" onclick="setBugReportStatus('${bugEsc(v.id)}', 'open')"
+                                style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">다시 열기</button>`
+                            : `<button type="button" onclick="setBugReportStatus('${bugEsc(v.id)}', 'done')"
+                                style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #2E7D32;background:#2E7D32;color:#fff;cursor:pointer;">처리 완료</button>`}
                     </div>
                 </div>`;
             }).join('');
@@ -995,6 +1002,23 @@
         } catch (e) {
             console.error('[renderBugReports] 실패:', e);
             box.innerHTML = `<div style="font-size:13px;color:#E53935;">제보를 불러오지 못했습니다 (${bugEsc(e.code || e.message)})</div>`;
+        }
+    };
+
+    // 처리 표시가 없으면 "미처리만" 필터가 아무 일도 못 하고 목록은 계속 쌓이기만 한다.
+    // 규칙상 관리자만 update 할 수 있다(bug_reports: allow update if isAdmin).
+    window.setBugReportStatus = async function(id, status) {
+        if (!id) return;
+        try {
+            await setDoc(doc(db, 'bug_reports', id), {
+                status,
+                resolvedAt: status === 'done' ? serverTimestamp() : null,
+                resolvedBy: status === 'done' ? (auth.currentUser?.email || null) : null
+            }, { merge: true });
+            await renderBugReports();
+        } catch (e) {
+            console.error('[setBugReportStatus] 실패:', e);
+            alert('상태를 바꾸지 못했습니다: ' + (e.code || e.message || e));
         }
     };
 

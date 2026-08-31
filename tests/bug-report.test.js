@@ -149,6 +149,20 @@ describe('reports are readable without opening DevTools', () => {
     it('offers the whole report for pasting into an analysis', () => {
         expect(ADMIN).toContain('window.copyBugReport');
     });
+
+    it('can mark a report handled, and undo it', () => {
+        // 처리 표시가 없으면 "미처리만" 필터가 아무 일도 못 하고 목록은 쌓이기만 한다.
+        expect(ADMIN).toContain('window.setBugReportStatus');
+        expect(ADMIN).toContain("setBugReportStatus('${bugEsc(v.id)}', 'done')");
+        expect(ADMIN).toContain("setBugReportStatus('${bugEsc(v.id)}', 'open')");
+    });
+
+    it('records who closed it and when', () => {
+        const at = ADMIN.indexOf('window.setBugReportStatus');
+        const block = ADMIN.slice(at, at + 700);
+        expect(block).toContain('resolvedAt');
+        expect(block).toContain('resolvedBy');
+    });
 });
 
 describe('report button reachable from any screen', () => {
