@@ -157,6 +157,18 @@ describe('reports are readable without opening DevTools', () => {
         expect(ADMIN).toContain("setBugReportStatus('${bugEsc(v.id)}', 'open')");
     });
 
+    it('hides handled reports behind a checkbox instead of listing them all', () => {
+        // 기본 화면은 처리할 것만. 완료된 건은 눌러야 나온다.
+        expect(ADMIN).toContain('id="bug-report-show-done"');
+        expect(ADMIN).toContain('완료 목록 보기');
+        expect(ADMIN).toContain('items.filter(v => isDone(v) === showDone)');
+        expect(ADMIN).not.toContain('bug-report-open-only');
+    });
+
+    it('still says how many are waiting', () => {
+        expect(ADMIN).toContain('미처리 ${openCount}건 · 완료 ${doneCount}건');
+    });
+
     it('records who closed it and when', () => {
         const at = ADMIN.indexOf('window.setBugReportStatus');
         const block = ADMIN.slice(at, at + 700);
