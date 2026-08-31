@@ -835,3 +835,7 @@ html.auth-pending .bug-report-fab { display: none; }
     pointer-events: none;
 }
 html.auth-pending .bug-report-version { display: none; }
+
+/* 승인/반려가 서버를 기다리는 동안. 눌린 것이 보여야 다시 누르지 않는다. */
+.habit-group-review-actions.is-busy { opacity: 0.6; }
+.habit-group-review-actions.is-busy button { cursor: progress; }

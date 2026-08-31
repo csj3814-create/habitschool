@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=346';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=346';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=347';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=347';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=346';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=346';
+} from './auth-login-helpers.js?v=347';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=347';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=346';
+} from './exercise-media.js?v=347';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=346';
+} from './health-connect-utils.js?v=347';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,18 +57,18 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=346';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=346';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=346';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=346';
-import { sanitize, compressImage } from './data-manager.js?v=346';
-import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=346';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=346';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=346';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=346';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=346';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=346';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=346';
+} from './habit-groups.js?v=347';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=347';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=347';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=347';
+import { sanitize, compressImage } from './data-manager.js?v=347';
+import { createSequentialTaskQueue, getResumableUploadTimeouts } from './upload-performance.js?v=347';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=347';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=347';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=347';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=347';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=347';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=347';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -78,14 +78,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=346';
+} from './guest-demo.js?v=347';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=346';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=346';
+} from './product-events.js?v=347';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=347';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -107,7 +107,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=346';
+} from './diet-program.js?v=347';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -119,19 +119,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=346';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=346';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=346';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=346';
+} from './meditation-guide.js?v=347';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=347';
+import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=347';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=347';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=346';
+} from './social-challenge-readiness.js?v=347';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=346';
+} from './monthly-mvp-reward.js?v=347';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6618,7 +6618,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=346';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=347';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -25903,6 +25903,33 @@ function buildHabitGroupReviewMediaHtml(checkin = {}) {
     return `<div class="habit-group-review-media-strip">${mediaHtml}</div>`;
 }
 
+// 승인은 콜드 스타트가 겹치면 5~8초까지 걸린다. 그 사이 화면이 아무 말도 하지 않으면
+// 사용자는 실패로 읽고 다시 누른다. 누른 그 자리에서 바로 상태를 보여 준다.
+function habitGroupReviewRowId(groupId, uid, date) {
+    return `hg-review-${String(groupId)}__${String(uid)}__${String(date)}`.replace(/[^\w-]/g, '_');
+}
+
+function setHabitGroupReviewRowBusy(groupId, uid, date, busy, label = '처리 중…') {
+    const row = document.getElementById(habitGroupReviewRowId(groupId, uid, date));
+    if (!row) return null;
+    const buttons = [...row.querySelectorAll('button')];
+    buttons.forEach((btn) => {
+        if (busy) {
+            if (btn.dataset.originalLabel == null) btn.dataset.originalLabel = btn.textContent;
+            btn.disabled = true;
+        } else {
+            btn.disabled = false;
+            if (btn.dataset.originalLabel != null) {
+                btn.textContent = btn.dataset.originalLabel;
+                delete btn.dataset.originalLabel;
+            }
+        }
+    });
+    if (busy && buttons[0]) buttons[0].textContent = label;
+    row.classList.toggle('is-busy', !!busy);
+    return row;
+}
+
 function buildHabitGroupLeaderReviewRow(checkin = {}) {
     const group = checkin.group || getHabitGroupById(checkin.groupId);
     if (!group) return '';
@@ -25914,7 +25941,8 @@ function buildHabitGroupLeaderReviewRow(checkin = {}) {
                 <div class="social-challenge-meta">${escapeHtml(checkin.displayName || '회원')} · ${formatHabitGroupReviewDate(checkin.date)} · ${escapeHtml(formatHabitGroupReviewSummary(checkin))}</div>
             </div>
             ${mediaHtml}
-            <div class="social-challenge-row-actions habit-group-review-actions">
+            <div class="social-challenge-row-actions habit-group-review-actions"
+                id="${habitGroupReviewRowId(checkin.groupId, checkin.uid, checkin.date)}">
                 <button type="button" class="social-challenge-cta" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'approved')">승인</button>
                 <button type="button" class="social-challenge-inline-btn cancel" onclick="reviewHabitGroupCheckin('${checkin.groupId}', '${checkin.uid}', '${checkin.date}', 'rejected')">반려</button>
             </div>
@@ -26114,6 +26142,10 @@ window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, rev
     if (!user || !group || !targetUid || !dateStr || !nextStatus) return;
     if (nextStatus === 'rejected' && !window.confirm('이 제출 기록을 반려할까요?')) return;
 
+    // 콜러블이 돌아오기 전까지 화면이 조용하면 실패로 읽힌다. 누른 자리에서 바로 말한다.
+    setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, true,
+        nextStatus === 'approved' ? '승인 중…' : '반려 중…');
+
     try {
         const fn = httpsCallable(functions, 'reviewHabitGroupCheckin');
         await fn({
@@ -26127,12 +26159,20 @@ window.reviewHabitGroupCheckin = async function(groupId, targetUid, dateStr, rev
         _renderSocialChallengesPromise = null;
         _renderSocialChallengesPromiseUid = '';
         showToast(nextStatus === 'approved' ? '소모임 기록을 승인했어요.' : '소모임 기록을 반려했어요.');
+        // 서버가 받았으면 이 카드는 끝난 것이다. 재조회를 기다리지 않고 먼저 치운다.
+        setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, true,
+            nextStatus === 'approved' ? '승인함' : '반려함');
         renderSocialChallenges(user).catch(error => {
             logOptionalDataTimeout('habit_group_review_refresh_failed', error);
         });
     } catch (error) {
         console.error('[reviewHabitGroupCheckin]', error);
-        showToast(error?.message || '소모임 기록 컨펌에 실패했어요. 잠시 후 다시 시도해 주세요.');
+        // 눌러도 되는 상태로 되돌린다. 눌린 채로 두면 다시 시도할 방법이 없다.
+        setHabitGroupReviewRowBusy(groupId, targetUid, dateStr, false);
+        const reason = String(error?.code || '').replace(/^functions\//, '').trim();
+        showToast(error?.message
+            ? `${error.message}${reason ? ` (${reason})` : ''}`
+            : `소모임 기록 컨펌에 실패했어요${reason ? ` (${reason})` : ''}. 잠시 후 다시 시도해 주세요.`);
     }
 };
 
