@@ -8,6 +8,7 @@ const PWA = readRepoFile('js/pwa-install.js');
 const FIRESTORE_RULES = readRepoFile('firestore.rules');
 const STORAGE_RULES = readRepoFile('storage.rules');
 const MANIFEST = JSON.parse(readRepoFile('manifest.json'));
+const ADMIN = readRepoFile('admin.html');
 
 // 제보가 "안 돼요" 한 줄로 오면 원인을 못 가린다. 사람이 못 적는 것은 자동으로 붙인다.
 describe('bug report carries what a person cannot type', () => {
@@ -105,5 +106,36 @@ describe('open-in-app banner', () => {
     it('uses window globals because this file is not a module', () => {
         expect(PWA).not.toMatch(/\nexport /);
         expect(PWA).toContain('window.dismissOpenInAppBanner = dismissOpenInAppBanner;');
+    });
+});
+
+// 매일 볼 목록을 개발자 도구 뒤에 두면 아무도 안 본다.
+describe('reports are readable without opening DevTools', () => {
+    it('renders a section in the admin console, not just a console helper', () => {
+        expect(ADMIN).toContain('id="bug-report-list"');
+        expect(ADMIN).toContain('window.renderBugReports');
+        expect(ADMIN).toContain('🐞 오류 제보');
+    });
+
+    it('fills the list as soon as an admin signs in', () => {
+        expect(ADMIN).toContain('renderBugReports().catch(() => {})');
+    });
+
+    it('escapes report text before putting it in the page', () => {
+        // 제보 본문과 콘솔 출력은 사용자가 쓴 값이다. 그대로 innerHTML 에 넣으면 안 된다.
+        expect(ADMIN).toContain('function bugEsc(');
+        expect(ADMIN).toContain('bugEsc(v.message)');
+        expect(ADMIN).toContain('bugEsc(dev.userAgent)');
+    });
+
+    it('offers the whole report for pasting into an analysis', () => {
+        expect(ADMIN).toContain('window.copyBugReport');
+    });
+});
+
+describe('report button reachable from any screen', () => {
+    it('floats a report button over the record screens', () => {
+        expect(HTML).toContain('id="bug-report-fab"');
+        expect(HTML).toMatch(/id="bug-report-fab"[^>]*onclick="openBugReportModal\(\)"/);
     });
 });

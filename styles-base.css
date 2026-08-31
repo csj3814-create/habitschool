@@ -799,3 +799,24 @@ body.simple-mode .step-input-group {
     cursor: pointer;
     padding: 0 4px;
 }
+
+/* 심사 기간 한시 노출. 하단 저장 바에 가리지 않도록 그 위에 띄운다. */
+.bug-report-fab {
+    position: fixed;
+    right: 14px;
+    bottom: 96px;
+    z-index: 900;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid #CFD8DC;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
+    font-size: 21px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+}
+.bug-report-fab:active { transform: scale(0.94); }
+/* 로그인 전에는 보낼 수 없으므로 감춘다. */
+html.auth-pending .bug-report-fab { display: none; }

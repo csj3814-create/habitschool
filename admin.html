@@ -636,6 +636,20 @@
                         <button class="btn btn-primary" onclick="adjustCoins()">적용</button>
                     </div>
                 </div>
+                <div class="sec-box" style="margin-top:12px;">
+                    <h3 class="sec-title">🐞 오류 제보</h3>
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+                        <button type="button" onclick="renderBugReports()"
+                            style="padding:6px 14px; border-radius:8px; border:1px solid #ccc; background:#fff; cursor:pointer;">새로고침</button>
+                        <label style="font-size:12px; color:#666;">
+                            <input type="checkbox" id="bug-report-open-only" onchange="renderBugReports()"> 미처리만
+                        </label>
+                        <span id="bug-report-count" style="font-size:12px; color:#888;"></span>
+                    </div>
+                    <div id="bug-report-list">
+                        <div style="font-size:13px; color:#999;">불러오는 중...</div>
+                    </div>
+                </div>
                 <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
                     <h3 class="sec-title">📧 3일 / 7일 미활동 이메일 이력</h3>
                     <div id="email-audit-grid" class="email-audit-grid">
@@ -921,6 +935,83 @@
             alert(`갤러리 투영 실패: ${e.message || e}`);
         }
     };
+    // 오류 제보를 화면에 그린다. 이 목록은 앞으로 2주 동안 매일 보게 되므로
+    // 개발자 도구를 열어야만 보이는 자리에 두지 않는다.
+    function bugEsc(v) {
+        return String(v == null ? '' : v).replace(/[&<>"]/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+        ));
+    }
+
+    window.renderBugReports = async function() {
+        const box = document.getElementById('bug-report-list');
+        const countEl = document.getElementById('bug-report-count');
+        if (!box) return;
+        const openOnly = !!document.getElementById('bug-report-open-only')?.checked;
+        box.innerHTML = '<div style="font-size:13px;color:#999;">불러오는 중...</div>';
+        try {
+            const snap = await getDocs(query(
+                collection(db, 'bug_reports'),
+                orderBy('createdAt', 'desc'),
+                limit(50)
+            ));
+            const items = [];
+            snap.forEach(d => items.push({ id: d.id, ...(d.data() || {}) }));
+            const rows = openOnly ? items.filter(v => (v.status || 'open') === 'open') : items;
+            if (countEl) countEl.textContent = `전체 ${items.length}건 / 표시 ${rows.length}건`;
+            if (!rows.length) {
+                box.innerHTML = '<div style="font-size:13px;color:#999;">제보가 없습니다.</div>';
+                return;
+            }
+            box.innerHTML = rows.map(v => {
+                const dev = v.device || {};
+                const when = v.createdAt?.toDate?.()?.toLocaleString('ko-KR') || '-';
+                const where = dev.isAndroidApp || dev.displayMode === 'standalone' ? '📱 앱' : '🌐 웹';
+                const errs = (v.consoleEntries || []);
+                const errHtml = errs.length
+                    ? `<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:#C62828;">직전 오류 ${errs.length}건</summary>
+                       <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;background:#FAFAFA;border:1px solid #eee;border-radius:6px;padding:8px;margin:6px 0 0;">${bugEsc(errs.map(e => `[${e.level}] ${e.text}`).join('
+'))}</pre></details>`
+                    : '<div style="font-size:12px;color:#bbb;margin-top:6px;">직전 오류 없음</div>';
+                const shot = v.screenshotUrl
+                    ? `<a href="${bugEsc(v.screenshotUrl)}" target="_blank" rel="noopener" style="font-size:12px;">스크린샷 열기</a>`
+                    : (v.screenshotError ? `<span style="font-size:12px;color:#E53935;">첨부 실패 (${bugEsc(v.screenshotError)})</span>` : '');
+                return `<div style="border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff;">
+                    <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#777;">
+                        <span><strong style="color:#333;">${bugEsc(v.email || v.uid)}</strong> · ${bugEsc(when)}</span>
+                        <span>${where} · v${bugEsc(dev.assetVersion)} · ${bugEsc(dev.activeTab || '-')} · ${bugEsc(dev.appEnv || '-')}</span>
+                    </div>
+                    <div style="margin:8px 0;font-size:14px;color:#222;white-space:pre-wrap;">${bugEsc(v.message)}</div>
+                    <div style="font-size:11px;color:#999;word-break:break-all;">${bugEsc(dev.userAgent)}</div>
+                    <div style="font-size:11px;color:#999;">${bugEsc(dev.screen?.viewportWidth)}×${bugEsc(dev.screen?.viewportHeight)} · ${bugEsc(dev.connection?.effectiveType || '-')} · ${dev.online === false ? '오프라인' : '온라인'}</div>
+                    ${errHtml}
+                    <div style="margin-top:8px;display:flex;gap:10px;align-items:center;">
+                        ${shot}
+                        <button type="button" onclick="copyBugReport('${bugEsc(v.id)}')"
+                            style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">JSON 복사</button>
+                    </div>
+                </div>`;
+            }).join('');
+            window.__bugReportCache = Object.fromEntries(rows.map(v => [v.id, v]));
+        } catch (e) {
+            console.error('[renderBugReports] 실패:', e);
+            box.innerHTML = `<div style="font-size:13px;color:#E53935;">제보를 불러오지 못했습니다 (${bugEsc(e.code || e.message)})</div>`;
+        }
+    };
+
+    // 분석에 붙여 넣기 좋게 한 건을 통째로 복사한다.
+    window.copyBugReport = async function(id) {
+        const item = window.__bugReportCache?.[id];
+        if (!item) return;
+        try {
+            await navigator.clipboard.writeText(JSON.stringify(item, null, 2));
+            alert('제보 JSON을 복사했습니다.');
+        } catch (_) {
+            console.log(JSON.stringify(item, null, 2));
+            alert('클립보드를 쓸 수 없어 콘솔에 출력했습니다.');
+        }
+    };
+
     // 오류 제보 조회. 콘솔에서 호출:
     //   adminListBugReports()        // 최근 20건
     //   adminListBugReports(50)      // 최근 50건
@@ -1032,6 +1123,8 @@
             const envLabel = APP_ENV === 'prod' ? 'PROD' : APP_ENV === 'staging' ? 'STAGING' : 'LOCAL';
             document.getElementById('admin-info').textContent = `[${envLabel}] ${user.displayName || user.email}`;
             switchTab('dashboard');
+            // 제보는 들어오는 즉시 보여야 의미가 있다. 관리자 진입과 함께 채운다.
+            renderBugReports().catch(() => {});
         } else if (user) {
             showErr(`⛔ "${user.email}" 계정은 관리자 권한이 없습니다.`);
             await signOut(auth);

@@ -15,13 +15,13 @@
  * 사용자가 쓸 것은 "무슨 일이 있었는지" 한 줄과 스크린샷뿐이다.
  */
 
-import { auth, db, storage, APP_ENV } from './firebase-config.js?v=343';
+import { auth, db, storage, APP_ENV } from './firebase-config.js?v=344';
 import { addDoc, collection, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { showToast } from './ui-helpers.js?v=343';
+import { showToast } from './ui-helpers.js?v=344';
 
 // 자산 버전. import 경로와 함께 올라가므로 여기 값만 보면 어느 배포인지 알 수 있다.
-const ASSET_VERSION = '343';
+const ASSET_VERSION = '344';
 
 const CONSOLE_BUFFER_LIMIT = 25;
 const MAX_MESSAGE_LENGTH = 2000;

@@ -111,7 +111,7 @@ PWA 홈화면 아이콘과 플레이스토어 설치 앱이 겉보기에 비슷�
 번거롭게 해드려 죄송합니다. 이번엔 제대로 안내드리겠습니다.
 
 해빛스쿨 드림
-문의: csj3814@gmail.com
+문의: csj38141@gmail.com
 
 ---
 
@@ -159,7 +159,7 @@ iPhone users are not part of this test (Google Play is Android only).
 Sorry for the trouble, and thank you.
 
 Habit School
-Contact: csj3814@gmail.com
+Contact: csj38141@gmail.com
 
 ---
 
@@ -167,9 +167,9 @@ Contact: csj3814@gmail.com
 
 - [ ] 현재 옵트인 인원 확인 (12명에 걸쳐 있으면 추가 초대 먼저)
 - [ ] 비공개 테스트 통계에서 실제 설치·활성 수 확인 — 메일 문구의 근거
-- [ ] 문의 주소를 `csj3814@gmail.com` 으로 둘지 결정
-      (스토어 등록정보는 `habitschool0@gmail.com` 이지만, 지난 두 메일이
-      `csj3814` 로 나갔으므로 회신 흐름 유지를 위해 그대로 두는 쪽을 권함)
+- [x] 문의 주소 확정: **`csj38141@gmail.com`** (Play Console 로그인 계정과 동일)
+      지난 두 메일은 `csj3814@gmail.com` 로 나갔으므로 그 주소로 오는 회신도
+      당분간 같이 확인한다. 스토어 등록정보는 `habitschool0@gmail.com` 로 별개.
 - [ ] BCC 발송 (수신자 주소 상호 노출 금지)
 
 ## 이 메일만으로는 부족하다

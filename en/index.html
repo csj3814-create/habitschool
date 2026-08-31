@@ -138,8 +138,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=343">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=343">
+    <link rel="stylesheet" href="styles.css?v=344">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=344">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -737,7 +737,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=343"></script>
+    <script src="js/webview-detect.js?v=344"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -980,6 +980,14 @@
               발동하지 않는다) 안내만 한다. getInstalledRelatedApps 로 설치가 확인될
               때만 보인다.
             -->
+            <!--
+              한시적. 프로덕션 재신청 심사 기간 동안 어느 화면에서든 바로 제보할 수
+              있게 띄운다. 웹 페이지가 스스로 화면을 캡처하는 방법은 없으므로
+              (Android Chrome 에는 getDisplayMedia 도 없다) 첨부는 여전히 선택이고,
+              대신 화면·기기·직전 오류는 자동으로 실린다.
+            -->
+            <button type="button" id="bug-report-fab" class="bug-report-fab" onclick="openBugReportModal()"
+                aria-label="오류 제보하기">🐞</button>
             <div id="open-in-app-banner" class="open-in-app-banner" hidden>
                 <span class="open-in-app-banner__text">📱 <strong>해빛스쿨 앱</strong>이 설치돼 있어요. 앱에서 열면 더 빠릅니다.</span>
                 <button type="button" class="open-in-app-banner__dismiss" onclick="dismissOpenInAppBanner()" aria-label="이 안내 닫기">×</button>
@@ -2996,14 +3004,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=343"></script>
-    <script type="module" src="js/main.js?v=343"></script>
-    <script type="module" src="js/diet-analysis.js?v=343"></script>
-    <script type="module" src="js/metabolic-score.js?v=343"></script>
-    <script type="module" src="js/le8-score.js?v=343"></script>
+    <script type="module" src="js/app.js?v=344"></script>
+    <script type="module" src="js/main.js?v=344"></script>
+    <script type="module" src="js/diet-analysis.js?v=344"></script>
+    <script type="module" src="js/metabolic-score.js?v=344"></script>
+    <script type="module" src="js/le8-score.js?v=344"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=343"></script>
+    <script src="js/pwa-install.js?v=344"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
