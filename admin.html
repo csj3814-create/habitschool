@@ -503,6 +503,20 @@
 
     <div id="tab-moderation" class="tab-panel">
         <div class="box">
+            <h3 style="color:#37474F;">🐞 오류 제보</h3>
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
+                <button type="button" onclick="renderBugReports()"
+                    style="padding:6px 14px; border-radius:8px; border:1px solid #ccc; background:#fff; cursor:pointer;">새로고침</button>
+                <label style="font-size:12px; color:#666;">
+                    <input type="checkbox" id="bug-report-open-only" onchange="renderBugReports()"> 미처리만
+                </label>
+                <span id="bug-report-count" style="font-size:12px; color:#888;"></span>
+            </div>
+            <div id="bug-report-list">
+                <div style="font-size:13px; color:#999;">불러오는 중...</div>
+            </div>
+        </div>
+        <div class="box">
             <h3 style="color:#C62828;">🚨 신고 목록</h3>
             <table>
                 <thead><tr><th>접수일</th><th>유형</th><th>사유</th><th>신고자</th><th>대상 문서 ID</th><th>처리</th></tr></thead>
@@ -634,20 +648,6 @@
                         <input type="number" id="coin-amount" class="inp" placeholder="양수=지급, 음수=차감" style="width:160px;">
                         <input type="text" id="coin-reason" class="inp" placeholder="사유 (예: 이벤트 보상)" style="flex:1;">
                         <button class="btn btn-primary" onclick="adjustCoins()">적용</button>
-                    </div>
-                </div>
-                <div class="sec-box" style="margin-top:12px;">
-                    <h3 class="sec-title">🐞 오류 제보</h3>
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:10px;">
-                        <button type="button" onclick="renderBugReports()"
-                            style="padding:6px 14px; border-radius:8px; border:1px solid #ccc; background:#fff; cursor:pointer;">새로고침</button>
-                        <label style="font-size:12px; color:#666;">
-                            <input type="checkbox" id="bug-report-open-only" onchange="renderBugReports()"> 미처리만
-                        </label>
-                        <span id="bug-report-count" style="font-size:12px; color:#888;"></span>
-                    </div>
-                    <div id="bug-report-list">
-                        <div style="font-size:13px; color:#999;">불러오는 중...</div>
                     </div>
                 </div>
                 <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
@@ -1122,8 +1122,6 @@
             const envLabel = APP_ENV === 'prod' ? 'PROD' : APP_ENV === 'staging' ? 'STAGING' : 'LOCAL';
             document.getElementById('admin-info').textContent = `[${envLabel}] ${user.displayName || user.email}`;
             switchTab('dashboard');
-            // 제보는 들어오는 즉시 보여야 의미가 있다. 관리자 진입과 함께 채운다.
-            renderBugReports().catch(() => {});
         } else if (user) {
             showErr(`⛔ "${user.email}" 계정은 관리자 권한이 없습니다.`);
             await signOut(auth);
@@ -1153,7 +1151,7 @@
             else if (name === 'members') await loadMembers();
             else if (name === 'economy') await loadEconomy();
             else if (name === 'reward-market') await loadRewardMarketAdmin();
-            else if (name === 'moderation') await loadModeration();
+            else if (name === 'moderation') { await loadModeration(); renderBugReports().catch(() => {}); }
             else if (name === 'system') await loadSystem();
         } catch(e) { console.error('탭 로드 오류:', name, e); }
     }

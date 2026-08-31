@@ -117,8 +117,14 @@ describe('reports are readable without opening DevTools', () => {
         expect(ADMIN).toContain('🐞 오류 제보');
     });
 
-    it('fills the list as soon as an admin signs in', () => {
-        expect(ADMIN).toContain('renderBugReports().catch(() => {})');
+    it('lives in the moderation tab, next to the other things people file', () => {
+        const at = ADMIN.indexOf('id="tab-moderation"');
+        expect(at).toBeGreaterThan(-1);
+        expect(ADMIN.slice(at, at + 1200)).toContain('id="bug-report-list"');
+    });
+
+    it('loads when that tab is opened', () => {
+        expect(ADMIN).toMatch(/moderation'\)\s*\{[^}]*renderBugReports\(\)/);
     });
 
     it('escapes report text before putting it in the page', () => {
