@@ -138,8 +138,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=342">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=342">
+    <link rel="stylesheet" href="styles.css?v=343">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=343">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -737,7 +737,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=342"></script>
+    <script src="js/webview-detect.js?v=343"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -974,6 +974,16 @@
         </div>
 
         <div id="main-app">
+            <!--
+              앱을 설치해 두고도 브라우저로 들어오는 경우가 많다. 웹 페이지가 설치된
+              앱을 직접 열 수 있는 API 는 없으므로(같은 출처 이동에서는 App Links 도
+              발동하지 않는다) 안내만 한다. getInstalledRelatedApps 로 설치가 확인될
+              때만 보인다.
+            -->
+            <div id="open-in-app-banner" class="open-in-app-banner" hidden>
+                <span class="open-in-app-banner__text">📱 <strong>해빛스쿨 앱</strong>이 설치돼 있어요. 앱에서 열면 더 빠릅니다.</span>
+                <button type="button" class="open-in-app-banner__dismiss" onclick="dismissOpenInAppBanner()" aria-label="이 안내 닫기">×</button>
+            </div>
             <div class="header" role="banner">
                 <div class="header-top">
                     <h1 id="user-greeting" onclick="if(window.openTab) openTab('profile')" role="button" tabindex="0" aria-label="프로필 열기" style="cursor:pointer;"><img src="icons/icon-192.svg" alt=""
@@ -1647,6 +1657,11 @@
                         </div>
                     </div>
                     <div style="border-top:1px solid #f0f0f0; padding-top:14px; text-align:center;">
+                        <button type="button" class="submit-btn" style="background:linear-gradient(135deg,#546E7A 0%,#37474F 100%); font-size:14px;"
+                            onclick="openBugReportModal()">🐞 오류 제보하기</button>
+                        <p style="font-size:11px; color:#aaa; margin-top:6px;">기기·브라우저 정보가 자동으로 함께 전송돼 더 빨리 고칠 수 있어요.</p>
+                    </div>
+                    <div style="border-top:1px solid #f0f0f0; padding-top:14px; margin-top:14px; text-align:center;">
                         <button class="guest-btn" style="color:#999; font-size:13px; border:1px solid #ddd; border-radius:10px; padding:10px 24px; width:100%;"
                             onclick="logoutAndReset()">🚪 로그아웃</button>
                     </div>
@@ -2636,6 +2651,35 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="bug-report-modal" onclick="if(event.target===this)closeBugReportModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="close-btn" onclick="closeBugReportModal()" aria-label="닫기">×</button>
+            <h3 style="margin-top:0; color:#37474F;">🐞 오류 제보하기</h3>
+            <p style="font-size:13px; color:#666; line-height:1.6; margin:0 0 12px;">
+                어떤 상황이었는지 적어 주세요. 어느 화면에서, 무엇을 눌렀을 때, 어떻게 됐는지
+                적어 주시면 가장 빨리 고칩니다.
+            </p>
+            <textarea id="bug-report-message" rows="5" maxlength="2000"
+                placeholder="예) 운동 탭에서 영상을 올렸는데 '업로드가 지연돼요'만 계속 뜨고 저장이 안 됩니다."
+                style="width:100%; box-sizing:border-box; font-size:14px; padding:10px; border:1px solid #ddd; border-radius:10px; resize:vertical;"></textarea>
+            <div style="margin-top:12px;">
+                <label for="bug-report-screenshot" style="font-size:13px; color:#555; display:block; margin-bottom:6px;">
+                    📷 스크린샷 (선택)
+                </label>
+                <input type="file" id="bug-report-screenshot" accept="image/*"
+                    style="font-size:13px; width:100%;">
+            </div>
+            <p style="font-size:11px; color:#999; line-height:1.6; margin:12px 0 0;">
+                기기·브라우저·앱 버전과 직전에 발생한 오류 기록이 함께 전송됩니다.
+                기록·사진 등 개인 데이터는 포함되지 않습니다.
+            </p>
+            <div class="chatbot-connect-modal-actions" style="margin-top:16px;">
+                <button type="button" class="wallet-modal-btn cancel" onclick="closeBugReportModal()">취소</button>
+                <button type="button" id="bug-report-submit-btn" class="wallet-modal-btn confirm" onclick="sendBugReport()">보내기</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="guide-modal" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content guide-modal-content" onclick="event.stopPropagation()">
             <button class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">×</button>
@@ -2952,14 +2996,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=342"></script>
-    <script type="module" src="js/main.js?v=342"></script>
-    <script type="module" src="js/diet-analysis.js?v=342"></script>
-    <script type="module" src="js/metabolic-score.js?v=342"></script>
-    <script type="module" src="js/le8-score.js?v=342"></script>
+    <script type="module" src="js/app.js?v=343"></script>
+    <script type="module" src="js/main.js?v=343"></script>
+    <script type="module" src="js/diet-analysis.js?v=343"></script>
+    <script type="module" src="js/metabolic-score.js?v=343"></script>
+    <script type="module" src="js/le8-score.js?v=343"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=342"></script>
+    <script src="js/pwa-install.js?v=343"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

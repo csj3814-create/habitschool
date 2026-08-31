@@ -772,3 +772,30 @@ body.simple-mode .step-input-group {
 }
 
 /* ===========================
+
+/* 설치된 앱이 감지될 때만 뜨는 안내. 강제 이동은 불가능하므로 안내에 그친다. */
+.open-in-app-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin: 0 0 10px;
+    background: linear-gradient(135deg, #FFF3E0, #FFE8CC);
+    border: 1px solid #FFD9A0;
+    border-radius: var(--radius-lg, 16px);
+    font-size: 13px;
+    line-height: 1.5;
+    color: #7A4E12;
+}
+.open-in-app-banner[hidden] { display: none; }
+.open-in-app-banner__text { flex: 1; }
+.open-in-app-banner__dismiss {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    color: #B08A50;
+    cursor: pointer;
+    padding: 0 4px;
+}

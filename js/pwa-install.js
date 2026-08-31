@@ -127,6 +127,38 @@ async function detectInstalledRelatedWebApp() {
     }
 }
 
+const OPEN_IN_APP_DISMISS_KEY = 'hs_open_in_app_dismissed';
+
+/** 플레이스토어로 설치된 안드로이드 앱이 있는지. 웹앱 감지와 판정이 다르다. */
+async function detectInstalledPlayApp() {
+    if (typeof navigator.getInstalledRelatedApps !== 'function') return false;
+    try {
+        const installedApps = await navigator.getInstalledRelatedApps();
+        return installedApps.some((app) => String(app?.platform || '').toLowerCase() === 'play'
+            && String(app?.id || '').trim() === 'com.habitschool.app');
+    } catch (_) {
+        return false;
+    }
+}
+
+function dismissOpenInAppBanner() {
+    const banner = document.getElementById('open-in-app-banner');
+    if (banner) banner.hidden = true;
+    try { sessionStorage.setItem(OPEN_IN_APP_DISMISS_KEY, '1'); } catch (_) {}
+}
+
+/**
+ * 앱이 깔려 있는데 브라우저로 들어온 사람에게만 안내한다.
+ * 앱 안에서 보이면 안 되고(이미 앱이다), 닫으면 그 세션 동안 다시 뜨지 않는다.
+ */
+async function refreshOpenInAppBanner() {
+    const banner = document.getElementById('open-in-app-banner');
+    if (!banner) return;
+    if (isStandaloneInstallMode()) return;
+    try { if (sessionStorage.getItem(OPEN_IN_APP_DISMISS_KEY) === '1') return; } catch (_) {}
+    banner.hidden = !(await detectInstalledPlayApp());
+}
+
 async function refreshInstalledAppState() {
     let nextInstalled = isStandaloneInstallMode();
     if (!nextInstalled) {
@@ -587,6 +619,9 @@ window.addEventListener('storage', (event) => {
     notifyInstallCtaStateChanged();
 });
 
+window.dismissOpenInAppBanner = dismissOpenInAppBanner;
+// 설치 감지는 비동기다. 첫 페인트를 막지 않도록 로드 뒤에 한 번만 돌린다.
+window.addEventListener('load', () => { refreshOpenInAppBanner().catch(() => {}); });
 window.getInstallCtaState = getInstallCopy;
 window.handleInstallCtaAction = handleInstallCtaAction;
 window.installPWA = handleInstallCtaAction;

@@ -431,6 +431,20 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.postOwnerId == request.auth.uid;
     }
 
+    // ===== Bug Reports Collection =====
+    // 본인이 낸 제보만 쓰고 읽는다. 다른 사람의 제보에는 기기 정보와 콘솔 오류가
+    // 들어 있으므로 서로 보이지 않아야 한다. 운영자는 관리자 SDK 로 읽는다.
+    match /bug_reports/{reportId} {
+      allow read: if isOwner(resource.data.uid) || isAdmin();
+      allow create: if isSignedIn()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() > 0
+                    && request.resource.data.message.size() <= 2000;
+      // 낸 뒤에는 사용자가 고치지 못한다. 제보는 그 시점의 기록이어야 한다.
+      allow update, delete: if isAdmin();
+    }
+
     // ===== Friendships Collection =====
     match /friendships/{friendshipId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.users;

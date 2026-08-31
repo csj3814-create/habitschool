@@ -68,6 +68,18 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == userId;
     }
     
+    // ===== 오류 제보 스크린샷 =====
+    // 본인 폴더에만 올릴 수 있다. 다른 사람의 제보 스크린샷에는 그 사람의 화면이
+    // 그대로 담기므로 읽기도 본인으로 막는다(운영자는 관리자 SDK 로 본다).
+    match /bug_reports/{userId}/{allFiles=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && isImage()
+                   && isValidSize();
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // ===== 운동 비디오 썸네일 =====
     match /exercise_videos_thumbnails/{userId}/{allFiles=**} {
       allow read: if request.auth != null;
