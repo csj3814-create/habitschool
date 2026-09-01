@@ -120,6 +120,30 @@ function buildReEngagementEmailTemplate({
     };
 }
 
+/**
+ * 이번 공백에 대해 이 단계의 안내를 이미 보냈는지.
+ *
+ * 이 판단이 없으면 자동 발송을 켜는 순간 스팸이 된다. 발송 대상은 "3일 이상 기록이
+ * 없는 사람" 이라서, 한 번 멀어진 사람은 돌아오기 전까지 매일 대상에 남는다.
+ * 한 달 쉰 사람에게 서른 통을 보내는 셈이다.
+ *
+ * 기준은 "마지막 기록일 이후에 보낸 적이 있는가" 하나다. 다시 기록을 남기면 마지막
+ * 기록일이 발송일보다 뒤로 가므로, 그 다음에 또 멀어졌을 때는 다시 보낸다 —
+ * 사람마다 공백은 여러 번 생기고, 각 공백은 각각 안내할 값어치가 있다.
+ *
+ * @param {{sentAt?: string}|null} historyEntry emailLogs 의 해당 단계 기록
+ * @param {string|null} lastLogDate 마지막 기록일 'YYYY-MM-DD' (기록이 없으면 null)
+ * @returns {boolean}
+ */
+function alreadyNudgedForGap(historyEntry, lastLogDate) {
+    const sentAt = String(historyEntry?.sentAt || "").trim();
+    if (!sentAt) return false;
+    // 기록이 한 번도 없는 사람에게는 공백의 시작이 없다. 단계당 한 번이면 충분하다.
+    if (!lastLogDate) return true;
+    return sentAt.slice(0, 10) > String(lastLogDate);
+}
+
 module.exports = {
     buildReEngagementEmailTemplate,
+    alreadyNudgedForGap,
 };

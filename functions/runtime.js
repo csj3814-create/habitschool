@@ -19,7 +19,7 @@
  */
 
 const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentWritten } = require("firebase-functions/v2/firestore");
+const { onDocumentWritten, onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const crypto = require("crypto");
@@ -33,7 +33,7 @@ const { ethers } = require("ethers");
 const ffmpegPath = require("ffmpeg-static");
 const contractAbi = require("./contract-abi.json");
 const { buildInviteLeaderboard } = require("./admin-invite-leaderboard");
-const { buildReEngagementEmailTemplate } = require("./reengagement-email");
+const { buildReEngagementEmailTemplate, alreadyNudgedForGap } = require("./reengagement-email");
 const {
     getKstIsoWeekId,
     isCompletedRateDecision,
@@ -8732,6 +8732,272 @@ exports.sendReEngagementEmailsV2 = onCall(
         };
     }
 );
+
+
+// ── 미활동 안내 메일 자동 발송 ──────────────────────────────────────────────
+//
+// 관제탑의 "3일 미활동 발송" 버튼은 사람이 누를 때만 나간다. 누르는 걸 잊으면 안 나가고,
+// 매일 누르면 같은 사람에게 매일 나간다. 발송 대상이 "3일 이상 기록이 없는 사람" 이라
+// 한 번 멀어진 사람은 돌아오기 전까지 매일 대상에 남기 때문이다.
+//
+// 자동 발송은 그래서 두 가지를 지킨다.
+//   1. 단계는 구간으로 본다. 공백 3~6일이면 3일 안내, 7일 이상이면 7일 안내.
+//      "이상" 으로 두면 8일째인 사람이 하루 아침에 두 통을 받는다.
+//   2. 한 공백에 같은 단계는 한 번만. 마지막 기록일 이후에 보낸 적이 있으면 건너뛴다
+//      (alreadyNudgedForGap). 다시 기록하면 그 다음 공백에는 다시 보낸다.
+//
+// 대상을 고를 때 회원마다 daily_logs 를 한 번씩 조회하면 회원 수만큼 질의가 나간다
+// (지금 606명). 최근 열흘치 기록을 한 번에 읽어 마지막 기록일을 만들면 질의 한 번이면
+// 된다. 열흘 밖은 어차피 전부 7일 단계라 더 볼 필요가 없다.
+const REENGAGEMENT_LOOKBACK_DAYS = 10;
+
+function toKstDateString(date) {
+    return new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function daysBetweenDateStrings(fromDateStr, toDateStr) {
+    const from = new Date(`${fromDateStr}T12:00:00Z`).getTime();
+    const to = new Date(`${toDateStr}T12:00:00Z`).getTime();
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+    return Math.round((to - from) / 86400000);
+}
+
+/** 공백 길이 -> 보낼 단계. 어느 단계에도 안 들면 null. */
+function reEngagementTierForGap(gapDays) {
+    if (!Number.isFinite(gapDays)) return 7;   // 열흘 넘게 조용한 사람
+    if (gapDays >= 7) return 7;
+    if (gapDays >= 3) return 3;
+    return null;
+}
+
+async function runScheduledReEngagementSweep() {
+    const todayKst = getCurrentKstDateString();
+    const windowStart = new Date(Date.now() - REENGAGEMENT_LOOKBACK_DAYS * 86400000);
+    const windowStartStr = toKstDateString(windowStart);
+
+    // 최근 기록 한 번에 읽어 uid -> 마지막 기록일
+    const lastLogByUid = new Map();
+    const logsSnap = await db.collection("daily_logs").where("date", ">=", windowStartStr).get();
+    logsSnap.forEach((docSnap) => {
+        const log = docSnap.data() || {};
+        const uid = log.userId;
+        const date = String(log.date || "");
+        if (!uid || !date) return;
+        const known = lastLogByUid.get(uid);
+        if (!known || date > known) lastLogByUid.set(uid, date);
+    });
+
+    const usersSnap = await db.collection("users").get();
+    const candidates = [];
+    for (const docSnap of usersSnap.docs) {
+        const uid = docSnap.id;
+        const userData = docSnap.data() || {};
+        const lastLogDate = lastLogByUid.get(uid) || null;
+        const gapDays = lastLogDate ? daysBetweenDateStrings(lastLogDate, todayKst) : Infinity;
+        const days = reEngagementTierForGap(gapDays);
+        if (!days) continue;
+        candidates.push({ uid, userData, lastLogDate, days });
+    }
+
+    const nodemailer = require("nodemailer");
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() }
+    });
+
+    const stats = { day3: 0, day7: 0, skipped: 0, noEmail: 0, failed: 0 };
+
+    for (const candidate of candidates) {
+        const { uid, userData, lastLogDate, days } = candidate;
+        try {
+            const emailLogRef = db.collection("emailLogs").doc(uid);
+            const emailLogSnap = await emailLogRef.get();
+            const existingLog = emailLogSnap.exists ? (emailLogSnap.data() || {}) : {};
+            const byDays = existingLog.reEngagementByDays || {};
+            if (alreadyNudgedForGap(byDays[`day${days}`], lastLogDate)) {
+                stats.skipped += 1;
+                continue;
+            }
+
+            let email = String(userData.email || "").trim();
+            if (!email) {
+                try {
+                    const authUser = await admin.auth().getUser(uid);
+                    email = String(authUser.email || "").trim();
+                } catch (_) {}
+            }
+            if (!email) {
+                stats.noEmail += 1;
+                continue;
+            }
+
+            const name = userData.customDisplayName || userData.displayName || "회원";
+            const locale = normalizeLocale(userData.locale);
+            const template = buildReEngagementEmailTemplate({
+                days,
+                name,
+                appBaseUrl: locale === "en" ? `${APP_BASE_URL}/en` : APP_BASE_URL,
+                appIconUrl: APP_ICON_URL,
+                locale,
+            });
+
+            await transporter.sendMail({
+                from: `"${locale === "en" ? "Habit School" : "해빛스쿨"}" <${GMAIL_USER.value()}>`,
+                to: email,
+                subject: template.subject,
+                html: template.html,
+            });
+
+            const historyEntry = {
+                days,
+                sentAt: new Date().toISOString(),
+                recipientEmail: email,
+                locale,
+                method: template.method,
+                subject: template.subject,
+                summary: template.summary,
+                trigger: "scheduled",
+            };
+            const existingHistory = Array.isArray(existingLog.reEngagementHistory)
+                ? existingLog.reEngagementHistory
+                : [];
+            await emailLogRef.set({
+                lastSentAt: FieldValue.serverTimestamp(),
+                lastSentDays: days,
+                lastSentRecipient: email,
+                lastSentMethod: template.method,
+                lastSentSubject: template.subject,
+                lastSentSummary: template.summary,
+                // 본문 HTML 은 아무 화면도 읽지 않는데 회원마다 쌓인다. 관제탑은
+                // emailLogs 를 통째로 읽으므로, 안 읽는 것을 저장하면 그만큼 매번 내려받는다.
+                sentCount: FieldValue.increment(1),
+                reEngagementByDays: { [`day${days}`]: historyEntry },
+                reEngagementHistory: [historyEntry, ...existingHistory].slice(0, 12),
+            }, { merge: true });
+
+            stats[`day${days}`] += 1;
+        } catch (error) {
+            stats.failed += 1;
+            console.error(`[reEngagementScheduled] ${uid} 실패:`, error?.message || error);
+        }
+    }
+
+    return { ...stats, candidates: candidates.length, scannedUsers: usersSnap.size };
+}
+
+exports.sendReEngagementEmailsScheduled = onSchedule(
+    {
+        schedule: "0 10 * * *",
+        timeZone: "Asia/Seoul",
+        region: "asia-northeast3",
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        maxInstances: 1,
+        timeoutSeconds: 540,
+    },
+    async () => {
+        const result = await runScheduledReEngagementSweep();
+        console.log("[reEngagementScheduled]", JSON.stringify(result));
+    }
+);
+
+// ── 새 오류 제보 알림 ──────────────────────────────────────────────────────
+//
+// 제보는 관제탑을 직접 열어야만 보였다. 하루에 몇 건씩 들어오는데 여는 걸 잊으면
+// 그만큼 늦어진다. 들어오는 즉시 관리자에게 메일로 알린다.
+//
+// 알림이 실패해도 제보 자체는 이미 저장돼 있다. 여기서 던지면 재시도가 돌면서 같은
+// 메일이 여러 통 갈 뿐이라, 삼키고 로그만 남긴다.
+async function collectAdminEmails() {
+    const snap = await db.collection("admins").get();
+    const emails = new Set();
+    snap.forEach((docSnap) => {
+        const data = docSnap.data() || {};
+        const fromField = String(data.email || "").trim();
+        // 옛 문서는 문서 ID 자체가 이메일이다.
+        const fromId = docSnap.id.includes("@") ? docSnap.id.trim() : "";
+        const email = fromField || fromId;
+        if (email) emails.add(email.toLowerCase());
+    });
+    return [...emails];
+}
+
+function buildBugReportNotification(report) {
+    const device = report?.device || {};
+    const consoleEntries = Array.isArray(report?.consoleEntries) ? report.consoleEntries : [];
+    const pending = Array.isArray(report?.pendingUploads) ? report.pendingUploads : [];
+    const reporter = String(report?.email || report?.displayName || "알 수 없음");
+    const message = String(report?.message || "").trim() || "(내용 없음)";
+
+    const lines = [
+        `제보자: ${reporter}`,
+        `화면: ${device.activeTab || "-"} · v${device.assetVersion || "-"} · ${device.appEnv || "-"}`,
+        `기기: ${device.platform || "-"} · ${device.mobile ? "모바일" : "데스크톱"} · ${device.isAndroidApp ? "앱" : "브라우저"}`,
+        `네트워크: ${device.connection?.effectiveType || "-"} · ${device.connection?.downlinkMbps ?? "-"}Mbps · ${device.online === false ? "오프라인" : "온라인"}`,
+        `직전 콘솔 오류: ${consoleEntries.length}건`,
+        `진행 중이던 업로드: ${pending.length}건`,
+    ];
+
+    const escapeHtml = (value) => String(value == null ? "" : value)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const errorList = consoleEntries.slice(0, 5)
+        .map((entry) => `<li><code>${escapeHtml(String(entry?.text || "").slice(0, 200))}</code></li>`)
+        .join("");
+
+    return {
+        subject: `[해빛스쿨] 새 오류 제보 — ${reporter}`,
+        html: `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:620px">
+                <h2 style="margin:0 0 12px;font-size:17px;color:#9C27B0">🐞 새 오류 제보</h2>
+                <p style="white-space:pre-wrap;font-size:15px;background:#F3E5F5;padding:12px 14px;border-radius:10px;margin:0 0 14px">${escapeHtml(message)}</p>
+                <ul style="font-size:13px;color:#555;line-height:1.8;padding-left:18px;margin:0 0 14px">
+                    ${lines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}
+                </ul>
+                ${errorList ? `<div style="font-size:12px;color:#888;margin-bottom:6px">직전 콘솔 오류 (최대 5건)</div><ul style="font-size:12px;color:#C62828;line-height:1.7;padding-left:18px;margin:0 0 14px">${errorList}</ul>` : ""}
+                <a href="${APP_BASE_URL}/admin" style="display:inline-block;padding:10px 18px;background:#9C27B0;color:#fff;text-decoration:none;border-radius:8px;font-weight:700;font-size:14px">관제탑에서 보기</a>
+            </div>
+        `,
+    };
+}
+
+exports.notifyNewBugReport = onDocumentCreated(
+    {
+        document: "bug_reports/{reportId}",
+        region: "asia-northeast3",
+        secrets: [GMAIL_USER, GMAIL_APP_PASSWORD],
+        maxInstances: 3,
+    },
+    async (event) => {
+        try {
+            const report = event.data?.data();
+            if (!report) return;
+
+            const recipients = await collectAdminEmails();
+            if (recipients.length === 0) {
+                console.warn("[notifyNewBugReport] 받을 관리자 이메일이 없습니다.");
+                return;
+            }
+
+            const { subject, html } = buildBugReportNotification(report);
+            const nodemailer = require("nodemailer");
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() }
+            });
+            await transporter.sendMail({
+                from: `"해빛스쿨 관제탑" <${GMAIL_USER.value()}>`,
+                to: recipients.join(", "),
+                subject,
+                html,
+            });
+            console.log(`[notifyNewBugReport] ${event.params.reportId} -> ${recipients.length}명`);
+        } catch (error) {
+            // 제보는 이미 저장됐다. 알림 실패로 재시도가 돌면 같은 메일만 여러 통 간다.
+            console.error("[notifyNewBugReport] 알림 실패:", error?.message || error);
+        }
+    }
+);
+
 
 exports.refreshGuestActivity = onSchedule(
     { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
