@@ -127,3 +127,26 @@ describe('최근 기록일 백필', () => {
         expect(fn).toContain('if (dryRun) return summary;');
     });
 });
+
+// 관제탑을 처음 열 때 회원 목록이 나오기까지 15.7초가 걸렸다(운영 실측).
+// 두 번째부터는 0.7초 — 함수가 깨어나는 시간과 첫 집계 비용이었다.
+describe('회원 목록을 빨리 만든다', () => {
+    it('목록이 쓰는 필드만 읽는다', () => {
+        // 회원 문서에는 healthProfile·milestones·missionHistory 처럼 목록이 한 번도
+        // 보지 않는 것들이 들어 있다. 606개를 통째로 읽으면 그게 전부 따라온다.
+        expect(RUNTIME).toContain('db.collection("users").select(...ADMIN_MEMBER_FIELDS).get()');
+        expect(RUNTIME).toContain('db.collection("emailLogs").select(...ADMIN_EMAIL_LOG_FIELDS).get()');
+    });
+
+    it('보낸 메일 본문은 읽지 않는다', () => {
+        const fields = RUNTIME.split('const ADMIN_EMAIL_LOG_FIELDS = [')[1].split('];')[0];
+        expect(fields).not.toContain('lastSentHtml');
+        expect(fields).toContain('lastSentAt');
+    });
+
+    it('한 화면에서 두 번 부르지 않는다', () => {
+        // 대시보드 소스 경로와 getData 경로가 각자 불러, 깨어나는 값을 두 번 치렀다.
+        expect(ADMIN).toContain('let adminMemberSnapshotInFlight = null;');
+        expect(ADMIN).toContain('if (!force && adminMemberSnapshotInFlight) return adminMemberSnapshotInFlight;');
+    });
+});

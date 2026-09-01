@@ -9094,10 +9094,29 @@ function compactEmailLog(rawLog) {
     };
 }
 
+// 목록에 실제로 쓰는 필드만 읽는다.
+//
+// 회원 문서에는 healthProfile·milestones·weeklyMissionData·missionHistory·friends·
+// encryptedKey 처럼 목록이 한 번도 보지 않는 것들이 들어 있다. 606개를 통째로 읽으면
+// 그게 전부 따라온다 — 관제탑을 처음 열 때 15초가 걸린 이유의 큰 몫이었다.
+// select() 는 Firestore 가 필요한 필드만 보내게 한다.
+const ADMIN_MEMBER_FIELDS = [
+    "customDisplayName", "displayName", "email", "missionLevel", "currentStreak",
+    "coins", "totalHbtEarned", "hbtBalance", "feedbackDate", "adminFeedback",
+    "referralCode", "referredBy", "lastLogDate", "locale", "blockedUsers",
+];
+
+// 발송 이력도 마찬가지. lastSentHtml 은 보낸 메일 본문 전체라 문서에서 가장 크고,
+// 목록도 모달도 읽지 않는다.
+const ADMIN_EMAIL_LOG_FIELDS = [
+    "lastSentAt", "lastSentDays", "lastSentRecipient", "lastSentSubject",
+    "lastSentSummary", "sentCount", "reEngagementByDays", "reEngagementHistory",
+];
+
 async function buildAdminMemberList() {
     const [usersSnap, emailLogsSnap] = await Promise.all([
-        db.collection("users").get(),
-        db.collection("emailLogs").get(),
+        db.collection("users").select(...ADMIN_MEMBER_FIELDS).get(),
+        db.collection("emailLogs").select(...ADMIN_EMAIL_LOG_FIELDS).get(),
     ]);
 
     const emailLogs = new Map();
