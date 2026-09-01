@@ -56,6 +56,12 @@ const {
     rankUsers,
     collectSocialCounts,
 } = require("./mvp-score");
+const {
+    pickStreakTier,
+    getElapsedDaysInMonth,
+    countPerfectAttendance,
+    collectCurrentStreaks,
+} = require("./community-stats");
 const { updateGuestActivity } = require("./guest-activity");
 const {
     normalizeReminderPreference,
@@ -7887,7 +7893,16 @@ async function computeCommunityStatsLogic() {
 
     const ranked = rankUsers(userStats, `${year}-${month}`, 3);
 
-    const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
+    // 매일 기록하는 사람이 많아지면 "누가 제일 오래" 는 전부 같은 숫자가 된다.
+    // 이름 대신 인원을 센다 — 그래야 사람이 늘수록 숫자에 뜻이 생긴다.
+    const activeUserIds = Object.keys(userStats).filter(uid => userStats[uid].days > 0);
+    const streakTier = pickStreakTier(await collectCurrentStreaks(db, activeUserIds));
+    const perfectAttendance = countPerfectAttendance(
+        userStats,
+        getElapsedDaysInMonth(`${year}-${month}`, getCurrentKstDateString())
+    );
+
+    const totalUsers = activeUserIds.length;
     const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
     const totalComments = Object.values(userStats).reduce((s, u) => s + u.comments, 0);
     const totalReactions = Object.values(userStats).reduce((s, u) => s + u.reactions, 0);
@@ -7914,9 +7929,17 @@ async function computeCommunityStatsLogic() {
         month: currentMonth,
         totalUsers, totalDays, totalComments, totalReactions,
         newMemberCount, bestStreak, bestStreakName,
+        // 옛 필드는 계속 쓴다. 새 화면은 아래 두 필드를 보지만, 아직 예전 JS 를 들고
+        // 있는 사람에게는 이것뿐이고 지난 달 아카이브도 이 모양으로 저장돼 있다.
         dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
         exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
         mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
+        // 화면이 "옛 표시로 돌아갈지" 를 이 값으로 정한다. 새 필드가 비었다는 것과
+        // 애초에 없다는 것은 다르다 — 달 초에는 개근 인원을 일부러 비워 두는데,
+        // 그때 옛 표시로 돌아가면 방금 없앤 "누가 1일" 이 며칠간 되살아난다.
+        statsVersion: 2,
+        streakTier: streakTier || null,
+        perfectAttendance: perfectAttendance || null,
         ranked: ranked.map(r => ({ name: r.name, days: r.days, points: r.points, comments: r.comments, reactions: r.reactions, score: r.score })),
         updatedAt: FieldValue.serverTimestamp()
     };
@@ -8023,6 +8046,22 @@ exports.backfillCommunityStatsArchive = onCall(
 
         const ranked = rankUsers(userStats, targetMonth, 3);
 
+        // 매시간 집계와 같은 기준을 써야 한다. 갈라지면 이번 달과 지난 달의
+        // "꾸준함" 이 서로 다른 뜻이 된다.
+        const todayKst = getCurrentKstDateString();
+        const activeUserIds = Object.keys(userStats).filter(uid => userStats[uid].days > 0);
+        // 연속 기록은 '지금' 값만 알 수 있다(users/{uid}.currentStreak). 지난 달을
+        // 다시 집계하면서 오늘의 연속 기록을 그 달의 것처럼 적으면 없던 기록을
+        // 지어내는 셈이라, 지난 달에는 아예 넣지 않는다. 화면은 옛 표시로 돌아간다.
+        const streakTier = targetMonth === todayKst.slice(0, 7)
+            ? pickStreakTier(await collectCurrentStreaks(db, activeUserIds))
+            : null;
+        // 개근 인원은 그 달의 기록만으로 셀 수 있으므로 지난 달도 정확하다.
+        const perfectAttendance = countPerfectAttendance(
+            userStats,
+            getElapsedDaysInMonth(targetMonth, todayKst)
+        );
+
         const totalUsers = Object.keys(userStats).filter(uid => userStats[uid].days > 0).length;
         const totalDays = Object.values(userStats).reduce((s, u) => s + u.days, 0);
         const totalComments = Object.values(userStats).reduce((s, u) => s + u.comments, 0);
@@ -8052,6 +8091,9 @@ exports.backfillCommunityStatsArchive = onCall(
             dietKing: dietKing ? { name: dietKing.name, count: dietKing.diet } : null,
             exerciseKing: exerciseKing ? { name: exerciseKing.name, count: exerciseKing.exercise } : null,
             mindKing: mindKing ? { name: mindKing.name, count: mindKing.mind } : null,
+            statsVersion: 2,
+            streakTier: streakTier || null,
+            perfectAttendance: perfectAttendance || null,
             ranked: ranked.map(r => ({ name: r.name, days: r.days, points: r.points, comments: r.comments, reactions: r.reactions, score: r.score })),
             updatedAt: FieldValue.serverTimestamp()
         };
