@@ -102,16 +102,18 @@ describe('shouldFastPathImageCompression', () => {
 });
 
 describe('getResumableUploadTimeouts', () => {
-    it('keeps image uploads on a short photo-oriented budget', () => {
+    it('scales the photo budget with size instead of a fixed one-minute cap', () => {
+        // 60초/30초 고정은 빠른 업링크를 가정한 값이었고, 느린 회선에서 같은 사진이
+        // 세 번 연속 유휴 제한에 걸려 버려졌다. tests/image-upload-timeout.test.js 참고.
         const timeouts = getResumableUploadTimeouts({
             type: 'image/jpeg',
             size: Math.round(2 * 1024 * 1024)
         });
 
         expect(timeouts).toEqual({
-            hardTimeoutMs: 60 * 1000,
-            idleTimeoutMs: 30 * 1000,
-            finalizeTimeoutMs: 10 * 1000
+            hardTimeoutMs: 3 * 60 * 1000,
+            idleTimeoutMs: 90 * 1000,
+            finalizeTimeoutMs: 15 * 1000
         });
     });
 

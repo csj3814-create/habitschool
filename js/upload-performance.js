@@ -8,11 +8,20 @@ const FAST_PATH_IMAGE_LIMITS = Object.freeze({
     'image/png': Math.round(0.9 * MB)
 });
 
+// 사진의 제한 시간은 오래 고정값(60초/30초)이었다. 그 값은 빠른 회선을 가정한다.
+// 제보(2026-08-31, 4g·업링크 혼잡)에서는 같은 사진이 30초 유휴 제한에 세 번 연속
+// 걸려 버려졌다 — 아홉 번의 `upload/timeout` 뒤에 사진이 사라졌다.
+// downlinkMbps 는 내려받기 속도라 올려보내기가 그만큼 나온다는 뜻이 아니다.
+// 그래서 영상과 같이 크기에 따라 늘어나게 두고, 바닥을 넉넉히 잡는다.
 const RESUMABLE_UPLOAD_TIMEOUTS = Object.freeze({
     image: Object.freeze({
-        hardTimeoutMs: 60 * 1000,
-        idleTimeoutMs: 30 * 1000,
-        finalizeTimeoutMs: 10 * 1000
+        minHardTimeoutMs: 3 * 60 * 1000,
+        maxHardTimeoutMs: 6 * 60 * 1000,
+        hardTimeoutPerMbMs: 90 * 1000,
+        minIdleTimeoutMs: 60 * 1000,
+        maxIdleTimeoutMs: 2 * 60 * 1000,
+        idleTimeoutPerMbMs: 45 * 1000,
+        finalizeTimeoutMs: 15 * 1000
     }),
     video: Object.freeze({
         minHardTimeoutMs: 5 * 60 * 1000,
@@ -149,25 +158,23 @@ export function resolveUploadNoticeAction({ progress = 0, message = '', ticking 
 export function getResumableUploadTimeouts(file = null) {
     const type = String(file?.type || '').trim().toLowerCase();
     const size = Math.max(0, Number(file?.size || 0));
-
-    if (!type.startsWith('video/')) {
-        return { ...RESUMABLE_UPLOAD_TIMEOUTS.image };
-    }
+    const preset = type.startsWith('video/')
+        ? RESUMABLE_UPLOAD_TIMEOUTS.video
+        : RESUMABLE_UPLOAD_TIMEOUTS.image;
 
     const sizeMb = Math.max(1, Math.ceil(size / MB));
-    const video = RESUMABLE_UPLOAD_TIMEOUTS.video;
 
     return {
         hardTimeoutMs: Math.round(clampNumber(
-            sizeMb * video.hardTimeoutPerMbMs,
-            video.minHardTimeoutMs,
-            video.maxHardTimeoutMs
+            sizeMb * preset.hardTimeoutPerMbMs,
+            preset.minHardTimeoutMs,
+            preset.maxHardTimeoutMs
         )),
         idleTimeoutMs: Math.round(clampNumber(
-            sizeMb * video.idleTimeoutPerMbMs,
-            video.minIdleTimeoutMs,
-            video.maxIdleTimeoutMs
+            sizeMb * preset.idleTimeoutPerMbMs,
+            preset.minIdleTimeoutMs,
+            preset.maxIdleTimeoutMs
         )),
-        finalizeTimeoutMs: video.finalizeTimeoutMs
+        finalizeTimeoutMs: preset.finalizeTimeoutMs
     };
 }
