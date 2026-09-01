@@ -143,10 +143,14 @@
 
         .sec-box { border: 1px solid #ddd; border-radius: 10px; padding: 14px; background: #fafafa; margin-bottom: 14px; }
         .sec-title { margin: 0 0 12px; font-size: 15px; border-bottom: 2px solid #ccc; padding-bottom: 7px; color: #333; }
-        .info-grid { display: flex; flex-direction: column; gap: 6px; font-size: 13px; margin-bottom: 10px; }
-        .info-row { background: white; padding: 9px 14px; border-radius: 7px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .info-lbl { color: #888; font-weight: bold; }
-        .info-val { font-weight: bold; color: #333; }
+        /* 이번 업데이트로 항목이 다섯에서 열셋으로 늘었다. 한 줄씩 세로로 쌓으면
+           프로필만 화면 한 장을 넘긴다. 두 칸으로 접고 줄 높이를 줄인다. */
+        .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 12px; margin-bottom: 10px; }
+        .info-row { background: white; padding: 5px 9px; border-radius: 6px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
+        .info-lbl { color: #888; font-weight: bold; white-space: nowrap; }
+        /* 값이 길면(1,735 kcal) 줄이 접히는 대신 줄어든다 — 높이가 들쭉날쭉하지 않게. */
+        .info-val { font-weight: bold; color: #333; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (max-width: 560px) { .info-grid { grid-template-columns: 1fr; } }
 
         .act-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 13px; }
         .act-btn { padding: 8px; border-radius: 6px; border: none; font-weight: bold; font-size: 12px; cursor: pointer; }
@@ -680,7 +684,7 @@
                         <div class="info-row"><span class="info-lbl">non-HDL</span><span class="info-val" id="p-nonhdl">-</span></div>
                         <div class="info-row"><span class="info-lbl">흡연</span><span class="info-val" id="p-smoking">-</span></div>
                         <div class="info-row"><span class="info-lbl">스트릭</span><span class="info-val" id="p-streak">-</span></div>
-                        <div class="info-row"><span class="info-lbl">코인</span><span class="info-val" id="p-coins">-</span></div>
+                        <div class="info-row"><span class="info-lbl">포인트</span><span class="info-val" id="p-coins">-</span></div>
                     </div>
                     <div style="font-size:12px;"><strong style="color:#888;">복용 약물</strong><ul id="p-meds" style="margin:7px 0 0;padding-left:18px;font-size:12px;color:#555;"></ul></div>
                 </div>
@@ -3750,7 +3754,7 @@
             adminToast(`✅ ${label} 완료`, 'success');
             document.getElementById('coin-amount').value = '';
             document.getElementById('coin-reason').value = '';
-            // 모달 코인 표시 갱신
+            // 모달 포인트 표시 갱신
             const snap = await getDoc(doc(db, 'users', uid));
             if (snap.exists()) document.getElementById('p-coins').textContent = (snap.data().coins || 0).toLocaleString();
         } catch(e) { adminToast('오류: ' + e.message, 'error'); }
