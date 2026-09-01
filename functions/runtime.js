@@ -9279,6 +9279,72 @@ exports.getHealthTrends = onCall(
 );
 
 
+
+// ── lastLogDate 백필 (관리자 전용) ───────────────────────────────────────
+//
+// 트리거는 앞으로 들어올 기록만 채운다. 이미 쌓인 기록은 한 번 훑어야 하는데,
+// 그 스크립트는 실행하는 사람의 PC 에 Google 자격증명이 있어야 한다.
+// 관제탑에서 누르면 서버가 자기 권한으로 도는 편이 훨씬 단순하다.
+//
+// 여러 번 눌러도 안전하다 — 이미 최신인 회원은 건너뛴다.
+exports.backfillLastLogDate = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 540 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const dryRun = request.data?.dryRun === true;
+
+        // uid 별 가장 늦은 기록일. 날짜 두 필드만 읽어 통신량을 줄인다.
+        const latestByUid = new Map();
+        const logsSnap = await db.collection("daily_logs").select("userId", "date").get();
+        logsSnap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const uid = data.userId;
+            const date = String(data.date || "");
+            if (!uid || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+            const known = latestByUid.get(uid);
+            if (!known || date > known) latestByUid.set(uid, date);
+        });
+
+        const usersSnap = await db.collection("users").get();
+        const targets = [];
+        let alreadyCurrent = 0;
+        let noLogs = 0;
+        usersSnap.forEach((docSnap) => {
+            const latest = latestByUid.get(docSnap.id);
+            if (!latest) { noLogs += 1; return; }
+            const known = String((docSnap.data() || {}).lastLogDate || "");
+            if (known >= latest) { alreadyCurrent += 1; return; }
+            targets.push({ uid: docSnap.id, from: known, to: latest });
+        });
+
+        const summary = {
+            scannedLogs: logsSnap.size,
+            members: usersSnap.size,
+            targets: targets.length,
+            alreadyCurrent,
+            noLogs,
+            sample: targets.slice(0, 5),
+            dryRun,
+            written: 0,
+        };
+
+        if (dryRun) return summary;
+
+        for (let i = 0; i < targets.length; i += 400) {
+            const chunk = targets.slice(i, i + 400);
+            const batch = db.batch();
+            chunk.forEach((target) => {
+                batch.set(db.doc(`users/${target.uid}`), { lastLogDate: target.to }, { merge: true });
+            });
+            await batch.commit();
+            summary.written += chunk.length;
+        }
+        console.log(`[backfillLastLogDate] ${summary.written}/${targets.length} 완료`);
+        return summary;
+    }
+);
+
+
 exports.refreshGuestActivity = onSchedule(
     { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
     async () => {

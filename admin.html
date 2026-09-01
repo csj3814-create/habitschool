@@ -651,6 +651,25 @@
                     <tbody id="admins-tbody"><tr><td colspan="2">로딩 중...</td></tr></tbody>
                 </table>
             </div>
+
+            <!--
+              회원 목록의 '최근 기록일' 은 원래 daily_logs 를 500건만 읽어 만들었다.
+              하루 20~30건이면 그 창은 최근 20~25일이라, 그보다 오래 쉰 회원은 날짜가
+              빈칸으로 보였다. 이제 기록이 들어올 때 회원 문서에 적어 두는데, 이미 쌓여
+              있던 기록은 여기서 한 번 채운다.
+            -->
+            <div class="box">
+                <h3>🗓 최근 기록일 채우기 <span style="font-size:12px;font-weight:400;color:#888;">1회성</span></h3>
+                <p style="font-size:12px;color:#888;line-height:1.7;margin:0 0 12px;">
+                    회원 목록의 <strong>최근 기록일</strong>을 실제 마지막 기록으로 채웁니다.
+                    앞으로 들어올 기록은 자동으로 기록되며, 여러 번 눌러도 이미 최신인 회원은 건너뜁니다.
+                </p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                    <button class="btn" onclick="runLastLogDateBackfill(true)">먼저 확인만</button>
+                    <button class="btn btn-primary" onclick="runLastLogDateBackfill(false)">채우기</button>
+                </div>
+                <div id="backfill-result" style="font-size:12px;color:#555;line-height:1.7;"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -675,9 +694,11 @@
             </div>
         </div>
         <div class="modal-body">
-            <!-- 좌우 두 열이 각자 스크롤을 가지면 휠이 어디서 먹는지 예측이 안 된다.
-                 프로필이 두 칸으로 짧아졌으므로 좌측은 스크롤을 두지 않는다. -->
-            <div style="padding-right:4px;">
+            <!-- 좌측 열은 프로필 아래로 처방·포인트 조정·발송 이력이 이어져 모달보다
+                 길다. 스크롤을 걷어냈더니 '포인트 수동 조정' 아래가 아예 닿지 않았다.
+                 두 열이 각자 스크롤을 갖는 편이 낫다 — 예측이 덜 되는 것보다 안 보이는
+                 것이 나쁘다. -->
+            <div style="overflow-y:auto;padding-right:4px;">
                 <div class="sec-box">
                     <h3 class="sec-title">🧬 프로필</h3>
                     <div class="info-grid">
@@ -1016,6 +1037,29 @@
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
+    const backfillLastLogDateCallable = httpsCallable(fns, 'backfillLastLogDate');
+
+    /**
+     * 회원 문서의 '최근 기록일' 을 한 번 채운다.
+     *
+     * 앞으로 들어올 기록은 트리거가 맡는다. 이 버튼은 이미 쌓여 있던 기록을 위한
+     * 1회성이고, 여러 번 눌러도 이미 최신인 회원은 건너뛴다.
+     */
+    window.runLastLogDateBackfill = async function(dryRun) {
+        const box = document.getElementById('backfill-result');
+        box.textContent = dryRun ? '대상을 세는 중…' : '채우는 중…';
+        try {
+            const response = await backfillLastLogDateCallable({ dryRun });
+            const data = response.data || {};
+            box.innerHTML = `기록 ${Number(data.scannedLogs || 0).toLocaleString()}건 · 회원 ${data.members}명<br>`
+                + `채울 대상 <strong>${data.targets}명</strong> · 이미 최신 ${data.alreadyCurrent}명 · 기록 없음 ${data.noLogs}명`
+                + (data.dryRun ? '<br><span style="color:#888;">확인만 했고 쓰지 않았습니다.</span>' : `<br><strong style="color:#2E7D32;">✅ ${data.written}명 채웠습니다.</strong>`);
+            adminToast(data.dryRun ? `대상 ${data.targets}명` : `✅ ${data.written}명 채웠습니다`, 'success');
+        } catch (error) {
+            box.innerHTML = `<span style="color:#C62828;">실패: ${escapeHtml(error.message || error)}</span>`;
+            adminToast(`백필 실패: ${error.message || error}`, 'error');
+        }
+    };
 
     /**
      * 회원 목록을 서버에서 한 번에 받아, 기존 소비처가 쓰던 스냅샷 모양으로 감싼다.
@@ -1608,6 +1652,30 @@
         });
     }
 
+
+    /**
+     * 프로필 한 칸을 채운다. 값 옆에 **언제 잰 것인지**를 붙이고, 6개월 넘은 값은
+     * 흐리게 하여 스스로 오래됐다고 말하게 한다.
+     *
+     * 모듈 스코프에 둔다 — openDetail 안의 지역 함수로 두었더니, 나중에 추이가 도착해
+     * 프로필을 다시 그릴 때(decorateProfileWithMeasurements) 부를 수 없어
+     * "setInfo is not defined" 로 표가 통째로 비었다.
+     */
+    function setInfo(id, value, measuredOn) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        // 숫자와 날짜를 각각 담는다. 한 덩어리로 두면 넘칠 때 날짜부터 잘린다.
+        el.innerHTML = '';
+        const num = document.createElement('span');
+        num.className = 'info-num';
+        num.textContent = value;
+        el.appendChild(num);
+        if (measuredOn && value !== '-') {
+            const stale = (new Date(todayStr) - new Date(measuredOn)) / 86400000 > 180;
+            el.insertAdjacentHTML('beforeend',
+                `<span class="info-date${stale ? ' stale' : ''}" title="${escapeHtml(measuredOn)} 측정">${escapeHtml(measuredOn.slice(5))}</span>`);
+        }
+    }
 
     // 흡연 상태 라벨. js/le8-score.js 의 NICOTINE_LABELS 와 같은 문구를 쓴다.
     const SMOKING_LABELS = {
@@ -3720,22 +3788,6 @@
                 hp = (userDoc.exists() ? userDoc.data() : {}).healthProfile || {};
             } catch (_) { hp = {}; }
 
-            // 값 옆에 언제 잰 것인지를 붙인다. 6개월 된 값과 어제 값이 똑같이 보이면
-            // 읽는 사람은 둘 다 지금 값으로 믿는다.
-            const setInfo = (id, value, measuredOn) => {
-                const el = document.getElementById(id);
-                // 숫자와 날짜를 각각 담는다. 한 덩어리로 두면 넘칠 때 날짜부터 잘린다.
-                el.innerHTML = '';
-                const num = document.createElement('span');
-                num.className = 'info-num';
-                num.textContent = value;
-                el.appendChild(num);
-                if (measuredOn && value !== '-') {
-                    const stale = (new Date(todayStr) - new Date(measuredOn)) / 86400000 > 180;
-                    el.insertAdjacentHTML('beforeend',
-                        `<span class="info-date${stale ? ' stale' : ''}" title="${escapeHtml(measuredOn)} 측정">${escapeHtml(measuredOn.slice(5))}</span>`);
-                }
-            };
             const latestWeight = logsForProfile => {
                 const withWeight = logsForProfile.find(log => Number(log?.metrics?.weight) > 0);
                 return withWeight ? Number(withWeight.metrics.weight) : null;

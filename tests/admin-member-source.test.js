@@ -87,3 +87,43 @@ describe('건강 추이는 서버 한 곳에서 계산한다', () => {
         expect(memberBranch).not.toContain('cache');
     });
 });
+
+// 스테이징에서 "추이를 불러오지 못했습니다 (setInfo is not defined)" 로 표가 통째로 비었다.
+// openDetail 안의 지역 함수를 나중에 도착한 추이가 부르려 했기 때문이다.
+describe('프로필 다시 그리기', () => {
+    it('setInfo 는 모듈 스코프에 있다', () => {
+        expect(ADMIN).toContain('function setInfo(id, value, measuredOn) {');
+        expect(ADMIN).not.toContain('const setInfo = (id, value, measuredOn)');
+    });
+
+    it('추이가 도착하면 프로필을 다시 그린다', () => {
+        expect(ADMIN).toContain('decorateProfileWithMeasurements(hp, memberTrendPayload);');
+    });
+});
+
+// 좌측 열은 프로필 아래로 처방·포인트 조정·발송 이력이 이어져 모달보다 길다.
+// 스크롤을 걷어냈더니 '포인트 수동 조정' 아래가 아예 닿지 않았다.
+describe('모달 좌측 열', () => {
+    it('스크롤을 유지한다', () => {
+        expect(ADMIN).toContain('<div style="overflow-y:auto;padding-right:4px;">');
+    });
+});
+
+describe('최근 기록일 백필', () => {
+    it('서버에서 도는 버튼으로 돌릴 수 있다', () => {
+        // 스크립트는 실행하는 사람 PC 에 자격증명이 있어야 한다.
+        expect(RUNTIME).toContain('exports.backfillLastLogDate = onCall(');
+        expect(ADMIN).toContain('window.runLastLogDateBackfill');
+        expect(ADMIN).toContain('onclick="runLastLogDateBackfill(true)"');
+    });
+
+    it('여러 번 눌러도 이미 최신인 회원은 건너뛴다', () => {
+        const fn = RUNTIME.split('exports.backfillLastLogDate = onCall(')[1].split('\n);')[0];
+        expect(fn).toContain('if (known >= latest) { alreadyCurrent += 1; return; }');
+    });
+
+    it('먼저 확인만 할 수 있다', () => {
+        const fn = RUNTIME.split('exports.backfillLastLogDate = onCall(')[1].split('\n);')[0];
+        expect(fn).toContain('if (dryRun) return summary;');
+    });
+});
