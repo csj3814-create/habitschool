@@ -55,6 +55,10 @@
         .trend-table th { background: #F3E5F5; color: var(--primary); padding: 8px 6px; white-space: nowrap; text-align: right; }
         .trend-table th:first-child, .trend-table td:first-child { text-align: left; }
         .trend-table td { padding: 8px 6px; border-bottom: 1px solid #eee; white-space: nowrap; }
+        /* 측정일 배지. 값이 언제 잰 것인지 — 6개월 넘으면 흐리게 하여 스스로 오래됐다고 말한다. */
+        .info-date { margin-left: 5px; font-size: 10px; font-weight: 400; color: #aaa; }
+        .info-date.stale { color: #E65100; }
+        .trend-alert { color: #C62828; font-weight: 700; border-bottom: 2px solid #C62828; }
         .trend-dir { font-weight: 700; }
         .trend-dir.improved { color: #2E7D32; }
         .trend-dir.worsened { color: #C62828; }
@@ -146,10 +150,13 @@
         /* 이번 업데이트로 항목이 다섯에서 열셋으로 늘었다. 한 줄씩 세로로 쌓으면
            프로필만 화면 한 장을 넘긴다. 두 칸으로 접고 줄 높이를 줄인다. */
         .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; font-size: 12px; margin-bottom: 10px; }
-        .info-row { background: white; padding: 5px 9px; border-radius: 6px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
-        .info-lbl { color: #888; font-weight: bold; white-space: nowrap; }
-        /* 값이 길면(1,735 kcal) 줄이 접히는 대신 줄어든다 — 높이가 들쭉날쭉하지 않게. */
-        .info-val { font-weight: bold; color: #333; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .info-row { background: white; padding: 5px 7px; border-radius: 6px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; min-width: 0; }
+        .info-lbl { color: #888; font-weight: bold; white-space: nowrap; font-size: 11px; }
+        /* 값이 길면(1,735 kcal) 줄이 접히는 대신 줄어든다 — 높이가 들쭉날쭉하지 않게.
+           측정일 배지는 줄어들지 않는다: 값이 잘리는 건 읽을 수 있지만, 날짜가
+           "0…" 으로 잘리면 그건 아무 뜻도 없는 글자다. */
+        .info-val { font-weight: bold; color: #333; font-size: 11.5px; display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; }
+        .info-val > .info-num { overflow: hidden; text-overflow: ellipsis; }
         @media (max-width: 560px) { .info-grid { grid-template-columns: 1fr; } }
 
         .act-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 13px; }
@@ -668,7 +675,9 @@
             </div>
         </div>
         <div class="modal-body">
-            <div style="overflow-y:auto;padding-right:4px;">
+            <!-- 좌우 두 열이 각자 스크롤을 가지면 휠이 어디서 먹는지 예측이 안 된다.
+                 프로필이 두 칸으로 짧아졌으므로 좌측은 스크롤을 두지 않는다. -->
+            <div style="padding-right:4px;">
                 <div class="sec-box">
                     <h3 class="sec-title">🧬 프로필</h3>
                     <div class="info-grid">
@@ -1502,16 +1511,48 @@
         return `<span class="trend-dir ${summary.direction}">${mark}</span>`;
     }
 
-    function renderTrendTable(metrics, { showCounts = false } = {}) {
+    /** 경보 기준을 넘긴 값. 기준은 서버의 METRIC_SPECS 한 곳에 있다. */
+    function renderRecentValueCell(summary, metric) {
+        const text = formatTrendValue(summary.recent, metric);
+        const over = metric.alertAbove && summary.recent !== null && summary.recent >= metric.alertAbove;
+        return over
+            ? `<span class="trend-alert" title="경보 기준 ${metric.alertAbove}${metric.unit || ''} 이상">${text}</span>`
+            : text;
+    }
+
+    /**
+     * "13주 중 N주 기록" — 빈 칸이 고장인지 미기록인지를 가른다.
+     * 공복 지표를 아예 안 재는 회원의 표는 절반이 비는데, 이 숫자가 없으면
+     * 화면이 잘못된 것처럼 보인다.
+     */
+    function renderCoverageCell(metric) {
+        const weeks = Number(metric.weeksWithData || 0);
+        const total = Number(metric.totalWeeks || 0);
+        if (!total) return '–';
+        const tone = weeks === 0 ? '#C62828' : (weeks < 4 ? '#F9A825' : '#888');
+        return `<span style="color:${tone};font-size:11px;">${total}주 중 ${weeks}주</span>`;
+    }
+
+    /** 코호트 안에서의 위치. 방향이 정해진 지표만 뜻이 있다. */
+    function renderPercentileCell(metric) {
+        if (metric.percentile === null || metric.percentile === undefined) return '<span style="color:#ccc;">–</span>';
+        const value = Number(metric.percentile);
+        const tone = value >= 70 ? '#2E7D32' : (value <= 30 ? '#C62828' : '#888');
+        return `<span style="color:${tone};font-size:11px;">상위 ${100 - value}%</span>`;
+    }
+
+    function renderTrendTable(metrics, { showCounts = false, showPercentile = false } = {}) {
         const rows = metrics.map((metric) => {
             const summary = metric.summary || {};
             const counts = metric.counts || {};
             return `<tr>
                 <td><strong>${escapeHtml(metric.label)}</strong>${metric.unit ? `<span style="color:#aaa;font-size:11px;"> ${escapeHtml(metric.unit)}</span>` : ''}</td>
-                <td>${formatTrendValue(summary.recent, metric)}</td>
+                <td>${renderRecentValueCell(summary, metric)}</td>
                 <td>${formatTrendValue(summary.previous, metric)}</td>
                 <td>${formatTrendDelta(summary, metric)}</td>
                 <td>${renderTrendDirectionCell(summary)}</td>
+                ${showPercentile ? `<td>${renderPercentileCell(metric)}</td>` : ''}
+                <td>${renderCoverageCell(metric)}</td>
                 ${showCounts ? `<td><span style="color:#2E7D32;">${counts.improved || 0}</span> / <span style="color:#C62828;">${counts.worsened || 0}</span> / <span style="color:#888;">${(counts.flat || 0) + (counts.neutral || 0)}</span></td>` : ''}
             </tr>`;
         }).join('');
@@ -1519,6 +1560,8 @@
         return `<table class="trend-table">
             <thead><tr>
                 <th>지표</th><th>최근 4주</th><th>직전 4주</th><th>변화</th><th>방향</th>
+                ${showPercentile ? '<th>위치</th>' : ''}
+                <th>기록</th>
                 ${showCounts ? '<th>개선/악화/유지</th>' : ''}
             </tr></thead>
             <tbody>${rows}</tbody>
@@ -1577,7 +1620,46 @@
 
     let memberTrendPayload = null, memberTrendMetric = 'weight';
 
-    async function loadMemberTrends(uid) {
+    /**
+     * 추이가 도착하면 프로필 칸을 다시 그린다.
+     *
+     * 두 가지를 고친다. 값 옆에 **언제 잰 것인지**를 붙이고(6개월 넘은 값은 흐리게),
+     * 프로필이 비어 있으면 **최신 검사값으로 채운다** — 혈액검사 결과가 healthProfile
+     * 로 자동 반영되지 않은 회원이 있어서, 표에는 있는데 프로필만 '-' 인 일이 있었다.
+     */
+    function decorateProfileWithMeasurements(hp, payload) {
+        const byKey = new Map((payload.metrics || []).map((metric) => [metric.key, metric]));
+        const fill = (id, key, format, profileValue) => {
+            const latest = byKey.get(key)?.latest;
+            if (profileValue !== null && profileValue !== undefined && profileValue !== '') {
+                setInfo(id, format(profileValue), latest?.date);
+                return;
+            }
+            if (latest) setInfo(id, format(latest.value), latest.date);
+        };
+
+        fill('p-fat', 'bodyFat', (v) => `${Number(v).toFixed(1)} kg`, hp.fat);
+        fill('p-smm', 'muscle', (v) => `${Number(v).toFixed(1)} kg`, hp.smm);
+        fill('p-visceral', 'visceral', (v) => `${Math.round(Number(v))}`, hp.visceral);
+        fill('p-hba1c', 'hba1c', (v) => `${Number(v).toFixed(1)} %`, hp.hba1c);
+        fill('p-nonhdl', 'nonHdl', (v) => `${Math.round(Number(v))} mg/dL`, null);
+
+        // 총콜레스테롤·HDL 은 표에 행이 없어 마지막 검사에서 직접 읽는다.
+        const lab = payload.latestLab;
+        const labValue = (key) => {
+            const entry = lab?.metrics?.[key];
+            const value = typeof entry === 'object' ? entry?.value : entry;
+            return Number.isFinite(Number(value)) ? Number(value) : null;
+        };
+        if (!hp.totalCholesterol && labValue('totalCholesterol') !== null) {
+            setInfo('p-chol', `${labValue('totalCholesterol')} mg/dL`, lab.date);
+        }
+        if (!hp.hdl && labValue('hdl') !== null) {
+            setInfo('p-hdl', `${labValue('hdl')} mg/dL`, lab.date);
+        }
+    }
+
+    async function loadMemberTrends(uid, hp = {}) {
         const tableEl = document.getElementById('member-trend-table');
         tableEl.innerHTML = '<div style="padding:16px;text-align:center;color:#888;font-size:13px;">불러오는 중...</div>';
         try {
@@ -1588,8 +1670,9 @@
                 (metric) => (metric.weekly || []).some((value) => value !== null)
             );
             tableEl.innerHTML = metrics.length
-                ? renderTrendTable(metrics)
+                ? renderTrendTable(metrics, { showPercentile: true })
                 : '<div style="padding:16px;text-align:center;color:#888;font-size:13px;">최근 13주 안에 비교할 기록이 없습니다.</div>';
+            decorateProfileWithMeasurements(hp, memberTrendPayload);
             drawMemberTrendChart();
         } catch (error) {
             tableEl.innerHTML = `<div style="padding:16px;color:#C62828;font-size:13px;">추이를 불러오지 못했습니다 (${escapeHtml(error.message || error)})</div>`;
@@ -3637,7 +3720,22 @@
                 hp = (userDoc.exists() ? userDoc.data() : {}).healthProfile || {};
             } catch (_) { hp = {}; }
 
-            const setInfo = (id, value) => { document.getElementById(id).textContent = value; };
+            // 값 옆에 언제 잰 것인지를 붙인다. 6개월 된 값과 어제 값이 똑같이 보이면
+            // 읽는 사람은 둘 다 지금 값으로 믿는다.
+            const setInfo = (id, value, measuredOn) => {
+                const el = document.getElementById(id);
+                // 숫자와 날짜를 각각 담는다. 한 덩어리로 두면 넘칠 때 날짜부터 잘린다.
+                el.innerHTML = '';
+                const num = document.createElement('span');
+                num.className = 'info-num';
+                num.textContent = value;
+                el.appendChild(num);
+                if (measuredOn && value !== '-') {
+                    const stale = (new Date(todayStr) - new Date(measuredOn)) / 86400000 > 180;
+                    el.insertAdjacentHTML('beforeend',
+                        `<span class="info-date${stale ? ' stale' : ''}" title="${escapeHtml(measuredOn)} 측정">${escapeHtml(measuredOn.slice(5))}</span>`);
+                }
+            };
             const latestWeight = logsForProfile => {
                 const withWeight = logsForProfile.find(log => Number(log?.metrics?.weight) > 0);
                 return withWeight ? Number(withWeight.metrics.weight) : null;
@@ -3651,10 +3749,7 @@
             setInfo('p-chol', hp.totalCholesterol ? `${hp.totalCholesterol} mg/dL` : '-');
             setInfo('p-hdl', hp.hdl ? `${hp.hdl} mg/dL` : '-');
             setInfo('p-nonhdl', (hp.totalCholesterol && hp.hdl) ? `${Math.round(hp.totalCholesterol - hp.hdl)} mg/dL` : '-');
-            setInfo('p-smoking', SMOKING_LABELS[hp.smokingStatus] || '-');
-            if (hp.secondhandSmoke) {
-                document.getElementById('p-smoking').textContent += ' · 간접흡연';
-            }
+            setInfo('p-smoking', (SMOKING_LABELS[hp.smokingStatus] || '-') + (hp.secondhandSmoke ? ' · 간접흡연' : ''));
             setInfo('p-streak', `🔥${m.currentStreak||0}일`);
             setInfo('p-coins', `${(m.coins||0).toLocaleString()}P`);
             let medsHtml=''; (hp.meds||[]).forEach(x=>{ medsHtml+=`<li>${escapeHtml(x)}</li>`; }); if(hp.medOther) medsHtml+=`<li>${escapeHtml(hp.medOther)}</li>`;
@@ -3672,7 +3767,7 @@
 
             // 추이는 서버가 주 단위로 만들어 준다. 30일 일별 그래프는 결측에 흔들려
             // 방향을 읽기 어려웠다.
-            loadMemberTrends(uid);
+            loadMemberTrends(uid, hp);
 
             // History cards
             document.getElementById('history-wrap').innerHTML = logs.map(r => {

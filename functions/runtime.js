@@ -60,6 +60,7 @@ const {
     METRIC_SPECS,
     COHORT_MIN_ACTIVE_DAYS,
     TREND_WEEKS,
+    percentileOf,
     buildMemberTrends,
     buildCohortTrends,
 } = require("./health-trends");
@@ -9188,7 +9189,35 @@ async function loadMemberHealthTrends(uid, todayStr) {
     const inbodyHistory = inbodySnap.docs.map((docSnap) => ({ date: docSnap.id, ...(docSnap.data() || {}) }));
     const profile = (userSnap.exists ? userSnap.data() : {})?.healthProfile || {};
 
-    return { ...buildMemberTrends({ logs, profile, bloodTests, inbodyHistory, todayStr }), profile };
+    const trends = buildMemberTrends({ logs, profile, bloodTests, inbodyHistory, todayStr });
+
+    // 방향(좋아지는가)만으로는 "그래서 지금 위험한가" 를 알 수 없다. 이미 계산해 둔
+    // 코호트 분포가 있으면 그 안에서의 위치를 함께 준다. 없으면 조용히 생략한다 —
+    // 이것 때문에 13주치를 다시 집계할 일은 아니다.
+    let cohortValues = null;
+    try {
+        const cached = await db.doc("meta/healthTrends").get();
+        const metrics = cached.exists ? (cached.data() || {}).metrics : null;
+        if (Array.isArray(metrics)) {
+            cohortValues = new Map(metrics.map((metric) => [metric.key, metric.recentValues || []]));
+        }
+    } catch (error) {
+        console.warn("[getHealthTrends] 코호트 분포 없음:", error?.message || error);
+    }
+
+    if (cohortValues) {
+        for (const metric of trends.metrics) {
+            metric.percentile = percentileOf(cohortValues.get(metric.key), metric.summary?.recent, metric.better);
+        }
+    }
+
+    // 총콜레스테롤·HDL 은 표의 행이 없다(non-HDL 하나로 본다). 프로필 칸을 최신
+    // 검사값으로 채울 수 있게 마지막 검사 한 건을 그대로 딸려 보낸다.
+    const latestLab = bloodTests
+        .filter((row) => row && row.date)
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0] || null;
+
+    return { ...trends, profile, latestLab: latestLab ? { date: latestLab.date, metrics: latestLab.metrics || {} } : null };
 }
 
 async function loadCohortHealthTrends(todayStr) {

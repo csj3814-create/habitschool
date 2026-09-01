@@ -31,7 +31,10 @@ export function filterAdminMemberRows(rows = [], searchTerm = "") {
     return rows.filter((row) => {
         const name = String(row?.name || "").toLocaleLowerCase("ko-KR");
         const email = String(row?.email || "").toLocaleLowerCase("ko-KR");
-        return name.includes(normalizedTerm) || email.includes(normalizedTerm);
+        // uid 로도 찾는다. 오류 제보에는 이름이 아니라 uid 가 실려 오는데, 그걸로
+        // 회원을 찾을 수 없어 제보와 회원을 손으로 이어야 했다.
+        const uid = String(row?.uid || "").toLocaleLowerCase("ko-KR");
+        return name.includes(normalizedTerm) || email.includes(normalizedTerm) || uid.includes(normalizedTerm);
     });
 }
 

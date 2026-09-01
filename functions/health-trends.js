@@ -41,9 +41,11 @@ const COHORT_ACTIVE_WINDOW_DAYS = 30;
 const METRIC_SPECS = Object.freeze([
     { key: "weight", label: "체중", unit: "kg", better: null, scope: "both", decimals: 1 },
     { key: "bmi", label: "BMI", unit: "", better: null, scope: "both", decimals: 1 },
-    { key: "glucose", label: "공복혈당", unit: "mg/dL", better: "down", scope: "both", decimals: 0 },
-    { key: "bpSystolic", label: "수축기혈압", unit: "mmHg", better: "down", scope: "both", decimals: 0 },
-    { key: "bpDiastolic", label: "이완기혈압", unit: "mmHg", better: "down", scope: "both", decimals: 0 },
+    // alertAbove — 관제탑 목록의 '건강 경보' 필터가 쓰던 기준을 여기로 모은다.
+    // 기준이 두 곳에 있으면 목록은 빨간데 상세는 멀쩡한 일이 생긴다.
+    { key: "glucose", label: "공복혈당", unit: "mg/dL", better: "down", scope: "both", decimals: 0, alertAbove: 126 },
+    { key: "bpSystolic", label: "수축기혈압", unit: "mmHg", better: "down", scope: "both", decimals: 0, alertAbove: 140 },
+    { key: "bpDiastolic", label: "이완기혈압", unit: "mmHg", better: "down", scope: "both", decimals: 0, alertAbove: 90 },
     { key: "dietGrade", label: "식단 등급", unit: "점", better: "up", scope: "both", decimals: 0 },
     { key: "steps", label: "걸음수", unit: "보", better: "up", scope: "both", decimals: 0 },
     { key: "sleepHours", label: "수면", unit: "시간", better: "up", scope: "both", decimals: 1 },
@@ -192,6 +194,33 @@ function summarizeChange(series, spec) {
     return summary;
 }
 
+
+/** 가장 최근 측정 한 건. 이 값이 언제 잰 것인지 화면이 말할 수 있게 한다. */
+function latestSample(samples) {
+    let best = null;
+    for (const sample of samples || []) {
+        const value = num(sample && sample.value);
+        if (value === null) continue;
+        const date = String(sample.date || "");
+        if (!best || date > best.date) best = { date, value };
+    }
+    return best;
+}
+
+/**
+ * 코호트 안에서 이 값이 어디쯤인지(0~100, 클수록 좋은 쪽).
+ *
+ * 방향이 정해진 지표만 뜻이 있다. 체중은 높아도 낮아도 '좋은 쪽' 이 없으므로 null.
+ */
+function percentileOf(values, value, better) {
+    const target = num(value);
+    if (target === null || !better) return null;
+    const pool = (values || []).map(num).filter((item) => item !== null);
+    if (pool.length < 5) return null;   // 몇 명으로 백분위를 말하면 숫자만 그럴듯해진다
+    const betterCount = pool.filter((item) => (better === "down" ? item > target : item < target)).length;
+    return Math.round((betterCount / pool.length) * 100);
+}
+
 /** 하위 컬렉션(체성분·혈액검사) 문서를 지표별 {date, value} 목록으로 편다. */
 function samplesFromInbody(inbodyHistory) {
     const rows = Array.isArray(inbodyHistory) ? inbodyHistory : [];
@@ -244,7 +273,16 @@ function buildMemberTrends({ logs = [], profile = {}, bloodTests = [], inbodyHis
         else samples = daily.map((day) => ({ date: day.date, value: day.values[spec.key] }));
 
         const weekly = aggregateWeekly(samples, weekKeys);
-        return { ...spec, weekly, summary: summarizeChange(weekly, spec) };
+        return {
+            ...spec,
+            weekly,
+            summary: summarizeChange(weekly, spec),
+            // 언제 잰 값인지. 프로필의 숫자 옆에 붙으면 오래된 값이 스스로 오래됐다고 말한다.
+            latest: latestSample(samples),
+            // 몇 주나 기록했는지. "–" 가 고장인지 미기록인지를 이 숫자가 가른다.
+            weeksWithData: weekly.filter((value) => value !== null).length,
+            totalWeeks: weekKeys.length,
+        };
     });
 
     return { weekKeys, metrics, heightCm };
@@ -299,7 +337,20 @@ function buildCohortTrends({ logsByUid = {}, profiles = {}, todayStr, minActiveD
             counts[direction] = (counts[direction] || 0) + 1;
         }
 
-        return { ...spec, weekly, summary: summarizeChange(weekly, spec), counts };
+        // 회원별 '최근 4주 평균' 분포. 개인 화면이 이 안에서 자기 위치를 찾는다.
+        const recentValues = perMember
+            .map((series) => summarizeChange(series, spec).recent)
+            .filter((value) => value !== null);
+
+        return {
+            ...spec,
+            weekly,
+            summary: summarizeChange(weekly, spec),
+            counts,
+            recentValues,
+            weeksWithData: weekly.filter((value) => value !== null).length,
+            totalWeeks: weekKeys.length,
+        };
     });
 
     return {
@@ -327,6 +378,8 @@ module.exports = {
     summarizeChange,
     bmiBandOf,
     countActiveDays,
+    latestSample,
+    percentileOf,
     buildMemberTrends,
     buildCohortTrends,
 };

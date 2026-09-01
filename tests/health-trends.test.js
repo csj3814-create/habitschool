@@ -8,6 +8,7 @@ import {
     summarizeChange,
     bmiBandOf,
     countActiveDays,
+    percentileOf,
     buildMemberTrends,
     buildCohortTrends
 } from '../functions/health-trends.js';
@@ -204,5 +205,78 @@ describe('코호트', () => {
         const glucose = result.metrics.find((m) => m.key === 'glucose');
         const counted = glucose.counts.improved + glucose.counts.worsened + glucose.counts.flat;
         expect(counted + glucose.counts.unknown).toBe(result.memberCount);
+    });
+});
+
+describe('추가 개선 — 숫자를 믿어도 되는가', () => {
+    it('가장 최근 측정이 언제인지 함께 준다', () => {
+        const result = buildMemberTrends({
+            todayStr: '2026-09-01',
+            profile: { heightCm: 170 },
+            logs: [],
+            inbodyHistory: [
+                { date: '2026-07-10', fat: 20 },
+                { date: '2026-08-28', fat: 18 }
+            ],
+            bloodTests: []
+        });
+        const fat = result.metrics.find((m) => m.key === 'bodyFat');
+        expect(fat.latest).toEqual({ date: '2026-08-28', value: 18 });
+    });
+
+    it('몇 주나 기록했는지 센다 — 빈 칸이 고장인지 미기록인지 가른다', () => {
+        const result = buildMemberTrends({
+            todayStr: '2026-09-01',
+            profile: {},
+            logs: [
+                { date: '2026-09-01', metrics: { glucose: 95 } },
+                { date: '2026-08-25', metrics: { glucose: 97 } }
+            ],
+            bloodTests: [], inbodyHistory: []
+        });
+        const glucose = result.metrics.find((m) => m.key === 'glucose');
+        expect(glucose.weeksWithData).toBe(2);
+        expect(glucose.totalWeeks).toBe(13);
+    });
+
+    it('경보 기준을 지표 정의 한 곳에 둔다', () => {
+        // 목록 필터와 상세가 서로 다른 기준을 쓰면 목록은 빨간데 상세는 멀쩡해진다.
+        expect(METRIC_SPECS.find((m) => m.key === 'glucose').alertAbove).toBe(126);
+        expect(METRIC_SPECS.find((m) => m.key === 'bpSystolic').alertAbove).toBe(140);
+    });
+});
+
+describe('코호트 안에서의 위치', () => {
+    const pool = [90, 95, 100, 105, 110, 115, 120];
+
+    it('낮을수록 좋은 지표는 낮을수록 높은 백분위', () => {
+        expect(percentileOf(pool, 92, 'down')).toBeGreaterThan(percentileOf(pool, 118, 'down'));
+    });
+
+    it('높을수록 좋은 지표는 반대', () => {
+        expect(percentileOf(pool, 118, 'up')).toBeGreaterThan(percentileOf(pool, 92, 'up'));
+    });
+
+    it('방향이 없는 지표에는 위치를 말하지 않는다', () => {
+        // 체중은 높아도 낮아도 '좋은 쪽' 이 없다.
+        expect(percentileOf(pool, 100, null)).toBeNull();
+    });
+
+    it('표본이 적으면 백분위를 만들지 않는다', () => {
+        expect(percentileOf([90, 100], 95, 'down')).toBeNull();
+    });
+
+    it('코호트는 회원별 최근값 분포를 남긴다', () => {
+        const daily = (value) => Array.from({ length: 30 }, (_, i) => ({
+            date: new Date(Date.UTC(2026, 7, 3) + i * 86400000).toISOString().slice(0, 10),
+            metrics: { glucose: value }
+        }));
+        const result = buildCohortTrends({
+            todayStr: '2026-09-01',
+            logsByUid: { a: daily(100), b: daily(120) },
+            profiles: {}
+        });
+        const glucose = result.metrics.find((m) => m.key === 'glucose');
+        expect(glucose.recentValues.sort()).toEqual([100, 120]);
     });
 });
