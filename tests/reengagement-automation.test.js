@@ -41,6 +41,23 @@ describe('자동 발송이 지키는 것들', () => {
         expect(fn).toContain('return null;');
     });
 
+    it('오래 떠난 분들까지 쫓아가지 않는다', () => {
+        // 이게 없으면 자동 발송을 켜는 첫날 수백 통이 한꺼번에 나간다.
+        // 회원 606명 중 매일 기록하는 사람은 한 자릿수다.
+        expect(RUNTIME).toContain('const REENGAGEMENT_MAX_GAP_DAYS = 45;');
+        const fn = RUNTIME.split('function reEngagementTierForGap(gapDays) {')[1].split('\n}')[0];
+        expect(fn).toContain('if (gapDays > REENGAGEMENT_MAX_GAP_DAYS) return null;');
+        expect(fn).toContain('if (!Number.isFinite(gapDays)) return null;');
+    });
+
+    it('한 번에 나가는 통수에 상한이 있다', () => {
+        // Gmail 일일 한도에 걸리면 그날 쿠폰 안내까지 같이 막힌다.
+        expect(RUNTIME).toContain('const REENGAGEMENT_MAX_PER_RUN = 120;');
+        const fn = RUNTIME.split('async function runScheduledReEngagementSweep() {')[1].split('\n}\n')[0];
+        expect(fn).toContain('>= REENGAGEMENT_MAX_PER_RUN');
+        expect(fn).toContain('stats.deferred += 1;');
+    });
+
     it('회원마다 질의하지 않고 최근 기록을 한 번에 읽는다', () => {
         // 회원 수만큼 질의하면 606명이 606번이 된다.
         const fn = RUNTIME.split('async function runScheduledReEngagementSweep() {')[1].split('\n}\n')[0];

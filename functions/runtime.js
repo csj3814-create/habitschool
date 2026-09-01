@@ -8749,7 +8749,19 @@ exports.sendReEngagementEmailsV2 = onCall(
 // 대상을 고를 때 회원마다 daily_logs 를 한 번씩 조회하면 회원 수만큼 질의가 나간다
 // (지금 606명). 최근 열흘치 기록을 한 번에 읽어 마지막 기록일을 만들면 질의 한 번이면
 // 된다. 열흘 밖은 어차피 전부 7일 단계라 더 볼 필요가 없다.
-const REENGAGEMENT_LOOKBACK_DAYS = 10;
+// 최근 이만큼의 기록을 한 번에 읽어 마지막 기록일을 만든다. 이 창 밖에 있는 사람은
+// 공백이 이보다 길다는 뜻이고, 아래 규칙에 따라 대상에서 빠진다.
+const REENGAGEMENT_LOOKBACK_DAYS = 45;
+
+// 이보다 오래 조용한 사람은 "잠시 멀어진" 게 아니라 떠난 것이다. 자동 안내가 쫓아갈
+// 대상이 아니고, 그렇게 두지 않으면 자동 발송을 켜는 첫날 수백 통이 한꺼번에 나간다
+// (회원 606명 중 매일 기록하는 사람은 한 자릿수다). 오래 쉰 분들께 보내는 건 캠페인이지
+// 자동화가 할 판단이 아니므로, 관제탑의 수동 발송으로 남긴다.
+const REENGAGEMENT_MAX_GAP_DAYS = 45;
+
+// 한 번에 나가는 통수 상한. Gmail 계정의 일일 발송 한도에 걸리면 그날 나머지 메일
+// (쿠폰 안내 같은 것)까지 같이 막힌다. 남은 사람은 다음 날 이어서 받는다.
+const REENGAGEMENT_MAX_PER_RUN = 120;
 
 function toKstDateString(date) {
     return new Date(date.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -8764,7 +8776,9 @@ function daysBetweenDateStrings(fromDateStr, toDateStr) {
 
 /** 공백 길이 -> 보낼 단계. 어느 단계에도 안 들면 null. */
 function reEngagementTierForGap(gapDays) {
-    if (!Number.isFinite(gapDays)) return 7;   // 열흘 넘게 조용한 사람
+    // 창 밖(= 45일 넘게 조용) 은 자동 안내 대상이 아니다.
+    if (!Number.isFinite(gapDays)) return null;
+    if (gapDays > REENGAGEMENT_MAX_GAP_DAYS) return null;
     if (gapDays >= 7) return 7;
     if (gapDays >= 3) return 3;
     return null;
@@ -8805,10 +8819,17 @@ async function runScheduledReEngagementSweep() {
         auth: { user: GMAIL_USER.value(), pass: GMAIL_APP_PASSWORD.value() }
     });
 
-    const stats = { day3: 0, day7: 0, skipped: 0, noEmail: 0, failed: 0 };
+    // 공백이 짧은 사람부터. 상한에 걸려 다음 날로 밀리는 건 오래 쉰 쪽이어야 한다.
+    candidates.sort((a, b) => String(b.lastLogDate || '').localeCompare(String(a.lastLogDate || '')));
+
+    const stats = { day3: 0, day7: 0, skipped: 0, noEmail: 0, failed: 0, deferred: 0 };
 
     for (const candidate of candidates) {
         const { uid, userData, lastLogDate, days } = candidate;
+        if (stats.day3 + stats.day7 >= REENGAGEMENT_MAX_PER_RUN) {
+            stats.deferred += 1;
+            continue;
+        }
         try {
             const emailLogRef = db.collection("emailLogs").doc(uid);
             const emailLogSnap = await emailLogRef.get();
