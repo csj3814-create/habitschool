@@ -101,7 +101,9 @@ function buildReEngagementEmailTemplate({
     <p style="font-size:16px;color:#333;line-height:1.6;"><strong>${resolvedName}</strong>님, 잘 지내고 계신가요? 💙</p>
     <p style="font-size:15px;color:#555;line-height:1.7;">7일 이상 기록이 없으셔서 바쁘게 보내고 계신 것 같아요.<br>오늘 다시 시작해도 전혀 늦지 않아요. 해빛스쿨이 응원합니다!</p>
     <div style="background:#f8f9ff;border-radius:12px;padding:16px;margin:20px 0;text-align:center;">
-      <p style="margin:0;font-size:14px;color:#666;">다시 시작하면 <strong style="color:#1565c0;">복귀 보너스와 자신감</strong>이 기다려요 🙌</p>
+      <!-- '복귀 보너스' 라고 적혀 있었는데 그런 보상은 없었다. 없는 것을 약속하면
+           돌아온 사람이 그걸 찾다가 못 찾고 두 번 실망한다. 만들기 전까지는 빼 둔다. -->
+      <p style="margin:0;font-size:14px;color:#666;">다시 시작하면 <strong style="color:#1565c0;">그 날의 기록과 자신감</strong>이 함께 쌓여요 🙌</p>
     </div>
     <div style="text-align:center;margin:28px 0;">
       <a href="${appBaseUrl}" style="background:linear-gradient(135deg,#1565c0,#42a5f5);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:600;display:inline-block;">해빛스쿨로 돌아가기</a>
