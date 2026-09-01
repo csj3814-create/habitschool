@@ -8,7 +8,8 @@ import {
 } from '../functions/community-stats.js';
 import {
     buildStreakHighlightHtml,
-    buildAttendanceChipsHtml
+    buildAttendanceChipsHtml,
+    buildCommunityEmptyStateHtml
 } from '../js/community-stats-view.js';
 import { readRepoFile } from './source-helpers.js';
 
@@ -128,6 +129,23 @@ describe('화면', () => {
     it('아무도 개근하지 못했으면 줄 자체가 없다', () => {
         expect(buildAttendanceChipsHtml({ statsVersion: 2, perfectAttendance: { days: 12, diet: 0, exercise: 0, mind: 0 } })).toBe('');
         expect(buildStreakHighlightHtml({})).toBe('');
+    });
+});
+
+// 참여자가 0명이면 섹션을 통째로 감추고 있었다. 그래서 매달 1일 첫 기록이 올라오기
+// 전까지 이 칸이 사라진다. 사라진 화면은 고장과 구분되지 않는다.
+describe('아무도 기록하지 않은 달', () => {
+    const APP = readRepoFile('js/app-core.js');
+
+    it('칸을 없애는 대신 비었다고 말한다', () => {
+        expect(APP.split('content.innerHTML = buildCommunityEmptyStateHtml();').length - 1).toBe(3);
+        expect(buildCommunityEmptyStateHtml()).toContain('아직 기록이 없어요');
+    });
+
+    it('문서를 못 읽은 것과 0명인 것을 구분한다', () => {
+        // 못 읽었으면 아무 말도 하지 않는다 — 비었다고 단정할 근거가 없다.
+        expect(APP).toContain("if (!s) { section.style.display = 'none'; return; }");
+        expect(APP).not.toContain("if (!s || !s.totalUsers) { section.style.display = 'none'; return; }");
     });
 });
 

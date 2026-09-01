@@ -1065,6 +1065,8 @@ body.dark-mode .group-top-user {
     border-color: #5C4A2E;
     color: #FFB74D;
 }
+body.dark-mode .community-empty-title { color: #C7C3CC; }
+body.dark-mode .community-empty-desc { color: #8B8792; }
 body.dark-mode .community-highlight {
     background: linear-gradient(135deg, #2E2518 0%, #332A1A 100%);
     border-color: #5C4A2E;

@@ -67,7 +67,7 @@ import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo
 import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=352';
 import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=352';
 import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=352';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml } from './community-stats-view.js?v=352';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=352';
 import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=352';
 import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=352';
 import {
@@ -16120,7 +16120,13 @@ function renderGroupChallengeFromData(s) {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
-    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
+    // 문서를 못 읽었으면 아무 말도 하지 않는다. 참여자가 0명인 것과는 다른 상태다.
+    if (!s) { section.style.display = 'none'; return; }
+    if (!s.totalUsers) {
+        section.style.display = 'block';
+        content.innerHTML = buildCommunityEmptyStateHtml();
+        return;
+    }
 
     const ranked = s.ranked || [];
     const medals = ['🥇', '🥈', '🥉'];
@@ -16281,8 +16287,13 @@ async function renderGroupChallenge() {
         const statsDoc = await getDoc(doc(db, "meta", "communityStats"));
         if (statsDoc.exists()) s = statsDoc.data();
     } catch (_) {}
-    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
-    if (!s.totalUsers || s.totalUsers === 0) { section.style.display = 'none'; return; }
+    // 문서를 못 읽었으면 아무 말도 하지 않는다. 참여자가 0명인 것과는 다른 상태다.
+    if (!s) { section.style.display = 'none'; return; }
+    if (!s.totalUsers) {
+        section.style.display = 'block';
+        content.innerHTML = buildCommunityEmptyStateHtml();
+        return;
+    }
 
     const ranked = s.ranked || [];
     const medals = ['🥇', '🥈', '🥉'];
@@ -24825,7 +24836,13 @@ function renderGroupChallengeFromDataLegacy(s) {
     const section = document.getElementById('group-challenge-section');
     const content = document.getElementById('group-challenge-content');
     if (!section || !content) return;
-    if (!s || !s.totalUsers) { section.style.display = 'none'; return; }
+    // 문서를 못 읽었으면 아무 말도 하지 않는다. 참여자가 0명인 것과는 다른 상태다.
+    if (!s) { section.style.display = 'none'; return; }
+    if (!s.totalUsers) {
+        section.style.display = 'block';
+        content.innerHTML = buildCommunityEmptyStateHtml();
+        return;
+    }
 
     const ranked = s.ranked || [];
     const medals = ['🥇', '🥈', '🥉'];

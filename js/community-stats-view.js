@@ -33,6 +33,21 @@ function isCurrentFormat(stats) {
 }
 
 /**
+ * 아직 아무도 기록하지 않은 달에 보여줄 자리.
+ *
+ * 지금까지는 참여자가 0명이면 섹션을 통째로 감췄다. 그래서 매달 1일, 첫 기록이
+ * 올라오기 전까지 모든 회원에게서 이 칸이 사라진다. 사라진 화면은 고장과 구분되지
+ * 않는다 — 실제로 "커뮤니티 현황이 아예 안 나온다" 는 물음이 그렇게 왔다.
+ * 빈 것은 빈 채로 말한다.
+ */
+export function buildCommunityEmptyStateHtml() {
+    return `<div class="community-empty-state">
+        <div class="community-empty-title">이번 달은 아직 기록이 없어요</div>
+        <div class="community-empty-desc">첫 기록을 남기면 여기에 이번 달 현황이 쌓입니다.</div>
+    </div>`;
+}
+
+/**
  * 🔥 줄. 새 집계에는 `streakTier`, 지난 달 아카이브에는 `bestStreak`/`bestStreakName`
  * 만 있다. 이미 저장된 달을 다시 쓸 수는 없으므로 둘 다 그린다.
  */
