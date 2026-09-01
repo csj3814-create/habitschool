@@ -57,6 +57,13 @@ const {
     collectSocialCounts,
 } = require("./mvp-score");
 const {
+    METRIC_SPECS,
+    COHORT_MIN_ACTIVE_DAYS,
+    TREND_WEEKS,
+    buildMemberTrends,
+    buildCohortTrends,
+} = require("./health-trends");
+const {
     pickStreakTier,
     getElapsedDaysInMonth,
     countPerfectAttendance,
@@ -3703,6 +3710,28 @@ function getAwardMapFromLedgerUnits(units = []) {
     return normalizeAwardMap(totals);
 }
 
+
+/**
+ * users/{uid}.lastLogDate 를 최신 기록일로 유지한다.
+ *
+ * 먼저 읽고 비교하는 이유: 지난 기록을 나중에 고치는 경우가 있는데, 그때 무조건 쓰면
+ * 최근 기록일이 과거로 되돌아간다. 앞선 날짜만 앞으로 민다.
+ * 실패해도 삼킨다 — 포인트 정산이 이 갱신 때문에 재시도되면 안 된다.
+ */
+async function updateUserLastLogDate(userId, logDate) {
+    if (!userId || !/^\d{4}-\d{2}-\d{2}$/.test(String(logDate || ""))) return;
+    try {
+        const userRef = db.doc(`users/${userId}`);
+        const snapshot = await userRef.get();
+        if (!snapshot.exists) return;
+        const known = String((snapshot.data() || {}).lastLogDate || "");
+        if (known >= logDate) return;
+        await userRef.set({ lastLogDate: logDate }, { merge: true });
+    } catch (error) {
+        console.warn(`lastLogDate 갱신 실패: ${userId}`, error?.message || error);
+    }
+}
+
 exports.awardPoints = onDocumentWritten(
     { document: "daily_logs/{logId}", region: "asia-northeast3" },
     async (event) => {
@@ -3905,6 +3934,13 @@ exports.awardPoints = onDocumentWritten(
                     await event.data.after.ref.set({ currentStreak: streak }, { merge: true });
                 }
                 console.log(`streak: ${userId} ${logDate} → ${streak}일`);
+
+                // 관제탑 회원 목록의 '최근 기록일' 은 daily_logs 를 500건만 읽어 만들고
+                // 있었다. 하루 20~30건이면 그 창은 최근 20~25일이고, 그보다 오래 쉰
+                // 회원은 목록에서 날짜가 빈칸으로 보인다 — "기록이 없는 사람" 과
+                // "창 밖으로 밀려난 사람" 이 구분되지 않는다. 기록이 들어올 때 회원
+                // 문서에 한 번 적어 두면 창 길이와 무관해진다.
+                await updateUserLastLogDate(userId, logDate);
 
                 // 추천인 마일스톤 보상
                 await checkReferralMilestone(userId, streak);
@@ -9016,6 +9052,200 @@ exports.notifyNewBugReport = onDocumentCreated(
             // 제보는 이미 저장됐다. 알림 실패로 재시도가 돌면 같은 메일만 여러 통 간다.
             console.error("[notifyNewBugReport] 알림 실패:", error?.message || error);
         }
+    }
+);
+
+
+
+// ── 관제탑: 회원 목록 한 번에 ─────────────────────────────────────────────
+//
+// 관제탑은 열 때마다 users 컬렉션을 통째로 읽었다. 회원 606명이면 606건이고, 소비처가
+// 다섯 곳(회원 목록·자산 TOP20·차단 현황·초대 현황·상세 모달)이라 회원이 늘면 그대로
+// 늘어난다. 서버가 필요한 필드만 추려 한 번에 준다.
+//
+// healthProfile 전체와 blockedUsers 원본 배열은 담지 않는다. 목록에 필요 없고, 담으면
+// 606배가 된다. 상세 모달은 그 회원 문서 하나만 따로 읽는다.
+const ADMIN_MEMBERS_CACHE_MS = 10 * 60 * 1000;
+
+/** 보낸 메일 기록에서 본문을 걷어낸다. 목록에 필요한 건 언제·무엇을 보냈나뿐이다. */
+function trimEmailEntry(entry) {
+    if (!entry || typeof entry !== "object") return null;
+    const { html, ...rest } = entry;
+    return rest;
+}
+
+function compactEmailLog(rawLog) {
+    if (!rawLog || typeof rawLog !== "object") return null;
+    const byDays = rawLog.reEngagementByDays || {};
+    const history = Array.isArray(rawLog.reEngagementHistory) ? rawLog.reEngagementHistory : [];
+    return {
+        lastSentAt: rawLog.lastSentAt || null,
+        lastSentDays: rawLog.lastSentDays || null,
+        lastSentRecipient: rawLog.lastSentRecipient || "",
+        lastSentSubject: rawLog.lastSentSubject || "",
+        lastSentSummary: rawLog.lastSentSummary || "",
+        sentCount: rawLog.sentCount || 0,
+        reEngagementByDays: {
+            day3: trimEmailEntry(byDays.day3),
+            day7: trimEmailEntry(byDays.day7),
+        },
+        reEngagementHistory: history.slice(0, 12).map(trimEmailEntry).filter(Boolean),
+    };
+}
+
+async function buildAdminMemberList() {
+    const [usersSnap, emailLogsSnap] = await Promise.all([
+        db.collection("users").get(),
+        db.collection("emailLogs").get(),
+    ]);
+
+    const emailLogs = new Map();
+    emailLogsSnap.forEach((docSnap) => emailLogs.set(docSnap.id, compactEmailLog(docSnap.data())));
+
+    const members = usersSnap.docs.map((docSnap) => {
+        const data = docSnap.data() || {};
+        const blocked = Array.isArray(data.blockedUsers) ? data.blockedUsers : [];
+        return {
+            uid: docSnap.id,
+            customDisplayName: data.customDisplayName || "",
+            displayName: data.displayName || "",
+            email: data.email || "",
+            missionLevel: data.missionLevel || 1,
+            currentStreak: data.currentStreak || 0,
+            coins: data.coins || 0,
+            totalHbtEarned: data.totalHbtEarned ?? null,
+            hbtBalance: data.hbtBalance ?? null,
+            feedbackDate: data.feedbackDate || "",
+            adminFeedback: data.adminFeedback || "",
+            referralCode: data.referralCode || "",
+            referredBy: data.referredBy || "",
+            lastLogDate: data.lastLogDate || "",
+            locale: data.locale || "",
+            blockedCount: blocked.length,
+            blockedUsers: blocked.slice(0, 3),
+            emailLog: emailLogs.get(docSnap.id) || null,
+        };
+    });
+
+    return { members, total: members.length };
+}
+
+exports.getAdminMembers = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const force = request.data?.force === true;
+        const cacheRef = db.doc("meta/adminMembers");
+
+        if (!force) {
+            try {
+                const cached = await cacheRef.get();
+                const data = cached.exists ? cached.data() : null;
+                const builtAt = data?.builtAt?.toMillis ? data.builtAt.toMillis() : 0;
+                if (data?.members && Date.now() - builtAt < ADMIN_MEMBERS_CACHE_MS) {
+                    return { members: data.members, total: data.total, cached: true, builtAt };
+                }
+            } catch (error) {
+                console.warn("[getAdminMembers] 캐시 읽기 실패:", error?.message || error);
+            }
+        }
+
+        const built = await buildAdminMemberList();
+        try {
+            // 1MB 를 넘길 수 있다. 넘치면 캐시를 포기하고 계산 결과만 준다 —
+            // 쪼개 담는 복잡도보다, 캐시가 없는 편이 낫다(그래도 읽기는 서버에서 한다).
+            await cacheRef.set({ ...built, builtAt: FieldValue.serverTimestamp() });
+        } catch (error) {
+            console.warn("[getAdminMembers] 캐시 저장 건너뜀:", error?.message || error);
+        }
+        return { ...built, cached: false, builtAt: Date.now() };
+    }
+);
+
+// ── 관제탑: 건강 지표 추이 ────────────────────────────────────────────────
+//
+// uid 를 주면 그 회원 한 명, 안 주면 꾸준히 기록하는 분들 전체.
+// 계산은 functions/health-trends.js 한 곳에 있고 여기서는 데이터만 모은다.
+const HEALTH_TRENDS_CACHE_MS = 6 * 60 * 60 * 1000;
+
+function trendWindowStart(todayStr) {
+    const today = new Date(`${todayStr}T12:00:00Z`).getTime();
+    // 13주 + 이번 주 여유 하루
+    return new Date(today - (TREND_WEEKS * 7 + 1) * 86400000).toISOString().slice(0, 10);
+}
+
+async function loadMemberHealthTrends(uid, todayStr) {
+    const since = trendWindowStart(todayStr);
+    const [logsSnap, bloodSnap, inbodySnap, userSnap] = await Promise.all([
+        db.collection("daily_logs").where("userId", "==", uid).where("date", ">=", since).get(),
+        db.collection("users").doc(uid).collection("bloodTests").get(),
+        db.collection("users").doc(uid).collection("inbodyHistory").get(),
+        db.doc(`users/${uid}`).get(),
+    ]);
+
+    const logs = logsSnap.docs.map((docSnap) => docSnap.data() || {});
+    const bloodTests = bloodSnap.docs.map((docSnap) => ({ date: docSnap.id, ...(docSnap.data() || {}) }));
+    const inbodyHistory = inbodySnap.docs.map((docSnap) => ({ date: docSnap.id, ...(docSnap.data() || {}) }));
+    const profile = (userSnap.exists ? userSnap.data() : {})?.healthProfile || {};
+
+    return { ...buildMemberTrends({ logs, profile, bloodTests, inbodyHistory, todayStr }), profile };
+}
+
+async function loadCohortHealthTrends(todayStr) {
+    const since = trendWindowStart(todayStr);
+    // 회원마다 질의하면 606번이 된다. 기간으로 한 번 읽고 uid 로 묶는다.
+    const logsSnap = await db.collection("daily_logs").where("date", ">=", since).get();
+    const logsByUid = {};
+    logsSnap.forEach((docSnap) => {
+        const log = docSnap.data() || {};
+        if (!log.userId) return;
+        (logsByUid[log.userId] = logsByUid[log.userId] || []).push(log);
+    });
+
+    const usersSnap = await db.collection("users").get();
+    const profiles = {};
+    usersSnap.forEach((docSnap) => {
+        const profile = (docSnap.data() || {}).healthProfile;
+        if (profile) profiles[docSnap.id] = { heightCm: profile.heightCm };
+    });
+
+    return buildCohortTrends({ logsByUid, profiles, todayStr, minActiveDays: COHORT_MIN_ACTIVE_DAYS });
+}
+
+exports.getHealthTrends = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 180 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const todayStr = getCurrentKstDateString();
+        const uid = String(request.data?.uid || "").trim();
+
+        // 한 명분은 싸다. 캐시하지 않는다 — 방금 들어온 기록이 안 보이는 편이 더 나쁘다.
+        if (uid) {
+            return { scope: "member", uid, todayStr, specs: METRIC_SPECS, ...(await loadMemberHealthTrends(uid, todayStr)) };
+        }
+
+        const cacheRef = db.doc("meta/healthTrends");
+        const force = request.data?.force === true;
+        if (!force) {
+            try {
+                const cached = await cacheRef.get();
+                const data = cached.exists ? cached.data() : null;
+                const builtAt = data?.builtAt?.toMillis ? data.builtAt.toMillis() : 0;
+                if (data?.metrics && Date.now() - builtAt < HEALTH_TRENDS_CACHE_MS) {
+                    return { scope: "cohort", todayStr: data.todayStr, specs: METRIC_SPECS, ...data, cached: true, builtAt };
+                }
+            } catch (error) {
+                console.warn("[getHealthTrends] 캐시 읽기 실패:", error?.message || error);
+            }
+        }
+
+        const cohort = await loadCohortHealthTrends(todayStr);
+        try {
+            await cacheRef.set({ ...cohort, todayStr, builtAt: FieldValue.serverTimestamp() });
+        } catch (error) {
+            console.warn("[getHealthTrends] 캐시 저장 건너뜀:", error?.message || error);
+        }
+        return { scope: "cohort", todayStr, specs: METRIC_SPECS, ...cohort, cached: false, builtAt: Date.now() };
     }
 );
 

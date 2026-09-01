@@ -50,6 +50,23 @@
         .card.danger .val { color: var(--danger); }
         .card.green .val { color: #2E7D32; }
 
+        /* 건강 지표 변화 표 — 좋아졌는지 나빠졌는지가 색과 화살표로 먼저 읽혀야 한다. */
+        .trend-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: right; }
+        .trend-table th { background: #F3E5F5; color: var(--primary); padding: 8px 6px; white-space: nowrap; text-align: right; }
+        .trend-table th:first-child, .trend-table td:first-child { text-align: left; }
+        .trend-table td { padding: 8px 6px; border-bottom: 1px solid #eee; white-space: nowrap; }
+        .trend-dir { font-weight: 700; }
+        .trend-dir.improved { color: #2E7D32; }
+        .trend-dir.worsened { color: #C62828; }
+        .trend-dir.flat { color: #888; }
+        /* 방향을 말할 수 없는 지표(체중·BMI)와 표본이 모자란 칸은 회색으로 둔다.
+           모르는 것을 개선으로 칠하면 그 표는 아무 말도 안 하는 것보다 나쁘다. */
+        .trend-dir.neutral, .trend-dir.unknown { color: #aaa; font-weight: 400; }
+        .trend-toggle { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .trend-toggle button { padding: 5px 12px; border: 1px solid #ddd; background: #fff; border-radius: 999px; cursor: pointer; font-size: 12px; color: #666; }
+        .trend-toggle button.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+        .cohort-note { font-size: 12px; color: #888; margin: 6px 0 12px; line-height: 1.6; }
+
         /* 알림 토스트 — 브라우저 대화상자는 확인을 누를 때까지 페이지 전체를 멈춰 세운다.
            관제탑은 한 자리에서 여러 건을 연달아 처리하는 화면이라, 매번 대화상자를
            닫아야 다음 일을 할 수 있다는 것 자체가 작업 비용이다. */
@@ -309,6 +326,24 @@
                     <thead><tr><th>종류</th><th>진행 중</th><th>완료 대기</th><th>누적 완료</th></tr></thead>
                     <tbody id="challenge-body"><tr><td colspan="4">로딩 중...</td></tr></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!--
+          이 앱이 존재하는 이유에 대한 질문이다 — 꾸준히 기록하는 분들이 실제로
+          건강해지고 있는가. 대시보드를 열 때마다 자동으로 돌리지 않는 이유는,
+          13주치 기록을 훑는 집계라 열어 볼 때만 값을 치르는 편이 맞아서다.
+        -->
+        <div class="box">
+            <h3>💚 꾸준히 기록하는 분들의 건강 변화
+                <button class="btn btn-primary" id="cohort-trend-btn" style="float:right;font-size:12px;padding:6px 14px;"
+                    onclick="loadCohortTrends(true)">집계하기</button>
+            </h3>
+            <div id="cohort-trend-body">
+                <div class="cohort-note">
+                    최근 30일 중 15일 이상 기록한 회원을 묶어, 최근 13주 동안 지표가 어느 쪽으로
+                    움직였는지 봅니다. <strong>집계하기</strong>를 누르면 계산합니다.
+                </div>
             </div>
         </div>
     </div>
@@ -633,16 +668,31 @@
                 <div class="sec-box">
                     <h3 class="sec-title">🧬 프로필</h3>
                     <div class="info-grid">
+                        <div class="info-row"><span class="info-lbl">키</span><span class="info-val" id="p-height">-</span></div>
+                        <div class="info-row"><span class="info-lbl">BMI</span><span class="info-val" id="p-bmi">-</span></div>
                         <div class="info-row"><span class="info-lbl">체지방</span><span class="info-val" id="p-fat">-</span></div>
-                        <div class="info-row"><span class="info-lbl">당화혈색소</span><span class="info-val" id="p-hba1c">-</span></div>
+                        <div class="info-row"><span class="info-lbl">골격근량</span><span class="info-val" id="p-smm">-</span></div>
                         <div class="info-row"><span class="info-lbl">내장지방</span><span class="info-val" id="p-visceral">-</span></div>
+                        <div class="info-row"><span class="info-lbl">기초대사량</span><span class="info-val" id="p-bmr">-</span></div>
+                        <div class="info-row"><span class="info-lbl">당화혈색소</span><span class="info-val" id="p-hba1c">-</span></div>
+                        <div class="info-row"><span class="info-lbl">총콜레스테롤</span><span class="info-val" id="p-chol">-</span></div>
+                        <div class="info-row"><span class="info-lbl">HDL</span><span class="info-val" id="p-hdl">-</span></div>
+                        <div class="info-row"><span class="info-lbl">non-HDL</span><span class="info-val" id="p-nonhdl">-</span></div>
+                        <div class="info-row"><span class="info-lbl">흡연</span><span class="info-val" id="p-smoking">-</span></div>
                         <div class="info-row"><span class="info-lbl">스트릭</span><span class="info-val" id="p-streak">-</span></div>
                         <div class="info-row"><span class="info-lbl">코인</span><span class="info-val" id="p-coins">-</span></div>
                     </div>
                     <div style="font-size:12px;"><strong style="color:#888;">복용 약물</strong><ul id="p-meds" style="margin:7px 0 0;padding-left:18px;font-size:12px;color:#555;"></ul></div>
                 </div>
                 <div class="sec-box">
-                    <h3 class="sec-title">📈 30일 트렌드</h3>
+                    <h3 class="sec-title">📊 건강 지표 변화 <span style="font-size:11px;font-weight:400;color:#999;">최근 4주 vs 직전 4주</span></h3>
+                    <div id="member-trend-table" style="overflow-x:auto;">
+                        <div style="padding:16px;text-align:center;color:#888;font-size:13px;">불러오는 중...</div>
+                    </div>
+                </div>
+                <div class="sec-box">
+                    <h3 class="sec-title">📈 주간 추이 <span style="font-size:11px;font-weight:400;color:#999;">최근 13주</span></h3>
+                    <div id="member-trend-toggle" class="trend-toggle"></div>
                     <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
                 </div>
                 <div class="sec-box" style="margin-bottom:0;">
@@ -750,7 +800,7 @@
         setTimeout(() => el.remove(), Math.min(15000, 3200 + text.length * 55));
     };
 
-    let trendChart = null, activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
+    let activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
     const ADMIN_DASHBOARD_CORE_TIMEOUT_MS = 9000;
     const ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS = 7000;
@@ -951,6 +1001,31 @@
     const getBloodTestQualityStatsCallable = httpsCallable(fns, 'getBloodTestQualityStats');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
+    const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
+    const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
+
+    /**
+     * 회원 목록을 서버에서 한 번에 받아, 기존 소비처가 쓰던 스냅샷 모양으로 감싼다.
+     *
+     * 예전에는 users 컬렉션을 통째로 읽었다(회원 606명이면 606건, 관제탑을 열 때마다).
+     * 소비처가 다섯 곳이라 전부 고쳐 쓰는 대신, `forEach(u => u.data())` 라는 같은
+     * 모양을 유지하는 얇은 껍데기를 씌운다.
+     */
+    function toMemberSnapshot(members) {
+        const rows = Array.isArray(members) ? members : [];
+        return {
+            size: rows.length,
+            docs: rows.map((member) => ({ id: member.uid, data: () => member })),
+            forEach(callback) {
+                rows.forEach((member) => callback({ id: member.uid, data: () => member }));
+            }
+        };
+    }
+
+    async function fetchAdminMemberSnapshot(force = false) {
+        const response = await getAdminMembersCallable({ force });
+        return toMemberSnapshot(response.data?.members);
+    }
     const adminResendRewardCouponCallable = httpsCallable(fns, 'adminResendRewardCoupon');
     const adminRefundRewardCouponCallable = httpsCallable(fns, 'adminRefundRewardCoupon');
     const adminReconcileRewardCouponCallable = httpsCallable(fns, 'adminReconcileRewardCoupon');
@@ -1322,7 +1397,7 @@
 
         // Callable이 실패해도 기존 Firestore 읽기는 한 번에 시작해 9초+7초 워터폴을 만들지 않는다.
         const dailyLogsPromise = getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500)));
-        const usersPromise = getDocs(collection(db, 'users'));
+        const usersPromise = fetchAdminMemberSnapshot();
         const ago7 = new Date(todayStr);
         ago7.setDate(ago7.getDate() - 6);
         const ago7str = toDateKey(ago7);
@@ -1366,7 +1441,7 @@
     async function getData(force = false, options = {}) {
         if (!force && cache) return cache;
         const dailyLogsPromise = getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500)));
-        const usersPromise = getDocs(collection(db, 'users'));
+        const usersPromise = fetchAdminMemberSnapshot();
         if (options.allowPartial) {
             const fallback = cache || { snap: EMPTY_ADMIN_QUERY_SNAPSHOT, usersQ: EMPTY_ADMIN_QUERY_SNAPSHOT };
             const [snapRead, usersRead] = await Promise.all([
@@ -1388,6 +1463,190 @@
         const [snap, usersQ] = await Promise.all([dailyLogsPromise, usersPromise]);
         cache = { snap, usersQ };
         return cache;
+    }
+
+
+    // ── 건강 지표 추이 ────────────────────────────────────────
+    //
+    // 값 하나로는 "좋아지고 있나" 에 답할 수 없다. 서버(functions/health-trends.js)가
+    // 주 단위 시계열과 방향을 만들어 주고, 여기서는 그리기만 한다. 같은 계산을 관제탑에
+    // 한 벌 더 두면 기준이 조용히 갈라진다.
+    const TREND_DIR_LABEL = { improved: '개선', worsened: '악화', flat: '유지', neutral: '–', unknown: '–' };
+    const TREND_COLORS = ['#9C27B0', '#FF9800', '#F44336', '#2E7D32', '#1976D2', '#795548', '#607D8B', '#E91E63'];
+    let memberTrendChart = null, cohortTrendChart = null;
+
+    function formatTrendValue(value, spec) {
+        if (value === null || value === undefined || !Number.isFinite(Number(value))) return '–';
+        const decimals = Number(spec?.decimals ?? 1);
+        return Number(value).toLocaleString('ko-KR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function formatTrendDelta(summary, spec) {
+        if (summary.delta === null || summary.delta === undefined) return '–';
+        const sign = summary.delta > 0 ? '+' : '';
+        return `${sign}${formatTrendValue(summary.delta, spec)}`;
+    }
+
+    function renderTrendDirectionCell(summary) {
+        // 체중·BMI 는 화살표를 붙이지 않는다. 감량이 언제나 개선인 것은 아니다.
+        if (summary.bandFrom && summary.bandTo && summary.bandFrom !== summary.bandTo) {
+            return `<span class="trend-dir neutral">${escapeHtml(summary.bandFrom)} → ${escapeHtml(summary.bandTo)}</span>`;
+        }
+        const mark = summary.direction === 'improved' ? '↑ 개선'
+            : summary.direction === 'worsened' ? '↓ 악화'
+            : TREND_DIR_LABEL[summary.direction] || '–';
+        return `<span class="trend-dir ${summary.direction}">${mark}</span>`;
+    }
+
+    function renderTrendTable(metrics, { showCounts = false } = {}) {
+        const rows = metrics.map((metric) => {
+            const summary = metric.summary || {};
+            const counts = metric.counts || {};
+            return `<tr>
+                <td><strong>${escapeHtml(metric.label)}</strong>${metric.unit ? `<span style="color:#aaa;font-size:11px;"> ${escapeHtml(metric.unit)}</span>` : ''}</td>
+                <td>${formatTrendValue(summary.recent, metric)}</td>
+                <td>${formatTrendValue(summary.previous, metric)}</td>
+                <td>${formatTrendDelta(summary, metric)}</td>
+                <td>${renderTrendDirectionCell(summary)}</td>
+                ${showCounts ? `<td><span style="color:#2E7D32;">${counts.improved || 0}</span> / <span style="color:#C62828;">${counts.worsened || 0}</span> / <span style="color:#888;">${(counts.flat || 0) + (counts.neutral || 0)}</span></td>` : ''}
+            </tr>`;
+        }).join('');
+
+        return `<table class="trend-table">
+            <thead><tr>
+                <th>지표</th><th>최근 4주</th><th>직전 4주</th><th>변화</th><th>방향</th>
+                ${showCounts ? '<th>개선/악화/유지</th>' : ''}
+            </tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    /** 주간 라인 차트. 지표 토글로 한 번에 하나씩 본다 — 단위가 서로 달라 겹쳐 그릴 수 없다. */
+    function renderTrendChart(canvasId, toggleId, payload, current, onSelect) {
+        const metrics = (payload.metrics || []).filter((metric) => (metric.weekly || []).some((value) => value !== null));
+        const toggle = document.getElementById(toggleId);
+        if (!metrics.length) {
+            if (toggle) toggle.innerHTML = '<span style="font-size:12px;color:#888;">그릴 기록이 아직 없습니다.</span>';
+            return null;
+        }
+        const active = metrics.find((metric) => metric.key === current) || metrics[0];
+
+        if (toggle) {
+            toggle.innerHTML = metrics.map((metric) => `
+                <button type="button" class="${metric.key === active.key ? 'active' : ''}" data-metric="${escapeHtml(metric.key)}">${escapeHtml(metric.label)}</button>
+            `).join('');
+            toggle.querySelectorAll('button').forEach((button) => {
+                button.onclick = () => onSelect(button.dataset.metric);
+            });
+        }
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const color = TREND_COLORS[metrics.indexOf(active) % TREND_COLORS.length];
+        return new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: (payload.weekKeys || []).map((key) => key.slice(5)),
+                datasets: [{
+                    label: `${active.label}${active.unit ? ` (${active.unit})` : ''}`,
+                    data: active.weekly,
+                    borderColor: color,
+                    backgroundColor: 'rgba(156,39,176,0.08)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    // 기록이 없는 주는 null 이다. 이어 그리되 0 으로 떨어뜨리지 않는다.
+                    spanGaps: true
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+
+    // 흡연 상태 라벨. js/le8-score.js 의 NICOTINE_LABELS 와 같은 문구를 쓴다.
+    const SMOKING_LABELS = {
+        never: '비흡연',
+        quit_5y_plus: '금연 5년 이상',
+        quit_1_5y: '금연 1~5년',
+        quit_under_1y: '금연 1년 미만',
+        current: '현재 흡연 중'
+    };
+
+    let memberTrendPayload = null, memberTrendMetric = 'weight';
+
+    async function loadMemberTrends(uid) {
+        const tableEl = document.getElementById('member-trend-table');
+        tableEl.innerHTML = '<div style="padding:16px;text-align:center;color:#888;font-size:13px;">불러오는 중...</div>';
+        try {
+            const response = await getHealthTrendsCallable({ uid });
+            memberTrendPayload = response.data || null;
+            if (!memberTrendPayload) throw new Error('빈 응답');
+            const metrics = (memberTrendPayload.metrics || []).filter(
+                (metric) => (metric.weekly || []).some((value) => value !== null)
+            );
+            tableEl.innerHTML = metrics.length
+                ? renderTrendTable(metrics)
+                : '<div style="padding:16px;text-align:center;color:#888;font-size:13px;">최근 13주 안에 비교할 기록이 없습니다.</div>';
+            drawMemberTrendChart();
+        } catch (error) {
+            tableEl.innerHTML = `<div style="padding:16px;color:#C62828;font-size:13px;">추이를 불러오지 못했습니다 (${escapeHtml(error.message || error)})</div>`;
+        }
+    }
+
+    function drawMemberTrendChart() {
+        if (!memberTrendPayload) return;
+        if (memberTrendChart) memberTrendChart.destroy();
+        memberTrendChart = renderTrendChart('trendChart', 'member-trend-toggle', memberTrendPayload, memberTrendMetric, (key) => {
+            memberTrendMetric = key;
+            drawMemberTrendChart();
+        });
+    }
+
+    let cohortTrendPayload = null, cohortTrendMetric = 'weight';
+
+    window.loadCohortTrends = async function(force = false) {
+        const box = document.getElementById('cohort-trend-body');
+        const button = document.getElementById('cohort-trend-btn');
+        if (button) { button.disabled = true; button.textContent = '집계 중…'; }
+        box.innerHTML = '<div style="padding:20px;text-align:center;color:#888;">집계 중입니다. 처음 실행은 시간이 걸립니다…</div>';
+        try {
+            const response = await getHealthTrendsCallable({ force });
+            cohortTrendPayload = response.data || null;
+            renderCohortTrends();
+        } catch (error) {
+            box.innerHTML = `<div style="padding:20px;color:#C62828;">집계하지 못했습니다 (${escapeHtml(error.message || error)})</div>`;
+        } finally {
+            if (button) { button.disabled = false; button.textContent = '다시 집계'; }
+        }
+    };
+
+    function renderCohortTrends() {
+        const box = document.getElementById('cohort-trend-body');
+        if (!cohortTrendPayload) return;
+        const { memberCount, minActiveDays, activeWindowDays, builtAt, cached } = cohortTrendPayload;
+        if (!memberCount) {
+            box.innerHTML = `<div class="cohort-note">최근 ${activeWindowDays}일 중 ${minActiveDays}일 이상 기록한 회원이 아직 없습니다.</div>`;
+            return;
+        }
+        const stamp = builtAt ? new Date(builtAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit' }) : '-';
+        box.innerHTML = `
+            <div class="cohort-note">
+                최근 ${activeWindowDays}일 중 <strong>${minActiveDays}일 이상</strong> 기록한 <strong>${memberCount}명</strong> 기준 ·
+                집계 ${escapeHtml(stamp)}${cached ? ' (캐시)' : ''}
+            </div>
+            <div style="overflow-x:auto;">${renderTrendTable(cohortTrendPayload.metrics || [], { showCounts: true })}</div>
+            <div class="trend-toggle" id="cohort-trend-toggle" style="margin-top:14px;"></div>
+            <div class="chart-wrap"><canvas id="cohortTrendChart"></canvas></div>
+        `;
+        drawCohortTrendChart();
+    }
+
+    function drawCohortTrendChart() {
+        if (!cohortTrendPayload) return;
+        if (cohortTrendChart) cohortTrendChart.destroy();
+        cohortTrendChart = renderTrendChart('cohortTrendChart', 'cohort-trend-toggle', cohortTrendPayload, cohortTrendMetric, (key) => {
+            cohortTrendMetric = key;
+            drawCohortTrendChart();
+        });
     }
 
     // ── Tab 1: Dashboard ──────────────────────────────────────
@@ -1578,10 +1837,9 @@
         try {
             const { snap, usersQ } = await getData();
 
-            // 이메일 발송 이력 조회
-            const emailLogsSnap = await getDocs(collection(db, 'emailLogs'));
-            const emailLogs = {};
-            emailLogsSnap.forEach(d => { emailLogs[d.id] = d.data(); });
+            // 발송 이력은 회원 목록 payload 에 이미 실려 온다. 예전에는 emailLogs
+            // 컬렉션을 통째로 한 번 더 읽었는데, 문서마다 보낸 메일 본문까지 들어 있어
+            // 목록을 열 때마다 그만큼 내려받았다.
 
             const latestLog = {}; snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
 
@@ -1607,7 +1865,7 @@
 
                 // 이메일 발송 배지
                 let emailBadge = '';
-                const emailLog = getNormalizedEmailLog(emailLogs[uid] || {}, { email: m.email || '' });
+                const emailLog = getNormalizedEmailLog(m.emailLog || {}, { email: m.email || '' });
                 const eLog = emailLog;
                 const sentAt = toJsDate(eLog?.lastSentAt);
                 if (sentAt) {
@@ -1625,7 +1883,9 @@
 
                 memberRows.push({
                     uid,
-                    date: r.date || '-',
+                    // 500건 창에서 뽑은 r.date 는 회원이 늘수록 짧은 기간만 덮는다.
+                    // 회원 문서에 적어 둔 값을 먼저 쓰고, 없을 때만 창에서 본 값을 쓴다.
+                    date: m.lastLogDate || r.date || '-',
                     name,
                     email: displayEmail,
                     level: m.missionLevel || 1,
@@ -2968,7 +3228,7 @@
         try {
             const { usersQ } = await getData();
             const rows = [];
-            usersQ.forEach(u => { const d=u.data(); if (d.blockedUsers?.length>0) rows.push({ name:d.customDisplayName||d.displayName||u.id.slice(0,8), cnt:d.blockedUsers.length, list:d.blockedUsers.slice(0,3).join(', ')+(d.blockedUsers.length>3?'…':'') }); });
+            usersQ.forEach(u => { const d=u.data(); const cnt = Number(d.blockedCount ?? d.blockedUsers?.length ?? 0); if (cnt>0) rows.push({ name:d.customDisplayName||d.displayName||u.id.slice(0,8), cnt, list:(d.blockedUsers||[]).slice(0,3).join(', ')+(cnt>3?'…':'') }); });
             if (!rows.length) { tbody.innerHTML='<tr><td colspan="3" style="color:#999;">차단 내역 없음</td></tr>'; return; }
             rows.sort((a,b)=>b.cnt-a.cnt);
             tbody.innerHTML = rows.map(r=>`<tr><td>${escapeHtml(r.name)}</td><td>${r.cnt}명</td><td style="font-size:11px;">${escapeHtml(r.list)}</td></tr>`).join('');
@@ -3365,12 +3625,34 @@
             if (galleryLink) galleryLink.href = `/?galleryUser=${encodeURIComponent(uid)}#gallery`;
             document.getElementById('modal-name').textContent = m.customDisplayName||m.displayName||'알 수 없음';
             document.getElementById('modal-sub').textContent = `Lv.${m.missionLevel||1} · 🔥${m.currentStreak||0}일 · ${(m.coins||0).toLocaleString()}P`;
-            const hp = m.healthProfile||{};
-            document.getElementById('p-fat').textContent = hp.fat?`${hp.fat} kg`:'-';
-            document.getElementById('p-hba1c').textContent = hp.hba1c?`${hp.hba1c} %`:'-';
-            document.getElementById('p-visceral').textContent = hp.visceral||'-';
-            document.getElementById('p-streak').textContent = `🔥${m.currentStreak||0}일`;
-            document.getElementById('p-coins').textContent = `${(m.coins||0).toLocaleString()}P`;
+            // healthProfile 은 목록 payload 에 싣지 않는다(회원 606명분이 된다).
+            // 한 명을 열 때 그 문서만 따로 읽는다.
+            let hp = {};
+            try {
+                const userDoc = await getDoc(doc(db, 'users', uid));
+                hp = (userDoc.exists() ? userDoc.data() : {}).healthProfile || {};
+            } catch (_) { hp = {}; }
+
+            const setInfo = (id, value) => { document.getElementById(id).textContent = value; };
+            const latestWeight = logsForProfile => {
+                const withWeight = logsForProfile.find(log => Number(log?.metrics?.weight) > 0);
+                return withWeight ? Number(withWeight.metrics.weight) : null;
+            };
+            setInfo('p-height', hp.heightCm ? `${hp.heightCm} cm` : '-');
+            setInfo('p-fat', hp.fat ? `${hp.fat} kg` : '-');
+            setInfo('p-smm', hp.smm ? `${hp.smm} kg` : '-');
+            setInfo('p-visceral', hp.visceral || '-');
+            setInfo('p-bmr', hp.bmr ? `${Number(hp.bmr).toLocaleString()} kcal` : '-');
+            setInfo('p-hba1c', hp.hba1c ? `${hp.hba1c} %` : '-');
+            setInfo('p-chol', hp.totalCholesterol ? `${hp.totalCholesterol} mg/dL` : '-');
+            setInfo('p-hdl', hp.hdl ? `${hp.hdl} mg/dL` : '-');
+            setInfo('p-nonhdl', (hp.totalCholesterol && hp.hdl) ? `${Math.round(hp.totalCholesterol - hp.hdl)} mg/dL` : '-');
+            setInfo('p-smoking', SMOKING_LABELS[hp.smokingStatus] || '-');
+            if (hp.secondhandSmoke) {
+                document.getElementById('p-smoking').textContent += ' · 간접흡연';
+            }
+            setInfo('p-streak', `🔥${m.currentStreak||0}일`);
+            setInfo('p-coins', `${(m.coins||0).toLocaleString()}P`);
             let medsHtml=''; (hp.meds||[]).forEach(x=>{ medsHtml+=`<li>${escapeHtml(x)}</li>`; }); if(hp.medOther) medsHtml+=`<li>${escapeHtml(hp.medOther)}</li>`;
             document.getElementById('p-meds').innerHTML = medsHtml||'<li>없음</li>';
 
@@ -3379,12 +3661,14 @@
 
             const logs = detailLogsSnapshot.docs.map((recordDoc) => recordDoc.data());
 
-            // Trend chart
-            const labels=[],bst=[],sys=[];
-            for(let i=29;i>=0;i--){ const d=new Date(todayStr); d.setDate(d.getDate()-i); const ds=d.toISOString().split('T')[0]; const l=logs.find(x=>x.date===ds); labels.push(ds.slice(5)); bst.push(l?.metrics?.glucose||null); sys.push(l?.metrics?.bpSystolic||null); }
-            const ctx=document.getElementById('trendChart').getContext('2d');
-            if(trendChart) trendChart.destroy();
-            trendChart=new Chart(ctx,{ type:'line', data:{ labels, datasets:[ {label:'공복혈당',data:bst,borderColor:'#FF9800',backgroundColor:'rgba(255,152,0,0.1)',borderWidth:2,tension:0.3,spanGaps:true}, {label:'수축기혈압',data:sys,borderColor:'#F44336',backgroundColor:'rgba(244,67,54,0.1)',borderWidth:2,tension:0.3,spanGaps:true} ] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } } });
+            const weightNow = latestWeight(logs);
+            setInfo('p-bmi', (weightNow && hp.heightCm)
+                ? `${(weightNow / Math.pow(hp.heightCm / 100, 2)).toFixed(1)}`
+                : '-');
+
+            // 추이는 서버가 주 단위로 만들어 준다. 30일 일별 그래프는 결측에 흔들려
+            // 방향을 읽기 어려웠다.
+            loadMemberTrends(uid);
 
             // History cards
             document.getElementById('history-wrap').innerHTML = logs.map(r => {
