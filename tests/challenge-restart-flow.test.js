@@ -29,7 +29,7 @@ describe('same-day challenge restart flow', () => {
         // (블록체인 모듈을 안 싣는 라이트 모드에서도 눌리게 하려면 그래야 했다.)
         // 갱신은 그대로 강제한다 — 위치만 옮겼을 뿐이다.
         const claimSource = readRepoFile('js/challenge-claim.js');
-        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=353';");
+        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=354';");
         // 갱신은 refreshAfterClaim 으로 모았다 — 성공했을 때와 클라이언트가 기다리다
         // 지쳤을 때(deadline-exceeded) 둘 다 같은 확인을 거쳐야 하기 때문이다.
         expect(claimSource).toContain('window.updateAssetDisplay(true)');

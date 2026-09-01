@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=353';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=354';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=353';
-import { getDatesInfo } from './ui-helpers.js?v=353';
-import { escapeHtml } from './security.js?v=353';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=353';
+import { showToast } from './ui-helpers.js?v=354';
+import { getDatesInfo } from './ui-helpers.js?v=354';
+import { escapeHtml } from './security.js?v=354';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=354';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=353';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=353';
-import { trackProductEvent } from './product-events.js?v=353';
+} from './auth-login-helpers.js?v=354';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=354';
+import { trackProductEvent } from './product-events.js?v=354';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=353';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=354';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1365,6 +1365,11 @@ export function setupAuthListener(callbacks) {
                     }, 400);
                 }
 
+                // 복귀 보너스는 서버 트리거가 조용히 넣는다. 알리지 않으면 받은 줄도
+                // 모르고, 그러면 그 포인트는 돌아오게 만드는 힘을 하나도 갖지 못한다.
+                // 한 번 알리고 표시를 지운다.
+                announceComebackBonus(user, ud?.comebackBonusNotice);
+
                 // 건강정보(민감정보) 동의 상태를 화면에 반영한다.
                 // 기존 가입자는 consents가 아예 없으므로 동의하지 않은 것으로 본다 —
                 // 받은 적 없는 동의를 있다고 보면 안 된다.
@@ -1845,6 +1850,30 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindConsentUi);
 } else {
     bindConsentUi();
+}
+
+/**
+ * 복귀 보너스를 받았다고 한 번 알린다.
+ *
+ * 서버 트리거(awardComebackBonus)가 포인트를 넣으면서 표시를 남겨 둔다. 앱이 열릴 때
+ * 그 표시를 보고 알린 뒤 지운다 — 안 지우면 열 때마다 같은 축하가 반복된다.
+ * 지우기에 실패하면 다음에 한 번 더 나오는 정도이므로 조용히 넘어간다.
+ */
+async function announceComebackBonus(user, notice) {
+    const points = Number(notice?.points) || 0;
+    if (!user?.uid || points <= 0) return;
+
+    const days = Number(notice?.gapDays) || 0;
+    showToast(days > 0
+        ? `🎉 ${days}일 만에 돌아오셨네요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`
+        : `🎉 다시 오신 걸 환영해요! 복귀 보너스 ${points.toLocaleString()}P를 드렸어요.`,
+    { durationMs: 6000 });
+
+    try {
+        await setDoc(doc(db, 'users', user.uid), { comebackBonusNotice: deleteField() }, { merge: true });
+    } catch (error) {
+        console.warn('복귀 보너스 안내 표시 정리 실패:', error?.message || error);
+    }
 }
 
 // 건강정보 동의 상태. 화면 여러 곳에서 봐야 해서 전역에 둔다.

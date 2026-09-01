@@ -222,7 +222,11 @@ service cloud.firestore {
                     'programPreferences', 'rewardRecipientPhone',
                     'chatbotLinkCode', 'chatbotLinkCodeExpiresAt', 'chatbotLinkCodeGeneratedAt',
                     'chatbotLinkCodeLastUsedAt', 'chatbotConnectLastLinkedAt',
-                    'chatbotConnectLastKakaoDisplayName', 'consents']);
+                    'chatbotConnectLastKakaoDisplayName', 'consents',
+                    // 복귀 보너스 안내 표시. 서버 트리거가 넣고, 앱이 한 번 알린 뒤 지운다.
+                    // 여기 없으면 그 삭제가 permission-denied 로 조용히 거부돼 같은
+                    // 축하가 열 때마다 반복된다.
+                    'comebackBonusNotice']);
     }
 
     function isAllowedUserCreate() {

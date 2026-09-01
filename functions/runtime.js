@@ -57,6 +57,10 @@ const {
     collectSocialCounts,
 } = require("./mvp-score");
 const {
+    COMEBACK_BONUS_POINTS,
+    decideComebackBonus,
+} = require("./comeback-bonus");
+const {
     METRIC_SPECS,
     COHORT_MIN_ACTIVE_DAYS,
     TREND_WEEKS,
@@ -3720,16 +3724,94 @@ function getAwardMapFromLedgerUnits(units = []) {
  * 실패해도 삼킨다 — 포인트 정산이 이 갱신 때문에 재시도되면 안 된다.
  */
 async function updateUserLastLogDate(userId, logDate) {
-    if (!userId || !/^\d{4}-\d{2}-\d{2}$/.test(String(logDate || ""))) return;
+    if (!userId || !/^\d{4}-\d{2}-\d{2}$/.test(String(logDate || ""))) return null;
     try {
         const userRef = db.doc(`users/${userId}`);
         const snapshot = await userRef.get();
-        if (!snapshot.exists) return;
-        const known = String((snapshot.data() || {}).lastLogDate || "");
-        if (known >= logDate) return;
+        if (!snapshot.exists) return null;
+        const data = snapshot.data() || {};
+        const known = String(data.lastLogDate || "");
+        // 복귀 판정에 쓰려면 덮어쓰기 전의 값이 필요하다.
+        const previous = { lastLogDate: known, comebackBonusDate: String(data.comebackBonusDate || "") };
+        if (known >= logDate) return previous;
         await userRef.set({ lastLogDate: logDate }, { merge: true });
+        return previous;
     } catch (error) {
         console.warn(`lastLogDate 갱신 실패: ${userId}`, error?.message || error);
+        return null;
+    }
+}
+
+/**
+ * 오래 쉬었다가 돌아온 회원에게 복귀 보너스를 준다.
+ *
+ * 규칙은 comeback-bonus.js 한 곳에 있다. 여기서는 원장에 적고 포인트를 올린다 —
+ * 추천 보너스(checkReferralMilestone)와 같은 방식이다. 원장 항목 ID 에 날짜를 넣어
+ * 같은 날 기록을 여러 번 고쳐도 한 번만 나가게 한다.
+ */
+async function awardComebackBonus(userId, logDate, previous) {
+    const decision = decideComebackBonus({
+        logDate,
+        previousLogDate: previous?.lastLogDate || "",
+        lastBonusDate: previous?.comebackBonusDate || "",
+    });
+    if (!decision.earned) return null;
+
+    const userRef = db.doc(`users/${userId}`);
+    const ledgerRoot = db.doc(`point_ledger/${userId}_bonuses`);
+    const ledgerEntry = ledgerRoot.collection("entries").doc(`comeback_${logDate}`);
+
+    try {
+        const credited = await db.runTransaction(async (tx) => {
+            const [ledgerSnap, userSnap] = await Promise.all([tx.get(ledgerEntry), tx.get(userRef)]);
+            if (ledgerSnap.exists || !userSnap.exists) return false;
+
+            // 트랜잭션 안에서 다시 본다. 같은 날 기록이 연달아 저장되면 두 번 들어올 수 있다.
+            const fresh = userSnap.data() || {};
+            const recheck = decideComebackBonus({
+                logDate,
+                previousLogDate: previous?.lastLogDate || "",
+                lastBonusDate: String(fresh.comebackBonusDate || ""),
+            });
+            if (!recheck.earned) return false;
+
+            tx.create(ledgerEntry, {
+                userId,
+                category: "comeback",
+                points: decision.points,
+                gapDays: decision.gapDays,
+                logDate,
+                source: "comeback_bonus",
+                credited: true,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+            tx.set(ledgerRoot, {
+                userId,
+                type: "bonus",
+                version: 2,
+                lastSettledAt: FieldValue.serverTimestamp(),
+            }, { merge: true });
+            tx.set(userRef, {
+                coins: FieldValue.increment(decision.points),
+                comebackBonusDate: logDate,
+                // 조용히 넣으면 받은 줄도 모른다. 앱이 다음에 열릴 때 한 번 알린다.
+                comebackBonusNotice: {
+                    points: decision.points,
+                    gapDays: decision.gapDays,
+                    date: logDate,
+                },
+            }, { merge: true });
+            return true;
+        });
+
+        if (credited) {
+            console.log(`comeback bonus: ${userId} ${logDate} +${decision.points}P (${decision.gapDays}일 만에 복귀)`);
+        }
+        return credited ? decision : null;
+    } catch (error) {
+        // 보너스 실패로 포인트 정산 전체를 재시도시키지 않는다.
+        console.warn(`복귀 보너스 실패: ${userId}`, error?.message || error);
+        return null;
     }
 }
 
@@ -3941,7 +4023,8 @@ exports.awardPoints = onDocumentWritten(
                 // 회원은 목록에서 날짜가 빈칸으로 보인다 — "기록이 없는 사람" 과
                 // "창 밖으로 밀려난 사람" 이 구분되지 않는다. 기록이 들어올 때 회원
                 // 문서에 한 번 적어 두면 창 길이와 무관해진다.
-                await updateUserLastLogDate(userId, logDate);
+                const previousLogState = await updateUserLastLogDate(userId, logDate);
+                await awardComebackBonus(userId, logDate, previousLogState);
 
                 // 추천인 마일스톤 보상
                 await checkReferralMilestone(userId, streak);

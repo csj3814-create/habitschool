@@ -50,7 +50,8 @@ describe('최근 기록일이 조회 창에 매여 있지 않다', () => {
 
     it('지난 기록을 고쳐도 최근 기록일이 뒤로 가지 않는다', () => {
         const fn = RUNTIME.split('async function updateUserLastLogDate(userId, logDate) {')[1].split('\n}')[0];
-        expect(fn).toContain('if (known >= logDate) return;');
+        // 앞선 날짜만 앞으로 민다. 이전 값은 복귀 판정에 쓰이므로 그대로 돌려준다.
+        expect(fn).toContain('if (known >= logDate) return previous;');
     });
 
     it('갱신이 실패해도 포인트 정산을 재시도시키지 않는다', () => {
