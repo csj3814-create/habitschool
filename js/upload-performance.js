@@ -1,11 +1,22 @@
 const KB = 1024;
 const MB = 1024 * KB;
 
+// 이 크기 이하면 다시 인코딩하지 않고 원본 그대로 올린다.
+//
+// 한도가 1.8MB 였는데, 그게 거꾸로 된 결과를 만들고 있었다. 1.8MB 를 넘는 사진은
+// 640×640 으로 줄여 100KB 안쪽으로 올라가는데, 1.7MB 짜리는 **원본 그대로** 올라갔다.
+// 작은 사진이 큰 사진보다 스무 배 많은 바이트를 보내고 있었던 것이다.
+//
+// 느린 업링크에서는 그 차이가 성패를 가른다. 1.7MB 를 실효 0.08Mbps 로 올리면 3분이
+// 넘어 하드 타임아웃에 걸린다(2026-09-02 제보가 그것이었다). 같은 사진을 100KB 로
+// 줄이면 십몇 초다.
+//
+// 다시 인코딩하는 비용은 폰에서 수백 밀리초다. 그보다 작은 파일에서만 건너뛴다.
 const FAST_PATH_IMAGE_LIMITS = Object.freeze({
-    'image/jpeg': Math.round(1.8 * MB),
-    'image/jpg': Math.round(1.8 * MB),
-    'image/webp': Math.round(1.8 * MB),
-    'image/png': Math.round(0.9 * MB)
+    'image/jpeg': Math.round(0.3 * MB),
+    'image/jpg': Math.round(0.3 * MB),
+    'image/webp': Math.round(0.3 * MB),
+    'image/png': Math.round(0.3 * MB)
 });
 
 // 사진의 제한 시간은 오래 고정값(60초/30초)이었다. 그 값은 빠른 회선을 가정한다.

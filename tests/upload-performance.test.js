@@ -58,7 +58,22 @@ describe('createSequentialTaskQueue', () => {
 });
 
 describe('shouldFastPathImageCompression', () => {
-    it('keeps smaller jpeg uploads on the fast path', () => {
+    it('keeps genuinely small jpeg uploads on the fast path', () => {
+        // 다시 인코딩하는 값(수백 밀리초)이 아끼는 바이트보다 클 만큼 작은 파일.
+        expect(shouldFastPathImageCompression({
+            type: 'image/jpeg',
+            size: Math.round(0.2 * 1024 * 1024)
+        }, {
+            maxWidth: 640,
+            maxHeight: 640,
+            quality: 0.6
+        })).toBe(true);
+    });
+
+    it('shrinks a mid-size photo instead of sending it whole', () => {
+        // 한도가 1.8MB 이던 시절에는 1.2MB 사진이 원본 그대로 올라갔다. 1.8MB 를 넘는
+        // 사진은 640px 로 줄여 100KB 안쪽이었으니, 작은 사진이 큰 사진보다 열 배 넘는
+        // 바이트를 보내고 있었다. 느린 업링크에서 그 차이가 타임아웃을 갈랐다.
         expect(shouldFastPathImageCompression({
             type: 'image/jpeg',
             size: Math.round(1.2 * 1024 * 1024)
@@ -66,7 +81,7 @@ describe('shouldFastPathImageCompression', () => {
             maxWidth: 640,
             maxHeight: 640,
             quality: 0.6
-        })).toBe(true);
+        })).toBe(false);
     });
 
     it('does not skip conversion for HEIC uploads', () => {
