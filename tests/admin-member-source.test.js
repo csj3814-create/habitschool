@@ -214,3 +214,26 @@ describe('멈추면 멈췄다고 말한다', () => {
         expect(refresh).toContain('adminMemberSnapshotInFlight = null;');
     });
 });
+
+// 자산&HBT 는 20~30초 만에 열렸다. 그 탭은 daily_logs 500건(1.6MB)을 기다리는데,
+// 화면에 그 데이터를 한 글자도 쓰지 않는다.
+describe('쓰지 않는 데이터를 기다리지 않는다', () => {
+    it('기록이 필요 없는 탭은 기록을 걸지 않는다', () => {
+        // 자산&HBT · 차단 현황 · 초대 현황 셋 다 usersQ 만 쓴다.
+        const calls = ADMIN.match(/await getData\([^)]*\)/g) || [];
+        expect(calls.filter(c => c.includes('withLogs: false'))).toHaveLength(3);
+        expect(ADMIN).not.toContain('const { usersQ } = await getData();');
+    });
+
+    it('기록을 쓰는 곳은 그대로 받는다', () => {
+        expect(ADMIN).toContain('const { snap, usersQ } = await getData();');
+    });
+
+    it('기록 없이 받은 결과를 캐시에 남기지 않는다', () => {
+        // snap 이 빈 채로 캐시에 들어가면, 기록이 필요한 호출부가 그걸 물려받아
+        // "기록이 없다" 로 잘못 읽는다.
+        const branch = ADMIN.split('if (options.withLogs === false) {')[1].split('\n        }')[0];
+        expect(branch).toContain('return { snap: EMPTY_ADMIN_QUERY_SNAPSHOT, usersQ };');
+        expect(branch).not.toContain('cache =');
+    });
+});
