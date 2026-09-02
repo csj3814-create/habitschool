@@ -852,12 +852,22 @@
     let activityChart = null, dailyPointsChart = null, miningChart = null, recordTypeChart = null;
     let cache = null; // { snapshot, usersQ }
     const ADMIN_DASHBOARD_CORE_TIMEOUT_MS = 9000;
+
+    // 회원 목록은 따로 잰다.
+    //
+    // 9초는 Firestore 를 직접 읽던 시절의 값이다. 지금은 콜러블이 목록을 만들어 주는데,
+    // 함수가 잠들어 있었다면 깨어나는 데만 몇 초가 걸린다. 그 9초에 걸리면 화면은
+    // 빈 목록을 받아 "총 0명" 이라고 말한다 — 회원이 607명인데도.
+    // 기다리는 편이 낫다. 없다고 말하는 것보다.
+    const ADMIN_MEMBER_FETCH_TIMEOUT_MS = 25000;
     const ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS = 7000;
     const EMPTY_ADMIN_QUERY_SNAPSHOT = {
         size: 0,
         forEach() {}
     };
     let memberRows = [], memberFilter = 'all', sortCol = 'date', sortDir = 'desc', memberCurrentPage = 0;
+    // 'loading' | 'ready' | 'error' — 빈 목록의 이유를 화면이 구분해 말할 수 있게 한다.
+    let memberListState = 'loading';
     const memberOnchainHbt = {};
     const PAGE_SIZE_MEMBERS = 20;
     const tabLoaded = {};
@@ -971,7 +981,13 @@
         const next = document.getElementById('member-next');
         if (!meta || !label || !prev || !next) return;
 
-        meta.textContent = `총 ${totalRows}명 · 페이지당 ${PAGE_SIZE_MEMBERS}명`;
+        // 불러오는 중인 것과 아무도 없는 것은 다르다. 같은 문장으로 말하면
+        // 화면이 고장 난 것처럼 읽힌다 — 실제로 그렇게 보고가 왔다.
+        meta.textContent = memberListState === 'loading'
+            ? '회원 목록을 불러오는 중…'
+            : memberListState === 'error'
+                ? '회원 목록을 불러오지 못했습니다'
+                : `총 ${totalRows}명 · 페이지당 ${PAGE_SIZE_MEMBERS}명`;
         label.textContent = `${memberCurrentPage + 1} / ${totalPages}`;
         prev.disabled = memberCurrentPage === 0 || totalRows === 0;
         next.disabled = memberCurrentPage >= totalPages - 1 || totalRows === 0;
@@ -1570,7 +1586,7 @@
         const ago7str = toDateKey(ago7);
         const [snapRead, usersRead, weekRead, reportsRead] = await Promise.all([
             resolveAdminRead(dailyLogsPromise, 'daily_logs recent', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
-            resolveAdminRead(usersPromise, 'users', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
+            resolveAdminRead(usersPromise, 'users', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_MEMBER_FETCH_TIMEOUT_MS),
             resolveAdminRead(getDocs(query(collection(db, 'daily_logs'), where('date', '>=', ago7str), where('date', '<=', todayStr))), 'daily_logs week', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
             resolveAdminRead(getDocs(collection(db, 'reports')), 'reports', EMPTY_ADMIN_QUERY_SNAPSHOT)
         ]);
@@ -1613,7 +1629,7 @@
             const fallback = cache || { snap: EMPTY_ADMIN_QUERY_SNAPSHOT, usersQ: EMPTY_ADMIN_QUERY_SNAPSHOT };
             const [snapRead, usersRead] = await Promise.all([
                 resolveAdminRead(dailyLogsPromise, 'daily_logs recent', fallback.snap, ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
-                resolveAdminRead(usersPromise, 'users', fallback.usersQ, ADMIN_DASHBOARD_CORE_TIMEOUT_MS)
+                resolveAdminRead(usersPromise, 'users', fallback.usersQ, ADMIN_MEMBER_FETCH_TIMEOUT_MS)
             ]);
             const snap = snapRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
             const usersQ = usersRead.value || EMPTY_ADMIN_QUERY_SNAPSHOT;
@@ -2099,6 +2115,10 @@
 
     // ── Tab 2: Members ────────────────────────────────────────
     async function loadMembers() {
+        memberListState = 'loading';
+        renderMemberPagination(0);
+        document.getElementById('member-tbody').innerHTML =
+            '<tr><td colspan="13" style="color:#888;">회원 목록을 불러오는 중… (처음 열 때는 몇 초 걸릴 수 있습니다)</td></tr>';
         try {
             const { snap, usersQ } = await getData();
 
@@ -2167,12 +2187,23 @@
                 });
             });
             memberCurrentPage = 0;
+            memberListState = 'ready';
             renderMembers();
         } catch(e) {
-            document.getElementById('member-tbody').innerHTML = `<tr><td colspan="13" style="color:red;">${escapeHtml(e.message)}</td></tr>`;
+            memberListState = 'error';
+            document.getElementById('member-tbody').innerHTML =
+                `<tr><td colspan="13" style="color:#C62828;">불러오지 못했습니다 — ${escapeHtml(e.message || e)}`
+                + ` <button class="btn" style="margin-left:8px;font-size:12px;padding:4px 10px;" onclick="reloadMemberList()">다시 시도</button></td></tr>`;
             renderMemberPagination(0);
         }
     }
+
+    /** 실패한 목록을 다시 불러온다. 캐시를 버려야 같은 빈 결과를 또 쓰지 않는다. */
+    window.reloadMemberList = function() {
+        cache = null;
+        tabLoaded['members'] = false;
+        loadMembers();
+    };
 
     window.renderMembers = function() {
         const term = document.getElementById('member-search')?.value || '';
@@ -2189,6 +2220,8 @@
         });
         const tbody = document.getElementById('member-tbody');
         if (!rows.length) {
+            // 아직 안 받아왔으면 "조건에 맞는 회원 없음" 이 아니다.
+            if (memberListState !== 'ready') { renderMemberPagination(0); return; }
             tbody.innerHTML='<tr><td colspan="13" style="color:#999;">조건에 맞는 회원 없음</td></tr>';
             memberCurrentPage = 0;
             renderMemberPagination(0);

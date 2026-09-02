@@ -151,3 +151,29 @@ describe('회원 목록을 빨리 만든다', () => {
         expect(ADMIN).toContain('if (!force && adminMemberSnapshotInFlight) return adminMemberSnapshotInFlight;');
     });
 });
+
+// 회원이 607명인데 화면이 "총 0명" 이라고 말한 제보가 있었다. 목록이 아직 안 왔을
+// 뿐인데, 불러오는 중과 아무도 없는 것을 같은 문장으로 말하고 있었다.
+describe('빈 목록의 이유를 구분해 말한다', () => {
+    it('불러오는 중에는 인원수를 말하지 않는다', () => {
+        expect(ADMIN).toContain("memberListState === 'loading'");
+        expect(ADMIN).toContain("'회원 목록을 불러오는 중…'");
+        expect(ADMIN).toContain("'회원 목록을 불러오지 못했습니다'");
+    });
+
+    it('실패하면 다시 시도할 수 있다', () => {
+        expect(ADMIN).toContain('window.reloadMemberList');
+        expect(ADMIN).toContain('다시 시도');
+    });
+
+    it('아직 안 받아왔으면 "조건에 맞는 회원 없음" 이라고 하지 않는다', () => {
+        expect(ADMIN).toContain("if (memberListState !== 'ready') { renderMemberPagination(0); return; }");
+    });
+
+    it('회원 목록은 대시보드보다 오래 기다린다', () => {
+        // 9초는 Firestore 를 직접 읽던 시절의 값이다. 콜러블은 깨어나는 데만 몇 초가
+        // 걸릴 수 있고, 그때 빈 목록을 받느니 기다리는 편이 낫다.
+        expect(ADMIN).toContain('const ADMIN_MEMBER_FETCH_TIMEOUT_MS = 25000;');
+        expect(ADMIN).toContain("resolveAdminRead(usersPromise, 'users', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_MEMBER_FETCH_TIMEOUT_MS)");
+    });
+});
