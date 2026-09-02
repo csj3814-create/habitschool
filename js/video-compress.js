@@ -22,13 +22,34 @@
 
 const MB = 1024 * 1024;
 
-// 이보다 작으면 그냥 올린다.
+// 이보다 작으면 그냥 올린다. 디코딩도 하지 않는 값싼 1차 관문이다.
 //
-// 재인코딩은 재생 속도로 걸린다. 그 기다림은 진행률이 아무리 정확해도 사라지지
-// 않으므로, 줄여서 버는 시간이 기다리는 시간보다 확실히 클 때만 값을 한다.
-// 10초 7MB 같은 파일은 이론상 이득이지만 체감으로는 "왜 바로 안 올라가지"가 되고,
-// 그게 이 기능을 쓸 수 없게 만든 실제 불만이었다. 확실히 큰 것만 줄인다.
-export const VIDEO_COMPRESS_MIN_BYTES = 15 * MB;
+// 15MB 였다. 크기 하나로 정하면 틀린다는 게 드러나 8MB 로 낮추고, 대신 길이를 함께
+// 보는 2차 관문(isCompressionWorthwhile)을 뒤에 뒀다. 길이는 파일을 열어야 알 수
+// 있어서 여기서는 볼 수 없다.
+export const VIDEO_COMPRESS_MIN_BYTES = 8 * MB;
+
+// 압축이 이득인지는 크기가 아니라 **비트레이트**가 정한다.
+//
+// 재인코딩은 재생 속도로 걸린다 — 60초 영상이면 60초. 그동안 한 바이트도 올라가지
+// 않는다. 그러니 "줄여서 버는 업로드 시간 > 줄이는 데 드는 시간" 일 때만 값을 한다.
+//
+// 버는 양은 (원본 - 목표 4MB) 이고, 그걸 느린 업링크(약 1Mbps)로 환산하면 대략
+// (MB 차이 × 8)초다. 그 값이 재생 시간보다 커야 한다.
+//
+//   10MB · 20초 → 48초 절약 vs 20초 대기 → 줄인다
+//   10MB · 60초 → 48초 절약 vs 60초 대기 → 그냥 올린다
+//
+// 같은 10MB 라도 짧고 뚱뚱하면 줄이고, 길고 가벼우면 그대로 둔다.
+export function isCompressionWorthwhile(sizeBytes, durationMs) {
+    const sizeMB = Math.max(0, Number(sizeBytes) || 0) / MB;
+    const durationSec = Math.max(0, Number(durationMs) || 0) / 1000;
+    // 길이를 못 읽은 파일은 크기만 보고 판단한다 — 1차 관문을 통과했으니 줄인다.
+    if (durationSec <= 0) return true;
+    const savedMB = sizeMB - (TARGET_UPLOAD_BYTES / MB);
+    if (savedMB <= 0) return false;
+    return savedMB * 8 > durationSec;
+}
 
 // 비트레이트는 "올린 뒤의 용량"에서 거꾸로 정한다.
 //
@@ -215,6 +236,15 @@ export async function compressExerciseVideo(file, {
     const durationMs = Number.isFinite(video.duration) && video.duration > 0
         ? video.duration * 1000
         : 0;
+
+    // 2차 관문. 길이는 여기까지 와야 알 수 있다. 길고 가벼운 영상은 줄이는 시간이
+    // 버는 시간보다 길어서, 그대로 올리는 편이 사용자에게 빠르다.
+    if (!isCompressionWorthwhile(file.size, durationMs)) {
+        console.log('[video] 길이 대비 이득이 없어 원본을 그대로 올립니다: '
+            + (file.size / MB).toFixed(1) + 'MB / ' + (durationMs / 1000).toFixed(0) + '초');
+        cleanup();
+        return null;
+    }
 
     try {
         const stream = video.captureStream();
