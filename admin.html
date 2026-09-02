@@ -1301,12 +1301,26 @@
                         ${shot}
                         <button type="button" onclick="copyBugReport('${bugEsc(v.id)}')"
                             style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">JSON 복사</button>
+                        ${v.uid ? `<button type="button" onclick="toggleBugReply('${bugEsc(v.id)}')"
+                            style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #7B1FA2;background:#fff;color:#7B1FA2;cursor:pointer;">💬 답장 보내기</button>` : ''}
                         ${done
                             ? `<button type="button" onclick="setBugReportStatus('${bugEsc(v.id)}', 'open')"
                                 style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;">다시 열기</button>`
                             : `<button type="button" onclick="setBugReportStatus('${bugEsc(v.id)}', 'done')"
                                 style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid #2E7D32;background:#2E7D32;color:#fff;cursor:pointer;">처리 완료</button>`}
                     </div>
+                    ${v.uid ? `<div id="bug-reply-${bugEsc(v.id)}" hidden style="margin-top:10px;border-top:1px dashed #ddd;padding-top:10px;">
+                        <textarea rows="4" placeholder="${bugEsc(v.displayName || v.email || '회원')}님께 보낼 안내 메시지"
+                            style="width:100%;box-sizing:border-box;font-size:13px;padding:8px;border:1px solid #ccc;border-radius:6px;resize:vertical;"></textarea>
+                        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+                            <button type="button" data-send onclick="sendBugReply('${bugEsc(v.id)}')"
+                                style="font-size:12px;padding:5px 14px;border-radius:6px;border:1px solid #7B1FA2;background:#7B1FA2;color:#fff;cursor:pointer;">보내기</button>
+                            <label style="font-size:12px;color:#666;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                                <input type="checkbox" data-close ${done ? '' : 'checked'}> 보내고 처리 완료로 표시
+                            </label>
+                            <span style="font-size:11px;color:#999;">앱의 해빛 메시지로 전달됩니다</span>
+                        </div>
+                    </div>` : ''}
                 </div>`;
             }).join('');
             window.__bugReportCache = Object.fromEntries(rows.map(v => [v.id, v]));
@@ -1330,6 +1344,46 @@
         } catch (e) {
             console.error('[setBugReportStatus] 실패:', e);
             adminToast('상태를 바꾸지 못했습니다: ' + (e.code || e.message || e), 'error');
+        }
+    };
+
+    // 제보를 읽은 자리에서 바로 답할 수 있게 한다. 예전에는 회원 목록에서 그 사람을
+    // 다시 찾아 상세를 열어야 했고, 그 사이에 답장이 미뤄졌다.
+    window.toggleBugReply = function(id) {
+        const box = document.getElementById(`bug-reply-${id}`);
+        if (!box) return;
+        box.hidden = !box.hidden;
+        if (!box.hidden) box.querySelector('textarea')?.focus();
+    };
+
+    window.sendBugReply = async function(id) {
+        const item = window.__bugReportCache?.[id];
+        const box = document.getElementById(`bug-reply-${id}`);
+        const field = box?.querySelector('textarea');
+        const sendBtn = box?.querySelector('button[data-send]');
+        const message = (field?.value || '').trim();
+        if (!item?.uid) { adminToast('이 제보에는 회원 정보가 없어 보낼 수 없습니다.', 'error'); return; }
+        if (!message) { adminToast('보낼 내용을 입력해 주세요.', 'error'); field?.focus(); return; }
+        if (message.length > 1000) { adminToast('1,000자 이내로 줄여 주세요.', 'error'); return; }
+
+        const label = sendBtn.textContent;
+        sendBtn.disabled = true; sendBtn.textContent = '보내는 중…';
+        try {
+            await submitAdminFeedbackCallable({ targetUid: item.uid, message });
+            adminToast('✅ 안내 메시지를 보냈습니다.', 'success');
+            const alsoClose = !!box.querySelector('input[data-close]')?.checked;
+            if (alsoClose) {
+                await setBugReportStatus(id, 'done');   // 목록을 다시 그린다
+            } else {
+                field.value = '';
+                box.hidden = true;
+            }
+        } catch (e) {
+            // 실패를 삼키면 보낸 줄 알고 넘어간다.
+            console.error('[sendBugReply] 실패:', e);
+            adminToast('보내지 못했습니다: ' + (e.code || e.message || e), 'error');
+        } finally {
+            if (sendBtn.isConnected) { sendBtn.disabled = false; sendBtn.textContent = label; }
         }
     };
 
