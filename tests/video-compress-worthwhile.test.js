@@ -35,15 +35,23 @@ describe('압축은 짧고 뚱뚱한 영상에만 값을 한다', () => {
 });
 
 describe('1차 관문은 디코딩 없이 크기만 본다', () => {
-    it('8MB 로 낮췄다', () => {
-        // 15MB 였다. 크기 하나로 정하면 틀린다는 게 드러나 낮추고,
-        // 길이를 함께 보는 2차 관문을 뒤에 뒀다.
-        expect(VIDEO_COMPRESS_MIN_BYTES).toBe(8 * MB);
+    it('5MB 로 낮췄다', () => {
+        // 15MB → 8MB → 5MB. 운영 표본에서 4-8MB 구간 47개(9.4%)가 걸러지고 있었는데,
+        // 그 크기에 6초면 압축이 이득이다. 판단은 길이를 아는 2차 관문에 맡긴다.
+        expect(VIDEO_COMPRESS_MIN_BYTES).toBe(5 * MB);
     });
 
-    it('8MB 를 넘는 영상만 파일을 열어 본다', () => {
-        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 9 * MB })).toBe(true);
-        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 7 * MB })).toBe(false);
+    it('5MB 를 넘는 영상만 파일을 열어 본다', () => {
+        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 6 * MB })).toBe(true);
+        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 4 * MB })).toBe(false);
+    });
+
+    it('표본의 4-8MB 구간이 이제 2차 관문까지 간다', () => {
+        // 6MB · 6초 → 16초 절약 vs 6초 대기 → 압축이 이득
+        expect(shouldCompressVideoFile({ type: 'video/mp4', size: 6 * MB })).toBe(true);
+        expect(worthwhile(6, 6)).toBe(true);
+        // 6MB · 20초 → 16초 절약 vs 20초 대기 → 그냥 올린다
+        expect(worthwhile(6, 20)).toBe(false);
     });
 
     it('영상이 아니면 보지 않는다', () => {
