@@ -1488,7 +1488,10 @@
             else if (name === 'reward-market') await loadRewardMarketAdmin();
             else if (name === 'moderation') { await loadModeration(); renderBugReports().catch(() => {}); }
             else if (name === 'system') await loadSystem();
-        } catch(e) { console.error('탭 로드 오류:', name, e); }
+        } catch(e) {
+            console.error('탭 로드 오류:', name, e);
+            showTabError(name, e);
+        }
     }
 
     window.refreshTab = function() {
@@ -1496,6 +1499,8 @@
         tabLoaded[name] = false;
         adminTokenStatsCache = null;
         cache = null;
+        adminMemberSnapshotInFlight = null;
+        document.getElementById(`tab-error-${name}`)?.remove();
         loadTab(name);
     };
 
@@ -1508,6 +1513,38 @@
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = `<tr><td colspan="${colspan}" style="color:${color};">${escapeHtml(message)}</td></tr>`;
+    }
+
+    // resolveAdminRead 는 늦으면 빈 값으로 대신 그린다 — 없어도 화면이 서는 조회용이다.
+    // 이건 반대다. 없으면 화면이 못 서는 조회에 쓰고, 늦으면 이유를 들고 던진다.
+    // 던지지 않으면 호출부가 영원히 await 하고, 화면은 "로딩 중..." 에서 멈춘 채
+    // 아무 말도 하지 않는다.
+    function withAdminTimeout(promise, label, timeoutMs) {
+        let timer = null;
+        const timeout = new Promise((_, reject) => {
+            timer = setTimeout(
+                () => reject(new Error(`${label}을(를) ${Math.round(timeoutMs / 1000)}초 안에 받지 못했습니다`)),
+                timeoutMs
+            );
+        });
+        return Promise.race([Promise.resolve(promise), timeout])
+            .finally(() => { if (timer) clearTimeout(timer); });
+    }
+
+    /** 탭 안에 실패를 적는다. 콘솔에만 남기면 보는 사람이 없다. */
+    function showTabError(name, error) {
+        const host = document.getElementById(`tab-${name}`);
+        if (!host) return;
+        const id = `tab-error-${name}`;
+        document.getElementById(id)?.remove();
+        const box = document.createElement('div');
+        box.id = id;
+        box.className = 'card';
+        box.style.cssText = 'border-left:4px solid #C62828;margin-bottom:12px;';
+        box.innerHTML = `<div style="color:#C62828;font-weight:600;">불러오지 못했습니다</div>`
+            + `<div style="color:#666;font-size:13px;margin:6px 0 10px;">${escapeHtml(error?.message || String(error))}</div>`
+            + `<button class="btn" onclick="refreshTab()">다시 시도</button>`;
+        host.prepend(box);
     }
 
     async function resolveAdminRead(promise, label, fallback, timeoutMs = ADMIN_DASHBOARD_OPTIONAL_TIMEOUT_MS) {
@@ -1643,7 +1680,12 @@
             if (!result.partial) cache = { snap, usersQ };
             return result;
         }
-        const [snap, usersQ] = await Promise.all([dailyLogsPromise, usersPromise]);
+        // allowPartial 경로에만 제한시간이 있었다. 이 경로로 들어온 탭(자산&HBT 등)은
+        // 응답이 안 오면 그대로 영원히 기다렸고, 화면은 "로딩 중..." 인 채로 남았다.
+        const [snap, usersQ] = await Promise.all([
+            withAdminTimeout(dailyLogsPromise, '기록 데이터', ADMIN_DASHBOARD_CORE_TIMEOUT_MS),
+            withAdminTimeout(usersPromise, '회원 목록', ADMIN_MEMBER_FETCH_TIMEOUT_MS)
+        ]);
         cache = { snap, usersQ };
         return cache;
     }
@@ -2126,7 +2168,7 @@
             // 공복혈당·혈압 두 칸에만 쓰이는데, 네트워크가 나쁜 날에는 그 한 번의
             // Firestore 왕복이 20초씩 걸려 이름조차 안 나왔다. 이름·포인트·스트릭·
             // 최근 기록일은 전부 콜러블 payload 에 있으니 먼저 내보낸다.
-            const usersQ = await fetchAdminMemberSnapshot();
+            const usersQ = await withAdminTimeout(fetchAdminMemberSnapshot(), '회원 목록', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
             buildMemberRows(usersQ, {});
             memberCurrentPage = 0;
             memberListState = 'ready';
@@ -2227,6 +2269,8 @@
     /** 실패한 목록을 다시 불러온다. 캐시를 버려야 같은 빈 결과를 또 쓰지 않는다. */
     window.reloadMemberList = function() {
         cache = null;
+        // 매달려 있는 요청을 그대로 두면 '다시 시도' 가 같은 것을 또 기다린다.
+        adminMemberSnapshotInFlight = null;
         tabLoaded['members'] = false;
         loadMembers();
     };

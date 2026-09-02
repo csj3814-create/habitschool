@@ -177,3 +177,40 @@ describe('빈 목록의 이유를 구분해 말한다', () => {
         expect(ADMIN).toContain("resolveAdminRead(usersPromise, 'users', EMPTY_ADMIN_QUERY_SNAPSHOT, ADMIN_MEMBER_FETCH_TIMEOUT_MS)");
     });
 });
+
+// "10초 이상 기다렸는데 아무것도 안 나와" — 콘솔에도 아무 메시지가 없었다.
+// 제한시간이 없는 경로에서 멈춰 있으면 화면도 콘솔도 침묵한다.
+describe('멈추면 멈췄다고 말한다', () => {
+    it('영원히 기다리는 await 가 없다', () => {
+        // getData 의 기본 경로에는 제한시간이 없었다. allowPartial 경로에만 있었다.
+        expect(ADMIN).not.toContain('await Promise.all([dailyLogsPromise, usersPromise]);');
+        expect(ADMIN).toContain("withAdminTimeout(dailyLogsPromise, '기록 데이터', ADMIN_DASHBOARD_CORE_TIMEOUT_MS)");
+        expect(ADMIN).toContain("withAdminTimeout(usersPromise, '회원 목록', ADMIN_MEMBER_FETCH_TIMEOUT_MS)");
+    });
+
+    it('회원 목록 콜러블도 제한시간 안에 있다', () => {
+        expect(ADMIN).not.toContain('const usersQ = await fetchAdminMemberSnapshot();');
+        expect(ADMIN).toContain("withAdminTimeout(fetchAdminMemberSnapshot(), '회원 목록', ADMIN_MEMBER_FETCH_TIMEOUT_MS)");
+    });
+
+    it('제한시간이 지나면 이유를 들고 던진다', () => {
+        // 조용히 빈 값을 돌려주면 호출부가 "데이터가 없다" 로 착각한다.
+        const fn = ADMIN.split('function withAdminTimeout(promise, label, timeoutMs) {')[1].split('\n    }')[0];
+        expect(fn).toContain('reject(new Error(');
+        expect(fn).toContain('초 안에 받지 못했습니다');
+    });
+
+    it('탭 로드 실패를 콘솔이 아니라 화면에 적는다', () => {
+        expect(ADMIN).toContain('showTabError(name, e);');
+        expect(ADMIN).toContain('function showTabError(name, error)');
+        expect(ADMIN).toContain('onclick="refreshTab()"');
+    });
+
+    it('다시 시도가 매달린 요청을 다시 물지 않는다', () => {
+        // 시간 초과된 promise 가 dedupe 에 남아 있으면 재시도가 같은 것을 또 기다린다.
+        const reload = ADMIN.split('window.reloadMemberList = function() {')[1].split('};')[0];
+        expect(reload).toContain('adminMemberSnapshotInFlight = null;');
+        const refresh = ADMIN.split('window.refreshTab = function() {')[1].split('};')[0];
+        expect(refresh).toContain('adminMemberSnapshotInFlight = null;');
+    });
+});
