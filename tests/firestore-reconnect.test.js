@@ -11,8 +11,9 @@ describe('Firestore reconnect backoff', () => {
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_RETRY_DELAYS_MS = [1000, 3000];');
         expect(firebaseConfigSource).toContain('const FIRESTORE_RECONNECT_SCHEDULE_DEBOUNCE_MS = 15_000;');
         expect(firebaseConfigSource).toContain('initializeFirestore(app, {');
-        expect(firebaseConfigSource).toContain('experimentalAutoDetectLongPolling: true');
-        expect(firebaseConfigSource).not.toContain('experimentalForceLongPolling: true');
+        // 전송 방식 자체는 tests/firestore-transport.test.js 가 본다.
+        // 2026-05-01 에 여기서 auto-detect 를 못박았지만, 그건 콘솔 노이즈를 줄이려던
+        // 결정이었고 아래 가드들이 그 노이즈를 담당한다. 전송 방식은 그 가드와 별개다.
         expect(firebaseConfigSource).toContain('experimentalLongPollingOptions:');
         expect(firebaseConfigSource).toContain('timeoutSeconds: 25');
         expect(firebaseConfigSource).toContain("setLogLevel('silent');");

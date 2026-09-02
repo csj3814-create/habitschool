@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=356";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=357";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -108,8 +108,28 @@ const firebaseConfig = {
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+// 이 앱은 Firestore 실시간 리스너를 하나도 쓰지 않는다 — 전부 getDoc/getDocs 한 번씩이다.
+// 그래서 WebChannel 스트리밍이 주는 이득이 없는데, 자동 탐지는 그 이득이 있는지 알아보려고
+// 연결마다 왕복을 한 번 더 쓴다. 그 비용만 내고 있었다.
+//
+// 같은 브라우저에서 잰 값(권한 거부까지의 왕복, 두 번씩):
+//   experimentalAutoDetectLongPolling  555ms · 568ms
+//   experimentalForceLongPolling        44ms ·  57ms
+//   (옵션 없음)                        305ms · 366ms
+//
+// 탐지가 실패하는 네트워크에서는 이 비용이 훨씬 커져서, 관제탑의 첫 조회들이 통째로
+// 타임아웃하고 "새로고침하면 그제서야 나오는" 증상이 됐다. 콘솔의 Listen 채널 404 도
+// 이 탐지 프로브가 남기던 것이다.
+//
+// 2026-05-01(8d59e89)에 이 옵션을 auto-detect 로 되돌린 적이 있다. 그때 이유는
+// 콘솔의 FIRESTORE INTERNAL ASSERTION FAILED 노이즈였고, 성능이 아니었다. 그 노이즈를
+// 잡는 가드(bindFirestoreInternalErrorGuard)는 같은 커밋에서 함께 들어와 지금도 있다.
+// 지금 저울에 올라온 것은 콘솔 한 줄이 아니라 관제탑이 20초 동안 아무것도 못 그리는
+// 일이라, 반대쪽을 고른다.
+//
+// 리스너를 쓰기 시작하면 이 선택을 다시 재야 한다. 롱폴링은 연결이 싸고 스트리밍이 비싸다.
 const db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
+    experimentalForceLongPolling: true,
     experimentalLongPollingOptions: {
         timeoutSeconds: 25
     }

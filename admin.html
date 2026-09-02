@@ -391,7 +391,7 @@
                 <tbody id="member-tbody"><tr><td colspan="13">데이터를 불러오는 중...</td></tr></tbody>
             </table>
             <div class="member-pagination">
-                <div id="member-page-meta" class="member-pagination-meta">총 0명</div>
+                <div id="member-page-meta" class="member-pagination-meta">회원 목록을 불러오는 중…</div>
                 <div class="member-pagination-controls">
                     <button class="btn btn-primary" style="padding:4px 12px;font-size:12px;" onclick="memberPage(-1)" id="member-prev">이전</button>
                     <span id="member-page-label">1 / 1</span>
@@ -2120,14 +2120,49 @@
         document.getElementById('member-tbody').innerHTML =
             '<tr><td colspan="13" style="color:#888;">회원 목록을 불러오는 중… (처음 열 때는 몇 초 걸릴 수 있습니다)</td></tr>';
         try {
+            // 1단계 — 회원 목록만 있으면 표는 이미 그릴 수 있다.
+            //
+            // 예전에는 daily_logs 500건 조회가 끝날 때까지 함께 기다렸다. 그 조회는
+            // 공복혈당·혈압 두 칸에만 쓰이는데, 네트워크가 나쁜 날에는 그 한 번의
+            // Firestore 왕복이 20초씩 걸려 이름조차 안 나왔다. 이름·포인트·스트릭·
+            // 최근 기록일은 전부 콜러블 payload 에 있으니 먼저 내보낸다.
+            const usersQ = await fetchAdminMemberSnapshot();
+            buildMemberRows(usersQ, {});
+            memberCurrentPage = 0;
+            memberListState = 'ready';
+            renderMembers();
+
+            // 2단계 — 지표는 늦게 와도 된다. 표는 이미 서 있다.
+            fillMemberMetricsWhenReady();
+        } catch(e) {
+            memberListState = 'error';
+            document.getElementById('member-tbody').innerHTML =
+                `<tr><td colspan="13" style="color:#C62828;">불러오지 못했습니다 — ${escapeHtml(e.message || e)}`
+                + ` <button class="btn" style="margin-left:8px;font-size:12px;padding:4px 10px;" onclick="reloadMemberList()">다시 시도</button></td></tr>`;
+            renderMemberPagination(0);
+        }
+    }
+
+    /** 공복혈당·혈압을 daily_logs 에서 채워 넣고 다시 그린다. 실패해도 표는 남는다. */
+    async function fillMemberMetricsWhenReady() {
+        try {
             const { snap, usersQ } = await getData();
+            const latestLog = {};
+            snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
+            if (!Object.keys(latestLog).length) return;
+            const page = memberCurrentPage;
+            buildMemberRows(usersQ, latestLog);
+            memberCurrentPage = page;
+            renderMembers();
+        } catch (error) {
+            // 지표 두 칸이 비는 것뿐이다. 목록을 지우지 않는다.
+            console.info('[admin-dashboard] 회원 지표를 채우지 못했습니다.', error?.message || error);
+        }
+    }
 
-            // 발송 이력은 회원 목록 payload 에 이미 실려 온다. 예전에는 emailLogs
-            // 컬렉션을 통째로 한 번 더 읽었는데, 문서마다 보낸 메일 본문까지 들어 있어
-            // 목록을 열 때마다 그만큼 내려받았다.
-
-            const latestLog = {}; snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
-
+    /** 회원 목록 payload(+선택적으로 daily_logs 최신 기록)로 표의 행을 만든다. */
+    function buildMemberRows(usersQ, latestLog) {
+        {
             // usersQ(전체 회원) 기준으로 순회 — latestLog에 없는 회원도 포함
             memberRows = [];
             usersQ.forEach(u => {
@@ -2186,15 +2221,6 @@
                     alert: glu >= 126 || sys >= 140,
                 });
             });
-            memberCurrentPage = 0;
-            memberListState = 'ready';
-            renderMembers();
-        } catch(e) {
-            memberListState = 'error';
-            document.getElementById('member-tbody').innerHTML =
-                `<tr><td colspan="13" style="color:#C62828;">불러오지 못했습니다 — ${escapeHtml(e.message || e)}`
-                + ` <button class="btn" style="margin-left:8px;font-size:12px;padding:4px 10px;" onclick="reloadMemberList()">다시 시도</button></td></tr>`;
-            renderMemberPagination(0);
         }
     }
 

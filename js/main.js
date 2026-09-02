@@ -5,11 +5,11 @@
  */
 
 // 인증 모듈 (initializeApp에서 직접 호출)
-import { initAuth, setupAuthListener } from './auth.js?v=356';
-import { APP_ENV } from './firebase-config.js?v=356';
-import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=356';
+import { initAuth, setupAuthListener } from './auth.js?v=357';
+import { APP_ENV } from './firebase-config.js?v=357';
+import { getActiveBscNetwork, getActiveHbtTokenAddress } from './blockchain-config.js?v=357';
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=356';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=357';
 const CONVERSION_RATE_CACHE_KEY = `hs_conversion_rate_${APP_ENV}`;
 
 function readCachedConversionStats() {
@@ -83,7 +83,7 @@ window.convertPointsToHBT = () => { alert('블록체인 모듈 로딩 중입니�
 // 라이트 모드는 그 모듈을 영영 안 싣기 때문에, 여기서 자리표시자로 두면
 // '잠시 후 다시 시도'라는 오지 않을 안내만 남는다. 유료 티어는 라이트에서
 // 감춰져 있어(styles-base.css 의 .play-mode) 이 경로로는 무료만 들어온다.
-window.startChallenge30D = (challengeId) => import('./challenge-claim.js?v=356')
+window.startChallenge30D = (challengeId) => import('./challenge-claim.js?v=357')
     .then(mod => {
         if (mod.isFreeChallenge(challengeId)) return mod.startFreeChallenge(challengeId);
         alert('블록체인 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.');
@@ -105,7 +105,7 @@ window.initializeUserWallet = async () => null;
 // 보상 수령은 서버 호출뿐이라 블록체인 모듈 없이도 된다.
 // 라이트 모드는 그 모듈을 아예 안 싣기 때문에, 여기서 미리 걸어 두지 않으면
 // 완주한 챌린지의 '탭하여 보상 수령'이 undefined 를 불러 아무 일도 일어나지 않는다.
-window.claimChallengeReward = (tier) => import('./challenge-claim.js?v=356')
+window.claimChallengeReward = (tier) => import('./challenge-claim.js?v=357')
     .then(mod => mod.claimChallengeReward(tier))
     .catch(error => {
         console.error('보상 수령 모듈 로드 실패:', error);
