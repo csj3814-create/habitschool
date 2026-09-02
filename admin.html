@@ -2174,20 +2174,17 @@
         document.getElementById('member-tbody').innerHTML =
             '<tr><td colspan="13" style="color:#888;">회원 목록을 불러오는 중… (처음 열 때는 몇 초 걸릴 수 있습니다)</td></tr>';
         try {
-            // 1단계 — 회원 목록만 있으면 표는 이미 그릴 수 있다.
+            // 표에 필요한 것이 전부 콜러블 payload 에 실려 온다 — 공복혈당·혈압까지.
             //
-            // 예전에는 daily_logs 500건 조회가 끝날 때까지 함께 기다렸다. 그 조회는
-            // 공복혈당·혈압 두 칸에만 쓰이는데, 네트워크가 나쁜 날에는 그 한 번의
-            // Firestore 왕복이 20초씩 걸려 이름조차 안 나왔다. 이름·포인트·스트릭·
-            // 최근 기록일은 전부 콜러블 payload 에 있으니 먼저 내보낸다.
+            // 예전에는 이 두 칸 때문에 daily_logs 500건(1.6MB)을 브라우저로 내려받았다.
+            // 느린 회선에서 20~30초가 걸렸고, 그동안 같은 Firestore 채널을 쓰는 다른
+            // 읽기(신고 목록·보상마켓)가 전부 그 뒤에 줄을 서서 함께 멈췄다.
+            // 서버가 uid 당 숫자 세 개만 추려 보내면 그 줄이 사라진다.
             const usersQ = await withAdminTimeout(fetchAdminMemberSnapshot(), '회원 목록', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
-            buildMemberRows(usersQ, {});
+            buildMemberRows(usersQ);
             memberCurrentPage = 0;
             memberListState = 'ready';
             renderMembers();
-
-            // 2단계 — 지표는 늦게 와도 된다. 표는 이미 서 있다.
-            fillMemberMetricsWhenReady();
         } catch(e) {
             memberListState = 'error';
             document.getElementById('member-tbody').innerHTML =
@@ -2197,33 +2194,16 @@
         }
     }
 
-    /** 공복혈당·혈압을 daily_logs 에서 채워 넣고 다시 그린다. 실패해도 표는 남는다. */
-    async function fillMemberMetricsWhenReady() {
-        try {
-            const { snap, usersQ } = await getData();
-            const latestLog = {};
-            snap.forEach(d => { const r = d.data(); if (!latestLog[r.userId]) latestLog[r.userId] = r; });
-            if (!Object.keys(latestLog).length) return;
-            const page = memberCurrentPage;
-            buildMemberRows(usersQ, latestLog);
-            memberCurrentPage = page;
-            renderMembers();
-        } catch (error) {
-            // 지표 두 칸이 비는 것뿐이다. 목록을 지우지 않는다.
-            console.info('[admin-dashboard] 회원 지표를 채우지 못했습니다.', error?.message || error);
-        }
-    }
-
-    /** 회원 목록 payload(+선택적으로 daily_logs 최신 기록)로 표의 행을 만든다. */
-    function buildMemberRows(usersQ, latestLog) {
+    /** 회원 목록 payload 로 표의 행을 만든다. */
+    function buildMemberRows(usersQ) {
         {
-            // usersQ(전체 회원) 기준으로 순회 — latestLog에 없는 회원도 포함
             memberRows = [];
             usersQ.forEach(u => {
                 const uid = u.id;
                 const m = u.data();
-                const r = latestLog[uid] || {};
-                const glu = parseInt(r.metrics?.glucose||0), sys = parseInt(r.metrics?.bpSystolic||0), dia = parseInt(r.metrics?.bpDiastolic||0);
+                const glu = m.latestMetrics?.glucose || 0;
+                const sys = m.latestMetrics?.bpSystolic || 0;
+                const dia = m.latestMetrics?.bpDiastolic || 0;
                 let msgBadge = `<span class="badge badge-gray">대기중</span>`;
                 if (m.feedbackDate) {
                     const diff = (new Date(todayStr) - new Date(m.feedbackDate)) / 86400000;
@@ -2233,7 +2213,7 @@
                         ? `<span class="badge badge-green feedback-sent-badge" style="cursor:pointer;" data-date="${escapeHtml(m.feedbackDate)}" data-msg="${escapeHtml(m.adminFeedback || '')}">✅ 발송됨</span>`
                         : `<span class="badge badge-red">⚠️ ${Math.floor(diff)}일 경과</span>`;
                 }
-                const rawName = r.userName || '';
+                const rawName = m.latestLogUserName || '';
                 const nameFromLog = (!rawName.includes(' ') && rawName.length > 15) ? '' : rawName;
                 const name = m.customDisplayName || m.displayName || nameFromLog || uid.slice(0,8);
 
@@ -2257,9 +2237,8 @@
 
                 memberRows.push({
                     uid,
-                    // 500건 창에서 뽑은 r.date 는 회원이 늘수록 짧은 기간만 덮는다.
-                    // 회원 문서에 적어 둔 값을 먼저 쓰고, 없을 때만 창에서 본 값을 쓴다.
-                    date: m.lastLogDate || r.date || '-',
+                    // 회원 문서에 트리거가 적어 둔 값. 조회 창에 매이지 않는다.
+                    date: m.lastLogDate || '-',
                     name,
                     email: displayEmail,
                     level: m.missionLevel || 1,

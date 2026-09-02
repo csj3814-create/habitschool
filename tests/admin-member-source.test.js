@@ -40,8 +40,9 @@ describe('회원 목록을 통째로 읽지 않는다', () => {
 // 목록의 '최근 기록일' 은 daily_logs 500건 창에서 나왔다. 하루 20~30건이면 그 창은
 // 최근 20~25일이고, 그보다 오래 쉰 회원은 날짜가 빈칸으로 보인다.
 describe('최근 기록일이 조회 창에 매여 있지 않다', () => {
-    it('회원 문서의 lastLogDate 를 먼저 쓴다', () => {
-        expect(ADMIN).toContain("date: m.lastLogDate || r.date || '-',");
+    it('회원 문서의 lastLogDate 를 쓴다', () => {
+        // 500건 창의 r.date 는 폴백으로도 남기지 않는다 — 그 조회를 브라우저에서 없앴다.
+        expect(ADMIN).toContain("date: m.lastLogDate || '-',");
     });
 
     it('기록이 들어오면 트리거가 적어 둔다', () => {
@@ -225,8 +226,10 @@ describe('쓰지 않는 데이터를 기다리지 않는다', () => {
         expect(ADMIN).not.toContain('const { usersQ } = await getData();');
     });
 
-    it('기록을 쓰는 곳은 그대로 받는다', () => {
-        expect(ADMIN).toContain('const { snap, usersQ } = await getData();');
+    it('이제 기록을 기다리는 호출부가 없다', () => {
+        // 마지막 소비처였던 지표 채우기가 서버로 옮겨갔다.
+        expect(ADMIN).not.toContain('const { snap, usersQ } = await getData();');
+        expect(ADMIN).not.toContain('fillMemberMetricsWhenReady');
     });
 
     it('기록 없이 받은 결과를 캐시에 남기지 않는다', () => {
@@ -235,5 +238,36 @@ describe('쓰지 않는 데이터를 기다리지 않는다', () => {
         const branch = ADMIN.split('if (options.withLogs === false) {')[1].split('\n        }')[0];
         expect(branch).toContain('return { snap: EMPTY_ADMIN_QUERY_SNAPSHOT, usersQ };');
         expect(branch).not.toContain('cache =');
+    });
+});
+
+// 공복혈당·혈압 두 칸 때문에 브라우저가 daily_logs 500건(1.6MB)을 내려받았다.
+// 롱폴링 채널을 20~30초 점유해서, 신고 목록·보상마켓 읽기가 그 뒤에 줄을 섰다.
+describe('지표는 서버가 추려서 보낸다', () => {
+    it('서버가 uid 당 숫자 세 개만 싣는다', () => {
+        expect(RUNTIME).toContain('const ADMIN_MEMBER_LOG_FIELDS = [');
+        expect(RUNTIME).toContain('db.collection("daily_logs").orderBy("date", "desc").limit(500)');
+        expect(RUNTIME).toContain('.select(...ADMIN_MEMBER_LOG_FIELDS).get()');
+        expect(RUNTIME).toContain('latestMetrics: buildAdminLatestMetrics(');
+    });
+
+    it('본문·사진·식단 분석은 읽지 않는다', () => {
+        const fields = RUNTIME.split('const ADMIN_MEMBER_LOG_FIELDS = [')[1].split('];')[0];
+        expect(fields).toContain('metrics.glucose');
+        expect(fields).not.toContain('dietAnalysis');
+        expect(fields).not.toContain('photo');
+    });
+
+    it('관제탑은 그 값을 그대로 쓴다', () => {
+        expect(ADMIN).toContain('const glu = m.latestMetrics?.glucose || 0;');
+        expect(ADMIN).toContain("const rawName = m.latestLogUserName || '';");
+    });
+
+    it('회원 목록 경로에 500건 조회가 남아 있지 않다', () => {
+        const body = ADMIN.split('async function loadMembers() {')[1];
+        const fn = body.slice(0, body.indexOf('window.reloadMemberList'));
+        // 주석에는 사연으로 남아 있다. 조회 자체가 없는지를 본다.
+        expect(fn).not.toContain("collection(db, 'daily_logs')");
+        expect(fn).not.toContain('getData(');
     });
 });

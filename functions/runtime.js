@@ -9196,14 +9196,47 @@ const ADMIN_EMAIL_LOG_FIELDS = [
     "lastSentSummary", "sentCount", "reEngagementByDays", "reEngagementHistory",
 ];
 
+// 목록의 공복혈당·혈압 두 칸에 필요한 최소한. metrics 하위만 읽고, 본문·사진·식단
+// 분석은 건드리지 않는다.
+const ADMIN_MEMBER_LOG_FIELDS = [
+    "userId", "date", "userName",
+    "metrics.glucose", "metrics.bpSystolic", "metrics.bpDiastolic",
+];
+
+function buildAdminLatestMetrics(logRow) {
+    const metrics = logRow?.metrics || null;
+    if (!metrics) return null;
+    const num = (value) => {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+    return {
+        glucose: num(metrics.glucose),
+        bpSystolic: num(metrics.bpSystolic),
+        bpDiastolic: num(metrics.bpDiastolic),
+    };
+}
+
 async function buildAdminMemberList() {
-    const [usersSnap, emailLogsSnap] = await Promise.all([
+    const [usersSnap, emailLogsSnap, logsSnap] = await Promise.all([
         db.collection("users").select(...ADMIN_MEMBER_FIELDS).get(),
         db.collection("emailLogs").select(...ADMIN_EMAIL_LOG_FIELDS).get(),
+        // 관제탑이 브라우저에서 직접 읽던 조회다. 500건 1.6MB 를 회선으로 내려받느라
+        // 느린 회선에서는 20~30초가 걸렸고, 그동안 같은 채널을 쓰는 다른 읽기(신고·
+        // 보상마켓)가 전부 그 뒤에 줄을 섰다. 서버에서 읽어 uid 당 숫자 세 개만 싣는다.
+        db.collection("daily_logs").orderBy("date", "desc").limit(500)
+            .select(...ADMIN_MEMBER_LOG_FIELDS).get(),
     ]);
 
     const emailLogs = new Map();
     emailLogsSnap.forEach((docSnap) => emailLogs.set(docSnap.id, compactEmailLog(docSnap.data())));
+
+    // 날짜 내림차순이라 uid 마다 처음 만난 것이 가장 최근이다.
+    const latestLogByUid = new Map();
+    logsSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (row.userId && !latestLogByUid.has(row.userId)) latestLogByUid.set(row.userId, row);
+    });
 
     const members = usersSnap.docs.map((docSnap) => {
         const data = docSnap.data() || {};
@@ -9227,6 +9260,8 @@ async function buildAdminMemberList() {
             blockedCount: blocked.length,
             blockedUsers: blocked.slice(0, 3),
             emailLog: emailLogs.get(docSnap.id) || null,
+            latestMetrics: buildAdminLatestMetrics(latestLogByUid.get(docSnap.id)),
+            latestLogUserName: String(latestLogByUid.get(docSnap.id)?.userName || ""),
         };
     });
 
