@@ -13,9 +13,11 @@ describe('exercise point consistency', () => {
     });
 
     it('explains the 8000-step point rule', () => {
-        expect(appSource).toContain('걸음수는 8,000보부터 유산소 운동 1회로 반영돼요.');
+        // 화면은 '유산소/근력' 대신 '걸음수·이미지 / 영상' 으로 말한다 —
+        // 점수가 갈리는 기준이 운동 종류가 아니라 올린 것의 종류이기 때문이다.
+        expect(appSource).toContain('걸음수는 8,000보부터 운동 인증 1회로 반영돼요.');
         expect(appSource).toContain('저장하면 걸음수도 포인트에 반영돼요.');
-        expect(appSource).toContain('8,000+ steps count as one cardio activity.');
+        expect(appSource).toContain('8,000+ steps count as one exercise credit.');
     });
 
     it('renders authoritative exercise points even while preserving local media UI', () => {
