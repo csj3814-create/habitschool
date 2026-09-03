@@ -1067,6 +1067,7 @@
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
+    const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
     const backfillLastLogDateCallable = httpsCallable(fns, 'backfillLastLogDate');
     const sampleExerciseVideoSizesCallable = httpsCallable(fns, 'sampleExerciseVideoSizes');
@@ -1199,6 +1200,24 @@
     // 치른 셈이다. 진행 중인 호출이 있으면 그 약속을 같이 쓴다.
     let adminMemberSnapshotInFlight = null;
     let adminMemberSnapshotCache = null;
+    // 자산&HBT 한 화면에서 포인트 내역과 HBT 거래가 같은 payload 를 쓴다.
+    let adminEconomyCache = null;
+    let adminEconomyInFlight = null;
+
+    async function fetchAdminEconomy(force = false) {
+        if (!force && adminEconomyCache) return adminEconomyCache;
+        if (!force && adminEconomyInFlight) return adminEconomyInFlight;
+        const request = getAdminEconomyCallable({})
+            .then((response) => {
+                adminEconomyCache = response.data || {};
+                return adminEconomyCache;
+            })
+            .finally(() => {
+                if (adminEconomyInFlight === request) adminEconomyInFlight = null;
+            });
+        if (!force) adminEconomyInFlight = request;
+        return request;
+    }
 
     // 진행 중인 요청만 합치고 끝난 결과는 버리고 있었다. 그래서 회원 목록 · 자산&HBT ·
     // 차단 현황 · 초대 현황이 각자 432kB 를 다시 받았다(운영 Network 실측). 한 화면
@@ -1564,6 +1583,7 @@
         cache = null;
         adminMemberSnapshotInFlight = null;
         adminMemberSnapshotCache = null;
+        adminEconomyCache = null;
         document.getElementById(`tab-error-${name}`)?.remove();
         loadTab(name);
     };
@@ -2327,6 +2347,7 @@
         // 매달려 있는 요청을 그대로 두면 '다시 시도' 가 같은 것을 또 기다린다.
         adminMemberSnapshotInFlight = null;
         adminMemberSnapshotCache = null;
+        adminEconomyCache = null;
         tabLoaded['members'] = false;
         loadMembers();
     };
@@ -2728,26 +2749,19 @@
 
     async function loadTxRows() {
         try {
-            const snap = await getDocs(query(
-                collection(db, 'blockchain_transactions'),
-                orderBy('timestamp', 'desc'),
-                limit(500)
-            ));
-            txAllRows = snap.docs.map((docSnap) => {
-                const t = docSnap.data();
-                const ts = t.timestamp || t.updatedAt;
-                const txDate = toJsDate(ts);
-                const date = txDate
-                    ? txDate.toLocaleDateString('ko')
-                    : (t.date || '-');
-                const amt = t.details?.hbtAmount ?? t.hbtReceived ?? t.amount ?? '-';
-                const txHash = t.txHash || t.stakeTxHash || t.resolveTxHash || t.refundTxHash || '';
+            // 예전에는 blockchain_transactions 500건을 통째로 내려받았다. 화면이 쓰는
+            // 건 문서마다 필드 대여섯 개뿐이라 서버가 추려 보낸다. 라벨은 여기서 만든다.
+            const { txRows = [] } = await withAdminTimeout(
+                fetchAdminEconomy(), 'HBT 거래 내역', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
+            txAllRows = txRows.map((t) => {
+                const txDate = t.timestampMs ? new Date(t.timestampMs) : null;
+                const amt = t.amount ?? '-';
                 return {
-                    date,
+                    date: txDate ? txDate.toLocaleDateString('ko') : (t.date || '-'),
                     name: pointsUsersMap[t.userId] || t.userName || t.userId?.slice(0, 8) || '-',
                     type: t.type || '-',
                     amountLabel: typeof amt === 'number' ? amt.toLocaleString() : String(amt),
-                    hashLabel: txHash ? `${txHash.slice(0, 8)}...` : '-',
+                    hashLabel: t.txHash ? `${t.txHash.slice(0, 8)}...` : '-',
                 };
             });
             txCurrentPage = 0;
@@ -2780,51 +2794,59 @@
     async function loadAllPointsData(usersQ) {
         const rows = [];
 
-        // 1. 일일 습관 포인트 (daily_logs)
+        // 1~3번 출처는 서버가 추려 온다. 예전에는 daily_logs 500건(1.6MB)을 포함해
+        // 세 컬렉션을 브라우저가 직접 읽었다. 라벨은 화면 문구라 여기 그대로 둔다 —
+        // functions 에 복제하면 두 벌이 되고 조용히 갈라진다.
         try {
-            const snap = await getDocs(query(collection(db, 'daily_logs'), orderBy('date', 'desc'), limit(500)));
-            snap.forEach(d => {
-                const r = d.data();
-                const ap = r.awardedPoints || {};
-                const diet = ap.dietPoints || 0, ex = ap.exercisePoints || 0, mind = ap.mindPoints || 0;
-                const total = diet + ex + mind;
-                if (total <= 0) return;
-                const name = pointsUsersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-';
-                const parts = [];
-                if (diet) parts.push(`🥗 식단 +${diet}P`);
-                if (ex)   parts.push(`🏃 운동 +${ex}P`);
-                if (mind) parts.push(`🌙 마음 +${mind}P`);
-                rows.push({ date: r.date || '-', name, type: parts.join(' / '), points: total, sort: r.date || '' });
-            });
-        } catch(e) { console.warn('daily_logs 조회 오류:', e.message); }
+            const { dailyRows = [], mvpRows = [], challengeRows = [] } = await withAdminTimeout(
+                fetchAdminEconomy(), '포인트 지급 내역', ADMIN_MEMBER_FETCH_TIMEOUT_MS);
 
-        // 2. MVP 보상 (monthly_rewards)
-        try {
-            const mvpSnap = await getDocs(query(collection(db, 'monthly_rewards'), orderBy('distributedAt', 'desc'), limit(24)));
-            const RANK_LABEL = ['🥇 MVP 1위', '🥈 MVP 2위', '🥉 MVP 3위'];
-            mvpSnap.forEach(doc => {
-                const d = doc.data();
-                const date = d.distributedAt ? new Date(d.distributedAt.seconds * 1000).toLocaleDateString('en-CA') : (d.month || '-');
-                (d.winners || []).forEach((w, i) => {
-                    rows.push({ date, name: w.name || pointsUsersMap[w.userId] || w.userId?.slice(0,8) || '-',
-                        type: RANK_LABEL[i] || `MVP ${i+1}위`, points: w.reward || 0, sort: date });
+            dailyRows.forEach(r => {
+                const parts = [];
+                if (r.diet)     parts.push(`🥗 식단 +${r.diet}P`);
+                if (r.exercise) parts.push(`🏃 운동 +${r.exercise}P`);
+                if (r.mind)     parts.push(`🌙 마음 +${r.mind}P`);
+                rows.push({
+                    date: r.date || '-',
+                    name: pointsUsersMap[r.userId] || r.userName || r.userId?.slice(0,8) || '-',
+                    type: parts.join(' / '),
+                    points: r.diet + r.exercise + r.mind,
+                    sort: r.date || ''
                 });
             });
-        } catch(e) { console.warn('monthly_rewards 조회 오류:', e.message); }
 
-        // 3. 챌린지 보상 (blockchain_transactions, 복합 인덱스 불필요하게 orderBy 제거)
-        try {
-            const chalSnap = await getDocs(query(collection(db, 'blockchain_transactions'),
-                where('type', '==', 'challenge_settlement'), limit(200)));
-            chalSnap.forEach(doc => {
-                const d = doc.data();
-                if (!d.rewardPoints || d.rewardPoints <= 0) return;
-                const date = d.date || (d.updatedAt ? new Date(d.updatedAt.seconds * 1000).toLocaleDateString('en-CA') : '-');
-                const name = pointsUsersMap[d.userId] || d.userId?.slice(0,8) || '-';
-                const tier = d.challengeId?.includes('30d') ? '30일' : d.challengeId?.includes('7d') ? '7일' : '3일';
-                rows.push({ date, name, type: `🏅 챌린지 완료 (${tier})`, points: d.rewardPoints, sort: date });
+            const RANK_LABEL = ['🥇 MVP 1위', '🥈 MVP 2위', '🥉 MVP 3위'];
+            mvpRows.forEach(r => {
+                const date = r.distributedAtMs
+                    ? new Date(r.distributedAtMs).toLocaleDateString('en-CA')
+                    : (r.month || '-');
+                rows.push({
+                    date,
+                    name: r.name || pointsUsersMap[r.userId] || r.userId?.slice(0,8) || '-',
+                    type: RANK_LABEL[r.rank] || `MVP ${r.rank + 1}위`,
+                    points: r.points,
+                    sort: date
+                });
             });
-        } catch(e) { console.warn('blockchain_transactions 조회 오류:', e.message); }
+
+            challengeRows.forEach(r => {
+                const date = r.date || (r.updatedAtMs
+                    ? new Date(r.updatedAtMs).toLocaleDateString('en-CA')
+                    : '-');
+                const tier = r.challengeId?.includes('30d') ? '30일'
+                    : r.challengeId?.includes('7d') ? '7일' : '3일';
+                rows.push({
+                    date,
+                    name: pointsUsersMap[r.userId] || r.userId?.slice(0,8) || '-',
+                    type: `🏅 챌린지 완료 (${tier})`,
+                    points: r.points,
+                    sort: date
+                });
+            });
+        } catch(e) {
+            // 4번(회원 플래그)은 이미 받아 둔 목록으로 만들 수 있다. 여기서 멈추지 않는다.
+            console.warn('포인트 지급 내역 일부를 불러오지 못했습니다:', e.message || e);
+        }
 
         // 4. 가입 축하 + 초대 이벤트 (users 플래그)
         usersQ.forEach(u => {
@@ -4042,7 +4064,12 @@
                 orderBy('date', 'desc'),
                 limit(30)
             ));
-            const [{ usersQ }, detailLogsSnapshot] = await Promise.all([getData(), detailLogsPromise]);
+            // 이 모달은 회원 정보만 쓴다. 상세 기록은 바로 위 detailLogsPromise 가
+            // 그 회원 30일치만 따로 읽는다 — 전체 500건은 필요 없다.
+            const [{ usersQ }, detailLogsSnapshot] = await Promise.all([
+                getData(false, { withLogs: false }),
+                detailLogsPromise
+            ]);
             const meta = {}; usersQ.forEach(u => { meta[u.id]=u.data(); });
             const m = meta[uid]||{};
             const galleryLink = document.getElementById('modal-gallery-link');

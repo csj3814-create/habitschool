@@ -288,3 +288,46 @@ describe('회원 목록을 한 번만 받는다', () => {
         expect(refresh).toContain('adminMemberSnapshotCache = null;');
     });
 });
+
+// 자산&HBT 탭은 daily_logs 500건과 blockchain_transactions 500건을 브라우저로
+// 내려받았다. 화면이 쓰는 건 문서마다 필드 몇 개뿐인데, 클라이언트 SDK 에는
+// 필드 마스크가 없어 문서를 통째로 받아야 한다.
+describe('자산&HBT 도 서버가 추려서 보낸다', () => {
+    it('서버가 네 출처를 한 번에 읽는다', () => {
+        expect(RUNTIME).toContain('exports.getAdminEconomy = onCall(');
+        const fn = RUNTIME.split('async function buildAdminEconomy() {')[1].split('\n}')[0];
+        expect(fn).toContain('.select(...ADMIN_ECONOMY_LOG_FIELDS).get()');
+        expect(fn).toContain('.select(...ADMIN_ECONOMY_TX_FIELDS).get()');
+    });
+
+    it('화면 문구는 서버로 옮기지 않는다', () => {
+        // 라벨을 functions 에 복제하면 두 벌이 되고 조용히 갈라진다.
+        // (주석에는 그 이유로 예시가 적혀 있으니 함수 본문만 본다.)
+        const fn = RUNTIME.split('async function buildAdminEconomy() {')[1]
+            .split('exports.getAdminEconomy')[0];
+        expect(fn).not.toContain('🥗');
+        expect(fn).not.toContain('🏅');
+        expect(fn).not.toContain('MVP');
+        expect(ADMIN).toContain('`🥗 식단 +${r.diet}P`');
+        expect(ADMIN).toContain('`🏅 챌린지 완료 (${tier})`');
+    });
+
+    it('관제탑에 500건 조회가 남아 있지 않다', () => {
+        const points = ADMIN.split('async function loadAllPointsData(usersQ) {')[1].split('\n    }')[0];
+        expect(points).not.toContain("collection(db, 'daily_logs')");
+        expect(points).not.toContain("collection(db, 'blockchain_transactions')");
+        const tx = ADMIN.split('async function loadTxRows() {')[1].split('\n    }')[0];
+        expect(tx).not.toContain("collection(db, 'blockchain_transactions')");
+    });
+
+    it('한 화면에서 콜러블을 한 번만 부른다', () => {
+        // 포인트 내역과 HBT 거래가 같은 payload 를 쓴다.
+        expect(ADMIN).toContain('let adminEconomyCache = null;');
+        expect(ADMIN).toContain('if (!force && adminEconomyCache) return adminEconomyCache;');
+    });
+
+    it('회원 상세 모달도 기록 500건을 기다리지 않는다', () => {
+        expect(ADMIN).not.toContain('await Promise.all([getData(), detailLogsPromise])');
+        expect(ADMIN).toContain('getData(false, { withLogs: false }),\n                detailLogsPromise');
+    });
+});

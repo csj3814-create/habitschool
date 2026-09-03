@@ -9268,6 +9268,112 @@ async function buildAdminMemberList() {
     return { members, total: members.length };
 }
 
+// 자산&HBT 탭이 브라우저에서 직접 읽던 두 조회다. daily_logs 500건과
+// blockchain_transactions 500건 — 화면에 쓰는 건 문서마다 필드 몇 개뿐인데
+// 클라이언트 SDK 에는 필드 마스크가 없어 문서를 통째로 내려받아야 했다.
+// 서버에서 select 로 추려 보낸다.
+const ADMIN_ECONOMY_LOG_FIELDS = ["userId", "date", "userName", "awardedPoints"];
+const ADMIN_ECONOMY_TX_FIELDS = [
+    "userId", "userName", "type", "timestamp", "updatedAt", "date",
+    "txHash", "stakeTxHash", "resolveTxHash", "refundTxHash",
+    "details", "hbtReceived", "amount", "rewardPoints", "challengeId",
+];
+
+/** Firestore Timestamp 를 콜러블이 실어 나를 수 있는 밀리초로 바꾼다. */
+function toMillisOrNull(value) {
+    if (!value) return null;
+    if (typeof value.toMillis === "function") return value.toMillis();
+    if (typeof value._seconds === "number") return value._seconds * 1000;
+    if (typeof value.seconds === "number") return value.seconds * 1000;
+    return null;
+}
+
+// 라벨(🥗 식단 +30P 같은 것)은 서버가 만들지 않는다. 화면 문구를 functions 에
+// 복제하면 두 벌이 되고, 조용히 갈라진다. 서버는 숫자와 식별자만 보낸다.
+async function buildAdminEconomy() {
+    const [logsSnap, mvpSnap, challengeSnap, txSnap] = await Promise.all([
+        db.collection("daily_logs").orderBy("date", "desc").limit(500)
+            .select(...ADMIN_ECONOMY_LOG_FIELDS).get(),
+        db.collection("monthly_rewards").orderBy("distributedAt", "desc").limit(24)
+            .select("distributedAt", "month", "winners").get(),
+        db.collection("blockchain_transactions")
+            .where("type", "==", "challenge_settlement").limit(200)
+            .select(...ADMIN_ECONOMY_TX_FIELDS).get(),
+        db.collection("blockchain_transactions").orderBy("timestamp", "desc").limit(500)
+            .select(...ADMIN_ECONOMY_TX_FIELDS).get(),
+    ]);
+
+    const dailyRows = [];
+    logsSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        const awarded = row.awardedPoints || {};
+        const diet = Number(awarded.dietPoints) || 0;
+        const exercise = Number(awarded.exercisePoints) || 0;
+        const mind = Number(awarded.mindPoints) || 0;
+        if (diet + exercise + mind <= 0) return;
+        dailyRows.push({
+            date: row.date || "",
+            userId: row.userId || "",
+            userName: row.userName || "",
+            diet, exercise, mind,
+        });
+    });
+
+    const mvpRows = [];
+    mvpSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        const distributedAtMs = toMillisOrNull(row.distributedAt);
+        (Array.isArray(row.winners) ? row.winners : []).forEach((winner, index) => {
+            mvpRows.push({
+                distributedAtMs,
+                month: row.month || "",
+                rank: index,
+                userId: winner?.userId || "",
+                name: winner?.name || "",
+                points: Number(winner?.reward) || 0,
+            });
+        });
+    });
+
+    const challengeRows = [];
+    challengeSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        const points = Number(row.rewardPoints) || 0;
+        if (points <= 0) return;
+        challengeRows.push({
+            date: row.date || "",
+            updatedAtMs: toMillisOrNull(row.updatedAt),
+            userId: row.userId || "",
+            challengeId: row.challengeId || "",
+            points,
+        });
+    });
+
+    const txRows = txSnap.docs.map((docSnap) => {
+        const row = docSnap.data() || {};
+        const amount = row.details?.hbtAmount ?? row.hbtReceived ?? row.amount ?? null;
+        return {
+            timestampMs: toMillisOrNull(row.timestamp) ?? toMillisOrNull(row.updatedAt),
+            date: row.date || "",
+            userId: row.userId || "",
+            userName: row.userName || "",
+            type: row.type || "",
+            amount: typeof amount === "number" ? amount : (amount === null ? null : String(amount)),
+            txHash: row.txHash || row.stakeTxHash || row.resolveTxHash || row.refundTxHash || "",
+        };
+    });
+
+    return { dailyRows, mvpRows, challengeRows, txRows };
+}
+
+exports.getAdminEconomy = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        await assertAdminRequest(request);
+        return await buildAdminEconomy();
+    }
+);
+
 exports.getAdminMembers = onCall(
     { region: "asia-northeast3", timeoutSeconds: 120 },
     async (request) => {
