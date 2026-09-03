@@ -676,15 +676,6 @@
               10MB 라도 20초짜리는 줄이는 게 이득, 60초짜리는 손해다. 실제 분포를 보고
               정하려고 표본을 뽑는다.
             -->
-            <div class="box">
-                <h3>🎬 운동 영상 크기 표본</h3>
-                <p style="font-size:12px;color:#888;line-height:1.7;margin:0 0 12px;">
-                    압축 기준을 정하기 위한 조사입니다. 크기는 Storage 에서, 길이는 최근 기록의
-                    영상 헤더만 읽어 잽니다(본문은 내려받지 않습니다).
-                </p>
-                <button class="btn btn-primary" onclick="runVideoSizeSample()">표본 뽑기</button>
-                <div id="video-sample-result" style="font-size:12px;color:#555;line-height:1.7;margin-top:12px;"></div>
-            </div>
         </div>
     </div>
 </div>
@@ -1070,90 +1061,7 @@
     const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
     const backfillLastLogDateCallable = httpsCallable(fns, 'backfillLastLogDate');
-    const sampleExerciseVideoSizesCallable = httpsCallable(fns, 'sampleExerciseVideoSizes');
 
-    /**
-     * 영상 길이를 잰다. preload='metadata' 라 헤더만 받아 오고 본문은 내려받지 않는다.
-     * 크기는 Storage 메타데이터에서 오지만 길이는 거기 없어서, 비트레이트를 알려면
-     * 이 둘을 합쳐야 한다.
-     */
-    function probeVideoDuration(url, timeoutMs = 12000) {
-        return new Promise((resolve) => {
-            const video = document.createElement('video');
-            video.preload = 'metadata';
-            video.muted = true;
-            const done = (value) => { video.removeAttribute('src'); video.load?.(); resolve(value); };
-            const timer = setTimeout(() => done(null), timeoutMs);
-            video.onloadedmetadata = () => {
-                clearTimeout(timer);
-                done(Number.isFinite(video.duration) && video.duration > 0 ? video.duration : null);
-            };
-            video.onerror = () => { clearTimeout(timer); done(null); };
-            video.src = url;
-        });
-    }
-
-    /** 최근 기록에서 운동 영상 URL 을 모은다(중복 제거). */
-    function collectRecentExerciseVideoUrls(snap, max = 25) {
-        const urls = new Set();
-        snap.forEach((docSnap) => {
-            const exercise = (docSnap.data() || {}).exercise || {};
-            (Array.isArray(exercise.strengthList) ? exercise.strengthList : []).forEach((item) => {
-                if (item?.videoUrl) urls.add(item.videoUrl);
-            });
-            if (exercise.strengthVideoUrl) urls.add(exercise.strengthVideoUrl);
-        });
-        return [...urls].slice(0, max);
-    }
-
-    window.runVideoSizeSample = async function() {
-        const box = document.getElementById('video-sample-result');
-        box.textContent = '표본을 뽑는 중… (크기는 서버, 길이는 브라우저에서 잽니다)';
-        try {
-            const [response, { snap }] = await Promise.all([
-                sampleExerciseVideoSizesCallable({ limit: 500 }),
-                getData()
-            ]);
-            const data = response.data || {};
-            if (!data.count) { box.textContent = '운동 영상이 아직 없습니다.'; return; }
-
-            const urls = collectRecentExerciseVideoUrls(snap);
-            const durations = (await Promise.all(urls.map((url) => probeVideoDuration(url))))
-                .filter((value) => value !== null)
-                .sort((a, b) => a - b);
-            const medianDuration = durations.length
-                ? durations[Math.floor(durations.length / 2)]
-                : null;
-
-            const row = (label, value) => `<tr><td>${escapeHtml(label)}</td><td style="text-align:right;"><strong>${escapeHtml(String(value))}</strong></td></tr>`;
-            const b = data.buckets || {};
-            box.innerHTML = `
-                <table class="trend-table" style="max-width:420px;">
-                    <thead><tr><th>항목</th><th>값</th></tr></thead>
-                    <tbody>
-                        ${row('표본 영상 수', `${data.count}개`)}
-                        ${row('중앙값', `${data.medianMB} MB`)}
-                        ${row('상위 25% (p75)', `${data.p75MB} MB`)}
-                        ${row('상위 10% (p90)', `${data.p90MB} MB`)}
-                        ${row('최대', `${data.maxMB} MB`)}
-                        ${row('전체 용량', `${data.totalMB} MB`)}
-                    </tbody>
-                </table>
-                <div style="margin-top:12px;font-size:12px;color:#555;">
-                    <strong>크기 구간별 개수</strong> — 지금 압축 기준은 15MB 이상입니다.<br>
-                    ${Object.entries(b).map(([key, value]) => `${escapeHtml(key)} <strong>${value}개</strong>`).join(' · ')}
-                </div>
-                <div style="margin-top:10px;font-size:12px;color:#555;">
-                    <strong>길이</strong> — 최근 기록 ${urls.length}건 중 ${durations.length}건 측정 ·
-                    중앙값 ${medianDuration !== null ? `<strong>${medianDuration.toFixed(0)}초</strong>` : '측정 실패'}
-                    ${medianDuration !== null ? `· 중앙값 기준 비트레이트 <strong>${((data.medianMB * 8) / medianDuration).toFixed(1)} Mbps</strong>` : ''}
-                </div>`;
-            adminToast(`영상 ${data.count}개 표본, 중앙값 ${data.medianMB}MB`, 'success');
-        } catch (error) {
-            box.innerHTML = `<span style="color:#C62828;">실패: ${escapeHtml(error.message || error)}</span>`;
-            adminToast(`표본 실패: ${error.message || error}`, 'error');
-        }
-    };
 
     /**
      * 회원 문서의 '최근 기록일' 을 한 번 채운다.

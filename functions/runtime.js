@@ -9589,56 +9589,6 @@ exports.backfillLastLogDate = onCall(
 
 
 
-// ── 운동 영상 크기 표본 ───────────────────────────────────────────────────
-//
-// 압축 기준을 크기만으로 정하면 틀린다. 재인코딩은 재생 속도로 걸리므로(외부
-// 라이브러리를 못 써서 원본을 재생하며 다시 담는다), 10MB 라도 20초짜리는 줄이는
-// 게 이득이고 60초짜리는 손해다. 판단해야 할 값은 크기가 아니라 비트레이트다.
-//
-// 여기서는 크기 분포만 낸다. 길이는 Storage 메타데이터에 없어서 브라우저가
-// <video preload="metadata"> 로 따로 잰다. 둘을 합쳐야 비트레이트가 나온다.
-exports.sampleExerciseVideoSizes = onCall(
-    { region: "asia-northeast3", timeoutSeconds: 300 },
-    async (request) => {
-        await assertAdminRequest(request);
-        const limit = Math.min(Math.max(Number(request.data?.limit) || 500, 50), 2000);
-
-        const bucket = admin.storage().bucket();
-        const [files] = await bucket.getFiles({ prefix: "exercise_videos/", maxResults: limit });
-
-        const sizes = files
-            .map((file) => Number(file.metadata?.size) || 0)
-            .filter((size) => size > 0)
-            .sort((a, b) => a - b);
-
-        if (sizes.length === 0) return { count: 0 };
-
-        const MB = 1024 * 1024;
-        const at = (ratio) => sizes[Math.min(sizes.length - 1, Math.floor(sizes.length * ratio))];
-        const inRange = (lo, hi) => sizes.filter((size) => size >= lo * MB && size < hi * MB).length;
-
-        return {
-            count: sizes.length,
-            totalMB: +(sizes.reduce((sum, size) => sum + size, 0) / MB).toFixed(1),
-            p10MB: +(at(0.10) / MB).toFixed(2),
-            p25MB: +(at(0.25) / MB).toFixed(2),
-            medianMB: +(at(0.50) / MB).toFixed(2),
-            p75MB: +(at(0.75) / MB).toFixed(2),
-            p90MB: +(at(0.90) / MB).toFixed(2),
-            maxMB: +(sizes[sizes.length - 1] / MB).toFixed(2),
-            // 지금 기준(15MB)과 후보 기준(8MB) 사이에 몇 개가 있는지가 핵심이다.
-            // 그 구간이 비어 있으면 기준을 낮춰도 달라지는 게 없다.
-            buckets: {
-                "0-2MB": inRange(0, 2),
-                "2-4MB": inRange(2, 4),
-                "4-8MB": inRange(4, 8),
-                "8-15MB": inRange(8, 15),
-                "15MB+": sizes.filter((size) => size >= 15 * MB).length,
-            },
-        };
-    }
-);
-
 
 exports.refreshGuestActivity = onSchedule(
     { schedule: "0 * * * *", region: "asia-northeast3", timeZone: "Asia/Seoul" },
