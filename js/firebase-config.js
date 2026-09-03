@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth
 import { connectFirestoreEmulator, disableNetwork, doc, enableNetwork, getDocFromServer, initializeFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { connectFunctionsEmulator, getFunctions } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
 import { connectStorageEmulator, getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=359";
+import { shouldForceGoogleRedirectLogin } from "./auth-login-helpers.js?v=360";
 
 // 팝업 로그인의 기본 authDomain 은 firebaseapp.com 이다.
 // → PWA가 설치된 경우 hosting 도메인으로 auth 콜백이 가면 Android가 PWA에서 처리해버림
@@ -108,28 +108,25 @@ const firebaseConfig = {
 // Firebase 초기화
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-// 이 앱은 Firestore 실시간 리스너를 하나도 쓰지 않는다 — 전부 getDoc/getDocs 한 번씩이다.
-// 그래서 WebChannel 스트리밍이 주는 이득이 없는데, 자동 탐지는 그 이득이 있는지 알아보려고
-// 연결마다 왕복을 한 번 더 쓴다. 그 비용만 내고 있었다.
+// 전송 방식은 두 번 바꿔 봤고, 지금 값이 세 번째다. 사연을 남겨 둔다.
 //
-// 같은 브라우저에서 잰 값(권한 거부까지의 왕복, 두 번씩):
-//   experimentalAutoDetectLongPolling  555ms · 568ms
-//   experimentalForceLongPolling        44ms ·  57ms
-//   (옵션 없음)                        305ms · 366ms
+// 2026-09-02 에 experimentalForceLongPolling 으로 바꿨다. 근거는 연결 한 번의
+// 왕복 시간이었다 — auto-detect 555ms 대 force 44ms. 그 숫자 자체는 맞았지만,
+// 한 번에 하나씩 잰 값이라 실제로 벌어지는 일을 못 봤다.
 //
-// 탐지가 실패하는 네트워크에서는 이 비용이 훨씬 커져서, 관제탑의 첫 조회들이 통째로
-// 타임아웃하고 "새로고침하면 그제서야 나오는" 증상이 됐다. 콘솔의 Listen 채널 404 도
-// 이 탐지 프로브가 남기던 것이다.
+// 운영 Network 기록이 보여준 것: 롱폴링을 강제하면 유휴 채널이 여러 개 열리고
+// 각각 timeoutSeconds 만큼 매달린다. 실측 7개가 동시에 24~30초씩, 각 0.1kB.
+// 브라우저는 호스트당 동시 연결 수가 제한돼 있어서, 그 뒤에 오는 조회들이
+// 줄을 선다. 보상마켓의 작은 문서 읽기 4개가 7초 타임아웃에 걸린 것이 그것이고,
+// "새로고침하면 그 다음부터 잘 나온다" 도 같은 이야기다.
 //
-// 2026-05-01(8d59e89)에 이 옵션을 auto-detect 로 되돌린 적이 있다. 그때 이유는
-// 콘솔의 FIRESTORE INTERNAL ASSERTION FAILED 노이즈였고, 성능이 아니었다. 그 노이즈를
-// 잡는 가드(bindFirestoreInternalErrorGuard)는 같은 커밋에서 함께 들어와 지금도 있다.
-// 지금 저울에 올라온 것은 콘솔 한 줄이 아니라 관제탑이 20초 동안 아무것도 못 그리는
-// 일이라, 반대쪽을 고른다.
+// 그래서 2026-05-01(8d59e89)이 골랐던 auto-detect 로 되돌린다. 연결마다 왕복을
+// 한 번 더 쓰는 값은 치르지만, 그건 0.5초고 저쪽은 25초다.
 //
-// 리스너를 쓰기 시작하면 이 선택을 다시 재야 한다. 롱폴링은 연결이 싸고 스트리밍이 비싸다.
+// 다시 바꾸려거든 한 번의 왕복이 아니라 **동시에 열린 채널 수와 그 지속 시간**을
+// 보라. 그게 이 문제를 결정한다.
 const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
     experimentalLongPollingOptions: {
         timeoutSeconds: 25
     }

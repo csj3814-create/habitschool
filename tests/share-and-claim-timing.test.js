@@ -71,13 +71,13 @@ describe('challenge reward can be claimed without the blockchain module', () => 
 
     it('is wired up before any module loading, so the button always answers', () => {
         expect(mainSource).toContain('window.claimChallengeReward = (tier) => import(');
-        expect(mainSource).toContain('challenge-claim.js?v=359');
+        expect(mainSource).toContain('challenge-claim.js?v=360');
         // 모듈 로드가 실패해도 조용히 끝나지 않게 기록은 남긴다.
         expect(mainSource).toContain("console.error('보상 수령 모듈 로드 실패:', error);");
     });
 
     it('keeps one implementation rather than two', () => {
-        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=359';");
+        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=360';");
         expect(managerSource).not.toContain('export async function claimChallengeReward(tier) {');
     });
 
@@ -94,6 +94,6 @@ describe('challenge reward can be claimed without the blockchain module', () => 
     });
 
     it('is precached like the other modules', () => {
-        expect(readRepoFile('sw.js')).toContain("'./js/challenge-claim.js?v=359'");
+        expect(readRepoFile('sw.js')).toContain("'./js/challenge-claim.js?v=360'");
     });
 });

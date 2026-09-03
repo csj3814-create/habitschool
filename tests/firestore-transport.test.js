@@ -2,33 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
 
 const CONFIG = readRepoFile('js/firebase-config.js');
-// 설정 블록만 본다 — 주석에는 비교하느라 옛 옵션 이름이 그대로 적혀 있다.
+// 설정 블록만 본다 — 주석에는 사연으로 옛 옵션 이름이 남아 있다.
 const INIT_CALL = CONFIG.split('const db = initializeFirestore(app, {')[1].split('});')[0];
-const SOURCES = ['js/auth.js', 'js/app-core.js', 'admin.html']
-    .map(path => { try { return readRepoFile(path); } catch { return ''; } })
-    .join('\n');
 
-// 관제탑을 처음 열면 조회들이 통째로 타임아웃하고, 새로고침해야 나왔다.
-// 원인은 느린 서버가 아니라 연결마다 한 번 더 도는 전송 방식 탐지였다.
+// 롱폴링을 강제하면 유휴 채널이 여러 개 열려 각각 timeoutSeconds 만큼 매달린다.
+// 운영 실측: 7개가 동시에 24~30초씩, 각 0.1kB. 브라우저의 호스트당 연결 수 제한에
+// 걸려 뒤따르는 조회들이 줄을 섰고, 그게 보상마켓 읽기 4개의 7초 타임아웃이었다.
 describe('Firestore 전송 방식', () => {
-    it('탐지를 켜 두지 않는다', () => {
-        expect(INIT_CALL).not.toContain('experimentalAutoDetectLongPolling');
+    it('롱폴링을 강제하지 않는다', () => {
+        expect(INIT_CALL).not.toContain('experimentalForceLongPolling');
     });
 
-    it('롱폴링으로 고정한다', () => {
-        expect(INIT_CALL).toContain('experimentalForceLongPolling: true');
+    it('탐지에 맡긴다', () => {
+        expect(INIT_CALL).toContain('experimentalAutoDetectLongPolling: true');
     });
 
-    it('왜 그래도 되는지 근거가 코드에 남아 있다', () => {
-        // 리스너가 없다는 것이 이 선택의 전제다. 숫자와 함께 적어 둔다.
-        expect(CONFIG).toContain('실시간 리스너를 하나도 쓰지 않는다');
-    });
-});
-
-// 위 선택은 "이 앱은 실시간 리스너를 쓰지 않는다"에 기대고 있다.
-// 리스너가 생기면 롱폴링 고정은 스트리밍을 비싸게 만든다 — 그때 다시 재야 한다.
-describe('그 전제가 깨지지 않았다', () => {
-    it('onSnapshot 을 쓰는 곳이 없다', () => {
-        expect(SOURCES).not.toMatch(/\bonSnapshot\s*\(/);
+    it('왜 되돌렸는지가 코드에 남아 있다', () => {
+        // 연결 한 번의 왕복만 보고 다시 바꾸지 않도록, 무엇을 봐야 하는지 적어 둔다.
+        expect(CONFIG).toContain('동시에 열린 채널 수와 그 지속 시간');
     });
 });

@@ -1198,11 +1198,20 @@
     // getData 경로가 각자 불렀다. 함수 하나가 깨어나는 데 몇 초가 걸리는데 그걸 두 번
     // 치른 셈이다. 진행 중인 호출이 있으면 그 약속을 같이 쓴다.
     let adminMemberSnapshotInFlight = null;
+    let adminMemberSnapshotCache = null;
 
+    // 진행 중인 요청만 합치고 끝난 결과는 버리고 있었다. 그래서 회원 목록 · 자산&HBT ·
+    // 차단 현황 · 초대 현황이 각자 432kB 를 다시 받았다(운영 Network 실측). 한 화면
+    // 안에서는 같은 목록이므로 받아 둔 것을 그대로 쓴다. 새로고침 버튼이 비운다.
     async function fetchAdminMemberSnapshot(force = false) {
+        if (!force && adminMemberSnapshotCache) return adminMemberSnapshotCache;
         if (!force && adminMemberSnapshotInFlight) return adminMemberSnapshotInFlight;
         const request = getAdminMembersCallable({ force })
-            .then((response) => toMemberSnapshot(response.data?.members))
+            .then((response) => {
+                const snapshot = toMemberSnapshot(response.data?.members);
+                adminMemberSnapshotCache = snapshot;
+                return snapshot;
+            })
             .finally(() => {
                 if (adminMemberSnapshotInFlight === request) adminMemberSnapshotInFlight = null;
             });
@@ -1554,6 +1563,7 @@
         adminTokenStatsCache = null;
         cache = null;
         adminMemberSnapshotInFlight = null;
+        adminMemberSnapshotCache = null;
         document.getElementById(`tab-error-${name}`)?.remove();
         loadTab(name);
     };
@@ -2316,6 +2326,7 @@
         cache = null;
         // 매달려 있는 요청을 그대로 두면 '다시 시도' 가 같은 것을 또 기다린다.
         adminMemberSnapshotInFlight = null;
+        adminMemberSnapshotCache = null;
         tabLoaded['members'] = false;
         loadMembers();
     };

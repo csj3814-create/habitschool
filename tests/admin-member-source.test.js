@@ -271,3 +271,20 @@ describe('지표는 서버가 추려서 보낸다', () => {
         expect(fn).not.toContain('getData(');
     });
 });
+
+// 운영 Network 기록에 getAdminMembers 가 432kB 씩 두 번 찍혔다. 진행 중인 요청만
+// 합치고 끝난 결과는 버리고 있어서, 탭마다 같은 목록을 다시 받았다.
+describe('회원 목록을 한 번만 받는다', () => {
+    it('받아 둔 결과를 다시 쓴다', () => {
+        expect(ADMIN).toContain('let adminMemberSnapshotCache = null;');
+        expect(ADMIN).toContain('if (!force && adminMemberSnapshotCache) return adminMemberSnapshotCache;');
+        expect(ADMIN).toContain('adminMemberSnapshotCache = snapshot;');
+    });
+
+    it('새로고침은 그 결과를 버린다', () => {
+        const reload = ADMIN.split('window.reloadMemberList = function() {')[1].split('};')[0];
+        expect(reload).toContain('adminMemberSnapshotCache = null;');
+        const refresh = ADMIN.split('window.refreshTab = function() {')[1].split('};')[0];
+        expect(refresh).toContain('adminMemberSnapshotCache = null;');
+    });
+});
