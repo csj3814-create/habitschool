@@ -14,15 +14,15 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=362';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=362';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=363';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=363';
 import {
     isSamsungInternetUserAgent,
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=362';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=362';
+} from './auth-login-helpers.js?v=363';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=363';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -33,14 +33,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=362';
+} from './exercise-media.js?v=363';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=362';
+} from './health-connect-utils.js?v=363';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -57,19 +57,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=362';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=362';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=362';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=362';
-import { sanitize, compressImage } from './data-manager.js?v=362';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=362';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=362';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=362';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=362';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=362';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=362';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=362';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=362';
+} from './habit-groups.js?v=363';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=363';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=363';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=363';
+import { sanitize, compressImage } from './data-manager.js?v=363';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=363';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=363';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=363';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=363';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=363';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=363';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=363';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=363';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -79,14 +79,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=362';
+} from './guest-demo.js?v=363';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=362';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=362';
+} from './product-events.js?v=363';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=363';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -108,7 +108,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=362';
+} from './diet-program.js?v=363';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -120,19 +120,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=362';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=362';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=362';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=362';
+} from './meditation-guide.js?v=363';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=363';
+import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=363';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=363';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=362';
+} from './social-challenge-readiness.js?v=363';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=362';
+} from './monthly-mvp-reward.js?v=363';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6633,7 +6633,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=362';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=363';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11325,15 +11325,31 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
             const circumference = 2 * Math.PI * radius;
             const dashOffset = circumference - (circumference * Math.min(progressPct, 100) / 100);
             const completedText = `${completed}/${totalDays}일 완료`;
-            // 기간이 끝났는데 아직 ongoing 이면, 저장된 일수는 마지막 날을 아직 안 센
-            // 값일 수 있다. 서버 재계산이 곧 도착하므로 그 숫자를 확정처럼 보여주면
-            // 방금까지처럼 29/30 을 보고 "왜 안 늘지" 하게 된다. 확정 전임을 밝힌다.
-            const isAwaitingSettlement = ch.status === 'ongoing'
-                && !!String(ch.endDate || '').trim()
-                && String(ch.endDate) <= todayStr;
+            // 기간이 끝났거나 일수를 다 채웠는데 아직 ongoing 이면, 저장된 상태가
+            // 아직 서버 재계산을 못 받은 것이다. 그 숫자를 확정처럼 보여주면
+            // 29/30 을 보고 "왜 안 늘지" 하게 되므로 확정 전임을 밝힌다.
+            const isPastEnd = !!String(ch.endDate || '').trim() && String(ch.endDate) <= todayStr;
+            const isAwaitingSettlement = ch.status === 'ongoing' && (isFullCompletion || isPastEnd);
             const progressDetailText = isAwaitingSettlement
                 ? '정산 확인 중…'
                 : `${progressPct}% · 남은 ${remain}일`;
+
+            // 그리고 여기서 실제로 재계산을 부른다.
+            //
+            // 예전에는 "정산 확인 중…" 이라고 적어 두고 기다리기만 했다. 재계산 요청은
+            // updateAssetDisplay 의 projection.changed 안에서만 나갔는데, 그 조건은
+            // 로컬 추정이 **바뀔 때** 한 번만 참이다. 그 한 번이 실패하거나 놓치면
+            // 다음부터는 추정이 그대로라 다시 요청하지 않았고, 상태는 ongoing 에
+            // 못 박힌 채 새로고침을 해도 풀리지 않았다. 로그인 10초 뒤 타이머
+            // (js/auth.js) 가 걸릴 때까지 — 즉 앱을 껐다 켤 때까지 — 수령이 막혔다.
+            //
+            // 화면이 "확인 중" 이라고 말하는 순간마다 확인을 요청한다. 60초 중복 방지가
+            // requestAssetChallengeProgressSync 안에 있고, 서버가 상태를 넘기면 이
+            // 조건이 거짓이 되어 저절로 멈춘다.
+            if (isAwaitingSettlement) {
+                requestAssetChallengeProgressSync(
+                    auth.currentUser?.uid, todayStr, 'challenge-awaiting-settlement');
+            }
 
             if (isClaimable) {
                 const titleSuffix = isFullCompletion ? '성공!' : '정산 가능';
