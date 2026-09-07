@@ -88,15 +88,35 @@ function rowsToMatrix(res) {
     return out;
 }
 
+// GA4 는 이벤트 파라미터를 '맞춤 측정기준' 으로 등록해야 조회할 수 있다.
+// 등록 전에는 수집만 되고 Data API 에서도 보고서에서도 못 꺼낸다.
+// 있으면 status 로 쪼개고, 없으면 건수만으로 답을 낸다.
+async function detectStatusDimension() {
+    try {
+        const res = await client.getMetadata({ name: "properties/" + propertyId + "/metadata" });
+        const dims = (res[0] && res[0].dimensions) || [];
+        return dims.some(d => d.apiName === "customEvent:status");
+    } catch (_) {
+        return false;
+    }
+}
+
+let HAS_STATUS = false;
+
 async function main() {
     console.log("자격증명: " + sa.client_email);
-    console.log("속성: properties/" + propertyId + "   기간: " + startDate + " ~ " + endDate + "\n");
+    console.log("속성: properties/" + propertyId + "   기간: " + startDate + " ~ " + endDate);
+
+    HAS_STATUS = await detectStatusDimension();
+    console.log("status 맞춤 측정기준: " + (HAS_STATUS ? "있음" : "없음 — 건수만으로 본다") + "\n");
 
     const dateRanges = [{ startDate: startDate, endDate: endDate }];
 
     const byBrowser = rowsToMatrix(await runReport({
         dateRanges: dateRanges,
-        dimensions: [{ name: "browser" }, { name: "customEvent:status" }],
+        dimensions: [{ name: "browser" }].concat(HAS_STATUS
+            ? [{ name: "customEvent:status" }]
+            : [{ name: "eventName" }]),
         metrics: [{ name: "eventCount" }],
         dimensionFilter: {
             filter: { fieldName: "eventName", stringFilter: { value: "auth_result" } }
@@ -123,6 +143,13 @@ async function main() {
     w();
     w("`scripts/fetch-ga4-auth-by-browser-2026-09-07.js` 출력. 읽기 전용.");
     w();
+    if (!HAS_STATUS) {
+        w("> **`status` 가 GA4 맞춤 측정기준으로 등록돼 있지 않다.** 앱은 `auth_result` 에");
+        w("> `status` 를 실어 보내고 있지만, GA4 는 등록된 파라미터만 조회를 허용한다.");
+        w("> 그래서 성공/실패를 못 가르고 **건수**로만 본다. 관리 > 데이터 표시 >");
+        w("> 맞춤 정의 에서 등록하면 다음부터 갈린다 (등록 이후 데이터부터 적용된다).");
+        w();
+    }
     w("## 1. 브라우저 × `auth_result`");
     w();
 
@@ -152,7 +179,9 @@ async function main() {
 
     const samsungDaily = rowsToMatrix(await runReport({
         dateRanges: dateRanges,
-        dimensions: [{ name: "date" }, { name: "customEvent:status" }],
+        dimensions: [{ name: "date" }].concat(HAS_STATUS
+            ? [{ name: "customEvent:status" }]
+            : [{ name: "eventName" }]),
         metrics: [{ name: "eventCount" }],
         dimensionFilter: {
             andGroup: {
