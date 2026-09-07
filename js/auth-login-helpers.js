@@ -15,8 +15,27 @@ export function isSamsungInternetUserAgent(userAgent = '') {
     return /SamsungBrowser/i.test(ua);
 }
 
-export function shouldForceGoogleRedirectLogin({ userAgent = '', isStandalone = false } = {}) {
-    return isSamsungInternetUserAgent(userAgent) && !!isStandalone;
+// 삼성 인터넷은 설치 여부와 상관없이 redirect 로그인을 쓴다.
+//
+// 이 조건은 2026-04-27 하루 동안 두 번 뒤집혔다. 그날 아침엔 삼성 인터넷 전체를
+// redirect 로 고정했고(팝업이 새 탭으로 빠져 안드로이드가 그 주소를 Gmail 앱에
+// 넘겨 버리는 문제), 저녁엔 redirect 가 구글에서 돌아온 뒤 로그인 화면으로
+// 튕기는 회귀 때문에 `&& isStandalone` 을 붙여 일반 탭을 팝업으로 되돌렸다.
+//
+// 그 튕김의 진짜 원인은 로그인 방식이 아니라 authDomain 이었다. redirect 는
+// 구글에 다녀오는 사이 중간 상태를 authDomain 쪽 저장소에 맡기는데, 그게
+// firebaseapp.com 이라 앱 입장에서 서드파티 저장소였고 브라우저가 분리·차단해
+// getRedirectResult 가 빈손으로 왔다. 2026-08-12 에 redirect 경로의 authDomain 을
+// 앱과 같은 출처로 바꿔 그 원인을 없앴다(`resolveAuthDomain`, 커밋 94aebe9).
+//
+// **그런데 조건은 그때 같이 넓히지 않았다.** 그래서 8월 이후로도 삼성 인터넷
+// 일반 탭 — 설치하지 않은 대다수 — 은 계속 팝업을 타고 Gmail 로 새고 있었다.
+// 2026-09-07 실기기에서 그대로 재현됐다.
+//
+// 여기를 다시 좁히려거든 먼저 `resolveAuthDomain` 을 볼 것. 두 함수는 한 몸이다 —
+// 이 함수가 redirect 라고 답하면 authDomain 도 같은 출처로 따라간다.
+export function shouldForceGoogleRedirectLogin({ userAgent = '' } = {}) {
+    return isSamsungInternetUserAgent(userAgent);
 }
 
 export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {

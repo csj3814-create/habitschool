@@ -17,9 +17,11 @@ const CHROME_UA = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (
 
 describe('only the redirect path gets a same-origin authDomain', () => {
     it('agrees with the helper about who uses redirect', () => {
-        // 이 하나의 조합만 리디렉트다. 여기가 바뀌면 authDomain 규칙도 같이 봐야 한다.
+        // 삼성 인터넷이면 설치 여부와 무관하게 리디렉트다. 여기가 바뀌면
+        // authDomain 규칙도 같이 봐야 한다 — resolveAuthDomain 이 이 함수를
+        // 그대로 호출해 같은 출처로 맞추므로 둘은 항상 함께 움직인다.
         expect(shouldForceGoogleRedirectLogin({ userAgent: SAMSUNG_UA, isStandalone: true })).toBe(true);
-        expect(shouldForceGoogleRedirectLogin({ userAgent: SAMSUNG_UA, isStandalone: false })).toBe(false);
+        expect(shouldForceGoogleRedirectLogin({ userAgent: SAMSUNG_UA, isStandalone: false })).toBe(true);
         expect(shouldForceGoogleRedirectLogin({ userAgent: CHROME_UA, isStandalone: true })).toBe(false);
     });
 

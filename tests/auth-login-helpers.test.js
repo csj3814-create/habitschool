@@ -24,12 +24,15 @@ const APP_CORE_SOURCE = readRepoFile('js/app-core.js');
 const INDEX_SOURCE = readRepoFile('index.html');
 
 describe('shouldUseGoogleRedirectLogin', () => {
-    it('keeps popup for Samsung Internet in normal browser tabs', () => {
+    // 2026-09-07: 일반 탭을 팝업으로 두면 안드로이드가 구글 계정 화면을 Gmail 앱에
+    // 넘겨 사용자가 메일함에 떨어진다(실기기 재현). 그 튕김 때문에 4/27 에 좁혀
+    // 뒀던 조건은 8/12 authDomain 수정으로 근거가 사라졌다. 함께 넓힌다.
+    it('uses redirect for Samsung Internet in normal browser tabs too', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(false);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: false })).toBe(true);
     });
 
-    it('uses redirect for Samsung Internet only in standalone mode', () => {
+    it('uses redirect for Samsung Internet in standalone mode', () => {
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
@@ -41,13 +44,15 @@ describe('shouldUseGoogleRedirectLogin', () => {
 });
 
 describe('resolveGoogleLoginMode', () => {
-    it('honors popup overrides for Samsung Internet normal tabs', () => {
+    it('ignores a stale popup override for Samsung Internet', () => {
+        // 예전에 팝업으로 실패해 남은 override 가 삼성 인터넷을 다시 팝업으로
+        // 끌고 가면 안 된다. 그 경로가 곧 Gmail 로 새는 경로다.
         const samsungUa = 'Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(resolveGoogleLoginMode({
             userAgent: samsungUa,
             isStandalone: false,
             overrideMode: 'popup'
-        })).toBe('popup');
+        })).toBe('redirect');
     });
 
     it('ignores popup overrides only for Samsung Internet standalone mode', () => {
