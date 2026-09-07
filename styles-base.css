@@ -789,6 +789,11 @@ body.simple-mode .step-input-group {
 }
 .open-in-app-banner[hidden] { display: none; }
 .open-in-app-banner__text { flex: 1; }
+/* 배너 전체가 누르는 자리라는 것이 보여야 한다. */
+.open-in-app-banner { cursor: pointer; -webkit-tap-highlight-color: rgba(122, 78, 18, 0.12); }
+.open-in-app-banner:active { background: linear-gradient(135deg, #FFE8CC, #FFDDB3); }
+.open-in-app-banner:focus-visible { outline: 2px solid #E65100; outline-offset: 2px; }
+.open-in-app-banner__cue { flex: 0 0 auto; font-size: 18px; color: #B08A50; line-height: 1; }
 .open-in-app-banner__dismiss {
     flex: 0 0 auto;
     background: none;

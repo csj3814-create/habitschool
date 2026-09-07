@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=365">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=365">
+    <link rel="stylesheet" href="styles.css?v=366">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=366">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -739,7 +739,7 @@
         }
     </style>
 
-    <script src="js/webview-detect.js?v=365"></script>
+    <script src="js/webview-detect.js?v=366"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -1080,9 +1080,14 @@
                 aria-label="오류 제보하기">🐞</button>
             <!-- 제보 스크린샷에 버전이 같이 찍히도록 아이콘 바로 아래 둔다. -->
             <div id="bug-report-version" class="bug-report-version" aria-hidden="true"></div>
-            <div id="open-in-app-banner" class="open-in-app-banner" hidden>
-                <span class="open-in-app-banner__text">📱 <strong>해빛스쿨 앱</strong>이 설치돼 있어요. 앱에서 열면 더 빠릅니다.</span>
-                <button type="button" class="open-in-app-banner__dismiss" onclick="dismissOpenInAppBanner()" aria-label="이 안내 닫기">×</button>
+            <!-- 배너 전체가 누르는 자리다. 닫기(×)만 전파를 끊어 따로 동작한다. -->
+            <div id="open-in-app-banner" class="open-in-app-banner" hidden role="button" tabindex="0"
+                aria-label="해빛스쿨 앱으로 열기"
+                onclick="openInInstalledApp()" onkeydown="handleOpenInAppBannerKeydown(event)">
+                <span class="open-in-app-banner__text">📱 <strong>해빛스쿨 앱</strong>이 설치돼 있어요. <strong>눌러서 앱으로 열기</strong></span>
+                <span class="open-in-app-banner__cue" aria-hidden="true">›</span>
+                <button type="button" class="open-in-app-banner__dismiss"
+                    onclick="event.stopPropagation(); dismissOpenInAppBanner();" aria-label="이 안내 닫기">×</button>
             </div>
             <div class="header" role="banner">
                 <div class="header-top">
@@ -3098,14 +3103,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=365"></script>
-    <script type="module" src="js/main.js?v=365"></script>
-    <script type="module" src="js/diet-analysis.js?v=365"></script>
-    <script type="module" src="js/metabolic-score.js?v=365"></script>
-    <script type="module" src="js/le8-score.js?v=365"></script>
+    <script type="module" src="js/app.js?v=366"></script>
+    <script type="module" src="js/main.js?v=366"></script>
+    <script type="module" src="js/diet-analysis.js?v=366"></script>
+    <script type="module" src="js/metabolic-score.js?v=366"></script>
+    <script type="module" src="js/le8-score.js?v=366"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=365"></script>
+    <script src="js/pwa-install.js?v=366"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

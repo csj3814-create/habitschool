@@ -17,6 +17,7 @@ window.getInstallHelperText = function () {
 };
 const ANDROID_INSTALL_PROMPT_WAIT_MS = 1800;
 const CHROME_ANDROID_PACKAGE_NAME = 'com.android.chrome';
+const APP_ANDROID_PACKAGE_NAME = 'com.habitschool.app';
 let cachedInstalledAppState = readStoredInstallState();
 let installPromptWaiters = [];
 let installFallbackModal = null;
@@ -145,6 +146,41 @@ function dismissOpenInAppBanner() {
     const banner = document.getElementById('open-in-app-banner');
     if (banner) banner.hidden = true;
     try { sessionStorage.setItem(OPEN_IN_APP_DISMISS_KEY, '1'); } catch (_) {}
+}
+
+/**
+ * 설치된 안드로이드 앱으로 현재 페이지를 연다.
+ *
+ * getChromeIntentUrl 과 같은 형태이고 패키지만 다르다. 해시는 담지 않는다 —
+ * intent URI 는 `#Intent` 를 구분자로 쓰기 때문에 주소의 해시를 그대로 넣으면
+ * 거기서 잘려 파싱이 깨진다. 앱은 기본 탭으로 열린다.
+ *
+ * 앱이 없거나 intent 를 모르는 브라우저에서는 browser_fallback_url 로 지금
+ * 페이지에 그대로 머문다. 이 배너는 Play 앱이 감지될 때만 뜨지만, 그 사이
+ * 앱을 지웠을 수도 있으므로 폴백을 반드시 붙인다.
+ */
+function getOpenInAppIntentUrl() {
+    const currentUrl = new URL(window.location.href);
+    const scheme = currentUrl.protocol.replace(':', '') || 'https';
+    const target = `${currentUrl.host}${currentUrl.pathname}${currentUrl.search}`;
+    const fallbackUrl = encodeURIComponent(currentUrl.href);
+    return `intent://${target}#Intent;scheme=${scheme};package=${APP_ANDROID_PACKAGE_NAME};S.browser_fallback_url=${fallbackUrl};end`;
+}
+
+function openInInstalledApp() {
+    try {
+        window.location.href = getOpenInAppIntentUrl();
+    } catch (error) {
+        console.warn('앱으로 열기 실패:', error?.message || error);
+    }
+}
+
+// 배너 전체가 누르는 자리다. div 에 role="button" 을 준 이상 키보드도 받아야 한다.
+function handleOpenInAppBannerKeydown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar') return;
+    if (event.target?.closest?.('.open-in-app-banner__dismiss')) return;
+    event.preventDefault();
+    openInInstalledApp();
 }
 
 /**
@@ -620,6 +656,8 @@ window.addEventListener('storage', (event) => {
 });
 
 window.dismissOpenInAppBanner = dismissOpenInAppBanner;
+window.openInInstalledApp = openInInstalledApp;
+window.handleOpenInAppBannerKeydown = handleOpenInAppBannerKeydown;
 // 설치 감지는 비동기다. 첫 페인트를 막지 않도록 로드 뒤에 한 번만 돌린다.
 window.addEventListener('load', () => { refreshOpenInAppBanner().catch(() => {}); });
 window.getInstallCtaState = getInstallCopy;
