@@ -1,6 +1,6 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=366';
-import { translateText } from './i18n.js?v=366';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=367';
+import { translateText } from './i18n.js?v=367';
 
 // 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
 export function getKstDateString() {

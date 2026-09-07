@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=366';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=367';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=366';
-import { getDatesInfo } from './ui-helpers.js?v=366';
-import { escapeHtml } from './security.js?v=366';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=366';
+import { showToast } from './ui-helpers.js?v=367';
+import { getDatesInfo } from './ui-helpers.js?v=367';
+import { escapeHtml } from './security.js?v=367';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=367';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=366';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=366';
-import { trackProductEvent } from './product-events.js?v=366';
+} from './auth-login-helpers.js?v=367';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=367';
+import { trackProductEvent } from './product-events.js?v=367';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=366';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=367';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -159,6 +159,30 @@ function rememberPopupLoginFallback() {
         return;
     }
     persistGoogleLoginModeOverride('popup');
+}
+
+// 로그인 결과를 남긴다. 실패는 원인을 함께 남겨야 "안 됐다" 와 "안 했다" 가 갈린다.
+function trackGoogleLoginResult(loginMode, status, errorKind = '') {
+    try {
+        trackProductEvent('auth_result', Object.assign({
+            login_mode: normalizeGoogleLoginMode(loginMode) || 'popup',
+            status,
+            auth_method: 'google',
+            entry_point: 'login_modal'
+        }, errorKind ? { error_kind: errorKind } : {}));
+    } catch (_) {}
+}
+
+// Firebase 오류 코드를 계측 허용값으로 접는다. 자유 문자열은 보내지 않는다.
+function resolveGoogleLoginErrorKind(error) {
+    const code = String(error?.code || '').toLowerCase();
+    if (code.includes('network')) return 'network';
+    if (code.includes('popup-blocked')) return 'popup_blocked';
+    if (code.includes('popup-closed') || code.includes('cancelled')) return 'user_cancelled';
+    if (code.includes('unauthorized-domain') || code.includes('operation-not-allowed')) return 'permission_denied';
+    if (code.includes('timeout') || code.includes('deadline')) return 'timeout';
+    if (code.includes('web-storage-unsupported') || code.includes('disallowed_useragent')) return 'invalid_state';
+    return 'unknown';
 }
 
 function getPreferredGoogleLoginMode() {
@@ -814,9 +838,20 @@ export function initAuth() {
         const loginMode = getPreferredGoogleLoginMode();
         const useRedirectLogin = loginMode === 'redirect';
         persistPendingGoogleLoginState(loginMode);
+        // 2026-09-07: 여기까지가 계측 공백이었다. auth_result 는 게스트 데모에서만
+        // 나가고 있어서, 일반 로그인의 성공·실패·이탈을 아무도 볼 수 없었다.
+        // auth_start 를 세고 auth_result 를 빼면 구글에 갔다가 돌아오지 않은
+        // 사람이 남는다 — 어떤 지표에도 안 잡히던 손실이 그것이다.
+        trackProductEvent('auth_start', {
+            login_mode: loginMode,
+            entry_point: 'login_modal',
+            locale: getLocale() === 'en' ? 'en' : 'ko',
+            app_mode: isStandalonePushMode() ? 'pwa' : 'default'
+        });
 
         if (useRedirectLogin) {
             signInWithRedirect(auth, provider).catch(error => {
+                trackGoogleLoginResult(loginMode, 'error', resolveGoogleLoginErrorKind(error));
                 console.error('리디렉트 로그인 오류:', error.code, error.message, error);
                 clearPendingGoogleLoginState();
                 clearPendingGoogleLoginResetTimer();
@@ -836,6 +871,7 @@ export function initAuth() {
         }
 
         signInWithPopup(auth, provider).then((result) => {
+            trackGoogleLoginResult(loginMode, 'success');
             bridgePopupLoginSuccess(result?.user || null);
             if (isNewUserCredential(result)) {
                 rememberPendingSignupOnboarding(result.user);
@@ -854,6 +890,7 @@ export function initAuth() {
             }
 
             if (error.code === 'auth/popup-closed-by-user') {
+                trackGoogleLoginResult(loginMode, 'cancelled', 'user_cancelled');
                 clearPendingGoogleLoginState();
                 clearPendingGoogleLoginResetTimer();
                 window._isPopupLogin = false;
@@ -861,6 +898,7 @@ export function initAuth() {
                 window.handleGuestAuthenticationFailure?.();
                 return;
             }
+            trackGoogleLoginResult(loginMode, 'error', resolveGoogleLoginErrorKind(error));
             clearPendingGoogleLoginState();
             clearPendingGoogleLoginResetTimer();
             window._isPopupLogin = false;
@@ -980,6 +1018,7 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
     try {
         const result = await getRedirectResult(auth);
         if (result?.user) {
+            trackGoogleLoginResult('redirect', 'success');
             clearPendingGoogleLoginResetTimer();
             bridgePopupLoginSuccess(result.user);
             if (isNewUserCredential(result)) {
@@ -1006,6 +1045,7 @@ async function handleGoogleRedirectLoginResult(loginBtn) {
     } catch (error) {
         console.error('리디렉트 로그인 오류:', error.code, error.message, error);
         if (pendingState?.mode === 'redirect') {
+            trackGoogleLoginResult('redirect', 'error', resolveGoogleLoginErrorKind(error));
             clearPendingGoogleLoginResetTimer();
             rememberPopupLoginFallback();
             clearPendingGoogleLoginState();

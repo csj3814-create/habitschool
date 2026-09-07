@@ -37,6 +37,18 @@ describe('shouldUseGoogleRedirectLogin', () => {
         expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
 
+    // 2026-09-07 GA: 웨일 모바일 124명이 게스트 데모까지 쓰고(가입 클릭 19건)
+    // record_saved 는 0건이었다. 삼성과 같은 처방을 쓴다.
+    it('uses redirect for Whale on Android', () => {
+        const whaleAndroid = 'Mozilla/5.0 (Linux; Android 14; SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Whale/1.0.0.0 Mobile Safari/537.36';
+        expect(shouldUseGoogleRedirectLogin({ userAgent: whaleAndroid, isStandalone: false })).toBe(true);
+    });
+
+    it('leaves desktop Whale on popup — the intent hijack is an Android behaviour', () => {
+        const whaleDesktop = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Whale/4.0.0.0 Safari/537.36';
+        expect(shouldUseGoogleRedirectLogin({ userAgent: whaleDesktop, isStandalone: false })).toBe(false);
+    });
+
     it('keeps popup flow for Chrome', () => {
         const chromeUa = 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36';
         expect(shouldUseGoogleRedirectLogin({ userAgent: chromeUa, isStandalone: false })).toBe(false);

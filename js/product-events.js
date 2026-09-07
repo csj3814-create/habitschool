@@ -22,7 +22,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'share_card_sent',
     'invite_link_landing',
     'share_prompt_shown',
-    'onboarding_gate'
+    'onboarding_gate',
+    'auth_start'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -129,6 +130,10 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
         'unavailable'
     ]),
     status: freezeValues(['success', 'cancelled', 'error', 'skipped', 'unavailable', 'empty', 'expired', 'deferred']),
+    // 팝업이냐 리디렉트냐. 브라우저마다 다른 경로를 타고, 2026-09-07 기준
+    // 삼성 인터넷과 안드로이드 웨일만 리디렉트다. 어느 경로가 실제로
+    // 끝나는지를 보려면 결과와 함께 이 값이 있어야 한다.
+    login_mode: freezeValues(['popup', 'redirect']),
     // 온보딩 게이트가 어느 갈래로 갔나. shown 의 분모는 그날의 신규 가입이고,
     // legacy_account 가 크면 게이트가 또 잘못 닫히고 있다는 뜻이다.
     onboarding_state: freezeValues([
@@ -188,7 +193,9 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
         position_bucket: values.position_bucket,
         variant: values.variant
     }),
+    // 게스트 데모뿐 아니라 일반 로그인 경로에서도 발생한다(2026-09-07~).
     auth_result: schema({
+        login_mode: values.login_mode,
         status: values.status,
         auth_method: values.auth_method,
         entry_point: values.entry_point,
@@ -257,6 +264,19 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     // users 문서의 뺄셈으로만 "390명이 모달을 못 봤다"에 도달할 수 있었다.
     onboarding_gate: schema({
         onboarding_state: values.onboarding_state,
+        locale: values.locale,
+        app_mode: values.app_mode
+    }),
+    // 로그인 버튼을 실제로 누른 시점. auth_result 의 분모다.
+    //
+    // 2026-09-07 까지 일반 로그인 경로에는 계측이 아예 없었다. auth_result 는
+    // 게스트 데모에서만 발생해(js/guest-demo.js) 로그인 성공·실패·이탈을
+    // 아무도 볼 수 없었다. auth_start 를 세고 auth_result 를 빼면
+    // **구글에 갔다가 돌아오지 않은 사람**이 남는다 — 그게 지금까지
+    // 어떤 지표에도 안 잡히던 손실이다.
+    auth_start: schema({
+        login_mode: values.login_mode,
+        entry_point: values.entry_point,
         locale: values.locale,
         app_mode: values.app_mode
     })

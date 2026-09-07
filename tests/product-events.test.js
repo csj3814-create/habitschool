@@ -29,7 +29,8 @@ const EXPECTED_EVENT_NAMES = [
     'share_card_sent',
     'invite_link_landing',
     'share_prompt_shown',
-    'onboarding_gate'
+    'onboarding_gate',
+    'auth_start'
 ];
 
 afterEach(() => {

@@ -15,6 +15,21 @@ export function isSamsungInternetUserAgent(userAgent = '') {
     return /SamsungBrowser/i.test(ua);
 }
 
+// 안드로이드 웨일. 데스크톱 웨일은 제외한다 — 팝업이 새 탭으로 빠져 인텐트에
+// 가로채이는 것은 안드로이드에서 일어나는 일이고, 데스크톱은 팝업이 잘 뜬다.
+//
+// 2026-09-07 GA (7/1~9/7): 웨일 모바일 124명이 평균 168초를 쓰고 게스트 데모까지
+// 만졌는데(가입 클릭 19건) **record_saved 가 0건**이었다. 유입 1위가 네이버
+// 블로그(94세션)라 찾아온 사람들인데 한 명도 기록에 닿지 못했다. 삼성과 같은
+// 모양으로 보고 같은 처방을 쓴다.
+//
+// 다만 이건 재현이 아니라 정황이다. 이번에 같이 넣은 auth_start / auth_result
+// 계측이 다음 확인에서 이 판단을 검증하거나 뒤집는다.
+export function isWhaleAndroidUserAgent(userAgent = '') {
+    const ua = String(userAgent || '').trim();
+    return /Whale/i.test(ua) && /Android/i.test(ua);
+}
+
 // 삼성 인터넷은 설치 여부와 상관없이 redirect 로그인을 쓴다.
 //
 // 이 조건은 2026-04-27 하루 동안 두 번 뒤집혔다. 그날 아침엔 삼성 인터넷 전체를
@@ -35,7 +50,7 @@ export function isSamsungInternetUserAgent(userAgent = '') {
 // 여기를 다시 좁히려거든 먼저 `resolveAuthDomain` 을 볼 것. 두 함수는 한 몸이다 —
 // 이 함수가 redirect 라고 답하면 authDomain 도 같은 출처로 따라간다.
 export function shouldForceGoogleRedirectLogin({ userAgent = '' } = {}) {
-    return isSamsungInternetUserAgent(userAgent);
+    return isSamsungInternetUserAgent(userAgent) || isWhaleAndroidUserAgent(userAgent);
 }
 
 export function resolveGoogleLoginMode({ userAgent = '', isStandalone = false, overrideMode = '' } = {}) {
