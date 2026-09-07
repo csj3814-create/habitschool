@@ -5,6 +5,8 @@ import {
     createPendingGoogleLoginState,
     createPendingSignupOnboardingState,
     getPendingGoogleRedirectRecoveryRemainingMs,
+    hasChosenPrimaryHabit,
+    hasStartedRecording,
     isNewUserCredential,
     normalizeGoogleLoginMode,
     parsePendingGoogleLoginState,
@@ -183,6 +185,69 @@ describe('welcome bonus onboarding decisions', () => {
             pendingState: null,
             now: Date.parse('2026-04-20T00:10:00.000Z')
         })).toBe(false);
+    });
+
+    // 2026-09-07: 게이트가 휘발성 표식에 걸려 있어 608명 중 390명이 모달을
+    // 못 본 채 완료로 찍혔다. 아래 네 건이 그 회귀를 막는다.
+    it('still shows onboarding once the welcome bonus was granted but no habit was ever chosen', () => {
+        // 예전에는 welcomeBonusGiven 하나로 영구히 닫혔다. 기록이 0인 431명 중
+        // 311명이 정확히 이 상태였다.
+        expect(shouldShowSignupOnboarding({
+            userId: 'u1',
+            userData: {
+                createdAt: '2026-04-20T00:00:00.000Z',
+                onboardingComplete: true,
+                welcomeBonusGiven: true
+            },
+            pendingState: null,
+            now: Date.parse('2026-06-01T00:00:00.000Z')
+        })).toBe(true);
+    });
+
+    it('shows onboarding long after signup — the 30 minute window no longer closes the gate', () => {
+        expect(shouldShowSignupOnboarding({
+            userId: 'u1',
+            userData: { createdAt: '2026-04-20T00:00:00.000Z' },
+            pendingState: null,
+            now: Date.parse('2026-04-20T09:00:00.000Z')
+        })).toBe(true);
+    });
+
+    it('does not show onboarding once a habit was actually chosen', () => {
+        expect(shouldShowSignupOnboarding({
+            userId: 'u1',
+            userData: {
+                createdAt: '2026-04-20T00:00:00.000Z',
+                settings: { primaryHabit: 'diet' }
+            },
+            pendingState: { uid: 'u1' }
+        })).toBe(false);
+    });
+
+    it('does not interrupt a member who already records — the modal has no close button', () => {
+        expect(shouldShowSignupOnboarding({
+            userId: 'u1',
+            userData: { createdAt: '2026-04-20T00:00:00.000Z', lastLogDate: '2026-08-30' }
+        })).toBe(false);
+        // lastLogDate 백필(2026-09-01) 이전 회원은 currentStreak 로도 걸러진다.
+        expect(shouldShowSignupOnboarding({
+            userId: 'u1',
+            userData: { createdAt: '2026-04-20T00:00:00.000Z', currentStreak: 4 }
+        })).toBe(false);
+    });
+
+    it('reads the habit from settings.primaryHabit, not onboardingComplete', () => {
+        // onboardingComplete 는 모달을 못 본 사람에게도 자동으로 찍힌다.
+        expect(hasChosenPrimaryHabit({ onboardingComplete: true })).toBe(false);
+        expect(hasChosenPrimaryHabit({ settings: { primaryHabit: 'exercise' } })).toBe(true);
+        expect(hasChosenPrimaryHabit({ settings: { primaryHabit: '  ' } })).toBe(false);
+    });
+
+    it('treats either lastLogDate or a positive streak as having started', () => {
+        expect(hasStartedRecording({})).toBe(false);
+        expect(hasStartedRecording({ currentStreak: 0 })).toBe(false);
+        expect(hasStartedRecording({ lastLogDate: '2026-09-01' })).toBe(true);
+        expect(hasStartedRecording({ currentStreak: 1 })).toBe(true);
     });
 
     it('marks missed recent welcome bonuses as recoverable after onboarding completion', () => {

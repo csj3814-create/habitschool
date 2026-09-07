@@ -28,7 +28,8 @@ const EXPECTED_EVENT_NAMES = [
     'week2_return',
     'share_card_sent',
     'invite_link_landing',
-    'share_prompt_shown'
+    'share_prompt_shown',
+    'onboarding_gate'
 ];
 
 afterEach(() => {

@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=363';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=364';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=363';
-import { getDatesInfo } from './ui-helpers.js?v=363';
-import { escapeHtml } from './security.js?v=363';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=363';
+import { showToast } from './ui-helpers.js?v=364';
+import { getDatesInfo } from './ui-helpers.js?v=364';
+import { escapeHtml } from './security.js?v=364';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=364';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=363';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=363';
-import { trackProductEvent } from './product-events.js?v=363';
+} from './auth-login-helpers.js?v=364';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=364';
+import { trackProductEvent } from './product-events.js?v=364';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=363';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=364';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1319,6 +1319,12 @@ export function setupAuthListener(callbacks) {
                     // 동의는 받은 사실만으로는 증명이 안 된다. 무엇에, 언제,
                     // 어느 문서 버전에 동의했는지 남겨야 나중에 확인할 수 있다.
                     updateData.consents = buildSignupConsentRecord();
+                    // 첫 기록 축하 화면의 표식은 가입 시점에 심는다. 예전에는
+                    // 온보딩 완료 핸들러에서만 썼는데, 온보딩을 건너뛴 회원은
+                    // 나중에 기록을 해도 이 화면을 못 봤다 — 200P 선물도,
+                    // 2,000P 쿠폰까지 남은 거리도 보이지 않았다. 온보딩이
+                    // 떴는지와 무관하게 첫 기록은 축하받아야 한다.
+                    updateData.settings = { firstRewardPending: true };
                 }
                 // 이 쓰기를 통째로 삼키면 안 된다. 여기에 신규 회원의 동의 기록이 실려
                 // 있는데, Firestore 규칙에 consents 가 없던 동안 계속 거부됐고 아무도

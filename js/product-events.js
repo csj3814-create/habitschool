@@ -21,7 +21,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'week2_return',
     'share_card_sent',
     'invite_link_landing',
-    'share_prompt_shown'
+    'share_prompt_shown',
+    'onboarding_gate'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -128,6 +129,14 @@ export const PRODUCT_EVENT_VALUE_ALLOWLISTS = Object.freeze({
         'unavailable'
     ]),
     status: freezeValues(['success', 'cancelled', 'error', 'skipped', 'unavailable', 'empty', 'expired', 'deferred']),
+    // 온보딩 게이트가 어느 갈래로 갔나. shown 의 분모는 그날의 신규 가입이고,
+    // legacy_account 가 크면 게이트가 또 잘못 닫히고 있다는 뜻이다.
+    onboarding_state: freezeValues([
+        'shown',
+        'has_habit',
+        'already_recording',
+        'legacy_account'
+    ]),
     variant: freezeValues(['control', 'demo_v1', 'demo_v2', 'personalized_v1', 'full']),
     locale: freezeValues(['ko', 'en']),
     app_mode: freezeValues(['default', 'simple', 'pwa']),
@@ -241,6 +250,13 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     share_prompt_shown: schema({
         tab: values.tab,
         entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode
+    }),
+    // 온보딩 모달을 띄웠는지/왜 안 띄웠는지. 이게 없어서 2026-09-07 진단은
+    // users 문서의 뺄셈으로만 "390명이 모달을 못 봤다"에 도달할 수 있었다.
+    onboarding_gate: schema({
+        onboarding_state: values.onboarding_state,
         locale: values.locale,
         app_mode: values.app_mode
     })
