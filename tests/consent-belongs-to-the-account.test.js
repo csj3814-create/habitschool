@@ -139,3 +139,34 @@ describe('the login button unlocks itself when the pending state clears', () => 
         expect(AUTH).not.toContain('function syncSignupConsentState');
     });
 });
+
+// 2026-09-08 실기기: 습관을 고르고 나면 버튼이 '이번 주 실천을 준비하는 중...' 에서
+// 멈췄고, 앱을 껐다 켜야 다음으로 넘어갔다. 온보딩 저장과 가입 보너스 콜러블을
+// 둘 다 제한시간 없이 기다리고 있었다.
+describe('finishing onboarding does not hang on the network', () => {
+    const CORE = readRepoFile('js/app-core.js');
+    const fn = CORE.split('async function completeOnboarding() {')[1].split('\n};')[0];
+
+    it('bounds the onboarding write with a timeout', () => {
+        expect(fn).toContain("'onboarding_save_timeout'");
+        expect(fn).toContain('await withAsyncTimeout(');
+    });
+
+    it('does not wait on the welcome bonus before closing the modal', () => {
+        // 서버가 멱등이고 다음 로그인에 회수되므로 화면을 막을 이유가 없다.
+        expect(fn).not.toContain("const res = await fn({});");
+        expect(fn).toContain("httpsCallable(functions, 'awardWelcomeBonus')({})");
+        const bonusAt = fn.indexOf("awardWelcomeBonus");
+        const closeAt = fn.indexOf("document.getElementById('onboarding-modal').style.display = 'none';");
+        expect(bonusAt).toBeGreaterThan(-1);
+        expect(closeAt).toBeGreaterThan(bonusAt);
+    });
+
+    it('shows the first-time copy to anyone with no consent record, not just brand-new docs', () => {
+        // 첫 동의 창에서 '그만두기' 를 누르면 회원 문서는 이미 있다. 그다음 로그인에
+        // isNewUser 로 가르면 아무것도 동의한 적 없는 사람이 "약관이 바뀌었어요" 를 본다.
+        expect(AUTH).toContain('function hasNoConsentRecord(userData = {})');
+        expect(AUTH).toContain('firstTime: hasNoConsentRecord(consentData)');
+        expect(AUTH).not.toContain('firstTime: isNewUser');
+    });
+});
