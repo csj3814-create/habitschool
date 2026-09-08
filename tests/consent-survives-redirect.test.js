@@ -58,34 +58,38 @@ describe('a consent choice survives the trip to Google and back', () => {
     });
 });
 
-describe('someone who already agreed is not asked again', () => {
-    it('remembers acceptance once the sign-in completes', () => {
-        // 재동의 화면에서 부를 때는 그 화면의 선택을 넘긴다(인자 없으면 로그인 화면 기준).
+describe('the login screen always asks, because it cannot know who is signing in', () => {
+    // 2026-09-08: 예전에는 "이미 동의한 브라우저" 표시가 있으면 상자를 감추고
+    // 필수 항목을 미리 체크했다. 그 표시는 localStorage 에 브라우저 단위로 남고
+    // 로그아웃해도 지워지지 않았다. 그래서 로그아웃한 기기에서 다른 사람이
+    // 가입하면 동의 화면을 아예 못 보고, **앞사람의 선택으로 그 사람의 동의
+    // 기록이 만들어졌다.** 화면이 비는 것보다 기록이 거짓인 쪽이 더 큰 문제다.
+    it('never hides the consent box on the login screen', () => {
+        const restore = AUTH.split('function restoreConsentSelection() {')[1].split('\n}\n')[0];
+        expect(restore).not.toContain('box.hidden = true;');
+        expect(restore).not.toContain("box.setAttribute('aria-hidden', 'true');");
+    });
+
+    it('never pre-ticks the required boxes from a stored flag', () => {
+        // 미리 체크된 동의는 본인이 한 동의가 아니다.
+        const restore = AUTH.split('function restoreConsentSelection() {')[1].split('\n}\n')[0];
+        expect(restore).not.toContain('readAcceptedConsent()');
+        expect(restore).not.toContain('el.checked = true;');
+    });
+
+    it('clears the browser-level flag on sign-out', () => {
+        // 다음에 로그인할 사람이 같은 사람이라는 보장이 없다.
+        expect(AUTH).toContain('function clearAcceptedConsent()');
+        const logout = AUTH.split('window.logoutAndReset = async function () {')[1].split('\n};')[0];
+        expect(logout).toContain('clearAcceptedConsent();');
+        expect(logout).toContain('clearConsentSelectionSnapshot();');
+    });
+
+    it('still records that acceptance happened, stamped with the document version', () => {
+        // 기록은 남긴다 — 언제 어느 판본에 동의했는지는 나중에 확인할 수 있어야 한다.
         expect(AUTH).toContain('function rememberAcceptedConsent(selection = null)');
         expect(AUTH).toContain('rememberAcceptedConsent();');
-        // 역할이 끝난 임시 스냅샷은 치운다.
+        expect(AUTH).toContain('version: CONSENT_DOC_VERSION,');
         expect(AUTH).toContain('clearConsentSelectionSnapshot();');
-    });
-
-    it('hides the box but leaves it in the DOM', () => {
-        // 없애 버리면 buildSignupConsentRecord 가 읽을 것이 사라져 동의 기록이 빈다.
-        const restore = AUTH.split('function restoreConsentSelection() {')[1].split('\n}\n')[0];
-        expect(restore).toContain('box.hidden = true;');
-        expect(restore).toContain("box.setAttribute('aria-hidden', 'true');");
-        expect(restore).not.toContain('.remove()');
-    });
-
-    it('keeps the optional choice as it was, rather than assuming yes', () => {
-        // 필수는 되살리되 민감정보는 거부했으면 거부한 대로 둔다.
-        const restore = AUTH.split('function restoreConsentSelection() {')[1].split('\n}\n')[0];
-        expect(restore).toContain('box.querySelectorAll(\'input[data-consent-required="true"]\').forEach((el) => { el.checked = true; });');
-        expect(restore).toContain('sensitiveBox.checked = accepted.sensitive === true;');
-    });
-
-    it('asks again when the documents change', () => {
-        // 저장된 버전이 현재 문서 버전과 다르면 없는 것으로 친다.
-        expect(AUTH).toContain('function readAcceptedConsent()');
-        const read = AUTH.split('function readAcceptedConsent() {')[1].split('\n}')[0];
-        expect(read).toContain('stored.version !== CONSENT_DOC_VERSION');
     });
 });

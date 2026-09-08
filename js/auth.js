@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=368';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=369';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=368';
-import { getDatesInfo } from './ui-helpers.js?v=368';
-import { escapeHtml } from './security.js?v=368';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=368';
+import { showToast } from './ui-helpers.js?v=369';
+import { getDatesInfo } from './ui-helpers.js?v=369';
+import { escapeHtml } from './security.js?v=369';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=369';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=368';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=368';
-import { trackProductEvent } from './product-events.js?v=368';
+} from './auth-login-helpers.js?v=369';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=369';
+import { trackProductEvent } from './product-events.js?v=369';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=368';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=369';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1531,6 +1531,10 @@ export function setupAuthListener(callbacks) {
 
 // 로그아웃 후 로그인 화면으로 복귀
 window.logoutAndReset = async function () {
+    // 이 기기에서 다음에 로그인할 사람이 같은 사람이라는 보장이 없다.
+    // 브라우저 단위 동의 표시를 남겨 두면 다음 사람이 동의 화면을 건너뛴다.
+    clearAcceptedConsent();
+    clearConsentSelectionSnapshot();
     try {
         await signOut(auth);
     } catch (e) {
@@ -1615,10 +1619,8 @@ function rememberAcceptedConsent(selection = null) {
     } catch (_) {}
 }
 
-function readAcceptedConsent() {
-    const stored = readStoredJson(CONSENT_ACCEPTED_KEY);
-    if (!stored || stored.version !== CONSENT_DOC_VERSION) return null;
-    return stored;
+function clearAcceptedConsent() {
+    try { localStorage.removeItem(CONSENT_ACCEPTED_KEY); } catch (_) {}
 }
 
 // 가입 때든 개정 재동의 때든 같은 모양으로 남겨야 한다. 두 벌로 만들면 언젠가 갈라진다.
@@ -1904,19 +1906,17 @@ function restoreConsentSelection() {
     const box = document.getElementById('signup-consent-box');
     if (!box) return;
 
-    const accepted = readAcceptedConsent();
-    if (accepted) {
-        box.querySelectorAll('input[data-consent-required="true"]').forEach((el) => { el.checked = true; });
-        const sensitiveBox = document.getElementById('consent-sensitive');
-        if (sensitiveBox) sensitiveBox.checked = accepted.sensitive === true;
-        // 감추되 DOM에는 남긴다. 다른 코드가 이 체크박스들을 그대로 읽기 때문에
-        // 없애 버리면 동의 기록이 빈 채로 만들어진다.
-        box.hidden = true;
-        box.setAttribute('aria-hidden', 'true');
-        syncSignupConsentState();
-        return;
-    }
-
+    // 예전에는 "이미 동의한 브라우저" 표시가 있으면 상자를 감추고 필수 항목을
+    // 미리 체크해 뒀다. 그 표시는 localStorage 에 브라우저 단위로 남고 로그아웃해도
+    // 지워지지 않는다 — **누가 로그인할지 모르는 표시**였다.
+    //
+    // 그래서 로그아웃한 기기에서 다른 사람이 가입하면 동의 화면을 아예 보지 못하고,
+    // 앞사람의 선택으로 그 사람의 동의 기록이 만들어졌다. 화면이 빈 것보다
+    // 기록이 거짓인 쪽이 더 큰 문제다 — 개인정보 보호법 제22조의 동의는 본인이
+    // 한 것이어야 한다. 미리 체크해 두는 것도 같은 이유로 안 된다.
+    //
+    // 로그인 화면에서는 항상 묻는다. 아래 스냅샷 복원은 다른 일이다 — 리디렉트로
+    // 구글을 다녀오는 **같은 사람의 같은 시도**를 이어 주는 것이라 그대로 둔다.
     const snapshot = readConsentSelectionSnapshot();
     if (!snapshot) return;
     Object.entries(snapshot).forEach(([id, checked]) => {
