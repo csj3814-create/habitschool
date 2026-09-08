@@ -25,11 +25,12 @@ describe('an existing member is asked again when the documents change', () => {
 
     it('does not pester someone who just signed up', () => {
         // 방금 가입한 사람은 이미 현재 문서에 동의했다.
-        expect(AUTH).toContain('if (!isNewUser && needsConsentRefresh({ ...resolvedUserData, ...updateData })) {');
+        // 2026-09-08: 신규도 같은 관문을 지난다. 동의 여부는 계정 기록으로만 본다.
+        expect(AUTH).toContain('if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {');
     });
 
     it('does not open twice over itself', () => {
-        const fn = AUTH.split('function openReconsentModal(user, userData = {}) {')[1].split('\n}')[0];
+        const fn = AUTH.split('function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {')[1].split('\n}')[0];
         expect(fn).toContain("if (!modal || modal.style.display === 'flex') return;");
     });
 });
@@ -39,7 +40,7 @@ describe('the record it writes matches the one signup writes', () => {
         // 동의 기록 모양이 두 벌이 되면 언젠가 갈라진다.
         expect(AUTH).toContain('function buildConsentRecordFromSelection(selection = {})');
         expect(AUTH).toContain('buildConsentRecordFromSelection(collectReconsentSelection())');
-        expect(AUTH).toContain('buildConsentRecordFromSelection(resolveConsentSelection())');
+        expect(AUTH).toContain('buildConsentRecordFromSelection(collectReconsentSelection())');
     });
 
     it('maps the modal ids onto the same canonical keys', () => {
@@ -52,9 +53,10 @@ describe('the record it writes matches the one signup writes', () => {
     it('persists before it claims to have accepted anything', () => {
         const fn = AUTH.split('window.submitReconsent = async function submitReconsent() {')[1].split('\n};')[0];
         const writeAt = fn.indexOf("await setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true });");
-        const rememberAt = fn.indexOf('rememberAcceptedConsent(collectReconsentSelection());');
+        // 저장이 끝나기 전에 창을 닫거나 고맙다고 하면, 실패한 동의를 받은 것처럼 보인다.
+        const closeAt = fn.indexOf('closeReconsentModal();');
         expect(writeAt).toBeGreaterThan(-1);
-        expect(rememberAt).toBeGreaterThan(writeAt);
+        expect(closeAt).toBeGreaterThan(writeAt);
     });
 
     it('re-enables the button if the write fails, instead of stranding the member', () => {
@@ -66,7 +68,7 @@ describe('the record it writes matches the one signup writes', () => {
 
 describe('an optional refusal survives the re-consent', () => {
     it('restores the previous health-data choice rather than defaulting to yes', () => {
-        const fn = AUTH.split('function openReconsentModal(user, userData = {}) {')[1].split('\n}')[0];
+        const fn = AUTH.split('function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {')[1].split('\n}')[0];
         expect(fn).toContain('sensitiveBox.checked = userData?.consents?.sensitive?.agreed === true;');
         // 필수 항목은 반대로 매번 새로 받아야 한다.
         expect(fn).toContain("['reconsent-terms', 'reconsent-privacy', 'reconsent-age', 'reconsent-all'].forEach");
@@ -84,13 +86,16 @@ describe('the modal works however it is shown', () => {
         expect(AUTH).toContain('function bindConsentUi()');
         expect(AUTH).toContain('bindReconsentListeners();');
         const fn = AUTH.split('function bindConsentUi() {')[1].split('\n}')[0];
-        expect(fn).toContain('bindSignupConsentListeners();');
+        // 로그인 화면에는 동의 상자가 없다. 묶을 것은 모달 하나뿐이다.
+        expect(fn).not.toContain('bindSignupConsentListeners');
         expect(fn).toContain('bindReconsentListeners();');
     });
 
     it('keeps the continue button locked until every required box is ticked', () => {
         const fn = AUTH.split('function syncReconsentState() {')[1].split('\n}')[0];
-        expect(fn).toContain('submit.disabled = !required.every(el => el.checked);');
+        // disabled 로 잠그면 클릭이 삼켜져 왜 잠겼는지 말할 기회가 없다.
+        expect(fn).toContain('const ready = required.every(el => el.checked);');
+        expect(fn).toContain("submit.setAttribute('aria-disabled', ready ? 'false' : 'true');");
     });
 });
 

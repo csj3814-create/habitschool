@@ -13,52 +13,36 @@ describe('signup consent', () => {
     const html = readRepo('index.html');
     const auth = readRepo('js/auth.js');
 
+    // 2026-09-08: 동의를 받는 자리가 로그인 화면 → 로그인 직후 화면으로 옮겨졌다.
+    // 아래는 "어디서" 가 아니라 "무엇을 어떻게 받는가" 를 지킨다.
+    // 순서·위치 계약은 tests/consent-belongs-to-the-account.test.js 가 갖는다.
     it('asks instead of assuming', () => {
         expect(html).not.toContain('동의하는 것으로 간주합니다');
-        expect(html).toContain('id="signup-consent-box"');
-        expect(html).toContain('id="consent-terms"');
-        expect(html).toContain('id="consent-privacy"');
+        expect(html).toContain('id="reconsent-box"');
+        expect(html).toContain('id="reconsent-terms"');
+        expect(html).toContain('id="reconsent-privacy"');
     });
 
     it('keeps health data as its own separate consent', () => {
-        // 민감정보는 별도 동의여야 하고, 거부해도 가입은 돼야 한다(선택).
-        expect(html).toContain('id="consent-sensitive"');
-        const sensitiveRow = html.split('id="consent-sensitive"')[1]?.split('</label>')[0] || '';
+        // 민감정보는 별도 동의여야 하고, 거부해도 계속 쓸 수 있어야 한다(선택).
+        expect(html).toContain('id="reconsent-sensitive"');
+        const sensitiveRow = html.split('id="reconsent-sensitive"')[1]?.split('</label>')[0] || '';
         expect(sensitiveRow).not.toContain('data-consent-required="true"');
         expect(sensitiveRow).toContain('건강정보');
-        // 필수 두 개만 로그인을 막는다.
-        expect(html).toContain('id="consent-terms" data-consent-required="true"');
-        expect(html).toContain('id="consent-privacy" data-consent-required="true"');
+        // 필수만 계속하기를 막는다.
+        expect(html).toContain('id="reconsent-terms" data-consent-required="true"');
+        expect(html).toContain('id="reconsent-privacy" data-consent-required="true"');
     });
 
-    // 2026-09-08: 잠금 방식을 바꿨다. `disabled` 인 버튼은 클릭 이벤트가 아예
-    // 발생하지 않아서, 누른 사람에게 무엇이 빠졌는지 말해 줄 기회가 없었다.
-    // 안내는 title 에만 있었고 모바일에는 툴팁이 없으니 회색 버튼이 그대로
-    // 막다른 길이었다. 이제 aria-disabled 로 잠그고 클릭은 받아서 이유를 알린다.
-    // **잠금 자체는 클릭 핸들러가 보장한다** — 아래 두 번째 단언이 그 자리다.
-    it('locks the login button until the required boxes are ticked', () => {
-        expect(html).toContain('id="loginBtn" aria-label="구글 계정으로 로그인" aria-disabled="true"');
-        // 동의 잠금에 disabled 를 쓰면 클릭이 삼켜져 안내를 못 한다.
-        expect(html).not.toContain('id="loginBtn" aria-label="구글 계정으로 로그인" disabled');
-
-        expect(auth).toContain('function syncSignupConsentState()');
-        expect(auth).toContain("loginBtn.setAttribute('aria-disabled', ready ? 'false' : 'true');");
-        expect(auth).toContain("loginBtn.classList.toggle('is-consent-locked', !ready);");
-
-        // 실제 잠금: 필수 동의가 비면 로그인을 시작하지 않고 돌아간다.
-        expect(auth).toContain('if (reportMissingConsent()) return;');
-        expect(auth).toContain('function reportMissingConsent()');
-        expect(auth).toContain('function getMissingRequiredConsents()');
-
-        // 로그인 진행 중의 진짜 disabled 는 건드리지 않는다.
-        expect(auth).toContain("if (loginBtn.getAttribute('aria-busy') !== 'true') loginBtn.disabled = false;");
-        const pendingFn = auth.split('function setGoogleLoginPendingUi(')[1]?.split('\nfunction ')[0] || '';
-        expect(pendingFn).toContain('syncSignupConsentState();');
+    it('does not let anyone through without the required items', () => {
+        expect(auth).toContain('function syncReconsentState()');
+        expect(auth).toContain('if (reportMissingReconsent()) return;');
+        expect(auth).toContain('function reportMissingReconsent()');
     });
 
-    // 동의에서 막혀 나간 사람은 auth_start 에 잡히지 않는다. 로그인을 시작조차
-    // 못 했기 때문이다. 따로 세지 않으면 이 이탈은 어떤 지표에도 안 남는다.
     it('counts the people who are stopped here', () => {
+        // 여기서 돌아선 사람은 로그인은 했지만 앱에 못 들어온다.
+        // 따로 세지 않으면 이 이탈은 어떤 지표에도 안 남는다.
         expect(auth).toContain("trackProductEvent('auth_consent_blocked'");
         const events = readRepo('js/product-events.js');
         expect(events).toContain("'auth_consent_blocked'");
@@ -68,18 +52,17 @@ describe('signup consent', () => {
     it('says which boxes are missing, on screen and not only in a tooltip', () => {
         const css = readRepo('styles-features.css');
         expect(auth).toContain("row.classList.add('consent-missing');");
-        expect(auth).toContain('function clearMissingConsentHighlight()');
-        // rAF 로 클래스를 붙이면 탭이 숨겨져 있을 때 영영 안 붙는다. 동기여야 한다.
-        expect(auth).not.toContain('requestAnimationFrame(() => {\n        missing.forEach');
         expect(css).toContain('.consent-row.consent-missing input[type="checkbox"]');
         // 토스트로도 말한다 — 색만 바뀌면 색을 못 보는 사람에게는 아무 일도 안 일어난 것이다.
         expect(auth).toContain('빨갛게 표시된 필수 항목');
+        // rAF 로 붙이면 탭이 숨겨져 있을 때 영영 안 붙는다. 동기여야 한다.
+        expect(auth).toContain('void row.offsetWidth;');
     });
 
     it('records what was agreed to, when, and against which version', () => {
         expect(auth).toContain('const CONSENT_DOC_VERSION');
-        expect(auth).toContain('function buildSignupConsentRecord()');
-        expect(auth).toContain('updateData.consents = buildSignupConsentRecord();');
+        expect(auth).toContain('function buildConsentRecordFromSelection(selection = {})');
+        expect(auth).toContain("setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true })");
         // 동의 안 한 항목에는 시각을 남기지 않는다.
         expect(auth).toContain('at: agreed ? at : null');
         // 규칙에서 막히면 저장 자체가 안 된다.

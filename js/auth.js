@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=369';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=370';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=369';
-import { getDatesInfo } from './ui-helpers.js?v=369';
-import { escapeHtml } from './security.js?v=369';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=369';
+import { showToast } from './ui-helpers.js?v=370';
+import { getDatesInfo } from './ui-helpers.js?v=370';
+import { escapeHtml } from './security.js?v=370';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=370';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=369';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=369';
-import { trackProductEvent } from './product-events.js?v=369';
+} from './auth-login-helpers.js?v=370';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=370';
+import { trackProductEvent } from './product-events.js?v=370';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=369';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=370';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -281,9 +281,6 @@ function setGoogleLoginPendingUi(loginBtn, isPending) {
     if (loginBtn.dataset.originalHtml) {
         loginBtn.innerHTML = loginBtn.dataset.originalHtml;
     }
-    // 대기 상태가 풀렸다고 무조건 열면 안 된다. 필수 동의를 안 했으면 잠긴 채로
-    // 둬야 하므로, 열고 닫는 판단은 동의 상태에 맡긴다.
-    syncSignupConsentState();
 }
 
 function clearPendingGoogleLoginResetTimer() {
@@ -826,14 +823,10 @@ export function initAuth() {
     handleGoogleRedirectLoginResult(loginBtn).catch(() => {});
 
     loginBtn.addEventListener('click', () => {
-        // 필수 동의가 비어 있으면 로그인을 시작하지 않고 이유를 알린다.
-        if (reportMissingConsent()) return;
         if (window._isPopupLogin) {
             return;
         }
         window._isPopupLogin = true;
-        // 리디렉트로 페이지가 날아가기 전에 선택을 붙잡아 둔다.
-        persistConsentSelectionSnapshot();
         setGoogleLoginPendingUi(loginBtn, true);
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
@@ -1358,9 +1351,12 @@ export function setupAuthListener(callbacks) {
                 };
                 if (isNewUser) {
                     updateData.createdAt = serverTimestamp();
+                    // consents 는 여기서 만들지 않는다. 동의는 로그인 뒤에
+                    // 계정 기준으로 받고(#reconsent-modal), 그 화면이 직접 쓴다.
+                    // 로그인 화면에서 받으면 브라우저 단위가 되어, 로그아웃한
+                    // 기기에서 다음 사람이 앞사람의 동의를 물려받는다.
                     // 동의는 받은 사실만으로는 증명이 안 된다. 무엇에, 언제,
                     // 어느 문서 버전에 동의했는지 남겨야 나중에 확인할 수 있다.
-                    updateData.consents = buildSignupConsentRecord();
                     // 첫 기록 축하 화면의 표식은 가입 시점에 심는다. 예전에는
                     // 온보딩 완료 핸들러에서만 썼는데, 온보딩을 건너뛴 회원은
                     // 나중에 기록을 해도 이 화면을 못 봤다 — 200P 선물도,
@@ -1378,14 +1374,13 @@ export function setupAuthListener(callbacks) {
                         console.error('동의 기록이 저장되지 않았습니다. Firestore 규칙에 consents 가 있는지 확인하세요.');
                     }
                 });
-                // 로그인이 끝났으니 이 브라우저는 다시 묻지 않는다. 임시 스냅샷은 역할이 끝났다.
-                rememberAcceptedConsent();
-                clearConsentSelectionSnapshot();
-                // 방금 가입한 사람은 이미 현재 문서에 동의했다. 기존 회원만 확인한다.
-                if (!isNewUser && needsConsentRefresh({ ...resolvedUserData, ...updateData })) {
+                // 신규든 기존이든 같은 관문을 지난다. 동의 여부는 이 계정의
+                // Firestore 기록으로만 판단하므로, 브라우저를 바꾸거나 로그아웃해도
+                // 한 번 동의한 사람에게 다시 묻지 않는다.
+                if (needsConsentRefresh({ ...resolvedUserData, ...updateData })) {
                     setTimeout(() => {
                         if (auth.currentUser?.uid !== user.uid) return;
-                        openReconsentModal(user, { ...resolvedUserData, ...updateData });
+                        openReconsentModal(user, { ...resolvedUserData, ...updateData }, { firstTime: isNewUser });
                     }, 900);
                 }
                 const ud = {
@@ -1531,10 +1526,6 @@ export function setupAuthListener(callbacks) {
 
 // 로그아웃 후 로그인 화면으로 복귀
 window.logoutAndReset = async function () {
-    // 이 기기에서 다음에 로그인할 사람이 같은 사람이라는 보장이 없다.
-    // 브라우저 단위 동의 표시를 남겨 두면 다음 사람이 동의 화면을 건너뛴다.
-    clearAcceptedConsent();
-    clearConsentSelectionSnapshot();
     try {
         await signOut(auth);
     } catch (e) {
@@ -1548,12 +1539,6 @@ window.logoutAndReset = async function () {
 // 구분되고, 재동의를 받아야 하는 이용자를 골라낼 수 있다.
 const CONSENT_DOC_VERSION = '2026-08-15';
 
-// 리디렉트 로그인은 구글을 다녀오면서 페이지를 통째로 새로 띄운다. 그러면 체크박스가
-// 전부 풀린 상태로 돌아오는데, 하필 그 시점에 신규 회원의 동의 기록이 만들어진다.
-// 그대로 두면 분명히 동의하고 가입한 사람의 기록에 '동의 안 함'이 박힌다.
-// 그래서 로그인을 시작할 때 선택을 저장해 두고, 돌아왔을 때 그것으로 복원한다.
-const CONSENT_SELECTION_KEY = 'habitschool-consent-selection';
-const CONSENT_ACCEPTED_KEY = 'habitschool-consent-accepted';
 const CONSENT_IDS = ['consent-terms', 'consent-privacy', 'consent-age', 'consent-sensitive'];
 
 function readConsentCheckbox(id) {
@@ -1575,54 +1560,6 @@ function collectConsentSelection() {
     return selection;
 }
 
-// 로그인을 시작하는 순간 호출한다. 리디렉트로 페이지가 날아가도 선택이 남는다.
-function persistConsentSelectionSnapshot() {
-    try {
-        localStorage.setItem(CONSENT_SELECTION_KEY, JSON.stringify({
-            version: CONSENT_DOC_VERSION,
-            selection: collectConsentSelection()
-        }));
-    } catch (_) {}
-}
-
-function readConsentSelectionSnapshot() {
-    const stored = readStoredJson(CONSENT_SELECTION_KEY);
-    if (!stored || stored.version !== CONSENT_DOC_VERSION) return null;
-    return stored.selection || null;
-}
-
-function clearConsentSelectionSnapshot() {
-    try {
-        localStorage.removeItem(CONSENT_SELECTION_KEY);
-    } catch (_) {}
-}
-
-// 화면에 하나라도 체크돼 있으면 그것이 방금 한 선택이다. 전부 비어 있다면 리디렉트를
-// 다녀오며 화면이 초기화된 경우이므로 저장해 둔 선택을 쓴다.
-function resolveConsentSelection() {
-    const live = collectConsentSelection();
-    if (Object.values(live).some(Boolean)) return live;
-    return readConsentSelectionSnapshot() || live;
-}
-
-// 이 브라우저가 이미 동의를 마쳤다는 표시. 문서 버전이 올라가면 다시 받아야 하므로
-// 버전을 함께 적는다.
-// 재동의 화면에서 부를 때는 그 화면의 선택을 넘긴다. 인자가 없으면 로그인 화면 기준.
-function rememberAcceptedConsent(selection = null) {
-    const resolved = selection || resolveConsentSelection();
-    try {
-        localStorage.setItem(CONSENT_ACCEPTED_KEY, JSON.stringify({
-            version: CONSENT_DOC_VERSION,
-            at: new Date().toISOString(),
-            sensitive: resolved['consent-sensitive'] === true
-        }));
-    } catch (_) {}
-}
-
-function clearAcceptedConsent() {
-    try { localStorage.removeItem(CONSENT_ACCEPTED_KEY); } catch (_) {}
-}
-
 // 가입 때든 개정 재동의 때든 같은 모양으로 남겨야 한다. 두 벌로 만들면 언젠가 갈라진다.
 function buildConsentRecordFromSelection(selection = {}) {
     const at = new Date().toISOString();
@@ -1636,10 +1573,6 @@ function buildConsentRecordFromSelection(selection = {}) {
         // 건강정보는 개인정보 보호법 제23조 민감정보라 따로 받는다.
         sensitive: entry(selection['consent-sensitive'] === true)
     };
-}
-
-function buildSignupConsentRecord() {
-    return buildConsentRecordFromSelection(resolveConsentSelection());
 }
 
 // ===== 약관 개정 재동의 =====
@@ -1681,7 +1614,52 @@ function syncReconsentState() {
     const required = [...box.querySelectorAll('input[data-consent-required="true"]')];
     const allBox = document.getElementById('reconsent-all');
     if (allBox) allBox.checked = all.length > 0 && all.every(el => el.checked);
-    submit.disabled = !required.every(el => el.checked);
+    // disabled 로 잠그면 클릭 이벤트가 아예 안 와서 왜 잠겼는지 말할 기회가 없다.
+    // 모바일에는 툴팁도 없다. 모양만 잠그고 클릭은 받는다.
+    const ready = required.every(el => el.checked);
+    submit.disabled = false;
+    submit.setAttribute('aria-disabled', ready ? 'false' : 'true');
+    submit.classList.toggle('is-consent-locked', !ready);
+    document.querySelectorAll('#reconsent-box .consent-row.consent-missing').forEach(row => {
+        const input = row.querySelector('input[type="checkbox"]');
+        if (!input || input.checked) row.classList.remove('consent-missing');
+    });
+}
+
+// 잠긴 동의 버튼을 눌렀을 때. 빠진 줄을 빨갛게 짚고, 문구로 말하고, 세어 둔다.
+function reportMissingReconsent() {
+    const box = document.getElementById('reconsent-box');
+    if (!box) return false;
+    const missing = [...box.querySelectorAll('input[data-consent-required="true"]')].filter(el => !el.checked);
+    if (!missing.length) return false;
+
+    box.querySelectorAll('.consent-row.consent-missing').forEach(row => row.classList.remove('consent-missing'));
+    missing.forEach(el => {
+        const row = el.closest('.consent-row');
+        if (!row) return;
+        void row.offsetWidth;
+        row.classList.add('consent-missing');
+    });
+
+    const isEn = document.documentElement.classList.contains('locale-en');
+    showToast(isEn
+        ? `Please agree to the ${missing.length} required item(s) marked in red.`
+        : `빨갛게 표시된 필수 항목 ${missing.length}개에 동의해 주세요.`);
+    try {
+        missing[0].closest('.consent-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        missing[0].focus({ preventScroll: true });
+    } catch (_) {}
+
+    // 여기서 돌아선 사람은 로그인은 했지만 앱에 들어오지 못한다.
+    // 따로 세지 않으면 이 이탈은 어떤 지표에도 안 남는다.
+    try {
+        trackProductEvent('auth_consent_blocked', {
+            entry_point: 'login_modal',
+            locale: isEn ? 'en' : 'ko',
+            app_mode: isStandalonePushMode() ? 'pwa' : 'default'
+        });
+    } catch (_) {}
+    return true;
 }
 
 function bindReconsentListeners() {
@@ -1703,11 +1681,25 @@ function bindReconsentListeners() {
     });
 }
 
-function openReconsentModal(user, userData = {}) {
+function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {
     const modal = document.getElementById('reconsent-modal');
     if (!modal || modal.style.display === 'flex') return;
     _reconsentUser = user;
     bindReconsentListeners();
+
+    // 처음 온 사람에게 "약관이 바뀌었어요"는 무슨 소린지 알 수 없다.
+    // 바뀐 내용 목록도 첫 가입에는 의미가 없으므로 감춘다.
+    const signupHead = document.getElementById('reconsent-head-signup');
+    const refreshHead = document.getElementById('reconsent-head-refresh');
+    const changes = modal.querySelector('.reconsent-changes');
+    if (signupHead) signupHead.hidden = !firstTime;
+    if (refreshHead) refreshHead.hidden = !!firstTime;
+    if (changes) changes.hidden = !!firstTime;
+    // 첫 가입이면 나가는 버튼 문구도 "로그아웃"이 아니라 그만두기에 가깝다.
+    const declineBtn = modal.querySelector('.reconsent-actions .cancel');
+    if (declineBtn) {
+        declineBtn.textContent = firstTime ? '그만두기' : '로그아웃';
+    }
     // 건강정보는 이미 받아 둔 선택이 있으면 그대로 되살린다. 개정을 빌미로 거부를
     // 동의로 바꾸면 안 된다.
     const sensitiveBox = document.getElementById('reconsent-sensitive');
@@ -1727,6 +1719,8 @@ function closeReconsentModal() {
 }
 
 window.submitReconsent = async function submitReconsent() {
+    // 필수 동의가 비어 있으면 저장하지 않고 무엇이 빠졌는지 알린다.
+    if (reportMissingReconsent()) return;
     const user = _reconsentUser || auth.currentUser;
     if (!user?.uid) return;
     const submit = document.getElementById('reconsent-submit');
@@ -1749,7 +1743,6 @@ window.submitReconsent = async function submitReconsent() {
 
     window._sensitiveConsentAgreed = record.sensitive.agreed === true;
     window.applySensitiveConsentGate?.();
-    rememberAcceptedConsent(collectReconsentSelection());
     closeReconsentModal();
     showToast('✅ 동의해 주셔서 감사합니다.');
 };
@@ -1759,89 +1752,6 @@ window.declineReconsent = function declineReconsent() {
     closeReconsentModal();
     window.logoutAndReset?.();
 };
-
-// 필수 항목을 다 체크해야 로그인 버튼이 열린다.
-function syncSignupConsentState() {
-    const box = document.getElementById('signup-consent-box');
-    if (!box) return;
-    const required = [...box.querySelectorAll('input[data-consent-required="true"]')];
-    const all = [...box.querySelectorAll('input[type="checkbox"]')].filter(el => el.id !== 'consent-all');
-    const allBox = document.getElementById('consent-all');
-    const loginBtn = document.getElementById('loginBtn');
-
-    if (allBox) allBox.checked = all.length > 0 && all.every(el => el.checked);
-    const ready = required.every(el => el.checked);
-    if (loginBtn) {
-        // `disabled` 로 잠그지 않는다. disabled 인 버튼은 클릭 이벤트가 아예
-        // 발생하지 않아서, 누른 사람에게 무엇이 빠졌는지 말해 줄 기회가 없다.
-        // 안내는 title 에만 있었는데 모바일에는 툴팁이 없으니 회색 버튼이
-        // 그대로 막다른 길이 됐다. 모양만 잠그고 클릭은 받아서 이유를 알린다.
-        // (로그인 진행 중일 때의 실제 disabled 는 건드리지 않는다.)
-        if (loginBtn.getAttribute('aria-busy') !== 'true') loginBtn.disabled = false;
-        loginBtn.setAttribute('aria-disabled', ready ? 'false' : 'true');
-        loginBtn.classList.toggle('is-consent-locked', !ready);
-        loginBtn.title = ready
-            ? ''
-            : (document.documentElement.classList.contains('locale-en')
-                ? 'Please agree to the required items first.'
-                : '필수 항목에 동의해야 시작할 수 있어요.');
-    }
-    // 방금 체크한 줄의 빨간색은 바로 뺀다. 다 채우기 전까지 그대로 두면
-    // 이미 한 일에 계속 빨간 표시가 남아 무엇이 남았는지 되레 흐려진다.
-    document.querySelectorAll('.consent-row.consent-missing').forEach(row => {
-        const input = row.querySelector('input[type="checkbox"]');
-        if (!input || input.checked) row.classList.remove('consent-missing');
-    });
-}
-
-function getMissingRequiredConsents() {
-    const box = document.getElementById('signup-consent-box');
-    if (!box) return [];
-    return [...box.querySelectorAll('input[data-consent-required="true"]')].filter(el => !el.checked);
-}
-
-function clearMissingConsentHighlight() {
-    document.querySelectorAll('.consent-row.consent-missing')
-        .forEach(row => row.classList.remove('consent-missing'));
-}
-
-// 잠긴 버튼을 눌렀을 때. 빠진 줄을 빨갛게 짚고, 문구로 말하고, 세어 둔다.
-function reportMissingConsent() {
-    const missing = getMissingRequiredConsents();
-    if (!missing.length) return false;
-
-    clearMissingConsentHighlight();
-    // 애니메이션을 다시 돌리려면 클래스를 뺐다 넣어야 하는데, 그 사이를
-    // requestAnimationFrame 으로 띄우면 안 된다 — 탭이 숨겨져 있으면 rAF 가
-    // 아예 실행되지 않아 빨간 표시가 영영 안 붙는다. 강제 리플로우로 동기 처리한다.
-    missing.forEach(el => {
-        const row = el.closest('.consent-row');
-        if (!row) return;
-        void row.offsetWidth;
-        row.classList.add('consent-missing');
-    });
-
-    const isEn = document.documentElement.classList.contains('locale-en');
-    showToast(isEn
-        ? `Please agree to the ${missing.length} required item(s) marked in red.`
-        : `빨갛게 표시된 필수 항목 ${missing.length}개에 동의해 주세요.`);
-
-    try {
-        missing[0].closest('.consent-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        missing[0].focus({ preventScroll: true });
-    } catch (_) {}
-
-    // 여기서 막힌 사람은 auth_start 에 잡히지 않는다. 로그인을 시작조차
-    // 못 했기 때문이다. 별도로 세지 않으면 이 이탈은 어떤 지표에도 안 남는다.
-    try {
-        trackProductEvent('auth_consent_blocked', {
-            entry_point: 'login_modal',
-            locale: isEn ? 'en' : 'ko',
-            app_mode: isStandalonePushMode() ? 'pwa' : 'default'
-        });
-    } catch (_) {}
-    return true;
-}
 
 // 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
 // 아무 반응 없이 막으면 고장으로 보인다. 무엇을 해야 하는지 그 자리에서 알린다.
@@ -1898,61 +1808,8 @@ window.highlightMissingConsents = function () {
     return true;
 };
 
-// 두 가지를 복원한다.
-//  1) 이미 동의를 마친 브라우저라면 다시 묻지 않는다. 체크된 상태로 두고 상자를 감춘다.
-//  2) 리디렉트를 다녀오는 중이라면 떠나기 직전의 선택을 되살린다. 이게 없으면
-//     돌아온 화면에서 체크가 전부 풀려 시작 버튼이 잠긴 채로 멈춰 보인다.
-function restoreConsentSelection() {
-    const box = document.getElementById('signup-consent-box');
-    if (!box) return;
-
-    // 예전에는 "이미 동의한 브라우저" 표시가 있으면 상자를 감추고 필수 항목을
-    // 미리 체크해 뒀다. 그 표시는 localStorage 에 브라우저 단위로 남고 로그아웃해도
-    // 지워지지 않는다 — **누가 로그인할지 모르는 표시**였다.
-    //
-    // 그래서 로그아웃한 기기에서 다른 사람이 가입하면 동의 화면을 아예 보지 못하고,
-    // 앞사람의 선택으로 그 사람의 동의 기록이 만들어졌다. 화면이 빈 것보다
-    // 기록이 거짓인 쪽이 더 큰 문제다 — 개인정보 보호법 제22조의 동의는 본인이
-    // 한 것이어야 한다. 미리 체크해 두는 것도 같은 이유로 안 된다.
-    //
-    // 로그인 화면에서는 항상 묻는다. 아래 스냅샷 복원은 다른 일이다 — 리디렉트로
-    // 구글을 다녀오는 **같은 사람의 같은 시도**를 이어 주는 것이라 그대로 둔다.
-    const snapshot = readConsentSelectionSnapshot();
-    if (!snapshot) return;
-    Object.entries(snapshot).forEach(([id, checked]) => {
-        const el = document.getElementById(id);
-        if (el) el.checked = checked === true;
-    });
-    syncSignupConsentState();
-}
-
-function bindSignupConsentListeners() {
-    const box = document.getElementById('signup-consent-box');
-    if (!box || box.dataset.consentBound === 'true') return;
-    box.dataset.consentBound = 'true';
-
-    restoreConsentSelection();
-
-    const allBox = document.getElementById('consent-all');
-    if (allBox) {
-        allBox.addEventListener('change', () => {
-            box.querySelectorAll('input[type="checkbox"]').forEach(el => {
-                if (el.id !== 'consent-all') el.checked = allBox.checked;
-            });
-            syncSignupConsentState();
-        });
-    }
-    box.querySelectorAll('input[type="checkbox"]').forEach(el => {
-        if (el.id === 'consent-all') return;
-        el.addEventListener('change', syncSignupConsentState);
-    });
-    syncSignupConsentState();
-}
-
 function bindConsentUi() {
-    bindSignupConsentListeners();
-    // 재동의 상자도 여기서 함께 묶는다. 모달을 여는 쪽에서만 묶으면, 다른 경로로
-    // 화면에 뜬 순간 체크박스가 아무 반응도 하지 않는 상자가 된다.
+    // 동의는 로그인 뒤에 계정 기준으로 받는다. 로그인 화면에는 동의 상자가 없다.
     bindReconsentListeners();
 }
 

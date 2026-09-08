@@ -96,10 +96,10 @@ describe('the age rule is one the code can keep', () => {
 
     it('is confirmed at sign-up, not merely asserted in the terms', () => {
         for (const [name, source] of [['index.html', indexSource], ['en/index.html', enIndexSource]]) {
-            expect(source, name).toContain('<input type="checkbox" id="consent-age" data-consent-required="true">');
+            // 2026-09-08: 동의는 로그인 뒤 계정 기준으로 받는다. 확인란은 그 화면에 있다.
+            // 자세한 내용은 tests/consent-belongs-to-the-account.test.js 참고.
+            expect(source, name).toContain('<input type="checkbox" id="reconsent-age" data-consent-required="true">');
         }
-        // 기록은 화면을 직접 읽지 않는다 — 리디렉트를 다녀오면 화면이 비어 있기 때문이다.
-        // 자세한 내용은 tests/consent-survives-redirect.test.js 참고.
         expect(authSource).toContain("age14: entry(selection['consent-age'] === true)");
     });
 
