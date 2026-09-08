@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=373';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=374';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=373';
-import { getDatesInfo } from './ui-helpers.js?v=373';
-import { escapeHtml } from './security.js?v=373';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=373';
+import { showToast } from './ui-helpers.js?v=374';
+import { getDatesInfo } from './ui-helpers.js?v=374';
+import { escapeHtml } from './security.js?v=374';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=374';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=373';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=373';
-import { trackProductEvent } from './product-events.js?v=373';
+} from './auth-login-helpers.js?v=374';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=374';
+import { trackProductEvent } from './product-events.js?v=374';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=373';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=374';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1809,34 +1809,6 @@ window.openConsentDoc = function (event, anchor) {
     event.preventDefault();
     event.stopPropagation();
     window.open(anchor.href, '_blank', 'noopener');
-};
-
-window.highlightMissingConsents = function () {
-    const box = document.getElementById('signup-consent-box');
-    if (!box) return false;
-    const missing = [...box.querySelectorAll('input[data-consent-required="true"]')].filter(el => !el.checked);
-    if (!missing.length) return false;
-
-    box.classList.add('needs-consent');
-    missing.forEach(el => el.closest('.consent-row')?.classList.add('is-missing'));
-    // 애니메이션을 다시 태우려면 클래스를 한 번 떼야 한다.
-    box.classList.remove('shake');
-    void box.offsetWidth;
-    box.classList.add('shake');
-
-    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    missing[0]?.focus({ preventScroll: true });
-
-    // 체크하면 표시를 지운다.
-    missing.forEach(el => {
-        el.addEventListener('change', () => {
-            if (el.checked) el.closest('.consent-row')?.classList.remove('is-missing');
-            if (![...box.querySelectorAll('input[data-consent-required="true"]')].some(x => !x.checked)) {
-                box.classList.remove('needs-consent', 'shake');
-            }
-        }, { once: true });
-    });
-    return true;
 };
 
 function bindConsentUi() {
