@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=370';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=371';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=370';
-import { getDatesInfo } from './ui-helpers.js?v=370';
-import { escapeHtml } from './security.js?v=370';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=370';
+import { showToast } from './ui-helpers.js?v=371';
+import { getDatesInfo } from './ui-helpers.js?v=371';
+import { escapeHtml } from './security.js?v=371';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=371';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=370';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=370';
-import { trackProductEvent } from './product-events.js?v=370';
+} from './auth-login-helpers.js?v=371';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=371';
+import { trackProductEvent } from './product-events.js?v=371';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=370';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=371';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -277,6 +277,11 @@ function setGoogleLoginPendingUi(loginBtn, isPending) {
         return;
     }
 
+    // 잠근 쪽이 푼다. 예전에는 이 자리에서 syncSignupConsentState() 가 동의 상태를
+    // 보고 disabled 를 풀어 줬는데, 동의를 로그인 뒤로 옮기며 그 함수를 지우자
+    // 푸는 곳이 사라졌다. 그래서 로그아웃한 뒤 새로고침 전까지 시작 버튼이 잠겨 있었다.
+    // 대기 표시를 세운 함수가 직접 거두는 것이 맞다.
+    loginBtn.disabled = false;
     loginBtn.removeAttribute('aria-busy');
     if (loginBtn.dataset.originalHtml) {
         loginBtn.innerHTML = loginBtn.dataset.originalHtml;
@@ -1531,6 +1536,11 @@ export function setupAuthListener(callbacks) {
 
 // 로그아웃 후 로그인 화면으로 복귀
 window.logoutAndReset = async function () {
+    // 로그아웃하면 로그인 화면으로 돌아간다. "로그인 확인 중..." 대기 표시가
+    // 남아 있으면 시작 버튼이 잠긴 채로 보이고, 새로고침 전에는 풀리지 않는다.
+    // 비로그인 셸이 그려질 때도 거두지만, 그건 onAuthStateChanged 가 돌아야 하는
+    // 일이라 여기서 먼저 거둔다 — 동의 창의 '그만두기' 도 이 길로 온다.
+    setGoogleLoginPendingUi(document.getElementById('loginBtn'), false);
     try {
         await signOut(auth);
     } catch (e) {

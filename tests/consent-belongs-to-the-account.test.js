@@ -113,3 +113,29 @@ describe('consent comes before the onboarding modal, not alongside it', () => {
         expect(readRepoFile('styles-dashboard.css')).toContain('.sr-only {');
     });
 });
+
+// 2026-09-08 실기기: 로그아웃한 뒤 새로고침 전까지 "구글로 시작하기" 가 잠겨 있었다.
+// 대기 표시를 세울 때 disabled 를 걸어 놓고, 거둘 때는 풀지 않았기 때문이다.
+// 예전에는 이 자리의 syncSignupConsentState() 가 우연히 풀어 주고 있었는데,
+// 동의를 로그인 뒤로 옮기며 그 함수를 지우자 푸는 곳이 사라졌다.
+describe('the login button unlocks itself when the pending state clears', () => {
+    it('re-enables the button in the same function that disabled it', () => {
+        const fn = AUTH.split('function setGoogleLoginPendingUi(loginBtn, isPending) {')[1].split('\n}')[0];
+        expect(fn).toContain('loginBtn.disabled = true;');
+        expect(fn).toContain('loginBtn.disabled = false;');
+    });
+
+    it('clears the pending state on logout without waiting for the shell to redraw', () => {
+        // 동의 창의 '그만두기' 도 이 길로 온다. onAuthStateChanged 가 셸을 다시
+        // 그릴 때까지 기다리면 그 사이 시작 버튼이 잠긴 채로 보인다.
+        const logout = AUTH.split('window.logoutAndReset = async function () {')[1].split('\n};')[0];
+        expect(logout).toContain("setGoogleLoginPendingUi(document.getElementById('loginBtn'), false);");
+    });
+
+    it('does not lean on a consent helper to do it', () => {
+        // 그 헬퍼는 이제 없다. 다시 기대면 같은 자리에서 또 잠긴다.
+        const fn = AUTH.split('function setGoogleLoginPendingUi(loginBtn, isPending) {')[1].split('\n}')[0];
+        expect(fn).not.toContain('syncSignupConsentState();');
+        expect(AUTH).not.toContain('function syncSignupConsentState');
+    });
+});
