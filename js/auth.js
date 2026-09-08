@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=375';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=376';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=375';
-import { getDatesInfo } from './ui-helpers.js?v=375';
-import { escapeHtml } from './security.js?v=375';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=375';
+import { showToast } from './ui-helpers.js?v=376';
+import { getDatesInfo } from './ui-helpers.js?v=376';
+import { escapeHtml } from './security.js?v=376';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=376';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=375';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=375';
-import { trackProductEvent } from './product-events.js?v=375';
+} from './auth-login-helpers.js?v=376';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=376';
+import { trackProductEvent } from './product-events.js?v=376';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=375';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=376';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1787,16 +1787,24 @@ window.declineReconsent = function declineReconsent() {
 // 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
 // 아무 반응 없이 막으면 고장으로 보인다. 무엇을 해야 하는지 그 자리에서 알린다.
 const APP_VERSION_LABELS = { ko: '기본형', simple: '심플', en: 'English', app: '라이트' };
+const APP_VERSION_LABELS_EN = { ko: 'Full', simple: 'Simple', en: 'English', app: 'Lite' };
 
 // 버전을 고르면 시작 버튼이 어디로 데려갈지 말해 준다.
 // 누르는 즉시 이동하지 않으므로, 무엇이 선택됐는지 버튼이 알려 줘야 한다.
 window.updateLoginButtonForVersion = function (version) {
     const btn = document.getElementById('loginBtn');
     if (!btn) return;
-    const label = APP_VERSION_LABELS[version];
+    // 영문 화면에 한글 안내가 남으면 화면이 반쯤 번역된 것처럼 보인다.
+    // 버튼 이름(Full/Simple/English/Lite)도 그 화면 표기를 따라야 한다.
+    const isEn = isEnglishLocale();
+    const label = (isEn ? APP_VERSION_LABELS_EN : APP_VERSION_LABELS)[version];
     const note = document.getElementById('login-version-note');
     if (note) {
-        note.textContent = label ? `선택한 버전: ${label} · 시작하면 이 버전으로 열려요` : '';
+        note.textContent = label
+            ? (isEn
+                ? `Selected: ${label} · Signing in opens this version`
+                : `선택한 버전: ${label} · 시작하면 이 버전으로 열려요`)
+            : '';
         note.hidden = !label;
     }
 };
