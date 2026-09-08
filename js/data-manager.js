@@ -3,9 +3,9 @@
  * 데이터 처리 및 파일 업로드 유틸리티 모듈
  */
 
-import { storage } from './firebase-config.js?v=372';
+import { storage } from './firebase-config.js?v=373';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
-import { shouldFastPathImageCompression } from './upload-performance.js?v=372';
+import { shouldFastPathImageCompression } from './upload-performance.js?v=373';
 
 function requiresGalleryCompatibleImageConversion(file) {
     const type = String(file?.type || '').trim().toLowerCase();

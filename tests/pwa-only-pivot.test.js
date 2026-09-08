@@ -78,3 +78,32 @@ describe('PWA-only pivot guardrails', () => {
         expect(pwaInstallSource).toContain('window.openInInstalledApp = openInInstalledApp;');
     });
 });
+
+// 2026-09-08: 삼성 인터넷의 팝업 로그인이 Gmail 로 새던 문제를 고쳐 배포했는데,
+// 그 전에 열어 둔 탭에서 로그인하니 같은 증상이 다시 났다. 배포된 코드는 멀쩡했고
+// 그 탭만 옛 자바스크립트를 쥐고 있었다. skipWaiting + clients.claim 은 캐시 주인만
+// 바꾸지 페이지를 다시 읽지 않는다.
+describe('a tab that was open before the deploy does not keep the old login code', () => {
+    it('reloads on controllerchange, but only from the login screen', () => {
+        const pwa = readRepoFile('js/pwa-install.js');
+        expect(pwa).toContain('function watchForServiceWorkerTakeover()');
+        expect(pwa).toContain("navigator.serviceWorker.addEventListener('controllerchange'");
+        expect(pwa).toContain('watchForServiceWorkerTakeover();');
+
+        const fn = pwa.split('function watchForServiceWorkerTakeover() {')[1].split('\n}\n')[0];
+        // 로그인 중이거나 로그인한 뒤에 페이지를 날리면 그게 더 큰 사고다.
+        expect(fn).toContain('if (window._isPopupLogin) return;');
+        expect(fn).toContain("classList.contains('signed-in')");
+        expect(fn).toContain('onLoginScreen');
+        // 한 번만. 반복 리로드는 무한 루프가 된다.
+        expect(fn).toContain('if (serviceWorkerTakeoverHandled) return;');
+        expect(fn).toContain('serviceWorkerTakeoverHandled = true;');
+        expect(fn).toContain('location.reload();');
+    });
+
+    it('still lets the worker take over immediately', () => {
+        const sw = readRepoFile('sw.js');
+        expect(sw).toContain('self.skipWaiting()');
+        expect(sw).toContain('self.clients.claim()');
+    });
+});

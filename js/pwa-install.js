@@ -619,6 +619,7 @@ window.addEventListener('load', async () => {
                 })
                 .then((registration) => {
                     console.log('PWA service worker ready:', registration.scope);
+                    watchForServiceWorkerTakeover();
                 })
                 .catch((error) => console.warn('PWA service worker registration failed:', error));
         }
@@ -626,6 +627,34 @@ window.addEventListener('load', async () => {
 
     await refreshInstalledAppState();
 });
+
+// 새 서비스워커가 올라와도 이미 열려 있는 탭은 **옛 자바스크립트를 계속 쓴다.**
+// sw.js 는 skipWaiting + clients.claim 을 하지만 그것은 캐시 주인이 바뀌는 것이지
+// 페이지가 다시 로드되는 것이 아니다.
+//
+// 2026-09-08: 삼성 인터넷의 팝업 로그인이 구글 계정 화면을 Gmail 로 넘기던 문제를
+// 고쳐 배포했는데, 그 전에 열어 둔 탭에서 로그인하니 같은 증상이 다시 났다.
+// 배포된 코드는 멀쩡했고 그 탭만 옛것이었다.
+//
+// 그래서 새 워커가 주도권을 잡으면 **로그인 화면에 있을 때만** 한 번 다시 읽는다.
+// 로그인 화면은 진행 중인 작업이 없어 다시 읽어도 잃을 것이 없고, 낡은 코드가
+// 실제로 해를 끼치는 자리가 바로 거기다. 로그인한 뒤에는 건드리지 않는다 —
+// 기록을 쓰던 중에 페이지가 날아가면 그게 더 큰 사고다.
+let serviceWorkerTakeoverHandled = false;
+function watchForServiceWorkerTakeover() {
+    if (!navigator.serviceWorker) return;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (serviceWorkerTakeoverHandled) return;
+        // 로그인 중이거나 이미 로그인한 상태면 그냥 둔다.
+        if (window._isPopupLogin) return;
+        if (document.documentElement.classList.contains('signed-in')) return;
+        const loginModal = document.getElementById('login-modal');
+        const onLoginScreen = !!loginModal && getComputedStyle(loginModal).display !== 'none';
+        if (!onLoginScreen) return;
+        serviceWorkerTakeoverHandled = true;
+        location.reload();
+    });
+}
 
 window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
