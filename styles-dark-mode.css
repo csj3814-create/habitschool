@@ -1302,6 +1302,8 @@ body.dark-mode .consent-note { color: #A09AAA; }
 body.dark-mode .consent-text a { color: #FFB74D; }
 body.dark-mode .consent-tag.required { background: #4A3210; color: #FFCC80; }
 body.dark-mode .consent-tag.optional { background: #22331F; color: #A5D6A7; }
+body.dark-mode .consent-row.consent-missing .consent-tag.required { background: #4A1C1C; color: #FF8A80; }
+body.dark-mode .consent-row.consent-missing input[type="checkbox"] { outline-color: #FF8A80; accent-color: #FF8A80; }
 
 /* 계정 삭제 전 토큰 고지 */
 body.dark-mode .delete-token-warning {

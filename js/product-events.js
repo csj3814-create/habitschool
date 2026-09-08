@@ -23,7 +23,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'invite_link_landing',
     'share_prompt_shown',
     'onboarding_gate',
-    'auth_start'
+    'auth_start',
+    'auth_consent_blocked'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -276,6 +277,13 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     // 어떤 지표에도 안 잡히던 손실이다.
     auth_start: schema({
         login_mode: values.login_mode,
+        entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode
+    }),
+    // 필수 동의를 안 한 채로 시작 버튼을 누른 경우. auth_start 의 앞단이라
+    // 이걸 세지 않으면 동의에서 막혀 나간 사람은 어떤 지표에도 안 남는다.
+    auth_consent_blocked: schema({
         entry_point: values.entry_point,
         locale: values.locale,
         app_mode: values.app_mode

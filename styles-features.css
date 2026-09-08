@@ -6692,10 +6692,39 @@ body.gallery-user-filtered #weekly-best-container {
     .reconsent-content .consent-note { font-size: 10.5px; line-height: 1.45; margin-top: 4px; }
 }
 
-.google-btn[disabled] {
+.google-btn[disabled],
+.google-btn[aria-disabled="true"] {
     opacity: 0.45;
     cursor: not-allowed;
     filter: grayscale(0.4);
+}
+
+/* 동의 때문에 잠긴 버튼은 disabled 로 두지 않는다 — disabled 는 클릭 이벤트가
+   아예 안 와서 "왜 안 되는지" 를 말해 줄 기회가 없다. 모양만 잠근 것처럼 두고
+   클릭은 받는다. 눌렀을 때 무엇이 빠졌는지 아래 강조가 알려 준다. */
+.google-btn.is-consent-locked { cursor: pointer; }
+
+/* 필수 동의 중 빠진 줄. 빨간 테두리는 체크 칸에 붙어야 어디를 눌러야 하는지 보인다. */
+.consent-row.consent-missing input[type="checkbox"] {
+    outline: 2px solid #D32F2F;
+    outline-offset: 2px;
+    border-radius: 4px;
+    accent-color: #D32F2F;
+}
+.consent-row.consent-missing .consent-tag.required {
+    background: #FFEBEE;
+    color: #C62828;
+}
+.consent-row.consent-missing {
+    animation: consentMissingNudge 320ms ease-in-out 2;
+}
+@keyframes consentMissingNudge {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .consent-row.consent-missing { animation: none; }
 }
 
 /* ===== 계정 삭제 전 토큰 손실 고지 ===== */

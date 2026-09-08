@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=367';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=368';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=367';
-import { getDatesInfo } from './ui-helpers.js?v=367';
-import { escapeHtml } from './security.js?v=367';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=367';
+import { showToast } from './ui-helpers.js?v=368';
+import { getDatesInfo } from './ui-helpers.js?v=368';
+import { escapeHtml } from './security.js?v=368';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=368';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=367';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=367';
-import { trackProductEvent } from './product-events.js?v=367';
+} from './auth-login-helpers.js?v=368';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=368';
+import { trackProductEvent } from './product-events.js?v=368';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=367';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=368';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -826,6 +826,8 @@ export function initAuth() {
     handleGoogleRedirectLoginResult(loginBtn).catch(() => {});
 
     loginBtn.addEventListener('click', () => {
+        // 필수 동의가 비어 있으면 로그인을 시작하지 않고 이유를 알린다.
+        if (reportMissingConsent()) return;
         if (window._isPopupLogin) {
             return;
         }
@@ -1768,13 +1770,75 @@ function syncSignupConsentState() {
     if (allBox) allBox.checked = all.length > 0 && all.every(el => el.checked);
     const ready = required.every(el => el.checked);
     if (loginBtn) {
-        loginBtn.disabled = !ready;
+        // `disabled` 로 잠그지 않는다. disabled 인 버튼은 클릭 이벤트가 아예
+        // 발생하지 않아서, 누른 사람에게 무엇이 빠졌는지 말해 줄 기회가 없다.
+        // 안내는 title 에만 있었는데 모바일에는 툴팁이 없으니 회색 버튼이
+        // 그대로 막다른 길이 됐다. 모양만 잠그고 클릭은 받아서 이유를 알린다.
+        // (로그인 진행 중일 때의 실제 disabled 는 건드리지 않는다.)
+        if (loginBtn.getAttribute('aria-busy') !== 'true') loginBtn.disabled = false;
+        loginBtn.setAttribute('aria-disabled', ready ? 'false' : 'true');
+        loginBtn.classList.toggle('is-consent-locked', !ready);
         loginBtn.title = ready
             ? ''
             : (document.documentElement.classList.contains('locale-en')
                 ? 'Please agree to the required items first.'
                 : '필수 항목에 동의해야 시작할 수 있어요.');
     }
+    // 방금 체크한 줄의 빨간색은 바로 뺀다. 다 채우기 전까지 그대로 두면
+    // 이미 한 일에 계속 빨간 표시가 남아 무엇이 남았는지 되레 흐려진다.
+    document.querySelectorAll('.consent-row.consent-missing').forEach(row => {
+        const input = row.querySelector('input[type="checkbox"]');
+        if (!input || input.checked) row.classList.remove('consent-missing');
+    });
+}
+
+function getMissingRequiredConsents() {
+    const box = document.getElementById('signup-consent-box');
+    if (!box) return [];
+    return [...box.querySelectorAll('input[data-consent-required="true"]')].filter(el => !el.checked);
+}
+
+function clearMissingConsentHighlight() {
+    document.querySelectorAll('.consent-row.consent-missing')
+        .forEach(row => row.classList.remove('consent-missing'));
+}
+
+// 잠긴 버튼을 눌렀을 때. 빠진 줄을 빨갛게 짚고, 문구로 말하고, 세어 둔다.
+function reportMissingConsent() {
+    const missing = getMissingRequiredConsents();
+    if (!missing.length) return false;
+
+    clearMissingConsentHighlight();
+    // 애니메이션을 다시 돌리려면 클래스를 뺐다 넣어야 하는데, 그 사이를
+    // requestAnimationFrame 으로 띄우면 안 된다 — 탭이 숨겨져 있으면 rAF 가
+    // 아예 실행되지 않아 빨간 표시가 영영 안 붙는다. 강제 리플로우로 동기 처리한다.
+    missing.forEach(el => {
+        const row = el.closest('.consent-row');
+        if (!row) return;
+        void row.offsetWidth;
+        row.classList.add('consent-missing');
+    });
+
+    const isEn = document.documentElement.classList.contains('locale-en');
+    showToast(isEn
+        ? `Please agree to the ${missing.length} required item(s) marked in red.`
+        : `빨갛게 표시된 필수 항목 ${missing.length}개에 동의해 주세요.`);
+
+    try {
+        missing[0].closest('.consent-row')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        missing[0].focus({ preventScroll: true });
+    } catch (_) {}
+
+    // 여기서 막힌 사람은 auth_start 에 잡히지 않는다. 로그인을 시작조차
+    // 못 했기 때문이다. 별도로 세지 않으면 이 이탈은 어떤 지표에도 안 남는다.
+    try {
+        trackProductEvent('auth_consent_blocked', {
+            entry_point: 'login_modal',
+            locale: isEn ? 'en' : 'ko',
+            app_mode: isStandalonePushMode() ? 'pwa' : 'default'
+        });
+    } catch (_) {}
+    return true;
 }
 
 // 필수 동의를 안 한 채로 다른 화면(버전 전환 등)으로 빠져나가려 할 때,
