@@ -1423,7 +1423,12 @@ export function setupAuthListener(callbacks) {
                 updateEnglishProfilePanel(user, ud);
 
                 if (isNewUser) {
-                    setTimeout(() => window.checkOnboarding?.(), 0);
+                    // 동의를 받아야 하는 계정이면 온보딩은 동의 뒤로 미룬다.
+                    // submitReconsent 가 끝나면 다시 부른다.
+                    setTimeout(() => {
+                        if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;
+                        window.checkOnboarding?.();
+                    }, 0);
                 } else if (guestAuthIntent) {
                     setTimeout(() => window.resumeGuestIntentForExistingUser?.(), 80);
                 }
@@ -1684,6 +1689,9 @@ function bindReconsentListeners() {
 function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {
     const modal = document.getElementById('reconsent-modal');
     if (!modal || modal.style.display === 'flex') return;
+    // 온보딩(습관 고르기)이 이 위를 덮으면 동의 창이 잠깐 보였다 가려진다.
+    // 동의가 먼저다 — 끝나면 여기서 온보딩을 다시 부른다.
+    window.__HABITSCHOOL_CONSENT_GATE_OPEN__ = true;
     _reconsentUser = user;
     bindReconsentListeners();
 
@@ -1715,6 +1723,7 @@ function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {
 function closeReconsentModal() {
     const modal = document.getElementById('reconsent-modal');
     if (modal) modal.style.display = 'none';
+    window.__HABITSCHOOL_CONSENT_GATE_OPEN__ = false;
     _reconsentUser = null;
 }
 
@@ -1745,6 +1754,8 @@ window.submitReconsent = async function submitReconsent() {
     window.applySensitiveConsentGate?.();
     closeReconsentModal();
     showToast('✅ 동의해 주셔서 감사합니다.');
+    // 동의 때문에 미뤄 둔 온보딩을 이제 띄운다.
+    setTimeout(() => window.checkOnboarding?.(), 0);
 };
 
 // 동의하지 않으면 계속 이용할 수 없다. 강제로 붙잡아 두는 대신 로그아웃으로 보낸다.

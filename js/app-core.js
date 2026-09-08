@@ -24383,6 +24383,9 @@ function resolveOnboardingSkipReason(userData = {}) {
 async function checkOnboarding() {
     const user = auth.currentUser;
     if (!user) return;
+    // 동의 관문이 열려 있으면 그 위를 덮지 않는다. 동의가 먼저고,
+    // 끝나는 쪽(submitReconsent)이 이 함수를 다시 부른다.
+    if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;
 
     try {
         const userSnap = await getDoc(doc(db, "users", user.uid));

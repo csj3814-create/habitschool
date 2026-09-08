@@ -83,3 +83,33 @@ describe('consent belongs to the account, not the browser', () => {
         expect(AUTH).toContain("trackProductEvent('auth_consent_blocked'");
     });
 });
+
+// 2026-09-08 실기기: 동의 창이 잠깐 보였다가 온보딩(습관 고르기)이 그 위를 덮었다.
+// 둘 다 로그인 직후에 독립적으로 뜨느라 경쟁했다. 동의가 먼저다.
+describe('consent comes before the onboarding modal, not alongside it', () => {
+    const CORE = readRepoFile('js/app-core.js');
+
+    it('marks the gate while the consent screen is up', () => {
+        expect(AUTH).toContain('window.__HABITSCHOOL_CONSENT_GATE_OPEN__ = true;');
+        expect(AUTH).toContain('window.__HABITSCHOOL_CONSENT_GATE_OPEN__ = false;');
+    });
+
+    it('makes onboarding stand down while that gate is open', () => {
+        // 호출부 한 곳만 막으면 다른 경로로 또 덮인다. 함수 자체가 물러나야 한다.
+        expect(CORE).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;');
+        expect(AUTH).toContain('if (window.__HABITSCHOOL_CONSENT_GATE_OPEN__) return;');
+    });
+
+    it('picks onboarding back up once consent is given', () => {
+        // 미루기만 하고 다시 부르지 않으면 신규 회원이 습관을 고르는 화면을 영영 못 본다.
+        const submit = AUTH.split('window.submitReconsent = async function submitReconsent() {')[1].split('\n};')[0];
+        expect(submit).toContain('window.checkOnboarding?.()');
+    });
+
+    it('keeps the modal heading out of sight rather than printing 동의 above the box', () => {
+        // .sr-only 는 styles-dashboard.css 에 실제로 있는 클래스다. 없는 클래스를
+        // 쓰면 제목이 그대로 화면에 찍힌다(실기기에서 그렇게 나왔다).
+        expect(INDEX).toContain('<h3 id="reconsent-title" class="sr-only">동의</h3>');
+        expect(readRepoFile('styles-dashboard.css')).toContain('.sr-only {');
+    });
+});
