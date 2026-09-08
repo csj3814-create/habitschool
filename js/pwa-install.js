@@ -91,7 +91,9 @@ function isLikelyInstallWebView() {
         /DaumApps/i,
         /everytimeApp/i,
         /BAND\//i,
-        /Whale\//i,
+        // 네이버 웨일은 인앱 브라우저가 아니라 독립 브라우저다. 여기에 넣으면
+        // 설치 안내가 "외부 브라우저로 여세요" 로 잘못 나간다.
+        // auth.js 의 isWebView 목록에서도 같은 이유로 뺐다(2026-09-08).
         /\bwv\b/i,
         /;\s*wv\)/i,
         /WebView/i,

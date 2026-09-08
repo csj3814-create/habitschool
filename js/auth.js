@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=378';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=379';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=378';
-import { getDatesInfo } from './ui-helpers.js?v=378';
-import { escapeHtml } from './security.js?v=378';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=378';
+import { showToast } from './ui-helpers.js?v=379';
+import { getDatesInfo } from './ui-helpers.js?v=379';
+import { escapeHtml } from './security.js?v=379';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=379';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=378';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=378';
-import { trackProductEvent } from './product-events.js?v=378';
+} from './auth-login-helpers.js?v=379';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=379';
+import { trackProductEvent } from './product-events.js?v=379';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=378';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=379';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -739,7 +739,12 @@ function isWebView() {
         /DaumApps/i,          // 다음/카카오 계열
         /everytimeApp/i,
         /BAND\//i,            // 네이버 밴드
-        /Whale\//i,           // 네이버 웨일 또는 WebView
+        // 네이버 웨일(/Whale/)은 여기 넣지 않는다. 독립 브라우저이고 구글 로그인이
+        // 정상 동작한다. 인앱으로 분류하면 아래에서 로그인 버튼을 통째로 숨겨
+        // **웨일 사용자는 로그인할 방법이 없어진다.**
+        // 2026-09-08 확인: GA 7/1~9/7 기준 웨일 135명이 평균 168초를 쓰고 게스트
+        // 데모까지 만졌는데(가입 클릭 19건) record_saved 가 0건이었다. 유입 1위가
+        // 네이버 블로그라 찾아온 사람들인데 전원이 이 벽에 막혀 있었다.
         /\bwv\b/i,            // Android WebView 플래그
         /;\s*wv\)/i,          // Android WebView 보조 패턴
         /WebView/i,

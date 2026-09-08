@@ -35,7 +35,7 @@ function runUpdateAssetRewardGoal(coins) {
     const progressbar = { attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } };
     els['asset-reward-progress-fill'] = { style: {}, parentElement: progressbar };
     const document = { getElementById: (id) => els[id] || null };
-    const body = sliceFn(app, 'function updateAssetRewardGoal(coins, logs = null)');
+    const body = sliceFn(app, 'function updateAssetRewardGoal(coins)');
     if (!body) throw new Error('updateAssetRewardGoal 을 찾지 못했다');
     // logs 를 넘기지 않으므로 날짜 헬퍼 경로는 타지 않는다.
     // eslint-disable-next-line no-new-func
@@ -43,6 +43,8 @@ function runUpdateAssetRewardGoal(coins) {
     return {
         copy: els['asset-reward-goal-copy'].textContent,
         remaining: els['asset-reward-remaining'].textContent,
+        estimate: els['asset-reward-estimate'].textContent,
+        estimateHidden: els['asset-reward-estimate'].hidden,
         width: els['asset-reward-progress-fill'].style.width,
         valuenow: progressbar.attrs['aria-valuenow'],
     };
@@ -72,6 +74,28 @@ describe('보상 진행바 계산', () => {
         expect(r.remaining).toBe('2,000P 남음');
         // 숫자는 같아도 설명은 반드시 갱신돼야 한다 — 이게 초기 상태와의 구분점이다
         expect(r.copy).toContain('현재 0P');
+    });
+});
+
+// 2026-09-08: 이 자리에 '최근 7일 평균 기준 약 1253일' 이 떠 있었다. 기록이 드문
+// 사람일수록 평균이 0 에 가까워져 숫자가 커지는 구조였다 — 계산은 맞았지만 시작한
+// 사람을 정확히 겨냥해 낙담시켰다. 도달 일수는 이제 하루 상한(80P) 기준으로 낸다.
+describe('남은 기간 안내', () => {
+    it('평균이 아니라 하루 상한으로 계산한다', () => {
+        const r = runUpdateAssetRewardGoal(0);
+        expect(r.estimateHidden).toBe(false);
+        expect(r.estimate).toContain('약 25일');       // 2000 / 80
+        expect(r.estimate).not.toContain('평균');
+    });
+
+    it('포인트가 쌓일수록 짧아진다', () => {
+        expect(runUpdateAssetRewardGoal(1835).estimate).toContain('약 3일');   // 165 / 80
+    });
+
+    it('잔액만 아는 경로에서도 안내가 보인다 — 기록 목록을 기다리지 않는다', () => {
+        // 예전에는 logs 를 못 받으면 통째로 숨겼다. 그래서 캐시로 숫자만 올라온
+        // 화면에서는 남은 기간이 아예 사라졌다.
+        expect(runUpdateAssetRewardGoal(500).estimateHidden).toBe(false);
     });
 });
 

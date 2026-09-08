@@ -37,16 +37,22 @@ describe('shouldUseGoogleRedirectLogin', () => {
         expect(shouldUseGoogleRedirectLogin({ userAgent: samsungUa, isStandalone: true })).toBe(true);
     });
 
-    // 2026-09-07 GA: 웨일 모바일 124명이 게스트 데모까지 쓰고(가입 클릭 19건)
-    // record_saved 는 0건이었다. 삼성과 같은 처방을 쓴다.
-    it('uses redirect for Whale on Android', () => {
+    // 2026-09-08 정정: 하루 전 웨일을 리다이렉트로 돌렸는데, 원인이 로그인 방식이
+    // 아니었다. 웨일은 auth.js 의 인앱 브라우저 목록에 들어 있어 **로그인 버튼이
+    // 아예 숨겨지고 있었다.** 진짜 원인을 고쳤으므로 근거 없는 리다이렉트는 되돌린다.
+    it('leaves Whale on popup — it is a normal browser', () => {
         const whaleAndroid = 'Mozilla/5.0 (Linux; Android 14; SM-S928N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Whale/1.0.0.0 Mobile Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin({ userAgent: whaleAndroid, isStandalone: false })).toBe(true);
+        expect(shouldUseGoogleRedirectLogin({ userAgent: whaleAndroid, isStandalone: false })).toBe(false);
     });
 
-    it('leaves desktop Whale on popup — the intent hijack is an Android behaviour', () => {
-        const whaleDesktop = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Whale/4.0.0.0 Safari/537.36';
-        expect(shouldUseGoogleRedirectLogin({ userAgent: whaleDesktop, isStandalone: false })).toBe(false);
+    it('never treats Whale as an in-app browser', () => {
+        // 인앱으로 분류하면 로그인 버튼이 통째로 숨겨진다(auth.js:791).
+        const authSource = readRepoFile('js/auth.js');
+        const list = authSource.split('function isWebView() {')[1].split('];')[0];
+        expect(list).not.toContain('/Whale\//i,');
+        const install = readRepoFile('js/pwa-install.js');
+        const installList = install.split('function isLikelyInstallWebView() {')[1].split('];')[0];
+        expect(installList).not.toContain('/Whale\//i,');
     });
 
     it('keeps popup flow for Chrome', () => {
