@@ -3,6 +3,7 @@
  * HBT 토큰 변환율, Phase 기반 반감기, 구간 계산 로직 테스트 (v2)
  */
 import { describe, it, expect } from 'vitest';
+import { readRepoFile } from './source-helpers.js';
 
 // CONVERSION_RULES.halving 설정값 (v2 — blockchain-config.js에서)
 const HALVING = {
@@ -203,5 +204,23 @@ describe('일일 변환 한도', () => {
         expect(100 % 100).toBe(0);
         expect(200 % 100).toBe(0);
         expect(150 % 100).not.toBe(0);
+    });
+});
+
+// 2026-09-08: 자산 화면에서 'BSC Mainnet' 과 'BSC 메인넷' 이 번갈아 보였다.
+// 앱 기본 표기는 'BSC 메인넷' 인데, 서버 통계(getTokenStats)가 'BSC Mainnet' 을
+// 함께 보내고 화면이 그것으로 덮어썼기 때문이다. 통계가 도착할 때마다 표기가 바뀌었다.
+describe('the chain name on screen comes from the app, not the server', () => {
+    const CORE = readRepoFile('js/app-core.js');
+
+    it('never takes the label out of the stats payload', () => {
+        expect(CORE).not.toContain('stats.chainLabel');
+        expect(CORE).toContain('const statsChainLabel = getActiveOnchainLabel(APP_ENV);');
+    });
+
+    it('keeps one Korean spelling for the mainnet', () => {
+        const config = readRepoFile('js/blockchain-config.js');
+        expect(config).toContain("label: 'BSC 메인넷'");
+        expect(config).not.toContain("label: 'BSC Mainnet'");
     });
 });
