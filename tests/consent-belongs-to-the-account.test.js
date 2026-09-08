@@ -170,3 +170,28 @@ describe('finishing onboarding does not hang on the network', () => {
         expect(AUTH).not.toContain('firstTime: isNewUser');
     });
 });
+
+// 2026-09-08 실기기: 영문 앱에서 Log out 을 눌러도 아무 반응이 없어 보였다.
+// 실제로는 로그아웃이 됐는데, 두 코드가 로그인 모달을 두고 반대로 행동했다.
+// setEnglishAuthShellState 가 모달을 띄우면 곧이어 openTab('gallery') 이 감췄다.
+describe('logging out of the English app lands on the login screen', () => {
+    const CORE = readRepoFile('js/app-core.js');
+
+    it('lets the address decide landing versus login, in both places', () => {
+        const shell = AUTH.split('function setEnglishAuthShellState(state = \'pending\') {')[1].split('\n}')[0];
+        expect(shell).toContain("const isLanding = root.classList.contains('en-landing');");
+        expect(shell).toContain("loginModal.style.display = (!isLanding && signedOut) ? 'flex' : 'none';");
+
+        // openTab 의 비로그인 영문 분기도 같은 규칙을 써야 한다.
+        const branch = CORE.split('if (routeContext.isEnglish) {')[1].split('return;')[0];
+        expect(branch).toContain("const isLanding = document.documentElement.classList.contains('en-landing');");
+        expect(branch).toContain("loginModal.style.display = isLanding ? 'none' : 'flex';");
+        expect(branch).toContain('landing.hidden = !isLanding;');
+    });
+
+    it('never hides the login modal unconditionally on a signed-out English route', () => {
+        const branch = CORE.split('if (routeContext.isEnglish) {')[1].split('return;')[0];
+        expect(branch).not.toContain("loginModal.style.display = 'none';");
+        expect(branch).not.toContain('landing.hidden = false;');
+    });
+});

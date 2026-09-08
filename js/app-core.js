@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=374';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=374';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=375';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=375';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=374';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=374';
+} from './auth-login-helpers.js?v=375';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=375';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,14 +35,14 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=374';
+} from './exercise-media.js?v=375';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=374';
+} from './health-connect-utils.js?v=375';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -59,19 +59,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=374';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=374';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=374';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=374';
-import { sanitize, compressImage } from './data-manager.js?v=374';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=374';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=374';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=374';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=374';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=374';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=374';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=374';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=374';
+} from './habit-groups.js?v=375';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=375';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=375';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=375';
+import { sanitize, compressImage } from './data-manager.js?v=375';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=375';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=375';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=375';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=375';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=375';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=375';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=375';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=375';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -81,14 +81,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=374';
+} from './guest-demo.js?v=375';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=374';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=374';
+} from './product-events.js?v=375';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=375';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -110,7 +110,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=374';
+} from './diet-program.js?v=375';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -122,19 +122,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=374';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=374';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=374';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=374';
+} from './meditation-guide.js?v=375';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=375';
+import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=375';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=375';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=374';
+} from './social-challenge-readiness.js?v=375';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=374';
+} from './monthly-mvp-reward.js?v=375';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6635,7 +6635,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=374';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=375';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14203,10 +14203,17 @@ function openTab(tabName, pushState = true) {
         if (routeContext.isEnglish) {
             document.documentElement.classList.add('signed-out');
             document.documentElement.classList.remove('signed-in', 'auth-pending');
+            // 랜딩이냐 로그인이냐는 **주소**로 정한다(/en/welcome 만 랜딩).
+            // setEnglishAuthShellState 가 쓰는 규칙과 같아야 한다 — 예전에는 여기서
+            // 무조건 랜딩을 띄우고 로그인 모달을 숨겨서, 로그아웃 직후 두 코드가
+            // 서로를 덮었다. setEnglishAuthShellState 가 모달을 띄우면 곧이어
+            // 호출되는 openTab('gallery') 이 그것을 도로 감췄고, 영문 사용자는
+            // 로그아웃 뒤 한국어 버튼 말고는 빠져나갈 길이 없었다.
+            const isLanding = document.documentElement.classList.contains('en-landing');
             const landing = document.getElementById('english-public-page');
-            if (landing) landing.hidden = false;
+            if (landing) landing.hidden = !isLanding;
             const loginModal = document.getElementById('login-modal');
-            if (loginModal) loginModal.style.display = 'none';
+            if (loginModal) loginModal.style.display = isLanding ? 'none' : 'flex';
             applyDomTranslations();
             return;
         }
