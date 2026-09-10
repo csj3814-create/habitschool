@@ -12,6 +12,41 @@ CLAUDE.md 규칙에 따라 **작업 시작 전에 여기에 적고**, 진행하�
 
 ## 진행 중
 
+- [x] **Health Connect 걸음 수 브리지 되살리기** (2026-09-10, v381). 4월 PWA-only
+      pivot 에서 끈 킬 스위치가 그대로 남아 있었다. 그 pivot 은 7월에 이미 뒤집혔는데
+      (`bbe1f2b` Play 라이트 빌드, `f645c50` Play 서명키, `19665d7` versionCode 6)
+      웹 플래그만 4월 상태였다. **새 Android 권한 0개** — `READ_STEPS` 는
+      `f9d0d81`(4/8)부터 매니페스트에 있었고 트랙의 versionCode 2·3·4·5 가 전부
+      이 권한을 달고 통과했다. AAB 재빌드 없이 `--only hosting` 으로 끝난다.
+      - `js/app-core.js:6639` `ENABLE_HEALTH_CONNECT_STEP_IMPORT = true`
+      - `index.html` 걸음 수 카드에 `#exercise-health-connect-btn` 복구
+      - `tests/pwa-only-pivot.test.js` 가드 의도 전환 + 네이티브 핸드오프 계약 가드 신설
+      - 릴리스 380 → 381 (19개 파일 147곳 + `sw.js` `CACHE_NAME`)
+      - [ ] **배포 전: Play Console 데이터 보안 선언(8/27자)에 "건강 및 피트니스"가
+            있는지 확인.** 매니페스트에 권한만 있고 실제 수집은 없던 상태에서
+            수집이 시작된다. 선언에 없으면 양식을 먼저 고친다 — 선언과 실제가
+            어긋나는 것 자체가 정책 위반이다.
+      - [ ] staging 배포 → 실기기(트랙 설치본)에서 운동 탭 CTA 확인 → 운영 배포
+      - [ ] 저장 후 Firestore 콘솔에서 `daily_logs/{uid}_{today}.steps` 를 직접 열어
+            `source: 'health_connect'` 가 실제로 들어갔는지 눈으로 확인 (2026-08-15
+            `consents` 사고와 같은 유형을 막는다)
+
+- [x] **앱 열 때 걸음수 자동 읽기** (2026-09-10, versionCode 7 / 1.0.4). 버튼을 눌러야만
+      들어오던 것을 실행 시 직접 읽게 바꿨다. 런처가 캐시(15분 창)만 봤고 그 캐시는
+      동기화를 누를 때만 채워졌다. **포그라운드 읽기라 새 권한 0개.**
+      - `HabitschoolLauncherActivity.refreshHealthConnectLaunchUrl()` — 1500ms 상한,
+        늦거나 실패하면 기존 캐시 경로로 그냥 연다
+      - `isAutoHealthSyncEligible()` — 캐시 폴백과 자동 읽기가 같은 판정을 쓴다
+      - `tests/android-launch-health-sync.test.js` 신설
+      - `./gradlew compileDebugKotlin` 통과
+      - [ ] **디스크의 AAB 는 versionCode 6 이다. 그것부터 올리고 나서 7을 빌드한다.**
+      - [ ] 실기기에서 앱을 껐다 켜 걸음수가 버튼 없이 들어오는지 확인
+
+- [ ] **versionCode 6 AAB 트랙 업로드** (9/12 재신청 전). 8/31 에 빌드해 두고
+      올리지 않았다 — `android/app/build/outputs/bundle/release/app-release.aab`.
+      8/29 반려 사유 2번("업데이트를 통해 의견 수집·조치")은 트랙에 새 versionCode 가
+      쌓여야 풀린다. 위 Health Connect 작업보다 이게 더 급하다.
+
 - [ ] **운영 v377 배포 뒤 볼 것** (2026-09-08 배포). 오늘 넣은 계측의 첫 수확이다.
       - [ ] `onboarding_gate` — `shown` 비중. `legacy_account` 가 크면 게이트가
             또 잘못 닫히고 있다는 뜻이다.
