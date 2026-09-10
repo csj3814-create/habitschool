@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=381';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=381';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=382';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=382';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=381';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=381';
+} from './auth-login-helpers.js?v=382';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=382';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,14 +35,16 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=381';
+} from './exercise-media.js?v=382';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
     choosePreferredHealthConnectImport,
     createEmptyStepData,
+    HEALTH_CONNECT_SOURCE,
+    normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=381';
+} from './health-connect-utils.js?v=382';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -59,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=381';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=381';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=381';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=381';
-import { sanitize, compressImage } from './data-manager.js?v=381';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=381';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=381';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=381';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=381';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=381';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=381';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=381';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=381';
+} from './habit-groups.js?v=382';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=382';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=382';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=382';
+import { sanitize, compressImage } from './data-manager.js?v=382';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=382';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=382';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=382';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=382';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=382';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=382';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=382';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=382';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -81,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=381';
+} from './guest-demo.js?v=382';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=381';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=381';
+} from './product-events.js?v=382';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=382';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -110,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=381';
+} from './diet-program.js?v=382';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -122,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=381';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=381';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=381';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=381';
+} from './meditation-guide.js?v=382';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=382';
+import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=382';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=382';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=381';
+} from './social-challenge-readiness.js?v=382';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=381';
+} from './monthly-mvp-reward.js?v=382';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -3346,7 +3348,7 @@ function buildManualHealthConnectReturnUrl() {
     }
 }
 
-function startNativeHealthConnectSync() {
+function startNativeHealthConnectSync({ source = 'android-web-sync' } = {}) {
     if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) {
         showToast('Health Connect 연동은 현재 웹/PWA 전용 운영으로 잠시 비활성화되어 있어요.');
         return;
@@ -3359,12 +3361,79 @@ function startNativeHealthConnectSync() {
     }
 
     const syncUrl = new URL('habitschool://health-connect/sync');
-    syncUrl.searchParams.set('source', 'android-web-sync');
+    syncUrl.searchParams.set('source', String(source || 'android-web-sync').trim() || 'android-web-sync');
     syncUrl.searchParams.set('returnTo', buildManualHealthConnectReturnUrl());
     window.location.href = syncUrl.toString();
 }
 
 window.startNativeHealthConnectSync = startNativeHealthConnectSync;
+
+// 앱으로 돌아왔을 때 걸음수를 다시 읽는다.
+//
+// 왜 이런 모양인가: TWA 에는 JS 브리지가 없어서 네이티브가 값을 넘기는 통로는 URL
+// 하나뿐이다. 그래서 "다시 읽기"는 반드시 페이지 재로드를 동반한다. 게다가 런처
+// 액티비티는 TWA 를 띄운 뒤 스스로 끝나므로, 최근 앱에서 복귀하면 런처가 아예 돌지
+// 않는다 — 그래서 첫 실행에 박힌 숫자가 계속 남아 있었다.
+//
+// 재로드는 비싸고 입력 중이던 내용을 잃게 만들 수 있다. 그래서 조건을 좁게 잡는다.
+// 특히 '앱으로 돌아온 순간'에만 걸고, 앱 안에서 탭을 옮기는 것으로는 걸지 않는다.
+const NATIVE_STEP_REFRESH_STALE_MS = 10 * 60 * 1000;
+const NATIVE_STEP_REFRESH_COOLDOWN_MS = 5 * 60 * 1000;
+const NATIVE_STEP_REFRESH_ATTEMPT_KEY = 'hs_native_step_refresh_at';
+
+function readNativeStepRefreshAttemptAt() {
+    try {
+        return Number.parseInt(sessionStorage.getItem(NATIVE_STEP_REFRESH_ATTEMPT_KEY) || '0', 10) || 0;
+    } catch (_) {
+        return 0;
+    }
+}
+
+function markNativeStepRefreshAttempt(nowMillis = Date.now()) {
+    try {
+        sessionStorage.setItem(NATIVE_STEP_REFRESH_ATTEMPT_KEY, String(nowMillis));
+    } catch (_) { }
+}
+
+function shouldRefreshNativeStepsOnReturn(nowMillis = Date.now()) {
+    if (!ENABLE_HEALTH_CONNECT_STEP_IMPORT) return false;
+    if (document.visibilityState !== 'visible') return false;
+    // 웹·PWA 는 네이티브 셸이 없어 딥링크가 아무 데도 닿지 않는다.
+    if (!getRememberedNativeAppSource()) return false;
+    // 걸음수를 보고 있을 때만. 다른 탭에서 화면이 깜빡일 이유가 없다.
+    if (getVisibleTabName() !== 'exercise') return false;
+    // 이미 Health Connect 로 받아온 적이 있어야 한다. 아니면 네이티브가 권한 창을
+    // 띄우게 되고, 그건 사용자가 요청한 적 없는 개입이다.
+    if (String(_stepData?.source || '').trim() !== HEALTH_CONNECT_SOURCE) return false;
+
+    const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();
+    if (!selectedDateStr || selectedDateStr !== getKstDateString()) return false;
+
+    if (nowMillis - readNativeStepRefreshAttemptAt() < NATIVE_STEP_REFRESH_COOLDOWN_MS) return false;
+
+    const syncedAtEpochMillis = normalizeHealthConnectSyncEpoch(
+        _stepData?.syncedAtEpochMillis,
+        _stepData?.updatedAt
+    );
+    if (syncedAtEpochMillis <= 0) return false;
+
+    return (nowMillis - syncedAtEpochMillis) >= NATIVE_STEP_REFRESH_STALE_MS;
+}
+
+function maybeRefreshNativeStepsOnReturn() {
+    if (!shouldRefreshNativeStepsOnReturn()) return false;
+    // 실패해도 다시 시도하지 않도록 떠나기 전에 표시한다. 동기화가 계속 실패할 때
+    // 앱을 열 때마다 네이티브로 튕기는 것이 증상보다 나쁘다.
+    markNativeStepRefreshAttempt();
+    startNativeHealthConnectSync({ source: 'android-resume-sync' });
+    return true;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    // 복귀 직후에는 탭 복원이 끝나지 않았을 수 있어 한 박자 늦춘다.
+    window.setTimeout(maybeRefreshNativeStepsOnReturn, 300);
+});
 
 function renderStepImportBanner() {
     const banner = document.getElementById('step-import-banner');
@@ -6635,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=381';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=382';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

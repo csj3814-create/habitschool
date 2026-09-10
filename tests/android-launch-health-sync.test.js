@@ -65,3 +65,58 @@ describe('Android launch-time Health Connect sync', () => {
         expect(source).toContain('if (!isAutoHealthSyncEligible(launchingUrl)) {');
     });
 });
+
+// 2026-09-10: 런처는 TWA 를 띄운 뒤 스스로 끝나므로, 최근 앱에서 복귀하면 런처가
+// 아예 돌지 않는다. 그래서 첫 실행에 박힌 걸음수가 그대로 남아 있었다. 웹이 복귀를
+// 감지해 네이티브 동기화를 한 번 더 태우는 것으로 메운다 — APK 변경 없이.
+describe('web-side step refresh when the user comes back to the app', () => {
+    const APP_CORE = 'js/app-core.js';
+
+    it('re-syncs on return instead of leaving the first launch value pinned', () => {
+        const source = readRepoFile(APP_CORE);
+
+        expect(source).toContain('function shouldRefreshNativeStepsOnReturn(');
+        expect(source).toContain('function maybeRefreshNativeStepsOnReturn(');
+        expect(source).toContain("startNativeHealthConnectSync({ source: 'android-resume-sync' })");
+        expect(source).toContain("document.visibilityState !== 'visible'");
+    });
+
+    it('only fires where a reload is worth its cost', () => {
+        const source = readRepoFile(APP_CORE);
+        const guard = source
+            .split('function shouldRefreshNativeStepsOnReturn(')[1]
+            .split('\n}\n')[0];
+
+        // 웹/PWA 에는 딥링크가 닿을 네이티브가 없다.
+        expect(guard).toContain('if (!getRememberedNativeAppSource()) return false;');
+        // 걸음수를 보고 있을 때만. 다른 탭에서 깜빡일 이유가 없다.
+        expect(guard).toContain("if (getVisibleTabName() !== 'exercise') return false;");
+        // 권한을 받은 적이 없으면 네이티브가 권한 창을 띄운다 — 요청한 적 없는 개입이다.
+        expect(guard).toContain('HEALTH_CONNECT_SOURCE');
+        // 오늘 기록에만.
+        expect(guard).toContain('getKstDateString()');
+        // 낡았을 때만, 그리고 너무 자주는 아니게.
+        expect(guard).toContain('NATIVE_STEP_REFRESH_STALE_MS');
+        expect(guard).toContain('NATIVE_STEP_REFRESH_COOLDOWN_MS');
+    });
+
+    it('marks the attempt before navigating away so a failing sync cannot bounce every open', () => {
+        const source = readRepoFile(APP_CORE);
+        const body = source
+            .split('function maybeRefreshNativeStepsOnReturn(')[1]
+            .split('\n}\n')[0];
+
+        const markAt = body.indexOf('markNativeStepRefreshAttempt()');
+        const navigateAt = body.indexOf('startNativeHealthConnectSync(');
+        expect(markAt).toBeGreaterThan(-1);
+        expect(navigateAt).toBeGreaterThan(markAt);
+    });
+
+    it('keeps the manual button working with no argument', () => {
+        const source = readRepoFile(APP_CORE);
+        const indexSource = readRepoFile('index.html');
+
+        expect(source).toContain("function startNativeHealthConnectSync({ source = 'android-web-sync' } = {}) {");
+        expect(indexSource).toContain('onclick="startNativeHealthConnectSync()"');
+    });
+});
