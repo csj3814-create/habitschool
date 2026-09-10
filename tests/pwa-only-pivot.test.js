@@ -2,13 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { readAppSource, readRepoFile } from './source-helpers.js';
 
 describe('PWA-only pivot guardrails', () => {
-    it('keeps Health Connect step import dormant in the web UI while retaining the code path', () => {
+    // 2026-09-10: 이 가드는 원래 "4월 PWA-only pivot 상태를 유지한다"였다. 그런데 그
+    // pivot 은 7월에 이미 뒤집혔다 — Play 라이트 빌드(bbe1f2b), Play 서명키 등록
+    // (f645c50), versionCode 6(19665d7). 웹 플래그만 4월 상태로 남아 브리지가 죽어
+    // 있었다. 그래서 가드의 의도를 "기능 OFF 고정"에서 "브리지가 살아 있고 양쪽
+    // 폴백이 남아 있다"로 바꾼다. READ_STEPS 는 f9d0d81(4/8)부터 매니페스트에 있어
+    // 트랙의 versionCode 2·3·4·5 가 전부 이 권한을 달고 통과했으므로, 되살리는 데
+    // 새 Android 권한은 필요 없다.
+    it('keeps the Health Connect step bridge wired end to end', () => {
         const indexSource = readRepoFile('index.html');
         const appSource = readAppSource();
 
-        expect(indexSource).not.toContain('exercise-health-connect-btn');
-        expect(appSource).toContain('const ENABLE_HEALTH_CONNECT_STEP_IMPORT = false;');
+        expect(indexSource).toContain('exercise-health-connect-btn');
+        expect(indexSource).toContain('onclick="startNativeHealthConnectSync()"');
+        expect(appSource).toContain('const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;');
         expect(appSource).toContain('window.startNativeHealthConnectSync = startNativeHealthConnectSync;');
+    });
+
+    // 네이티브 셸(AppRoutes.kt)이 값을 넘기는 통로는 이 두 가지뿐이다. TWA 에는 JS
+    // 브리지가 없어서 딥링크와 URL 쿼리 말고는 방법이 없다. 이름이 바뀌면 앱을
+    // 다시 배포하기 전까지 걸음 수가 조용히 안 들어온다.
+    it('keeps the native handoff contract that the Android shell writes', () => {
+        const appSource = readAppSource();
+
+        expect(appSource).toContain("new URL('habitschool://health-connect/sync')");
+        expect(appSource).toContain("syncUrl.searchParams.set('returnTo'");
+        for (const param of ['stepCount', 'stepSource', 'stepProvider', 'syncedAt']) {
+            expect(appSource, `native handoff param "${param}" should survive`).toContain(param);
+        }
     });
 
     it('uses PWA-first install copy instead of native app wording', () => {
