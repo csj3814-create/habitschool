@@ -75,39 +75,14 @@ function isSamsungInternetBrowser() {
     return /SamsungBrowser/i.test(getInstallUA());
 }
 
+// 설치 안내에서도 판정은 js/browser-detect.js 한 곳을 쓴다.
+// 여기서 잘못 참이 되면 멀쩡한 브라우저에 "외부 브라우저로 여세요" 가 뜬다.
 function isLikelyInstallWebView() {
-    const ua = getInstallUA();
-    const webviewPatterns = [
-        /KAKAOTALK/i,
-        /NAVER\(/i,
-        /NAVER/i,
-        /NaverMatome/i,
-        /FBAN|FBAV/i,
-        /FB_IAB/i,
-        /Instagram/i,
-        /Line\//i,
-        /Twitter/i,
-        /Snapchat/i,
-        /DaumApps/i,
-        /everytimeApp/i,
-        /BAND\//i,
-        // 네이버 웨일은 인앱 브라우저가 아니라 독립 브라우저다. 여기에 넣으면
-        // 설치 안내가 "외부 브라우저로 여세요" 로 잘못 나간다.
-        // auth.js 의 isWebView 목록에서도 같은 이유로 뺐다(2026-09-08).
-        /\bwv\b/i,
-        /;\s*wv\)/i,
-        /WebView/i,
-        /GSA\//i,
-        /\[FB/i
-    ];
-
-    if (isIOSInstallDevice()) {
-        const looksLikeIOSBrowser = /CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
-        if (!isSafariBrowser() && !looksLikeIOSBrowser) return true;
-    }
-
-    return webviewPatterns.some((pattern) => pattern.test(ua));
+    const detect = window.HabitSchoolBrowserDetect;
+    if (!detect || typeof detect.isInAppBrowser !== 'function') return false;
+    return detect.isInAppBrowser(getInstallUA());
 }
+
 
 function isStandaloneInstallMode() {
     return window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;

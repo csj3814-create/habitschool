@@ -15,6 +15,8 @@ const LF_ONLY = [
     'js/auth-login-helpers.js',
     'js/product-events.js',
     'js/pwa-install.js',
+    'js/browser-detect.js',
+    'js/webview-detect.js',
     'js/main.js',
     'styles-base.css',
     'styles-features.css',

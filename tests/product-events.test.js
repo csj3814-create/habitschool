@@ -31,7 +31,8 @@ const EXPECTED_EVENT_NAMES = [
     'share_prompt_shown',
     'onboarding_gate',
     'auth_start',
-    'auth_consent_blocked'
+    'auth_consent_blocked',
+    'auth_browser_blocked'
 ];
 
 afterEach(() => {

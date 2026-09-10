@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=379';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=380';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=379';
-import { getDatesInfo } from './ui-helpers.js?v=379';
-import { escapeHtml } from './security.js?v=379';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=379';
+import { showToast } from './ui-helpers.js?v=380';
+import { getDatesInfo } from './ui-helpers.js?v=380';
+import { escapeHtml } from './security.js?v=380';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=380';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=379';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=379';
-import { trackProductEvent } from './product-events.js?v=379';
+} from './auth-login-helpers.js?v=380';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=380';
+import { trackProductEvent } from './product-events.js?v=380';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=379';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=380';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -721,43 +721,17 @@ if (_chatbotConnectTokenFromUrl) {
     localStorage.setItem(CHATBOT_CONNECT_PENDING_KEY, _chatbotConnectTokenFromUrl);
 }
 
-// WebView(인앱 브라우저) 감지
+// WebView(인앱 브라우저) 감지 — 판정은 js/browser-detect.js 한 곳에서만 한다.
+//
+// 예전에는 이 파일이 패턴 목록을 따로 들고 있었고, pwa-install.js·webview-detect.js
+// 에도 각각 다른 사본이 있었다. 2026-09-08 에 웨일을 한 목록에서만 빼는 바람에
+// 남은 패턴이 계속 웨일을 잡았고, 사용자는 여전히 로그인 버튼을 보지 못했다.
 function isWebView() {
-    const ua = navigator.userAgent || navigator.vendor || '';
-    // 주요 인앱 브라우저 패턴
-    const webviewPatterns = [
-        /KAKAOTALK/i,
-        /NAVER\(/i,           // 네이버 앱 패턴
-        /NAVER/i,             // 네이버 관련 일반 패턴
-        /NaverMatome/i,
-        /FBAN|FBAV/i,         // Facebook
-        /FB_IAB/i,            // Facebook In-App Browser
-        /Instagram/i,
-        /Line\//i,
-        /Twitter/i,
-        /Snapchat/i,
-        /DaumApps/i,          // 다음/카카오 계열
-        /everytimeApp/i,
-        /BAND\//i,            // 네이버 밴드
-        // 네이버 웨일(/Whale/)은 여기 넣지 않는다. 독립 브라우저이고 구글 로그인이
-        // 정상 동작한다. 인앱으로 분류하면 아래에서 로그인 버튼을 통째로 숨겨
-        // **웨일 사용자는 로그인할 방법이 없어진다.**
-        // 2026-09-08 확인: GA 7/1~9/7 기준 웨일 135명이 평균 168초를 쓰고 게스트
-        // 데모까지 만졌는데(가입 클릭 19건) record_saved 가 0건이었다. 유입 1위가
-        // 네이버 블로그라 찾아온 사람들인데 전원이 이 벽에 막혀 있었다.
-        /\bwv\b/i,            // Android WebView 플래그
-        /;\s*wv\)/i,          // Android WebView 보조 패턴
-        /WebView/i,
-        /GSA\//i,             // Google Search App
-        /\[FB/i,              // Facebook bracket 패턴
-    ];
-
-    // Safari가 아닌 iOS 환경은 WebView 가능성이 높음
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua);
-    if (isIOS && !isSafari && !/Chrome|CriOS|FxiOS|OPiOS|EdgiOS/i.test(ua)) return true;
-
-    return webviewPatterns.some(pattern => pattern.test(ua));
+    const detect = window.HabitSchoolBrowserDetect;
+    // 공용 판정을 못 읽으면 **막지 않는다.** 잘못 막으면 로그인 버튼이 사라져
+    // 되돌아올 방법이 없고, 잘못 통과시키면 팝업이 한 번 실패할 뿐이다.
+    if (!detect || typeof detect.isInAppBrowser !== 'function') return false;
+    return detect.isInAppBrowser();
 }
 
 // 외부 브라우저로 열기(Android intent, iOS Safari fallback)
@@ -793,6 +767,9 @@ export function initAuth() {
 
     // WebView 감지 시 경고 표시
     if (isWebView()) {
+        // 이 분기는 로그인 자체를 없앤다. 몇 명이 여기서 돌아가는지 모르면
+        // 다음에도 원인을 추측하게 된다(2026-09-08 웨일 건).
+        trackProductEvent('auth_browser_blocked');
         loginBtn.style.display = 'none';
         if (webviewWarning) {
             webviewWarning.style.display = 'block';

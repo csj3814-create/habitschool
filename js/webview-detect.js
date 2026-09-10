@@ -1,6 +1,10 @@
 // 인앱 브라우저(WebView) 감지 → 외부 브라우저로 자동 이동
 (function () {
     var ua = navigator.userAgent || '';
+    // 독립 브라우저는 건드리지 않는다. 여기서 잘못 이동시키면 사용자는
+    // 브라우저 선택 창을 보고 앱을 떠난다(2026-09-08 웨일 건).
+    var detect = window.HabitSchoolBrowserDetect;
+    if (detect && detect.isStandaloneBrowser(ua)) return;
     var currentUrl = location.href.replace(/\/index\.html$/, '/');
     // 카카오톡
     if (/KAKAOTALK/i.test(ua)) {

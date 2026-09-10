@@ -24,7 +24,8 @@ export const PRODUCT_EVENT_NAMES = Object.freeze([
     'share_prompt_shown',
     'onboarding_gate',
     'auth_start',
-    'auth_consent_blocked'
+    'auth_consent_blocked',
+    'auth_browser_blocked'
 ]);
 
 const freezeValues = (values) => Object.freeze([...values]);
@@ -285,6 +286,15 @@ export const PRODUCT_EVENT_PARAM_ALLOWLIST = Object.freeze({
     // 이걸 세지 않으면 동의에서 막혀 나간 사람은 어떤 지표에도 안 남는다.
     auth_consent_blocked: schema({
         entry_point: values.entry_point,
+        locale: values.locale,
+        app_mode: values.app_mode
+    }),
+
+    // 인앱 브라우저로 분류돼 로그인 버튼이 아예 사라진 경우.
+    // 2026-09-08 에 웨일이 여기 걸려 135명이 한 명도 기록에 닿지 못했는데,
+    // 계측이 없어서 GA 로는 "가입 클릭은 있고 기록은 0" 으로만 보였다.
+    // 브라우저 구분은 GA 기본 차원에 이미 있으므로 여기서는 아무것도 싣지 않는다.
+    auth_browser_blocked: schema({
         locale: values.locale,
         app_mode: values.app_mode
     })
