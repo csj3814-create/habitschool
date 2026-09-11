@@ -6813,6 +6813,42 @@ exports.claimChallengeReward = onCall(
             }
         }
 
+        // 보너스 민팅은 온체인 일일 한도(지갑당 USER_DAILY_CAP)에 걸릴 수 있다.
+        // 예전에는 그 사실을 **원금 반환 트랜잭션을 보낸 뒤**에야 알았다. 그래서
+        // (1) 사용자는 30초 넘게 기다린 끝에 실패를 듣고, (2) 원금은 이미 온체인으로
+        // 돌아갔는데 챌린지는 claimable 로 남아, 다음 시도가 NoStakeFound 를 타는
+        // 어중간한 상태가 만들어졌다. (2026-09-11 제보: "보상 수령이 100초 넘도록
+        // 오래 걸림" — 로그상 36초 뒤 ExceedsUserDailyCap.)
+        //
+        // 읽기 한 번으로 미리 판별한다. 쓰기를 한 건도 보내지 않으므로, 막혔을 때
+        // 남는 것이 없다. 한도가 충분하면 지금까지와 완전히 같은 경로로 간다.
+        if (bonusRewardHbt > 0) {
+            const bonusWalletAddress = String(challenge.stakeWalletAddress || '').trim() || getEffectiveWalletAddress(userData);
+            if (bonusWalletAddress) {
+                try {
+                    const { provider } = getProviderAndWallet(SERVER_MINTER_KEY.value());
+                    const habitReader = getHabitContract(provider);
+                    const remainingRaw = await habitReader.getUserDailyRemaining(bonusWalletAddress);
+                    const neededRaw = ethers.parseUnits(bonusRewardHbt.toString(), HBT_DECIMALS);
+                    if (remainingRaw < neededRaw) {
+                        const remainingHbt = Math.floor(Number(ethers.formatUnits(remainingRaw, HBT_DECIMALS)));
+                        throw new HttpsError(
+                            "failed-precondition",
+                            `오늘 HBT 일일 발행 한도가 남지 않아 보너스를 지금 지급할 수 없어요 (필요 ${bonusRewardHbt.toLocaleString()} HBT, 남은 한도 ${remainingHbt.toLocaleString()} HBT). 예치금은 안전하고 챌린지는 그대로 유지되니, 한도가 초기화되는 다음 날(한국시간 오전 9시) 이후 다시 수령해 주세요.`
+                        );
+                    }
+                } catch (capCheckError) {
+                    if (capCheckError instanceof HttpsError) throw capCheckError;
+                    // 한도를 못 읽은 것으로 수령을 막지는 않는다. 이 확인은 빨리
+                    // 실패하게 하려는 것이고, 진짜 판정은 컨트랙트가 한다.
+                    console.warn(
+                        "일일 한도 사전 확인 실패, 그대로 진행합니다:",
+                        capCheckError?.message || capCheckError
+                    );
+                }
+            }
+        }
+
         // 온체인 정산: resolveChallenge(user, true) → 스테이킹 100% 반환
         if (stakedOnChain && staked > 0 && successRate >= 0.8) {
             const userWalletAddress = String(challenge.stakeWalletAddress || '').trim() || getEffectiveWalletAddress(userData);
