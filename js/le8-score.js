@@ -247,12 +247,7 @@ function calcSleepScore(recentLogs) {
         if (h !== null) {
             usedManual = true;
         } else {
-            const details = sam.sleepAnalysis && sam.sleepAnalysis.details;
-            if (details) {
-                h = num(details.sleepHours) !== null
-                    ? num(details.sleepHours)
-                    : parseSleepDuration(details.sleepDuration);
-            }
+            h = resolveAnalysisSleepHours(sam.sleepAnalysis);
         }
         if (h !== null && h > 0 && h < 24) hours.push(h);
     });
@@ -282,6 +277,22 @@ function calcSleepScore(recentLogs) {
         proxy: !usedManual,
         avgHours: Math.round(avg * 10) / 10
     };
+}
+
+/**
+ * 수면 AI 분석 결과에서 시간을 뽑는다. 서버는 `sleepHours` 를 숫자로 달라고
+ * 요청하지만 항상 오는 보장이 없어, 화면에 쓰이는 `sleepDuration`("8시간 20분")
+ * 문구를 폴백으로 읽는다.
+ *
+ * 점수 계산과 기록 화면의 입력칸이 **같은 규칙**을 써야 한다. 예전에는 입력칸이
+ * `details.sleepHours` 하나만 봤고, 그래서 점수는 나오는데 칸은 비어 있는 상태가
+ * 생겼다 (2026-09-11 제보).
+ */
+export function resolveAnalysisSleepHours(sleepAnalysis) {
+    const details = sleepAnalysis && sleepAnalysis.details;
+    if (!details) return null;
+    const direct = num(details.sleepHours);
+    return direct !== null ? direct : parseSleepDuration(details.sleepDuration);
 }
 
 /** "7시간 30분", "7h 30m", "7.5" 같은 문자열에서 시간을 뽑는다. */

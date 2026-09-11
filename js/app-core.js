@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=382';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=382';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=383';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=383';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=382';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=382';
+} from './auth-login-helpers.js?v=383';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=383';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=382';
+} from './exercise-media.js?v=383';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=382';
+} from './health-connect-utils.js?v=383';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=382';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=382';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=382';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=382';
-import { sanitize, compressImage } from './data-manager.js?v=382';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=382';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=382';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=382';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=382';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=382';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=382';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=382';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=382';
+} from './habit-groups.js?v=383';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=383';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=383';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=383';
+import { sanitize, compressImage } from './data-manager.js?v=383';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=383';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=383';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=383';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=383';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=383';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=383';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=383';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=383';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=382';
+} from './guest-demo.js?v=383';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=382';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=382';
+} from './product-events.js?v=383';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=383';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=382';
+} from './diet-program.js?v=383';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=382';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=382';
-import { calculateLE8Score, renderLE8ScoreCard } from './le8-score.js?v=382';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=382';
+} from './meditation-guide.js?v=383';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=383';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=383';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=383';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=382';
+} from './social-challenge-readiness.js?v=383';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=382';
+} from './monthly-mvp-reward.js?v=383';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=382';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=383';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -9561,11 +9561,16 @@ async function loadDataForSelectedDate(dateStr) {
                     const sleepAiBtn = document.getElementById('ai-btn-sleep');
                     if (sleepAiBtn) sleepAiBtn.style.display = 'block';
                 }
-                // 직접 입력한 수면 시간 복원
+                // 직접 입력한 수면 시간 복원. 저장된 값이 없으면 AI 분석에서 읽어 채운다.
+                // 분석은 누르는 즉시 Firestore 에 남지만 시간은 저장 버튼을 눌러야 남는다.
+                // 그래서 분석만 하고 화면을 다시 그리면 카드에는 "8시간 20분" 이 떠 있는데
+                // 입력칸만 비는 일이 있었다 (2026-09-11 제보).
                 const sleepHoursEl = document.getElementById('sleep-hours');
                 if (sleepHoursEl) {
                     const savedHours = data.sleepAndMind.sleepHours;
-                    sleepHoursEl.value = (savedHours === null || savedHours === undefined) ? '' : savedHours;
+                    sleepHoursEl.value = (savedHours === null || savedHours === undefined)
+                        ? toSleepHoursInputValue(resolveAnalysisSleepHours(data.sleepAndMind.sleepAnalysis))
+                        : savedHours;
                 }
                 // 수면 AI 분석 결과 복원
                 if (data.sleepAndMind.sleepAnalysis) {
@@ -14508,6 +14513,15 @@ window.hideFeedback = function () {
 };
 
 // 중복 제거: 인증 상태 리스너는 auth.js의 setupAuthListener에서 처리
+
+/**
+ * 분석에서 읽은 시간을 `#sleep-hours` 에 넣을 문자열로 바꾼다. 입력칸이
+ * `step="0.1"` 이라 소수점 한 자리로 줄이고, 범위를 벗어나면 빈 값을 준다.
+ */
+function toSleepHoursInputValue(hours) {
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 24) return '';
+    return String(Math.round(hours * 10) / 10);
+}
 
 /**
  * 수면 시간 입력값을 읽는다. firestore.rules 가 0~24 사이 숫자만 허용하므로
@@ -24584,9 +24598,9 @@ window.analyzeSleepData = async function() {
         if (analysis) {
             // AI가 시간을 읽어냈고 입력칸이 비어 있으면 채워 준다. 사용자가 같은 값을
             // 두 번 적을 이유가 없다. 이미 적어 둔 값은 건드리지 않는다.
-            const aiHours = parseFloat(analysis?.details?.sleepHours);
             const hoursEl = document.getElementById('sleep-hours');
-            if (hoursEl && !hoursEl.value && Number.isFinite(aiHours) && aiHours > 0 && aiHours <= 24) {
+            const aiHours = toSleepHoursInputValue(resolveAnalysisSleepHours(analysis));
+            if (hoursEl && !hoursEl.value && aiHours !== '') {
                 hoursEl.value = aiHours;
             }
             renderSleepMindAnalysisResult(analysis, resultBox);
