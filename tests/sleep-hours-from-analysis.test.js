@@ -73,3 +73,37 @@ describe('the score and the input box read the same rule', () => {
         expect(result.behaviors.sleep.proxy).toBe(true);
     });
 });
+
+// 2026-09-11 후속: 분석만 하고 저장 없이 나가면 점수는 분석에서 읽어 계산되는데
+// 기록에는 안 남아 나중에 보면 비어 있었다. 분석 직후에 시간도 같이 남긴다.
+describe('the analysis persists the hours it just filled in', () => {
+    const source = readRepoFile('js/app-core.js');
+
+    it('writes sleepHours next to sleepAnalysis', () => {
+        expect(source).toContain('const sleepPayload = { sleepAnalysis: analysis };');
+        expect(source).toContain("if (filledSleepHours !== null) sleepPayload.sleepHours = filledSleepHours;");
+    });
+
+    it('only persists a value it filled itself, never the user typed draft', () => {
+        expect(source).toContain('let filledSleepHours = null;');
+        expect(source).toContain("if (hoursEl && !hoursEl.value && aiHours !== '') {");
+    });
+
+    it('sends userId and date so the first write of the day can create the doc', () => {
+        // firestore.rules 의 isValidDailyLog 가 둘을 요구한다. 없으면 그날 첫 동작이
+        // 수면 분석일 때 merge 생성이 조용히 거부된다 (CLAUDE.md 2026-08-15 유형).
+        const block = source.split('const sleepPayload = { sleepAnalysis: analysis };')[1].split('const cachedData')[0];
+        expect(block).toContain('userId: user.uid,');
+        expect(block).toContain('date: selectedDateStr,');
+    });
+
+    it('does not swallow a rejected write in silence', () => {
+        const block = source.split('const sleepPayload = { sleepAnalysis: analysis };')[1].split('const cachedData')[0];
+        expect(block).toContain('console.error');
+        expect(block).toContain('저장에 실패');
+    });
+
+    it('keeps the cache in step with what was written', () => {
+        expect(source).toContain('...sleepPayload');
+    });
+});
