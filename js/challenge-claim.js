@@ -11,10 +11,10 @@
  * blockchain-manager 는 이 함수를 그대로 부른다(구현이 두 벌이 되지 않게).
  */
 
-import { auth, functions } from './firebase-config.js?v=386';
-import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=386';
+import { auth, functions } from './firebase-config.js?v=387';
+import { CHALLENGES, CHALLENGE_ID_MAP, formatChallengeQualificationLabel } from './blockchain-config.js?v=387';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast, hideToast } from './ui-helpers.js?v=386';
+import { showToast, hideToast } from './ui-helpers.js?v=387';
 
 let claimChallengeFunction = null;
 const _claimInFlight = new Set();
@@ -108,7 +108,9 @@ export async function claimChallengeReward(tier) {
         await refreshAfterClaim();
         // 챌린지 카드 UI 갱신 (카드가 그대로 남아 재시도 방지)
         if (window.loadDashboard) window.loadDashboard();
-        return true;
+        // 축하 화면이 서버가 실제로 준 금액을 보여줄 수 있게 결과를 그대로 돌려준다.
+        // 객체도 참이라 기존의 진위값 사용처는 그대로 동작한다.
+        return data;
     } catch (error) {
         stopProgress();
         console.error('❌ 보상 수령 오류:', error);

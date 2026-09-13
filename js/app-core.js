@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=386';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=386';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=387';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=387';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=386';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=386';
+} from './auth-login-helpers.js?v=387';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=387';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=386';
+} from './exercise-media.js?v=387';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=386';
+} from './health-connect-utils.js?v=387';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=386';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=386';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=386';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=386';
-import { sanitize, compressImage } from './data-manager.js?v=386';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=386';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=386';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=386';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=386';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=386';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=386';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=386';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=386';
+} from './habit-groups.js?v=387';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=387';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=387';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=387';
+import { sanitize, compressImage } from './data-manager.js?v=387';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=387';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=387';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=387';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=387';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=387';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=387';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=387';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=387';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=386';
+} from './guest-demo.js?v=387';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=386';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=386';
+} from './product-events.js?v=387';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=387';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=386';
+} from './diet-program.js?v=387';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=386';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=386';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=386';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=386';
+} from './meditation-guide.js?v=387';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=387';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=387';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=387';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=386';
+} from './social-challenge-readiness.js?v=387';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=386';
+} from './monthly-mvp-reward.js?v=387';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=386';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=387';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11438,7 +11438,7 @@ function renderAssetChallengePanel(activeChallenges = {}, todayStr = getKstDateS
                 const titleSuffix = isFullCompletion ? '성공!' : '정산 가능';
                 const claimCopy = isFullCompletion ? '👆 탭하여 보상 수령' : '👆 탭하여 정산 수령';
                 challengeHtml += `
-                        <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="claimChallengeReward('${tier}')">
+                        <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="openChallengeRewardCelebration('${tier}', ${completed}, ${totalDays}, ${isFullCompletion})">
                             <svg class="challenge-ring-svg" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
@@ -12330,7 +12330,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     if (isClaimable) {
                         // 수령 대기 카드
                         challengeHtml += `
-                        <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="claimChallengeReward('${tier}')">
+                        <div class="challenge-ring-card ${tierBgClass[tier]} claimable" onclick="openChallengeRewardCelebration('${tier}', ${completed}, ${totalDays}, ${isFullCompletion})">
                             <svg class="challenge-ring-svg" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="8"/>
                                 <circle cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8"
@@ -24896,6 +24896,120 @@ async function analyzeStepScreenshot() {
 }
 
 // 걸음수 데이터 로드 (날짜 변경 시)
+// ── 챌린지 보상 수령 축하 ────────────────────────────────────────────────
+//
+// 예전에는 카드를 탭하면 곧바로 claimChallengeReward 를 부르고 토스트 한 줄로
+// 끝났다. 며칠에서 한 달을 채운 일의 마무리치고는 조용했다. 그래서 탭과 수령
+// 사이에 축하를 한 칸 넣는다 — '수령하기'를 누르는 그 동작이 성취의 순간이다.
+//
+// 서버 호출은 기존 claimChallengeReward 를 그대로 쓴다. 돈이 오가는 경로라
+// 흐름을 새로 짜지 않고, 부르는 자리만 바꾼다.
+let _pendingChallengeRewardTier = null;
+
+function formatChallengeRewardAmount(value) {
+    const n = Number(value) || 0;
+    return n.toLocaleString('ko-KR');
+}
+
+window.openChallengeRewardCelebration = function (tier, completedDays = 0, totalDays = 0, isFullCompletion = true) {
+    const modal = document.getElementById('challenge-reward-modal');
+    if (!modal) {
+        // 모달이 없으면 예전처럼 바로 수령한다. 축하 때문에 보상을 못 받으면 안 된다.
+        window.claimChallengeReward?.(tier);
+        return;
+    }
+
+    _pendingChallengeRewardTier = tier;
+
+    const isFull = isFullCompletion !== false;
+    const label = ASSET_CHALLENGE_TIER_LABELS[tier] || '챌린지';
+    const completed = Number(completedDays) || 0;
+    const total = Number(totalDays) || 0;
+
+    document.getElementById('challenge-reward-emoji').textContent = isFull ? '🎉' : '🧾';
+    document.getElementById('challenge-reward-kicker').textContent = isFull ? '챌린지 완주' : '챌린지 정산';
+    document.getElementById('challenge-reward-title').textContent = isFull
+        ? `${label}를 끝냈어요`
+        : `${label} 정산이 준비됐어요`;
+    document.getElementById('challenge-reward-progress').textContent = total > 0
+        ? `${completed}/${total}일 · ${Math.round((completed / total) * 100)}% 달성`
+        : '';
+
+    // 받을 금액을 여기서 미리 적지 않는다. 보너스율·정산율이 서버에서 정해지므로
+    // 화면이 먼저 약속하면 틀릴 수 있고, 돈 이야기에서 그건 제일 나쁜 실수다.
+    // 실제 금액은 수령이 끝난 뒤 서버가 준 값으로 채운다.
+    document.getElementById('challenge-reward-prizes').innerHTML = '';
+
+    const note = document.getElementById('challenge-reward-note');
+    note.classList.remove('is-error');
+    // 온체인 발행은 오래 걸릴 수 있다. 누르기 전에 미리 말해 두면 기다림이 불안이 되지 않는다.
+    note.textContent = tier === 'mini'
+        ? '수령하면 포인트가 바로 들어와요.'
+        : '블록체인에 발행하느라 30초에서 1분쯤 걸려요.';
+
+    const claimBtn = document.getElementById('challenge-reward-claim');
+    claimBtn.disabled = false;
+    claimBtn.textContent = '보상 수령하기';
+    document.getElementById('challenge-reward-close').textContent = '나중에';
+
+    modal.style.display = 'flex';
+};
+
+window.closeChallengeRewardModal = function () {
+    const modal = document.getElementById('challenge-reward-modal');
+    if (modal) modal.style.display = 'none';
+    _pendingChallengeRewardTier = null;
+};
+
+window.confirmChallengeRewardClaim = async function () {
+    const tier = _pendingChallengeRewardTier;
+    if (!tier) return;
+
+    const claimBtn = document.getElementById('challenge-reward-claim');
+    const closeBtn = document.getElementById('challenge-reward-close');
+    const note = document.getElementById('challenge-reward-note');
+    claimBtn.disabled = true;
+    claimBtn.textContent = '수령 중…';
+    note.classList.remove('is-error');
+    note.textContent = '보상을 발행하고 있어요. 창을 닫아도 보상은 들어옵니다.';
+
+    let result = null;
+    try {
+        result = await window.claimChallengeReward?.(tier);
+    } catch (_) {
+        result = null;
+    }
+
+    if (result) {
+        const hbt = Number(result?.rewardHbt) || 0;
+        const points = Number(result?.rewardPoints) || 0;
+        const prizes = [];
+        if (hbt > 0) prizes.push(['받은 HBT', `${formatChallengeRewardAmount(hbt)} HBT`]);
+        if (points > 0) prizes.push(['받은 포인트', `${formatChallengeRewardAmount(points)}P`]);
+        document.getElementById('challenge-reward-prizes').innerHTML = prizes.map(([k, v]) => `
+        <div class="challenge-reward-prize">
+            <span class="challenge-reward-prize-label">${escapeHtml(k)}</span>
+            <span class="challenge-reward-prize-value">${escapeHtml(v)}</span>
+        </div>
+    `).join('');
+
+        document.getElementById('challenge-reward-emoji').textContent = '🎊';
+        document.getElementById('challenge-reward-kicker').textContent = '수령 완료';
+        document.getElementById('challenge-reward-title').textContent = '보상이 들어왔어요';
+        note.textContent = hbt > 0 ? '자산 탭에서 확인할 수 있어요.' : '';
+        claimBtn.style.display = 'none';
+        closeBtn.textContent = '확인';
+        return;
+    }
+
+    // 실패 사유는 claimChallengeReward 가 토스트로 정확히 말해 준다(일일 한도 등).
+    // 여기서 문구를 또 만들면 서로 다른 말을 하게 된다.
+    claimBtn.disabled = false;
+    claimBtn.textContent = '다시 시도';
+    note.classList.add('is-error');
+    note.textContent = '수령하지 못했어요. 안내 메시지를 확인해 주세요.';
+};
+
 function loadStepData(logData) {
     const { todayStr } = getDatesInfo();
     const selectedDateStr = String(document.getElementById('selected-date')?.value || '').trim();

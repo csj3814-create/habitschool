@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=386">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=386">
+    <link rel="stylesheet" href="styles.css?v=387">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=387">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=386"></script>
-    <script src="js/webview-detect.js?v=386"></script>
+    <script src="js/browser-detect.js?v=387"></script>
+    <script src="js/webview-detect.js?v=387"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -3044,6 +3044,32 @@
     </div>
 
     <!--
+      챌린지 보상 수령. 예전에는 카드를 탭하면 곧바로 서버를 부르고 토스트 한 줄로
+      끝났다 — 며칠에서 한 달을 채운 일의 마무리치고는 너무 조용했다. 그래서 탭과
+      수령 사이에 축하를 한 칸 넣는다. '수령하기'를 누르는 동작 자체가 그 순간이다.
+    -->
+    <div id="challenge-reward-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true"
+        aria-labelledby="challenge-reward-title">
+        <div class="modal-content challenge-reward-sheet">
+            <div class="challenge-reward-burst" id="challenge-reward-emoji" aria-hidden="true">🎉</div>
+            <div class="challenge-reward-kicker" id="challenge-reward-kicker">챌린지 완주</div>
+            <h3 id="challenge-reward-title">7일 위클리 챌린지를 끝냈어요</h3>
+            <div class="challenge-reward-progress" id="challenge-reward-progress">7/7일 · 100% 달성</div>
+
+            <div class="challenge-reward-prizes" id="challenge-reward-prizes"></div>
+
+            <p class="challenge-reward-note" id="challenge-reward-note"></p>
+
+            <div class="challenge-reward-actions">
+                <button type="button" class="challenge-reward-secondary" id="challenge-reward-close"
+                    onclick="closeChallengeRewardModal()">닫기</button>
+                <button type="button" class="challenge-reward-primary" id="challenge-reward-claim"
+                    onclick="confirmChallengeRewardClaim()">보상 수령하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!--
       저장 직후 공유 유도. 갤러리 탭까지 찾아 들어가지 않아도 한 번의 탭으로
       공유 시트까지 가게 한다. 노출 조건은 app-core의 maybeShowShareAfterSave 참고
       (사진이 있는 오늘 기록, 업로드 실패 없음, 하루 한 번).
@@ -3085,14 +3111,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=386"></script>
-    <script type="module" src="js/main.js?v=386"></script>
-    <script type="module" src="js/diet-analysis.js?v=386"></script>
-    <script type="module" src="js/metabolic-score.js?v=386"></script>
-    <script type="module" src="js/le8-score.js?v=386"></script>
+    <script type="module" src="js/app.js?v=387"></script>
+    <script type="module" src="js/main.js?v=387"></script>
+    <script type="module" src="js/diet-analysis.js?v=387"></script>
+    <script type="module" src="js/metabolic-score.js?v=387"></script>
+    <script type="module" src="js/le8-score.js?v=387"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=386"></script>
+    <script src="js/pwa-install.js?v=387"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
