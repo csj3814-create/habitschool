@@ -5024,7 +5024,7 @@ exports.ensureReferralCode = onCall(
         return {
             success: true,
             referralCode,
-            link: `${APP_BASE_URL}?ref=${referralCode}`
+            link: `${APP_BASE_URL}/i/${referralCode}`
         };
     }
 );
@@ -5132,7 +5132,14 @@ function escapeHtmlAttribute(value = "") {
         .replace(/'/g, "&#39;");
 }
 
-function buildShareCardHtml({ imageUrl = "", targetUrl = "", title = "", description = "" }) {
+function buildShareCardHtml({
+    imageUrl = "",
+    targetUrl = "",
+    title = "",
+    description = "",
+    imageWidth = 1080,
+    imageHeight = 1080
+}) {
     const safeImage = escapeHtmlAttribute(imageUrl);
     const safeTarget = escapeHtmlAttribute(targetUrl);
     const safeTitle = escapeHtmlAttribute(title);
@@ -5148,8 +5155,8 @@ function buildShareCardHtml({ imageUrl = "", targetUrl = "", title = "", descrip
 <meta property="og:title" content="${safeTitle}">
 <meta property="og:description" content="${safeDesc}">
 <meta property="og:image" content="${safeImage}">
-<meta property="og:image:width" content="1080">
-<meta property="og:image:height" content="1080">
+<meta property="og:image:width" content="${imageWidth}">
+<meta property="og:image:height" content="${imageHeight}">
 <meta property="og:url" content="${safeTarget}">
 <meta property="og:site_name" content="해빛스쿨">
 <meta name="twitter:card" content="summary_large_image">
@@ -5184,6 +5191,66 @@ body {
 </body>
 </html>`;
 }
+
+// 초대 링크 미리보기.
+//
+// `?ref=CODE` 에는 전용 OG 를 붙일 수 없다. Firebase Hosting 의 rewrite 는
+// 쿼리스트링을 매칭하지 못해서, ref 가 붙든 말든 같은 index.html 이 나가고
+// 미리보기도 앱 일반 소개로 뜬다. 그래서 경로를 쓴다.
+//
+// `/i/CODE` 는 이 함수가 받아 초대한 사람 이름이 담긴 OG 를 돌려주고, 사람
+// 브라우저는 곧바로 `/?ref=CODE` 로 넘어간다. 기존 추천 가입 흐름
+// (processReferralSignup)은 그대로다 — 링크 모양만 바뀌고 동작은 같다.
+const INVITE_CODE_PATTERN = /^[A-Z0-9]{6}$/;
+
+exports.inviteLinkPreview = onRequest(
+    { region: "asia-northeast3", cors: false },
+    async (req, res) => {
+        const fallbackUrl = `${APP_BASE_URL}/`;
+        try {
+            const rawCode = String(req.path || "").split("/").filter(Boolean).pop() || "";
+            const code = rawCode.trim().toUpperCase();
+            // 코드가 이상하면 조용히 앱으로 보낸다. 실패 화면을 보여 줄 이유가 없다.
+            if (!INVITE_CODE_PATTERN.test(code)) {
+                res.redirect(302, fallbackUrl);
+                return;
+            }
+
+            const targetUrl = `${APP_BASE_URL}/?ref=${code}`;
+
+            // 이름을 못 찾아도 초대는 성립한다. 조회 실패로 미리보기를 포기하지 않는다.
+            let inviterName = "";
+            try {
+                const snap = await db.collection("users")
+                    .where("referralCode", "==", code)
+                    .limit(1)
+                    .get();
+                if (!snap.empty) {
+                    inviterName = String(getUserLabel(snap.docs[0].data(), "") || "").slice(0, 20);
+                }
+            } catch (lookupError) {
+                console.warn("[inviteLinkPreview] 초대자 조회 실패:", lookupError?.message || lookupError);
+            }
+
+            const html = buildShareCardHtml({
+                imageUrl: `${APP_BASE_URL}/icons/og-invite.png`,
+                imageWidth: 1200,
+                imageHeight: 630,
+                targetUrl,
+                title: inviterName
+                    ? `${inviterName}님이 건강 습관에 초대했어요`
+                    : "당신의 건강을 위해 초대합니다",
+                description: "매일의 식단·운동·수면을 기록하고 함께 건강한 습관을 만들어요. 해빛스쿨 습관학교."
+            });
+
+            res.set("Cache-Control", "public, max-age=600, s-maxage=600");
+            res.status(200).send(html);
+        } catch (error) {
+            console.error("[inviteLinkPreview] 실패:", error?.message || error);
+            res.redirect(302, fallbackUrl);
+        }
+    }
+);
 
 exports.shareCardPreview = onRequest(
     { region: "asia-northeast3", cors: false },

@@ -52,7 +52,6 @@
         "tmp/**",
         "*.log",
         "*.md",
-        "*.txt",
         ".gitignore",
         ".firebase/**",
         ".env",
@@ -122,6 +121,13 @@
           "source": "/c/**",
           "function": {
             "functionId": "shareCardPreview",
+            "region": "asia-northeast3"
+          }
+        },
+        {
+          "source": "/i/**",
+          "function": {
+            "functionId": "inviteLinkPreview",
             "region": "asia-northeast3"
           }
         },
