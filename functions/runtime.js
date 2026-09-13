@@ -1636,6 +1636,22 @@ async function startTieredChallengeStake(wallet, {
     return { recovered: false, txHash: receipt.hash, tierIndex };
 }
 
+// 온체인이 이미 정산을 끝냈을 때 쓰는 표식. HttpsError 가 아니어야 수령 핸들러의
+// "이미 정산됨" 분기까지 내려간다.
+const TIERED_STAKE_ALREADY_SETTLED = "TIERED_STAKE_ALREADY_SETTLED";
+
+// 온체인이 이미 정산을 끝냈는가. 계약과 경로에 따라 신호가 다르게 온다.
+// - legacy/staking: NoStakeFound 되돌림 (ethers v6 는 커스텀 에러를
+//   "unknown custom error" 로 표시하므로 셀렉터로도 본다)
+// - tiered: settled 플래그를 읽고 우리가 붙인 표식
+function isChallengeAlreadySettledError(error) {
+    if (error?.code === TIERED_STAKE_ALREADY_SETTLED) return true;
+    const errData = error?.data || error?.error?.data || '';
+    return error?.errorName === 'NoStakeFound'
+        || String(error?.message || '').includes('NoStakeFound')
+        || String(errData).startsWith('0x59be8f02'); // NoStakeFound() selector
+}
+
 async function syncTieredChallengeProgress(wallet, userWalletAddress, tier, completedDays) {
     const stakingContract = getStakingContract(wallet);
     if (!stakingContract) {
@@ -1650,7 +1666,20 @@ async function syncTieredChallengeProgress(wallet, userWalletAddress, tier, comp
     let onchain = readTieredChallengeTuple(
         await stakingContract.getChallenge(userWalletAddress, tierIndex)
     );
-    if (onchain.settled || onchain.totalDays === 0) {
+    // 이미 정산된 것과 예치 기록이 아예 없는 것은 다르다.
+    //
+    // settled 는 원금이 이미 지갑으로 돌아갔다는 뜻이다. 남은 일은 Firestore 정리와
+    // (아직이라면) 보너스뿐인데, 예전에는 여기서 HttpsError 로 막아 수령이 영영 되지
+    // 않았다. legacy 경로는 NoStakeFound 되돌림을 "이미 정산됨"으로 보고 통과시키는데
+    // 티어 경로에만 그 처리가 없었다 (2026-09-12 제보).
+    //
+    // totalDays === 0 은 온체인에 예치 자체가 없다는 뜻이라 성격이 다르다. 그대로 막는다.
+    if (onchain.settled) {
+        const settledError = new Error("Tiered challenge already settled on-chain");
+        settledError.code = TIERED_STAKE_ALREADY_SETTLED;
+        throw settledError;
+    }
+    if (onchain.totalDays === 0) {
         throw new HttpsError("failed-precondition", "온체인 챌린지 예치 내역을 찾을 수 없습니다.");
     }
 
@@ -6943,20 +6972,15 @@ exports.claimChallengeReward = onCall(
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
             } catch (onChainErr) {
-                if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
-                    throw onChainErr;
-                }
-                // NoStakeFound(0x59be8f02): 이미 온체인 정산 완료 → Firestore 정리만 진행
-                // ethers v6가 커스텀 에러를 "unknown custom error"로 표시하므로 data 셀렉터로 판별
-                const errData = onChainErr?.data || onChainErr?.error?.data || '';
-                const isAlreadySettled =
-                    onChainErr?.errorName === 'NoStakeFound' ||
-                    (onChainErr?.message || '').includes('NoStakeFound') ||
-                    String(errData).startsWith('0x59be8f02'); // NoStakeFound() selector
-                if (isAlreadySettled) {
-                    console.warn("온체인 이미 정산됨(NoStakeFound), Firestore 정리만 진행합니다.");
+                // 이미 정산된 경우가 먼저다. 티어 경로는 이 판정을 HttpsError 로
+                // 던지기 때문에, 아래 재던지기보다 앞에 두지 않으면 영영 걸린다.
+                if (isChallengeAlreadySettledError(onChainErr)) {
+                    console.warn("온체인 이미 정산됨, Firestore 정리만 진행합니다.");
+                    // 원금은 이미 지갑으로 돌아갔다. 재지급하지 않는다(이중지급 없음).
                     principalPaidHbt = 0;
                     rewardHbt = bonusRewardHbt;
+                } else if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
+                    throw onChainErr;
                 } else {
                     console.error("온체인 정산 오류:", onChainErr.message);
                     throw new HttpsError("internal", "온체인 챌린지 정산에 실패했습니다.");
@@ -7203,11 +7227,16 @@ exports.settleChallengeFailure = onCall(
                 const resolveReceipt = await resolveTx.wait();
                 resolveTxHash = resolveReceipt.hash;
             } catch (onChainErr) {
-                if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
+                // 수령 경로와 같은 이유로 "이미 정산됨"을 먼저 본다. 온체인이 끝나
+                // 있는데 여기서 막으면 실패한 챌린지가 계정에 영영 남는다.
+                if (isChallengeAlreadySettledError(onChainErr)) {
+                    console.warn("온체인 이미 정산됨, Firestore 정리만 진행합니다.");
+                } else if (onChainErr instanceof HttpsError || onChainErr?.code === "failed-precondition") {
                     throw onChainErr;
+                } else {
+                    console.error("온체인 소각 정산 오류:", onChainErr.message);
+                    throw new HttpsError("internal", "온체인 챌린지 실패 정산에 실패했습니다.");
                 }
-                console.error("온체인 소각 정산 오류:", onChainErr.message);
-                throw new HttpsError("internal", "온체인 챌린지 실패 정산에 실패했습니다.");
             }
         }
 
