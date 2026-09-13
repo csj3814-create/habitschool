@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=387';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=387';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=388';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=388';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=387';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=387';
+} from './auth-login-helpers.js?v=388';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=388';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=387';
+} from './exercise-media.js?v=388';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=387';
+} from './health-connect-utils.js?v=388';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=387';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=387';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=387';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=387';
-import { sanitize, compressImage } from './data-manager.js?v=387';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=387';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=387';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=387';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=387';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=387';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=387';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=387';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=387';
+} from './habit-groups.js?v=388';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=388';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=388';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=388';
+import { sanitize, compressImage } from './data-manager.js?v=388';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=388';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=388';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=388';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=388';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=388';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=388';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=388';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=388';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=387';
+} from './guest-demo.js?v=388';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=387';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=387';
+} from './product-events.js?v=388';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=388';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=387';
+} from './diet-program.js?v=388';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=387';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=387';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=387';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=387';
+} from './meditation-guide.js?v=388';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=388';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=388';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=388';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=387';
+} from './social-challenge-readiness.js?v=388';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=387';
+} from './monthly-mvp-reward.js?v=388';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=387';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=388';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -10141,7 +10141,14 @@ function normalizeFirestoreTimestampLike(value) {
     return null;
 }
 
-function summarizeMintWindowUsage(transactions = [], { networkTag = '', now = new Date(), dailyMax = 12000 } = {}) {
+// 포인트를 HBT 로 바꿀 때의 하루 상한. 서버 functions/runtime.js 의 MAX_DAILY_HBT 와
+// 같은 값이어야 한다 — 화면이 더 크게 말하면 눌러 본 뒤에야 거절당한다.
+//
+// 컨트랙트의 USER_DAILY_CAP(지갑당 2만)과는 다른 층이다. 그쪽은 챌린지 보너스까지
+// 포함해 지갑에 발행되는 전부를 덮고, 이 값은 그중 변환 몫이다.
+const HBT_DAILY_CONVERT_LIMIT = 12000;
+
+function summarizeMintWindowUsage(transactions = [], { networkTag = '', now = new Date(), dailyMax = HBT_DAILY_CONVERT_LIMIT } = {}) {
     const windowInfo = getMintResetWindowInfo(now);
     let convertedHbt = 0;
     let totalEarnedHbt = 0;
@@ -12110,8 +12117,18 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                 const mintWindowUsage = summarizeMintWindowUsage(recentTransactions, {
                     networkTag: ACTIVE_BLOCKCHAIN_TX_NETWORK_TAG
                 });
-                const dailyMax = 12000;
-                dailyLimitEl.innerHTML = `오늘 변환 한도: <strong>${mintWindowUsage.remainingHbt.toLocaleString()} / ${dailyMax.toLocaleString()} HBT</strong><span class="wallet-convert-limit-reset">${mintWindowUsage.resetCopy}</span>`;
+                // 사용량 / 한도 로 적는다. 예전에는 앞자리가 '남은 양'이었는데,
+                // `0 / 12,000` 을 보고 "12,000 중 0을 썼다" 로 읽지 않을 사람이 없다.
+                // 실제로는 정반대(다 썼다)였고, 서버 오류 문구는 처음부터 사용량
+                // 기준이라 화면과 서버가 같은 자리를 반대로 말하고 있었다.
+                const dailyMax = HBT_DAILY_CONVERT_LIMIT;
+                const usedHbt = Math.min(Math.max(0, Number(mintWindowUsage.convertedHbt) || 0), dailyMax);
+                const isExhausted = mintWindowUsage.remainingHbt <= 0;
+                const limitNote = isExhausted
+                    ? '오늘 한도를 다 썼어요 · 매일 오전 9시 reset'
+                    : mintWindowUsage.resetCopy;
+                dailyLimitEl.innerHTML = `오늘 변환 한도: <strong>${usedHbt.toLocaleString()} / ${dailyMax.toLocaleString()} HBT</strong><span class="wallet-convert-limit-reset">${limitNote}</span>`;
+                dailyLimitEl.classList.toggle('is-exhausted', isExhausted);
             }
 
             // 스켈레톤 해제
@@ -25793,7 +25810,7 @@ async function loadHabitGroupRewardProgress(user = auth.currentUser, groupIds = 
 
     const progressByGroupId = new Map(progressItems
         .filter(item => item?.groupId)
-        .map(item => [item.groupId, { ...item, ...summarizeHabitGroupProgress(item) }]));
+        .map(item => [item.groupId, { ...item, ...summarizeHabitGroupProgress(item, getKstDateString()) }]));
     _habitGroupProgressCache = {
         uid: user.uid,
         groupKey,
@@ -26100,6 +26117,21 @@ function formatHabitGroupProgressLine(progressSummary = {}) {
     return `${progressSummary.submittedCount}/${EXERCISE_GROUP_REWARD_TARGET}일 완료 · 승인 ${progressSummary.approvedCount} · 확인 대기 ${progressSummary.pendingCount}`;
 }
 
+// 100회는 120일 창 안에서 채워야 3,000P 가 나온다. 창을 말해 주지 않으면 남은 날을
+// 알 방법이 없어, 늦었는지 여유가 있는지 판단할 수가 없다.
+function formatHabitGroupWindowLine(progressSummary = {}) {
+    const startedDate = String(progressSummary.startedDate || '').trim();
+    const windowEndDate = String(progressSummary.windowEndDate || '').trim();
+    if (!startedDate || !windowEndDate) return '';
+
+    const period = `${startedDate.replaceAll('-', '.')} ~ ${windowEndDate.replaceAll('-', '.')}`;
+    if (progressSummary.windowExpired) return `📅 ${period} · 기간 종료`;
+
+    const daysLeft = progressSummary.windowDaysLeft;
+    if (!Number.isFinite(daysLeft)) return `📅 ${period}`;
+    return `📅 ${period} · ${daysLeft.toLocaleString('ko-KR')}일 남음`;
+}
+
 function formatHabitGroupJoinCta() {
     return `${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 참여`;
 }
@@ -26107,7 +26139,7 @@ function formatHabitGroupJoinCta() {
 function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false, checkin = null, progress = null, canJoin = true, showUnavailableAction = true } = {}) {
     const typeLabel = getHabitGroupTypeLabel(group.type);
     const reviewStatus = String(checkin?.reviewStatus || '').trim();
-    const progressSummary = summarizeHabitGroupProgress(progress || {});
+    const progressSummary = summarizeHabitGroupProgress(progress || {}, getKstDateString());
     const isRejectedToday = reviewStatus === 'rejected';
     const statusClass = reviewStatus === 'approved'
         ? 'is-active'
@@ -26124,6 +26156,9 @@ function buildHabitGroupDashboardRow(group, { joined = false, checkedIn = false,
         : '';
     const progressHtml = joined
         ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
+          + (formatHabitGroupWindowLine(progressSummary)
+              ? `<div class="habit-group-window-text">${formatHabitGroupWindowLine(progressSummary)}</div>`
+              : '')
         : '';
     const actionHtml = reviewStatus === 'approved'
         ? '<button type="button" class="social-challenge-cta is-active" disabled>승인</button>'
@@ -26333,9 +26368,12 @@ async function renderHabitGroupDirectoryList(user = auth.currentUser, { forceRel
 
     list.innerHTML = groups.map(group => {
         const joined = joinedGroupIds.has(group.id);
-        const progressSummary = summarizeHabitGroupProgress(progressByGroupId.get(group.id) || {});
+        const progressSummary = summarizeHabitGroupProgress(progressByGroupId.get(group.id) || {}, getKstDateString());
         const progressHtml = joined
             ? `<div class="habit-group-progress-text">${formatHabitGroupProgressLine(progressSummary)}</div>`
+              + (formatHabitGroupWindowLine(progressSummary)
+                  ? `<div class="habit-group-window-text">${formatHabitGroupWindowLine(progressSummary)}</div>`
+                  : '')
             : '';
         return `
             <div class="social-challenge-item habit-group-directory-row ${joined ? 'is-active' : ''}">

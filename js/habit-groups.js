@@ -170,7 +170,15 @@ function normalizeDateArray(values = []) {
         .sort();
 }
 
-export function summarizeHabitGroupProgress(progress = {}) {
+/** "2026-09-14" 두 개 사이의 날짜 수. 끝나는 날을 포함해 센다. */
+function countDaysInclusive(fromDateStr = '', toDateStr = '') {
+    const from = Date.parse(`${String(fromDateStr).trim()}T00:00:00+09:00`);
+    const to = Date.parse(`${String(toDateStr).trim()}T00:00:00+09:00`);
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+    return Math.round((to - from) / 86400000) + 1;
+}
+
+export function summarizeHabitGroupProgress(progress = {}, todayStr = '') {
     const submittedDates = normalizeDateArray(progress.submittedDates);
     const approvedDates = normalizeDateArray(progress.approvedDates);
     const pendingDates = normalizeDateArray(progress.pendingDates);
@@ -180,7 +188,19 @@ export function summarizeHabitGroupProgress(progress = {}) {
     const pendingCount = Array.isArray(progress.pendingDates) ? pendingDates.length : Number(progress.pendingCount || 0) || 0;
     const remainingCount = Math.max(0, EXERCISE_GROUP_REWARD_TARGET - submittedCount);
 
+    // 100회는 아무 때나 채우면 되는 것이 아니라 120일 창 안에서 채워야 한다.
+    // 화면이 그 창을 말해 주지 않으면, 남은 날을 알 방법이 없다.
+    const startedDate = String(progress.startedDate || '').trim();
+    const windowEndDate = String(progress.windowEndDate || '').trim();
+    const daysLeft = (windowEndDate && todayStr)
+        ? countDaysInclusive(todayStr, windowEndDate)
+        : null;
+
     return {
+        startedDate,
+        windowEndDate,
+        windowDaysLeft: Number.isFinite(daysLeft) ? Math.max(0, daysLeft) : null,
+        windowExpired: Number.isFinite(daysLeft) ? daysLeft <= 0 : false,
         submittedDates,
         approvedDates,
         pendingDates,
