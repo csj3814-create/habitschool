@@ -1331,3 +1331,13 @@ body.dark-mode .legacy-wallet-qr-box {
 body.dark-mode .legacy-wallet-qr-title { color: #FFD28D; }
 body.dark-mode .legacy-wallet-qr-desc { color: #C0BCC6; }
 body.dark-mode .legacy-wallet-qr-desc strong { color: #EF9A9A; }
+
+/* 이번 주 운동 완수율 */
+body.dark-mode .weekly-activity-count { color: #A09AAA; }
+body.dark-mode .weekly-activity-count strong { color: #EDEAF2; }
+body.dark-mode .weekly-activity-bar-bg { background: #2B2830; }
+body.dark-mode .weekly-activity-guide { color: #C0BCC6; }
+body.dark-mode .weekly-activity-day-label { color: #7C7688; }
+body.dark-mode .weekly-activity-day-dot { background: #3A3641; }
+body.dark-mode .weekly-activity-day.is-future .weekly-activity-day-dot { background: #24212A; border-color: #3A3641; }
+body.dark-mode .weekly-activity-note { color: #7C7688; }

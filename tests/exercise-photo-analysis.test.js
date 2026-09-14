@@ -42,11 +42,11 @@ describe('a workout photo can say what it is', () => {
         expect(runtime).toContain('const EXERCISE_INTENSITY_LEVELS = ["저강도", "중강도", "고강도", "초고강도"];');
         expect(norm).toContain('EXERCISE_INTENSITY_LEVELS.includes(');
         expect(norm).toContain('"중강도"');
-        // 막대는 0~150 을 그린다.
-        expect(norm).toContain('number(source.recommendedDailyProgress, 150)');
+        // 막대는 주 150분 대비 적립 분으로 그린다.
+        expect(norm).toContain('weightedMinutes');
 
         const renderer = read('js/diet-analysis.js').split('export function renderExerciseAnalysisResult(')[1].split('\n}\n')[0];
-        for (const key of ['analysis.intensity', 'analysis.exerciseType', 'analysis.timeAnalysis', 'analysis.recommendedDailyProgress', 'analysis.feedback', 'analysis.formTip']) {
+        for (const key of ['analysis.intensity', 'analysis.exerciseType', 'analysis.timeAnalysis', 'analysis.feedback', 'analysis.formTip', 'analysis.weightedMinutes']) {
             expect(renderer).toContain(key);
         }
     });
@@ -141,10 +141,10 @@ describe('a photo that is not a workout says so', () => {
         expect(norm).toContain('EXERCISE_INTENSITY_LEVELS.includes(rawIntensity) ? rawIntensity : null');
         expect(norm).toContain('readIntensity !== null');
         // 운동인 것이 확인된 뒤에만 가운데 값으로 접는다.
-        expect(norm).toContain("intensity: readIntensity || \"중강도\"");
+        expect(norm).toContain("const intensity = readIntensity || \"중강도\";");
         const notExercise = norm.split('if (!isExercise) {')[1].split('    }')[0];
         expect(notExercise).toContain('intensity: null');
-        expect(notExercise).toContain('recommendedDailyProgress: 0');
+        expect(notExercise).toContain('weightedMinutes: null');
         expect(notExercise).toContain('exerciseType: null');
     });
 

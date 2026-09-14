@@ -7316,3 +7316,100 @@ body.dark-mode #gallery-feed-end {
     cursor: default;
     filter: grayscale(.35);
 }
+
+/* ── 이번 주 운동 완수율 ─────────────────────────────────────────
+   주 150분이라는 목표가 건강습관 점수 안 문자열로만 있었다. 기록하는 자리에서
+   남은 양이 보여야 오늘 얼마를 하면 되는지 알 수 있다. */
+.weekly-activity-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.weekly-activity-head h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.weekly-activity-count {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+.weekly-activity-count strong {
+    font-size: 20px;
+    color: #333;
+}
+
+.weekly-activity-bar-bg {
+    height: 10px;
+    border-radius: 999px;
+    background: #EEE;
+    overflow: hidden;
+}
+
+.weekly-activity-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.45s ease;
+}
+
+.weekly-activity-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.weekly-activity-percent {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.weekly-activity-guide {
+    font-size: 13px;
+    color: #555;
+}
+
+.weekly-activity-days {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 12px;
+}
+
+.weekly-activity-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.weekly-activity-day-label {
+    font-size: 11px;
+    color: #999;
+}
+
+.weekly-activity-day-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #E0E0E0;
+}
+
+.weekly-activity-day.is-done .weekly-activity-day-dot { background: #4CAF50; }
+.weekly-activity-day.is-future .weekly-activity-day-dot { background: #F5F5F5; border: 1px dashed #DDD; }
+.weekly-activity-day.is-today .weekly-activity-day-label { color: #FF8C00; font-weight: 800; }
+.weekly-activity-day.is-today .weekly-activity-day-dot { box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.22); }
+
+.weekly-activity-note {
+    margin: 10px 0 0;
+    font-size: 11px;
+    color: #999;
+    line-height: 1.5;
+}

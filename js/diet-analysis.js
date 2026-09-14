@@ -2,11 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=395';
+import { auth, functions } from './firebase-config.js?v=396';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=395';
-import { escapeHtml } from './security.js?v=395';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=395';
+import { showToast } from './ui-helpers.js?v=396';
+import { escapeHtml } from './security.js?v=396';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=396';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=396';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -277,15 +278,27 @@ export function renderExerciseAnalysisResult(analysis, container) {
     };
     const intensity = analysis.intensity || '중강도';
     const displayIntensity = en ? (intensityLabels[intensity] || intensity) : intensity;
-    const progress = Math.min(Number(analysis.recommendedDailyProgress || 0), 150);
-    const progressColor = progress >= 80 ? '#4CAF50' : progress >= 50 ? '#FF9800' : '#F44336';
-    const progressLabel = progress >= 100
-        ? (en ? t('exercise.progress.complete') : '달성! 🎉')
-        : progress >= 80
-            ? (en ? t('exercise.progress.almost') : '거의 달성')
-            : progress >= 50
-                ? (en ? t('exercise.progress.half') : '절반 이상')
-                : (en ? t('exercise.progress.keepGoing') : '조금 더 노력');
+    // 자는 하나다 — 주 150분. 하루 30분짜리 별도 달성률을 여기서 또 그리면,
+    // 같은 사람이 운동 탭 막대와 이 카드에서 다른 숫자를 보고 어느 쪽을 믿을지
+    // 모르게 된다. 이 카드는 '이번 운동이 주간 목표에 얼마를 보탰나'만 말한다.
+    const weightedMinutes = Number(analysis.weightedMinutes);
+    const hasMinutes = Number.isFinite(weightedMinutes) && weightedMinutes > 0;
+    const weeklyShare = hasMinutes
+        ? Math.min(100, Math.round((weightedMinutes / WEEKLY_ACTIVITY_TARGET_MINUTES) * 100))
+        : 0;
+    const shareColor = weeklyShare >= 50 ? '#4CAF50' : weeklyShare >= 20 ? '#FF9800' : '#2196F3';
+    const weeklyContribution = hasMinutes
+        ? `
+            <div class="diet-natural-ratio" style="margin-top: 12px;">
+                <span>🎯 ${en
+                    ? `${weightedMinutes} min toward this week's ${WEEKLY_ACTIVITY_TARGET_MINUTES}`
+                    : `주 ${WEEKLY_ACTIVITY_TARGET_MINUTES}분 목표에 ${weightedMinutes}분 적립`}</span>
+                <div class="diet-ratio-bar-bg">
+                    <div class="diet-ratio-bar-fill" style="width:${weeklyShare}%; background:${shareColor};"></div>
+                </div>
+                <span class="diet-ratio-val" style="color:${shareColor}; font-weight:bold;">${weeklyShare}%</span>
+            </div>`
+        : '';
     const exerciseType = analysis.exerciseType
         ? `<div style="font-size:12px; color:#555; margin-top:4px;">${en ? t('exercise.type') : '인식'}: ${escapeHtml(analysis.exerciseType)}</div>`
         : '';
@@ -303,13 +316,7 @@ export function renderExerciseAnalysisResult(analysis, container) {
                     ${exerciseType}
                 </div>
             </div>
-            <div class="diet-natural-ratio" style="margin-top: 12px;">
-                <span>🎯 ${en ? t('exercise.dailyProgress') : '일일 권장량 달성률'}</span>
-                <div class="diet-ratio-bar-bg">
-                    <div class="diet-ratio-bar-fill" style="width:${Math.min(progress, 100)}%; background:${progressColor};"></div>
-                </div>
-                <span class="diet-ratio-val" style="color:${progressColor}; font-weight:bold;">${progress}% ${escapeHtml(progressLabel)}</span>
-            </div>
+            ${weeklyContribution}
             <div class="diet-insight-box" style="margin-top: 12px;">
                 <div class="diet-insight-icon">🏋️</div>
                 <div class="diet-insight-text">

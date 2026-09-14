@@ -146,6 +146,109 @@ function calcDietScore(recentLogs) {
  * 하루 분 = max(건강앱 활동분 또는 걸음수 추정분, 운동 기록 추정분)
  * 걸음수와 운동 사진이 같은 산책을 가리킬 수 있어 합치지 않고 큰 쪽만 쓴다.
  */
+// 신체활동의 자는 하나다 — 주 150분(WHO·AHA). 건강습관 점수도, 운동 탭의 주간
+// 막대도, 운동 사진 분석 카드도 전부 이 숫자를 본다. 자가 둘이면 같은 사람이 두
+// 숫자를 보고 어느 쪽을 믿을지 모르게 된다.
+export const WEEKLY_ACTIVITY_TARGET_MINUTES = 150;
+
+// 강도 환산(WHO): 고강도 1분은 중강도 2분에 해당한다.
+// functions/runtime.js 의 EXERCISE_INTENSITY_MINUTE_WEIGHTS 와 같아야 한다.
+export const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
+    '저강도': 0.5,
+    '중강도': 1,
+    '고강도': 2,
+    '초고강도': 3
+});
+
+// 사진 한 장으로 하루를 채웠다고 볼 수는 없다. AI 가 두 시간을 읽어 와도 여기서 끊는다.
+const MAX_MEDIA_MINUTES_PER_DAY = 120;
+const DEFAULT_MEDIA_MINUTES_PER_UNIT = 30;
+
+// 운동 기록 한 건이 몇 분인가. AI 가 사진에서 시간을 실제로 읽었으면 그 값을 쓰고,
+// 못 읽었으면 예전처럼 30분으로 친다. 장면만 보고 지어낸 시간은 서버에서 null 로
+// 걸러지므로 여기까지 오지 않는다.
+function resolveExerciseItemMinutes(item) {
+    const weighted = num(item && item.aiAnalysis && item.aiAnalysis.weightedMinutes);
+    if (weighted !== null && weighted > 0) return Math.min(MAX_MEDIA_MINUTES_PER_DAY, weighted);
+    return DEFAULT_MEDIA_MINUTES_PER_UNIT;
+}
+
+/**
+ * 하루치 로그에서 의도적 활동 분을 뽑는다.
+ *
+ * 이 함수가 규칙의 유일한 자리다. 건강습관 점수(최근 7일)와 운동 탭 주간 막대
+ * (이번 주 월~일)는 보는 창이 다를 뿐 같은 규칙을 쓴다. 규칙이 두 벌이면 한쪽만
+ * 고쳐지고, 화면 두 곳이 다른 숫자를 말하게 된다.
+ */
+export function resolveDailyActivityMinutes(log) {
+    const steps = (log && log.steps) || {};
+    const exercise = (log && log.exercise) || {};
+    let usedHealthApp = false;
+    let hasSignal = false;
+
+    // 건강앱이 활동 분을 직접 주면 그대로 믿는다.
+    let stepMinutes = num(steps.active_minutes);
+    if (stepMinutes !== null) {
+        usedHealthApp = true;
+        hasSignal = true;
+    } else {
+        const count = num(steps.count);
+        if (count !== null) hasSignal = true;
+        // 일상 이동분(약 4000보)을 뺀 나머지를 의도적 활동으로 본다. 분당 100보.
+        stepMinutes = count !== null ? Math.min(120, Math.max(0, (count - 4000) / 100)) : 0;
+    }
+
+    const mediaItems = [].concat(exercise.cardioList || [], exercise.strengthList || []);
+    if (mediaItems.length > 0) hasSignal = true;
+    const mediaMinutes = Math.min(
+        MAX_MEDIA_MINUTES_PER_DAY,
+        mediaItems.reduce((sum, item) => sum + resolveExerciseItemMinutes(item), 0)
+    );
+
+    // 걸음수와 운동 사진이 같은 산책을 가리킬 수 있어 합치지 않고 큰 쪽만 쓴다.
+    return { minutes: Math.max(stepMinutes, mediaMinutes), usedHealthApp, hasSignal };
+}
+
+/**
+ * 이번 주(월~일) 완수율. 운동 탭 막대가 쓴다.
+ *
+ * 창이 최근 7일이 아니라 달력 주인 이유: '며칠 남았다'가 성립해야 오늘 얼마를
+ * 하면 되는지 말할 수 있다. 남은 양 ÷ 남은 일수가 곧 처방이다.
+ */
+export function summarizeWeeklyActivity(weekLogs = [], { todayStr = '', weekStrs = [] } = {}) {
+    const byDate = new Map();
+    (weekLogs || []).forEach((log) => {
+        if (log && log.date) byDate.set(String(log.date), log);
+    });
+
+    const days = (weekStrs || []).map((dateStr) => {
+        const summary = resolveDailyActivityMinutes(byDate.get(dateStr));
+        return {
+            date: dateStr,
+            minutes: Math.round(summary.minutes),
+            isFuture: !!todayStr && dateStr > todayStr,
+            isToday: dateStr === todayStr
+        };
+    });
+
+    const weeklyMinutes = Math.round(days.reduce((sum, day) => sum + day.minutes, 0));
+    const targetMinutes = WEEKLY_ACTIVITY_TARGET_MINUTES;
+    const remainingMinutes = Math.max(0, targetMinutes - weeklyMinutes);
+    // 오늘도 아직 할 수 있는 날이다. 오늘을 빼면 '남은 0일'이 되어 안내가 사라진다.
+    const daysLeft = days.filter((day) => day.isFuture || day.isToday).length;
+
+    return {
+        days,
+        weeklyMinutes,
+        targetMinutes,
+        remainingMinutes,
+        percent: Math.min(100, Math.round((weeklyMinutes / targetMinutes) * 100)),
+        met: weeklyMinutes >= targetMinutes,
+        daysLeft,
+        perDayNeeded: daysLeft > 0 ? Math.ceil(remainingMinutes / daysLeft) : remainingMinutes
+    };
+}
+
 function calcActivityScore(recentLogs) {
     if (!Array.isArray(recentLogs) || recentLogs.length === 0) {
         return missing('🏃 운동·걸음수 기록 필요', 'exercise', 'step-card');
@@ -156,26 +259,10 @@ function calcActivityScore(recentLogs) {
     let hasSignal = false;
 
     recentLogs.forEach(log => {
-        const steps = (log && log.steps) || {};
-        const exercise = (log && log.exercise) || {};
-
-        // 건강앱이 활동 분을 직접 주면 그대로 믿는다.
-        let stepMinutes = num(steps.active_minutes);
-        if (stepMinutes !== null) {
-            usedHealthApp = true;
-            hasSignal = true;
-        } else {
-            const count = num(steps.count);
-            if (count !== null) hasSignal = true;
-            // 일상 이동분(약 4000보)을 뺀 나머지를 의도적 활동으로 본다. 분당 100보.
-            stepMinutes = count !== null ? Math.min(120, Math.max(0, (count - 4000) / 100)) : 0;
-        }
-
-        const mediaUnits = ((exercise.cardioList || []).length) + ((exercise.strengthList || []).length);
-        if (mediaUnits > 0) hasSignal = true;
-        const mediaMinutes = Math.min(90, mediaUnits * 30);
-
-        weeklyMinutes += Math.max(stepMinutes, mediaMinutes);
+        const daily = resolveDailyActivityMinutes(log);
+        if (daily.usedHealthApp) usedHealthApp = true;
+        if (daily.hasSignal) hasSignal = true;
+        weeklyMinutes += daily.minutes;
     });
 
     // 걸음수도 운동 기록도 전혀 없으면 "안 움직였다"가 아니라 "모른다"이다.
@@ -187,7 +274,7 @@ function calcActivityScore(recentLogs) {
     weeklyMinutes = Math.round(weeklyMinutes);
 
     let score;
-    if (weeklyMinutes >= 150) score = 100;
+    if (weeklyMinutes >= WEEKLY_ACTIVITY_TARGET_MINUTES) score = 100;
     else if (weeklyMinutes >= 120) score = 90;
     else if (weeklyMinutes >= 90) score = 80;
     else if (weeklyMinutes >= 60) score = 60;
@@ -197,8 +284,8 @@ function calcActivityScore(recentLogs) {
 
     const source = usedHealthApp ? '건강앱 활동시간' : '걸음수·운동기록 추정';
     let detail;
-    if (score >= 100) detail = '우수 — 주 150분 권장량을 채웠습니다';
-    else if (score >= 60) detail = '보통 — 주 150분까지 조금 더 늘려보세요';
+    if (score >= 100) detail = `우수 — 주 ${WEEKLY_ACTIVITY_TARGET_MINUTES}분 권장량을 채웠습니다`;
+    else if (score >= 60) detail = `보통 — 주 ${WEEKLY_ACTIVITY_TARGET_MINUTES}분까지 조금 더 늘려보세요`;
     else detail = '개선 필요 — 하루 30분 빠르게 걷기부터 시작해보세요';
 
     return {

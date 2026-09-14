@@ -3110,7 +3110,7 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
 0. **운동 사진이 맞는가**(isExercise): 이 사진에 운동이라고 볼 근거가 있습니까?
    음식, 영수증, 풍경, 문서, 사람 얼굴, 반려동물처럼 운동과 무관한 사진이면 **false**.
    근거가 없으면 억지로 운동이라고 하지 마세요 — false 로 두고, 나머지 항목은
-   intensity 를 null, recommendedDailyProgress 를 0 으로 두고 feedback 에 무엇이
+   intensity 와 durationMinutes 를 null 로 두고 feedback 에 무엇이
    찍힌 사진으로 보이는지 한 문장으로 적습니다. **이 판단이 제일 중요합니다.**
 1. **운동 종류**(exerciseType): 걷기, 달리기, 등산, 자전거, 수영, 근력운동, 요가, 홈트레이닝 등. 모르겠으면 "운동".
 2. **강도**(intensity): 정확히 아래 넷 중 하나로만.
@@ -3118,11 +3118,9 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
    - 중강도: 빠르게 걷기, 가벼운 조깅, 평지 자전거 (숨이 차지만 대화 가능)
    - 고강도: 달리기, 등산, 인터벌, 본격 근력운동 (대화가 끊김)
    - 초고강도: 전력 질주, 고강도 인터벌 (몇 분 이상 못 버팀)
-3. **시간·거리**: 사진에서 읽은 값. 없으면 null.
-4. **하루 권장량 달성률**(recommendedDailyProgress): WHO 기준 **중강도 하루 30분**을 100%로 봅니다.
-   강도 환산은 저강도 0.5배, 중강도 1배, 고강도 2배, 초고강도 3배.
-   예) 고강도 20분 = 40분 상당 = 133%. 시간을 모르면 강도만 보고 어림잡되 60을 넘기지 마세요.
-   0~150 사이 정수.
+3. **시간·거리**: 사진에서 읽은 값. 없으면 null. **어림짐작으로 채우지 마세요** —
+   시간을 모르면 null 이 정답입니다. 달성률 계산은 앱이 하므로 지어낸 숫자가
+   그대로 점수가 됩니다.
 
 ## 문장 쓰기
 - timeAnalysis: 읽어낸 것을 한 줄로. 숫자가 있으면 반드시 넣습니다. 예) "30분 · 4.2km · 320kcal", "시간 표시 없음 — 장면으로 판단".
@@ -3137,7 +3135,6 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
   "durationMinutes": 30,
   "distanceKm": 4.2,
   "estimatedCalories": 320,
-  "recommendedDailyProgress": 100,
   "timeAnalysis": "30분 · 4.2km · 320kcal",
   "feedback": "격려 한두 문장",
   "formTip": "실천 가능한 조언 한 문장"
@@ -3154,7 +3151,6 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
   "durationMinutes": null,
   "distanceKm": null,
   "estimatedCalories": null,
-  "recommendedDailyProgress": 0,
   "timeAnalysis": "식판에 담긴 음식 사진입니다.",
   "feedback": "운동 기록으로 볼 만한 것이 없습니다. 운동하는 모습이나 기록 화면을 올려 주세요.",
   "formTip": null
@@ -3165,9 +3161,9 @@ const EXERCISE_ANALYSIS_PROMPT_EN = `You are a fitness coach AI for Habit School
 The photo is usually either a **readout** (treadmill console, smartwatch or running-app summary, with time/distance/calories on screen) or a **scene** (someone exercising, equipment, a place). Read numbers exactly as shown — never invent them. If none are visible, use null and judge only from the scene.
 
 Rules:
-- **isExercise comes first and matters most.** If the photo shows nothing that counts as exercise — food, a receipt, scenery, a document, a face, a pet — set isExercise to false, intensity to null, recommendedDailyProgress to 0, and say in feedback what the photo appears to show. Never force an unrelated photo into an exercise reading.
+- **isExercise comes first and matters most.** If the photo shows nothing that counts as exercise — food, a receipt, scenery, a document, a face, a pet — set isExercise to false, intensity and durationMinutes to null, and say in feedback what the photo appears to show. Never force an unrelated photo into an exercise reading.
 - intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard), or null when isExercise is false. The app maps these to labels itself.
-- recommendedDailyProgress: 30 minutes of moderate activity per day (WHO) is 100%. Weight intensity as light x0.5, moderate x1, hard x2, very hard x3. Integer 0-150. If duration is unknown, estimate from intensity alone and do not exceed 60.
+- durationMinutes: only what you actually read. **Never guess** — null is the right answer when no time is shown. The app does the goal arithmetic, so an invented number becomes an invented score.
 - timeAnalysis: one line stating what you read; include the numbers when you have them.
 - Write feedback and formTip in natural English.
 
@@ -3179,7 +3175,6 @@ Return only valid JSON:
   "durationMinutes": 30,
   "distanceKm": 4.2,
   "estimatedCalories": 320,
-  "recommendedDailyProgress": 100,
   "timeAnalysis": "30 min · 4.2 km · 320 kcal",
   "feedback": "one or two encouraging sentences",
   "formTip": "one actionable tip"
@@ -3264,9 +3259,19 @@ exports.analyzeExercise = onCall(
     }
 );
 
-// 화면은 intensity 로 색과 이모지를 고르고 recommendedDailyProgress 로 막대를 그린다.
+// 화면은 intensity 로 색과 이모지를 고르고 weightedMinutes 로 막대를 그린다.
 // 모델이 다른 낱말을 보내면 색이 통째로 빠지므로, 화면에 닿기 전에 여기서 맞춰 둔다.
 const EXERCISE_INTENSITY_LEVELS = ["저강도", "중강도", "고강도", "초고강도"];
+
+// 강도 환산(WHO): 고강도 1분은 중강도 2분에 해당한다.
+// js/le8-score.js 의 EXERCISE_INTENSITY_MINUTE_WEIGHTS 와 같아야 한다.
+// 자가 두 벌이면 분석 카드와 주간 막대가 다른 숫자를 말한다.
+const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
+    "저강도": 0.5,
+    "중강도": 1,
+    "고강도": 2,
+    "초고강도": 3
+});
 
 function normalizeExerciseAnalysis(raw) {
     const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
@@ -3299,22 +3304,31 @@ function normalizeExerciseAnalysis(raw) {
             durationMinutes: null,
             distanceKm: null,
             estimatedCalories: null,
-            recommendedDailyProgress: 0,
+            weightedMinutes: null,
             timeAnalysis: text(source.timeAnalysis, 200) || "",
             feedback: text(source.feedback, 500) || "운동 기록으로 볼 만한 것이 사진에 없습니다.",
             formTip: null
         };
     }
 
+    // 운동인 것은 맞는데 강도만 못 읽은 경우에만 가운데 값으로 접는다.
+    const intensity = readIntensity || "중강도";
+    const durationMinutes = number(source.durationMinutes, 1440);
+
+    // 셈은 서버가 한다. 모델에게 달성률을 시키면 지어낸 숫자가 그대로 점수가 된다.
+    // 시간을 못 읽었으면 null 이다 — 모른다는 뜻이고, 앱은 그때 예전 추정으로 돌아간다.
+    const weightedMinutes = durationMinutes !== null
+        ? Math.round(durationMinutes * (EXERCISE_INTENSITY_MINUTE_WEIGHTS[intensity] || 1))
+        : null;
+
     return {
         isExercise: true,
         exerciseType: text(source.exerciseType, 40) || "운동",
-        // 운동인 것은 맞는데 강도만 못 읽은 경우에만 가운데 값으로 접는다.
-        intensity: readIntensity || "중강도",
-        durationMinutes: number(source.durationMinutes, 1440),
+        intensity,
+        durationMinutes,
         distanceKm: number(source.distanceKm, 500),
         estimatedCalories: number(source.estimatedCalories, 20000),
-        recommendedDailyProgress: Math.round(number(source.recommendedDailyProgress, 150) ?? 0),
+        weightedMinutes,
         timeAnalysis: text(source.timeAnalysis, 200) || "",
         feedback: text(source.feedback, 500) || "",
         formTip: text(source.formTip, 300)
