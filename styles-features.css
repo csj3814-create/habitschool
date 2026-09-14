@@ -7413,3 +7413,77 @@ body.dark-mode #gallery-feed-end {
     color: #999;
     line-height: 1.5;
 }
+
+/* ── 운동 시간 입력 ─────────────────────────────────────────────
+   사진과 영상이 못 말해 주는 단 하나가 시간이다. 하이퍼랩스는 10초 파일이 실제로
+   몇 분이었는지 화면에 남기지 않으므로, AI 가 아니라 사람에게 묻는다. */
+.exercise-duration {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #FFF8F0;
+    border: 1px solid #FFE3C2;
+}
+
+.exercise-duration-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #B35C00;
+    margin-bottom: 6px;
+}
+
+.exercise-duration-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.exercise-duration-input {
+    width: 64px;
+    padding: 7px 8px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    border: 1px solid #FFD0A0;
+    border-radius: 8px;
+    background: #FFF;
+    color: #333;
+}
+
+.exercise-duration-unit {
+    font-size: 13px;
+    color: #8A6A4A;
+    margin-right: 2px;
+}
+
+.exercise-duration-chips {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.exercise-duration-chip {
+    padding: 6px 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #B35C00;
+    background: #FFF;
+    border: 1px solid #FFD0A0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.12s, background 0.15s;
+}
+
+.exercise-duration-chip:active {
+    transform: scale(0.94);
+    background: #FFEFD9;
+}
+
+.exercise-duration-note {
+    margin: 7px 0 0;
+    font-size: 11px;
+    color: #A08160;
+    line-height: 1.5;
+}

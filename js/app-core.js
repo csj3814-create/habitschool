@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=396';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=396';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=397';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=397';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=396';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=396';
+} from './auth-login-helpers.js?v=397';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=397';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=396';
+} from './exercise-media.js?v=397';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=396';
+} from './health-connect-utils.js?v=397';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=396';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=396';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=396';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=396';
-import { sanitize, compressImage } from './data-manager.js?v=396';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=396';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=396';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=396';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=396';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=396';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=396';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=396';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=396';
+} from './habit-groups.js?v=397';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=397';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=397';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=397';
+import { sanitize, compressImage } from './data-manager.js?v=397';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=397';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=397';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=397';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=397';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=397';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=397';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=397';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=397';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=396';
+} from './guest-demo.js?v=397';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=396';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=396';
+} from './product-events.js?v=397';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=397';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=396';
+} from './diet-program.js?v=397';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=396';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=396';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=396';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=396';
+} from './meditation-guide.js?v=397';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=397';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=397';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=397';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=396';
+} from './social-challenge-readiness.js?v=397';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=396';
+} from './monthly-mvp-reward.js?v=397';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=396';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=397';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6908,6 +6908,68 @@ try {
 
 // showToast, sanitize 등은 상단에서 직접 import
 
+// ── 운동 시간 입력 ────────────────────────────────────────────
+// 사진과 영상이 못 말해 주는 단 하나가 시간이다. 계기판이 찍힌 사진이면 AI 가
+// 읽어 오지만, 하이퍼랩스는 시간을 지워 버린 영상이라 원리적으로 알 수 없다.
+// 그래서 묻는다 — 한 번 누른 값이 지어낸 값보다 낫다.
+const EXERCISE_DURATION_PRESETS = [10, 20, 30, 45, 60];
+const MAX_EXERCISE_DURATION_MINUTES = 300;
+
+function buildExerciseDurationHtml(slotId = '', data = null) {
+    const en = isEnglishLocale();
+    const savedMinutes = Number(data && data.durationMinutes);
+    const value = Number.isFinite(savedMinutes) && savedMinutes > 0 ? Math.round(savedMinutes) : '';
+    const chips = EXERCISE_DURATION_PRESETS
+        .map((minutes) => `<button type="button" class="exercise-duration-chip" onclick="setExerciseDuration(this, ${minutes})">${minutes}${en ? 'm' : '분'}</button>`)
+        .join('');
+
+    return `
+        <div class="exercise-duration">
+            <label class="exercise-duration-label" for="dur_${slotId}">${en ? 'How long?' : '얼마나 하셨어요?'}</label>
+            <div class="exercise-duration-row">
+                <input type="number" class="exercise-duration-input" id="dur_${slotId}"
+                    min="1" max="${MAX_EXERCISE_DURATION_MINUTES}" step="1" inputmode="numeric"
+                    value="${value}" placeholder="--" oninput="markExerciseDurationEdited(this)"${value === '' ? '' : ' data-user-set="true"'}>
+                <span class="exercise-duration-unit">${en ? 'min' : '분'}</span>
+                <div class="exercise-duration-chips">${chips}</div>
+            </div>
+            <p class="exercise-duration-note">${en
+                ? 'Counts toward this week’s 150 minutes. Leave blank and we’ll estimate.'
+                : '이번 주 150분에 반영돼요. 비워 두면 기록 하나당 30분으로 잡아요.'}</p>
+        </div>`;
+}
+
+// 사용자가 손대면 표시를 남긴다. AI 분석이 나중에 돌아도 사람이 적은 값을 덮지 않는다.
+window.markExerciseDurationEdited = function (input) {
+    if (!input) return;
+    input.setAttribute('data-user-set', 'true');
+};
+
+window.setExerciseDuration = function (chip, minutes) {
+    const input = chip?.closest?.('.exercise-duration')?.querySelector('.exercise-duration-input');
+    if (!input) return;
+    input.value = String(minutes);
+    input.setAttribute('data-user-set', 'true');
+};
+
+function readExerciseDurationMinutes(block) {
+    const input = block?.querySelector?.('.exercise-duration-input');
+    const parsed = Number(input?.value);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return Math.min(MAX_EXERCISE_DURATION_MINUTES, Math.round(parsed));
+}
+
+// AI 가 계기판에서 시간을 읽어 왔으면 비어 있는 칸을 채워 준다. 사람이 이미 적은
+// 값은 건드리지 않는다 — 같은 값을 두 번 적게 할 이유가 없고, 고쳐 둔 값을
+// 분석이 되돌리면 더 나쁘다.
+function prefillExerciseDurationFromAnalysis(block, analysis) {
+    const input = block?.querySelector?.('.exercise-duration-input');
+    if (!input || input.getAttribute('data-user-set') === 'true' || input.value) return;
+    const minutes = Number(analysis && analysis.durationMinutes);
+    if (!Number.isFinite(minutes) || minutes <= 0) return;
+    input.value = String(Math.min(MAX_EXERCISE_DURATION_MINUTES, Math.round(minutes)));
+}
+
 // 중복 코드 통합: 운동 블록 추가 통합 함수
 function addExerciseBlock(type, data = null) {
     const isCardio = type === 'cardio';
@@ -6919,6 +6981,9 @@ function addExerciseBlock(type, data = null) {
     div.id = id;
     const photoPrompt = isEnglishLocale() ? 'Upload workout photo' : '운동 이미지 올리기';
     const videoPrompt = isEnglishLocale() ? 'Upload workout video' : '운동 영상 올리기';
+    // 시간은 사진·영상에서 얻을 수 없는 값이다. 특히 하이퍼랩스는 10초짜리 파일이
+    // 실제로 몇 분이었는지 화면에 남기지 않는다. 그래서 사람에게 묻는다.
+    const durationHtml = buildExerciseDurationHtml(`${isCardio ? 'c' : 's'}_${id}`, data);
 
     let contentHtml = '';
     let dataUrl = '';
@@ -6942,6 +7007,7 @@ function addExerciseBlock(type, data = null) {
                 <span id="txt_c_${id}" style="color:#666; font-size:13px; ${data && data.imageUrl ? 'display:none;' : ''}">${photoPrompt}</span>
                 ${imgHtml}
             </label>
+            ${durationHtml}
             <button class="diet-ai-btn exercise-ai-btn" id="ai_c_${id}" style="${safeImgUrl || hasAnalysis ? 'display:block;' : 'display:none;'}" onclick="analyzeExercisePhoto(this)">${hasAnalysis ? '🤖 분석 보기' : '🤖 AI 분석'}</button>
             <div class="diet-analysis-result exercise-ai-result" id="ai_res_c_${id}" style="display:none;"></div>
         `;
@@ -6964,6 +7030,7 @@ function addExerciseBlock(type, data = null) {
                 <span style="color:#666; font-size:13px; ${data && data.videoUrl ? 'display:none;' : ''}">${videoPrompt}</span>
                 ${statusHtml}
             </label>
+            ${durationHtml}
         `;
     }
 
@@ -19147,6 +19214,12 @@ function getClientWritableDailyLogData(value = {}) {
 function normalizeExerciseItem(type, item = null, index = 0) {
     if (!item || typeof item !== 'object') return null;
     const mediaId = getExerciseItemMediaId(type, item, index);
+    // 시간은 주간 완수율의 입력이다. null 로 두면 기록 하나당 30분으로 잡힌다.
+    const durationMinutes = Number(item.durationMinutes);
+    const normalizedDuration = Number.isFinite(durationMinutes) && durationMinutes > 0
+        ? Math.min(MAX_EXERCISE_DURATION_MINUTES, Math.round(durationMinutes))
+        : null;
+
     if (type === 'cardio') {
         const imageUrl = hasMediaUrl(item.imageUrl) ? item.imageUrl : null;
         if (!imageUrl) return null;
@@ -19154,7 +19227,8 @@ function normalizeExerciseItem(type, item = null, index = 0) {
             mediaId,
             imageUrl,
             imageThumbUrl: hasMediaUrl(item.imageThumbUrl) ? item.imageThumbUrl : null,
-            aiAnalysis: item.aiAnalysis || null
+            aiAnalysis: item.aiAnalysis || null,
+            durationMinutes: normalizedDuration
         };
     }
     const videoUrl = hasMediaUrl(item.videoUrl) ? item.videoUrl : null;
@@ -19163,7 +19237,8 @@ function normalizeExerciseItem(type, item = null, index = 0) {
         mediaId,
         videoUrl,
         videoThumbUrl: hasMediaUrl(item.videoThumbUrl) ? item.videoThumbUrl : null,
-        aiAnalysis: item.aiAnalysis || null
+        aiAnalysis: item.aiAnalysis || null,
+        durationMinutes: normalizedDuration
     };
 }
 
@@ -20799,7 +20874,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     mediaId,
                     imageUrl: url,
                     imageThumbUrl: thumbUrl,
-                    aiAnalysis
+                    aiAnalysis,
+                    durationMinutes: readExerciseDurationMinutes(block)
                 }, index);
                 if (item) {
                     cardioCurrentItems.push(item);
@@ -20857,7 +20933,8 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     mediaId,
                     videoUrl: url,
                     videoThumbUrl: thumbUrl,
-                    aiAnalysis
+                    aiAnalysis,
+                    durationMinutes: readExerciseDurationMinutes(block)
                 }, index);
                 if (item) {
                     strengthCurrentItems.push(item);
@@ -25023,6 +25100,8 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         resultBox._analysisData = analysis;
         btn.textContent = '🤖 분석 접기';
         btn.setAttribute('data-analyzed', 'true');
+        // 계기판에서 시간을 읽었으면 빈 칸을 채워 준다. 사람이 적은 값은 건드리지 않는다.
+        prefillExerciseDurationFromAnalysis(block, analysis);
         // 저장 경로(saveRecord)가 이 속성을 읽어 기록에 남긴다.
         block.setAttribute('data-ai-analysis', JSON.stringify(analysis));
         if (!auto) showToast('✅ AI 운동 분석 완료!');
