@@ -116,3 +116,62 @@ describe('a workout photo can say what it is', () => {
         expect(markup.indexOf('exercise-ai-btn')).toBeGreaterThan(markup.indexOf('</label>'));
     });
 });
+
+// 2026-09-14 제보: 운동 칸에 음식 사진을 올렸더니 '중강도'로 평가됐다.
+// 사진이 잘못된 게 아니라 기본값이 잘못이었다 — 모델은 "사진만으로는 운동 여부를
+// 알 수 없습니다" 라고 정직하게 답했는데, 서버가 빈 intensity 를 중강도로 채웠다.
+describe('a photo that is not a workout says so', () => {
+    const app = read('js/app-core.js');
+    const runtime = read('functions/runtime.js');
+    const client = read('js/diet-analysis.js');
+
+    it('asks whether it is a workout photo before anything else', () => {
+        const prompt = runtime.split('const EXERCISE_ANALYSIS_PROMPT = `')[1].split('`;')[0];
+        expect(prompt).toContain('isExercise');
+        expect(prompt).toContain('0. **운동 사진이 맞는가**');
+        // 답의 모양을 보여주지 않으면 모델이 형식을 지키지 않는다.
+        expect(prompt).toContain('"isExercise": false');
+        const promptEn = runtime.split('const EXERCISE_ANALYSIS_PROMPT_EN = `')[1].split('`;')[0];
+        expect(promptEn).toContain('isExercise');
+    });
+
+    it('never fills an unknown intensity with a middle value', () => {
+        const norm = runtime.split('function normalizeExerciseAnalysis(')[1].split('\n}\n')[0];
+        // 예전: EXERCISE_INTENSITY_LEVELS.includes(...) ? ... : "중강도"
+        expect(norm).toContain('EXERCISE_INTENSITY_LEVELS.includes(rawIntensity) ? rawIntensity : null');
+        expect(norm).toContain('readIntensity !== null');
+        // 운동인 것이 확인된 뒤에만 가운데 값으로 접는다.
+        expect(norm).toContain("intensity: readIntensity || \"중강도\"");
+        const notExercise = norm.split('if (!isExercise) {')[1].split('    }')[0];
+        expect(notExercise).toContain('intensity: null');
+        expect(notExercise).toContain('recommendedDailyProgress: 0');
+        expect(notExercise).toContain('exerciseType: null');
+    });
+
+    it('draws no intensity badge for it', () => {
+        // 배지는 "이만큼 운동했다"는 말이다. 근거가 없으면 붙이지 않는다.
+        const fn = client.split('export function renderExerciseAnalysisResult(')[1].split('\n}\n')[0];
+        const guard = fn.indexOf('if (analysis.isExercise === false)');
+        const badge = fn.indexOf('intensityColors[intensity]');
+        expect(guard).toBeGreaterThan(-1);
+        expect(badge).toBeGreaterThan(guard);
+        expect(fn).toContain('운동 사진으로 보이지 않아요');
+    });
+
+    it('keeps it out of the record', () => {
+        // 저장하면 갤러리·리포트에 '운동 분석'으로 끼어든다.
+        const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
+        const branch = fn.split('if (analysis.isExercise === false) {')[1].split('\n        }')[0];
+        expect(branch).toContain("block.removeAttribute('data-ai-analysis');");
+        expect(branch).toContain("btn.textContent = '🤖 다시 분석';");
+        expect(branch).not.toContain("setAttribute('data-analyzed'");
+        // 다시 눌러볼 수 있어야 하므로 _analysisData 를 채우지 않는다.
+        expect(fn.indexOf('resultBox._analysisData = analysis;')).toBeGreaterThan(fn.indexOf('if (analysis.isExercise === false)'));
+    });
+
+    it('does not overwrite the retry label on the way out', () => {
+        const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
+        const finallyBlock = fn.split('} finally {')[1];
+        expect(finallyBlock).toContain("if (btn.textContent === '🤖 AI 분석 중...')");
+    });
+});

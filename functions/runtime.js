@@ -3107,6 +3107,11 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
 숫자가 보이면 **읽은 그대로** 씁니다. 지어내지 마세요. 안 보이면 null 로 두고, 장면에서 알 수 있는 것만 말합니다.
 
 ## 판단 기준
+0. **운동 사진이 맞는가**(isExercise): 이 사진에 운동이라고 볼 근거가 있습니까?
+   음식, 영수증, 풍경, 문서, 사람 얼굴, 반려동물처럼 운동과 무관한 사진이면 **false**.
+   근거가 없으면 억지로 운동이라고 하지 마세요 — false 로 두고, 나머지 항목은
+   intensity 를 null, recommendedDailyProgress 를 0 으로 두고 feedback 에 무엇이
+   찍힌 사진으로 보이는지 한 문장으로 적습니다. **이 판단이 제일 중요합니다.**
 1. **운동 종류**(exerciseType): 걷기, 달리기, 등산, 자전거, 수영, 근력운동, 요가, 홈트레이닝 등. 모르겠으면 "운동".
 2. **강도**(intensity): 정확히 아래 넷 중 하나로만.
    - 저강도: 산책, 가벼운 스트레칭, 느린 자전거 (심박 여유 40% 미만)
@@ -3126,6 +3131,7 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
 
 ## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
 {
+  "isExercise": true,
   "exerciseType": "달리기",
   "intensity": "저강도|중강도|고강도|초고강도",
   "durationMinutes": 30,
@@ -3137,20 +3143,37 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
   "formTip": "실천 가능한 조언 한 문장"
 }
 
-숫자를 읽지 못한 항목은 null 로 둡니다. intensity 는 반드시 위 네 단어 중 하나여야 합니다.`;
+숫자를 읽지 못한 항목은 null 로 둡니다. intensity 는 반드시 위 네 단어 중 하나이거나,
+운동 사진이 아니면 null 이어야 합니다.
+
+운동이 아닌 사진의 예:
+{
+  "isExercise": false,
+  "exerciseType": null,
+  "intensity": null,
+  "durationMinutes": null,
+  "distanceKm": null,
+  "estimatedCalories": null,
+  "recommendedDailyProgress": 0,
+  "timeAnalysis": "식판에 담긴 음식 사진입니다.",
+  "feedback": "운동 기록으로 볼 만한 것이 없습니다. 운동하는 모습이나 기록 화면을 올려 주세요.",
+  "formTip": null
+}`;
 
 const EXERCISE_ANALYSIS_PROMPT_EN = `You are a fitness coach AI for Habit School. Read the photo and tell the user what exercise they did and how much.
 
 The photo is usually either a **readout** (treadmill console, smartwatch or running-app summary, with time/distance/calories on screen) or a **scene** (someone exercising, equipment, a place). Read numbers exactly as shown — never invent them. If none are visible, use null and judge only from the scene.
 
 Rules:
-- intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard). The app maps these to labels itself.
+- **isExercise comes first and matters most.** If the photo shows nothing that counts as exercise — food, a receipt, scenery, a document, a face, a pet — set isExercise to false, intensity to null, recommendedDailyProgress to 0, and say in feedback what the photo appears to show. Never force an unrelated photo into an exercise reading.
+- intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard), or null when isExercise is false. The app maps these to labels itself.
 - recommendedDailyProgress: 30 minutes of moderate activity per day (WHO) is 100%. Weight intensity as light x0.5, moderate x1, hard x2, very hard x3. Integer 0-150. If duration is unknown, estimate from intensity alone and do not exceed 60.
 - timeAnalysis: one line stating what you read; include the numbers when you have them.
 - Write feedback and formTip in natural English.
 
 Return only valid JSON:
 {
+  "isExercise": true,
   "exerciseType": "running",
   "intensity": "저강도|중강도|고강도|초고강도",
   "durationMinutes": 30,
@@ -3257,13 +3280,37 @@ function normalizeExerciseAnalysis(raw) {
         return normalized ? normalized.slice(0, limit) : null;
     };
 
-    const intensity = EXERCISE_INTENSITY_LEVELS.includes(String(source.intensity || "").trim())
-        ? String(source.intensity).trim()
-        : "중강도";
+    const rawIntensity = String(source.intensity || "").trim();
+    const readIntensity = EXERCISE_INTENSITY_LEVELS.includes(rawIntensity) ? rawIntensity : null;
+
+    // 강도를 못 읽었다고 중강도로 채우면, 운동이 아닌 사진에도 초록 배지가 붙는다.
+    // 2026-09-14 제보: 운동 칸에 올린 음식 사진이 '중강도'로 평가됐다. 모델은
+    // "사진만으로는 운동 여부를 알 수 없습니다" 라고 정직하게 답했는데 여기서
+    // 덮었다. 모르면 모른다고 내보내고, 화면이 그렇게 그리게 한다.
+    const isExercise = source.isExercise === false
+        ? false
+        : (source.isExercise === true ? true : readIntensity !== null);
+
+    if (!isExercise) {
+        return {
+            isExercise: false,
+            exerciseType: null,
+            intensity: null,
+            durationMinutes: null,
+            distanceKm: null,
+            estimatedCalories: null,
+            recommendedDailyProgress: 0,
+            timeAnalysis: text(source.timeAnalysis, 200) || "",
+            feedback: text(source.feedback, 500) || "운동 기록으로 볼 만한 것이 사진에 없습니다.",
+            formTip: null
+        };
+    }
 
     return {
+        isExercise: true,
         exerciseType: text(source.exerciseType, 40) || "운동",
-        intensity,
+        // 운동인 것은 맞는데 강도만 못 읽은 경우에만 가운데 값으로 접는다.
+        intensity: readIntensity || "중강도",
         durationMinutes: number(source.durationMinutes, 1440),
         distanceKm: number(source.distanceKm, 500),
         estimatedCalories: number(source.estimatedCalories, 20000),

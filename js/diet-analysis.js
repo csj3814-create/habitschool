@@ -2,11 +2,11 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=394';
+import { auth, functions } from './firebase-config.js?v=395';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=394';
-import { escapeHtml } from './security.js?v=394';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=394';
+import { showToast } from './ui-helpers.js?v=395';
+import { escapeHtml } from './security.js?v=395';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=395';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -237,6 +237,26 @@ export function renderExerciseAnalysisResult(analysis, container) {
     if (!container || !analysis) return;
 
     const en = isEnglishLocale();
+
+    // 운동 사진이 아니라고 판단한 경우. 강도 배지를 붙이면 안 된다 —
+    // 배지는 "이만큼 운동했다"는 말인데 여기엔 그런 근거가 없다.
+    if (analysis.isExercise === false) {
+        container.innerHTML = `
+            <div class="diet-analysis-card" style="border-left: 4px solid #9E9E9E;">
+                <div class="diet-insight-box">
+                    <div class="diet-insight-icon">🤔</div>
+                    <div class="diet-insight-text">
+                        <div class="diet-insight-label">${en ? 'Not a workout photo' : '운동 사진으로 보이지 않아요'}</div>
+                        <div>${escapeHtml(analysis.feedback || (en
+                            ? 'Nothing in this photo reads as exercise.'
+                            : '운동 기록으로 볼 만한 것이 사진에 없습니다.'))}</div>
+                    </div>
+                </div>
+                ${analysis.timeAnalysis ? `<div style="font-size:12px; color:#777; margin-top:8px;">${escapeHtml(analysis.timeAnalysis)}</div>` : ''}
+            </div>`;
+        container.style.display = 'block';
+        return;
+    }
     const intensityColors = {
         '저강도': '#2196F3',
         '중강도': '#4CAF50',
