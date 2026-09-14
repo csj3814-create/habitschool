@@ -3212,7 +3212,7 @@ exports.analyzeExercise = onCall(
         try {
             // 이미지 내려받기가 늘어질 수 있다. 끊지 않으면 함수 타임아웃(60초)까지
             // 아무 말 없이 기다리다 죽는다 — 화면에는 '분석 중...' 만 남는다.
-            const imgResponse = await fetchWithDeadline(imageUrl, EXERCISE_IMAGE_FETCH_TIMEOUT_MS);
+            const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
             if (!imgResponse.ok) {
                 throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
             }
@@ -3244,7 +3244,7 @@ exports.analyzeExercise = onCall(
                         }
                     }
                 ]),
-                EXERCISE_MODEL_TIMEOUT_MS,
+                AI_MODEL_TIMEOUT_MS,
                 "exercise_model"
             );
 
@@ -3292,8 +3292,12 @@ exports.analyzeExercise = onCall(
 // 이미지 내려받기는 0.7초, Gemini 응답은 3.6초로 멀쩡했다. 즉 그때 60초를 먹은 곳은
 // 모델 호출 쪽이었고, 거기엔 마감선이 없어 함수가 죽을 때까지 아무 말도 못 했다.
 // 원인은 확인하지 못했지만, 다음에 같은 일이 나면 침묵 대신 이유가 남아야 한다.
-const EXERCISE_IMAGE_FETCH_TIMEOUT_MS = 15000;
-const EXERCISE_MODEL_TIMEOUT_MS = 40000;
+// 함수 타임아웃이 60초인 분석 함수들이 쓴다. 40초에 우리가 먼저 끊어야 남은
+// 20초 안에 로그를 남기고 사람이 읽을 오류를 돌려줄 수 있다.
+const AI_IMAGE_FETCH_TIMEOUT_MS = 15000;
+const AI_MODEL_TIMEOUT_MS = 40000;
+// classifySharedHealthImage 는 함수 타임아웃이 20초다. 같은 자를 쓸 수 없다.
+const AI_MODEL_FAST_TIMEOUT_MS = 14000;
 
 function withDeadline(promise, timeoutMs, label) {
     let timer = null;
@@ -3412,7 +3416,7 @@ exports.analyzeDiet = onCall(
 
         try {
             // 이미지 다운로드
-            const imgResponse = await fetch(imageUrl);
+            const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
             if (!imgResponse.ok) {
                 throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
             }
@@ -3430,15 +3434,19 @@ exports.analyzeDiet = onCall(
                 }
             });
 
-            const result = await model.generateContent([
-                locale === "en" ? DIET_ANALYSIS_PROMPT_EN : DIET_ANALYSIS_PROMPT,
-                {
-                    inlineData: {
-                        data: base64Image,
-                        mimeType: contentType
+            const result = await withDeadline(
+                model.generateContent([
+                    locale === "en" ? DIET_ANALYSIS_PROMPT_EN : DIET_ANALYSIS_PROMPT,
+                    {
+                        inlineData: {
+                            data: base64Image,
+                            mimeType: contentType
+                        }
                     }
-                }
-            ]);
+                ]),
+                AI_MODEL_TIMEOUT_MS,
+                "analyzeDiet_model"
+            );
 
             const responseText = result.response.text();
 
@@ -3459,6 +3467,11 @@ exports.analyzeDiet = onCall(
 
         } catch (error) {
             if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeDiet 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             console.error("analyzeDiet 오류:", error);
 
             if (error.message && error.message.includes("JSON")) {
@@ -3565,12 +3578,16 @@ exports.classifySharedHealthImage = onCall(
                 }
             });
 
-            const result = await model.generateContent([
-                SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT,
-                `파일 이름: ${String(fileName || "").trim() || "-"}`,
-                `공유된 이미지 수: ${Number(fileCount || 0) || 1}`,
-                await buildInlineImagePartFromUrl(imageUrl)
-            ]);
+            const result = await withDeadline(
+                model.generateContent([
+                    SHARED_HEALTH_IMAGE_CLASSIFICATION_PROMPT,
+                    `파일 이름: ${String(fileName || "").trim() || "-"}`,
+                    `공유된 이미지 수: ${Number(fileCount || 0) || 1}`,
+                    await buildInlineImagePartFromUrl(imageUrl)
+                ]),
+                AI_MODEL_FAST_TIMEOUT_MS,
+                "classifySharedHealthImage_model"
+            );
 
             const responseText = result.response.text();
             let jsonStr = responseText;
@@ -3600,6 +3617,11 @@ exports.classifySharedHealthImage = onCall(
             };
         } catch (error) {
             if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("classifySharedHealthImage 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             console.error("classifySharedHealthImage 오류:", error);
             throw new HttpsError("internal", "공유 이미지 분류 중 오류가 발생했습니다.");
         }
@@ -3705,7 +3727,7 @@ exports.analyzeSleepMind = onCall(
                     throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
                 }
                 try {
-                    const imgResponse = await fetch(imageUrl);
+                    const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
                     if (imgResponse.ok) {
                         const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
                         const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
@@ -3727,7 +3749,11 @@ exports.analyzeSleepMind = onCall(
 
             contentParts.push(locale === "en" ? `Analysis type: ${analysisType || 'sleep'}` : `분석 유형: ${analysisType || 'sleep'}`);
 
-            const result = await model.generateContent(contentParts);
+            const result = await withDeadline(
+                model.generateContent(contentParts),
+                AI_MODEL_TIMEOUT_MS,
+                "analyzeSleepMind_model"
+            );
             const responseText = result.response.text();
 
             let jsonStr = responseText;
@@ -3754,6 +3780,11 @@ exports.analyzeSleepMind = onCall(
 
         } catch (error) {
             if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeSleepMind 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             console.error("analyzeSleepMind 오류:", error.message || error);
             throw new HttpsError("internal", "수면/마음 분석 중 오류가 발생했습니다. 다시 시도해주세요.");
         }
@@ -3871,15 +3902,19 @@ exports.analyzeStepScreenshot = onCall(
                 }
             });
 
-            const result = await model.generateContent([
-                locale === "en" ? STEP_SCREENSHOT_PROMPT_EN : STEP_SCREENSHOT_PROMPT,
-                {
-                    inlineData: {
-                        data: base64Image,
-                        mimeType: contentType
+            const result = await withDeadline(
+                model.generateContent([
+                    locale === "en" ? STEP_SCREENSHOT_PROMPT_EN : STEP_SCREENSHOT_PROMPT,
+                    {
+                        inlineData: {
+                            data: base64Image,
+                            mimeType: contentType
+                        }
                     }
-                }
-            ]);
+                ]),
+                AI_MODEL_TIMEOUT_MS,
+                "analyzeStepScreenshot_model"
+            );
 
             const responseText = result.response.text();
 
@@ -3925,6 +3960,11 @@ exports.analyzeStepScreenshot = onCall(
 
         } catch (error) {
             if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeStepScreenshot 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             console.error("analyzeStepScreenshot 오류:", error);
 
             if (error.message && error.message.includes("JSON")) {
@@ -6369,7 +6409,7 @@ exports.analyzeBloodTest = onCall(
         }
 
         try {
-            const imgResponse = await fetch(imageUrl);
+            const imgResponse = await fetchWithDeadline(imageUrl, AI_IMAGE_FETCH_TIMEOUT_MS);
             if (!imgResponse.ok) {
                 throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
             }
@@ -6386,15 +6426,19 @@ exports.analyzeBloodTest = onCall(
                 }
             });
 
-            const result = await model.generateContent([
-                BLOOD_TEST_ANALYSIS_PROMPT,
-                {
-                    inlineData: {
-                        data: base64Image,
-                        mimeType: contentType
+            const result = await withDeadline(
+                model.generateContent([
+                    BLOOD_TEST_ANALYSIS_PROMPT,
+                    {
+                        inlineData: {
+                            data: base64Image,
+                            mimeType: contentType
+                        }
                     }
-                }
-            ]);
+                ]),
+                AI_MODEL_TIMEOUT_MS,
+                "analyzeBloodTest_model"
+            );
 
             const responseText = result.response.text();
             let jsonStr = responseText;
@@ -6463,6 +6507,11 @@ exports.analyzeBloodTest = onCall(
 
         } catch (error) {
             if (error instanceof HttpsError) throw error;
+            // 마감선에 걸린 것은 고장이 아니라 늦은 것이다. 다시 눌러보게 한다.
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeBloodTest 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             console.error("analyzeBloodTest 오류:", error);
             if (error.message && error.message.includes("JSON")) {
                 throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 사진이 선명한지 확인해주세요.");

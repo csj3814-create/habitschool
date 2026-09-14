@@ -183,20 +183,8 @@ describe('a slow analysis says so instead of going quiet', () => {
     const runtime = read('functions/runtime.js');
     const fn = runtime.split('exports.analyzeExercise = onCall(')[1].split('\n);\n')[0];
 
-    it('puts a deadline on both waits, inside the function timeout', () => {
-        expect(runtime).toContain('const EXERCISE_IMAGE_FETCH_TIMEOUT_MS = 15000;');
-        expect(runtime).toContain('const EXERCISE_MODEL_TIMEOUT_MS = 40000;');
-        // 둘 다 함수 타임아웃 60초보다 짧아야 우리가 먼저 끊고 이유를 남긴다.
-        expect(fn).toContain('timeoutSeconds: 60');
-        expect(fn).toContain('fetchWithDeadline(imageUrl, EXERCISE_IMAGE_FETCH_TIMEOUT_MS)');
-        expect(fn).toContain('EXERCISE_MODEL_TIMEOUT_MS');
-    });
-
-    it('turns a deadline into a message the screen can show', () => {
-        expect(fn).toContain('deadline-exceeded');
-        expect(fn).toContain('분석이 너무 오래 걸렸어요');
-    });
-
+    // 마감선 자체는 여섯 분석 함수를 한꺼번에 보는 tests/ai-analysis-deadlines.test.js
+    // 가 검사한다. 여기서는 이 함수에만 있는 것 — 단계별 흔적 — 을 본다.
     it('leaves a trail at each step so the next failure is readable', () => {
         expect(fn).toContain('[analyzeExercise] 이미지 확보');
         expect(fn).toContain('[analyzeExercise] 분석 완료');

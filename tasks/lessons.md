@@ -2561,8 +2561,11 @@
   침묵은 사용자에게 '고장'으로 읽히고, 다시 눌러볼 수조차 없게 만든다.
 - 단계마다 시간·크기를 로그로 남긴다. 다음 실패는 읽을 수 있어야 한다.
 
-**아직 안 한 것:** analyzeDiet · analyzeSleepMind · analyzeBloodTest ·
-analyzeStepScreenshot 도 같은 구조다. 모델 호출에 마감선이 없다.
+**같은 날 함께 적용:** analyzeDiet · analyzeSleepMind · analyzeBloodTest ·
+analyzeStepScreenshot · classifySharedHealthImage 도 같은 구조여서 한 번에 걸었다.
+마감선은 함수마다 다르다 — classifySharedHealthImage 는 함수 타임아웃이 20초라
+14초를 쓴다. tests/ai-analysis-deadlines.test.js 가 "마감선 < 함수 타임아웃 - 5초"
+를 함수별로 검사한다.
 
 ## 258. 히어독 안의 백슬래시는 사라진다 (2026-09-14)
 
