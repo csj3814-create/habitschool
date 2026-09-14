@@ -3234,15 +3234,19 @@ exports.analyzeExercise = onCall(
                 }
             });
 
-            const result = await model.generateContent([
-                locale === "en" ? EXERCISE_ANALYSIS_PROMPT_EN : EXERCISE_ANALYSIS_PROMPT,
-                {
-                    inlineData: {
-                        data: base64Image,
-                        mimeType: contentType
+            const result = await withDeadline(
+                model.generateContent([
+                    locale === "en" ? EXERCISE_ANALYSIS_PROMPT_EN : EXERCISE_ANALYSIS_PROMPT,
+                    {
+                        inlineData: {
+                            data: base64Image,
+                            mimeType: contentType
+                        }
                     }
-                }
-            ]);
+                ]),
+                EXERCISE_MODEL_TIMEOUT_MS,
+                "exercise_model"
+            );
 
             const responseText = result.response.text();
             console.log("[analyzeExercise] 분석 완료", { ms: Date.now() - startedAt, chars: responseText.length });
@@ -3268,6 +3272,10 @@ exports.analyzeExercise = onCall(
                 message: error?.message
             });
 
+            if (String(error?.message || "").includes("_timeout_")) {
+                // 화면이 '분석 중...' 에 갇히는 대신 다시 눌러볼 수 있게 한다.
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
             if (error.message && error.message.includes("JSON")) {
                 throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
             }
@@ -3279,7 +3287,21 @@ exports.analyzeExercise = onCall(
 // 화면은 intensity 로 색과 이모지를 고르고 weightedMinutes 로 막대를 그린다.
 // 모델이 다른 낱말을 보내면 색이 통째로 빠지므로, 화면에 닿기 전에 여기서 맞춰 둔다.
 // 함수 타임아웃(60초)에 닿기 전에 우리가 먼저 끊는다. 끊어야 왜 실패했는지 말할 수 있다.
+//
+// 2026-09-14: 운동 분석이 '분석 중...' 에서 멈춘다는 제보가 있었다. 로그를 심고 보니
+// 이미지 내려받기는 0.7초, Gemini 응답은 3.6초로 멀쩡했다. 즉 그때 60초를 먹은 곳은
+// 모델 호출 쪽이었고, 거기엔 마감선이 없어 함수가 죽을 때까지 아무 말도 못 했다.
+// 원인은 확인하지 못했지만, 다음에 같은 일이 나면 침묵 대신 이유가 남아야 한다.
 const EXERCISE_IMAGE_FETCH_TIMEOUT_MS = 15000;
+const EXERCISE_MODEL_TIMEOUT_MS = 40000;
+
+function withDeadline(promise, timeoutMs, label) {
+    let timer = null;
+    const deadline = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label}_timeout_${timeoutMs}ms`)), timeoutMs);
+    });
+    return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
+}
 
 async function fetchWithDeadline(url, timeoutMs) {
     const controller = new AbortController();

@@ -175,3 +175,39 @@ describe('a photo that is not a workout says so', () => {
         expect(finallyBlock).toContain("if (btn.textContent === '🤖 AI 분석 중...')");
     });
 });
+
+// 2026-09-14 제보: 운동 AI 분석이 '분석 중...' 에서 멈췄다. 로그를 심고 보니 이미지
+// 내려받기 0.7초, 모델 응답 3.6초로 멀쩡했다 — 그때 60초를 먹은 곳은 모델 호출
+// 쪽이었고, 거기엔 마감선이 없어 함수가 죽을 때까지 아무 말도 못 했다.
+describe('a slow analysis says so instead of going quiet', () => {
+    const runtime = read('functions/runtime.js');
+    const fn = runtime.split('exports.analyzeExercise = onCall(')[1].split('\n);\n')[0];
+
+    it('puts a deadline on both waits, inside the function timeout', () => {
+        expect(runtime).toContain('const EXERCISE_IMAGE_FETCH_TIMEOUT_MS = 15000;');
+        expect(runtime).toContain('const EXERCISE_MODEL_TIMEOUT_MS = 40000;');
+        // 둘 다 함수 타임아웃 60초보다 짧아야 우리가 먼저 끊고 이유를 남긴다.
+        expect(fn).toContain('timeoutSeconds: 60');
+        expect(fn).toContain('fetchWithDeadline(imageUrl, EXERCISE_IMAGE_FETCH_TIMEOUT_MS)');
+        expect(fn).toContain('EXERCISE_MODEL_TIMEOUT_MS');
+    });
+
+    it('turns a deadline into a message the screen can show', () => {
+        expect(fn).toContain('deadline-exceeded');
+        expect(fn).toContain('분석이 너무 오래 걸렸어요');
+    });
+
+    it('leaves a trail at each step so the next failure is readable', () => {
+        expect(fn).toContain('[analyzeExercise] 이미지 확보');
+        expect(fn).toContain('[analyzeExercise] 분석 완료');
+        expect(fn).toContain('[analyzeExercise] 허용되지 않은 URL');
+        // 오류 코드를 삼키면 '실패했대요' 만 제보로 돌아온다.
+        expect(fn).toContain('status: error?.status');
+    });
+
+    it('strips a code fence with a regex that survived the edit', () => {
+        // 백슬래시를 잃으면 /```(?:json)?s*([sS]*?)```/ 가 되어 조용히 안 맞는다.
+        const B = String.fromCharCode(92);
+        expect(fn).toContain(`/\`\`\`(?:json)?${B}s*([${B}s${B}S]*?)\`\`\`/`);
+    });
+});
