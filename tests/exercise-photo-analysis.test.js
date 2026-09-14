@@ -1,0 +1,118 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
+
+// 2026-09-14 요청: "운동에서 운동 이미지도 AI 분석을 적용하면 어떨까?
+// 어떤 운동을 얼마나 했는지 알 수 있지 않을까?"
+// 렌더러(renderExerciseAnalysisResult)는 이미 완성돼 갤러리 오버레이에만 붙어
+// 있었고, 저장 경로도 data-ai-analysis → cardioList[].aiAnalysis 로 뚫려 있었다.
+// 없던 것은 서버 함수와 버튼뿐이다.
+describe('a workout photo can say what it is', () => {
+    const app = read('js/app-core.js');
+    const runtime = read('functions/runtime.js');
+    const client = read('js/diet-analysis.js');
+
+    it('calls a function of its own, not the diet one', () => {
+        expect(runtime).toContain('exports.analyzeExercise = onCall(');
+        expect(client).toContain("httpsCallable(functions, 'analyzeExercise')");
+        expect(client).toContain('export async function requestExerciseAnalysis(');
+    });
+
+    it('only accepts this user\'s own workout images', () => {
+        const fn = runtime.split('exports.analyzeExercise = onCall(')[1].split('\n);\n')[0];
+        // 식단 폴더를 그대로 두면 운동 사진이 전부 거부된다.
+        expect(fn).toContain('isAllowedUserMediaUrl(imageUrl, request.auth.uid, "exercise_images")');
+        expect(fn).toContain('if (!request.auth)');
+    });
+
+    it('uses the model the project standardised on', () => {
+        const fn = runtime.split('exports.analyzeExercise = onCall(')[1].split('\n);\n')[0];
+        expect(fn).toContain('model: "gemini-2.5-flash"');
+        expect(fn).toContain('thinkingConfig: { thinkingBudget: 0 }');
+        expect(fn).not.toContain('gemini-2.0-flash');
+    });
+
+    it('hands the renderer exactly the words it colours by', () => {
+        // 화면은 intensity 로 색·이모지를 고른다. 다른 낱말이 오면 색이 통째로 빠진다.
+        const norm = runtime.split('function normalizeExerciseAnalysis(')[1].split('\n}\n')[0];
+        expect(runtime).toContain('const EXERCISE_INTENSITY_LEVELS = ["저강도", "중강도", "고강도", "초고강도"];');
+        expect(norm).toContain('EXERCISE_INTENSITY_LEVELS.includes(');
+        expect(norm).toContain('"중강도"');
+        // 막대는 0~150 을 그린다.
+        expect(norm).toContain('number(source.recommendedDailyProgress, 150)');
+
+        const renderer = read('js/diet-analysis.js').split('export function renderExerciseAnalysisResult(')[1].split('\n}\n')[0];
+        for (const key of ['analysis.intensity', 'analysis.exerciseType', 'analysis.timeAnalysis', 'analysis.recommendedDailyProgress', 'analysis.feedback', 'analysis.formTip']) {
+            expect(renderer).toContain(key);
+        }
+    });
+
+    it('lets the existing save path carry the result', () => {
+        // 그 자리에서 서버에 쓰지 않는다 — 사진만 지우고 분석이 남는 어긋남을 만들지 않기 위해서다.
+        const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
+        expect(fn).toContain("block.setAttribute('data-ai-analysis', JSON.stringify(analysis));");
+        expect(fn).not.toContain('setDoc(');
+        // 저장 경로가 실제로 그 속성을 읽는다.
+        expect(app).toContain("aiAnalysis = JSON.parse(block.getAttribute('data-ai-analysis'));");
+    });
+
+    it('runs itself when the upload finishes, one at a time', () => {
+        const fn = app.split('function queueAutoAiAnalysis(')[1].split('\n}\n')[0];
+        expect(fn).toContain('findCardioBlockForInput(inputId)');
+        expect(fn).toContain("window.analyzeExercisePhoto(cardioBlock, { auto: true })");
+        expect(fn).toContain('_autoAiAnalysisChain = _autoAiAnalysisChain');
+    });
+
+    it('waits for the photo, and says nothing when it runs itself', () => {
+        const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
+        expect(fn).toContain('if (pending && !pending.done)');
+        expect(fn).toContain("if (!auto) showToast('⚠️ 먼저 사진을 올려주세요.');");
+        expect(fn).toContain('if (!isPersistedStorageUrl(imageUrl))');
+        // 분석이 도는 동안 사진이 사라졌을 수 있다.
+        expect(fn).toContain('if (!isAnalyzedPhotoStillInPlace(previewImg, inputId, imageUrl)) return;');
+        // 자동 실행은 접어 둔 결과를 펼치지 않는다.
+        expect(fn).toContain('if (auto) return;');
+    });
+
+    it('rate-limits the request per block, not the fold-away', () => {
+        const fn = app.split('window.analyzeExercisePhoto = async function (')[1].split('\n};\n')[0];
+        const toggle = fn.indexOf('resultBox._analysisData ||');
+        const limit = fn.indexOf('checkRateLimit(');
+        const request = fn.indexOf('await requestExerciseAnalysis(');
+        expect(toggle).toBeGreaterThan(-1);
+        expect(limit).toBeGreaterThan(toggle);
+        expect(limit).toBeLessThan(request);
+        expect(fn).toContain('analyzeExercisePhoto:');
+    });
+
+    it('finds the button even though it is built per block', () => {
+        // 유산소 버튼은 블록마다 새로 생겨 AI_ANALYSIS_INPUT_TO_BUTTON 표에 적을 수 없다.
+        const fn = app.split('function findAiAnalysisButtonForInput(')[1].split('\n}\n')[0];
+        expect(fn).toContain('AI_ANALYSIS_INPUT_TO_BUTTON[');
+        expect(fn).toContain(".querySelector('.exercise-ai-btn')");
+        const sync = app.split('function syncAiAnalysisButtonForInput(')[1].split('\n}\n')[0];
+        expect(sync).toContain('const btn = findAiAnalysisButtonForInput(inputId);');
+    });
+
+    it('lets go of the analysis when the photo changes or leaves', () => {
+        const reset = app.split('function resetExerciseAiAnalysisUi(')[1].split('\n}\n')[0];
+        expect(reset).toContain('resultBox._analysisData = null;');
+        expect(reset).toContain("btn.removeAttribute('data-analyzed');");
+        const remove = app.split('window.removeStaticImage = function (')[1].split('\n};\n')[0];
+        expect(remove).toContain('resetExerciseAiAnalysisUi(exerciseBlock, { visible: false });');
+        expect(app).toContain('resetExerciseAiAnalysisUi(exerciseBlock, { visible: true });');
+    });
+
+    it('brings a saved analysis back folded', () => {
+        const fn = app.split('function addExerciseBlock(')[1].split('\n}\n')[0];
+        expect(fn).toContain('renderExerciseAnalysisResult(data.aiAnalysis, savedResultBox);');
+        expect(fn).toContain("savedAiBtn.setAttribute('data-analyzed', 'true');");
+        // 버튼이 label 안에 있으면 누를 때마다 파일 선택창이 같이 열린다.
+        const markup = fn.split('contentHtml = `')[1].split('`;')[0];
+        expect(markup.indexOf('exercise-ai-btn')).toBeGreaterThan(markup.indexOf('</label>'));
+    });
+});

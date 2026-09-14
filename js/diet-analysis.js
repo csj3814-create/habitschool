@@ -2,13 +2,14 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=393';
+import { auth, functions } from './firebase-config.js?v=394';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=393';
-import { escapeHtml } from './security.js?v=393';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=393';
+import { showToast } from './ui-helpers.js?v=394';
+import { escapeHtml } from './security.js?v=394';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=394';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
+const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
 const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');
@@ -86,6 +87,23 @@ export async function requestDietAnalysis(imageUrl) {
         return result.data.analysis;
     } catch (error) {
         console.error('Diet analysis error:', error);
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.'
+        ));
+        return null;
+    }
+}
+
+export async function requestExerciseAnalysis(imageUrl) {
+    if (!requireSignedIn()) return null;
+    if (!imageUrl) return null;
+
+    try {
+        const result = await analyzeExerciseFn(analysisLocalePayload({ imageUrl }));
+        return result.data.analysis;
+    } catch (error) {
+        console.error('Exercise analysis error:', error);
         showToast(analysisFailureMessage(
             error,
             isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.'

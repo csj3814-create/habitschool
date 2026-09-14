@@ -3097,6 +3097,183 @@ Return only valid JSON with the exact same schema:
 
 Food quality matters more than calories alone. Classify whole/minimally processed foods as "natural", traditional/simple processed foods as "processed", and packaged instant snacks, sweet drinks, processed meats, ramen, and similar industrial foods as "ultraprocessed". Write all user-facing strings in natural English.`;
 
+const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니스 코치 AI입니다. 사진을 보고 어떤 운동을 얼마나 했는지 읽어 주세요.
+
+## 사진의 종류
+대개 둘 중 하나입니다.
+- **기록 화면**: 러닝머신·실내자전거 계기판, 스마트워치·러닝 앱 요약 화면. 시간·거리·칼로리·심박수 같은 숫자가 찍혀 있습니다.
+- **운동 장면**: 운동하는 모습, 장비, 장소 사진. 숫자가 없습니다.
+
+숫자가 보이면 **읽은 그대로** 씁니다. 지어내지 마세요. 안 보이면 null 로 두고, 장면에서 알 수 있는 것만 말합니다.
+
+## 판단 기준
+1. **운동 종류**(exerciseType): 걷기, 달리기, 등산, 자전거, 수영, 근력운동, 요가, 홈트레이닝 등. 모르겠으면 "운동".
+2. **강도**(intensity): 정확히 아래 넷 중 하나로만.
+   - 저강도: 산책, 가벼운 스트레칭, 느린 자전거 (심박 여유 40% 미만)
+   - 중강도: 빠르게 걷기, 가벼운 조깅, 평지 자전거 (숨이 차지만 대화 가능)
+   - 고강도: 달리기, 등산, 인터벌, 본격 근력운동 (대화가 끊김)
+   - 초고강도: 전력 질주, 고강도 인터벌 (몇 분 이상 못 버팀)
+3. **시간·거리**: 사진에서 읽은 값. 없으면 null.
+4. **하루 권장량 달성률**(recommendedDailyProgress): WHO 기준 **중강도 하루 30분**을 100%로 봅니다.
+   강도 환산은 저강도 0.5배, 중강도 1배, 고강도 2배, 초고강도 3배.
+   예) 고강도 20분 = 40분 상당 = 133%. 시간을 모르면 강도만 보고 어림잡되 60을 넘기지 마세요.
+   0~150 사이 정수.
+
+## 문장 쓰기
+- timeAnalysis: 읽어낸 것을 한 줄로. 숫자가 있으면 반드시 넣습니다. 예) "30분 · 4.2km · 320kcal", "시간 표시 없음 — 장면으로 판단".
+- feedback: 격려 한두 문장. 숫자를 봤으면 그 숫자를 근거로 말합니다.
+- formTip: 자세·안전·다음 단계에 대한 실천 가능한 조언 한 문장. 없으면 null.
+
+## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
+{
+  "exerciseType": "달리기",
+  "intensity": "저강도|중강도|고강도|초고강도",
+  "durationMinutes": 30,
+  "distanceKm": 4.2,
+  "estimatedCalories": 320,
+  "recommendedDailyProgress": 100,
+  "timeAnalysis": "30분 · 4.2km · 320kcal",
+  "feedback": "격려 한두 문장",
+  "formTip": "실천 가능한 조언 한 문장"
+}
+
+숫자를 읽지 못한 항목은 null 로 둡니다. intensity 는 반드시 위 네 단어 중 하나여야 합니다.`;
+
+const EXERCISE_ANALYSIS_PROMPT_EN = `You are a fitness coach AI for Habit School. Read the photo and tell the user what exercise they did and how much.
+
+The photo is usually either a **readout** (treadmill console, smartwatch or running-app summary, with time/distance/calories on screen) or a **scene** (someone exercising, equipment, a place). Read numbers exactly as shown — never invent them. If none are visible, use null and judge only from the scene.
+
+Rules:
+- intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard). The app maps these to labels itself.
+- recommendedDailyProgress: 30 minutes of moderate activity per day (WHO) is 100%. Weight intensity as light x0.5, moderate x1, hard x2, very hard x3. Integer 0-150. If duration is unknown, estimate from intensity alone and do not exceed 60.
+- timeAnalysis: one line stating what you read; include the numbers when you have them.
+- Write feedback and formTip in natural English.
+
+Return only valid JSON:
+{
+  "exerciseType": "running",
+  "intensity": "저강도|중강도|고강도|초고강도",
+  "durationMinutes": 30,
+  "distanceKm": 4.2,
+  "estimatedCalories": 320,
+  "recommendedDailyProgress": 100,
+  "timeAnalysis": "30 min · 4.2 km · 320 kcal",
+  "feedback": "one or two encouraging sentences",
+  "formTip": "one actionable tip"
+}
+
+Use null for anything you could not read.`;
+
+// 운동 사진은 식단과 같은 길을 간다 — 다른 것은 프롬프트와 허용 폴더뿐이다.
+exports.analyzeExercise = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 20,
+        timeoutSeconds: 60
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { imageUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
+        if (!imageUrl || typeof imageUrl !== "string") {
+            throw new HttpsError("invalid-argument", "이미지 URL이 필요합니다.");
+        }
+
+        // SSRF/교차 사용자 방지: 로그인 사용자의 운동 이미지 객체만 허용
+        if (!isAllowedUserMediaUrl(imageUrl, request.auth.uid, "exercise_images")) {
+            throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
+        }
+
+        try {
+            const imgResponse = await fetch(imageUrl);
+            if (!imgResponse.ok) {
+                throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
+            }
+            const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+            const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
+            const base64Image = imgBuffer.toString("base64");
+
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+
+            const result = await model.generateContent([
+                locale === "en" ? EXERCISE_ANALYSIS_PROMPT_EN : EXERCISE_ANALYSIS_PROMPT,
+                {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: contentType
+                    }
+                }
+            ]);
+
+            const responseText = result.response.text();
+            let jsonStr = responseText;
+            const jsonMatch = responseText.match(/```(?:json)?s*([sS]*?)```/);
+            if (jsonMatch) {
+                jsonStr = jsonMatch[1].trim();
+            }
+
+            return {
+                success: true,
+                analysis: normalizeExerciseAnalysis(JSON.parse(jsonStr)),
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            console.error("analyzeExercise 오류:", error);
+
+            if (error.message && error.message.includes("JSON")) {
+                throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
+            }
+            throw new HttpsError("internal", "운동 분석 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+// 화면은 intensity 로 색과 이모지를 고르고 recommendedDailyProgress 로 막대를 그린다.
+// 모델이 다른 낱말을 보내면 색이 통째로 빠지므로, 화면에 닿기 전에 여기서 맞춰 둔다.
+const EXERCISE_INTENSITY_LEVELS = ["저강도", "중강도", "고강도", "초고강도"];
+
+function normalizeExerciseAnalysis(raw) {
+    const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const number = (value, max) => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed < 0) return null;
+        return max !== undefined ? Math.min(parsed, max) : parsed;
+    };
+    const text = (value, limit) => {
+        const normalized = String(value ?? "").trim();
+        return normalized ? normalized.slice(0, limit) : null;
+    };
+
+    const intensity = EXERCISE_INTENSITY_LEVELS.includes(String(source.intensity || "").trim())
+        ? String(source.intensity).trim()
+        : "중강도";
+
+    return {
+        exerciseType: text(source.exerciseType, 40) || "운동",
+        intensity,
+        durationMinutes: number(source.durationMinutes, 1440),
+        distanceKm: number(source.distanceKm, 500),
+        estimatedCalories: number(source.estimatedCalories, 20000),
+        recommendedDailyProgress: Math.round(number(source.recommendedDailyProgress, 150) ?? 0),
+        timeAnalysis: text(source.timeAnalysis, 200) || "",
+        feedback: text(source.feedback, 500) || "",
+        formTip: text(source.formTip, 300)
+    };
+}
+
 exports.analyzeDiet = onCall(
     {
         secrets: [GEMINI_API_KEY],

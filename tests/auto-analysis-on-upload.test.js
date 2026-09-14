@@ -26,10 +26,13 @@ describe('an uploaded photo analyses itself', () => {
 
     it('runs one at a time', () => {
         // 아침·점심·저녁·간식을 한꺼번에 고르면 업로드가 잇따라 끝난다.
-        // 줄을 세우지 않으면 Gemini 호출 네 개가 동시에 뜬다.
+        // 줄을 세우지 않으면 Gemini 호출 네 개가 동시에 뜬다. 유산소 사진도
+        // 같은 줄에 선다 — 호출 하나를 아끼려는 게 아니라 넷이 동시에 뜨는 것을
+        // 막으려는 것이므로 탭이 달라도 줄은 하나여야 한다.
         const fn = app.split('function queueAutoAiAnalysis(')[1].split('\n}\n')[0];
         expect(fn).toContain('_autoAiAnalysisChain = _autoAiAnalysisChain');
-        expect(fn).toContain('.then(() => runAutoAiAnalysis(slot))');
+        expect(fn).toContain('runAutoAiAnalysis(slot)');
+        expect(fn).toContain('window.analyzeExercisePhoto(cardioBlock, { auto: true })');
         expect(app).toContain('let _autoAiAnalysisChain = Promise.resolve();');
     });
 
