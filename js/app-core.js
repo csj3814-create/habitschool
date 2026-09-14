@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=389';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=389';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=390';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=390';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=389';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=389';
+} from './auth-login-helpers.js?v=390';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=390';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=389';
+} from './exercise-media.js?v=390';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=389';
+} from './health-connect-utils.js?v=390';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=389';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=389';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=389';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=389';
-import { sanitize, compressImage } from './data-manager.js?v=389';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=389';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=389';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=389';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=389';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=389';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=389';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=389';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=389';
+} from './habit-groups.js?v=390';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=390';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=390';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=390';
+import { sanitize, compressImage } from './data-manager.js?v=390';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=390';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=390';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=390';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=390';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=390';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=390';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=390';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=390';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=389';
+} from './guest-demo.js?v=390';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=389';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=389';
+} from './product-events.js?v=390';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=390';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=389';
+} from './diet-program.js?v=390';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=389';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=389';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=389';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=389';
+} from './meditation-guide.js?v=390';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=390';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=390';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=390';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=389';
+} from './social-challenge-readiness.js?v=390';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=389';
+} from './monthly-mvp-reward.js?v=390';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=389';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=390';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8083,6 +8083,10 @@ window.previewStaticImage = function (input, previewId, btnId, skipExif = false)
                     if (aiBtn) {
                         aiBtn.style.display = 'block';
                         aiBtn.textContent = '🤖 AI 분석';
+                        aiBtn.removeAttribute('data-analyzed');
+                        // 사진을 고른 직후라 아직 올라가는 중일 수 있다. 수면 칸은
+                        // 입력칸 이름이 `sleep-img` 라 표에서 되찾아야 맞는다.
+                        syncAiAnalysisButtonForInput(findAiAnalysisInputIdForSlot(meal));
                     }
                     // 기존 분석 결과 초기화
                     const resultContainer = document.getElementById(`diet-analysis-${meal}`);
@@ -18091,7 +18095,61 @@ function setThumbPendingState(inputId, { visible = false, label = '썸네일 제
     host.classList.remove('has-thumb-pending');
 }
 
+// 업로드가 끝나기 전에는 AI 분석을 걸 수 없다. 예전에는 사진을 고른 순간 버튼이
+// 켜졌고, 누르면 "사진을 먼저 저장한 후 분석해주세요" 라는 토스트만 나왔다.
+// 누를 수 있는데 아무 일도 안 일어나는 버튼은 고장난 버튼으로 읽힌다.
+//
+// 상태는 _pendingUploads 하나로 판정한다. 입력칸과 버튼의 짝은 아래 표가 전부다.
+const AI_ANALYSIS_INPUT_TO_BUTTON = {
+    'diet-img-breakfast': 'ai-btn-breakfast',
+    'diet-img-lunch': 'ai-btn-lunch',
+    'diet-img-dinner': 'ai-btn-dinner',
+    'diet-img-snack': 'ai-btn-snack',
+    'sleep-img': 'ai-btn-sleep'
+};
+
+// 미리보기 칸(`preview-sleep`, `preview-lunch` …)에서 입력칸 id 를 되찾는다.
+// 짝은 위 표 하나에만 적어 두고 양방향으로 쓴다 — 두 벌이 되면 한쪽만 고쳐진다.
+function findAiAnalysisInputIdForSlot(slot = '') {
+    const buttonId = `ai-btn-${String(slot || '').trim()}`;
+    return Object.keys(AI_ANALYSIS_INPUT_TO_BUTTON)
+        .find((inputId) => AI_ANALYSIS_INPUT_TO_BUTTON[inputId] === buttonId) || '';
+}
+
+function syncAiAnalysisButtonForInput(inputId = '') {
+    const buttonId = AI_ANALYSIS_INPUT_TO_BUTTON[String(inputId || '').trim()];
+    if (!buttonId) return;
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+
+    // 분석이 이미 끝난 버튼은 '분석 보기/접기' 토글이라 업로드와 무관하다.
+    if (btn.getAttribute('data-analyzed') === 'true') {
+        btn.disabled = false;
+        btn.removeAttribute('data-upload-pending');
+        return;
+    }
+
+    const entry = _pendingUploads.get(inputId);
+    const isUploading = !!entry && !entry.done;
+
+    btn.disabled = isUploading;
+    if (isUploading) {
+        btn.setAttribute('data-upload-pending', 'true');
+        btn.textContent = '⏳ 사진 올리는 중…';
+        return;
+    }
+
+    if (btn.getAttribute('data-upload-pending') === 'true') {
+        btn.removeAttribute('data-upload-pending');
+        btn.textContent = '🤖 AI 분석';
+    }
+}
+
 function setInlineUploadProgress(inputId, { state = 'uploading', pct = 0, message = '', indeterminate = false } = {}) {
+
+    // 화면 요소가 없어도 버튼 상태는 맞춰야 한다. 진행 막대가 없는 입력칸도 있다.
+    syncAiAnalysisButtonForInput(inputId);
+
     const els = getInlineUploadProgressEls(inputId);
     if (!els) return;
 

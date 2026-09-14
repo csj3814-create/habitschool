@@ -7308,3 +7308,11 @@ body.dark-mode #gallery-feed-end {
 
 /* 오늘 변환 한도를 다 썼을 때. 숫자만 바뀌면 알아차리기 어렵다. */
 .wallet-convert-limit.is-exhausted strong { color: #C62828; }
+
+/* 업로드가 끝나기 전에는 AI 분석을 걸 수 없다. 눌리는데 아무 일도 안 일어나는
+   버튼은 고장난 버튼으로 읽힌다. */
+.diet-ai-btn:disabled {
+    opacity: .55;
+    cursor: default;
+    filter: grayscale(.35);
+}
