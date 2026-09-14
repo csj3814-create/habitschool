@@ -142,8 +142,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=388">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=388">
+    <link rel="stylesheet" href="styles.css?v=389">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=389">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -742,8 +742,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=388"></script>
-    <script src="js/webview-detect.js?v=388"></script>
+    <script src="js/browser-detect.js?v=389"></script>
+    <script src="js/webview-detect.js?v=389"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -3048,6 +3048,26 @@
       끝났다 — 며칠에서 한 달을 채운 일의 마무리치고는 너무 조용했다. 그래서 탭과
       수령 사이에 축하를 한 칸 넣는다. '수령하기'를 누르는 동작 자체가 그 순간이다.
     -->
+    <!--
+      이미 받은 성취를 알리는 자리. 챌린지와 달리 소모임 100회·미션 배지는 서버가
+      자동으로 주므로 누를 것이 없다. 그래서 "수령하기"가 아니라 "확인했어요"이고,
+      도달 직후 한 번만 뜬다. 나중에 알려주면 축하가 아니라 알림이 된다.
+    -->
+    <div id="achievement-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true"
+        aria-labelledby="achievement-title">
+        <div class="modal-content challenge-reward-sheet">
+            <div class="challenge-reward-burst" id="achievement-emoji" aria-hidden="true">🏆</div>
+            <div class="challenge-reward-kicker" id="achievement-kicker">달성</div>
+            <h3 id="achievement-title"></h3>
+            <div class="challenge-reward-progress" id="achievement-subtitle"></div>
+            <div class="challenge-reward-prizes" id="achievement-prizes"></div>
+            <div class="challenge-reward-actions">
+                <button type="button" class="challenge-reward-primary" id="achievement-confirm"
+                    onclick="dismissAchievementCelebration()">확인했어요</button>
+            </div>
+        </div>
+    </div>
+
     <div id="challenge-reward-modal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true"
         aria-labelledby="challenge-reward-title">
         <div class="modal-content challenge-reward-sheet">
@@ -3111,14 +3131,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=388"></script>
-    <script type="module" src="js/main.js?v=388"></script>
-    <script type="module" src="js/diet-analysis.js?v=388"></script>
-    <script type="module" src="js/metabolic-score.js?v=388"></script>
-    <script type="module" src="js/le8-score.js?v=388"></script>
+    <script type="module" src="js/app.js?v=389"></script>
+    <script type="module" src="js/main.js?v=389"></script>
+    <script type="module" src="js/diet-analysis.js?v=389"></script>
+    <script type="module" src="js/metabolic-score.js?v=389"></script>
+    <script type="module" src="js/le8-score.js?v=389"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=388"></script>
+    <script src="js/pwa-install.js?v=389"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
