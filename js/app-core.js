@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=391';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=391';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=392';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=392';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=391';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=391';
+} from './auth-login-helpers.js?v=392';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=392';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=391';
+} from './exercise-media.js?v=392';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=391';
+} from './health-connect-utils.js?v=392';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=391';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=391';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=391';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=391';
-import { sanitize, compressImage } from './data-manager.js?v=391';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=391';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=391';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=391';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=391';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=391';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=391';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=391';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=391';
+} from './habit-groups.js?v=392';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=392';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=392';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=392';
+import { sanitize, compressImage } from './data-manager.js?v=392';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=392';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=392';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=392';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=392';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=392';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=392';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=392';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=392';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=391';
+} from './guest-demo.js?v=392';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=391';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=391';
+} from './product-events.js?v=392';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=392';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=391';
+} from './diet-program.js?v=392';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=391';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=391';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=391';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=391';
+} from './meditation-guide.js?v=392';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=392';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours } from './le8-score.js?v=392';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=392';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=391';
+} from './social-challenge-readiness.js?v=392';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=391';
+} from './monthly-mvp-reward.js?v=392';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=391';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=392';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -8208,7 +8208,11 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
         if (aiBtn) {
             aiBtn.style.display = 'none';
             aiBtn.textContent = '🤖 AI 분석';
+            aiBtn.removeAttribute('data-analyzed');
         }
+        // 화면에서 지우는 것만으로는 부족하다. 분석은 저장 버튼 없이 이미 서버에
+        // 들어가 있을 수 있고, 그대로 두면 점수와 포인트 증빙에 계속 잡힌다.
+        discardAnalysisPersistedWithoutSave(meal);
         // 수면 분석 초기화
         if (meal === 'sleep') {
             const sleepResult = document.getElementById('sleep-analysis-result');
@@ -9219,12 +9223,87 @@ function collectCurrentDietAnalysisFromUi() {
     meals.forEach(meal => {
         const resultContainer = document.getElementById(`diet-analysis-${meal}`);
         const analysis = resultContainer?._analysisData;
-        if (analysis && typeof analysis === 'object') {
-            dietAnalysis[meal] = analysis;
-        }
+        // 값이 없으면 키를 빼는 게 아니라 null 을 적는다. 저장이 merge 라서 키를
+        // 빼면 서버에 남은 예전 분석이 그대로 살아남는다 — 사진을 지우고 저장해도
+        // 분석은 남아 건강습관·대사 점수에 계속 반영됐다.
+        dietAnalysis[meal] = (analysis && typeof analysis === 'object') ? analysis : null;
     });
 
     return dietAnalysis;
+}
+
+// 분석이 도는 동안 사용자가 사진을 지웠거나 다른 사진으로 바꿨을 수 있다.
+// 그 자리에 없는 사진의 분석을 화면에 그리거나 기록에 남기면 안 된다.
+function isAnalyzedPhotoStillInPlace(previewEl, inputId, imageUrl) {
+    if (!previewEl || previewEl.style.display === 'none') return false;
+    if (previewEl.hasAttribute('data-user-removed')) return false;
+
+    // 올라간 사진이 아니라 로컬 이미지를 그대로 보낸 경우(압축 data:)에는 대조할
+    // URL 이 없다. 자리에 사진이 남아 있는지까지만 본다.
+    const target = String(imageUrl || '').trim();
+    if (!target || !isPersistedStorageUrl(target)) return true;
+
+    return [
+        previewEl.src,
+        previewEl.getAttribute('data-saved-url'),
+        _pendingUploads.get(inputId)?.result?.url
+    ].some((candidate) => String(candidate || '').trim() === target);
+}
+
+// 분석은 저장 버튼 없이 그 자리에서 서버에 들어간다 — 자동 분석이면 사용자가
+// 누른 적도 없다. 그래서 사진을 지웠을 때 되돌릴 것이 서버에 남아 있을 수 있다.
+// 여기에 적힌 칸만 지운다. 예전에 저장해 둔 사진까지 즉시 지우면 '저장 버튼이
+// 확정한다'는 규칙이 깨진다.
+const _analysisPersistedWithoutSave = new Map(); // slot -> docId
+
+function noteAnalysisPersistedWithoutSave(slot, docId) {
+    const normalizedSlot = String(slot || '').trim();
+    const normalizedDocId = String(docId || '').trim();
+    if (!normalizedSlot || !normalizedDocId) return;
+    _analysisPersistedWithoutSave.set(normalizedSlot, normalizedDocId);
+}
+
+// 저장이 서버 ACK 를 받았거나 기록을 다시 읽어 왔으면 서버가 진실이다.
+function forgetAnalysisPersistedWithoutSave() {
+    _analysisPersistedWithoutSave.clear();
+}
+
+// 사진을 지우면 그 사진 때문에 서버에 들어갔던 것도 같이 지운다. 안 지우면 분석이
+// 기록에 남아 점수에 계속 반영되고, 사진 URL 이 남아 포인트 증빙으로도 잡힌다.
+async function discardAnalysisPersistedWithoutSave(slot) {
+    const normalizedSlot = String(slot || '').trim();
+    const docId = _analysisPersistedWithoutSave.get(normalizedSlot);
+    if (!docId) return;
+    _analysisPersistedWithoutSave.delete(normalizedSlot);
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // isValidDailyLog 가 userId·date 를 요구한다. 지우는 쓰기도 예외가 아니다.
+    const patch = { userId: user.uid, date: String(docId).split('_').slice(1).join('_') };
+    if (normalizedSlot === 'sleep') {
+        patch.sleepAndMind = { sleepImageUrl: null, sleepImageThumbUrl: null, sleepAnalysis: null };
+    } else {
+        const { urlKey, thumbKey } = getDietSlotMediaKeys(normalizedSlot);
+        patch.diet = { [urlKey]: null, [thumbKey]: null };
+        patch.dietAnalysis = { [normalizedSlot]: null };
+    }
+
+    try {
+        await setDoc(doc(db, "daily_logs", docId), patch, { merge: true });
+    } catch (error) {
+        // 조용히 실패하면 지운 줄 알았던 분석이 남는다. 최소한 남긴다.
+        console.error('[analysis] 지운 사진의 분석 정리 실패:', error?.message || error);
+    }
+
+    const cached = getCachedDailyLog(docId);
+    if (!cached) return;
+    updateDailyLogCache(docId, {
+        ...cached,
+        ...(patch.diet ? { diet: { ...(cached.diet || {}), ...patch.diet } } : {}),
+        ...(patch.dietAnalysis ? { dietAnalysis: { ...(cached.dietAnalysis || {}), ...patch.dietAnalysis } } : {}),
+        ...(patch.sleepAndMind ? { sleepAndMind: { ...(cached.sleepAndMind || {}), ...patch.sleepAndMind } } : {})
+    });
 }
 
 function getDietSlotMediaKeys(slot = '') {
@@ -9420,6 +9499,11 @@ async function loadDataForSelectedDate(dateStr) {
     const user = auth.currentUser;
     if (!user) return;
     const selectedDateStr = String(dateStr || todayStr).trim() || todayStr;
+
+    // 기록을 다시 읽어 오면 화면은 서버가 말하는 것이 된다. 날짜가 바뀌었을 수도
+    // 있으니, 저장 없이 서버에 들어갔던 칸 목록은 여기서 비운다 — 안 비우면
+    // 어제 분석한 칸의 문서를 오늘 사진 지울 때 건드린다.
+    forgetAnalysisPersistedWithoutSave();
 
     const thisGeneration = ++_loadDataGeneration;
 
@@ -20875,6 +20959,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 // 사용자는 아무 답도 없이 50초를 기다린다.
                 await doSetDoc(DAILY_LOG_PRIMARY_SAVE_STALL_TIMEOUT_MS);
                 primarySaveAcknowledged = true;
+                forgetAnalysisPersistedWithoutSave();
             } catch (e) {
                 if (isOfflineSaveCandidateError(e)) {
                     // 죽은 스트림에 두 번째 시도를 그대로 보내면 똑같이 타임아웃난다.
@@ -20884,6 +20969,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     // 재시도는 넉넉하게 — 진짜 느린 회선을 성급하게 포기하지 않는다.
                     await doSetDoc(DAILY_LOG_PRIMARY_SAVE_TIMEOUT_MS);
                     primarySaveAcknowledged = true;
+                    forgetAnalysisPersistedWithoutSave();
                 } else { throw e; }
             }
             await withAsyncTimeout(
@@ -24206,6 +24292,8 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
 
     try {
         const analysis = await requestDietAnalysis(imageUrl);
+        // 분석이 도는 동안 사진이 지워졌거나 다른 사진으로 바뀌었으면 여기서 접는다.
+        if (!isAnalyzedPhotoStillInPlace(previewImg, findAiAnalysisInputIdForSlot(meal), imageUrl)) return;
         if (analysis) {
             renderDietAnalysisResult(resultContainer, analysis);
             resultContainer._analysisData = analysis;
@@ -24232,6 +24320,8 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
                     thumbUrl,
                     analysis
                 });
+                // 저장 버튼 없이 서버에 들어갔다. 사진을 지우면 이것도 지워야 한다.
+                noteAnalysisPersistedWithoutSave(meal, docId);
             }
             showToast('✅ AI 식단 분석 완료!');
             updateDietDaySummary();
@@ -24745,6 +24835,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
         resultBox.innerHTML = '<div style="text-align:center; padding:15px;"><div class="loading-spinner" style="display:inline-flex;"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div><p style="margin-top:8px; color:#888; font-size:12px;">수면 패턴 분석 중...</p></div>';
 
         const analysis = await requestSleepMindAnalysis(sleepUrl, null, 'sleep');
+        // 분석이 도는 동안 캡처가 지워졌거나 다른 것으로 바뀌었으면 여기서 접는다.
+        if (!isAnalyzedPhotoStillInPlace(previewEl, findAiAnalysisInputIdForSlot('sleep'), sleepUrl)) return;
         if (analysis) {
             // AI가 시간을 읽어냈고 입력칸이 비어 있으면 채워 준다. 사용자가 같은 값을
             // 두 번 적을 이유가 없다. 이미 적어 둔 값은 건드리지 않는다.
@@ -24786,6 +24878,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
                         date: selectedDateStr,
                         sleepAndMind: sleepPayload
                     }, { merge: true });
+                    // 저장 버튼 없이 서버에 들어갔다. 캡처를 지우면 이것도 지워야 한다.
+                    noteAnalysisPersistedWithoutSave('sleep', docId);
                 } catch (saveError) {
                     // 규칙에 막히면 화면은 멀쩡한데 아무것도 안 남는다. 최소한 남긴다.
                     console.error('[sleep] 분석 결과 저장 실패:', saveError?.message || saveError);
