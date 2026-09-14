@@ -117,6 +117,8 @@ describe('the duration field is asked for, saved, and brought back', () => {
     it('has a look in both themes', () => {
         // 전역 input[type=number]{width:100%} 가 클래스 하나를 이긴다. 부모를 붙여 특이도를 올려야 한다.
         expect(read('styles-features.css')).toContain('.exercise-duration-row .exercise-duration-input {');
+        // 칩은 그리드로 다섯 칸. flex-wrap 이면 좁은 화면에서 4 + 1 로 갈라진다.
+        expect(read('styles-features.css')).toContain('grid-template-columns: repeat(5, 1fr);');
         expect(read('styles-features.css')).not.toContain(['', '.exercise-duration-input {'].join('\n'));
         expect(read('styles-dark-mode.css')).toContain('body.dark-mode .exercise-duration-row .exercise-duration-input');
     });

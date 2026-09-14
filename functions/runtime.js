@@ -3203,17 +3203,27 @@ exports.analyzeExercise = onCall(
 
         // SSRF/교차 사용자 방지: 로그인 사용자의 운동 이미지 객체만 허용
         if (!isAllowedUserMediaUrl(imageUrl, request.auth.uid, "exercise_images")) {
+            // 어느 대목에서 막혔는지 말하지 않으면 화면에는 '실패'만 뜨고 끝난다.
+            console.warn("[analyzeExercise] 허용되지 않은 URL", { uid: request.auth.uid, imageUrl: String(imageUrl).slice(0, 120) });
             throw new HttpsError("invalid-argument", "허용되지 않은 이미지 URL입니다.");
         }
 
+        const startedAt = Date.now();
         try {
-            const imgResponse = await fetch(imageUrl);
+            // 이미지 내려받기가 늘어질 수 있다. 끊지 않으면 함수 타임아웃(60초)까지
+            // 아무 말 없이 기다리다 죽는다 — 화면에는 '분석 중...' 만 남는다.
+            const imgResponse = await fetchWithDeadline(imageUrl, EXERCISE_IMAGE_FETCH_TIMEOUT_MS);
             if (!imgResponse.ok) {
                 throw new HttpsError("not-found", "이미지를 불러올 수 없습니다.");
             }
             const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
             const contentType = imgResponse.headers.get("content-type") || "image/jpeg";
             const base64Image = imgBuffer.toString("base64");
+            console.log("[analyzeExercise] 이미지 확보", {
+                ms: Date.now() - startedAt,
+                bytes: imgBuffer.length,
+                contentType
+            });
 
             const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
             const model = genAI.getGenerativeModel({
@@ -3235,8 +3245,10 @@ exports.analyzeExercise = onCall(
             ]);
 
             const responseText = result.response.text();
+            console.log("[analyzeExercise] 분석 완료", { ms: Date.now() - startedAt, chars: responseText.length });
+
             let jsonStr = responseText;
-            const jsonMatch = responseText.match(/```(?:json)?s*([sS]*?)```/);
+            const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
             if (jsonMatch) {
                 jsonStr = jsonMatch[1].trim();
             }
@@ -3249,7 +3261,12 @@ exports.analyzeExercise = onCall(
 
         } catch (error) {
             if (error instanceof HttpsError) throw error;
-            console.error("analyzeExercise 오류:", error);
+            console.error("analyzeExercise 오류:", {
+                ms: Date.now() - startedAt,
+                name: error?.name,
+                status: error?.status,
+                message: error?.message
+            });
 
             if (error.message && error.message.includes("JSON")) {
                 throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
@@ -3261,6 +3278,19 @@ exports.analyzeExercise = onCall(
 
 // 화면은 intensity 로 색과 이모지를 고르고 weightedMinutes 로 막대를 그린다.
 // 모델이 다른 낱말을 보내면 색이 통째로 빠지므로, 화면에 닿기 전에 여기서 맞춰 둔다.
+// 함수 타임아웃(60초)에 닿기 전에 우리가 먼저 끊는다. 끊어야 왜 실패했는지 말할 수 있다.
+const EXERCISE_IMAGE_FETCH_TIMEOUT_MS = 15000;
+
+async function fetchWithDeadline(url, timeoutMs) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(url, { signal: controller.signal });
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 const EXERCISE_INTENSITY_LEVELS = ["저강도", "중강도", "고강도", "초고강도"];
 
 // 강도 환산(WHO): 고강도 1분은 중강도 2분에 해당한다.

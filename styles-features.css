@@ -7462,20 +7462,23 @@ body.dark-mode #gallery-feed-end {
     margin-right: 2px;
 }
 
+/* 칸을 똑같이 다섯으로 나눈다. flex-wrap 으로 두면 좁은 화면에서 네 개 + 하나로
+   갈라져 끝이 비어 보였다. 그리드는 어떤 폭에서도 한 줄이다. */
 .exercise-duration-chips {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-top: 8px;
 }
 
 .exercise-duration-chip {
-    padding: 6px 9px;
-    font-size: 12px;
+    padding: 8px 0;
+    font-size: 13px;
     font-weight: 700;
     color: #B35C00;
     background: #FFF;
     border: 1px solid #FFD0A0;
-    border-radius: 999px;
+    border-radius: 8px;
     cursor: pointer;
     transition: transform 0.12s, background 0.15s;
 }
