@@ -178,17 +178,21 @@
         .email-history-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; }
         .email-history-item strong { color: #333; }
         .email-audit-empty { font-size: 12px; color: #999; padding: 12px; text-align: center; background: white; border: 1px dashed #ddd; border-radius: 8px; }
-        .member-email-cell { min-width: 220px; }
-        .member-email-stack { display: flex; flex-direction: column; gap: 6px; }
-        .member-email-item { background: #faf7ff; border: 1px solid #eadcf7; border-radius: 8px; padding: 8px 10px; }
-        .member-email-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .member-email-day { font-size: 11px; font-weight: 700; color: #4A148C; }
-        .member-email-date { font-size: 11px; color: #777; }
-        .member-email-meta { font-size: 11px; color: #666; line-height: 1.4; }
-        .member-email-details { margin-top: 6px; }
-        .member-email-details summary { cursor: pointer; font-size: 11px; font-weight: 600; color: #4A148C; }
-        .member-email-summary { margin-top: 6px; font-size: 11px; color: #666; line-height: 1.4; }
-        .member-email-preview { max-height: 160px; overflow: auto; margin-top: 8px; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: white; font-size: 12px; }
+        /* 회원 한 명 = 한 줄. 어느 칸도 줄을 접지 않는다. */
+        #member-tbody td { white-space: nowrap; }
+        #member-tbody .badge { white-space: nowrap; }
+        #member-tbody .btn-view { white-space: nowrap; }
+        .member-cell-empty { color: #ccc; }
+        /* 긴 이름·이메일은 접는 대신 잘라내고, 전체는 title 로 띄운다. */
+        .member-name-cell { font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
+        .member-email-address { font-size: 11px; color: #888; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        .member-email-cell { white-space: nowrap; }
+        .member-email-tags { display: inline-flex; gap: 4px; }
+        .member-email-tag {
+            display: inline-block; padding: 3px 7px; border-radius: 999px;
+            background: #F3E5F5; color: #6A1B9A; font-size: 11px; font-weight: 700;
+            cursor: help;
+        }
         .member-pagination { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 12px; font-size: 13px; flex-wrap: wrap; }
         .member-pagination-meta { color: #666; }
         .member-pagination-controls { display: flex; align-items: center; gap: 10px; }
@@ -926,39 +930,27 @@
         return { normalizedLog, sentEntries };
     }
 
-    function renderMemberEmailItem(entry, fallbackEmail = '') {
-        const subject = escapeHtml(entry.subject || `${entry.days}일 미활동 이메일`);
-        const summary = escapeHtml(entry.summary || '');
-        const recipientEmail = escapeHtml(entry.recipientEmail || fallbackEmail || '-');
-        const methodLabel = escapeHtml(getReEngagementMethodLabel(entry.method));
-        const previewHtml = entry.html
-            ? `<div class="member-email-preview">${entry.html}</div>`
-            : `<div class="member-email-preview">저장된 본문이 없습니다.</div>`;
-
-        return `
-            <div class="member-email-item">
-                <div class="member-email-head">
-                    <div class="member-email-day">${entry.days}일</div>
-                    <div class="member-email-date">${escapeHtml(formatAdminDateTime(entry.sentAt))}</div>
-                </div>
-                <div class="member-email-meta">${recipientEmail} · ${methodLabel}</div>
-                <details class="member-email-details">
-                    <summary>${subject}</summary>
-                    ${summary ? `<div class="member-email-summary">${summary}</div>` : ''}
-                    ${previewHtml}
-                </details>
-            </div>
-        `;
+    // 목록은 한 눈에 훑는 자리다. 제목·요약·본문 미리보기는 상세 모달의
+    // '📧 3일 / 7일 미활동 이메일 이력' 이 이미 똑같이 보여주고 있어서, 여기서
+    // 또 그리면 회원 한 명이 화면 한 통을 차지한다. 여기서는 '보냈나, 언제' 만.
+    function renderMemberEmailTag(entry, fallbackEmail = '') {
+        const sentAt = toJsDate(entry.sentAt);
+        const label = sentAt
+            ? `${String(sentAt.getMonth() + 1).padStart(2, '0')}.${String(sentAt.getDate()).padStart(2, '0')}`
+            : '?';
+        const title = [
+            `${entry.days}일 미활동`,
+            formatAdminDateTime(entry.sentAt),
+            entry.recipientEmail || fallbackEmail || '',
+            entry.subject || ''
+        ].filter(Boolean).join(' · ');
+        return `<span class="member-email-tag" title="${escapeHtml(title)}">${entry.days}일 ${label}</span>`;
     }
 
     function renderMemberEmailCell(emailLog, { email = '' } = {}) {
         const { sentEntries } = getMemberEmailEntries(emailLog, { email });
-        if (!sentEntries.length) return '';
-        return `
-            <div class="member-email-stack">
-                ${sentEntries.map((entry) => renderMemberEmailItem(entry, email)).join('')}
-            </div>
-        `;
+        if (!sentEntries.length) return '<span class="member-cell-empty">–</span>';
+        return `<div class="member-email-tags">${sentEntries.map((entry) => renderMemberEmailTag(entry, email)).join('')}</div>`;
     }
 
     function renderMemberPagination(totalRows) {
@@ -2209,16 +2201,9 @@
                 const nameFromLog = (!rawName.includes(' ') && rawName.length > 15) ? '' : rawName;
                 const name = m.customDisplayName || m.displayName || nameFromLog || uid.slice(0,8);
 
-                // 이메일 발송 배지
-                let emailBadge = '';
+                // 이름 옆 📧 배지는 '미활동 이메일' 칸과 같은 말을 두 번 하고,
+                // 이름 칸을 늘려 줄을 접게 만든다. 칸 하나로 모았다.
                 const emailLog = getNormalizedEmailLog(m.emailLog || {}, { email: m.email || '' });
-                const eLog = emailLog;
-                const sentAt = toJsDate(eLog?.lastSentAt);
-                if (sentAt) {
-                    const daysAgo = Math.floor((new Date() - sentAt) / 86400000);
-                    const color = daysAgo <= 7 ? '#ff9800' : '#bbb';
-                    emailBadge = `<span style="font-size:10px;color:${color};margin-left:4px;">📧${daysAgo}일전</span>`;
-                }
 
                 const displayEmail =
                     m.email
@@ -2241,7 +2226,6 @@
                     sys,
                     dia,
                     msgBadge,
-                    emailBadge,
                     emailLog,
                     alert: glu >= 126 || sys >= 140,
                 });
@@ -2290,8 +2274,9 @@
         const pageRows = rows.slice(start, start + PAGE_SIZE_MEMBERS);
 
         tbody.innerHTML = pageRows.map(r => `<tr class="${r.alert?'alert-row':''}">
-            <td>${r.date}</td><td style="font-weight:bold;">${escapeHtml(r.name)}${r.emailBadge||''}</td>
-            <td style="font-size:11px;color:#888;">${escapeHtml(r.email)}</td>
+            <td>${r.date}</td>
+            <td class="member-name-cell" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</td>
+            <td class="member-email-address" title="${escapeHtml(r.email)}">${escapeHtml(r.email)}</td>
             <td>Lv.${r.level}</td>
             <td>🔥${r.streak}</td><td>${r.coins.toLocaleString()}</td><td>${r.hbt.toLocaleString()}</td>
             <td>${renderMemberOnchainHbtCell(r.uid)}</td>
