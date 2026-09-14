@@ -1345,7 +1345,7 @@ body.dark-mode .weekly-activity-note { color: #7C7688; }
 /* 운동 시간 입력 */
 body.dark-mode .exercise-duration { background: #2A2028; border-color: #4A3524; }
 body.dark-mode .exercise-duration-label { color: #FFB566; }
-body.dark-mode .exercise-duration-input { background: #1E1B24; border-color: #4A3524; color: #EDEAF2; }
+body.dark-mode .exercise-duration-row .exercise-duration-input { background: #1E1B24; border-color: #4A3524; color: #EDEAF2; }
 body.dark-mode .exercise-duration-unit { color: #C0A080; }
 body.dark-mode .exercise-duration-chip { background: #1E1B24; border-color: #4A3524; color: #FFB566; }
 body.dark-mode .exercise-duration-chip:active { background: #3A2C20; }

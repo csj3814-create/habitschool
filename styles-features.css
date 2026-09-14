@@ -7440,8 +7440,12 @@ body.dark-mode #gallery-feed-end {
     flex-wrap: wrap;
 }
 
-.exercise-duration-input {
-    width: 64px;
+/* 전역 input[type="number"] { width: 100% } 가 특이도 (0,1,1) 로 클래스 하나를
+   이긴다. 부모 클래스를 붙여 (0,2,0) 으로 올린다 — 안 그러면 "30" 한 글자를
+   담는 칸이 화면 너비를 통째로 차지한다. */
+.exercise-duration-row .exercise-duration-input {
+    flex: 0 0 auto;
+    width: 68px;
     padding: 7px 8px;
     font-size: 15px;
     font-weight: 700;
