@@ -65,7 +65,26 @@ describe('an uploaded photo analyses itself', () => {
 
     it('skips the rate limit that exists to stop double-clicks', () => {
         const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
-        expect(meal).toContain("if (!auto && !checkRateLimit('analyzeMealPhoto', 3000))");
+        expect(meal).toContain('!auto && !checkRateLimit(');
+        expect(meal).toContain('analyzeMealPhoto:');
+    });
+
+    it('rate-limits the request, not the fold-away', () => {
+        // 2026-09-14 질문: "분석 보기/접기도 3초 제한이 있나?" 맨 위에서 막고 있어서
+        // 화면만 여닫는 토글까지 "잠시 후 다시 시도해주세요" 를 만났다.
+        const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
+        const toggle = meal.indexOf('if (resultContainer._analysisData');
+        const limit = meal.indexOf('checkRateLimit(');
+        const request = meal.indexOf('await requestDietAnalysis(');
+        expect(toggle).toBeGreaterThan(-1);
+        expect(limit).toBeGreaterThan(toggle);
+        expect(limit).toBeLessThan(request);
+    });
+
+    it('counts each meal on its own', () => {
+        // 아침을 분석하고 점심을 누르는 것은 연타가 아니다.
+        const meal = app.split('async function analyzeMealPhoto(')[1].split('\n};\n')[0];
+        expect(meal).not.toContain("checkRateLimit('analyzeMealPhoto',");
     });
 
     it('says nothing when there is no photo to read', () => {
