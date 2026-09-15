@@ -142,11 +142,50 @@ describe('a prescription is written from this member, or not written', () => {
         expect(draftFor(drafts, 'streak')).toBeUndefined();
     });
 
-    it('reads a three-digit streak differently from a one-week one', () => {
-        const long = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 157, todayStr: TODAY });
-        expect(draftFor(long, 'streak').message).toContain('세 자리까지');
-        const short = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 9, todayStr: TODAY });
-        expect(draftFor(short, 'streak').message).toContain('2주를 넘기면');
+    // 2026-09-15 지적: "66일 연속 기록을 축하하면서 응원을 해야 하는 메세지가
+    // 나와야 하는데 엉뚱한 이야기를 하고 있어."
+    //
+    // 분기가 100일 기준 둘뿐이라 66일째인 분이 "2주를 넘기면…" 을 받았고,
+    // 둘째 줄은 통째로 '혹시 끊기더라도' 였다 — 축하 자리에서 실패를 먼저 꺼냈다.
+    const streakMessage = (days) => draftFor(
+        buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: days, todayStr: TODAY }),
+        'streak'
+    ).message;
+
+    it('congratulates instead of warning about breaking the run', () => {
+        for (const days of [7, 10, 14, 30, 66, 100, 365]) {
+            const message = streakMessage(days);
+            for (const wrong of ['혹시 끊기더라도', '빠뜨린 날이', '다시 세면']) {
+                expect(message, `${days}일 · ${wrong}`).not.toContain(wrong);
+            }
+        }
+        expect(streakMessage(66)).toContain('축하');
+    });
+
+    it('measures the run in a unit that fits its length', () => {
+        expect(streakMessage(7)).toContain('일주일을 채우셨습니다');
+        // 10일에게 "일주일을 채우셨습니다" 는 사흘을 빠뜨리고 세는 말이다.
+        expect(streakMessage(10)).toContain('일주일을 넘기셨습니다');
+        expect(streakMessage(21)).toContain('3주째');
+        expect(streakMessage(66)).toContain('2개월 넘게');
+        expect(streakMessage(365)).toContain('1년을');
+        expect(streakMessage(730)).toContain('2년을');
+    });
+
+    it('never tells a two-month member what happens at two weeks', () => {
+        // 66일째인 분께 "2주를 넘기면" 은 엉뚱한 말이다.
+        expect(streakMessage(66)).not.toContain('2주를 넘기면');
+        expect(streakMessage(66)).not.toContain('첫 주가');
+        // 반대로 일주일째인 분께 세 자리 이야기를 하지 않는다.
+        expect(streakMessage(7)).not.toContain('손에 꼽');
+    });
+
+    it('does not repeat the same ending twice in one line', () => {
+        // "…기록하고 계십니다. 2주째 이어오고 계십니다." 로 겹쳐 읽혔다.
+        for (const days of [14, 21, 45]) {
+            const first = streakMessage(days).split(String.fromCharCode(10))[0];
+            expect(first.split('계십니다').length - 1, `${days}일`).toBe(1);
+        }
     });
 
     it('carries the evidence so it can be checked before sending', () => {

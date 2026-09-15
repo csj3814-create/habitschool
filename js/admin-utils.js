@@ -692,6 +692,36 @@ export function withJosa(text, kind) {
 const PRESCRIPTION_STREAK_MILESTONES = [365, 300, 200, 150, 100, 50, 30, 14, 7];
 
 /**
+ * 연속 기록을 사람이 쓰는 단위로 옮긴다. "66일" 은 숫자일 뿐이고
+ * "두 달 넘게" 가 그 사람이 한 일이다.
+ */
+function streakSpanText(days) {
+    if (days >= 365) return `${Math.floor(days / 365)}년을 하루도 빠뜨리지 않으셨습니다.`;
+    if (days >= 60) return `${Math.floor(days / 30)}개월 넘게 하루도 빠뜨리지 않으셨습니다.`;
+    // '2주째 이어오고 계십니다' 로 쓰면 앞 문장의 '계십니다' 와 겹쳐 읽힌다.
+    if (days >= 14) return `${Math.floor(days / 7)}주째입니다.`;
+    // 10일에게 "일주일을 채우셨습니다" 는 사흘을 빠뜨리고 세는 말이다.
+    return days === 7 ? "일주일을 채우셨습니다." : "일주일을 넘기셨습니다.";
+}
+
+/**
+ * 축하와 응원. **끊길 때 이야기는 하지 않는다.**
+ *
+ * 2026-09-15 지적: "66일 연속 기록을 축하하면서 응원을 해야 하는 메세지가
+ * 나와야 하는데 엉뚱한 이야기를 하고 있어."
+ *
+ * 그 전 문장은 66일째인 분께 "2주를 넘기면…" 이라고 했고(분기가 100일 기준
+ * 둘뿐이라 7일과 99일이 같은 말을 받았다), 둘째 줄은 통째로 '혹시 끊기더라도'
+ * 였다. 축하 자리에서 실패를 먼저 꺼낸 셈이다.
+ */
+function streakCheerText(days) {
+    if (days >= 100) return "이만큼 오신 분은 손에 꼽습니다. 축하드립니다.";
+    if (days >= 30) return "여기까지 오시는 분이 많지 않습니다. 축하드리고, 지금 흐름 그대로 가시면 됩니다.";
+    if (days >= 14) return "가장 어려운 구간을 지나셨습니다. 지금 흐름 그대로 가시면 됩니다.";
+    return "첫 주가 제일 어렵습니다. 여기서부터는 훨씬 수월해지니 지금 흐름 그대로 가시면 됩니다.";
+}
+
+/**
  * 지표마다 맞는 동사가 있다. 걸음수는 '늘리고' 혈당은 '내리고' 체지방은 '줄인다'.
  * 전부 '올라섰습니다' 로 쓰면 틀에서 뽑은 글이라는 게 한 줄 만에 읽힌다.
  *
@@ -1026,12 +1056,9 @@ export function buildAdminPrescriptionDrafts({
             evidence: `연속 기록 ${streakDays}일`,
             // 100일과 7일은 같은 말을 들을 일이 아니다. 마일스톤 자릿수로 가른다.
             score: 25 + Math.min(20, Math.round(Math.log10(Math.max(milestone, 1)) * 10)),
-            summary: `${streakDays}일 연속 기록`,
-            message: `${streakDays}일 연속으로 기록하고 계십니다. `
-                + `${milestone >= 100
-                    ? "세 자리까지 오신 분은 손에 꼽습니다."
-                    : "2주를 넘기면 빠뜨린 날이 오히려 신경 쓰이기 시작합니다."}\n`
-                + `혹시 끊기더라도 그날부터 다시 세면 됩니다. 지금까지 쌓은 기록은 그대로 남습니다.`,
+            summary: `${streakDays}일 연속 기록, 축하드립니다`,
+            message: `${streakDays}일 연속으로 기록하고 계십니다. ${streakSpanText(streakDays)}\n`
+                + streakCheerText(streakDays),
         });
     }
 
