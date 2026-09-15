@@ -167,12 +167,19 @@ function buildDietAnalysisFields(analysis) {
 function buildExerciseAnalysisFields(analysis) {
     if (!isRecord(analysis)) return [];
     const fields = [];
+    // 운동이 아니라고 판정된 것도 관제탑에서는 보여준다 — 왜 점수에 안 잡히는지
+    // 물어오는 제보가 여기서 풀린다.
+    if (analysis.isExercise === false) {
+        addAnalysisField(fields, "판정", "운동으로 보이지 않음");
+    }
+    addAnalysisField(fields, "적은 운동 시간", analysis.enteredDurationMinutes, "분");
     addAnalysisField(fields, "강도", analysis.intensity);
     addAnalysisField(fields, "운동 종류", analysis.exerciseType);
+    addAnalysisField(fields, "반복 횟수", analysis.repCount, "회");
     addAnalysisField(fields, "시간 분석", analysis.timeAnalysis);
-    if (analysis.recommendedDailyProgress !== null && analysis.recommendedDailyProgress !== undefined) {
-        addAnalysisField(fields, "권장량 달성률", analysis.recommendedDailyProgress, "%");
-    }
+    // 2026-09-14 에 '하루 30분' 자를 없애고 '주 150분 대비 적립 분'으로 바꿨다.
+    // 관제탑만 옛 필드를 읽고 있어 새 기록에서는 아무것도 안 보였다.
+    addAnalysisField(fields, "적립 분(강도 환산)", analysis.weightedMinutes, "분");
     addAnalysisField(fields, "피드백", analysis.feedback);
     addAnalysisField(fields, "자세 팁", analysis.formTip);
     return fields;
@@ -238,10 +245,17 @@ export function collectAdminDailyLogAnalyses(log = {}) {
         ["근력 운동", Array.isArray(exercise.strengthList) ? exercise.strengthList : []],
     ].forEach(([label, list]) => {
         list.forEach((item, index) => {
+            // 사용자가 적은 운동 시간은 분석이 아니라 기록 자체에 붙어 있다.
+            // 주간 활동분의 실제 입력이 이 값이라, 분석이 없어도 보여야 한다.
+            const enteredMinutes = Number(item?.durationMinutes);
+            const analysis = item?.aiAnalysis || item?.analysis;
+            const merged = Number.isFinite(enteredMinutes) && enteredMinutes > 0
+                ? { ...(isRecord(analysis) ? analysis : {}), enteredDurationMinutes: Math.round(enteredMinutes) }
+                : analysis;
             hasCurrentExerciseAnalysis = addAdminAnalysis(items, {
                 kind: "exercise",
                 label: `${label} ${index + 1}`,
-                analysis: item?.aiAnalysis || item?.analysis,
+                analysis: merged,
                 buildFields: buildExerciseAnalysisFields,
             }) || hasCurrentExerciseAnalysis;
         });

@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=406';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=406';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=407';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=407';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=406';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=406';
+} from './auth-login-helpers.js?v=407';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=407';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=406';
+} from './exercise-media.js?v=407';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=406';
+} from './health-connect-utils.js?v=407';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=406';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=406';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=406';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=406';
-import { sanitize, compressImage } from './data-manager.js?v=406';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=406';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=406';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=406';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=406';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=406';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=406';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=406';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=406';
+} from './habit-groups.js?v=407';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=407';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=407';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=407';
+import { sanitize, compressImage } from './data-manager.js?v=407';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=407';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=407';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=407';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=407';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=407';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=407';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=407';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=407';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=406';
+} from './guest-demo.js?v=407';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=406';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=406';
+} from './product-events.js?v=407';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=407';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=406';
+} from './diet-program.js?v=407';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=406';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=406';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=406';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=406';
+} from './meditation-guide.js?v=407';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=407';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=407';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=407';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=406';
+} from './social-challenge-readiness.js?v=407';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=406';
+} from './monthly-mvp-reward.js?v=407';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=406';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=407';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -23885,31 +23885,34 @@ function collectGalleryMedia(data) {
                 addedUrls.add(url);
             }
         };
-        const addVid = (url, thumbUrl) => {
+        const addVid = (url, thumbUrl, aiAnalysis) => {
             if (url && !addedUrls.has(url) && isValidStorageUrl(url)) {
                 const safeUrl = escapeHtml(url);
                 const localThumb = findLocalExerciseVideoThumb(url);
                 const resolvedThumb = localThumb || ((thumbUrl && isValidStorageUrl(thumbUrl)) ? thumbUrl : '');
-                if (resolvedThumb) {
-                    const safeThumb = escapeHtml(resolvedThumb);
-                    result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
-                        <img src="${safeThumb}" alt="운동 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">
-                        <div class="video-play-btn">&#9654;</div>
-                    </div>`;
-                } else {
-                    result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}" onclick="playGalleryVideo(this)">
-                        <video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video>
-                        <div class="video-play-btn">&#9654;</div>
-                    </div>`;
-                }
+                // 영상도 사진과 같은 오버레이를 받는다. 자세·강도는 영상에서만 나오는데
+                // 정작 갤러리에서는 볼 수 없었다.
+                const hasAi = aiAnalysis != null;
+                const aiAttr = hasAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(aiAnalysis))))}"` : '';
+                const aiBtn = hasAi
+                    ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button><div class="gallery-ai-overlay" style="display:none;"></div>'
+                    : '';
+                const inner = resolvedThumb
+                    ? `<img src="${escapeHtml(resolvedThumb)}" alt="운동 영상 썸네일" loading="lazy" decoding="async" onerror="handleThumbFallback(this)">`
+                    : `<video src="${safeUrl}#t=0.1" preload="metadata" muted playsinline aria-label="운동 영상"></video>`;
+                result.exerciseHtml += `<div class="gallery-media-wrapper video-thumb-wrapper" data-video-src="${safeUrl}"${aiAttr} onclick="playGalleryVideo(this)">
+                    ${inner}
+                    <div class="video-play-btn">&#9654;</div>
+                    ${aiBtn}
+                </div>`;
                 addedUrls.add(url);
             }
         };
 
         addImg(data.exercise.cardioImageUrl, data.exercise.cardioImageThumbUrl, null);
-        addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl);
+        addVid(data.exercise.strengthVideoUrl, data.exercise.strengthVideoThumbUrl, null);
         if (data.exercise.cardioList) data.exercise.cardioList.forEach(c => addImg(c.imageUrl, c.imageThumbUrl, c.aiAnalysis));
-        if (data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl));
+        if (data.exercise.strengthList) data.exercise.strengthList.forEach(s => addVid(s.videoUrl, s.videoThumbUrl, s.aiAnalysis));
     }
 
     // 마음 미디어 (썸네일 우선) - 클릭 시 확대 + AI분석 오버레이

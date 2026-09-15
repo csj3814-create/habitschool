@@ -165,6 +165,38 @@ function normalizeMediaId(value, fallback) {
     return fallback;
 }
 
+// 갤러리가 운동 분석을 보여줄 수 있게 함께 내보낸다.
+// 식단(normalizeDietAnalysis)은 이미 내보내는데 운동만 빠져 있었다. 그래서 화면의
+// '분석 확인' 버튼 코드가 있어도 운동 사진에는 영영 뜨지 않았다.
+// 화면이 실제로 쓰는 것만 추린다 — 원문을 통째로 실어 보내지 않는다.
+const EXERCISE_INTENSITY_WORDS = ["저강도", "중강도", "고강도", "초고강도"];
+
+function normalizeExerciseAnalysisEntry(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+    // 운동이 아니라고 판정된 것은 갤러리에 내보내지 않는다. 남들에게 보일 자리다.
+    if (raw.isExercise === false) return null;
+
+    const intensity = normalizeString(raw.intensity, 8);
+    if (!EXERCISE_INTENSITY_WORDS.includes(intensity)) return null;
+
+    const entry = { intensity };
+    const exerciseType = normalizeString(raw.exerciseType, 40);
+    if (exerciseType) entry.exerciseType = exerciseType;
+    const timeAnalysis = normalizeString(raw.timeAnalysis, 200);
+    if (timeAnalysis) entry.timeAnalysis = timeAnalysis;
+    const feedback = normalizeString(raw.feedback, 500);
+    if (feedback) entry.feedback = feedback;
+    const formTip = normalizeString(raw.formTip, 300);
+    if (formTip) entry.formTip = formTip;
+
+    const weighted = Number(raw.weightedMinutes);
+    if (Number.isFinite(weighted) && weighted > 0) entry.weightedMinutes = Math.min(1440, Math.round(weighted));
+    const reps = Number(raw.repCount);
+    if (Number.isFinite(reps) && reps > 0) entry.repCount = Math.min(999, Math.round(reps));
+
+    return entry;
+}
+
 function normalizeExerciseList(rawItems, {
     ownerId,
     kind,
@@ -191,6 +223,9 @@ function normalizeExerciseList(rawItems, {
         };
         const thumbUrl = normalizeMediaUrl(source[thumbKey], ownerId, thumbFolder, allowedStorageBuckets);
         if (thumbUrl) item[thumbKey] = thumbUrl;
+
+        const analysis = normalizeExerciseAnalysisEntry(source.aiAnalysis);
+        if (analysis) item.aiAnalysis = analysis;
 
         seenUrls.add(originalUrl);
         result.push(item);
