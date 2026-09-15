@@ -447,3 +447,153 @@ export default {
     getReEngagementMethodLabel,
     normalizeAdminEmailLog,
 };
+
+// ── 하루 등급 (식단 · 운동 · 수면) ──────────────────────────────
+//
+// 관제탑에서 회원을 열면 30일치 카드가 쭉 나오는데, 잘하고 있는지 알려면 카드마다
+// 'AI 분석 결과' 아코디언을 하나씩 펼쳐야 했다. 하루에 넷씩, 30일이면 백 번이다.
+// 카드 머리에 A~F 한 글자씩 붙여 훑어서 읽히게 한다.
+//
+// 자를 새로 만들지 않는다. 식단·수면은 AI 가 이미 A~F 를 준다. 운동만 등급이
+// 없어서, 건강습관 점수(LE8)가 쓰는 주 150분 문턱을 하루치로 나눠 쓴다 —
+// 같은 자를 다른 창으로 보는 것이지 새 기준이 아니다.
+
+const GRADE_LETTERS = ["A", "B", "C", "D", "F"];
+const GRADE_POINTS = { A: 5, B: 4, C: 3, D: 2, F: 1 };
+
+// js/le8-score.js 의 신체활동 문턱(주 150/120/90/60/30분)을 7로 나눈 값.
+// 그 파일은 브라우저 ESM 이고 여기는 관제탑이 쓰는 순수 모듈이라 값을 옮겨 적는다.
+// 어긋나면 화면 두 곳이 다른 말을 하므로 테스트가 둘을 묶어 둔다.
+const WEEKLY_ACTIVITY_TARGET_MINUTES = 150;
+const DAILY_ACTIVITY_GRADE_THRESHOLDS = [
+    ["A", 150 / 7],
+    ["B", 120 / 7],
+    ["C", 90 / 7],
+    ["D", 30 / 7],
+];
+
+function normalizeGradeLetter(value) {
+    const letter = String(value || "").trim().toUpperCase();
+    return GRADE_LETTERS.includes(letter) ? letter : null;
+}
+
+function averageGrade(letters) {
+    const points = letters.map((l) => GRADE_POINTS[l]).filter(Boolean);
+    if (!points.length) return null;
+    const mean = points.reduce((sum, p) => sum + p, 0) / points.length;
+    // 반올림하면 B 와 C 사이가 B 로 올라간다. 내림이 회원에게 더 정직하다.
+    const rounded = Math.max(1, Math.min(5, Math.floor(mean + 0.5)));
+    return GRADE_LETTERS[5 - rounded];
+}
+
+/** 그날 식단 등급. 여러 끼니면 평균을 한 글자로 접는다. */
+export function resolveDietDayGrade(log = {}) {
+    const analysis = isRecord(log?.dietAnalysis) ? log.dietAnalysis : {};
+    const letters = ["breakfast", "lunch", "dinner", "snack"]
+        .map((meal) => normalizeGradeLetter(analysis?.[meal]?.grade))
+        .filter(Boolean);
+    if (!letters.length) return null;
+    return { grade: averageGrade(letters), detail: `${letters.length}끼 · ${letters.join(" ")}` };
+}
+
+/** 그날 수면 등급. AI 가 준 값을 그대로 쓴다. */
+export function resolveSleepDayGrade(log = {}) {
+    const sleep = isRecord(log?.sleepAndMind) ? log.sleepAndMind : {};
+    const grade = normalizeGradeLetter(sleep?.sleepAnalysis?.grade);
+    if (!grade) return null;
+    const hours = Number(sleep?.sleepHours);
+    return {
+        grade,
+        detail: Number.isFinite(hours) && hours > 0 ? `${hours}시간` : "수면 분석",
+    };
+}
+
+/**
+ * 그날 운동 등급.
+ *
+ * 활동분을 7배 해 '이 페이스를 일주일 유지하면' 으로 환산하고, 건강습관 점수가
+ * 쓰는 주 150분 문턱에 맞춘다. 하루 21분이 곧 주 150분이다.
+ *
+ * 활동분 계산은 js/le8-score.js 의 resolveDailyActivityMinutes 와 같아야 한다.
+ * 관제탑은 그 모듈을 싣지 않으므로 최소한만 옮겨 적는다.
+ */
+export function resolveExerciseDayGrade(log = {}, { dailyMinutes = null } = {}) {
+    const minutes = Number.isFinite(dailyMinutes) ? dailyMinutes : estimateDailyActivityMinutes(log);
+    if (minutes === null) return null;
+
+    const rounded = Math.round(minutes);
+    const found = DAILY_ACTIVITY_GRADE_THRESHOLDS.find(([, floor]) => minutes >= floor);
+    return {
+        grade: found ? found[0] : "F",
+        detail: `${rounded}분 · 주 ${Math.round(minutes * 7)}분 페이스`,
+    };
+}
+
+const EXERCISE_INTENSITY_MINUTE_WEIGHTS = { "저강도": 0.5, "중강도": 1, "고강도": 2, "초고강도": 3 };
+const STEP_OVERLAPPING_EXERCISE_KEYWORDS = [
+    "걷기", "걷", "산책", "달리기", "달리", "조깅", "러닝", "등산", "트레킹",
+    "마라톤", "러닝머신", "트레드밀", "워킹", "하이킹", "계단",
+];
+const MAX_MEDIA_MINUTES_PER_DAY = 120;
+const DEFAULT_MEDIA_MINUTES_PER_UNIT = 30;
+
+function itemMinutes(item) {
+    const entered = Number(item?.durationMinutes);
+    if (Number.isFinite(entered) && entered > 0) {
+        const weight = EXERCISE_INTENSITY_MINUTE_WEIGHTS[item?.aiAnalysis?.intensity] || 1;
+        return Math.min(MAX_MEDIA_MINUTES_PER_DAY, entered * weight);
+    }
+    const weighted = Number(item?.aiAnalysis?.weightedMinutes);
+    if (Number.isFinite(weighted) && weighted > 0) return Math.min(MAX_MEDIA_MINUTES_PER_DAY, weighted);
+    return DEFAULT_MEDIA_MINUTES_PER_UNIT;
+}
+
+function isStepOverlapping(item) {
+    const type = String(item?.aiAnalysis?.exerciseType || "").trim();
+    if (!type) return true;
+    return STEP_OVERLAPPING_EXERCISE_KEYWORDS.some((keyword) => type.includes(keyword));
+}
+
+/** 기록이 하나도 없으면 null — '안 했다'가 아니라 '모른다'이다. */
+function estimateDailyActivityMinutes(log = {}) {
+    const steps = isRecord(log?.steps) ? log.steps : {};
+    const exercise = isRecord(log?.exercise) ? log.exercise : {};
+    const cardio = Array.isArray(exercise.cardioList) ? exercise.cardioList : [];
+    const strength = Array.isArray(exercise.strengthList) ? exercise.strengthList : [];
+
+    const active = Number(steps.active_minutes);
+    const count = Number(steps.count);
+    const hasSteps = Number.isFinite(active) || Number.isFinite(count);
+    if (!hasSteps && !cardio.length && !strength.length) return null;
+
+    let stepMinutes = 0;
+    if (Number.isFinite(active)) stepMinutes = active;
+    else if (Number.isFinite(count)) stepMinutes = Math.min(120, Math.max(0, (count - 4000) / 100));
+
+    let overlapping = 0;
+    let separate = 0;
+    cardio.forEach((item) => {
+        const minutes = itemMinutes(item);
+        if (isStepOverlapping(item)) overlapping += minutes; else separate += minutes;
+    });
+    strength.forEach((item) => {
+        const minutes = itemMinutes(item);
+        const knownType = String(item?.aiAnalysis?.exerciseType || "").trim();
+        if (knownType && isStepOverlapping(item)) overlapping += minutes; else separate += minutes;
+    });
+
+    overlapping = Math.min(MAX_MEDIA_MINUTES_PER_DAY, overlapping);
+    separate = Math.min(MAX_MEDIA_MINUTES_PER_DAY, separate);
+    return Math.max(stepMinutes, overlapping) + separate;
+}
+
+/** 카드 머리에 붙일 세 등급. 기록이 없는 항목은 자리를 비운다. */
+export function resolveDailyGrades(log = {}) {
+    return {
+        diet: resolveDietDayGrade(log),
+        exercise: resolveExerciseDayGrade(log),
+        sleep: resolveSleepDayGrade(log),
+    };
+}
+
+export const ADMIN_DAILY_GRADE_TARGET_MINUTES = WEEKLY_ACTIVITY_TARGET_MINUTES;
