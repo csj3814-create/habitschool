@@ -173,3 +173,68 @@ describe('the weekly bar sits where the recording happens', () => {
         expect(fn).toContain('하루 ${perDayNeeded}분씩이면 채워요');
     });
 });
+
+// 2026-09-15: 걸음수와 운동기록을 큰 쪽만 쓰던 규칙을 종류별로 나눴다.
+// 90일 실측 결과 근력 영상이 있는 367일 중 204일(55.6%)에서 그날 한 운동이
+// 걸음수에 가려 사라지고 있었다 — 하루 평균 34분, 합계 6,977분.
+// 포인트(사진 1장 = 10점, 하루 30점 상한)와는 무관하다. 서버는 이 함수를 모른다.
+describe('steps explain a walk, not a workout', () => {
+    it('adds strength to steps instead of choosing one', () => {
+        // 8,000보(40분) 걷고 근력 한 건(30분) 한 사람은 70분을 움직였다.
+        expect(resolveDailyActivityMinutes({
+            steps: { count: 8000 },
+            exercise: { strengthList: [{}] }
+        }).minutes).toBe(70);
+    });
+
+    it('still refuses to count the same walk twice', () => {
+        // 종류를 모르는 유산소는 그 걸음수가 설명하는 산책일 수 있다.
+        expect(resolveDailyActivityMinutes({
+            steps: { count: 8000 },
+            exercise: { cardioList: [{}] }
+        }).minutes).toBe(40);
+        // 달리기라고 읽혔으면 더더욱 겹친다.
+        expect(resolveDailyActivityMinutes({
+            steps: { count: 8000 },
+            exercise: { cardioList: [{ durationMinutes: 20, aiAnalysis: { exerciseType: '달리기', intensity: '중강도' } }] }
+        }).minutes).toBe(40);
+    });
+
+    it('adds a workout the step count cannot see', () => {
+        // 자전거는 페달을 밟지 걸음을 만들지 않는다.
+        expect(resolveDailyActivityMinutes({
+            steps: { count: 8000 },
+            exercise: { cardioList: [{ durationMinutes: 40, aiAnalysis: { exerciseType: '자전거', intensity: '중강도' } }] }
+        }).minutes).toBe(80);
+        expect(resolveDailyActivityMinutes({
+            steps: { count: 8000 },
+            exercise: { cardioList: [{ durationMinutes: 30, aiAnalysis: { exerciseType: '수영', intensity: '고강도' } }] }
+        }).minutes).toBe(100);
+    });
+
+    it('treats an unknown type as overlapping, so old records do not move', () => {
+        // 분석 이전 기록에는 exerciseType 이 없다. 그 숫자가 갑자기 바뀌면 안 된다.
+        const before = resolveDailyActivityMinutes({
+            steps: { count: 12000 },
+            exercise: { cardioList: [{}, {}] }
+        }).minutes;
+        expect(before).toBe(80); // max(80, 60) — 예전과 같다
+    });
+
+    it('caps each side so one day cannot claim the week', () => {
+        const day = resolveDailyActivityMinutes({
+            steps: { count: 20000 },
+            exercise: {
+                cardioList: [{ durationMinutes: 300, aiAnalysis: { exerciseType: '자전거', intensity: '초고강도' } }],
+                strengthList: [{ durationMinutes: 300, aiAnalysis: { intensity: '초고강도' } }]
+            }
+        }).minutes;
+        // 걸음수 120 상한 + 안 겹치는 쪽 120 상한
+        expect(day).toBe(240);
+    });
+
+    it('says nothing when there is nothing', () => {
+        expect(resolveDailyActivityMinutes({}).minutes).toBe(0);
+        expect(resolveDailyActivityMinutes({}).hasSignal).toBe(false);
+    });
+});

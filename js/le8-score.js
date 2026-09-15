@@ -164,6 +164,25 @@ export const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
 const MAX_MEDIA_MINUTES_PER_DAY = 120;
 const DEFAULT_MEDIA_MINUTES_PER_UNIT = 30;
 
+// 걸음수가 이미 세어 주는 운동인가.
+//
+// 걸음수와 운동 기록을 큰 쪽만 쓰던 이유는 같은 산책이 양쪽에 잡히기 때문이고,
+// 걷기·달리기에는 맞다. 근력·수영·자전거는 걸음을 만들지 않으므로 겹치지 않는다.
+// 2026-09-15 측정(90일, 회원 101명): 근력 영상이 있는 367일 중 204일(55.6%)에서
+// 그날 한 운동이 걸음수에 가려 사라지고 있었다. 하루 평균 34분.
+const STEP_OVERLAPPING_EXERCISE_KEYWORDS = Object.freeze([
+    '걷기', '걷', '산책', '달리기', '달리', '조깅', '러닝', '등산', '트레킹',
+    '마라톤', '러닝머신', '트레드밀', '워킹', '하이킹', '계단'
+]);
+
+// 종류를 모르면 '겹친다'고 본다. 부풀리는 쪽으로 틀리지 않기 위해서다 —
+// 덕분에 AI 분석 이전의 유산소 기록은 숫자가 그대로다.
+function isStepOverlappingExercise(item) {
+    const exerciseType = String(item?.aiAnalysis?.exerciseType || '').trim();
+    if (!exerciseType) return true;
+    return STEP_OVERLAPPING_EXERCISE_KEYWORDS.some((keyword) => exerciseType.includes(keyword));
+}
+
 // 운동 기록 한 건이 몇 분인가. 아는 사람 순서대로 묻는다.
 //
 // 1. 사용자가 적은 시간. 한 번 누른 값이 지어낸 값보다 낫다. 특히 하이퍼랩스는
@@ -210,15 +229,31 @@ export function resolveDailyActivityMinutes(log) {
         stepMinutes = count !== null ? Math.min(120, Math.max(0, (count - 4000) / 100)) : 0;
     }
 
-    const mediaItems = [].concat(exercise.cardioList || [], exercise.strengthList || []);
-    if (mediaItems.length > 0) hasSignal = true;
-    const mediaMinutes = Math.min(
-        MAX_MEDIA_MINUTES_PER_DAY,
-        mediaItems.reduce((sum, item) => sum + resolveExerciseItemMinutes(item), 0)
-    );
+    const cardioItems = exercise.cardioList || [];
+    const strengthItems = exercise.strengthList || [];
+    if (cardioItems.length > 0 || strengthItems.length > 0) hasSignal = true;
 
-    // 걸음수와 운동 사진이 같은 산책을 가리킬 수 있어 합치지 않고 큰 쪽만 쓴다.
-    return { minutes: Math.max(stepMinutes, mediaMinutes), usedHealthApp, hasSignal };
+    // 걸음수가 세어 주는 운동과 그렇지 않은 운동을 나눈다.
+    let overlappingMinutes = 0;
+    let separateMinutes = 0;
+    cardioItems.forEach((item) => {
+        const minutes = resolveExerciseItemMinutes(item);
+        if (isStepOverlappingExercise(item)) overlappingMinutes += minutes;
+        else separateMinutes += minutes;
+    });
+    // 근력 영상은 언제나 따로 센다. 역기를 든다고 걸음수가 오르지 않는다.
+    strengthItems.forEach((item) => { separateMinutes += resolveExerciseItemMinutes(item); });
+
+    overlappingMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, overlappingMinutes);
+    separateMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, separateMinutes);
+
+    // 같은 산책을 두 번 세지 않으려면 겹치는 쪽은 큰 것만 쓴다. 걸음수가 설명하지
+    // 못하는 운동은 더한다 — 걸음수가 근력 한 시간을 설명하지는 않는다.
+    return {
+        minutes: Math.max(stepMinutes, overlappingMinutes) + separateMinutes,
+        usedHealthApp,
+        hasSignal
+    };
 }
 
 /**
