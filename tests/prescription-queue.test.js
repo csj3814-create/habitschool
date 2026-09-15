@@ -96,7 +96,8 @@ describe('the exclusions the admin asked for are actually applied', () => {
     it('holds the same kind of draft back for four weeks', () => {
         expect(RUNTIME).toContain('const PRESCRIPTION_QUEUE_COOLDOWN_DAYS = 28;');
         // 근거는 admin_feedback 에 남는 draftKey 다. 직접 쓴 메시지는 종류가 없다.
-        expect(RUNTIME).toContain('if (!row.targetUserId || !row.draftKey) return;');
+        const reader = RUNTIME.split('async function readRecentPrescriptionFeedback(todayStr) {')[1].split('\n}\n')[0];
+        expect(reader).toContain('if (!row.draftKey) return;');
         const fn = ADMIN.split('function topPrescriptionFor(member, todayStr, cooldownDays) {')[1].split('\n    }\n')[0];
         expect(fn).toContain('!(sent[draft.key] && sent[draft.key] >= cut)');
     });
@@ -125,11 +126,36 @@ describe('what was sent is remembered so it is not sent twice', () => {
         expect(ADMIN).toContain("pendingDraftKey = '';");
     });
 
-    it('hides a row as soon as it is sent, without a full recount', () => {
+    it('survives a refresh — the sent history is never served from the cache', () => {
+        // 2026-09-15 보고: "보내고 다시 새로고침 하니까 그대로 뜨네?"
+        // 30분 캐시된 재료에 방금 보낸 것이 없어 보내기 전 목록이 그대로 나왔다.
+        // 무거운 것(63일치 로그·추이)만 캐시하고 발송 이력은 매번 새로 읽는다.
+        const built = RUNTIME.split('async function buildAdminPrescriptionQueue(todayStr) {')[1].split('\n}\n')[0];
+        expect(built).not.toContain('admin_feedback');
+        expect(RUNTIME).toContain('async function readRecentPrescriptionFeedback(todayStr) {');
+
+        const callable = RUNTIME.split('exports.getAdminPrescriptionQueue = onCall(')[1].split('\n);')[0];
+        // 캐시를 내줄 때도 이력만은 새로 읽는다. 이 한 줄이 그 버그를 막는다.
+        expect(callable).toContain('const fresh = await readRecentPrescriptionFeedback(todayStr);');
+        expect(callable).toContain('...data, ...fresh');
+        // 이력을 캐시에 넣으면 다시 낡는다.
+        expect(callable).toContain('await cacheRef.set({ ...built,');
+        expect(callable).not.toContain('cacheRef.set({ ...built, ...fresh');
+    });
+
+    it('moves what was sent into the sent box instead of just hiding it', () => {
+        // 목록에서 사라진 것이 '보냈기 때문' 인지 '근거가 없어서' 인지 구분이 안 되면
+        // 같은 사람에게 또 보내게 된다.
+        expect(ADMIN).toContain('data-rxqf="sent"');
+        expect(ADMIN).toContain('function renderPrescriptionSentBox(term) {');
+        expect(ADMIN).toContain("if (prescriptionFilter === 'sent') {");
+
         const fn = ADMIN.split('async function sendPrescriptionFromQueue(uid, button) {')[1].split('\n    }\n')[0];
-        expect(fn).toContain('prescriptionSent.add(uid)');
-        expect(fn).toContain('entry.sentKeys = {');
-        expect(fn).toContain('renderPrescriptionQueue()');
+        // 화면 안 Set 으로만 가리면 새로고침에 사라진다. 서버가 새로 읽어 주는 값과
+        // 같은 자리를 채워야 새로고침 뒤에도 같은 판정이 나온다.
+        expect(fn).toContain('prescriptionQueue.sentKeysByUid[uid] = {');
+        expect(fn).toContain('prescriptionQueue.sentLog = prescriptionQueue.sentLog || []');
+        expect(ADMIN).not.toContain('prescriptionSent');
     });
 
     it('re-enables the button when the send fails', () => {

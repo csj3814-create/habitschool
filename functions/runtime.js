@@ -10216,10 +10216,9 @@ function mergePresenceIntoLog(log, row) {
 async function buildAdminPrescriptionQueue(todayStr) {
     const windowStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_WINDOW_DAYS);
     const presenceStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_PRESENCE_DAYS);
-    const cooldownStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_COOLDOWN_DAYS);
     const inactiveCut = shiftDateString(todayStr, PRESCRIPTION_QUEUE_INACTIVE_DAYS);
 
-    const [usersSnap, numericSnap, presenceSnap, feedbackSnap, cohortSnap] = await Promise.all([
+    const [usersSnap, numericSnap, presenceSnap, cohortSnap] = await Promise.all([
         db.collection("users")
             .select("customDisplayName", "displayName", "currentStreak",
                 "settings", "healthProfile")
@@ -10228,8 +10227,6 @@ async function buildAdminPrescriptionQueue(todayStr) {
             .select(...PRESCRIPTION_QUEUE_NUMERIC_FIELDS).get(),
         db.collection("daily_logs").where("date", ">=", presenceStart)
             .select(...PRESCRIPTION_QUEUE_PRESENCE_FIELDS).get(),
-        db.collection("admin_feedback").where("feedbackDate", ">=", cooldownStart)
-            .select("targetUserId", "draftKey", "feedbackDate").get(),
         db.doc("meta/healthTrends").get(),
     ]);
 
@@ -10247,17 +10244,6 @@ async function buildAdminPrescriptionQueue(todayStr) {
         const byDate = logsByUid.get(row.userId);
         const log = byDate.get(row.date) || { date: row.date };
         byDate.set(row.date, mergePresenceIntoLog(log, row));
-    });
-
-    // 같은 종류를 4주 안에 또 보내지 않는다. 직접 쓴 메시지(draftKey 없음)는 세지 않는다.
-    const sentKeysByUid = new Map();
-    feedbackSnap.forEach((docSnap) => {
-        const row = docSnap.data() || {};
-        if (!row.targetUserId || !row.draftKey) return;
-        if (!sentKeysByUid.has(row.targetUserId)) sentKeysByUid.set(row.targetUserId, {});
-        const bucket = sentKeysByUid.get(row.targetUserId);
-        const date = String(row.feedbackDate || "");
-        if (!bucket[row.draftKey] || date > bucket[row.draftKey]) bucket[row.draftKey] = date;
     });
 
     let cohortValues = null;
@@ -10318,18 +10304,47 @@ async function buildAdminPrescriptionQueue(todayStr) {
             latestDate,
             logs,
             trendMetrics,
-            sentKeys: sentKeysByUid.get(uid) || {},
         });
     });
 
-    return {
-        members,
-        total: members.length,
-        skipped,
-        todayStr,
-        cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
-        inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
-    };
+    return { members, total: members.length, skipped, todayStr };
+}
+
+/**
+ * 최근 발송 이력. **캐시하지 않는다.**
+ *
+ * 30분 캐시된 재료에는 방금 보낸 것이 없다. 그래서 보내고 새로고침하면 보내기 전
+ * 목록이 그대로 나왔다 — 같은 회원에게 같은 말을 또 보내기 딱 좋은 자리였다.
+ * 무거운 것(63일치 로그·추이)만 캐시하고 이 조회는 매번 새로 한다. 색인 하나로
+ * 끝나는 조회라 비싸지 않다.
+ */
+async function readRecentPrescriptionFeedback(todayStr) {
+    const cooldownStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_COOLDOWN_DAYS);
+    const snap = await db.collection("admin_feedback")
+        .where("feedbackDate", ">=", cooldownStart)
+        .select("targetUserId", "draftKey", "feedbackDate", "summary")
+        .get();
+
+    const sentKeysByUid = {};
+    const sentLog = [];
+    snap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (!row.targetUserId) return;
+        const date = String(row.feedbackDate || "");
+        sentLog.push({
+            uid: row.targetUserId,
+            draftKey: String(row.draftKey || ""),
+            summary: String(row.summary || ""),
+            feedbackDate: date,
+        });
+        // 종류가 없는 것(직접 쓴 메시지)은 쿨다운에 세지 않는다.
+        if (!row.draftKey) return;
+        if (!sentKeysByUid[row.targetUserId]) sentKeysByUid[row.targetUserId] = {};
+        const bucket = sentKeysByUid[row.targetUserId];
+        if (!bucket[row.draftKey] || date > bucket[row.draftKey]) bucket[row.draftKey] = date;
+    });
+    sentLog.sort((a, b) => (a.feedbackDate < b.feedbackDate ? 1 : -1));
+    return { sentKeysByUid, sentLog };
 }
 
 exports.getAdminPrescriptionQueue = onCall(
@@ -10347,21 +10362,38 @@ exports.getAdminPrescriptionQueue = onCall(
                 const builtAt = data && data.builtAt && data.builtAt.toMillis ? data.builtAt.toMillis() : 0;
                 if (data && data.members && data.todayStr === todayStr
                     && Date.now() - builtAt < PRESCRIPTION_QUEUE_CACHE_MS) {
-                    return { ...data, builtAt, cached: true };
+                    // 재료는 캐시에서, 발송 이력은 새로. 이 한 줄이 "보내고 새로고침하면
+                    // 그대로 뜨는" 문제를 막는다.
+                    const fresh = await readRecentPrescriptionFeedback(todayStr);
+                    return {
+                        ...data, ...fresh,
+                        cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
+                        inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
+                        builtAt, cached: true,
+                    };
                 }
             } catch (error) {
                 console.warn("[getAdminPrescriptionQueue] 캐시 읽기 실패:", error && error.message);
             }
         }
 
-        const built = await buildAdminPrescriptionQueue(todayStr);
+        const [built, fresh] = await Promise.all([
+            buildAdminPrescriptionQueue(todayStr),
+            readRecentPrescriptionFeedback(todayStr),
+        ]);
         try {
+            // 발송 이력은 캐시에 넣지 않는다 — 넣으면 다시 낡는다.
             await cacheRef.set({ ...built, builtAt: FieldValue.serverTimestamp() });
         } catch (error) {
             // 1MB 를 넘길 수 있다. 캐시를 포기하고 계산 결과만 준다 — getAdminMembers 와 같은 판단.
             console.warn("[getAdminPrescriptionQueue] 캐시 저장 건너뜀:", error && error.message);
         }
-        return { ...built, builtAt: Date.now(), cached: false };
+        return {
+            ...built, ...fresh,
+            cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
+            inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
+            builtAt: Date.now(), cached: false,
+        };
     }
 );
 
