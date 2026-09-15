@@ -166,21 +166,33 @@ describe('the weekly bar sits where the recording happens', () => {
     });
 
     it('keeps the same running order as the other record tabs', () => {
+        // 세 기록 탭이 같은 뼈대를 쓴다:
+        //   가이드 → 포인트 배너 → 업로드 CTA → 삼성 인터넷 안내 → 본문 카드
+        // 한 탭만 어긋나면 탭을 옮길 때마다 첫 화면이 달라져 눈에 걸린다.
         const html = read('index.html');
-        const orderIn = (tabId, guideAttr) => {
-            const start = html.indexOf(`<div id="${tabId}" class="content-section"`);
-            const seg = html.slice(start, start + 16000);
-            return [seg.indexOf(guideAttr), seg.indexOf('quest-board'), seg.indexOf('class="card')];
-        };
         for (const [tabId, guideAttr] of [
             ['diet', 'data-record-guide="diet"'],
             ['exercise', 'data-record-guide="exercise"'],
             ['sleep', 'data-record-guide="sleep"']
         ]) {
-            const [g, q, c] = orderIn(tabId, guideAttr);
-            expect(g, tabId).toBeGreaterThan(-1);
-            expect(q, tabId).toBeGreaterThan(g);
-            expect(c, tabId).toBeGreaterThan(q);
+            const start = html.indexOf(`<div id="${tabId}" class="content-section"`);
+            expect(start, tabId).toBeGreaterThan(-1);
+            const seg = html.slice(start, start + 16000);
+
+            const guide = seg.indexOf(guideAttr);
+            const banner = seg.indexOf('quest-board');
+            // 식단 탭은 class="upload-cta upload-cta-split" 이다. 닫는 따옴표까지 맞추면 빗나간다.
+            const cta = seg.indexOf('class="upload-cta');
+            const notice = seg.indexOf('samsung-file-picker-guide');
+            const card = seg.indexOf('class="card');
+
+            for (const [label, at] of [['가이드', guide], ['배너', banner], ['CTA', cta], ['안내', notice], ['카드', card]]) {
+                expect(at, `${tabId} ${label}`).toBeGreaterThan(-1);
+            }
+            expect(banner, tabId).toBeGreaterThan(guide);
+            expect(cta, tabId).toBeGreaterThan(banner);
+            expect(notice, tabId).toBeGreaterThan(cta);
+            expect(card, tabId).toBeGreaterThan(notice);
         }
     });
 

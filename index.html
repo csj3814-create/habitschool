@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=403">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=403">
+    <link rel="stylesheet" href="styles.css?v=404">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=404">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -740,8 +740,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=403"></script>
-    <script src="js/webview-detect.js?v=403"></script>
+    <script src="js/browser-detect.js?v=404"></script>
+    <script src="js/webview-detect.js?v=404"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2266,6 +2266,25 @@
                             class="quest-check" id="quest-exercise">미달성</span></div>
                 </div>
 
+                <!-- 업로드 CTA -->
+                <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile(event)">
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
+                        <div class="upload-cta-text">
+                            <strong style="font-size:13px;">운동 이미지 등록</strong>
+                        </div>
+                        <div class="upload-cta-arrow">›</div>
+                    </div>
+                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile(event)">
+                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
+                        <div class="upload-cta-text">
+                            <strong style="font-size:13px;">운동 영상 등록</strong>
+                        </div>
+                        <div class="upload-cta-arrow">›</div>
+                    </div>
+                </div>
+                <p class="samsung-file-picker-guide" data-samsung-file-picker-guide hidden></p>
+
                 <!-- 이번 주 완수율. 기록하는 자리 바로 위에 남은 양이 보여야 목표에 닿는다.
                      자리는 다른 탭과 맞춘다 — 가이드 → 포인트 배너 → 본문 카드. -->
                 <div class="card weekly-activity-card" id="weekly-activity-card" style="display:none;"></div>
@@ -2295,24 +2314,6 @@
                     </div>
                     <div id="step-import-banner" class="step-import-banner" aria-live="polite" style="display:none;"></div>
                 </div>
-                <!-- 업로드 CTA -->
-                <div style="display:flex; gap:8px; margin:8px 0 12px 0;">
-                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addCardioBlockWithFile(event)">
-                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📸</div>
-                        <div class="upload-cta-text">
-                            <strong style="font-size:13px;">운동 이미지 등록</strong>
-                        </div>
-                        <div class="upload-cta-arrow">›</div>
-                    </div>
-                    <div class="upload-cta" style="flex:1; margin:0; padding:10px 12px;" onclick="addStrengthBlockWithFile(event)">
-                        <div class="upload-cta-icon" style="font-size:22px; animation:none;">📹</div>
-                        <div class="upload-cta-text">
-                            <strong style="font-size:13px;">운동 영상 등록</strong>
-                        </div>
-                        <div class="upload-cta-arrow">›</div>
-                    </div>
-                </div>
-                <p class="samsung-file-picker-guide" data-samsung-file-picker-guide hidden></p>
                 <div class="card">
                     <h3 id="exercise-cardio-title">📸 운동 이미지</h3>
                     <p id="exercise-cardio-date-note" style="font-size:12px; color:#FF8C00; margin-bottom:10px; font-weight:bold;">📸 사진은 촬영 당일에만 등록 가능합니다.</p>
@@ -3133,14 +3134,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=403"></script>
-    <script type="module" src="js/main.js?v=403"></script>
-    <script type="module" src="js/diet-analysis.js?v=403"></script>
-    <script type="module" src="js/metabolic-score.js?v=403"></script>
-    <script type="module" src="js/le8-score.js?v=403"></script>
+    <script type="module" src="js/app.js?v=404"></script>
+    <script type="module" src="js/main.js?v=404"></script>
+    <script type="module" src="js/diet-analysis.js?v=404"></script>
+    <script type="module" src="js/metabolic-score.js?v=404"></script>
+    <script type="module" src="js/le8-score.js?v=404"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=403"></script>
+    <script src="js/pwa-install.js?v=404"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
