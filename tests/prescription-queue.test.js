@@ -204,6 +204,7 @@ describe('the tab is reachable and explains itself', () => {
         const fn = ADMIN.split('window.renderPrescriptionQueue = function() {')[1].split('\n    };')[0];
         expect(fn).toContain('미활동 제외');
         expect(fn).toContain('수신 거부');
-        expect(fn).toContain('쿨다운');
+        expect(fn).toContain('최근 보내서 대기');
+        expect(fn).toContain('근거 부족·건너뜀');
     });
 });
