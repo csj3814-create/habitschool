@@ -1626,7 +1626,6 @@
      */
     function topPrescriptionFor(member, todayStr, cooldownDays) {
         const drafts = buildAdminPrescriptionDrafts({
-            name: member.name,
             logs: member.logs || [],
             trendMetrics: member.trendMetrics || [],
             streak: member.streak || 0,
@@ -4564,7 +4563,6 @@
 
             const logs = detailLogsSnapshot.docs.map((recordDoc) => recordDoc.data());
             adminPrescriptionContext = {
-                name: document.getElementById('modal-name')?.textContent || '',
                 logs,
                 streak: m.currentStreak || 0,
                 todayStr: new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10),

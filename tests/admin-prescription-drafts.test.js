@@ -120,16 +120,21 @@ describe('a prescription is written from this member, or not written', () => {
         expect(draftFor(drafts, 'gap')).toBeUndefined();
     });
 
-    it('counts the days since the last record instead of scolding', () => {
+    // 2026-09-15 지적: "마지막 기록 복귀 권유는 메일로 해야지 앱에다 잔소리로
+    // 보내봐야 볼 수가 없지."
+    //
+    // 코치 메시지 카드는 앱을 열어야 보인다. 열흘째 안 들어온 분께 앱 안에
+    // "열흘째 기록이 없습니다" 라고 적어 두는 것은 닿지 않는 자리에 써 붙이는
+    // 것과 같다. 그 일은 재참여 메일이 이미 한다.
+    it('leaves the come-back nudge to email, which actually reaches them', () => {
         const drafts = buildAdminPrescriptionDrafts({
-            name: '루미나',
             logs: [{ date: '2026-09-08', diet: { breakfastUrl: 'https://x/a' } }],
             todayStr: TODAY,
         });
-        const back = draftFor(drafts, 'comeback');
-        expect(back.message).toContain('9월 8일');
-        expect(back.message).toContain('7일');
-        expect(back.message).toContain('처음부터 하실 필요 없습니다');
+        expect(draftFor(drafts, 'comeback')).toBeUndefined();
+        const text = drafts.map((d) => d.message + d.summary + d.label).join('\n');
+        expect(text).not.toContain('복귀');
+        expect(text).not.toContain('일째 기록이 없습니다');
     });
 
     it('stays quiet about a streak that has not been earned', () => {

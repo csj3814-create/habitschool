@@ -467,8 +467,11 @@ const GRADE_POINTS = { A: 5, B: 4, C: 3, D: 2, F: 1 };
 //
 // 2026-09-15: 예전에는 이 파일이 import 없는 순수 모듈이라 150 을 옮겨 적고
 // 테스트로 둘을 묶어 뒀다. 지금은 위에서 le8-score 를 직접 불러온다 —
-// 옮겨 적은 값이 없으면 어긋날 일도 없다. admin.html 은 이미 le8-score 를
-// 불러오므로 화면에 실리는 양은 늘지 않는다.
+// 옮겨 적은 값이 없으면 어긋날 일도 없다.
+//
+// 값을 치르기는 한다. le8-score.js 는 39KB(gzip 13KB)이고 관제탑은 이걸
+// 불러오지 않고 있었다. 관제탑은 사람 한둘이 쓰는 화면이라 그만큼은 사본이
+// 어긋날 위험과 바꿀 만하다고 봤다. 회원 화면에서였다면 다르게 정했을 것이다.
 const DAILY_ACTIVITY_GRADE_THRESHOLDS = [
     ["A", 150 / 7],
     ["B", 120 / 7],
@@ -859,22 +862,23 @@ function changeMagnitudeScore(summary) {
 /**
  * 회원의 기록에서 처방 초안을 만든다.
  *
- * 우선순위: 건강 경보 → 나빠진 지표 → 좋아진 지표 → 꾸준함 → 비어 있는 자리.
+ * 종류: 건강 경보 → 나빠진 지표 → 좋아진 지표 → 꾸준함 → 비어 있는 자리.
  * 급한 것이 위로 오되, 나쁜 말만 늘어놓지 않도록 좋아진 것도 함께 올린다.
+ * 순서는 점수가 정한다(PRESCRIPTION_SCORE_FLOOR 위 주석 참조).
+ *
+ * 복귀 권유는 여기에 없다. 앱을 안 여는 분께 앱 카드로 보내봐야 닿지 않는다 —
+ * 그 일은 재참여 메일이 한다.
  */
 export function buildAdminPrescriptionDrafts({
-    name = "",
     logs = [],
     trendMetrics = [],
     streak = 0,
     todayStr = "",
 } = {}) {
     const drafts = [];
-    const 님 = name ? `${name}님` : "회원님";
 
     const last7 = recentLogs(logs, 7, todayStr);
     const last30 = recentLogs(logs, 30, todayStr);
-    const latest = last30[0] || null;
 
     // ── 1. 건강 경보 — 잰 값이 기준을 넘었을 때만
     const alerts = [];
@@ -1057,25 +1061,17 @@ export function buildAdminPrescriptionDrafts({
         }
     }
 
-    // ── 6. 기록이 끊겼다 — 마지막 기록이 며칠 전인지로만 말한다
-    if (todayStr && latest?.date) {
-        const gapDays = Math.round(
-            (new Date(`${todayStr}T12:00:00Z`).getTime() - new Date(`${latest.date}T12:00:00Z`).getTime()) / 86400000
-        );
-        if (gapDays >= 3) {
-            drafts.push({
-                key: "comeback",
-                tone: "cheer",
-                label: `👋 ${gapDays}일째 복귀 권유`,
-                evidence: `마지막 기록 ${latest.date} · ${gapDays}일 전`,
-                // 14일이 넘으면 재참여 메일이 담당한다. 여기서는 더 올리지 않는다.
-                score: 30 + Math.min(20, gapDays * 2),
-                summary: `마지막 기록 ${toKoreanDate(latest.date)}`,
-                message: `${님}, ${toKoreanDate(latest.date)} 이후로 ${gapDays}일째 기록이 없습니다.\n`
-                    + `사진 한 장이나 걸음수만 남기셔도 이어집니다. 처음부터 하실 필요 없습니다.`,
-            });
-        }
-    }
+    // ── 복귀 권유는 여기서 만들지 않는다 ─────────────────────────
+    //
+    // 2026-09-15 지적: "마지막 기록 복귀 권유는 메일로 해야지 앱에다 잔소리로
+    // 보내봐야 볼 수가 없지."
+    //
+    // 맞는 말이다. 이 초안은 코치 메시지 카드로 나가는데, 그 카드는 앱을 열어야
+    // 보인다. 열흘째 안 들어온 분께 앱 안에서 "열흘째 기록이 없습니다" 라고
+    // 적어 두는 것은 닿지 않는 자리에 써 붙이는 것과 같다.
+    //
+    // 그 일은 이미 메일이 한다 — sendReEngagementEmailsScheduled 가 3일·7일
+    // 미활동 메일을 보내고, 관제탑 회원 상세에 발송 이력이 함께 보인다.
 
     // 점수순. 같은 점수면 만들어진 차례(종류 순서)를 지킨다 — sort 는 안정 정렬이다.
     // 하한선 아래는 버린다. 할 말이 없는데 억지로 한 줄 보내는 것이 가장 나쁘다.
