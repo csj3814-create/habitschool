@@ -281,3 +281,35 @@ describe('steps explain a walk, not a workout', () => {
         expect(resolveDailyActivityMinutes({}).hasSignal).toBe(false);
     });
 });
+
+// 측정 스크립트는 '지금 규칙'과 '바꿀 규칙'을 자기 안에 들고 비교한다. 앱 코드를
+// 읽지 않으므로, 상수가 어긋나면 측정 결과가 조용히 거짓이 된다. 둘을 묶어 둔다.
+describe('the measurement script measures the rule we actually ship', () => {
+    const script = read('scripts/measure-activity-overlap-2026-09-15.js');
+    const le8 = read('js/le8-score.js');
+
+    it('shares the target, the weights and the caps', () => {
+        expect(script).toContain(`const WEEKLY_TARGET = ${WEEKLY_ACTIVITY_TARGET_MINUTES};`);
+        for (const [word, weight] of [['저강도', '0.5'], ['중강도', '1'], ['고강도', '2'], ['초고강도', '3']]) {
+            expect(script, word).toContain(`"${word}": ${weight}`);
+            expect(le8, word).toContain(`'${word}': ${weight}`);
+        }
+        for (const line of ['MAX_MEDIA_MINUTES_PER_DAY = 120', 'DEFAULT_MEDIA_MINUTES_PER_UNIT = 30']) {
+            expect(script, line).toContain(line);
+            expect(le8, line).toContain(line);
+        }
+    });
+
+    it('shares the list of exercises the step count already sees', () => {
+        const scriptList = script.split('STEP_OVERLAPPING_KEYWORDS = [')[1].split('];')[0];
+        const appList = le8.split('STEP_OVERLAPPING_EXERCISE_KEYWORDS = Object.freeze([')[1].split('])')[0];
+        const words = (text) => (text.match(/['"]([^'"]+)['"]/g) || []).map(w => w.slice(1, -1)).sort();
+        expect(words(scriptList)).toEqual(words(appList));
+    });
+
+    it('says out loud that it cannot confirm a deploy', () => {
+        // 2026-09-15: 배포 뒤 다시 돌려 '손실 0'을 보자고 했는데, 이 스크립트는
+        // 배포와 무관하게 늘 같은 답을 낸다. 다음 사람이 같은 착각을 하지 않도록.
+        expect(script).toContain('배포 확인용이 아니다');
+    });
+});
