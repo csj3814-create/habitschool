@@ -847,6 +847,36 @@ const PRESCRIPTION_GOOD_ENOUGH = {
     bpDiastolic: { atMost: 80 },
 };
 
+/**
+ * "실제로 움직였다" 고 말할 수 있는 최소 변화폭.
+ *
+ * 2026-09-15 지적: "이완기 혈압, 수축기 혈압 이정도 차이는 임상적으로 별 의미
+ * 없는 차이야. 최소 수축기 10 이상, 이완기 5 이상은 차이가 나야 칭찬할 만
+ * 하다고 할 수 있겠어."
+ *
+ * 그때까지 문턱은 health-trends.js 의 FLAT_RATIO(2%) **상대값** 하나뿐이었다.
+ * 수축기 108 의 2% 는 2.2mmHg 라 3mmHg 움직인 것이 '개선' 으로 올라왔고,
+ * 이완기 75 의 2% 는 1.5mmHg 라 4mmHg 도 통과했다. 혈압처럼 재는 자체에
+ * 흔들림이 있는 값은 비율이 아니라 절대 변화폭으로 봐야 한다.
+ *
+ * 칭찬만이 아니라 악화 쪽에도 똑같이 건다. 3mmHg 올랐다고 "나빠졌습니다" 라고
+ * 하는 것도 같은 정도로 근거가 없다.
+ */
+const PRESCRIPTION_MIN_ABSOLUTE_CHANGE = {
+    bpSystolic: 10,
+    bpDiastolic: 5,
+};
+
+/** 변화폭이 말할 만한가. 정한 값이 없는 지표는 FLAT_RATIO 가 이미 걸러 준다. */
+function isChangeWorthMentioning(metric) {
+    const minimum = PRESCRIPTION_MIN_ABSOLUTE_CHANGE[metric?.key];
+    if (minimum === undefined) return true;
+    const recent = toNumber(metric?.summary?.recent);
+    const previous = toNumber(metric?.summary?.previous);
+    if (recent === null || previous === null) return false;
+    return Math.abs(recent - previous) >= minimum;
+}
+
 /** 최근 값이 기준 안쪽인가. 기준이 없는 지표는 판단하지 않는다(false). */
 function isStillGoodEnough(metric) {
     const line = PRESCRIPTION_GOOD_ENOUGH[metric?.key];
@@ -1010,6 +1040,8 @@ export function buildAdminPrescriptionDrafts({
         // 기준 안쪽이면 줄었어도 연락할 일이 아니다. 2만보 걷는 분께
         // "걸음수가 줄었습니다" 는 잔소리다.
         if (isStillGoodEnough(metric)) continue;
+        // 재는 자체의 흔들림만큼 움직인 것은 움직인 것이 아니다.
+        if (!isChangeWorthMentioning(metric)) continue;
         drafts.push({
             key: `worsened-${metric.key}`,
             tone: "warn",
@@ -1029,6 +1061,8 @@ export function buildAdminPrescriptionDrafts({
         const recent = formatMetricValue(metric.summary.recent, metric);
         const previous = formatMetricValue(metric.summary.previous, metric);
         if (!recent || !previous) continue;
+        // 3mmHg 내려간 것을 "잘 내리셨습니다" 라고 하면 칭찬이 아니라 빈말이 된다.
+        if (!isChangeWorthMentioning(metric)) continue;
         const percentile = toNumber(metric.percentile);
         const rank = percentile !== null ? ` 전체 회원 중 상위 ${100 - Math.round(percentile)}%입니다.` : "";
         drafts.push({
@@ -1111,4 +1145,5 @@ export function buildAdminPrescriptionDrafts({
 export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS;
 export const ADMIN_PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = PRESCRIPTION_ALERT_MIN_REPEATS_ALONE;
 export const ADMIN_PRESCRIPTION_GOOD_ENOUGH = PRESCRIPTION_GOOD_ENOUGH;
+export const ADMIN_PRESCRIPTION_MIN_ABSOLUTE_CHANGE = PRESCRIPTION_MIN_ABSOLUTE_CHANGE;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
