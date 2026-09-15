@@ -264,6 +264,10 @@
         .rxq-actions { display: flex; gap: 6px; align-items: center; }
         .rxq-actions .btn { font-size: 12px; padding: 6px 11px; white-space: nowrap; }
         .rxq-human { background: #fdeaea; color: #b03030; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: 700; }
+        /* 최근에 메시지를 받은 분. 줄은 남기되 지금 보낼 수 없다는 게 보여야 한다. */
+        .rxq-row.is-waiting { background: #fafafa; }
+        .rxq-row.is-waiting .rxq-score { background: #aaa; }
+        .rxq-wait { color: #999; cursor: not-allowed; border-color: #ddd; }
         .rxq-done { color: #3c9e55; font-size: 12px; font-weight: 700; }
         /* 왜 이 순서인지 보이지 않으면 순위를 믿을 수 없다. 점수를 함께 띄운다. */
         .rx-draft-score { display: inline-block; min-width: 26px; text-align: center; background: #333; color: #fff; border-radius: 4px; padding: 1px 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
@@ -1584,6 +1588,27 @@
     };
 
     /**
+     * 이 회원에게 다시 보내기까지 며칠 남았는지. 0 이면 지금 보낼 수 있다.
+     *
+     * 종류별 4주 쿨다운과는 다른 규칙이다. 그쪽은 '같은 말' 을 막고, 이쪽은
+     * '같은 사람' 을 막는다 — 종류가 달라도 받는 쪽에서는 사흘 내리 알림이
+     * 오는 것으로만 보인다. 직접 쓴 메시지도 한 통으로 센다.
+     */
+    function daysUntilCanSend(uid) {
+        const waitDays = prescriptionQueue.sendCooldownDays || 3;
+        const last = (prescriptionQueue.lastSentByUid || {})[uid];
+        if (!last) return 0;
+        const elapsed = Math.floor(
+            (new Date(prescriptionQueue.todayStr + 'T12:00:00Z').getTime()
+                - new Date(last + 'T12:00:00Z').getTime()) / 86400000
+        );
+        // 마지막 발송일이 미래로 찍혀 있으면(잘못 기록된 날짜) 음수가 나와서
+        // 대기가 3일보다 길어진다. 한 번 잘못 들어간 날짜로 관제탑이 며칠씩
+        // 잠기면 안 되므로 경과를 0 아래로는 내려가지 않게 한다.
+        return Math.max(0, waitDays - Math.max(0, elapsed));
+    }
+
+    /**
      * 회원마다 초안을 만들고 가장 의미 있는 하나만 남긴다.
      *
      * 4주 쿨다운은 여기서 건다 — 같은 종류를 4주 안에 또 보내면 자동이라는 게
@@ -1624,8 +1649,9 @@
         rows.sort((a, b) => b.draft.score - a.draft.score);
 
         const skipped = prescriptionQueue.skipped || {};
-        scopeHost.textContent = '경보는 사람이 읽고 보냅니다. 같은 종류는 '
-            + cooldownDays + '일 안에 다시 올리지 않고, '
+        scopeHost.textContent = '경보는 사람이 읽고 보냅니다. 같은 분께는 '
+            + (prescriptionQueue.sendCooldownDays || 3) + '일 안에 다시 보내지 않고, 같은 종류는 '
+            + cooldownDays + '일 안에 다시 올리지 않습니다. '
             + (prescriptionQueue.inactiveDays || 14) + '일 이상 기록이 없거나 수신을 끈 분은 빠집니다.';
         const sentCount = (prescriptionQueue.sentLog || []).length;
         summaryHost.innerHTML = '보낼 수 있는 회원 <b>' + rows.length + '명</b>'
@@ -1653,7 +1679,9 @@
         }
 
         host.innerHTML = visible.map(({ member, draft }) => {
-            return '<div class="rxq-row t-' + escapeHtml(draft.tone || 'info') + '">'
+            const wait = daysUntilCanSend(member.uid);
+            const last = (prescriptionQueue.lastSentByUid || {})[member.uid] || '';
+            return '<div class="rxq-row' + (wait > 0 ? ' is-waiting' : '') + ' t-' + escapeHtml(draft.tone || 'info') + '">'
                 + '<div class="rxq-score">' + escapeHtml(String(draft.score)) + '</div>'
                 + '<div class="rxq-name">' + escapeHtml(member.name || '(이름 없음)')
                 + '<small>' + escapeHtml(member.latestDate || '') + '</small></div>'
@@ -1665,7 +1693,12 @@
                 + '</div>'
                 + '<div class="rxq-actions">'
                 + '<button class="btn" data-rxq-open="' + escapeHtml(member.uid) + '">열어서 보기</button>'
-                + '<button class="btn btn-primary" data-rxq-send="' + escapeHtml(member.uid) + '">그대로 보내기</button>'
+                + (wait > 0
+                    // 왜 못 보내는지 버튼이 스스로 말하게 둔다. 사라지거나 그냥
+                    // 회색이면 고장인지 규칙인지 알 수 없다.
+                    ? '<button class="btn rxq-wait" disabled title="' + escapeHtml(last + ' 에 메시지를 보냈습니다')
+                      + '">' + wait + '일 뒤 보내기</button>'
+                    : '<button class="btn btn-primary" data-rxq-send="' + escapeHtml(member.uid) + '">그대로 보내기</button>')
                 + '</div>'
                 + '</div>';
         }).join('');
@@ -1726,6 +1759,12 @@
         if (!entry) return;
         const draft = topPrescriptionFor(entry, prescriptionQueue.todayStr, prescriptionQueue.cooldownDays || 28);
         if (!draft) return;
+        // 버튼만 막으면 규칙이 아니라 장식이다. 보내는 쪽에서도 같은 판정을 한다.
+        const wait = daysUntilCanSend(uid);
+        if (wait > 0) {
+            adminToast(wait + '일 뒤에 보낼 수 있습니다. 최근에 메시지를 받으신 분입니다.', 'warn');
+            return;
+        }
         // 잰 값이 기준을 넘은 건은 목록에서 바로 보내지 않는다. 상세를 열어 읽고 보낸다.
         if (draft.requiresHuman) {
             adminToast('경보는 회원 상세에서 확인하고 보내 주세요.', 'warn');
@@ -1745,6 +1784,8 @@
             });
             // 서버가 늘 새로 읽어 주는 값과 같은 자리를 채운다. 새로고침해도 같은
             // 판정이 나오도록, 화면 안 Set 이 아니라 이 쪽을 진짜 근거로 쓴다.
+            prescriptionQueue.lastSentByUid = prescriptionQueue.lastSentByUid || {};
+            prescriptionQueue.lastSentByUid[uid] = prescriptionQueue.todayStr;
             prescriptionQueue.sentKeysByUid = prescriptionQueue.sentKeysByUid || {};
             prescriptionQueue.sentKeysByUid[uid] = {
                 ...(prescriptionQueue.sentKeysByUid[uid] || {}),

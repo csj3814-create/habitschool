@@ -10143,6 +10143,10 @@ const PRESCRIPTION_QUEUE_WINDOW_DAYS = 63;
 const PRESCRIPTION_QUEUE_PRESENCE_DAYS = 7;
 // 이 기간 안에 같은 종류를 보냈으면 다시 올리지 않는다.
 const PRESCRIPTION_QUEUE_COOLDOWN_DAYS = 28;
+// 방금 메시지를 받은 분께 또 보내지 않는다. 종류가 달라도 마찬가지다 —
+// 받는 쪽에서는 사흘 내리 알림이 오는 것으로만 보인다.
+// 위의 28일은 '같은 종류' 를, 이 3일은 '같은 사람' 을 막는다.
+const PRESCRIPTION_SEND_COOLDOWN_DAYS = 3;
 // 이만큼 기록이 없으면 대기열에서 뺀다. 복귀 권유는 재참여 메일이 담당한다.
 const PRESCRIPTION_QUEUE_INACTIVE_DAYS = 14;
 
@@ -10326,11 +10330,16 @@ async function readRecentPrescriptionFeedback(todayStr) {
         .get();
 
     const sentKeysByUid = {};
+    const lastSentByUid = {};
     const sentLog = [];
     snap.forEach((docSnap) => {
         const row = docSnap.data() || {};
         if (!row.targetUserId) return;
         const date = String(row.feedbackDate || "");
+        // 회원 단위 쿨다운은 종류를 가리지 않는다. 직접 쓴 메시지도 한 통이다.
+        if (!lastSentByUid[row.targetUserId] || date > lastSentByUid[row.targetUserId]) {
+            lastSentByUid[row.targetUserId] = date;
+        }
         sentLog.push({
             uid: row.targetUserId,
             draftKey: String(row.draftKey || ""),
@@ -10344,7 +10353,7 @@ async function readRecentPrescriptionFeedback(todayStr) {
         if (!bucket[row.draftKey] || date > bucket[row.draftKey]) bucket[row.draftKey] = date;
     });
     sentLog.sort((a, b) => (a.feedbackDate < b.feedbackDate ? 1 : -1));
-    return { sentKeysByUid, sentLog };
+    return { sentKeysByUid, lastSentByUid, sentLog };
 }
 
 exports.getAdminPrescriptionQueue = onCall(
@@ -10368,6 +10377,7 @@ exports.getAdminPrescriptionQueue = onCall(
                     return {
                         ...data, ...fresh,
                         cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
+                        sendCooldownDays: PRESCRIPTION_SEND_COOLDOWN_DAYS,
                         inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
                         builtAt, cached: true,
                     };
@@ -10391,6 +10401,7 @@ exports.getAdminPrescriptionQueue = onCall(
         return {
             ...built, ...fresh,
             cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
+            sendCooldownDays: PRESCRIPTION_SEND_COOLDOWN_DAYS,
             inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
             builtAt: Date.now(), cached: false,
         };
