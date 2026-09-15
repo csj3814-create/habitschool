@@ -597,3 +597,270 @@ export function resolveDailyGrades(log = {}) {
 }
 
 export const ADMIN_DAILY_GRADE_TARGET_MINUTES = WEEKLY_ACTIVITY_TARGET_MINUTES;
+
+// ── 다이렉트 처방 초안 ──────────────────────────────────────────
+//
+// 버튼 넷이 누구에게나 같은 말을 했다. 혈당을 한 번도 안 잰 회원에게도
+// "혈당 조절에 한 걸음 더 가까워지고 있어요" 가 갔다. 받는 사람은 이게 나를 보고
+// 쓴 말이 아니라는 것을 안다.
+//
+// 그래서 회원의 실제 숫자에서 문장을 만든다. 규칙은 하나다 —
+// **근거가 되는 숫자가 없으면 그 초안은 아예 만들지 않는다.** 빈 자리를 일반론으로
+// 채우면 예전 버튼으로 돌아간다.
+//
+// 초안마다 evidence 를 함께 준다. 보내기 전에 관리자가 눈으로 확인할 자리다.
+
+const PRESCRIPTION_ALERT_THRESHOLDS = { glucose: 126, bpSystolic: 140, bpDiastolic: 90 };
+
+// 조사를 붙인다. 이게 틀리면 "걸음수이 85점에서 95점로 올랐습니다" 가 되고,
+// 받는 사람은 한 줄 만에 사람이 쓴 글이 아니라는 것을 안다. 정성 들인 메시지가
+// 목적인 기능에서는 이 한 글자가 문장 전체를 무너뜨린다.
+//
+// 규칙: 받침이 없으면 가/는/로, 있으면 이/은/으로. 단 ㄹ 받침은 '로' 를 쓴다.
+// 숫자와 단위는 읽는 소리로 판단한다 — kg 는 '킬로그램', 3 은 '삼' 이라 받침이 있다.
+const JOSA_TAIL_HAS_BATCHIM = {
+    "kg": true, "mg": true, "mg/dL": false, "mmHg": false, "%": false, "kcal": false,
+    "0": false, "1": true, "2": false, "3": true, "4": false,
+    "5": false, "6": true, "7": true, "8": true, "9": false,
+};
+
+function lastSoundHasBatchim(text) {
+    const value = String(text ?? "").trim();
+    if (!value) return null;
+
+    // 단위가 붙어 있으면 그 단위의 소리로 판단한다.
+    for (const unit of ["mg/dL", "mmHg", "kcal", "kg", "mg", "%"]) {
+        if (value.endsWith(unit)) return JOSA_TAIL_HAS_BATCHIM[unit];
+    }
+
+    const last = value[value.length - 1];
+    const code = last.charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+        const jongseong = (code - 0xAC00) % 28;
+        if (jongseong === 0) return false;
+        // ㄹ 받침은 '로' 를 쓴다. '레벨로', '1일로'.
+        if (jongseong === 8) return "rieul";
+        return true;
+    }
+    if (last >= "0" && last <= "9") return JOSA_TAIL_HAS_BATCHIM[last];
+    return null;
+}
+
+/** 조사를 붙인 문자열. 판단할 수 없으면 받침 있는 쪽으로 붙인다. */
+export function withJosa(text, kind) {
+    const value = String(text ?? "");
+    const batchim = lastSoundHasBatchim(value);
+    const pairs = {
+        이가: ["가", "이", "이"],
+        은는: ["는", "은", "은"],
+        으로: ["로", "으로", "로"],
+        을를: ["를", "을", "을"],
+    };
+    const [none, has, rieul] = pairs[kind] || pairs.이가;
+    if (batchim === "rieul") return value + rieul;
+    if (batchim === false) return value + none;
+    return value + has;
+}
+const PRESCRIPTION_STREAK_MILESTONES = [365, 300, 200, 150, 100, 50, 30, 14, 7];
+
+function toNumber(value) {
+    const parsed = typeof value === "number" ? value : parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMetricValue(value, metric = {}) {
+    const number = toNumber(value);
+    if (number === null) return null;
+    const decimals = Number.isFinite(metric.decimals) ? metric.decimals : 1;
+    const text = decimals === 0 ? Math.round(number).toLocaleString() : number.toFixed(decimals);
+    return metric.unit ? `${text}${metric.unit}` : text;
+}
+
+function findMetric(metrics, key) {
+    return (Array.isArray(metrics) ? metrics : []).find((metric) => metric && metric.key === key) || null;
+}
+
+/** 최근 N일 로그. 날짜 내림차순으로 잘라 준다. */
+function recentLogs(logs, days, todayStr) {
+    const list = (Array.isArray(logs) ? logs : []).filter((log) => /^\d{4}-\d{2}-\d{2}$/.test(String(log?.date || "")));
+    const sorted = [...list].sort((a, b) => (a.date < b.date ? 1 : -1));
+    if (!todayStr || !days) return sorted;
+    const floor = new Date(`${todayStr}T12:00:00Z`).getTime() - (days - 1) * 86400000;
+    return sorted.filter((log) => new Date(`${log.date}T12:00:00Z`).getTime() >= floor);
+}
+
+function countDaysWith(logs, pick) {
+    return logs.reduce((count, log) => (pick(log) ? count + 1 : count), 0);
+}
+
+function hasDietRecord(log) {
+    const diet = isRecord(log?.diet) ? log.diet : {};
+    return ["breakfast", "lunch", "dinner", "snack"].some((slot) => diet[`${slot}Url`]);
+}
+
+function hasExerciseRecord(log) {
+    const exercise = isRecord(log?.exercise) ? log.exercise : {};
+    const steps = toNumber(isRecord(log?.steps) ? log.steps.count : null);
+    return (Array.isArray(exercise.cardioList) && exercise.cardioList.length > 0)
+        || (Array.isArray(exercise.strengthList) && exercise.strengthList.length > 0)
+        || (steps !== null && steps > 0);
+}
+
+function hasSleepRecord(log) {
+    const sleep = isRecord(log?.sleepAndMind) ? log.sleepAndMind : {};
+    return !!sleep.sleepImageUrl || toNumber(sleep.sleepHours) !== null || !!sleep.sleepAnalysis;
+}
+
+/**
+ * 회원의 기록에서 처방 초안을 만든다.
+ *
+ * 우선순위: 건강 경보 → 나빠진 지표 → 좋아진 지표 → 꾸준함 → 비어 있는 자리.
+ * 급한 것이 위로 오되, 나쁜 말만 늘어놓지 않도록 좋아진 것도 함께 올린다.
+ */
+export function buildAdminPrescriptionDrafts({
+    name = "",
+    logs = [],
+    trendMetrics = [],
+    streak = 0,
+    todayStr = "",
+} = {}) {
+    const drafts = [];
+    const 님 = name ? `${name}님` : "회원님";
+
+    const last7 = recentLogs(logs, 7, todayStr);
+    const last30 = recentLogs(logs, 30, todayStr);
+    const latest = last30[0] || null;
+
+    // ── 1. 건강 경보 — 잰 값이 기준을 넘었을 때만
+    const alerts = [];
+    for (const log of last30) {
+        const metrics = isRecord(log?.metrics) ? log.metrics : {};
+        const glucose = toNumber(metrics.glucose);
+        const systolic = toNumber(metrics.bpSystolic);
+        const diastolic = toNumber(metrics.bpDiastolic);
+        if (glucose !== null && glucose >= PRESCRIPTION_ALERT_THRESHOLDS.glucose) {
+            alerts.push({ kind: "공복혈당", value: `${glucose} mg/dL`, date: log.date, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.glucose} mg/dL` });
+        }
+        if ((systolic !== null && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic)
+            || (diastolic !== null && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic)) {
+            alerts.push({ kind: "혈압", value: `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`, date: log.date, limit: "140/90 mmHg" });
+        }
+    }
+    if (alerts.length) {
+        const first = alerts[0];
+        drafts.push({
+            key: `alert-${first.kind}`,
+            tone: "warn",
+            label: `⚠️ ${first.kind} 확인`,
+            evidence: `${first.date} ${first.kind} ${first.value} (기준 ${first.limit} 이상) · 최근 30일 ${alerts.length}회`,
+            message: `${님}, 기록을 살펴보다 한 가지 말씀드리고 싶어 연락드립니다.\n\n`
+                + `${first.date} ${withJosa(first.kind, "이가")} ${withJosa(first.value, "으로")} 기준(${first.limit})을 넘었습니다. `
+                + `최근 30일 동안 ${alerts.length}번 있었어요.\n\n`
+                + `한 번의 수치로 무언가를 단정할 수는 없지만, 반복된다면 확인해 보시는 편이 좋습니다. `
+                + `다음에 재실 때는 같은 시간대에 재 보시고, 그 값도 기록해 주세요. 제가 함께 보겠습니다.`,
+        });
+    }
+
+    // ── 2. 나빠진 지표 — 서버가 방향을 정해 준 것만
+    const worsened = (Array.isArray(trendMetrics) ? trendMetrics : [])
+        .filter((metric) => metric?.summary?.direction === "worsened");
+    for (const metric of worsened.slice(0, 2)) {
+        const recent = formatMetricValue(metric.summary.recent, metric);
+        const previous = formatMetricValue(metric.summary.previous, metric);
+        if (!recent || !previous) continue;
+        drafts.push({
+            key: `worsened-${metric.key}`,
+            tone: "warn",
+            label: `📉 ${metric.label} 되돌리기`,
+            evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}`,
+            message: `${님}, 4주씩 끊어 보니 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 움직였습니다.\n\n`
+                + `짧은 기간의 흔들림일 수 있어 크게 걱정하실 일은 아닙니다. 다만 방향이 이어지는지가 중요해서 말씀드려요.\n\n`
+                + `다음 2주만 여기에 집중해 보시면 어떨까요. 다시 4주가 쌓이면 제가 같은 자리에서 확인하고 알려 드리겠습니다.`,
+        });
+    }
+
+    // ── 3. 좋아진 지표 — 칭찬도 숫자로 한다
+    const improved = (Array.isArray(trendMetrics) ? trendMetrics : [])
+        .filter((metric) => metric?.summary?.direction === "improved");
+    for (const metric of improved.slice(0, 2)) {
+        const recent = formatMetricValue(metric.summary.recent, metric);
+        const previous = formatMetricValue(metric.summary.previous, metric);
+        if (!recent || !previous) continue;
+        const percentile = toNumber(metric.percentile);
+        const rank = percentile !== null ? ` 지금 전체 회원 중 상위 ${100 - Math.round(percentile)}%입니다.` : "";
+        drafts.push({
+            key: `improved-${metric.key}`,
+            tone: "good",
+            label: `📈 ${metric.label} 칭찬`,
+            evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${100 - Math.round(percentile)}%` : ""}`,
+            message: `${님}, 기록을 4주씩 끊어 보다가 말씀드리고 싶어졌습니다.\n\n`
+                + `${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 올라섰습니다.${rank}\n\n`
+                + `우연히 좋아진 숫자가 아니라 ${님}이 4주 동안 쌓아 만든 결과입니다. `
+                + `지금 하시는 방식이 맞으니 그대로 이어가시면 됩니다.`,
+        });
+    }
+
+    // ── 4. 꾸준함 — 스트릭이 실제로 쌓였을 때만
+    const streakDays = toNumber(streak) || 0;
+    if (streakDays >= 7) {
+        const milestone = PRESCRIPTION_STREAK_MILESTONES.find((days) => streakDays >= days);
+        drafts.push({
+            key: "streak",
+            tone: "good",
+            label: `🔥 ${streakDays}일 연속 축하`,
+            evidence: `연속 기록 ${streakDays}일`,
+            message: `${님}, ${streakDays}일 연속으로 기록하고 계십니다.\n\n`
+                + `${milestone >= 100
+                    ? "세 자리 수를 넘긴 분은 많지 않습니다. 이쯤 되면 습관이 아니라 생활이라고 불러야 맞습니다."
+                    : "한 주를 넘기면 그때부터가 진짜입니다. 지금이 그 구간입니다."}\n\n`
+                + `빠뜨린 날이 생겨도 괜찮습니다. 끊긴 날보다 다시 시작한 날이 더 중요합니다.`,
+        });
+    }
+
+    // ── 5. 비어 있는 자리 — 최근 7일에 기록이 하나도 없는 영역
+    if (last7.length) {
+        const areas = [
+            { key: "diet", label: "식단", days: countDaysWith(last7, hasDietRecord), how: "사진 한 장이면 됩니다. AI가 알아서 읽습니다" },
+            { key: "exercise", label: "운동", days: countDaysWith(last7, hasExerciseRecord), how: "걸음수만 적으셔도 기록이 됩니다" },
+            { key: "sleep", label: "수면", days: countDaysWith(last7, hasSleepRecord), how: "수면 앱 화면을 캡처해 올리시면 됩니다" },
+        ];
+        const filled = areas.filter((area) => area.days > 0);
+        const empty = areas.filter((area) => area.days === 0);
+        if (empty.length && filled.length) {
+            const target = empty[0];
+            const strong = filled.sort((a, b) => b.days - a.days)[0];
+            drafts.push({
+                key: `gap-${target.key}`,
+                tone: "cheer",
+                label: `🧩 ${target.label} 채우기 권유`,
+                evidence: `최근 7일 · ${strong.label} ${strong.days}일 / ${target.label} 0일`,
+                message: `${님}, 지난 7일 기록을 봤습니다.\n\n`
+                    + `${withJosa(strong.label, "은는")} 7일 중 ${strong.days}일이나 남기셨습니다. 쉽지 않은 일입니다.\n\n`
+                    + `다만 ${withJosa(target.label, "이가")} 한 번도 없어서, 건강 점수가 ${님}의 실제 상태보다 낮게 잡히고 있습니다. `
+                    + `${target.how}. 하루만 남겨 주셔도 그림이 훨씬 정확해집니다.`,
+            });
+        }
+    }
+
+    // ── 6. 기록이 끊겼다 — 마지막 기록이 며칠 전인지로만 말한다
+    if (todayStr && latest?.date) {
+        const gapDays = Math.round(
+            (new Date(`${todayStr}T12:00:00Z`).getTime() - new Date(`${latest.date}T12:00:00Z`).getTime()) / 86400000
+        );
+        if (gapDays >= 3) {
+            drafts.push({
+                key: "comeback",
+                tone: "cheer",
+                label: `👋 ${gapDays}일째 복귀 권유`,
+                evidence: `마지막 기록 ${latest.date} · ${gapDays}일 전`,
+                message: `${님}, 마지막 기록이 ${latest.date}이니 ${gapDays}일이 지났습니다.\n\n`
+                    + `바쁘셨을 겁니다. 채근하려고 드리는 말씀이 아니라, 그동안 쌓아 두신 기록이 아까워서요.\n\n`
+                    + `오늘 사진 한 장이나 걸음수 하나만 남기셔도 다시 이어집니다. 처음부터 다시 할 필요는 없습니다.`,
+            });
+        }
+    }
+
+    return drafts;
+}
+
+export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS;

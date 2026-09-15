@@ -234,6 +234,18 @@
         .trend-spark-dir.down { color: #C62828; }
         .trend-spark-dir.flat { color: #999; }
         .trend-spark svg { display: block; width: 100%; height: 26px; margin-top: 4px; }
+        /* 다이렉트 처방 초안. 고정 문구 넷을 회원 데이터에서 만든 초안으로 바꿨다. */
+        .rx-drafts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .rx-draft { border: 1px solid #eee; border-left-width: 4px; border-radius: 9px; padding: 9px 11px; background: #fff; cursor: pointer; text-align: left; transition: border-color .15s, box-shadow .15s; }
+        .rx-draft:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+        .rx-draft.t-warn { border-left-color: #EF5350; }
+        .rx-draft.t-good { border-left-color: #66BB6A; }
+        .rx-draft.t-cheer { border-left-color: #42A5F5; }
+        .rx-draft.t-info { border-left-color: #BDBDBD; }
+        .rx-draft-label { font-size: 13px; font-weight: 800; color: #333; }
+        /* 보내기 전에 눈으로 확인할 자리. 근거 없이 나가는 문장이 없어야 한다. */
+        .rx-draft-evidence { margin-top: 3px; font-size: 11px; color: #777; line-height: 1.45; }
+        .rx-empty { font-size: 12px; color: #888; padding: 10px 2px; line-height: 1.6; }
         .hc-stats { display: flex; gap: 12px; font-size: 12px; color: #555; margin-bottom: 7px; flex-wrap: wrap; }
         .hc-media-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; padding-bottom: 5px; }
         .hc-media-item { min-width: 0; }
@@ -772,11 +784,8 @@
                 <div class="sec-box" style="margin-bottom:0;">
                     <h3 class="sec-title">👨‍⚕️ 다이렉트 처방</h3>
                     <input type="hidden" id="modal-uid">
-                    <div class="act-btns">
-                        <button class="act-btn ab-good" onclick="quickMsg('✅ 오늘도 훌륭한 실천! 혈당 조절에 한 걸음 더 가까워지고 있어요.')">👍 잘하고 있어요</button>
-                        <button class="act-btn ab-warn" onclick="quickMsg('⚠️ 혈당 수치가 다소 높습니다. 식단과 운동을 점검해 보세요.')">⚠️ 혈당 주의</button>
-                        <button class="act-btn ab-cheer" onclick="quickMsg('💪 조금만 더 힘내세요! 꾸준한 실천이 건강을 만듭니다.')">💪 응원</button>
-                        <button class="act-btn ab-warn" onclick="quickMsg('📋 정기 검진 일정을 확인해 보세요.')">📋 검진 권고</button>
+                    <div id="rx-drafts" class="rx-drafts">
+                        <div class="rx-empty">기록을 불러오는 중…</div>
                     </div>
                     <textarea id="fb-text" class="fb-textarea" placeholder="직접 코멘트 작성..."></textarea>
                     <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
@@ -843,6 +852,7 @@
         normalizeAdminEmailLog,
         getReEngagementMethodLabel,
         resolveDailyGrades,
+        buildAdminPrescriptionDrafts,
     } from './js/admin-utils.js';
     import { escapeHtml, isPersistedStorageUrl } from './js/security.js';
 
@@ -1813,6 +1823,35 @@
     const GRADE_KIND_LABELS = { diet: '식', exercise: '운', sleep: '잠' };
     const GRADE_KIND_NAMES = { diet: '식단', exercise: '운동', sleep: '수면' };
 
+    // 회원 데이터에서 만든 처방 초안. 누르면 아래 입력칸에 채워지고, 보내기 전에
+    // 고칠 수 있다 — 사람이 마지막에 손대는 것이 이 기능의 요점이다.
+    let adminPrescriptionDrafts = [];
+
+    function renderPrescriptionDrafts(drafts) {
+        adminPrescriptionDrafts = Array.isArray(drafts) ? drafts : [];
+        const host = document.getElementById('rx-drafts');
+        if (!host) return;
+
+        if (!adminPrescriptionDrafts.length) {
+            // 일반론으로 칸을 채우지 않는다. 그러면 예전 버튼으로 돌아간다.
+            host.innerHTML = '<div class="rx-empty">이 회원의 기록에서 근거 있는 초안을 만들지 못했습니다.<br>아래 칸에 직접 적어 보내 주세요.</div>';
+            return;
+        }
+
+        host.innerHTML = adminPrescriptionDrafts.map((draft, index) => `
+            <button type="button" class="rx-draft t-${escapeHtml(draft.tone || 'info')}" data-rx-index="${index}">
+                <div class="rx-draft-label">${escapeHtml(draft.label)}</div>
+                <div class="rx-draft-evidence">${escapeHtml(draft.evidence || '')}</div>
+            </button>`).join('');
+
+        host.querySelectorAll('button[data-rx-index]').forEach((button) => {
+            button.onclick = () => {
+                const draft = adminPrescriptionDrafts[Number(button.dataset.rxIndex)];
+                if (draft) quickMsg(draft.message);
+            };
+        });
+    }
+
     function renderDailyGradeBadges(log) {
         const grades = resolveDailyGrades(log || {});
         const badges = ['diet', 'exercise', 'sleep']
@@ -2046,7 +2085,19 @@
         };
         // 작은 선 열한 개를 먼저 펼쳐 방향을 한눈에 보이고, 고른 하나만 크게 그린다.
         renderTrendSparklines('member-trend-sparks', memberTrendPayload, memberTrendMetric, select);
+        refreshPrescriptionDrafts();
         memberTrendChart = renderTrendChart('trendChart', null, memberTrendPayload, memberTrendMetric, select);
+    }
+
+    // 추이는 로그보다 늦게 도착한다. 도착하면 4주 비교가 붙은 초안으로 다시 만든다.
+    let adminPrescriptionContext = null;
+
+    function refreshPrescriptionDrafts() {
+        if (!adminPrescriptionContext) return;
+        renderPrescriptionDrafts(buildAdminPrescriptionDrafts({
+            ...adminPrescriptionContext,
+            trendMetrics: memberTrendPayload?.metrics || [],
+        }));
     }
 
     let cohortTrendPayload = null, cohortTrendMetric = 'weight';
@@ -4129,6 +4180,14 @@
             renderEmailAuditSection(row?.emailLog, { email: row?.email || m.email || '' });
 
             const logs = detailLogsSnapshot.docs.map((recordDoc) => recordDoc.data());
+            adminPrescriptionContext = {
+                name: document.getElementById('modal-name')?.textContent || '',
+                logs,
+                streak: m.currentStreak || 0,
+                todayStr: new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10),
+                trendMetrics: [],
+            };
+            refreshPrescriptionDrafts();
 
             const weightNow = latestWeight(logs);
             setInfo('p-bmi', (weightNow && hp.heightCm)
