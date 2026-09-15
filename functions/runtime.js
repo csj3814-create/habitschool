@@ -67,6 +67,12 @@ const {
     percentileOf,
     buildMemberTrends,
     buildCohortTrends,
+    // 주간 처방 대기열은 회원별 추이를 직접 집계한다. buildMemberTrends 는 회원마다
+    // 하위 컬렉션까지 읽어서 562명에게 한 번에 쓸 수 없다.
+    recentWeekKeys,
+    extractDailyValues,
+    aggregateWeekly,
+    summarizeChange,
 } = require("./health-trends");
 const {
     pickStreakTier,
@@ -5355,6 +5361,9 @@ exports.submitAdminFeedback = onCall(
         // 대시보드 카드는 요약 한 줄을 머리로 쓰고 본문은 두 줄만 편다.
         // 요약이 없으면 본문 첫 문장을 대신 쓴다 — 카드 머리가 비면 안 된다.
         const rawSummary = String(request.data?.summary || "").trim();
+        // 어떤 초안에서 나온 메시지인지. 주간 대기열이 "같은 종류를 4주 안에 또
+        // 보내지 않는다" 를 판단하는 유일한 근거다. 직접 쓴 메시지는 빈 값이다.
+        const draftKey = String(request.data?.draftKey || "").trim().slice(0, 64);
         if (!targetUid) {
             throw new HttpsError("invalid-argument", "대상 회원을 선택해 주세요.");
         }
@@ -5392,6 +5401,7 @@ exports.submitAdminFeedback = onCall(
             message,
             summary,
             feedbackDate,
+            draftKey,
             adminUid,
             createdAt: FieldValue.serverTimestamp(),
         });
@@ -10107,6 +10117,251 @@ exports.getAdminEconomy = onCall(
     async (request) => {
         await assertAdminRequest(request);
         return await buildAdminEconomy();
+    }
+);
+
+// ── 관제탑: 주간 처방 대기열 ──────────────────────────────────────────────
+//
+// 회원 상세에 한 명씩 들어가야만 처방을 보낼 수 있었다. 562명을 그렇게 훑을 수는
+// 없다. 여기서는 전원의 '초안 재료' 를 한 번에 모아 준다.
+//
+// **문장과 순위는 여기서 만들지 않는다.** buildAdminPrescriptionDrafts 는
+// js/admin-utils.js 에 있고 functions 는 js 를 참조하지 않는다(hosting 이
+// functions/** 를 무시한다). 서버에서 문장까지 만들면 같은 로직이 두 벌이 되고,
+// 문구를 고칠 때 한쪽만 고쳐진다 — 바로 그 문구를 오늘 고쳤다. 그래서 비싼 읽기만
+// 서버가 하고, 문장과 점수는 관제탑이 회원 상세와 **똑같은 코드**로 만든다.
+const PRESCRIPTION_QUEUE_CACHE_MS = 30 * 60 * 1000;
+// 4주 대 4주 비교라 8주치가 필요하다. 13주까지 갈 이유는 없다 — 그만큼 읽기가 는다.
+//
+// 다만 56일이 아니라 63일이다. 주차 키는 **이번 주 시작일** 기준으로 잡히므로
+// (recentWeekKeys), 비교 구간에서 가장 오래된 주의 첫날은 오늘로부터 최대
+// 56 + 6 = 62일 전이다. 56일만 읽으면 오늘이 주 중반일 때 그 주가 잘려서,
+// 적은 날수로 낸 평균이 '직전 4주' 로 쓰인다 — 비교가 조용히 기울어진다.
+const PRESCRIPTION_QUEUE_WINDOW_DAYS = 63;
+// 기록 유무(식단·운동·수면)는 '빈 자리' 초안에만 쓰이고 그건 최근 7일만 본다.
+// 운동 목록은 항목이 커서 이 7일에만 실어 온다.
+const PRESCRIPTION_QUEUE_PRESENCE_DAYS = 7;
+// 이 기간 안에 같은 종류를 보냈으면 다시 올리지 않는다.
+const PRESCRIPTION_QUEUE_COOLDOWN_DAYS = 28;
+// 이만큼 기록이 없으면 대기열에서 뺀다. 복귀 권유는 재참여 메일이 담당한다.
+const PRESCRIPTION_QUEUE_INACTIVE_DAYS = 14;
+
+// 숫자 지표만. 사진 URL·운동 목록은 무거워서 아래 최근 7일 조회에만 넣는다.
+const PRESCRIPTION_QUEUE_NUMERIC_FIELDS = [
+    "userId", "date",
+    "metrics.weight", "metrics.glucose", "metrics.bpSystolic", "metrics.bpDiastolic",
+    "steps.count", "sleepAndMind.sleepHours", "dietAnalysis",
+];
+const PRESCRIPTION_QUEUE_PRESENCE_FIELDS = [
+    "userId", "date",
+    "diet.breakfastUrl", "diet.lunchUrl", "diet.dinnerUrl", "diet.snackUrl",
+    "exercise.cardioList", "exercise.strengthList",
+    "sleepAndMind.sleepImageUrl", "sleepAndMind.sleepAnalysis",
+];
+
+function shiftDateString(todayStr, days) {
+    return new Date(new Date(`${todayStr}T12:00:00Z`).getTime() - days * 86400000)
+        .toISOString().slice(0, 10);
+}
+
+/** 초안이 실제로 읽는 것만 남긴다. 나머지를 회선으로 내려보낼 이유가 없다. */
+function slimPrescriptionLog(row) {
+    const log = { date: row.date };
+    const metrics = row.metrics || {};
+    const picked = {};
+    for (const key of ["weight", "glucose", "bpSystolic", "bpDiastolic"]) {
+        if (metrics[key] !== undefined && metrics[key] !== null) picked[key] = metrics[key];
+    }
+    if (Object.keys(picked).length) log.metrics = picked;
+    if (row.steps && row.steps.count !== undefined && row.steps.count !== null) {
+        log.steps = { count: row.steps.count };
+    }
+    if (row.sleepAndMind && row.sleepAndMind.sleepHours !== undefined && row.sleepAndMind.sleepHours !== null) {
+        log.sleepAndMind = { sleepHours: row.sleepAndMind.sleepHours };
+    }
+    if (row.dietAnalysis && typeof row.dietAnalysis === "object") {
+        // 등급만 쓴다. 분석 본문까지 실을 이유가 없다.
+        const grades = {};
+        for (const [slot, entry] of Object.entries(row.dietAnalysis)) {
+            if (entry && entry.grade) grades[slot] = { grade: entry.grade };
+        }
+        if (Object.keys(grades).length) log.dietAnalysis = grades;
+    }
+    return log;
+}
+
+/** 최근 7일 문서에서 '무엇을 남겼는가' 만 추려 덧댄다. */
+function mergePresenceIntoLog(log, row) {
+    const diet = row.diet || {};
+    const dietUrls = {};
+    for (const slot of ["breakfast", "lunch", "dinner", "snack"]) {
+        if (diet[`${slot}Url`]) dietUrls[`${slot}Url`] = true;
+    }
+    if (Object.keys(dietUrls).length) log.diet = dietUrls;
+
+    // 초안은 목록의 길이만 본다(hasExerciseRecord). 항목을 그대로 실어 보내면
+    // 문서 하나가 수 KB 라 562명 × 7일이 감당이 안 된다. 길이만 남긴다.
+    const exercise = row.exercise || {};
+    const cardio = Array.isArray(exercise.cardioList) ? exercise.cardioList.length : 0;
+    const strength = Array.isArray(exercise.strengthList) ? exercise.strengthList.length : 0;
+    if (cardio > 0) (log.exercise = log.exercise || {}).cardioList = new Array(cardio).fill(1);
+    if (strength > 0) (log.exercise = log.exercise || {}).strengthList = new Array(strength).fill(1);
+
+    const sleep = row.sleepAndMind || {};
+    if (sleep.sleepImageUrl) (log.sleepAndMind = log.sleepAndMind || {}).sleepImageUrl = true;
+    if (sleep.sleepAnalysis) (log.sleepAndMind = log.sleepAndMind || {}).sleepAnalysis = true;
+    return log;
+}
+
+async function buildAdminPrescriptionQueue(todayStr) {
+    const windowStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_WINDOW_DAYS);
+    const presenceStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_PRESENCE_DAYS);
+    const cooldownStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_COOLDOWN_DAYS);
+    const inactiveCut = shiftDateString(todayStr, PRESCRIPTION_QUEUE_INACTIVE_DAYS);
+
+    const [usersSnap, numericSnap, presenceSnap, feedbackSnap, cohortSnap] = await Promise.all([
+        db.collection("users")
+            .select("customDisplayName", "displayName", "currentStreak",
+                "settings", "healthProfile")
+            .get(),
+        db.collection("daily_logs").where("date", ">=", windowStart)
+            .select(...PRESCRIPTION_QUEUE_NUMERIC_FIELDS).get(),
+        db.collection("daily_logs").where("date", ">=", presenceStart)
+            .select(...PRESCRIPTION_QUEUE_PRESENCE_FIELDS).get(),
+        db.collection("admin_feedback").where("feedbackDate", ">=", cooldownStart)
+            .select("targetUserId", "draftKey", "feedbackDate").get(),
+        db.doc("meta/healthTrends").get(),
+    ]);
+
+    const logsByUid = new Map();
+    numericSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (!row.userId || !row.date) return;
+        if (!logsByUid.has(row.userId)) logsByUid.set(row.userId, new Map());
+        logsByUid.get(row.userId).set(row.date, slimPrescriptionLog(row));
+    });
+    presenceSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (!row.userId || !row.date) return;
+        if (!logsByUid.has(row.userId)) logsByUid.set(row.userId, new Map());
+        const byDate = logsByUid.get(row.userId);
+        const log = byDate.get(row.date) || { date: row.date };
+        byDate.set(row.date, mergePresenceIntoLog(log, row));
+    });
+
+    // 같은 종류를 4주 안에 또 보내지 않는다. 직접 쓴 메시지(draftKey 없음)는 세지 않는다.
+    const sentKeysByUid = new Map();
+    feedbackSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (!row.targetUserId || !row.draftKey) return;
+        if (!sentKeysByUid.has(row.targetUserId)) sentKeysByUid.set(row.targetUserId, {});
+        const bucket = sentKeysByUid.get(row.targetUserId);
+        const date = String(row.feedbackDate || "");
+        if (!bucket[row.draftKey] || date > bucket[row.draftKey]) bucket[row.draftKey] = date;
+    });
+
+    let cohortValues = null;
+    const cohortMetrics = cohortSnap.exists ? (cohortSnap.data() || {}).metrics : null;
+    if (Array.isArray(cohortMetrics)) {
+        cohortValues = new Map(cohortMetrics.map((metric) => [metric.key, metric.recentValues || []]));
+    }
+
+    const weekKeys = recentWeekKeys(todayStr);
+    const members = [];
+    const skipped = { optedOut: 0, inactive: 0, noRecord: 0 };
+
+    usersSnap.forEach((docSnap) => {
+        const user = docSnap.data() || {};
+        const uid = docSnap.id;
+        const byDate = logsByUid.get(uid);
+        if (!byDate || byDate.size === 0) { skipped.noRecord += 1; return; }
+        // 회원이 껐으면 여기서 끝이다. settings 안에 두는 이유는 users/ 의 필드
+        // 화이트리스트(firestore.rules isAllowedUserField) 때문이다 — 새 최상위
+        // 필드는 규칙을 함께 배포해야 하고, 빠뜨리면 쓰기가 조용히 거부된다.
+        if (user.settings && user.settings.coachMessagesOptOut === true) {
+            skipped.optedOut += 1;
+            return;
+        }
+
+        const logs = [...byDate.values()].sort((a, b) => (a.date < b.date ? 1 : -1));
+        const latestDate = logs[0] ? logs[0].date : "";
+        // 이탈한 분께 주간 메시지를 계속 보내면 스팸이다. 복귀 권유는 재참여 메일의 몫.
+        if (latestDate < inactiveCut) { skipped.inactive += 1; return; }
+
+        const heightCm = user.healthProfile ? user.healthProfile.heightCm : null;
+        const daily = logs.map((log) => ({ date: log.date, values: extractDailyValues(log, { heightCm }) }));
+
+        // daily_logs 로 읽히는 지표만. 체지방·골격근량·당화혈색소 등은 회원마다 하위
+        // 컬렉션을 따로 읽어야 해서 이 화면에서는 빠진다 — 회원 상세는 그대로 다 본다.
+        const trendMetrics = METRIC_SPECS
+            .filter((spec) => spec.scope === "both")
+            .map((spec) => {
+                const weekly = aggregateWeekly(
+                    daily.map((day) => ({ date: day.date, value: day.values[spec.key] })),
+                    weekKeys
+                );
+                const summary = summarizeChange(weekly, spec);
+                const pool = cohortValues ? cohortValues.get(spec.key) : null;
+                return {
+                    key: spec.key, label: spec.label, unit: spec.unit, decimals: spec.decimals,
+                    summary,
+                    percentile: pool ? percentileOf(pool, summary.recent, spec.better) : null,
+                };
+            })
+            // 방향이 없는 지표는 초안을 만들지 않는다. 실어 보낼 이유가 없다.
+            .filter((metric) => metric.summary.direction === "improved" || metric.summary.direction === "worsened");
+
+        members.push({
+            uid,
+            name: user.customDisplayName || user.displayName || "",
+            streak: user.currentStreak || 0,
+            latestDate,
+            logs,
+            trendMetrics,
+            sentKeys: sentKeysByUid.get(uid) || {},
+        });
+    });
+
+    return {
+        members,
+        total: members.length,
+        skipped,
+        todayStr,
+        cooldownDays: PRESCRIPTION_QUEUE_COOLDOWN_DAYS,
+        inactiveDays: PRESCRIPTION_QUEUE_INACTIVE_DAYS,
+    };
+}
+
+exports.getAdminPrescriptionQueue = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 300, memory: "1GiB" },
+    async (request) => {
+        await assertAdminRequest(request);
+        const force = request.data && request.data.force === true;
+        const todayStr = getCurrentKstDateString();
+        const cacheRef = db.doc("meta/adminPrescriptionQueue");
+
+        if (!force) {
+            try {
+                const cached = await cacheRef.get();
+                const data = cached.exists ? cached.data() : null;
+                const builtAt = data && data.builtAt && data.builtAt.toMillis ? data.builtAt.toMillis() : 0;
+                if (data && data.members && data.todayStr === todayStr
+                    && Date.now() - builtAt < PRESCRIPTION_QUEUE_CACHE_MS) {
+                    return { ...data, builtAt, cached: true };
+                }
+            } catch (error) {
+                console.warn("[getAdminPrescriptionQueue] 캐시 읽기 실패:", error && error.message);
+            }
+        }
+
+        const built = await buildAdminPrescriptionQueue(todayStr);
+        try {
+            await cacheRef.set({ ...built, builtAt: FieldValue.serverTimestamp() });
+        } catch (error) {
+            // 1MB 를 넘길 수 있다. 캐시를 포기하고 계산 결과만 준다 — getAdminMembers 와 같은 판단.
+            console.warn("[getAdminPrescriptionQueue] 캐시 저장 건너뜀:", error && error.message);
+        }
+        return { ...built, builtAt: Date.now(), cached: false };
     }
 );
 

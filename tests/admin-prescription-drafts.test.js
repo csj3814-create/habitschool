@@ -175,7 +175,8 @@ describe('the admin screen shows drafts instead of four fixed lines', () => {
         const fn = ADMIN.split('function renderPrescriptionDrafts(')[1].split('\n    }\n')[0];
         expect(fn).toContain('rx-draft-label');
         expect(fn).toContain('rx-draft-evidence');
-        expect(fn).toContain('quickMsg(draft.message, draft.summary)');
+        // 2026-09-15: 주간 대기열이 4주 쿨다운을 걸려면 어떤 초안이었는지도 함께 간다.
+        expect(fn).toContain('quickMsg(draft.message, draft.summary, draft.key)');
     });
 
     it('says so plainly when it has no grounds, rather than filling the gap', () => {

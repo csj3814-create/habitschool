@@ -49,9 +49,9 @@ describe('a coach message fits the card it lands in', () => {
     it('gives the admin a place to write it', () => {
         expect(admin).toContain('id="fb-summary"');
         expect(admin).toContain('maxlength="60"');
-        expect(admin).toContain('submitAdminFeedbackCallable({ targetUid: uid, message: msg, summary })');
+        expect(admin).toContain('message: msg, summary, draftKey: pendingDraftKey }');
         // 초안을 누르면 두 칸이 함께 채워진다.
-        expect(admin).toContain('quickMsg(draft.message, draft.summary)');
+        expect(admin).toContain('quickMsg(draft.message, draft.summary, draft.key)');
     });
 });
 

@@ -71,7 +71,8 @@ describe('admin member detail UI', () => {
         expect(closeSource.indexOf('focusTarget.focus')).toBeLessThan(closeSource.indexOf("setAttribute('aria-hidden', 'true')"));
         expect(source).toContain("httpsCallable(fns, 'submitAdminFeedback')");
         // 2026-09-15: 회원 카드가 요약 한 줄을 머리로 쓰게 되면서 summary 가 함께 간다.
-        expect(submitSource).toContain('submitAdminFeedbackCallable({ targetUid: uid, message: msg, summary })');
+        // 2026-09-15: 주간 대기열의 4주 쿨다운 근거로 draftKey 가 함께 간다.
+        expect(submitSource).toContain('message: msg, summary, draftKey: pendingDraftKey }');
         expect(submitSource).not.toContain("setDoc(doc(db,'users'");
         expect(submitSource).not.toContain("setDoc(doc(db,'daily_logs'");
     });
