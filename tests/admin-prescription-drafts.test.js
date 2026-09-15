@@ -43,7 +43,7 @@ describe('a prescription is written from this member, or not written', () => {
         expect(alert.message).toContain('2026-09-12');
         expect(alert.evidence).toContain('126');
         // 한 번의 수치로 단정하지 않는다.
-        expect(alert.message).toContain('단정할 수는 없지만');
+        expect(alert.message).toContain('단정할 일은 아니지만');
     });
 
     it('puts the alert first — the urgent thing goes on top', () => {
@@ -99,7 +99,8 @@ describe('a prescription is written from this member, or not written', () => {
         const drafts = buildAdminPrescriptionDrafts({ name: '루미나', logs, todayStr: TODAY });
         const gap = draftFor(drafts, 'gap');
         expect(gap.evidence).toContain('식단 5일');
-        expect(gap.message).toContain('7일 중 5일');
+        expect(gap.message).toContain('지난 7일 동안');
+        expect(gap.message).toContain('5일이나');
         expect(gap.message).toMatch(/운동|수면/);
         // 점수가 실제보다 낮게 잡힌다는 이유까지 말한다.
         expect(gap.message).toContain('낮게 잡히고');
@@ -125,7 +126,7 @@ describe('a prescription is written from this member, or not written', () => {
         const back = draftFor(drafts, 'comeback');
         expect(back.message).toContain('2026-09-08');
         expect(back.message).toContain('7일');
-        expect(back.message).toContain('채근하려고 드리는 말씀이 아니라');
+        expect(back.message).toContain('채근하려는 게 아니라');
     });
 
     it('stays quiet about a streak that has not been earned', () => {
@@ -135,7 +136,7 @@ describe('a prescription is written from this member, or not written', () => {
 
     it('reads a three-digit streak differently from a one-week one', () => {
         const long = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 157, todayStr: TODAY });
-        expect(draftFor(long, 'streak').message).toContain('생활이라고');
+        expect(draftFor(long, 'streak').message).toContain('생활입니다');
         const short = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 9, todayStr: TODAY });
         expect(draftFor(short, 'streak').message).toContain('한 주를 넘기면');
     });
@@ -151,7 +152,7 @@ describe('a prescription is written from this member, or not written', () => {
         for (const draft of drafts) {
             expect(draft.evidence, draft.key).toBeTruthy();
             expect(draft.label, draft.key).toBeTruthy();
-            expect(draft.message.length, draft.key).toBeGreaterThan(80);
+            expect(draft.message.length, draft.key).toBeGreaterThan(60);
         }
     });
 
@@ -171,7 +172,7 @@ describe('the admin screen shows drafts instead of four fixed lines', () => {
         const fn = ADMIN.split('function renderPrescriptionDrafts(')[1].split('\n    }\n')[0];
         expect(fn).toContain('rx-draft-label');
         expect(fn).toContain('rx-draft-evidence');
-        expect(fn).toContain('quickMsg(draft.message)');
+        expect(fn).toContain('quickMsg(draft.message, draft.summary)');
     });
 
     it('says so plainly when it has no grounds, rather than filling the gap', () => {

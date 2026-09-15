@@ -167,6 +167,8 @@
         .ab-warn { background: #FFEBEE; color: #C62828; border: 1px solid #F44336; }
         .ab-cheer { background: #E3F2FD; color: #1565C0; border: 1px solid #2196F3; }
         .fb-textarea { width: 100%; min-height: 70px; padding: 9px; border-radius: 8px; border: 1px solid #ccc; resize: none; font-family: inherit; font-size: 13px; }
+        /* 회원 화면의 머리 한 줄. 본문보다 눈에 띄어야 여기가 요약임이 읽힌다. */
+        .fb-summary { width: 100%; padding: 9px; margin-bottom: 7px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 13px; font-weight: 700; }
         .fb-submit { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; }
         .email-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         @media (max-width: 768px) { .email-audit-grid { grid-template-columns: 1fr; } }
@@ -787,7 +789,9 @@
                     <div id="rx-drafts" class="rx-drafts">
                         <div class="rx-empty">기록을 불러오는 중…</div>
                     </div>
-                    <textarea id="fb-text" class="fb-textarea" placeholder="직접 코멘트 작성..."></textarea>
+                    <input id="fb-summary" class="fb-summary" type="text" maxlength="60"
+                        placeholder="요약 한 줄 — 회원 화면 맨 위에 굵게 보입니다 (60자)">
+                    <textarea id="fb-text" class="fb-textarea" placeholder="본문 — 카드에서는 두 줄까지 보이고 나머지는 '더 보기'로 접힙니다"></textarea>
                     <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
                 </div>
                 <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
@@ -1847,7 +1851,7 @@
         host.querySelectorAll('button[data-rx-index]').forEach((button) => {
             button.onclick = () => {
                 const draft = adminPrescriptionDrafts[Number(button.dataset.rxIndex)];
-                if (draft) quickMsg(draft.message);
+                if (draft) quickMsg(draft.message, draft.summary);
             };
         });
     }
@@ -4209,8 +4213,13 @@
         } catch(e) { document.getElementById('history-wrap').innerHTML=`<div style="padding:20px;color:red;">${escapeHtml(e.message)}</div>`; }
     };
 
-    window.closeModal = function() { closeAdminMediaLightbox(); adminDetailMediaItems = []; adminDetailMediaIndex = -1; document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; };
-    window.quickMsg = function(msg) { document.getElementById('fb-text').value=msg; };
+    window.closeModal = function() { closeAdminMediaLightbox(); adminDetailMediaItems = []; adminDetailMediaIndex = -1; document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; document.getElementById('fb-summary').value=''; };
+    window.quickMsg = function(msg, summary) {
+        document.getElementById('fb-text').value = msg;
+        // 요약을 비워 두면 서버가 본문 첫 문장으로 채운다. 덮어쓰지는 않는다.
+        const summaryEl = document.getElementById('fb-summary');
+        if (summaryEl && summary !== undefined) summaryEl.value = summary || '';
+    };
 
     window.sendReEngagement = async function(days) {
         const btn = event.target;
@@ -4308,16 +4317,17 @@
     window.submitFb = async function() {
         const uid = document.getElementById('modal-uid').value;
         const msg = document.getElementById('fb-text').value.trim();
+        const summary = document.getElementById('fb-summary').value.trim();
         if (!msg) { adminToast('메시지를 입력하세요.', 'warn'); return; }
         const button = document.querySelector('.fb-submit');
         if (button?.disabled) return;
         if (button) { button.disabled = true; button.textContent = '전송 중...'; }
         try {
-            const response = await submitAdminFeedbackCallable({ targetUid: uid, message: msg });
+            const response = await submitAdminFeedbackCallable({ targetUid: uid, message: msg, summary });
             const historyNotice = response.data?.historyAttached
                 ? '오늘 기록에도 함께 추가됐습니다.'
                 : '오늘 기록이 없어 앱 안내에만 표시됩니다.';
-            adminToast(`✅ 회원 앱에 3일간 노출됩니다. ${historyNotice}`, 'success');
+            adminToast(`✅ 회원 앱에 7일간 노출되고, 지난 메시지에 남습니다. ${historyNotice}`, 'success');
             closeModal(); cache=null; tabLoaded['members']=false; loadMembers();
         } catch(e) { adminToast('전송 실패: '+e.message, 'error'); }
         finally {

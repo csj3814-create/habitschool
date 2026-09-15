@@ -609,6 +609,10 @@ export const ADMIN_DAILY_GRADE_TARGET_MINUTES = WEEKLY_ACTIVITY_TARGET_MINUTES;
 // 채우면 예전 버튼으로 돌아간다.
 //
 // 초안마다 evidence 를 함께 준다. 보내기 전에 관리자가 눈으로 확인할 자리다.
+//
+// 메시지는 두 겹이다. summary 는 대시보드 카드의 머리 한 줄(40자 안팎)이고,
+// message 는 그 아래 두 줄로 접히는 본문이다. 회원 화면은 좁고, 카드가 길면
+// 대시보드를 통째로 밀어낸다. 할 말을 다 쓰는 것보다 읽히는 것이 먼저다.
 
 const PRESCRIPTION_ALERT_THRESHOLDS = { glucose: 126, bpSystolic: 140, bpDiastolic: 90 };
 
@@ -753,11 +757,9 @@ export function buildAdminPrescriptionDrafts({
             tone: "warn",
             label: `⚠️ ${first.kind} 확인`,
             evidence: `${first.date} ${first.kind} ${first.value} (기준 ${first.limit} 이상) · 최근 30일 ${alerts.length}회`,
-            message: `${님}, 기록을 살펴보다 한 가지 말씀드리고 싶어 연락드립니다.\n\n`
-                + `${first.date} ${withJosa(first.kind, "이가")} ${withJosa(first.value, "으로")} 기준(${first.limit})을 넘었습니다. `
-                + `최근 30일 동안 ${alerts.length}번 있었어요.\n\n`
-                + `한 번의 수치로 무언가를 단정할 수는 없지만, 반복된다면 확인해 보시는 편이 좋습니다. `
-                + `다음에 재실 때는 같은 시간대에 재 보시고, 그 값도 기록해 주세요. 제가 함께 보겠습니다.`,
+            summary: `${first.kind} ${first.value}, 한 번 확인해 주세요`,
+            message: `${first.date} ${withJosa(first.kind, "이가")} ${withJosa(first.value, "으로")} 기준(${first.limit})을 넘었습니다. 최근 30일 중 ${alerts.length}번이에요.\n`
+                + `한 번의 수치로 단정할 일은 아니지만, 다음에 재실 때 같은 시간대로 재서 기록해 주시면 제가 함께 보겠습니다.`,
         });
     }
 
@@ -773,9 +775,9 @@ export function buildAdminPrescriptionDrafts({
             tone: "warn",
             label: `📉 ${metric.label} 되돌리기`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}`,
-            message: `${님}, 4주씩 끊어 보니 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 움직였습니다.\n\n`
-                + `짧은 기간의 흔들림일 수 있어 크게 걱정하실 일은 아닙니다. 다만 방향이 이어지는지가 중요해서 말씀드려요.\n\n`
-                + `다음 2주만 여기에 집중해 보시면 어떨까요. 다시 4주가 쌓이면 제가 같은 자리에서 확인하고 알려 드리겠습니다.`,
+            summary: `${metric.label} ${previous} → ${recent}`,
+            message: `4주씩 끊어 보니 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 움직였습니다.\n`
+                + `짧은 흔들림일 수 있어요. 다음 2주만 여기에 집중해 보시면, 4주가 쌓일 때 제가 다시 확인해 알려 드리겠습니다.`,
         });
     }
 
@@ -793,10 +795,9 @@ export function buildAdminPrescriptionDrafts({
             tone: "good",
             label: `📈 ${metric.label} 칭찬`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${100 - Math.round(percentile)}%` : ""}`,
-            message: `${님}, 기록을 4주씩 끊어 보다가 말씀드리고 싶어졌습니다.\n\n`
-                + `${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 올라섰습니다.${rank}\n\n`
-                + `우연히 좋아진 숫자가 아니라 ${님}이 4주 동안 쌓아 만든 결과입니다. `
-                + `지금 하시는 방식이 맞으니 그대로 이어가시면 됩니다.`,
+            summary: `${metric.label} ${previous} → ${recent}, 잘 올라왔어요`,
+            message: `${withJosa(metric.label, "이가")} 4주 사이 ${previous}에서 ${withJosa(recent, "으로")} 올라섰습니다.${rank}\n`
+                + `우연이 아니라 ${님}이 4주 동안 쌓아 만든 결과예요. 지금 방식 그대로 이어가시면 됩니다.`,
         });
     }
 
@@ -809,11 +810,12 @@ export function buildAdminPrescriptionDrafts({
             tone: "good",
             label: `🔥 ${streakDays}일 연속 축하`,
             evidence: `연속 기록 ${streakDays}일`,
-            message: `${님}, ${streakDays}일 연속으로 기록하고 계십니다.\n\n`
+            summary: `${streakDays}일 연속 기록 중이에요`,
+            message: `${streakDays}일 연속으로 기록하고 계십니다. `
                 + `${milestone >= 100
-                    ? "세 자리 수를 넘긴 분은 많지 않습니다. 이쯤 되면 습관이 아니라 생활이라고 불러야 맞습니다."
-                    : "한 주를 넘기면 그때부터가 진짜입니다. 지금이 그 구간입니다."}\n\n`
-                + `빠뜨린 날이 생겨도 괜찮습니다. 끊긴 날보다 다시 시작한 날이 더 중요합니다.`,
+                    ? "세 자리를 넘긴 분은 많지 않아요. 이쯤이면 습관이 아니라 생활입니다."
+                    : "한 주를 넘기면 그때부터가 진짜입니다. 지금이 그 구간이에요."}\n`
+                + `빠뜨린 날이 생겨도 괜찮습니다. 끊긴 날보다 다시 시작한 날이 더 중요해요.`,
         });
     }
 
@@ -834,10 +836,9 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `🧩 ${target.label} 채우기 권유`,
                 evidence: `최근 7일 · ${strong.label} ${strong.days}일 / ${target.label} 0일`,
-                message: `${님}, 지난 7일 기록을 봤습니다.\n\n`
-                    + `${withJosa(strong.label, "은는")} 7일 중 ${strong.days}일이나 남기셨습니다. 쉽지 않은 일입니다.\n\n`
-                    + `다만 ${withJosa(target.label, "이가")} 한 번도 없어서, 건강 점수가 ${님}의 실제 상태보다 낮게 잡히고 있습니다. `
-                    + `${target.how}. 하루만 남겨 주셔도 그림이 훨씬 정확해집니다.`,
+                summary: `${target.label} 기록만 비어 있어요`,
+                message: `지난 7일 동안 ${withJosa(strong.label, "은는")} ${strong.days}일이나 남기셨어요. 쉽지 않은 일입니다.\n`
+                    + `다만 ${withJosa(target.label, "이가")} 한 번도 없어서 건강 점수가 실제보다 낮게 잡히고 있어요. ${target.how}.`,
             });
         }
     }
@@ -853,9 +854,9 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `👋 ${gapDays}일째 복귀 권유`,
                 evidence: `마지막 기록 ${latest.date} · ${gapDays}일 전`,
-                message: `${님}, 마지막 기록이 ${latest.date}이니 ${gapDays}일이 지났습니다.\n\n`
-                    + `바쁘셨을 겁니다. 채근하려고 드리는 말씀이 아니라, 그동안 쌓아 두신 기록이 아까워서요.\n\n`
-                    + `오늘 사진 한 장이나 걸음수 하나만 남기셔도 다시 이어집니다. 처음부터 다시 할 필요는 없습니다.`,
+                summary: `${gapDays}일 쉬셨네요, 오늘 하나만`,
+                message: `마지막 기록이 ${latest.date}이니 ${gapDays}일이 지났습니다. 채근하려는 게 아니라 쌓아 두신 기록이 아까워서요.\n`
+                    + `오늘 사진 한 장이나 걸음수 하나면 다시 이어집니다. 처음부터 할 필요 없어요.`,
             });
         }
     }

@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=408';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=408';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=409';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=409';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=408';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=408';
+} from './auth-login-helpers.js?v=409';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=409';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=408';
+} from './exercise-media.js?v=409';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=408';
+} from './health-connect-utils.js?v=409';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=408';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=408';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=408';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=408';
-import { sanitize, compressImage } from './data-manager.js?v=408';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=408';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=408';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=408';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=408';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=408';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=408';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=408';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=408';
+} from './habit-groups.js?v=409';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=409';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=409';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=409';
+import { sanitize, compressImage } from './data-manager.js?v=409';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=409';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=409';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=409';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=409';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=409';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=409';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=409';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=409';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=408';
+} from './guest-demo.js?v=409';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=408';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=408';
+} from './product-events.js?v=409';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=409';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=408';
+} from './diet-program.js?v=409';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=408';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=408';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=408';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=408';
+} from './meditation-guide.js?v=409';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=409';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=409';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=409';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=408';
+} from './social-challenge-readiness.js?v=409';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=408';
+} from './monthly-mvp-reward.js?v=409';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6704,7 +6704,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=408';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=409';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -14708,13 +14708,127 @@ window.addEventListener('beforeunload', () => {
 
 // 중복 제거: 로그인 및 인증 로직은 auth.js 모듈에서 처리
 
+/**
+ * 코치 메시지를 대시보드 카드에 건다.
+ *
+ * 요약 한 줄이 머리고, 본문은 두 줄까지만 편다. 카드가 길면 대시보드를 통째로
+ * 밀어내기 때문이다. 요약이 없는 예전 메시지는 본문 첫 문장을 머리로 쓴다.
+ */
+window.showCoachMessage = function ({ summary = '', body = '', feedbackDate = '', collapsed = false } = {}) {
+    const box = document.getElementById('admin-feedback-box');
+    const summaryEl = document.getElementById('admin-feedback-summary');
+    const textEl = document.getElementById('admin-feedback-text');
+    const moreBtn = document.getElementById('admin-feedback-more');
+    if (!box || !summaryEl || !textEl) return;
+
+    const bodyText = String(body || '').trim();
+    if (!bodyText) return;
+
+    const headline = String(summary || '').trim() || bodyText.split(/[.!?\n]/)[0].trim().slice(0, 60);
+    summaryEl.innerText = headline;
+    textEl.innerText = bodyText;
+    textEl.classList.add('is-clamped');
+    box.dataset.feedbackDate = feedbackDate;
+    box.classList.toggle('is-collapsed', !!collapsed);
+    box.style.display = 'block';
+
+    // 두 줄 안에 다 들어가면 '더 보기'를 띄울 이유가 없다.
+    if (moreBtn) {
+        moreBtn.textContent = '더 보기';
+        moreBtn.hidden = textEl.scrollHeight <= textEl.clientHeight + 1;
+    }
+    const collapseBtn = document.getElementById('admin-feedback-collapse');
+    if (collapseBtn) {
+        collapseBtn.textContent = collapsed ? '▾' : '✕';
+        collapseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        collapseBtn.setAttribute('aria-label', collapsed ? '메시지 펼치기' : '메시지 접기');
+    }
+};
+
+window.toggleFeedbackBody = function () {
+    const textEl = document.getElementById('admin-feedback-text');
+    const moreBtn = document.getElementById('admin-feedback-more');
+    if (!textEl || !moreBtn) return;
+    const clamped = textEl.classList.toggle('is-clamped');
+    moreBtn.textContent = clamped ? '더 보기' : '접기';
+};
+
+/**
+ * 읽고 나서 누르는 버튼이다. 사라지지 않고 요약 한 줄로 접힌다 — 다시 누르면 펴진다.
+ * 접었다는 사실만 기억하고, 메시지 자체는 보관함에 그대로 남는다.
+ */
 window.hideFeedback = function () {
     const box = document.getElementById('admin-feedback-box');
-    box.style.display = 'none';
+    if (!box) return;
+    const collapsed = box.classList.toggle('is-collapsed');
     const user = auth.currentUser;
-    // 이 메시지 하나만 닫는다. 표식에 날짜가 없으면 다음 메시지까지 함께 막힌다.
+    // 이 메시지 하나만 기억한다. 표식에 날짜가 없으면 다음 메시지까지 함께 막힌다.
     const feedbackDate = box.dataset.feedbackDate || '';
-    if (user && feedbackDate) localStorage.setItem(`hide_fb_${user.uid}_${feedbackDate}`, 'true');
+    if (user && feedbackDate) {
+        const key = `hide_fb_${user.uid}_${feedbackDate}`;
+        if (collapsed) localStorage.setItem(key, 'true');
+        else localStorage.removeItem(key);
+    }
+    const collapseBtn = document.getElementById('admin-feedback-collapse');
+    if (collapseBtn) {
+        collapseBtn.textContent = collapsed ? '▾' : '✕';
+        collapseBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        collapseBtn.setAttribute('aria-label', collapsed ? '메시지 펼치기' : '메시지 접기');
+    }
+};
+
+/**
+ * 지난 코치 메시지. admin_feedback 은 서버가 발송할 때마다 한 건씩 쌓고, 규칙이
+ * 본인 읽기를 이미 허용한다 — 새 컬렉션도 규칙 변경도 필요 없다.
+ *
+ * orderBy 를 붙이면 복합 인덱스가 필요해지므로 같음 조건으로만 받아 와 화면에서
+ * 정렬한다. 한 회원이 받는 코치 메시지는 그만한 양이 아니다.
+ */
+window.openCoachMessageArchive = async function () {
+    const modal = document.getElementById('coach-archive-modal');
+    const list = document.getElementById('coach-archive-list');
+    if (!modal || !list) return;
+    modal.style.display = 'flex';
+    list.innerHTML = '<div class="coach-archive-empty">불러오는 중…</div>';
+
+    const user = auth.currentUser;
+    if (!user) {
+        list.innerHTML = '<div class="coach-archive-empty">로그인이 필요합니다.</div>';
+        return;
+    }
+    try {
+        const snapshot = await getDocs(query(
+            collection(db, 'admin_feedback'),
+            where('targetUserId', '==', user.uid),
+            limit(50)
+        ));
+        const items = [];
+        snapshot.forEach((docSnap) => items.push(docSnap.data()));
+        items.sort((a, b) => String(b.feedbackDate || '').localeCompare(String(a.feedbackDate || '')));
+
+        if (!items.length) {
+            list.innerHTML = '<div class="coach-archive-empty">아직 받은 메시지가 없습니다.</div>';
+            return;
+        }
+        list.innerHTML = items.map((item) => {
+            const bodyText = String(item.message || '').trim();
+            const headline = String(item.summary || '').trim() || bodyText.split(/[.!?\n]/)[0].trim().slice(0, 60);
+            return `<div class="coach-archive-item">
+                <div class="coach-archive-date">${escapeHtml(item.feedbackDate || '')}</div>
+                <div class="coach-archive-summary">${escapeHtml(headline)}</div>
+                <div class="coach-archive-text">${escapeHtml(bodyText)}</div>
+            </div>`;
+        }).join('');
+    } catch (error) {
+        // 조용히 비우면 '메시지가 없다'와 '못 불러왔다'가 섞인다.
+        console.error('[coach-archive] 지난 메시지 조회 실패:', error?.message || error);
+        list.innerHTML = '<div class="coach-archive-empty">메시지를 불러오지 못했습니다.<br>잠시 후 다시 시도해 주세요.</div>';
+    }
+};
+
+window.closeCoachMessageArchive = function () {
+    const modal = document.getElementById('coach-archive-modal');
+    if (modal) modal.style.display = 'none';
 };
 
 // 중복 제거: 인증 상태 리스너는 auth.js의 setupAuthListener에서 처리

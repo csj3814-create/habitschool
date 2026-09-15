@@ -5352,11 +5352,17 @@ exports.submitAdminFeedback = onCall(
         const adminUid = await assertAdminRequest(request);
         const targetUid = String(request.data?.targetUid || "").trim();
         const message = String(request.data?.message || "").trim();
+        // 대시보드 카드는 요약 한 줄을 머리로 쓰고 본문은 두 줄만 편다.
+        // 요약이 없으면 본문 첫 문장을 대신 쓴다 — 카드 머리가 비면 안 된다.
+        const rawSummary = String(request.data?.summary || "").trim();
         if (!targetUid) {
             throw new HttpsError("invalid-argument", "대상 회원을 선택해 주세요.");
         }
         if (!message) {
             throw new HttpsError("invalid-argument", "코멘트를 입력해 주세요.");
+        }
+        if (rawSummary.length > 60) {
+            throw new HttpsError("invalid-argument", "요약은 60자를 넘을 수 없습니다.");
         }
         if (message.length > 1000) {
             throw new HttpsError("invalid-argument", "코멘트는 1,000자 이내로 입력해 주세요.");
@@ -5375,13 +5381,16 @@ exports.submitAdminFeedback = onCall(
 
         const feedbackRef = db.collection("admin_feedback").doc();
         const batch = db.batch();
+        const summary = rawSummary || message.split(/[.!?\n]/)[0].trim().slice(0, 60);
         batch.set(userRef, {
             adminFeedback: message,
+            adminFeedbackSummary: summary,
             feedbackDate,
         }, { merge: true });
         batch.set(feedbackRef, {
             targetUserId: targetUid,
             message,
+            summary,
             feedbackDate,
             adminUid,
             createdAt: FieldValue.serverTimestamp(),

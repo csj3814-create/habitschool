@@ -15,14 +15,16 @@ describe('dismissing one coach message does not silence the next', () => {
 
     it('keys the dismissal by message, not by member', () => {
         expect(auth).toContain('localStorage.getItem(`hide_fb_${user.uid}_${ud.feedbackDate}`)');
-        expect(app).toContain('localStorage.setItem(`hide_fb_${user.uid}_${feedbackDate}`');
+        expect(app).toContain('const key = `hide_fb_${user.uid}_${feedbackDate}`;');
         // 회원 단위로 막던 예전 표식은 남아 있으면 안 된다.
         expect(auth).not.toContain("localStorage.getItem('hide_fb_' + user.uid)");
         expect(app).not.toContain("localStorage.setItem('hide_fb_' + user.uid, 'true')");
     });
 
     it('carries the date on the box so the closer knows what it closed', () => {
-        expect(auth).toContain('box.dataset.feedbackDate = ud.feedbackDate;');
+        expect(auth).toContain('feedbackDate: ud.feedbackDate,');
+        const show = app.split('window.showCoachMessage = function (')[1].split('\n};\n')[0];
+        expect(show).toContain('box.dataset.feedbackDate = feedbackDate;');
         const fn = app.split('window.hideFeedback = function () {')[1].split('\n};\n')[0];
         expect(fn).toContain('box.dataset.feedbackDate');
     });

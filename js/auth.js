@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=408';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=409';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast } from './ui-helpers.js?v=408';
-import { getDatesInfo } from './ui-helpers.js?v=408';
-import { escapeHtml } from './security.js?v=408';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=408';
+import { showToast } from './ui-helpers.js?v=409';
+import { getDatesInfo } from './ui-helpers.js?v=409';
+import { escapeHtml } from './security.js?v=409';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=409';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=408';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=408';
-import { trackProductEvent } from './product-events.js?v=408';
+} from './auth-login-helpers.js?v=409';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=409';
+import { trackProductEvent } from './product-events.js?v=409';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=408';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=409';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1432,12 +1432,15 @@ export function setupAuthListener(callbacks) {
                     // 닫기 표식에 메시지 날짜를 넣는다. 예전에는 uid 만 썼던 탓에
                     // 한 번 X 를 누른 회원은 그 뒤 어떤 코치 메시지도 못 봤다 —
                     // 보낸 쪽은 '3일간 노출됩니다' 를 보고 전달된 줄 알았다.
-                    const isHidden = localStorage.getItem(`hide_fb_${user.uid}_${ud.feedbackDate}`);
-                    if (diffDays <= 3 && !isHidden) {
-                        const box = document.getElementById('admin-feedback-box');
-                        box.dataset.feedbackDate = ud.feedbackDate;
-                        box.style.display = 'block';
-                        document.getElementById('admin-feedback-text').innerText = ud.adminFeedback;
+                    const isCollapsed = localStorage.getItem(`hide_fb_${user.uid}_${ud.feedbackDate}`);
+                    // 7일. 보관함이 생겨 놓쳐도 다시 볼 수 있으니 짧게 둘 이유가 없다.
+                    if (diffDays <= 7) {
+                        window.showCoachMessage?.({
+                            summary: ud.adminFeedbackSummary || '',
+                            body: ud.adminFeedback,
+                            feedbackDate: ud.feedbackDate,
+                            collapsed: !!isCollapsed,
+                        });
                     }
                 }
 
