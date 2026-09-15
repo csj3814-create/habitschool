@@ -86,9 +86,13 @@ describe('a day says how it went without being opened', () => {
     });
 
     it('keeps the weekly target in one place', () => {
+        // 2026-09-15: 예전에는 admin-utils 가 150 을 옮겨 적고 이 시험이 둘을
+        // 묶어 뒀다. 이제는 le8-score 에서 직접 불러온다 — 옮겨 적은 값이 없으면
+        // 어긋날 일도 없으므로, 시험은 '사본이 없는지' 를 본다.
         expect(WEEKLY_ACTIVITY_TARGET_MINUTES).toBe(150);
         const utils = read('js/admin-utils.js');
-        expect(utils).toContain('const WEEKLY_ACTIVITY_TARGET_MINUTES = 150;');
+        expect(utils).toContain("import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js';");
+        expect(utils).not.toContain('const WEEKLY_ACTIVITY_TARGET_MINUTES =');
         expect(utils).toContain('150 / 7');
     });
 });

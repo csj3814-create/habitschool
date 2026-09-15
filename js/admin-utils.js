@@ -1,3 +1,5 @@
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js';
+
 function toMillis(value) {
     if (!value) return 0;
     if (value instanceof Date) return value.getTime();
@@ -462,9 +464,11 @@ const GRADE_LETTERS = ["A", "B", "C", "D", "F"];
 const GRADE_POINTS = { A: 5, B: 4, C: 3, D: 2, F: 1 };
 
 // js/le8-score.js 의 신체활동 문턱(주 150/120/90/60/30분)을 7로 나눈 값.
-// 그 파일은 브라우저 ESM 이고 여기는 관제탑이 쓰는 순수 모듈이라 값을 옮겨 적는다.
-// 어긋나면 화면 두 곳이 다른 말을 하므로 테스트가 둘을 묶어 둔다.
-const WEEKLY_ACTIVITY_TARGET_MINUTES = 150;
+//
+// 2026-09-15: 예전에는 이 파일이 import 없는 순수 모듈이라 150 을 옮겨 적고
+// 테스트로 둘을 묶어 뒀다. 지금은 위에서 le8-score 를 직접 불러온다 —
+// 옮겨 적은 값이 없으면 어긋날 일도 없다. admin.html 은 이미 le8-score 를
+// 불러오므로 화면에 실리는 양은 늘지 않는다.
 const DAILY_ACTIVITY_GRADE_THRESHOLDS = [
     ["A", 150 / 7],
     ["B", 120 / 7],
@@ -774,6 +778,52 @@ function hasSleepRecord(log) {
 }
 
 /**
+ * "이 정도면 잘하고 있다" 는 선.
+ *
+ * 2026-09-15 지적: "2만보는 엄청 많이 걷는 건데 그걸 좀 줄었다고 잔소리를 해야
+ * 겠냐? 잘 하고 있는데 조금 떨어졌다고 잔소리 하진 말자."
+ *
+ * 그때까지 '나빠진 지표' 는 **상대 변화만** 봤다. 23,816보 → 21,851보 는 줄어든
+ * 것이 맞지만 21,851보는 목표의 세 배가 넘는다. 줄었다는 사실만으로 연락하면
+ * 잘하고 있는 사람에게 잔소리가 간다.
+ *
+ * 그래서 최근 값이 아래 선 안쪽이면 초안을 만들지 않는다. 숫자는 새로 정한 것이
+ * 아니라 앱이 이미 쓰는 기준이다(js/le8-score.js):
+ *   - 수면 7~9시간 = 100점
+ *   - 식단 등급 B = 80점
+ *   - 공복혈당 100 미만이 정상(그 이상은 전당뇨)
+ *   - 혈압 120/80 미만 = 100점
+ *   - 당화혈색소 5.7 미만 만점, non-HDL 130 미만 = 100점
+ *
+ * 체지방·골격근량·내장지방은 LE8 에 기준이 없다. 잘하고 있는지 말할 수 없으므로
+ * 지금처럼 알린다 — 모르면서 괜찮다고 하는 것이 더 나쁘다.
+ */
+// 걸음수는 활동 점수와 같은 자로 잰다. 일상 이동분 4,000보를 빼고 분당 100보로
+// 환산해 주 150분(=하루 150/7분)을 채우는 걸음수.
+const PRESCRIPTION_STEP_BASELINE = 4000;
+const PRESCRIPTION_STEPS_PER_MINUTE = 100;
+const PRESCRIPTION_GOOD_ENOUGH = {
+    steps: { atLeast: PRESCRIPTION_STEP_BASELINE
+        + (WEEKLY_ACTIVITY_TARGET_MINUTES / 7) * PRESCRIPTION_STEPS_PER_MINUTE },
+    sleepHours: { atLeast: 7 },
+    dietGrade: { atLeast: 80 },
+    glucose: { atMost: 100 },
+    hba1c: { atMost: 5.7 },
+    nonHdl: { atMost: 130 },
+    bpSystolic: { atMost: 120 },
+    bpDiastolic: { atMost: 80 },
+};
+
+/** 최근 값이 기준 안쪽인가. 기준이 없는 지표는 판단하지 않는다(false). */
+function isStillGoodEnough(metric) {
+    const line = PRESCRIPTION_GOOD_ENOUGH[metric?.key];
+    const recent = toNumber(metric?.summary?.recent);
+    if (!line || recent === null) return false;
+    if (line.atLeast !== undefined) return recent >= line.atLeast;
+    return recent <= line.atMost;
+}
+
+/**
  * 초안 점수 — 얼마나 먼저 보여줄지. 0~100.
  *
  * 지금까지는 종류 순서(경보→나빠짐→좋아짐→꾸준함→빈자리→복귀)가 곧 순위였다.
@@ -923,6 +973,9 @@ export function buildAdminPrescriptionDrafts({
         const recent = formatMetricValue(metric.summary.recent, metric);
         const previous = formatMetricValue(metric.summary.previous, metric);
         if (!recent || !previous) continue;
+        // 기준 안쪽이면 줄었어도 연락할 일이 아니다. 2만보 걷는 분께
+        // "걸음수가 줄었습니다" 는 잔소리다.
+        if (isStillGoodEnough(metric)) continue;
         drafts.push({
             key: `worsened-${metric.key}`,
             tone: "warn",
@@ -1034,4 +1087,5 @@ export function buildAdminPrescriptionDrafts({
 
 export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS;
 export const ADMIN_PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = PRESCRIPTION_ALERT_MIN_REPEATS_ALONE;
+export const ADMIN_PRESCRIPTION_GOOD_ENOUGH = PRESCRIPTION_GOOD_ENOUGH;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
