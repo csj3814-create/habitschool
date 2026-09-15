@@ -128,7 +128,7 @@ describe('a photo that is not a workout says so', () => {
     it('asks whether it is a workout photo before anything else', () => {
         const prompt = runtime.split('const EXERCISE_ANALYSIS_PROMPT = `')[1].split('`;')[0];
         expect(prompt).toContain('isExercise');
-        expect(prompt).toContain('0. **운동 사진이 맞는가**');
+        expect(prompt).toContain('0. **운동 중에 찍힌 사진인가**');
         // 답의 모양을 보여주지 않으면 모델이 형식을 지키지 않는다.
         expect(prompt).toContain('"isExercise": false');
         const promptEn = runtime.split('const EXERCISE_ANALYSIS_PROMPT_EN = `')[1].split('`;')[0];

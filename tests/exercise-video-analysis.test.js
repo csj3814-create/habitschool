@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveExerciseItemMinutes } from '../js/le8-score.js';
+import { resolveDailyActivityMinutes, resolveExerciseItemMinutes } from '../js/le8-score.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
@@ -68,7 +68,7 @@ describe('a hyperlapse can say what, not how long', () => {
 
     it('asks whether it is a workout at all, and keeps a "no" out of the record', () => {
         const prompt = runtime.split('const EXERCISE_VIDEO_ANALYSIS_PROMPT = `')[1].split('`;')[0];
-        expect(prompt).toContain('**운동 영상이 맞는가**(isExercise)');
+        expect(prompt).toContain('**운동 중에 찍힌 영상인가**(isExercise)');
         expect(prompt).toContain('"isExercise": false');
 
         const analyzer = app.split('window.analyzeExerciseVideo = async function (')[1].split('\n};\n')[0];
@@ -126,5 +126,60 @@ describe('a hyperlapse can say what, not how long', () => {
         expect(strengthMarkup.indexOf('ai_s_${id}')).toBeGreaterThan(strengthMarkup.indexOf('</label>'));
         // 저장된 분석은 두 블록 종류 모두 되살린다.
         expect(fnBlock).toContain('if (hasAnalysis) {');
+    });
+});
+
+// 2026-09-15 제보: 1인칭 계단 오르기 영상을 올렸더니 "운동 영상으로 보이지 않아요"
+// 가 뜨면서도 timeAnalysis 에는 "계단 오르는 영상"이라고 제대로 적혀 있었다.
+// 모델이 못 읽은 게 아니라, 프롬프트가 isExercise 를 3인칭 기준으로만 물었다 —
+// "사람도 기구도 공간도 안 보이면 false". 1인칭은 그 셋이 다 안 보인다.
+describe('a first-person clip is still a workout', () => {
+    const videoPrompt = runtime.split('const EXERCISE_VIDEO_ANALYSIS_PROMPT = `')[1].split('`;')[0];
+    const photoPrompt = runtime.split('const EXERCISE_ANALYSIS_PROMPT = `')[1].split('`;')[0];
+
+    it('asks whether it was filmed while exercising, not whether a body is visible', () => {
+        for (const [label, prompt] of [['영상', videoPrompt], ['사진', photoPrompt]]) {
+            expect(prompt, label).toContain('운동하면서 찍은');
+            expect(prompt, label).toContain('1인칭');
+        }
+        // 예전 판정 문장은 없어야 한다.
+        expect(videoPrompt).not.toContain('사람이 운동하는 모습도, 운동 기구도, 운동 공간도 보이지 않으면');
+    });
+
+    it('names the scenes a first-person camera actually shows', () => {
+        expect(videoPrompt).toContain('계단이 흘러가고');
+        expect(videoPrompt).toContain('등산로');
+        // 답의 모양을 보여주지 않으면 모델이 형식을 지키지 않는다.
+        expect(videoPrompt).toContain('"exerciseType": "계단 오르기"');
+    });
+
+    it('still turns away what is plainly not exercise', () => {
+        // 음식 사진을 중강도로 평가하던 2026-09-14 건이 되살아나면 안 된다.
+        for (const [label, prompt] of [['영상', videoPrompt], ['사진', photoPrompt]]) {
+            expect(prompt, label).toContain('분명히 무관');
+            expect(prompt, label).toContain('음식');
+            expect(prompt, label).toContain('"isExercise": false');
+        }
+        // 풍경을 통째로 제외하던 문구는 뺐다 — 1인칭 등산로가 거기 걸렸다.
+        expect(photoPrompt).not.toContain('음식, 영수증, 풍경, 문서');
+    });
+
+    it('does not invent form advice for a body it cannot see', () => {
+        expect(videoPrompt).toContain('1인칭 영상은 몸이 안 보이므로 자세를 말할 수 없습니다');
+    });
+
+    it('sends a stair video to the side the step count already counts', () => {
+        // 1인칭 계단 영상은 운동 영상 칸에 올라오지만 걸음수가 이미 센다.
+        // 따로 더하면 같은 계단을 두 번 세게 된다.
+        const stairs = { exercise: { strengthList: [{ durationMinutes: 20, aiAnalysis: { exerciseType: '계단 오르기', intensity: '중강도' } }] }, steps: { count: 10000 } };
+        expect(resolveDailyActivityMinutes(stairs).minutes).toBe(60); // max(60, 20)
+
+        // 진짜 근력은 그대로 더한다.
+        const lifting = { exercise: { strengthList: [{ durationMinutes: 20, aiAnalysis: { exerciseType: '데드리프트', intensity: '고강도' } }] }, steps: { count: 10000 } };
+        expect(resolveDailyActivityMinutes(lifting).minutes).toBe(100); // 60 + 40
+
+        // 종류를 모르면 예전대로 따로 센다 — 측정 근거가 그쪽이다.
+        const unknown = { exercise: { strengthList: [{}] }, steps: { count: 10000 } };
+        expect(resolveDailyActivityMinutes(unknown).minutes).toBe(90); // 60 + 30
     });
 });

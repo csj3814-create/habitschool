@@ -3107,11 +3107,14 @@ const EXERCISE_ANALYSIS_PROMPT = `당신은 운동 생리학에 밝은 피트니
 숫자가 보이면 **읽은 그대로** 씁니다. 지어내지 마세요. 안 보이면 null 로 두고, 장면에서 알 수 있는 것만 말합니다.
 
 ## 판단 기준
-0. **운동 사진이 맞는가**(isExercise): 이 사진에 운동이라고 볼 근거가 있습니까?
-   음식, 영수증, 풍경, 문서, 사람 얼굴, 반려동물처럼 운동과 무관한 사진이면 **false**.
-   근거가 없으면 억지로 운동이라고 하지 마세요 — false 로 두고, 나머지 항목은
-   intensity 와 durationMinutes 를 null 로 두고 feedback 에 무엇이
-   찍힌 사진으로 보이는지 한 문장으로 적습니다. **이 판단이 제일 중요합니다.**
+0. **운동 중에 찍힌 사진인가**(isExercise): "운동하는 사람이 보이나"가 아니라
+   **"운동하면서 찍은 사진인가"** 를 묻습니다. 둘은 다릅니다.
+   1인칭으로 찍으면 사람도 기구도 보이지 않습니다 — 발밑의 등산로, 눈앞의 계단,
+   자전거 핸들 너머 길, 러닝 코스. **이것도 운동 사진입니다.**
+   음식, 영수증, 문서, 반려동물처럼 **운동과 분명히 무관할 때만 false** 로 둡니다.
+   그때는 억지로 운동이라고 하지 말고 intensity 와 durationMinutes 를 null 로 두고
+   feedback 에 무엇이 찍힌 사진으로 보이는지 한 문장으로 적습니다.
+   **이 판단이 제일 중요합니다.**
 1. **운동 종류**(exerciseType): 걷기, 달리기, 등산, 자전거, 수영, 근력운동, 요가, 홈트레이닝 등. 모르겠으면 "운동".
 2. **강도**(intensity): 정확히 아래 넷 중 하나로만.
    - 저강도: 산책, 가벼운 스트레칭, 느린 자전거 (심박 여유 40% 미만)
@@ -3161,7 +3164,7 @@ const EXERCISE_ANALYSIS_PROMPT_EN = `You are a fitness coach AI for Habit School
 The photo is usually either a **readout** (treadmill console, smartwatch or running-app summary, with time/distance/calories on screen) or a **scene** (someone exercising, equipment, a place). Read numbers exactly as shown — never invent them. If none are visible, use null and judge only from the scene.
 
 Rules:
-- **isExercise comes first and matters most.** If the photo shows nothing that counts as exercise — food, a receipt, scenery, a document, a face, a pet — set isExercise to false, intensity and durationMinutes to null, and say in feedback what the photo appears to show. Never force an unrelated photo into an exercise reading.
+- **isExercise comes first, and the question is "was this taken while exercising", not "can I see someone exercising".** A first-person shot shows no person and no equipment — the trail underfoot, the stairs ahead, the road past the handlebars. Those count as exercise. Set false only when the photo is clearly unrelated (food, a receipt, a document, a pet); then set intensity and durationMinutes to null and say in feedback what it appears to show. Never force an unrelated photo into an exercise reading.
 - intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도" (light / moderate / hard / very hard), or null when isExercise is false. The app maps these to labels itself.
 - durationMinutes: only what you actually read. **Never guess** — null is the right answer when no time is shown. The app does the goal arithmetic, so an invented number becomes an invented score.
 - timeAnalysis: one line stating what you read; include the numbers when you have them.
@@ -3403,14 +3406,23 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 �
 같은 이유로 반복 횟수도 **화면에서 실제로 셀 수 있을 때만** 적습니다. 빨리 감긴 영상에서 어림짐작한 횟수는 틀린 정보입니다.
 
 ## 판단 기준
-0. **운동 영상이 맞는가**(isExercise): 운동이라고 볼 근거가 있습니까? 사람이 운동하는 모습도, 운동 기구도, 운동 공간도 보이지 않으면 **false** 로 두고 무엇이 찍힌 영상으로 보이는지 feedback 에 적습니다. 이 판단이 제일 중요합니다.
-1. **운동 종류**(exerciseType): 스쿼트, 데드리프트, 벤치프레스, 푸시업, 플랭크, 런지, 덤벨 운동, 케틀벨, 요가, 스트레칭, 홈트레이닝 등. 모르겠으면 "근력운동".
+0. **운동 중에 찍힌 영상인가**(isExercise): "운동하는 사람이 보이나"가 아니라 **"운동하면서 찍은 영상인가"** 를 묻습니다. 둘은 다릅니다.
+
+   **1인칭 시점 영상을 놓치지 마세요.** 카메라를 몸에 달거나 손에 들고 찍으면 사람도, 기구도, 헬스장도 보이지 않습니다. 화면에는 계단이 흘러가고, 등산로가 지나가고, 길바닥이 움직이고, 자전거 핸들 너머 풍경만 있습니다. **이것도 전부 운동 영상입니다.** 오히려 우리 사용자에게는 이 쪽이 더 흔합니다.
+
+   운동 중에 찍혔다고 볼 수 있으면 **true** 입니다. 시점이 흔들리며 앞으로 나아가는 장면, 계단·경사로가 아래에서 위로 흘러가는 장면, 발이 번갈아 나오는 장면이 그렇습니다.
+
+   **false 는 운동과 분명히 무관할 때만** 씁니다 — 음식, 영수증, 문서, 반려동물, 실내에 가만히 앉아 찍은 장면처럼. 그때는 intensity 를 null 로 두고 무엇이 찍힌 영상으로 보이는지 feedback 에 적습니다.
+1. **운동 종류**(exerciseType): 보이는 대로 적습니다.
+   - 3인칭(몸이 보임): 스쿼트, 데드리프트, 벤치프레스, 푸시업, 플랭크, 런지, 덤벨 운동, 케틀벨, 요가, 스트레칭, 홈트레이닝
+   - 1인칭(시점만 보임): 계단 오르기, 등산, 달리기, 걷기, 자전거, 트레드밀
+   모르겠으면 "운동".
 2. **강도**(intensity): 정확히 아래 넷 중 하나로만. 동작의 크기·속도·부하로 판단합니다.
    - 저강도: 스트레칭, 가벼운 요가, 맨몸 준비운동
    - 중강도: 맨몸 근력운동, 가벼운 덤벨, 느린 템포
    - 고강도: 본격 웨이트, 큰 중량, 쉬지 않는 서킷
    - 초고강도: 전력에 가까운 고중량, 고강도 인터벌
-3. **자세**(formTip): 이 영상에서 **실제로 보이는 것**을 근거로 한 조언 한 문장. 무릎 방향, 허리 각도, 가동 범위, 호흡 리듬 같은 것. 잘 안 보이면 null 로 둡니다 — 안 보이는 것을 지적하면 틀린 지적이 됩니다.
+3. **자세**(formTip): 이 영상에서 **실제로 보이는 것**을 근거로 한 조언 한 문장. 무릎 방향, 허리 각도, 가동 범위, 호흡 리듬 같은 것. 잘 안 보이면 null 로 둡니다 — 안 보이는 것을 지적하면 틀린 지적이 됩니다. **1인칭 영상은 몸이 안 보이므로 자세를 말할 수 없습니다.** 그때는 null 이 정답이고, 대신 페이스나 경사 같은 보이는 것을 feedback 에 씁니다.
 4. **반복 횟수**(repCount): 셀 수 있으면 정수, 못 세면 null.
 
 ## 문장 쓰기
@@ -3431,6 +3443,18 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 �
 
 durationMinutes 는 예외 없이 null 입니다. intensity 는 반드시 위 네 단어 중 하나이거나, 운동 영상이 아니면 null 입니다.
 
+1인칭 계단 오르기의 예 — 사람도 기구도 안 보이지만 운동입니다:
+{
+  "isExercise": true,
+  "exerciseType": "계단 오르기",
+  "intensity": "고강도",
+  "durationMinutes": null,
+  "repCount": null,
+  "timeAnalysis": "1인칭 시점 계단 오르기",
+  "feedback": "쉬지 않고 올라가는 페이스가 좋습니다. 계단은 같은 시간 대비 심박이 빨리 올라가는 운동입니다.",
+  "formTip": null
+}
+
 운동이 아닌 영상의 예:
 {
   "isExercise": false,
@@ -3438,8 +3462,8 @@ durationMinutes 는 예외 없이 null 입니다. intensity 는 반드시 위 �
   "intensity": null,
   "durationMinutes": null,
   "repCount": null,
-  "timeAnalysis": "길거리를 찍은 영상입니다.",
-  "feedback": "운동하는 모습으로 볼 만한 것이 없습니다. 운동 장면이 담긴 영상을 올려 주세요.",
+  "timeAnalysis": "식탁에 놓인 음식을 찍은 영상입니다.",
+  "feedback": "운동으로 볼 만한 것이 없습니다. 운동 중에 찍은 영상을 올려 주세요.",
   "formTip": null
 }`;
 
@@ -3450,9 +3474,9 @@ These clips are usually **hyperlapse/timelapse**: ten seconds of file standing i
 **You therefore cannot know how long the workout lasted.** Always set durationMinutes to null — the user types the time themselves. Count reps only when you can actually count them on screen; a guess from sped-up footage is wrong information.
 
 Rules:
-- **isExercise comes first.** If nothing in the clip reads as exercise, set isExercise false, intensity null, and say in feedback what the video appears to show.
+- **isExercise comes first, and the question is "was this filmed while exercising", not "can I see someone exercising".** First-person clips — a camera on the chest or in the hand — show no person, no equipment, no gym: just stairs scrolling past, a trail going by, the road moving, the view over handlebars. Those are exercise. Set false only when the clip is clearly unrelated (food, a receipt, a document, a pet, someone sitting still indoors).
 - intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도", or null when isExercise is false. The app maps these to labels itself.
-- formTip must be grounded in what is visible (knee tracking, back angle, range of motion, tempo). If you cannot see it clearly, use null — an invented correction is worse than none.
+- formTip must be grounded in what is visible (knee tracking, back angle, range of motion, tempo). If you cannot see it clearly, use null — an invented correction is worse than none. **A first-person clip shows no body, so form cannot be judged: use null and comment on pace or gradient in feedback instead.**
 - Write timeAnalysis, feedback and formTip in natural English. Never put a duration in timeAnalysis.
 
 Return only valid JSON:

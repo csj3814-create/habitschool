@@ -241,8 +241,15 @@ export function resolveDailyActivityMinutes(log) {
         if (isStepOverlappingExercise(item)) overlappingMinutes += minutes;
         else separateMinutes += minutes;
     });
-    // 근력 영상은 언제나 따로 센다. 역기를 든다고 걸음수가 오르지 않는다.
-    strengthItems.forEach((item) => { separateMinutes += resolveExerciseItemMinutes(item); });
+    // 근력 영상은 기본적으로 따로 센다 — 역기를 든다고 걸음수가 오르지 않는다.
+    // 다만 이 칸에 1인칭 계단·등산 영상을 올리는 사람도 있다. 그건 걸음수가
+    // 이미 세어 주므로 겹치는 쪽으로 보낸다. 종류를 모르면 예전대로 따로 센다.
+    strengthItems.forEach((item) => {
+        const minutes = resolveExerciseItemMinutes(item);
+        const knownType = String(item?.aiAnalysis?.exerciseType || '').trim();
+        if (knownType && isStepOverlappingExercise(item)) overlappingMinutes += minutes;
+        else separateMinutes += minutes;
+    });
 
     overlappingMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, overlappingMinutes);
     separateMinutes = Math.min(MAX_MEDIA_MINUTES_PER_DAY, separateMinutes);
