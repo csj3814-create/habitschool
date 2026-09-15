@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildAdminPrescriptionDrafts } from '../js/admin-utils.js';
+import {
+    buildAdminPrescriptionDrafts,
+    ADMIN_PRESCRIPTION_ALERT_THRESHOLDS as ADMIN_THRESHOLDS,
+    ADMIN_PRESCRIPTION_ALERT_MIN_REPEATS_ALONE as MIN_REPEATS,
+} from '../js/admin-utils.js';
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
@@ -11,9 +15,14 @@ const RUNTIME = read('functions/runtime.js');
 const RULES = read('firestore.rules');
 const TODAY = '2026-09-15';
 
-const alertFor = (metrics) => buildAdminPrescriptionDrafts({
-    name: '헤이', logs: [{ date: '2026-09-04', metrics }], todayStr: TODAY,
+const DATES = ['2026-09-04', '2026-08-26', '2026-08-17'];
+// 여러 날짜에 걸친 기록. 한쪽만 걸린 혈압은 반복돼야 경보가 되므로 필요하다.
+const alertOver = (...days) => buildAdminPrescriptionDrafts({
+    name: '헤이',
+    logs: days.map((metrics, i) => ({ date: DATES[i], metrics })),
+    todayStr: TODAY,
 }).find((d) => d.key.includes('alert'));
+const alertFor = (metrics) => alertOver(metrics);
 
 // 2026-09-15 지적: "132/90 처럼 아슬아슬하게 높은 건 메세지 보내기가 그래."
 //
@@ -21,19 +30,11 @@ const alertFor = (metrics) => buildAdminPrescriptionDrafts({
 // 넘었고" 라고 나갔다 — 132 는 140 을 넘지 않았다. 걸린 것은 이완기 90 하나뿐이고
 // 그것도 넘은 게 아니라 닿은 것이다.
 describe('a borderline reading is described as what it is', () => {
-    it('names the half that crossed, not both', () => {
-        const draft = alertFor({ bpSystolic: 132, bpDiastolic: 90 });
-        expect(draft.message).toContain('이완기혈압이 90 mmHg');
-        // 걸리지 않은 쪽을 기준과 나란히 두면 그쪽도 넘은 것처럼 읽힌다.
-        expect(draft.message).not.toContain('140/90');
-        // 전체 수치는 맥락으로 함께 보여준다.
-        expect(draft.message).toContain('혈압 132/90 mmHg');
-    });
-
     it('says "touched the line" when the value equals it', () => {
-        expect(alertFor({ bpSystolic: 132, bpDiastolic: 90 }).message).toContain('딱 닿는 값이고');
         expect(alertFor({ glucose: 126 }).message).toContain('딱 닿는 값이고');
         expect(alertFor({ bpSystolic: 140, bpDiastolic: 90 }).message).toContain('딱 닿는 값이고');
+        expect(alertOver({ bpSystolic: 145, bpDiastolic: 80 }, { bpSystolic: 146, bpDiastolic: 80 })
+            .message).toContain('딱 닿는 값이고');
     });
 
     it('says "higher than" only when it really is', () => {
@@ -48,20 +49,79 @@ describe('a borderline reading is described as what it is', () => {
         expect(draft.message).toContain('140/90 mmHg');
     });
 
-    it('names the systolic side when only it crossed', () => {
-        const draft = alertFor({ bpSystolic: 145, bpDiastolic: 85 });
-        expect(draft.message).toContain('수축기혈압이 145 mmHg');
-        expect(draft.message).toContain('140 mmHg보다 높고');
-        expect(draft.message).not.toContain('90');
+    it('names the half that crossed, and never the one that did not', () => {
+        const draft = alertOver({ bpSystolic: 199, bpDiastolic: 67 }, { bpSystolic: 188, bpDiastolic: 70 });
+        expect(draft.message).toContain('수축기혈압이 199 mmHg');
+        expect(draft.message).toContain('145 mmHg보다 높고');
+        // 걸리지 않은 쪽을 기준과 나란히 두면 그쪽도 넘은 것처럼 읽힌다.
+        expect(draft.message).not.toContain('140/90');
+        // 전체 수치는 맥락으로 함께 보여준다.
+        expect(draft.message).toContain('혈압 199/67 mmHg');
     });
 
-    it('raises no alert when neither half is at the line', () => {
-        expect(alertFor({ bpSystolic: 132, bpDiastolic: 85 })).toBeUndefined();
+    it('counts each kind on its own', () => {
+        // 혈당 1회 + 수축기 2회인 분께 혈당 메시지가 "30일에 3번" 이라고 나갔다.
+        const draft = alertOver(
+            { glucose: 141 },
+            { bpSystolic: 199, bpDiastolic: 67 },
+            { bpSystolic: 190, bpDiastolic: 67 }
+        );
+        expect(draft.message).toContain('공복혈당이 141 mg/dL');
+        expect(draft.message).toContain('최근 30일에 1번입니다');
+    });
+});
+
+// 2026-09-15 요청: "수축기, 이완기 단독은 145, 95부터, 2회 이상 반복될 때만
+// 경보로 바꿔줘."
+//
+// 140/90 을 양쪽에 그대로 적용하니 132/90, 128/90 처럼 이완기 하나만 아슬아슬하게
+// 닿은 값이 대기열 맨 위를 차지했다. 한 번 잰 값으로 연락할 일이 아니다.
+describe('one high number on its own is not an alert', () => {
+    it('lets the readings that crowded the queue go quiet', () => {
+        expect(alertFor({ bpSystolic: 132, bpDiastolic: 90 })).toBeUndefined();
+        expect(alertFor({ bpSystolic: 128, bpDiastolic: 90 })).toBeUndefined();
+        expect(alertFor({ bpSystolic: 199, bpDiastolic: 67 })).toBeUndefined();
     });
 
-    it('scores a reading that only touches the line below one that clears it', () => {
-        expect(alertFor({ bpSystolic: 132, bpDiastolic: 90 }).score)
-            .toBeLessThan(alertFor({ bpSystolic: 160, bpDiastolic: 100 }).score);
+    it('holds the line at 145 and 95, not 140 and 90', () => {
+        const twice = (m) => alertOver(m, m);
+        expect(twice({ bpSystolic: 144, bpDiastolic: 80 })).toBeUndefined();
+        expect(twice({ bpSystolic: 145, bpDiastolic: 80 })).toBeTruthy();
+        expect(twice({ bpSystolic: 130, bpDiastolic: 94 })).toBeUndefined();
+        expect(twice({ bpSystolic: 130, bpDiastolic: 95 })).toBeTruthy();
+    });
+
+    it('needs it to happen twice', () => {
+        expect(alertOver({ bpSystolic: 199, bpDiastolic: 67 })).toBeUndefined();
+        expect(alertOver({ bpSystolic: 199, bpDiastolic: 67 }, { bpSystolic: 188, bpDiastolic: 70 })).toBeTruthy();
+        expect(alertOver({ bpSystolic: 130, bpDiastolic: 95 })).toBeUndefined();
+        expect(alertOver({ bpSystolic: 130, bpDiastolic: 95 }, { bpSystolic: 130, bpDiastolic: 96 })).toBeTruthy();
+    });
+
+    it('does not make the two halves cover for each other', () => {
+        // 한 번은 수축기만, 한 번은 이완기만 — 같은 종류가 두 번 나온 것이 아니다.
+        expect(alertOver({ bpSystolic: 150, bpDiastolic: 80 }, { bpSystolic: 120, bpDiastolic: 96 }))
+            .toBeUndefined();
+    });
+
+    it('still raises both-high on the first reading', () => {
+        // 양쪽이 함께 걸린 것은 아슬아슬한 값이 아니다. 기다릴 이유가 없다.
+        expect(alertFor({ bpSystolic: 140, bpDiastolic: 90 })).toBeTruthy();
+        expect(alertFor({ bpSystolic: 160, bpDiastolic: 100 })).toBeTruthy();
+    });
+
+    it('leaves fasting glucose alone — one reading is enough there', () => {
+        expect(alertFor({ glucose: 126 })).toBeTruthy();
+        expect(alertFor({ glucose: 141 })).toBeTruthy();
+        expect(alertFor({ glucose: 125 })).toBeUndefined();
+    });
+
+    it('keeps the two thresholds in one place', () => {
+        expect(ADMIN_THRESHOLDS.bpSystolicAlone).toBe(145);
+        expect(ADMIN_THRESHOLDS.bpDiastolicAlone).toBe(95);
+        expect(ADMIN_THRESHOLDS.bpSystolic).toBe(140);
+        expect(ADMIN_THRESHOLDS.bpDiastolic).toBe(90);
+        expect(MIN_REPEATS).toBe(2);
     });
 });
 

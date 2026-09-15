@@ -614,7 +614,24 @@ export const ADMIN_DAILY_GRADE_TARGET_MINUTES = WEEKLY_ACTIVITY_TARGET_MINUTES;
 // message 는 그 아래 두 줄로 접히는 본문이다. 회원 화면은 좁고, 카드가 길면
 // 대시보드를 통째로 밀어낸다. 할 말을 다 쓰는 것보다 읽히는 것이 먼저다.
 
-const PRESCRIPTION_ALERT_THRESHOLDS = { glucose: 126, bpSystolic: 140, bpDiastolic: 90 };
+/**
+ * 경보 기준.
+ *
+ * 혈압은 한쪽만 걸렸을 때 기준을 따로 둔다. 140/90 을 양쪽에 그대로 적용하면
+ * 132/90 이나 128/90 처럼 이완기 하나만 아슬아슬하게 닿은 값이 매주 대기열
+ * 맨 위를 차지했다. 한 번 잰 값으로 연락할 일은 아니다.
+ *
+ * 그래서 한쪽만 걸린 경우는 (1) 기준을 145 / 95 로 올리고 (2) 30일에 두 번
+ * 이상 나왔을 때만 경보로 본다. 양쪽이 함께 걸린 것은 예전 기준 그대로,
+ * 한 번만 나와도 올린다 — 그건 아슬아슬한 값이 아니다.
+ */
+const PRESCRIPTION_ALERT_THRESHOLDS = {
+    glucose: 126,
+    bpSystolic: 140, bpDiastolic: 90,
+    bpSystolicAlone: 145, bpDiastolicAlone: 95,
+};
+// 한쪽만 걸린 혈압은 이만큼 반복돼야 경보로 본다.
+const PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = 2;
 
 // 조사를 붙인다. 이게 틀리면 "걸음수이 85점에서 95점로 올랐습니다" 가 되고,
 // 받는 사람은 한 줄 만에 사람이 쓴 글이 아니라는 것을 안다. 정성 들인 메시지가
@@ -828,41 +845,65 @@ export function buildAdminPrescriptionDrafts({
         // 혈압은 숫자가 둘이다. 하나만 걸렸는데 "기준 140/90 을 넘었다" 고 쓰면
         // 132/90 이 둘 다 넘은 것처럼 읽힌다 — 132 는 140 을 넘지 않았다.
         // 걸린 쪽을 지목하고 전체 수치는 괄호로 함께 보여준다.
-        const highSystolic = systolic !== null && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic;
-        const highDiastolic = diastolic !== null && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic;
-        if (highSystolic || highDiastolic) {
+        const bothHigh = systolic !== null && diastolic !== null
+            && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic
+            && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic;
+        // 한쪽만 걸린 경우는 더 높은 기준을 넘어야 한다.
+        const systolicAlone = !bothHigh && systolic !== null
+            && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolicAlone;
+        const diastolicAlone = !bothHigh && !systolicAlone && diastolic !== null
+            && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolicAlone;
+
+        if (bothHigh || systolicAlone || diastolicAlone) {
             const reading = `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`;
-            const side = (highSystolic && highDiastolic)
-                ? { kind: "혈압", value: reading, limit: "140/90 mmHg" }
-                : highSystolic
-                    ? { kind: "수축기혈압", value: `${systolic} mmHg`, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic} mmHg` }
-                    : { kind: "이완기혈압", value: `${diastolic} mmHg`, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic} mmHg` };
-            alerts.push({
-                ...side,
-                date: log.date,
-                reading,
-                // 기준에 '닿은' 것과 '넘은' 것은 다른 말이다. 90 은 90 을 넘지 않았다.
-                atLimit: (!highSystolic || systolic === PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic)
-                    && (!highDiastolic || diastolic === PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic),
-                // 걸린 쪽 중 기준에서 더 멀리 간 쪽으로 읽는다.
-                overBy: Math.max(
-                    highSystolic ? ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) * 100 : 0,
-                    highDiastolic ? ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) * 100 : 0
-                ),
-            });
+            const bp = bothHigh
+                ? {
+                    kind: "혈압", value: reading, limit: "140/90 mmHg", alone: false,
+                    atLimit: systolic === PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic
+                        && diastolic === PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic,
+                    overBy: Math.max(
+                        ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) * 100,
+                        ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) * 100
+                    ),
+                }
+                : systolicAlone
+                    ? {
+                        kind: "수축기혈압", value: `${systolic} mmHg`, alone: true,
+                        limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpSystolicAlone} mmHg`,
+                        atLimit: systolic === PRESCRIPTION_ALERT_THRESHOLDS.bpSystolicAlone,
+                        overBy: ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolicAlone) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolicAlone) * 100,
+                    }
+                    : {
+                        kind: "이완기혈압", value: `${diastolic} mmHg`, alone: true,
+                        limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolicAlone} mmHg`,
+                        atLimit: diastolic === PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolicAlone,
+                        overBy: ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolicAlone) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolicAlone) * 100,
+                    };
+            alerts.push({ ...bp, date: log.date, reading });
         }
     }
-    if (alerts.length) {
-        const first = alerts[0];
+
+    // 종류별로 센다. 지금까지는 전체 건수를 썼는데, 혈당 1회 + 혈압 2회인 분께
+    // 혈당 메시지가 "최근 30일에 3번입니다" 라고 나갔다 — 혈당은 한 번이었다.
+    const alertCountByKind = {};
+    for (const alert of alerts) {
+        alertCountByKind[alert.kind] = (alertCountByKind[alert.kind] || 0) + 1;
+    }
+    // 한쪽만 걸린 혈압은 반복돼야 경보로 본다. 한 번 잰 값으로 연락할 일은 아니다.
+    const eligibleAlerts = alerts.filter((alert) =>
+        !alert.alone || alertCountByKind[alert.kind] >= PRESCRIPTION_ALERT_MIN_REPEATS_ALONE);
+    if (eligibleAlerts.length) {
+        const first = eligibleAlerts[0];
+        const repeats = alertCountByKind[first.kind];
         drafts.push({
             key: `alert-${first.kind}`,
             tone: "warn",
             label: `⚠️ ${first.kind} 확인`,
             evidence: `${first.date} ${first.kind} ${first.value}`
                 + (first.reading && first.reading !== first.value ? ` (혈압 ${first.reading})` : "")
-                + ` · 기준 ${first.limit} 이상 · 최근 30일 ${alerts.length}회`,
+                + ` · 기준 ${first.limit} 이상 · 최근 30일 ${repeats}회`,
             // 잰 값이 기준을 넘었다. 반복될수록, 기준에서 멀수록 올린다.
-            score: Math.min(100, 75 + Math.min(15, (alerts.length - 1) * 5) + Math.min(10, Math.round(first.overBy / 2))),
+            score: Math.min(100, 75 + Math.min(15, (repeats - 1) * 5) + Math.min(10, Math.round(first.overBy / 2))),
             // 사람이 읽고 보낸다. 자동 발송 후보에 넣지 않는다.
             requiresHuman: true,
             summary: `${first.kind} ${first.value}`,
@@ -870,7 +911,7 @@ export function buildAdminPrescriptionDrafts({
                 + (first.reading && first.reading !== first.value ? `(혈압 ${first.reading}).` : ".")
                 // 닿은 것과 넘은 것은 다른 말이다. 아슬아슬한 값을 "넘었습니다" 라고
                 // 쓰면 보내는 쪽도 받는 쪽도 실제보다 나쁘게 읽는다.
-                + ` 기준 ${first.limit}${first.atLimit ? "에 딱 닿는 값이고" : "보다 높고"}, 최근 30일에 ${alerts.length}번입니다.\n`
+                + ` 기준 ${first.limit}${first.atLimit ? "에 딱 닿는 값이고" : "보다 높고"}, 최근 30일에 ${repeats}번입니다.\n`
                 + `다음엔 같은 시간대에 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`,
         });
     }
@@ -992,4 +1033,5 @@ export function buildAdminPrescriptionDrafts({
 }
 
 export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS;
+export const ADMIN_PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = PRESCRIPTION_ALERT_MIN_REPEATS_ALONE;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
