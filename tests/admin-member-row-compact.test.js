@@ -78,3 +78,45 @@ describe('one member, one row', () => {
         expect(ADMIN).toContain('colspan="13"');
     });
 });
+
+// 2026-09-15 요청: "스크롤 바 안 생기게 해 봐"
+// nowrap 을 걸었더니 표가 1175px 를 요구했다. .wrap(1200) 에서 .box 여백(40)을 빼면
+// 자리는 1160px 뿐이라 가로 스크롤바가 생겼다. 브라우저에서 직접 재며 줄였다 —
+// 여백 3px(칸 13개 = 78px), 헤더 글자, 이름·이메일 최대 너비. 최소 1125px 이 됐다.
+describe('the member table fits without a horizontal scrollbar', () => {
+    it('gives this table its own tighter padding', () => {
+        expect(ADMIN).toContain('<table id="member-table">');
+        expect(ADMIN).toContain('#member-table th, #member-table td { padding: 7px 6px; }');
+    });
+
+    it('shortens headers that were wider than anything under them', () => {
+        const head = ADMIN.split('id="member-tbody"')[0].split('<thead><tr>').pop().split('</tr></thead>')[0];
+        for (const label of ['기록일 ↕', '포인트 ↕', '발행 HBT ↕', '온체인', '혈당 ↕', '재참여 메일']) {
+            expect(head, label).toContain(`>${label}<`);
+        }
+        for (const gone of ['최근 기록일 ↕', '현재 포인트 ↕', '누적 발행 HBT ↕', '온체인 HBT', '공복혈당 ↕', '미활동 이메일<']) {
+            expect(head, gone).not.toContain(gone);
+        }
+    });
+
+    it('keeps the meaning in a tooltip when the label is cut', () => {
+        const head = ADMIN.split('id="member-tbody"')[0].split('<thead><tr>').pop().split('</tr></thead>')[0];
+        expect(head).toContain('title="현재 보유 포인트"');
+        expect(head).toContain('title="지갑의 실제 온체인 잔액"');
+        expect(head).toContain('title="공복혈당"');
+        expect(head).toContain('title="3일 / 7일 미활동 재참여 메일 발송 기록"');
+        // 발행 HBT 의 설명은 원래 있던 것을 그대로 지킨다.
+        expect(head).toContain('앱이 발행해 준 누계입니다');
+    });
+
+    it('caps the two widest cells so the table stays inside the page', () => {
+        // 측정: 이 두 칸이 표에서 가장 넓다. 여기서 넘치면 스크롤바가 돌아온다.
+        expect(ADMIN).toContain('.member-name-cell { font-weight: bold; max-width: 110px;');
+        expect(ADMIN).toContain('.member-email-address { font-size: 11px; color: #888; max-width: 150px;');
+    });
+
+    it('still scrolls rather than breaking on a narrow window', () => {
+        // 좁은 화면에서까지 안 생기게 만들 수는 없다. 그때는 잘리지 말고 스크롤돼야 한다.
+        expect(ADMIN).toContain('.box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto;');
+    });
+});

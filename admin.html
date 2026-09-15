@@ -178,14 +178,19 @@
         .email-history-item { background: white; border: 1px solid #eee; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #555; }
         .email-history-item strong { color: #333; }
         .email-audit-empty { font-size: 12px; color: #999; padding: 12px; text-align: center; background: white; border: 1px dashed #ddd; border-radius: 8px; }
-        /* 회원 한 명 = 한 줄. 어느 칸도 줄을 접지 않는다. */
+        /* 회원 한 명 = 한 줄. 어느 칸도 줄을 접지 않는다.
+           칸이 13개라 여백 3px 를 줄이면 표가 78px 좁아진다 — 가로 스크롤바가
+           생기느냐 마느냐가 그만큼에서 갈렸다. 다른 표는 건드리지 않는다. */
+        #member-table th, #member-table td { padding: 7px 6px; }
         #member-tbody td { white-space: nowrap; }
         #member-tbody .badge { white-space: nowrap; }
         #member-tbody .btn-view { white-space: nowrap; }
         .member-cell-empty { color: #ccc; }
-        /* 긴 이름·이메일은 접는 대신 잘라내고, 전체는 title 로 띄운다. */
-        .member-name-cell { font-weight: bold; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
-        .member-email-address { font-size: 11px; color: #888; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        /* 긴 이름·이메일은 접는 대신 잘라내고, 전체는 title 로 띄운다.
+           너비는 표 전체가 .wrap(1200) - .box 여백(40) 안에 들어가도록 잡았다.
+           이 둘이 표에서 제일 넓은 칸이라, 여기서 넘치면 가로 스크롤바가 생긴다. */
+        .member-name-cell { font-weight: bold; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+        .member-email-address { font-size: 11px; color: #888; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
         .member-email-cell { white-space: nowrap; }
         .member-email-tags { display: inline-flex; gap: 4px; }
         .member-email-tag {
@@ -376,21 +381,21 @@
                 <button class="btn btn-primary" style="margin-left:auto;font-size:12px;padding:6px 12px;" onclick="sendReEngagement(3)">📧 3일 미활동 발송</button>
                 <button class="btn btn-primary" style="font-size:12px;padding:6px 12px;" onclick="sendReEngagement(7)">📧 7일+ 미활동 발송</button>
             </div>
-            <table>
+            <table id="member-table">
                 <thead><tr>
-                    <th class="sort" onclick="sortBy('date')">최근 기록일 ↕</th>
+                    <th class="sort" onclick="sortBy('date')">기록일 ↕</th>
                     <th>이름</th>
                     <th>이메일</th>
                     <th>레벨</th>
                     <th class="sort" onclick="sortBy('streak')">스트릭 ↕</th>
-                    <th class="sort" onclick="sortBy('coins')">현재 포인트 ↕</th>
-                    <th class="sort" title="앱이 발행해 준 누계입니다. 지갑의 온체인 잔액과 다릅니다." onclick="sortBy('hbt')">누적 발행 HBT ↕</th>
-                    <th>온체인 HBT</th>
+                    <th class="sort" title="현재 보유 포인트" onclick="sortBy('coins')">포인트 ↕</th>
+                    <th class="sort" title="앱이 발행해 준 누계입니다. 지갑의 온체인 잔액과 다릅니다." onclick="sortBy('hbt')">발행 HBT ↕</th>
+                    <th title="지갑의 실제 온체인 잔액">온체인</th>
                     <th>상세</th>
-                    <th class="sort" onclick="sortBy('glucose')">공복혈당 ↕</th>
+                    <th class="sort" title="공복혈당" onclick="sortBy('glucose')">혈당 ↕</th>
                     <th>혈압</th>
                     <th>메시지</th>
-                    <th>미활동 이메일</th>
+                    <th title="3일 / 7일 미활동 재참여 메일 발송 기록">재참여 메일</th>
                 </tr></thead>
                 <tbody id="member-tbody"><tr><td colspan="13">데이터를 불러오는 중...</td></tr></tbody>
             </table>
