@@ -144,13 +144,44 @@ describe('the weekly bar tells you what today asks of you', () => {
 describe('the weekly bar sits where the recording happens', () => {
     const app = read('js/app-core.js');
 
-    it('is at the top of the exercise tab', () => {
+    it('leads the exercise tab, in the place every tab keeps for content', () => {
+        // 2026-09-15: 처음엔 가이드 카드 위에 뒀는데 운동 탭만 순서가 달라졌다.
+        // 식단·마음 탭은 모두 가이드 → 포인트 배너 → 본문 카드 순이다.
         const html = read('index.html');
         const tab = html.indexOf('<div id="exercise" class="content-section">');
-        const card = html.indexOf('id="weekly-activity-card"');
         const guide = html.indexOf('data-record-guide="exercise"');
-        expect(card).toBeGreaterThan(tab);
-        expect(card).toBeLessThan(guide);
+        const banner = html.indexOf('id="quest-exercise"');
+        const card = html.indexOf('id="weekly-activity-card"');
+        const stepCard = html.indexOf('id="step-card"');
+        const photoCard = html.indexOf('id="exercise-image-title"') > -1
+            ? html.indexOf('id="exercise-image-title"')
+            : html.indexOf('📸 운동 이미지');
+
+        expect(guide).toBeGreaterThan(tab);
+        expect(banner).toBeGreaterThan(guide);
+        // 본문 카드 중에서는 맨 앞 — 기록하기 전에 남은 양이 보여야 한다.
+        expect(card).toBeGreaterThan(banner);
+        expect(card).toBeLessThan(stepCard);
+        expect(card).toBeLessThan(photoCard);
+    });
+
+    it('keeps the same running order as the other record tabs', () => {
+        const html = read('index.html');
+        const orderIn = (tabId, guideAttr) => {
+            const start = html.indexOf(`<div id="${tabId}" class="content-section"`);
+            const seg = html.slice(start, start + 16000);
+            return [seg.indexOf(guideAttr), seg.indexOf('quest-board'), seg.indexOf('class="card')];
+        };
+        for (const [tabId, guideAttr] of [
+            ['diet', 'data-record-guide="diet"'],
+            ['exercise', 'data-record-guide="exercise"'],
+            ['sleep', 'data-record-guide="sleep"']
+        ]) {
+            const [g, q, c] = orderIn(tabId, guideAttr);
+            expect(g, tabId).toBeGreaterThan(-1);
+            expect(q, tabId).toBeGreaterThan(g);
+            expect(c, tabId).toBeGreaterThan(q);
+        }
     });
 
     it('refreshes when the tab opens and after a save lands', () => {

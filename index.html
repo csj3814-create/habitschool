@@ -140,8 +140,8 @@
     </script>
 
     <!-- 외부 CSS 파일 -->
-    <link rel="stylesheet" href="styles.css?v=402">
-    <link rel="stylesheet" href="styles-guest-demo.css?v=402">
+    <link rel="stylesheet" href="styles.css?v=403">
+    <link rel="stylesheet" href="styles-guest-demo.css?v=403">
     <style>
         .meditation-practice-card {
             margin-top: 8px;
@@ -740,8 +740,8 @@
     </style>
 
     <!-- 인앱 브라우저 판정. webview-detect.js 가 이걸 읽으므로 반드시 먼저 온다. -->
-    <script src="js/browser-detect.js?v=402"></script>
-    <script src="js/webview-detect.js?v=402"></script>
+    <script src="js/browser-detect.js?v=403"></script>
+    <script src="js/webview-detect.js?v=403"></script>
     <script>
         (function () {
             var key = 'habitschool-media-picker-recovery-v1';
@@ -2238,8 +2238,6 @@
             </div>
 
             <div id="exercise" class="content-section">
-                <!-- 이번 주 완수율. 행동하는 자리에 남은 양이 보여야 목표에 닿는다. -->
-                <div class="card weekly-activity-card" id="weekly-activity-card" style="display:none;"></div>
                 <div class="record-flow-card" data-record-guide="exercise" aria-label="운동 기록 가이드">
                     <div class="record-flow-topline">
                         <div class="record-flow-kicker">가이드</div>
@@ -2267,6 +2265,10 @@
                     <div class="quest-item"><span>🏃 <strong>걸음수·운동 이미지 10+5P, 운동 영상 10+5P</strong></span><span
                             class="quest-check" id="quest-exercise">미달성</span></div>
                 </div>
+
+                <!-- 이번 주 완수율. 기록하는 자리 바로 위에 남은 양이 보여야 목표에 닿는다.
+                     자리는 다른 탭과 맞춘다 — 가이드 → 포인트 배너 → 본문 카드. -->
+                <div class="card weekly-activity-card" id="weekly-activity-card" style="display:none;"></div>
                 <!-- 걸음수 카드 -->
                 <div class="card step-card" id="step-card">
                     <h3>👟 오늘의 걸음수 <span style="font-size:12px; color:#888; font-weight:normal;">(운동 인증 1건)</span></h3>
@@ -3131,14 +3133,14 @@
     </div>
 
     <!-- 모듈화된 JavaScript 로드 -->
-    <script type="module" src="js/app.js?v=402"></script>
-    <script type="module" src="js/main.js?v=402"></script>
-    <script type="module" src="js/diet-analysis.js?v=402"></script>
-    <script type="module" src="js/metabolic-score.js?v=402"></script>
-    <script type="module" src="js/le8-score.js?v=402"></script>
+    <script type="module" src="js/app.js?v=403"></script>
+    <script type="module" src="js/main.js?v=403"></script>
+    <script type="module" src="js/diet-analysis.js?v=403"></script>
+    <script type="module" src="js/metabolic-score.js?v=403"></script>
+    <script type="module" src="js/le8-score.js?v=403"></script>
 
     <!-- Service Worker 등록 & PWA 설치 프롬프트 -->
-    <script src="js/pwa-install.js?v=402"></script>
+    <script src="js/pwa-install.js?v=403"></script>
 
     <!-- QR 코드 라이브러리 (qrcodejs — 브라우저 전용, 검증된 버전) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
