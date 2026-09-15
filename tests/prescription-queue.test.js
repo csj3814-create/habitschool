@@ -99,7 +99,7 @@ describe('the exclusions the admin asked for are actually applied', () => {
         const reader = RUNTIME.split('async function readRecentPrescriptionFeedback(todayStr) {')[1].split('\n}\n')[0];
         expect(reader).toContain('if (!row.draftKey) return;');
         const fn = ADMIN.split('function topPrescriptionFor(member, todayStr, cooldownDays) {')[1].split('\n    }\n')[0];
-        expect(fn).toContain('!(sent[draft.key] && sent[draft.key] >= cut)');
+        expect(fn).toContain('if (sent[draft.key] && sent[draft.key] >= cut) return false;');
     });
 
     it('never sends a reading over the line straight from the list', () => {

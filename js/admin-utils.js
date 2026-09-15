@@ -820,19 +820,34 @@ export function buildAdminPrescriptionDrafts({
             alerts.push({
                 kind: "공복혈당", value: `${glucose} mg/dL`, date: log.date,
                 limit: `${PRESCRIPTION_ALERT_THRESHOLDS.glucose} mg/dL`,
+                atLimit: glucose === PRESCRIPTION_ALERT_THRESHOLDS.glucose,
                 // 기준에서 얼마나 멀리 있는지(%). 126 과 141 은 같은 '초과' 가 아니다.
                 overBy: ((glucose - PRESCRIPTION_ALERT_THRESHOLDS.glucose) / PRESCRIPTION_ALERT_THRESHOLDS.glucose) * 100,
             });
         }
-        if ((systolic !== null && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic)
-            || (diastolic !== null && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic)) {
+        // 혈압은 숫자가 둘이다. 하나만 걸렸는데 "기준 140/90 을 넘었다" 고 쓰면
+        // 132/90 이 둘 다 넘은 것처럼 읽힌다 — 132 는 140 을 넘지 않았다.
+        // 걸린 쪽을 지목하고 전체 수치는 괄호로 함께 보여준다.
+        const highSystolic = systolic !== null && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic;
+        const highDiastolic = diastolic !== null && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic;
+        if (highSystolic || highDiastolic) {
+            const reading = `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`;
+            const side = (highSystolic && highDiastolic)
+                ? { kind: "혈압", value: reading, limit: "140/90 mmHg" }
+                : highSystolic
+                    ? { kind: "수축기혈압", value: `${systolic} mmHg`, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic} mmHg` }
+                    : { kind: "이완기혈압", value: `${diastolic} mmHg`, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic} mmHg` };
             alerts.push({
-                kind: "혈압", value: `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`, date: log.date,
-                limit: "140/90 mmHg",
-                // 수축기·이완기 중 기준에서 더 멀리 간 쪽으로 읽는다.
+                ...side,
+                date: log.date,
+                reading,
+                // 기준에 '닿은' 것과 '넘은' 것은 다른 말이다. 90 은 90 을 넘지 않았다.
+                atLimit: (!highSystolic || systolic === PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic)
+                    && (!highDiastolic || diastolic === PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic),
+                // 걸린 쪽 중 기준에서 더 멀리 간 쪽으로 읽는다.
                 overBy: Math.max(
-                    systolic === null ? 0 : ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) * 100,
-                    diastolic === null ? 0 : ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) * 100
+                    highSystolic ? ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) * 100 : 0,
+                    highDiastolic ? ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) * 100 : 0
                 ),
             });
         }
@@ -843,13 +858,19 @@ export function buildAdminPrescriptionDrafts({
             key: `alert-${first.kind}`,
             tone: "warn",
             label: `⚠️ ${first.kind} 확인`,
-            evidence: `${first.date} ${first.kind} ${first.value} (기준 ${first.limit} 이상) · 최근 30일 ${alerts.length}회`,
+            evidence: `${first.date} ${first.kind} ${first.value}`
+                + (first.reading && first.reading !== first.value ? ` (혈압 ${first.reading})` : "")
+                + ` · 기준 ${first.limit} 이상 · 최근 30일 ${alerts.length}회`,
             // 잰 값이 기준을 넘었다. 반복될수록, 기준에서 멀수록 올린다.
             score: Math.min(100, 75 + Math.min(15, (alerts.length - 1) * 5) + Math.min(10, Math.round(first.overBy / 2))),
             // 사람이 읽고 보낸다. 자동 발송 후보에 넣지 않는다.
             requiresHuman: true,
             summary: `${first.kind} ${first.value}`,
-            message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔습니다. 기준 ${withJosa(first.limit, "을를")} 넘었고, 최근 30일에 ${alerts.length}번입니다.\n`
+            message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔습니다`
+                + (first.reading && first.reading !== first.value ? `(혈압 ${first.reading}).` : ".")
+                // 닿은 것과 넘은 것은 다른 말이다. 아슬아슬한 값을 "넘었습니다" 라고
+                // 쓰면 보내는 쪽도 받는 쪽도 실제보다 나쁘게 읽는다.
+                + ` 기준 ${first.limit}${first.atLimit ? "에 딱 닿는 값이고" : "보다 높고"}, 최근 30일에 ${alerts.length}번입니다.\n`
                 + `다음엔 같은 시간대에 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`,
         });
     }

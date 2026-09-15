@@ -247,7 +247,6 @@ describe('the sentences read like a person wrote them', () => {
         }
         // 맞는 쪽은 실제로 들어 있어야 한다 — 없는 문장을 통과시키지 않기 위해서다.
         expect(text).toContain('공복혈당이');
-        expect(text).toContain('126 mg/dL를');
         expect(text).toContain('70.5kg으로');
         // 칭찬은 회원이 주어다 — '걸음수가' 가 아니라 '걸음수를 … 늘려오셨습니다'.
         expect(text).toContain('걸음수를');

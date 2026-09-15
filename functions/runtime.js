@@ -10324,10 +10324,17 @@ async function buildAdminPrescriptionQueue(todayStr) {
  */
 async function readRecentPrescriptionFeedback(todayStr) {
     const cooldownStart = shiftDateString(todayStr, PRESCRIPTION_QUEUE_COOLDOWN_DAYS);
-    const snap = await db.collection("admin_feedback")
-        .where("feedbackDate", ">=", cooldownStart)
-        .select("targetUserId", "draftKey", "feedbackDate", "summary")
-        .get();
+    const [snap, skipSnap] = await Promise.all([
+        db.collection("admin_feedback")
+            .where("feedbackDate", ">=", cooldownStart)
+            .select("targetUserId", "draftKey", "feedbackDate", "summary")
+            .get(),
+        // 건너뛴 초안. 보낸 것과 같은 창으로 읽어 같은 자리에서 걸러진다.
+        db.collection("prescription_skips")
+            .where("skippedDate", ">=", cooldownStart)
+            .select("targetUserId", "draftKey", "skippedDate")
+            .get(),
+    ]);
 
     const sentKeysByUid = {};
     const lastSentByUid = {};
@@ -10353,8 +10360,45 @@ async function readRecentPrescriptionFeedback(todayStr) {
         if (!bucket[row.draftKey] || date > bucket[row.draftKey]) bucket[row.draftKey] = date;
     });
     sentLog.sort((a, b) => (a.feedbackDate < b.feedbackDate ? 1 : -1));
-    return { sentKeysByUid, lastSentByUid, sentLog };
+
+    // 건너뛴 것은 보낸 것과 따로 둔다. 섞으면 보낸 메시지함에 보내지도 않은 것이
+    // 올라오고, 회원 단위 3일 쿨다운도 잘못 걸린다.
+    const skippedKeysByUid = {};
+    skipSnap.forEach((docSnap) => {
+        const row = docSnap.data() || {};
+        if (!row.targetUserId || !row.draftKey) return;
+        if (!skippedKeysByUid[row.targetUserId]) skippedKeysByUid[row.targetUserId] = {};
+        skippedKeysByUid[row.targetUserId][row.draftKey] = String(row.skippedDate || "");
+    });
+
+    return { sentKeysByUid, skippedKeysByUid, lastSentByUid, sentLog };
 }
+
+exports.skipAdminPrescription = onCall(
+    { region: "asia-northeast3", maxInstances: 10, timeoutSeconds: 30 },
+    async (request) => {
+        const adminUid = await assertAdminRequest(request);
+        const targetUid = String(request.data?.targetUid || "").trim();
+        // 초안 종류를 문서 id 에 쓰므로 경로를 깨뜨릴 글자는 받지 않는다.
+        const draftKey = String(request.data?.draftKey || "").trim().slice(0, 64);
+        if (!targetUid) {
+            throw new HttpsError("invalid-argument", "대상 회원을 선택해 주세요.");
+        }
+        if (!draftKey || /[/.[\]*~]/.test(draftKey)) {
+            throw new HttpsError("invalid-argument", "초안 종류가 올바르지 않습니다.");
+        }
+
+        const skippedDate = getCurrentKstDateString();
+        await db.doc(`prescription_skips/${targetUid}__${draftKey}`).set({
+            targetUserId: targetUid,
+            draftKey,
+            skippedDate,
+            adminUid,
+            skippedAt: FieldValue.serverTimestamp(),
+        });
+        return { success: true, skippedDate, days: PRESCRIPTION_QUEUE_COOLDOWN_DAYS };
+    }
+);
 
 exports.getAdminPrescriptionQueue = onCall(
     { region: "asia-northeast3", timeoutSeconds: 300, memory: "1GiB" },

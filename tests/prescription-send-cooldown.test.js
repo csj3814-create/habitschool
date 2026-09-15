@@ -66,7 +66,7 @@ describe('the rule is on the send, not only on the button', () => {
         const reader = RUNTIME.split('async function readRecentPrescriptionFeedback(todayStr) {')[1].split('\n}\n')[0];
         const lastSent = reader.split('lastSentByUid[row.targetUserId]')[0];
         expect(lastSent).not.toContain('if (!row.draftKey) return;');
-        expect(reader).toContain('return { sentKeysByUid, lastSentByUid, sentLog };');
+        expect(reader).toContain('return { sentKeysByUid, skippedKeysByUid, lastSentByUid, sentLog };');
     });
 
     it('refuses in the send function too, not just in the markup', () => {

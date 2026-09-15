@@ -169,7 +169,12 @@
         .fb-textarea { width: 100%; min-height: 70px; padding: 9px; border-radius: 8px; border: 1px solid #ccc; resize: none; font-family: inherit; font-size: 13px; }
         /* 회원 화면의 머리 한 줄. 본문보다 눈에 띄어야 여기가 요약임이 읽힌다. */
         .fb-summary { width: 100%; padding: 9px; margin-bottom: 7px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 13px; font-weight: 700; }
-        .fb-submit { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; }
+        .fb-actions { display: flex; gap: 7px; margin-top: 8px; }
+        .fb-submit { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; }
+        /* 초안을 고르지 않았으면 지울 것이 없다. 직접 쓴 글은 초안이 아니다. */
+        .fb-skip { background: #fff; color: #b03030; border: 1px solid #e0b4b4; padding: 11px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; white-space: nowrap; }
+        .fb-skip:disabled { color: #bbb; border-color: #e4e4e4; cursor: not-allowed; }
+        .rxq-skip { color: #b03030; border-color: #e0b4b4; }
         /* 전송 후에도 창에 남으므로, 방금 무엇을 보냈는지 보이지 않으면 같은 말을 두 번 보내게 된다. */
         .fb-sent { margin-top: 10px; border-top: 1px solid #e5e5e5; padding-top: 8px; }
         .fb-sent-head { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 6px; }
@@ -850,7 +855,11 @@
                     <input id="fb-summary" class="fb-summary" type="text" maxlength="60"
                         placeholder="요약 한 줄 — 회원 화면 맨 위에 굵게 보입니다 (60자)">
                     <textarea id="fb-text" class="fb-textarea" placeholder="본문 — 카드에서는 두 줄까지 보이고 나머지는 '더 보기'로 접힙니다"></textarea>
-                    <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
+                    <div class="fb-actions">
+                        <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
+                        <button id="fb-skip" class="fb-skip" onclick="skipCurrentDraft()" disabled
+                            title="보내지 않고 이 초안을 치웁니다">초안 삭제</button>
+                    </div>
                     <div id="fb-sent" class="fb-sent" hidden></div>
                 </div>
                 <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
@@ -1153,6 +1162,7 @@
     const getBloodTestQualityStatsCallable = httpsCallable(fns, 'getBloodTestQualityStats');
     const getOnchainBalanceCallable = httpsCallable(fns, 'getOnchainBalance');
     const submitAdminFeedbackCallable = httpsCallable(fns, 'submitAdminFeedback');
+    const skipAdminPrescriptionCallable = httpsCallable(fns, 'skipAdminPrescription');
     const getAdminMembersCallable = httpsCallable(fns, 'getAdminMembers');
     const getAdminEconomyCallable = httpsCallable(fns, 'getAdminEconomy');
     const getHealthTrendsCallable = httpsCallable(fns, 'getHealthTrends');
@@ -1625,7 +1635,14 @@
         const cut = new Date(new Date(todayStr + 'T12:00:00Z').getTime() - cooldownDays * 86400000)
             .toISOString().slice(0, 10);
         const sent = (prescriptionQueue.sentKeysByUid || {})[member.uid] || {};
-        const fresh = drafts.filter((draft) => !(sent[draft.key] && sent[draft.key] >= cut));
+        const skipped = (prescriptionQueue.skippedKeysByUid || {})[member.uid] || {};
+        const fresh = drafts.filter((draft) => {
+            if (sent[draft.key] && sent[draft.key] >= cut) return false;
+            // 보낼 만하지 않다고 치운 것이 다음 주에 같은 자리로 돌아오면
+            // 대기열을 믿을 수 없게 된다.
+            if (skipped[draft.key] && skipped[draft.key] >= cut) return false;
+            return true;
+        });
         return fresh[0] || null;
     }
 
@@ -1699,6 +1716,10 @@
                     ? '<button class="btn rxq-wait" disabled title="' + escapeHtml(last + ' 에 메시지를 보냈습니다')
                       + '">' + wait + '일 뒤 보내기</button>'
                     : '<button class="btn btn-primary" data-rxq-send="' + escapeHtml(member.uid) + '">그대로 보내기</button>')
+                // 보낼 만하지 않은 건은 보내지 않고 치운다. 132/90 처럼 기준에
+                // 아슬아슬하게 닿은 값이 그렇다.
+                + '<button class="btn rxq-skip" data-rxq-skip="' + escapeHtml(member.uid)
+                + '" title="보내지 않고 이 초안을 치웁니다">삭제</button>'
                 + '</div>'
                 + '</div>';
         }).join('');
@@ -1708,6 +1729,9 @@
         });
         host.querySelectorAll('button[data-rxq-send]').forEach((button) => {
             button.onclick = () => sendPrescriptionFromQueue(button.dataset.rxqSend, button);
+        });
+        host.querySelectorAll('button[data-rxq-skip]').forEach((button) => {
+            button.onclick = () => skipPrescriptionFromQueue(button.dataset.rxqSkip, button);
         });
     };
 
@@ -1752,6 +1776,44 @@
         host.querySelectorAll('button[data-rxq-open]').forEach((button) => {
             button.onclick = () => openDetail(button.dataset.rxqOpen);
         });
+    }
+
+    /**
+     * 보내지 않고 치운다.
+     *
+     * 지우는 것은 회원 기록이 아니라 '이 초안을 이번에는 보내지 않는다' 는 표시다.
+     * 보낸 것과 같은 창(28일) 동안 대기열에 다시 올라오지 않는다. 그 뒤에도
+     * 같은 상황이면 다시 올라오는 것이 맞다 — 영영 숨기는 것이 아니다.
+     */
+    async function skipPrescriptionFromQueue(uid, button) {
+        const entry = (prescriptionQueue.members || []).find((m) => m.uid === uid);
+        if (!entry) return;
+        const draft = topPrescriptionFor(entry, prescriptionQueue.todayStr, prescriptionQueue.cooldownDays || 28);
+        if (!draft || button.disabled) return;
+        button.disabled = true;
+        button.textContent = '치우는 중...';
+        try {
+            await skipAdminPrescriptionCallable({ targetUid: uid, draftKey: draft.key });
+            markPrescriptionSkipped(uid, draft.key);
+            adminToast('치웠습니다. ' + (prescriptionQueue.cooldownDays || 28)
+                + '일 동안 이 초안은 다시 올라오지 않습니다.', 'success');
+            renderPrescriptionQueue();
+        } catch (e) {
+            adminToast('삭제 실패: ' + e.message, 'error');
+            button.disabled = false;
+            button.textContent = '삭제';
+        }
+    }
+
+    /** 서버가 새로 읽어 주는 값과 같은 자리를 채운다 — 새로고침해도 같은 판정이 나온다. */
+    function markPrescriptionSkipped(uid, draftKey) {
+        // 대기열을 아직 안 열었으면 채울 곳이 없다. 다음에 열 때 서버에서 읽어 온다.
+        if (!prescriptionQueue) return;
+        prescriptionQueue.skippedKeysByUid = prescriptionQueue.skippedKeysByUid || {};
+        prescriptionQueue.skippedKeysByUid[uid] = {
+            ...(prescriptionQueue.skippedKeysByUid[uid] || {}),
+            [draftKey]: prescriptionQueue.todayStr,
+        };
     }
 
     async function sendPrescriptionFromQueue(uid, button) {
@@ -4447,6 +4509,7 @@
         document.getElementById('modal-uid').value = uid;
         clearSentFeedback();
         pendingDraftKey = '';
+        syncDraftSkipButton();
         try {
             const ago30 = new Date(todayStr); ago30.setDate(ago30.getDate()-29);
             const cut = ago30.toISOString().split('T')[0];
@@ -4582,6 +4645,38 @@
         const summaryEl = document.getElementById('fb-summary');
         if (summaryEl && summary !== undefined) summaryEl.value = summary || '';
         pendingDraftKey = draftKey || '';
+        syncDraftSkipButton();
+    };
+
+    /** 지울 초안이 있을 때만 켠다. 직접 쓴 글은 초안이 아니라 지울 것이 없다. */
+    function syncDraftSkipButton() {
+        const el = document.getElementById('fb-skip');
+        if (el) el.disabled = !pendingDraftKey;
+    }
+
+    window.skipCurrentDraft = async function() {
+        const uid = document.getElementById('modal-uid').value;
+        const draftKey = pendingDraftKey;
+        if (!uid || !draftKey) return;
+        const button = document.getElementById('fb-skip');
+        if (button.disabled) return;
+        button.disabled = true;
+        button.textContent = '치우는 중...';
+        try {
+            await skipAdminPrescriptionCallable({ targetUid: uid, draftKey });
+            markPrescriptionSkipped(uid, draftKey);
+            // 입력칸도 비운다 — 지운 초안의 글이 남아 있으면 그대로 보내게 된다.
+            document.getElementById('fb-text').value = '';
+            document.getElementById('fb-summary').value = '';
+            pendingDraftKey = '';
+            renderPrescriptionDrafts(adminPrescriptionDrafts.filter((d) => d.key !== draftKey));
+            adminToast('치웠습니다. 주간 처방 대기열에서도 빠집니다.', 'success');
+        } catch (e) {
+            adminToast('삭제 실패: ' + e.message, 'error');
+        } finally {
+            button.textContent = '초안 삭제';
+            syncDraftSkipButton();
+        }
     };
 
     window.sendReEngagement = async function(days) {
