@@ -245,6 +245,9 @@
         .trend-spark svg { display: block; width: 100%; height: 26px; margin-top: 4px; }
         /* 다이렉트 처방 초안. 고정 문구 넷을 회원 데이터에서 만든 초안으로 바꿨다. */
         .rx-drafts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        /* 왜 이 순서인지 보이지 않으면 순위를 믿을 수 없다. 점수를 함께 띄운다. */
+        .rx-draft-score { display: inline-block; min-width: 26px; text-align: center; background: #333; color: #fff; border-radius: 4px; padding: 1px 4px; font-size: 11px; font-weight: 700; margin-right: 5px; }
+        .rx-draft-human { display: inline-block; background: #fdeaea; color: #b03030; border-radius: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; margin-left: 5px; vertical-align: middle; }
         .rx-draft { border: 1px solid #eee; border-left-width: 4px; border-radius: 9px; padding: 9px 11px; background: #fff; cursor: pointer; text-align: left; transition: border-color .15s, box-shadow .15s; }
         .rx-draft:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
         .rx-draft.t-warn { border-left-color: #EF5350; }
@@ -1852,7 +1855,11 @@
 
         host.innerHTML = adminPrescriptionDrafts.map((draft, index) => `
             <button type="button" class="rx-draft t-${escapeHtml(draft.tone || 'info')}" data-rx-index="${index}">
-                <div class="rx-draft-label">${escapeHtml(draft.label)}</div>
+                <div class="rx-draft-label">
+                    <span class="rx-draft-score" title="의미 점수 — 변화가 클수록, 급할수록 높습니다">${escapeHtml(String(draft.score ?? '-'))}</span>
+                    ${escapeHtml(draft.label)}
+                    ${draft.requiresHuman ? '<span class="rx-draft-human" title="잰 값이 기준을 넘었습니다. 사람이 읽고 보내는 항목입니다">사람 확인</span>' : ''}
+                </div>
                 <div class="rx-draft-evidence">${escapeHtml(draft.evidence || '')}</div>
             </button>`).join('');
 

@@ -757,6 +757,39 @@ function hasSleepRecord(log) {
 }
 
 /**
+ * 초안 점수 — 얼마나 먼저 보여줄지. 0~100.
+ *
+ * 지금까지는 종류 순서(경보→나빠짐→좋아짐→꾸준함→빈자리→복귀)가 곧 순위였다.
+ * 그래서 걸음수가 100보 늘어난 사람과 3,000보 늘어난 사람이 같은 자리를 받았다.
+ * "가장 의미있는 것부터" 를 하려면 변화의 크기가 순위에 들어가야 한다.
+ *
+ * 종류마다 **바닥 점수**를 주어 큰 순서는 지키고, 그 위에 **크기 점수**를 얹어
+ * 같은 종류 안에서 갈리게 한다. 바닥끼리 겹치지 않게 띄워 두었으므로 종류를
+ * 건너뛰는 역전은 일어나지 않는다 — 걸음수가 아무리 늘어도 혈당 경보를 밀어내지
+ * 못한다.
+ *
+ * 하한선 아래는 아예 만들지 않는다. 보낼 말이 없으면 보내지 않는 게 맞다.
+ * 다만 사소한 변화를 거르는 일은 여기가 아니라 서버가 먼저 한다 —
+ * health-trends.js 의 FLAT_RATIO(2%) 미만은 improved/worsened 가 아니라 flat 이라
+ * 초안 자체가 만들어지지 않는다. 이 하한선은 그 뒤에 남는 것들을 위한 것이다.
+ */
+const PRESCRIPTION_SCORE_FLOOR = 30;
+
+/**
+ * 4주 사이 상대 변화율을 0~20점으로. 20% 넘게 움직였으면 만점.
+ *
+ * 절대값이 아니라 비율로 재는 이유: 걸음수 2,000보와 수면 0.5시간은 절대값으로
+ * 견줄 수 없다. 자기 자신 대비 얼마나 움직였는지가 지표를 가로질러 비교된다.
+ */
+function changeMagnitudeScore(summary) {
+    const recent = toNumber(summary?.recent);
+    const previous = toNumber(summary?.previous);
+    if (recent === null || previous === null || previous === 0) return 0;
+    const ratio = Math.abs((recent - previous) / previous) * 100;
+    return Math.min(20, Math.round(ratio));
+}
+
+/**
  * 회원의 기록에서 처방 초안을 만든다.
  *
  * 우선순위: 건강 경보 → 나빠진 지표 → 좋아진 지표 → 꾸준함 → 비어 있는 자리.
@@ -784,11 +817,24 @@ export function buildAdminPrescriptionDrafts({
         const systolic = toNumber(metrics.bpSystolic);
         const diastolic = toNumber(metrics.bpDiastolic);
         if (glucose !== null && glucose >= PRESCRIPTION_ALERT_THRESHOLDS.glucose) {
-            alerts.push({ kind: "공복혈당", value: `${glucose} mg/dL`, date: log.date, limit: `${PRESCRIPTION_ALERT_THRESHOLDS.glucose} mg/dL` });
+            alerts.push({
+                kind: "공복혈당", value: `${glucose} mg/dL`, date: log.date,
+                limit: `${PRESCRIPTION_ALERT_THRESHOLDS.glucose} mg/dL`,
+                // 기준에서 얼마나 멀리 있는지(%). 126 과 141 은 같은 '초과' 가 아니다.
+                overBy: ((glucose - PRESCRIPTION_ALERT_THRESHOLDS.glucose) / PRESCRIPTION_ALERT_THRESHOLDS.glucose) * 100,
+            });
         }
         if ((systolic !== null && systolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic)
             || (diastolic !== null && diastolic >= PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic)) {
-            alerts.push({ kind: "혈압", value: `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`, date: log.date, limit: "140/90 mmHg" });
+            alerts.push({
+                kind: "혈압", value: `${systolic ?? "-"}/${diastolic ?? "-"} mmHg`, date: log.date,
+                limit: "140/90 mmHg",
+                // 수축기·이완기 중 기준에서 더 멀리 간 쪽으로 읽는다.
+                overBy: Math.max(
+                    systolic === null ? 0 : ((systolic - PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpSystolic) * 100,
+                    diastolic === null ? 0 : ((diastolic - PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) / PRESCRIPTION_ALERT_THRESHOLDS.bpDiastolic) * 100
+                ),
+            });
         }
     }
     if (alerts.length) {
@@ -798,6 +844,10 @@ export function buildAdminPrescriptionDrafts({
             tone: "warn",
             label: `⚠️ ${first.kind} 확인`,
             evidence: `${first.date} ${first.kind} ${first.value} (기준 ${first.limit} 이상) · 최근 30일 ${alerts.length}회`,
+            // 잰 값이 기준을 넘었다. 반복될수록, 기준에서 멀수록 올린다.
+            score: Math.min(100, 75 + Math.min(15, (alerts.length - 1) * 5) + Math.min(10, Math.round(first.overBy / 2))),
+            // 사람이 읽고 보낸다. 자동 발송 후보에 넣지 않는다.
+            requiresHuman: true,
             summary: `${first.kind} ${first.value}`,
             message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔습니다. 기준 ${withJosa(first.limit, "을를")} 넘었고, 최근 30일에 ${alerts.length}번입니다.\n`
                 + `다음엔 같은 시간대에 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`,
@@ -816,6 +866,7 @@ export function buildAdminPrescriptionDrafts({
             tone: "warn",
             label: `📉 ${metric.label} 되돌리기`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}`,
+            score: 55 + changeMagnitudeScore(metric.summary),
             summary: `${metric.label} ${previous} → ${recent}`,
             message: `4주 사이 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} ${metricVerb(metric, "worsened")}.\n`
                 + `2주만 여기에 신경 써 주세요. 4주가 다시 쌓이면 제가 보고 말씀드리겠습니다.`,
@@ -836,6 +887,9 @@ export function buildAdminPrescriptionDrafts({
             tone: "good",
             label: `📈 ${metric.label} 칭찬`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${100 - Math.round(percentile)}%` : ""}`,
+            // 나빠진 것보다는 덜 급하지만, 크게 좋아진 것은 작게 나빠진 것보다 할 말이 많다.
+            score: 35 + changeMagnitudeScore(metric.summary)
+                + (percentile !== null && percentile >= 75 ? 5 : 0),
             summary: `${metric.label} ${previous} → ${recent}`,
             message: `4주 사이 ${withJosa(metric.label, "을를")} ${previous}에서 ${recent}까지 잘 ${metricVerb(metric, "improved")}.${rank}\n`
                 + `지금 하시는 방식이 맞습니다. 그대로 이어가세요.`,
@@ -851,6 +905,8 @@ export function buildAdminPrescriptionDrafts({
             tone: "good",
             label: `🔥 ${streakDays}일 연속 축하`,
             evidence: `연속 기록 ${streakDays}일`,
+            // 100일과 7일은 같은 말을 들을 일이 아니다. 마일스톤 자릿수로 가른다.
+            score: 25 + Math.min(20, Math.round(Math.log10(Math.max(milestone, 1)) * 10)),
             summary: `${streakDays}일 연속 기록`,
             message: `${streakDays}일 연속으로 기록하고 계십니다. `
                 + `${milestone >= 100
@@ -877,6 +933,8 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `🧩 ${target.label} 채우기 권유`,
                 evidence: `최근 7일 · ${strong.label} ${strong.days}일 / ${target.label} 0일`,
+            // 이미 성실한 회원일수록 비어 있는 한 칸이 점수를 더 많이 깎는다.
+                score: 40 + strong.days * 2,
                 summary: `${target.label} 기록이 비어 있습니다`,
                 message: `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨는데 ${withJosa(target.label, "이가")} 한 번도 없습니다.\n`
                     + `${target.how}. 건강 점수가 실제보다 낮게 잡히니 오늘 하루만 채워 보시겠어요?`,
@@ -895,6 +953,8 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `👋 ${gapDays}일째 복귀 권유`,
                 evidence: `마지막 기록 ${latest.date} · ${gapDays}일 전`,
+                // 14일이 넘으면 재참여 메일이 담당한다. 여기서는 더 올리지 않는다.
+                score: 30 + Math.min(20, gapDays * 2),
                 summary: `마지막 기록 ${toKoreanDate(latest.date)}`,
                 message: `${님}, ${toKoreanDate(latest.date)} 이후로 ${gapDays}일째 기록이 없습니다.\n`
                     + `사진 한 장이나 걸음수만 남기셔도 이어집니다. 처음부터 하실 필요 없습니다.`,
@@ -902,7 +962,13 @@ export function buildAdminPrescriptionDrafts({
         }
     }
 
-    return drafts;
+    // 점수순. 같은 점수면 만들어진 차례(종류 순서)를 지킨다 — sort 는 안정 정렬이다.
+    // 하한선 아래는 버린다. 할 말이 없는데 억지로 한 줄 보내는 것이 가장 나쁘다.
+    return drafts
+        .map((draft) => ({ ...draft, score: Math.max(0, Math.min(100, Math.round(draft.score ?? 0))) }))
+        .filter((draft) => draft.score >= PRESCRIPTION_SCORE_FLOOR)
+        .sort((a, b) => b.score - a.score);
 }
 
 export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS;
+export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
