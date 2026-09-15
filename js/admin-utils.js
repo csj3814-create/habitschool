@@ -667,6 +667,47 @@ export function withJosa(text, kind) {
 }
 const PRESCRIPTION_STREAK_MILESTONES = [365, 300, 200, 150, 100, 50, 30, 14, 7];
 
+/**
+ * 지표마다 맞는 동사가 있다. 걸음수는 '늘리고' 혈당은 '내리고' 체지방은 '줄인다'.
+ * 전부 '올라섰습니다' 로 쓰면 틀에서 뽑은 글이라는 게 한 줄 만에 읽힌다.
+ *
+ * 좋아진 쪽은 **회원이 주어**다 — 스스로 해낸 일이니 '걸음수를 … 늘려오셨습니다'.
+ * 나빠진 쪽은 **지표가 주어**다 — 탓하는 문장이 되면 안 되니 '체중이 … 늘었습니다'.
+ * 주어가 바뀌므로 조사도 을/를 과 이/가 로 갈린다.
+ */
+const METRIC_VERBS = {
+    steps: { improved: "늘려오셨습니다", worsened: "줄었습니다" },
+    sleepHours: { improved: "늘리셨습니다", worsened: "줄었습니다" },
+    muscle: { improved: "늘리셨습니다", worsened: "줄었습니다" },
+    dietGrade: { improved: "올리셨습니다", worsened: "내려갔습니다" },
+    glucose: { improved: "내리셨습니다", worsened: "올랐습니다" },
+    hba1c: { improved: "내리셨습니다", worsened: "올랐습니다" },
+    nonHdl: { improved: "내리셨습니다", worsened: "올랐습니다" },
+    bpSystolic: { improved: "내리셨습니다", worsened: "올랐습니다" },
+    bpDiastolic: { improved: "내리셨습니다", worsened: "올랐습니다" },
+    bodyFat: { improved: "줄이셨습니다", worsened: "늘었습니다" },
+    visceral: { improved: "줄이셨습니다", worsened: "늘었습니다" },
+};
+
+function metricVerb(metric, direction) {
+    const table = METRIC_VERBS[metric?.key];
+    if (table) return table[direction];
+    // 체중·BMI 는 좋고 나쁨을 말할 수 없는 지표다(health-trends.js 의 better: null).
+    // 여기서 '나빠졌습니다' 를 쓰면 저체중 회원의 증량까지 나무라는 문장이 된다.
+    // 판단은 빼고 움직인 방향만 적는다.
+    return toNumber(metric?.summary?.delta) > 0 ? "늘었습니다" : "줄었습니다";
+}
+
+/**
+ * 2026-09-12 는 기계가 쓰는 형식이다. 회원이 읽는 문장에는 '9월 12일' 로 넣는다.
+ * 관제탑이 보는 evidence 는 ISO 그대로 둔다 — 보내기 전에 대조할 값이라서다.
+ */
+function toKoreanDate(dateStr) {
+    const match = String(dateStr || "").match(/^\d{4}-(\d{2})-(\d{2})$/);
+    if (!match) return String(dateStr || "");
+    return `${Number(match[1])}월 ${Number(match[2])}일`;
+}
+
 function toNumber(value) {
     const parsed = typeof value === "number" ? value : parseFloat(value);
     return Number.isFinite(parsed) ? parsed : null;
@@ -757,9 +798,9 @@ export function buildAdminPrescriptionDrafts({
             tone: "warn",
             label: `⚠️ ${first.kind} 확인`,
             evidence: `${first.date} ${first.kind} ${first.value} (기준 ${first.limit} 이상) · 최근 30일 ${alerts.length}회`,
-            summary: `${first.kind} ${first.value}, 한 번 확인해 주세요`,
-            message: `${first.date} ${withJosa(first.kind, "이가")} ${withJosa(first.value, "으로")} 기준(${first.limit})을 넘었습니다. 최근 30일 중 ${alerts.length}번이에요.\n`
-                + `한 번의 수치로 단정할 일은 아니지만, 다음에 재실 때 같은 시간대로 재서 기록해 주시면 제가 함께 보겠습니다.`,
+            summary: `${first.kind} ${first.value}`,
+            message: `${toKoreanDate(first.date)} ${withJosa(first.kind, "이가")} ${first.value} 나왔습니다. 기준 ${withJosa(first.limit, "을를")} 넘었고, 최근 30일에 ${alerts.length}번입니다.\n`
+                + `다음엔 같은 시간대에 재서 올려 주세요. 두세 번 값이 모여야 제대로 보입니다.`,
         });
     }
 
@@ -776,8 +817,8 @@ export function buildAdminPrescriptionDrafts({
             label: `📉 ${metric.label} 되돌리기`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}`,
             summary: `${metric.label} ${previous} → ${recent}`,
-            message: `4주씩 끊어 보니 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} 움직였습니다.\n`
-                + `짧은 흔들림일 수 있어요. 다음 2주만 여기에 집중해 보시면, 4주가 쌓일 때 제가 다시 확인해 알려 드리겠습니다.`,
+            message: `4주 사이 ${withJosa(metric.label, "이가")} ${previous}에서 ${withJosa(recent, "으로")} ${metricVerb(metric, "worsened")}.\n`
+                + `2주만 여기에 신경 써 주세요. 4주가 다시 쌓이면 제가 보고 말씀드리겠습니다.`,
         });
     }
 
@@ -789,15 +830,15 @@ export function buildAdminPrescriptionDrafts({
         const previous = formatMetricValue(metric.summary.previous, metric);
         if (!recent || !previous) continue;
         const percentile = toNumber(metric.percentile);
-        const rank = percentile !== null ? ` 지금 전체 회원 중 상위 ${100 - Math.round(percentile)}%입니다.` : "";
+        const rank = percentile !== null ? ` 전체 회원 중 상위 ${100 - Math.round(percentile)}%입니다.` : "";
         drafts.push({
             key: `improved-${metric.key}`,
             tone: "good",
             label: `📈 ${metric.label} 칭찬`,
             evidence: `${metric.label} 직전 4주 ${previous} → 최근 4주 ${recent}${percentile !== null ? ` · 상위 ${100 - Math.round(percentile)}%` : ""}`,
-            summary: `${metric.label} ${previous} → ${recent}, 잘 올라왔어요`,
-            message: `${withJosa(metric.label, "이가")} 4주 사이 ${previous}에서 ${withJosa(recent, "으로")} 올라섰습니다.${rank}\n`
-                + `우연이 아니라 ${님}이 4주 동안 쌓아 만든 결과예요. 지금 방식 그대로 이어가시면 됩니다.`,
+            summary: `${metric.label} ${previous} → ${recent}`,
+            message: `4주 사이 ${withJosa(metric.label, "을를")} ${previous}에서 ${recent}까지 잘 ${metricVerb(metric, "improved")}.${rank}\n`
+                + `지금 하시는 방식이 맞습니다. 그대로 이어가세요.`,
         });
     }
 
@@ -810,12 +851,12 @@ export function buildAdminPrescriptionDrafts({
             tone: "good",
             label: `🔥 ${streakDays}일 연속 축하`,
             evidence: `연속 기록 ${streakDays}일`,
-            summary: `${streakDays}일 연속 기록 중이에요`,
+            summary: `${streakDays}일 연속 기록`,
             message: `${streakDays}일 연속으로 기록하고 계십니다. `
                 + `${milestone >= 100
-                    ? "세 자리를 넘긴 분은 많지 않아요. 이쯤이면 습관이 아니라 생활입니다."
-                    : "한 주를 넘기면 그때부터가 진짜입니다. 지금이 그 구간이에요."}\n`
-                + `빠뜨린 날이 생겨도 괜찮습니다. 끊긴 날보다 다시 시작한 날이 더 중요해요.`,
+                    ? "세 자리까지 오신 분은 손에 꼽습니다."
+                    : "2주를 넘기면 빠뜨린 날이 오히려 신경 쓰이기 시작합니다."}\n`
+                + `혹시 끊기더라도 그날부터 다시 세면 됩니다. 지금까지 쌓은 기록은 그대로 남습니다.`,
         });
     }
 
@@ -836,9 +877,9 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `🧩 ${target.label} 채우기 권유`,
                 evidence: `최근 7일 · ${strong.label} ${strong.days}일 / ${target.label} 0일`,
-                summary: `${target.label} 기록만 비어 있어요`,
-                message: `지난 7일 동안 ${withJosa(strong.label, "은는")} ${strong.days}일이나 남기셨어요. 쉽지 않은 일입니다.\n`
-                    + `다만 ${withJosa(target.label, "이가")} 한 번도 없어서 건강 점수가 실제보다 낮게 잡히고 있어요. ${target.how}.`,
+                summary: `${target.label} 기록이 비어 있습니다`,
+                message: `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨는데 ${withJosa(target.label, "이가")} 한 번도 없습니다.\n`
+                    + `${target.how}. 건강 점수가 실제보다 낮게 잡히니 오늘 하루만 채워 보시겠어요?`,
             });
         }
     }
@@ -854,9 +895,9 @@ export function buildAdminPrescriptionDrafts({
                 tone: "cheer",
                 label: `👋 ${gapDays}일째 복귀 권유`,
                 evidence: `마지막 기록 ${latest.date} · ${gapDays}일 전`,
-                summary: `${gapDays}일 쉬셨네요, 오늘 하나만`,
-                message: `마지막 기록이 ${latest.date}이니 ${gapDays}일이 지났습니다. 채근하려는 게 아니라 쌓아 두신 기록이 아까워서요.\n`
-                    + `오늘 사진 한 장이나 걸음수 하나면 다시 이어집니다. 처음부터 할 필요 없어요.`,
+                summary: `마지막 기록 ${toKoreanDate(latest.date)}`,
+                message: `${님}, ${toKoreanDate(latest.date)} 이후로 ${gapDays}일째 기록이 없습니다.\n`
+                    + `사진 한 장이나 걸음수만 남기셔도 이어집니다. 처음부터 하실 필요 없습니다.`,
             });
         }
     }

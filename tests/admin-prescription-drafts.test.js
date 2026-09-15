@@ -40,10 +40,13 @@ describe('a prescription is written from this member, or not written', () => {
         const alert = draftFor(drafts, 'alert');
         expect(alert.tone).toBe('warn');
         expect(alert.message).toContain('141');
-        expect(alert.message).toContain('2026-09-12');
+        expect(alert.message).toContain('9월 12일');
+        // ISO 날짜는 관제탑이 보내기 전에 대조할 evidence 에만 남는다.
+        expect(alert.message).not.toContain('2026-09-12');
+        expect(alert.evidence).toContain('2026-09-12');
         expect(alert.evidence).toContain('126');
         // 한 번의 수치로 단정하지 않는다.
-        expect(alert.message).toContain('단정할 일은 아니지만');
+        expect(alert.message).toContain('두세 번 값이 모여야');
     });
 
     it('puts the alert first — the urgent thing goes on top', () => {
@@ -99,11 +102,11 @@ describe('a prescription is written from this member, or not written', () => {
         const drafts = buildAdminPrescriptionDrafts({ name: '루미나', logs, todayStr: TODAY });
         const gap = draftFor(drafts, 'gap');
         expect(gap.evidence).toContain('식단 5일');
-        expect(gap.message).toContain('지난 7일 동안');
-        expect(gap.message).toContain('5일이나');
+        expect(gap.message).toContain('지난 7일 중');
+        expect(gap.message).toContain('5일 남기셨는데');
         expect(gap.message).toMatch(/운동|수면/);
         // 점수가 실제보다 낮게 잡힌다는 이유까지 말한다.
-        expect(gap.message).toContain('낮게 잡히고');
+        expect(gap.message).toContain('낮게 잡히니');
     });
 
     it('offers nothing about gaps when every area is already covered', () => {
@@ -124,9 +127,9 @@ describe('a prescription is written from this member, or not written', () => {
             todayStr: TODAY,
         });
         const back = draftFor(drafts, 'comeback');
-        expect(back.message).toContain('2026-09-08');
+        expect(back.message).toContain('9월 8일');
         expect(back.message).toContain('7일');
-        expect(back.message).toContain('채근하려는 게 아니라');
+        expect(back.message).toContain('처음부터 하실 필요 없습니다');
     });
 
     it('stays quiet about a streak that has not been earned', () => {
@@ -136,9 +139,9 @@ describe('a prescription is written from this member, or not written', () => {
 
     it('reads a three-digit streak differently from a one-week one', () => {
         const long = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 157, todayStr: TODAY });
-        expect(draftFor(long, 'streak').message).toContain('생활입니다');
+        expect(draftFor(long, 'streak').message).toContain('세 자리까지');
         const short = buildAdminPrescriptionDrafts({ logs: [{ date: TODAY }], streak: 9, todayStr: TODAY });
-        expect(draftFor(short, 'streak').message).toContain('한 주를 넘기면');
+        expect(draftFor(short, 'streak').message).toContain('2주를 넘기면');
     });
 
     it('carries the evidence so it can be checked before sending', () => {
@@ -238,12 +241,100 @@ describe('the sentences read like a person wrote them', () => {
             ],
         });
         const text = drafts.map((d) => d.message).join(String.fromCharCode(10));
-        for (const wrong of ['걸음수이', '점로', '시간로', '혈당가', '혈압가', '레벨으로', 'kg로']) {
+        for (const wrong of ['걸음수이', '걸음수을', '점로', '시간로', '혈당가', '혈압가', '레벨으로', 'kg로', 'mg/dL을']) {
             expect(text, wrong).not.toContain(wrong);
         }
         // 맞는 쪽은 실제로 들어 있어야 한다 — 없는 문장을 통과시키지 않기 위해서다.
-        expect(text).toContain('걸음수가');
-        expect(text).toContain('9,549보로');
-        expect(text).toContain('141 mg/dL로');
+        expect(text).toContain('공복혈당이');
+        expect(text).toContain('126 mg/dL를');
+        expect(text).toContain('70.5kg으로');
+        // 칭찬은 회원이 주어다 — '걸음수가' 가 아니라 '걸음수를 … 늘려오셨습니다'.
+        expect(text).toContain('걸음수를');
+    });
+});
+
+// 2026-09-15 지적: "걸음수는 잘 늘려왔습니다라고 표현해야지 올라섰다는 표현은
+// 어색해. 우연이 아니라 라는 말도 쓸데 없는 표현이야. AI 티 안나게 내가 직접
+// 세심하게 작성한 것처럼 작성해 줘."
+//
+// 한 문장 틀에 모든 지표를 끼워 넣은 것이 원인이었다. 걸음수가 '올라서고'
+// 수면이 '올라서면' 사람이 쓴 글이 아니다.
+describe('the verb comes from the metric, not from a template', () => {
+    const praiseFor = (key, label, unit, previous, recent) => buildAdminPrescriptionDrafts({
+        logs: [{ date: TODAY }],
+        todayStr: TODAY,
+        trendMetrics: [{
+            key, label, unit, decimals: 1,
+            summary: { recent, previous, delta: recent - previous, direction: 'improved' },
+        }],
+    })[0].message;
+
+    it('gives each metric the verb that actually fits it', () => {
+        expect(praiseFor('steps', '걸음수', '보', 7200, 9549)).toContain('늘려오셨습니다');
+        expect(praiseFor('sleepHours', '수면', '시간', 6.9, 7.7)).toContain('늘리셨습니다');
+        expect(praiseFor('glucose', '공복혈당', 'mg/dL', 141, 105)).toContain('내리셨습니다');
+        expect(praiseFor('bodyFat', '체지방', 'kg', 28.0, 25.5)).toContain('줄이셨습니다');
+        expect(praiseFor('dietGrade', '식단 등급', '점', 85, 95)).toContain('올리셨습니다');
+    });
+
+    it('never says a number "stepped up"', () => {
+        // 한 틀로 찍어 내던 흔적. 어느 지표에서도 다시 나오면 안 된다.
+        for (const key of ['steps', 'sleepHours', 'glucose', 'bodyFat', 'dietGrade', 'muscle']) {
+            expect(praiseFor(key, '지표', '', 10, 20), key).not.toContain('올라섰습니다');
+        }
+    });
+
+    it('passes no judgment on a metric that has no good direction', () => {
+        // 체중은 health-trends.js 에서 better: null 이다. 저체중 회원의 증량을
+        // '나빠졌습니다' 라고 부르면 안 된다.
+        const drafts = buildAdminPrescriptionDrafts({
+            logs: [{ date: TODAY }],
+            todayStr: TODAY,
+            trendMetrics: [{
+                key: 'weight', label: '체중', unit: 'kg', decimals: 1,
+                summary: { recent: 70.5, previous: 69.0, delta: 1.5, direction: 'worsened' },
+            }],
+        });
+        const message = draftFor(drafts, 'worsened').message;
+        expect(message).toContain('늘었습니다');
+        expect(message).not.toContain('나빠졌습니다');
+    });
+
+    it('drops the filler that gave it away', () => {
+        const drafts = buildAdminPrescriptionDrafts({
+            name: '루미나',
+            logs: [{ date: '2026-09-12', metrics: { glucose: 141 } }],
+            streak: 157,
+            todayStr: TODAY,
+            trendMetrics: [{
+                key: 'steps', label: '걸음수', unit: '보', decimals: 0, percentile: 79,
+                summary: { recent: 9549, previous: 7200, delta: 2349, direction: 'improved' },
+            }],
+        });
+        const text = drafts.map((d) => d.message + String.fromCharCode(10) + d.summary).join(String.fromCharCode(10));
+        for (const filler of ['우연이 아니라', '쌓아 만든 결과', '잘 올라왔어요', '진짜입니다', '아까워서요']) {
+            expect(text, filler).not.toContain(filler);
+        }
+    });
+
+    it('closes every sentence it opens', () => {
+        // 마침표 없이 다음 절이 붙어 "늘려오셨습니다 전체 회원 중" 이 된 적이 있다.
+        const drafts = buildAdminPrescriptionDrafts({
+            name: '루미나',
+            logs: [{ date: '2026-09-12', metrics: { glucose: 141 } }],
+            streak: 157,
+            todayStr: TODAY,
+            trendMetrics: [
+                { key: 'steps', label: '걸음수', unit: '보', decimals: 0, percentile: 79,
+                  summary: { recent: 9549, previous: 7200, delta: 2349, direction: 'improved' } },
+                { key: 'sleepHours', label: '수면', unit: '시간', decimals: 1,
+                  summary: { recent: 6.2, previous: 7.7, delta: -1.5, direction: 'worsened' } },
+            ],
+        });
+        for (const draft of drafts) {
+            for (const line of draft.message.split(String.fromCharCode(10))) {
+                expect(line.trim(), draft.key + ' :: ' + line).toMatch(/[.?]$/);
+            }
+        }
     });
 });
