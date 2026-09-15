@@ -170,6 +170,13 @@
         /* 회원 화면의 머리 한 줄. 본문보다 눈에 띄어야 여기가 요약임이 읽힌다. */
         .fb-summary { width: 100%; padding: 9px; margin-bottom: 7px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 13px; font-weight: 700; }
         .fb-submit { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; }
+        /* 전송 후에도 창에 남으므로, 방금 무엇을 보냈는지 보이지 않으면 같은 말을 두 번 보내게 된다. */
+        .fb-sent { margin-top: 10px; border-top: 1px solid #e5e5e5; padding-top: 8px; }
+        .fb-sent-head { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 6px; }
+        .fb-sent-item { background: #f6f8f6; border-left: 3px solid var(--primary); border-radius: 0 6px 6px 0; padding: 7px 9px; margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+        .fb-sent-item b { display: block; color: #333; }
+        .fb-sent-item span { color: #666; white-space: pre-wrap; }
+        .fb-sent-time { float: right; color: #aaa; font-size: 11px; font-weight: 400; }
         .email-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         @media (max-width: 768px) { .email-audit-grid { grid-template-columns: 1fr; } }
         .email-audit-card { background: white; border: 1px solid #eee; border-radius: 10px; padding: 12px; }
@@ -793,6 +800,7 @@
                         placeholder="요약 한 줄 — 회원 화면 맨 위에 굵게 보입니다 (60자)">
                     <textarea id="fb-text" class="fb-textarea" placeholder="본문 — 카드에서는 두 줄까지 보이고 나머지는 '더 보기'로 접힙니다"></textarea>
                     <button class="fb-submit" onclick="submitFb()">코멘트 전송</button>
+                    <div id="fb-sent" class="fb-sent" hidden></div>
                 </div>
                 <div class="sec-box" style="margin-top:12px;margin-bottom:0;">
                     <h3 class="sec-title">💰 포인트 수동 조정</h3>
@@ -4131,6 +4139,7 @@
         document.getElementById('email-history-list').innerHTML = '';
         document.getElementById('history-wrap').innerHTML = '<div style="padding:20px;text-align:center;color:#888;">로딩 중...</div>';
         document.getElementById('modal-uid').value = uid;
+        clearSentFeedback();
         try {
             const ago30 = new Date(todayStr); ago30.setDate(ago30.getDate()-29);
             const cut = ago30.toISOString().split('T')[0];
@@ -4213,7 +4222,50 @@
         } catch(e) { document.getElementById('history-wrap').innerHTML=`<div style="padding:20px;color:red;">${escapeHtml(e.message)}</div>`; }
     };
 
-    window.closeModal = function() { closeAdminMediaLightbox(); adminDetailMediaItems = []; adminDetailMediaIndex = -1; document.getElementById('detail-modal').style.display='none'; document.getElementById('fb-text').value=''; document.getElementById('fb-summary').value=''; };
+    /**
+     * 전송해도 모달이 닫히지 않으므로, 목록 갱신은 닫는 순간으로 미룬다.
+     * 전송할 때마다 loadMembers() 를 부르면 모달 뒤에서 표가 새로 그려진다.
+     */
+    let membersNeedReload = false;
+
+    window.closeModal = function() {
+        closeAdminMediaLightbox();
+        adminDetailMediaItems = [];
+        adminDetailMediaIndex = -1;
+        document.getElementById('detail-modal').style.display = 'none';
+        document.getElementById('fb-text').value = '';
+        document.getElementById('fb-summary').value = '';
+        clearSentFeedback();
+        if (membersNeedReload) {
+            membersNeedReload = false;
+            cache = null;
+            tabLoaded['members'] = false;
+            loadMembers();
+        }
+    };
+
+    /** 이 창에서 방금 보낸 것만 쌓는다. 회원을 바꾸면 비운다. */
+    function appendSentFeedback(summary, message) {
+        const host = document.getElementById('fb-sent');
+        if (!host) return;
+        if (host.hidden) {
+            host.hidden = false;
+            host.innerHTML = '<div class="fb-sent-head">이 창에서 보낸 메시지</div>';
+        }
+        const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        const item = document.createElement('div');
+        item.className = 'fb-sent-item';
+        item.innerHTML = `<b><span class="fb-sent-time">${escapeHtml(time)}</span>${escapeHtml(summary || '(요약 없음)')}</b>`
+            + `<span>${escapeHtml(message)}</span>`;
+        host.appendChild(item);
+    }
+
+    function clearSentFeedback() {
+        const host = document.getElementById('fb-sent');
+        if (!host) return;
+        host.hidden = true;
+        host.innerHTML = '';
+    }
     window.quickMsg = function(msg, summary) {
         document.getElementById('fb-text').value = msg;
         // 요약을 비워 두면 서버가 본문 첫 문장으로 채운다. 덮어쓰지는 않는다.
@@ -4328,7 +4380,15 @@
                 ? '오늘 기록에도 함께 추가됐습니다.'
                 : '오늘 기록이 없어 앱 안내에만 표시됩니다.';
             adminToast(`✅ 회원 앱에 7일간 노출되고, 지난 메시지에 남습니다. ${historyNotice}`, 'success');
-            closeModal(); cache=null; tabLoaded['members']=false; loadMembers();
+            // 창을 닫지 않는다. 한 회원에게 이어서 더 쓸 일이 잦은데, 닫아 버리면
+            // 목록으로 나갔다가 같은 회원을 다시 찾아 들어와야 했다.
+            appendSentFeedback(summary, msg);
+            document.getElementById('fb-text').value = '';
+            document.getElementById('fb-summary').value = '';
+            document.getElementById('fb-text').focus();
+            // 목록은 지금 새로 읽지 않는다 — 모달 뒤에서 바뀌면 읽던 자리를 잃는다.
+            // 닫을 때 다시 읽도록 표시만 남긴다.
+            membersNeedReload = true;
         } catch(e) { adminToast('전송 실패: '+e.message, 'error'); }
         finally {
             if (button) { button.disabled = false; button.textContent = '코멘트 전송'; }
