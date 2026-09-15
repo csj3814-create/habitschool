@@ -62,8 +62,8 @@ describe('a workout photo can say what it is', () => {
 
     it('runs itself when the upload finishes, one at a time', () => {
         const fn = app.split('function queueAutoAiAnalysis(')[1].split('\n}\n')[0];
-        expect(fn).toContain('findCardioBlockForInput(inputId)');
-        expect(fn).toContain("window.analyzeExercisePhoto(cardioBlock, { auto: true })");
+        expect(fn).toContain('findExerciseBlockForInput(inputId)');
+        expect(fn).toContain("window.analyzeExercisePhoto(exerciseTarget.block, { auto: true })");
         expect(fn).toContain('_autoAiAnalysisChain = _autoAiAnalysisChain');
     });
 

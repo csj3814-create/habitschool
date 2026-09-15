@@ -3296,6 +3296,8 @@ exports.analyzeExercise = onCall(
 // 20초 안에 로그를 남기고 사람이 읽을 오류를 돌려줄 수 있다.
 const AI_IMAGE_FETCH_TIMEOUT_MS = 15000;
 const AI_MODEL_TIMEOUT_MS = 40000;
+// 영상은 프레임을 훑어야 해서 사진보다 오래 걸린다. 함수 타임아웃도 120초로 따로 둔다.
+const AI_VIDEO_MODEL_TIMEOUT_MS = 90000;
 // classifySharedHealthImage 는 함수 타임아웃이 20초다. 같은 자를 쓸 수 없다.
 const AI_MODEL_FAST_TIMEOUT_MS = 14000;
 
@@ -3385,6 +3387,236 @@ function normalizeExerciseAnalysis(raw) {
         distanceKm: number(source.distanceKm, 500),
         estimatedCalories: number(source.estimatedCalories, 20000),
         weightedMinutes,
+        timeAnalysis: text(source.timeAnalysis, 200) || "",
+        feedback: text(source.feedback, 500) || "",
+        formTip: text(source.formTip, 300)
+    };
+}
+
+const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 피트니스 코치 AI입니다. 짧은 운동 영상을 보고 무엇을, 어떻게 하고 있는지 말해 주세요.
+
+## 이 영상에 대해 먼저 알아 둘 것
+대개 **하이퍼랩스(타임랩스)** 로 찍힌 10초 안팎의 영상입니다. 실제로는 몇 분에서 한 시간이었던 운동을 빨리 감아 압축한 것입니다.
+
+**그래서 운동한 시간은 이 영상으로 알 수 없습니다.** 10초짜리 파일이 실제로 10분이었는지 한 시간이었는지 화면에 남아 있지 않습니다. 시간은 사용자가 직접 적으므로 **durationMinutes 는 언제나 null 로 두세요.** 화면에 시계나 계기판이 찍혀 있어도 그것은 영상 길이가 아닙니다.
+
+같은 이유로 반복 횟수도 **화면에서 실제로 셀 수 있을 때만** 적습니다. 빨리 감긴 영상에서 어림짐작한 횟수는 틀린 정보입니다.
+
+## 판단 기준
+0. **운동 영상이 맞는가**(isExercise): 운동이라고 볼 근거가 있습니까? 사람이 운동하는 모습도, 운동 기구도, 운동 공간도 보이지 않으면 **false** 로 두고 무엇이 찍힌 영상으로 보이는지 feedback 에 적습니다. 이 판단이 제일 중요합니다.
+1. **운동 종류**(exerciseType): 스쿼트, 데드리프트, 벤치프레스, 푸시업, 플랭크, 런지, 덤벨 운동, 케틀벨, 요가, 스트레칭, 홈트레이닝 등. 모르겠으면 "근력운동".
+2. **강도**(intensity): 정확히 아래 넷 중 하나로만. 동작의 크기·속도·부하로 판단합니다.
+   - 저강도: 스트레칭, 가벼운 요가, 맨몸 준비운동
+   - 중강도: 맨몸 근력운동, 가벼운 덤벨, 느린 템포
+   - 고강도: 본격 웨이트, 큰 중량, 쉬지 않는 서킷
+   - 초고강도: 전력에 가까운 고중량, 고강도 인터벌
+3. **자세**(formTip): 이 영상에서 **실제로 보이는 것**을 근거로 한 조언 한 문장. 무릎 방향, 허리 각도, 가동 범위, 호흡 리듬 같은 것. 잘 안 보이면 null 로 둡니다 — 안 보이는 것을 지적하면 틀린 지적이 됩니다.
+4. **반복 횟수**(repCount): 셀 수 있으면 정수, 못 세면 null.
+
+## 문장 쓰기
+- timeAnalysis: 본 것을 한 줄로. 시간은 쓰지 않습니다. 예) "스쿼트 · 약 12회", "덤벨 운동 · 반복 횟수는 세기 어려움".
+- feedback: 격려 한두 문장. 본 동작을 근거로 말합니다.
+
+## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
+{
+  "isExercise": true,
+  "exerciseType": "스쿼트",
+  "intensity": "중강도",
+  "durationMinutes": null,
+  "repCount": 12,
+  "timeAnalysis": "스쿼트 · 약 12회",
+  "feedback": "격려 한두 문장",
+  "formTip": "자세 조언 한 문장"
+}
+
+durationMinutes 는 예외 없이 null 입니다. intensity 는 반드시 위 네 단어 중 하나이거나, 운동 영상이 아니면 null 입니다.
+
+운동이 아닌 영상의 예:
+{
+  "isExercise": false,
+  "exerciseType": null,
+  "intensity": null,
+  "durationMinutes": null,
+  "repCount": null,
+  "timeAnalysis": "길거리를 찍은 영상입니다.",
+  "feedback": "운동하는 모습으로 볼 만한 것이 없습니다. 운동 장면이 담긴 영상을 올려 주세요.",
+  "formTip": null
+}`;
+
+const EXERCISE_VIDEO_ANALYSIS_PROMPT_EN = `You are a form-coaching fitness AI. Watch this short workout clip and say what the person is doing and how.
+
+These clips are usually **hyperlapse/timelapse**: ten seconds of file standing in for minutes or an hour of real training.
+
+**You therefore cannot know how long the workout lasted.** Always set durationMinutes to null — the user types the time themselves. Count reps only when you can actually count them on screen; a guess from sped-up footage is wrong information.
+
+Rules:
+- **isExercise comes first.** If nothing in the clip reads as exercise, set isExercise false, intensity null, and say in feedback what the video appears to show.
+- intensity must be exactly one of the Korean words "저강도", "중강도", "고강도", "초고강도", or null when isExercise is false. The app maps these to labels itself.
+- formTip must be grounded in what is visible (knee tracking, back angle, range of motion, tempo). If you cannot see it clearly, use null — an invented correction is worse than none.
+- Write timeAnalysis, feedback and formTip in natural English. Never put a duration in timeAnalysis.
+
+Return only valid JSON:
+{
+  "isExercise": true,
+  "exerciseType": "squat",
+  "intensity": "중강도",
+  "durationMinutes": null,
+  "repCount": 12,
+  "timeAnalysis": "Squats, about 12 reps",
+  "feedback": "one or two encouraging sentences",
+  "formTip": "one actionable cue"
+}`;
+
+// 영상은 사진보다 크다. 요청에 통째로 실어 보내므로 여기서 끊지 않으면 모델이
+// 받지 못한 채 느리게 실패한다. 앱이 3분/압축본으로 제한하니 대개 이 밑이다.
+const EXERCISE_VIDEO_MAX_BYTES = 15 * 1024 * 1024;
+const EXERCISE_VIDEO_FETCH_TIMEOUT_MS = 25000;
+
+exports.analyzeExerciseVideo = onCall(
+    {
+        secrets: [GEMINI_API_KEY],
+        region: "asia-northeast3",
+        maxInstances: 10,
+        timeoutSeconds: 120
+    },
+    async (request) => {
+        if (!request.auth) {
+            throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+        }
+
+        const { videoUrl, locale: rawLocale } = request.data || {};
+        const locale = normalizeLocale(rawLocale);
+        if (!videoUrl || typeof videoUrl !== "string") {
+            throw new HttpsError("invalid-argument", "영상 URL이 필요합니다.");
+        }
+
+        // SSRF/교차 사용자 방지: 로그인 사용자의 운동 영상 객체만 허용
+        if (!isAllowedUserMediaUrl(videoUrl, request.auth.uid, "exercise_videos")) {
+            console.warn("[analyzeExerciseVideo] 허용되지 않은 URL", { uid: request.auth.uid, videoUrl: String(videoUrl).slice(0, 120) });
+            throw new HttpsError("invalid-argument", "허용되지 않은 영상 URL입니다.");
+        }
+
+        const startedAt = Date.now();
+        try {
+            const videoResponse = await fetchWithDeadline(videoUrl, EXERCISE_VIDEO_FETCH_TIMEOUT_MS);
+            if (!videoResponse.ok) {
+                throw new HttpsError("not-found", "영상을 불러올 수 없습니다.");
+            }
+
+            // 다 받아 놓고 크다고 버리면 시간만 쓴다. 헤더로 먼저 거른다.
+            const declaredLength = Number(videoResponse.headers.get("content-length") || 0);
+            if (Number.isFinite(declaredLength) && declaredLength > EXERCISE_VIDEO_MAX_BYTES) {
+                console.warn("[analyzeExerciseVideo] 영상이 너무 큼", { bytes: declaredLength });
+                throw new HttpsError("failed-precondition", "영상이 너무 커서 분석할 수 없어요. 더 짧게 찍어 올려 주세요.");
+            }
+
+            const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+            if (videoBuffer.length > EXERCISE_VIDEO_MAX_BYTES) {
+                console.warn("[analyzeExerciseVideo] 영상이 너무 큼(본문)", { bytes: videoBuffer.length });
+                throw new HttpsError("failed-precondition", "영상이 너무 커서 분석할 수 없어요. 더 짧게 찍어 올려 주세요.");
+            }
+
+            const rawContentType = videoResponse.headers.get("content-type") || "";
+            const mimeType = rawContentType.startsWith("video/") ? rawContentType.split(";")[0].trim() : "video/mp4";
+            console.log("[analyzeExerciseVideo] 영상 확보", {
+                ms: Date.now() - startedAt,
+                bytes: videoBuffer.length,
+                mimeType
+            });
+
+            const genAI = new GoogleGenerativeAI(GEMINI_API_KEY.value());
+            const model = genAI.getGenerativeModel({
+                model: "gemini-2.5-flash",
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+
+            const result = await withDeadline(
+                model.generateContent([
+                    locale === "en" ? EXERCISE_VIDEO_ANALYSIS_PROMPT_EN : EXERCISE_VIDEO_ANALYSIS_PROMPT,
+                    {
+                        inlineData: {
+                            data: videoBuffer.toString("base64"),
+                            mimeType
+                        }
+                    }
+                ]),
+                AI_VIDEO_MODEL_TIMEOUT_MS,
+                "analyzeExerciseVideo_model"
+            );
+
+            const responseText = result.response.text();
+            console.log("[analyzeExerciseVideo] 분석 완료", { ms: Date.now() - startedAt, chars: responseText.length });
+
+            return {
+                success: true,
+                analysis: normalizeExerciseVideoAnalysis(JSON.parse(responseText)),
+                timestamp: new Date().toISOString()
+            };
+
+        } catch (error) {
+            if (error instanceof HttpsError) throw error;
+            if (String(error?.message || "").includes("_timeout_")) {
+                console.warn("analyzeExerciseVideo 마감선 초과:", error.message);
+                throw new HttpsError("deadline-exceeded", "분석이 너무 오래 걸렸어요. 다시 시도해주세요.");
+            }
+            console.error("analyzeExerciseVideo 오류:", {
+                ms: Date.now() - startedAt,
+                name: error?.name,
+                status: error?.status,
+                message: error?.message
+            });
+            if (error.message && error.message.includes("JSON")) {
+                throw new HttpsError("internal", "AI 응답 파싱에 실패했습니다. 다시 시도해주세요.");
+            }
+            throw new HttpsError("internal", "운동 영상 분석 중 오류가 발생했습니다.");
+        }
+    }
+);
+
+// 사진 분석과 다른 점 하나: 시간을 절대 싣지 않는다. 하이퍼랩스는 시간을 지운
+// 영상이라 모델이 무엇을 말하든 근거가 없다. 시간은 사용자가 적고, 이 분석은
+// 그 시간에 곱할 강도만 준다.
+function normalizeExerciseVideoAnalysis(raw) {
+    const source = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    const text = (value, limit) => {
+        const normalized = String(value ?? "").trim();
+        return normalized ? normalized.slice(0, limit) : null;
+    };
+
+    const rawIntensity = String(source.intensity || "").trim();
+    const readIntensity = EXERCISE_INTENSITY_LEVELS.includes(rawIntensity) ? rawIntensity : null;
+    const isExercise = source.isExercise === false
+        ? false
+        : (source.isExercise === true ? true : readIntensity !== null);
+
+    if (!isExercise) {
+        return {
+            isExercise: false,
+            mediaKind: "video",
+            exerciseType: null,
+            intensity: null,
+            durationMinutes: null,
+            weightedMinutes: null,
+            repCount: null,
+            timeAnalysis: text(source.timeAnalysis, 200) || "",
+            feedback: text(source.feedback, 500) || "운동으로 볼 만한 것이 영상에 없습니다.",
+            formTip: null
+        };
+    }
+
+    const parsedReps = Number(source.repCount);
+    return {
+        isExercise: true,
+        mediaKind: "video",
+        exerciseType: text(source.exerciseType, 40) || "근력운동",
+        intensity: readIntensity || "중강도",
+        // 영상은 시간을 말해 주지 않는다. 모델이 뭘 보내든 버린다.
+        durationMinutes: null,
+        weightedMinutes: null,
+        repCount: Number.isFinite(parsedReps) && parsedReps > 0 ? Math.min(999, Math.round(parsedReps)) : null,
         timeAnalysis: text(source.timeAnalysis, 200) || "",
         feedback: text(source.feedback, 500) || "",
         formTip: text(source.formTip, 300)

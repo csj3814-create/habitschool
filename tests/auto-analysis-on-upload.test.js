@@ -32,7 +32,9 @@ describe('an uploaded photo analyses itself', () => {
         const fn = app.split('function queueAutoAiAnalysis(')[1].split('\n}\n')[0];
         expect(fn).toContain('_autoAiAnalysisChain = _autoAiAnalysisChain');
         expect(fn).toContain('runAutoAiAnalysis(slot)');
-        expect(fn).toContain('window.analyzeExercisePhoto(cardioBlock, { auto: true })');
+        expect(fn).toContain('window.analyzeExercisePhoto(exerciseTarget.block, { auto: true })');
+        // 근력 영상도 같은 줄에 선다 — 사진과 영상이 동시에 뜨면 안 된다.
+        expect(fn).toContain('window.analyzeExerciseVideo(exerciseTarget.block, { auto: true })');
         expect(app).toContain('let _autoAiAnalysisChain = Promise.resolve();');
     });
 

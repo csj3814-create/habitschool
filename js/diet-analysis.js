@@ -2,15 +2,16 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=404';
+import { auth, functions } from './firebase-config.js?v=405';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=404';
-import { escapeHtml } from './security.js?v=404';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=404';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=404';
+import { showToast } from './ui-helpers.js?v=405';
+import { escapeHtml } from './security.js?v=405';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=405';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=405';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
+const analyzeExerciseVideoFn = httpsCallable(functions, 'analyzeExerciseVideo');
 const analyzeSleepMindFn = httpsCallable(functions, 'analyzeSleepMind');
 const analyzeBloodTestFn = httpsCallable(functions, 'analyzeBloodTest');
 const analyzeStepScreenshotFn = httpsCallable(functions, 'analyzeStepScreenshot');
@@ -105,6 +106,25 @@ export async function requestExerciseAnalysis(imageUrl) {
         return result.data.analysis;
     } catch (error) {
         console.error('Exercise analysis error:', error);
+        showToast(analysisFailureMessage(
+            error,
+            isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.'
+        ));
+        return null;
+    }
+}
+
+// 하이퍼랩스는 시간을 지운 영상이라 분(分)은 돌려주지 않는다. 종류·강도·자세만
+// 온다. 시간은 사용자가 적고, 이 분석은 거기에 곱할 강도를 준다.
+export async function requestExerciseVideoAnalysis(videoUrl) {
+    if (!requireSignedIn()) return null;
+    if (!videoUrl) return null;
+
+    try {
+        const result = await analyzeExerciseVideoFn(analysisLocalePayload({ videoUrl }));
+        return result.data.analysis;
+    } catch (error) {
+        console.error('Exercise video analysis error:', error);
         showToast(analysisFailureMessage(
             error,
             isEnglishLocale() ? t('toast.aiFailed') : 'AI 분석에 실패했습니다. 다시 시도해 주세요.'
@@ -299,8 +319,13 @@ export function renderExerciseAnalysisResult(analysis, container) {
                 <span class="diet-ratio-val" style="color:${shareColor}; font-weight:bold;">${weeklyShare}%</span>
             </div>`
         : '';
+    // 영상 분석은 반복 횟수를 셀 수 있을 때만 준다. 있으면 종류 옆에 같이 보인다.
+    const repCount = Number(analysis.repCount);
+    const repLabel = Number.isFinite(repCount) && repCount > 0
+        ? ` · ${repCount}${en ? " reps" : "회"}`
+        : '';
     const exerciseType = analysis.exerciseType
-        ? `<div style="font-size:12px; color:#555; margin-top:4px;">${en ? t('exercise.type') : '인식'}: ${escapeHtml(analysis.exerciseType)}</div>`
+        ? `<div style="font-size:12px; color:#555; margin-top:4px;">${en ? t('exercise.type') : '인식'}: ${escapeHtml(analysis.exerciseType)}${repLabel}</div>`
         : '';
     const formTip = analysis.formTip
         ? `<div class="diet-suggestion-box" style="margin-top:10px;">💬 ${escapeHtml(analysis.formTip)}</div>`
