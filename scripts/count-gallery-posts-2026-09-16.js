@@ -1,7 +1,7 @@
 // 갤러리 피드가 "여기까지가 전체 기록이에요" 로 끝나는 것이 맞는지 확인한다.
 // 읽기만 한다 — 쓰기 경로가 없다.
 //
-//   node scripts/count-gallery-posts-2026-09-16.js <serviceAccountKey.json>
+//   node scripts/count-gallery-posts-2026-09-16.js C:/SJ/antigravity/habitchatbot/appServiceAccountKey.json
 //
 // 왜 만들었나
 //   2026-09-16 제보: "여기까지가 전체기록이에요 라고 나와요" (v401, 갤러리 탭).
@@ -16,12 +16,19 @@
 //
 // 출력에는 집계와 날짜만 담는다. uid·이름·이메일·사진 URL 은 적지 않는다.
 
-const admin = require("firebase-admin");
 const path = require("path");
+// 이 저장소 루트에는 firebase-admin 이 없다. functions/ 쪽 설치본을 쓴다.
+// (다른 scripts/ 들과 같은 방식이다.)
+let admin;
+try {
+    admin = require("firebase-admin");
+} catch (_) {
+    admin = require(path.join(__dirname, "..", "functions", "node_modules", "firebase-admin"));
+}
 
 const keyPath = process.argv[2];
 if (!keyPath) {
-    console.error("사용법: node scripts/count-gallery-posts-2026-09-16.js <serviceAccountKey.json>");
+    console.error("사용법: node scripts/count-gallery-posts-2026-09-16.js C:/SJ/antigravity/habitchatbot/appServiceAccountKey.json");
     process.exit(1);
 }
 
