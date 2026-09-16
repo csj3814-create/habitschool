@@ -21420,15 +21420,32 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     }, 300);
                 }
 
+                // 2026-09-16 제보: "챌린지 완료 직후에는 정산 확인중 뜨고 앱을
+                // 나갔다 들어와야 정산 가능하게 바뀌네."
+                //
+                // 넷을 한 try 로 묶고 catch (_) {} 로 삼키고 있었다. 앞의
+                // checkMilestones 나 renderMilestones 가 한 번 실패하면 그 뒤의
+                // updateChallengeProgress 가 **아예 실행되지 않는다.** 서버 재계산이
+                // 안 되니 화면은 '정산 확인 중…' 에 머물고, 다음 로그인의
+                // settleExpiredChallenges 가 돌 때까지 — 즉 앱을 껐다 켤 때까지 —
+                // 풀리지 않는다. 그리고 로그가 없어서 왜 그런지도 남지 않았다.
+                //
+                // 마일스톤이 실패해도 챌린지 정산은 따로 간다. 그리고 삼키지 않는다.
                 try {
                     renderSocialChallenges(user).catch(() => {});
                     await checkMilestones(user.uid);
                     await renderMilestones(user.uid);
+                } catch (error) {
+                    console.warn('[저장 후] 마일스톤 갱신 실패:', error?.message || error);
+                }
+                try {
                     await updateChallengeProgress({
                         dateStr: selectedDateStr,
                         dailyLogData: challengeDailyLogData
                     });
-                } catch (_) {}
+                } catch (error) {
+                    console.warn('[저장 후] 챌린지 진행도 갱신 실패:', error?.message || error);
+                }
             };
 
             // 저장 버튼 즉시 복원 (post-save ops 완료 기다리지 않음)
