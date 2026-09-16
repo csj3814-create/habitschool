@@ -3507,7 +3507,18 @@ exports.analyzeExerciseVideo = onCall(
         secrets: [GEMINI_API_KEY],
         region: "asia-northeast3",
         maxInstances: 10,
-        timeoutSeconds: 120
+        timeoutSeconds: 120,
+        // 2026-09-16 제보: 9.5MB 영상에서 "AI 분석에 실패했습니다 (internal)".
+        // 로그는 'Memory limit of 256 MiB exceeded with 260 MiB used' 였다.
+        //
+        // 영상을 base64 로 인라인해서 보내는 구조라(아래 inlineData) 한 번에
+        // 원본 버퍼 + base64 문자열 + 요청 본문이 함께 살아 있다. 9.9MB 가
+        // 260MiB 를 썼으니 대략 영상 크기의 18배 + Node 기본 ~80MiB 다.
+        // 허용 상한인 15MB 면 350MiB 언저리라 512MiB 로는 빠듯하다.
+        //
+        // EXERCISE_VIDEO_MAX_BYTES(15MB)와 메모리가 서로 안 맞는 것이 원인이었다.
+        // 상한을 낮추면 10초 하이퍼랩스도 거절당하므로 메모리를 맞춘다.
+        memory: "1GiB"
     },
     async (request) => {
         if (!request.auth) {

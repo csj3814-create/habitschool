@@ -81,7 +81,8 @@ describe('a hyperlapse can say what, not how long', () => {
         expect(runtime).toContain('const EXERCISE_VIDEO_MAX_BYTES = 15 * 1024 * 1024;');
         // 헤더로 먼저 거르고, 본문으로 한 번 더 본다.
         expect(fn).toContain('content-length');
-        expect(fn.split('EXERCISE_VIDEO_MAX_BYTES').length - 1).toBe(2);
+        // 비교문을 센다. 이름만 세면 주석에 상수를 언급하는 순간 깨진다.
+        expect(fn.split('> EXERCISE_VIDEO_MAX_BYTES').length - 1).toBe(2);
         expect(fn).toContain('failed-precondition');
     });
 
