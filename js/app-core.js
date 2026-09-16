@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=412';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=412';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=413';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=413';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=412';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=412';
+} from './auth-login-helpers.js?v=413';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=413';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=412';
+} from './exercise-media.js?v=413';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=412';
+} from './health-connect-utils.js?v=413';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=412';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=412';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=412';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=412';
-import { sanitize, compressImage } from './data-manager.js?v=412';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=412';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=412';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=412';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=412';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=412';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=412';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=412';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=412';
+} from './habit-groups.js?v=413';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=413';
+import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=413';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=413';
+import { sanitize, compressImage } from './data-manager.js?v=413';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=413';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=413';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=413';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=413';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=413';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=413';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=413';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=413';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=412';
+} from './guest-demo.js?v=413';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=412';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=412';
+} from './product-events.js?v=413';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=413';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=412';
+} from './diet-program.js?v=413';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=412';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=412';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=412';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=412';
+} from './meditation-guide.js?v=413';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=413';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=413';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=413';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=412';
+} from './social-challenge-readiness.js?v=413';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=412';
+} from './monthly-mvp-reward.js?v=413';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -6775,7 +6775,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=412';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=413';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -21276,7 +21276,15 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 doc(db, "daily_logs", docId, "private", "mind"),
                 { userId: user.uid, gratitude: gratitudeText || '', updatedAt: serverTimestamp() },
                 { merge: true }
-            ).catch(() => {});
+            ).catch((error) => {
+                // 마음 공유를 끈 회원은 공개 문서의 gratitude 가 빈 값이라
+                // (publicGratitude) 이 하위문서가 글의 유일한 원본이다.
+                // 조용히 넘기면 회원이 쓴 글이 사라진 것을 아무도 모른다.
+                console.error('[감사일기] 개인 사본 저장 실패:', error?.message || error);
+                if (shareSettings.hideMind && (gratitudeText || '').trim()) {
+                    showToast('⚠️ 감사일기 저장에 실패했어요. 내용을 복사해 두고 다시 저장해 주세요.');
+                }
+            });
             offlineOutboxMediaItems = collectOfflineOutboxMediaItems(saveData, backgroundJobs);
 
             // Firestore 저장은 서버 ACK가 있어야만 성공으로 본다.
@@ -25141,7 +25149,11 @@ async function checkOnboarding() {
             if (modal) modal.style.display = 'none';
             await setDoc(doc(db, "users", user.uid), {
                 onboardingComplete: true
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch((error) => {
+                // 실패하면 온보딩이 다음에도 다시 뜬다. 회원에게 알릴 일은 아니지만
+                // (다음 로그인에 저절로 낫는다) 왜 반복되는지는 남아야 한다.
+                console.error('[온보딩] 완료 표시 저장 실패:', error?.message || error);
+            });
             clearPendingSignupOnboardingState();
             return;
         }
@@ -27023,7 +27035,14 @@ async function syncHabitGroupCheckinsForDailyLog({ user = auth.currentUser, date
         }
 
         if (!status.complete) {
-            await deleteDoc(checkinRef).then(() => { removed += 1; }).catch(() => {});
+            await deleteDoc(checkinRef)
+                .then(() => { removed += 1; })
+                .catch((error) => {
+                    // 지워지지 않으면 미완료 체크인이 남아 집계가 어긋난다.
+                    // removed 는 성공했을 때만 올라가니 숫자는 맞지만, 왜 남았는지는
+                    // 여기서만 알 수 있다.
+                    console.error('[소모임] 미완료 체크인 삭제 실패:', error?.message || error);
+                });
             return;
         }
 

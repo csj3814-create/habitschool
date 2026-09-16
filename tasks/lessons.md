@@ -2579,3 +2579,39 @@ analyzeStepScreenshot · classifySharedHealthImage 도 같은 구조여서 한 �
 규칙: **정규식이나 이스케이프가 들어가는 편집은 히어독으로 하지 말 것.**
 Edit 도구를 쓰거나, `String.fromCharCode(92)` 처럼 백슬래시를 피해서 조립한다.
 편집 후에는 `grep` 으로 그 줄을 눈으로 확인한다 — `node --check` 는 통과한다.
+
+**2026-09-17 추가 — 세 번 더 당했다.** `python - <<'PY'` 도 마찬가지다. 셸이
+무엇이든 히어독으로 들어가면 백슬래시가 한 겹 벗겨진다.
+
+- 테스트의 `.split('\n    }')` 가 진짜 줄바꿈이 되어 앵커가 안 맞음 (2회)
+- `.split('onboardingComplete: true\n            }, ...')` 가 파일을 깨뜨림
+
+**앵커에 줄바꿈이 필요하면 소스에 쓰지 말고 조립한다:**
+
+    const anchor = '첫 줄' + String.fromCharCode(10) + '            둘째 줄';
+
+그리고 편집 스크립트 자체를 Write 도구로 파일에 쓴 뒤 `node` 로 돌린다.
+이 방법은 백슬래시가 살아남고, 실패하면 앵커 개수로 바로 드러난다.
+
+---
+
+## 259. 함수 본문에서 '이름' 을 세는 시험은 주석에 그 이름을 쓰는 순간 깨진다 (2026-09-17)
+
+하루에 세 번 같은 자리에서 걸렸다.
+
+- `expect(fn.split('EXERCISE_VIDEO_MAX_BYTES').length - 1).toBe(2)`
+  → 왜 그 상수를 올리는지 주석에 적자 3이 됐다
+- `expect(milestoneBlock).not.toContain('updateChallengeProgress')`
+  → 고친 이유를 주석에 적자 실패
+- `expect(RUNTIME).not.toContain('buildAdminPrescriptionDrafts')`
+  → "여기서 만들지 않는 이유" 주석이 걸렸다
+
+주석은 코드가 아니다. 그런데 소스 텍스트 시험은 둘을 구분하지 않는다.
+
+**규칙: 이름의 등장 횟수가 아니라 구조를 검사한다.**
+
+- 비교문을 센다: `'> EXERCISE_VIDEO_MAX_BYTES'`
+- 정의·호출을 본다: `/function foo/`, `/foo\s*\(/`
+- 순서를 본다: `expect(a.indexOf(x)).toBeLessThan(a.indexOf(y))`
+
+그래야 "왜 이렇게 했는지" 를 주석에 적는 일과 시험이 싸우지 않는다.
