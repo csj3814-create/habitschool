@@ -250,6 +250,14 @@
         .trend-spark svg { display: block; width: 100%; height: 26px; margin-top: 4px; }
         /* 다이렉트 처방 초안. 고정 문구 넷을 회원 데이터에서 만든 초안으로 바꿨다. */
         .rx-drafts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .appusage-verdict { font-size: 13px; font-weight: 700; padding: 9px 12px; border-radius: 8px; margin: 12px 0; }
+        .appusage-verdict.ok { background: #eaf6ec; color: #2c7a41; }
+        .appusage-verdict.short { background: #fdeaea; color: #b03030; }
+        .appusage-list { display: flex; flex-direction: column; gap: 5px; max-height: 320px; overflow-y: auto; }
+        .appusage-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; font-size: 12px; padding: 6px 9px; border: 1px solid #eee; border-radius: 6px; }
+        .appusage-row b { font-weight: 700; }
+        .appusage-row span { color: #888; }
+        .appusage-empty { padding: 20px; text-align: center; color: #888; font-size: 13px; }
         .rxq-note { font-size: 12px; color: #666; line-height: 1.6; margin: 0 0 10px; }
         .rxq-summary { font-size: 12px; color: #555; margin-bottom: 10px; }
         .rxq-summary b { color: #222; }
@@ -702,6 +710,31 @@
 
     <!-- Tab 5: 초대 & 시스템 -->
     <div id="tab-system" class="tab-panel">
+        <!-- Play 비공개 테스트가 통과하려면 12명 이상이 실제로 **앱을** 써야 한다.
+             두 번 반려된 사유가 그것인데, 그동안 그 숫자를 볼 방법이 없었다. -->
+        <div class="box" style="margin-bottom:16px;">
+            <h3>📱 안드로이드 앱 실행 (Play 비공개 테스트)</h3>
+            <p style="font-size:13px;color:#666;margin:0 0 12px;">
+                앱으로 연 회원만 셉니다(웹 접속은 제외). Play 요건은 12명 이상이 14일간 테스트에
+                참여하는 것이고, 프로덕션 액세스가 두 번 반려된 사유가 바로 이 항목입니다.
+            </p>
+            <div class="cards">
+                <div class="card">
+                    <div class="lbl">최근 14일 앱 실행</div>
+                    <div class="val" id="appusage-count">-</div>
+                </div>
+                <div class="card">
+                    <div class="lbl">Play 요건</div>
+                    <div class="val" id="appusage-target">12명</div>
+                </div>
+                <div class="card">
+                    <div class="lbl">오늘 연 회원</div>
+                    <div class="val" id="appusage-today">-</div>
+                </div>
+            </div>
+            <div id="appusage-verdict" class="appusage-verdict"></div>
+            <div id="appusage-list" class="appusage-list"></div>
+        </div>
         <!-- 혈액검사 분석 품질. 개수와 분포만 본다 — 누구의 혈당이 얼마인지는
              여기 오지 않는다. 민감정보라 '기능이 도는가'와 '그 사람 수치가 뭔가'를
              섞지 않는다. -->
@@ -4138,8 +4171,52 @@
 
     // ── Tab 5: System ─────────────────────────────────────────
     async function loadSystem() {
-        await Promise.all([loadReferralsV2(), loadAdmins(), loadBloodTestQuality()]);
+        await Promise.all([loadReferralsV2(), loadAdmins(), loadBloodTestQuality(), loadAppUsage()]);
     }
+
+    // Play 비공개 테스트가 통과하려면 12명 이상이 실제로 앱을 써야 한다.
+    // 신청 전에 그 숫자를 보기 위한 화면이다 — 두 번은 모르는 채로 신청했다.
+    window.loadAppUsage = async function loadAppUsage() {
+        const listEl = document.getElementById('appusage-list');
+        const verdictEl = document.getElementById('appusage-verdict');
+        listEl.innerHTML = '<div class="appusage-empty">불러오는 중…</div>';
+        try {
+            const response = await httpsCallable(fns, 'getAdminAppUsage')({});
+            const data = response.data || {};
+            const members = data.members || [];
+            const target = data.minTesters || 12;
+            const todayCount = members.filter((m) => m.lastAppOpenDate === data.todayStr).length;
+
+            document.getElementById('appusage-count').textContent = members.length + '명';
+            document.getElementById('appusage-target').textContent = target + '명';
+            document.getElementById('appusage-today').textContent = todayCount + '명';
+
+            const short = target - members.length;
+            verdictEl.className = 'appusage-verdict ' + (short <= 0 ? 'ok' : 'short');
+            verdictEl.textContent = short <= 0
+                ? '요건을 채우고 있습니다. 이 상태가 14일 이어지면 신청할 수 있습니다.'
+                : short + '명 모자랍니다. 지금 신청하면 같은 사유로 또 반려됩니다.';
+
+            if (!members.length) {
+                listEl.innerHTML = '<div class="appusage-empty">'
+                    + data.since + ' 이후 앱으로 연 회원이 없습니다.<br>'
+                    + '<span style="color:#b03030">이 기능을 배포한 날 이후부터 쌓입니다 — 그 전 기록은 없습니다.</span></div>';
+                return;
+            }
+            listEl.innerHTML = members.map((m) =>
+                '<div class="appusage-row">'
+                + '<b>' + escapeHtml(m.name || m.email || m.uid.slice(0, 8)) + '</b>'
+                + '<span>' + escapeHtml(m.source || '-') + '</span>'
+                + '<span>' + escapeHtml(m.lastAppOpenDate) + '</span>'
+                + '</div>').join('');
+        } catch (e) {
+            console.error('[앱 실행 현황] 불러오기 실패:', e);
+            listEl.innerHTML = '<div class="appusage-empty">불러오지 못했습니다.<br>'
+                + escapeHtml(e.message || '') + '</div>';
+            verdictEl.className = 'appusage-verdict';
+            verdictEl.textContent = '';
+        }
+    };
 
     // 혈액검사 분석 품질. 서버가 집계만 돌려주므로 여기서 개인 수치를 볼 일이 없다.
     window.loadBloodTestQuality = async function loadBloodTestQuality() {

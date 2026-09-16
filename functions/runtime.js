@@ -10400,6 +10400,59 @@ exports.skipAdminPrescription = onCall(
     }
 );
 
+// ── 관제탑: 안드로이드 앱 실행 현황 ──────────────────────────────────────
+//
+// Play 프로덕션 액세스가 두 번 반려됐고, 두 번 다 첫 사유가 "비공개 테스트 중에
+// 테스터가 앱에 참여하지 않았습니다" 였다. 그런데 몇 명이 앱을 실제로 여는지
+// 볼 방법이 없어서, 두 번 다 모르는 채로 신청하고 2주씩 잃었다.
+//
+// 회원 앱이 ?native=... 로 열릴 때 settings.lastAppOpenDate 를 남기고(하루 한 번),
+// 여기서 그걸 세어 준다. 신청 전에 12명이 채워졌는지 눈으로 보기 위한 것이다.
+const PLAY_CLOSED_TEST_MIN_TESTERS = 12;
+const PLAY_CLOSED_TEST_WINDOW_DAYS = 14;
+
+exports.getAdminAppUsage = onCall(
+    { region: "asia-northeast3", timeoutSeconds: 120 },
+    async (request) => {
+        await assertAdminRequest(request);
+        const todayStr = getCurrentKstDateString();
+        const windowDays = Number(request.data?.days) > 0
+            ? Math.min(90, Math.round(Number(request.data.days)))
+            : PLAY_CLOSED_TEST_WINDOW_DAYS;
+        const since = shiftDateString(todayStr, windowDays - 1);
+
+        // settings.lastAppOpenDate 는 중첩 필드라 단일 필드 색인이 자동으로 붙는다.
+        // 복합 색인을 따로 만들 일이 없다.
+        const snap = await db.collection("users")
+            .where("settings.lastAppOpenDate", ">=", since)
+            .select("customDisplayName", "displayName", "email", "settings")
+            .get();
+
+        const members = [];
+        snap.forEach((docSnap) => {
+            const data = docSnap.data() || {};
+            const settings = data.settings || {};
+            members.push({
+                uid: docSnap.id,
+                name: data.customDisplayName || data.displayName || "",
+                email: data.email || "",
+                lastAppOpenDate: String(settings.lastAppOpenDate || ""),
+                source: String(settings.lastAppOpenSource || ""),
+            });
+        });
+        members.sort((a, b) => (a.lastAppOpenDate < b.lastAppOpenDate ? 1 : -1));
+
+        return {
+            members,
+            total: members.length,
+            todayStr,
+            since,
+            windowDays,
+            minTesters: PLAY_CLOSED_TEST_MIN_TESTERS,
+        };
+    }
+);
+
 exports.getAdminPrescriptionQueue = onCall(
     { region: "asia-northeast3", timeoutSeconds: 300, memory: "1GiB" },
     async (request) => {
