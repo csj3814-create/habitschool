@@ -53,7 +53,9 @@ describe('the slimmed-down log still produces every kind of draft', () => {
     it('reads the presence placeholders the server sends for the last seven days', () => {
         // 운동 목록은 항목이 커서 길이만 남긴 자리표시자로 온다. hasExerciseRecord 가
         // 길이만 보므로 이것으로 충분해야 한다.
-        const logs = ['09-10', '09-11', '09-12', '09-13', '09-14'].map((d) => slim(`2026-${d}`, {
+        // 08-20 은 '들어오신 지 2주' 문턱을 넘기기 위한 것이다. 최근 7일 밖이라
+        // 기록 유무 집계에는 들어가지 않는다.
+        const logs = ['08-20', '09-10', '09-11', '09-12', '09-13', '09-14'].map((d) => slim(`2026-${d}`, {
             diet: { breakfastUrl: true },
             exercise: { cardioList: [1, 1] },
         }));

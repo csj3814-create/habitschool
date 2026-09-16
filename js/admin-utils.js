@@ -835,6 +835,22 @@ function hasSleepRecord(log) {
 // 환산해 주 150분(=하루 150/7분)을 채우는 걸음수.
 const PRESCRIPTION_STEP_BASELINE = 4000;
 const PRESCRIPTION_STEPS_PER_MINUTE = 100;
+/**
+ * '비어 있는 자리' 초안을 만들기 전에 필요한 두 가지.
+ *
+ * 2026-09-15 지적: "신규 회원들에게 식단이 없다는 둥 운동이 없다는 둥 하면
+ * 안되지."
+ *
+ * 관제탑 대기열에 올라온 세 분은 최근 7일에 기록이 **하루**뿐이었다. 그 하루로
+ * "운동은 1일 남기셨는데 식단이 한 번도 없습니다" 라고 한 것이다. 이제 막
+ * 시작한 분께 빠진 것부터 세는 셈이고, 애초에 판단할 만큼 쌓이지도 않았다.
+ *
+ * 그래서 (1) 들어오신 지 2주는 지나야 하고, (2) 하고 계신 영역이 최소 사흘은
+ * 있어야 그 영역을 '하고 있다' 고 부른다.
+ */
+const PRESCRIPTION_GAP_MIN_HISTORY_DAYS = 14;
+const PRESCRIPTION_GAP_MIN_STRONG_DAYS = 3;
+
 const PRESCRIPTION_GOOD_ENOUGH = {
     steps: { atLeast: PRESCRIPTION_STEP_BASELINE
         + (WEEKLY_ACTIVITY_TARGET_MINUTES / 7) * PRESCRIPTION_STEPS_PER_MINUTE },
@@ -866,6 +882,23 @@ const PRESCRIPTION_MIN_ABSOLUTE_CHANGE = {
     bpSystolic: 10,
     bpDiastolic: 5,
 };
+
+/**
+ * 가장 오래된 기록으로부터 며칠 지났나.
+ *
+ * 불러온 창(회원 상세 30일, 대기열 63일)보다 길게는 셀 수 없다. 오래 다니신
+ * 분은 어느 쪽이든 문턱을 넘으므로, 이 상한 때문에 잘못 막히지는 않는다.
+ */
+function daysSinceFirstRecord(logs, todayStr) {
+    const dates = (Array.isArray(logs) ? logs : [])
+        .map((log) => String(log?.date || ""))
+        .filter(Boolean)
+        .sort();
+    if (!dates.length || !todayStr) return 0;
+    return Math.round(
+        (new Date(`${todayStr}T12:00:00Z`).getTime() - new Date(`${dates[0]}T12:00:00Z`).getTime()) / 86400000
+    );
+}
 
 /** 변화폭이 말할 만한가. 정한 값이 없는 지표는 FLAT_RATIO 가 이미 걸러 준다. */
 function isChangeWorthMentioning(metric) {
@@ -1097,13 +1130,17 @@ export function buildAdminPrescriptionDrafts({
     }
 
     // ── 5. 비어 있는 자리 — 최근 7일에 기록이 하나도 없는 영역
-    if (last7.length) {
+    //
+    // 막 시작한 분께는 하지 않는다. 빠진 것부터 세는 인사가 되고, 애초에
+    // 판단할 만큼 기록이 쌓이지도 않았다.
+    if (last7.length && daysSinceFirstRecord(logs, todayStr) >= PRESCRIPTION_GAP_MIN_HISTORY_DAYS) {
         const areas = [
             { key: "diet", label: "식단", days: countDaysWith(last7, hasDietRecord), how: "사진 한 장이면 됩니다. AI가 알아서 읽습니다" },
             { key: "exercise", label: "운동", days: countDaysWith(last7, hasExerciseRecord), how: "걸음수만 적으셔도 기록이 됩니다" },
             { key: "sleep", label: "수면", days: countDaysWith(last7, hasSleepRecord), how: "수면 앱 화면을 캡처해 올리시면 됩니다" },
         ];
-        const filled = areas.filter((area) => area.days > 0);
+        // 하루 기록으로 "운동은 1일 남기셨는데" 라고 하는 것은 근거가 아니다.
+        const filled = areas.filter((area) => area.days >= PRESCRIPTION_GAP_MIN_STRONG_DAYS);
         const empty = areas.filter((area) => area.days === 0);
         if (empty.length && filled.length) {
             const target = empty[0];
@@ -1146,4 +1183,6 @@ export const ADMIN_PRESCRIPTION_ALERT_THRESHOLDS = PRESCRIPTION_ALERT_THRESHOLDS
 export const ADMIN_PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = PRESCRIPTION_ALERT_MIN_REPEATS_ALONE;
 export const ADMIN_PRESCRIPTION_GOOD_ENOUGH = PRESCRIPTION_GOOD_ENOUGH;
 export const ADMIN_PRESCRIPTION_MIN_ABSOLUTE_CHANGE = PRESCRIPTION_MIN_ABSOLUTE_CHANGE;
+export const ADMIN_PRESCRIPTION_GAP_MIN_HISTORY_DAYS = PRESCRIPTION_GAP_MIN_HISTORY_DAYS;
+export const ADMIN_PRESCRIPTION_GAP_MIN_STRONG_DAYS = PRESCRIPTION_GAP_MIN_STRONG_DAYS;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;

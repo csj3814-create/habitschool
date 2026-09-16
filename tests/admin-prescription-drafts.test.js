@@ -96,9 +96,11 @@ describe('a prescription is written from this member, or not written', () => {
     it('names the area that is empty, and the one that is not', () => {
         // 일곱 날 중 식단만 남긴 회원에게 "운동도 하세요" 는 게으른 말이다.
         // 무엇을 이미 하고 있는지 먼저 말하고 나서 비어 있는 한 가지를 청한다.
-        const logs = ['09-09', '09-10', '09-11', '09-12', '09-13'].map((d) => ({
+        const logs = ['08-20', '09-09', '09-10', '09-11', '09-12', '09-13'].map((d) => ({
             date: `2026-${d}`, diet: { breakfastUrl: 'https://x/a' },
         }));
+        // 첫 기록이 2주보다 앞서야 '비어 있는 자리' 를 말한다 — 막 시작한 분께
+        // 빠진 것부터 세지 않기 위해서다(tests/prescription-new-member.test.js).
         const drafts = buildAdminPrescriptionDrafts({ name: '루미나', logs, todayStr: TODAY });
         const gap = draftFor(drafts, 'gap');
         expect(gap.evidence).toContain('식단 5일');
