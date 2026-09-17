@@ -665,7 +665,14 @@ window.dismissOpenInAppBanner = dismissOpenInAppBanner;
 window.openInInstalledApp = openInInstalledApp;
 window.handleOpenInAppBannerKeydown = handleOpenInAppBannerKeydown;
 // 설치 감지는 비동기다. 첫 페인트를 막지 않도록 로드 뒤에 한 번만 돌린다.
-window.addEventListener('load', () => { refreshOpenInAppBanner().catch(() => {}); });
+window.addEventListener('load', () => {
+    // 배너 갱신이 실패해도 흐름을 막지 않는다. 다만 조용히 넘기지는 않는다 —
+    // ui-helpers 의 onRefreshFailure 와 같은 규칙이다. 이 파일은 그 모듈을
+    // 쓰지 않으므로 한 줄 때문에 의존성을 새로 만들지 않고 여기 적는다.
+    refreshOpenInAppBanner().catch((error) => {
+        console.warn('[화면 갱신] 앱에서 열기 배너 실패:', error?.message || error);
+    });
+});
 window.getInstallCtaState = getInstallCopy;
 window.handleInstallCtaAction = handleInstallCtaAction;
 window.installPWA = handleInstallCtaAction;

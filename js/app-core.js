@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=413';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=413';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=414';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=414';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=413';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=413';
+} from './auth-login-helpers.js?v=414';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=414';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=413';
+} from './exercise-media.js?v=414';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=413';
+} from './health-connect-utils.js?v=414';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=413';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=413';
-import { getDatesInfo, showToast, hideToast, getKstDateString } from './ui-helpers.js?v=413';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=413';
-import { sanitize, compressImage } from './data-manager.js?v=413';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=413';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=413';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=413';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=413';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=413';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=413';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=413';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=413';
+} from './habit-groups.js?v=414';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=414';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure } from './ui-helpers.js?v=414';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=414';
+import { sanitize, compressImage } from './data-manager.js?v=414';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=414';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=414';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=414';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=414';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=414';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=414';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=414';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=414';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=413';
+} from './guest-demo.js?v=414';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=413';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=413';
+} from './product-events.js?v=414';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=414';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=413';
+} from './diet-program.js?v=414';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=413';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=413';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=413';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=413';
+} from './meditation-guide.js?v=414';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=414';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=414';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=414';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=413';
+} from './social-challenge-readiness.js?v=414';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=413';
+} from './monthly-mvp-reward.js?v=414';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -1602,7 +1602,7 @@ async function persistDietProgramSelection(methodId, remindersEnabled, { fasting
 
         window.applyDietProgramUserData?.(nextUserData);
         if (window.refreshSimpleProfilePanel) {
-            Promise.resolve(window.refreshSimpleProfilePanel(nextUserData)).catch(() => {});
+            Promise.resolve(window.refreshSimpleProfilePanel(nextUserData)).catch(onRefreshFailure('프로필 패널'));
         }
     } catch (error) {
         console.warn('식단 방법 저장 후 UI 동기화 실패:', error?.message || error);
@@ -6293,8 +6293,8 @@ function refreshFriendshipUiAfterRetry(user) {
     }
     if (getVisibleTabName() === 'dashboard') {
         const { todayStr } = getDatesInfo();
-        renderFriendActivityCard(user, todayStr).catch(() => {});
-        renderSocialChallenges(user).catch(() => {});
+        renderFriendActivityCard(user, todayStr).catch(onRefreshFailure('친구 활동 카드'));
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     }
 }
 
@@ -6501,8 +6501,8 @@ async function refreshFriendshipDependentUi(reloadGallery = false) {
         renderDashboard();
     } else {
         const { todayStr } = getDatesInfo();
-        renderFriendActivityCard(user, todayStr).catch(() => {});
-        renderSocialChallenges(user).catch(() => {});
+        renderFriendActivityCard(user, todayStr).catch(onRefreshFailure('친구 활동 카드'));
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     }
 
     if (reloadGallery || getVisibleTabName() === 'gallery') {
@@ -6775,7 +6775,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=413';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=414';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -6934,7 +6934,7 @@ window.claimMilestoneBonus = async function (milestoneId) {
         const currentPts = parseInt(pointEl?.textContent) || 0;
         const nextBalance = authoritativeBalance ?? (currentPts + reward);
         if (pointEl) pointEl.textContent = nextBalance;
-        renderSimpleProfilePanel({ coins: nextBalance }).catch(() => {});
+        renderSimpleProfilePanel({ coins: nextBalance }).catch(onRefreshFailure('프로필 패널'));
 
         await renderMilestones(currentUser.uid, {
             milestones: result.data?.milestones || {},
@@ -9370,7 +9370,7 @@ function scheduleDailyLogRetry(uid, selectedDateStr, reason = 'unknown') {
     _dailyLogRetryTimer = setTimeout(() => {
         if (auth.currentUser?.uid !== uid) return;
         if (getSelectedRecordDateStr() !== selectedDateStr) return;
-        loadDataForSelectedDate(selectedDateStr).catch(() => {});
+        loadDataForSelectedDate(selectedDateStr).catch(onRefreshFailure('선택한 날짜 기록'));
     }, delay);
 }
 
@@ -9624,7 +9624,7 @@ async function reconcileSettlementAfterSave(uid, docId, dateStr) {
                 if (Number.isFinite(coins)) {
                     const el = document.getElementById('point-balance');
                     if (el) el.innerText = coins;
-                    renderSimpleProfilePanel({ coins }).catch(() => {});
+                    renderSimpleProfilePanel({ coins }).catch(onRefreshFailure('프로필 패널'));
                 }
             } catch (_) {}
 
@@ -9633,7 +9633,7 @@ async function reconcileSettlementAfterSave(uid, docId, dateStr) {
             // (예전엔 없는 변수를 참조해 ReferenceError로 보정이 통째로 중단됐다).
             const visibleDateStr = String(document.getElementById('selected-date')?.value || '').trim();
             if (visibleDateStr === String(dateStr) && typeof loadDataForSelectedDate === 'function') {
-                loadDataForSelectedDate(dateStr).catch(() => {});
+                loadDataForSelectedDate(dateStr).catch(onRefreshFailure('선택한 날짜 기록'));
             }
             return;
         }
@@ -11385,7 +11385,7 @@ function scheduleAssetRetry(uid, reason = 'unknown') {
         _assetRetryCounts.set(uid, nextCount);
         _assetRetryTimer = null;
         if (auth.currentUser?.uid !== uid) return;
-        window.updateAssetDisplay(true).catch(() => { });
+        window.updateAssetDisplay(true).catch(onRefreshFailure('자산 화면'));
     }, ASSET_RETRY_DELAY_MS);
     return true;
 }
@@ -12025,8 +12025,8 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         window.hideWalletSkeleton();
     }
     const hadCachedMiniChart = applyCachedAssetMiniChart(user.uid);
-    refreshAssetOnchainBalance(user.uid).catch(() => {});
-    refreshAssetTokenStats(user.uid).catch(() => {});
+    refreshAssetOnchainBalance(user.uid).catch(onRefreshFailure('온체인 잔액'));
+    refreshAssetTokenStats(user.uid).catch(onRefreshFailure('토큰 통계'));
     const hadCachedHistory = applyCachedAssetHistory(user.uid);
     if (hadCachedHistory) {
         _assetHistoryState.isLoading = false;
@@ -12474,7 +12474,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
             if (pointBadge) {
                 pointBadge.textContent = String(coinsValue);
             }
-            renderSimpleProfilePanel(userDisplayData).catch(() => {});
+            renderSimpleProfilePanel(userDisplayData).catch(onRefreshFailure('프로필 패널'));
 
             if (false) {
             // ========== 활성 챌린지 UI (통합 전용, 미니→위클리→마스터 순) ==========
@@ -12534,7 +12534,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     if (!lateProjection.changed) return;
                     requestAssetChallengeProgressSync(user.uid, _todayStr, 'challenge-range-late-projection');
                     if (getVisibleTabName() === 'assets' && auth.currentUser?.uid === user.uid) {
-                        window.updateAssetDisplay(true).catch(() => {});
+                        window.updateAssetDisplay(true).catch(onRefreshFailure('자산 화면'));
                     }
                 }).catch(() => {});
             }
@@ -12979,7 +12979,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
                     if (!lateSnap?.exists?.()) return;
                     if (auth.currentUser?.uid !== user.uid) return;
                     if (getVisibleTabName() === 'assets') {
-                        window.updateAssetDisplay(true).catch(() => {});
+                        window.updateAssetDisplay(true).catch(onRefreshFailure('자산 화면'));
                         return;
                     }
                     // 다른 탭(보상 마켓 등)에 있어도 잔액만은 반영한다. 예전엔 통째로
@@ -12998,7 +12998,7 @@ window.updateAssetDisplay = async function (forceRefresh = false) {
         if (window.hideWalletSkeleton) window.hideWalletSkeleton();
         markAssetHbtBalanceDelayed({ defer: true });
         // 자산 조회가 통째로 실패해도 마켓·쿠폰은 별개로 뜰 수 있어야 한다.
-        loadRewardMarketSnapshot(false).catch(() => {});
+        loadRewardMarketSnapshot(false).catch(onRefreshFailure('보상 마켓'));
         scheduleAssetRetry(user.uid, 'asset-display-error');
     } finally {
         if (_assetRetrySignalSequence === retrySignalAtStart) {
@@ -16165,7 +16165,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         recordNativeAppOpen(user, ud.settings).catch(() => {});
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
-        renderSimpleProfilePanel(ud).catch(() => {});
+        renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));
         renderMilestones(user.uid, ud);
 
         let level = typeof ud.missionLevel === 'number' ? ud.missionLevel : 1;
@@ -16475,10 +16475,10 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         if (data.communityStats) {
             renderGroupChallengeFromData(data.communityStats);
         } else {
-            setTimeout(() => renderGroupChallenge().catch(() => {}), 1000);
+            setTimeout(() => renderGroupChallenge().catch(onRefreshFailure('그룹 챌린지')), 1000);
         }
 
-        if (lifecycle === 'established') renderSocialChallenges(user).catch(() => {});
+        if (lifecycle === 'established') renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
 
         _communityFocusState.friendCount = 0;
         _communityFocusState.activeFriends = 0;
@@ -17115,7 +17115,7 @@ async function saveWeeklyMissions() {
         _customMissionComposerOpen = false;
         showToast("🎯 이번 주 미션이 시작되었습니다! 화이팅!");
         if (window._invalidateDashboardCache) window._invalidateDashboardCache();
-        renderDashboard().catch(() => {});
+        renderDashboard().catch(onRefreshFailure('대시보드'));
         const firstMissionTab = missionTypeToRecordTab(missions[0]?.type);
         if (firstMissionTab) openWeeklyMissionRecord(firstMissionTab, { trackStart: true });
     } catch (error) {
@@ -21343,7 +21343,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
             const nextDisplayed = currentDisplayed + Math.max(0, pointsToGive);
             if (pointsToGive > 0) {
                 document.getElementById('point-balance').innerText = nextDisplayed;
-                renderSimpleProfilePanel({ coins: nextDisplayed }).catch(() => {});
+                renderSimpleProfilePanel({ coins: nextDisplayed }).catch(onRefreshFailure('프로필 패널'));
             }
             // 서버 정산(awardPoints 트리거)은 비동기이고 증거 검증 결과가 낙관적 예상값과
             // 다를 수 있다. 잠시 후 서버 확정값을 다시 읽어 잔액·대시보드를 보정한다(fail-open).
@@ -21420,7 +21420,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                         console.warn('업로드 완료 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
                     });
                 } else {
-                    loadGalleryData().catch(() => {});
+                    loadGalleryData().catch(onRefreshFailure('갤러리'));
                     setTimeout(() => {
                         loadGalleryData(true).catch((refreshError) => {
                             console.warn('저장 후 갤러리 새로고침 실패:', refreshError?.message || refreshError);
@@ -21440,7 +21440,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 //
                 // 마일스톤이 실패해도 챌린지 정산은 따로 간다. 그리고 삼키지 않는다.
                 try {
-                    renderSocialChallenges(user).catch(() => {});
+                    renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
                     await checkMilestones(user.uid);
                     await renderMilestones(user.uid);
                 } catch (error) {
@@ -21520,7 +21520,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 upsertGalleryCacheItem(docId, committedData);
                 refreshGalleryFromCacheIfVisible();
                 showToast('\u2705 \uae30\ub85d\uc740 \uc800\uc7a5\ub410\uc5b4\uc694. \uac24\ub7ec\ub9ac \ubc18\uc601\uc740 \ub2e4\uc2dc \ud655\uc778\ud560\uac8c\uc694.');
-                loadGalleryData(true).catch(() => {});
+                loadGalleryData(true).catch(onRefreshFailure('갤러리'));
                 return;
             }
             if (latestSaveData && docId && isOfflineSaveCandidateError(e)) {
@@ -22787,7 +22787,7 @@ function upsertGalleryCacheItem(docId, data) {
     if (_galleryProjectionRefreshTimer) clearTimeout(_galleryProjectionRefreshTimer);
     _galleryProjectionRefreshTimer = setTimeout(() => {
         _galleryProjectionRefreshTimer = null;
-        loadGalleryData(true).catch(() => {});
+        loadGalleryData(true).catch(onRefreshFailure('갤러리'));
     }, 900);
 }
 
@@ -23461,7 +23461,7 @@ function scheduleGalleryRetry(uid = auth.currentUser?.uid || 'guest', reason = '
         _galleryRetryCounts.set(retryKey, nextCount);
         _galleryRetryTimer = null;
         if (retryKey !== 'guest' && auth.currentUser?.uid !== retryKey) return;
-        loadGalleryData(true).catch(() => {});
+        loadGalleryData(true).catch(onRefreshFailure('갤러리'));
     }, GALLERY_RETRY_DELAY_MS);
     return true;
 }
@@ -27453,8 +27453,8 @@ window.joinHabitGroup = async function(groupId) {
             ? ` · ${EXERCISE_GROUP_ENTRY_FEE_POINTS.toLocaleString('ko-KR')}P 사용`
             : '';
         showToast(`${group.title}에 참여했어요${feeText}.`);
-        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(() => {});
-        renderSocialChallenges(user).catch(() => {});
+        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[joinHabitGroup]', error);
         showToast(error?.message || '소모임 참여에 실패했어요. 잠시 후 다시 시도해 주세요.');
@@ -27470,8 +27470,8 @@ window.leaveHabitGroup = async function(groupId) {
         await fn({ groupId: group.id });
         invalidateHabitGroupCaches();
         showToast(`${group.title}에서 나왔어요.`);
-        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(() => {});
-        renderSocialChallenges(user).catch(() => {});
+        await renderHabitGroupDirectoryList(user, { forceReload: true }).catch(onRefreshFailure('소모임 목록'));
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (error) {
         console.error('[leaveHabitGroup]', error);
         showToast(error?.message || '소모임 나가기에 실패했어요. 잠시 후 다시 시도해 주세요.');
@@ -27577,7 +27577,7 @@ function scheduleSocialRetry(uid, reason = 'unknown') {
         // 캐시가 비어 있어서 실패한 것이므로 캐시를 무시하고 다시 읽는다.
         _habitGroupMembershipLoadFailed = false;
         _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
-        renderSocialChallenges(auth.currentUser).catch(() => {});
+        renderSocialChallenges(auth.currentUser).catch(onRefreshFailure('소셜 챌린지'));
     }, SOCIAL_RETRY_DELAY_MS);
 
     logOptionalDataTimeout(`social_retry_scheduled:${reason}`);
@@ -27589,7 +27589,7 @@ window.retrySocialChallengesCard = function() {
     if (!user) return;
     // 손으로 누른 재시도는 카운터를 되돌린다. 자동 재시도가 다시 붙을 수 있어야 한다.
     clearSocialRetry(user.uid);
-    renderSocialChallenges(user).catch(() => {});
+    renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
 };
 
 // 소모임 로드 실패 후 사용자가 누르는 재시도. 캐시를 무시하고 다시 읽는다.
@@ -27599,7 +27599,7 @@ window.refreshHabitGroupsAfterLoadFailure = function () {
     clearSocialRetry(user.uid);
     _habitGroupMembershipLoadFailed = false;
     _habitGroupMembershipCache = { uid: '', loadedAt: 0, memberships: [] };
-    renderSocialChallenges(user).catch(() => {});
+    renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
 };
 
 async function renderSocialChallenges(user) {
@@ -27844,13 +27844,13 @@ window.openCreateChallengeModal = async function(options = {}) {
 
         if (availableTypes.length === 0) {
             showToast('이미 진행 중인 1:1 경쟁과 단체 목표가 있어 새 챌린지를 더 만들 수 없어요.');
-            renderSocialChallenges(user).catch(() => {});
+            renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
             return;
         }
 
         if (selectableFriends.length === 0) {
             showToast('이미 진행 중인 챌린지를 제외하면 지금 바로 초대할 수 있는 친구가 없어요.');
-            renderSocialChallenges(user).catch(() => {});
+            renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
             return;
         }
 
@@ -27889,7 +27889,7 @@ window.openCreateChallengeModal = async function(options = {}) {
     } catch (e) {
         console.error('[openCreateChallengeModal]', e);
         showToast('친구 상태를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
-        renderSocialChallenges(user).catch(() => {});
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     }
 };
 
@@ -28089,7 +28089,7 @@ window.submitCreateChallenge = async function() {
 
         closeCreateChallengeModal();
         showToast('🎉 챌린지 초대를 보냈어요!');
-        renderSocialChallenges(user).catch(() => {});
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (e) {
         console.error('[createChallenge]', e);
         showToast(`⚠️ ${e.message || '챌린지 생성에 실패했어요'}`);
@@ -28107,7 +28107,7 @@ window.cancelPendingSocialChallenge = async function(challengeId) {
         const fn = httpsCallable(functions, 'cancelSocialChallenge');
         await fn({ challengeId });
         showToast('보낸 챌린지 초대를 취소했어요.');
-        renderSocialChallenges(user).catch(() => {});
+        renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (e) {
         console.error('[cancelPendingSocialChallenge]', e);
         showToast(`⚠️ ${e.message || '챌린지 취소에 실패했어요.'}`);
@@ -28166,7 +28166,7 @@ window.respondChallenge = async function(accept) {
             showToast('챌린지 초대를 거절했어요');
         }
         const user = auth.currentUser;
-        if (user) renderSocialChallenges(user).catch(() => {});
+        if (user) renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
     } catch (e) {
         console.error('[respondChallenge]', e);
         showToast(`⚠️ ${e.message || '처리에 실패했어요'}`);

@@ -56,7 +56,8 @@ describe('progressive loading isolation', () => {
         expect(appSource).toContain('if (_assetRetrySignalSequence === retrySignalAtStart) {');
         expect(appSource).toContain("loadRewardMarketSnapshot(false).catch((error) => {");
         expect(appSource).toContain('function refreshAssetTokenStats(uid = \'\')');
-        expect(appSource).toContain('refreshAssetTokenStats(user.uid).catch(() => {});');
+        // 2026-09-17: 갱신 실패를 삼키지 않는다. 여기서 보는 것은 '기다리지 않고 부른다' 이다.
+        expect(appSource).toContain("refreshAssetTokenStats(user.uid).catch(onRefreshFailure('토큰 통계'));");
         expect(appSource).toContain('let fetchHbtTransferHistory = async () => [];');
         expect(appSource).toContain('fetchHbtTransferHistory = typeof mod.fetchHbtTransferHistory === \'function\'');
         expect(appSource).toContain('function normalizeAssetTransactionChainKey');
@@ -89,7 +90,7 @@ describe('progressive loading isolation', () => {
         expect(appSource).not.toContain("console.time('⏱️ 대시보드 데이터 로드');");
         expect(appSource).not.toContain("console.timeEnd('⏱️ 대시보드 데이터 로드');");
         expect(appSource).toContain('function refreshAssetOnchainBalance(uid)');
-        expect(appSource).toContain('refreshAssetOnchainBalance(user.uid).catch(() => {});');
+        expect(appSource).toContain("refreshAssetOnchainBalance(user.uid).catch(onRefreshFailure('온체인 잔액'));");
         expect(appSource).not.toContain('clearAssetRetry(uid);\r\n        return stats;');
         expect(appSource).not.toContain('clearAssetRetry(uid);\n        return stats;');
         expect(appSource).not.toContain('clearAssetRetry(uid);\r\n        writeAssetDisplayCache(uid, {');

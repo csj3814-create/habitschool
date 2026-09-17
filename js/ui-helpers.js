@@ -1,6 +1,6 @@
 // UI 헬퍼 함수들
-import { MISSIONS, getWeekId } from './firebase-config.js?v=413';
-import { translateText } from './i18n.js?v=413';
+import { MISSIONS, getWeekId } from './firebase-config.js?v=414';
+import { translateText } from './i18n.js?v=414';
 
 // 한국 표준시(KST) 날짜 및 정보 관련 헬퍼
 export function getKstDateString() {
@@ -47,6 +47,26 @@ export function showToast(message, { durationMs = 3500 } = {}) {
             _toastDismissTimer = null;
         }, durationMs);
     }
+}
+
+/**
+ * 화면 갱신이 실패했을 때 쓰는 catch 핸들러.
+ *
+ * 2026-09-16 제보 "챌린지 완료 직후에는 정산 확인중 뜨고 앱을 나갔다 들어와야
+ * 정산 가능하게 바뀌네" 의 원인이 이 자리였다. 서버 쓰기는 성공했는데 뒤이은
+ * 화면 갱신이 조용히 실패해, 회원에게는 "안 된 것" 으로 보였다.
+ *
+ * 갱신 실패로 흐름을 멈출 이유는 없다 — 다음에 다시 그리면 된다. 다만 **조용히
+ * 넘기면 안 된다.** 버그 제보에 콘솔이 함께 실려 오는데(js/bug-report.js 가
+ * warn·error 를 수집한다), 아무것도 없으면 "서버는 됐는데 화면이 안 바뀐다" 는
+ * 제보를 열어도 볼 것이 없다.
+ *
+ *     renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
+ */
+export function onRefreshFailure(what = '화면') {
+    return (error) => {
+        console.warn(`[화면 갱신] ${what} 실패:`, error?.message || error);
+    };
 }
 
 export function hideToast() {

@@ -44,6 +44,8 @@ describe('panels recover on their own instead of waiting for the user', () => {
         // 캐시 히트 / 정상 / 지연 / 예외 — 네 갈래 모두에서 불러야 한다.
         expect(calls).toBeGreaterThanOrEqual(4);
         expect(appSource).toContain("console.warn('reward market deferred-branch load skipped:'");
-        expect(appSource).toContain('loadRewardMarketSnapshot(false).catch(() => {});');
+        // 2026-09-17: 화면 갱신 실패를 더 이상 삼키지 않는다(ui-helpers onRefreshFailure).
+        // 여기서 보는 것은 '사용자 문서를 기다리지 않고 부른다' 이므로 호출만 확인한다.
+        expect(appSource).toContain("loadRewardMarketSnapshot(false).catch(onRefreshFailure('보상 마켓'));");
     });
 });

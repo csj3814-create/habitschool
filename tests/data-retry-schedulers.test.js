@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readAppSource, readRepoFile } from './source-helpers.js';
 
+// 떼어 온 코드가 이제 onRefreshFailure 를 쓴다(ui-helpers). 하니스가 auth·window
+// 를 넣어 주듯 이것도 넣어 준다. 이 시험이 보는 것은 재시도 횟수이지 로그가
+// 아니므로, 같은 모양의 빈 핸들러면 충분하다.
+const onRefreshFailure = () => () => {};
+
 function sliceSource(source, startMarker, endMarker) {
     const start = source.indexOf(startMarker);
     const end = source.indexOf(endMarker, start);
@@ -19,7 +24,7 @@ function createAssetRetryHarness() {
     const auth = { currentUser: { uid: 'user-1' } };
     const updateAssetDisplay = vi.fn(() => Promise.resolve());
     const window = { updateAssetDisplay };
-    const harness = Function('auth', 'window', `
+    const harness = Function('auth', 'window', 'onRefreshFailure', `
         const ASSET_RETRY_DELAY_MS = 2000;
         const ASSET_MAX_RETRY_ATTEMPTS = 3;
         let _assetRetryTimer = null;
@@ -34,7 +39,7 @@ function createAssetRetryHarness() {
             count: () => _assetRetryCounts.get('user-1') || 0,
             hasTimer: () => Boolean(_assetRetryTimer)
         };
-    `)(auth, window);
+    `)(auth, window, onRefreshFailure);
     return { harness, executeSpy: updateAssetDisplay };
 }
 
@@ -47,7 +52,7 @@ function createGalleryRetryHarness() {
     );
     const auth = { currentUser: { uid: 'user-1' } };
     const loadGalleryData = vi.fn(() => Promise.resolve());
-    const harness = Function('auth', 'loadGalleryData', `
+    const harness = Function('auth', 'loadGalleryData', 'onRefreshFailure', `
         const GALLERY_RETRY_DELAY_MS = 2000;
         const GALLERY_MAX_RETRY_ATTEMPTS = 3;
         let _galleryRetryTimer = null;
@@ -58,7 +63,7 @@ function createGalleryRetryHarness() {
             count: () => _galleryRetryCounts.get('user-1') || 0,
             hasTimer: () => Boolean(_galleryRetryTimer)
         };
-    `)(auth, loadGalleryData);
+    `)(auth, loadGalleryData, onRefreshFailure);
     return { harness, executeSpy: loadGalleryData };
 }
 
@@ -71,7 +76,7 @@ function createRewardMarketRetryHarness() {
     );
     const auth = { currentUser: { uid: 'user-1' } };
     const loadRewardMarketSnapshot = vi.fn(() => Promise.resolve());
-    const harness = Function('auth', 'loadRewardMarketSnapshot', `
+    const harness = Function('auth', 'loadRewardMarketSnapshot', 'onRefreshFailure', `
         const REWARD_MARKET_RETRY_DELAY_MS = 2000;
         const REWARD_MARKET_MAX_RETRY_ATTEMPTS = 3;
         let rewardMarketRetryTimer = null;
@@ -83,7 +88,7 @@ function createRewardMarketRetryHarness() {
             count: () => rewardMarketRetryAttempts,
             hasTimer: () => Boolean(rewardMarketRetryTimer)
         };
-    `)(auth, loadRewardMarketSnapshot);
+    `)(auth, loadRewardMarketSnapshot, onRefreshFailure);
     return { harness, executeSpy: loadRewardMarketSnapshot };
 }
 
