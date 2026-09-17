@@ -12,7 +12,9 @@ describe('gallery loading hardening', () => {
         expect(appSource).toContain('let _galleryLoadingStartedAt = 0;');
         expect(appSource).toContain('let _galleryLoadGeneration = 0;');
         expect(appSource).toContain('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
-        expect(appSource).toContain('const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 2;');
+        // 게시물 모양이 바뀌면 이 번호가 오른다(2026-09-17 수면 분석 추가로 3).
+        // 값을 못 박으면 올릴 때마다 여기가 깨지므로 선언만 확인한다.
+        expect(appSource).toMatch(/const GALLERY_PERSISTED_POST_SCHEMA_VERSION = \d+;/);
         expect(appSource).toContain("const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v2';");
         expect(appSource).toContain("const LEGACY_AUTH_GALLERY_CACHE_PREFIXES = Object.freeze(['habitschool_gallery_cache_v1']);");
         expect(appSource).toContain('removeLegacyGalleryPersistentCaches(uid);');
@@ -35,7 +37,7 @@ describe('gallery loading hardening', () => {
         expect(appSource).not.toContain('await friendsPromise;');
     });
 
-    it('rejects a mixed v1/v2 persistent feed instead of caching a partial gallery', () => {
+    it('rejects a feed that mixes post schema versions instead of caching a partial gallery', () => {
         const appSource = readAppSource();
         const start = appSource.indexOf('const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;');
         const end = appSource.indexOf('function readPersistentGalleryCache(', start);
@@ -46,12 +48,17 @@ describe('gallery loading hardening', () => {
             ${appSource.slice(start, end)}
             return normalizePersistedGalleryLogs;
         `)((value) => JSON.parse(JSON.stringify(value)));
-        const v2Post = { id: 'v2', data: { schemaVersion: 2, dietAnalysis: { breakfast: { grade: 'A' } } } };
-        const v1Post = { id: 'v1', data: { schemaVersion: 1 } };
+        // 번호를 소스에서 읽는다. 여기에 숫자를 적으면 모양이 바뀔 때마다 두 곳을
+        // 고쳐야 하고, 한쪽을 잊으면 시험이 거짓으로 통과한다.
+        const current = Number(
+            appSource.match(/const GALLERY_PERSISTED_POST_SCHEMA_VERSION = (\d+);/)[1]
+        );
+        const currentPost = { id: 'cur', data: { schemaVersion: current, dietAnalysis: { breakfast: { grade: 'A' } } } };
+        const oldPost = { id: 'old', data: { schemaVersion: current - 1 } };
 
-        expect(normalizePersistedGalleryLogs([v2Post])).toHaveLength(1);
-        expect(normalizePersistedGalleryLogs([v2Post, v1Post])).toEqual([]);
-        expect(normalizePersistedGalleryLogs([v2Post, { id: '', data: { schemaVersion: 2 } }])).toEqual([]);
+        expect(normalizePersistedGalleryLogs([currentPost])).toHaveLength(1);
+        expect(normalizePersistedGalleryLogs([currentPost, oldPost])).toEqual([]);
+        expect(normalizePersistedGalleryLogs([currentPost, { id: '', data: { schemaVersion: current } }])).toEqual([]);
     });
 
     it('loads the authenticated gallery_posts feed through timeout-bounded SDK and REST paths', () => {
