@@ -429,7 +429,11 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
     const needsServerRefresh = !initialSnap.exists()
         || resolvedData.coins == null
         || (initialSnap.metadata?.fromCache && Number(resolvedData.coins || 0) === 0 && cachedPoints != null && cachedPoints > 0)
-        || !normalizeInviteRefCode(resolvedData.referralCode);
+        || !normalizeInviteRefCode(resolvedData.referralCode)
+        // 동의 기록이 없어 보이면 그것만으로 서버에 한 번 더 묻는다. 이 답에
+        // 따라 "처음 오셨군요, 동의해 주세요" 를 띄울지가 갈린다 — 이미 동의한
+        // 사람에게 그 창을 다시 내미는 것은 가장 하기 싫은 실수다.
+        || hasNoConsentRecord(resolvedData);
 
     if (needsServerRefresh) {
         try {
@@ -448,7 +452,9 @@ async function resolveLatestUserDocData(userRef, initialSnap) {
         }
     }
 
-    return { snap: resolvedSnap, data: resolvedData };
+    // 이 답을 서버에서 들었는가. 캐시로만 답한 조회에 대고 "동의한 적 없는
+    // 사람" 이라고 단정하지 않기 위해 함께 보낸다.
+    return { snap: resolvedSnap, data: resolvedData, fromCache: resolvedSnap.metadata?.fromCache !== false };
 }
 
 async function ensureSignedInUserReferralCode(userData = {}) {
@@ -1329,7 +1335,7 @@ export function setupAuthListener(callbacks) {
             // 백그라운드 사용자 문서 로드(닉네임, 코인, 프로필 업데이트)
             const userRef = doc(db, "users", user.uid);
             getDoc(userRef).then(async userDoc => {
-                const { snap: resolvedUserDoc, data: resolvedUserData } = await resolveLatestUserDocData(userRef, userDoc);
+                const { snap: resolvedUserDoc, data: resolvedUserData, fromCache: userDocFromCache } = await resolveLatestUserDocData(userRef, userDoc);
                 const isNewUser = !resolvedUserDoc.exists();
                 const updateData = {
                     email: user.email || '',
@@ -1368,7 +1374,19 @@ export function setupAuthListener(callbacks) {
                     setTimeout(() => {
                         if (auth.currentUser?.uid !== user.uid) return;
                         const consentData = { ...resolvedUserData, ...updateData };
-                        openReconsentModal(user, consentData, { firstTime: hasNoConsentRecord(consentData) });
+                        const firstTime = hasNoConsentRecord(consentData);
+                        // 2026-09-18 제보: "동의 화면이 왜 계속 뜨지? 업데이트마다
+                        // 다시 받나?" 서버에서 확인한 결과 그 계정은 기록이 정말
+                        // 없었고 저장도 잘 됐지만, 확인하다 보니 이 자리가 눈에
+                        // 걸렸다. 연결이 끊긴 채 캐시로만 답한 조회에 대고
+                        // "동의한 적 없는 분" 이라고 단정하면, 이미 동의한 사람이
+                        // 가입 창을 다시 보게 된다. 모를 때는 묻지 않는다 —
+                        // 다음 로그인에 서버가 답하면 그때 판단한다.
+                        if (firstTime && userDocFromCache) {
+                            console.warn('[consent] 서버 응답이 아니어서 첫 동의 확인을 미룬다');
+                            return;
+                        }
+                        openReconsentModal(user, consentData, { firstTime });
                     }, 900);
                 }
                 const ud = {

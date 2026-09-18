@@ -165,8 +165,12 @@ describe('finishing onboarding does not hang on the network', () => {
     it('shows the first-time copy to anyone with no consent record, not just brand-new docs', () => {
         // 첫 동의 창에서 '그만두기' 를 누르면 회원 문서는 이미 있다. 그다음 로그인에
         // isNewUser 로 가르면 아무것도 동의한 적 없는 사람이 "약관이 바뀌었어요" 를 본다.
+        // 2026-09-18: 캐시로만 답한 조회로는 이 창을 띄우지 않게 되면서
+        // (tests/consent-gate-offline.test.js) 판단이 변수 하나로 떨어져 나왔다.
+        // 보는 것은 그대로다 — isNewUser 가 아니라 기록 유무로 가르는가.
         expect(AUTH).toContain('function hasNoConsentRecord(userData = {})');
-        expect(AUTH).toContain('firstTime: hasNoConsentRecord(consentData)');
+        expect(AUTH).toContain('const firstTime = hasNoConsentRecord(consentData)');
+        expect(AUTH).toContain('openReconsentModal(user, consentData, { firstTime })');
         expect(AUTH).not.toContain('firstTime: isNewUser');
     });
 });
