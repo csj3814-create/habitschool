@@ -6,6 +6,16 @@ import { fileURLToPath } from 'node:url';
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const APP = readFileSync(resolve(ROOT_DIR, 'js/app-core.js'), 'utf8');
 const INDEX = readFileSync(resolve(ROOT_DIR, 'index.html'), 'utf8');
+const HELPERS = readFileSync(resolve(ROOT_DIR, 'js/ui-helpers.js'), 'utf8');
+
+// ui-helpers 는 파이어베이스 CDN 을 import 하므로 직접 들여올 수 없다. 실제
+// 구현을 소스에서 떼어 그대로 돌린다.
+const TIMEOUT_BODY = HELPERS
+    .split('export async function withAsyncTimeout')[1]
+    .split('\n}')[0];
+const withAsyncTimeout = Function(
+    `async function withAsyncTimeout${TIMEOUT_BODY}\n}\nreturn withAsyncTimeout;`
+)();
 
 // 2026-09-19: 92명에게 메일을 보내고 단톡방에도 올렸는데 하루가 지나도 앱을 여는
 // 사람이 8명 그대로였다. 메일은 한 번 읽히고 끝이다. 정작 부탁할 사람은 지금
@@ -23,16 +33,18 @@ function sliceFn(name, endMarker) {
     return APP.slice(start, end);
 }
 
-function createHarness({ ua, nativeSource = '', snoozedAt = null }) {
+function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour = async () => {} }) {
     const body = sliceFn('function detectWebPlatform()', 'async function recordNativeAppOpen(');
     const box = { hidden: true, innerHTML: '' };
     const store = new Map();
     if (snoozedAt != null) store.set('habitschool_android_invite_snoozed_at', String(snoozedAt));
 
     const win = { location: { href: '' } };
+    const setDoc = vi.fn(() => writeBehaviour());
     const api = Function(
         'navigator', 'document', 'localStorage', 'window', 'getRememberedNativeAppSource',
         'setDoc', 'doc', 'db', 'console', 'isEnglishLocale', 'escapeHtml',
+        'withAsyncTimeout', 'increment',
         `${body}
         return { renderAndroidAppInvite, detectWebPlatform, recordWebPlatform,
                  dismiss: window.dismissAndroidAppInvite, open: window.openAndroidApp };`
@@ -45,14 +57,16 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null }) {
         },
         win,
         () => nativeSource,
-        vi.fn(async () => {}),
+        setDoc,
         () => ({}),
         {},
         { warn: () => {} },
         () => false,
-        (v) => String(v)
+        (v) => String(v),
+        withAsyncTimeout,
+        () => 'INC'
     );
-    return { api, box, store, win };
+    return { api, box, store, win, setDoc };
 }
 
 const ANDROID = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/152 Mobile Safari/537.36';
@@ -176,5 +190,36 @@ describe('the banner has a place to render', () => {
     it('is drawn from the same place that reads the user document', () => {
         expect(APP).toContain('renderAndroidAppInvite(user);');
         expect(APP).toContain('recordWebPlatform(user, ud.settings)');
+    });
+});
+
+// 배너를 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때 문구가 약한
+// 것인지 설치 단계에서 막히는 것인지 알 수 없다. 둘은 할 일이 전혀 다르다.
+describe('we can tell a tap from a glance', () => {
+    it('records the tap before sending them off', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.renderAndroidAppInvite({ uid: 'u1' });
+        await h.api.open();
+        expect(h.setDoc).toHaveBeenCalledTimes(1);
+        const written = h.setDoc.mock.calls[0][1];
+        expect(written.settings.lastAppInviteTapDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(written.settings.appInviteTapCount).toBe('INC');
+        expect(h.setDoc.mock.calls[0][2]).toEqual({ merge: true });
+        expect(h.win.location.href).toContain('intent://');
+    });
+
+    it('still opens the app when the write hangs', async () => {
+        // 기록은 우리 사정이고, 사람은 앱으로 가려고 누른 것이다. 연결이 끊긴
+        // 쓰기는 끝나지 않으므로(tests/consent-save-does-not-hang) 붙잡히면 안 된다.
+        const h = createHarness({ ua: ANDROID, writeBehaviour: () => new Promise(() => {}) });
+        h.api.renderAndroidAppInvite({ uid: 'u1' });
+        await h.api.open();
+        expect(h.win.location.href).toContain('intent://');
+    });
+
+    it('opens even for someone the banner never greeted', async () => {
+        const h = createHarness({ ua: ANDROID });
+        await h.api.open();
+        expect(h.win.location.href).toContain('intent://');
     });
 });

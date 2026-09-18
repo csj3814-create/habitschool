@@ -2672,6 +2672,10 @@ async function recordWebPlatform(user, settings) {
 // 바로 그 순간에 보인다. 숫자(8명/12명)는 꺼내지 않는다 — 그건 우리 사정이고,
 // 부탁조로 말하면 광고처럼 읽혀 닫힌다. 회원에게 돌아가는 것만 말한다.
 const ANDROID_INVITE_SNOOZE_KEY = 'habitschool_android_invite_snoozed_at';
+// 누름을 남기려고 사람을 오래 붙잡아 두지는 않는다. 넘으면 그냥 보낸다.
+const ANDROID_INVITE_TAP_TIMEOUT_MS = 1200;
+// 배너를 그릴 때 잡아 둔다. 버튼은 window 함수라 user 를 못 받는다.
+let _androidInviteUid = '';
 const ANDROID_INVITE_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
 const PLAY_TESTING_URL = 'https://play.google.com/apps/testing/com.habitschool.app';
 // 깔려 있으면 앱이 열리고, 없으면 참여 페이지로 간다. 설치 여부를 알 수 없으므로
@@ -2697,7 +2701,31 @@ window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
     if (box) { box.hidden = true; box.innerHTML = ''; }
 };
 
-window.openAndroidApp = function openAndroidApp() {
+window.openAndroidApp = async function openAndroidApp() {
+    // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
+    // **문구가 약한 것인지 설치 단계에서 막히는 것인지** 알 수 없다. 둘은 할 일이
+    // 전혀 다르다.
+    //
+    // 쓰기를 기다렸다가 보낸다. 먼저 보내면 화면이 떠나면서 쓰기가 잘린다. 다만
+    // 오래 기다리지는 않는다 — 기록은 우리 사정이고, 사람은 앱으로 가려고 누른
+    // 것이다.
+    if (_androidInviteUid) {
+        const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+        try {
+            await withAsyncTimeout(
+                setDoc(doc(db, 'users', _androidInviteUid), {
+                    settings: {
+                        lastAppInviteTapDate: today,
+                        appInviteTapCount: increment(1),
+                    },
+                }, { merge: true }),
+                ANDROID_INVITE_TAP_TIMEOUT_MS,
+                'invite_tap_timeout'
+            );
+        } catch (error) {
+            console.warn('[앱 권유] 누름 기록 실패:', error?.message || error);
+        }
+    }
     window.location.href = ANDROID_APP_INTENT_URL;
 };
 
@@ -2710,6 +2738,7 @@ function renderAndroidAppInvite(user) {
     if (!user || getRememberedNativeAppSource()) return;
     if (detectWebPlatform() !== 'android') return;
     if (isAndroidAppInviteSnoozed()) return;
+    _androidInviteUid = String(user.uid || '');
 
     // 영문 앱도 같은 코드를 쓴다. 한글 줄이 영문 화면에 끼면 화면이 반쯤
     // 번역된 것처럼 보인다.
