@@ -2729,7 +2729,15 @@ window.openAndroidApp = async function openAndroidApp() {
     window.location.href = ANDROID_APP_INTENT_URL;
 };
 
-function renderAndroidAppInvite(user) {
+/**
+ * 앱을 권하는 줄. **이미 있는 배너와 겹치지 않게 한다.**
+ *
+ * js/pwa-install.js 에 #open-in-app-banner 가 이미 있다 — 앱이 깔려 있는데
+ * 브라우저로 들어온 사람에게 "설치돼 있어요, 눌러서 앱으로 열기" 를 보여 준다.
+ * 그러니 이 줄은 **아직 앱이 없는 사람** 몫이다. 둘 다 띄우면 같은 말을 두 번
+ * 하는 화면이 된다.
+ */
+async function renderAndroidAppInvite(user) {
     const box = document.getElementById('android-app-invite');
     if (!box) return;
     box.hidden = true;
@@ -2738,6 +2746,11 @@ function renderAndroidAppInvite(user) {
     if (!user || getRememberedNativeAppSource()) return;
     if (detectWebPlatform() !== 'android') return;
     if (isAndroidAppInviteSnoozed()) return;
+    // 이미 깔린 사람은 #open-in-app-banner 가 맡는다. 감지를 못 하는 브라우저는
+    // false 를 돌려주므로, 그때는 이 줄이 뜨고 버튼이 알아서 갈라 준다.
+    try {
+        if (await window.detectInstalledPlayApp?.()) return;
+    } catch (_) { }
     _androidInviteUid = String(user.uid || '');
 
     // 영문 앱도 같은 코드를 쓴다. 한글 줄이 영문 화면에 끼면 화면이 반쯤
@@ -16294,7 +16307,7 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 숫자인지 판단할 수 있다.
         recordWebPlatform(user, ud.settings)
             .catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
-        renderAndroidAppInvite(user);
+        renderAndroidAppInvite(user).catch(onRefreshFailure('앱 권유 배너'));
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));

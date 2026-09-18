@@ -33,13 +33,14 @@ function sliceFn(name, endMarker) {
     return APP.slice(start, end);
 }
 
-function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour = async () => {} }) {
+function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour = async () => {},
+                        playAppInstalled = false }) {
     const body = sliceFn('function detectWebPlatform()', 'async function recordNativeAppOpen(');
     const box = { hidden: true, innerHTML: '' };
     const store = new Map();
     if (snoozedAt != null) store.set('habitschool_android_invite_snoozed_at', String(snoozedAt));
 
-    const win = { location: { href: '' } };
+    const win = { location: { href: '' }, detectInstalledPlayApp: async () => playAppInstalled };
     const setDoc = vi.fn(() => writeBehaviour());
     const api = Function(
         'navigator', 'document', 'localStorage', 'window', 'getRememberedNativeAppSource',
@@ -74,40 +75,40 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebK
 const DESKTOP = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152 Safari/537.36';
 
 describe('the invitation reaches exactly the people who can act on it', () => {
-    it('shows on an Android phone opened through the web', () => {
+    it('shows on an Android phone opened through the web', async () => {
         const { api, box } = createHarness({ ua: ANDROID });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(false);
         expect(box.innerHTML).toContain('걸음수가 자동으로 들어옵니다');
     });
 
-    it('stays away when they are already in the app', () => {
+    it('stays away when they are already in the app', async () => {
         const { api, box } = createHarness({ ua: ANDROID, nativeSource: 'android-shell' });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(true);
         expect(box.innerHTML).toBe('');
     });
 
-    it('stays away on iPhone, which cannot join a Play test at all', () => {
+    it('stays away on iPhone, which cannot join a Play test at all', async () => {
         const { api, box } = createHarness({ ua: IPHONE });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(true);
     });
 
-    it('stays away on desktop and when signed out', () => {
+    it('stays away on desktop and when signed out', async () => {
         const desktop = createHarness({ ua: DESKTOP });
-        desktop.api.renderAndroidAppInvite({ uid: 'u1' });
+        await desktop.api.renderAndroidAppInvite({ uid: 'u1' });
         expect(desktop.box.hidden).toBe(true);
 
         const guest = createHarness({ ua: ANDROID });
-        guest.api.renderAndroidAppInvite(null);
+        await guest.api.renderAndroidAppInvite(null);
         expect(guest.box.hidden).toBe(true);
     });
 
-    it('never mentions the tester count', () => {
+    it('never mentions the tester count', async () => {
         // 2026-09-18 지시: "앱 안에서 참여자 숫자를 사용자들이 보게 할 필요는 없어."
         const { api, box } = createHarness({ ua: ANDROID });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         for (const leak of ['12명', '8명', '심사', '테스터']) {
             expect(box.innerHTML, leak).not.toContain(leak);
         }
@@ -115,29 +116,29 @@ describe('the invitation reaches exactly the people who can act on it', () => {
 });
 
 describe('a closed invitation stays closed for a few days', () => {
-    it('does not come back right after it is dismissed', () => {
+    it('does not come back right after it is dismissed', async () => {
         const { api, box, store } = createHarness({ ua: ANDROID });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(false);
         api.dismiss();
         expect(box.hidden).toBe(true);
         expect(store.get('habitschool_android_invite_snoozed_at')).toBeTruthy();
 
         const again = createHarness({ ua: ANDROID, snoozedAt: Date.now() });
-        again.api.renderAndroidAppInvite({ uid: 'u1' });
+        await again.api.renderAndroidAppInvite({ uid: 'u1' });
         expect(again.box.hidden).toBe(true);
     });
 
-    it('comes back after the snooze runs out', () => {
+    it('comes back after the snooze runs out', async () => {
         const fourDaysAgo = Date.now() - 4 * 24 * 60 * 60 * 1000;
         const { api, box } = createHarness({ ua: ANDROID, snoozedAt: fourDaysAgo });
-        api.renderAndroidAppInvite({ uid: 'u1' });
+        await api.renderAndroidAppInvite({ uid: 'u1' });
         expect(box.hidden).toBe(false);
     });
 });
 
 describe('one button covers both installed and not installed', () => {
-    it('hands Android an intent with a store fallback', () => {
+    it('hands Android an intent with a store fallback', async () => {
         const { api, win } = createHarness({ ua: ANDROID });
         api.open();
         expect(win.location.href).toContain('intent://');
@@ -149,18 +150,18 @@ describe('one button covers both installed and not installed', () => {
 });
 
 describe('we record which device the web visitor is on', () => {
-    it('tells the three apart', () => {
+    it('tells the three apart', async () => {
         expect(createHarness({ ua: ANDROID }).api.detectWebPlatform()).toBe('android');
         expect(createHarness({ ua: IPHONE }).api.detectWebPlatform()).toBe('ios');
         expect(createHarness({ ua: DESKTOP }).api.detectWebPlatform()).toBe('desktop');
     });
 
-    it('counts an iPad that pretends to be a Mac as ios', () => {
+    it('counts an iPad that pretends to be a Mac as ios', async () => {
         const ipad = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15';
         expect(createHarness({ ua: ipad }).api.detectWebPlatform()).toBe('ios');
     });
 
-    it('writes inside settings, which the rules already allow', () => {
+    it('writes inside settings, which the rules already allow', async () => {
         // users/ 에는 필드 화이트리스트가 있다. 새 최상위 필드를 쓰면 규칙을 함께
         // 배포해야 하고, 빠뜨리면 쓰기가 조용히 거부된다(2026-08-15 consents).
         const fn = sliceFn('async function recordWebPlatform(', '// 안드로이드에서 웹으로 쓰는 분께만');
@@ -168,28 +169,40 @@ describe('we record which device the web visitor is on', () => {
         expect(fn).toContain('{ merge: true }');
     });
 
-    it('writes once a day, and not when they came through the app', () => {
+    it('writes once a day, and not when they came through the app', async () => {
         const fn = sliceFn('async function recordWebPlatform(', '// 안드로이드에서 웹으로 쓰는 분께만');
         expect(fn).toContain('if (!user || getRememberedNativeAppSource()) return;');
         expect(fn).toContain('settings.lastWebOpenDate === today');
     });
 
-    it('says so when the write fails', () => {
+    it('says so when the write fails', async () => {
         const fn = sliceFn('async function recordWebPlatform(', '// 안드로이드에서 웹으로 쓰는 분께만');
         expect(fn).toContain("console.warn('[웹 기기 기록] 저장 실패:'");
     });
 });
 
 describe('the banner has a place to render', () => {
-    it('sits above the dashboard, hidden until it decides to show', () => {
+    it('sits above the dashboard, hidden until it decides to show', async () => {
         expect(INDEX).toContain('<div id="android-app-invite" hidden></div>');
         expect(INDEX.indexOf('id="android-app-invite"'))
             .toBeLessThan(INDEX.indexOf('<div id="dashboard"'));
     });
 
-    it('is drawn from the same place that reads the user document', () => {
-        expect(APP).toContain('renderAndroidAppInvite(user);');
+    it('is drawn from the same place that reads the user document', async () => {
+        expect(APP).toContain('renderAndroidAppInvite(user)');
         expect(APP).toContain('recordWebPlatform(user, ud.settings)');
+    });
+
+    it('does not double up with the banner that already exists', async () => {
+        // js/pwa-install.js 의 #open-in-app-banner 가 '앱이 깔려 있어요, 눌러서
+        // 열기' 를 이미 맡는다. 이 줄은 아직 앱이 없는 사람 몫이다.
+        const installed = createHarness({ ua: ANDROID, playAppInstalled: true });
+        await installed.api.renderAndroidAppInvite({ uid: 'u1' });
+        expect(installed.box.hidden).toBe(true);
+
+        const notInstalled = createHarness({ ua: ANDROID, playAppInstalled: false });
+        await notInstalled.api.renderAndroidAppInvite({ uid: 'u1' });
+        expect(notInstalled.box.hidden).toBe(false);
     });
 });
 
@@ -198,7 +211,7 @@ describe('the banner has a place to render', () => {
 describe('we can tell a tap from a glance', () => {
     it('records the tap before sending them off', async () => {
         const h = createHarness({ ua: ANDROID });
-        h.api.renderAndroidAppInvite({ uid: 'u1' });
+        await h.api.renderAndroidAppInvite({ uid: 'u1' });
         await h.api.open();
         expect(h.setDoc).toHaveBeenCalledTimes(1);
         const written = h.setDoc.mock.calls[0][1];
@@ -212,7 +225,7 @@ describe('we can tell a tap from a glance', () => {
         // 기록은 우리 사정이고, 사람은 앱으로 가려고 누른 것이다. 연결이 끊긴
         // 쓰기는 끝나지 않으므로(tests/consent-save-does-not-hang) 붙잡히면 안 된다.
         const h = createHarness({ ua: ANDROID, writeBehaviour: () => new Promise(() => {}) });
-        h.api.renderAndroidAppInvite({ uid: 'u1' });
+        await h.api.renderAndroidAppInvite({ uid: 'u1' });
         await h.api.open();
         expect(h.win.location.href).toContain('intent://');
     });

@@ -661,6 +661,9 @@ window.addEventListener('storage', (event) => {
     notifyInstallCtaStateChanged();
 });
 
+// 앱이 깔려 있는지는 여기서만 알 수 있다. 앱 권유 배너가 같은 답을 필요로 해서
+// 내보낸다 — 같은 판정을 두 벌로 만들면 언젠가 갈라진다.
+window.detectInstalledPlayApp = detectInstalledPlayApp;
 window.dismissOpenInAppBanner = dismissOpenInAppBanner;
 window.openInInstalledApp = openInInstalledApp;
 window.handleOpenInAppBannerKeydown = handleOpenInAppBannerKeydown;
