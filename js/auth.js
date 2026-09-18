@@ -3,7 +3,7 @@ import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, no
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure } from './ui-helpers.js?v=416';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=416';
 import { getDatesInfo } from './ui-helpers.js?v=416';
 import { escapeHtml } from './security.js?v=416';
 import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=416';
@@ -1605,6 +1605,8 @@ function buildConsentRecordFromSelection(selection = {}) {
 // 넘어가면 "동의를 받았다"고 말할 근거가 그 사람들에게는 없다. 필수 항목의 동의 버전이
 // 현재 문서와 다르면 로그인 후 한 번 다시 받는다.
 const RECONSENT_REQUIRED_KEYS = ['terms', 'privacy', 'age14'];
+// 서버가 받았다는 답을 이만큼 기다린다. 넘으면 저장된 척하지 않는다.
+const CONSENT_SAVE_TIMEOUT_MS = 8000;
 const RECONSENT_ID_BY_KEY = {
     'consent-terms': 'reconsent-terms',
     'consent-privacy': 'reconsent-privacy',
@@ -1765,15 +1767,34 @@ window.submitReconsent = async function submitReconsent() {
 
     const record = buildConsentRecordFromSelection(collectReconsentSelection());
     try {
-        await setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true });
+        // 2026-09-18 제보: "동의 화면이 왜 계속 뜨지? 업데이트마다 다시 받나?"
+        //
+        // 매일 쓰는 계정인데 동의 기록이 없었다. 지우는 경로는 없었다 — 애초에
+        // 저장이 닿은 적이 없었던 것이다.
+        //
+        // Firestore 쓰기는 **서버가 받았을 때** 약속이 풀린다. 연결이 끊긴 동안에는
+        // 로컬에만 적고 약속을 붙들고 있으므로, 이 await 는 거부되지도 끝나지도
+        // 않는다. 버튼은 잠긴 채, 토스트도 없이, 창만 떠 있다. 사람은 새로고침으로
+        // 빠져나가고 기록은 남지 않는다. 다음 로그인에 같은 창이 또 뜬다.
+        //
+        // 같은 날 다른 제보(이번 주 운동 0분)가 이 기기의 연결이 실제로 끊기고
+        // 있었음을 보여 준다. 침묵을 오래 기다리지 않는다.
+        await withAsyncTimeout(
+            setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true }),
+            CONSENT_SAVE_TIMEOUT_MS,
+            'consent_save_timeout'
+        );
     } catch (error) {
         console.error('재동의 저장 실패:', error);
         // 코드를 감추면 "잠시 후 다시" 를 영원히 누르게 된다. permission-denied 는
         // 기다린다고 풀리지 않는다 — 규칙을 고쳐야 하는 상황이고, 그렇게 말해야 한다.
         const code = String(error?.code || '').replace(/^firestore\//, '');
-        showToast(code === 'permission-denied'
-            ? '⚠️ 동의를 저장할 권한이 없어요. 잠시 후에도 같으면 문의해 주세요. (permission-denied)'
-            : `⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.${code ? ` (${code})` : ''}`);
+        const timedOut = error?.message === 'consent_save_timeout';
+        showToast(timedOut
+            ? '⚠️ 연결이 불안정해 동의가 저장되지 않았어요. 잠시 후 다시 눌러 주세요.'
+            : code === 'permission-denied'
+                ? '⚠️ 동의를 저장할 권한이 없어요. 잠시 후에도 같으면 문의해 주세요. (permission-denied)'
+                : `⚠️ 동의 저장에 실패했어요. 잠시 후 다시 시도해 주세요.${code ? ` (${code})` : ''}`);
         if (submit) submit.disabled = false;
         return;
     }
@@ -1988,15 +2009,21 @@ async function writeSensitiveConsent(agreed) {
         return false;
     }
     try {
-        await setDoc(doc(db, 'users', user.uid), {
-            consents: {
-                sensitive: {
-                    agreed,
-                    at: agreed ? new Date().toISOString() : null,
-                    version: CONSENT_DOC_VERSION
+        // 선택 동의도 같은 침묵에 걸린다. 끝나지 않는 쓰기를 기다리면 토글이
+        // 눌린 채 멈춘 것처럼 보인다(tests/consent-save-does-not-hang.test.js).
+        await withAsyncTimeout(
+            setDoc(doc(db, 'users', user.uid), {
+                consents: {
+                    sensitive: {
+                        agreed,
+                        at: agreed ? new Date().toISOString() : null,
+                        version: CONSENT_DOC_VERSION
+                    }
                 }
-            }
-        }, { merge: true });
+            }, { merge: true }),
+            CONSENT_SAVE_TIMEOUT_MS,
+            'consent_save_timeout'
+        );
         window._sensitiveConsentAgreed = agreed;
         window.applySensitiveConsentGate();
         return true;

@@ -63,6 +63,27 @@ export function showToast(message, { durationMs = 3500 } = {}) {
  *
  *     renderSocialChallenges(user).catch(onRefreshFailure('소셜 챌린지'));
  */
+/**
+ * 끝나지 않는 일에 시한을 건다.
+ *
+ * Firestore 쓰기는 **서버가 받았을 때** 약속이 풀린다. 연결이 끊긴 동안에는
+ * 로컬에만 적어 두고 약속을 붙들고 있는다 — 거부가 아니라 침묵이라 catch 로는
+ * 잡히지 않는다. 그 사이 화면은 버튼을 잠근 채 기다린다.
+ */
+export async function withAsyncTimeout(task, timeoutMs, errorMessage = '작업 시간이 초과되었어요.') {
+    let timeoutId = null;
+    try {
+        return await Promise.race([
+            Promise.resolve(task),
+            new Promise((_, reject) => {
+                timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+            })
+        ]);
+    } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+}
+
 export function onRefreshFailure(what = '화면') {
     return (error) => {
         console.warn(`[화면 갱신] ${what} 실패:`, error?.message || error);

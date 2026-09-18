@@ -63,7 +63,7 @@ import {
     summarizeHabitGroups
 } from './habit-groups.js?v=416';
 import { reconcileMilestoneState } from './milestone-helpers.js?v=416';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure } from './ui-helpers.js?v=416';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=416';
 import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=416';
 import { sanitize, compressImage } from './data-manager.js?v=416';
 import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=416';
@@ -3975,19 +3975,6 @@ function buildSharePlaceholderMedia(mediaItems = [], maxCount = SHARE_MEDIA_MAX_
     });
 }
 
-async function withAsyncTimeout(task, timeoutMs, errorMessage = '작업 시간이 초과되었어요.') {
-    let timeoutId = null;
-    try {
-        return await Promise.race([
-            Promise.resolve(task),
-            new Promise((_, reject) => {
-                timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
-            })
-        ]);
-    } finally {
-        if (timeoutId) clearTimeout(timeoutId);
-    }
-}
 
 function logOptionalDataTimeout(label, error = null) {
     const shouldLog = APP_ENV !== 'prod' || globalThis.__HABITSCHOOL_DEBUG_OPTIONAL_DATA === true;

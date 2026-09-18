@@ -52,11 +52,16 @@ describe('the record it writes matches the one signup writes', () => {
 
     it('persists before it claims to have accepted anything', () => {
         const fn = AUTH.split('window.submitReconsent = async function submitReconsent() {')[1].split('\n};')[0];
-        const writeAt = fn.indexOf("await setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true });");
+        const writeAt = fn.indexOf("setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true })");
         // 저장이 끝나기 전에 창을 닫거나 고맙다고 하면, 실패한 동의를 받은 것처럼 보인다.
         const closeAt = fn.indexOf('closeReconsentModal();');
         expect(writeAt).toBeGreaterThan(-1);
         expect(closeAt).toBeGreaterThan(writeAt);
+        // 2026-09-18: 기다리되 무한정은 아니다. 연결이 끊기면 이 쓰기는 거부되지도
+        // 끝나지도 않아서, 버튼만 잠긴 채 창이 떠 있었다
+        // (tests/consent-save-does-not-hang.test.js).
+        expect(fn).toContain('await withAsyncTimeout(');
+        expect(fn).toContain("'consent_save_timeout'");
     });
 
     it('re-enables the button if the write fails, instead of stranding the member', () => {
