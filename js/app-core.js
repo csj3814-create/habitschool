@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=416';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=416';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=417';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=417';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=416';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=416';
+} from './auth-login-helpers.js?v=417';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=417';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=416';
+} from './exercise-media.js?v=417';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=416';
+} from './health-connect-utils.js?v=417';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=416';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=416';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=416';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=416';
-import { sanitize, compressImage } from './data-manager.js?v=416';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=416';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=416';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=416';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=416';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=416';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=416';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=416';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=416';
+} from './habit-groups.js?v=417';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=417';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=417';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=417';
+import { sanitize, compressImage } from './data-manager.js?v=417';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=417';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=417';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=417';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=417';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=417';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=417';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=417';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=417';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=416';
+} from './guest-demo.js?v=417';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=416';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=416';
+} from './product-events.js?v=417';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=417';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=416';
+} from './diet-program.js?v=417';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=416';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=416';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=416';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=416';
+} from './meditation-guide.js?v=417';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=417';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=417';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=417';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=416';
+} from './social-challenge-readiness.js?v=417';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=416';
+} from './monthly-mvp-reward.js?v=417';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2628,6 +2628,113 @@ function getRememberedNativeAppSource() {
  * 하루에 한 번만 쓴다. 앱을 열 때마다 쓰면 세는 데 필요하지도 않은 쓰기가
  * 사람 수 × 하루 실행 횟수만큼 생긴다.
  */
+/**
+ * 웹으로 열었을 때 어떤 기기인지 하루 한 번 남긴다.
+ *
+ * 2026-09-19: 테스터를 늘리려고 92명에게 메일을 보냈는데 하루가 지나도 앱을
+ * 여는 사람이 8명 그대로였다. 회신 하나가 이유를 알려 줬다 — "제가 아이폰이라서요".
+ * 아이폰은 Play 비공개 테스트에 참여할 자체가 없다.
+ *
+ * 그러면 "모수 33명" 이라는 말이 틀렸을 수 있다. 그중 몇이 안드로이드인지
+ * 아무도 모르기 때문이다(제보 기록으로 기기를 알 수 있는 사람은 41명 중 5명뿐).
+ * 재신청을 할지 말지가 이 숫자에 달려 있는데, 그걸 모르고 또 신청할 수는 없다.
+ *
+ * recordNativeAppOpen 과 같은 규칙을 따른다 — settings 안에, 하루 한 번.
+ */
+function detectWebPlatform() {
+    const ua = String(navigator.userAgent || '');
+    if (/android/i.test(ua)) return 'android';
+    // 아이패드는 데스크톱 UA 를 보내므로 터치 여부를 함께 본다.
+    if (/iphone|ipod|ipad/i.test(ua)) return 'ios';
+    if (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return 'ios';
+    return 'desktop';
+}
+
+async function recordWebPlatform(user, settings) {
+    // 앱으로 열었으면 recordNativeAppOpen 이 이미 남긴다.
+    if (!user || getRememberedNativeAppSource()) return;
+
+    const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+    if (settings && settings.lastWebOpenDate === today) return;
+
+    try {
+        await setDoc(doc(db, 'users', user.uid), {
+            settings: { lastWebOpenDate: today, lastWebPlatform: detectWebPlatform() },
+        }, { merge: true });
+    } catch (error) {
+        console.warn('[웹 기기 기록] 저장 실패:', error?.message || error);
+    }
+}
+
+// 안드로이드에서 웹으로 쓰는 분께만 보이는 줄.
+//
+// 메일은 한 번 읽히고 끝이지만, 이 줄은 정작 부탁할 사람이 해빛스쿨을 쓰고 있는
+// 바로 그 순간에 보인다. 숫자(8명/12명)는 꺼내지 않는다 — 그건 우리 사정이고,
+// 부탁조로 말하면 광고처럼 읽혀 닫힌다. 회원에게 돌아가는 것만 말한다.
+const ANDROID_INVITE_SNOOZE_KEY = 'habitschool_android_invite_snoozed_at';
+const ANDROID_INVITE_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+const PLAY_TESTING_URL = 'https://play.google.com/apps/testing/com.habitschool.app';
+// 깔려 있으면 앱이 열리고, 없으면 참여 페이지로 간다. 설치 여부를 알 수 없으므로
+// 이 한 버튼이 둘을 대신한다.
+const ANDROID_APP_INTENT_URL = 'intent://habitschool.web.app/#Intent;scheme=https;'
+    + 'package=com.habitschool.app;S.browser_fallback_url='
+    + encodeURIComponent(PLAY_TESTING_URL) + ';end';
+
+function isAndroidAppInviteSnoozed() {
+    try {
+        const at = Number(localStorage.getItem(ANDROID_INVITE_SNOOZE_KEY) || 0);
+        return at > 0 && (Date.now() - at) < ANDROID_INVITE_SNOOZE_MS;
+    } catch (_) {
+        return false;
+    }
+}
+
+window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
+    try {
+        localStorage.setItem(ANDROID_INVITE_SNOOZE_KEY, String(Date.now()));
+    } catch (_) { }
+    const box = document.getElementById('android-app-invite');
+    if (box) { box.hidden = true; box.innerHTML = ''; }
+};
+
+window.openAndroidApp = function openAndroidApp() {
+    window.location.href = ANDROID_APP_INTENT_URL;
+};
+
+function renderAndroidAppInvite(user) {
+    const box = document.getElementById('android-app-invite');
+    if (!box) return;
+    box.hidden = true;
+    box.innerHTML = '';
+    // 앱으로 이미 들어온 사람에게 앱을 권하지 않는다.
+    if (!user || getRememberedNativeAppSource()) return;
+    if (detectWebPlatform() !== 'android') return;
+    if (isAndroidAppInviteSnoozed()) return;
+
+    // 영문 앱도 같은 코드를 쓴다. 한글 줄이 영문 화면에 끼면 화면이 반쯤
+    // 번역된 것처럼 보인다.
+    const en = isEnglishLocale();
+    const headline = en
+        ? 'Steps sync automatically in the app'
+        : '앱으로 쓰시면 걸음수가 자동으로 들어옵니다';
+    const detail = en
+        ? 'No need to type them in yourself.'
+        : '직접 입력하지 않으셔도 돼요.';
+    const cta = en ? 'Open the app' : '앱으로 열기';
+
+    box.innerHTML = `
+        <div class="android-invite">
+            <div class="android-invite-text">
+                <strong>${escapeHtml(headline)}</strong>
+                <span>${escapeHtml(detail)}</span>
+            </div>
+            <button type="button" class="android-invite-go" onclick="openAndroidApp()">${escapeHtml(cta)}</button>
+            <button type="button" class="android-invite-close" onclick="dismissAndroidAppInvite()"
+                aria-label="${en ? 'Dismiss' : '닫기'}">✕</button>
+        </div>`;
+    box.hidden = false;
+}
+
 async function recordNativeAppOpen(user, settings) {
     const source = getRememberedNativeAppSource();
     if (!user || !source) return;
@@ -6762,7 +6869,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=416';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=417';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -16154,6 +16261,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 조용히 0 이 된다.
         recordNativeAppOpen(user, ud.settings)
             .catch((error) => console.warn('[앱 실행 기록] 예기치 못한 오류:', error));
+        // 웹으로 들어온 경우의 기기. 아이폰이 몇인지 알아야 12명이 닿을 수 있는
+        // 숫자인지 판단할 수 있다.
+        recordWebPlatform(user, ud.settings)
+            .catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
+        renderAndroidAppInvite(user);
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));

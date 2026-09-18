@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { readAppSource, readRepoFile } from './source-helpers.js';
 
+// 자산 버전(?v=NNN)은 배포마다 오른다. 숫자를 적어 두면 올릴 때마다 이 시험이
+// 깨지고, 정작 지키려던 것과 상관없는 이유로 빨간불이 켜진다.
+const assetVersion = () => (readRepoFile('sw.js').match(/habitschool-v(\d+)/) || [, ''])[1];
+
 // 증상: 하루를 다 기록하고 "공유하시겠어요?"에서 공유를 누르면, 실제보다 낮은
 // 점수가 박힌 카드가 나갔다.
 //
@@ -71,13 +75,13 @@ describe('challenge reward can be claimed without the blockchain module', () => 
 
     it('is wired up before any module loading, so the button always answers', () => {
         expect(mainSource).toContain('window.claimChallengeReward = (tier) => import(');
-        expect(mainSource).toContain('challenge-claim.js?v=416');
+        expect(mainSource).toContain(`challenge-claim.js?v=${assetVersion()}`);
         // 모듈 로드가 실패해도 조용히 끝나지 않게 기록은 남긴다.
         expect(mainSource).toContain("console.error('보상 수령 모듈 로드 실패:', error);");
     });
 
     it('keeps one implementation rather than two', () => {
-        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=416';");
+        expect(managerSource).toContain(`export { claimChallengeReward } from './challenge-claim.js?v=${assetVersion()}';`);
         expect(managerSource).not.toContain('export async function claimChallengeReward(tier) {');
     });
 
@@ -94,6 +98,6 @@ describe('challenge reward can be claimed without the blockchain module', () => 
     });
 
     it('is precached like the other modules', () => {
-        expect(readRepoFile('sw.js')).toContain("'./js/challenge-claim.js?v=416'");
+        expect(readRepoFile('sw.js')).toContain(`'./js/challenge-claim.js?v=${assetVersion()}'`);
     });
 });

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { readRepoFile } from './source-helpers.js';
 
+// 자산 버전(?v=NNN)은 배포마다 오른다. 숫자를 적어 두면 올릴 때마다 이 시험이
+// 깨지고, 정작 지키려던 것과 상관없는 이유로 빨간불이 켜진다.
+const assetVersion = () => (readRepoFile('sw.js').match(/habitschool-v(\d+)/) || [, ''])[1];
+
 describe('same-day challenge restart flow', () => {
     it('records challenge settlement by tier and defers same-day restarts to tomorrow', () => {
         const runtimeSource = readRepoFile('functions/runtime.js');
@@ -29,7 +33,7 @@ describe('same-day challenge restart flow', () => {
         // (블록체인 모듈을 안 싣는 라이트 모드에서도 눌리게 하려면 그래야 했다.)
         // 갱신은 그대로 강제한다 — 위치만 옮겼을 뿐이다.
         const claimSource = readRepoFile('js/challenge-claim.js');
-        expect(managerSource).toContain("export { claimChallengeReward } from './challenge-claim.js?v=416';");
+        expect(managerSource).toContain(`export { claimChallengeReward } from './challenge-claim.js?v=${assetVersion()}';`);
         // 갱신은 refreshAfterClaim 으로 모았다 — 성공했을 때와 클라이언트가 기다리다
         // 지쳤을 때(deadline-exceeded) 둘 다 같은 확인을 거쳐야 하기 때문이다.
         expect(claimSource).toContain('window.updateAssetDisplay(true)');

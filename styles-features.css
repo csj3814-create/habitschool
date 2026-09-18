@@ -7553,3 +7553,52 @@ body.dark-mode #gallery-feed-end {
 .coach-archive-summary { font-size: 14px; font-weight: 800; color: #4A148C; margin-top: 2px; line-height: 1.45; }
 .coach-archive-text { font-size: 13px; color: #444; line-height: 1.6; margin-top: 6px; white-space: pre-line; }
 .coach-archive-empty { padding: 26px 0; text-align: center; color: #999; font-size: 13px; line-height: 1.7; }
+/* ── 안드로이드 앱 권유 ────────────────────────────────────────
+   안드로이드에서 웹으로 쓰는 분께만 보인다. 부탁이 아니라 이득을 말하는
+   자리라, 경고색이 아니라 안내색을 쓴다. 닫으면 사흘은 다시 뜨지 않는다. */
+.android-invite {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 14px 0;
+    padding: 12px 14px;
+    border: 1px solid #CDE3FB;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #F2F8FF, #EAF3FE);
+}
+.android-invite-text { flex: 1; min-width: 0; }
+.android-invite-text strong {
+    display: block;
+    font-size: 13px;
+    color: #1B4E86;
+    line-height: 1.4;
+}
+.android-invite-text span {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: #5C7FA3;
+}
+.android-invite-go {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #2F80D8;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.android-invite-go:active { background: #2668AE; }
+.android-invite-close {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #86A5C4;
+    font-size: 13px;
+    cursor: pointer;
+}
