@@ -7414,6 +7414,20 @@ body.dark-mode #gallery-feed-end {
     line-height: 1.5;
 }
 
+/* 못 읽었을 때의 '다시 시도'. 0분이라고 적는 대신 이 버튼을 내놓는다. */
+.weekly-activity-retry {
+    margin-top: 10px;
+    padding: 7px 14px;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    background: #fff;
+    color: #555;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.weekly-activity-retry:active { background: #f2f2f2; }
+
 /* ── 운동 시간 입력 ─────────────────────────────────────────────
    사진과 영상이 못 말해 주는 단 하나가 시간이다. 하이퍼랩스는 10초 파일이 실제로
    몇 분이었는지 화면에 남기지 않으므로, AI 가 아니라 사람에게 묻는다. */

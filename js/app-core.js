@@ -126,7 +126,7 @@ import {
     normalizeMeditationLog
 } from './meditation-guide.js?v=416';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=416';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity } from './le8-score.js?v=416';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=416';
 import { loadRewardMarketSnapshot } from './reward-market.js?v=416';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
@@ -25181,6 +25181,13 @@ async function checkOnboarding() {
 // 처방이라, 그 한 줄이 목표 달성 가능성을 좌우한다.
 const WEEKLY_ACTIVITY_DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 let _weeklyActivityFetch = null;
+// 이번 주 값을 서버에서 듣고 그린 적이 있는가. 캐시만 읽힌 뒤에 덮어쓸지
+// 말지를 이걸로 가른다 — 참인 값을 "모름" 으로 바꾸지 않기 위해서다.
+let _weeklyActivityServerKey = '';
+let _weeklyActivityRecheckTimer = null;
+// 자동으로 다시 보는 것은 한 주에 한 번뿐이다. 실패할 때마다 다시 걸면 연결이
+// 오래 끊긴 기기에서 4초마다 영원히 두드리게 된다.
+let _weeklyActivityRecheckedKey = '';
 
 async function loadWeeklyActivityLogs(user, weekStrs) {
     const weekQuery = query(
@@ -25196,7 +25203,27 @@ async function loadWeeklyActivityLogs(user, weekStrs) {
         // 분 계산에 쓰는 것만 들고 온다.
         logs.push({ date: data.date, steps: data.steps || null, exercise: data.exercise || null });
     });
-    return logs;
+    // 서버에서 듣지 못한 답은 답이 아니다. 이 프로젝트는 영구 캐시를 쓰지 않아
+    // (firebase-config.js initializeFirestore) 연결이 끊긴 채 질의하면 비어 있는
+    // 메모리 캐시가 **오류 없이** 빈 결과로 돌아온다. 그것을 그대로 그리면
+    // "0 / 150분" 이 된다 — 한 주를 통째로 안 한 것처럼 보인다.
+    return { logs, fromCache: !!snapshot.metadata?.fromCache };
+}
+
+// 읽지 못했을 때의 자리. 숫자를 지어내지 않는다.
+//
+// 2026-09-17 제보: "이번주 운동기록이 사라짐. 새로고침 하면 다시 나타남."
+// 같은 시각 콘솔에 갤러리 조회 시간 초과와 "client is offline" 이 함께 찍혔다.
+// 기록이 사라진 것이 아니라 못 읽은 것인데, 화면은 0분이라고 단정했다.
+function renderWeeklyActivityUnknown(container) {
+    container.innerHTML = `
+        <div class="weekly-activity-head">
+            <h3>🏃 이번 주 운동</h3>
+            <span class="weekly-activity-count"><strong>—</strong> / ${WEEKLY_ACTIVITY_TARGET_MINUTES}분</span>
+        </div>
+        <p class="weekly-activity-note">이번 주 기록을 불러오지 못했어요. 기록이 사라진 것은 아닙니다.</p>
+        <button type="button" class="weekly-activity-retry" onclick="refreshWeeklyActivityCard({ force: true })">다시 시도</button>`;
+    container.style.display = 'block';
 }
 
 function renderWeeklyActivityCard(summary) {
@@ -25257,18 +25284,44 @@ async function refreshWeeklyActivityCard({ force = false } = {}) {
     }
 
     const promise = loadWeeklyActivityLogs(user, weekStrs)
-        .then((logs) => {
+        .then(({ logs, fromCache }) => {
+            if (fromCache) {
+                // 서버가 답한 적이 없다. 이 주를 한 번이라도 서버에서 듣고 그렸다면
+                // 그 화면을 그대로 두고, 아니면 모른다고 적는다. 어느 쪽이든
+                // 0분이라고 쓰지는 않는다.
+                console.warn('[weekly-activity] 캐시만 읽혔다 — 0분으로 그리지 않는다');
+                if (_weeklyActivityServerKey !== cacheKey) renderWeeklyActivityUnknown(container);
+                _weeklyActivityFetch = null;
+                scheduleWeeklyActivityRecheck(cacheKey);
+                return;
+            }
+            _weeklyActivityServerKey = cacheKey;
             renderWeeklyActivityCard(summarizeWeeklyActivity(logs, { todayStr, weekStrs }));
         })
         .catch((error) => {
-            // 완수율을 못 읽었다고 기록을 못 하게 할 이유는 없다. 조용히 접는다.
+            // 완수율을 못 읽었다고 기록을 못 하게 할 이유는 없다. 다만 화면에
+            // 0분이 남아 있으면 안 된다 — 숫자가 없다는 것과 0이라는 것은 다르다.
             console.warn('[weekly-activity] 주간 운동량 조회 실패:', error?.message || error);
+            if (_weeklyActivityServerKey !== cacheKey) renderWeeklyActivityUnknown(container);
             _weeklyActivityFetch = null;
         });
 
     _weeklyActivityFetch = { key: cacheKey, promise };
     return promise;
 }
+// 연결이 돌아오면 사람이 탭을 다시 열지 않아도 한 번은 스스로 본다. 딱 한 번만
+// 본다 — 그래도 안 되면 화면의 '다시 시도' 가 사람 손에 달려 있다.
+const WEEKLY_ACTIVITY_RECHECK_DELAY_MS = 4000;
+function scheduleWeeklyActivityRecheck(cacheKey) {
+    if (_weeklyActivityRecheckTimer || _weeklyActivityRecheckedKey === cacheKey) return;
+    _weeklyActivityRecheckedKey = cacheKey;
+    _weeklyActivityRecheckTimer = setTimeout(() => {
+        _weeklyActivityRecheckTimer = null;
+        if (_weeklyActivityServerKey === cacheKey) return;
+        refreshWeeklyActivityCard({ force: true }).catch(onRefreshFailure('이번 주 운동'));
+    }, WEEKLY_ACTIVITY_RECHECK_DELAY_MS);
+}
+
 window.refreshWeeklyActivityCard = refreshWeeklyActivityCard;
 
 // ========================================
