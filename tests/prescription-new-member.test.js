@@ -53,7 +53,7 @@ describe('a member who just arrived is not told what is missing', () => {
     it('still names the gap for a settled member', () => {
         const draft = gapDraft([dayAgo(30, DIET), dayAgo(1, DIET), dayAgo(2, DIET), dayAgo(3, DIET)]);
         expect(draft.key).toMatch(/gap-(exercise|sleep)/);
-        expect(draft.message).toContain('식단은 3일 남기셨는데');
+        expect(draft.message).toContain('식단은 3일 남기셨습니다');
     });
 
     it('leaves the other kinds of draft alone for a new member', () => {

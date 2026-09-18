@@ -93,9 +93,9 @@ describe('a prescription is written from this member, or not written', () => {
         expect(praise.message).not.toContain('상위');
     });
 
-    it('names the area that is empty, and the one that is not', () => {
+    it('names the area that is thin, and the one that is not', () => {
         // 일곱 날 중 식단만 남긴 회원에게 "운동도 하세요" 는 게으른 말이다.
-        // 무엇을 이미 하고 있는지 먼저 말하고 나서 비어 있는 한 가지를 청한다.
+        // 무엇을 이미 하고 있는지 먼저 말하고 나서 한 가지를 더 청한다.
         const logs = ['08-20', '09-09', '09-10', '09-11', '09-12', '09-13'].map((d) => ({
             date: `2026-${d}`, diet: { breakfastUrl: 'https://x/a' },
         }));
@@ -105,10 +105,13 @@ describe('a prescription is written from this member, or not written', () => {
         const gap = draftFor(drafts, 'gap');
         expect(gap.evidence).toContain('식단 5일');
         expect(gap.message).toContain('지난 7일 중');
-        expect(gap.message).toContain('5일 남기셨는데');
+        expect(gap.message).toContain('5일 남기셨습니다');
         expect(gap.message).toMatch(/운동|수면/);
-        // 점수가 실제보다 낮게 잡힌다는 이유까지 말한다.
-        expect(gap.message).toContain('낮게 잡히니');
+        // 2026-09-18 지시: "메세지는 운동 기록을 하면 더 좋아진다는 긍정 피드백
+        // 방향으로 하자." 깎인다고 겁주는 대신 올라간다고 청한다
+        // (tests/prescription-sparse-area.test.js).
+        expect(gap.message).toContain('올라갑니다');
+        expect(gap.message).not.toContain('낮게 잡히니');
     });
 
     it('offers nothing about gaps when every area is already covered', () => {

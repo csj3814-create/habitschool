@@ -847,9 +847,21 @@ const PRESCRIPTION_STEPS_PER_MINUTE = 100;
  *
  * 그래서 (1) 들어오신 지 2주는 지나야 하고, (2) 하고 계신 영역이 최소 사흘은
  * 있어야 그 영역을 '하고 있다' 고 부른다.
+ *
+ * 2026-09-18 지적: "운동과 수면이 다 기록이 없는데 운동하라는 권유는 없고
+ * 수면 기록 권유만 있네? 이유가 있나?"
+ *
+ * 그 회원은 걸음수를 하루 남겼고, hasExerciseRecord 는 걸음수도 운동으로 센다.
+ * 그래서 운동 1일 — 0일도 아니고 사흘도 아닌 중간에 걸려 규칙이 보지 못하는
+ * 자리였다. 0일에서 1일로 올라선 바로 그때가 한 마디가 가장 잘 닿는 자리인데
+ * 그때부터 조용해졌던 것이다. 그래서 (3) 하루 이하를 함께 본다.
  */
 const PRESCRIPTION_GAP_MIN_HISTORY_DAYS = 14;
 const PRESCRIPTION_GAP_MIN_STRONG_DAYS = 3;
+const PRESCRIPTION_GAP_MAX_TARGET_DAYS = 1;
+// 이미 한 번 남기신 분은 아주 비어 있는 분보다 뒤에 세운다. 한 회원에게 둘 다
+// 있으면 0일 쪽을 먼저 말하는 것이 맞다.
+const PRESCRIPTION_GAP_STARTED_DISCOUNT = 5;
 
 const PRESCRIPTION_GOOD_ENOUGH = {
     steps: { atLeast: PRESCRIPTION_STEP_BASELINE
@@ -1129,7 +1141,7 @@ export function buildAdminPrescriptionDrafts({
         });
     }
 
-    // ── 5. 비어 있는 자리 — 최근 7일에 기록이 하나도 없는 영역
+    // ── 5. 거의 비어 있는 자리 — 최근 7일에 기록이 하루 이하인 영역
     //
     // 막 시작한 분께는 하지 않는다. 빠진 것부터 세는 인사가 되고, 애초에
     // 판단할 만큼 기록이 쌓이지도 않았다.
@@ -1141,20 +1153,35 @@ export function buildAdminPrescriptionDrafts({
         ];
         // 하루 기록으로 "운동은 1일 남기셨는데" 라고 하는 것은 근거가 아니다.
         const filled = areas.filter((area) => area.days >= PRESCRIPTION_GAP_MIN_STRONG_DAYS);
-        const empty = areas.filter((area) => area.days === 0);
-        if (empty.length && filled.length) {
-            const target = empty[0];
-            const strong = filled.sort((a, b) => b.days - a.days)[0];
+        // 0일과 1일을 함께 본다. 1일을 빼 두면 한 번 남기신 분은 그 뒤로 아무
+        // 말도 듣지 못한다. 0일이 먼저다 — sort 는 안정 정렬이라 같은 일수면
+        // 식단·운동·수면 차례를 지킨다.
+        const sparse = areas
+            .filter((area) => area.days <= PRESCRIPTION_GAP_MAX_TARGET_DAYS)
+            .sort((a, b) => a.days - b.days);
+        if (sparse.length && filled.length) {
+            const target = sparse[0];
+            const strong = filled.slice().sort((a, b) => b.days - a.days)[0];
+            const started = target.days > 0;
             drafts.push({
                 key: `gap-${target.key}`,
                 tone: "cheer",
-                label: `🧩 ${target.label} 채우기 권유`,
-                evidence: `최근 7일 · ${strong.label} ${strong.days}일 / ${target.label} 0일`,
-            // 이미 성실한 회원일수록 비어 있는 한 칸이 점수를 더 많이 깎는다.
-                score: 40 + strong.days * 2,
-                summary: `${target.label} 기록이 비어 있습니다`,
-                message: `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨는데 ${withJosa(target.label, "이가")} 한 번도 없습니다.\n`
-                    + `${target.how}. 건강 점수가 실제보다 낮게 잡히니 오늘 하루만 채워 보시겠어요?`,
+                label: `🧩 ${target.label} ${started ? "이어가기" : "채우기"} 권유`,
+                // 세 영역을 다 적는다. 강한 것과 빈 것만 적으면 관제탑에서는
+                // "운동은 왜 그냥 넘어갔지?" 를 알 수 없다 — 실제로 받은 질문이다.
+                evidence: `최근 7일 · ${areas.map((area) => `${area.label} ${area.days}일`).join(" / ")}`,
+                // 이미 성실한 회원일수록 비어 있는 한 칸이 점수를 더 많이 깎는다.
+                score: 40 + strong.days * 2 - target.days * PRESCRIPTION_GAP_STARTED_DISCOUNT,
+                summary: started
+                    ? `${target.label} 기록을 이어가시면 됩니다`
+                    : `${target.label}까지 더하면 점수가 제대로 잡힙니다`,
+                // 없는 것을 세지 않는다. 하고 계신 것을 먼저 말하고, 한 칸 더
+                // 얹으면 점수가 하시는 만큼 올라간다는 쪽으로 청한다.
+                message: started
+                    ? `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일, ${target.label}도 하루 남기셨습니다.\n`
+                        + `${target.how}. 며칠만 더 이어가시면 건강 점수도 하시는 만큼 올라갑니다.`
+                    : `지난 7일 중 ${withJosa(strong.label, "은는")} ${strong.days}일 남기셨습니다. 꾸준하십니다.\n`
+                        + `여기에 ${target.label} 기록이 더해지면 건강 점수도 하시는 만큼 올라갑니다. ${target.how}.`,
             });
         }
     }
@@ -1185,4 +1212,5 @@ export const ADMIN_PRESCRIPTION_GOOD_ENOUGH = PRESCRIPTION_GOOD_ENOUGH;
 export const ADMIN_PRESCRIPTION_MIN_ABSOLUTE_CHANGE = PRESCRIPTION_MIN_ABSOLUTE_CHANGE;
 export const ADMIN_PRESCRIPTION_GAP_MIN_HISTORY_DAYS = PRESCRIPTION_GAP_MIN_HISTORY_DAYS;
 export const ADMIN_PRESCRIPTION_GAP_MIN_STRONG_DAYS = PRESCRIPTION_GAP_MIN_STRONG_DAYS;
+export const ADMIN_PRESCRIPTION_GAP_MAX_TARGET_DAYS = PRESCRIPTION_GAP_MAX_TARGET_DAYS;
 export const ADMIN_PRESCRIPTION_SCORE_FLOOR = PRESCRIPTION_SCORE_FLOOR;
