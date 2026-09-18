@@ -16149,7 +16149,11 @@ function _renderDashboardWithData(data, todayStr, weekStrs, currentWeekId, user)
         // 스위치가 저장만 하고 현재 값을 못 읽으면, 껐던 회원이 다시 들어왔을 때
         // 켜진 것처럼 보인다. 사용자 문서를 읽는 이 자리에서 맞춘다.
         window.renderCoachMessagePreference?.(ud.settings);
-        recordNativeAppOpen(user, ud.settings).catch(() => {});
+        // 이 기록 하나가 Play 재신청 판단의 근거다. 함수 안에서 저장 실패는
+        // 이미 로그로 남기지만, 그 바깥의 예기치 못한 오류까지 삼키면 숫자가
+        // 조용히 0 이 된다.
+        recordNativeAppOpen(user, ud.settings)
+            .catch((error) => console.warn('[앱 실행 기록] 예기치 못한 오류:', error));
         ensureGuideCollapseState(ud);
         if (ud.coins != null) document.getElementById('point-balance').innerText = ud.coins;
         renderSimpleProfilePanel(ud).catch(onRefreshFailure('프로필 패널'));
