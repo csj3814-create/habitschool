@@ -7119,30 +7119,40 @@ try {
 // 사진과 영상이 못 말해 주는 단 하나가 시간이다. 계기판이 찍힌 사진이면 AI 가
 // 읽어 오지만, 하이퍼랩스는 시간을 지워 버린 영상이라 원리적으로 알 수 없다.
 // 그래서 묻는다 — 한 번 누른 값이 지어낸 값보다 낫다.
-const EXERCISE_DURATION_PRESETS = [10, 20, 30, 45, 60];
+// 2026-09-19 지시: "5분, 10분, 15분, 30분, 60분." 짧은 쪽을 늘렸다 — 10분이
+// 최소값이면 5분 스트레칭을 적을 칸이 없다.
+const EXERCISE_DURATION_PRESETS = [5, 10, 15, 30, 60];
 const MAX_EXERCISE_DURATION_MINUTES = 300;
 
 function buildExerciseDurationHtml(slotId = '', data = null) {
     const en = isEnglishLocale();
     const savedMinutes = Number(data && data.durationMinutes);
     const value = Number.isFinite(savedMinutes) && savedMinutes > 0 ? Math.round(savedMinutes) : '';
+    // 고른 값이 눈에 보여야 한다. 누르고 나서 무엇을 골랐는지 화면이 말해 주지
+    // 않으면 같은 버튼을 두 번 누르게 된다.
     const chips = EXERCISE_DURATION_PRESETS
-        .map((minutes) => `<button type="button" class="exercise-duration-chip" onclick="setExerciseDuration(this, ${minutes})">${minutes}</button>`)
+        .map((minutes) => {
+            const on = Number(value) === minutes ? ' is-on' : '';
+            return `<button type="button" class="exercise-duration-chip${on}"`
+                + ` onclick="setExerciseDuration(this, ${minutes})">${minutes}</button>`;
+        })
         .join('');
 
+    // 한 줄로 얇게. 자주 쓰는 값을 손가락으로 고르고, 그 밖의 값만 직접 적는다.
     return `
         <div class="exercise-duration">
-            <label class="exercise-duration-label" for="dur_${slotId}">${en ? 'How long?' : '얼마나 하셨어요?'}</label>
             <div class="exercise-duration-row">
+                <span class="exercise-duration-label">${en ? 'Time' : '운동 시간'}</span>
+                <div class="exercise-duration-chips">${chips}</div>
                 <input type="number" class="exercise-duration-input" id="dur_${slotId}"
                     min="1" max="${MAX_EXERCISE_DURATION_MINUTES}" step="1" inputmode="numeric"
-                    value="${value}" placeholder="--" oninput="markExerciseDurationEdited(this)"${value === '' ? '' : ' data-user-set="true"'}>
+                    value="${value}" placeholder="--" aria-label="${en ? 'Minutes' : '운동 시간(분)'}"
+                    oninput="markExerciseDurationEdited(this)"${value === '' ? '' : ' data-user-set="true"'}>
                 <span class="exercise-duration-unit">${en ? 'min' : '분'}</span>
             </div>
-            <div class="exercise-duration-chips">${chips}</div>
             <p class="exercise-duration-note">${en
-                ? 'Counts toward this week’s 150 minutes. Leave blank and we’ll estimate.'
-                : '이번 주 150분에 반영돼요. 비워 두면 기록 하나당 30분으로 잡아요.'}</p>
+                ? 'Counts toward this week’s 150 minutes.'
+                : '이번 주 150분에 반영돼요. 비워 두면 30분으로 잡아요.'}</p>
         </div>`;
 }
 
@@ -7150,14 +7160,29 @@ function buildExerciseDurationHtml(slotId = '', data = null) {
 window.markExerciseDurationEdited = function (input) {
     if (!input) return;
     input.setAttribute('data-user-set', 'true');
+    syncExerciseDurationChips(input);
 };
 
 window.setExerciseDuration = function (chip, minutes) {
-    const input = chip?.closest?.('.exercise-duration')?.querySelector('.exercise-duration-input');
+    const box = chip?.closest?.('.exercise-duration');
+    const input = box?.querySelector('.exercise-duration-input');
     if (!input) return;
     input.value = String(minutes);
     input.setAttribute('data-user-set', 'true');
+    box.querySelectorAll('.exercise-duration-chip')
+        .forEach((el) => el.classList.toggle('is-on', el === chip));
 };
+
+// 숫자를 직접 고치면 눌러 둔 표시를 푼다. 15 를 눌러 놓고 22 로 고쳤는데
+// 15 가 켜진 채면 어느 쪽이 저장될지 알 수 없다.
+function syncExerciseDurationChips(input) {
+    const box = input?.closest?.('.exercise-duration');
+    if (!box) return;
+    const minutes = Number(input.value);
+    box.querySelectorAll('.exercise-duration-chip').forEach((el) => {
+        el.classList.toggle('is-on', Number(el.textContent) === minutes);
+    });
+}
 
 function readExerciseDurationMinutes(block) {
     const input = block?.querySelector?.('.exercise-duration-input');
@@ -18640,6 +18665,48 @@ function findAiAnalysisSlotForInput(inputId = '') {
 // 끝난다. 그대로 두면 Gemini 호출 네 개가 동시에 뜬다.
 let _autoAiAnalysisChain = Promise.resolve();
 
+/**
+ * 지금 돌고 있는 AI 분석들.
+ *
+ * 2026-09-19 제보: "운동 영상 올릴때 운동 시간 누르면 AI분석 끝나고 순차적으로
+ * 저장되게 해 줘. 지금은 동시에 저장이 안되는지 AI분석 실패로 나와."
+ *
+ * 영상을 올리면 분석이 저절로 시작된다(queueAutoAiAnalysis). 그 사이에 저장을
+ * 누르면 저장 경로가 블록을 다시 그리고, 분석은 자기가 결과를 걸어 둘 자리를
+ * 잃는다. 결과가 기록에 실리지 못하고 화면에는 실패로 보인다.
+ *
+ * 그래서 저장이 분석을 기다린다. 분석 쪽을 손보지 않고 저장 쪽에서 한 번
+ * 기다리는 것이 고칠 자리가 가장 적다.
+ */
+const _runningAiAnalyses = new Set();
+// 분석이 멈춰도 저장까지 멈추지는 않는다. 기다림에는 상한이 있다.
+const AI_ANALYSIS_SAVE_WAIT_MS = 25000;
+
+function beginAiAnalysis() {
+    let release = () => { };
+    const promise = new Promise((resolve) => { release = resolve; });
+    _runningAiAnalyses.add(promise);
+    return () => {
+        _runningAiAnalyses.delete(promise);
+        release();
+    };
+}
+
+async function waitForRunningAiAnalyses() {
+    if (_runningAiAnalyses.size === 0) return;
+    showToast('🤖 AI 분석을 마치고 저장할게요.');
+    try {
+        await withAsyncTimeout(
+            Promise.all([..._runningAiAnalyses]),
+            AI_ANALYSIS_SAVE_WAIT_MS,
+            'ai_analysis_wait_timeout'
+        );
+    } catch (error) {
+        // 오래 걸리면 그냥 저장한다. 분석이 늦었다고 기록을 못 남길 이유는 없다.
+        console.warn('[저장] AI 분석을 기다리다 멈춤:', error?.message || error);
+    }
+}
+
 function queueAutoAiAnalysis(inputId = '') {
     const slot = findAiAnalysisSlotForInput(inputId);
     // 운동 기록은 블록마다 새로 생겨 표에 없다. 블록을 찾아서 그 블록을 분석한다.
@@ -21020,6 +21087,9 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
     }, 40000);
 
     (async () => {
+        // 돌고 있는 AI 분석이 있으면 먼저 끝낸다. 저장이 블록을 다시 그리면
+        // 분석은 결과를 걸어 둘 자리를 잃는다.
+        await waitForRunningAiAnalyses();
         // Firestore 타임아웃 헬퍼 (서버 응답 대기 상한선)
         const withTimeout = (promise, ms, fallback) =>
             Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
@@ -25524,6 +25594,8 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
 
     btn.classList.add('loading');
     btn.textContent = '🤖 AI 분석 중...';
+    // 영상과 같다 — 저장이 이 분석을 기다릴 수 있게 한다.
+    const endAnalysis = beginAiAnalysis();
     try {
         const analysis = await requestExerciseAnalysis(imageUrl);
         // 분석이 도는 동안 사진이 지워졌거나 바뀌었으면 그리지도, 남기지도 않는다.
@@ -25555,6 +25627,7 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         console.error('운동 분석 오류:', e);
         if (!auto) showToast('⚠️ 운동 분석 중 오류가 발생했습니다.');
     } finally {
+        endAnalysis();
         btn.classList.remove('loading');
         // 실패하면 '분석 중…' 이 남아 다시 누를 수 없어 보인다. 다만 위에서 이미
         // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다.
@@ -25612,6 +25685,8 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
 
     btn.classList.add('loading');
     btn.textContent = '🤖 AI 분석 중...';
+    // 저장이 이 분석을 기다릴 수 있게 한다.
+    const endAnalysis = beginAiAnalysis();
     try {
         const analysis = await requestExerciseVideoAnalysis(videoUrl);
         // 분석이 도는 동안 영상이 지워졌거나 바뀌었으면 그리지도, 남기지도 않는다.
@@ -25642,6 +25717,7 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         console.error('운동 영상 분석 오류:', e);
         if (!auto) showToast('⚠️ 운동 영상 분석 중 오류가 발생했습니다.');
     } finally {
+        endAnalysis();
         btn.classList.remove('loading');
         // 실패하면 '분석 중…' 이 남아 다시 누를 수 없어 보인다. 다만 위에서 이미
         // 문구를 정해 둔 경우('다시 분석')는 덮지 않는다.

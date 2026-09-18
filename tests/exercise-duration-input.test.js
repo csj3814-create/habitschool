@@ -6,6 +6,7 @@ import { resolveDailyActivityMinutes, resolveExerciseItemMinutes } from '../js/l
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
+const APP_SOURCE = read('js/app-core.js');
 
 // 2026-09-14 질문: "하이퍼랩스 영상도 AI가 읽고 운동량과 시간, 강도를 계산할 수 있나?"
 // 종류·강도·자세는 읽을 수 있지만 시간은 원리적으로 불가능하다 — 하이퍼랩스는
@@ -74,7 +75,7 @@ describe('the duration field is asked for, saved, and brought back', () => {
     });
 
     it('offers taps as well as typing', () => {
-        expect(app).toContain('const EXERCISE_DURATION_PRESETS = [10, 20, 30, 45, 60];');
+        expect(app).toContain('const EXERCISE_DURATION_PRESETS = [5, 10, 15, 30, 60];');
         expect(app).toContain('window.setExerciseDuration = function (chip, minutes)');
     });
 
@@ -111,7 +112,7 @@ describe('the duration field is asked for, saved, and brought back', () => {
     it('says what the number is for', () => {
         const fn = app.split('function buildExerciseDurationHtml(')[1].split('\n}\n')[0];
         expect(fn).toContain('이번 주 150분에 반영돼요');
-        expect(fn).toContain('비워 두면 기록 하나당 30분으로 잡아요');
+        expect(fn).toContain('비워 두면 30분으로 잡아요');
     });
 
     it('has a look in both themes', () => {
@@ -121,5 +122,73 @@ describe('the duration field is asked for, saved, and brought back', () => {
         expect(read('styles-features.css')).toContain('grid-template-columns: repeat(5, 1fr);');
         expect(read('styles-features.css')).not.toContain(['', '.exercise-duration-input {'].join('\n'));
         expect(read('styles-dark-mode.css')).toContain('body.dark-mode .exercise-duration-row .exercise-duration-input');
+    });
+});
+
+// 2026-09-19 제보: "운동 영상 올릴때 운동 시간 누르면 AI분석 끝나고 순차적으로
+// 저장되게 해 줘. 지금은 동시에 저장이 안되는지 AI분석 실패로 나와."
+//
+// 영상을 올리면 분석이 저절로 시작된다. 그 사이에 저장을 누르면 저장 경로가
+// 블록을 다시 그리고, 분석은 결과를 걸어 둘 자리를 잃는다. 결과가 기록에 실리지
+// 못하고 화면에는 실패로 보인다.
+describe('saving waits for an analysis that is still running', () => {
+    it('counts the analyses that are in flight', () => {
+        expect(APP_SOURCE).toContain('const _runningAiAnalyses = new Set();');
+        expect(APP_SOURCE).toContain('function beginAiAnalysis()');
+        // 영상과 사진 둘 다 등록한다 — 저장 경로가 같다.
+        expect(APP_SOURCE.split('beginAiAnalysis()').length - 1).toBe(3);
+    });
+
+    it('waits before it starts saving, not after', () => {
+        const save = APP_SOURCE.split("document.getElementById('saveDataBtn').addEventListener('click'")[1];
+        const waitAt = save.indexOf('await waitForRunningAiAnalyses();');
+        const writeAt = save.indexOf('selectedDateStr = document.getElementById');
+        expect(waitAt).toBeGreaterThan(-1);
+        expect(writeAt).toBeGreaterThan(waitAt);
+    });
+
+    it('does not wait forever', () => {
+        // 분석이 멈춰도 저장까지 멈추면 기록을 잃는다.
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses()')[1].split('\n}')[0];
+        expect(fn).toContain('AI_ANALYSIS_SAVE_WAIT_MS');
+        expect(fn).toContain('withAsyncTimeout(');
+        expect(fn).toContain('catch');
+    });
+
+    it('says why the save is taking a moment', () => {
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses()')[1].split('\n}')[0];
+        expect(fn).toContain('AI 분석을 마치고 저장할게요');
+    });
+
+    it('releases its slot even when the analysis throws', () => {
+        // finally 가 아니면 실패한 분석 하나가 그 뒤의 모든 저장을 25초씩 붙잡는다.
+        const video = APP_SOURCE.split('window.analyzeExerciseVideo = async function')[1].split('\n};')[0];
+        const finallyAt = video.indexOf('} finally {');
+        const releaseAt = video.indexOf('endAnalysis();');
+        expect(finallyAt).toBeGreaterThan(-1);
+        expect(releaseAt).toBeGreaterThan(finallyAt);
+    });
+});
+
+describe('the duration row is one thin line', () => {
+    it('puts the label, the chips and the box on the same row', () => {
+        const fn = APP_SOURCE.split('function buildExerciseDurationHtml(')[1].split('\n}\n')[0];
+        const row = fn.split('exercise-duration-row')[1];
+        for (const part of ['exercise-duration-label', 'exercise-duration-chips', 'exercise-duration-input']) {
+            expect(row, part).toContain(part);
+        }
+    });
+
+    it('shows which value is chosen', () => {
+        // 누르고 나서 무엇을 골랐는지 화면이 말해 주지 않으면 같은 버튼을 두 번 누른다.
+        expect(APP_SOURCE).toContain("el.classList.toggle('is-on', el === chip)");
+        expect(read('styles-features.css')).toContain('.exercise-duration-chip.is-on {');
+        expect(read('styles-dark-mode.css')).toContain('body.dark-mode .exercise-duration-chip.is-on');
+    });
+
+    it('drops the highlight when the number is typed over', () => {
+        expect(APP_SOURCE).toContain('function syncExerciseDurationChips(input)');
+        const edited = APP_SOURCE.split('window.markExerciseDurationEdited = function (input) {')[1].split('\n}')[0];
+        expect(edited).toContain('syncExerciseDurationChips(input)');
     });
 });

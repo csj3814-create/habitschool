@@ -1356,4 +1356,5 @@ body.dark-mode .exercise-duration-row .exercise-duration-input { background: #1E
 body.dark-mode .exercise-duration-unit { color: #C0A080; }
 body.dark-mode .exercise-duration-chip { background: #1E1B24; border-color: #4A3524; color: #FFB566; }
 body.dark-mode .exercise-duration-chip:active { background: #3A2C20; }
+body.dark-mode .exercise-duration-chip.is-on { background: #FF8C00; border-color: #FF8C00; color: #1E1B24; }
 body.dark-mode .exercise-duration-note { color: #9A8068; }
