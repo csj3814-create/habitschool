@@ -177,7 +177,6 @@ function buildExerciseAnalysisFields(analysis) {
     addAnalysisField(fields, "적은 운동 시간", analysis.enteredDurationMinutes, "분");
     addAnalysisField(fields, "강도", analysis.intensity);
     addAnalysisField(fields, "운동 종류", analysis.exerciseType);
-    addAnalysisField(fields, "반복 횟수", analysis.repCount, "회");
     addAnalysisField(fields, "시간 분석", analysis.timeAnalysis);
     // 2026-09-14 에 '하루 30분' 자를 없애고 '주 150분 대비 적립 분'으로 바꿨다.
     // 관제탑만 옛 필드를 읽고 있어 새 기록에서는 아무것도 안 보였다.

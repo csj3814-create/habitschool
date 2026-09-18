@@ -50,14 +50,44 @@ describe('a hyperlapse can say what, not how long', () => {
         expect(resolveExerciseItemMinutes({ aiAnalysis: videoAnalysis })).toBe(30);
     });
 
-    it('counts reps only when it can actually count them', () => {
+    // 2026-09-19 제보: "푸시업 70개 런지 양쪽 70개씩 했는데 런지 약 3회로 분석되어
+    // 있어. 횟수를 정확히 셀 수 없으면 차라리 횟수 이야기를 빼."
+    //
+    // 하이퍼랩스는 프레임이 띄엄띄엄 남는다. 모델은 남은 프레임을 정확히 세고 그
+    // 숫자를 확신한다 — 틀렸다는 신호가 응답 어디에도 없다. 프롬프트로 "셀 수
+    // 있을 때만" 이라고 일러 두었지만 모델은 자기가 셀 수 있다고 믿었다.
+    it('does not count reps at all, because it cannot', () => {
         const prompt = runtime.split('const EXERCISE_VIDEO_ANALYSIS_PROMPT = `')[1].split('`;')[0];
-        expect(prompt).toContain('화면에서 실제로 셀 수 있을 때만');
+        expect(prompt).toContain('반복 횟수도 세지 마세요');
+        expect(prompt).not.toContain('repCount');
+        // 모델이 뭘 보내든 필드가 없다.
         const norm = runtime.split('function normalizeExerciseVideoAnalysis(')[1].split('\n}\n')[0];
-        expect(norm).toContain('repCount: Number.isFinite(parsedReps) && parsedReps > 0');
-        // 셌으면 화면에 보인다.
+        expect(norm).not.toContain('repCount');
+        // 화면에도 없다.
         const renderer = client.split('export function renderExerciseAnalysisResult(')[1].split('\n}\n')[0];
-        expect(renderer).toContain('analysis.repCount');
+        expect(renderer).not.toContain('repCount');
+    });
+
+    it('scrubs a rep count that leaks into the sentence', () => {
+        // 필드에서만 빼고 문장에 "약 3회" 가 남으면 고친 것이 아니다.
+        const body = runtime.split('function stripRepCounts(value) {')[1].split('\n}')[0];
+        const stripRepCounts = Function('return function stripRepCounts(value) {' + body + '\n}')();
+        expect(stripRepCounts('스쿼트 · 약 12회')).toBe('스쿼트');
+        expect(stripRepCounts('런지 · 약 3회')).toBe('런지');
+        expect(stripRepCounts('푸시업 70회씩 하셨네요. 대단합니다.')).toBe('푸시업 하셨네요. 대단합니다.');
+        expect(stripRepCounts('Squats, about 12 reps')).toBe('Squats');
+        // 세트 수와 층수는 화면에 실제로 남는 정보다. 건드리지 않는다.
+        expect(stripRepCounts('3세트로 나눠 하셨네요')).toBe('3세트로 나눠 하셨네요');
+        expect(stripRepCounts('계단 5층까지 오르셨습니다')).toBe('계단 5층까지 오르셨습니다');
+        expect(stripRepCounts('')).toBe('');
+        expect(stripRepCounts(null)).toBe(null);
+    });
+
+    it('runs the scrubber on every sentence it sends back', () => {
+        const norm = runtime.split('function normalizeExerciseVideoAnalysis(')[1].split('\n}\n')[0];
+        for (const field of ['timeAnalysis', 'feedback', 'formTip']) {
+            expect(norm, field).toContain(`stripRepCounts(text(source.${field}`);
+        }
     });
 
     it('grounds a form cue in what is visible, or says nothing', () => {
@@ -182,5 +212,50 @@ describe('a first-person clip is still a workout', () => {
         // 종류를 모르면 예전대로 따로 센다 — 측정 근거가 그쪽이다.
         const unknown = { exercise: { strengthList: [{}] }, steps: { count: 10000 } };
         expect(resolveDailyActivityMinutes(unknown).minutes).toBe(90); // 60 + 30
+    });
+});
+
+// 서버는 오늘부터 오는 응답을 막고, 화면은 이미 저장된 기록을 맡는다. 09-19 이전
+// 영상에는 "런지 · 약 3회" 가 문장에 그대로 남아 있고, 그 숫자가 틀렸다는 것이
+// 이 기능을 뺀 이유다. 백필 대신 그리는 자리에서 지운다.
+//
+// 같은 규칙이 두 벌 있으므로, 둘이 같은 답을 내는지 여기서 대조한다. 안 그러면
+// 언젠가 한쪽만 고쳐진다.
+describe('the scrubber reads the same on both sides', () => {
+    const load = (source) => {
+        const body = source.split('function stripRepCounts(value) {')[1].split('\n}')[0];
+        return Function('return function stripRepCounts(value) {' + body + '\n}')();
+    };
+    const server = load(runtime);
+    const screen = load(client);
+
+    const CASES = [
+        '스쿼트 · 약 12회',
+        '런지 · 약 3회',
+        '푸시업 70회씩 하셨네요. 대단합니다.',
+        'Squats, about 12 reps',
+        'Lunges, 3 reps',
+        '스쿼트 · 깊이 일정',
+        '3세트로 나눠 하셨네요',
+        '계단 5층까지 오르셨습니다',
+        '',
+    ];
+
+    it('agrees on every example', () => {
+        for (const value of CASES) {
+            expect(screen(value), value).toBe(server(value));
+        }
+    });
+
+    it('cleans an old record the same way a new one is written', () => {
+        expect(screen('런지 · 약 3회')).toBe('런지');
+        expect(screen('푸시업 70회씩 하셨네요. 대단합니다.')).toBe('푸시업 하셨네요. 대단합니다.');
+    });
+
+    it('is applied to every sentence the exercise card draws', () => {
+        const fn = client.split('export function renderExerciseAnalysisResult(')[1].split('\nexport function')[0];
+        for (const field of ['timeAnalysis', 'feedback', 'formTip']) {
+            expect(fn, field).toContain(`stripRepCounts(analysis.${field}`);
+        }
     });
 });

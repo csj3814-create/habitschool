@@ -3402,6 +3402,29 @@ function normalizeExerciseAnalysis(raw) {
     };
 }
 
+/**
+ * 문장에 남은 횟수 표현을 지운다.
+ *
+ * 프롬프트로 막아도 모델은 가끔 "스쿼트 · 약 12회" 를 적어 보낸다. 그 숫자가
+ * 틀렸다는 것이 이 기능을 뺀 이유이므로, 필드에서만 빼고 문장에 남겨 두면
+ * 고친 것이 아니다.
+ *
+ * 세트 수("3세트")나 층수("5층")는 건드리지 않는다 — 그건 화면에 실제로 남는
+ * 정보다. 지우는 것은 반복 횟수뿐이다.
+ */
+function stripRepCounts(value) {
+    if (!value) return value;
+    return String(value)
+        // "약 12회", "12회", "12 reps", "about 12 reps"
+        .replace(/(약\s*)?\d+\s*회(씩)?/g, "")
+        .replace(/(about\s+)?\d+\s*reps?/gi, "")
+        // 남은 가운뎃점·쉼표·공백 정리
+        .replace(/\s*[·,]\s*(?=[·,]|$)/g, "")
+        .replace(/^\s*[·,]\s*/, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+}
+
 const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 피트니스 코치 AI입니다. 짧은 운동 영상을 보고 무엇을, 어떻게 하고 있는지 말해 주세요.
 
 ## 이 영상에 대해 먼저 알아 둘 것
@@ -3409,7 +3432,9 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 �
 
 **그래서 운동한 시간은 이 영상으로 알 수 없습니다.** 10초짜리 파일이 실제로 10분이었는지 한 시간이었는지 화면에 남아 있지 않습니다. 시간은 사용자가 직접 적으므로 **durationMinutes 는 언제나 null 로 두세요.** 화면에 시계나 계기판이 찍혀 있어도 그것은 영상 길이가 아닙니다.
 
-같은 이유로 반복 횟수도 **화면에서 실제로 셀 수 있을 때만** 적습니다. 빨리 감긴 영상에서 어림짐작한 횟수는 틀린 정보입니다.
+**반복 횟수도 세지 마세요.** 빨리 감긴 영상은 프레임이 띄엄띄엄 남습니다. 실제로 70회를 한 운동이 서너 번으로 보이고, 모델은 그 서너 번을 정확히 셌다고 믿습니다.
+
+그래서 횟수는 **아예 말하지 않습니다.** timeAnalysis 에도, feedback 에도, formTip 에도 숫자로 된 횟수를 쓰지 마세요. "약 12회", "12회", "12 reps" 같은 표현을 넣지 않습니다. 대신 무엇을 어떻게 하고 있는지를 적습니다.
 
 ## 판단 기준
 0. **운동 중에 찍힌 영상인가**(isExercise): "운동하는 사람이 보이나"가 아니라 **"운동하면서 찍은 영상인가"** 를 묻습니다. 둘은 다릅니다.
@@ -3429,10 +3454,9 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 �
    - 고강도: 본격 웨이트, 큰 중량, 쉬지 않는 서킷
    - 초고강도: 전력에 가까운 고중량, 고강도 인터벌
 3. **자세**(formTip): 이 영상에서 **실제로 보이는 것**을 근거로 한 조언 한 문장. 무릎 방향, 허리 각도, 가동 범위, 호흡 리듬 같은 것. 잘 안 보이면 null 로 둡니다 — 안 보이는 것을 지적하면 틀린 지적이 됩니다. **1인칭 영상은 몸이 안 보이므로 자세를 말할 수 없습니다.** 그때는 null 이 정답이고, 대신 페이스나 경사 같은 보이는 것을 feedback 에 씁니다.
-4. **반복 횟수**(repCount): 셀 수 있으면 정수, 못 세면 null.
 
 ## 문장 쓰기
-- timeAnalysis: 본 것을 한 줄로. 시간은 쓰지 않습니다. 예) "스쿼트 · 약 12회", "덤벨 운동 · 반복 횟수는 세기 어려움".
+- timeAnalysis: 본 것을 한 줄로. 시간도 횟수도 쓰지 않습니다. 예) "스쿼트 · 깊이 일정", "런지 · 좌우 번갈아".
 - feedback: 격려 한두 문장. 본 동작을 근거로 말합니다.
 
 ## 응답 형식 (반드시 아래 JSON 형식으로만 응답)
@@ -3441,8 +3465,7 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT = `당신은 운동 자세를 봐 주는 �
   "exerciseType": "스쿼트",
   "intensity": "중강도",
   "durationMinutes": null,
-  "repCount": 12,
-  "timeAnalysis": "스쿼트 · 약 12회",
+  "timeAnalysis": "스쿼트 · 깊이 일정",
   "feedback": "격려 한두 문장",
   "formTip": "자세 조언 한 문장"
 }
@@ -3455,7 +3478,6 @@ durationMinutes 는 예외 없이 null 입니다. intensity 는 반드시 위 �
   "exerciseType": "계단 오르기",
   "intensity": "고강도",
   "durationMinutes": null,
-  "repCount": null,
   "timeAnalysis": "1인칭 시점 계단 오르기",
   "feedback": "쉬지 않고 올라가는 페이스가 좋습니다. 계단은 같은 시간 대비 심박이 빨리 올라가는 운동입니다.",
   "formTip": null
@@ -3467,7 +3489,6 @@ durationMinutes 는 예외 없이 null 입니다. intensity 는 반드시 위 �
   "exerciseType": null,
   "intensity": null,
   "durationMinutes": null,
-  "repCount": null,
   "timeAnalysis": "식탁에 놓인 음식을 찍은 영상입니다.",
   "feedback": "운동으로 볼 만한 것이 없습니다. 운동 중에 찍은 영상을 올려 주세요.",
   "formTip": null
@@ -3477,7 +3498,9 @@ const EXERCISE_VIDEO_ANALYSIS_PROMPT_EN = `You are a form-coaching fitness AI. W
 
 These clips are usually **hyperlapse/timelapse**: ten seconds of file standing in for minutes or an hour of real training.
 
-**You therefore cannot know how long the workout lasted.** Always set durationMinutes to null — the user types the time themselves. Count reps only when you can actually count them on screen; a guess from sped-up footage is wrong information.
+**You therefore cannot know how long the workout lasted.** Always set durationMinutes to null — the user types the time themselves.
+
+**Never count reps either.** Sped-up footage keeps only scattered frames: a set of seventy looks like three, and the model believes it counted correctly. Put no rep numbers anywhere — not in timeAnalysis, not in feedback, not in formTip.
 
 Rules:
 - **isExercise comes first, and the question is "was this filmed while exercising", not "can I see someone exercising".** First-person clips — a camera on the chest or in the hand — show no person, no equipment, no gym: just stairs scrolling past, a trail going by, the road moving, the view over handlebars. Those are exercise. Set false only when the clip is clearly unrelated (food, a receipt, a document, a pet, someone sitting still indoors).
@@ -3491,8 +3514,7 @@ Return only valid JSON:
   "exerciseType": "squat",
   "intensity": "중강도",
   "durationMinutes": null,
-  "repCount": 12,
-  "timeAnalysis": "Squats, about 12 reps",
+  "timeAnalysis": "Squats, steady depth",
   "feedback": "one or two encouraging sentences",
   "formTip": "one actionable cue"
 }`;
@@ -3641,26 +3663,31 @@ function normalizeExerciseVideoAnalysis(raw) {
             intensity: null,
             durationMinutes: null,
             weightedMinutes: null,
-            repCount: null,
             timeAnalysis: text(source.timeAnalysis, 200) || "",
             feedback: text(source.feedback, 500) || "운동으로 볼 만한 것이 영상에 없습니다.",
             formTip: null
         };
     }
 
-    const parsedReps = Number(source.repCount);
     return {
         isExercise: true,
         mediaKind: "video",
         exerciseType: text(source.exerciseType, 40) || "근력운동",
         intensity: readIntensity || "중강도",
-        // 영상은 시간을 말해 주지 않는다. 모델이 뭘 보내든 버린다.
+        // 영상은 시간도 횟수도 말해 주지 않는다. 모델이 뭘 보내든 버린다.
+        //
+        // 2026-09-19 제보: "푸시업 70개 런지 양쪽 70개씩 했는데 런지 약 3회로
+        // 분석되어 있어. 횟수를 정확히 셀 수 없으면 차라리 횟수 이야기를 빼."
+        //
+        // 하이퍼랩스는 프레임이 띄엄띄엄 남는다. 모델은 남은 프레임을 정확히 세고
+        // 그 숫자를 확신한다 — 틀렸다는 신호가 응답 어디에도 없다. 프롬프트로
+        // "셀 수 있을 때만" 이라고 일러도 모델은 자기가 셀 수 있다고 믿는다.
+        // 그래서 부탁이 아니라 규칙으로 막는다.
         durationMinutes: null,
         weightedMinutes: null,
-        repCount: Number.isFinite(parsedReps) && parsedReps > 0 ? Math.min(999, Math.round(parsedReps)) : null,
-        timeAnalysis: text(source.timeAnalysis, 200) || "",
-        feedback: text(source.feedback, 500) || "",
-        formTip: text(source.formTip, 300)
+        timeAnalysis: stripRepCounts(text(source.timeAnalysis, 200)) || "",
+        feedback: stripRepCounts(text(source.feedback, 500)) || "",
+        formTip: stripRepCounts(text(source.formTip, 300))
     };
 }
 

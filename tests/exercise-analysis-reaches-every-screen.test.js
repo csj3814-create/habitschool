@@ -23,9 +23,12 @@ describe('the exercise analysis reaches the screens that show it', () => {
 
         it('sends only the fields the screen draws, not the raw object', () => {
             const fn = gallery.split('function normalizeExerciseAnalysisEntry(')[1].split('\n}\n')[0];
-            for (const field of ['intensity', 'exerciseType', 'timeAnalysis', 'feedback', 'formTip', 'weightedMinutes', 'repCount']) {
+            for (const field of ['intensity', 'exerciseType', 'timeAnalysis', 'feedback', 'formTip', 'weightedMinutes']) {
                 expect(fn, field).toContain(field);
             }
+            // 2026-09-19: 반복 횟수는 싣지 않는다. 하이퍼랩스에서 센 숫자가
+            // 실제와 크게 어긋났다(70회 → 3회).
+            expect(fn).not.toContain('repCount');
             // 화면은 intensity 로 색을 고른다. 낯선 낱말이 오면 색이 통째로 빠진다.
             expect(gallery).toContain('const EXERCISE_INTENSITY_WORDS = ["저강도", "중강도", "고강도", "초고강도"];');
             expect(fn).toContain('EXERCISE_INTENSITY_WORDS.includes(intensity)');
@@ -71,7 +74,6 @@ describe('the exercise analysis reaches the screens that show it', () => {
                         isExercise: true,
                         intensity: '고강도',
                         exerciseType: '데드리프트',
-                        repCount: 12,
                         weightedMinutes: null,
                         feedback: '좋습니다',
                         formTip: '허리를 펴세요'
@@ -92,7 +94,7 @@ describe('the exercise analysis reaches the screens that show it', () => {
         it('shows what the new analysis actually carries', () => {
             const [entry] = collectAdminDailyLogAnalyses(log);
             const labels = entry.fields.map((f) => f.label);
-            for (const label of ['강도', '운동 종류', '반복 횟수', '피드백', '자세 팁']) {
+            for (const label of ['강도', '운동 종류', '피드백', '자세 팁']) {
                 expect(labels, label).toContain(label);
             }
         });

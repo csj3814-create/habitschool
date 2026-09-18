@@ -191,8 +191,6 @@ function normalizeExerciseAnalysisEntry(raw) {
 
     const weighted = Number(raw.weightedMinutes);
     if (Number.isFinite(weighted) && weighted > 0) entry.weightedMinutes = Math.min(1440, Math.round(weighted));
-    const reps = Number(raw.repCount);
-    if (Number.isFinite(reps) && reps > 0) entry.repCount = Math.min(999, Math.round(reps));
 
     return entry;
 }

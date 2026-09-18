@@ -2,12 +2,12 @@
  * Client helpers for AI food, exercise, sleep/mind, blood-test, and step screenshot analysis.
  */
 
-import { auth, functions } from './firebase-config.js?v=417';
+import { auth, functions } from './firebase-config.js?v=418';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
-import { showToast } from './ui-helpers.js?v=417';
-import { escapeHtml } from './security.js?v=417';
-import { getLocale, isEnglishLocale, t } from './i18n.js?v=417';
-import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=417';
+import { showToast } from './ui-helpers.js?v=418';
+import { escapeHtml } from './security.js?v=418';
+import { getLocale, isEnglishLocale, t } from './i18n.js?v=418';
+import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=418';
 
 const analyzeDietFn = httpsCallable(functions, 'analyzeDiet');
 const analyzeExerciseFn = httpsCallable(functions, 'analyzeExercise');
@@ -254,6 +254,27 @@ export function renderDietDaySummary(container, analyses) {
     container.style.display = 'block';
 }
 
+/**
+ * 문장에 남은 반복 횟수를 지운다. functions/runtime.js 의 같은 이름 함수와
+ * **같은 규칙**이어야 한다(tests/exercise-video-analysis 가 둘을 같은 예로 돌려
+ * 대조한다).
+ *
+ * 서버는 오늘부터 오는 응답을 막고, 이것은 **이미 저장된 기록**을 맡는다.
+ * 2026-09-19 이전 영상에는 "런지 · 약 3회" 같은 문장이 그대로 남아 있고,
+ * 그 숫자가 틀렸다는 것이 이 기능을 뺀 이유다. 백필 대신 그리는 자리에서
+ * 지운다 — 기록 화면과 갤러리가 이 함수 하나를 함께 쓴다.
+ */
+function stripRepCounts(value) {
+    if (!value) return value;
+    return String(value)
+        .replace(/(약\s*)?\d+\s*회(씩)?/g, '')
+        .replace(/(about\s+)?\d+\s*reps?/gi, '')
+        .replace(/\s*[·,]\s*(?=[·,]|$)/g, '')
+        .replace(/^\s*[·,]\s*/, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+}
+
 export function renderExerciseAnalysisResult(analysis, container) {
     if (!container || !analysis) return;
 
@@ -273,7 +294,7 @@ export function renderExerciseAnalysisResult(analysis, container) {
                             : '운동 기록으로 볼 만한 것이 사진에 없습니다.'))}</div>
                     </div>
                 </div>
-                ${analysis.timeAnalysis ? `<div style="font-size:12px; color:#777; margin-top:8px;">${escapeHtml(analysis.timeAnalysis)}</div>` : ''}
+                ${analysis.timeAnalysis ? `<div style="font-size:12px; color:#777; margin-top:8px;">${escapeHtml(stripRepCounts(analysis.timeAnalysis))}</div>` : ''}
             </div>`;
         container.style.display = 'block';
         return;
@@ -319,16 +340,13 @@ export function renderExerciseAnalysisResult(analysis, container) {
                 <span class="diet-ratio-val" style="color:${shareColor}; font-weight:bold;">${weeklyShare}%</span>
             </div>`
         : '';
-    // 영상 분석은 반복 횟수를 셀 수 있을 때만 준다. 있으면 종류 옆에 같이 보인다.
-    const repCount = Number(analysis.repCount);
-    const repLabel = Number.isFinite(repCount) && repCount > 0
-        ? ` · ${repCount}${en ? " reps" : "회"}`
-        : '';
+    // 반복 횟수는 보여 주지 않는다. 하이퍼랩스 영상에서 센 숫자는 실제와 크게
+    // 어긋난다 — 70회가 3회로 나온 제보가 2026-09-19 에 있었다.
     const exerciseType = analysis.exerciseType
-        ? `<div style="font-size:12px; color:#555; margin-top:4px;">${en ? t('exercise.type') : '인식'}: ${escapeHtml(analysis.exerciseType)}${repLabel}</div>`
+        ? `<div style="font-size:12px; color:#555; margin-top:4px;">${en ? t('exercise.type') : '인식'}: ${escapeHtml(analysis.exerciseType)}</div>`
         : '';
     const formTip = analysis.formTip
-        ? `<div class="diet-suggestion-box" style="margin-top:10px;">💬 ${escapeHtml(analysis.formTip)}</div>`
+        ? `<div class="diet-suggestion-box" style="margin-top:10px;">💬 ${escapeHtml(stripRepCounts(analysis.formTip))}</div>`
         : '';
 
     container.innerHTML = `
@@ -337,7 +355,7 @@ export function renderExerciseAnalysisResult(analysis, container) {
                 <div class="diet-grade-badge" style="background:${intensityColors[intensity] || '#4CAF50'}; font-size: 14px; min-width: 60px;">${intensityEmoji[intensity] || '🏃'} ${escapeHtml(displayIntensity)}</div>
                 <div class="diet-grade-info">
                     <div class="diet-grade-label">${en ? t('exercise.intensityTitle') : '운동 강도 분석'}</div>
-                    <div class="diet-grade-summary">${escapeHtml(analysis.timeAnalysis || '')}</div>
+                    <div class="diet-grade-summary">${escapeHtml(stripRepCounts(analysis.timeAnalysis) || '')}</div>
                     ${exerciseType}
                 </div>
             </div>
@@ -346,7 +364,7 @@ export function renderExerciseAnalysisResult(analysis, container) {
                 <div class="diet-insight-icon">🏋️</div>
                 <div class="diet-insight-text">
                     <div class="diet-insight-label">${en ? t('exercise.coachFeedback') : 'AI 트레이너 피드백'}</div>
-                    <div>${escapeHtml(analysis.feedback || '')}</div>
+                    <div>${escapeHtml(stripRepCounts(analysis.feedback) || '')}</div>
                 </div>
             </div>
             ${formTip}
