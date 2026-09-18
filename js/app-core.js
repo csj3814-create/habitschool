@@ -22658,9 +22658,10 @@ window.shareToPlatform = async function (platform) {
 let cachedGalleryLogs = [];
 let galleryCacheAudience = 'unknown'; // 'guest' | 'auth' | 'unknown'
 const GALLERY_PERSISTENT_CACHE_SCHEMA_VERSION = 2;
-// 2026-09-17: 수면 분석이 게시물에 실리기 시작했다(functions/gallery-posts.js).
-// 기기에 남은 캐시에는 그 필드가 없어서, 번호를 올려 다시 받게 한다.
-const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 3;
+// 서버가 gallery_posts 에 찍는 functions/gallery-posts.js 의
+// GALLERY_POST_SCHEMA_VERSION 과 **같은 값이어야 한다.** 다르면 모든 게시물이
+// 번호 불일치로 걸러져 영구 캐시가 통째로 죽는다(tests/gallery-sleep-analysis.test.js).
+const GALLERY_PERSISTED_POST_SCHEMA_VERSION = 2;
 const GALLERY_PERSISTENT_CACHE_PREFIX = 'habitschool_gallery_cache_v2';
 const LEGACY_AUTH_GALLERY_CACHE_PREFIXES = Object.freeze(['habitschool_gallery_cache_v1']);
 const GALLERY_PERSISTENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -24153,12 +24154,10 @@ function collectGalleryMedia(data) {
             const src = (thumbUrl && isValidStorageUrl(thumbUrl)) ? escapeHtml(thumbUrl) : escapeHtml(url);
             const full = escapeHtml(url);
             const fallback = (src !== full) ? ` data-fallback-list="${full}"` : '';
-            const hasSleepAi = data.sleepAndMind.sleepAnalysis != null;
-            const sleepAiAttr = hasSleepAi ? ` data-ai-analysis="${btoa(unescape(encodeURIComponent(JSON.stringify(data.sleepAndMind.sleepAnalysis))))}"` : '';
-            result.mindHtml = `<div class="gallery-media-wrapper"${sleepAiAttr}>
+            // 수면은 사진만 건다. 분석 확인 버튼은 일부러 없다 — 이유는
+            // functions/gallery-posts.js normalizeSleepAndMind 주석에.
+            result.mindHtml = `<div class="gallery-media-wrapper">
                 <img src="${src}" onclick="toggleGalleryFullImage(this, '${full}')" alt="수면 기록 캡처" loading="lazy" decoding="async" onerror="handleThumbFallback(this)"${fallback}>
-                ${hasSleepAi ? '<button class="gallery-ai-overlay-btn" onclick="event.stopPropagation(); toggleGalleryAiOverlay(this)">분석 확인</button>' : ''}
-                <div class="gallery-ai-overlay" style="display:none;"></div>
             </div>`;
         }
     }

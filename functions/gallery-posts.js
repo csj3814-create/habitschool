@@ -315,45 +315,18 @@ function normalizeExercise(raw, ownerId, allowedStorageBuckets = null) {
     return Object.keys(exercise).length > 0 ? exercise : null;
 }
 
-const SLEEP_ANALYSIS_GRADES = ["A", "B", "C", "D", "F"];
-
 /**
- * 갤러리에 내보낼 수면 분석. 화면(js/diet-analysis.js renderSleepMindAnalysisResult)이
- * 읽는 것만 추린다.
+ * 갤러리에 나가는 수면 칸. **수면 분석(sleepAnalysis)은 일부러 싣지 않는다.**
  *
- * 2026-09-17 요청: "갤러리에서 운동 이미지, 영상, 수면 아래에도 분석 확인 버튼
- * 나타나게 해 줘." 운동은 이미 실려 나가고 있었는데(normalizeExerciseAnalysisEntry)
- * 수면만 빠져 있었다. 원본에는 있고 투영에만 없어서 버튼이 뜰 수가 없었다.
+ * 2026-09-17 에 한 번 실었다가 2026-09-18 에 다시 뺐다. 갤러리는 남들이 보는
+ * 자리이고, 수면 캡처를 공유하는 것과 "이 사람의 수면은 B 등급" 이라는 AI 판단을
+ * 함께 거는 것은 다른 일이다. 회원 본인 화면(js/app-core.js 기록 탭)에서는
+ * 그대로 볼 수 있다.
  *
- * **emotionTone 과 stressLevel 은 일부러 뺀다.** 화면은 그 둘도 읽지만, 갤러리는
- * 남들이 보는 자리다. 수면 캡처를 공유하는 것과 "이 사람의 감정 상태는 이렇다" 는
- * AI 판단을 함께 거는 것은 다른 일이라고 봤다. 필요하면 여기에 더하면 된다.
+ * 되살리려면 여기서 raw.sleepAnalysis 를 추려 담고, js/app-core.js 갤러리
+ * 카드에 분석 확인 버튼을 되돌리면 된다 — 화면 쪽 오버레이(toggleGalleryAiOverlay)는
+ * 종류만 맞으면 그대로 받는다.
  */
-function normalizeSleepAnalysisEntry(raw) {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
-
-    const grade = normalizeString(raw.grade, 2).toUpperCase();
-    const summary = normalizeString(raw.summary, 200);
-    if (!SLEEP_ANALYSIS_GRADES.includes(grade) && !summary) return null;
-
-    const result = {};
-    // 화면이 종류로 분기한다. 없으면 식단 분석으로 잘못 읽힌다.
-    result.type = normalizeString(raw.type, 8) === "mind" ? "mind" : "sleep";
-    if (SLEEP_ANALYSIS_GRADES.includes(grade)) result.grade = grade;
-    if (summary) result.summary = summary;
-
-    const rawDetails = raw.details;
-    if (rawDetails && typeof rawDetails === "object" && !Array.isArray(rawDetails)) {
-        const details = {};
-        const duration = normalizeString(rawDetails.sleepDuration, 40);
-        const quality = normalizeString(rawDetails.sleepQuality, 60);
-        if (duration) details.sleepDuration = duration;
-        if (quality) details.sleepQuality = quality;
-        if (Object.keys(details).length > 0) result.details = details;
-    }
-    return result;
-}
-
 function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null) {
     if (!raw || typeof raw !== "object") return null;
 
@@ -366,10 +339,6 @@ function normalizeSleepAndMind(raw, ownerId, allowedStorageBuckets = null) {
         result.sleepImageUrl = sleepImageUrl;
         const thumbUrl = normalizeMediaUrl(raw.sleepImageThumbUrl, ownerId, "sleep_images_thumbnails", allowedStorageBuckets);
         if (thumbUrl) result.sleepImageThumbUrl = thumbUrl;
-        // 사진이 나가는 경우에만 분석을 함께 보낸다. 사진 없이 분석만 있으면
-        // 걸어 둘 자리가 없다.
-        const analysis = normalizeSleepAnalysisEntry(raw.sleepAnalysis);
-        if (analysis) result.sleepAnalysis = analysis;
     }
     return result;
 }
