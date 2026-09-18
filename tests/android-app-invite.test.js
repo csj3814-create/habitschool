@@ -236,3 +236,39 @@ describe('we can tell a tap from a glance', () => {
         expect(h.win.location.href).toContain('intent://');
     });
 });
+
+// 2026-09-19 지시: 안드로이드에서는 PWA 설치 권유를 잠시 끈다.
+//
+// 안드로이드 화면에 설치 안내가 둘이었다 — 위에는 플레이스토어 앱으로 가는 줄,
+// 아래에는 PWA 설치 배너. 잘못 누르면 홈화면 아이콘이 생기는데 그건 웹
+// 바로가기라 Play 심사에 잡히지 않는다. 우리가 메일에 "홈화면 아이콘은 웹
+// 바로가기일 수 있습니다" 라고 경고한 그 상황을 앱이 스스로 만들고 있었다.
+describe('only one install path shows on Android', () => {
+    const PWA = readFileSync(resolve(ROOT_DIR, 'js/pwa-install.js'), 'utf8');
+    const gate = PWA.split('function shouldShowInstallCta() {')[1].split('\n}')[0];
+
+    const decide = (ua) => Function('navigator', `
+        const isLocalHost = () => false;
+        const isStandaloneInstallMode = () => false;
+        const SUPPRESS_ANDROID_PWA_INSTALL = ${PWA.includes('const SUPPRESS_ANDROID_PWA_INSTALL = true;')};
+        ${PWA.split('function isAndroidDevice() {')[1].split('\n}')[0].replace(/^/, 'function isAndroidDevice() {')}
+        }
+        function shouldShowInstallCta() {${gate}
+        }
+        return shouldShowInstallCta();`)({ userAgent: ua });
+
+    it('hides the PWA install prompt on Android', () => {
+        expect(decide(ANDROID)).toBe(false);
+    });
+
+    it('keeps it on iPhone and desktop, where it is the only way to install', () => {
+        expect(decide(IPHONE)).toBe(true);
+        expect(decide(DESKTOP)).toBe(true);
+    });
+
+    it('is one line to undo, and says when to undo it', () => {
+        // Play 액세스가 나오면 되돌린다. 왜 껐는지 모르면 영영 꺼진 채로 남는다.
+        expect(PWA).toContain('const SUPPRESS_ANDROID_PWA_INSTALL = true;');
+        expect(PWA).toContain('Play 프로덕션 액세스가 나오면 이 값을 false 로 되돌린다');
+    });
+});

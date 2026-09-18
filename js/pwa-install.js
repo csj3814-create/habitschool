@@ -185,9 +185,31 @@ async function refreshInstalledAppState() {
     return nextInstalled;
 }
 
+/**
+ * 안드로이드에서 PWA 설치 권유를 잠시 끈다.
+ *
+ * 2026-09-19: 안드로이드 화면에 설치 안내가 둘이었다. 위에는 플레이스토어 앱으로
+ * 가는 줄, 아래에는 이 PWA 설치 배너. **잘못 누르면 홈화면 아이콘이 생기는데
+ * 그건 웹 바로가기라 Play 심사에 잡히지 않는다.** 우리가 테스터 메일에
+ * "홈화면 아이콘은 웹 바로가기일 수 있습니다" 라고 경고한 바로 그 상황을 앱이
+ * 스스로 만들고 있었다.
+ *
+ * 안드로이드에는 진짜 앱이 있으므로 PWA 설치가 더 나은 선택인 경우가 없다.
+ * 아이폰·데스크톱은 그대로 둔다 — 거기서는 이것이 유일한 설치 수단이다.
+ *
+ * **한시적이다.** Play 프로덕션 액세스가 나오면 이 값을 false 로 되돌린다
+ * (tasks/2026-09-18_tester_activation.md).
+ */
+const SUPPRESS_ANDROID_PWA_INSTALL = true;
+
+function isAndroidDevice() {
+    return /android/i.test(String(navigator.userAgent || ''));
+}
+
 function shouldShowInstallCta() {
     if (isLocalHost()) return false;
     if (isStandaloneInstallMode()) return false;
+    if (SUPPRESS_ANDROID_PWA_INSTALL && isAndroidDevice()) return false;
     return true;
 }
 
