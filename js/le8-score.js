@@ -151,6 +151,19 @@ function calcDietScore(recentLogs) {
 // 숫자를 보고 어느 쪽을 믿을지 모르게 된다.
 export const WEEKLY_ACTIVITY_TARGET_MINUTES = 150;
 
+/**
+ * 권장 상한. 세계보건기구는 성인에게 **주 150~300분** 중강도를 권한다 — 150분이
+ * 최소선이고 300분까지는 이득이 계속 늘어난다(그 뒤로도 늘긴 하지만 완만해진다).
+ *
+ * 2026-09-19 제안: "주간 운동량을 150분 최소량 채우고 나면 축하 메세지 나오면서
+ * 300분 권장량까지 바가 더 생기는 방식 어떨까?"
+ *
+ * **점수에는 쓰지 않는다.** LE8 활동 점수는 150분에서 100점이 만점이고, 여기서
+ * 더 걷는다고 더 받는 것이 아니다. 이 값은 화면이 다음 눈금을 보여 주기 위한
+ * 것뿐이다 — 점수를 건드리면 지난 기록의 점수가 소급해서 바뀐다.
+ */
+export const WEEKLY_ACTIVITY_STRETCH_MINUTES = 300;
+
 // 강도 환산(WHO): 고강도 1분은 중강도 2분에 해당한다.
 // functions/runtime.js 의 EXERCISE_INTENSITY_MINUTE_WEIGHTS 와 같아야 한다.
 export const EXERCISE_INTENSITY_MINUTE_WEIGHTS = Object.freeze({
@@ -291,6 +304,12 @@ export function summarizeWeeklyActivity(weekLogs = [], { todayStr = '', weekStrs
     // 오늘도 아직 할 수 있는 날이다. 오늘을 빼면 '남은 0일'이 되어 안내가 사라진다.
     const daysLeft = days.filter((day) => day.isFuture || day.isToday).length;
 
+    // 150분을 넘긴 뒤의 눈금. 최소선을 채운 사람에게 0% 로 되돌아간 막대를
+    // 보여 주면 방금 한 일이 지워진 것처럼 보이므로, 150 을 기준점으로 잡는다.
+    const stretchMinutes = WEEKLY_ACTIVITY_STRETCH_MINUTES;
+    const stretchSpan = Math.max(1, stretchMinutes - targetMinutes);
+    const stretchRemaining = Math.max(0, stretchMinutes - weeklyMinutes);
+
     return {
         days,
         weeklyMinutes,
@@ -299,7 +318,12 @@ export function summarizeWeeklyActivity(weekLogs = [], { todayStr = '', weekStrs
         percent: Math.min(100, Math.round((weeklyMinutes / targetMinutes) * 100)),
         met: weeklyMinutes >= targetMinutes,
         daysLeft,
-        perDayNeeded: daysLeft > 0 ? Math.ceil(remainingMinutes / daysLeft) : remainingMinutes
+        perDayNeeded: daysLeft > 0 ? Math.ceil(remainingMinutes / daysLeft) : remainingMinutes,
+        stretchMinutes,
+        stretchRemaining,
+        stretchPercent: Math.min(100, Math.max(0,
+            Math.round(((weeklyMinutes - targetMinutes) / stretchSpan) * 100))),
+        stretchMet: weeklyMinutes >= stretchMinutes
     };
 }
 

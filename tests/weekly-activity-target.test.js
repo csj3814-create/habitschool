@@ -211,9 +211,13 @@ describe('the weekly bar sits where the recording happens', () => {
 
     it('does not nag a week that is already met', () => {
         const fn = app.split('function renderWeeklyActivityCard(')[1].split('\n}\n')[0];
-        expect(fn).toContain('const guide = met');
-        expect(fn).toContain('남은 날은 덤입니다');
+        // 2026-09-19: 150분을 채우면 축하하고 다음 눈금(권장 상한 300분)을 연다.
+        // 보채지 않는다는 규칙은 그대로다 — 채운 주에 '채워요' 가 붙으면 안 된다.
+        expect(fn).toContain('const guide = stretchMet');
+        expect(fn).toContain('최소 ${targetMinutes}분을 채우셨어요 🎉');
         expect(fn).toContain('하루 ${perDayNeeded}분씩이면 채워요');
+        const metBranch = fn.split('const guide = stretchMet')[1].split(': daysLeft > 0')[0];
+        expect(metBranch).not.toContain('채워요');
     });
 });
 

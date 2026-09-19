@@ -1341,6 +1341,9 @@ body.dark-mode .weekly-activity-day-label { color: #7C7688; }
 body.dark-mode .weekly-activity-day-dot { background: #3A3641; }
 body.dark-mode .weekly-activity-day.is-future .weekly-activity-day-dot { background: #24212A; border-color: #3A3641; }
 body.dark-mode .weekly-activity-note { color: #7C7688; }
+body.dark-mode .weekly-activity-stretch { border-top-color: #2B2830; }
+body.dark-mode .weekly-activity-stretch-label { color: #9CCC65; }
+body.dark-mode .weekly-activity-stretch-count { color: #7C7688; }
 body.dark-mode .weekly-activity-retry { background: #2B2830; border-color: #3A3641; color: #C0BCC6; }
 
 /* 안드로이드 앱 권유 */

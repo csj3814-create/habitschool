@@ -7615,3 +7615,35 @@ body.dark-mode #gallery-feed-end {
     font-size: 13px;
     cursor: pointer;
 }
+
+/* ── 권장 상한(300분) 막대 ─────────────────────────────────────
+   150분을 채운 뒤에만 나타난다. 최소선을 채운 사람에게 0% 로 되돌아간 막대를
+   보여 주면 방금 한 일이 지워진 것처럼 보이므로, 색과 자리로 '다음 구간'임을
+   분명히 한다. */
+.weekly-activity-stretch {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #E3E8EF;
+}
+
+.weekly-activity-stretch-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.weekly-activity-stretch-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6B8E5A;
+}
+
+.weekly-activity-stretch-count {
+    font-size: 11px;
+    color: #999;
+}
+
+.weekly-activity-bar-fill.is-stretch {
+    background: linear-gradient(90deg, #7CB342, #AED581);
+}
