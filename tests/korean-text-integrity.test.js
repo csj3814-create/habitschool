@@ -81,7 +81,13 @@ describe('Korean text integrity', () => {
         // 날짜는 릴리스마다 바뀐다. 이 테스트가 지키는 건 한글이 깨지지 않았다는 것뿐이니
         // 특정 날짜가 아니라 그 줄의 모양만 본다.
         expect(changelogSource).toMatch(/마지막 업데이트: \d{4}년 \d{1,2}월 \d{1,2}일/);
-        expect(changelogSource).toContain('쿠폰 보관함의 표시와 문자 재발송 안내를 바로잡았습니다');
+        // 2026-09-19: 예전에는 특정 문장 하나를 못 박고 있었는데, 업데이트 노트를
+        // 다듬을 때마다 그 문장이 바뀌어 깨졌다. 이 시험이 지키는 것은 문구가
+        // 아니라 한글이 깨지지 않았다는 사실이다.
+        for (const label of ['신규', '개선', '수정']) {
+            expect(changelogSource, label).toContain(`>${label}</span>`);
+        }
+        expect((changelogSource.match(/[가-힣]/g) || []).length).toBeGreaterThan(2000);
         expect(changelogSource).not.toMatch(BROKEN_CHANGELOG_QUESTION_RUN_PATTERN);
         expect(changelogSource).not.toMatch(MOJIBAKE_PATTERN);
     });

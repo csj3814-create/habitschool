@@ -1,648 +1,183 @@
 # Changelog
 
-All notable changes to Habitschool are documented here.
-
-## 2026-09-15
+해빛스쿨의 변경 기록입니다. 사용자에게 달라지는 것만 적습니다.
 
-### Added
-- **운동 영상도 AI가 봅니다.** 하이퍼랩스로 찍은 운동 영상을 올리면 어떤 운동인지, 강도가 어느 정도인지, 자세는 어떤지 읽어 드립니다. 반복 횟수도 화면에서 셀 수 있으면 함께 알려 드립니다. 사진 한 장으로는 알 수 없던 것 — 동작과 자세 — 이 영상에서는 보입니다. 다만 **운동한 시간은 영상으로 알 수 없습니다.** 하이퍼랩스는 시간을 압축한 영상이라 10초짜리 파일이 실제로 10분이었는지 한 시간이었는지 화면에 남지 않습니다. 그래서 시간은 지금처럼 직접 적어 주시고, AI가 읽은 강도가 거기에 곱해져 이번 주 150분에 반영됩니다(고강도 20분 = 40분).
+## 2026-09-19 — 운동 기록이 더 정확해졌습니다
 
-### Changed
-- **근력운동이 이제 걸음수와 따로 셉니다.** 지금까지는 하루 활동량을 "걸음수로 환산한 시간"과 "운동 기록으로 환산한 시간" 중 **큰 쪽 하나만** 썼습니다. 같은 산책이 걸음수로도 사진으로도 잡혀 두 번 세어지는 것을 막으려던 것이고, 걷기·달리기에는 맞는 방식입니다. 그런데 근력운동은 걸음수를 만들지 않습니다. 역기를 든다고 만보기가 돌지 않는데도, 8,000보 걷고 헬스 한 시간 하신 분의 운동을 둘 중 하나만 인정하고 있었습니다. 90일치를 확인해 보니 근력 영상을 올리신 367일 중 **204일(55.6%)에서 그날 하신 운동이 걸음수에 가려 사라지고** 있었습니다. 하루 평균 34분씩입니다. 이제 걸음수가 설명하지 못하는 운동은 더합니다 — 근력은 언제나, 유산소는 AI가 자전거·수영처럼 걸음이 안 생기는 종류로 읽었을 때. 걷기·달리기로 읽혔거나 종류를 모를 때는 지금처럼 큰 쪽만 씁니다.
-- 이 변경으로 **점수가 내려가는 분은 없습니다.** 건강습관 점수의 신체활동 항목이 오르는 경우가 전체의 3.5%, 오를 때 평균 16.4점입니다. 나머지 96.5%는 그대로입니다.
+- **[신규]** **이번 주 150분을 채우면 축하와 함께 다음 눈금이 열립니다.** 세계보건기구 권장은 주 150~300분입니다. 150분을 넘기면 300분까지 막대가 이어집니다.
+- **[개선]** **운동 시간 입력칸이 한 줄로 줄었습니다.** 5·10·15·30·60분 버튼 중에 누르거나 직접 적으시면 됩니다.
+- **[개선]** **운동 영상 분석에서 반복 횟수를 뺐습니다.** 하이퍼랩스는 빨리 감긴 영상이라 70회가 3회로 보입니다. 틀린 숫자를 드리느니 말하지 않는 편이 낫다고 판단했습니다.
+- **[개선]** **갤러리에서도 운동 사진·영상의 AI 분석을 바로 볼 수 있습니다.**
+- **[수정]** **영상을 올린 직후 저장하면 AI 분석이 실패하던 문제**를 고쳤습니다. 이제 분석이 끝난 뒤에 저장합니다.
+- **[수정]** **이번 주 운동 시간이 0분으로 보이던 문제**를 고쳤습니다. 연결이 끊겨 못 불러왔을 때 0이라고 적고 있었습니다. 이제 못 불러오면 그렇다고 말씀드립니다.
+- **[수정]** **챌린지를 끝내도 "정산 확인 중"에 머물던 문제**를 고쳤습니다. 앱을 나갔다 들어오지 않아도 바로 수령할 수 있습니다.
+- **[수정]** **연결이 불안정할 때 동의 화면이 다시 뜨던 문제**를 고쳤습니다. 저장되지 않으면 그 자리에서 알려 드립니다.
 
-> 포인트와는 무관한 변경입니다. 운동 사진·영상 인증 포인트(장당 10점, 하루 30점 상한)는 예전과 똑같이 지급됩니다.
+## 2026-09-15 — 근력운동이 걸음수에 가려 사라지고 있었습니다
 
-## 2026-09-14
+- **[신규]** **운동 영상도 AI가 봅니다.** 어떤 운동인지, 강도가 어느 정도인지, 자세는 어떤지 읽어 드립니다. 운동한 시간은 영상으로 알 수 없어 직접 적어 주셔야 합니다.
+- **[수정]** **근력운동이 이제 걸음수와 따로 셉니다.** 역기를 들어도 만보기는 돌지 않는데, 그날 하신 근력운동이 걸음수에 가려 사라지고 있었습니다.
+- **[개선]** 이 변경으로 **점수가 내려가는 분은 없습니다.** 운동 인증 포인트도 예전과 똑같습니다.
 
-기록하는 자리에서 손이 덜 가게, 그리고 해낸 것이 화면에 제대로 보이게 손봤습니다.
+## 2026-09-14 — 사진만 올리면 분석까지, 해낸 것은 눈에 보이게
 
-### Added
-- **운동 시간을 적을 칸이 생겼습니다.** 사진과 영상이 알려 주지 못하는 단 하나가 시간입니다. 특히 하이퍼랩스는 시간을 압축해 버린 영상이라, 10초짜리 파일이 실제로 몇 분이었는지 화면에 남지 않습니다. AI로도 알 수 없는 값이라 직접 여쭙기로 했습니다 — 숫자를 적거나 10·20·30·45·60분 중에 누르시면 됩니다. 적으신 시간은 강도에 따라 환산돼(고강도 1분은 중강도 2분) 이번 주 150분에 그대로 반영됩니다. 러닝머신 계기판처럼 시간이 찍힌 사진이면 AI가 읽어 미리 채워 드리고, 직접 고치신 값은 나중에 다시 분석해도 그대로 둡니다. 비워 두시면 예전처럼 기록 하나당 30분으로 잡습니다.
-- **운동 탭에 이번 주 완수율이 생겼습니다.** "이번 주 82 / 150분 · 55% · 3일 남았어요 — 하루 23분씩이면 채워요". 주 150분은 세계보건기구와 미국심장협회가 권하는 기준이고, 건강습관 점수가 이미 이 기준으로 신체활동을 채점하고 있었습니다. 다만 그 숫자가 점수 설명 안에만 있어서, 정작 기록하는 자리에서는 얼마나 했고 얼마가 남았는지 볼 수 없었습니다. 요일별 점으로 이번 주를 한눈에 보고, 남은 양을 남은 날로 나눈 "오늘 얼마"까지 함께 보여 드립니다. 걸음수와 운동 기록에서 계산하며, 같은 산책을 두 번 세지 않습니다.
-- **운동 사진도 AI가 읽습니다.** 유산소 인증 사진을 올리면 어떤 운동을 얼마나 했는지 분석합니다. 러닝머신 계기판이나 워치 요약 화면처럼 숫자가 찍힌 사진이면 시간·거리·칼로리를 읽어 그대로 쓰고, 숫자가 없는 운동 장면이면 장면으로 강도를 판단합니다. WHO 기준 중강도 하루 30분을 100%로 보고 달성률을 함께 보여 줍니다. 사진을 올리면 저절로 돌고, 결과는 기록을 저장할 때 함께 남습니다.
-- **식단·수면 사진을 올리면 AI 분석이 저절로 시작됩니다.** 사진을 올렸다는 것이 곧 분석해 달라는 뜻인데, 버튼을 한 번 더 누르게 하고 있었습니다. 아침·점심·저녁·간식을 한꺼번에 고르면 올라가는 순서대로 하나씩 분석합니다. 버튼은 그대로 둡니다 — 결과를 접었다 펴고, 실패했을 때 다시 눌러 볼 자리가 필요합니다. 자동 분석이 실패해도 화면을 어지럽히지 않고 조용히 넘어갑니다.
-- **목표를 달성하면 축하 화면이 뜹니다.** 챌린지 보상은 "수령하기"를 눌러 받고, 받은 포인트·HBT가 얼마인지 그 자리에서 보입니다. 조건을 채워 저절로 들어온 미션 배지도 처음 확인할 때 한 번 알려 드립니다.
+- **[신규]** **운동 시간을 적을 칸이 생겼습니다.** 사진과 영상이 알려 주지 못하는 단 하나가 시간입니다. 적으신 시간은 강도에 따라 환산돼 이번 주 150분에 반영됩니다.
+- **[신규]** **운동 탭에서 이번 주 완수율을 봅니다.** "82 / 150분 · 3일 남았어요 — 하루 23분씩이면 채워요". 요일별로 이번 주를 한눈에 볼 수 있습니다.
+- **[신규]** **운동 사진도 AI가 읽습니다.** 러닝머신 계기판처럼 숫자가 찍힌 사진이면 시간·거리·칼로리를 그대로 읽고, 숫자가 없으면 장면으로 강도를 판단합니다.
+- **[신규]** **식단·수면 사진을 올리면 AI 분석이 저절로 시작됩니다.** 버튼을 한 번 더 누르지 않으셔도 됩니다.
+- **[신규]** **목표를 달성하면 축하 화면이 뜹니다.** 받은 포인트와 HBT가 그 자리에서 보입니다.
+- **[수정]** **운동 분석 카드와 건강습관 점수가 서로 다른 기준을 쓰던 문제**를 고쳤습니다. 이제 둘 다 주 150분 하나만 봅니다.
+- **[수정]** **사진을 지워도 AI 분석은 기록에 남아 점수에 반영되던 문제**를 고쳤습니다. 이제 사진과 함께 지워집니다.
+- **[수정]** **변환 한도가 실제와 다르게 표시되던 문제**를 고쳤습니다.
+- **[수정]** **이미 끝난 챌린지가 수령 대기로 남던 문제**를 고쳤습니다.
+- **[개선]** **소모임 100일 도전의 기간이 보입니다.** 며칠 남았는지 함께 표시합니다.
+- **[개선]** **초대 링크에 미리보기 이미지가 붙습니다.**
 
-### Fixed
-- **운동 분석 카드의 달성률 기준을 주 150분으로 맞췄습니다.** 카드는 "하루 30분"을, 건강습관 점수는 "주 150분"을 기준으로 삼고 있어 같은 운동이 두 화면에서 다른 숫자로 보였습니다. 이제 카드는 "주 150분 목표에 40분 적립"처럼 주간 목표에 얼마를 보탰는지만 말합니다. AI가 사진에서 시간을 읽어낸 경우에는 그 시간이 주간 합계에 그대로 반영됩니다(강도에 따라 고강도 1분은 2분으로 환산). 시간을 읽지 못하면 예전처럼 한 건당 30분으로 잡습니다.
-- **사진을 지워도 AI 분석은 기록에 남아 있었습니다.** 화면에서는 분석 카드가 사라졌지만 서버에는 그대로였습니다. 분석 결과는 저장 버튼과 무관하게 그 자리에서 기록에 들어가는데, 지우는 쪽은 저장 버튼을 눌러야 반영됐고 그나마도 값을 빼는 방식이라 실제로는 지워지지 않았습니다. 그래서 지운 사진의 분석이 건강습관 점수·대사 점수에 계속 반영됐습니다. 이제 사진을 지우면 그 사진 때문에 기록에 들어갔던 분석과 사진도 함께 지워집니다. 예전에 저장해 두신 기록은 지금처럼 저장 버튼을 눌러야 바뀝니다.
-- **분석이 도는 도중에 사진을 지우면** 분석이 끝난 뒤 지워진 사진의 결과가 다시 나타났습니다. 이제 결과가 돌아왔을 때 그 사진이 아직 그 자리에 있는지 확인합니다.
-- **캡처를 올리는 동안에도 AI 분석 버튼이 눌렸습니다.** 누르면 "사진을 먼저 저장한 후 분석해주세요"만 나왔습니다. 눌리는데 아무 일도 안 일어나는 버튼은 고장난 버튼으로 읽힙니다. 이제 사진이 다 올라갈 때까지 버튼이 기다립니다.
-- **오늘 변환 한도가 잘못 표시되고 있었습니다.** 화면은 20,000을 기준으로 그리고 있었는데 서버가 실제로 막는 한도는 12,000입니다. 한도를 다 쓴 상태도 표시에 드러나지 않았습니다. 이제 서버가 세는 것과 같은 숫자를 보여 줍니다. (지갑당 하루 발행 한도 20,000은 변환·보상·챌린지를 모두 합친 별도의 한도입니다.)
-- **온체인에서는 이미 끝난 챌린지가 앱에서는 수령 대기로 남던 문제**를 고쳤습니다. 예치금 반환까지 끝났는데 앱이 그 사실을 오류로 읽어, 다시 눌러도 "예치 내역을 찾을 수 없습니다"만 나왔습니다.
+## 2026-09-11 — 알려주신 두 가지를 고쳤습니다
 
-### Changed
-- **소모임 100일 도전의 기간이 화면에 보입니다.** 언제부터 언제까지인지, 며칠 남았는지 함께 표시합니다. 시작한 날부터 120일 안에 100일을 채우면 3,000 포인트입니다.
-- **초대 링크에 미리보기 이미지가 붙습니다.** 블로그나 메신저에 링크를 넣으면 "당신의 건강을 위해 초대합니다" 카드가 함께 뜹니다.
+- **[수정]** **수면 AI 분석을 해도 수면 시간 칸이 비어 있던 문제**를 고쳤습니다. 분석에는 "8시간 20분"이 떠 있는데 입력칸은 그대로였습니다.
+- **[수정]** **챌린지 보상 수령이 100초 넘게 걸리던 문제**를 고쳤습니다. 느린 것이 아니라 실패하고 있었습니다. 이제 몇 초 안에 결과를 알려 드립니다.
+- **[개선]** 수면 AI 분석을 하면 **읽어낸 수면 시간도 바로 저장**됩니다. 직접 적어 두신 값은 그대로 둡니다.
+- **[개선]** **앱에서 걸음수를 자동으로 가져옵니다.** 갤럭시 워치·삼성 헬스의 오늘 걸음수를 앱을 열 때 읽어 옵니다.
+- **[수정]** **그날 첫 기록이 AI 분석일 때 결과가 저장되지 않던 문제**를 고쳤습니다.
 
-## 2026-09-11
+## 2026-09-10 — 가입하고도 시작하지 못하게 막고 있던 것들
 
-제보 두 건을 받아 고쳤습니다. 둘 다 앱 안의 🐞 버튼으로 들어온 것입니다.
+- **[수정]** **네이버 웨일에서 로그인 버튼이 보이지 않던 문제**를 고쳤습니다. 웨일로 오신 분들은 가입할 방법을 찾지 못한 채 돌아가셨습니다. 죄송합니다.
+- **[수정]** 가입한 뒤 **"첫 기록 준비" 화면이 뜨지 않던 문제**를 고쳤습니다. 이제 놓치셔도 다음에 들어오시면 다시 나옵니다.
+- **[수정]** 로그아웃했다가 다시 로그인하면 **약관 동의를 처음부터 다시 받던 문제**를 고쳤습니다. 같은 계정은 한 번만 받습니다.
 
-### Fixed
-- **수면 AI 분석을 해도 수면 시간 칸이 비어 있었습니다.** 분석 카드에는 "8시간 20분"이 떠 있는데 바로 아래 입력칸은 그대로였습니다. 값을 읽는 규칙이 두 벌로 갈라져 있었던 게 원인입니다 — 건강습관 점수는 숫자 필드가 없으면 "8시간 20분" 같은 문구까지 읽었는데, 입력칸은 숫자 필드 하나만 봤습니다. 그래서 점수는 나오는데 칸은 비는 상태가 생겼습니다. 게다가 분석 결과는 누르는 즉시 저장되지만 시간은 저장 버튼을 눌러야 저장되는 구조라, 화면을 다시 그리는 순간(탭 이동·새로고침) 입력칸이 빈 값으로 덮였습니다. 숫자가 들어갔다가 지워지고 있었던 겁니다. 이제 읽는 규칙을 한 곳으로 모아 점수와 입력칸이 같은 값을 봅니다.
-- **30일 마스터 챌린지 보상 수령이 100초 넘게 걸렸습니다.** 실제로는 느린 게 아니라 실패하고 있었습니다. 온체인 일일 발행 한도(지갑당 하루 20,000 HBT)에 걸려 보너스를 지급할 수 없는 상황이었는데, 그 사실을 **예치금 반환 거래를 먼저 보내고 나서야** 확인하고 있었습니다. 못 줄 보너스를 위해 36초를 쓴 셈이고, 그 사이 예치금은 이미 지갑으로 돌아갔는데 챌린지는 수령 대기로 남아 어중간한 상태가 됐습니다. 이제 거래를 보내기 전에 남은 한도를 먼저 확인합니다. 한도가 모자라면 몇 초 안에, 남은 한도가 얼마인지까지 알려 드립니다.
+## 2026-09-01 — 올라가는 중인데 멈춘 것처럼 보이던 것들
 
-### Changed
-- 수면 AI 분석을 하면 **읽어낸 수면 시간도 바로 저장**됩니다. 예전에는 저장 버튼을 눌러야 남았습니다. 직접 적어 두신 값이 있으면 그대로 둡니다.
-- 앱을 열 때 걸음수를 자동으로 가져옵니다(어제 나간 기능의 보완). 운동 탭을 보다 앱으로 돌아올 때도 다시 확인합니다.
+- **[수정]** **사진을 여러 장 올릴 때 한 장만 올라가던 문제**를 고쳤습니다. 느린 회선에서 올라가는 중인데도 끊고 다시 시작하기를 반복하고 있었습니다.
+- **[수정]** **운동 영상을 올릴 때 진행 안내가 사라지던 문제**를 고쳤습니다. 멈춘 것처럼 보였지만 실제로는 올라가는 중이었습니다.
+- **[수정]** 건강습관 점수에서 **"흡연 상태 입력 필요"를 눌러도 아무 일도 일어나지 않던 문제**를 고쳤습니다. 이제 건강정보 동의 안내가 열립니다.
+- **[개선]** 커뮤니티 현황이 한 사람의 이름 대신 **인원**을 보여줍니다. "연속 기록 100일 이상 N명"처럼 셉니다.
+- **[수정]** **매달 1일에 커뮤니티 현황이 사라지던 문제**를 고쳤습니다.
 
-### Fixed (추가)
-- **그날 첫 기록이 AI 분석일 때 결과가 저장되지 않을 수 있었습니다.** 식단·수면 분석은 저장 버튼과 무관하게 그 자리에서 기록에 남는데, 그 쓰기에 기록을 여는 데 필요한 항목 두 개가 빠져 있었습니다. 이미 그날 기록이 있으면 문제가 없었고, 아무것도 없는 상태에서 분석부터 하면 거부됐습니다. 화면은 멀쩡해 보여서 알아차리기 어려운 자리였습니다.
+## 2026-08-31 — 잘못됐을 때 무엇이 잘못됐는지 보이게
 
-## 2026-09-10
+- **[신규]** **오류 제보 버튼**을 넣었습니다. 어느 화면에서든 우측 하단의 🐞 를 누르고 무슨 일이 있었는지 한 줄만 적어 주시면 됩니다.
+- **[수정]** **소모임 인증을 승인해도 카드가 그대로 남아 있던 문제**를 고쳤습니다.
+- **[수정]** **프로필의 인바디 수치를 입력해도 저장 버튼을 찾을 수 없던 문제**를 고쳤습니다. 이제 입력칸 바로 아래에 있습니다.
+- **[개선]** **영상 업로드가 느릴 때 경과 시간을 보여 줍니다.** 예전에는 8초만 지나면 "지연돼요"라고 떴습니다.
+- **[개선]** **AI 분석이나 업로드가 실패하면 원인을 알려 드립니다.**
 
-가입하고도 한 번도 기록하지 않은 회원이 608명 중 431명(70.9%)이었습니다. 왜 권하지
-않을까를 묻다가 측정을 먼저 했고, 병목이 공유가 아니라 **시작하는 길** 자체였다는
-것을 확인했습니다. 아래는 그 길을 막고 있던 것들입니다.
+## 2026-08-12 — 탈퇴하면 정말로 아무것도 남지 않습니다
 
-### Fixed
-- 네이버 웨일에서 **로그인 버튼이 화면에 아예 없었습니다.** 인앱 브라우저 판정 목록에 웨일이 들어 있었고, 그 판정이 참이면 로그인 버튼을 숨기도록 되어 있었습니다. 웨일은 앱 안에 박힌 브라우저가 아니라 독립 브라우저이고 구글 로그인이 정상 동작합니다. GA 기준 7월 1일~9월 7일에 웨일로 온 135명이 평균 168초를 쓰고 게스트 체험까지 만졌는데 기록은 **한 건도** 없었습니다. 유입 1위가 네이버 블로그였으니 찾아온 사람들이었는데, 전원이 이 벽 앞에서 돌아갔습니다. 처음 고칠 때는 목록에서 이름만 뺐는데 화면이 그대로였습니다 — 같은 판정이 세 파일에 복사돼 있었고, 웨일은 크로미움 기반이라 브라우저 정보에 WebView 계열 표시를 함께 실어 보내는 형태가 있어서 이름을 빼도 남은 규칙이 계속 잡았습니다. 그래서 판정을 한 곳으로 모으고 물음을 뒤집었습니다: "인앱처럼 보이나"가 아니라 **"알려진 독립 브라우저인가"를 먼저** 묻고, 맞으면 어떤 규칙도 그 판단을 뒤집지 못합니다. 판정을 읽지 못하면 막지 않는 쪽이 기본값입니다 — 잘못 막으면 되돌아올 방법이 없고, 잘못 통과시키면 로그인 창이 한 번 실패할 뿐입니다.
-- **첫 기록 준비 화면이 뜨지 않은 채로 완료 처리되고 있었습니다.** 이 화면을 띄울 근거가 브라우저에 30분만 남는 임시 표식 하나뿐이었습니다. 리다이렉트 로그인(삼성 인터넷·카카오 인앱)으로 구글에 다녀오거나, 탭을 닫거나, 30분이 지나면 그 표식이 사라졌고, 그 뒤 온보딩이 자동으로 "완료"로 찍히면서 문이 영구히 닫혔습니다. 608명 중 390명(64.1%)이 이 화면을 한 번도 보지 못한 채 완료로 기록돼 있었고, 기록이 0인 431명 중 311명이 정확히 이 상태였습니다. 이제 브라우저의 임시 표식이 아니라 **서버에 남는 사실**(습관을 고른 적이 있나)로 판단합니다. 한 번 놓쳐도 다음 접속에서 저절로 회복됩니다.
-- 로그아웃했다가 다시 로그인하면 **약관 동의를 처음부터 다시** 받았습니다. 동의를 로그인 화면에서 받고 있었기 때문입니다 — 그 시점에는 누가 들어오는지 모르니 브라우저 단위로 기억할 수밖에 없고, 그래서 같은 사람이 기기를 바꾸거나 로그아웃할 때마다 다시 물었습니다. 동의는 사람에게 받는 것이지 브라우저에 받는 것이 아닙니다. 이제 **로그인한 뒤 계정을 알고 나서** 받고, 같은 계정은 한 번만 받습니다.
-- 신규 가입 시 **동의 창이 잠깐 보였다가 첫 기록 준비 화면에 가려졌습니다.** 두 화면이 서로를 모르고 각자 떴습니다. 이제 동의를 먼저 끝내고 습관 고르기가 열립니다.
-- 로그아웃하거나 첫 동의 화면에서 그만두기를 누르면 **"구글로 시작하기" 버튼이 비활성인 채로 남아** 새로고침해야 풀렸습니다. 버튼을 잠그는 코드와 푸는 코드가 다른 곳에 있었고, 정리하는 과정에서 푸는 쪽만 사라졌습니다. 이제 잠그고 푸는 일을 한 곳에서 합니다.
-- 영문 화면의 **로그아웃이 한국어 화면으로 빠져나가** 다시 영어로 돌아올 방법이 없었습니다.
-- 자산 탭의 "가장 가까운 보상"에 **"최근 7일 평균 기준 약 1253일"** 같은 숫자가 떴습니다. 평균이 기록하지 않은 날까지 0으로 함께 나누기 때문에, 이제 막 시작한 사람일수록 큰 숫자가 나오는 구조였습니다. 계산은 맞았지만 그 자리에 필요한 것은 현재 속도의 보고가 아니라 닿을 수 있다는 사실입니다. 이제 하루에 채울 수 있는 최대치(80P)를 기준으로 계산합니다.
+- **[개선]** **탈퇴 시 블록체인 거래 기록과 포인트 교환 기록까지 모두 삭제합니다.** 이제 탈퇴 후 보관하는 개인정보가 없습니다.
+- **[개선]** **기록과 사진은 대한민국(서울) 서버에 저장**되며 국외로 나가지 않습니다. AI 분석을 요청한 이미지만 국외로 전송됩니다.
+- **[개선]** AI 분석은 유료 등급으로 이용하고 있어 **보내신 사진이 AI 학습에 쓰이거나 사람이 읽는 일이 없습니다.**
 
-### Changed
-- 회색으로 비활성처럼 보이던 **로그인 버튼이 왜 눌리지 않는지 말합니다.** 눌러야 할 동의 항목의 체크 칸이 빨갛게 표시되고 안내가 함께 뜹니다. 예전에는 정말로 눌리지 않는 버튼이라 클릭 이벤트조차 발생하지 않았고, 따라서 스스로를 설명할 수도 없었습니다. 동의에서 막혀 나가는 사람이 몇 명인지도 이제 셉니다.
-- 앱이 이미 설치돼 있다는 상단 안내를 **어디를 눌러도 앱이 열립니다.** 예전에는 작은 버튼 하나만 눌러야 했습니다.
-- 체인 이름이 화면마다 **"BSC Mainnet"과 "BSC 메인넷"으로 번갈아** 나오던 것을 **BSC 메인넷**으로 통일했습니다. 표시할 이름을 서버가 준 값과 앱이 아는 값에서 각각 읽고 있었습니다.
-- 로그인 경로 전체에 계측을 넣었습니다. 시작·결과·동의에서 막힌 경우·**브라우저 판정으로 막힌 경우**를 각각 셉니다. 이번 웨일 문제는 계측이 없어서 "가입 클릭은 있는데 기록은 0"이라는 모양으로만 보였고, 그 모양을 두 번 잘못 읽었습니다.
-- 운동 점수 안내를 **무엇을 올리느냐** 기준으로 다시 썼습니다(걸음수·운동 이미지 10+5P, 운동 영상 10+5P). 점수를 가르는 것이 그것인데 화면에 드러나 있지 않았습니다.
+## 2026-08-12 — 약관과 개인정보처리방침을 실제 동작에 맞게 다시 썼습니다
 
-## 2026-09-01
+- **[수정]** **쿠폰 교환 시 휴대전화번호가 발송 대행사로 전달된다는 사실**을 명시했습니다.
+- **[수정]** **가입 연령을 만 14세 이상**으로 정하고 가입 화면에서 실제로 확인합니다.
+- **[개선]** 건강정보 동의, 지갑 개인키, 걸음 수 캡처, AI 분석 위탁 등 **그동안 빠져 있던 항목을 모두 넣었습니다.** 영어판도 같습니다.
 
-### Fixed
-- 건강습관 점수의 빈 항목을 눌러도 아무 일도 일어나지 않았습니다. "흡연 상태 입력 필요"·"콜레스테롤 수치 필요"를 누르면 그 입력칸으로 데려가게 되어 있는데, 8월 30일에 그 칸들이 건강정보 동의 묶음 안으로 들어갔습니다. 동의 전에는 묶음이 통째로 `hidden` 이고, 감춰진 요소는 스크롤도 포커스도 받지 않습니다. `getElementById` 는 감춰진 것도 찾아내므로 코드는 성공한 것처럼 보였고, 화면만 그대로였습니다. 제보는 그 상태를 정확히 그렇게 적었습니다 — "흡연. 체중. 콜레스테롤 수치 입력이 안되요". 이제 감춰진 칸으로 데려가는 대신 동의 안내를 펼쳐 왜 열리지 않았는지 말합니다. 잠금 안내 문구도 "체성분·복용 약물·혈액검사"만 말하고 있었습니다 — 흡연 칸을 찾는 사람이 그 자물쇠를 열어 볼 이유가 없었습니다.
-- 사진 두 장을 올리면 한 장만 올라가고 나머지는 "로딩만" 남은 채 사라졌습니다. 콘솔에는 `upload/timeout` 이 아홉 번(3회 × 3세트) 찍혀 있었습니다. 사진의 제한 시간은 60초/30초 고정이었고 — 영상만 크기에 비례했습니다 — 게다가 유휴 시계가 업로드의 첫 진행 보고 **전에** 이미 돌고 있었습니다. 느린 업링크에서는 첫 덩어리가 올라가는 동안 진행 이벤트가 한 번도 안 올 수 있고, 그러면 올라가는 중인 전송을 30초에 끊고 재시도해도 같은 자리에서 또 끊습니다. 제보의 기기 정보에 적힌 1.7Mbps 는 내려받기 속도라 올려보내기가 그만큼 나온다는 뜻이 아닙니다. 이제 사진도 크기에 비례하고(바닥 3분/90초), 유휴 시계는 첫 진행 보고를 받은 뒤부터 돕니다 — 멈췄다고 말하려면 먼저 움직이는 걸 봤어야 합니다. 시작 구간은 하드 타임아웃이 맡습니다. 같은 회원의 "카메라로 찍은 사진은 안 되고 파일 불러오기는 된다"도 같은 원인으로 보입니다. 카메라 사진이 더 큰 파일이라 시계가 먼저 떨어집니다.
-- 운동영상은 전송 전에 폰에서 재인코딩하는데, 압축이 끝나 "영상을 줄이는 중… N%" 가 끊기는 순간 "N초째" 안내도 함께 꺼졌습니다. 안내는 메시지가 오면 시계를 멈추게 되어 있었고, 그 메시지가 끊긴 자리에서 다시 걸지 않았습니다. 그래서 안심시키려고 만든 안내가 그게 가장 필요한 경로에서만 꺼져 있었고, 화면에는 `업로드 준비 중 0%` 와 폭 0 짜리 막대가 몇 분간 남았습니다. 제보자의 영상 두 건은 실제로는 모두 저장돼 있었습니다 — 잃은 것은 기록이 아니라 진행 중이라는 신호였습니다.
-- 참여자가 0명인 달에는 커뮤니티 현황 칸이 통째로 사라졌습니다. 매달 1일, 첫 기록이 올라오기 전까지 모든 회원에게서 그렇습니다. 사라진 화면은 고장과 구분되지 않아서 "커뮤니티 현황이 아예 안 나온다"는 물음으로 돌아왔습니다. 이제 비었다고 말하고 첫 기록을 권합니다. 문서를 읽지 못한 경우는 여전히 조용히 숨깁니다 — 읽지도 못했는데 비었다고 단정할 근거가 없습니다.
+## 2026-08-12 — 저장이 도중에 멈추고 갤러리에 올라가지 않던 문제
 
-### Changed
-- 커뮤니티 현황의 연속 기록과 카테고리 표시가 이름 대신 인원을 셉니다. 8월에는 세 사람이 모두 31일을 채워 전부 "31일"로 나왔고, 그중 한 명을 뽑는 코드는 `>` 비교라 동점이면 먼저 스캔된 사람이 뽑혔습니다 — 매시간 재집계에서 바뀔 수 있는, 순위가 아니라 스캔 순서였습니다. 매일 기록하는 사람이 많아진 커뮤니티에서 1등 이름은 정보가 아닙니다. 이제 "연속 기록 100일 이상 N명"으로 보여주고, 100일을 넘긴 사람이 세 명이 안 되면 "한 달 이상 N명"으로 내려갑니다. 카테고리 칩은 그 달을 하루도 빠지지 않은 인원을 셉니다. 둘 다 동점이라는 개념이 없고, 사람이 늘수록 숫자가 커집니다. 연속 기록은 이 달에 기록한 회원만 대상으로 셉니다 — `currentStreak` 은 기록을 쓸 때만 갱신돼서, 몇 달 전에 그만둔 사람의 문서에는 그때의 숫자가 그대로 남아 있습니다. 이미 저장된 지난 달은 옛 표시 그대로 남습니다.
-- 관제탑의 알림 61곳이 대화상자에서 화면 안 토스트로 바뀌었습니다. `alert()` 는 확인을 누를 때까지 페이지를 멈춰 세우는데, 관제탑은 한 자리에서 여러 건을 연달아 처리하는 화면이라 그 자체가 작업 비용이었습니다. 결과에 따라 색이 다르고, 눌러서 닫히며, 글이 길수록 오래 남습니다. 답을 받아야 하는 `confirm()` 15곳은 그대로 뒀습니다 — 토스트로 바꾸면 묻지도 않고 지우게 됩니다.
-- 관제탑 회원 목록의 "누적 HBT" 열을 "누적 발행 HBT"로 바꾸고 설명을 달았습니다. 이 값은 앱이 발행해 준 누계(`totalHbtEarned`)라 지갑의 온체인 잔액과 다릅니다. "현재 포인트" 옆에 붙어 있어 잔액처럼 읽혔고, 실제로 앱의 보유 HBT 와 어긋난다는 물음이 나왔습니다.
+- **[수정]** **"잠시 후 자동으로 마무리돼요"가 뜨고도 마무리되지 않던 문제**를 고쳤습니다. 새로고침하고 저장을 다시 누르지 않으셔도 됩니다.
+- **[수정]** **탭에는 사진이 보이는데 갤러리에만 올라가지 않던 문제**를 고쳤습니다.
+- **[개선]** **앱을 다시 열면 지난번에 못 올라간 기록을 이어서 올립니다.**
 
-## 2026-08-31
+## 2026-08-12 — 공유 카드에 오늘 받은 점수가 제대로 찍힙니다
 
-### Added
-- 앱 안에서 바로 오류를 제보할 수 있습니다. 어느 화면에서든 우측 하단의 🐞 를 누르면 되고, 그 아래에 현재 버전이 함께 표시됩니다. 이번 주 제보는 전부 "안 돼요" 한 줄로 도착했습니다 — 기기는 "갤럭시 크롬"이 전부였고, 실제 실패 코드는 콘솔로 흘러가 사라진 뒤였습니다. 그래서 식단 AI 분석도 영상 업로드도 증거가 아니라 코드를 읽어 좁혀야 했습니다. 이제 제보에는 사람이 적어 주기 어려운 것들이 자동으로 실립니다: 기기·OS·브라우저, 설치된 앱인지 브라우저인지, 자산 버전, 보고 있던 탭, 화면 크기, 네트워크 상태, **직전에 발생한 콘솔 오류**, 그리고 그 순간 진행 중이던 업로드의 상태. 사용자가 쓸 것은 무슨 일이 있었는지 한 줄과, 원한다면 스크린샷뿐입니다.
-- 스크린샷 첨부가 실패해도 제보 본문은 접수됩니다. 첨부 때문에 제보 자체가 사라지면 아무것도 받지 못하고, 안내는 첨부만 빠졌다고 분명히 말합니다.
-- 관제탑 신고 관리 탭에서 제보를 봅니다. 누가·언제·앱인지 웹인지·어느 버전·어느 탭에서 냈는지가 한 줄에 있고, 콘솔 오류는 접어 두었다가 펼치며, 한 건을 통째로 JSON 으로 복사할 수 있습니다. 처리한 제보는 완료로 표시하면 목록에서 사라지고, 완료 목록 보기를 체크해야 다시 나옵니다.
+- **[수정]** **공유 카드가 점수가 오르기 전 상태로 만들어지던 문제**를 고쳤습니다.
+- **[수정]** **라이트 버전에서 챌린지 보상 수령을 눌러도 반응이 없던 문제**를 고쳤습니다.
 
-### Fixed
-- 소모임 인증을 승인하거나 반려해도 카드가 화면에 남아 있었습니다. 다시 눌러도 달라지지 않고 새로고침해야 사라졌습니다. 쓰기는 정상이었고 — 승인 수는 계속 올라가고 있었습니다 — 그 직후의 재조회가 문제였습니다. 캐시 무효화가 값만 버리고 진행 중이던 조회 요청은 그대로 두어서, 승인 직전에 이미 날아가 있던 조회가 그대로 재사용되면 승인 전 목록이 다시 그려졌습니다. 게다가 그 조회가 실패하면 방금 "틀렸다"고 표시해 둔 캐시를 그대로 돌려주도록 되어 있어, 한 번 어긋나면 계속 어긋났습니다.
-- 인바디 수치를 넣어도 저장할 방법이 보이지 않았습니다. 저장 버튼이 입력칸에서 두 카드 아래, 복용 약물 카드 안에 있었습니다. 새로고침하면 넣은 값이 전부 사라졌습니다. 이제 입력칸 바로 아래에 있습니다.
-- 관제탑이 열리지 않았습니다. 제보 목록을 그리는 코드에서 문자열이 한 줄 끝에서 끊겨 `admin.html` 전체가 파싱되지 않았고, 그 상태로 운영까지 배포됐습니다. 테스트가 이 파일을 문자열로만 검사하고 있어 파싱조차 안 되는 파일을 통과시켰습니다. 이제 모듈 스크립트를 실제로 파싱해 보는 테스트가 있습니다.
+## 2026-08-09 — 공유 카드가 기다림 없이 바로 뜹니다
 
-### Changed
-- 영상 업로드가 느릴 때 8초 만에 "업로드가 지연돼요"라고 단정하지 않습니다. 느린 회선에서는 그 시점이 정상 진행 중입니다 — 제보 두 건이 모두 그 상태에서 왔고, 한 건은 1.25Mbps 회선의 4.3MB 영상이었습니다. 이제 "업로드 중이에요 · N초째"로 경과 시간을 5초마다 갱신합니다. 고장인지 느린 것인지를 가르는 차이입니다.
-- AI 분석과 업로드가 실패하면 원인을 화면에 남깁니다. 사람이 조치할 수 있는 경우는 문장으로(로그인이 풀렸어요 / 분석이 오래 걸리고 있어요 / 요청이 몰려 있어요 / 연결이 끊겼어요), 나머지는 오류 코드를 그대로 붙입니다. 코드를 삼키면 제보는 "실패했대요"가 전부가 되고, 원인은 영영 갈리지 않습니다.
-- 소모임 승인·반려 버튼이 누르는 즉시 반응합니다. 서버 응답까지 5~8초가 걸리는데 그동안 화면이 아무 말도 하지 않아 실패로 읽혔고, 다시 누르게 만들었습니다. 이제 버튼이 잠기고 "승인 중…"으로 바뀌며, 서버가 받으면 재조회를 기다리지 않고 바로 정리됩니다. 실패하면 버튼이 되살아납니다 — 잠긴 채로 두면 다시 시도할 방법이 없습니다.
+- **[개선]** **공유 카드가 훨씬 빨리 준비됩니다.** 갤러리를 다시 열면 기다림이 거의 없습니다.
+- **[수정]** **갤러리에는 보이는 사진이 공유 카드에서만 회색 칸으로 남던 문제**를 고쳤습니다.
 
-## 2026-08-26 (3)
+## 2026-08-06 — 공유 카드에 그날 사진이 다 담깁니다
 
-### Fixed
-- Uploading several exercise videos on Samsung Internet left the later ones sitting at "업로드 대기 중 · 앞 파일부터 저장할게요" with an empty bar, for long enough that people reported it as frozen. Nothing was actually stuck. Samsung Internet uses a plain `uploadBytes` transport because the resumable one stalls there, and `uploadBytes` reports no byte progress at all — it goes from 0% to 100% in one step, which for a large video is minutes of a motionless bar. Meanwhile the queued files behind it were told their position exactly once, when they were added, and never again, so their text could not change either. Between the two, the whole screen sat still with no way to tell it apart from a failure.
-- Queued uploads now show how many files are ahead, and the number counts down as the queue drains. The upload in flight shows elapsed seconds and an indeterminate bar rather than a percentage, since there is no real percentage to report and inventing one would be worse than saying nothing.
+- **[개선]** **공유 카드가 사진을 아홉 장까지 담습니다.** 식단 네 끼에 운동과 마음까지 기록한 날에도 뒤쪽 사진이 잘리지 않습니다.
+- **[개선]** **작은 사진을 누르면 그 사진이 대표 사진이 됩니다.** 한 번 더 누르면 돌아옵니다.
+- **[수정]** **공유 카드의 사진이 회색 칸으로 남던 문제**를 고쳤습니다.
 
-## 2026-08-26 (2)
+## 2026-08-06 — 쿠폰 교환이 한 번에 끝납니다
 
-### Changed
-- The gallery feed now reaches back 900 posts instead of 300. Three hundred covered only the last three weeks — records from two months ago could not be reached by scrolling at all, with 1,265 posts spread over 73 days. It is not unlimited because the constraint is the browser rather than the server: there is no virtual scrolling, so cards and their images accumulate in the page as you scroll. Reading every post in the collection costs well under a dollar a month in Firestore reads; the images are fetched lazily either way, so the old ceiling was withholding access rather than saving anything.
-- The end of the feed now says so instead of stopping silently, which read as a loading failure. It distinguishes the three cases: everything has been shown, the 900 ceiling was reached and older records are still reachable through a member's own records, or a filtered member's records are fully shown.
+- **[수정]** **커피 쿠폰 교환이 오류로 끝나던 문제**를 고쳤습니다.
+- **[개선]** **보관함에서 기프티콘 이미지와 바코드, PIN을 바로 봅니다.** 문자함을 열지 않아도 매장에서 그대로 쓰실 수 있습니다.
+- **[수정]** **교환 직후 포인트가 바로 줄어듭니다.** 새로고침하지 않으셔도 됩니다.
+- **[수정]** **교환이 되지 않았는데 "도착했어요"라고 안내하던 문제**를 고쳤습니다.
 
-### Fixed
-- The weekly ranking no longer shares the feed's depth limit. It only needs the last seven days, and would otherwise have started reading 900 documents every time the gallery opened. The REST fallback was similarly decoupled.
+## 2026-07-24 — 불러오지 못한 정보를 "없는 정보"로 보여주지 않습니다
 
-## 2026-08-26
+- **[수정]** **연결이 느릴 때 참여 중인 소모임이 초기화된 것처럼 보이던 문제**를 고쳤습니다.
+- **[수정]** **기록이 충분한데도 30일 종합 결과지가 만들어지지 않던 문제**를 고쳤습니다.
+- **[수정]** **해빛 마켓과 쿠폰 보관함이 계속 "불러오는 중"에 머물던 문제**를 고쳤습니다.
+- **[개선]** **갤러리를 기록 날짜순으로 정렬**해 오래된 기록이 위에 오지 않습니다.
 
-### Fixed
-- Filtering the gallery to one member fetched their posts oldest-first, so anyone past the 200-post fetch limit would have lost their recent records from the view and kept only the earliest ones. No query ordering was given, and Firestore then falls back to document id order — the ids are `{uid}_{date}`, so within one member that is the same as ascending by date. Ordering by document id descending fixes the direction and still needs no composite index, unlike ordering by a field. Nobody has crossed 200 posts yet; the most prolific member is at 74 after 73 days.
-- Posts pulled in by that filter no longer count against the main feed's 300-post ceiling. Opening one prolific member's records used up a quarter of the ceiling, and the main feed then ran out that much sooner once the filter was cleared.
+## 2026-07-19 — 운동 영상의 검은 화면을 썸네일로 쓰지 않습니다
 
-## 2026-08-25
+- **[수정]** **삼성 휴대폰에서 영상의 첫 검은 화면이 썸네일로 저장되던 문제**를 고쳤습니다. 이제 실제 화면이 보이는 장면을 골라 씁니다.
 
-### Fixed
-- The "closest reward" card on the assets tab kept saying it was still checking your points, with an empty bar and the full 2,000P shown as remaining, while the balance right above it read 1,835P. The number and the bar were written by different code: five places put the point balance on screen and only one of them also updated the bar. Whenever the balance arrived from cache — the 30-second in-memory one, or the localStorage copy painted before the server answers — the card was left with the placeholder text compiled into the page, which is why the figure was the untouched 2,000P rather than the 165P the arithmetic gives. Every path that knows the balance now updates both, and the two paths that skip the asset refresh entirely fill the bar from the last known balance instead of leaving it blank.
-- Converting points to HBT now updates the remaining figure too. It was reading as though the spent points were still there.
+## 2026-07-18 — 저장한 운동 영상의 썸네일이 그대로 남습니다
 
-## 2026-08-23
+- **[수정]** **저장 후 운동 영상 썸네일이 검은 화면으로 바뀌던 문제**를 고쳤습니다.
+- **[개선]** **쿠폰 유효기간이 한 줄에 보입니다.** 날짜와 남은 기간을 함께 표시합니다.
 
-### Fixed
-- Stopped the gallery feed from stalling partway down. Three separate faults each left it unable to recover on its own. The loading flag was set before appending posts and cleared after, with nothing in between to guarantee the clear — one post that threw while rendering locked the flag on, and every later attempt returned at the guard on the first line. `IntersectionObserver` only reports the moment an element crosses into view, so once a load came back empty and the page stopped growing, the sentinel sat on screen and never fired again; scrolling in place did nothing and only leaving the tab and returning cleared it. And a failed fetch was swallowed by a `catch` that logged and returned nothing, so the caller could not tell "nothing left to load" from "could not load it", left `galleryHasMore` set, and recursed into the same failure without limit. The flag is now released in a `finally`, the observer is re-armed after each load so a sentinel still in view immediately asks for the next page, the fetch reports success or failure, and the retry chain is bounded.
-- Kept the sentinel visible when a filter happens to exclude an entire page of results. It was hidden on local cache exhaustion alone, so with more posts still waiting in Firestore the infinite scroll never started at all.
+## 2026-07-18 — 운동 영상 미리보기와 쿠폰 정보를 복구합니다
 
-### Changed
-- The feed now starts loading about 1000px before the bottom rather than 100px, and appends 12 posts at a time rather than 6. At the old settings a page of 30 cached posts took five observer round-trips to display, and anyone scrolling at a normal pace saw the spinner before the next posts arrived.
-- When a load genuinely fails, the three loading dots are replaced by a retry button. A permanent "load more" button would add a tap to the normal case, but a network failure needs some way out other than reopening the tab.
+- **[수정]** **운동 영상을 고르면 검은 화면 대신 실제 장면이 바로 보입니다.**
+- **[수정]** **발급은 됐는데 앱에 저장되지 않은 쿠폰의 PIN과 바코드를 복구합니다.** 포인트를 다시 차감하지 않습니다.
 
-## 2026-08-21
+## 2026-07-18 — 쿠폰 보관함 표시와 문자 재발송 안내
 
-### Fixed
-- The monthly MVP ranking had been counting zero comments and zero reactions all month. Reaction writes moved to `gallery_posts` when the old path was closed off — a signed-in client could forge other people's UIDs into `daily_logs.reactions` and mint coins — but the three aggregation sites kept reading the old location. August showed "0 reactions" on screen against 494 actual ones, and the MVP score collapsed to `days x 10` alone, which put six people on exactly 210 points. The medals were being handed out in Firestore scan order, and 5,000P with them. The score now reads from where the data actually lives, and the three copies of the formula are one shared module so the screen and the payout cannot drift apart again.
-- Gave the ranking a deterministic tie-break. Sorting on score alone left equal scores in whatever order the scan returned, so the medals could change between hourly runs. Ties now resolve by activity points, then days, comments, reactions, and finally user id — the same input produces the same ranking every time.
+- **[수정]** **쿠폰 이미지가 표시되지 않으면 바코드를 대신 보여 줍니다.**
+- **[수정]** **유효기간이 비어 있어도 만료일을 계산해 표시합니다.**
+- **[개선]** **문자가 오지 않을 때 스팸함 확인과 재시도 방법을 안내합니다.**
 
-### Changed
-- From September the MVP score is based on activity points rather than days recorded. Recording every day no longer distinguishes anyone: 21-day perfect attendance was reached by six people in August, while their activity points ranged from 690 to 1,390. Points already grade the depth of a record — meal photos, cardio and strength, sleep and gratitude, 10 to 80 a day — and among August's most consistent members every single one had a different total. Comments and reactions still count, weighted to keep the share of the score they had before, but the social part is capped at 30% of a member's own activity points: a reaction is one tap, and one member left 356 of August's 494, which without a cap would have been half their score. August and earlier keep the old formula, so past months and the rewards already paid for them are unchanged.
-- The weekly gallery list now uses the same basis, from the first full week of September. Its ceiling is seven days rather than thirty, so it saturated harder — ten members were tied at five days this week, and the top two at the same score.
+## 2026-07-17 — 쿠폰 발급과 다시 받기
 
-## 2026-08-20 (5)
+- **[수정]** **쿠폰은 발급됐는데 보관함에 발급 대기로 남던 문제**를 고쳤습니다.
+- **[신규]** **문자로 다시 받기**를 넣었습니다. 저장된 연락처로 쿠폰을 다시 받을 수 있습니다.
 
-### Changed
-- Raised the compression threshold to 15MB, so ordinary clips upload straight away and only genuinely large files are re-encoded. Re-encoding runs at playback speed and no amount of accurate progress reporting removes that wait; a 7MB ten-second clip is a theoretical win on a slow uplink and still reads as "why isn't this uploading" in the hand, which is what made the feature unusable. Above 15MB the arithmetic stops being close — a 200MB file becomes about 4MB — and the wait buys something obvious. The consequence is that a 7MB hyperlapse goes back to being sent as recorded, which was the original complaint about slow uploads; that trade is deliberate, since the compression wait was the worse of the two.
+## 2026-06-25 — 영어 버전을 정리했습니다
 
-## 2026-08-20 (4)
+- **[신규]** **/en 이 영어 공식 진입점**이 되고, Food · Exercise · Mind · Profile 중심의 화면을 제공합니다.
+- **[수정]** **영어 화면에 남아 있던 한국어 문구**를 정리했습니다.
 
-### Fixed
-- Stopped the progress bar from freezing at 89% for the whole upload. Compression reported its percentage through the same channel as transfer progress, and that value is recorded with `Math.max` — so finishing compression wrote 100 into the transfer figure before a single byte had been sent, and it could never come back down. `transfer 100 / sync 6` is exactly 89%, and the bar sat there for the entire real upload while the work went on invisibly. Compression now reports through the message line only and leaves the transfer figure at zero, so the bar reads 0 during compression and then actually moves 0→100 as the file goes up. I introduced this in the previous release; it is the same class of thing this session has been fixing elsewhere — a number that says one thing while another is happening.
-- Set the encoder bitrate from the target upload size rather than resolution alone. Choosing by resolution meant a 40-second 4K clip came out at 12.5MB, which on a slow uplink is another two-minute upload — the compression had traded one wait for a shorter version of the same wait. Bitrate is now derived from a 4MB target and clamped for quality, so a 40-second clip lands near 4MB whatever its resolution, roughly three times faster to send than before. Beyond about a minute the quality floor wins and files grow again: three minutes still produces 10–19MB, which is the honest limit of holding both size and watchability.
-- Raised the compression threshold from 2MB to 4MB, matching the target size. Re-encoding a file already smaller than the result costs playback time and returns nothing.
+## 2026-06-04 — 소모임과 단톡방 진입을 다듬었습니다
 
-### Notes
-- Re-encoding runs at playback speed and cannot go faster by this route; a 40-second clip costs 40 seconds or more, since decode and encode share the phone. Getting below that needs WebCodecs with an MP4 demuxer, which is a much larger change. What this release removes is the second wait after it, not the first.
+- **[개선]** **대시보드에서 소모임을 최대 4개까지 봅니다.**
+- **[개선]** **갤러리의 단톡방 버튼이 바로 오픈채팅방을 엽니다.**
 
-## 2026-08-20 (3)
+## 2026-06-04 — 운동 소모임을 시작했습니다
 
-### Changed
-- Raised the video size limit from 100MB to 600MB, but only where the phone can actually re-encode. What gets uploaded is the compressed file, and its size comes from duration and bitrate rather than from the original, so a 40-second 200MB hyperlapse lands at roughly 6MB from a 1080p source or 12MB from 4K. Applying the wider limit everywhere would have made things worse rather than better: iOS Safari has no `HTMLVideoElement.captureStream`, so on an iPhone the 200MB file would have gone up untouched. The limit now follows `canCompressVideoInBrowser()`, and both selection paths — the multi-file picker and the single-file preview — read the same value, since widening one alone would mean the same file is accepted or refused depending on how it was chosen.
-- Set the encoder bitrate from the source resolution: 800kbps up to 720p, 1.2Mbps up to 1080p, 2.5Mbps above that. Dropping the canvas downscale meant output resolution follows the input, and a 200MB file is usually large because it is 4K rather than because it is long. A flat 1.2Mbps would have shrunk it correctly and left it unwatchable.
+- **[신규]** **만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽**이 생겼습니다. 최대 2개까지 참여하실 수 있습니다.
+- **[신규]** **모임장이 인증을 확인하고 승인하거나 반려합니다.**
+- **[개선]** 참여할 때 200P를 예치하고, **100일을 채우면 3,000P**를 받습니다.
 
-### Added
-- Capped video length at 3 minutes, checked when the file is picked. Re-encoding runs at playback speed, so length is the wait, and without a cap someone choosing a 10-minute clip waits ten minutes before seeing any result. Refusing at selection also says why: left to the size check further down, the same file would come back as a size error after the picker had already accepted it.
-- Explained the size rejection that can still happen. A file large enough to need compression, on a device that then fails to compress it, is refused at upload with a message saying the phone could not shrink it — rather than a bare size limit the member was told moments earlier did not apply.
+## 2026-06-03 — 동영상 업로드를 안정화했습니다
 
-## 2026-08-20 (2)
+- **[수정]** **삼성 인터넷에서 운동 영상 업로드가 1%에 머물던 문제**를 줄였습니다.
+- **[수정]** **모임장 검토 화면에서 사진을 크게 보고, 영상은 실제 파일이 있을 때만 재생합니다.**
 
-### Added
-- Re-encode exercise video before uploading it. Photos went through `compressImage` and video went up exactly as recorded, so a phone's 1080p default bitrate turned a 10-second hyperlapse into 7MB — which on a congested LTE uplink is the whole complaint. The original now plays into a `MediaRecorder` at 1.2Mbps, with no dependency and no demuxer, which CSP rules out anyway. It costs playback time: a 10-second clip takes about 10 seconds, still less than sending 7MB over a slow link. Measured on worst-case noise footage, 4.82MB became 1.46MB with the duration intact; real footage compresses further. Anything under 2MB is left alone, since the wait would buy little.
-- Refused to produce webm. Only `video/mp4` output is accepted, and where mp4 recording is unavailable the original is uploaded untouched. iOS Safari cannot play webm, and it is the same browser that cannot compress at all, so a webm store would have meant Android uploads that iPhone friends could not open — trading upload time for broken playback.
+## 2026-06-01 — 날짜가 바뀐 뒤의 기록 유지
 
-### Fixed
-- Discarded a re-encode that comes back shorter than the source. The first implementation drew each frame onto a canvas so it could downscale, and canvas frames only flow while the page is actually painting. Leaving the app mid-transcode produced a 0-second file — which, being tiny, sailed through the "did it get smaller" check and would have replaced a member's recording with an empty one. Capturing the video element's own stream survives the page being hidden, verified side by side: 0.0s from the canvas route against 5.0s from the stream, under identical conditions. The duration check stays regardless, because size alone rates a truncated file as the best possible result.
-- Added the new module to the service worker's pre-cache list, without which it would have failed to load offline. Caught by `pwa-offline-assets`, which walks the import graph rather than trusting the list to be kept up to date by hand.
+- **[수정]** **오랜만에 앱을 열었을 때 새 날짜 기준으로 다시 불러옵니다.**
+- **[수정]** **같은 날 사진을 추가로 올린 뒤 앞선 기록이 사라져 보이던 흐름**을 고쳤습니다.
 
-## 2026-08-20
+## 2026-05-26 — 주간 챌린지 재시작
 
-### Fixed
-- Let the free 3-day challenge start in the Lite app. `window.startChallenge30D` begins life in main.js as a placeholder that alerts "블록체인 모듈 로딩 중입니다", and the real one only replaces it once blockchain-manager loads. Lite never loads that module by design, so the placeholder was permanent and the mini challenge told people to wait for something that would never arrive. The start needs no chain at all — `challenge-3d` has `hbtStake: 0`, so the on-chain branch is skipped entirely and one callable is all that remains. It now sits in challenge-claim.js beside the claim, which was split out for exactly this reason and had the fix applied only to itself. `blockchain-config.js` is safe to import there: it has no imports of its own and holds only constants, so no wallet, key, or on-chain call comes with it. A paid tier arriving on this path is refused loudly rather than started without its stake, though Lite hides those cards anyway.
-- Stopped the friend-connected push from naming its own recipient. Two of the three call sites sent `friendName: outcome.inviterName` to the inviter, so whoever invited or referred someone was told "최석재님과 이제 함께 기록할 수 있어요" about themselves. The accept-request path had it right all along and shows the shape the other two should have had. Both now carry the other party — the member who signed up, or the one who used the link.
+- **[수정]** **완료한 주간 챌린지를 같은 날 다시 시작하면 이미 1일차로 잡히던 문제**를 고쳤습니다.
+- **[개선]** **보상 수령 뒤 자산 화면이 오래된 상태를 보여주지 않습니다.**
 
-### Notes
-- Looked into the slow video upload and did not change it, because nothing in the upload path is misbehaving. The timeouts are generous (5 minutes hard, 90 seconds idle for a 7MB clip), so nothing is being cancelled and re-sent, and thumbnail extraction is deferred behind `requestIdleCallback` rather than blocking the start. What stands out instead is that **video is never compressed**: images go through `compressImage`, video is sent exactly as recorded, up to a 100MB ceiling. A 7MB clip on a congested LTE uplink is simply a lot of bytes. Firebase's resumable upload does send it as five serial chunks (256KB doubling to 4MB) plus a create request where the Samsung path uses a single PUT, but that is worth a fraction of a second, not the difference being reported. Making the file smaller is the lever with the certain payoff, and that needs a decision on approach before building. Upload sizes could not be measured directly — the service account key was revoked on 08-15.
+## 2026-05-19 — 쿠폰 보관함과 마음 기록
 
-## 2026-08-15 (9)
+- **[개선]** **사용 완료·만료된 쿠폰은 핵심 정보만 접어서 보여 줍니다.**
+- **[개선]** **마음 기록의 힌트와 명상 안내를 더 짧게 다듬었습니다.**
 
-### Changed
-- Removed "the name of the chat room the command came from" from the collection list. No such value reaches us. MessengerBot R v0.7.29a puts the Android notification title in `room`, and in the production open chat that title is the speaker's own nickname, so every participant reports a different value and none of them names a room. The nickname is already disclosed on its own line, so the list is now complete rather than shortened. Reported from the bot repo, verified against `routes/messengerbot.js` before editing — removing an item from a privacy policy is the direction that under-discloses, so it is the direction to check hardest.
-- Struck the room-name filter from `tasks/habitchatbot-linking-prompt.md`, which I had written as a prerequisite for the whole linking feature. It cannot be built: `isGroupChat` is false for open-chat traffic and the legacy `response()` API in that version exposes no stable channel id. The leaked-code risk it was meant to cover is handled instead by what the code itself does — ten-minute expiry, single use, redaction from logs, and never echoing the code back into the room. Room separation is an operating agreement between the two rooms, not something the code can enforce. The note stays in the file rather than being deleted, since the reasoning is what stops the next person reaching for the same non-existent filter.
+## 2026-05-01 — 느린 연결에서의 로딩
 
-## 2026-08-15 (8)
+- **[수정]** **자산 탭에서 거래 기록이 무한 로딩처럼 보이던 문제**를 줄였습니다.
+- **[개선]** **친구·커뮤니티·갤러리를 불러오는 동안 화면 전체가 막히지 않습니다.**
 
-### Fixed
-- Made cardio photos wait for their thumbnail before writing the record. `getStrengthThumbWaitMsForJob` returned 0 for anything that was not a strength video, and `finalizeBackgroundMediaUploadResult` gated on `job.kind === 'strength'` a second time, so a cardio save wrote `imageThumbUrl: null` the moment the original landed. The thumbnail then finished uploading, reached Storage, updated the in-memory entry and the preview — and never reached Firestore. The stored data carries the shape of that one condition: 24.2% of cardio photos have no thumbnail against 10.8% of strength videos, and strength is the half that waits. Both gates now ask `getMediaThumbWaitMsForJob`, which answers for the kind it is given. The wait only happens when the thumbnail is genuinely still in flight, which is the minority of saves.
-- Extended the share-card thumbnail repair to exercise media, which had been excluded since it was written. Diet and sleep passed a `backfill` descriptor and exercise passed nothing, so a cardio photo or strength video that lost its thumbnail had no way back. The obstacle was real — `exercise.cardioList[0].imageThumbUrl` cannot be expressed as a dotted path, and writing the index as an object key would convert the array to a map and corrupt the document — so array items now go through `applyArrayThumbBackfill`, which re-reads the document, matches the item by its original URL rather than its position, skips it if something else filled it in first, and rewrites just that list. The per-session guard is keyed by list and URL too; keyed by field name alone, only the first cardio photo of the day would ever have been repaired.
+## 2026-04-29 — 쿠폰 유효기간을 정확하게
 
-### Changed
-- Established that the 430 orphaned thumbnails must be regenerated, not re-linked, and did not write the linking script. 95% of originals do have a thumbnail file sitting in Storage, which made re-linking look like the cheap option, but the paths share no token — `{ms}_{seq}_{name}` is assigned independently for each upload. Checking the rule against the 1,837 pairs that are already correctly recorded: 77% of filenames do not even parse, the naming having changed over time, and among those that do the sequence gap is 1 for only 83.3%, with 2, 3 and 4 all present. Time proximity is worse — median 7.6s, 95th percentile 48.7s, longest 12 minutes. Roughly one in six items would have been given a different photo's thumbnail, which is a worse outcome than the blank it replaces. `scripts/validate-thumb-pairing-rule.js` keeps the check. The client-side repair above regenerates from the original instead, which is unambiguous, and reaches each record as its owner opens that day's share card.
-
-## 2026-08-15 (7)
-
-### Fixed
-- Made `hidden` actually hide things. `[hidden] { display: none }` is a browser default, so any author rule that sets `display` on the same element beats it — and then `el.hidden = true` silently does nothing. The strength-video preview was the visible casualty: the `<video>` stays laid out over the `<img>` (both `position: absolute; inset: 0`, video later in the DOM) and paints its own `#0d1117` background, so a thumbnail that had downloaded correctly showed as a black box. An audit found the same trap on 8 classes, and the ~20 one-off `.foo[hidden] { display: none }` rules scattered through the stylesheets turn out to be this bug being patched one site at a time without ever being named. A single `[hidden] { display: none !important; }` now covers all of them; no existing rule tried to make a hidden element visible, so nothing is displaced.
-- Gave the strength thumbnail an `onerror`. Its `<video>` sibling has had `onerror = fallbackToImage` all along; the image path had none, so a dead thumbnail URL produced the same silent black box with no fallback, no retry, and nothing in the console. It now falls back to the placeholder and logs the URL. This was not the cause of the reported bug — the images were loading fine, HTTP 200 at 720px — but it was the reason the failure would have been just as invisible if they hadn't been.
-
-### Added
-- Added `scripts/count-missing-exercise-thumbs.js`, read-only, to size the separate backfill question. Across 2,547 daily logs: 315 of 1,302 cardio photos (24.2%) and 103 of 953 strength videos (10.8%) have no stored thumbnail, plus 12 legacy single-field records — 430 items over 38 members. The month-by-month split matters more than the total: 26 items in the first half of August alone, so thumbnail generation is still failing now and a backfill on its own would be mopping while the tap runs. Not yet fixed; the black-box report turned out to be a separate, unrelated defect.
-
-## 2026-08-15 (6)
-
-### Changed
-- Narrowed the KakaoTalk disclosure to what the relay can actually collect. Yesterday's text was written against an assumption about the bot that turned out to be wrong: the group-chat path is a MessengerBot script on a phone forwarding to `/api/messengerbot`, not the official Kakao openbuilder, and it forwards **only messages beginning with `!`**. There is no stable sender identifier on that path either — the sender arrives as a display nickname. So the policy named an identifier that cannot be obtained and described a passive collection of speakers that will never happen. It now lists what the relay does forward: the command text, the display nickname, and the room name, gathered only when someone types a `!` command.
-- Replaced "we do not collect message contents" with "messages that do not start with `!` are never sent to our server". The first is a promise about what we discard after receiving it; the second is a fact about what never leaves the phone. `CONSENT_DOC_VERSION` stays at 2026-08-15 — this removes collection items rather than adding them, and the 08-15 documents had only ever reached staging, so nobody agreed to the wider text and nobody is asked twice.
-
-### Fixed
-- Stopped the re-consent card from pushing its own agree button out of view. The rules that tighten consent rows live in `@media (max-width: 600px)`, but this card is a fixed 420px modal, so its density was keyed to viewport width while its ceiling is keyed to height. On a screen that is wide but short — a resized desktop window, a phone held sideways — the rows returned to full size against an unchanged ceiling and the content ran 669px inside a 592px card. The tightening is now keyed to `max-height: 700px`, where it belongs: 497px at 640×640 and 550px at 360×600, both fitting without scrolling, and tall screens untouched at 608px. Below roughly 580px the card still scrolls, with the button reachable.
-- Corrected the previous entry's claim that the notice fits "on a 640px-tall screen". That measurement was taken at 360×640 and did not hold at 640×640, which is where the overflow above was found.
-- Aligned the asset stamps that release (5) left behind. `styles.css`, `js/main.js` and the other module entrypoints were still pointing at `?v=319` while `index.html` and the service worker had moved on, so returning members would have kept the cached stylesheet and never received the layout fix. Caught by `pwa-versioning`, which the previous release was committed without re-running.
-
-## 2026-08-15 (5)
-
-### Added
-- Disclosed the KakaoTalk group-chat linking that the new connection flow will use: the sender identifier Kakao provides, the display nickname, and the time of the last message — stated alongside the fact that **message contents are not collected**, only who spoke and when. The identifier and nickname are used solely to link the accounts and are deleted once linked or after 30 days, rather than waiting for account deletion, and the whole thing is optional.
-- Added the same line to the re-consent notice, since that is what members are being asked to agree to right now.
-
-### Changed
-- Moved the effective date to 2026-08-15 across all four documents and raised `CONSENT_DOC_VERSION` to match, because the collection items changed materially. Anyone who already agreed to the 08-12 version will be asked once more.
-- Tightened the re-consent spacing so the fifth line still fits without scrolling: 590px against a 592px ceiling on a 640px-tall screen, with the button reachable.
-
-## 2026-08-15 (4)
-
-### Fixed
-- Kept the tab bar in step with the guest tour. Pressing "운동 기록 남기러 가기" moved the screen to the exercise tab while the tab buttons and underline stayed on food, because the active state is set inside the app's `openTab` and the tour was calling the demo controller's own `openTab` directly, skipping it. The jump now goes through the app's switch, with the internal one kept as a fallback.
-
-### Changed
-- Made the health-data notice read as something you open. The arrow was a small centred glyph that looked like punctuation; it is now a filled circle at the right edge with the text left-aligned, and the row has an 18px gap beneath it so it stops reading as part of the card below.
-- Moved the tour's cue to the right edge of the button and enlarged it to 22px, where it nudges sideways instead of sitting to the left of the label looking like an icon. The button's pulse is faster and wider. Both stop under `prefers-reduced-motion`.
-- Removed the coach box's "안내 닫기" and "전체 안내 끄기" buttons. The step guide already says what to do, so the remaining sentence is explanation rather than interruption, and a dismiss control for it was clutter.
-
-## 2026-08-15 (3)
-
-### Changed
-- Folded the three health-data cards — body composition, current medications, blood test — behind one shared notice instead of three. They are all unlocked by the same optional consent, so someone who has declined was reading the same paragraph three times down the profile screen. Collapsed the group is a 45px line naming all three; consenting opens all of it, 1092px, with a single revoke button at the end rather than one per card.
-- Pointed the guest tour at the button to press. The hints described the goal ("save it too") without saying which control does that, so each step began with a hunt. The next action is now computed from the prerequisite graph, exactly one button carries a 👆 cue and a pulsing ring, and the hint refers to that cue. Steps completed by looking rather than pressing — my records, gallery — say so plainly and mark nothing. The cue is `aria-current="step"` for screen readers, and the animation drops under `prefers-reduced-motion`.
-
-## 2026-08-15 (2)
-
-### Fixed
-- Deployed the Firestore rules, which were behind the code and rejecting every consent write. `consents` was added to both user whitelists on 2026-08-11 when the consent system was built, but the live ruleset was still the one released on 2026-08-05 — rules sit deliberately outside the hosting/functions deploy shortcut, so they had never gone out. For the four days since, every write of a consent record failed with `permission-denied`. Across 562 members, **zero** had a consent record. The live ruleset now matches the file exactly.
-- Stopped the member document write from swallowing its own failure. It carried the new signup's consent record and was wrapped in `.catch(() => {})`, so a rules rejection looked exactly like success and nothing surfaced at all. It now logs the code and message, and says explicitly when it was the consent that failed. Sign-in still proceeds — a logging failure should not lock everyone out.
-- Made the re-consent screen name what it hit. `permission-denied` does not resolve by waiting, so telling someone to "try again shortly" sends them round a loop that cannot end. That case now says the write was not permitted; anything else shows its code.
-
-## 2026-08-15
-
-### Added
-- A blood test analysis quality panel in the admin control tower, answering whether the feature is working without exposing anyone's results. It reports counts and distributions only — how many analyses ran, average metrics extracted, how many are missing a unit, a reference range or a valid status, how many lack a summary or advice, the grade distribution, and metric keys the model invented outside the prompt. No member's values and no uids cross the wire, because "is this working" does not require reading someone's cholesterol. An individual-record view would be a new processing purpose and would need the policy and an access log first.
-- `healthProfile.latestBloodTestDate`, so a reflected measurement carries the date it was actually taken.
-
-### Fixed
-- Stopped treating an old health check report as a current measurement. People upload reports from years back — among the seven on file, one is from 2021 and one from 2023, and the model had been reading those dates correctly all along while the app ignored them. A result whose printed test date is more than a year old, or missing, no longer feeds `healthProfile`, so a triglyceride reading from 2021 cannot drive today's metabolic score. The analysis is still stored and still shown in history; it just stops claiming to be current.
-
-### Changed
-- Applied the same freshness rule in the backfill, which now reports who was skipped for staleness and still clears the stray dotted fields for them.
-- Built the `analyzeBloodTest` fallback write from the same patch object rather than re-listing the fields by hand, so the two paths cannot drift apart.
-- Rotated the cache to v315.
-
-## 2026-08-14 (2)
-
-### Fixed
-- Stopped reporting an unverified save as a failed upload. When a follow-up step threw, the recovery path asked `verifyBackgroundMediaPersisted` whether the media had landed — and that function returned `null` for three different situations: confirmed absent, unreadable, and readable only from a cache that may not yet know about the write. The caller read all three as failure, so a photo that had uploaded fine showed "일부 업로드 실패" at 100%. It now reports `persisted` / `absent` / `unknown`, only says `absent` when the server itself answered, and treats `unknown` as deferred — re-queueing the patch instead of declaring a failure.
-- Made the blood test result reach the profile it feeds. `analyzeBloodTest` wrote `{'healthProfile.hba1c': …}` through `set()`, which does not read dots as paths — it created a top-level field whose name contains a dot, while the nested `healthProfile.hba1c` that `metabolic-score` reads stayed empty. Anyone who uploaded a blood test still saw "건강 지표 기록 필요" on the insulin row. It now uses `update()`, which does interpret paths, and falls back to writing the nested shape if the member document is missing.
-- Filed blood test results under the Korean date instead of the UTC one, so a test uploaded between midnight and 9am no longer lands on the previous day, and added `{merge: true}` so a second analysis on the same day no longer erases the first.
-- Told a refused coupon resend apart from one that never reached the vendor. Any provider error produced "문자 재발송 요청이 지연되고 있어요. 잠시 후 다시 시도해 주세요." — including a 4xx refusal, which will never succeed no matter how many times it is retried, as happens with an already-used coupon. A 4xx now says the vendor refused and why it might have, while timeouts and 5xx keep the delay wording.
-
-### Added
-- Server-side sensitive-consent check on `analyzeBloodTest`. The gate existed only on screen, so calling the callable directly would analyse and store a blood test with no consent recorded — for Article 23 data.
-- `scripts/backfill-bloodtest-health-profile-2026-08-14.js`, which walks the `bloodTests` collection group and moves each member's latest metrics into `healthProfile`, clearing the dotted top-level fields the old code created. It refuses to run without `--dry-run` or `--apply`, and never overwrites a value the member entered themselves.
-
-### Changed
-- Rotated the cache to v313.
-
-## 2026-08-14
-
-### Changed
-- Shortened the re-consent notice to one line per change so it no longer scrolls on a phone. A consent screen that scrolls can hide the items and the button below the fold, which makes "they read it and agreed" harder to claim. Measured at 412×640: 583px tall with the button reachable and no internal scroll. The overflow guard stays as a safety net in case a future line pushes it over.
-- Folded the health-data consent notice away until it is wanted. For someone who has decided not to use those features, the explanation was occupying a large block of the profile screen on every visit. It is now a `<details>` that starts closed, with the feature name in the collapsed line so it can be judged without opening — 45px collapsed against 189px before.
-
-### Fixed
-- Corrected a hex colour containing a Devanagari digit (`#b99a६d`), which browsers drop silently, and added a test that scans declaration values for `#` tokens that are not valid hex.
-
-## 2026-08-13 (4)
-
-### Fixed
-- Corrected the storage location in the privacy policy, which was wrong. It said records and photos are stored in Seoul and that this is not an overseas transfer. Firestore is indeed `asia-northeast3`, and that much was verified — but the Storage bucket is `us-central1`, and I had assumed it matched rather than checking. So every uploaded photo and video, **including blood test report images**, sits in the United States while the policy told members nothing left the country. Section 5 now lists the two stores separately, marks Firebase Storage as an overseas transfer, and names the sensitive item inside it explicitly.
-- Removed the claim that declining AI analysis means nothing is transferred abroad. The photo store itself is abroad, so uploading anything is already a transfer. The refusal clause now says plainly that refusing means the upload features cannot be used, while text-only use stays available and stays in Korea.
-- Fixed the same false sentence in the re-consent notice, where it would have been shown to every existing member at the moment of collecting their agreement.
-
-### Changed
-- Rotated the cache to v311.
-
-## 2026-08-13 (3)
-
-### Added
-- Asked existing members to agree to the revised documents. Raising `CONSENT_DOC_VERSION` marked the old agreements as stale but never collected new ones, and only new signups were recording `age14` — so for everyone already registered there was no record of consent to the revised terms at all. A member whose required consents are missing or stamped with an older version now gets a one-time notice after signing in, listing what changed (age floor of 14, the phone number passed to the coupon vendor, deletion now leaving nothing behind, and records living in Seoul) with links to the full documents.
-- Kept an earlier refusal of health-data consent as a refusal. The optional box is restored from the member's existing choice rather than defaulted to agreed — a revision is not an opportunity to quietly upgrade a "no". Required boxes always start clear.
-
-### Changed
-- Extracted `buildConsentRecordFromSelection` so signup and re-consent write the same record shape. Two copies of a legal record is exactly the thing that drifts.
-- Bound the re-consent checkboxes at load rather than when the modal opens. Binding only in the open path leaves a box that renders but does not respond if it is ever shown another way — which is how it behaved the first time it was exercised.
-- Rotated the cache to v310.
-
-## 2026-08-13 (2)
-
-### Fixed
-- Stopped telling members their reward failed when it had been paid. The `claimChallengeReward` callable is declared with `timeoutSeconds: 300`, but `httpsCallable` defaults to waiting 70 seconds — so an on-chain mint that ran long left the client giving up while the server carried on and credited the reward. `deadline-exceeded` was then reported as "보상 수령에 실패했습니다", to someone who had just received 30,000 HBT. The client now waits the full 300 seconds the server is allowed, so it hears the real answer.
-- Treated a client-side timeout as unfinished rather than failed, as a backstop for the same case. `deadline-exceeded` means this client stopped waiting, not that the server failed, so the message now says the mint is still in progress and the screen goes and checks instead of asserting an outcome.
-- Refreshed the asset screen after a claim more than once (immediately, then at 15s and 45s). The mint can land after the call returns, which is why the transaction history read as empty right after claiming and only showed the 30,000 HBT after leaving and reopening the app.
-
-### Changed
-- Made the waiting message stop promising "보통 30초~1분" once ninety seconds have passed. Past that point the useful thing to say is that it is still minting and the reward arrives whether or not the window stays open.
-- Rotated the cache to v309.
-
-## 2026-08-13
-
-### Fixed
-- Redrew the asset screen when a challenge is completed, not only when one fails. `settleExpiredChallenges` calls `refreshChallengeProgress`, which recomputes progress on the server — but it only refreshed the display when `expiredTiers` was non-empty. Finishing a challenge on its last day leaves that list empty, so the server was corrected and the screen was left behind: the "완료된 챌린지가 있습니다" toast appeared while the asset tab still read 29/30. Reloading did not help because the same visit that corrected the server never redrew; only a later visit, reading the already-corrected document, showed 30/30.
-- Started the settlement before wallet initialisation rather than after it on the asset tab. `initializeUserWallet` is allowed up to six seconds, and the challenge recompute — an ordinary callable that has nothing to do with the wallet — was queued behind it, so yesterday's progress stood as fact for that whole window.
-
-### Changed
-- Stopped presenting a day count as final when it is known to be provisional. A challenge whose end date has passed while its status is still `ongoing` has not had its last day counted yet, so the card now shows "정산 확인 중…" in place of "97% · 남은 1일". The count itself stays visible; only the false certainty goes.
-- Rotated the cache to v308.
-
-## 2026-08-12 (6)
-
-### Fixed
-- Gave the redirect sign-in path a same-origin `authDomain`, which is what was breaking Google sign-in in the installed app on Samsung Internet. That combination is the only one that uses `signInWithRedirect` (forced back in April because popups fail there). `signInWithRedirect` parks intermediate state in the `authDomain`'s storage, and when `authDomain` is a different origin — `habitschool-*.firebaseapp.com` — that storage is third-party, which current browsers partition or block. `getRedirectResult` then comes back empty and the button gives up at "로그인 확인 중...". Popup users are untouched and keep `firebaseapp.com`, which they need: for popups the `authDomain` has to stay outside the PWA scope or Android opens the popup inside the app. The two requirements are opposites, and the mode is known from userAgent and display-mode before `initializeApp` runs, so the domain is chosen there.
-- Stopped the service worker from touching `/__/` paths. It is network-first, so the auth handler still worked, but the response was being written into the cache — and those URLs carry per-attempt state, so a stale copy could be served back into a later sign-in.
-
-### Verified
-- `https://habitschool-staging.web.app/__/auth/handler` returns the Firebase handler, not the app shell, so Hosting serves it from our own domain and the rewrites do not swallow it.
-
-### Changed
-- Rotated the cache to v307.
-
-## 2026-08-12 (5)
-
-### Fixed
-- Stopped recording "did not agree" for people who plainly did. Redirect sign-in sends the page to Google and brings back a fresh load, so every consent checkbox is cleared by the time `onAuthStateChanged` fires — which is exactly when a new member's consent record is written from those checkboxes. Anyone who signed up in redirect mode got a record saying they agreed to nothing. The selection is now snapshotted to `localStorage` before the redirect leaves and resolved from there when the page comes back empty, so the stored record reflects what was actually ticked.
-- Restored the checkboxes on the way back, so the start button is not left locked behind consents the member already gave. This is the visible half of the same defect: the screen appears to return to the login prompt with nothing checked.
-
-### Added
-- Remembered consent per browser, version-stamped. Someone who has already agreed is not asked again on the next sign-in — the box is hidden and the required items stay satisfied, while an optional refusal of health-data consent is preserved as a refusal. Raising `CONSENT_DOC_VERSION` invalidates the record and asks again, which is what should happen when the documents change.
-
-### Changed
-- Rotated the cache to v306.
-
-### Still open
-- The reported sign-in failure is not yet root-caused. These fixes remove the dead end it leaves behind, and correct a consent record that was wrong regardless, but whether `getRedirectResult` is returning a user on the affected device is still unknown and needs the console from that device.
-
-## 2026-08-12 (4)
-
-### Changed
-- Account deletion now deletes everything. `blockchain_transactions` and `reward_redemptions` had been held back in case they were records the E-Commerce Act requires preserving; the Service takes no cash payment and has no business registration, so that duty does not attach, and there is no other basis for keeping them. Both moved from `RETAINED_COLLECTIONS` to `OWNED_QUERIES`, and the retained list is now empty. The counting code stays so that anything added back in future is reported rather than quietly kept.
-- Confirmed the Gemini API runs on a paid tier (Tier 1), which settles a question that materially changes what the policy has to say: on the paid tier Google does not train on submitted images or responses and human reviewers do not read them, whereas on the unpaid tier both would apply — to blood test reports among everything else. The policy states the tier and what follows from it.
-- Corrected the overseas transfer disclosure after checking rather than assuming. `firestore:databases:get` reports `asia-northeast3`, so records and photos are stored in Seoul and never leave the country. Only images sent to the Gemini API cross a border, and the policy now says exactly that — including that declining AI analysis means nothing is transferred at all, while every other feature keeps working.
-- Named the coupon vendor by its registered entity, 케이티알파 주식회사, and filled in the operator and privacy officer.
-
-### Removed
-- The "retained after deletion" sections in all four documents, and the retention-period blank that went with them. The privacy policy and terms now say without hedging that deletion leaves nothing behind.
-
-### Changed
-- Rotated the cache to v305.
-
-## 2026-08-12 (3)
-
-### Fixed
-- Rewrote the terms of use and privacy policy against what the code actually does. Three statements were false. The policy said personal information is never given to third parties, but redeeming a coupon sends the recipient's phone number to the delivery vendor (`reward-market.js`, `phone_no`). It said everything is destroyed without delay on account deletion, but `blockchain_transactions` and `reward_redemptions` are deliberately retained (`account-deletion.js`, `RETAINED_COLLECTIONS`). The terms barred anyone under 18, and nothing in the codebase ever checked an age.
-- Set the age floor at 14 — the threshold the Personal Information Protection Act actually uses — and made it a required checkbox at sign-up recorded as `consents.age14`, so the document describes a rule the code enforces rather than one it merely asserts.
-
-### Added
-- Disclosed everything the policy had omitted: sensitive-information consent under Article 23 and what declining it costs, the encrypted wallet private key and wallet address, per-device push tokens, step-count screenshots, blood test images, the Gemini API and Google Analytics as processors, and the overseas transfer that follows from running on Google infrastructure.
-- Warned in both documents that account deletion erases the stored wallet key and that blockchain records cannot be deleted at all — the app already said this at the point of deletion, but neither document did.
-- Added terms articles for the wallet and private key (Article 7) and for coupon redemption (Article 8), covering refunds, validity, and re-delivery.
-- Added `tests/policy-documents-match-code.test.js`, which reads `RETAINED_COLLECTIONS` and the vendor payload out of the source and fails if the documents stop naming them. The documents drifted from the code once; this is what notices next time.
-
-### Changed
-- Rotated the cache to v304. The English policy pages are precached by the service worker, so they need the rotation to refresh.
-
-### Still open
-- Four blanks are marked `[[…]]` in the policy and cannot be invented: the operator's full name for the privacy officer field, the coupon vendor's legal entity name, the Firestore/Storage and Gemini processing regions, and the retention period pending a read of the E-Commerce Act on whether those records are covered at all.
-
-## 2026-08-12 (2)
-
-### Fixed
-- Rebuilt the Firestore connection when it stalls, instead of calling a no-op. The reconnect probe called `enableNetwork(db)` on a client whose network had never been disabled — that resolves immediately and rebuilds nothing, so a stalled WebChannel stream stayed stalled and a page reload was the only cure. It now bounces the connection (`disableNetwork` then `enableNetwork`) once a plain probe has already failed, which tears the streams down, re-establishes them, and re-sends the mutations queued behind them.
-- Stopped sending the daily-log save retry down the same dead stream. The first attempt now times out at 12s rather than 25s — a healthy write is acknowledged in well under a second, so a long wait on the first attempt only ever means a stalled stream — then forces a reconnect before retrying with the full 25s budget. Worst case falls from ~51s to ~38.5s, which also brings the whole failure path inside the 40s save-button watchdog so its toast no longer interleaves.
-- Made "안전하게 저장했어요. 잠시 후 자동으로 마무리돼요." true. The offline outbox was only flushed on `online`, `focus`, and `visibilitychange`, none of which fire for someone who stays on the page, so nothing ever finished the save: photos appeared in the diet/exercise/mind tabs but the gallery stayed empty, and the only way through was to reload and press save again. Queueing now schedules its own retry (4s, 10s, 25s, 60s, 120s), reviving the connection first since the replay jams in the same place, and confirms with a toast when it lands.
-- Resumed pending saves after sign-in. A queued entry survived a reload but nothing picked it up, which is the other half of why pressing save again was required.
-
-### Changed
-- Rotated the cache to v303.
-
-## 2026-08-12
-
-### Fixed
-- Waited for the points the server awards before building the share card. Points are not a value the client knows: the client writes `daily_logs`, and the `awardPoints` Firestore trigger fills `awardedPoints` afterwards. The share prompt was raised 900ms after the save and read the local cache, so a member who finished a full day and tapped "share" got a card stamped with the score from before that day counted. The card now polls the server copy (five attempts, 700ms apart), refreshes the daily-log, gallery, and prepared-media caches from what it reads, and shares anyway if the points never arrive — refusing to share would be worse than an out-of-date number.
-- Recorded which day the prompt was raised for, rather than reading today's date again when the share finally runs. Across a midnight boundary those differ.
-- Made the 3-day challenge reward claimable in the Lite version. `claimChallengeReward` lived in `blockchain-manager.js`, and `main.js` only assigned `window.claimChallengeReward` once that module had loaded — but Lite (play) mode never loads it, so the button's `onclick` called `undefined` and failed silently. The claim is one `httpsCallable` with no signing and no chain access, so it moved to its own `js/challenge-claim.js`, which `main.js` now imports lazily in every mode and `blockchain-manager.js` re-exports. One implementation, two entry points.
-
-### Changed
-- Rotated the cache to v302 so the above actually reaches installed clients.
-
-## 2026-08-09
-
-### Fixed
-- Stopped the share media callable from discarding a photo whose size exceeded a per-item limit that had been scaled by batch size (6MB / 5 items = 1.2MB). A 1.63MB original cleared that easily, so a photo visible in the gallery feed rendered as a placeholder on the card and stayed one — being too large is not a condition the automatic retry could improve. The limit is a flat 6MB again.
-- Checked the callable's response budget before committing an item's bytes rather than after, so the item that broke the ceiling is the one dropped instead of always being let through.
-
-### Changed
-- Loaded share card photos directly in the browser with `crossOrigin="anonymous"` instead of routing them through `prepareShareMediaAssets`. Storage already serves CORS, so the canvas is not tainted and `toBlob` works; the round trip existed only to avoid tainting. Measured on one real day: four photos took 3,980ms and 2.6MB of base64 through the server versus 2,328ms direct, and a second open is 35ms with zero function calls because the images are ordinary cacheable HTTP requests. The callable remains as a fallback when the CORS load fails, and strength video thumbnails still use it since they need ffmpeg.
-- Cached decoded images for the life of a card build so preparation and drawing no longer decode the same photo twice.
-
-### Added
-- Retried thumbnail generation once on upload. It is a decode plus a canvas, which fails on a large photo on a loaded device, and the failure was previously caught, logged, and dropped — original saved, thumbnail field left empty, with no retry and no way back.
-- Backfilled thumbnails that were never created, building them from the image the card already decoded and writing them back to the daily log. Verified in production: a 1,707,469 byte original now has a 7,771 byte thumbnail. Covers the fixed fields (four meals, mind photo); cardio and strength entries live in arrays and would require rewriting the whole array, so they are left for later.
-
-## 2026-08-06
-
-### Added
-- Raised the gallery share card from four photos to nine, and generalized the tidy (정돈형) layout into per-row column plans (5→[2,3], 6→[3,3], 7→[3,4], 8→[4,4], 9→[3,3,3]) so every row spans the full width and only the 10px gaps go unpainted.
-- Split the overlap (겹침형) and focus (포커스형) thumbnail strips into two rows past five extras, sizing them from the available width and a height band so they shrink instead of overflowing. Five extras or fewer render byte-identically to before.
-- Made tapping a small photo in the overlap and focus layouts promote it to the hero, swapping it with the current hero so a second tap restores the original order. The card is a single canvas with no element per photo, so the tap is resolved by hit-testing the drawn frame coordinates topmost-first, unrotating the point for the tilted overlap tiles.
-- Held the chosen order as photo keys (`category|originalUrl`, the key `collectShareCardMedia` already dedupes on) rather than positions, so hiding a category cannot repoint the selection at the wrong photo.
-
-### Fixed
-- Stopped four of the six hardcoded photo caps from silently defeating the new limit: the media signature in `ensurePreparedShareMedia` and the render key both truncated at four, so adding a fifth photo produced an identical cache key and never rebuilt the card.
-- Stopped `drawPosterMediaTiles` from overwriting `frame.x`/`frame.y` in place while drawing rotated tiles, which destroyed the coordinates needed to resolve a tap.
-- Stopped a single slow preparation from freezing the card into placeholders for the rest of the session. A cold container after a functions deploy exceeded the 12s client timeout, and the resulting all-placeholder batch was cached as though it were the answer, with no path to retry. An incomplete result is now remembered as incomplete and rebuilt once after a six second wait, at most twice.
-- Bounded the share media callable's response so it cannot exceed the 10MB callable limit: the server returns whole originals base64-encoded, which four items could already overflow and nine would have made routine. Per-item size now scales with batch size and the response stops filling at 6MB, costing a few placeholders instead of every photo.
-
-### Changed
-- Chunked the share media request at five items in parallel instead of stretching the timeout, keeping per-container memory identical to the previous four-item requests. `shareMyCard` caps the whole build at 14s, so raising the inner limit would only move the failure to the share button.
-- Sized the tile corner radius and matte inset to the tile, so two-row thumbnails are not swallowed by a fixed 34px radius. Tiles above 155px are unchanged.
-- Removed the DOM/html2canvas share card that the canvas implementation replaced (`buildShareImageGrid`, `prepareShareThumbsForCapture`, `createSquareShareBlob`, `_ensureHtml2Canvas`, and the `.share-media-*` styles), all of which had no callers and still carried the old four-photo cap.
-- PWA cache rotated to v301.
-
-### Fixed
-- Stopped reading a Giftishow fixed-end-date `limitDay` (`YYYYMMDD`) as a day count, which produced an expiry far outside the Firestore timestamp range and failed the entire redemption write after the coupon had already been issued and delivered.
-- Clamped every reward validity period to a sane range so a poisoned catalog value can no longer reach a Firestore write from any read path.
-- Validated the fallback date in `toSafeFirestoreDate` as strictly as the primary value.
-
-### Added
-- Mirrored the supplier coupon image into Firebase Storage at issuance and recovery, and served the HTTPS copy in the vault so the gifticon renders instead of being blocked as mixed content.
-- Logged the field names (never the values) of a Giftishow status response that returns no PIN or image, so a stuck coupon is diagnosable without exposing coupon data.
-
-### Changed
-- Suppressed the "check your text messages" note when a real coupon image is already on screen.
-- Stopped telling the member a coupon arrived when the server skipped issuance and returned an existing record; the toast now names what actually happened (unresolved, recovered, or already processed).
-- Logged which redemption blocks a new one, so ops can find the record to reconcile or refund.
-- Bounded the unresolved-redemption block to one hour so an unrecoverable order cannot lock a member out of a product forever; stale ones are logged for ops instead.
-- Ran the five independent preflight reads concurrently instead of serially, so a cold start no longer stacks the Giftishow catalog and bizmoney round trips on top of each other.
-- Gave the redemption callable the same 180s window as the function, so a slow-but-working issuance no longer surfaces as deadline-exceeded.
-- Locked the redeem button while an issuance is in flight, and logged preflight, provider, and mirror durations.
-- Returned the post-charge point balance from the redemption and applied it immediately, so the header no longer shows the pre-purchase number until a refresh.
-- Made the admin reconcile order number optional, rejected a coupon PIN typed in its place, and recorded whether the evidence was a provider confirmation or an admin attestation.
-- Dropped the invented countdown: measured redemption is preflight 755ms + provider 348ms + mirror 432ms, so the UI now stays quiet for five seconds and only then reports elapsed time.
-- Dropped the product thumbnail when the supplier gifticon image is on screen, since that image already carries the product photo and name.
-- PWA cache rotated to v300.
-
-## 2026-07-19
-
-### Fixed
-- Rejected nearly uniform black decoder frames instead of persisting them as successful exercise-video thumbnails on Samsung devices.
-- Sampled several positions across each exercise video and waited for a decoded frame before generating the local and Storage thumbnail.
-- Kept a clear video placeholder instead of falling back to a black video surface when no valid frame can be decoded.
-
-### Changed
-- PWA cache rotated to v244.
-
-## 2026-07-18
-
-### Fixed
-- Captured a persisted JPEG thumbnail from the already decoded exercise-video preview instead of replacing the saved card with a black fallback while deferred thumbnail work finishes.
-- Kept the local video frame visible after save until its thumbnail is ready, including videos larger than 20 MB.
-- Shortened the coupon expiry label by removing the estimated `product basis` suffix so the date and remaining days fit on one line.
-
-### Changed
-- PWA cache rotated to v243.
-
-### Fixed
-- Rendered selected exercise videos from their local video frame immediately instead of leaving large or slow-to-decode files as black placeholders while upload thumbnails are prepared.
-- Added owner-only background reconciliation for coupons that Giftishow issued successfully but remained `pending_issue` after a Firestore finalization failure.
-- Preserved existing point deductions and provider transactions during coupon reconciliation so recovery cannot issue or charge twice.
-- Accepted additional Giftishow PIN and barcode response field aliases when restoring coupon details.
-
-### Changed
-- Kept the coupon-vault snapshot fast while reconciling only unresolved coupons in the background.
-- PWA cache rotated to v242.
-
-### Fixed
-- Replaced blocked or broken Giftishow coupon images with a locally generated PIN barcode instead of showing broken-image alt text.
-- Derived missing coupon expiry from the catalog validity period and labeled the derived value as product-based in the vault.
-- Stopped treating a successful Giftishow resend API response as proof that the MMS reached the device.
-- Required an explicit Giftishow success code instead of accepting provider responses with a missing code.
-
-### Changed
-- Recorded MMS resend acceptance separately from delivery confirmation and updated the user guidance for spam filtering and delayed delivery.
-- PWA cache rotated to v241.
-
-## 2026-07-17
-
-### Added
-- Added an owner-only `resendRewardCoupon` callable and a `문자로 다시 받기` action in the coupon vault.
-- Added a separate Giftishow MMS resend action to the reward-market admin console.
-
-### Fixed
-- Normalized Giftishow expiry values supplied as epoch seconds, epoch milliseconds, or provider date strings before Firestore writes.
-- Reconciled idempotent retry requests through the existing provider transaction instead of issuing a second coupon.
-- Blocked unresolved same-user/same-SKU live redemptions from creating another provider order.
-- Added server-side resend reservation, five-minute cooldown, and a KST daily limit of three requests without additional point deduction.
-- Removed the reward-market admin dependency on the full users/daily-log dashboard scan and rendered issuance rows first.
-
-### Verification
-- `npm test` (556 passing; 7 Firestore emulator-only tests skipped in the local run)
-- `npx esbuild js/app.js --bundle --format=esm --platform=browser`
-- `node --check functions/reward-market.js`
-- `node --check functions/runtime.js`
-- PWA cache rotated to v240.
-
-## 2026-07-10
-
-### Security
-- Blocked client-forged coin minting via `daily_logs.awardedPoints`: `firestore.rules` now whitelists/caps `awardedPoints` (diet 30 / exercise 30 / mind 20) and the `awardPoints` trigger clamps the credited diff server-side (`functions/points-utils.js`).
-- Made reactions server-authoritative to stop reaction-based coin minting: any signed-in user could previously write arbitrary UIDs into `daily_logs.reactions` and mint coins for the post owner (and inflate MVP score). New `toggleReactionOnPost` callable toggles/awards with the verified `request.auth.uid` only; `firestore.rules` now bars client writes to `reactions`/`reactionPointAwardedUserIds`. Replaces the `awardReactionPoints` trigger.
-- Made `claimChallengeReward` atomic with a per-user/tier claim lock (`create()` mutual exclusion) to prevent concurrent double-claim of reward points / bonus HBT during on-chain settlement.
-- Made the `mintHBT` lock atomic (`create()` instead of get-then-set) to prevent concurrent double-deduct / double-mint.
-- Enforced `shareSettings` server-side: `daily_logs` stays gallery-public, but hidden fields (userName, gratitude) are stripped from the public doc and the gratitude original is kept in an owner-only `daily_logs/{id}/private/mind` subdocument. (Default sharing remains public by product decision.)
-
-### Changed
-- Extracted the challenge settlement/qualification math into `functions/challenge-utils.js` (single source of truth) with behavioral tests — previously untested inline logic in `runtime.js`, the top recurring-bug area.
-- Extracted pure friendship predicates into `js/friendship-utils.js` as the first safe step of splitting the 1MB `app-core.js` monolith.
-
-### Fixed
-- Suppressed stale in-app notification toasts: notifications older than 30 minutes are now silently marked seen instead of popping up late when the app is reopened (applies to all notification types, not just `friend_connected`).
-- Fixed the admin member table's "발송됨" feedback badge breaking on apostrophes: replaced onclick interpolation with `data-*` attributes and a delegated click listener.
-
-### Chore
-- Removed tracked scratch file `temp_cmd.txt` and the byte-identical duplicate `HBT_TOKENOMICS.txt`; ran `git gc` (loose objects ~61 MiB → packed ~7.7 MiB).
-
-### Verification
-- `npm test` (409 passing, incl. new `points-utils`, `challenge-utils`, `friendship-utils` suites)
-- `npx esbuild js/app-core.js --bundle --external:https://* --format=esm` (client bundle parse check)
-- `node -c functions/runtime.js` (server syntax check)
-
-### Deployment
-- Production (`https://habitschool.web.app`, PWA v226): security hardening + notification fix — commits `d5c9978` → `0b5ae5b`.
-- Pending deployment (committed, staged for staging→prod): settlement extraction `bfbadad`, friendship extraction `6d60ec2`, admin badge fix `9ded33d`. Note: the next production deploy must bump the PWA version past v226.
-
-## 2026-06-25
-
-### Changed
-- Added the English `/en` simple app entry and polished its signed-in design hierarchy.
-- Updated English simple app cards, upload zones, AI buttons, and CTAs to better match the Korean simple visual quality.
-- Rotated PWA/assets through v216 so production clients receive the latest English styling.
-
-### Fixed
-- Fixed remaining Korean labels in the English Exercise and Mind simple flows.
-- Updated meditation guide tests to cover the current English/Korean guide toggle copy.
-
-### Verification
-- `npm test`
-- `npm run check:en`
-- `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
-- `git diff --check`
-
-### Deployment
-- Production: `https://habitschool.web.app/en`
-- Latest production commit: `ecfccb3 Polish English simple app styling`
-
-## 2026-06-04
-
-### Added
-- Added the exercise habit group pilot model with four group types:
-  - 10,000-step walking
-  - Home training proof room
-  - Gym attendance
-  - Running club
-- Added per-group reward progress so users can join up to two exercise groups and progress each group independently.
-- Added paid group entry support with a 200P entry fee and 3,000P reward target for 100 approved completions.
-- Added leader review workflow for habit group checkins:
-  - Group leaders can see pending submissions on the dashboard.
-  - Leaders can approve or reject submitted records.
-  - Reward progress advances only after approval.
-- Added Firestore index support for leader review queues on `habit_group_checkins(groupId, reviewStatus)`.
-- Added production deployment of habit group callable/functions:
-  - `joinHabitGroup`
-  - `leaveHabitGroup`
-  - `reviewHabitGroupCheckin`
-  - `transferHabitGroupLeader`
-  - `onHabitGroupCheckinWritten`
-- Added a user-facing Korean changelog page refresh for the latest habit group and gallery entry updates.
-
-### Changed
-- Updated the gallery community CTA so users enter the Kakao OpenChat directly without account-linking friction.
-- Increased habit group dashboard visibility to show up to four groups while keeping membership capped at two groups.
-- Refined the joined group dashboard copy:
-  - Removed repeated "today submitted / pending review" copy from compact group cards.
-  - Kept progress copy concise with completion, approved, and pending counts.
-- Collapsed unavailable recommendations by default when a user is already in two groups.
-- Replaced repeated "2 groups joined" labels with a single "maximum 2 groups" section-level control.
-- Sorted recommended exercise groups by participant count.
-- Rotated PWA assets through v208 to ensure mobile/PWA clients pick up the latest runtime.
-
-### Fixed
-- Fixed mojibake in `changelog.html`, where Korean release notes were rendered as question-mark placeholder text.
-- Fixed same-day group reward progress so two joined groups can each count on the same date when both conditions are met.
-- Fixed duplicate checkin counting within the same group and date by keeping progress scoped to `user + groupId`.
-- Fixed Samsung Internet exercise video uploads that could remain stuck around 1% by using the safer upload path for exercise videos.
-- Fixed leader review media rendering:
-  - Photos now open in the existing gallery lightbox.
-  - Videos now render as playable video only when a real video URL is available.
-  - Older pending checkins are hydrated from the related daily log when the original video URL was missing from the checkin snapshot.
-  - Thumbnail-only records no longer pass image URLs into a `<video>` source.
-- Fixed date rollover behavior so returning after a new day reloads the selected date more reliably.
-
-### Verification
-- `npm test`
-- `npx esbuild js/app.js --bundle --format=esm --platform=browser --outfile=%TEMP%\habitschool-app-check.js`
-- Focused habit group and PWA versioning Vitest suites
-- `node --check functions/runtime.js`
-- `git diff --check`
-
-### Deployment
-- Staging: `https://habitschool-staging.web.app`
-- Production: `https://habitschool.web.app`
-- Latest production commit: `6b0b080 Update habit group and gallery entry UI`
+- **[수정]** **아메리카노 쿠폰 유효기간을 실제 발급 기준과 맞췄습니다.**
+- **[개선]** **보관함에서 만료 날짜와 남은 일수를 쉽게 확인할 수 있습니다.**

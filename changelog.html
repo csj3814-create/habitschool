@@ -174,333 +174,304 @@
         <div class="header">
             <h1>업데이트 노트</h1>
             <div class="subtitle">해빛스쿨의 주요 변경과 개선 기록</div>
-            <div class="update">마지막 업데이트: 2026년 9월 15일</div>
+            <div class="update">마지막 업데이트: 2026년 9월 19일</div>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.36</span>
+                <span class="version-badge">v1.0.37</span>
+                <span class="version-date">2026년 9월 19일</span>
+            </div>
+            <div class="version-title">운동 기록이 더 정확해졌습니다</div>
+            <ul class="change-list">
+                <li><span class="tag tag-new">신규</span> <strong>이번 주 150분을 채우면 축하와 함께 다음 눈금이 열립니다.</strong> 세계보건기구 권장은 주 150~300분입니다. 150분을 넘기면 300분까지 막대가 이어집니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>운동 시간 입력칸이 한 줄로 줄었습니다.</strong> 5·10·15·30·60분 버튼 중에 누르거나 직접 적으시면 됩니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>운동 영상 분석에서 반복 횟수를 뺐습니다.</strong> 하이퍼랩스는 빨리 감긴 영상이라 70회가 3회로 보입니다. 틀린 숫자를 드리느니 말하지 않는 편이 낫다고 판단했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>갤러리에서도 운동 사진·영상의 AI 분석을 바로 볼 수 있습니다.</strong></li>
+                <li><span class="tag tag-fix">수정</span> <strong>영상을 올린 직후 저장하면 AI 분석이 실패하던 문제</strong>를 고쳤습니다. 이제 분석이 끝난 뒤에 저장합니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>이번 주 운동 시간이 0분으로 보이던 문제</strong>를 고쳤습니다. 연결이 끊겨 못 불러왔을 때 0이라고 적고 있었습니다. 이제 못 불러오면 그렇다고 말씀드립니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>챌린지를 끝내도 "정산 확인 중"에 머물던 문제</strong>를 고쳤습니다. 앱을 나갔다 들어오지 않아도 바로 수령할 수 있습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>연결이 불안정할 때 동의 화면이 다시 뜨던 문제</strong>를 고쳤습니다. 저장되지 않으면 그 자리에서 알려 드립니다.</li>
+            </ul>
+        </div>
+
+        <div class="version-card">
+            <div class="version-header">
+                <span class="version-badge old">v1.0.36</span>
                 <span class="version-date">2026년 9월 15일</span>
             </div>
             <div class="version-title">근력운동이 걸음수에 가려 사라지고 있었습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> <strong>운동 영상도 AI가 봅니다.</strong> 하이퍼랩스로 찍은 운동 영상을 올리면 어떤 운동인지, 강도가 어느 정도인지, 자세는 어떤지 읽어 드립니다. 반복 횟수도 셀 수 있으면 함께 알려 드립니다. 다만 <strong>운동한 시간은 영상으로 알 수 없습니다</strong> — 하이퍼랩스는 시간을 압축한 영상이라 10초짜리 파일이 10분이었는지 한 시간이었는지 남지 않습니다. 시간은 직접 적어 주시고, AI가 읽은 강도가 거기에 곱해져 이번 주 150분에 반영됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>근력운동이 이제 걸음수와 따로 셉니다.</strong> 지금까지는 하루 활동량을 "걸음수로 환산한 시간"과 "운동 기록으로 환산한 시간" 중 큰 쪽 하나만 썼습니다. 같은 산책이 두 번 세어지는 것을 막으려던 것인데, 근력운동은 걸음수를 만들지 않습니다. 90일치를 확인해 보니 근력 영상을 올리신 367일 중 <strong>204일(55.6%)에서 그날 하신 운동이 걸음수에 가려 사라지고</strong> 있었습니다. 하루 평균 34분씩입니다. 이제 걸음수가 설명하지 못하는 운동은 더합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 이 변경으로 <strong>점수가 내려가는 분은 없습니다.</strong> 건강습관 점수의 신체활동이 오르는 경우가 전체의 3.5%(오를 때 평균 16.4점)이고 나머지는 그대로입니다. <strong>포인트와는 무관합니다</strong> — 운동 인증 포인트(장당 10점, 하루 30점 상한)는 예전과 똑같습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>운동 영상도 AI가 봅니다.</strong> 어떤 운동인지, 강도가 어느 정도인지, 자세는 어떤지 읽어 드립니다. 운동한 시간은 영상으로 알 수 없어 직접 적어 주셔야 합니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>근력운동이 이제 걸음수와 따로 셉니다.</strong> 역기를 들어도 만보기는 돌지 않는데, 그날 하신 근력운동이 걸음수에 가려 사라지고 있었습니다.</li>
+                <li><span class="tag tag-improve">개선</span> 이 변경으로 <strong>점수가 내려가는 분은 없습니다.</strong> 운동 인증 포인트도 예전과 똑같습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.35</span>
+                <span class="version-badge old">v1.0.35</span>
                 <span class="version-date">2026년 9월 14일</span>
             </div>
             <div class="version-title">사진만 올리면 분석까지, 해낸 것은 눈에 보이게</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> <strong>운동 시간을 적을 칸이 생겼습니다.</strong> 사진과 영상이 알려 주지 못하는 단 하나가 시간입니다. 하이퍼랩스는 시간을 압축해 버린 영상이라 10초짜리 파일이 실제로 몇 분이었는지 남지 않습니다. AI로도 알 수 없는 값이라 직접 여쭙기로 했습니다 — 숫자를 적거나 10·20·30·45·60분 중에 누르시면 됩니다. 적으신 시간은 강도에 따라 환산돼 이번 주 150분에 반영됩니다. 시간이 찍힌 사진이면 AI가 읽어 미리 채워 드립니다.</li>
-                <li><span class="tag tag-new">신규</span> <strong>운동 탭에 이번 주 완수율이 생겼습니다.</strong> "이번 주 82 / 150분 · 55% · 3일 남았어요 — 하루 23분씩이면 채워요". 주 150분은 세계보건기구·미국심장협회 권장 기준이고, 건강습관 점수가 이미 이 기준으로 채점하고 있었지만 그 숫자가 점수 설명 안에만 있었습니다. 이제 기록하는 자리에서 얼마나 했고 얼마가 남았는지 바로 보입니다. 요일별 점으로 이번 주를 한눈에 볼 수 있습니다.</li>
-                <li><span class="tag tag-new">신규</span> <strong>운동 사진도 AI가 읽습니다.</strong> 유산소 인증 사진을 올리면 어떤 운동을 얼마나 했는지 분석합니다. 러닝머신 계기판이나 워치 요약처럼 숫자가 찍힌 사진이면 시간·거리·칼로리를 읽어 그대로 쓰고, 숫자가 없는 운동 장면이면 장면으로 강도를 판단합니다. 하루 권장량(중강도 30분) 달성률도 함께 보여 드립니다.</li>
-                <li><span class="tag tag-new">신규</span> <strong>식단·수면 사진을 올리면 AI 분석이 저절로 시작됩니다.</strong> 사진을 올렸다는 것이 곧 분석해 달라는 뜻인데 버튼을 한 번 더 누르게 하고 있었습니다. 아침·점심·저녁·간식을 한꺼번에 고르면 올라가는 순서대로 하나씩 분석합니다. 버튼은 그대로 있습니다 — 결과를 접었다 펴거나 다시 분석해 볼 때 씁니다.</li>
-                <li><span class="tag tag-new">신규</span> <strong>목표를 달성하면 축하 화면이 뜹니다.</strong> 챌린지 보상은 "수령하기"를 눌러 받고, 받은 포인트와 HBT가 얼마인지 그 자리에서 보입니다. 조건을 채워 저절로 들어온 미션 배지도 처음 확인할 때 한 번 알려 드립니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>운동 분석 카드와 건강습관 점수가 서로 다른 기준으로 달성률을 보여주던 문제</strong>를 고쳤습니다. 카드는 "하루 30분", 점수는 "주 150분"을 쓰고 있었습니다. 이제 둘 다 주 150분 하나만 봅니다. AI가 사진에서 운동 시간을 읽어내면 그 시간이 주간 합계에 반영됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>사진을 지워도 AI 분석은 기록에 남아 있던 문제</strong>를 고쳤습니다. 화면에서는 사라졌지만 서버에는 그대로였고, 지운 사진의 분석이 건강습관 점수와 대사 점수에 계속 반영됐습니다. 이제 사진을 지우면 그 사진 때문에 기록에 들어갔던 분석과 사진도 함께 지워집니다. 예전에 저장해 두신 기록은 지금처럼 저장 버튼을 눌러야 바뀝니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>분석이 도는 도중에 사진을 지우면 결과가 다시 나타나던 문제</strong>를 고쳤습니다. 이제 분석이 끝났을 때 그 사진이 아직 그 자리에 있는지 확인합니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>캡처를 올리는 동안에도 AI 분석 버튼이 눌리던 문제</strong>를 고쳤습니다. 누르면 "사진을 먼저 저장한 후 분석해주세요"만 나왔습니다. 이제 사진이 다 올라갈 때까지 버튼이 기다립니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>오늘 변환 한도가 잘못 표시되던 문제</strong>를 고쳤습니다. 화면은 20,000을 기준으로 그렸는데 실제로 막는 한도는 12,000이었습니다. 이제 서버가 세는 것과 같은 숫자를 보여 드리고, 한도를 다 쓰면 그것도 표시됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>온체인에서는 이미 끝난 챌린지가 앱에서는 수령 대기로 남던 문제</strong>를 고쳤습니다. 예치금까지 돌아왔는데 다시 누르면 "예치 내역을 찾을 수 없습니다"만 나왔습니다.</li>
-                <li><span class="tag tag-improve">개선</span> <strong>소모임 100일 도전의 기간이 화면에 보입니다.</strong> 언제부터 언제까지인지, 며칠 남았는지 함께 표시합니다. 시작한 날부터 120일 안에 100일을 채우면 3,000 포인트입니다.</li>
-                <li><span class="tag tag-improve">개선</span> <strong>초대 링크에 미리보기 이미지가 붙습니다.</strong> 블로그나 메신저에 링크를 넣으면 "당신의 건강을 위해 초대합니다" 카드가 함께 뜹니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>운동 시간을 적을 칸이 생겼습니다.</strong> 사진과 영상이 알려 주지 못하는 단 하나가 시간입니다. 적으신 시간은 강도에 따라 환산돼 이번 주 150분에 반영됩니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>운동 탭에서 이번 주 완수율을 봅니다.</strong> "82 / 150분 · 3일 남았어요 — 하루 23분씩이면 채워요". 요일별로 이번 주를 한눈에 볼 수 있습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>운동 사진도 AI가 읽습니다.</strong> 러닝머신 계기판처럼 숫자가 찍힌 사진이면 시간·거리·칼로리를 그대로 읽고, 숫자가 없으면 장면으로 강도를 판단합니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>식단·수면 사진을 올리면 AI 분석이 저절로 시작됩니다.</strong> 버튼을 한 번 더 누르지 않으셔도 됩니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>목표를 달성하면 축하 화면이 뜹니다.</strong> 받은 포인트와 HBT가 그 자리에서 보입니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>운동 분석 카드와 건강습관 점수가 서로 다른 기준을 쓰던 문제</strong>를 고쳤습니다. 이제 둘 다 주 150분 하나만 봅니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>사진을 지워도 AI 분석은 기록에 남아 점수에 반영되던 문제</strong>를 고쳤습니다. 이제 사진과 함께 지워집니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>변환 한도가 실제와 다르게 표시되던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>이미 끝난 챌린지가 수령 대기로 남던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>소모임 100일 도전의 기간이 보입니다.</strong> 며칠 남았는지 함께 표시합니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>초대 링크에 미리보기 이미지가 붙습니다.</strong></li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.34</span>
+                <span class="version-badge old">v1.0.34</span>
                 <span class="version-date">2026년 9월 11일</span>
             </div>
             <div class="version-title">알려주신 두 가지를 고쳤습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> <strong>수면 AI 분석을 해도 수면 시간 칸이 비어 있던 문제</strong>를 고쳤습니다. 분석 카드에는 "8시간 20분"이 떠 있는데 바로 아래 입력칸은 그대로였습니다. 값을 읽는 규칙이 두 벌로 갈라져 있었고, 게다가 분석 결과는 바로 저장되지만 시간은 저장 버튼을 눌러야 저장되는 구조라 화면을 다시 그릴 때마다 입력칸이 비워졌습니다. 숫자가 들어갔다가 지워지고 있었습니다. 제보해 주셔서 찾았습니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>30일 마스터 챌린지 보상 수령이 100초 넘게 걸리던 문제</strong>를 고쳤습니다. 느린 게 아니라 실패하고 있었습니다. 하루에 발행할 수 있는 HBT 한도에 걸린 상태였는데, 그 확인을 예치금 반환 거래를 보낸 뒤에야 하고 있었습니다. 이제 거래를 보내기 전에 먼저 확인하고, 한도가 모자라면 몇 초 안에 남은 한도가 얼마인지까지 알려 드립니다.</li>
-                <li><span class="tag tag-improve">개선</span> 수면 AI 분석을 하면 <strong>읽어낸 수면 시간도 바로 저장</strong>됩니다. 예전에는 저장 버튼을 눌러야 남았습니다. 직접 적어 두신 값이 있으면 그대로 둡니다.</li>
-                <li><span class="tag tag-improve">개선</span> 앱에서 <strong>걸음수를 자동으로 가져옵니다.</strong> 갤럭시 워치·삼성 헬스의 오늘 걸음수를 앱을 열 때 읽어오고, 운동 탭을 보다 앱으로 돌아올 때도 다시 확인합니다.</li>
-                <li><span class="tag tag-fix">수정</span> <strong>그날 첫 기록이 AI 분석일 때 결과가 저장되지 않을 수 있던 문제</strong>를 고쳤습니다. 식단·수면 분석은 저장 버튼을 누르지 않아도 그 자리에서 기록에 남는데, 그날 아무 기록도 없는 상태에서 분석부터 하면 저장이 거부되고 있었습니다. 화면은 멀쩡해 보여서 알아차리기 어려운 자리였습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>수면 AI 분석을 해도 수면 시간 칸이 비어 있던 문제</strong>를 고쳤습니다. 분석에는 "8시간 20분"이 떠 있는데 입력칸은 그대로였습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>챌린지 보상 수령이 100초 넘게 걸리던 문제</strong>를 고쳤습니다. 느린 것이 아니라 실패하고 있었습니다. 이제 몇 초 안에 결과를 알려 드립니다.</li>
+                <li><span class="tag tag-improve">개선</span> 수면 AI 분석을 하면 <strong>읽어낸 수면 시간도 바로 저장</strong>됩니다. 직접 적어 두신 값은 그대로 둡니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>앱에서 걸음수를 자동으로 가져옵니다.</strong> 갤럭시 워치·삼성 헬스의 오늘 걸음수를 앱을 열 때 읽어 옵니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>그날 첫 기록이 AI 분석일 때 결과가 저장되지 않던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.33</span>
+                <span class="version-badge old">v1.0.33</span>
                 <span class="version-date">2026년 9월 10일</span>
             </div>
-            <div class="version-title">가입하고도 시작하지 못하게 막고 있던 것들을 걷어냈습니다</div>
+            <div class="version-title">가입하고도 시작하지 못하게 막고 있던 것들</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> <strong>네이버 웨일에서 로그인 버튼이 아예 보이지 않던 문제</strong>를 고쳤습니다. 앱 안에 박힌 브라우저(카카오톡·인스타그램 같은)로 잘못 분류돼 로그인 버튼이 통째로 숨겨지고 있었습니다. 웨일로 오신 분들은 체험만 해 보고 가입할 방법을 찾지 못한 채 돌아가셨습니다. 죄송합니다. 이제 정상적으로 로그인됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> 가입한 뒤 <strong>"첫 기록 준비" 화면이 아예 뜨지 않던 문제</strong>를 고쳤습니다. 이 화면을 띄울 근거가 브라우저에 30분만 남는 임시 표시 하나뿐이라, 로그인 도중 구글 화면에 다녀오거나 탭을 닫으면 사라졌고 그대로 "완료"로 처리됐습니다. 무엇부터 시작할지 고르지 못한 채 빈 화면을 만나신 분이 많았습니다. 이제 놓쳐도 다음에 들어오시면 다시 나옵니다.</li>
-                <li><span class="tag tag-fix">수정</span> 로그아웃했다가 다시 로그인하면 <strong>약관 동의를 처음부터 다시 받던 문제</strong>를 고쳤습니다. 동의는 사람에게 받는 것인데 브라우저에 기억해 두고 있었습니다. 이제 같은 계정은 한 번만 받습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 새로 가입하실 때 <strong>동의 창이 잠깐 보였다가 다음 화면에 가려지던 문제</strong>를 고쳤습니다. 이제 동의를 먼저 끝내고 습관 고르기가 열립니다.</li>
-                <li><span class="tag tag-fix">수정</span> 로그아웃하거나 동의 화면에서 그만두기를 누르면 <strong>"구글로 시작하기" 버튼이 회색으로 굳어 새로고침해야 풀리던 문제</strong>를 고쳤습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 영문 화면에서 <strong>로그아웃하면 한국어 화면으로 빠져나가던 문제</strong>를 고쳤습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 자산 탭의 "가장 가까운 보상"에 <strong>"최근 7일 평균 기준 약 1253일" 같은 숫자가 뜨던 문제</strong>를 고쳤습니다. 기록하지 않은 날까지 함께 평균을 내는 방식이라, 이제 막 시작하신 분일수록 큰 숫자가 나왔습니다. 이제 하루에 채울 수 있는 최대치(80P)를 기준으로 알려 드립니다.</li>
-                <li><span class="tag tag-improve">개선</span> 회색으로 보이던 <strong>로그인 버튼이 왜 눌리지 않는지 알려 줍니다.</strong> 체크하셔야 할 항목이 빨갛게 표시됩니다. 예전에는 아무 반응이 없어서 무엇이 부족한지 알 길이 없었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 앱이 설치돼 있다는 상단 안내를 <strong>어디를 눌러도 앱이 열립니다.</strong> 예전에는 작은 버튼 하나만 눌러야 했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 화면마다 <strong>"BSC Mainnet"과 "BSC 메인넷"이 번갈아 나오던 것</strong>을 <strong>BSC 메인넷</strong>으로 통일했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 운동 점수 안내를 <strong>무엇을 올리느냐 기준</strong>으로 다시 썼습니다(걸음수·운동 이미지 10+5P, 운동 영상 10+5P). 점수를 가르는 것이 그것인데 화면에 드러나 있지 않았습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>네이버 웨일에서 로그인 버튼이 보이지 않던 문제</strong>를 고쳤습니다. 웨일로 오신 분들은 가입할 방법을 찾지 못한 채 돌아가셨습니다. 죄송합니다.</li>
+                <li><span class="tag tag-fix">수정</span> 가입한 뒤 <strong>"첫 기록 준비" 화면이 뜨지 않던 문제</strong>를 고쳤습니다. 이제 놓치셔도 다음에 들어오시면 다시 나옵니다.</li>
+                <li><span class="tag tag-fix">수정</span> 로그아웃했다가 다시 로그인하면 <strong>약관 동의를 처음부터 다시 받던 문제</strong>를 고쳤습니다. 같은 계정은 한 번만 받습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.32</span>
+                <span class="version-badge old">v1.0.32</span>
                 <span class="version-date">2026년 9월 1일</span>
             </div>
-            <div class="version-title">올라가는 중인데 멈춘 것처럼 보이던 것들을 고쳤습니다</div>
+            <div class="version-title">올라가는 중인데 멈춘 것처럼 보이던 것들</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 사진을 여러 장 올릴 때 <strong>한 장만 올라가고 나머지는 로딩만 하다 사라지던 문제</strong>를 고쳤습니다. 사진에 주는 시간이 빠른 회선을 기준으로 짧게 잡혀 있어서, 느린 회선에서는 <strong>올라가고 있는 중인데도 끊고 다시 시작</strong>하기를 반복하다 결국 버렸습니다. 카메라로 바로 찍은 사진은 파일이 더 커서 특히 그랬습니다. 이제 사진 크기에 맞게 기다리고, 한 번도 진행 보고가 없는 시작 구간을 "멈췄다"고 판단하지 않습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 운동 영상을 올릴 때 <strong>영상 줄이기가 끝나면 진행 안내가 사라지던 문제</strong>를 고쳤습니다. "업로드 준비 중 0%"에서 몇 분간 멈춰 있는 것처럼 보였지만 실제로는 올라가는 중이었습니다. 이제 그 구간에도 "업로드 중이에요 · N초째"가 계속 나옵니다.</li>
-                <li><span class="tag tag-fix">수정</span> 건강습관 점수에서 <strong>"흡연 상태 입력 필요"나 "콜레스테롤 수치 필요"를 눌러도 아무 일도 일어나지 않던 문제</strong>를 고쳤습니다. 그 입력칸들이 건강정보 동의 뒤에 있어서, 동의 전에는 눌러도 화면이 그대로였습니다. 이제 동의 안내가 열립니다. 잠금 안내에도 키·흡연·콜레스테롤이 그 안에 있다고 적었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 커뮤니티 현황의 꾸준함 표시가 <strong>한 사람의 이름 대신 인원</strong>을 보여줍니다. 매일 기록하는 분이 많아지면서 모두가 같은 일수가 되어, 1등 이름은 사실상 뽑기였습니다. 이제 "연속 기록 100일 이상 N명", "식단 개근 N명"처럼 셉니다. 많아질수록 좋아지는 숫자입니다.</li>
-                <li><span class="tag tag-fix">수정</span> 매달 1일 첫 기록이 올라오기 전까지 <strong>커뮤니티 현황 칸이 통째로 사라지던 문제</strong>를 고쳤습니다. 이제 "이번 달은 아직 기록이 없어요"라고 알려 줍니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>사진을 여러 장 올릴 때 한 장만 올라가던 문제</strong>를 고쳤습니다. 느린 회선에서 올라가는 중인데도 끊고 다시 시작하기를 반복하고 있었습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>운동 영상을 올릴 때 진행 안내가 사라지던 문제</strong>를 고쳤습니다. 멈춘 것처럼 보였지만 실제로는 올라가는 중이었습니다.</li>
+                <li><span class="tag tag-fix">수정</span> 건강습관 점수에서 <strong>"흡연 상태 입력 필요"를 눌러도 아무 일도 일어나지 않던 문제</strong>를 고쳤습니다. 이제 건강정보 동의 안내가 열립니다.</li>
+                <li><span class="tag tag-improve">개선</span> 커뮤니티 현황이 한 사람의 이름 대신 <strong>인원</strong>을 보여줍니다. "연속 기록 100일 이상 N명"처럼 셉니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>매달 1일에 커뮤니티 현황이 사라지던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.31</span>
+                <span class="version-badge old">v1.0.31</span>
                 <span class="version-date">2026년 8월 31일</span>
             </div>
-            <div class="version-title">잘못됐을 때 무엇이 잘못됐는지 보이게 했습니다</div>
+            <div class="version-title">잘못됐을 때 무엇이 잘못됐는지 보이게</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> <strong>오류 제보 버튼</strong>을 넣었습니다. 어느 화면에서든 우측 하단의 🐞 를 누르면 됩니다. 어떤 기기에서 어느 화면을 보다가 무슨 오류가 났는지가 자동으로 함께 전송돼, 훨씬 빨리 고칠 수 있습니다. 무슨 일이 있었는지 한 줄만 적어 주시면 됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> 소모임 인증을 승인하거나 반려해도 <strong>카드가 화면에 그대로 남아 있던 문제</strong>를 고쳤습니다. 승인은 정상적으로 처리되고 있었지만 화면이 갱신되지 않아, 새로고침해야 사라졌습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 프로필의 인바디 수치를 입력해도 <strong>저장 버튼을 찾을 수 없던 문제</strong>를 고쳤습니다. 버튼이 입력칸에서 멀리 떨어져 있어, 넣은 값이 새로고침하면 사라졌습니다. 이제 입력칸 바로 아래에 있습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 소모임 승인·반려 버튼을 누르면 <strong>즉시 반응</strong>합니다. 저장에 몇 초가 걸리는 동안 아무 표시가 없어 실패한 것처럼 보였습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 영상 업로드가 느릴 때 <strong>"업로드 중이에요 · N초째"</strong>로 경과 시간을 보여 줍니다. 예전에는 8초만 지나면 "지연돼요"라고 떠서, 실제로는 올라가는 중인데도 멈춘 것처럼 보였습니다.</li>
-                <li><span class="tag tag-improve">개선</span> AI 분석이나 업로드가 실패하면 <strong>원인을 화면에 표시</strong>합니다. 로그인이 풀렸는지, 시간이 오래 걸리는지, 연결이 끊겼는지 알 수 있습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 인바디 수치를 어디서 보는지 안내에 <strong>가정용 체성분 체중계</strong>도 포함했습니다. 체지방률(%)만 나오는 기기의 환산법과, 내장지방 항목이 없어도 점수가 계산된다는 안내를 넣었습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>오류 제보 버튼</strong>을 넣었습니다. 어느 화면에서든 우측 하단의 🐞 를 누르고 무슨 일이 있었는지 한 줄만 적어 주시면 됩니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>소모임 인증을 승인해도 카드가 그대로 남아 있던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>프로필의 인바디 수치를 입력해도 저장 버튼을 찾을 수 없던 문제</strong>를 고쳤습니다. 이제 입력칸 바로 아래에 있습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>영상 업로드가 느릴 때 경과 시간을 보여 줍니다.</strong> 예전에는 8초만 지나면 "지연돼요"라고 떴습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>AI 분석이나 업로드가 실패하면 원인을 알려 드립니다.</strong></li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.30</span>
+                <span class="version-badge old">v1.0.30</span>
                 <span class="version-date">2026년 8월 12일</span>
             </div>
             <div class="version-title">탈퇴하면 정말로 아무것도 남지 않습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 탈퇴 시 블록체인 거래 기록과 포인트 교환 기록까지 모두 삭제합니다. 법령상 보존 대상일까 봐 남겨두던 것인데, 이 서비스는 현금 결제를 취급하지 않아 해당하지 않는 것으로 정리했습니다. 이제 탈퇴 후 보관하는 개인정보가 없습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 여러분의 기록과 사진은 <strong>대한민국(서울) 서버에 저장</strong>되며 국외로 나가지 않습니다. AI 분석을 요청한 이미지만 국외로 전송되고, AI 분석을 쓰지 않으면 국외로 나가는 정보가 전혀 없습니다. 방침에 정확히 밝혔습니다.</li>
-                <li><span class="tag tag-improve">개선</span> AI 분석은 유료 등급으로 이용하고 있어, 보내신 사진이 AI 학습에 쓰이거나 사람이 읽는 일이 없습니다. 이 점도 방침에 명시했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 발송 대행사의 정식 법인명(케이티알파 주식회사)과 개인정보 보호책임자를 방침에 기재했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v305로 갱신했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>탈퇴 시 블록체인 거래 기록과 포인트 교환 기록까지 모두 삭제합니다.</strong> 이제 탈퇴 후 보관하는 개인정보가 없습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>기록과 사진은 대한민국(서울) 서버에 저장</strong>되며 국외로 나가지 않습니다. AI 분석을 요청한 이미지만 국외로 전송됩니다.</li>
+                <li><span class="tag tag-improve">개선</span> AI 분석은 유료 등급으로 이용하고 있어 <strong>보내신 사진이 AI 학습에 쓰이거나 사람이 읽는 일이 없습니다.</strong></li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.29</span>
+                <span class="version-badge old">v1.0.29</span>
                 <span class="version-date">2026년 8월 12일</span>
             </div>
-            <div class="version-title">이용약관과 개인정보처리방침을 실제 동작에 맞게 다시 썼습니다</div>
+            <div class="version-title">약관과 개인정보처리방침을 실제 동작에 맞게 다시 썼습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 쿠폰 교환 시 휴대전화번호가 발송 대행사로 전달된다는 사실을 명시했습니다. 이전 방침은 "제3자에게 제공하지 않습니다"라고만 되어 있었습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 탈퇴해도 블록체인 거래 기록과 포인트 교환 기록은 법령상 보존 의무 때문에 남는다는 점을 명시했습니다. 이전에는 "모두 영구 삭제"라고만 안내했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 가입 연령을 만 14세 이상으로 정하고, 가입 화면에서 실제로 확인합니다. 이전 약관은 만 18세 미만 불가라고 했지만 확인하는 절차가 없었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 건강정보 별도 동의, 블록체인 지갑 개인키, 푸시 토큰, 걸음 수 캡처, AI 분석 위탁, 국외 이전 등 그동안 빠져 있던 항목을 모두 넣었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 탈퇴하면 지갑 개인키에 접근할 수 없게 된다는 경고를 약관과 방침 양쪽에 넣었습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 영어판 문서도 같은 내용으로 갱신했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v304로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>쿠폰 교환 시 휴대전화번호가 발송 대행사로 전달된다는 사실</strong>을 명시했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>가입 연령을 만 14세 이상</strong>으로 정하고 가입 화면에서 실제로 확인합니다.</li>
+                <li><span class="tag tag-improve">개선</span> 건강정보 동의, 지갑 개인키, 걸음 수 캡처, AI 분석 위탁 등 <strong>그동안 빠져 있던 항목을 모두 넣었습니다.</strong> 영어판도 같습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.28</span>
+                <span class="version-badge old">v1.0.28</span>
                 <span class="version-date">2026년 8월 12일</span>
             </div>
-            <div class="version-title">저장이 도중에 멈추고 갤러리에 올라가지 않던 문제를 고쳤습니다</div>
+            <div class="version-title">저장이 도중에 멈추고 갤러리에 올라가지 않던 문제</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> "안전하게 저장했어요. 잠시 후 자동으로 마무리돼요."가 뜨고도 실제로는 마무리되지 않던 문제를 고쳤습니다. 이제 정말로 잠시 후 저절로 올라가고, 다 올라가면 알려드립니다. 새로고침하고 저장을 다시 누르지 않아도 됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> 탭에는 사진이 보이는데 갤러리에만 올라가지 않던 문제를 고쳤습니다. 서버로 가는 연결이 멈춰 있었는데 앱이 그걸 되살리지 못하고 있었어요. 이제 연결을 다시 세웁니다.</li>
-                <li><span class="tag tag-improve">개선</span> 저장이 막혔을 때 답을 주기까지 걸리던 시간을 약 50초에서 약 38초로 줄였습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 앱을 다시 열면 지난번에 미처 못 올라간 기록을 이어서 올립니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v303으로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>"잠시 후 자동으로 마무리돼요"가 뜨고도 마무리되지 않던 문제</strong>를 고쳤습니다. 새로고침하고 저장을 다시 누르지 않으셔도 됩니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>탭에는 사진이 보이는데 갤러리에만 올라가지 않던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>앱을 다시 열면 지난번에 못 올라간 기록을 이어서 올립니다.</strong></li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.27</span>
+                <span class="version-badge old">v1.0.27</span>
                 <span class="version-date">2026년 8월 12일</span>
             </div>
-            <div class="version-title">공유 카드에 오늘 받은 점수가 제대로 찍히고, 라이트 버전에서도 챌린지 보상을 받습니다</div>
+            <div class="version-title">공유 카드에 오늘 받은 점수가 제대로 찍힙니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 하루 기록을 마치고 "인증 공유하기"를 눌렀을 때 점수가 오르기 전 상태로 카드가 만들어지던 문제를 고쳤습니다. 점수는 저장 직후 서버가 매기기 때문에, 이제 그 점수가 도착할 때까지 잠시 기다렸다가 카드를 만듭니다.</li>
-                <li><span class="tag tag-fix">수정</span> 라이트 버전에서 3일 챌린지를 완주하고 보상 수령을 눌러도 아무 반응이 없던 문제를 고쳤습니다. 보상 수령 기능이 라이트 버전에는 실리지 않는 블록체인 모듈 안에 들어 있었던 것이 원인이었어요.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v302로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>공유 카드가 점수가 오르기 전 상태로 만들어지던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>라이트 버전에서 챌린지 보상 수령을 눌러도 반응이 없던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.26</span>
+                <span class="version-badge old">v1.0.26</span>
                 <span class="version-date">2026년 8월 9일</span>
             </div>
             <div class="version-title">공유 카드가 기다림 없이 바로 뜹니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 공유 카드가 훨씬 빨리 준비됩니다. 사진을 서버가 받아다 넘겨주던 방식을 앱이 직접 불러오는 방식으로 바꿨어요. 갤러리를 다시 열면 기다림이 거의 없습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 갤러리에는 잘 보이는 사진이 공유 카드에서만 회색 칸으로 남던 문제를 고쳤습니다. 사진 용량이 크면 건너뛰던 것이 원인이었어요.</li>
-                <li><span class="tag tag-improve">개선</span> 사진을 올릴 때 작은 미리보기가 만들어지지 않았던 경우, 다음에 열 때 자동으로 만들어 채웁니다. 그 사진이 훨씬 가볍고 빠르게 열립니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>공유 카드가 훨씬 빨리 준비됩니다.</strong> 갤러리를 다시 열면 기다림이 거의 없습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>갤러리에는 보이는 사진이 공유 카드에서만 회색 칸으로 남던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.25</span>
+                <span class="version-badge old">v1.0.25</span>
                 <span class="version-date">2026년 8월 6일</span>
             </div>
-            <div class="version-title">공유 카드에 그날 찍은 사진이 다 담기고, 대표 사진을 골라 넣을 수 있습니다</div>
+            <div class="version-title">공유 카드에 그날 사진이 다 담깁니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 공유 카드가 사진 네 장까지만 담던 것을 아홉 장까지 담습니다. 식단 네 끼에 운동과 마음까지 기록한 날에도 뒤쪽 사진이 잘리지 않습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 사진이 늘면 카드 크기는 그대로 두고 칸이 작아집니다. 여섯 장이면 여섯 칸, 아홉 장이면 아홉 칸이 빈자리 없이 채워집니다.</li>
-                <li><span class="tag tag-improve">개선</span> 겹침형과 포커스형에서 작은 사진을 누르면 그 사진이 대표 사진이 됩니다. 한 번 더 누르면 원래대로 돌아옵니다.</li>
-                <li><span class="tag tag-fix">수정</span> 공유 카드의 식단·마음 사진이 회색 칸으로 남고 새로고침하기 전까지 그대로이던 문제를 고쳤습니다. 이제 잠시 뒤 저절로 사진이 채워집니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v301로 갱신했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>공유 카드가 사진을 아홉 장까지 담습니다.</strong> 식단 네 끼에 운동과 마음까지 기록한 날에도 뒤쪽 사진이 잘리지 않습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>작은 사진을 누르면 그 사진이 대표 사진이 됩니다.</strong> 한 번 더 누르면 돌아옵니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>공유 카드의 사진이 회색 칸으로 남던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.24</span>
+                <span class="version-badge old">v1.0.24</span>
                 <span class="version-date">2026년 8월 6일</span>
             </div>
-            <div class="version-title">쿠폰 교환이 한 번에 끝나고, 기프티콘을 보관함에서 바로 봅니다</div>
+            <div class="version-title">쿠폰 교환이 한 번에 끝납니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 커피 쿠폰 교환이 "쿠폰 교환 처리 중 오류가 발생했습니다"로 끝나던 문제를 고쳤습니다. 이제 정상적으로 교환됩니다.</li>
-                <li><span class="tag tag-improve">개선</span> 보관함에서 기프티콘 이미지와 바코드, PIN을 바로 볼 수 있습니다. 문자함을 열지 않아도 매장에서 그대로 쓸 수 있어요.</li>
-                <li><span class="tag tag-fix">수정</span> 교환 직후 포인트가 바로 줄어듭니다. 새로고침하지 않아도 됩니다.</li>
-                <li><span class="tag tag-improve">개선</span> 교환은 보통 3초 안에 끝나고, 진행 중에는 버튼이 잠깁니다. 여러 번 누르지 않아도 됩니다.</li>
-                <li><span class="tag tag-fix">수정</span> 교환이 되지 않았는데 "쿠폰이 보관함에 도착했어요"라고 안내하던 문제를 고쳤습니다. 이제 실제 상황을 그대로 알려 드립니다.</li>
-                <li><span class="tag tag-improve">개선</span> 앞선 교환이 확인되지 않아 같은 상품을 계속 못 사던 상황을 풀었습니다. 1시간 뒤에는 다시 교환할 수 있습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v300으로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>커피 쿠폰 교환이 오류로 끝나던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>보관함에서 기프티콘 이미지와 바코드, PIN을 바로 봅니다.</strong> 문자함을 열지 않아도 매장에서 그대로 쓰실 수 있습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>교환 직후 포인트가 바로 줄어듭니다.</strong> 새로고침하지 않으셔도 됩니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>교환이 되지 않았는데 "도착했어요"라고 안내하던 문제</strong>를 고쳤습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.23</span>
+                <span class="version-badge old">v1.0.23</span>
                 <span class="version-date">2026년 7월 24일</span>
             </div>
             <div class="version-title">불러오지 못한 정보를 "없는 정보"로 보여주지 않습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 연결이 느릴 때 참여 중인 소모임이 초기화된 것처럼 보이던 문제를 수정했습니다. 이제 불러오지 못하면 다시 시도 안내가 나옵니다.</li>
-                <li><span class="tag tag-fix">수정</span> 기록이 충분한데도 30일 종합 결과지가 만들어지지 않던 문제를 수정했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 해빛 마켓의 상품 목록과 쿠폰 보관함이 계속 "불러오는 중"에 머물던 문제를 수정했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 보상 마켓 화면에서 보유 포인트가 표시되지 않던 문제를 수정했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 쿠폰 보관함의 사용 완료·삭제 버튼을 다시 표시합니다.</li>
-                <li><span class="tag tag-fix">수정</span> 기록 저장 후 포인트를 서버 정산 값으로 맞추는 과정에서 발생하던 오류를 수정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 갤러리 피드를 기록 날짜순으로 정렬해 "어제 자료"보다 이전 자료가 위에 오지 않습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 자산 화면의 안내 문구를 한 줄로 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v250으로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>연결이 느릴 때 참여 중인 소모임이 초기화된 것처럼 보이던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>기록이 충분한데도 30일 종합 결과지가 만들어지지 않던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>해빛 마켓과 쿠폰 보관함이 계속 "불러오는 중"에 머물던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>갤러리를 기록 날짜순으로 정렬</strong>해 오래된 기록이 위에 오지 않습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.22</span>
+                <span class="version-badge old">v1.0.22</span>
                 <span class="version-date">2026년 7월 19일</span>
             </div>
-            <div class="version-title">운동 영상의 검은 프레임을 썸네일로 저장하지 않습니다</div>
+            <div class="version-title">운동 영상의 검은 화면을 썸네일로 쓰지 않습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 삼성 휴대폰에서 영상의 첫 검은 디코딩 화면이 썸네일로 저장되던 문제를 수정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 영상의 여러 시점을 확인해 실제 화면 정보가 있는 프레임만 썸네일로 사용합니다.</li>
-                <li><span class="tag tag-fix">수정</span> 유효한 프레임을 읽지 못해도 검은 화면 대신 영상 자리표시자를 보여줍니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v244로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>삼성 휴대폰에서 영상의 첫 검은 화면이 썸네일로 저장되던 문제</strong>를 고쳤습니다. 이제 실제 화면이 보이는 장면을 골라 씁니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.21</span>
+                <span class="version-badge old">v1.0.21</span>
                 <span class="version-date">2026년 7월 18일</span>
             </div>
-            <div class="version-title">저장한 운동 영상의 실제 썸네일을 유지합니다</div>
+            <div class="version-title">저장한 운동 영상의 썸네일이 그대로 남습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 화면에 표시된 운동 영상 프레임을 썸네일로 저장해 저장 완료 뒤 검은 화면으로 바뀌지 않게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 대용량 영상도 썸네일이 준비될 때까지 실제 로컬 영상 프레임을 유지합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 유효기간의 상품 기준 문구를 제거해 날짜와 남은 기간이 한 줄에 보이게 했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v243으로 갱신했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>저장 후 운동 영상 썸네일이 검은 화면으로 바뀌던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>쿠폰 유효기간이 한 줄에 보입니다.</strong> 날짜와 남은 기간을 함께 표시합니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.20</span>
+                <span class="version-badge old">v1.0.20</span>
                 <span class="version-date">2026년 7월 18일</span>
             </div>
-            <div class="version-title">운동 영상 미리보기와 누락된 쿠폰 정보를 복구합니다</div>
+            <div class="version-title">운동 영상 미리보기와 쿠폰 정보를 복구합니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 운동 영상을 선택하면 업로드 준비 중에도 검은 화면 대신 실제 영상 프레임을 바로 보여줍니다.</li>
-                <li><span class="tag tag-fix">수정</span> 공급사 발급은 성공했지만 앱 저장이 끝나지 않은 쿠폰을 백그라운드에서 안전하게 확인해 PIN과 바코드를 복구합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 복구 과정에서는 쿠폰을 다시 주문하거나 포인트를 다시 차감하지 않습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v242로 갱신해 최신 화면이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>운동 영상을 고르면 검은 화면 대신 실제 장면이 바로 보입니다.</strong></li>
+                <li><span class="tag tag-fix">수정</span> <strong>발급은 됐는데 앱에 저장되지 않은 쿠폰의 PIN과 바코드를 복구합니다.</strong> 포인트를 다시 차감하지 않습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.19</span>
+                <span class="version-badge old">v1.0.19</span>
                 <span class="version-date">2026년 7월 18일</span>
             </div>
-            <div class="version-title">쿠폰 보관함의 표시와 문자 재발송 안내를 바로잡았습니다</div>
+            <div class="version-title">쿠폰 보관함 표시와 문자 재발송 안내</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 공급사 쿠폰 이미지가 표시되지 않으면 깨진 이미지 대신 PIN 기반 바코드를 보여줍니다.</li>
-                <li><span class="tag tag-fix">수정</span> 공급사 유효기간 값이 비어 있어도 상품 발급 기준으로 만료일을 계산해 표시합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 문자 재발송 API의 요청 접수와 실제 단말 도달을 구분해, 완료로 오해할 수 있는 안내를 바로잡았습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 문자가 오지 않을 때 스팸함 확인과 5분 뒤 재시도 방법을 함께 안내합니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v241로 갱신해 최신 쿠폰 화면이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>쿠폰 이미지가 표시되지 않으면 바코드를 대신 보여 줍니다.</strong></li>
+                <li><span class="tag tag-fix">수정</span> <strong>유효기간이 비어 있어도 만료일을 계산해 표시합니다.</strong></li>
+                <li><span class="tag tag-improve">개선</span> <strong>문자가 오지 않을 때 스팸함 확인과 재시도 방법을 안내합니다.</strong></li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.18</span>
+                <span class="version-badge old">v1.0.18</span>
                 <span class="version-date">2026년 7월 17일</span>
             </div>
-            <div class="version-title">쿠폰 발급과 다시 받기 기능을 안정화했습니다</div>
+            <div class="version-title">쿠폰 발급과 다시 받기</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 쿠폰은 정상 발급됐지만 앱 보관함에 발급 대기로 남을 수 있던 문제를 고쳤습니다.</li>
-                <li><span class="tag tag-new">신규</span> 실발급 쿠폰을 저장된 연락처로 다시 받을 수 있는 <strong>문자로 다시 받기</strong> 기능을 추가했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 발급 결과가 불확실한 경우 새 쿠폰을 중복 주문하지 않고 기존 발급 상태를 먼저 확인하도록 보강했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 관제탑 보상 마켓에서 최근 발급 이력을 더 빠르게 확인하고 필요할 때 기존 쿠폰 MMS를 다시 보낼 수 있습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v240으로 갱신해 최신 보상 마켓 화면이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>쿠폰은 발급됐는데 보관함에 발급 대기로 남던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>문자로 다시 받기</strong>를 넣었습니다. 저장된 연락처로 쿠폰을 다시 받을 수 있습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.17</span>
+                <span class="version-badge old">v1.0.17</span>
                 <span class="version-date">2026년 6월 25일</span>
             </div>
-            <div class="version-title">영어 버전 진입점과 simple 앱 디자인을 개선했습니다</div>
+            <div class="version-title">영어 버전을 정리했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> `/en`을 영어 공식 진입점으로 정리하고 Food, Exercise, Mind, Profile 중심의 simple 앱을 제공합니다.</li>
-                <li><span class="tag tag-improve">개선</span> 영어 simple 화면의 카드, 업로드 영역, AI 버튼, CTA 색상을 한국어 simple 화면과 더 어울리도록 다듬었습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 영어 Exercise와 Mind 화면에 남아 있던 한국어 문구를 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v216으로 올려 최신 영어 화면이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>/en 이 영어 공식 진입점</strong>이 되고, Food · Exercise · Mind · Profile 중심의 화면을 제공합니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>영어 화면에 남아 있던 한국어 문구</strong>를 정리했습니다.</li>
             </ul>
         </div>
 
         <div class="version-card">
             <div class="version-header">
-                <span class="version-badge">v1.0.16</span>
+                <span class="version-badge old">v1.0.16</span>
                 <span class="version-date">2026년 6월 4일</span>
             </div>
-            <div class="version-title">운동 소모임과 단톡방 진입 흐름을 다듬었습니다</div>
+            <div class="version-title">소모임과 단톡방 진입을 다듬었습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 대시보드에서 소모임을 최대 4개까지 볼 수 있도록 조정했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 갤러리의 단톡방 참여 버튼은 계정 연결 없이 바로 오픈채팅방을 열도록 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 앱 캐시 버전을 v208로 갱신해 최신 화면이 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>대시보드에서 소모임을 최대 4개까지 봅니다.</strong></li>
+                <li><span class="tag tag-improve">개선</span> <strong>갤러리의 단톡방 버튼이 바로 오픈채팅방을 엽니다.</strong></li>
             </ul>
         </div>
 
@@ -509,13 +480,11 @@
                 <span class="version-badge old">v1.0.15</span>
                 <span class="version-date">2026년 6월 4일</span>
             </div>
-            <div class="version-title">운동 소모임 시범 운영 기능을 추가했습니다</div>
+            <div class="version-title">운동 소모임을 시작했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-new">신규</span> 만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽 소모임을 추가했습니다.</li>
-                <li><span class="tag tag-new">신규</span> 사용자는 최대 2개 소모임에 참여할 수 있고, 각 소모임의 100일 보상 진행도는 따로 쌓입니다.</li>
-                <li><span class="tag tag-new">신규</span> 모임장이 제출 기록을 확인하고 승인 또는 반려할 수 있는 검토 화면을 추가했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 소모임 참여 시 200P 예치, 100일 승인 완료 시 3,000P 보상 구조를 반영했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 같은 날짜에 2개 소모임 조건을 모두 만족하면 각 소모임 진행도가 각각 1회씩 오르도록 고쳤습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>만보 걷기, 홈트 인증방, 헬스장 출석, 러닝 클럽</strong>이 생겼습니다. 최대 2개까지 참여하실 수 있습니다.</li>
+                <li><span class="tag tag-new">신규</span> <strong>모임장이 인증을 확인하고 승인하거나 반려합니다.</strong></li>
+                <li><span class="tag tag-improve">개선</span> 참여할 때 200P를 예치하고, <strong>100일을 채우면 3,000P</strong>를 받습니다.</li>
             </ul>
         </div>
 
@@ -524,11 +493,10 @@
                 <span class="version-badge old">v1.0.14</span>
                 <span class="version-date">2026년 6월 3일</span>
             </div>
-            <div class="version-title">동영상 업로드와 모임장 검토 미디어를 안정화했습니다</div>
+            <div class="version-title">동영상 업로드를 안정화했습니다</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 일부 삼성 인터넷에서 운동 영상 업로드가 1%에 머무는 문제를 줄였습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 모임장 검토 화면에서 사진은 크게 보고, 영상은 실제 영상 파일이 있을 때만 재생되도록 고쳤습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 영상 썸네일만 있는 오래된 제출 기록은 관련 일일 기록에서 원본 영상 주소를 보강해 보여줍니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>삼성 인터넷에서 운동 영상 업로드가 1%에 머물던 문제</strong>를 줄였습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>모임장 검토 화면에서 사진을 크게 보고, 영상은 실제 파일이 있을 때만 재생합니다.</strong></li>
             </ul>
         </div>
 
@@ -537,11 +505,10 @@
                 <span class="version-badge old">v1.0.13</span>
                 <span class="version-date">2026년 6월 1일</span>
             </div>
-            <div class="version-title">새 날짜 리로드와 기록 유지 흐름을 보강했습니다</div>
+            <div class="version-title">날짜가 바뀐 뒤의 기록 유지</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 오랜만에 앱을 열었을 때 새 날짜 기준으로 더 정확하게 다시 불러오도록 개선했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 같은 날 사진을 추가로 올린 뒤 앞선 기록이 사라져 보일 수 있는 흐름을 점검하고 보강했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 날짜가 바뀐 뒤에도 선택 날짜와 화면 상태가 어긋나지 않도록 갱신 조건을 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>오랜만에 앱을 열었을 때 새 날짜 기준으로 다시 불러옵니다.</strong></li>
+                <li><span class="tag tag-fix">수정</span> <strong>같은 날 사진을 추가로 올린 뒤 앞선 기록이 사라져 보이던 흐름</strong>을 고쳤습니다.</li>
             </ul>
         </div>
 
@@ -550,11 +517,10 @@
                 <span class="version-badge old">v1.0.12</span>
                 <span class="version-date">2026년 5월 26일</span>
             </div>
-            <div class="version-title">주간 챌린지 재시작과 PWA 갱신을 안정화했습니다</div>
+            <div class="version-title">주간 챌린지 재시작</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 완료한 주간 챌린지를 같은 날 다시 시작할 때 이미 1일차로 잡히던 문제를 고쳤습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 보상 수령 뒤 자산 화면이 오래된 챌린지 상태를 보여주지 않도록 서버 기준 새로고침을 강화했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> PWA 캐시 버전을 갱신해 최신 코드가 더 안정적으로 반영되도록 했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>완료한 주간 챌린지를 같은 날 다시 시작하면 이미 1일차로 잡히던 문제</strong>를 고쳤습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>보상 수령 뒤 자산 화면이 오래된 상태를 보여주지 않습니다.</strong></li>
             </ul>
         </div>
 
@@ -563,11 +529,10 @@
                 <span class="version-badge old">v1.0.11</span>
                 <span class="version-date">2026년 5월 19일</span>
             </div>
-            <div class="version-title">쿠폰 보관함과 마음 힌트 흐름을 정리했습니다</div>
+            <div class="version-title">쿠폰 보관함과 마음 기록</div>
             <ul class="change-list">
-                <li><span class="tag tag-improve">개선</span> 사용 완료 또는 만료된 쿠폰은 보관함에서 사진과 바코드를 접고 핵심 정보만 보이도록 정리했습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 마음 기록의 힌트 안내와 명상 흐름을 더 짧고 자연스럽게 다듬었습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 오래된 쿠폰이 자동 정리되도록 서버 정리 작업을 보강했습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>사용 완료·만료된 쿠폰은 핵심 정보만 접어서 보여 줍니다.</strong></li>
+                <li><span class="tag tag-improve">개선</span> <strong>마음 기록의 힌트와 명상 안내를 더 짧게 다듬었습니다.</strong></li>
             </ul>
         </div>
 
@@ -576,11 +541,10 @@
                 <span class="version-badge old">v1.0.10</span>
                 <span class="version-date">2026년 5월 1일</span>
             </div>
-            <div class="version-title">로딩 안정성과 관리자 화면을 개선했습니다</div>
+            <div class="version-title">느린 연결에서의 로딩</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 자산 탭에서 Firestore가 느릴 때 거래 기록과 HBT 정보가 무한 로딩처럼 보이던 문제를 줄였습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 친구, 커뮤니티, 갤러리 같은 보조 데이터 로딩이 화면 전체를 막지 않도록 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 관리자 보상마켓 운영에 필요한 Firestore 권한 배포를 정리했습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>자산 탭에서 거래 기록이 무한 로딩처럼 보이던 문제</strong>를 줄였습니다.</li>
+                <li><span class="tag tag-improve">개선</span> <strong>친구·커뮤니티·갤러리를 불러오는 동안 화면 전체가 막히지 않습니다.</strong></li>
             </ul>
         </div>
 
@@ -589,11 +553,10 @@
                 <span class="version-badge old">v1.0.9</span>
                 <span class="version-date">2026년 4월 29일</span>
             </div>
-            <div class="version-title">쿠폰 유효기간과 표시 정보를 정확하게 맞췄습니다</div>
+            <div class="version-title">쿠폰 유효기간을 정확하게</div>
             <ul class="change-list">
-                <li><span class="tag tag-fix">수정</span> 아메리카노 쿠폰 유효기간을 실제 발급 기준과 맞췄습니다.</li>
-                <li><span class="tag tag-improve">개선</span> 쿠폰 보관함에서 만료 날짜와 남은 일수를 더 쉽게 확인할 수 있도록 정리했습니다.</li>
-                <li><span class="tag tag-fix">수정</span> 쿠폰 상태 조회 응답에서 만료일을 우선 반영하도록 고쳤습니다.</li>
+                <li><span class="tag tag-fix">수정</span> <strong>아메리카노 쿠폰 유효기간을 실제 발급 기준과 맞췄습니다.</strong></li>
+                <li><span class="tag tag-improve">개선</span> <strong>보관함에서 만료 날짜와 남은 일수를 쉽게 확인할 수 있습니다.</strong></li>
             </ul>
         </div>
 
