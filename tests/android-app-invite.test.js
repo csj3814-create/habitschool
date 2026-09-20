@@ -40,6 +40,13 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
     const store = new Map();
     if (snoozedAt != null) store.set('habitschool_android_invite_snoozed_at', String(snoozedAt));
 
+    // 배너를 그리면 시트도 따라 만든다. 하니스의 document 가 그것까지 받아야 한다.
+    const sheets = [];
+    const makeNode = () => ({
+        id: '', className: '', innerHTML: '', removed: false,
+        setAttribute() { }, addEventListener() { },
+        remove() { this.removed = true; },
+    });
     const win = { location: { href: '' }, detectInstalledPlayApp: async () => playAppInstalled };
     const setDoc = vi.fn(() => writeBehaviour());
     const api = Function(
@@ -51,7 +58,15 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
                  dismiss: window.dismissAndroidAppInvite, open: window.openAndroidApp };`
     )(
         { userAgent: ua, maxTouchPoints: /macintosh/i.test(ua) ? 5 : 0 },
-        { getElementById: (id) => (id === 'android-app-invite' ? box : null) },
+        {
+            getElementById: (id) => {
+                if (id === 'android-app-invite') return box;
+                if (id === 'android-app-sheet') return sheets.find((s) => !s.removed) || null;
+                return null;
+            },
+            createElement: makeNode,
+            body: { appendChild: (el) => sheets.push(el) },
+        },
         {
             getItem: (k) => (store.has(k) ? store.get(k) : null),
             setItem: (k, v) => store.set(k, v),
@@ -67,7 +82,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
         withAsyncTimeout,
         () => 'INC'
     );
-    return { api, box, store, win, setDoc };
+    return { api, box, store, win, setDoc, sheets };
 }
 
 const ANDROID = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/152 Mobile Safari/537.36';
@@ -270,5 +285,71 @@ describe('only one install path shows on Android', () => {
         // Play 액세스가 나오면 되돌린다. 왜 껐는지 모르면 영영 꺼진 채로 남는다.
         expect(PWA).toContain('const SUPPRESS_ANDROID_PWA_INSTALL = true;');
         expect(PWA).toContain('Play 프로덕션 액세스가 나오면 이 값을 false 로 되돌린다');
+    });
+});
+
+// 2026-09-20: 하루를 재 보니 안드로이드 웹으로 쓰는 7명 중 배너를 눌러 본 사람이
+// 0명이었다. 문구가 약해서가 아니라 **배너가 뜨지 않고 있었다.**
+//
+// renderAndroidAppInvite 와 recordWebPlatform 이 _renderDashboardWithData 안에
+// 있었고, 그 함수는 '내 기록' 탭을 열 때만 돈다. 식단이나 운동 탭으로 바로
+// 들어간 사람에게는 한 번도 그려지지 않았다. 기기 기록이 하루에 16명분밖에
+// 쌓이지 않은 것도 같은 이유다.
+describe('the invitation does not depend on which tab they opened', () => {
+    it('is decided once per page, from the tab switcher', () => {
+        expect(APP).toContain('function maybeOfferAndroidApp(user)');
+        expect(APP).toContain('maybeOfferAndroidApp(auth.currentUser);');
+        // 대시보드 렌더 안에 갇혀 있으면 안 된다.
+        const openTab = APP.split('function openTab(tabName, pushState = true) {')[1].split('\nfunction ')[0];
+        expect(openTab).toContain('maybeOfferAndroidApp(');
+    });
+
+    it('runs once, not on every tab switch', () => {
+        const fn = APP.split('function maybeOfferAndroidApp(user) {')[1].split('\n}')[0];
+        expect(fn).toContain('if (_androidInviteChecked || !user) return;');
+        expect(fn).toContain('_androidInviteChecked = true;');
+    });
+
+    it('still writes the device once a day without the user document', () => {
+        // 탭 전환마다 부르므로, 설정값을 못 받은 자리에서도 하루 한 번을 지켜야 한다.
+        const fn = APP.split('async function recordWebPlatform(')[1].split('// 안드로이드에서 웹으로 쓰는 분께만')[0];
+        expect(fn).toContain('WEB_PLATFORM_WRITTEN_KEY');
+        expect(fn).toContain('localStorage.getItem(WEB_PLATFORM_WRITTEN_KEY) === today');
+    });
+});
+
+describe('a sheet asks once in a while, and lets go', () => {
+    it('comes up after the banner is drawn', () => {
+        const fn = APP.split('async function renderAndroidAppInvite(user) {')[1].split('\n}')[0];
+        expect(fn).toContain('showAndroidAppSheet(en);');
+        // 배너가 뜨지 않는 사람에게는 시트도 뜨지 않는다 — 같은 관문을 지난다.
+        expect(fn.indexOf('showAndroidAppSheet')).toBeGreaterThan(fn.indexOf('box.hidden = false;'));
+    });
+
+    it('shows at most once every three days', () => {
+        const fn = APP.split('function showAndroidAppSheet(en) {')[1].split('\n}')[0];
+        expect(fn).toContain('if (isAndroidInviteSheetSnoozed()) return;');
+        expect(APP).toContain('const ANDROID_INVITE_SHEET_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;');
+        // 띄우는 순간 표시를 남긴다. 닫지 않고 나가도 다시 조르지 않는다.
+        expect(fn).toContain('localStorage.setItem(ANDROID_INVITE_SHEET_KEY');
+    });
+
+    it('closes on the backdrop, not only on the button', () => {
+        // 가둬 두면 부탁이 아니라 덫이 된다.
+        const fn = APP.split('function showAndroidAppSheet(en) {')[1].split('\n}')[0];
+        expect(fn).toContain('if (event.target === sheet) window.dismissAndroidAppSheet();');
+        expect(APP).toContain('window.dismissAndroidAppSheet = function');
+    });
+
+    it('keeps the tester count out of it, like the banner', () => {
+        const fn = APP.split('function showAndroidAppSheet(en) {')[1].split('\n}')[0];
+        for (const leak of ['12명', '심사', '테스터']) {
+            expect(fn, leak).not.toContain(leak);
+        }
+    });
+
+    it('has a look in both themes', () => {
+        expect(readFileSync(resolve(ROOT_DIR, 'styles-features.css'), 'utf8')).toContain('.android-sheet-backdrop {');
+        expect(readFileSync(resolve(ROOT_DIR, 'styles-dark-mode.css'), 'utf8')).toContain('body.dark-mode .android-sheet {');
     });
 });

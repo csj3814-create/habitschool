@@ -2650,17 +2650,25 @@ function detectWebPlatform() {
     return 'desktop';
 }
 
-async function recordWebPlatform(user, settings) {
+const WEB_PLATFORM_WRITTEN_KEY = 'habitschool_web_platform_written';
+
+async function recordWebPlatform(user, settings = null) {
     // 앱으로 열었으면 recordNativeAppOpen 이 이미 남긴다.
     if (!user || getRememberedNativeAppSource()) return;
 
     const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
     if (settings && settings.lastWebOpenDate === today) return;
+    // 회원 문서를 아직 못 읽은 자리에서도 부른다. 그럴 때는 이 기기에 남긴
+    // 표시로 하루 한 번을 지킨다 — 없으면 탭을 옮길 때마다 쓰게 된다.
+    try {
+        if (localStorage.getItem(WEB_PLATFORM_WRITTEN_KEY) === today) return;
+    } catch (_) { }
 
     try {
         await setDoc(doc(db, 'users', user.uid), {
             settings: { lastWebOpenDate: today, lastWebPlatform: detectWebPlatform() },
         }, { merge: true });
+        try { localStorage.setItem(WEB_PLATFORM_WRITTEN_KEY, today); } catch (_) { }
     } catch (error) {
         console.warn('[웹 기기 기록] 저장 실패:', error?.message || error);
     }
@@ -2671,7 +2679,25 @@ async function recordWebPlatform(user, settings) {
 // 메일은 한 번 읽히고 끝이지만, 이 줄은 정작 부탁할 사람이 해빛스쿨을 쓰고 있는
 // 바로 그 순간에 보인다. 숫자(8명/12명)는 꺼내지 않는다 — 그건 우리 사정이고,
 // 부탁조로 말하면 광고처럼 읽혀 닫힌다. 회원에게 돌아가는 것만 말한다.
+// 2026-09-20: 배너가 대시보드를 그릴 때만 그려지고 있었다. 식단이나 운동 탭으로
+// 바로 들어가면 한 번도 뜨지 않는다 — 안드로이드 웹으로 쓰는 7명 중 배너를 눌러
+// 본 사람이 0명이었던 이유다. 기기 기록(lastWebPlatform)도 같은 자리에 있어
+// 하루 동안 16명분밖에 쌓이지 않았다.
+//
+// 그래서 탭과 무관하게, 페이지당 한 번 판단한다.
+let _androidInviteChecked = false;
+
+function maybeOfferAndroidApp(user) {
+    if (_androidInviteChecked || !user) return;
+    _androidInviteChecked = true;
+    recordWebPlatform(user).catch((error) => console.warn('[웹 기기 기록] 예기치 못한 오류:', error));
+    renderAndroidAppInvite(user).catch(onRefreshFailure('앱 권유 배너'));
+}
+
 const ANDROID_INVITE_SNOOZE_KEY = 'habitschool_android_invite_snoozed_at';
+const ANDROID_INVITE_SHEET_KEY = 'habitschool_android_invite_sheet_at';
+// 시트는 사흘에 한 번만. 배너보다 무거운 만큼 더 드물게 띄운다.
+const ANDROID_INVITE_SHEET_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
 // 누름을 남기려고 사람을 오래 붙잡아 두지는 않는다. 넘으면 그냥 보낸다.
 const ANDROID_INVITE_TAP_TIMEOUT_MS = 1200;
 // 배너를 그릴 때 잡아 둔다. 버튼은 window 함수라 user 를 못 받는다.
@@ -2737,6 +2763,55 @@ window.openAndroidApp = async function openAndroidApp() {
  * 그러니 이 줄은 **아직 앱이 없는 사람** 몫이다. 둘 다 띄우면 같은 말을 두 번
  * 하는 화면이 된다.
  */
+function isAndroidInviteSheetSnoozed() {
+    try {
+        const at = Number(localStorage.getItem(ANDROID_INVITE_SHEET_KEY) || 0);
+        return at > 0 && (Date.now() - at) < ANDROID_INVITE_SHEET_SNOOZE_MS;
+    } catch (_) {
+        return false;
+    }
+}
+
+window.dismissAndroidAppSheet = function dismissAndroidAppSheet() {
+    try {
+        localStorage.setItem(ANDROID_INVITE_SHEET_KEY, String(Date.now()));
+    } catch (_) { }
+    const sheet = document.getElementById('android-app-sheet');
+    if (sheet) sheet.remove();
+};
+
+// 배너만으로는 눈에 띄지 않았다 — 하루 동안 8명 중 1명이 눌렀다. 사흘에 한 번,
+// 화면 아래에서 올라오는 시트로 한 번 더 청한다. 닫으면 얇은 배너는 그대로
+// 남는다 — 지우는 것이 아니라 조용해지는 것이다.
+function showAndroidAppSheet(en) {
+    if (isAndroidInviteSheetSnoozed()) return;
+    if (document.getElementById('android-app-sheet')) return;
+    try {
+        localStorage.setItem(ANDROID_INVITE_SHEET_KEY, String(Date.now()));
+    } catch (_) { }
+
+    const sheet = document.createElement('div');
+    sheet.id = 'android-app-sheet';
+    sheet.className = 'android-sheet-backdrop';
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.innerHTML = `
+        <div class="android-sheet">
+            <div class="android-sheet-icon">📱</div>
+            <h3 class="android-sheet-title">${en ? 'Steps sync automatically in the app' : '앱으로 쓰시면 걸음수가 자동으로 들어옵니다'}</h3>
+            <p class="android-sheet-body">${en
+                ? 'No need to type them in. Everything else stays the same.'
+                : '직접 입력하지 않으셔도 돼요. 나머지는 지금과 똑같습니다.'}</p>
+            <button type="button" class="android-sheet-go" onclick="openAndroidApp()">${en ? 'Open the app' : '앱으로 열기'}</button>
+            <button type="button" class="android-sheet-later" onclick="dismissAndroidAppSheet()">${en ? 'Later' : '나중에'}</button>
+        </div>`;
+    sheet.addEventListener('click', (event) => {
+        // 바깥을 누르면 닫힌다. 가둬 두면 부탁이 아니라 덫이 된다.
+        if (event.target === sheet) window.dismissAndroidAppSheet();
+    });
+    document.body.appendChild(sheet);
+}
+
 async function renderAndroidAppInvite(user) {
     const box = document.getElementById('android-app-invite');
     if (!box) return;
@@ -2775,6 +2850,7 @@ async function renderAndroidAppInvite(user) {
                 aria-label="${en ? 'Dismiss' : '닫기'}">✕</button>
         </div>`;
     box.hidden = false;
+    showAndroidAppSheet(en);
 }
 
 async function recordNativeAppOpen(user, settings) {
@@ -14889,6 +14965,9 @@ function openTab(tabName, pushState = true) {
     }
 
     if (resolvedTabName === 'dashboard') renderDashboard();
+    // 어느 탭으로 들어오든 한 번은 판단한다. 대시보드에만 두면 다른 탭으로
+    // 바로 들어온 사람에게는 영영 뜨지 않는다.
+    maybeOfferAndroidApp(auth.currentUser);
 
     updateRecordFlowGuides(resolvedTabName);
     syncGuidePanels(resolvedTabName);
