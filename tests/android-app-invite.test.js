@@ -42,6 +42,8 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
 
     // 배너를 그리면 시트도 따라 만든다. 하니스의 document 가 그것까지 받아야 한다.
     const sheets = [];
+    const timers = [];
+    const docState = { hidden: false };
     const makeNode = () => ({
         id: '', className: '', innerHTML: '', removed: false,
         setAttribute() { }, addEventListener() { },
@@ -52,7 +54,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
     const api = Function(
         'navigator', 'document', 'localStorage', 'window', 'getRememberedNativeAppSource',
         'setDoc', 'doc', 'db', 'console', 'isEnglishLocale', 'escapeHtml',
-        'withAsyncTimeout', 'increment',
+        'withAsyncTimeout', 'increment', 'setTimeout',
         `${body}
         return { renderAndroidAppInvite, detectWebPlatform, recordWebPlatform,
                  dismiss: window.dismissAndroidAppInvite, open: window.openAndroidApp };`
@@ -64,6 +66,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
                 if (id === 'android-app-sheet') return sheets.find((s) => !s.removed) || null;
                 return null;
             },
+            get hidden() { return docState.hidden; },
             createElement: makeNode,
             body: { appendChild: (el) => sheets.push(el) },
         },
@@ -80,9 +83,10 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
         () => false,
         (v) => String(v),
         withAsyncTimeout,
-        () => 'INC'
+        () => 'INC',
+        (fn) => { timers.push(fn); return 1; }
     );
-    return { api, box, store, win, setDoc, sheets };
+    return { api, box, store, win, setDoc, sheets, timers, documentHidden: (v) => { docState.hidden = v; } };
 }
 
 const ANDROID = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/152 Mobile Safari/537.36';
@@ -351,5 +355,57 @@ describe('a sheet asks once in a while, and lets go', () => {
     it('has a look in both themes', () => {
         expect(readFileSync(resolve(ROOT_DIR, 'styles-features.css'), 'utf8')).toContain('.android-sheet-backdrop {');
         expect(readFileSync(resolve(ROOT_DIR, 'styles-dark-mode.css'), 'utf8')).toContain('body.dark-mode .android-sheet {');
+    });
+});
+
+// 2026-09-20 질문: "앱으로 열기 눌렀을 때 앱이 없으면 테스터 조인 및 설치 링크로
+// 바로 이동이 되나?"
+//
+// intent 의 browser_fallback_url 이 그 일을 한다. 다만 두 가지가 그것을 막을 수
+// 있어서 함께 손봤다.
+//   1. 크롬은 intent:// 이동을 사용자가 누른 흐름 안에서만 허용한다. 누름을
+//      기록하려고 1초씩 기다리면 그 흐름이 끊긴다.
+//   2. 앱 안 브라우저(카카오톡 등)는 intent:// 자체를 모른다. fallback 도 안 탄다.
+describe('the button always lands somewhere', () => {
+    it('does not wait on a write before leaving', async () => {
+        // await 가 있으면 사용자 제스처 흐름이 끊겨 외부 앱 실행이 막힐 수 있다.
+        const fn = APP.split('window.openAndroidApp = function openAndroidApp() {')[1].split('\n};')[0];
+        expect(fn).not.toContain('await ');
+        expect(APP).toContain('window.openAndroidApp = function openAndroidApp()');
+    });
+
+    it('still records the tap, just without blocking', async () => {
+        const h = createHarness({ ua: ANDROID });
+        await h.api.renderAndroidAppInvite({ uid: 'u1' });
+        h.api.open();
+        expect(h.setDoc).toHaveBeenCalledTimes(1);
+        expect(h.setDoc.mock.calls[0][1].settings.lastAppInviteTapDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(h.win.location.href).toContain('intent://');
+    });
+
+    it('carries the tester join page as the fallback', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        expect(decodeURIComponent(h.win.location.href))
+            .toContain('play.google.com/apps/testing/com.habitschool.app');
+    });
+
+    it('goes to the join page itself when nothing happened', async () => {
+        // 앱 안 브라우저에서는 intent 도 fallback 도 동작하지 않는다. 화면이
+        // 그대로면 우리가 직접 보낸다.
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        expect(h.timers).toHaveLength(1);
+        h.timers[0]();
+        expect(h.win.location.href).toBe('https://play.google.com/apps/testing/com.habitschool.app');
+    });
+
+    it('leaves the page alone when the app did open', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        const intentUrl = h.win.location.href;
+        h.documentHidden(true);   // 앱이 열리면 이 문서는 숨겨진다
+        h.timers[0]();
+        expect(h.win.location.href).toBe(intentUrl);
     });
 });
