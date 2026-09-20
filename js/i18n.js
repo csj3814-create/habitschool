@@ -1,4 +1,4 @@
-import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=421';
+import { buildLocalizedUrl, getLocale as getRouteLocale } from './app-mode.js?v=422';
 
 const DEFAULT_LOCALE = 'ko';
 const ENGLISH_LOCALE = 'en';

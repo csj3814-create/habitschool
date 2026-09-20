@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=421';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=421';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=422';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=422';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=421';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=421';
+} from './auth-login-helpers.js?v=422';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=422';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=421';
+} from './exercise-media.js?v=422';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=421';
+} from './health-connect-utils.js?v=422';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=421';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=421';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=421';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=421';
-import { sanitize, compressImage } from './data-manager.js?v=421';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=421';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=421';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=421';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=421';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=421';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=421';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=421';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=421';
+} from './habit-groups.js?v=422';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=422';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=422';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=422';
+import { sanitize, compressImage } from './data-manager.js?v=422';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=422';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=422';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=422';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=422';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=422';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=422';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=422';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=422';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=421';
+} from './guest-demo.js?v=422';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=421';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=421';
+} from './product-events.js?v=422';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=422';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=421';
+} from './diet-program.js?v=422';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=421';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=421';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=421';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=421';
+} from './meditation-guide.js?v=422';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=422';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=422';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=422';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=421';
+} from './social-challenge-readiness.js?v=422';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=421';
+} from './monthly-mvp-reward.js?v=422';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7044,7 +7044,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=421';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=422';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -18828,18 +18828,46 @@ function beginAiAnalysis() {
     };
 }
 
+function hasUploadsInFlight() {
+    for (const entry of _pendingUploads.values()) {
+        if (entry && !entry.done) return true;
+    }
+    return false;
+}
+
+/**
+ * 저장하기 전에 올라가는 중인 것과 분석 중인 것을 모두 기다린다.
+ *
+ * 2026-09-20 제보: "운동 동영상 올리는 사이에 운동 시간 입력하고 저장 누르면
+ * ai분석 실패해. 식단도 4개 한꺼번에 올렸더니 그중 세번째가 ai분석 실패했어."
+ *
+ * 어제는 **이미 시작된 분석**만 기다렸다. 그런데 업로드가 아직 도는 중이면
+ * 분석은 시작조차 안 한 상태다 — 기다릴 것이 없으니 곧바로 저장이 들어가고,
+ * 저장이 _pendingUploads 를 비우고 화면을 다시 그린다. 그 뒤에 시작된 분석은
+ * 올라간 주소를 찾지 못해 실패한다.
+ *
+ * 그래서 셋을 차례로 기다린다: **업로드 → 큐에 걸린 자동 분석 → 도는 중인 분석.**
+ * 업로드가 끝나면 그때 새 분석이 큐에 걸리므로, 조용해질 때까지 몇 바퀴 돈다.
+ */
 async function waitForRunningAiAnalyses() {
-    if (_runningAiAnalyses.size === 0) return;
-    showToast('🤖 AI 분석을 마치고 저장할게요.');
+    if (!hasUploadsInFlight() && _runningAiAnalyses.size === 0) return;
+    showToast('🤖 올라가는 중인 것과 AI 분석을 마치고 저장할게요.');
     try {
-        await withAsyncTimeout(
-            Promise.all([..._runningAiAnalyses]),
-            AI_ANALYSIS_SAVE_WAIT_MS,
-            'ai_analysis_wait_timeout'
-        );
+        await withAsyncTimeout((async () => {
+            for (let round = 0; round < 6; round += 1) {
+                await Promise.allSettled(
+                    [..._pendingUploads.values()].map((entry) => entry?.promise).filter(Boolean)
+                );
+                // 업로드가 끝난 직후에 자동 분석이 큐에 걸린다. 걸릴 틈을 준다.
+                await new Promise((resolve) => setTimeout(resolve, 60));
+                await _autoAiAnalysisChain.catch(() => { });
+                await Promise.allSettled([..._runningAiAnalyses]);
+                if (!hasUploadsInFlight() && _runningAiAnalyses.size === 0) return;
+            }
+        })(), AI_ANALYSIS_SAVE_WAIT_MS, 'ai_analysis_wait_timeout');
     } catch (error) {
         // 오래 걸리면 그냥 저장한다. 분석이 늦었다고 기록을 못 남길 이유는 없다.
-        console.warn('[저장] AI 분석을 기다리다 멈춤:', error?.message || error);
+        console.warn('[저장] 업로드·AI 분석을 기다리다 멈춤:', error?.message || error);
     }
 }
 
@@ -25038,6 +25066,9 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
     // 로딩 상태
     if (btn) { btn.classList.add('loading'); btn.textContent = '🤖 AI 분석 중...'; }
 
+    // 저장이 이 분석을 기다릴 수 있게 한다. 식단 넉 장을 한꺼번에 올리면 뒤쪽
+    // 분석이 저장과 겹쳐 떨어져 나갔다.
+    const endAnalysis = beginAiAnalysis();
     try {
         const analysis = await requestDietAnalysis(imageUrl);
         // 분석이 도는 동안 사진이 지워졌거나 다른 사진으로 바뀌었으면 여기서 접는다.
@@ -25078,6 +25109,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
         console.error('식단 분석 오류:', e);
         showToast('⚠️ 식단 분석 중 오류가 발생했습니다.');
     } finally {
+        endAnalysis();
         if (btn && btn.textContent === '🤖 AI 분석 중...') {
             btn.classList.remove('loading'); 
             btn.textContent = '🤖 AI 분석'; 
@@ -25943,6 +25975,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
         return;
     }
 
+    // 저장이 이 분석을 기다릴 수 있게 한다.
+    const endAnalysis = beginAiAnalysis();
     try {
         if (aiBtn) { aiBtn.classList.add('loading'); aiBtn.textContent = '🤖 AI 분석 중...'; }
         resultBox.style.display = 'block';
@@ -26015,6 +26049,7 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
         console.error(e);
         showSleepAnalysisFailure(resultBox, '분석 중 오류가 발생했습니다.', auto);
     } finally {
+        endAnalysis();
         if (aiBtn) {
             aiBtn.classList.remove('loading');
             // 실패하면 '분석 중…' 이 그대로 남아 다시 누를 수 없어 보였다.

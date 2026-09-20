@@ -6,6 +6,7 @@ import { resolveDailyActivityMinutes, resolveExerciseItemMinutes } from '../js/l
 
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT_DIR, p), 'utf8');
+const NL = String.fromCharCode(10);
 const APP_SOURCE = read('js/app-core.js');
 
 // 2026-09-14 질문: "하이퍼랩스 영상도 AI가 읽고 운동량과 시간, 강도를 계산할 수 있나?"
@@ -135,8 +136,16 @@ describe('saving waits for an analysis that is still running', () => {
     it('counts the analyses that are in flight', () => {
         expect(APP_SOURCE).toContain('const _runningAiAnalyses = new Set();');
         expect(APP_SOURCE).toContain('function beginAiAnalysis()');
-        // 영상과 사진 둘 다 등록한다 — 저장 경로가 같다.
-        expect(APP_SOURCE.split('beginAiAnalysis()').length - 1).toBe(3);
+        // 개수를 세지 않는다 — 분석이 하나 늘 때마다 깨진다(lessons 259).
+        // 네 가지 분석이 저마다 등록하는지를 본다.
+        for (const marker of ['window.analyzeExerciseVideo = async function',
+            'window.analyzeExercisePhoto = async function',
+            'async function analyzeMealPhoto(',
+            'window.analyzeSleepData = async function']) {
+            const fn = APP_SOURCE.split(marker)[1].split(NL + '};')[0];
+            expect(fn, marker).toContain('const endAnalysis = beginAiAnalysis();');
+            expect(fn, marker).toContain('endAnalysis();');
+        }
     });
 
     it('waits before it starts saving, not after', () => {
@@ -190,5 +199,59 @@ describe('the duration row is one thin line', () => {
         expect(APP_SOURCE).toContain('function syncExerciseDurationChips(input)');
         const edited = APP_SOURCE.split('window.markExerciseDurationEdited = function (input) {')[1].split('\n}')[0];
         expect(edited).toContain('syncExerciseDurationChips(input)');
+    });
+});
+
+// 2026-09-20 제보: "운동 동영상 올리는 사이에 운동 시간 입력하고 저장 누르면
+// ai분석 실패해. 식단도 4개 한꺼번에 올렸더니 그중 세번째가 ai분석 실패했어."
+//
+// 어제 넣은 대기는 **이미 시작된 분석**만 기다렸다. 업로드가 도는 중이면 분석은
+// 시작조차 안 한 상태라 기다릴 것이 없고, 저장이 곧바로 들어가 _pendingUploads 를
+// 비우고 화면을 다시 그린다. 그 뒤에 시작된 분석은 올라간 주소를 찾지 못한다.
+describe('saving waits for what is still uploading, too', () => {
+    it('knows an upload is still in flight', () => {
+        expect(APP_SOURCE).toContain('function hasUploadsInFlight()');
+        const fn = APP_SOURCE.split('function hasUploadsInFlight() {')[1].split('\n}')[0];
+        expect(fn).toContain('_pendingUploads.values()');
+        expect(fn).toContain('!entry.done');
+    });
+
+    it('waits even when no analysis has started yet', () => {
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses() {')[1].split('\n}\n')[0];
+        expect(fn).toContain('if (!hasUploadsInFlight() && _runningAiAnalyses.size === 0) return;');
+    });
+
+    it('waits in order: uploads, then the queue, then what is running', () => {
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses() {')[1].split('\n}\n')[0];
+        const uploads = fn.indexOf('_pendingUploads.values()');
+        const queue = fn.indexOf('_autoAiAnalysisChain');
+        const running = fn.indexOf('[..._runningAiAnalyses]');
+        expect(uploads).toBeGreaterThan(-1);
+        expect(queue).toBeGreaterThan(uploads);
+        expect(running).toBeGreaterThan(queue);
+    });
+
+    it('goes around again, because a finished upload queues a new analysis', () => {
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses() {')[1].split('\n}\n')[0];
+        expect(fn).toMatch(/for \(let round = 0; round < \d+; round \+= 1\)/);
+        // 조용해지면 곧바로 나온다.
+        expect(fn).toContain('if (!hasUploadsInFlight() && _runningAiAnalyses.size === 0) return;');
+    });
+
+    it('still gives up eventually', () => {
+        const fn = APP_SOURCE.split('async function waitForRunningAiAnalyses() {')[1].split('\n}\n')[0];
+        expect(fn).toContain('AI_ANALYSIS_SAVE_WAIT_MS');
+        expect(fn).toContain('withAsyncTimeout(');
+    });
+
+    it('counts diet and sleep analyses as well, not only exercise', () => {
+        // 식단 넉 장을 한꺼번에 올리면 뒤쪽 분석이 저장과 겹쳐 떨어져 나갔다.
+        // 그 둘은 애초에 등록조차 되어 있지 않았다.
+        const meal = APP_SOURCE.split('async function analyzeMealPhoto(')[1].split('\n};')[0];
+        expect(meal).toContain('const endAnalysis = beginAiAnalysis();');
+        expect(meal).toContain('endAnalysis();');
+        const sleep = APP_SOURCE.split('window.analyzeSleepData = async function')[1].split('\n};')[0];
+        expect(sleep).toContain('const endAnalysis = beginAiAnalysis();');
+        expect(sleep).toContain('endAnalysis();');
     });
 });
