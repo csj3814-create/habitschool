@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=419';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=419';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=420';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=420';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=419';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=419';
+} from './auth-login-helpers.js?v=420';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=420';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=419';
+} from './exercise-media.js?v=420';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=419';
+} from './health-connect-utils.js?v=420';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=419';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=419';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=419';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=419';
-import { sanitize, compressImage } from './data-manager.js?v=419';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=419';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=419';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=419';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=419';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=419';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=419';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=419';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=419';
+} from './habit-groups.js?v=420';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=420';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=420';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=420';
+import { sanitize, compressImage } from './data-manager.js?v=420';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=420';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=420';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=420';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=420';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=420';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=420';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=420';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=420';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=419';
+} from './guest-demo.js?v=420';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=419';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=419';
+} from './product-events.js?v=420';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=420';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=419';
+} from './diet-program.js?v=420';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=419';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=419';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=419';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=419';
+} from './meditation-guide.js?v=420';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=420';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=420';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=420';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=419';
+} from './social-challenge-readiness.js?v=420';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=419';
+} from './monthly-mvp-reward.js?v=420';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -382,13 +382,35 @@ window.closeBugReportModal = function () {
     if (modal) modal.style.display = 'none';
 };
 
+// 2026-09-20 제보 실패: "제보 전송에 실패했어요 (FIRESTORE (10.8.0) INTERNAL
+// ASSERTION FAILED: Unexpected state)".
+//
+// SDK 내부 상태가 깨지면 그 뒤 모든 쓰기가 같은 오류로 막힌다. 하필 그때가
+// **제보를 가장 보내고 싶은 순간**이다 — 뭔가 잘못됐으니 제보를 쓰는 것이다.
+// 연결을 다시 세우고 한 번 더 시도한다.
+function isFirestoreInternalStateError(error) {
+    const text = String(error?.message || error || '');
+    return /INTERNAL ASSERTION FAILED|Unexpected state/i.test(text);
+}
+
 window.sendBugReport = async function () {
     const btn = document.getElementById('bug-report-submit-btn');
     const message = document.getElementById('bug-report-message')?.value || '';
     const screenshotFile = document.getElementById('bug-report-screenshot')?.files?.[0] || null;
     if (btn) { btn.disabled = true; btn.textContent = '보내는 중...'; }
     try {
-        const result = await submitBugReport({ description: message, screenshotFile });
+        let result;
+        try {
+            result = await submitBugReport({ description: message, screenshotFile });
+        } catch (error) {
+            if (!isFirestoreInternalStateError(error)) throw error;
+            console.warn('[sendBugReport] 연결을 다시 세우고 한 번 더 보냅니다:', error?.message || error);
+            if (btn) btn.textContent = '다시 보내는 중...';
+            await forceFirestoreReconnect('bug-report-retry').catch(() => false);
+            await new Promise((r) => setTimeout(r, 1200));
+            // 스크린샷은 이미 올라갔을 수 있다. 두 번 올리지 않는다.
+            result = await submitBugReport({ description: message, screenshotFile });
+        }
         if (result) {
             // 첨부만 실패한 경우를 조용히 넘기면 사용자는 사진이 갔다고 믿는다.
             showToast(result.screenshotError
@@ -3300,10 +3322,17 @@ function shouldAutoAdvanceSelectedRecordDate({
     return true;
 }
 
+/**
+ * 선택 날짜를 오늘로 맞춘다.
+ *
+ * advance:false 로 부르면 **날짜를 바꾸지 않고** 바뀌어야 하는 상황인지만
+ * 알려 준다(wouldAdvance). 저장 직전에 쓰는 자리다 — 아래 2026-09-20 주석 참고.
+ */
 function syncSelectedRecordDateToToday({
     reloadData = false,
     reason = 'manual',
     onlyIfStaleToday = false,
+    advance = true,
     previousTodayStr = _lastKnownRecordTodayStr
 } = {}) {
     const dateInput = document.getElementById('selected-date');
@@ -3328,7 +3357,13 @@ function syncSelectedRecordDateToToday({
         todayStr,
         onlyIfStaleToday
     });
-    const changed = currentDate !== todayStr && shouldChange;
+    const wouldAdvance = currentDate !== todayStr && shouldChange;
+    if (wouldAdvance && !advance) {
+        // 화면은 그대로 두고 사실만 알린다. 부르는 쪽이 판단한다.
+        _lastKnownRecordTodayStr = todayStr;
+        return { todayStr, changed: false, wouldAdvance: true };
+    }
+    const changed = wouldAdvance;
     if (changed) {
         dateInput.value = todayStr;
         _recordDateManualSelection = { dateStr: '', at: 0 };
@@ -3346,7 +3381,22 @@ function syncSelectedRecordDateToToday({
         });
     }
 
-    return { todayStr, changed };
+    return { todayStr, changed, wouldAdvance };
+}
+
+/**
+ * 저장하는 사이에 자정이 지났다는 것을 알린다.
+ *
+ * 저장은 화면에 적힌 날짜(어제)로 끝냈다. 그 사실을 숨기면 "오늘 기록했는데
+ * 오늘 칸이 비어 있다" 가 된다. 알리고 나서 오늘로 넘겨, 다음 기록이 오늘에
+ * 쌓이게 한다.
+ */
+function noteRecordDateRolledOver(rolledOver, savedDateStr) {
+    if (!rolledOver) return;
+    showToast(`🌙 자정이 지나 ${savedDateStr} 기록으로 저장했어요. 오늘 날짜로 넘어갑니다.`);
+    setTimeout(() => {
+        syncSelectedRecordDateToToday({ reloadData: true, reason: 'post-save-rollover' });
+    }, 1200);
 }
 
 function wasRecordDateAutoAdvancedRecently(dateStr = '', maxAgeMs = 5 * 60 * 1000) {
@@ -6987,7 +7037,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=419';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=420';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -21183,11 +21233,24 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
         let backgroundOutboxBackupQueued = false;
         let backgroundOutboxBackupInputIds = new Set();
         try {
+            // 2026-09-20 제보: "새벽 0시에 동영상 올리던 중에 날짜가 변경되었고
+            // 그 뒤 저장을 눌렀는데... 어제 날짜 기록이 갤러리 오늘 날짜에도
+            // 올라가 있어."
+            //
+            // 예전에는 여기서 선택 날짜를 오늘로 **옮겼다.** 자정을 넘긴 채
+            // 저장하면 어제 날짜로 남는 것을 막으려던 것인데, 화면에는 어제
+            // 불러온 사진·영상이 그대로 있다. 저장 대상만 오늘로 바뀌니 어제
+            // 기록이 통째로 오늘 날짜에 복사됐다.
+            //
+            // 화면에 있는 것은 그 날짜의 기록이다. 그러니 **화면에 적힌 날짜로**
+            // 저장하고, 날짜가 넘어간 사실은 저장을 마친 뒤에 알린다.
             const dateSyncResult = syncSelectedRecordDateToToday({
                 reloadData: false,
                 reason: 'pre-save',
-                onlyIfStaleToday: true
+                onlyIfStaleToday: true,
+                advance: false
             });
+            const dateRolledOverDuringEdit = !!dateSyncResult.wouldAdvance;
             selectedDateStr = document.getElementById('selected-date').value;
             const ignoreStalePreviewFallback = !!dateSyncResult.changed
                 || wasRecordDateAutoAdvancedRecently(selectedDateStr);
@@ -21596,6 +21659,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                 primarySaveAcknowledged = true;
                 forgetAnalysisPersistedWithoutSave();
                 refreshWeeklyActivityCard({ force: true });
+                noteRecordDateRolledOver(dateRolledOverDuringEdit, selectedDateStr);
             } catch (e) {
                 if (isOfflineSaveCandidateError(e)) {
                     // 죽은 스트림에 두 번째 시도를 그대로 보내면 똑같이 타임아웃난다.
@@ -21607,6 +21671,7 @@ document.getElementById('saveDataBtn').addEventListener('click', () => {
                     primarySaveAcknowledged = true;
                     forgetAnalysisPersistedWithoutSave();
                     refreshWeeklyActivityCard({ force: true });
+                    noteRecordDateRolledOver(dateRolledOverDuringEdit, selectedDateStr);
                 } else { throw e; }
             }
             await withAsyncTimeout(
