@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=424';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=424';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=425';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=425';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=424';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=424';
+} from './auth-login-helpers.js?v=425';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=425';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=424';
+} from './exercise-media.js?v=425';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=424';
+} from './health-connect-utils.js?v=425';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=424';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=424';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=424';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=424';
-import { sanitize, compressImage } from './data-manager.js?v=424';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=424';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=424';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=424';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=424';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=424';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=424';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=424';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=424';
+} from './habit-groups.js?v=425';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=425';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=425';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=425';
+import { sanitize, compressImage } from './data-manager.js?v=425';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=425';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=425';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=425';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=425';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=425';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=425';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=425';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=425';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=424';
+} from './guest-demo.js?v=425';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=424';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=424';
+} from './product-events.js?v=425';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=425';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=424';
+} from './diet-program.js?v=425';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=424';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=424';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=424';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=424';
+} from './meditation-guide.js?v=425';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=425';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=425';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=425';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=424';
+} from './social-challenge-readiness.js?v=425';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=424';
+} from './monthly-mvp-reward.js?v=425';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -2762,6 +2762,79 @@ window.dismissAndroidAppInvite = function dismissAndroidAppInvite() {
 //    화면이 그대로면 참여 페이지로 직접 넘긴다.
 const ANDROID_INVITE_FALLBACK_DELAY_MS = 1500;
 
+// 실제로 나가는 이동. 깔려 있으면 앱이 열리고, 없으면 참여 페이지로 간다.
+window.goToAndroidApp = function goToAndroidApp() {
+    window.location.href = ANDROID_APP_INTENT_URL;
+    setTimeout(() => {
+        // 앱이 열렸으면 이 문서는 숨겨진다. 그대로면 아무 일도 없었다는 뜻이다.
+        if (document.hidden) return;
+        window.location.href = PLAY_TESTING_URL;
+    }, ANDROID_INVITE_FALLBACK_DELAY_MS);
+};
+
+window.closeAndroidInstallGuide = function closeAndroidInstallGuide() {
+    const guide = document.getElementById('android-install-guide');
+    if (guide) guide.remove();
+};
+
+/**
+ * 참여부터 설치까지 무엇을 하게 되는지 먼저 보여 준다.
+ *
+ * 2026-09-21 제안: "배너 눌렀을 때 미리 과정을 상세히 이미지와 함께 설명해주면
+ * 되지 않겠어?"
+ *
+ * 이유가 있다. 배너를 누른 두 분 다 앱까지 가지 못했다. 누르면 구글 참여
+ * 페이지로 떨어지는데, 거기서부터 **테스터 되기 → 다운로드 → 설치 → 열기**
+ * 네 단계를 혼자 넘어야 한다. 처음 보는 화면이고, 무엇을 누르면 되는지
+ * 아무도 말해 주지 않는다.
+ *
+ * 그림은 구글 화면을 흉내 내지 않는다. 진짜처럼 보이는 가짜 화면은 실제와
+ * 다를 때 더 헷갈리게 만든다. 무엇을 누르는지가 보이는 도해면 충분하다.
+ */
+const ANDROID_GUIDE_STEPS = [
+    {
+        title: '구글 페이지에서 "테스터 되기"',
+        body: '해빛스쿨 테스트 참여 페이지가 열립니다. 가운데 버튼을 한 번 누르면 됩니다.',
+        art: 'join'
+    },
+    {
+        title: '바로 아래 "다운로드" 누르기',
+        body: '참여가 되면 같은 화면에 다운로드 링크가 나타납니다. 플레이스토어로 넘어갑니다.',
+        art: 'download'
+    },
+    {
+        title: '설치하고 열기',
+        body: '평소 앱 설치와 같습니다. 다 되면 이 화면 그대로 앱에서 이어집니다.',
+        art: 'install'
+    }
+];
+
+function androidGuideArt(kind) {
+    const frame = '<rect x="6" y="3" width="52" height="58" rx="7" fill="#fff" stroke="#CDE3FB" stroke-width="2"/>';
+    if (kind === 'join') {
+        return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
+            <rect x="14" y="13" width="36" height="5" rx="2.5" fill="#E3EDF8"/>
+            <rect x="14" y="22" width="24" height="4" rx="2" fill="#EDF2F7"/>
+            <rect x="14" y="34" width="36" height="13" rx="6.5" fill="#2F80D8"/>
+            <circle cx="46" cy="49" r="7" fill="#1B4E86"/>
+            <path d="M43 49l2.5 2.5L50 46" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+    }
+    if (kind === 'download') {
+        return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
+            <rect x="14" y="13" width="36" height="5" rx="2.5" fill="#E3EDF8"/>
+            <rect x="14" y="24" width="36" height="11" rx="5.5" fill="#EAF3FE" stroke="#9CC7F0"/>
+            <path d="M32 26v7m0 0l-3-3m3 3l3-3" stroke="#2F80D8" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="14" y="42" width="24" height="4" rx="2" fill="#EDF2F7"/>
+        </svg>`;
+    }
+    return `<svg viewBox="0 0 64 64" aria-hidden="true">${frame}
+        <rect x="20" y="16" width="24" height="24" rx="6" fill="#FFD9A0" stroke="#FFB05C"/>
+        <circle cx="32" cy="28" r="6" fill="#FF8C00"/>
+        <rect x="18" y="47" width="28" height="9" rx="4.5" fill="#2F80D8"/>
+    </svg>`;
+}
+
 window.openAndroidApp = function openAndroidApp() {
     // 누른 사람을 남긴다. 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때
     // 문구가 약한 것인지 설치 단계에서 막히는 것인지 알 수 없다.
@@ -2776,12 +2849,34 @@ window.openAndroidApp = function openAndroidApp() {
             .catch((error) => console.warn('[앱 권유] 누름 기록 실패:', error?.message || error));
     }
 
-    window.location.href = ANDROID_APP_INTENT_URL;
-    setTimeout(() => {
-        // 앱이 열렸으면 이 문서는 숨겨진다. 그대로면 아무 일도 없었다는 뜻이다.
-        if (document.hidden) return;
-        window.location.href = PLAY_TESTING_URL;
-    }, ANDROID_INVITE_FALLBACK_DELAY_MS);
+    if (document.getElementById('android-install-guide')) return;
+    const en = isEnglishLocale();
+    const guide = document.createElement('div');
+    guide.id = 'android-install-guide';
+    guide.className = 'android-sheet-backdrop';
+    guide.setAttribute('role', 'dialog');
+    guide.setAttribute('aria-modal', 'true');
+    guide.innerHTML = `
+        <div class="android-sheet android-guide">
+            <h3 class="android-sheet-title">${en ? 'Three steps, about two minutes' : '세 단계, 2분이면 됩니다'}</h3>
+            <ol class="android-guide-steps">
+                ${ANDROID_GUIDE_STEPS.map((step, index) => `
+                    <li class="android-guide-step">
+                        <span class="android-guide-num">${index + 1}</span>
+                        <span class="android-guide-art">${androidGuideArt(step.art)}</span>
+                        <span class="android-guide-text">
+                            <strong>${escapeHtml(step.title)}</strong>
+                            <span>${escapeHtml(step.body)}</span>
+                        </span>
+                    </li>`).join('')}
+            </ol>
+            <button type="button" class="android-sheet-go" onclick="closeAndroidInstallGuide(); goToAndroidApp();">${en ? 'Go to the page' : '참여 페이지 열기'}</button>
+            <button type="button" class="android-sheet-later" onclick="closeAndroidInstallGuide()">${en ? 'Later' : '나중에'}</button>
+        </div>`;
+    guide.addEventListener('click', (event) => {
+        if (event.target === guide) window.closeAndroidInstallGuide();
+    });
+    document.body.appendChild(guide);
 };
 
 /**
@@ -7068,7 +7163,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=424';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=425';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;

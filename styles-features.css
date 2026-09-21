@@ -7718,3 +7718,61 @@ body.dark-mode #gallery-feed-end {
 
 @keyframes androidSheetFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes androidSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* ── 설치 안내 ─────────────────────────────────────────────────
+   참여 페이지로 던져두고 끝내면 그 뒤 네 단계를 혼자 넘어야 한다. 무엇을 하게
+   되는지 먼저 보여 준다. 그림은 구글 화면을 흉내 내지 않는다 — 진짜처럼 보이는
+   가짜 화면은 실제와 다를 때 더 헷갈리게 만든다. */
+.android-guide { max-height: 86vh; overflow-y: auto; text-align: left; }
+.android-guide .android-sheet-title { text-align: center; margin-bottom: 14px; }
+
+.android-guide-steps {
+    list-style: none;
+    margin: 0 0 16px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.android-guide-step {
+    display: grid;
+    grid-template-columns: 22px 52px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid #E8EEF5;
+    border-radius: 12px;
+    background: #FBFDFF;
+}
+
+.android-guide-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #2F80D8;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.android-guide-art svg { width: 52px; height: 52px; display: block; }
+
+.android-guide-text strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 800;
+    color: #1B4E86;
+    line-height: 1.4;
+}
+
+.android-guide-text span {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: #6B7A8B;
+    line-height: 1.5;
+}

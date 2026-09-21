@@ -42,6 +42,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
 
     // 배너를 그리면 시트도 따라 만든다. 하니스의 document 가 그것까지 받아야 한다.
     const sheets = [];
+    const guides = [];
     const timers = [];
     const docState = { hidden: false };
     const makeNode = () => ({
@@ -57,18 +58,20 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
         'withAsyncTimeout', 'increment', 'setTimeout',
         `${body}
         return { renderAndroidAppInvite, detectWebPlatform, recordWebPlatform,
-                 dismiss: window.dismissAndroidAppInvite, open: window.openAndroidApp };`
+                 dismiss: window.dismissAndroidAppInvite, open: window.openAndroidApp,
+                 go: window.goToAndroidApp, closeGuide: window.closeAndroidInstallGuide };`
     )(
         { userAgent: ua, maxTouchPoints: /macintosh/i.test(ua) ? 5 : 0 },
         {
             getElementById: (id) => {
                 if (id === 'android-app-invite') return box;
                 if (id === 'android-app-sheet') return sheets.find((s) => !s.removed) || null;
+                if (id === 'android-install-guide') return guides.find((g) => !g.removed) || null;
                 return null;
             },
             get hidden() { return docState.hidden; },
             createElement: makeNode,
-            body: { appendChild: (el) => sheets.push(el) },
+            body: { appendChild: (el) => (el.id === 'android-install-guide' ? guides.push(el) : sheets.push(el)) },
         },
         {
             getItem: (k) => (store.has(k) ? store.get(k) : null),
@@ -86,7 +89,7 @@ function createHarness({ ua, nativeSource = '', snoozedAt = null, writeBehaviour
         () => 'INC',
         (fn) => { timers.push(fn); return 1; }
     );
-    return { api, box, store, win, setDoc, sheets, timers, documentHidden: (v) => { docState.hidden = v; } };
+    return { api, box, store, win, setDoc, sheets, guides, timers, documentHidden: (v) => { docState.hidden = v; } };
 }
 
 const ANDROID = 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/152 Mobile Safari/537.36';
@@ -159,7 +162,7 @@ describe('a closed invitation stays closed for a few days', () => {
 describe('one button covers both installed and not installed', () => {
     it('hands Android an intent with a store fallback', async () => {
         const { api, win } = createHarness({ ua: ANDROID });
-        api.open();
+        api.go();
         expect(win.location.href).toContain('intent://');
         expect(win.location.href).toContain('package=com.habitschool.app');
         // 안 깔린 사람은 참여 페이지로 간다. 이게 없으면 아무 일도 안 일어난다.
@@ -228,30 +231,32 @@ describe('the banner has a place to render', () => {
 // 배너를 본 사람과 누른 사람을 가를 수 없으면, 숫자가 안 오를 때 문구가 약한
 // 것인지 설치 단계에서 막히는 것인지 알 수 없다. 둘은 할 일이 전혀 다르다.
 describe('we can tell a tap from a glance', () => {
-    it('records the tap before sending them off', async () => {
+    it('records the tap and shows the guide instead of jumping', async () => {
         const h = createHarness({ ua: ANDROID });
         await h.api.renderAndroidAppInvite({ uid: 'u1' });
-        await h.api.open();
+        h.api.open();
         expect(h.setDoc).toHaveBeenCalledTimes(1);
         const written = h.setDoc.mock.calls[0][1];
         expect(written.settings.lastAppInviteTapDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(written.settings.appInviteTapCount).toBe('INC');
         expect(h.setDoc.mock.calls[0][2]).toEqual({ merge: true });
-        expect(h.win.location.href).toContain('intent://');
+        // 곧바로 구글 페이지로 떨어뜨리지 않는다. 무엇을 하게 되는지 먼저 보여 준다.
+        expect(h.win.location.href).toBe('');
+        expect(h.guides).toHaveLength(1);
     });
 
-    it('still opens the app when the write hangs', async () => {
-        // 기록은 우리 사정이고, 사람은 앱으로 가려고 누른 것이다. 연결이 끊긴
-        // 쓰기는 끝나지 않으므로(tests/consent-save-does-not-hang) 붙잡히면 안 된다.
+    it('still shows the guide when the write hangs', async () => {
+        // 기록은 우리 사정이다. 연결이 끊긴 쓰기는 끝나지 않으므로
+        // (tests/consent-save-does-not-hang) 안내가 그것에 붙잡히면 안 된다.
         const h = createHarness({ ua: ANDROID, writeBehaviour: () => new Promise(() => {}) });
         await h.api.renderAndroidAppInvite({ uid: 'u1' });
-        await h.api.open();
-        expect(h.win.location.href).toContain('intent://');
+        h.api.open();
+        expect(h.guides).toHaveLength(1);
     });
 
     it('opens even for someone the banner never greeted', async () => {
         const h = createHarness({ ua: ANDROID });
-        await h.api.open();
+        h.api.go();
         expect(h.win.location.href).toContain('intent://');
     });
 });
@@ -380,12 +385,12 @@ describe('the button always lands somewhere', () => {
         h.api.open();
         expect(h.setDoc).toHaveBeenCalledTimes(1);
         expect(h.setDoc.mock.calls[0][1].settings.lastAppInviteTapDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        expect(h.win.location.href).toContain('intent://');
+        expect(h.guides).toHaveLength(1);
     });
 
     it('carries the tester join page as the fallback', async () => {
         const h = createHarness({ ua: ANDROID });
-        h.api.open();
+        h.api.go();
         expect(decodeURIComponent(h.win.location.href))
             .toContain('play.google.com/apps/testing/com.habitschool.app');
     });
@@ -394,7 +399,7 @@ describe('the button always lands somewhere', () => {
         // 앱 안 브라우저에서는 intent 도 fallback 도 동작하지 않는다. 화면이
         // 그대로면 우리가 직접 보낸다.
         const h = createHarness({ ua: ANDROID });
-        h.api.open();
+        h.api.go();
         expect(h.timers).toHaveLength(1);
         h.timers[0]();
         expect(h.win.location.href).toBe('https://play.google.com/apps/testing/com.habitschool.app');
@@ -402,10 +407,69 @@ describe('the button always lands somewhere', () => {
 
     it('leaves the page alone when the app did open', async () => {
         const h = createHarness({ ua: ANDROID });
-        h.api.open();
+        h.api.go();
         const intentUrl = h.win.location.href;
         h.documentHidden(true);   // 앱이 열리면 이 문서는 숨겨진다
         h.timers[0]();
         expect(h.win.location.href).toBe(intentUrl);
+    });
+});
+
+// 2026-09-21 제안: "배너 눌렀을 때 미리 과정을 상세히 이미지와 함께 설명해주면
+// 되지 않겠어?"
+//
+// 이유가 있다. 배너를 누른 두 분 다 앱까지 가지 못했다. 누르면 구글 참여
+// 페이지로 떨어지는데, 거기서부터 테스터 되기 → 다운로드 → 설치 → 열기 네
+// 단계를 혼자 넘어야 한다. 처음 보는 화면이고 무엇을 누르는지 아무도 말해 주지
+// 않는다.
+describe('the guide says what is about to happen', () => {
+    it('shows three steps in order', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        const html = h.guides[0].innerHTML;
+        for (const step of ['테스터 되기', '다운로드', '설치하고 열기']) {
+            expect(html, step).toContain(step);
+        }
+        expect(html).toContain('세 단계, 2분이면 됩니다');
+    });
+
+    it('draws a diagram, not a fake Google screen', () => {
+        // 진짜처럼 보이는 가짜 화면은 실제와 다를 때 더 헷갈리게 만든다.
+        const fn = APP.split('function androidGuideArt(kind) {')[1].split('\n}')[0];
+        expect(fn).toContain('<svg viewBox="0 0 64 64" aria-hidden="true">');
+        expect(fn).not.toMatch(/googleusercontent|play\.google\.com\/.*\.png/);
+    });
+
+    it('leaves for the page only when they say so', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        // 안내를 띄우는 것만으로는 아무 데도 가지 않는다.
+        expect(h.win.location.href).toBe('');
+        h.api.go();
+        expect(h.win.location.href).toContain('intent://');
+    });
+
+    it('can be closed without going anywhere', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        expect(h.guides[0].removed).toBe(false);
+        h.api.closeGuide();
+        expect(h.guides[0].removed).toBe(true);
+        expect(h.win.location.href).toBe('');
+    });
+
+    it('does not stack when tapped twice', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        h.api.open();
+        expect(h.guides).toHaveLength(1);
+    });
+
+    it('still keeps the tester count out of it', async () => {
+        const h = createHarness({ ua: ANDROID });
+        h.api.open();
+        for (const leak of ['12명', '심사', '테스터가 아']) {
+            expect(h.guides[0].innerHTML, leak).not.toContain(leak);
+        }
     });
 });

@@ -1355,6 +1355,9 @@ body.dark-mode .android-sheet { background: #1D1B20; }
 body.dark-mode .android-sheet-title { color: #A8CDF5; }
 body.dark-mode .android-sheet-body { color: #A09AAA; }
 body.dark-mode .android-sheet-later { color: #7C7688; }
+body.dark-mode .android-guide-step { background: #242128; border-color: #2E4A6A; }
+body.dark-mode .android-guide-text strong { color: #A8CDF5; }
+body.dark-mode .android-guide-text span { color: #A09AAA; }
 
 /* 운동 시간 입력 */
 body.dark-mode .exercise-duration { background: #2A2028; border-color: #4A3524; }
