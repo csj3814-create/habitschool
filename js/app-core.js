@@ -17545,12 +17545,24 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
         missionStreak: newStreak
     };
 
-    // 새 배지 추가
+    // 새 배지 추가.
+    //
+    // 2026-09-21 제보: "첫 미션, 나만의 미션 배지가 원래 있었는데 자물쇠가 되어
+    // 버렸네?" 남아 있던 여섯 개가 하필 **이 함수가 매주 다시 계산하는 목록과
+    // 정확히 같았다.** 빠진 둘(firstMission, customMaster)은 여기서 다시 계산되지
+    // 않는 배지다. 읽기가 짧게 답한 그 주에 지워지고, 다시 계산될 일이 없으니
+    // 영영 돌아오지 않았다.
+    //
+    // 원인은 배열을 통째로 쓴 것이다. 읽고-합치고-쓰기는 **읽기가 답한 만큼만
+    // 남긴다.** 캐시가 답하든, 필드가 아직 없든, 짧게 답하면 그만큼 지워진다.
+    // arrayUnion 은 더하기만 한다 — 읽기가 무엇을 답했든 있던 배지는 남는다.
+    // 더하기만 하면 되는 배열을 읽어서 쓰지 않는다.
     const existingBadges = existingData.missionBadges || [];
+    // 축하할 것을 고르는 데만 쓴다. 읽기가 짧게 답해도 이제 지워지지는 않고,
+    // 중복 축하는 계정의 확인 기록(celebratedAchievements)이 막는다.
     const justEarnedBadges = newBadges.filter((badgeId) => !existingBadges.includes(badgeId));
     if (newBadges.length > 0) {
-        const allBadges = [...new Set([...existingBadges, ...newBadges])];
-        updateData.missionBadges = allBadges;
+        updateData.missionBadges = arrayUnion(...newBadges);
     }
 
     await setDoc(doc(db, "users", uid), updateData, { merge: true });
@@ -17611,31 +17623,22 @@ async function saveWeeklyMissions() {
             return;
         }
 
-        // 첫 미션 배지 체크. 배지는 비필수라, 읽기가 느리거나 실패하면 미션 저장을
-        // 막지 말고 배지만 이번엔 건드리지 않는다(기존 배지 보존).
+        // 첫 미션 배지. 읽지 않는다 — arrayUnion 은 더하기만 하므로 지금 무엇이
+        // 있는지 알 필요가 없다.
+        //
+        // 예전에는 기존 배지를 지키려고 먼저 읽고 배열째 썼다. 읽기가 짧게 답하면
+        // 지키려던 것을 오히려 지우는 구조였다. 읽기를 없애니 8초 기다림도,
+        // 읽기가 실패하면 배지를 건너뛰던 갈래도 함께 사라진다.
         const userRef = doc(db, "users", user.uid);
-        let existingBadges = null;
-        try {
-            const userDoc = await withAsyncTimeout(getDoc(userRef), 8000, 'mission_badge_read_timeout');
-            existingBadges = (userDoc.exists() && Array.isArray(userDoc.data().missionBadges))
-                ? userDoc.data().missionBadges
-                : [];
-        } catch (_) {
-            existingBadges = null; // 읽기 실패 → missionBadges는 이번 쓰기에서 제외
-        }
 
         const missionPayload = {
             weeklyMissionData: {
                 weekId: currentWeekId,
                 missions: missions
             },
-            missionLevelUpDate: deleteField()
+            missionLevelUpDate: deleteField(),
+            missionBadges: arrayUnion('firstMission')
         };
-        if (existingBadges !== null) {
-            missionPayload.missionBadges = existingBadges.includes('firstMission')
-                ? existingBadges
-                : [...existingBadges, 'firstMission'];
-        }
 
         // 쓰기는 타임아웃 후 1회 재시도(오늘처럼 일시적으로 느린 연결 대비).
         const writeMissions = () => withRejectingTimeout(
