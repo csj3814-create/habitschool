@@ -14,9 +14,12 @@ import { readRepoFile } from './source-helpers.js';
 const APP = readRepoFile('js/app-core.js');
 
 function createHarness({ serverBehaviour, cacheRows = [] }) {
-    const start = APP.indexOf('async function readReportLogsFromServer(readLogs) {');
+    // 결과지 본문은 위쪽 도우미들(summarizeReportActivity 등)을 부른다.
+    // 그것까지 함께 떼어 와야 이 시험이 진짜 코드를 도는 셈이 된다.
+    const start = APP.indexOf('function summarizeReportActivity(logs = []) {');
     const end = APP.indexOf('const REPORT_PRINT_SHEET_ID', start);
     expect(start).toBeGreaterThan(-1);
+    expect(APP.indexOf('async function readReportLogsFromServer(readLogs) {')).toBeGreaterThan(start);
     const block = APP.slice(start, end);
 
     const nodes = new Map();
@@ -58,7 +61,8 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         'where', 'orderBy', 'limit', 'getDocs', 'getDocsFromServer', 'escapeHtml', 'console',
         'setTimeout', 'isFirestoreInternalStateError', 'isFirestoreConnectivityIssue',
         'forceFirestoreReconnect', 'drawReportLineChart', 'drawReportBarChart', 'drawReportHealthChart',
-        'window',
+        'window', 'resolveDailyActivityMinutes',
+        'WEEKLY_ACTIVITY_TARGET_MINUTES', 'WEEKLY_ACTIVITY_STRETCH_MINUTES',
         `${block}
          return { report: window.generate30DayReport, readFromServer: readReportLogsFromServer };`
     )(
@@ -83,7 +87,9 @@ function createHarness({ serverBehaviour, cacheRows = [] }) {
         (e) => String(e?.code || '') === 'unavailable',
         async (reason) => { reconnects.push(reason); return true; },
         () => {}, () => {}, () => {},
-        {}
+        {},
+        // 이 시험이 보는 것은 연결이지 운동 분이 아니다.
+        () => ({ minutes: 0 }), 150, 300
     );
 
     return { api, nodes, node, reconnects, getDocsFromServer };

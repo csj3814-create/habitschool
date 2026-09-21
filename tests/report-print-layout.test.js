@@ -8,8 +8,20 @@ describe('30-day report A4 two-up print layout', () => {
 
         expect(html).toContain('onclick="print30DayReport()"');
         expect(html).not.toContain('onclick="window.print()"');
-        expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'points']);");
-        expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'health', 'heatmap']);");
+        // 2026-09-21: 활동·수면과 AI 요약이 늘었다. 화면에만 있고 인쇄에 자리가
+        // 없으면 출력물에서 통째로 사라진다 — 목록에 같이 넣어야 한다.
+        expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);");
+        expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'heatmap']);");
+
+        // 그리는 구역과 인쇄하는 구역이 갈라지면 조용히 빠진다. 전부 한쪽에는 있어야 한다.
+        const rendered = [...appSource.matchAll(/data-report-section="([a-z-]+)"/g)].map((m) => m[1]);
+        const printed = [
+            ...appSource.split('REPORT_PRINT_TOP_SECTIONS = Object.freeze([')[1].split(']')[0].matchAll(/'([a-z-]+)'/g),
+            ...appSource.split('REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze([')[1].split(']')[0].matchAll(/'([a-z-]+)'/g),
+        ].map((m) => m[1]);
+        for (const section of new Set(rendered)) {
+            expect(printed, `${section} 구역이 인쇄 목록에 없다`).toContain(section);
+        }
         expect(appSource).toContain('window.print30DayReport = async function ()');
         expect(appSource).not.toContain("window.addEventListener('afterprint', remove30DayReportPrintSheet");
         expect(appSource).toContain('Keep the hidden print sheet alive until');

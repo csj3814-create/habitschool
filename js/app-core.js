@@ -127,7 +127,7 @@ import {
     normalizeMeditationLog
 } from './meditation-guide.js?v=430';
 import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=430';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=430';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, resolveDailyActivityMinutes, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES, WEEKLY_ACTIVITY_STRETCH_MINUTES } from './le8-score.js?v=430';
 import { loadRewardMarketSnapshot } from './reward-market.js?v=430';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
@@ -17767,6 +17767,117 @@ window.levelUp = async function (newLevel) {
 // ========== 30일 종합 결과지 ==========
 
 /**
+ * 결과지가 쓸 30일 요약. 화면을 만들기 전에 숫자만 뽑는다.
+ *
+ * 2026-09-21 요청: "30일 요약도 새로운 기능들에 맞춰서 업그레이드 필요할 것 같은데?"
+ *
+ * 맞는 지적이었다. 결과지는 포인트·참여율·연속·체중/혈당/혈압에서 멈춰 있었다.
+ * 그 뒤로 만든 것이 하나도 들어가 있지 않았다 — 운동 시간(v401), 운동 영상
+ * 분석(v410), 수면 시간과 수면 분석, 걸음수. 매일 쌓고 있는데 한 달을 돌아볼
+ * 때는 보이지 않았다.
+ *
+ * 운동 분은 주간 카드와 **같은 함수**(resolveDailyActivityMinutes)로 센다.
+ * 두 곳이 기준을 따로 가지면 같은 기간이 화면마다 다른 숫자로 보인다.
+ */
+function summarizeReportActivity(logs = []) {
+    const days = Array.isArray(logs) ? logs : [];
+    const stepCounts = [];
+    const sleepHours = [];
+    const sleepGrades = new Map();
+    const intensity = new Map();
+    const dietAxes = { minerals: [], fiber: [], vitamins: [], antioxidants: [] };
+    let exerciseMinutes = 0;
+    let activeDays = 0;
+    let bestDayMinutes = 0;
+    let analyzedExercise = 0;
+
+    days.forEach((log) => {
+        const count = Number(log?.steps?.count);
+        if (Number.isFinite(count) && count > 0) stepCounts.push(count);
+
+        const hours = Number(log?.sleepAndMind?.sleepHours);
+        if (Number.isFinite(hours) && hours > 0) sleepHours.push(hours);
+        const grade = String(log?.sleepAndMind?.sleepAnalysis?.grade || '').trim();
+        if (grade) sleepGrades.set(grade, (sleepGrades.get(grade) || 0) + 1);
+
+        // 주간 운동 카드와 같은 셈이다. 걸음수와 겹치는 운동을 두 번 세지 않는다.
+        const minutes = Math.round(resolveDailyActivityMinutes(log)?.minutes || 0);
+        if (minutes > 0) {
+            exerciseMinutes += minutes;
+            activeDays += 1;
+            if (minutes > bestDayMinutes) bestDayMinutes = minutes;
+        }
+
+        const items = [...(log?.exercise?.cardioList || []), ...(log?.exercise?.strengthList || [])];
+        items.forEach((item) => {
+            const ai = item?.aiAnalysis;
+            if (!ai) return;
+            analyzedExercise += 1;
+            const level = String(ai.intensity || '').trim();
+            if (level) intensity.set(level, (intensity.get(level) || 0) + 1);
+        });
+
+        ['breakfast', 'lunch', 'dinner', 'snack'].forEach((meal) => {
+            const scores = log?.dietAnalysis?.[meal]?.scores;
+            if (!scores || typeof scores !== 'object') return;
+            Object.keys(dietAxes).forEach((axis) => {
+                const value = Number(scores[axis]);
+                if (Number.isFinite(value)) dietAxes[axis].push(value);
+            });
+        });
+    });
+
+    const mean = (list) => (list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);
+    const span = Math.max(1, days.length);
+
+    return {
+        steps: {
+            days: stepCounts.length,
+            average: stepCounts.length ? Math.round(mean(stepCounts)) : null,
+            best: stepCounts.length ? Math.max(...stepCounts) : null,
+            total: stepCounts.reduce((a, b) => a + b, 0)
+        },
+        sleep: {
+            days: sleepHours.length,
+            average: sleepHours.length ? Math.round(mean(sleepHours) * 10) / 10 : null,
+            // 3.67시간이라고 적을 이유가 없다. 사람이 읽는 단위로 줄인다.
+            shortest: sleepHours.length ? Math.round(Math.min(...sleepHours) * 10) / 10 : null,
+            longest: sleepHours.length ? Math.round(Math.max(...sleepHours) * 10) / 10 : null,
+            grades: [...sleepGrades.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)),
+            analyzed: [...sleepGrades.values()].reduce((a, b) => a + b, 0)
+        },
+        exercise: {
+            minutes: exerciseMinutes,
+            activeDays,
+            bestDayMinutes,
+            // 30일을 주 단위로 환산한다. "주 몇 분" 이 회원이 아는 단위다.
+            weeklyAverage: Math.round((exerciseMinutes / span) * 7),
+            targetMinutes: WEEKLY_ACTIVITY_TARGET_MINUTES,
+            stretchMinutes: WEEKLY_ACTIVITY_STRETCH_MINUTES,
+            analyzed: analyzedExercise,
+            intensity: [...intensity.entries()].sort((a, b) => b[1] - a[1])
+        },
+        diet: {
+            scoredMeals: dietAxes.minerals.length,
+            axes: Object.fromEntries(Object.entries(dietAxes)
+                .map(([axis, list]) => [axis, list.length ? Math.round(mean(list)) : null]))
+        }
+    };
+}
+
+const REPORT_DIET_AXIS_LABELS = Object.freeze({
+    minerals: '미네랄',
+    fiber: '식이섬유',
+    vitamins: '비타민',
+    antioxidants: '항산화'
+});
+
+/** 값이 없는 칸은 0 으로 적지 않는다. 기록하지 않은 것과 0 은 다른 일이다. */
+function reportValueOrDash(value, suffix = '') {
+    return (value === null || value === undefined) ? '—' : `${value}${suffix}`;
+}
+
+/**
  * 결과지가 쓸 기록을 서버에서 읽는다. 실패하면 연결을 다시 세우고 한 번 더.
  *
  * 2026-09-21 제보: "30일 분석 오류나고 있었어."
@@ -17882,6 +17993,10 @@ window.generate30DayReport = async function () {
             return ap.diet || ap.exercise || ap.mind || (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) > 0;
         }).length / logs.length) * 100);
 
+        // 최근에 만든 것들 — 운동 시간·걸음수·수면·AI 분석. 위 루프와 따로 두어
+        // 화면 없이 숫자만 시험할 수 있게 한다.
+        const activity = summarizeReportActivity(logs);
+
         // 날짜 레이블 (축약)
         const dateLabels = logs.map(l => l.date.substring(5).replace('-', '/'));
 
@@ -17926,6 +18041,83 @@ window.generate30DayReport = async function () {
                 </div>
             </div>
         </div>`;
+
+        // — 활동과 수면 —
+        //
+        // 걸음수·수면·운동 시간은 매일 쌓이는데 결과지에는 한 번도 안 나왔다.
+        // 기록하지 않은 칸은 0 이 아니라 — 로 둔다. 안 한 것과 안 적은 것은 다르다.
+        if (activity.steps.days > 0 || activity.sleep.days > 0 || activity.exercise.minutes > 0) {
+            const ex = activity.exercise;
+            const metTarget = ex.weeklyAverage >= ex.targetMinutes;
+            const targetPercent = Math.min(100, Math.round((ex.weeklyAverage / ex.targetMinutes) * 100));
+            html += `<div class="report-section" data-report-section="activity">
+                <div class="report-section-title">🏃 활동과 수면</div>
+                <div class="report-summary-grid">
+                    <div class="report-stat-card">
+                        <div class="report-stat-value">${reportValueOrDash(activity.steps.average?.toLocaleString('ko-KR'))}</div>
+                        <div class="report-stat-label">하루 평균 걸음</div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="report-stat-value">${reportValueOrDash(activity.sleep.average, '시간')}</div>
+                        <div class="report-stat-label">하루 평균 수면</div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="report-stat-value">${ex.weeklyAverage}분</div>
+                        <div class="report-stat-label">주 평균 운동</div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="report-stat-value">${ex.bestDayMinutes}분</div>
+                        <div class="report-stat-label">가장 활발한 날</div>
+                    </div>
+                </div>
+                <div class="report-metric-summary">
+                    🎯 세계보건기구 권장은 주 ${ex.targetMinutes}~${ex.stretchMinutes}분입니다.
+                    ${metTarget
+                        ? `<span class="report-metric-diff good">최소 권장량을 채우고 계세요 (주 ${ex.weeklyAverage}분)</span>`
+                        : `<span class="report-metric-diff">지금은 주 ${ex.weeklyAverage}분 · 권장량의 ${targetPercent}%</span>`}
+                </div>
+                <div class="report-cat-bar"><div class="report-cat-fill" style="width:${targetPercent}%; background:${metTarget ? '#4CAF50' : '#2196F3'};"></div></div>
+                ${activity.sleep.days > 0
+                    ? `<div class="report-metric-summary">🌙 수면은 ${activity.sleep.days}일 적으셨고, 가장 짧은 날 ${activity.sleep.shortest}시간 · 가장 긴 날 ${activity.sleep.longest}시간이었어요.</div>`
+                    : ''}
+                ${activity.steps.best
+                    ? `<div class="report-metric-summary">👟 가장 많이 걸은 날은 ${activity.steps.best.toLocaleString('ko-KR')}보였어요.</div>`
+                    : ''}
+            </div>`;
+        }
+
+        // — AI 가 본 30일 —
+        //
+        // 분석은 하루하루 열어야만 볼 수 있었다. 한 달을 모아 놓으면 하루치로는
+        // 안 보이던 것이 보인다 — 강도가 한쪽으로 쏠렸는지, 수면 등급이 어떤지.
+        const hasAiSummary = activity.exercise.analyzed > 0
+            || activity.sleep.analyzed > 0
+            || activity.diet.scoredMeals > 0;
+        if (hasAiSummary) {
+            html += `<div class="report-section" data-report-section="ai">
+                <div class="report-section-title">🤖 AI가 본 30일</div>`;
+            if (activity.exercise.analyzed > 0) {
+                const total = activity.exercise.intensity.reduce((sum, [, n]) => sum + n, 0);
+                html += `<div class="report-metric-summary">🏋️ 운동 분석 ${activity.exercise.analyzed}건
+                    ${activity.exercise.intensity.length > 0
+                        ? ` · ${activity.exercise.intensity.map(([level, n]) => `${escapeHtml(level)} ${Math.round((n / total) * 100)}%`).join(' · ')}`
+                        : ''}</div>`;
+            }
+            if (activity.sleep.analyzed > 0) {
+                html += `<div class="report-metric-summary">😴 수면 분석 ${activity.sleep.analyzed}건 ·
+                    ${activity.sleep.grades.map(([grade, n]) => `${escapeHtml(grade)} ${n}일`).join(' · ')}</div>`;
+            }
+            if (activity.diet.scoredMeals > 0) {
+                const axes = Object.entries(activity.diet.axes)
+                    .filter(([, value]) => value !== null)
+                    .map(([axis, value]) => `<div class="report-metric-summary">
+                        ${escapeHtml(REPORT_DIET_AXIS_LABELS[axis] || axis)} ${value}점
+                        <div class="report-cat-bar"><div class="report-cat-fill" style="width:${value}%; background:#4CAF50;"></div></div>
+                    </div>`).join('');
+                html += `<div class="report-metric-summary">🥗 끼니 ${activity.diet.scoredMeals}번의 영양 평균</div>${axes}`;
+            }
+            html += `</div>`;
+        }
 
         // — 일별 포인트 그래프 —
         html += `<div class="report-section" data-report-section="points">
@@ -18038,8 +18230,8 @@ window.generate30DayReport = async function () {
 };
 
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
-const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'points']);
-const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'health', 'heatmap']);
+const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);
+const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'heatmap']);
 
 function remove30DayReportPrintSheet() {
     document.getElementById(REPORT_PRINT_SHEET_ID)?.remove();
