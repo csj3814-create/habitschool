@@ -1,4 +1,7 @@
 import { WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js';
+// 조사는 회원 앱도 쓴다. 두 벌로 두면 갈라지므로 공용 모듈에 둔다.
+export { withJosa } from './korean.js';
+import { withJosa } from './korean.js';
 
 function toMillis(value) {
     if (!value) return 0;
@@ -645,49 +648,6 @@ const PRESCRIPTION_ALERT_MIN_REPEATS_ALONE = 2;
 //
 // 규칙: 받침이 없으면 가/는/로, 있으면 이/은/으로. 단 ㄹ 받침은 '로' 를 쓴다.
 // 숫자와 단위는 읽는 소리로 판단한다 — kg 는 '킬로그램', 3 은 '삼' 이라 받침이 있다.
-const JOSA_TAIL_HAS_BATCHIM = {
-    "kg": true, "mg": true, "mg/dL": false, "mmHg": false, "%": false, "kcal": false,
-    "0": false, "1": true, "2": false, "3": true, "4": false,
-    "5": false, "6": true, "7": true, "8": true, "9": false,
-};
-
-function lastSoundHasBatchim(text) {
-    const value = String(text ?? "").trim();
-    if (!value) return null;
-
-    // 단위가 붙어 있으면 그 단위의 소리로 판단한다.
-    for (const unit of ["mg/dL", "mmHg", "kcal", "kg", "mg", "%"]) {
-        if (value.endsWith(unit)) return JOSA_TAIL_HAS_BATCHIM[unit];
-    }
-
-    const last = value[value.length - 1];
-    const code = last.charCodeAt(0);
-    if (code >= 0xAC00 && code <= 0xD7A3) {
-        const jongseong = (code - 0xAC00) % 28;
-        if (jongseong === 0) return false;
-        // ㄹ 받침은 '로' 를 쓴다. '레벨로', '1일로'.
-        if (jongseong === 8) return "rieul";
-        return true;
-    }
-    if (last >= "0" && last <= "9") return JOSA_TAIL_HAS_BATCHIM[last];
-    return null;
-}
-
-/** 조사를 붙인 문자열. 판단할 수 없으면 받침 있는 쪽으로 붙인다. */
-export function withJosa(text, kind) {
-    const value = String(text ?? "");
-    const batchim = lastSoundHasBatchim(value);
-    const pairs = {
-        이가: ["가", "이", "이"],
-        은는: ["는", "은", "은"],
-        으로: ["로", "으로", "로"],
-        을를: ["를", "을", "을"],
-    };
-    const [none, has, rieul] = pairs[kind] || pairs.이가;
-    if (batchim === "rieul") return value + rieul;
-    if (batchim === false) return value + none;
-    return value + has;
-}
 const PRESCRIPTION_STREAK_MILESTONES = [365, 300, 200, 150, 100, 50, 30, 14, 7];
 
 /**

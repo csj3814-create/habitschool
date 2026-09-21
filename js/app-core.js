@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=425';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=425';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=426';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=426';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=425';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=425';
+} from './auth-login-helpers.js?v=426';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=426';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=425';
+} from './exercise-media.js?v=426';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=425';
+} from './health-connect-utils.js?v=426';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=425';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=425';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=425';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=425';
-import { sanitize, compressImage } from './data-manager.js?v=425';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=425';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=425';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=425';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=425';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=425';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=425';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=425';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=425';
+} from './habit-groups.js?v=426';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=426';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=426';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=426';
+import { sanitize, compressImage } from './data-manager.js?v=426';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=426';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=426';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=426';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=426';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=426';
+import { withJosa } from './korean.js?v=426';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=426';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=426';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=426';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +84,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=425';
+} from './guest-demo.js?v=426';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=425';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=425';
+} from './product-events.js?v=426';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=426';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +113,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=425';
+} from './diet-program.js?v=426';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +125,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=425';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=425';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=425';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=425';
+} from './meditation-guide.js?v=426';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=426';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=426';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=426';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=425';
+} from './social-challenge-readiness.js?v=426';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=425';
+} from './monthly-mvp-reward.js?v=426';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7163,7 +7164,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=425';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=426';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -11267,8 +11268,8 @@ function renderAssetHistorySection(kind, title, caption, items, pageIndex, isDef
     const start = clampedPage * ASSET_HISTORY_PAGE_SIZE;
     const pagedItems = items.slice(start, start + ASSET_HISTORY_PAGE_SIZE);
     const emptyText = isDeferred
-        ? `${title}을 확인하는 중입니다.`
-        : `아직 ${title}이 없습니다.`;
+        ? `${withJosa(title, '을를')} 확인하는 중입니다.`
+        : `아직 ${withJosa(title, '이가')} 없습니다.`;
 
     const pagerHtml = items.length > ASSET_HISTORY_PAGE_SIZE ? `
         <div class="wallet-history-pager">
@@ -17559,7 +17560,7 @@ async function archiveWeekAndReset(uid, weeklyData, history, currentStreak, week
                 id: `badge:${badgeId}`,
                 emoji: badge?.emoji || '🏅',
                 kicker: '새 배지',
-                title: `${badge?.name || '배지'}를 얻었어요`,
+                title: `${withJosa(badge?.name || '배지', '을를')} 얻었어요`,
                 subtitle: badge?.desc || ''
             };
         }));
@@ -26645,7 +26646,7 @@ window.openChallengeRewardCelebration = function (tier, completedDays = 0, total
     document.getElementById('challenge-reward-emoji').textContent = isFull ? '🎉' : '🧾';
     document.getElementById('challenge-reward-kicker').textContent = isFull ? '챌린지 완주' : '챌린지 정산';
     document.getElementById('challenge-reward-title').textContent = isFull
-        ? `${label}를 끝냈어요`
+        ? `${withJosa(label, '을를')} 끝냈어요`
         : `${label} 정산이 준비됐어요`;
     document.getElementById('challenge-reward-progress').textContent = total > 0
         ? `${completed}/${total}일 · ${Math.round((completed / total) * 100)}% 달성`
