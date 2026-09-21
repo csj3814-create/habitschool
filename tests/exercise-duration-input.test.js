@@ -255,3 +255,39 @@ describe('saving waits for what is still uploading, too', () => {
         expect(sleep).toContain('endAnalysis();');
     });
 });
+
+// 2026-09-21 제보: "영상 올리고 AI분석 중에 운동시간 입력했더니 ai분석 결과가
+// 잠깐 나온 다음에 다시 새로고침처럼 깜빡이더니 AI분석 버튼으로 돌아갔어.
+// AI분석 결과가 저장되지 않은채 새로고침 된 것 같은데?"
+//
+// 정확한 진단이었다. 일일 기록을 다시 읽어 오면 clearInputs 가 운동 블록을 통째로
+// 다시 그린다. 운동 분석 결과는 블록의 data-ai-analysis 에만 붙어 있고 아직
+// 서버에 없어서(식단·수면과 달리 저장 버튼이 확정한다) 그 순간 사라진다.
+describe('a reload does not wipe an analysis that only lives on screen', () => {
+    const rule = APP_SOURCE.split("function shouldPreserveDailyLogMediaUi(dateStr = '') {")[1].split('\n}')[0];
+
+    it('keeps the screen while an analysis or upload is running', () => {
+        expect(rule).toContain('if (_runningAiAnalyses.size > 0 || hasUploadsInFlight()) return true;');
+    });
+
+    it('keeps it when a finished analysis has not been saved yet', () => {
+        // 분석은 끝났지만 저장 버튼을 아직 안 눌렀다. 그 사이 새로고침이 나면
+        // 되돌릴 것이 서버에 없다.
+        expect(rule).toContain('if (hasUnsavedExerciseAnalysisOnScreen()) return true;');
+        const fn = APP_SOURCE.split('function hasUnsavedExerciseAnalysisOnScreen() {')[1].split('\n}')[0];
+        expect(fn).toContain("querySelectorAll('[data-ai-analysis]')");
+    });
+
+    it('still lets a different day wipe the screen', () => {
+        // 날짜를 바꿔 다른 날을 보는 것은 지워야 맞다. 그 판정이 앞에 있어야 한다.
+        const dayCheck = rule.indexOf('selectedDateStr !== targetDateStr');
+        const keepCheck = rule.indexOf('_runningAiAnalyses.size > 0');
+        expect(dayCheck).toBeGreaterThan(-1);
+        expect(dayCheck).toBeLessThan(keepCheck);
+    });
+
+    it('says so when something redraws anyway', () => {
+        // 규칙이 새면 다음 제보 때 콘솔이 어디서 그랬는지 말해 준다.
+        expect(APP_SOURCE).toContain("console.warn('[daily-log] 분석 중인데 화면을 다시 그립니다')");
+    });
+});
