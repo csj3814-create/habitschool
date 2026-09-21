@@ -203,6 +203,7 @@ const STATIC_ASSETS = [
     './js/product-events.js?v=430',
     './js/activity-days.js?v=430',
     './js/pwa-install.js?v=430',
+    './js/media-hosts.js?v=430',
     './js/security.js?v=430',
     './js/community-stats-view.js?v=430',
     './js/social-challenge-readiness.js?v=430',

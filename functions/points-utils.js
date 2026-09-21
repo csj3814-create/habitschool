@@ -33,6 +33,19 @@ const ALLOWED_MEDIA_FOLDER_SET = new Set(ALLOWED_MEDIA_FOLDERS);
  * endpoint. Returning null instead of throwing lets callers reject untrusted
  * daily-log evidence without turning malformed client input into a retry loop.
  */
+
+// 회원 미디어를 받아 오는 호스트.
+//
+// **정본은 js/media-hosts.js 다.** 여기에 같은 목록이 또 있는 이유는 공유가
+// 불가능해서다 — 배포되는 functions/ 는 상위 폴더를 가져가지 않고, 브라우저는
+// CommonJS 를 못 읽는다. 대신 tests/media-host-single-source.test.js 가 이
+// 목록과 정본, 그리고 firebase.json 의 CSP 가 같은지 확인한다. 한쪽만 고치면
+// 시험이 깨진다.
+//
+// 여기가 막히면 사진이 안 보이는 것으로 끝나지 않는다 — **포인트 지급이
+// 조용히 거부된다.** 화면에는 아무 표시도 나지 않는다.
+const MEDIA_HOSTS = ['firebasestorage.googleapis.com'];
+
 function parseFirebaseStorageDownloadUrl(value) {
     if (typeof value !== 'string' || !value.trim()) return null;
 
@@ -45,7 +58,7 @@ function parseFirebaseStorageDownloadUrl(value) {
 
     if (
         parsed.protocol !== 'https:'
-        || parsed.hostname !== 'firebasestorage.googleapis.com'
+        || !MEDIA_HOSTS.includes(parsed.hostname)
         || parsed.username
         || parsed.password
         || parsed.port

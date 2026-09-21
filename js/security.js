@@ -3,6 +3,8 @@
  * 보안 관련 유틸리티 함수 모듈
  */
 
+import { isMediaEmulatorUrl, isMediaHostUrl } from './media-hosts.js?v=430';
+
 /**
  * XSS 방지: HTML 특수 문자 이스케이프
  * @param {string} text - 이스케이프할 텍스트
@@ -22,14 +24,12 @@ export function escapeHtml(text) {
  */
 export function isValidStorageUrl(url) {
     if (!url) return false;
-    // Firebase Storage URL 패턴
-    const firebasePattern = /^https:\/\/firebasestorage\.googleapis\.com\//;
-    // Local Storage Emulator download URL 패턴
-    const emulatorPattern = /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/v0\/b\/[^/]+\/o\//;
+    // 허용 호스트는 js/media-hosts.js 가 정한다. 여기에 다시 적지 않는다 —
+    // CSP·서버 검증과 갈라지면 증상이 제각각으로 나타난다.
     // data: URL (Base64) 패턴
     const dataUrlPattern = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
-    
-    return firebasePattern.test(url) || emulatorPattern.test(url) || dataUrlPattern.test(url);
+
+    return isMediaHostUrl(url) || isMediaEmulatorUrl(url) || dataUrlPattern.test(url);
 }
 
 /**
