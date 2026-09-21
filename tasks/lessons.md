@@ -2853,3 +2853,34 @@ if (userDocFromCache) { scheduleConsentRecheck(user); return; }
 있으면 그 조건이 거짓인 갈래는 캐시 답을 그대로 믿고 있다.
 
 260·261·262·264 와 같은 줄기다. 이번에는 **회원이 원인까지 짚어 주었다.**
+
+---
+
+## 266. 배포가 성공이라고 해도 서빙되는 버전을 눈으로 본다 (2026-09-21)
+
+`firebase deploy --only hosting,functions` 가 "Deploy complete!" 를 찍었는데
+운영이 **v428 을 서빙하고 있었다.** 새로 나간 것은 functions 뿐이었다.
+hosting 만 다시 올리니 v430 이 나갔다.
+
+오늘만 세 번째다. 앞선 두 번은 원인이 달랐다.
+
+- 할당량 오류가 hosting 배포를 중간에 끊었다 (출력 끝에만 보였다)
+- CDN 이 옛 응답을 물고 있었다 (`Cache-Control: no-cache` 로 확인됨)
+
+원인은 매번 달라도 **드러나는 방식은 같다 — 성공이라고 적힌 화면과 실제로
+서빙되는 파일이 다르다.** 그리고 우리는 "배포했으니 됐다" 고 넘어간다.
+
+**규칙: 배포 뒤에는 서버가 내보내는 파일을 받아서 확인한다. 배포 로그를
+읽는 것으로 대신하지 않는다.**
+
+```bash
+curl -s -H "Cache-Control: no-cache" https://habitschool.web.app/ | grep -o "app\.js?v=[0-9]*"
+curl -s -H "Cache-Control: no-cache" https://habitschool.web.app/sw.js | grep -o "habitschool-v[0-9]*"
+```
+
+버전만으로는 모자랄 때가 있다. **이번에 바꾼 것이 실제로 그 파일 안에 있는지**
+까지 본다 — 새 함수 이름, 새 문구, 지운 문구가 0 인지.
+
+**묶어서 배포할 때 특히 위험하다.** `--only hosting,functions` 는 한쪽이
+안 나가도 마지막 줄은 "Deploy complete!" 다. 출력의 끝만 보면 어느 쪽이
+나갔는지 알 수 없다. 둘 다 확인할 것.
