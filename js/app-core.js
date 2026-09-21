@@ -17887,8 +17887,9 @@ function reportPointsOfLog(log) {
     return summed || ((ap.diet ? 10 : 0) + (ap.exercise ? 15 : 0) + (ap.mind ? 5 : 0));
 }
 
+// 하루 만점이 80P 라 그 위 구간은 만들지 않는다. 아무도 못 받는 칸을 범례에
+// 두면 "저건 뭐지" 만 남는다.
 function reportPointsTone(points) {
-    if (points > 80) return 'best';
     if (points > 50) return 'high';
     if (points > 20) return 'mid';
     if (points > 0) return 'low';
@@ -18248,9 +18249,8 @@ window.generate30DayReport = async function () {
             html += `<canvas id="report-chart-health" class="report-canvas"></canvas></div>`;
         }
 
-        // — 일별 기록 캘린더 히트맵 —
+        // — 날짜별 기록 달력 —
         const calendarWeeks = buildReportCalendar(logs);
-        const skippedDays = calendarWeeks.flat().filter((cell) => cell.inRange && !cell.recorded).length;
         html += `<div class="report-section" data-report-section="calendar">
             <div class="report-section-title">🗓️ 날짜별 기록</div>
             ${renderReportCalendar(calendarWeeks)}
@@ -18259,11 +18259,7 @@ window.generate30DayReport = async function () {
                 <span class="rc-legend-item"><span class="rc-box rc-low"></span>1~20P</span>
                 <span class="rc-legend-item"><span class="rc-box rc-mid"></span>21~50P</span>
                 <span class="rc-legend-item"><span class="rc-box rc-high"></span>51~80P</span>
-                <span class="rc-legend-item"><span class="rc-box rc-best"></span>81P+</span>
             </div>
-            ${skippedDays > 0
-                ? `<div class="report-metric-summary">이 기간에 ${skippedDays}일은 기록이 없었어요.</div>`
-                : '<div class="report-metric-summary">이 기간 하루도 빠뜨리지 않으셨어요. 🎉</div>'}
         </div>`;
 
         document.getElementById('report-body').innerHTML = html;

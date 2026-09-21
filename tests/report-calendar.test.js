@@ -76,7 +76,15 @@ describe('the day grid is an actual calendar', () => {
         expect(cal.reportPointsTone(15)).toBe('low');
         expect(cal.reportPointsTone(35)).toBe('mid');
         expect(cal.reportPointsTone(65)).toBe('high');
-        expect(cal.reportPointsTone(95)).toBe('best');
+    });
+
+    it('has no band above the daily maximum', () => {
+        // 2026-09-21: "81+는 필요 없어 80점이 만점이니까." 아무도 못 받는 칸을
+        // 범례에 두면 무슨 뜻인지 묻게만 된다. 만점도 51~80 칸에 들어간다.
+        expect(cal.reportPointsTone(80)).toBe('high');
+        expect(APP).not.toContain("return 'best'");
+        expect(APP).not.toContain('81P+');
+        expect(CSS).not.toContain('.rc-best');
     });
 
     it('writes the score into the cell, not only the colour', () => {
@@ -116,9 +124,13 @@ describe('the calendar replaces the heatmap everywhere', () => {
         expect(CSS).not.toContain('.report-heatmap');
     });
 
-    it('tells the member how many days they skipped', () => {
-        expect(APP).toContain('const skippedDays = calendarWeeks.flat().filter((cell) => cell.inRange && !cell.recorded).length;');
-        expect(APP).toContain('이 기간에 ${skippedDays}일은 기록이 없었어요.');
+    it('does not count the skipped days out loud', () => {
+        // 2026-09-21: "이 기간에 34일은 기록이 없었어요 필요 없어. 지워줘."
+        // 달력이 이미 보여 준다. 숫자로 한 번 더 말하면 셈해 주는 것이 아니라
+        // 나무라는 문장이 된다. 축하하던 반대쪽 줄도 같이 뺐다 — 한 자리의 두 갈래다.
+        expect(APP).not.toContain('skippedDays');
+        expect(APP).not.toContain('일은 기록이 없었어요');
+        expect(APP).not.toContain('하루도 빠뜨리지 않으셨어요');
     });
 
     it('does not require an optional section before it will print', () => {
@@ -129,6 +141,16 @@ describe('the calendar replaces the heatmap everywhere', () => {
 
         const required = APP.split('REPORT_PRINT_REQUIRED_SECTIONS = Object.freeze(')[1].split(');')[0];
         expect(required).toContain('!REPORT_PRINT_OPTIONAL_SECTIONS.includes(name)');
+    });
+});
+
+describe('the buttons at the bottom have room to breathe', () => {
+    it('keeps the action bar off the very edge of the screen', () => {
+        // 2026-09-21: "A4 한장에 인쇄, 닫기 아래에 공간 만들어 줘."
+        const modal = CSS.split('.report-modal {')[1].split('}')[0];
+        expect(modal).toContain('env(safe-area-inset-bottom');
+        const actions = CSS.split('.report-actions {')[1].split('}')[0];
+        expect(actions).toContain('padding: 12px 16px 20px;');
     });
 });
 
