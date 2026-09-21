@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=429';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=429';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=430';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=430';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=429';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=429';
+} from './auth-login-helpers.js?v=430';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=430';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=429';
+} from './exercise-media.js?v=430';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=429';
+} from './health-connect-utils.js?v=430';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=429';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=429';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=429';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=429';
-import { sanitize, compressImage } from './data-manager.js?v=429';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=429';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=429';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=429';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=429';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=429';
-import { withJosa } from './korean.js?v=429';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=429';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=429';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=429';
+} from './habit-groups.js?v=430';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=430';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=430';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=430';
+import { sanitize, compressImage } from './data-manager.js?v=430';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=430';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=430';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=430';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=430';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=430';
+import { withJosa } from './korean.js?v=430';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=430';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=430';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=430';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,14 +84,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=429';
+} from './guest-demo.js?v=430';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=429';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=429';
+} from './product-events.js?v=430';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=430';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -113,7 +113,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=429';
+} from './diet-program.js?v=430';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -125,19 +125,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=429';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=429';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=429';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=429';
+} from './meditation-guide.js?v=430';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=430';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=430';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=430';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=429';
+} from './social-challenge-readiness.js?v=430';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=429';
+} from './monthly-mvp-reward.js?v=430';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7164,7 +7164,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=429';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=430';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7541,14 +7541,20 @@ function addExerciseBlock(type, data = null) {
     }
     ensureExerciseBlockMediaId(div, type, data);
     list.appendChild(div);
-    // 저장된 분석은 접어 둔 채로 되살린다 — 버튼은 '분석 보기'가 된다.
+    // 저장된 분석은 접어 둔 채로 되살린다. 다만 방금까지 펼쳐 보고 있던 자리는
+    // 그대로 편다 — 저장이 화면을 다시 그린다는 사정 때문에 읽던 글이 닫히면 안 된다.
     if (hasAnalysis) {
         const savedResultBox = div.querySelector('.exercise-ai-result');
         const savedAiBtn = div.querySelector('.exercise-ai-btn');
         if (savedResultBox) {
             renderExerciseAnalysisResult(data.aiAnalysis, savedResultBox);
             savedResultBox._analysisData = data.aiAnalysis;
-            savedResultBox.style.display = 'none';
+            setAnalysisExpanded(
+                savedResultBox,
+                savedAiBtn,
+                wasAnalysisExpanded(analysisSlotKey('exercise', div.dataset.mediaId)),
+                analysisSlotKey('exercise', div.dataset.mediaId)
+            );
         }
         if (savedAiBtn) savedAiBtn.setAttribute('data-analyzed', 'true');
     }
@@ -10181,6 +10187,9 @@ async function loadDataForSelectedDate(dateStr) {
     // 있으니, 저장 없이 서버에 들어갔던 칸 목록은 여기서 비운다 — 안 비우면
     // 어제 분석한 칸의 문서를 오늘 사진 지울 때 건드린다.
     forgetAnalysisPersistedWithoutSave();
+    // 같은 날을 다시 읽는 것(저장 직후)과 다른 날로 옮기는 것은 다르다.
+    // 날짜가 바뀌면 펼쳐 둔 기억도 같이 버린다.
+    resetExpandedAnalysisSlotsFor(selectedDateStr);
 
     const thisGeneration = ++_loadDataGeneration;
 
@@ -10356,11 +10365,13 @@ async function loadDataForSelectedDate(dateStr) {
                     if (sleepResultBox && typeof renderSleepMindAnalysisResult === 'function') {
                         renderSleepMindAnalysisResult(data.sleepAndMind.sleepAnalysis, sleepResultBox);
                         sleepResultBox._analysisData = data.sleepAndMind.sleepAnalysis;
-                        sleepResultBox.style.display = 'none';
-                        if (sleepAiBtn) {
-                            sleepAiBtn.setAttribute('data-analyzed', 'true');
-                            sleepAiBtn.textContent = '🤖 분석 보기';
-                        }
+                        setAnalysisExpanded(
+                            sleepResultBox,
+                            sleepAiBtn,
+                            wasAnalysisExpanded(analysisSlotKey('sleep')),
+                            analysisSlotKey('sleep')
+                        );
+                        if (sleepAiBtn) sleepAiBtn.setAttribute('data-analyzed', 'true');
                     }
                 }
                 // H2: 공개 문서에서 숨긴(hideMind) gratitude는 소유자 전용 하위문서에서 복원한다.
@@ -25287,6 +25298,48 @@ if (lightboxModal) {
 // AI 식단 분석 + 온보딩 + 대사건강 점수
 // ==========================
 
+// ── 펼쳐 둔 분석은 펼친 채로 ────────────────────────────────────────────
+//
+// 2026-09-21 요청: "식단 운동 수면 ai분석하고 나면 다시 저장하느라 자동으로
+// 접히는데 저장했을 때엔 자동으로 펼쳐져 있게 해 줘."
+//
+// 저장하면 기록을 다시 읽어 화면을 새로 그린다. 되살리는 쪽은 저장된 분석을
+// 늘 접어 두었는데(지난 날을 열 때는 그게 맞다), 방금 분석을 읽고 있던 사람에게는
+// 읽던 글이 눈앞에서 닫히는 일이 된다.
+//
+// 그래서 "지금 펼쳐 둔 자리" 를 기억했다가 다시 그릴 때 그대로 되돌린다.
+// 접어 둔 것을 펴지도 않는다 — 접은 것도 그 사람의 선택이다.
+const _expandedAnalysisSlots = new Set();
+let _expandedAnalysisDate = '';
+
+function analysisSlotKey(kind, id = '') {
+    return id ? `${kind}:${id}` : kind;
+}
+
+function noteAnalysisExpanded(key, expanded) {
+    if (!key) return;
+    if (expanded) _expandedAnalysisSlots.add(key);
+    else _expandedAnalysisSlots.delete(key);
+}
+
+function wasAnalysisExpanded(key) {
+    return !!key && _expandedAnalysisSlots.has(key);
+}
+
+/** 화면과 버튼을 함께 맞추고, 그 상태를 기억해 둔다. */
+function setAnalysisExpanded(box, btn, expanded, key) {
+    if (box) box.style.display = expanded ? 'block' : 'none';
+    if (btn) btn.textContent = expanded ? '🤖 분석 접기' : '🤖 분석 보기';
+    noteAnalysisExpanded(key, expanded);
+}
+
+// 다른 날을 열면 처음부터 접어 둔다. 어제 펼쳐 둔 것이 오늘 화면에 이어질 이유가 없다.
+function resetExpandedAnalysisSlotsFor(dateStr = '') {
+    if (dateStr === _expandedAnalysisDate) return;
+    _expandedAnalysisDate = dateStr;
+    _expandedAnalysisSlots.clear();
+}
+
 // 식단 사진 AI 분석
 async function analyzeMealPhoto(meal, { auto = false } = {}) {
     const previewImg = document.getElementById(`preview-${meal}`);
@@ -25302,13 +25355,8 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
     // 사용자가 접어 둔 결과를 업로드가 제멋대로 펼치면 안 된다.
     if (resultContainer._analysisData || resultContainer.innerHTML.trim() !== '') {
         if (auto) return;
-        if (resultContainer.style.display === 'none') {
-            resultContainer.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
-        } else {
-            resultContainer.style.display = 'none';
-            btn.textContent = '🤖 분석 보기';
-        }
+        const opening = resultContainer.style.display === 'none';
+        setAnalysisExpanded(resultContainer, btn, opening, analysisSlotKey('diet', meal));
         return;
     }
 
@@ -25363,8 +25411,7 @@ async function analyzeMealPhoto(meal, { auto = false } = {}) {
             renderDietAnalysisResult(resultContainer, analysis);
             resultContainer._analysisData = analysis;
             renderDietProgramAnalysisTip(resultContainer);
-            resultContainer.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
+            setAnalysisExpanded(resultContainer, btn, true, analysisSlotKey('diet', meal));
 
             // 분석만 남고 사진 URL이 빠지는 경로를 막기 위해 사진 URL과 분석을 함께 저장한다.
             const user = auth.currentUser;
@@ -25493,10 +25540,13 @@ function _restoreDietAnalysis(data) {
             renderDietAnalysisResult(resultContainer, analysis);
             resultContainer._analysisData = analysis;
             renderDietProgramAnalysisTip(resultContainer);
-            resultContainer.style.display = 'none'; // 분석결과는 처음에 접기
-            if (aiBtn) {
-                aiBtn.textContent = '🤖 분석 보기';
-            }
+            // 처음에는 접어 두되, 방금까지 펼쳐 보고 있던 자리는 그대로 편다.
+            setAnalysisExpanded(
+                resultContainer,
+                aiBtn,
+                wasAnalysisExpanded(analysisSlotKey('diet', meal)),
+                analysisSlotKey('diet', meal)
+            );
         } else if (resultContainer) {
             resultContainer._analysisData = null;
             resultContainer.innerHTML = '';
@@ -26051,13 +26101,8 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
     // 이미 분석이 있으면 보기/접기. 자동 실행은 토글할 자격이 없다.
     if (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true') {
         if (auto) return;
-        if (resultBox.style.display === 'none') {
-            resultBox.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
-        } else {
-            resultBox.style.display = 'none';
-            btn.textContent = '🤖 분석 보기';
-        }
+        const opening = resultBox.style.display === 'none';
+        setAnalysisExpanded(resultBox, btn, opening, analysisSlotKey('exercise', block?.dataset?.mediaId));
         return;
     }
 
@@ -26110,7 +26155,7 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         }
 
         resultBox._analysisData = analysis;
-        btn.textContent = '🤖 분석 접기';
+        setAnalysisExpanded(resultBox, btn, true, analysisSlotKey('exercise', block?.dataset?.mediaId));
         btn.setAttribute('data-analyzed', 'true');
         // 계기판에서 시간을 읽었으면 빈 칸을 채워 준다. 사람이 적은 값은 건드리지 않는다.
         prefillExerciseDurationFromAnalysis(block, analysis);
@@ -26150,13 +26195,8 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
     // 이미 분석이 있으면 보기/접기. 자동 실행은 토글할 자격이 없다.
     if (resultBox._analysisData || btn.getAttribute('data-analyzed') === 'true') {
         if (auto) return;
-        if (resultBox.style.display === 'none') {
-            resultBox.style.display = 'block';
-            btn.textContent = '🤖 분석 접기';
-        } else {
-            resultBox.style.display = 'none';
-            btn.textContent = '🤖 분석 보기';
-        }
+        const opening = resultBox.style.display === 'none';
+        setAnalysisExpanded(resultBox, btn, opening, analysisSlotKey('exercise', block?.dataset?.mediaId));
         return;
     }
 
@@ -26205,7 +26245,7 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         }
 
         resultBox._analysisData = analysis;
-        btn.textContent = '🤖 분석 접기';
+        setAnalysisExpanded(resultBox, btn, true, analysisSlotKey('exercise', block?.dataset?.mediaId));
         btn.setAttribute('data-analyzed', 'true');
         // 저장 경로(saveRecord)가 이 속성을 읽어 strengthList[].aiAnalysis 로 남긴다.
         block.setAttribute('data-ai-analysis', JSON.stringify(analysis));
@@ -26237,13 +26277,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
     // 사용자가 접어 둔 결과를 업로드가 제멋대로 펼치면 안 된다.
     if (aiBtn && aiBtn.getAttribute('data-analyzed') === 'true') {
         if (auto) return;
-        if (resultBox.style.display === 'none') {
-            resultBox.style.display = 'block';
-            aiBtn.textContent = '🤖 분석 접기';
-        } else {
-            resultBox.style.display = 'none';
-            aiBtn.textContent = '🤖 분석 보기';
-        }
+        const opening = resultBox.style.display === 'none';
+        setAnalysisExpanded(resultBox, aiBtn, opening, analysisSlotKey('sleep'));
         return;
     }
 
@@ -26289,10 +26324,8 @@ window.analyzeSleepData = async function({ auto = false } = {}) {
             }
             renderSleepMindAnalysisResult(analysis, resultBox);
             resultBox._analysisData = analysis;
-            if (aiBtn) {
-                aiBtn.textContent = '🤖 분석 접기';
-                aiBtn.setAttribute('data-analyzed', 'true');
-            }
+            setAnalysisExpanded(resultBox, aiBtn, true, analysisSlotKey('sleep'));
+            if (aiBtn) aiBtn.setAttribute('data-analyzed', 'true');
             // Firestore에 수면 분석 결과 저장
             const user = auth.currentUser;
             if (user) {
