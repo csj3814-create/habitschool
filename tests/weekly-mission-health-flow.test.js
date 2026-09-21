@@ -60,7 +60,7 @@ describe('weekly mission health-practice flow', () => {
         expect(appSource).toContain("btn.classList.toggle('active', btn.dataset.diff === 'easy');");
     });
 
-    it('routes onboarding to mission setup and mission save to the chosen record tab', () => {
+    it('routes onboarding to mission setup and leaves mission save where it is', () => {
         const appSource = readAppSource();
         const onboardingSource = sliceBetween(
             appSource,
@@ -76,9 +76,16 @@ describe('weekly mission health-practice flow', () => {
         expect(onboardingSource).toContain('openWeeklyMissionArea(false);');
         expect(onboardingSource).not.toContain("trackProductEvent('first_record_start'");
         expect(onboardingSource).toContain('if (pendingGuestIntent) {');
-        expect(saveMissionSource).toContain('missionTypeToRecordTab(missions[0]?.type)');
-        expect(saveMissionSource).toContain('openWeeklyMissionRecord(firstMissionTab, { trackStart: true });');
+        // 2026-09-21 요청: "이번주 시작 버튼 누르면 식단으로 탭 이동되는데 그러지
+        // 말고 그대로 나의 주간 미션 보이게 해 줘." 목록의 첫 칸이 늘 식단이라
+        // 무엇을 고르든 식단으로 떨어졌고, 방금 정한 미션이 화면에서 사라졌다.
+        expect(saveMissionSource).not.toContain('openWeeklyMissionRecord(');
+        expect(saveMissionSource).not.toContain('openTab(');
+        // 기록하러 가는 길은 카드에 남아 있고, 그쪽이 다음 미션의 탭으로 간다.
         expect(appSource).toContain('>오늘 실천 기록하기</button>');
+        expect(appSource).toContain("openWeeklyMissionRecord('${nextMissionRecordTab}', { trackStart: true })");
+        // 가지도 않은 걸음을 세지 않는다 — 시작 지표는 실제로 갈 때만 남는다.
+        expect(saveMissionSource).not.toContain('trackStart');
     });
 
     it('keeps the weekly mission visible in first and repeat lifecycles', () => {
