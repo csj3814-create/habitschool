@@ -84,8 +84,13 @@ describe('the duration field is asked for, saved, and brought back', () => {
         const fn = app.split('function normalizeExerciseItem(')[1].split('\n}\n')[0];
         expect(fn.split('durationMinutes: normalizedDuration').length - 1).toBe(2);
         expect(fn).toContain('MAX_EXERCISE_DURATION_MINUTES');
-        // 저장 시 두 블록 모두에서 읽어 간다.
-        expect(app.split('durationMinutes: readExerciseDurationMinutes(block)').length - 1).toBe(2);
+        // 저장 시 두 블록 모두에서 읽어 간다. 개수를 세지 않는다 — 다른 자리가
+        // 같은 값을 읽기 시작하면 깨진다(lessons 259). 저장 경로 안에서 본다.
+        const save = app.split("document.getElementById('saveDataBtn').addEventListener('click'")[1];
+        for (const type of ['cardio', 'strength']) {
+            const build = save.split(`normalizeExerciseItem('${type}', {`)[1].split('}, index);')[0];
+            expect(build, type).toContain('durationMinutes: readExerciseDurationMinutes(block)');
+        }
     });
 
     it('comes back filled when the record is reopened', () => {

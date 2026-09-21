@@ -8,14 +8,14 @@
 import {
     increment, collection, doc, documentId, getDoc, getDocFromServer, getDocs, getDocsFromServer, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter, serverTimestamp, deleteField,
-    arrayRemove, arrayUnion
+    arrayRemove, arrayUnion, runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js';
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=423';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=423';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=424';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=424';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=423';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=423';
+} from './auth-login-helpers.js?v=424';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=424';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=423';
+} from './exercise-media.js?v=424';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=423';
+} from './health-connect-utils.js?v=424';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,19 +61,19 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=423';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=423';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=423';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=423';
-import { sanitize, compressImage } from './data-manager.js?v=423';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=423';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=423';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=423';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=423';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=423';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=423';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=423';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=423';
+} from './habit-groups.js?v=424';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=424';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=424';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=424';
+import { sanitize, compressImage } from './data-manager.js?v=424';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=424';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=424';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=424';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=424';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=424';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=424';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=424';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=424';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -83,14 +83,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=423';
+} from './guest-demo.js?v=424';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=423';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=423';
+} from './product-events.js?v=424';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=424';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -112,7 +112,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=423';
+} from './diet-program.js?v=424';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -124,19 +124,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=423';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=423';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=423';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=423';
+} from './meditation-guide.js?v=424';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=424';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=424';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=424';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=423';
+} from './social-challenge-readiness.js?v=424';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=423';
+} from './monthly-mvp-reward.js?v=424';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7068,7 +7068,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=423';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=424';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -7483,6 +7483,9 @@ window.removeExerciseBlock = function(block) {
     const hasPendingMedia = !!getSelectedMediaFile(input);
     if (mediaId && (hasPersistedMedia || hasPendingMedia)) {
         _removedExerciseMediaIds[type].add(mediaId);
+        // 서버에 이미 들어간 분석이면 거기서도 지운다. 안 지우면 점수와
+        // 갤러리에 계속 남는다(2026-09-14 식단에서 같은 것을 고쳤다).
+        discardPersistedExerciseAnalysis(type, mediaId);
     }
     if (input?.id) {
         _pendingUploads.delete(input.id);
@@ -8703,7 +8706,9 @@ window.removeStaticImage = function (e, inputId, previewId, btnId, txtId) {
             exerciseBlock.setAttribute('data-user-removed', 'true');
             const mediaId = String(exerciseBlock.dataset.mediaId || '').trim();
             if (mediaId) {
-                _removedExerciseMediaIds[getExerciseBlockType(exerciseBlock)].add(mediaId);
+                const exerciseType = getExerciseBlockType(exerciseBlock);
+                _removedExerciseMediaIds[exerciseType].add(mediaId);
+                discardPersistedExerciseAnalysis(exerciseType, mediaId);
             }
             exerciseBlock.removeAttribute('data-ai-analysis');
             exerciseBlock.removeAttribute('data-url');
@@ -9742,6 +9747,8 @@ function noteAnalysisPersistedWithoutSave(slot, docId) {
 // 저장이 서버 ACK 를 받았거나 기록을 다시 읽어 왔으면 서버가 진실이다.
 function forgetAnalysisPersistedWithoutSave() {
     _analysisPersistedWithoutSave.clear();
+    // 운동 쪽도 같은 순간에 서버가 진실이 된다.
+    _persistedExerciseAnalyses.clear();
 }
 
 // 사진을 지우면 그 사진 때문에 서버에 들어갔던 것도 같이 지운다. 안 지우면 분석이
@@ -9841,6 +9848,104 @@ function resolveDietPreviewThumbUrl(meal = '', imageUrl = '') {
     }
     const savedThumbUrl = previewImg?.getAttribute('data-saved-thumb-url');
     return hasMediaUrl(savedThumbUrl) ? savedThumbUrl : null;
+}
+
+/**
+ * 운동 분석을 저장 버튼 없이 그 자리에서 서버에 넣는다.
+ *
+ * 2026-09-21 지시: "근본적으로 해결해줘."
+ *
+ * 사흘 동안 같은 자리에서 세 번 걸렸다(tasks/lessons.md 262). 원인은 하나 —
+ * 운동 분석 결과가 화면(data-ai-analysis)에만 있고 서버에 없다. 식단·수면은
+ * persistAnalyzedDietPhotoAndResult 로 그 자리에서 들어가는데 운동만 저장
+ * 버튼을 기다렸고, 그래서 화면을 다시 그리는 모든 경로가 지우개였다.
+ *
+ * **배열이라 읽고-고치고-쓰기가 필요하다.** Firestore 는 merge 로 배열의 한
+ * 항목만 고칠 수 없다. 두 분석이 동시에 끝나면 나중 쓰기가 앞의 것을 지울 수
+ * 있으므로 트랜잭션으로 묶는다.
+ *
+ * 합치는 규칙은 저장 경로와 같은 것을 쓴다(mergeExerciseItems). mediaId 로
+ * 짝을 맞추고, 지운 미디어는 걸러 낸다 — 규칙을 두 벌로 만들면 갈라진다.
+ */
+const _persistedExerciseAnalyses = new Map(); // `${type}:${mediaId}` -> docId
+
+function getExerciseListKey(type) {
+    return type === 'cardio' ? 'cardioList' : 'strengthList';
+}
+
+async function writeExerciseListSnapshot({ user, docId, dateStr, type, incomingItem = null }) {
+    const listKey = getExerciseListKey(type);
+    await runTransaction(db, async (tx) => {
+        const ref = doc(db, 'daily_logs', docId);
+        const snap = await tx.get(ref);
+        const data = snap.exists() ? (snap.data() || {}) : {};
+        const serverList = (data.exercise || {})[listKey] || [];
+        const merged = mergeExerciseItems(type, serverList, incomingItem ? [incomingItem] : []);
+        // 규칙이 userId·date 를 요구한다. 그날 첫 동작이 분석이면 문서가 아직
+        // 없고, 둘을 빼면 생성이 거부돼 분석이 통째로 날아간다.
+        tx.set(ref, {
+            userId: user.uid,
+            date: dateStr,
+            exercise: { [listKey]: merged },
+            timestamp: serverTimestamp()
+        }, { merge: true });
+    });
+}
+
+async function persistExerciseAnalysisNow(block, analysis) {
+    const user = auth.currentUser;
+    if (!user?.uid || !block || !analysis) return;
+
+    const type = getExerciseBlockType(block);
+    const mediaId = String(block.dataset.mediaId || '').trim();
+    const mediaUrl = String(block.getAttribute('data-url') || '').trim();
+    // 올라간 미디어가 있어야 서버에 남길 것이 있다. 아직 업로드 중이면 저장
+    // 버튼이 맡는다 — 없는 주소를 적어 두면 빈 항목이 생긴다.
+    if (!mediaId || !isPersistedStorageUrl(mediaUrl)) return;
+
+    const dateStr = String(getSelectedRecordDateStr() || '').trim();
+    if (!dateStr) return;
+    const docId = `${user.uid}_${dateStr}`;
+    const thumbUrl = String(block.getAttribute('data-thumb-url') || '').trim();
+
+    const incomingItem = type === 'cardio'
+        ? { mediaId, imageUrl: mediaUrl, imageThumbUrl: thumbUrl || null, aiAnalysis: analysis, durationMinutes: readExerciseDurationMinutes(block) }
+        : { mediaId, videoUrl: mediaUrl, videoThumbUrl: thumbUrl || null, aiAnalysis: analysis, durationMinutes: readExerciseDurationMinutes(block) };
+
+    try {
+        await withRejectingTimeout(
+            writeExerciseListSnapshot({ user, docId, dateStr, type, incomingItem }),
+            BACKGROUND_MEDIA_PATCH_TIMEOUT_MS,
+            'exercise_analysis_patch_timeout'
+        );
+        _persistedExerciseAnalyses.set(`${type}:${mediaId}`, docId);
+    } catch (error) {
+        // 못 넣었다고 분석을 버리지는 않는다. 화면에 남아 있고, 저장 버튼이
+        // 여전히 확정한다. 다만 조용히 넘기지는 않는다.
+        console.warn('[운동 분석] 즉시 저장 실패:', error?.message || error);
+    }
+}
+
+/**
+ * 지운 운동 미디어의 분석을 서버에서도 지운다.
+ *
+ * 즉시 저장을 넣으면서 같이 와야 하는 짝이다. 2026-09-14 에 식단에서 고쳤던
+ * 버그("사진을 지워도 분석이 기록에 남아 점수에 반영") 를 운동에 새로 만들지
+ * 않으려면, 지우는 쪽도 그 자리에서 서버를 고쳐야 한다.
+ */
+function discardPersistedExerciseAnalysis(type, mediaId) {
+    const key = `${type}:${String(mediaId || '').trim()}`;
+    const docId = _persistedExerciseAnalyses.get(key);
+    if (!docId) return;
+    _persistedExerciseAnalyses.delete(key);
+
+    const user = auth.currentUser;
+    if (!user?.uid) return;
+    const dateStr = String(docId).split('_').slice(1).join('_');
+    // _removedExerciseMediaIds 에 이미 들어 있으므로 mergeExerciseItems 가
+    // 걸러 낸다. 새 항목 없이 다시 쓰면 그 항목만 빠진다.
+    writeExerciseListSnapshot({ user, docId, dateStr, type })
+        .catch((error) => console.warn('[운동 분석] 지운 항목 정리 실패:', error?.message || error));
 }
 
 async function persistAnalyzedDietPhotoAndResult({ user, docId, dateStr, meal, imageUrl, thumbUrl, analysis }) {
@@ -25859,6 +25964,9 @@ window.analyzeExercisePhoto = async function (target, { auto = false } = {}) {
         prefillExerciseDurationFromAnalysis(block, analysis);
         // 저장 경로(saveRecord)가 이 속성을 읽어 기록에 남긴다.
         block.setAttribute('data-ai-analysis', JSON.stringify(analysis));
+        // 화면에만 두지 않는다. 화면을 다시 그리는 경로는 많고, 그때마다
+        // 사라졌다(tasks/lessons.md 262).
+        persistExerciseAnalysisNow(block, analysis).catch(onRefreshFailure('운동 분석 저장'));
         if (!auto) showToast('✅ AI 운동 분석 완료!');
     } catch (e) {
         console.error('운동 분석 오류:', e);
@@ -25949,6 +26057,9 @@ window.analyzeExerciseVideo = async function (target, { auto = false } = {}) {
         btn.setAttribute('data-analyzed', 'true');
         // 저장 경로(saveRecord)가 이 속성을 읽어 strengthList[].aiAnalysis 로 남긴다.
         block.setAttribute('data-ai-analysis', JSON.stringify(analysis));
+        // 화면에만 두지 않는다. 화면을 다시 그리는 경로는 많고, 그때마다
+        // 사라졌다(tasks/lessons.md 262).
+        persistExerciseAnalysisNow(block, analysis).catch(onRefreshFailure('운동 분석 저장'));
         if (!auto) showToast('✅ AI 운동 영상 분석 완료!');
     } catch (e) {
         console.error('운동 영상 분석 오류:', e);
