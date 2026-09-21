@@ -14,8 +14,8 @@ import { httpsCallable } from 'https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL, getMetadata } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js';
 
 // 프로젝트 모듈 임포트
-import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=426';
-import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=426';
+import { app, auth, db, storage, functions, APP_ENV, APP_ORIGIN, APP_OG_IMAGE_URL, MILESTONES, MISSIONS, MISSION_BADGES, MAX_IMG_SIZE, MAX_VID_SIZE, MAX_VID_SIZE_WITH_COMPRESSION, getWeekId, noteFirestoreConnectivityFailure, isFirestoreConnectivityIssue, forceFirestoreReconnect } from './firebase-config.js?v=427';
+import { applyAppModeChrome, buildAppModeUrl, buildLocalizedUrl, getAllowedTabsForMode, getAppModeFromPath, getDefaultTabForMode, getRouteContext, isSimpleMode, normalizeTabForRoute } from './app-mode.js?v=427';
 import {
     hasChosenPrimaryHabit,
     hasStartedRecording,
@@ -23,8 +23,8 @@ import {
     parsePendingSignupOnboardingState,
     shouldAutoGrantWelcomeBonus,
     shouldShowSignupOnboarding
-} from './auth-login-helpers.js?v=426';
-import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=426';
+} from './auth-login-helpers.js?v=427';
+import { formatChallengeQualificationLabel, getActiveChainKey, getActiveOnchainLabel, getChallengeCompletedDays, getChallengeDateRange, normalizeChallengeQualificationPolicy, reconcileActiveChallengesWithDailyLogs } from './blockchain-config.js?v=427';
 import {
     buildStrengthExerciseSeed,
     dataUrlToBlob,
@@ -35,7 +35,7 @@ import {
     resolveStrengthLocalThumbSeed,
     resolveStrengthVideoThumbUrl,
     shouldDeferStrengthThumbUntilUpload
-} from './exercise-media.js?v=426';
+} from './exercise-media.js?v=427';
 import {
     buildHealthConnectStepData,
     buildPersistableStepData,
@@ -44,7 +44,7 @@ import {
     HEALTH_CONNECT_SOURCE,
     normalizeHealthConnectSyncEpoch,
     restoreHealthConnectImportState
-} from './health-connect-utils.js?v=426';
+} from './health-connect-utils.js?v=427';
 import {
     DEFAULT_HABIT_GROUPS,
     EXERCISE_GROUP_ENTRY_FEE_POINTS,
@@ -61,20 +61,20 @@ import {
     getRecommendedHabitGroups,
     summarizeHabitGroupProgress,
     summarizeHabitGroups
-} from './habit-groups.js?v=426';
-import { reconcileMilestoneState } from './milestone-helpers.js?v=426';
-import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=426';
-import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=426';
-import { sanitize, compressImage } from './data-manager.js?v=426';
-import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=426';
-import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=426';
-import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=426';
-import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=426';
-import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=426';
-import { withJosa } from './korean.js?v=426';
-import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=426';
-import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=426';
-import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=426';
+} from './habit-groups.js?v=427';
+import { reconcileMilestoneState } from './milestone-helpers.js?v=427';
+import { getDatesInfo, showToast, hideToast, getKstDateString, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=427';
+import { applyDomTranslations, getLocale, installLocaleDomObserver, isEnglishLocale, t, translateText } from './i18n.js?v=427';
+import { sanitize, compressImage } from './data-manager.js?v=427';
+import { createSequentialTaskQueue, getResumableUploadTimeouts, resolveUploadNoticeAction } from './upload-performance.js?v=427';
+import { MAX_VIDEO_DURATION_MS, canCompressVideoInBrowser, compressExerciseVideo, probeVideoFile } from './video-compress.js?v=427';
+import { installBugReportCollectors, readAssetVersion, submitBugReport } from './bug-report.js?v=427';
+import { isRenderableVideoFramePixels } from './video-thumbnail-quality.js?v=427';
+import { escapeHtml, isValidStorageUrl, isPersistedStorageUrl, sanitizeText, isValidFileType, checkRateLimit } from './security.js?v=427';
+import { withJosa } from './korean.js?v=427';
+import { buildStreakHighlightHtml, buildAttendanceChipsHtml, buildCommunityEmptyStateHtml } from './community-stats-view.js?v=427';
+import { toDateSafe, getFriendshipOtherUid, isFriendshipExpired, getEffectiveFriendshipStatus, getFriendshipName } from './friendship-utils.js?v=427';
+import { requestDietAnalysis, renderDietAnalysisResult, renderDietDaySummary, renderExerciseAnalysisResult, requestExerciseAnalysis, requestExerciseVideoAnalysis, requestSleepMindAnalysis, renderSleepMindAnalysisResult, requestBloodTestAnalysis, renderBloodTestResult, requestStepScreenshotAnalysis, requestSharedTargetClassification } from './diet-analysis.js?v=427';
 import {
     APP_EXPERIENCE_STATES,
     DEMO_TABS,
@@ -84,14 +84,14 @@ import {
     isDemoTab,
     loadGuestDemoSession,
     normalizeDemoTab
-} from './guest-demo.js?v=426';
+} from './guest-demo.js?v=427';
 import {
     getKstAccountDay,
     getKstDateKey,
     resolveActivationMilestone,
     trackProductEvent
-} from './product-events.js?v=426';
-import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=426';
+} from './product-events.js?v=427';
+import { addCalendarDays, calculateActivityStreak, countActiveDays } from './activity-days.js?v=427';
 import {
     DIET_PROGRAM_FASTING_PRESET,
     DIET_PROGRAM_METHOD_IDS,
@@ -113,7 +113,7 @@ import {
     normalizeDietProgramEnvelope,
     resolveEatingWindow,
     normalizeDietProgramPreferences
-} from './diet-program.js?v=426';
+} from './diet-program.js?v=427';
 import {
     DEFAULT_MEDITATION_METHOD_ID,
     MEDITATION_COMMON_NOTE,
@@ -125,19 +125,19 @@ import {
     getMeditationPhaseUiState,
     listMeditationMethods,
     normalizeMeditationLog
-} from './meditation-guide.js?v=426';
-import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=426';
-import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=426';
-import { loadRewardMarketSnapshot } from './reward-market.js?v=426';
+} from './meditation-guide.js?v=427';
+import { calculateMetabolicScore, renderMetabolicScoreCard } from './metabolic-score.js?v=427';
+import { calculateLE8Score, renderLE8ScoreCard, resolveAnalysisSleepHours, summarizeWeeklyActivity, WEEKLY_ACTIVITY_TARGET_MINUTES } from './le8-score.js?v=427';
+import { loadRewardMarketSnapshot } from './reward-market.js?v=427';
 import {
     SOCIAL_CHALLENGE_ACTIVITY_LOOKBACK_DAYS,
     buildSocialChallengeLookbackDateStrings,
     summarizeSocialChallengeReadinessLogs
-} from './social-challenge-readiness.js?v=426';
+} from './social-challenge-readiness.js?v=427';
 import {
     getPreviousMonthIdFromKstDateString,
     shouldAttemptMonthlyMvpRewardFromKstDateString
-} from './monthly-mvp-reward.js?v=426';
+} from './monthly-mvp-reward.js?v=427';
 // 전역 노출 함수 선언 (Hoisting 활용)
 window.loadDataForSelectedDate = loadDataForSelectedDate;
 window.renderDashboard = renderDashboard;
@@ -7164,7 +7164,7 @@ async function changeDisplayName() {
 
 // -------------------------------------------------------------------------
 // blockchain-manager는 동적으로 로드 (실패해도 앱 작동)
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=426';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=427';
 const ENABLE_HEALTH_CONNECT_STEP_IMPORT = true;
 let updateChallengeProgress = async () => { };
 let getConversionRate = () => 100;
@@ -26541,20 +26541,68 @@ async function analyzeStepScreenshot() {
 // 아니라 "확인했어요"이고, 도달한 뒤 처음 화면을 볼 때 한 번만 뜬다. 며칠 지나
 // 알려주면 축하가 아니라 알림이 된다.
 //
-// 본 사실은 이 기기에만 남긴다. 서버에 쓰면 users 문서에 쓰기가 하나 더 늘고,
-// 축하를 다른 기기에서 한 번 더 보는 것은 그만한 값이 아니다.
+// 본 사실은 계정에 남긴다.
+//
+// 2026-09-21 제보: "폰에서 확인했던 배지 축하가 새 컴퓨터로 로그인하니까
+// 처음부터 다시 다 뜨네?" 예전 주석은 "서버에 쓰면 쓰기가 하나 더 늘고, 축하를
+// 다른 기기에서 한 번 더 보는 것은 그만한 값이 아니다" 라고 적어 두었다.
+// 기기가 하나일 때의 셈이었다. 기기를 바꾸면 한 번 더가 아니라 **전부 다시** 다.
+// 배지는 몇 달에 걸쳐 쌓이므로 새 기기의 첫 화면이 지난 축하로 뒤덮인다.
+//
+// 기기 기록(localStorage)은 그대로 둔다. 계정 기록이 오기를 기다리는 동안과
+// 연결이 끊긴 동안 같은 축하가 되풀이되지 않게 막는 것은 여전히 이쪽 몫이다.
 const CELEBRATED_ACHIEVEMENTS_KEY_PREFIX = 'hs_celebrated_';
+// 계정 기록이 오기를 이만큼 기다린다. 넘으면 이 기기 기록만으로 간다 —
+// 축하를 영영 삼키는 것보다 한 번 더 보는 쪽이 낫다.
+const CELEBRATED_SERVER_WAIT_MS = 5000;
 let _achievementQueue = [];
+// null 이면 아직 계정 기록을 모른다는 뜻이다. 빈 Set 과 구별해야 한다 —
+// "본 적 없다" 와 "물어보지 않았다" 는 다르다.
+let _celebratedServerIds = null;
+let _celebratedServerUid = '';
+let _celebratedPending = [];
+let _celebratedWaitTimer = 0;
 
 function getCelebratedAchievementIds(uid = '') {
     if (!uid) return new Set();
+    // 계정 기록이 먼저다. 기기 기록은 그 위에 얹는다 — 서버에 아직 닿지 못한
+    // 확인이 이쪽에만 남아 있을 수 있다.
+    const seen = new Set(_celebratedServerUid === uid && _celebratedServerIds ? _celebratedServerIds : []);
     try {
         const raw = localStorage.getItem(`${CELEBRATED_ACHIEVEMENTS_KEY_PREFIX}${uid}`);
         const parsed = raw ? JSON.parse(raw) : [];
-        return new Set(Array.isArray(parsed) ? parsed : []);
-    } catch (_) {
-        return new Set();
+        if (Array.isArray(parsed)) parsed.forEach((id) => seen.add(id));
+    } catch (_) { }
+    return seen;
+}
+
+/**
+ * 로그인할 때 계정에 적힌 "이미 확인한 축하" 를 알려 준다.
+ *
+ * 회원 문서는 auth.js 가 어차피 읽는다. 그 답을 넘겨받으므로 조회가 늘지 않는다.
+ */
+window.primeCelebratedAchievements = function (uid = '', ids = []) {
+    if (!uid) return;
+    _celebratedServerUid = uid;
+    _celebratedServerIds = new Set((Array.isArray(ids) ? ids : []).filter(Boolean));
+    // 계정이 아는 것을 이 기기에도 적어 둔다. 다음 실행은 기다릴 필요가 없다.
+    try {
+        localStorage.setItem(
+            `${CELEBRATED_ACHIEVEMENTS_KEY_PREFIX}${uid}`,
+            JSON.stringify([...getCelebratedAchievementIds(uid)].slice(-200))
+        );
+    } catch (_) { }
+    flushPendingAchievementCelebrations();
+};
+
+function flushPendingAchievementCelebrations() {
+    if (_celebratedWaitTimer) {
+        clearTimeout(_celebratedWaitTimer);
+        _celebratedWaitTimer = 0;
     }
+    const pending = _celebratedPending;
+    _celebratedPending = [];
+    if (pending.length > 0) window.celebrateAchievementsOnce(pending);
 }
 
 function markAchievementCelebrated(uid = '', achievementId = '') {
@@ -26568,6 +26616,16 @@ function markAchievementCelebrated(uid = '', achievementId = '') {
             JSON.stringify([...seen].slice(-200))
         );
     } catch (_) { }
+    if (_celebratedServerUid === uid && _celebratedServerIds) _celebratedServerIds.add(achievementId);
+    // 계정에도 남긴다. arrayUnion 이라 두 기기가 같은 순간에 써도 서로의 항목을
+    // 지우지 않는다. 배지 종류가 유한해서 이 배열은 저절로 짧게 유지된다.
+    setDoc(doc(db, 'users', uid), {
+        settings: { celebratedAchievements: arrayUnion(achievementId) }
+    }, { merge: true }).catch((error) => {
+        // 삼키면 안 된다. 여기가 막히면 축하가 기기를 옮길 때마다 되풀이되는데,
+        // 화면만 봐서는 아무 일도 없는 것처럼 보인다.
+        console.warn('[축하] 확인 기록 저장 실패:', error?.code || '', error?.message || error);
+    });
 }
 
 function renderAchievementCelebration(item) {
@@ -26600,8 +26658,36 @@ window.celebrateAchievementsOnce = function (items = []) {
     const modal = document.getElementById('achievement-modal');
     if (!uid || !modal || !Array.isArray(items) || items.length === 0) return;
 
+    // 계정 기록을 아직 못 들었으면 띄우지 않고 쥐고 있는다. 여기서 성급히 띄우면
+    // 다른 기기에서 이미 확인한 축하가 새 기기에서 다시 뜬다 — 고치려는 그 일이다.
+    if (_celebratedServerUid !== uid || !_celebratedServerIds) {
+        items.forEach((item) => {
+            if (item?.id && !_celebratedPending.some((waiting) => waiting.id === item.id)) {
+                _celebratedPending.push(item);
+            }
+        });
+        if (!_celebratedWaitTimer) {
+            _celebratedWaitTimer = setTimeout(() => {
+                _celebratedWaitTimer = 0;
+                // 끝내 답이 없다. 이 기기 기록만으로 간다.
+                console.warn('[축하] 계정 기록을 못 받아 이 기기 기록으로 판단한다');
+                _celebratedServerUid = uid;
+                _celebratedServerIds = new Set();
+                flushPendingAchievementCelebrations();
+            }, CELEBRATED_SERVER_WAIT_MS);
+        }
+        return;
+    }
+
     const seen = getCelebratedAchievementIds(uid);
-    const fresh = items.filter((item) => item?.id && !seen.has(item.id));
+    // 같은 축하가 한 묶음에 두 번 들어와도 한 번만 띄운다. 화면을 다시 그릴 때마다
+    // 같은 항목을 보내는 자리가 있어서(소모임 카드) 쥐고 있는 동안 겹칠 수 있다.
+    const picked = new Set();
+    const fresh = items.filter((item) => {
+        if (!item?.id || seen.has(item.id) || picked.has(item.id)) return false;
+        picked.add(item.id);
+        return true;
+    });
     if (fresh.length === 0) return;
 
     // 띄우기 전에 표시한다. 도중에 닫히거나 새로고침돼도 같은 축하가 되풀이되지 않는다.

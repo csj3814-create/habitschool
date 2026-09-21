@@ -41,7 +41,7 @@ function createSubmitHarness({ writeBehaviour }) {
         'reportMissingReconsent', 'auth', 'document', 'buildConsentRecordFromSelection',
         'collectReconsentSelection', 'setDoc', 'doc', 'db', 'withAsyncTimeout',
         'CONSENT_SAVE_TIMEOUT_MS', 'showToast', 'closeReconsentModal', 'window',
-        'console', 'setTimeout', '_reconsentUser',
+        'console', 'setTimeout', '_reconsentUser', '_reconsentPriorConsents',
         `return (async function submitReconsent() {${body}});`
     )(
         () => false,
@@ -59,7 +59,8 @@ function createSubmitHarness({ writeBehaviour }) {
         { applySensitiveConsentGate: () => {}, checkOnboarding: () => {} },
         { error: () => {} },
         (fn) => fn(),
-        null
+        null,
+        {}
     );
 
     return { submit, calls, submitButton, setDoc };

@@ -38,9 +38,8 @@ describe('an existing member is asked again when the documents change', () => {
 describe('the record it writes matches the one signup writes', () => {
     it('goes through the shared builder rather than a second copy', () => {
         // 동의 기록 모양이 두 벌이 되면 언젠가 갈라진다.
-        expect(AUTH).toContain('function buildConsentRecordFromSelection(selection = {})');
-        expect(AUTH).toContain('buildConsentRecordFromSelection(collectReconsentSelection())');
-        expect(AUTH).toContain('buildConsentRecordFromSelection(collectReconsentSelection())');
+        expect(AUTH).toContain('function buildConsentRecordFromSelection(selection = {}');
+        expect(AUTH).toContain('buildConsentRecordFromSelection(collectReconsentSelection()');
     });
 
     it('maps the modal ids onto the same canonical keys', () => {

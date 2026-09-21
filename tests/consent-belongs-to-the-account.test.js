@@ -52,7 +52,7 @@ describe('consent belongs to the account, not the browser', () => {
     it('writes the record from the consent screen itself', () => {
         const submit = AUTH.split('window.submitReconsent = async function submitReconsent() {')[1].split('\n};')[0];
         expect(submit).toContain("setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true })");
-        expect(submit).toContain('buildConsentRecordFromSelection(collectReconsentSelection())');
+        expect(submit).toContain('buildConsentRecordFromSelection(collectReconsentSelection()');
     });
 
     it('lets someone leave without agreeing, and does not delete their account', () => {

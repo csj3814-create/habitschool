@@ -61,7 +61,7 @@ describe('signup consent', () => {
 
     it('records what was agreed to, when, and against which version', () => {
         expect(auth).toContain('const CONSENT_DOC_VERSION');
-        expect(auth).toContain('function buildConsentRecordFromSelection(selection = {})');
+        expect(auth).toContain('function buildConsentRecordFromSelection(selection = {}');
         expect(auth).toContain("setDoc(doc(db, 'users', user.uid), { consents: record }, { merge: true })");
         // 동의 안 한 항목에는 시각을 남기지 않는다.
         expect(auth).toContain('at: agreed ? at : null');

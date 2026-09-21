@@ -100,12 +100,12 @@ describe('the age rule is one the code can keep', () => {
             // 자세한 내용은 tests/consent-belongs-to-the-account.test.js 참고.
             expect(source, name).toContain('<input type="checkbox" id="reconsent-age" data-consent-required="true">');
         }
-        expect(authSource).toContain("age14: entry(selection['consent-age'] === true)");
+        expect(authSource).toContain("age14: entry(selection['consent-age'] === true");
     });
 
     it('is recorded with the rest of the consents', () => {
         const record = authSource
-            .split('function buildConsentRecordFromSelection(selection = {}) {')[1]
+            .split('function buildConsentRecordFromSelection(selection = {}')[1]
             .split('\n}')[0];
         expect(record).toContain('terms:');
         expect(record).toContain('privacy:');
@@ -131,7 +131,7 @@ describe('the age rule is one the code can keep', () => {
 
 describe('sensitive health data is handled as a separate consent', () => {
     it('the code takes it separately', () => {
-        expect(readRepoFile('js/auth.js')).toContain("sensitive: entry(selection['consent-sensitive'] === true)");
+        expect(readRepoFile('js/auth.js')).toContain("sensitive: entry(selection['consent-sensitive'] === true");
     });
 
     it('and the policy says so, naming the article it comes from', () => {

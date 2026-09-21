@@ -1,12 +1,12 @@
 // 인증 관리 모듈
-import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=426';
+import { auth, db, functions, FCM_PUBLIC_VAPID_KEY, APP_ORIGIN, IS_LOCAL_ENV, noteFirestoreConnectivityFailure } from './firebase-config.js?v=427';
 import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { doc, getDoc, getDocFromServer, setDoc, deleteDoc, deleteField, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { httpsCallable } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-functions.js";
-import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=426';
-import { getDatesInfo } from './ui-helpers.js?v=426';
-import { escapeHtml } from './security.js?v=426';
-import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=426';
+import { showToast, onRefreshFailure, withAsyncTimeout } from './ui-helpers.js?v=427';
+import { getDatesInfo } from './ui-helpers.js?v=427';
+import { escapeHtml } from './security.js?v=427';
+import { applyDomTranslations, buildLocalizedUrl, getLocale, isEnglishLocale, t } from './i18n.js?v=427';
 import {
     GOOGLE_LOGIN_MODE_OVERRIDE_KEY,
     GOOGLE_LOGIN_PENDING_STATE_KEY,
@@ -19,12 +19,12 @@ import {
     resolveGoogleLoginMode,
     resolvePendingGoogleLoginState,
     shouldKeepPendingGoogleRedirectRecovery
-} from './auth-login-helpers.js?v=426';
-import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=426';
-import { trackProductEvent } from './product-events.js?v=426';
+} from './auth-login-helpers.js?v=427';
+import { getAllowedTabsForMode, getDefaultTabForMode, getAppModeFromPath, getRouteContext, normalizeTabForRoute } from './app-mode.js?v=427';
+import { trackProductEvent } from './product-events.js?v=427';
 // blockchain-manager는 동적 import한다. 로드 실패가 인증 흐름에 영향을 주지 않게 분리한다.
 
-const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=426';
+const BLOCKCHAIN_MANAGER_MODULE_PATH = './blockchain-manager.js?v=427';
 
 const PENDING_REFERRAL_CODE_KEY = 'pendingReferralCode';
 const PENDING_SIGNUP_ONBOARDING_KEY = 'habitschoolPendingSignupOnboarding';
@@ -1337,6 +1337,13 @@ export function setupAuthListener(callbacks) {
             getDoc(userRef).then(async userDoc => {
                 const { snap: resolvedUserDoc, data: resolvedUserData, fromCache: userDocFromCache } = await resolveLatestUserDocData(userRef, userDoc);
                 const isNewUser = !resolvedUserDoc.exists();
+                // 이미 확인한 축하는 계정에 적혀 있다. 화면이 그려지기 전에
+                // 알려 줘야 폰에서 확인한 배지가 새 기기에서 다시 뜨지 않는다.
+                // 이 문서는 어차피 읽으므로 조회가 늘지 않는다.
+                window.primeCelebratedAchievements?.(
+                    user.uid,
+                    resolvedUserData?.settings?.celebratedAchievements || []
+                );
                 const updateData = {
                     email: user.email || '',
                     displayName: user.displayName || '사용자',
@@ -1585,17 +1592,32 @@ function collectConsentSelection() {
 }
 
 // 가입 때든 개정 재동의 때든 같은 모양으로 남겨야 한다. 두 벌로 만들면 언젠가 갈라진다.
-function buildConsentRecordFromSelection(selection = {}) {
+//
+// firstAgreedAt 은 한 번만 찍고 그대로 둔다. at 은 제출할 때마다 덮이기 때문에,
+// 그것만으로는 "언제 동의를 받았는가" 를 답할 수 없다 — 동의 기록에서 가장
+// 중요한 것이 시각인데 매번 오늘로 지워진다.
+//
+// 2026-09-18 에 "동의 화면이 왜 계속 뜨지?" 를 조사할 때 이것 때문에 막혔다.
+// 기록의 at 이 그날이어서 "오늘 처음 동의했다" 로 읽었는데, 사실은 이미 동의한
+// 사람이 다시 제출한 것일 수도 있었다. 둘을 가릴 방법이 없었다.
+function buildConsentRecordFromSelection(selection = {}, previous = {}) {
     const at = new Date().toISOString();
-    const entry = (agreed) => ({ agreed, at: agreed ? at : null, version: CONSENT_DOC_VERSION });
+    const entry = (agreed, key) => {
+        const prior = previous?.[key];
+        // 이미 동의한 사람이면 그때 시각을 지킨다. 없으면(예전 기록) at 이 그 자리다.
+        const firstAgreedAt = agreed
+            ? (prior?.agreed === true ? (prior.firstAgreedAt || prior.at || at) : at)
+            : null;
+        return { agreed, at: agreed ? at : null, firstAgreedAt, version: CONSENT_DOC_VERSION };
+    };
     return {
-        terms: entry(selection['consent-terms'] === true),
-        privacy: entry(selection['consent-privacy'] === true),
+        terms: entry(selection['consent-terms'] === true, 'terms'),
+        privacy: entry(selection['consent-privacy'] === true, 'privacy'),
         // 만 14세 미만은 법정대리인 동의가 필요해(개인정보 보호법 제22조의2) 아예 받지 않는다.
         // 약관에 나이 기준만 적어두고 확인하지 않으면 지킬 수 없는 약속이 된다.
-        age14: entry(selection['consent-age'] === true),
+        age14: entry(selection['consent-age'] === true, 'age14'),
         // 건강정보는 개인정보 보호법 제23조 민감정보라 따로 받는다.
-        sensitive: entry(selection['consent-sensitive'] === true)
+        sensitive: entry(selection['consent-sensitive'] === true, 'sensitive')
     };
 }
 
@@ -1614,6 +1636,8 @@ const RECONSENT_ID_BY_KEY = {
     'consent-sensitive': 'reconsent-sensitive'
 };
 let _reconsentUser = null;
+// 창을 열 때 보고 있던 동의 기록. 제출할 때 처음 동의한 시각을 지키는 데 쓴다.
+let _reconsentPriorConsents = {};
 
 // 동의 기록이 아예 없는가. "처음 온 사람" 과 "예전에 동의했는데 문서가 바뀐 사람" 을
 // 가르는 기준이다. isNewUser 로 가르면 안 된다 — 첫 동의 창에서 '그만두기' 를 누른
@@ -1723,6 +1747,7 @@ function openReconsentModal(user, userData = {}, { firstTime = false } = {}) {
     // 동의가 먼저다 — 끝나면 여기서 온보딩을 다시 부른다.
     window.__HABITSCHOOL_CONSENT_GATE_OPEN__ = true;
     _reconsentUser = user;
+    _reconsentPriorConsents = userData?.consents || {};
     bindReconsentListeners();
 
     // 처음 온 사람에게 "약관이 바뀌었어요"는 무슨 소린지 알 수 없다.
@@ -1765,7 +1790,7 @@ window.submitReconsent = async function submitReconsent() {
     const submit = document.getElementById('reconsent-submit');
     if (submit) submit.disabled = true;
 
-    const record = buildConsentRecordFromSelection(collectReconsentSelection());
+    const record = buildConsentRecordFromSelection(collectReconsentSelection(), _reconsentPriorConsents);
     try {
         // 2026-09-18 제보: "동의 화면이 왜 계속 뜨지? 업데이트마다 다시 받나?"
         //
