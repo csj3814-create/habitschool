@@ -29,7 +29,29 @@
 .report-header {
     background: linear-gradient(135deg, #FF8C00 0%, #FFA726 100%);
     color: white; padding: 20px 24px; text-align: center;
+    position: relative;
 }
+
+/* 결과지는 길어서 끝까지 내려가야 '닫기' 가 나온다. 위에서도 닫을 수 있어야 한다.
+   아래 '닫기' 버튼은 그대로 둔다 — 다 읽고 내려온 사람에게는 그쪽이 가깝다. */
+.report-close-x {
+    position: absolute; top: 10px; right: 10px;
+    width: 32px; height: 32px; padding: 0;
+    border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.22); color: #fff;
+    font-size: 22px; line-height: 1; font-weight: 400;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.report-close-x:hover { background: rgba(255, 255, 255, 0.36); }
+.report-close-x:active { background: rgba(255, 255, 255, 0.45); }
+.report-close-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* 인쇄물에 닫기 버튼이 찍힐 이유가 없다. */
+.report-print-sheet .report-close-x { display: none; }
+@media print { .report-close-x { display: none; } }
 
 .report-header h2 { margin: 0 0 6px; font-size: 18px; }
 
@@ -101,23 +123,55 @@
 .report-metric-diff.good { color: #4CAF50; }
 .report-metric-diff.warn { color: #FF5722; }
 
-.report-heatmap {
+/* 날짜별 기록 달력.
+   예전 히트맵은 7칸씩 끊어 놓아 달력처럼 보였지만 요일과 맞지 않았고, 기록이
+   있는 날만 칸을 만들어 쉰 날이 사라졌다. 여기서는 요일을 맞추고 빈 날도
+   자리를 지킨다 — 쉰 날이 보여야 한눈에 보는 의미가 있다. */
+.report-calendar {
     display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
 }
 
-.hm-cell {
-    aspect-ratio: 1; border-radius: 4px; display: flex;
-    align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 600; color: #555;
+.rc-head {
+    font-size: 10px; font-weight: 700; color: #9aa0a6;
+    text-align: center; padding-bottom: 2px;
+}
+.rc-head.rc-sun { color: #e57373; }
+.rc-head.rc-sat { color: #64b5f6; }
+
+.rc-cell {
+    aspect-ratio: 1; border-radius: 5px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px;
+    background: #f1f3f4; color: #5f6368;
+    min-height: 34px;
 }
 
-.report-heatmap-legend {
-    display: flex; gap: 10px; margin-top: 6px; justify-content: center;
+.rc-day { font-size: 9px; font-weight: 600; opacity: 0.75; line-height: 1; }
+.rc-pts { font-size: 11px; font-weight: 800; line-height: 1; }
+
+/* 기간 밖의 날. 자리는 지키되 아무 말도 하지 않는다. */
+.rc-cell.rc-outside { background: transparent; }
+
+/* 기간 안인데 기록이 없는 날. 비어 있다는 것 자체가 정보다. */
+.rc-cell.rc-none { background: #f1f3f4; color: #bdc1c6; }
+
+.rc-cell.rc-low  { background: #FFE0B2; color: #8a5a00; }
+.rc-cell.rc-mid  { background: #FFB74D; color: #6b3f00; }
+.rc-cell.rc-high { background: #FF8C00; color: #fff; }
+.rc-cell.rc-best { background: #E65100; color: #fff; }
+
+.report-calendar-legend {
+    display: flex; gap: 8px; margin-top: 8px;
+    justify-content: center; flex-wrap: wrap;
 }
 
-.hm-legend-item { font-size: 10px; color: #888; display: flex; align-items: center; gap: 3px; }
+.rc-legend-item { font-size: 10px; color: #888; display: flex; align-items: center; gap: 3px; }
 
-.hm-box { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.rc-box { width: 12px; height: 12px; border-radius: 3px; display: inline-block; background: #f1f3f4; }
+.rc-box.rc-low  { background: #FFE0B2; }
+.rc-box.rc-mid  { background: #FFB74D; }
+.rc-box.rc-high { background: #FF8C00; }
+.rc-box.rc-best { background: #E65100; }
 
 .report-actions {
     display: flex; gap: 8px; padding: 12px 16px 16px;
@@ -208,8 +262,9 @@
     border-radius: 8px;
 }
 
-.report-print-sheet .hm-cell {
+.report-print-sheet .rc-cell {
     height: 26px;
+    min-height: 0;
     aspect-ratio: auto;
 }
 

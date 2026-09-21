@@ -17865,6 +17865,98 @@ function summarizeReportActivity(logs = []) {
     };
 }
 
+// ── 일별 달력 ──────────────────────────────────────────────────────────
+//
+// 2026-09-21 질문: "일별 기록 히트맵은 어떤 의미야? 날짜별로 잘 했는지 한눈에
+// 보여주고 싶으면 달력처럼 만들어서 각 날짜별 점수와 색깔 보여줘."
+//
+// 물어보실 만했다. 예전 히트맵은 **달력처럼 보이는데 달력이 아니었다.**
+//
+//   - 7칸씩 끊어 놓아 요일처럼 보이지만, 요일과 맞춰 놓지 않았다
+//   - 기록이 있는 날만 칸을 만들어서, 빠진 날은 사라지고 다음 날이 그 자리로
+//     당겨졌다. 쉰 날이 안 보이니 "한눈에" 볼 수가 없다
+//
+// 그래서 진짜 달력으로 편다. 기간 전체를 요일에 맞춰 놓고, 기록이 없는 날도
+// 빈칸으로 남긴다. **쉰 날이 보여야 달력이다.**
+const REPORT_CALENDAR_WEEKDAYS = Object.freeze(['일', '월', '화', '수', '목', '금', '토']);
+
+/** 그날 받은 포인트. 예전 기록은 합계 칸이 없어 항목별로 되살린다. */
+function reportPointsOfLog(log) {
+    const ap = (log && log.awardedPoints) || {};
+    const summed = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0);
+    return summed || ((ap.diet ? 10 : 0) + (ap.exercise ? 15 : 0) + (ap.mind ? 5 : 0));
+}
+
+function reportPointsTone(points) {
+    if (points > 80) return 'best';
+    if (points > 50) return 'high';
+    if (points > 20) return 'mid';
+    if (points > 0) return 'low';
+    return 'none';
+}
+
+/**
+ * 기록을 주 단위 달력으로 편다. 기간의 첫날이 속한 주의 일요일부터
+ * 마지막 날이 속한 주의 토요일까지 — 빈 칸도 자리를 지킨다.
+ */
+function buildReportCalendar(logs = []) {
+    const byDate = new Map();
+    (logs || []).forEach((log) => {
+        if (log && log.date) byDate.set(String(log.date), log);
+    });
+    const dates = [...byDate.keys()].sort();
+    if (dates.length === 0) return [];
+
+    const toUtc = (value) => new Date(`${value}T00:00:00Z`);
+    const first = toUtc(dates[0]);
+    const last = toUtc(dates[dates.length - 1]);
+    const leading = first.getUTCDay();
+    const trailing = 6 - last.getUTCDay();
+    const gridStart = new Date(first);
+    gridStart.setUTCDate(gridStart.getUTCDate() - leading);
+    const cellCount = Math.round((last - first) / 86400000) + 1 + leading + trailing;
+
+    const weeks = [];
+    for (let i = 0; i < cellCount; i += 1) {
+        const at = new Date(gridStart);
+        at.setUTCDate(at.getUTCDate() + i);
+        const date = at.toISOString().slice(0, 10);
+        const inRange = date >= dates[0] && date <= dates[dates.length - 1];
+        const log = byDate.get(date);
+        const points = log ? reportPointsOfLog(log) : 0;
+        if (i % 7 === 0) weeks.push([]);
+        weeks[weeks.length - 1].push({
+            date,
+            day: at.getUTCDate(),
+            month: at.getUTCMonth() + 1,
+            inRange,
+            recorded: !!log,
+            points,
+            tone: !inRange ? 'outside' : (log ? reportPointsTone(points) : 'none')
+        });
+    }
+    return weeks;
+}
+
+function renderReportCalendar(weeks = []) {
+    if (weeks.length === 0) return '';
+    const head = REPORT_CALENDAR_WEEKDAYS
+        .map((name, index) => `<div class="rc-head${index === 0 ? ' rc-sun' : index === 6 ? ' rc-sat' : ''}">${name}</div>`)
+        .join('');
+    const cells = weeks.flat().map((cell) => {
+        if (!cell.inRange) return '<div class="rc-cell rc-outside"></div>';
+        // 달이 바뀌는 날은 날짜만 적으면 어느 달인지 알 수 없다.
+        const label = cell.day === 1 ? `${cell.month}/1` : String(cell.day);
+        const value = cell.recorded ? `${cell.points}P` : '·';
+        const title = cell.recorded ? `${cell.date} · ${cell.points}P` : `${cell.date} · 기록 없음`;
+        return `<div class="rc-cell rc-${cell.tone}" title="${title}">
+            <span class="rc-day">${label}</span>
+            <span class="rc-pts">${value}</span>
+        </div>`;
+    }).join('');
+    return `<div class="report-calendar">${head}${cells}</div>`;
+}
+
 const REPORT_DIET_AXIS_LABELS = Object.freeze({
     minerals: '미네랄',
     fiber: '식이섬유',
@@ -18157,31 +18249,25 @@ window.generate30DayReport = async function () {
         }
 
         // — 일별 기록 캘린더 히트맵 —
-        html += `<div class="report-section" data-report-section="heatmap">
-            <div class="report-section-title">🗓️ 일별 기록 히트맵</div>
-            <div class="report-heatmap" id="report-heatmap"></div>
-            <div class="report-heatmap-legend">
-                <span class="hm-legend-item"><span class="hm-box" style="background:#eee;"></span>미기록</span>
-                <span class="hm-legend-item"><span class="hm-box" style="background:#FFE0B2;"></span>1~20P</span>
-                <span class="hm-legend-item"><span class="hm-box" style="background:#FFB74D;"></span>21~50P</span>
-                <span class="hm-legend-item"><span class="hm-box" style="background:#FF8C00;"></span>51~80P</span>
+        const calendarWeeks = buildReportCalendar(logs);
+        const skippedDays = calendarWeeks.flat().filter((cell) => cell.inRange && !cell.recorded).length;
+        html += `<div class="report-section" data-report-section="calendar">
+            <div class="report-section-title">🗓️ 날짜별 기록</div>
+            ${renderReportCalendar(calendarWeeks)}
+            <div class="report-calendar-legend">
+                <span class="rc-legend-item"><span class="rc-box rc-none"></span>기록 없음</span>
+                <span class="rc-legend-item"><span class="rc-box rc-low"></span>1~20P</span>
+                <span class="rc-legend-item"><span class="rc-box rc-mid"></span>21~50P</span>
+                <span class="rc-legend-item"><span class="rc-box rc-high"></span>51~80P</span>
+                <span class="rc-legend-item"><span class="rc-box rc-best"></span>81P+</span>
             </div>
+            ${skippedDays > 0
+                ? `<div class="report-metric-summary">이 기간에 ${skippedDays}일은 기록이 없었어요.</div>`
+                : '<div class="report-metric-summary">이 기간 하루도 빠뜨리지 않으셨어요. 🎉</div>'}
         </div>`;
 
         document.getElementById('report-body').innerHTML = html;
 
-        // ===== 히트맵 렌더 =====
-        const heatmapEl = document.getElementById('report-heatmap');
-        logs.forEach((log, idx) => {
-            const ap = log.awardedPoints || {};
-            const pts = (ap.dietPoints || 0) + (ap.exercisePoints || 0) + (ap.mindPoints || 0) || ((ap.diet ? 10 : 0) + (ap.exercise ? 15 : 0) + (ap.mind ? 5 : 0));
-            let color = '#eee';
-            if (pts > 50) color = '#FF8C00';
-            else if (pts > 20) color = '#FFB74D';
-            else if (pts > 0) color = '#FFE0B2';
-            const dayLabel = log.date.substring(8);
-            heatmapEl.innerHTML += `<div class="hm-cell" style="background:${color};" title="${log.date}: ${pts}P">${dayLabel}</div>`;
-        });
 
         // ===== 캔버스 그래프 렌더 =====
         // 일별 포인트 스택 바 차트
@@ -18231,7 +18317,13 @@ window.generate30DayReport = async function () {
 
 const REPORT_PRINT_SHEET_ID = 'report-print-sheet';
 const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);
-const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'heatmap']);
+const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);
+// 자료가 없으면 그리지 않는 구역들. 인쇄가 이것들을 기다리면 안 된다.
+const REPORT_PRINT_OPTIONAL_SECTIONS = Object.freeze(['activity', 'ai', 'health']);
+const REPORT_PRINT_REQUIRED_SECTIONS = Object.freeze(
+    [...REPORT_PRINT_TOP_SECTIONS, ...REPORT_PRINT_BOTTOM_SECTIONS]
+        .filter((name) => !REPORT_PRINT_OPTIONAL_SECTIONS.includes(name))
+);
 
 function remove30DayReportPrintSheet() {
     document.getElementById(REPORT_PRINT_SHEET_ID)?.remove();
@@ -18319,8 +18411,11 @@ function build30DayReportPrintSheet() {
     const reportContainer = document.getElementById('report-container');
     const reportHeader = reportContainer?.querySelector('.report-header');
     const reportBody = reportContainer?.querySelector('#report-body');
-    const requiredSections = [...REPORT_PRINT_TOP_SECTIONS, 'category-trend', 'heatmap'];
-    const hasAllRequiredSections = requiredSections.every(sectionName => (
+    // 인쇄를 포기할지 정하는 목록이라 **늘 그려지는 구역만** 들어가야 한다.
+    // TOP/BOTTOM 목록을 그대로 쓰면 안 된다 — 거기에는 자료가 있을 때만 그려지는
+    // 구역(activity·ai·health)이 섞여 있어서, 걸음수도 운동도 없는 회원은
+    // 인쇄가 조용히 아무 일도 하지 않게 된다.
+    const hasAllRequiredSections = REPORT_PRINT_REQUIRED_SECTIONS.every(sectionName => (
         reportBody?.querySelector(`[data-report-section="${sectionName}"]`)
     ));
     if (!reportContainer || !reportHeader || !reportBody || !hasAllRequiredSections) return null;

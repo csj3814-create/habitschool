@@ -11,7 +11,7 @@ describe('30-day report A4 two-up print layout', () => {
         // 2026-09-21: 활동·수면과 AI 요약이 늘었다. 화면에만 있고 인쇄에 자리가
         // 없으면 출력물에서 통째로 사라진다 — 목록에 같이 넣어야 한다.
         expect(appSource).toContain("const REPORT_PRINT_TOP_SECTIONS = Object.freeze(['summary', 'category', 'activity', 'points']);");
-        expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'heatmap']);");
+        expect(appSource).toContain("const REPORT_PRINT_BOTTOM_SECTIONS = Object.freeze(['category-trend', 'ai', 'health', 'calendar']);");
 
         // 그리는 구역과 인쇄하는 구역이 갈라지면 조용히 빠진다. 전부 한쪽에는 있어야 한다.
         const rendered = [...appSource.matchAll(/data-report-section="([a-z-]+)"/g)].map((m) => m[1]);
@@ -40,7 +40,7 @@ describe('30-day report A4 two-up print layout', () => {
     it('marks the existing report sections without adding new calculations', () => {
         const appSource = readAppSource();
 
-        for (const section of ['summary', 'category', 'points', 'category-trend', 'health', 'heatmap']) {
+        for (const section of ['summary', 'category', 'points', 'category-trend', 'health', 'calendar']) {
             expect(appSource).toContain(`data-report-section="${section}"`);
         }
         expect(appSource).toContain("image.src = canvas.toDataURL('image/png');");
@@ -59,7 +59,12 @@ describe('30-day report A4 two-up print layout', () => {
         expect(css).toContain('display: block !important;');
         expect(css).toContain('.report-actions {\n        display: none !important;');
         expect(css).toContain('height: 150px;\n    object-fit: fill;');
-        expect(css).toContain('.report-print-sheet .hm-cell {\n    height: 26px;\n    aspect-ratio: auto;');
+        // 인쇄에서는 달력 칸이 정사각형일 필요가 없다. 높이를 고정하고 비율을 푼다.
+        const printCell = css.split('.report-print-sheet .rc-cell {')[1].split('}')[0];
+        expect(printCell).toContain('height: 26px;');
+        expect(printCell).toContain('aspect-ratio: auto;');
+        // 화면용 최소 높이가 남아 있으면 26px 지정이 먹지 않는다.
+        expect(printCell).toContain('min-height: 0;');
         expect(css).toContain('page-break-inside: avoid;');
     });
 });
